@@ -1,0 +1,3 @@
+pnpm lint:apply
+pnpm fmt:apply
+git update-index --again

@@ -1,0 +1,25 @@
+{
+  "extraKnownMarketplaces": {},
+  "enabledPlugins": {
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "skillListingMaxDescChars": 512,
+  "env": {
+    "ENABLE_LSP_TOOL": "1"
+  },
+  "permissions": {
+    "allow": []
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "hooks": {},
+  "lspServers": {
+    "typescript": {
+      "command": "typescript-language-server",
+      "args": ["--stdio"],
+      "fileTypes": [".ts", ".tsx", ".mjs", ".js", ".jsx"]
+    }
+  }
+}

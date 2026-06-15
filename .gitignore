@@ -1,0 +1,23 @@
+# Dependencies
+**/node_modules
+
+# Build files
+**/bin
+**/*.tsbuildinfo
+
+# Environment files
+**/*.local
+**/.env
+**/.crosslm_cache
+
+# MacOS files
+**/.DS_Store
+
+# Claude
+.claude/settings.local.json
+
+# Dev Container
+.devcontainer/.mnt-*/*
+!.devcontainer/.mnt-*/.gitkeep
+.pnpm-store
+.ms-playwright

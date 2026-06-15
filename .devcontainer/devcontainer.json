@@ -1,0 +1,21 @@
+// See https://containers.dev/implementors/json_reference/ for configuration reference
+{
+  "name": "Projet IGSN",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "workspaceFolder": "/workspaces/projet-igsn",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/projet-igsn,type=bind,consistency=cached",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "node",
+  "features": {
+    "./claude-code": {},
+    "./playwright": {},
+    "./pnpm": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["oxc.oxc-vscode"]
+    }
+  }
+}
