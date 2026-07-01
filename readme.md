@@ -132,9 +132,13 @@ To test against **real ORCID** instead (sandbox or prod), register an app with r
 `http://localhost:8080/realms/igsn/broker/orcid/endpoint` and set the `ORCID_*` vars in
 `.env` — the same vars a prod deployment sets on its Keycloak.
 
-Going to production is otherwise an ops task: register Keycloak's SP metadata
-(`…/realms/igsn/broker/shibboleth/endpoint`) with the RENATER federation and opt into
-eduGAIN, then point the SAML broker at the real IdP metadata.
+In production the admin SPA points at an externally-managed Keycloak via
+`VITE_OIDC_AUTHORITY` / `VITE_OIDC_CLIENT_ID` (see [`auth.ts`](packages/admin/src/auth.ts)).
+The realm files, the `test` user, and the mock IdPs here are **dev/e2e only and are never
+shipped** — the insecure-by-design bits (`sslRequired: none`, unsigned SAML, a local admin
+password) live only in that throwaway setup. Standing up the prod Keycloak is an ops task:
+register its SP metadata (`…/realms/igsn/broker/shibboleth/endpoint`) with the RENATER
+federation, opt into eduGAIN, and configure the ORCID broker against production ORCID.
 
 ## Test
 
