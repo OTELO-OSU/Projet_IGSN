@@ -1,4 +1,5 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { LogOut } from "lucide-react";
 import { useAuth } from "react-oidc-context";
 
 import App from "./app.tsx";
@@ -46,15 +47,22 @@ export function AuthGate() {
   }
 
   return (
-    <>
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => void auth.signoutRedirect()}
-      >
-        Sign out
-      </Button>
-      <App />
-    </>
+    <div className="min-h-screen">
+      {/* ponytail: App is currently just the title, so it serves as the header
+          brand. When App gains real content, lift the <h1> into this header and
+          render <App /> below it. */}
+      <header className="flex items-center justify-between border-b px-6 py-4">
+        <App />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => void auth.signoutRedirect()}
+        >
+          <LogOut />
+          Sign out
+        </Button>
+      </header>
+    </div>
   );
 }
