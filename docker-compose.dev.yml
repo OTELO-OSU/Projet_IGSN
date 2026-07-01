@@ -19,6 +19,11 @@ services:
           target: /app/packages/domain
           ignore:
             - node_modules/
+        - action: sync
+          path: ./packages/design-system
+          target: /app/packages/design-system
+          ignore:
+            - node_modules/
         - action: sync+restart
           path: ./tsconfig.base.json
           target: /app/tsconfig.base.json
@@ -43,6 +48,11 @@ services:
         - action: sync
           path: ./packages/domain
           target: /app/packages/domain
+          ignore:
+            - node_modules/
+        - action: sync
+          path: ./packages/design-system
+          target: /app/packages/design-system
           ignore:
             - node_modules/
         - action: sync+restart

@@ -30,7 +30,10 @@ product must be easy to adopt.
 
 - `domain`: shared business logic and contracts (domain models, IGSN validation,
   service/repository interfaces). No I/O; consumed by all other packages.
-- `frontend` _(planned)_: public app for unauthenticated readers (browse/search).
+- `design-system`: shared UI (shadcn/ui components, styles, shadcn config).
+  shadcn components MUST be added here, never in an app. Consumed by `frontend`
+  and `admin`.
+- `frontend`: public app for unauthenticated readers (browse/search).
 - `admin`: app for authenticated users (Contributor/Editor) and admins.
 - `api`: backend API holding all business domain logic; `frontend` and `admin`
   use it for CRUD.
@@ -58,4 +61,4 @@ files or args (`pnpm test path/to/file`, `pnpm lint:check --quiet`). The
 
 - `admin`: http://localhost:3001
 - `api`: http://localhost:3002
-- `frontend` _(planned)_: http://localhost:3000
+- `frontend`: http://localhost:3000
