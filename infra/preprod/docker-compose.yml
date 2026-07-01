@@ -1,0 +1,108 @@
+# Production stack for the preprod EC2 host: runs the pre-built igsn-*:preprod
+# images shipped by infra/preprod/scripts/deploy.sh via `docker save | ssh docker load`.
+# Postgres runs here as a container with a persistent volume; its password comes
+# from the host docker-compose.env that the operator copies to the host.
+#
+# Not meant to `up` locally: it needs the loaded igsn-*:preprod images and DNS
+# for $DOMAIN.
+#
+# Only Caddy publishes ports (80/443); the apps and Postgres are reachable only
+# over the compose network, per the service-exposure rule.
+
+# Shared HTTP healthcheck: every app listens on :8080 and returns 2xx on /.
+x-healthcheck: &healthcheck
+  test: ["CMD", "curl", "-fsS", "http://localhost:8080/"]
+  interval: 10s
+  timeout: 5s
+  retries: 5
+  start_period: 20s
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: ${DATABASE_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # One-off: apply migrations, then exit. The api waits for success.
+  migrate:
+    image: igsn-api:preprod
+    command: ["node", "src/migrate.ts"]
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    image: igsn-api:preprod
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      CORS_ORIGINS: "https://igsn-admin.${DOMAIN}"
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: ${DATABASE_NAME}
+      DATABASE_USER: ${DATABASE_USER}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+    healthcheck: *healthcheck
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  admin:
+    image: igsn-admin:preprod
+    restart: unless-stopped
+    healthcheck: *healthcheck
+
+  frontend:
+    image: igsn-frontend:preprod
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      VITE_API_URL: "https://igsn-api.${DOMAIN}"
+    healthcheck: *healthcheck
+
+  # Edge: terminates TLS with the Cloudflare Origin CA cert (mounted from the
+  # host ~/certs), reverse-proxies to the apps, and sets the required security
+  # headers for every response.
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Cloudflare Origin CA cert + key the operator copies to the host ~/certs.
+      - ./certs:/certs:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+      admin:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

@@ -14,6 +14,10 @@
 # Environment files
 **/*.local
 **/.env
+infra/preprod/docker-compose.env
+
+# Cloudflare Origin CA cert + key (host secrets, copied by the operator)
+infra/preprod/certs/
 
 # MacOS files
 **/.DS_Store

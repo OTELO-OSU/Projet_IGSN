@@ -29,3 +29,21 @@ dev:
 
 generate-routes:
 	@pnpm -F @projet-igsn/frontend generate-routes
+
+preprod-deploy:							## Deploy to preprod over SSH (requires DOMAIN=...)
+	@DOMAIN=$(DOMAIN) ./infra/preprod/scripts/deploy.sh
+
+preprod-ssh:							## Open temporary SSH access to the preprod host and connect
+	@./infra/preprod/scripts/ssh-access.sh connect
+
+preprod-ssh-send-key:					## Install your SSH key on the preprod host (optional SSH_PUBLIC_KEY_PATH=...)
+	@./infra/preprod/scripts/ssh-send-key.sh "$(SSH_PUBLIC_KEY_PATH)"
+
+preprod-tofu-init:						## Init preprod tofu (S3 backend)
+	@tofu -chdir=infra/preprod/tf init -backend-config=backend.hcl
+
+preprod-tofu-plan:						## Plan preprod infra changes
+	@tofu -chdir=infra/preprod/tf plan
+
+preprod-tofu-apply:						## Apply preprod infra changes
+	@tofu -chdir=infra/preprod/tf apply

@@ -1,4 +1,20 @@
 services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_USER: igsn
+      POSTGRES_PASSWORD: igsn
+      POSTGRES_DB: igsn
+    # No HTTP endpoint, so this one keeps pg_isready rather than curl.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U igsn -d igsn"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
   frontend:
     build:
       context: .
@@ -7,6 +23,12 @@ services:
     container_name: frontend
     ports:
       - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
     develop:
       watch:
         - action: sync
@@ -38,6 +60,12 @@ services:
     container_name: admin
     ports:
       - "3001:3001"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3001/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
     develop:
       watch:
         - action: sync
@@ -69,6 +97,22 @@ services:
     container_name: api
     ports:
       - "3002:3002"
+    environment:
+      CORS_ORIGINS: "http://localhost:3001"
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: igsn
+      DATABASE_USER: igsn
+      DATABASE_PASSWORD: igsn
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3002/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    depends_on:
+      postgres:
+        condition: service_healthy
     develop:
       watch:
         - action: sync
@@ -86,3 +130,6 @@ services:
           target: /app/tsconfig.base.json
         - action: rebuild
           path: ./pnpm-lock.yaml
+
+volumes:
+  pgdata:
