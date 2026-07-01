@@ -7,8 +7,24 @@ install:								## Install dependencies
 	@pnpm install
 	
 install-browsers: install				## Install playwright browsers
-	@pnpm exec playwright install chromium
+	@pnpm exec playwright install
 
-setup-devcontainer: 					## Setup development container with all dependencies and browsers
-	corepack enable --install-directory ~/bin
-	$(MAKE) install install-browsers
+lint:
+	@pnpm lint:apply
+	@pnpm fmt:apply
+
+test:
+	@pnpm test
+
+test-browser:
+	@pnpm test:browser
+
+test-watch:
+	@pnpm test:watch
+
+dev:
+	docker compose \
+		-f docker-compose.dev.yml \
+		up  \
+		--watch \
+		--build

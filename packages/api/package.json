@@ -1,0 +1,23 @@
+{
+  "name": "@projet-igsn/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/main.ts"
+  },
+  "dependencies": {
+    "@hono/node-server": "catalog:",
+    "@projet-igsn/domain": "workspace:*",
+    "hono": "catalog:",
+    "kysely": "catalog:",
+    "kysely-postgres-js": "catalog:",
+    "rate-limiter-flexible": "catalog:"
+  },
+  "devDependencies": {
+    "@kysely-vitest/postgres": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

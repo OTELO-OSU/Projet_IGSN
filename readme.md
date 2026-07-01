@@ -1,1 +1,75 @@
 # IGSN Project
+
+A pnpm workspace monorepo for managing IGSN (International Generic Sample Number) records.
+
+## Packages
+
+| Package                                  | Stack           | Dev port | Description                                          |
+| ---------------------------------------- | --------------- | -------- | ---------------------------------------------------- |
+| [`@projet-igsn/domain`](packages/domain) | TypeScript      | -        | Shared business logic and contracts; no I/O          |
+| `@projet-igsn/frontend` _(planned)_      | React 19 + Vite | 3000     | Public app for unauthenticated users (browse/search) |
+| [`@projet-igsn/admin`](packages/admin)   | React 19 + Vite | 3001     | App for authenticated users and admins               |
+| [`@projet-igsn/api`](packages/api)       | Hono + Node     | 3002     | Backend API; holds all business domain logic         |
+
+## Requirements
+
+- Node `24` (see [.nvmrc](.nvmrc))
+- pnpm `11.7` (pinned via `packageManager` in [package.json](package.json))
+- Docker (for `make dev`)
+
+Tooling is shared across packages from the workspace root: [oxlint](https://oxc.rs) for
+linting, [oxfmt](https://oxc.rs) for formatting, [Vitest](https://vitest.dev) (browser mode)
+for tests, and Husky git hooks. Dependency versions are centralized in the pnpm
+[catalog](pnpm-workspace.yaml).
+
+## Devcontainer
+
+A [devcontainer](.devcontainer) gives every contributor the same clean, reproducible
+environment: Node, pnpm, Playwright browsers, Docker-in-Docker, and the oxc VS Code
+extension are all preinstalled, so nothing touches your host machine. Open the project
+in it (VS Code: "Reopen in Container") and the [Setup](#setup) steps below already ran
+via `postCreateCommand`. Ports 3000-3002 are forwarded automatically.
+
+## Setup
+
+```sh
+make install            # pnpm install
+make install-browsers   # pnpm install + playwright browsers (required for tests)
+```
+
+## Develop
+
+Run every package together in Docker with live file watching:
+
+```sh
+make dev
+```
+
+This builds and starts `admin` (http://localhost:3001) and `api` (http://localhost:3002)
+via [docker-compose.dev.yml](docker-compose.dev.yml). Source changes sync into the
+containers automatically.
+
+## Test
+
+Tests run in a real browser through Vitest + Playwright, so run `make install-browsers`
+first.
+
+```sh
+make test           # pnpm test           one-shot, headless
+make test-browser   # pnpm test:browser   headed browser UI
+make test-watch     # pnpm test:watch     re-run on change, headless
+```
+
+## Lint and format
+
+```sh
+make lint            # pnpm lint:apply + fmt:apply   fix in place
+pnpm lint:check      # oxlint                        report only
+pnpm fmt:check       # oxfmt --check                 report only
+```
+
+Linting and formatting also run automatically on commit via the Husky pre-commit hook.
+
+## Make targets
+
+Run `make help` (or just `make`) to list every available target.

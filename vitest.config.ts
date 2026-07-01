@@ -2,6 +2,14 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    projects: ["packages/*"],
+    projects: [
+      "packages/*",
+      {
+        test: {
+          name: "claude",
+          include: ["./.claude/hooks/*.test.mjs"],
+        },
+      },
+    ],
   },
 });
