@@ -4,11 +4,16 @@
 # Build files
 **/*.tsbuildinfo
 **/dist
+**/dist-ssr
+**/.nitro
+**/.tanstack
+**/.output
+**/.vinxi
+**/__unconfig*
 
 # Environment files
 **/*.local
 **/.env
-**/.crosslm_cache
 
 # MacOS files
 **/.DS_Store
