@@ -1,3 +1,4 @@
+import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { useAuth } from "react-oidc-context";
 
 import App from "./app.tsx";
@@ -12,20 +13,33 @@ export function AuthGate() {
 
   if (!auth.isAuthenticated) {
     return (
-      <main>
-        <h1>IGSN Admin</h1>
-        <button type="button" onClick={() => void auth.signinRedirect()}>
+      <main className="flex min-h-screen flex-col items-center justify-center gap-6 text-center">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">IGSN Admin</h1>
+          <p className="text-muted-foreground">
+            Welcome. Please sign in to manage IGSN records.
+          </p>
+        </div>
+        <Button
+          type="button"
+          size="lg"
+          onClick={() => void auth.signinRedirect()}
+        >
           Sign in with Keycloak
-        </button>
+        </Button>
       </main>
     );
   }
 
   return (
     <>
-      <button type="button" onClick={() => void auth.signoutRedirect()}>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => void auth.signoutRedirect()}
+      >
         Sign out
-      </button>
+      </Button>
       <App />
     </>
   );
