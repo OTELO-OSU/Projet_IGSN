@@ -77,6 +77,24 @@ them with the workspace `shadcn` script, which runs the CLI inside `design-syste
 pnpm shadcn add <component>   # e.g. pnpm shadcn add dialog
 ```
 
+## Auth (Keycloak)
+
+`make dev` also starts a [Keycloak](https://www.keycloak.org) at http://localhost:8080,
+preconfigured from [`keycloak/realm-igsn.json`](keycloak/realm-igsn.json) via Keycloak's
+native `--import-realm` — no manual setup.
+
+| What             | Value                                         |
+| ---------------- | --------------------------------------------- |
+| Realm            | `igsn`                                        |
+| Admin console    | http://localhost:8080 — `admin` / `admin`     |
+| Admin SPA client | `igsn-admin` (public, PKCE, `localhost:3001`) |
+| Test user        | `test` / `test` (realm role `admin`)          |
+| OIDC issuer      | http://localhost:8080/realms/igsn             |
+
+Edit the realm file and restart to change clients/users. The test user has direct-access
+grants enabled, so tests can fetch a token with a password grant instead of driving the
+browser login.
+
 ## Test
 
 Tests run in a real browser through Vitest + Playwright, so run `make install-browsers`
