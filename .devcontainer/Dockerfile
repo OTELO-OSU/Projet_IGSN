@@ -8,6 +8,4 @@ RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
 
 USER node
 
-RUN echo 'alias g="git"' >> /home/node/.bash_aliases
-
 ENV DEVCONTAINER=true
