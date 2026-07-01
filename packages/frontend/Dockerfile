@@ -37,7 +37,7 @@ RUN pnpm -F "@projet-igsn/frontend..." install --frozen-lockfile
 
 RUN pnpm -F @projet-igsn/frontend build
 
-FROM node:24-alpine
+FROM node:24-alpine as prod
 
 RUN apk upgrade --no-cache && apk add --no-cache curl
 

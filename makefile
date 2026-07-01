@@ -1,11 +1,14 @@
 default: help
 
-# Bring up the services the e2e suite needs (detached), wait until they answer,
-# and tear the whole stack down when the calling recipe's shell exits.
-E2E_UP = trap 'docker compose -f docker-compose.dev.yml down' EXIT; \
-	docker compose -f docker-compose.dev.yml up -d --build keycloak saml-idp admin && \
-	echo "waiting for keycloak, saml-idp and admin..." && \
-	timeout 240 sh -c 'until curl -sfo /dev/null http://localhost:3001 && curl -sfo /dev/null http://localhost:8080/realms/igsn/.well-known/openid-configuration && curl -sfo /dev/null http://localhost:8081/simplesaml/saml2/idp/metadata.php; do sleep 2; done'
+# The e2e stack: prod-built apps + auth stack on shifted ports (own compose
+# project so it runs beside `make dev`). Bring it up, wait until it answers, and
+# tear it down (incl. the throwaway pg volume) when the calling recipe exits.
+E2E_COMPOSE = docker compose -p igsn-e2e -f docker-compose.e2e.yml
+E2E_URL = ADMIN_URL=http://localhost:4001
+E2E_UP = trap '$(E2E_COMPOSE) down -v' EXIT; \
+	$(E2E_COMPOSE) up -d --build && \
+	echo "waiting for admin, keycloak and saml-idp..." && \
+	timeout 300 sh -c 'until curl -sfo /dev/null http://localhost:4001 && curl -sfo /dev/null http://localhost:18080/realms/igsn/.well-known/openid-configuration && curl -sfo /dev/null http://localhost:18081/simplesaml/saml2/idp/metadata.php; do sleep 2; done'
 
 help:									## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -27,11 +30,11 @@ test-browser:
 test-watch:
 	@pnpm test:watch
 
-test-e2e:								## Start a throwaway stack, run auth e2e tests, tear down
-	@$(E2E_UP) && pnpm test:e2e
+test-e2e:								## Start a throwaway prod stack, run auth e2e tests, tear down
+	@$(E2E_UP) && $(E2E_URL) pnpm test:e2e
 
 test-e2e-ui:								## Same, but open Playwright UI mode (http://localhost:8090)
-	@$(E2E_UP) && pnpm test:e2e:ui
+	@$(E2E_UP) && $(E2E_URL) pnpm test:e2e:ui
 
 dev:
 	docker compose \

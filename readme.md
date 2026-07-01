@@ -152,13 +152,21 @@ make test-watch     # pnpm test:watch     re-run on change, headless
 [`e2e/`](e2e) drives a real browser through the full brokered login flows
 (institution/Shibboleth and ORCID) with [`@playwright/test`](https://playwright.dev);
 selectors and actions live in page objects under [`e2e/support/`](e2e/support).
-Each target brings up its own throwaway stack (Keycloak + mock IdPs + admin), waits
-for it, runs, and tears it down — no need to `make dev` first:
+
+Each target brings up its own throwaway **prod-mode** stack from
+[`docker-compose.e2e.yml`](docker-compose.e2e.yml) — the apps' prod Dockerfile
+stages (built, not `vite dev`), a real Postgres with a one-off migration, and
+Keycloak + the mock IdPs — runs the tests, and tears it down:
 
 ```sh
 make test-e2e        # headless, one-shot
 make test-e2e-ui     # Playwright UI mode, then open http://localhost:8090
 ```
+
+It uses a separate compose project (`igsn-e2e`) on shifted ports (frontend 4000,
+admin 4001, api 4002, keycloak 18080, saml-idp 18081), so it runs **in parallel
+with `make dev`**. The port-specific auth URLs are env-substituted into the realm
+import, so the same realm files serve both environments.
 
 ## Lint and format
 

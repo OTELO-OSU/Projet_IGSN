@@ -25,9 +25,13 @@ CMD ["pnpm", "-F", "@projet-igsn/admin", "dev"]
 
 FROM base as build
 
-# Vite bakes VITE_* at build time, so the API URL is a build arg for this SPA.
+# Vite bakes VITE_* at build time. The API URL and the Keycloak authority are
+# both fixed into the bundle here; the authority defaults to the dev Keycloak
+# and the e2e/prod build overrides it (different host/port).
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
+ARG VITE_OIDC_AUTHORITY=http://localhost:8080/realms/igsn
+ENV VITE_OIDC_AUTHORITY=$VITE_OIDC_AUTHORITY
 
 # "pkg..." installs admin AND its workspace deps' external deps (design-system),
 # which a bare -F filter omits.
@@ -35,7 +39,7 @@ RUN pnpm -F "@projet-igsn/admin..." install --frozen-lockfile
 
 RUN pnpm -F @projet-igsn/admin build
 
-FROM caddy:alpine
+FROM caddy:alpine as prod
 
 RUN apk upgrade --no-cache && apk add --no-cache curl
 

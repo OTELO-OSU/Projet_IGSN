@@ -14,11 +14,11 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["http://localhost:3001/*"],
-      "webOrigins": ["http://localhost:3001"],
+      "redirectUris": ["${ADMIN_REDIRECT_URI:http://localhost:3001/*}"],
+      "webOrigins": ["${ADMIN_WEB_ORIGIN:http://localhost:3001}"],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:3001/*"
+        "post.logout.redirect.uris": "${ADMIN_REDIRECT_URI:http://localhost:3001/*}"
       }
     }
   ],
@@ -45,7 +45,7 @@
       "trustEmail": true,
       "firstBrokerLoginFlowAlias": "first broker login",
       "config": {
-        "singleSignOnServiceUrl": "http://localhost:8081/simplesaml/saml2/idp/SSOService.php",
+        "singleSignOnServiceUrl": "${SHIBBOLETH_SSO_URL:http://localhost:8081/simplesaml/saml2/idp/SSOService.php}",
         "nameIDPolicyFormat": "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
         "principalType": "ATTRIBUTE",
         "principalAttribute": "eduPersonPrincipalName",

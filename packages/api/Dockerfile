@@ -22,10 +22,12 @@ RUN pnpm -F @projet-igsn/api install --frozen-lockfile
 
 CMD ["pnpm", "-F", "@projet-igsn/api", "dev"]
 
-FROM base
+FROM base as prod
 
 ENV PORT=8080
 
+# --ignore-scripts: skip the root `prepare` (husky), which isn't installed in
+# --prod mode. The api has no dependencies with native build steps.
 RUN pnpm -F @projet-igsn/api install --prod --frozen-lockfile --ignore-scripts
 
 # Drop root: the app only reads its (root-owned, world-readable) files at runtime.

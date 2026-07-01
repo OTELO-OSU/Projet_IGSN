@@ -12,8 +12,8 @@ export function keycloakProfilePage(page: Page) {
       const signedIn = page.getByRole("button", { name: "Sign out" });
       await expect(heading.or(signedIn).first()).toBeVisible();
       if (await heading.isVisible()) {
-        await page.getByLabel("Email", { exact: true }).fill(email);
-        await page.getByRole("button", { name: "Submit" }).click();
+        await page.getByRole("textbox", { name: /email/i }).fill(email);
+        await page.getByRole("button", { name: /submit/i }).click();
       }
     },
   };

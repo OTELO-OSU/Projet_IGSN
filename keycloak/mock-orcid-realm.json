@@ -14,7 +14,7 @@
       "clientAuthenticatorType": "client-secret",
       "standardFlowEnabled": true,
       "redirectUris": [
-        "http://localhost:8080/realms/igsn/broker/orcid/endpoint"
+        "${ORCID_BROKER_REDIRECT_URI:http://localhost:8080/realms/igsn/broker/orcid/endpoint}"
       ]
     }
   ],

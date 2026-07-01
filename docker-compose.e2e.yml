@@ -1,0 +1,123 @@
+# Prod-mode stack for E2E: the apps run their prod Dockerfile stages (built, not
+# vite dev), behind Keycloak + the mock IdPs, plus a real Postgres and a one-off
+# migration that gates the api the same way CD does.
+#
+# Ports are shifted off the dev ports so this can run alongside `make dev`:
+#   frontend 4000, admin 4001, api 4002, keycloak 18080, saml-idp 18081
+# Postgres is internal only (infra security rule). Keycloak listens on 18080
+# inside the container too (KC_HTTP_PORT) so its issued URLs are identical for the
+# browser and for its own broker calls. Run via `make test-e2e` (uses -p igsn-e2e).
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: igsn
+      POSTGRES_PASSWORD: igsn # local throwaway; real password is AWS-managed
+      POSTGRES_DB: igsn
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U igsn -d igsn"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # One-off: apply migrations, then exit. The api waits for this to succeed.
+  migrate:
+    build:
+      context: .
+      dockerfile: ./packages/api/Dockerfile
+      target: prod
+    command: ["pnpm", "-F", "@projet-igsn/api", "migrate"]
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: igsn
+      DATABASE_USER: igsn
+      DATABASE_PASSWORD: igsn
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: ./packages/api/Dockerfile
+      target: prod
+    environment:
+      PORT: "3002"
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: igsn
+      DATABASE_USER: igsn
+      DATABASE_PASSWORD: igsn
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "4002:3002"
+
+  admin:
+    build:
+      context: .
+      dockerfile: ./packages/admin/Dockerfile
+      target: prod
+      args:
+        # Baked into the bundle at build time — points the SPA at the e2e Keycloak.
+        VITE_OIDC_AUTHORITY: http://localhost:18080/realms/igsn
+    # Caddy binds $PORT (Caddyfile), so listen on 3001 to match the mapping.
+    environment:
+      PORT: "3001"
+    ports:
+      - "4001:3001"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./packages/frontend/Dockerfile
+      target: prod
+    # Nitro binds $PORT; listen on 3000 to match the mapping.
+    environment:
+      PORT: "3000"
+    ports:
+      - "4000:3000"
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+      KC_HTTP_PORT: "18080"
+      # Port-shifted URLs the realm import substitutes (see keycloak/*.json).
+      ADMIN_REDIRECT_URI: http://localhost:4001/*
+      ADMIN_WEB_ORIGIN: http://localhost:4001
+      SHIBBOLETH_SSO_URL: http://localhost:18081/simplesaml/saml2/idp/SSOService.php
+      ORCID_BROKER_REDIRECT_URI: http://localhost:18080/realms/igsn/broker/orcid/endpoint
+      ORCID_AUTHORIZATION_URL: http://localhost:18080/realms/mock-orcid/protocol/openid-connect/auth
+      ORCID_TOKEN_URL: http://localhost:18080/realms/mock-orcid/protocol/openid-connect/token
+      ORCID_USERINFO_URL: http://localhost:18080/realms/mock-orcid/protocol/openid-connect/userinfo
+      ORCID_ISSUER: http://localhost:18080/realms/mock-orcid
+      ORCID_JWKS_URL: http://localhost:18080/realms/mock-orcid/protocol/openid-connect/certs
+    ports:
+      - "18080:18080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+
+  saml-idp:
+    image: kenchan0130/simplesamlphp
+    ports:
+      - "18081:8080"
+    environment:
+      SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost:18080/realms/igsn
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost:18080/realms/igsn/broker/shibboleth/endpoint
+      SIMPLESAMLPHP_IDP_BASE_URL: http://localhost:18081/simplesaml/
+    volumes:
+      - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
+
+volumes:
+  pgdata:
