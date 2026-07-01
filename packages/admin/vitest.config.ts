@@ -8,7 +8,7 @@ export default defineConfig({
     browser: {
       provider: playwright(),
       enabled: true,
-      instances: [{ browser: "chromium" }],
+      instances: [{ browser: "chromium" }, { browser: "firefox" }],
     },
     globals: true,
     include: ["src/**/*.spec.{ts,tsx}"],

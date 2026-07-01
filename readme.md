@@ -30,6 +30,15 @@ extension are all preinstalled, so nothing touches your host machine. Open the p
 in it (VS Code: "Reopen in Container") and the [Setup](#setup) steps below already ran
 via `postCreateCommand`. Ports 3000-3002 are forwarded automatically.
 
+### Desktop (desktop-lite)
+
+The [desktop-lite](https://github.com/devcontainers/features/tree/main/src/desktop-lite)
+feature runs a lightweight Linux desktop (Fluxbox) inside the container, reachable in your
+browser over noVNC. Use it to view headed Playwright runs or any GUI app.
+
+Open http://localhost:6080 (default password `vscode`). The port is forwarded automatically
+via the `appPort` entry in [devcontainer.json](.devcontainer/devcontainer.json).
+
 ## Setup
 
 ```sh

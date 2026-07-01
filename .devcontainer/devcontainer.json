@@ -21,7 +21,8 @@
       "installOhMyZsh": true,
       "installOhMyZshConfig": true,
       "configureZshAsDefaultShell": true
-    }
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   "customizations": {
     "vscode": {
