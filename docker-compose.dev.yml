@@ -1,0 +1,52 @@
+services:
+  admin:
+    build:
+      context: .
+      dockerfile: ./packages/admin/Dockerfile
+      target: dev
+    container_name: admin
+    ports:
+      - "3001:3001"
+    develop:
+      watch:
+        - action: sync
+          path: ./packages/admin
+          target: /app/packages/admin
+          ignore:
+            - node_modules/
+        - action: sync
+          path: ./packages/domain
+          target: /app/packages/domain
+          ignore:
+            - node_modules/
+        - action: sync+restart
+          path: ./tsconfig.base.json
+          target: /app/tsconfig.base.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
+
+  api:
+    build:
+      context: .
+      dockerfile: ./packages/api/Dockerfile
+      target: dev
+    container_name: api
+    ports:
+      - "3002:3002"
+    develop:
+      watch:
+        - action: sync
+          path: ./packages/api
+          target: /app/packages/api
+          ignore:
+            - node_modules/
+        - action: sync
+          path: ./packages/domain
+          target: /app/packages/domain
+          ignore:
+            - node_modules/
+        - action: sync+restart
+          path: ./tsconfig.base.json
+          target: /app/tsconfig.base.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml

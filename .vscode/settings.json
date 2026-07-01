@@ -27,8 +27,9 @@
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "files.exclude": {
-    "**/.DS_Store": true,
     "**/node_modules": true,
+    "**/.pnpm-store": true,
+    "**/.DS_Store": true,
     "**/*.tsbuildinfo": true
   }
 }

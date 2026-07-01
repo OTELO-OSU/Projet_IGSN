@@ -10,13 +10,18 @@
     },
     {
       "type": "bind",
-      "source": "${localEnv:HOME}/.claude",
-      "target": "/home/node/.claude"
+      "source": "${localEnv:HOME}/.claude/.credentials.json",
+      "target": "/home/node/.claude/.credentials.json"
+    },
+    {
+      "type": "bind",
+      "source": "${localEnv:HOME}/.claude/projects",
+      "target": "/home/node/.claude/projects"
     },
     {
       "type": "volume",
-      "source": "claude-plugins",
-      "target": "/home/node/.claude/plugins"
+      "source": "claude",
+      "target": "/home/node/.claude"
     }
   ],
   "customizations": {

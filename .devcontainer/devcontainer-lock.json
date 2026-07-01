@@ -1,5 +1,15 @@
 {
   "features": {
+    "ghcr.io/devcontainers/features/desktop-lite:1": {
+      "version": "1.2.9",
+      "resolved": "ghcr.io/devcontainers/features/desktop-lite@sha256:d8649bc8ca8e50a52fbee29d281739ea05dc1022905b185434d6bbe9afc8f221",
+      "integrity": "sha256:d8649bc8ca8e50a52fbee29d281739ea05dc1022905b185434d6bbe9afc8f221"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:3": {
+      "version": "3.1.0",
+      "resolved": "ghcr.io/devcontainers/features/docker-in-docker@sha256:62e04ec83d944da4fd2830f68a677d1f5466c0654aea1e4baa30232d16029ac1",
+      "integrity": "sha256:62e04ec83d944da4fd2830f68a677d1f5466c0654aea1e4baa30232d16029ac1"
+    },
     "ghcr.io/postfinance/devcontainer-features/playwright-deps:1": {
       "version": "1.0.0",
       "resolved": "ghcr.io/postfinance/devcontainer-features/playwright-deps@sha256:1fbd235678d55637ddfb93c800249e48ae72af36cb382297ff3a22bab8945acb",

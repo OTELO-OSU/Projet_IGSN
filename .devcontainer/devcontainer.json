@@ -11,11 +11,23 @@
   "features": {
     "./claude-code": {},
     "./playwright": {},
-    "./pnpm": {}
+    "./pnpm": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:3": {
+      "moby": false
+    },
+    "ghcr.io/devcontainers/features/desktop-lite:1": {}
   },
   "customizations": {
     "vscode": {
       "extensions": ["oxc.oxc-vscode"]
     }
-  }
+  },
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "${devcontainerId}-tmp",
+      "target": "/tmp"
+    }
+  ],
+  "appPort": [3000, 3001, 3002, 6080]
 }

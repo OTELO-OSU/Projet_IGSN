@@ -11,6 +11,11 @@
     },
     {
       "type": "volume",
+      "source": "${devcontainerId}-pnpm-store",
+      "target": "/workspaces/projet-igsn/.pnpm-store"
+    },
+    {
+      "type": "volume",
       "source": "${devcontainerId}-pnpm",
       "target": "/mnt/pnpm"
     }
