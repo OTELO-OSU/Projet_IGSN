@@ -147,6 +147,19 @@ make test-browser   # pnpm test:browser   headed browser UI
 make test-watch     # pnpm test:watch     re-run on change, headless
 ```
 
+### End-to-end (auth)
+
+[`e2e/`](e2e) drives a real browser through the full brokered login flows
+(institution/Shibboleth and ORCID) with [`@playwright/test`](https://playwright.dev);
+selectors and actions live in page objects under [`e2e/support/`](e2e/support).
+Each target brings up its own throwaway stack (Keycloak + mock IdPs + admin), waits
+for it, runs, and tears it down — no need to `make dev` first:
+
+```sh
+make test-e2e        # headless, one-shot
+make test-e2e-ui     # Playwright UI mode, then open http://localhost:8090
+```
+
 ## Lint and format
 
 ```sh

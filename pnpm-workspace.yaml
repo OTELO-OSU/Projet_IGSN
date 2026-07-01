@@ -8,6 +8,7 @@ catalog:
   "@babel/core": ^7.29.0
   "@hono/node-server": ^2.0.5
   "@kysely-vitest/postgres": ^0.3.0
+  "@playwright/test": ^1.61.1
   "@rolldown/plugin-babel": ^0.2.3
   "@tailwindcss/typography": ^0.5.20
   "@tailwindcss/vite": ^4.3.1

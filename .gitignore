@@ -25,6 +25,11 @@ infra/preprod/certs/
 # Claude
 .claude/settings.local.json
 
+# Playwright
+**/test-results
+**/playwright-report
+**/.playwright
+
 # Dev Container
 .devcontainer/.mnt-*/*
 !.devcontainer/.mnt-*/.gitkeep
