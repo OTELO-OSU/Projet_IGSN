@@ -4,12 +4,13 @@ A pnpm workspace monorepo for managing IGSN (International Generic Sample Number
 
 ## Packages
 
-| Package                                  | Stack           | Dev port | Description                                          |
-| ---------------------------------------- | --------------- | -------- | ---------------------------------------------------- |
-| [`@projet-igsn/domain`](packages/domain) | TypeScript      | -        | Shared business logic and contracts; no I/O          |
-| `@projet-igsn/frontend` _(planned)_      | React 19 + Vite | 3000     | Public app for unauthenticated users (browse/search) |
-| [`@projet-igsn/admin`](packages/admin)   | React 19 + Vite | 3001     | App for authenticated users and admins               |
-| [`@projet-igsn/api`](packages/api)       | Hono + Node     | 3002     | Backend API; holds all business domain logic         |
+| Package                                                | Stack             | Dev port | Description                                          |
+| ------------------------------------------------------ | ----------------- | -------- | ---------------------------------------------------- |
+| [`@projet-igsn/domain`](packages/domain)               | TypeScript        | -        | Shared business logic and contracts; no I/O          |
+| [`@projet-igsn/design-system`](packages/design-system) | React 19 + shadcn | -        | Shared UI components, styles, and shadcn config      |
+| [`@projet-igsn/frontend`](packages/frontend)           | React 19 + Vite   | 3000     | Public app for unauthenticated users (browse/search) |
+| [`@projet-igsn/admin`](packages/admin)                 | React 19 + Vite   | 3001     | App for authenticated users and admins               |
+| [`@projet-igsn/api`](packages/api)                     | Hono + Node       | 3002     | Backend API; holds all business domain logic         |
 
 ## Requirements
 
@@ -57,6 +58,24 @@ make dev
 This builds and starts `admin` (http://localhost:3001) and `api` (http://localhost:3002)
 via [docker-compose.dev.yml](docker-compose.dev.yml). Source changes sync into the
 containers automatically.
+
+## Design system
+
+All shadcn/ui components live in [`@projet-igsn/design-system`](packages/design-system),
+which also owns the shadcn config ([components.json](packages/design-system/components.json))
+and the shared theme ([src/styles.css](packages/design-system/src/styles.css)). Apps
+consume them from there, for example:
+
+```tsx
+import { Button } from "@projet-igsn/design-system/components/ui/button";
+```
+
+shadcn components MUST be added in the `design-system` package, never in an app. Add
+them with the workspace `shadcn` script, which runs the CLI inside `design-system`:
+
+```sh
+pnpm shadcn add <component>   # e.g. pnpm shadcn add dialog
+```
 
 ## Test
 

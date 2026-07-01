@@ -1,39 +1,30 @@
 {
-  "name": "@projet-igsn/admin",
-  "version": "0.0.0",
+  "name": "@projet-igsn/design-system",
   "private": true,
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build"
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "exports": {
+    "./styles.css": "./src/styles.css",
+    "./lib/*": "./src/lib/*.ts",
+    "./components/ui/*": "./src/components/ui/*.tsx"
   },
   "dependencies": {
-    "@projet-igsn/design-system": "workspace:*",
-    "@projet-igsn/domain": "workspace:*",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "lucide-react": "catalog:",
     "radix-ui": "catalog:",
     "react": "catalog:",
-    "react-dom": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:"
   },
   "devDependencies": {
-    "@babel/core": "catalog:",
-    "@rolldown/plugin-babel": "catalog:",
-    "@tailwindcss/typography": "catalog:",
-    "@tailwindcss/vite": "catalog:",
-    "@types/babel__core": "catalog:",
-    "@types/node": "catalog:",
     "@types/react": "catalog:",
-    "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@vitest/browser-playwright": "catalog:",
-    "babel-plugin-react-compiler": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:",
     "vitest": "catalog:",
     "vitest-browser-react": "catalog:"
   }
