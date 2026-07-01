@@ -27,9 +27,23 @@
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
   "files.exclude": {
-    "**/node_modules": true,
+    "**/.nitro": true,
+    "**/.output": true,
     "**/.pnpm-store": true,
+    "**/.tanstack": true,
+    "**/dist": true,
+    "**/dist-ssr": true,
     "**/.DS_Store": true,
     "**/*.tsbuildinfo": true
+  },
+
+  "files.watcherExclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "search.exclude": {
+    "**/routeTree.gen.ts": true
+  },
+  "files.readonlyInclude": {
+    "**/routeTree.gen.ts": true
   }
 }

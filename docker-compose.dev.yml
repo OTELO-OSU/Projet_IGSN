@@ -1,4 +1,30 @@
 services:
+  frontend:
+    build:
+      context: .
+      dockerfile: ./packages/frontend/Dockerfile
+      target: dev
+    container_name: frontend
+    ports:
+      - "3000:3000"
+    develop:
+      watch:
+        - action: sync
+          path: ./packages/frontend
+          target: /app/packages/frontend
+          ignore:
+            - node_modules/
+        - action: sync
+          path: ./packages/domain
+          target: /app/packages/domain
+          ignore:
+            - node_modules/
+        - action: sync+restart
+          path: ./tsconfig.base.json
+          target: /app/tsconfig.base.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
+
   admin:
     build:
       context: .

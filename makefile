@@ -5,8 +5,6 @@ help:									## Show this help
 
 install:								## Install dependencies
 	@pnpm install
-	
-install-browsers: install				## Install playwright browsers
 	@pnpm exec playwright install
 
 lint:
@@ -28,3 +26,6 @@ dev:
 		up  \
 		--watch \
 		--build
+
+generate-routes:
+	@pnpm -F @projet-igsn/frontend generate-routes
