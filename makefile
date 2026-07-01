@@ -27,6 +27,9 @@ dev:
 		--watch \
 		--build
 
+auth:									## Start only Keycloak + the dev SAML IdP (detached)
+	docker compose -f docker-compose.dev.yml up -d keycloak saml-idp
+
 generate-routes:
 	@pnpm -F @projet-igsn/frontend generate-routes
 

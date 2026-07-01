@@ -6,10 +6,15 @@ const auth = { isLoading: false, error: undefined, isAuthenticated: false };
 vi.mock("react-oidc-context", () => ({ useAuth: () => auth }));
 
 describe("AuthGate", () => {
-  it("shows the sign-in button when unauthenticated", async () => {
+  it("shows an identity-provider button per broker when unauthenticated", async () => {
     const screen = await render(<AuthGate />);
     await expect
-      .element(screen.getByRole("button", { name: "Sign in with Keycloak" }))
+      .element(
+        screen.getByRole("button", { name: "Sign in with your institution" }),
+      )
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Sign in with ORCID" }))
       .toBeInTheDocument();
   });
 });

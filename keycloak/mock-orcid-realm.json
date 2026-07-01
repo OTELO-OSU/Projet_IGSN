@@ -1,0 +1,32 @@
+{
+  "realm": "mock-orcid",
+  "enabled": true,
+  "sslRequired": "none",
+  "displayName": "Mock ORCID (dev only)",
+  "clients": [
+    {
+      "clientId": "igsn-broker",
+      "name": "IGSN Keycloak broker",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "mock-orcid-secret",
+      "clientAuthenticatorType": "client-secret",
+      "standardFlowEnabled": true,
+      "redirectUris": [
+        "http://localhost:8080/realms/igsn/broker/orcid/endpoint"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "0000-0002-1825-0097",
+      "enabled": true,
+      "firstName": "Camille",
+      "lastName": "Rousseau",
+      "credentials": [
+        { "type": "password", "value": "password", "temporary": false }
+      ]
+    }
+  ]
+}

@@ -35,5 +35,99 @@
       ],
       "realmRoles": ["admin"]
     }
+  ],
+  "identityProviders": [
+    {
+      "alias": "shibboleth",
+      "displayName": "Institution (Shibboleth)",
+      "providerId": "saml",
+      "enabled": true,
+      "trustEmail": true,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "singleSignOnServiceUrl": "http://localhost:8081/simplesaml/saml2/idp/SSOService.php",
+        "nameIDPolicyFormat": "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
+        "principalType": "ATTRIBUTE",
+        "principalAttribute": "eduPersonPrincipalName",
+        "postBindingResponse": "true",
+        "postBindingAuthnRequest": "true",
+        "wantAuthnRequestsSigned": "false",
+        "validateSignature": "false",
+        "syncMode": "IMPORT"
+      }
+    },
+    {
+      "alias": "orcid",
+      "displayName": "ORCID",
+      "providerId": "oidc",
+      "enabled": true,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "${ORCID_CLIENT_ID:igsn-broker}",
+        "clientSecret": "${ORCID_CLIENT_SECRET:mock-orcid-secret}",
+        "authorizationUrl": "${ORCID_AUTHORIZATION_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/auth}",
+        "tokenUrl": "${ORCID_TOKEN_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/token}",
+        "userInfoUrl": "${ORCID_USERINFO_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/userinfo}",
+        "issuer": "${ORCID_ISSUER:http://localhost:8080/realms/mock-orcid}",
+        "jwksUrl": "${ORCID_JWKS_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/certs}",
+        "useJwksUrl": "true",
+        "validateSignature": "true",
+        "defaultScope": "${ORCID_SCOPE:openid profile}",
+        "clientAuthMethod": "client_secret_post",
+        "syncMode": "IMPORT"
+      }
+    }
+  ],
+  "identityProviderMappers": [
+    {
+      "name": "shibboleth-email",
+      "identityProviderAlias": "shibboleth",
+      "identityProviderMapper": "saml-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "attribute.name": "email",
+        "user.attribute": "email"
+      }
+    },
+    {
+      "name": "shibboleth-first-name",
+      "identityProviderAlias": "shibboleth",
+      "identityProviderMapper": "saml-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "attribute.name": "firstName",
+        "user.attribute": "firstName"
+      }
+    },
+    {
+      "name": "shibboleth-last-name",
+      "identityProviderAlias": "shibboleth",
+      "identityProviderMapper": "saml-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "attribute.name": "lastName",
+        "user.attribute": "lastName"
+      }
+    },
+    {
+      "name": "orcid-first-name",
+      "identityProviderAlias": "orcid",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "given_name",
+        "user.attribute": "firstName"
+      }
+    },
+    {
+      "name": "orcid-last-name",
+      "identityProviderAlias": "orcid",
+      "identityProviderMapper": "oidc-user-attribute-idp-mapper",
+      "config": {
+        "syncMode": "INHERIT",
+        "claim": "family_name",
+        "user.attribute": "lastName"
+      }
+    }
   ]
 }

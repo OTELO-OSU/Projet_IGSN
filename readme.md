@@ -95,6 +95,47 @@ Edit the realm file and restart to change clients/users. The test user has direc
 grants enabled, so tests can fetch a token with a password grant instead of driving the
 browser login.
 
+### Federated login (Shibboleth + ORCID)
+
+Users don't self-register; they sign in through one of two brokered identity providers,
+and Keycloak provisions the account on first login (first-broker-login):
+
+| Provider    | Keycloak broker | Dev IdP                                                             | Prod IdP                     |
+| ----------- | --------------- | ------------------------------------------------------------------- | ---------------------------- |
+| Institution | SAML            | SimpleSAMLphp at http://localhost:8081 (`user1`/`password`)         | RENATER / eduGAIN Shibboleth |
+| ORCID       | OIDC            | Mock `mock-orcid` Keycloak realm (`0000-0002-1825-0097`/`password`) | ORCID production             |
+
+Both IdPs are faked locally, so dev and CI are self-contained and need no external
+accounts. The app never talks to ORCID/RENATER directly — only to Keycloak — so the same
+build runs in every environment; only which IdP each broker points at changes, via env
+vars. Prod overrides those; dev falls back to the mocks.
+
+`make dev` (and `make auth`, which starts only Keycloak + the SAML IdP) bring both up.
+The SAML broker skips signature validation in dev; only the IdP metadata/SSO URL changes
+for prod. The dev IdP's users are defined in
+[`saml-idp/authsources.php`](saml-idp/authsources.php) — `user1`/`user2` (password
+`password`) release a French researcher profile (eduPersonPrincipalName, email, name), so
+brokered login completes without prompts.
+
+> Keycloak imports the realm only when it has no existing copy (`IGNORE_EXISTING`). After
+> editing [`keycloak/realm-igsn.json`](keycloak/realm-igsn.json), run
+> `docker compose -f docker-compose.dev.yml down` before `make dev`/`make auth` so the
+> fresh container re-imports it.
+
+**ORCID** is mocked by a second Keycloak realm, [`mock-orcid`](keycloak/mock-orcid-realm.json),
+that plays the OIDC provider — no external account, no approval, works offline. The `orcid`
+broker's endpoints and credentials are env vars ([`.env.example`](.env.example)) that
+default to this mock; leave them unset for dev. Like real ORCID, the mock releases no email,
+so first-broker-login prompts ORCID users for one.
+
+To test against **real ORCID** instead (sandbox or prod), register an app with redirect URI
+`http://localhost:8080/realms/igsn/broker/orcid/endpoint` and set the `ORCID_*` vars in
+`.env` — the same vars a prod deployment sets on its Keycloak.
+
+Going to production is otherwise an ops task: register Keycloak's SP metadata
+(`…/realms/igsn/broker/shibboleth/endpoint`) with the RENATER federation and opt into
+eduGAIN, then point the SAML broker at the real IdP metadata.
+
 ## Test
 
 Tests run in a real browser through Vitest + Playwright, so run `make install-browsers`
