@@ -25,5 +25,6 @@ Conventions for end-to-end flows.
   })
 
 Never use timeout-based assertions (`waitForTimeout`). Prefer deterministic
-waits: `waitForResponse`, `waitForSelector`, `expect(locator).toBeVisible()`.
+waits: `waitForResponse`, `waitForSelector`, `expect(locator).toBeVisible()`,
+and `waitForLoadState('networkidle')` to confirm a page has finished loading.
 Quarantine flaky tests with `test.fixme()` and a tracking reference before merge.

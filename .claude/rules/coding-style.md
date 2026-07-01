@@ -19,6 +19,8 @@ paths:
 - Functional: prefer pure functions, composition, and `map`/`filter`/`reduce`.
 - Composition over inheritance: compose small functions and types; no class
   hierarchies.
+- Least knowledge: implementation details don't bleed between caller and callee.
+- Single responsibility: a file has only one reason to change.
 
 ## Immutability
 
@@ -131,10 +133,14 @@ messages. Server-side: log detailed context.
 - Long functions (>50 lines): split into focused pieces
 - Large files (>800 lines): extract modules
 - `console.log` in production code: use a logging library
+- Hidden side effects: return every change (a `Promise` if async), don't mutate
+  behind the caller's back
+- Code testable only through mocks: a sign the logic is too coupled to its I/O
 
 ## Comments
 
 Add a comment only when the code is hard to understand on its own: explain the
-why (intent, trade-off, edge case), not the what. Don't restate what the code
-already says or leave commented-out code behind. Prefer a clear name over a
-comment that explains an unclear one.
+why (intent, trade-off, edge case) of the current code, not the what. Never
+document past implementations or how the code used to work. Don't restate what
+the code already says or leave commented-out code behind. Prefer a clear name
+over a comment that explains an unclear one.

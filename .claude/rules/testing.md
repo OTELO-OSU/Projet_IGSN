@@ -10,6 +10,20 @@ paths:
 
 Every function and component MUST have tests. Untested code does not ship.
 
+Test what a function does, not how it does it. Assert on behavior and outputs,
+never on internal implementation.
+
+## FIRST
+
+Good tests are:
+
+- Fast: run quickly so the suite stays cheap to run often.
+- Independent: one test never affects another (see Isolation below).
+- Repeatable: same result on every run, regardless of outside factors (date,
+  network, order).
+- Self-validating: a failure makes the reason obvious, no manual inspection.
+- Timely: write the test alongside or before the code (TDD).
+
 ## Use TDD
 
 Write tests first. Follow red-green-refactor: failing test, minimum code to
@@ -36,6 +50,17 @@ they are bound to a domain rule.
 Cover both success and failure cases for each behavior: the happy path and the
 errors, rejections, and edge cases it must guard against. A test for success
 alone lets failures regress unnoticed.
+
+Use the BOUNDARY heuristic to hunt edge cases:
+
+- Boundary values (first/last, min/max)
+- Out-of-range values
+- Unexpected inputs
+- Null or missing values
+- Duplicate or repeated data
+- Alternative states
+- Race conditions or repeated actions
+- Yield or failure conditions
 
 ## Naming: `it("should ...")`
 

@@ -12,16 +12,17 @@ import { fileURLToPath } from "node:url";
 // (`docker compose -f x.yml up`, `docker --context c run`, `sudo docker exec`).
 const DANGEROUS = new Set(["run", "start", "exec", "up"]);
 
-export function startsContainer(command) {
+// Returns true if the command may continue, false if it must be blocked.
+export function guardContainer(command) {
   const tokens = command.split(/\s+/);
   for (let i = 0; i < tokens.length; i++) {
     if (tokens[i] !== "docker" && tokens[i] !== "docker-compose") continue;
     for (let j = i + 1; j < tokens.length; j++) {
       if (/[;&|]/.test(tokens[j])) break; // next command segment: stop scanning
-      if (DANGEROUS.has(tokens[j])) return true;
+      if (DANGEROUS.has(tokens[j])) return false;
     }
   }
-  return false;
+  return true;
 }
 
 function deny(reason) {
@@ -49,7 +50,7 @@ function main() {
   const command = input?.tool_input?.command;
   if (typeof command !== "string") process.exit(0);
 
-  if (startsContainer(command)) {
+  if (!guardContainer(command)) {
     deny(
       "Blocked by project hook: docker commands that start a container " +
         "(run/start/up) or exec a command inside one (exec/run) are not allowed. " +

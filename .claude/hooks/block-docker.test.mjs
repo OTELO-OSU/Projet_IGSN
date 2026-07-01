@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { startsContainer } from "./block-docker.mjs";
+import { guardContainer } from "./block-docker.mjs";
 
-describe("startsContainer", () => {
+describe("guardContainer", () => {
   it.each([
     "docker run -it ubuntu",
     "docker container start db",
@@ -13,7 +13,7 @@ describe("startsContainer", () => {
     "docker-compose -p proj up",
     "sudo docker exec api sh",
   ])("should block %s", (command) => {
-    expect(startsContainer(command)).toBe(true);
+    expect(guardContainer(command)).toBe(false);
   });
 
   it.each([
@@ -25,6 +25,6 @@ describe("startsContainer", () => {
     "docker logs run-container",
     "docker ps; echo run",
   ])("should allow %s", (command) => {
-    expect(startsContainer(command)).toBe(false);
+    expect(guardContainer(command)).toBe(true);
   });
 });

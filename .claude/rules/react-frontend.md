@@ -20,6 +20,8 @@ measured case the compiler can't cover (leave a comment why).
   non-React widgets), not for reacting to prop changes or fetching data. Use
   @tanstack/react-query for data.
 - Lists need stable identity-based keys, never the array index.
+- Ask only for the props a component uses. Pass the specific fields it needs
+  (e.g. `title` and `description`), not a whole object it barely reads.
 
 ## State management
 
