@@ -1,20 +1,48 @@
 {
-  "extraKnownMarketplaces": {},
-  "enabledPlugins": {
-    "typescript-lsp@claude-plugins-official": true
-  },
   "skillListingMaxDescChars": 512,
   "env": {
     "ENABLE_LSP_TOOL": "1"
-  },
-  "permissions": {
-    "allow": []
   },
   "attribution": {
     "commit": "",
     "pr": ""
   },
-  "hooks": {},
+  "permissions": {
+    "allow": []
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-docker.mjs\""
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "ponytail@ponytail": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "superpowers@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    },
+    "ponytail": {
+      "source": {
+        "source": "github",
+        "repo": "DietrichGebert/ponytail"
+      },
+      "autoUpdate": true
+    }
+  },
   "lspServers": {
     "typescript": {
       "command": "typescript-language-server",
