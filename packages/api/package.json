@@ -4,7 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch src/main.ts"
+    "dev": "node --watch src/main.ts",
+    "start": "node src/main.ts",
+    "migrate": "node src/migrate.ts"
   },
   "dependencies": {
     "@hono/node-server": "catalog:",

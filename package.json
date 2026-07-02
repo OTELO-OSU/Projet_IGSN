@@ -13,10 +13,13 @@
     "test": "vitest run --browser.headless",
     "test:browser": "vitest",
     "test:watch": "vitest --browser.headless",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui --ui-host=0.0.0.0 --ui-port=8090",
     "prepare": "husky",
     "shadcn": "pnpm -F @projet-igsn/design-system exec shadcn"
   },
   "devDependencies": {
+    "@playwright/test": "catalog:",
     "husky": "catalog:",
     "oxfmt": "catalog:",
     "oxlint": "catalog:",

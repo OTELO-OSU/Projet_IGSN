@@ -1,11 +1,15 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { AuthProvider } from "react-oidc-context";
 
 import "./styles.css";
-import App from "./app.tsx";
+import { AuthGate } from "./auth-gate.tsx";
+import { oidcConfig } from "./auth.ts";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <AuthProvider {...oidcConfig}>
+      <AuthGate />
+    </AuthProvider>
   </StrictMode>,
 );

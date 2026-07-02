@@ -14,6 +14,38 @@ services:
       retries: 15
     volumes:
       - pgdata:/var/lib/postgresql/data
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6
+    container_name: keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    # The "orcid" broker defaults to the local mock-orcid realm, so dev needs no
+    # credentials. To point it at real ORCID instead, set the ORCID_* vars in
+    # .env (see .env.example); anything unset falls back to the mock.
+    env_file:
+      - path: .env
+        required: false
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+
+  # Fake Shibboleth (SAML) IdP for local dev/test. In prod this is replaced by
+  # the real RENATER/eduGAIN IdP — only the metadata/SSO URL changes.
+  saml-idp:
+    image: kenchan0130/simplesamlphp
+    container_name: saml-idp
+    ports:
+      - "8081:8080"
+    environment:
+      SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost:8080/realms/igsn
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost:8080/realms/igsn/broker/shibboleth/endpoint
+      SIMPLESAMLPHP_IDP_BASE_URL: http://localhost:8081/simplesaml/
+    volumes:
+      - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
 
   frontend:
     build:
@@ -98,6 +130,10 @@ services:
     ports:
       - "3002:3002"
     environment:
+      # Token issuer is the browser-facing Keycloak URL; the api fetches JWKS on
+      # its own network, so the fetch URL points at the keycloak service directly.
+      OIDC_ISSUER: http://localhost:8080/realms/igsn
+      OIDC_JWKS_URI: http://keycloak:8080/realms/igsn/protocol/openid-connect/certs
       CORS_ORIGINS: "http://localhost:3001"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"

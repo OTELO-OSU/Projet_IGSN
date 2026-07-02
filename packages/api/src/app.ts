@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 
-const app = new Hono()
+import { type KeycloakClaims, requireAuth } from "./auth/middleware.ts";
+
+const app = new Hono<{ Variables: { jwtPayload: KeycloakClaims } }>()
   .use(
     "*",
     cors({
@@ -16,12 +18,22 @@ const app = new Hono()
           ? origin
           : null,
       credentials: true,
+      // The admin SPA sends the Keycloak access token as a bearer header.
+      allowHeaders: ["Authorization"],
     }),
   )
+  .use("/me", requireAuth)
   .get("/", (c) => c.json({ message: "Hello World" }))
-  .get("/:name", (c) => {
-    const { name } = c.req.param();
-    return c.json({ message: `Hello ${name}` });
+  // Protected dummy route: proves the admin's Keycloak token verifies server-side.
+  // Echoes back who the verified token says you are.
+  .get("/me", (c) => {
+    const claims = c.get("jwtPayload");
+    return c.json({
+      sub: claims.sub,
+      username: claims.preferred_username,
+      name: claims.name,
+      email: claims.email,
+    });
   });
 
 export default app;

@@ -4,3 +4,6 @@
 **/.output
 **/.nitro
 **/.vite
+**/.tanstack
+**/test-results
+**/playwright-report
