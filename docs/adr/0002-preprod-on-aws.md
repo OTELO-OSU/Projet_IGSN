@@ -36,7 +36,7 @@ deploy is enough; CD is not required yet.
   closed by default: the script authorizes the operator's current IP for the
   deploy and revokes it on exit. No CI/CD auth (no OIDC role).
 - **Migrations** run as a one-off compose `migrate` service (the api image with
-  `node src/migrate.ts`) that must complete before the api starts.
+  `node migrate.ts`) that must complete before the api starts.
 - **IaC: OpenTofu** in `infra/`, env values in `env/<env>.tfvars`, state in an S3
   backend with S3-native locking (`use_lockfile`, no DynamoDB).
 

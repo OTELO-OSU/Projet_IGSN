@@ -25,13 +25,22 @@ One folder per entity, one concern per file, kebab-case folder. No barrel/index.
 
 - `<entity>/model.ts`: domain model (Zod schema + inferred type).
 - `<entity>/repository.ts`: repository / service interface that `api` implements.
+- `<entity>/<model>-validator.ts`: request validators shared by more than one
+  package (e.g. `sample-validator.ts` holds `createSampleSchema`). `model.ts`
+  owns the persisted entity; input-shape validators live here.
 - `<entity>/helper.ts`: shared logic that is neither a model nor a repository
   (e.g. `igsn/helper.ts` holds `normalizeIgsn`, used by `igsn/model.ts`).
+
+Relative imports inside `domain` MUST carry the explicit `.ts` extension
+(`./model.ts`), since `api` resolves this source under `nodenext` and Node's
+ESM runtime requires it.
 
 `api` mirrors the same folder-per-entity shape:
 
 - `<entity>/repository.ts`: implements the domain interface, persistence only.
 - `<entity>/routes.ts`: Hono sub-app mounted in `app.ts`.
+- `<entity>/validator.ts`: request validators used only by `api`. Anything a
+  second package needs belongs in `domain/<entity>/<model>-validator.ts`.
 
 ## Decision records (ADR)
 
