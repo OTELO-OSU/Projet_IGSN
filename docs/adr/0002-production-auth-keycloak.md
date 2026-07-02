@@ -46,6 +46,22 @@ avoid drift with the dev one. The required prod configuration is the dev realm
 The IdP attribute mappers (email, given/family name), the first-broker-login
 flow, and the `admin` realm role are the same as dev; copy them across.
 
+**ORCID is a linking mechanism, not a standalone login.** A user must not create
+an account via ORCID. They first sign in through RENATER, link their ORCID while
+authenticated (Keycloak stores the federated-identity link), and only then may
+sign in with ORCID, which authenticates the already-linked account. The link
+cannot key on an ORCID-provided email: ORCID releases none, and auto-linking by
+email from an untrusted IdP is an account-takeover vector. The linking feature
+itself is out of scope for now. Until it ships:
+
+- the admin SPA offers the ORCID sign-in button, but gates the app on the
+  `identity_provider` token claim (a session-note protocol mapper on
+  `igsn-admin`): an ORCID-authenticated session gets an access-denied screen,
+  not the app (`auth-gate.tsx`). This is UX only; the real boundary is the
+  broker rule below. Server-side enforcement follows with per-route roles.
+- the prod ORCID broker MUST NOT auto-create accounts (no standalone ORCID
+  first-broker-login), so a misconfigured realm cannot let users bypass RENATER.
+
 **Admin role assignment is an open question.** Dev bakes a `test` admin user.
 Prod has no local users, so admins get the `admin` role by some mechanism to be
 decided: manual grant, group mapping, or an IdP-attribute-to-role mapper. This
@@ -89,7 +105,8 @@ Ordered production checklist:
    AuthnRequests, and the real IdP metadata/cert; register Keycloak's SP metadata
    (`.../realms/igsn/broker/shibboleth/endpoint`) with RENATER and opt into eduGAIN.
 4. Configure the ORCID OIDC broker with the production ORCID app credentials and
-   endpoints (the `ORCID_*` vars in `.env.example` are exactly this set).
+   endpoints (the `ORCID_*` vars in `.env.example` are exactly this set), with
+   account auto-creation OFF (ORCID links to a RENATER account, never creates one).
 5. Recreate the IdP attribute mappers and first-broker-login flow.
 6. Decide and implement admin-role assignment.
 7. Build the admin image with `VITE_OIDC_AUTHORITY`/`VITE_OIDC_CLIENT_ID` in CD.

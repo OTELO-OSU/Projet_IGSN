@@ -47,6 +47,33 @@ export function AuthGate() {
     );
   }
 
+  // ORCID is a link-then-login mechanism, not a cold-start path: an ORCID-only
+  // account has no app access until it is linked to an institution account (see
+  // docs/adr/0002-production-auth-keycloak.md). Keycloak sets the identity_provider
+  // claim on brokered logins; institution and local logins are not "orcid".
+  if (auth.user?.profile.identity_provider === "orcid") {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-6 text-center">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">IGSN Admin</h1>
+          <p role="alert" className="text-muted-foreground">
+            You do not have access to the app. Sign in through your institution
+            first, then link your ORCID.
+          </p>
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => void auth.signoutRedirect()}
+        >
+          <LogOut />
+          Sign out
+        </Button>
+      </main>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       {/* ponytail: App is currently just the title, so it serves as the header

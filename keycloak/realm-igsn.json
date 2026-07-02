@@ -19,7 +19,21 @@
       "attributes": {
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "${ADMIN_REDIRECT_URI:http://localhost:3001/*}"
-      }
+      },
+      "protocolMappers": [
+        {
+          "name": "identity-provider",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usersessionmodel-note-mapper",
+          "config": {
+            "user.session.note": "identity_provider",
+            "claim.name": "identity_provider",
+            "jsonType.label": "String",
+            "id.token.claim": "true",
+            "access.token.claim": "true"
+          }
+        }
+      ]
     }
   ],
   "users": [
