@@ -1,6 +1,9 @@
 import { serve } from "@hono/node-server";
 
-import app from "./app.ts";
+import { createApp } from "./app.ts";
+import { createDb } from "./db.ts";
+
+const app = createApp(createDb());
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3002;
 

@@ -94,8 +94,8 @@ catalogs:
       specifier: ^9.1.7
       version: 9.1.7
     kysely:
-      specifier: ^0.29.2
-      version: 0.29.2
+      specifier: ~0.28.14
+      version: 0.28.17
     kysely-postgres-js:
       specifier: ^3.0.0
       version: 3.0.0
@@ -153,6 +153,9 @@ catalogs:
     typescript:
       specifier: ^6.0.3
       version: 6.0.3
+    uuid:
+      specifier: ^14.0.1
+      version: 14.0.1
     vite:
       specifier: ^8.0.12
       version: 8.0.16
@@ -296,20 +299,26 @@ importers:
         version: 4.12.26
       kysely:
         specifier: 'catalog:'
-        version: 0.29.2
+        version: 0.28.17
       kysely-postgres-js:
         specifier: 'catalog:'
-        version: 3.0.0(kysely@0.29.2)(postgres@3.4.9)
+        version: 3.0.0(kysely@0.28.17)(postgres@3.4.9)
       postgres:
         specifier: 'catalog:'
         version: 3.4.9
       rate-limiter-flexible:
         specifier: 'catalog:'
         version: 11.2.0
+      uuid:
+        specifier: 'catalog:'
+        version: 14.0.1
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
     devDependencies:
       '@kysely-vitest/postgres':
         specifier: 'catalog:'
-        version: 0.3.0(kysely-postgres-js@3.0.0(kysely@0.29.2)(postgres@3.4.9))(kysely@0.29.2)(vitest@4.1.9)
+        version: 0.3.0(kysely-postgres-js@3.0.0(kysely@0.28.17)(postgres@3.4.9))(kysely@0.28.17)(vitest@4.1.9)
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.1
@@ -3528,9 +3537,9 @@ packages:
       postgres:
         optional: true
 
-  kysely@0.29.2:
-    resolution: {integrity: sha512-s6WVJyEZrbm6jhBpiKHsGHyePMrVQKJ85wZCFCr9W4QHv6WTjWIrdvTmO9hDEA3bNK0xkrE2DqrHsXMLWuZpQg==}
-    engines: {node: '>=22.0.0'}
+  kysely@0.28.17:
+    resolution: {integrity: sha512-nbD8lB9EB3wNdMhOCdx5Li8DxnLbvKByylRLcJ1h+4SkrowVeECAyZlyiKMThF7xFdRz0jSQ2MoJr+wXux2y0Q==}
+    engines: {node: '>=20.0.0'}
 
   launch-editor@2.14.1:
     resolution: {integrity: sha512-QWBrQsMpH7gPr965dsKD/3cKWiNoTjpATQf++Xq63N6sKRGMwlVXz41O1IZTMfZQgBctD/K5Zt06+/I6pP6+HA==}
@@ -4471,6 +4480,10 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
+  uuid@14.0.1:
+    resolution: {integrity: sha512-6ZxzVpzDXDa3bJWaHilVayA+BH/1zmxCJoVgvmqJnid/gPoKHxUrS/aC/T6LGQtNHT+XHG9fXPJB4d+IrU30Ew==}
+    hasBin: true
+
   validate-npm-package-name@7.0.2:
     resolution: {integrity: sha512-hVDIBwsRruT73PbK7uP5ebUt+ezEtCmzZz3F59BSr2F6OVFnJ/6h8liuvdLrQ88Xmnk6/+xGGuq+pG9WwTuy3A==}
     engines: {node: ^20.17.0 || >=22.9.0}
@@ -5040,16 +5053,16 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@kysely-vitest/core@0.3.0(kysely@0.29.2)(vitest@4.1.9)':
+  '@kysely-vitest/core@0.3.0(kysely@0.28.17)(vitest@4.1.9)':
     dependencies:
-      kysely: 0.29.2
+      kysely: 0.28.17
       vitest: 4.1.9(@types/node@24.13.1)(@vitest/browser-playwright@4.1.9)(vite@8.0.16(@types/node@24.13.1)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0))
 
-  '@kysely-vitest/postgres@0.3.0(kysely-postgres-js@3.0.0(kysely@0.29.2)(postgres@3.4.9))(kysely@0.29.2)(vitest@4.1.9)':
+  '@kysely-vitest/postgres@0.3.0(kysely-postgres-js@3.0.0(kysely@0.28.17)(postgres@3.4.9))(kysely@0.28.17)(vitest@4.1.9)':
     dependencies:
-      '@kysely-vitest/core': 0.3.0(kysely@0.29.2)(vitest@4.1.9)
-      kysely: 0.29.2
-      kysely-postgres-js: 3.0.0(kysely@0.29.2)(postgres@3.4.9)
+      '@kysely-vitest/core': 0.3.0(kysely@0.28.17)(vitest@4.1.9)
+      kysely: 0.28.17
+      kysely-postgres-js: 3.0.0(kysely@0.28.17)(postgres@3.4.9)
       vitest: 4.1.9(@types/node@24.13.1)(@vitest/browser-playwright@4.1.9)(vite@8.0.16(@types/node@24.13.1)(esbuild@0.28.0)(jiti@2.7.0)(yaml@2.9.0))
 
   '@modelcontextprotocol/sdk@1.29.0(zod@3.25.76)':
@@ -7469,13 +7482,13 @@ snapshots:
 
   kleur@4.1.5: {}
 
-  kysely-postgres-js@3.0.0(kysely@0.29.2)(postgres@3.4.9):
+  kysely-postgres-js@3.0.0(kysely@0.28.17)(postgres@3.4.9):
     dependencies:
-      kysely: 0.29.2
+      kysely: 0.28.17
     optionalDependencies:
       postgres: 3.4.9
 
-  kysely@0.29.2: {}
+  kysely@0.28.17: {}
 
   launch-editor@2.14.1:
     dependencies:
@@ -8403,6 +8416,8 @@ snapshots:
       react: 19.2.7
 
   util-deprecate@1.0.2: {}
+
+  uuid@14.0.1: {}
 
   validate-npm-package-name@7.0.2: {}
 

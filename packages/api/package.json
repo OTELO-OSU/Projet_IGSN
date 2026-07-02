@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --watch src/main.ts",
     "start": "node src/main.ts",
-    "migrate": "node src/migrate.ts"
+    "migrate": "node migrate.ts"
   },
   "dependencies": {
     "@hono/node-server": "catalog:",
@@ -15,7 +15,9 @@
     "kysely": "catalog:",
     "kysely-postgres-js": "catalog:",
     "postgres": "catalog:",
-    "rate-limiter-flexible": "catalog:"
+    "rate-limiter-flexible": "catalog:",
+    "uuid": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@kysely-vitest/postgres": "catalog:",

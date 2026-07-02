@@ -62,6 +62,19 @@ Use the BOUNDARY heuristic to hunt edge cases:
 - Race conditions or repeated actions
 - Yield or failure conditions
 
+## Assert on whole values
+
+Assert the full result with `toEqual` (or `toMatchObject` for a subset), not a
+handful of individual fields. Checking only `success` or one property lets the
+rest regress and hides bugs the assertion never looked at. A single whole-object
+assertion also merges what would otherwise be several partial tests into one.
+
+    // Prefer
+    expect(result).toEqual({ name: "Grès", nature: "rock_powder" })
+    // Over
+    expect(result.success).toBe(true)
+    expect(result.name).toBe("Grès")
+
 ## Naming: `it("should ...")`
 
 Describe the behavior under test:

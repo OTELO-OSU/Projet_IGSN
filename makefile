@@ -46,6 +46,14 @@ dev:
 auth:									## Start only Keycloak + the dev SAML IdP (detached)
 	docker compose -f docker-compose.dev.yml up -d keycloak saml-idp
 
+migrate:								## Run migrations on the local dev Postgres (dev stack must be up)
+	@docker compose -f docker-compose.dev.yml run --rm api pnpm -F @projet-igsn/api migrate
+
+db-reset:								## Fully reset the dev Postgres database, then re-run migrations (dev stack must be up)
+	@docker compose -f docker-compose.dev.yml exec -T postgres \
+		psql -U igsn -d igsn -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+	@docker compose -f docker-compose.dev.yml run --rm api pnpm -F @projet-igsn/api migrate
+
 generate-routes:
 	@pnpm -F @projet-igsn/frontend generate-routes
 

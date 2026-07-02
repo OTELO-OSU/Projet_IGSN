@@ -1,21 +1,23 @@
 import { testClient } from "hono/testing";
+import { afterEach, beforeEach, describe, expect } from "vitest";
 
-import app from "./app";
+import { createApp } from "./app.ts";
+import { pgTest } from "./tests/pg-test.ts";
 
 describe("app", () => {
   describe("GET /", () => {
-    it("should return Hello World", async () => {
-      const client = testClient(app);
+    pgTest("should return Hello World", async ({ db }) => {
+      const client = testClient(createApp(db));
 
       const res = await client.index.$get();
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ message: "Hello World" });
+      expect(await res.json()).toEqual({ message: "OK" });
     });
   });
 
   describe("GET /me", () => {
-    it("rejects a request with no bearer token", async () => {
-      const client = testClient(app);
+    pgTest("rejects a request with no bearer token", async ({ db }) => {
+      const client = testClient(createApp(db));
 
       const res = await client.me.$get();
       expect(res.status).toBe(401);
@@ -33,38 +35,49 @@ describe("app", () => {
       delete process.env.CORS_ORIGINS;
     });
 
-    it("should reflect the allow-origin header for an allowed origin", async () => {
-      const client = testClient(app);
+    pgTest(
+      "should reflect the allow-origin header for an allowed origin",
+      async ({ db }) => {
+        const client = testClient(createApp(db));
 
-      const res = await client.index.$get(undefined, {
-        headers: { Origin: allowedOrigin },
-      });
+        const res = await client.index.$get(undefined, {
+          headers: { Origin: allowedOrigin },
+        });
 
-      expect(res.headers.get("access-control-allow-origin")).toBe(
-        allowedOrigin,
-      );
-      expect(res.headers.get("access-control-allow-credentials")).toBe("true");
-    });
+        expect(res.headers.get("access-control-allow-origin")).toBe(
+          allowedOrigin,
+        );
+        expect(res.headers.get("access-control-allow-credentials")).toBe(
+          "true",
+        );
+      },
+    );
 
-    it("should not set allow-origin for a disallowed origin", async () => {
-      const client = testClient(app);
+    pgTest(
+      "should not set allow-origin for a disallowed origin",
+      async ({ db }) => {
+        const client = testClient(createApp(db));
 
-      const res = await client.index.$get(undefined, {
-        headers: { Origin: "https://evil.example.test" },
-      });
+        const res = await client.index.$get(undefined, {
+          headers: { Origin: "https://evil.example.test" },
+        });
 
-      expect(res.headers.get("access-control-allow-origin")).toBeNull();
-    });
+        expect(res.headers.get("access-control-allow-origin")).toBeNull();
+      },
+    );
 
-    it("should deny every origin when CORS_ORIGINS is empty", async () => {
-      delete process.env.CORS_ORIGINS;
-      const client = testClient(app);
+    pgTest(
+      "should deny every origin when CORS_ORIGINS is empty",
+      async ({ db }) => {
+        delete process.env.CORS_ORIGINS;
+        const client = testClient(createApp(db));
 
-      const res = await client.index.$get(undefined, {
-        headers: { Origin: allowedOrigin },
-      });
+        const res = await client.index.$get(undefined, {
+          headers: { Origin: allowedOrigin },
+        });
 
-      expect(res.headers.get("access-control-allow-origin")).toBeNull();
-    });
+        expect(res.headers.get("access-control-allow-origin")).toBeNull();
+      },
+    );
   });
 });
