@@ -1,17 +1,19 @@
+import type { ReactNode } from "react";
+
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "react-oidc-context";
 
 import { ApiGreeting } from "./api-greeting.tsx";
-import App from "./app.tsx";
 
 // Login page + gate: unauthenticated users pick an identity provider, which
 // redirects through Keycloak (kc_idp_hint) straight to that IdP. Accounts are
-// provisioned on first login (first-broker-login). Authenticated users see the app.
+// provisioned on first login (first-broker-login). Authenticated users see the
+// app (the routed children) behind this gate.
 const signInWith = (auth: ReturnType<typeof useAuth>, idp: string) => () =>
   void auth.signinRedirect({ extraQueryParams: { kc_idp_hint: idp } });
 
-export function AuthGate() {
+export function AuthGate({ children }: { children?: ReactNode }) {
   const auth = useAuth();
 
   if (auth.isLoading) return <p>Loading…</p>;
@@ -76,11 +78,8 @@ export function AuthGate() {
 
   return (
     <div className="min-h-screen">
-      {/* ponytail: App is currently just the title, so it serves as the header
-          brand. When App gains real content, lift the <h1> into this header and
-          render <App /> below it. */}
       <header className="flex items-center justify-between border-b px-6 py-4">
-        <App />
+        <span className="text-xl font-bold">IGSN Admin</span>
         <div className="flex items-center gap-4">
           <ApiGreeting />
           <Button
@@ -94,6 +93,7 @@ export function AuthGate() {
           </Button>
         </div>
       </header>
+      <main>{children}</main>
     </div>
   );
 }

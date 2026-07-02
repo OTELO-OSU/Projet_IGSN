@@ -12,5 +12,6 @@
       "unknown"
     ]
   },
-  "sortTailwindcss": {}
+  "sortTailwindcss": {},
+  "ignorePatterns": ["**/*.gen.ts"]
 }

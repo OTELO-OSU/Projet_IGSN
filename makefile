@@ -41,7 +41,8 @@ dev:
 		-f docker-compose.dev.yml \
 		up  \
 		--watch \
-		--build
+		--build \
+		--attach admin --attach api --attach frontend
 
 auth:									## Start only Keycloak + the dev SAML IdP (detached)
 	docker compose -f docker-compose.dev.yml up -d keycloak saml-idp

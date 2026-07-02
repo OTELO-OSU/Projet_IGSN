@@ -36,6 +36,19 @@ Treat each concern separately:
 Don't reach for a global state manager. Keep state local; lift to Context only
 when genuinely shared across distant components.
 
+## Forms
+
+Build every form with `useAppForm` from
+`@projet-igsn/design-system/components/form/app-form`, not raw
+`@tanstack/react-form`. It yields fields and actions pre-bound to the shared,
+accessible form inputs; pass per-form `defaultValues` and `validators` (a zod
+schema from `domain`).
+
+Reuse the existing bound inputs (`TextField`, `SubmitButton`...) via
+`form.AppField` / `form.AppForm`. Need an input the kit doesn't have yet? Add it
+to `packages/design-system/src/components/form/` and register it in `app-form.tsx`
+so every form gets it, never inline a one-off input in an app.
+
 ## Extract hooks
 
 When a component accumulates complex state logic (several related `useState`s,

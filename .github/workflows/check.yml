@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Compile i18n messages
+        run: pnpm -F @projet-igsn/admin compile-i18n
+
       - name: Run lint
         run: pnpm lint:check
 
