@@ -44,11 +44,11 @@ dev:
 		--build \
 		--attach admin --attach api --attach frontend
 
-auth:									## Start only Keycloak + the dev SAML IdP (detached)
-	docker compose -f docker-compose.dev.yml up -d keycloak saml-idp
-
-migrate:								## Run migrations on the local dev Postgres (dev stack must be up)
+db-migrate:								## Run migrations on the local dev Postgres (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml run --rm api pnpm -F @projet-igsn/api migrate
+
+db-seed:									## Seed the local dev Postgres with sample data (dev stack must be up, migrations applied)
+	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api seed
 
 db-reset:								## Fully reset the dev Postgres database, then re-run migrations (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml exec -T postgres \

@@ -1,14 +1,9 @@
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
+import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { validator } from "hono/validator";
-import { z } from "zod";
-
-export const listQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  perPage: z.coerce.number().int().min(1).max(100).default(10),
-});
 
 export const validateListQuery = validator("query", (value, c) => {
-  const parsed = listQuerySchema.safeParse(value);
+  const parsed = listSamplesQuerySchema.safeParse(value);
   if (!parsed.success) {
     return c.json({ error: "Invalid query parameters" }, 400);
   }

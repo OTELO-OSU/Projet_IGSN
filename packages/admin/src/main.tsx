@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import { AuthProvider } from "react-oidc-context";
 
 import "./styles.css";
-import { oidcConfig } from "./auth.ts";
+import { oidcConfig } from "./auth/oidc-config.ts";
 import { routeTree } from "./routeTree.gen.ts";
 
 const queryClient = new QueryClient();

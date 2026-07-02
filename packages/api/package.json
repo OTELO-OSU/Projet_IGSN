@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node --watch src/main.ts",
     "start": "node src/main.ts",
-    "migrate": "node migrate.ts"
+    "migrate": "node migrate.ts",
+    "seed": "node seed.ts"
   },
   "dependencies": {
     "@hono/node-server": "catalog:",

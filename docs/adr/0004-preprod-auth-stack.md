@@ -1,4 +1,4 @@
-# 3. Preprod auth stack: dev Keycloak + mock SAML IdP
+# 4. Preprod auth stack: dev Keycloak + mock SAML IdP
 
 ## Status
 

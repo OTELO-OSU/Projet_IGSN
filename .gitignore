@@ -11,6 +11,7 @@
 **/.vinxi
 **/__unconfig*
 **/__screenshots__
+**/.vitest-attachments
 
 # Environment files
 **/*.local

@@ -31,7 +31,10 @@ Treat each concern separately:
   into client state)
 - Client state: React Context (+ useState/useReducer)
 - URL state: search params, route segments
-- Form state: @tanstack/react-form (validate with zod schemas)
+- Form state: @tanstack/react-form (validate with zod schemas). Build reusable
+  typed forms with `createFormHook`/`useAppForm` (see
+  `@projet-igsn/design-system/components/form/app-form`)
+  so fields and submit share one accessible markup and error pattern.
 
 Don't reach for a global state manager. Keep state local; lift to Context only
 when genuinely shared across distant components.
@@ -99,3 +102,19 @@ them.
       })
 
     const userResponse = apiResponseSchema(userSchema).parse(await res.json())
+
+## Consuming the API
+
+Talk to `api` through the domain repository interface, not scattered `fetch`
+calls. Implement the interface once as an HTTP repository (parse each response
+with the domain Zod schema at the boundary, map to the domain result shape) and
+serve it through a React hook backed by context (e.g. `useSampleRepository`), so
+components depend on the contract and tests can inject a fake via the provider.
+The react-query hooks (`useSamples`, `useCreateSample`) call the repository.
+
+## Data tables
+
+Render datagrids with `@tanstack/react-table` (headless) plus the design-system
+shadcn `table` primitives. Let the library own table state (sorting, pagination,
+selection, column visibility); do not hand-roll it. For server-paginated tables
+use manual pagination and keep page and page size in the URL (see URL as state).
