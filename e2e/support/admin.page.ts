@@ -13,5 +13,9 @@ export function adminPage(page: Page) {
       page.getByRole("button", { name: "Sign in with ORCID" }).click(),
     expectSignedIn: () =>
       expect(page.getByRole("button", { name: "Sign out" })).toBeVisible(),
+    // The header greeting is filled from the api's protected /me route, so seeing
+    // it proves the Keycloak token verified server-side, not just in the SPA.
+    expectApiVerified: (name: string) =>
+      expect(page.getByText(`API verified you as ${name}`)).toBeVisible(),
   };
 }

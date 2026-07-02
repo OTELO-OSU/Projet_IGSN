@@ -2,8 +2,9 @@
 
 ## Status
 
-Accepted for the login flow. The API-side pieces (token verification, token
-forwarding) are deferred until the first protected endpoint exists.
+Accepted. The browser login flow and a proof-of-concept protected API route
+(`GET /me`) are implemented and covered end to end by the e2e suite. Real
+protected endpoints and per-route role enforcement build on the same middleware.
 
 ## Context
 
@@ -50,14 +51,16 @@ Prod has no local users, so admins get the `admin` role by some mechanism to be
 decided: manual grant, group mapping, or an IdP-attribute-to-role mapper. This
 must be settled before the admin persona ships.
 
-**API token verification is deferred, not skipped.** The API has no protected
-endpoints yet (`app.ts` is placeholder routes), so it validates nothing today.
-The first protected route MUST add middleware that verifies the Keycloak access
-token (signature against `<authority>/protocol/openid-connect/certs`, plus
-`iss`/`aud`/`exp`) and enforces the `admin` role. This needs a JWKS/JWT
-verification dependency (e.g. `jose`); that choice is deferred to when the
-endpoint lands, per the dependencies rule. The admin SPA must then attach
-`auth.user.access_token` to its API calls and handle 401 / silent renew.
+**API token verification is implemented with `hono/jwk`.** The api verifies the
+Keycloak access token (signature against the realm JWKS, `iss`, and `exp`, with
+`alg` pinned to RS256) in `packages/api/src/auth/middleware.ts`, applied to the
+protected `GET /me` route. No new dependency was needed: hono (already a
+dependency) ships the `jwk` middleware, so the ladder stopped there rather than
+adding `jose`. JWKS fetch URL (`OIDC_JWKS_URI`) is separate from the expected
+issuer (`OIDC_ISSUER`) because in Docker the browser-facing issuer and the
+api-to-Keycloak URL differ. The admin SPA attaches `auth.user.access_token` to
+its calls (`packages/admin/src/api.ts`). Still to do per real endpoint: role
+enforcement (read `realm_access.roles`) and 401 / silent-renew handling.
 
 **Edge serving and CSP.** The built SPA is served by a static host/CDN or nginx
 with SPA fallback and the headers from the infra security rule. The CSP
@@ -67,13 +70,13 @@ alone breaks login.
 
 ## Consequences
 
-Ready today: the full browser login/logout round-trip, end to end, once
-`VITE_OIDC_AUTHORITY` (and `VITE_OIDC_CLIENT_ID` if it differs) point at a real
-Keycloak.
+Ready today: the full browser login/logout round-trip and a token-verified API
+call, end to end (proven by e2e), once `VITE_OIDC_AUTHORITY` (and
+`VITE_OIDC_CLIENT_ID` if it differs) point at a real Keycloak.
 
-Not ready, and required before any protected feature ships: API token
-verification, SPA token forwarding, the prod edge server with headers and a
-Keycloak-aware CSP, and a decision on admin-role assignment.
+Not ready, and required before any protected feature ships: per-route role
+enforcement, the prod edge server with headers and a Keycloak-aware CSP, and a
+decision on admin-role assignment.
 
 Ordered production checklist:
 
@@ -92,5 +95,7 @@ Ordered production checklist:
 7. Build the admin image with `VITE_OIDC_AUTHORITY`/`VITE_OIDC_CLIENT_ID` in CD.
 8. Serve the SPA from a static host/CDN with the infra headers and a CSP whose
    `connect-src` includes the Keycloak origin.
-9. Add API JWT verification + role guard on the first protected route.
-10. Attach the access token to admin API calls; handle 401 and silent renew.
+9. API JWT verification: done (`hono/jwk` on `GET /me`); add a role guard per
+   protected route as real endpoints land.
+10. Admin attaches the access token to API calls: done for `/me`; add 401 /
+    silent-renew handling as CRUD lands.

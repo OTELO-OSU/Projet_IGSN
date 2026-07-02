@@ -52,6 +52,11 @@ services:
       DATABASE_NAME: igsn
       DATABASE_USER: igsn
       DATABASE_PASSWORD: igsn
+      # Token issuer is the browser-facing Keycloak URL; JWKS is fetched over the
+      # compose network from the keycloak service (same 18080 port, see below).
+      OIDC_ISSUER: http://localhost:18080/realms/igsn
+      OIDC_JWKS_URI: http://keycloak:18080/realms/igsn/protocol/openid-connect/certs
+      CORS_ORIGINS: http://localhost:4001
     depends_on:
       postgres:
         condition: service_healthy
@@ -66,8 +71,10 @@ services:
       dockerfile: ./packages/admin/Dockerfile
       target: prod
       args:
-        # Baked into the bundle at build time — points the SPA at the e2e Keycloak.
+        # Baked into the bundle at build time — point the SPA at the e2e Keycloak
+        # and the port-shifted e2e api.
         VITE_OIDC_AUTHORITY: http://localhost:18080/realms/igsn
+        VITE_API_URL: http://localhost:4002
     # Caddy binds $PORT (Caddyfile), so listen on 3001 to match the mapping.
     environment:
       PORT: "3001"

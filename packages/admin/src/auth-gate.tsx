@@ -2,6 +2,7 @@ import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { LogOut } from "lucide-react";
 import { useAuth } from "react-oidc-context";
 
+import { ApiGreeting } from "./api-greeting.tsx";
 import App from "./app.tsx";
 
 // Login page + gate: unauthenticated users pick an identity provider, which
@@ -53,15 +54,18 @@ export function AuthGate() {
           render <App /> below it. */}
       <header className="flex items-center justify-between border-b px-6 py-4">
         <App />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => void auth.signoutRedirect()}
-        >
-          <LogOut />
-          Sign out
-        </Button>
+        <div className="flex items-center gap-4">
+          <ApiGreeting />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => void auth.signoutRedirect()}
+          >
+            <LogOut />
+            Sign out
+          </Button>
+        </div>
       </header>
     </div>
   );

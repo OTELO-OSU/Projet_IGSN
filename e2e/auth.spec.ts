@@ -17,6 +17,7 @@ test.describe("authentication", () => {
     );
 
     await admin.expectSignedIn();
+    await admin.expectApiVerified("Marie Dupont");
   });
 
   test("a researcher signs in with ORCID", async ({ page }) => {
@@ -30,5 +31,6 @@ test.describe("authentication", () => {
     );
 
     await admin.expectSignedIn();
+    await admin.expectApiVerified("Camille Rousseau");
   });
 });

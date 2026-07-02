@@ -13,13 +13,12 @@ describe("app", () => {
     });
   });
 
-  describe("GET /:name", () => {
-    it("should return Hello {name}", async () => {
+  describe("GET /me", () => {
+    it("rejects a request with no bearer token", async () => {
       const client = testClient(app);
 
-      const res = await client[":name"].$get({ param: { name: "John" } });
-      expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ message: "Hello John" });
+      const res = await client.me.$get();
+      expect(res.status).toBe(401);
     });
   });
 

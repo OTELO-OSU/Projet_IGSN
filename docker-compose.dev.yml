@@ -127,6 +127,12 @@ services:
       dockerfile: ./packages/api/Dockerfile
       target: dev
     container_name: api
+    environment:
+      # Token issuer is the browser-facing Keycloak URL; the api fetches JWKS on
+      # its own network, so the fetch URL points at the keycloak service directly.
+      OIDC_ISSUER: http://localhost:8080/realms/igsn
+      OIDC_JWKS_URI: http://keycloak:8080/realms/igsn/protocol/openid-connect/certs
+      ADMIN_ORIGIN: http://localhost:3001
     ports:
       - "3002:3002"
     environment:
