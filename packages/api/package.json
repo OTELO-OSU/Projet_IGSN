@@ -12,6 +12,7 @@
     "hono": "catalog:",
     "kysely": "catalog:",
     "kysely-postgres-js": "catalog:",
+    "postgres": "catalog:",
     "rate-limiter-flexible": "catalog:"
   },
   "devDependencies": {

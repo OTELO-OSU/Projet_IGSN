@@ -53,6 +53,7 @@ files or args (`pnpm test path/to/file`, `pnpm lint:check --quiet`). The
 `makefile` wraps common ones (`make install`, `make dev`, `make lint`, `make test`).
 
 - `pnpm test`: run tests headless (`pnpm test:browser` interactive, `pnpm test:watch` watch)
+- `pnpm test --project @projet-igsn/<project>`: run a single project's tests
 - `pnpm lint:apply` / `pnpm lint:check`: lint with/without writing fixes
 - `pnpm fmt:apply` / `pnpm fmt:check`: format with/without writing fixes
 - `make dev`: run the stack via `docker-compose.dev.yml` (watch + build)

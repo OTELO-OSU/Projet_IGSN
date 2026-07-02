@@ -1,0 +1,7 @@
+# Static SPA host. Binds the PORT env (prod image sets 8080) and falls
+# back to index.html so client-side routes resolve.
+:{$PORT:8080} {
+	root * /srv
+	try_files {path} /index.html
+	file_server
+}

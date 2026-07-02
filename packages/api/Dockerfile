@@ -1,6 +1,10 @@
 FROM node:24-alpine as base
 
-RUN apk update
+# Git hooks are irrelevant in the image, and .git isn't in the build context.
+ENV HUSKY=0
+
+# Patch base packages, then add curl for container healthchecks.
+RUN apk upgrade --no-cache && apk add --no-cache curl
 
 RUN npm install -g pnpm
 
@@ -20,6 +24,12 @@ CMD ["pnpm", "-F", "@projet-igsn/api", "dev"]
 
 FROM base
 
-RUN pnpm -F @projet-igsn/api install --prod --frozen-lockfile 
+ENV PORT=8080
 
-CMD ["pnpm", "-F", "@projet-igsn/api", "start"]
+RUN pnpm -F @projet-igsn/api install --prod --frozen-lockfile --ignore-scripts
+
+# Drop root: the app only reads its (root-owned, world-readable) files at runtime.
+USER node
+
+# main.ts is run directly; Node 24 strips TS types natively (no tsc needed).
+CMD ["node", "src/main.ts"]
