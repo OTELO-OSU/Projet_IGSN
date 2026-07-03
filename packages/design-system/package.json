@@ -8,11 +8,14 @@
   "exports": {
     "./styles.css": "./src/styles.css",
     "./lib/*": "./src/lib/*.ts",
-    "./components/ui/*": "./src/components/ui/*.tsx"
+    "./components/ui/*": "./src/components/ui/*.tsx",
+    "./components/form/*": "./src/components/form/*.tsx"
   },
   "dependencies": {
+    "@tanstack/react-form": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
+    "cmdk": "catalog:",
     "lucide-react": "catalog:",
     "radix-ui": "catalog:",
     "react": "catalog:",

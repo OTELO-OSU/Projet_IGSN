@@ -10,6 +10,7 @@
 **/.output
 **/.vinxi
 **/__unconfig*
+**/__screenshots__
 
 # Environment files
 **/*.local
