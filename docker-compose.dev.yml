@@ -20,7 +20,12 @@ services:
     command: start-dev --import-realm
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      # One shared password var for Keycloak admin, the SAML users, and the
+      # mock-orcid user; `password` in dev. Preprod sets a strong value in its
+      # host env file. The bare KEYCLOAK_PASSWORD is what the realm import
+      # substitutes into the mock-orcid user's password.
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
+      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
       KC_HEALTH_ENABLED: "true"
     # The "orcid" broker defaults to the local mock-orcid realm, so dev needs no
     # credentials. To point it at real ORCID instead, set the ORCID_* vars in
@@ -44,6 +49,8 @@ services:
       SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost:8080/realms/igsn
       SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost:8080/realms/igsn/broker/shibboleth/endpoint
       SIMPLESAMLPHP_IDP_BASE_URL: http://localhost:8081/simplesaml/
+      # Password shared with the Keycloak admin var; read by authsources.php.
+      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
     volumes:
       - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
 

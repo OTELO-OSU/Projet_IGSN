@@ -1,10 +1,10 @@
 # Preprod deployment
 
 Three apps plus Postgres as Docker containers on one EC2 host, behind a Caddy
-reverse proxy that terminates TLS. No CD: deploy manually with `make
-preprod-deploy` ([deploy.sh](../infra/preprod/scripts/deploy.sh)). Everything
-preprod (OpenTofu, scripts, compose stack) lives under
-[infra/preprod/](../infra/preprod); prod will be a sibling `infra/prod/`.
+reverse proxy. No CD: deploy manually with `make preprod-deploy`
+([deploy.sh](../infra/preprod/scripts/deploy.sh)). Everything preprod (OpenTofu,
+scripts, compose stack) lives under [infra/preprod/](../infra/preprod); prod will
+be a sibling `infra/prod/`.
 
 ## Architecture
 
@@ -13,15 +13,19 @@ preprod (OpenTofu, scripts, compose stack) lives under
   revoked.
 - **Postgres** container with a persistent volume (`pgdata`), never exposed off
   the host. Credentials live in the host `docker-compose.env`.
-- **Cloudflare** proxies the three hostnames (orange cloud, SSL mode Full
-  (strict)) and terminates TLS at its edge, re-originating HTTPS to the host.
+- **Cloudflare** proxies the hostnames (orange cloud, SSL mode Full (strict)) and
+  terminates TLS at its edge, re-originating HTTPS to the host.
+- **Auth** is the dev throwaway Keycloak plus the mock SAML IdP (see
+  [ADR 0003](adr/0003-preprod-auth-stack.md)), at `igsn-auth.$DOMAIN` (Keycloak)
+  and `igsn-idp.$DOMAIN` (IdP). `KEYCLOAK_PASSWORD` in the host env file is the
+  Keycloak admin password and the shared SAML-user password.
 - **Caddy** ([Caddyfile](../infra/preprod/Caddyfile)) serves a Cloudflare Origin
-  CA cert (mounted from the host `~/certs`) and proxies `igsn.$DOMAIN` ->
-  frontend, `igsn-admin.$DOMAIN` -> admin, `igsn-api.$DOMAIN` -> api, setting
-  security headers at the edge. All three are flat single-level subdomains, not
-  nested (`admin.igsn.$DOMAIN`): Cloudflare's `*.$DOMAIN` cert covers only one
-  label deep, so nested hosts fail the handshake. It does not use Let's Encrypt:
-  ACME can't validate behind the Cloudflare proxy.
+  CA cert (mounted from `~/certs`) and proxies each host: `igsn.$DOMAIN` ->
+  frontend, `igsn-admin.$DOMAIN` -> admin, `igsn-api.$DOMAIN` -> api,
+  `igsn-auth.$DOMAIN` -> Keycloak, `igsn-idp.$DOMAIN` -> SAML IdP, plus security
+  headers. Hosts are flat single-level subdomains, not nested: the `*.$DOMAIN`
+  cert covers only one label deep. No Let's Encrypt: ACME can't validate behind
+  the Cloudflare proxy.
 - **Images** are built on your laptop and shipped over SSH
   (`docker save | gzip | ssh 'docker load'`). No registry.
 
@@ -41,9 +45,8 @@ preprod (OpenTofu, scripts, compose stack) lives under
    infra.
 
 2. Point Cloudflare at the EIP. Create proxied (orange cloud) A records for
-   `igsn.$DOMAIN`, `igsn-admin.$DOMAIN`, and `igsn-api.$DOMAIN` (single-level
-   subdomains, so the `*.$DOMAIN` cert covers them), and set SSL/TLS mode to
-   **Full (strict)** so Cloudflare requires a trusted cert on the origin:
+   `igsn.$DOMAIN`, `igsn-admin.$DOMAIN`, `igsn-api.$DOMAIN`, `igsn-auth.$DOMAIN`,
+   and `igsn-idp.$DOMAIN`, and set SSL/TLS mode to **Full (strict)**:
 
    ```
    tofu -chdir=infra/preprod/tf output -raw public_ip
@@ -59,7 +62,8 @@ preprod (OpenTofu, scripts, compose stack) lives under
    # paste the private key   -> infra/preprod/certs/origin.key
    ```
 
-4. Create the host env file. Copy the example, set a strong `DATABASE_PASSWORD`:
+4. Create the host env file. Copy the example, set strong `DATABASE_PASSWORD`
+   and `KEYCLOAK_PASSWORD`:
 
    ```
    cp infra/preprod/docker-compose.env.example infra/preprod/docker-compose.env
@@ -92,9 +96,10 @@ make preprod-deploy DOMAIN=igsn.example.org
 ```
 
 The script builds the three images, opens SSH to your current public IP, ships
-the images + [docker-compose.yml](../infra/preprod/docker-compose.yml) +
-Caddyfile, runs migrations, then starts the stack (reading env from the host
-`docker-compose.env`). SSH ingress is revoked on exit.
+the images + [docker-compose.yml](../infra/preprod/docker-compose.yml) + Caddyfile
+
+- the `keycloak/` and `saml-idp/` import dirs, runs migrations, then starts the
+  stack (env from the host `docker-compose.env`). SSH ingress is revoked on exit.
 
 ### Manual SSH access
 

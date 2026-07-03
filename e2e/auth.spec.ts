@@ -11,7 +11,7 @@ test.describe("authentication", () => {
     await admin.goto();
     await admin.signInWithInstitution();
 
-    await shibbolethLoginPage(page).login("user1", "password");
+    await shibbolethLoginPage(page).login("marie.dupont", "password");
     await keycloakProfilePage(page).completeIfShown(
       "marie.dupont@univ-lorraine.fr",
     );
@@ -32,7 +32,7 @@ test.describe("authentication", () => {
 
     await orcidLoginPage(page).login("0000-0002-1825-0097", "password");
     await keycloakProfilePage(page).completeIfShown(
-      "camille.rousseau@example.org",
+      "sophie.bernard@univ-lorraine.fr",
     );
 
     await admin.expectNoAccess();
