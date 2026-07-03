@@ -8,6 +8,9 @@ type SampleTable = {
   id: string;
   name: string;
   nature: string;
+  // Null until the sample is published; then derived from the id with generateIgsnSuffix.
+  igsn: string | null;
+  published: Generated<boolean>;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
 };
