@@ -54,7 +54,7 @@ export function AuthGate({ children }: { children?: ReactNode }) {
 
   // ORCID is a link-then-login mechanism, not a cold-start path: an ORCID-only
   // account has no app access until it is linked to an institution account (see
-  // docs/adr/0002-production-auth-keycloak.md). Keycloak sets the identity_provider
+  // docs/adr/0003-production-auth-keycloak.md). Keycloak sets the identity_provider
   // claim on brokered logins; institution and local logins are not "orcid".
   if (auth.user?.profile.identity_provider === "orcid") {
     return (

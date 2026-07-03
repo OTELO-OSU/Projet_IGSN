@@ -14,7 +14,7 @@ native `--import-realm` — no manual setup.
 
 Edit the realm file and restart to change clients/users. Token policy mirrors
 production (5 min access tokens, single-use 30 min refresh tokens, no password
-grant; GT-SSO recommendations, see ADR 0003), so tests drive the real browser
+grant; GT-SSO recommendations, see ADR 0006), so tests drive the real browser
 login.
 
 ## Federated login (Shibboleth + ORCID)

@@ -16,7 +16,7 @@ be a sibling `infra/prod/`.
 - **Cloudflare** proxies the hostnames (orange cloud, SSL mode Full (strict)) and
   terminates TLS at its edge, re-originating HTTPS to the host.
 - **Auth** is the dev throwaway Keycloak plus the mock SAML IdP (see
-  [ADR 0003](adr/0003-preprod-auth-stack.md)), at `igsn-auth.$DOMAIN` (Keycloak)
+  [ADR 0004](adr/0004-preprod-auth-stack.md)), at `igsn-auth.$DOMAIN` (Keycloak)
   and `igsn-idp.$DOMAIN` (IdP). `KEYCLOAK_PASSWORD` in the host env file is the
   Keycloak admin password and the shared SAML-user password.
 - **Caddy** ([Caddyfile](../infra/preprod/Caddyfile)) serves a Cloudflare Origin

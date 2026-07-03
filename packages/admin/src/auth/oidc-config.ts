@@ -6,7 +6,7 @@ import { UserManager } from "oidc-client-ts";
 // One module-scope instance, passed to AuthProvider: the UserManager
 // constructor starts silent renew, and building it per mount arms duplicate
 // renew timers under StrictMode; with single-use refresh tokens the duplicate
-// renewal reads as token theft and revokes the session (ADR 0003).
+// renewal reads as token theft and revokes the session (ADR 0006).
 export const userManager = new UserManager({
   authority:
     import.meta.env.VITE_OIDC_AUTHORITY ?? "http://localhost:8080/realms/igsn",

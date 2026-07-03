@@ -1,4 +1,4 @@
-# 3. GaiaData SSO compliance (GT-SSO Recommandations Client v1.3)
+# 6. GaiaData SSO compliance (GT-SSO Recommandations Client v1.3)
 
 ## Status
 
@@ -8,7 +8,7 @@ GT-SSO client recommendations; implemented in the same change set.
 ## Context
 
 Production authentication delegates to the GaiaData mutualized Keycloak
-(ADR 0002), governed by "Authentification OpenID avec Keycloak,
+(ADR 0003), governed by "Authentification OpenID avec Keycloak,
 Recommandations Client v1.3" (2025-09-03). We audited the admin SPA
 (react-oidc-context / oidc-client-ts), the api (hono `jwk`), and the local
 dev realm against it.
@@ -39,7 +39,7 @@ audience value is deploy config (REQ-TOKEN-03/04).
 `ssoSessionIdleTimeout: 1800`, `revokeRefreshToken: true`,
 `refreshTokenMaxReuse: 0`, `directAccessGrantsEnabled: false`
 (REQ-TOKEN-01/02, REQ-FLOW-02). Rotation bugs surface in dev, not prod.
-Accepted dev-only deltas stay as documented in ADR 0002: `sslRequired:
+Accepted dev-only deltas stay as documented in ADR 0003: `sslRequired:
 none`, mock IdPs, the `test` user.
 
 **SPA hardening.**
@@ -62,7 +62,7 @@ bearer token to `/userinfo` for critical actions (REQ-CRIT-01):
 introspection would require a confidential client we deliberately do not
 have; the userinfo URL derives from `OIDC_ISSUER` with an
 `OIDC_USERINFO_URI` override, the JWKS pattern. The attachment obligations
-are recorded in `.claude/rules/security-backend.md` and ADR 0002 checklist
+are recorded in `.claude/rules/security-backend.md` and ADR 0003 checklist
 items 11 and 12.
 
 **Deletion propagation (REQ-USER-01) waits on the user store.** When per-user

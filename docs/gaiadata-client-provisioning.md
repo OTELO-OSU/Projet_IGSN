@@ -52,7 +52,7 @@ Proposed `igsn-api`; an env-suffixed name per their convention
 
 ## Realm-level needs (beyond the client)
 
-Per ADR 0002; this is the "who creates what" to settle:
+Per ADR 0003; this is the "who creates what" to settle:
 
 - RENATER/eduGAIN Shibboleth broker: signature validation ON, signed
   AuthnRequests, real IdP metadata; register the SP endpoint
