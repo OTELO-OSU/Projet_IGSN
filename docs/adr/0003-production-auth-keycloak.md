@@ -116,9 +116,11 @@ Ordered production checklist:
 10. Admin attaches the access token to API calls: done for `/me`; add 401 /
     silent-renew handling as CRUD lands.
 11. Critical actions (deletions, rights changes, invitations) revalidate the
-    session live via the userinfo guard before executing (REQ-CRIT-01);
+    session live via the userinfo guard before executing
+    ([REQ-CRIT-01](0006-gaiadata-sso-compliance.md#gt-sso-requirements));
     local JWT validation alone is not enough for them.
 12. If per-user data is ever persisted, propagate IdP account deletion
-    (REQ-USER-01): deactivate the local account on signal, stale-account
-    fail-safe as backstop. Transport (backchannel logout, webhook, polling)
-    per GaiaData's answer.
+    ([REQ-USER-01](0006-gaiadata-sso-compliance.md#gt-sso-requirements)):
+    deactivate the local account on signal, stale-account fail-safe as
+    backstop. Transport (backchannel logout, webhook, polling) per GaiaData's
+    answer.

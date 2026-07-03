@@ -31,10 +31,11 @@ rehearsal build first, same shape as below with their `-int` naming.
 
 The SPA always returns to origin + `/` (`redirect_uri` derives from
 `window.location.origin`), so exact URIs suffice: stricter than the
-suffix-wildcard REQ-PARAM-02 allows. Deep links ride the oidc `state`, not
-the redirect URI.
+suffix-wildcard
+[REQ-PARAM-02](adr/0006-gaiadata-sso-compliance.md#gt-sso-requirements)
+allows. Deep links ride the oidc `state`, not the redirect URI.
 
-## Audience (REQ-TOKEN-03)
+## Audience ([REQ-TOKEN-03](adr/0006-gaiadata-sso-compliance.md#gt-sso-requirements))
 
 A dedicated client scope, default on `igsn-admin`, adding the api audience.
 Proposed `igsn-api`; an env-suffixed name per their convention
@@ -81,7 +82,9 @@ below fill the production deploy config and the rollout plan.
    rotation on/off), to mirror in `keycloak/realm-igsn.json` so dev matches
    prod.
 4. Consent page for `openid profile email`: enforced, or same-trust-perimeter
-   waiver (REQ-CONSENT-1). First-login UX only.
+   waiver
+   ([REQ-CONSENT-1](adr/0006-gaiadata-sso-compliance.md#gt-sso-requirements)).
+   First-login UX only.
 5. Governance model: dedicated realm we administer, or client in a realm
    they operate; if the latter, the request channel and turnaround (every
    redirect-URI change goes through it).
@@ -91,6 +94,7 @@ below fill the production deploy config and the rollout plan.
 7. Admin role assignment: who grants the `admin` realm role and how (manual,
    group, or IdP attribute).
 8. Deletion signal: what exists when an account is deleted (backchannel
-   logout, webhook, event bus, or a queryable API), for REQ-USER-01. Our
-   stale-account fail-safe runs regardless; the answer only picks the
+   logout, webhook, event bus, or a queryable API), for
+   [REQ-USER-01](adr/0006-gaiadata-sso-compliance.md#gt-sso-requirements).
+   Our stale-account fail-safe runs regardless; the answer only picks the
    transport adapter.
