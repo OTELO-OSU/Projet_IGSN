@@ -53,3 +53,21 @@ igsn-api.{$DOMAIN} {
 	import sechdrs
 	reverse_proxy api:8080
 }
+
+# Auth stack: Keycloak and the mock SAML IdP (see docs/adr/0003-preprod-auth-stack.md).
+# Caddy forwards X-Forwarded-* so Keycloak resolves its public https URLs.
+igsn-auth.{$DOMAIN} {
+	import edgetls
+	import sechdrs
+	# Keep the admin console and admin REST API off the public edge; only the
+	# auth flows (/realms/*, /resources/*) are meant to be reachable in preprod.
+	@admin path /admin /admin/*
+	respond @admin 404
+	reverse_proxy keycloak:8080
+}
+
+igsn-idp.{$DOMAIN} {
+	import edgetls
+	import sechdrs
+	reverse_proxy saml-idp:8080
+}

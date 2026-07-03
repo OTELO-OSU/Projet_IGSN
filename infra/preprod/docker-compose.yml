@@ -59,10 +59,62 @@ services:
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
+      # Issuer is the browser-facing Keycloak URL (baked into tokens); JWKS is
+      # fetched over the compose network from the keycloak service directly.
+      OIDC_ISSUER: "https://igsn-auth.${DOMAIN}/realms/igsn"
+      OIDC_JWKS_URI: "http://keycloak:8080/realms/igsn/protocol/openid-connect/certs"
     healthcheck: *healthcheck
     depends_on:
       migrate:
         condition: service_completed_successfully
+
+  # Same throwaway Keycloak as dev (start-dev, realm imported from keycloak/*.json)
+  # plus the mock SAML IdP, so preprod exercises the real broker flow without
+  # wiring true RENATER. KC_HOSTNAME + proxy headers make Keycloak emit its public
+  # https URLs behind Caddy. See docs/adr/0003-preprod-auth-stack.md.
+  # ponytail: H2 in-memory, so brokered users vanish on container recreate and
+  # re-provision on next login. Switch to `start` + Postgres if durable state matters.
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6
+    restart: unless-stopped
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
+      # Also exposed bare so the realm import substitutes it into the mock-orcid
+      # user's password (${KEYCLOAK_PASSWORD} in mock-orcid-realm.json).
+      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+      KC_HOSTNAME: "https://igsn-auth.${DOMAIN}"
+      KC_PROXY_HEADERS: xforwarded
+      # URLs the realm import substitutes for the public preprod hosts.
+      ADMIN_REDIRECT_URI: "https://igsn-admin.${DOMAIN}/*"
+      ADMIN_WEB_ORIGIN: "https://igsn-admin.${DOMAIN}"
+      SHIBBOLETH_SSO_URL: "https://igsn-idp.${DOMAIN}/simplesaml/saml2/idp/SSOService.php"
+      # ORCID brokers to the mock-orcid realm in this same Keycloak. Browser-facing
+      # URLs (authorization, broker redirect, issuer) are public; backend calls
+      # keycloak reaches over localhost, the same public/internal split as the api.
+      ORCID_BROKER_REDIRECT_URI: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/orcid/endpoint"
+      ORCID_AUTHORIZATION_URL: "https://igsn-auth.${DOMAIN}/realms/mock-orcid/protocol/openid-connect/auth"
+      ORCID_TOKEN_URL: "http://localhost:8080/realms/mock-orcid/protocol/openid-connect/token"
+      ORCID_USERINFO_URL: "http://localhost:8080/realms/mock-orcid/protocol/openid-connect/userinfo"
+      ORCID_ISSUER: "https://igsn-auth.${DOMAIN}/realms/mock-orcid"
+      ORCID_JWKS_URL: "http://localhost:8080/realms/mock-orcid/protocol/openid-connect/certs"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+
+  saml-idp:
+    image: kenchan0130/simplesamlphp
+    restart: unless-stopped
+    environment:
+      SIMPLESAMLPHP_SP_ENTITY_ID: "https://igsn-auth.${DOMAIN}/realms/igsn"
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/shibboleth/endpoint"
+      SIMPLESAMLPHP_IDP_BASE_URL: "https://igsn-idp.${DOMAIN}/simplesaml/"
+      # Shared with the Keycloak admin password; read by authsources.php.
+      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
+    volumes:
+      - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
+      - ./saml-idp/apache-hardening.conf:/etc/apache2/conf-enabled/zzz-hardening.conf:ro
 
   admin:
     image: igsn-admin:preprod
@@ -101,6 +153,12 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
+      # No in-container curl, so no healthcheck: just order the start. Caddy
+      # retries the upstream until Keycloak/the IdP answer.
+      keycloak:
+        condition: service_started
+      saml-idp:
+        condition: service_started
 
 volumes:
   pgdata:

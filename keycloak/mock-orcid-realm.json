@@ -22,10 +22,40 @@
     {
       "username": "0000-0002-1825-0097",
       "enabled": true,
-      "firstName": "Camille",
-      "lastName": "Rousseau",
+      "firstName": "Sophie",
+      "lastName": "Bernard",
       "credentials": [
-        { "type": "password", "value": "password", "temporary": false }
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_PASSWORD:password}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "0000-0001-5109-3700",
+      "enabled": true,
+      "firstName": "Marie",
+      "lastName": "Dupont",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_PASSWORD:password}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "0000-0002-1694-2333",
+      "enabled": true,
+      "firstName": "Jean",
+      "lastName": "Martin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${KEYCLOAK_PASSWORD:password}",
+          "temporary": false
+        }
       ]
     }
   ]
