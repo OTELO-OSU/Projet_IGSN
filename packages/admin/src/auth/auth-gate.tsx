@@ -14,7 +14,12 @@ import { CenteredScreen } from "./centered-screen.tsx";
 // provisioned on first login (first-broker-login). Authenticated users see the
 // app (the routed children) behind this gate.
 const signInWith = (auth: ReturnType<typeof useAuth>, idp: string) => () =>
-  void auth.signinRedirect({ extraQueryParams: { kc_idp_hint: idp } });
+  void auth.signinRedirect({
+    // oidc-client-ts sends no nonce by default on the code flow; given one it
+    // stores it and verifies the id_token claim (GT-SSO REQ-PARAM-00/01).
+    nonce: crypto.randomUUID(),
+    extraQueryParams: { kc_idp_hint: idp },
+  });
 
 export function AuthGate({ children }: { children?: ReactNode }) {
   const auth = useAuth();

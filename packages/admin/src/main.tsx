@@ -5,7 +5,8 @@ import { createRoot } from "react-dom/client";
 import { AuthProvider } from "react-oidc-context";
 
 import "./styles.css";
-import { oidcConfig } from "./auth/oidc-config.ts";
+import { onSigninCallback, userManager } from "./auth/oidc-config.ts";
+import { watchIdleRenew } from "./idle-renew.ts";
 import { routeTree } from "./routeTree.gen.ts";
 
 const queryClient = new QueryClient();
@@ -17,9 +18,11 @@ declare module "@tanstack/react-router" {
   }
 }
 
+watchIdleRenew(userManager);
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider {...oidcConfig}>
+    <AuthProvider userManager={userManager} onSigninCallback={onSigninCallback}>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>
