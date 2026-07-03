@@ -1,4 +1,4 @@
-# 2. Production authentication with Keycloak
+# 3. Production authentication with Keycloak
 
 ## Status
 

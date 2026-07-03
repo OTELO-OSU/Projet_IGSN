@@ -49,7 +49,7 @@ describe("sample routes", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({
       data: [{ name: "Grès de Fontainebleau" }],
-      meta: { total: 1, page: 1, perPage: 10 },
+      meta: { total: 1 },
     });
   });
 

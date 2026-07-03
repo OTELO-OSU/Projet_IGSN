@@ -67,6 +67,26 @@ describe("app", () => {
     );
 
     pgTest(
+      "should allow Authorization and Content-Type headers on preflight",
+      async ({ db }) => {
+        const app = createApp(db);
+
+        const res = await app.request("/samples", {
+          method: "OPTIONS",
+          headers: {
+            Origin: allowedOrigin,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type,authorization",
+          },
+        });
+
+        expect(res.headers.get("access-control-allow-headers")).toBe(
+          "Authorization,Content-Type",
+        );
+      },
+    );
+
+    pgTest(
       "should deny every origin when CORS_ORIGINS is empty",
       async ({ db }) => {
         delete process.env.CORS_ORIGINS;

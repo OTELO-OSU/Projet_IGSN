@@ -4,7 +4,7 @@ import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 
 import { getLocale } from "#/paraglide/runtime.js";
 
-import { AuthGate } from "../auth-gate.tsx";
+import { AuthGate } from "../auth/auth-gate.tsx";
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   {

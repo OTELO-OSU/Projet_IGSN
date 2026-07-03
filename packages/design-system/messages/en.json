@@ -1,0 +1,15 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "nature_hand_sample": "Hand sample",
+  "nature_inapplicable": "Inapplicable",
+  "nature_multiple_sample": "Multiple sample",
+  "nature_polished_section": "Polished section",
+  "nature_residue": "Residue",
+  "nature_rock_chips": "Rock chips",
+  "nature_rock_powder": "Rock powder",
+  "nature_sample_fragment": "Sample fragment",
+  "nature_sem_mount": "SEM Mount",
+  "nature_separated_materials": "Separated Materials",
+  "nature_thick_section": "Thick section",
+  "nature_thin_section": "Thin section"
+}

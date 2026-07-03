@@ -4,6 +4,9 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   plugins: [react()],
+  // lucide-react (and other deps) must resolve the same React instance as the
+  // renderer, or their useContext hooks see a null React.
+  resolve: { dedupe: ["react"] },
   test: {
     browser: {
       provider: playwright(),
