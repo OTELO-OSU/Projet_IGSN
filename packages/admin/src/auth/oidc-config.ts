@@ -15,8 +15,12 @@ export const userManager = new UserManager({
   scope: "openid profile email",
   redirect_uri: window.location.origin + "/",
   post_logout_redirect_uri: window.location.origin + "/",
-  // RFC 7009 revocation on logout (GT-SSO REQ-TOKEN-05).
+  // RFC 7009 revocation on logout (GT-SSO REQ-TOKEN-05). Access token only:
+  // revoking the refresh token makes Keycloak drop the session before the
+  // end_session redirect arrives, which skips the brokered IdP logout and
+  // leaves the IdP SSO session alive. The refresh token dies with the session.
   revokeTokensOnSignout: true,
+  revokeTokenTypes: ["access_token"],
 });
 
 // Strip ?code&state from the URL after Keycloak redirects back.

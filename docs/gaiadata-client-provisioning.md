@@ -58,6 +58,10 @@ Per ADR 0003; this is the "who creates what" to settle:
 - RENATER/eduGAIN Shibboleth broker: signature validation ON, signed
   AuthnRequests, real IdP metadata; register the SP endpoint
   (`.../realms/<realm>/broker/shibboleth/endpoint`) with RENATER.
+- Single logout on that broker (the IdP metadata's SLO endpoint in
+  `singleLogoutServiceUrl`). Without it Keycloak silently skips IdP logout on
+  sign-out and the institution SSO session survives, so the next login
+  re-authenticates without credentials.
 - ORCID broker on the production ORCID app, account auto-creation OFF: ORCID
   links to an existing institution account, never creates one.
 - First-broker-login flow and attribute mappers (email, given/family name).

@@ -91,6 +91,8 @@ services:
       ADMIN_REDIRECT_URI: "https://igsn-admin.${DOMAIN}/*"
       ADMIN_WEB_ORIGIN: "https://igsn-admin.${DOMAIN}"
       SHIBBOLETH_SSO_URL: "https://igsn-idp.${DOMAIN}/simplesaml/saml2/idp/SSOService.php"
+      SHIBBOLETH_SLO_URL: "https://igsn-idp.${DOMAIN}/simplesaml/saml2/idp/SingleLogoutService.php"
+      ORCID_LOGOUT_URL: "https://igsn-auth.${DOMAIN}/realms/mock-orcid/protocol/openid-connect/logout"
       # ORCID brokers to the mock-orcid realm in this same Keycloak. Browser-facing
       # URLs (authorization, broker redirect, issuer) are public; backend calls
       # keycloak reaches over localhost, the same public/internal split as the api.
@@ -109,6 +111,7 @@ services:
     environment:
       SIMPLESAMLPHP_SP_ENTITY_ID: "https://igsn-auth.${DOMAIN}/realms/igsn"
       SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/shibboleth/endpoint"
+      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/shibboleth/endpoint"
       SIMPLESAMLPHP_IDP_BASE_URL: "https://igsn-idp.${DOMAIN}/simplesaml/"
       # Shared with the Keycloak admin password; read by authsources.php.
       KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}

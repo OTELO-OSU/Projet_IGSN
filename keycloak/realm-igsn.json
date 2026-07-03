@@ -74,6 +74,7 @@
       "firstBrokerLoginFlowAlias": "first broker login",
       "config": {
         "singleSignOnServiceUrl": "${SHIBBOLETH_SSO_URL:http://localhost:8081/simplesaml/saml2/idp/SSOService.php}",
+        "singleLogoutServiceUrl": "${SHIBBOLETH_SLO_URL:http://localhost:8081/simplesaml/saml2/idp/SingleLogoutService.php}",
         "nameIDPolicyFormat": "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
         "principalType": "ATTRIBUTE",
         "principalAttribute": "eduPersonPrincipalName",
@@ -94,6 +95,7 @@
         "clientId": "${ORCID_CLIENT_ID:igsn-broker}",
         "clientSecret": "${ORCID_CLIENT_SECRET:mock-orcid-secret}",
         "authorizationUrl": "${ORCID_AUTHORIZATION_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/auth}",
+        "logoutUrl": "${ORCID_LOGOUT_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/logout}",
         "tokenUrl": "${ORCID_TOKEN_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/token}",
         "userInfoUrl": "${ORCID_USERINFO_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/userinfo}",
         "issuer": "${ORCID_ISSUER:http://localhost:8080/realms/mock-orcid}",

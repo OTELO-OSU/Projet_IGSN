@@ -20,6 +20,26 @@ test.describe("authentication", () => {
     await admin.expectApiVerified("Marie Dupont");
   });
 
+  // Signing out must end the whole SSO chain (app + Keycloak + IdP): clicking
+  // sign-in again asks for credentials instead of silently reusing a session.
+  test("a researcher who signed out must re-enter credentials", async ({
+    page,
+  }) => {
+    const admin = adminPage(page);
+    await admin.goto();
+    await admin.signInWithInstitution();
+    await shibbolethLoginPage(page).login("luc.moreau", "password");
+    await keycloakProfilePage(page).completeIfShown(
+      "luc.moreau@univ-lorraine.fr",
+    );
+    await admin.expectSignedIn();
+
+    await admin.signOut();
+    await admin.signInWithInstitution();
+
+    await shibbolethLoginPage(page).expectCredentialsPrompt();
+  });
+
   // ORCID is a link-then-login mechanism, not a cold-start path: a user may
   // authenticate with ORCID, but until the RENATER-authenticated linking feature
   // ships the app denies them access (see docs/adr/0002-production-auth-keycloak.md).
@@ -36,5 +56,11 @@ test.describe("authentication", () => {
     );
 
     await admin.expectNoAccess();
+
+    // Signing out from the no-access screen must also end the ORCID IdP
+    // session: signing in again asks for credentials.
+    await admin.signOut();
+    await admin.signInWithOrcid();
+    await orcidLoginPage(page).expectCredentialsPrompt();
   });
 });

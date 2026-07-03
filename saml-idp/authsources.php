@@ -17,6 +17,7 @@ $users = array(
     'sophie.bernard' => array('Sophie',  'Bernard', 'sbernard'),
     'pierre.durand'  => array('Pierre',  'Durand',  'pdurand'),
     'camille.petit'  => array('Camille', 'Petit',   'cpetit'),
+    'luc.moreau'     => array('Luc',     'Moreau',  'lmoreau'),
 );
 
 $exampleUserpass = array('exampleauth:UserPass');

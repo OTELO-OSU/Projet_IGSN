@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 // The ORCID login page — in dev, the "mock-orcid" Keycloak realm, so it is a
 // standard Keycloak username/password form.
@@ -11,5 +11,8 @@ export function orcidLoginPage(page: Page) {
       await page.getByRole("textbox", { name: /password/i }).fill(password);
       await page.getByRole("button", { name: /sign in/i }).click();
     },
+    // Proves the IdP session ended: it asks for credentials again.
+    expectCredentialsPrompt: () =>
+      expect(page.getByLabel(/username/i)).toBeVisible(),
   };
 }

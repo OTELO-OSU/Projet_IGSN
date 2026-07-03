@@ -11,6 +11,7 @@ export function adminPage(page: Page) {
         .click(),
     signInWithOrcid: () =>
       page.getByRole("button", { name: "Sign in with ORCID" }).click(),
+    signOut: () => page.getByRole("button", { name: "Sign out" }).click(),
     // ORCID cold-start accounts are authenticated but denied app access until
     // ORCID linking ships (see docs/adr/0002-production-auth-keycloak.md).
     expectNoAccess: () =>

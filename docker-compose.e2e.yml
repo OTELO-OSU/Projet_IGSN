@@ -104,6 +104,8 @@ services:
       ADMIN_REDIRECT_URI: http://localhost:4001/*
       ADMIN_WEB_ORIGIN: http://localhost:4001
       SHIBBOLETH_SSO_URL: http://localhost:18081/simplesaml/saml2/idp/SSOService.php
+      SHIBBOLETH_SLO_URL: http://localhost:18081/simplesaml/saml2/idp/SingleLogoutService.php
+      ORCID_LOGOUT_URL: http://localhost:18080/realms/mock-orcid/protocol/openid-connect/logout
       ORCID_BROKER_REDIRECT_URI: http://localhost:18080/realms/igsn/broker/orcid/endpoint
       ORCID_AUTHORIZATION_URL: http://localhost:18080/realms/mock-orcid/protocol/openid-connect/auth
       ORCID_TOKEN_URL: http://localhost:18080/realms/mock-orcid/protocol/openid-connect/token
@@ -122,6 +124,7 @@ services:
     environment:
       SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost:18080/realms/igsn
       SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost:18080/realms/igsn/broker/shibboleth/endpoint
+      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://localhost:18080/realms/igsn/broker/shibboleth/endpoint
       SIMPLESAMLPHP_IDP_BASE_URL: http://localhost:18081/simplesaml/
     volumes:
       - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro

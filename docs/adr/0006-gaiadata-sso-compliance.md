@@ -49,7 +49,10 @@ none`, mock IdPs, the `test` user.
   it and rejects an id_token whose claim differs
   ([REQ-PARAM-00/01](#gt-sso-requirements)).
 - `revokeTokensOnSignout: true`: RFC 7009 revocation on logout
-  ([REQ-TOKEN-05](#gt-sso-requirements)).
+  ([REQ-TOKEN-05](#gt-sso-requirements)). Access token only
+  (`revokeTokenTypes: ["access_token"]`): revoking the refresh token makes
+  Keycloak end the session before the end_session redirect arrives, which
+  skips the brokered IdP logout; the refresh token dies with the session.
 - One module-scope UserManager passed to `AuthProvider` via its
   `userManager` prop, removing the StrictMode duplicate-renew mechanism.
 - Silent renew stops after user inactivity: `VITE_RENEW_IDLE_CUTOFF_MS`,
