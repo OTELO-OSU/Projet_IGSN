@@ -32,16 +32,15 @@ Terraform, or a hardened realm import); we do not ship a prod realm file, to
 avoid drift with the dev one. The required prod configuration is the dev realm
 (`keycloak/realm-igsn.json`) with these deltas:
 
-| Setting                                  | Dev value        | Prod value                |
-| ---------------------------------------- | ---------------- | ------------------------- |
-| realm `sslRequired`                      | `none`           | `external` (default)      |
-| `igsn-admin` `directAccessGrantsEnabled` | `true`           | `false`                   |
-| `igsn-admin` redirect/web-origins        | `localhost:3001` | real admin origin (https) |
-| shibboleth `validateSignature`           | `false`          | `true`                    |
-| shibboleth `wantAuthnRequestsSigned`     | `false`          | `true`                    |
-| shibboleth IdP metadata/cert             | SimpleSAMLphp    | real RENATER/eduGAIN IdP  |
-| orcid endpoints + client                 | mock-orcid realm | production ORCID app      |
-| `test`/`test` user                       | present (admin)  | absent                    |
+| Setting                              | Dev value        | Prod value                |
+| ------------------------------------ | ---------------- | ------------------------- |
+| realm `sslRequired`                  | `none`           | `external` (default)      |
+| `igsn-admin` redirect/web-origins    | `localhost:3001` | real admin origin (https) |
+| shibboleth `validateSignature`       | `false`          | `true`                    |
+| shibboleth `wantAuthnRequestsSigned` | `false`          | `true`                    |
+| shibboleth IdP metadata/cert         | SimpleSAMLphp    | real RENATER/eduGAIN IdP  |
+| orcid endpoints + client             | mock-orcid realm | production ORCID app      |
+| `test`/`test` user                   | present (admin)  | absent                    |
 
 The IdP attribute mappers (email, given/family name), the first-broker-login
 flow, and the `admin` realm role are the same as dev; copy them across.
@@ -116,3 +115,10 @@ Ordered production checklist:
    protected route as real endpoints land.
 10. Admin attaches the access token to API calls: done for `/me`; add 401 /
     silent-renew handling as CRUD lands.
+11. Critical actions (deletions, rights changes, invitations) revalidate the
+    session live via the userinfo guard before executing (REQ-CRIT-01);
+    local JWT validation alone is not enough for them.
+12. If per-user data is ever persisted, propagate IdP account deletion
+    (REQ-USER-01): deactivate the local account on signal, stale-account
+    fail-safe as backstop. Transport (backchannel logout, webhook, polling)
+    per GaiaData's answer.
