@@ -3,6 +3,10 @@
   "enabled": true,
   "sslRequired": "none",
   "registrationAllowed": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
   "roles": {
     "realm": [{ "name": "admin", "description": "IGSN administrator" }]
   },
@@ -13,7 +17,7 @@
       "enabled": true,
       "publicClient": true,
       "standardFlowEnabled": true,
-      "directAccessGrantsEnabled": true,
+      "directAccessGrantsEnabled": false,
       "redirectUris": ["${ADMIN_REDIRECT_URI:http://localhost:3001/*}"],
       "webOrigins": ["${ADMIN_WEB_ORIGIN:http://localhost:3001}"],
       "attributes": {
@@ -31,6 +35,16 @@
             "jsonType.label": "String",
             "id.token.claim": "true",
             "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "igsn-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "igsn-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
           }
         }
       ]
