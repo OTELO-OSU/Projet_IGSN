@@ -105,12 +105,10 @@ them.
 
 ## Consuming the API
 
-Talk to `api` through the domain repository interface, not scattered `fetch`
-calls. Implement the interface once as an HTTP repository (parse each response
-with the domain Zod schema at the boundary, map to the domain result shape) and
-serve it through a React hook backed by context (e.g. `useSampleRepository`), so
-components depend on the contract and tests can inject a fake via the provider.
-The react-query hooks (`useSamples`, `useCreateSample`) call the repository.
+Each entity gets one react-query hook per operation (`useSamples`,
+`useCreateSample`). The hook calls `api` directly through the authed client from
+`useApiClient`, builds the request from the domain types, and parses the
+response with the domain Zod schema at the boundary.
 
 ## Data tables
 
