@@ -22,8 +22,8 @@ type TestJwk = webcrypto.JsonWebKey & { kid: string; alg: string };
 let privateKey: webcrypto.CryptoKey;
 let jwks: { keys: TestJwk[] };
 
-beforeAll(async () => {
-  const pair = await crypto.subtle.generateKey(
+const generateRsaKeyPair = () =>
+  crypto.subtle.generateKey(
     {
       name: "RSASSA-PKCS1-v1_5",
       modulusLength: 2048,
@@ -33,6 +33,9 @@ beforeAll(async () => {
     true,
     ["sign", "verify"],
   );
+
+beforeAll(async () => {
+  const pair = await generateRsaKeyPair();
   privateKey = pair.privateKey;
   const publicJwk = await crypto.subtle.exportKey("jwk", pair.publicKey);
   jwks = { keys: [{ ...publicJwk, kid: KID, alg: "RS256" }] };
@@ -50,12 +53,17 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function mint(claims: Record<string, unknown>): Promise<string> {
+// The header always claims KID so a token minted with another key exercises
+// the signature check, not just a kid lookup miss.
+async function mint(
+  claims: Record<string, unknown>,
+  key: webcrypto.CryptoKey = privateKey,
+): Promise<string> {
   const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT", kid: KID }));
   const payload = b64url(JSON.stringify(claims));
   const signature = await crypto.subtle.sign(
     "RSASSA-PKCS1-v1_5",
-    privateKey,
+    key,
     new TextEncoder().encode(`${header}.${payload}`),
   );
   return `${header}.${payload}.${b64url(new Uint8Array(signature))}`;
@@ -125,30 +133,9 @@ describe("requireAuth", () => {
   });
 
   pgTest("should reject a token signed by an unknown key", async ({ db }) => {
-    const rogue = await crypto.subtle.generateKey(
-      {
-        name: "RSASSA-PKCS1-v1_5",
-        modulusLength: 2048,
-        publicExponent: new Uint8Array([1, 0, 1]),
-        hash: "SHA-256",
-      },
-      true,
-      ["sign", "verify"],
-    );
-    const header = b64url(
-      JSON.stringify({ alg: "RS256", typ: "JWT", kid: KID }),
-    );
-    const payload = b64url(JSON.stringify(validClaims()));
-    const signature = await crypto.subtle.sign(
-      "RSASSA-PKCS1-v1_5",
-      rogue.privateKey,
-      new TextEncoder().encode(`${header}.${payload}`),
-    );
+    const rogue = await generateRsaKeyPair();
 
-    const res = await getMe(
-      db,
-      `${header}.${payload}.${b64url(new Uint8Array(signature))}`,
-    );
+    const res = await getMe(db, await mint(validClaims(), rogue.privateKey));
 
     expect(res.status).toBe(401);
   });
