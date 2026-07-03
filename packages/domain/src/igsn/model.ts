@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-import { normalizeIgsn } from "./helper";
-
 const IGSN_PATTERN = /^10\.\d{4,9}\/[-._;()/:a-z0-9]+$/i;
 
 const INVALID_IGSN_MESSAGE =
@@ -11,6 +9,6 @@ export const igsnSchema = z
   .string()
   .trim()
   .regex(IGSN_PATTERN, INVALID_IGSN_MESSAGE)
-  .transform(normalizeIgsn);
+  .toUpperCase();
 
 export type Igsn = z.infer<typeof igsnSchema>;
