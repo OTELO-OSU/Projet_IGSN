@@ -68,7 +68,11 @@ function EditSamplePage() {
       ) : null}
 
       <SampleForm
-        defaultValues={{ name: query.data.name, nature: query.data.nature }}
+        defaultValues={{
+          name: query.data.name,
+          nature: query.data.nature,
+          type: query.data.type,
+        }}
         igsn={query.data.igsn}
         published={query.data.published}
         submitLabel={m.action_save()}

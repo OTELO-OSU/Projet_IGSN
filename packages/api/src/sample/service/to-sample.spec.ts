@@ -6,6 +6,7 @@ const row = {
   id: "018f4d3a-1f2b-7c00-8000-000000000000",
   name: "Grès de Fontainebleau",
   nature: "rock_powder",
+  type: "dredge",
   igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
   published: false,
   created_at: new Date("2026-01-01T00:00:00.000Z"),
@@ -21,6 +22,7 @@ describe("toSample", () => {
       id: "018f4d3a-1f2b-7c00-8000-000000000000",
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
+      type: "dredge",
       igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
       published: false,
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -30,6 +32,10 @@ describe("toSample", () => {
 
   it("should throw when the nature is not a known value", () => {
     expect(() => toSample({ ...row, nature: "inconnu" })).toThrow();
+  });
+
+  it("should throw when the type is not a known taxonomy path", () => {
+    expect(() => toSample({ ...row, type: "half_round" })).toThrow();
   });
 
   it("should throw when the name is empty", () => {

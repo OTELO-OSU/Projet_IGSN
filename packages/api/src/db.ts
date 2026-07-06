@@ -8,6 +8,8 @@ type SampleTable = {
   id: string;
   name: string;
   nature: string;
+  // Taxonomy path (e.g. "core.section"); null until classified.
+  type: string | null;
   // Null until the sample is published; then derived from the id with generateIgsnSuffix.
   igsn: string | null;
   published: Generated<boolean>;

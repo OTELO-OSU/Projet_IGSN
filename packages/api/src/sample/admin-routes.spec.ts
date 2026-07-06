@@ -25,7 +25,13 @@ describe("admin sample routes", () => {
     const client = testClient(createApp(db));
     // Act
     const res = await client.admin.samples.$post(
-      { json: { name: "Basalte du Massif Central", nature: "thin_section" } },
+      {
+        json: {
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: null,
+        },
+      },
       { headers: authHeader },
     );
     // Assert
@@ -39,7 +45,13 @@ describe("admin sample routes", () => {
     // Arrange
     const client = testClient(createApp(db));
     await client.admin.samples.$post(
-      { json: { name: "Grès de Fontainebleau", nature: "rock_powder" } },
+      {
+        json: {
+          name: "Grès de Fontainebleau",
+          nature: "rock_powder",
+          type: null,
+        },
+      },
       { headers: authHeader },
     );
     // Act
@@ -59,7 +71,13 @@ describe("admin sample routes", () => {
     // Arrange
     const client = testClient(createApp(db));
     const created = await client.admin.samples.$post(
-      { json: { name: "Basalte du Massif Central", nature: "thin_section" } },
+      {
+        json: {
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: null,
+        },
+      },
       { headers: authHeader },
     );
     const { data } = sampleResponseSchema.parse(await created.json());
@@ -89,7 +107,13 @@ describe("admin sample routes", () => {
     // Arrange
     const client = testClient(createApp(db));
     const created = await client.admin.samples.$post(
-      { json: { name: "Basalte du Massif Central", nature: "thin_section" } },
+      {
+        json: {
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: null,
+        },
+      },
       { headers: authHeader },
     );
     const { data } = sampleResponseSchema.parse(await created.json());
@@ -97,7 +121,11 @@ describe("admin sample routes", () => {
     const res = await client.admin.samples[":id"].$put(
       {
         param: { id: data.id },
-        json: { name: "Grès de Fontainebleau", nature: "rock_powder" },
+        json: {
+          name: "Grès de Fontainebleau",
+          nature: "rock_powder",
+          type: null,
+        },
       },
       { headers: authHeader },
     );
@@ -117,7 +145,7 @@ describe("admin sample routes", () => {
     const res = await testClient(createApp(db)).admin.samples[":id"].$put(
       {
         param: { id: "01890a5d-ac96-774b-bcce-b302099a8057" },
-        json: { name: "Grès", nature: "rock_powder" },
+        json: { name: "Grès", nature: "rock_powder", type: null },
       },
       { headers: authHeader },
     );
@@ -129,7 +157,13 @@ describe("admin sample routes", () => {
     // Arrange
     const client = testClient(createApp(db));
     const created = await client.admin.samples.$post(
-      { json: { name: "Basalte du Massif Central", nature: "thin_section" } },
+      {
+        json: {
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: null,
+        },
+      },
       { headers: authHeader },
     );
     const { data } = sampleResponseSchema.parse(await created.json());
@@ -171,6 +205,27 @@ describe("admin sample routes", () => {
       const res = await postSample(createApp(db), {
         name: "Grès",
         nature: "Roche inconnue",
+      });
+      expect(res.status).toBe(400);
+    });
+
+    pgTest("should create a sample with a type", async ({ db }) => {
+      const res = await postSample(createApp(db), {
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: "core.section",
+      });
+      expect(res.status).toBe(201);
+      expect(await res.json()).toMatchObject({
+        data: { type: "core.section" },
+      });
+    });
+
+    pgTest("should reject an unknown type with 400", async ({ db }) => {
+      const res = await postSample(createApp(db), {
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: "half_round",
       });
       expect(res.status).toBe(400);
     });

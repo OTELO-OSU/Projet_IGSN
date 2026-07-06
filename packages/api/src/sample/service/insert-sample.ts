@@ -13,7 +13,12 @@ export async function insertSample(
 ): Promise<Sample> {
   const row = await db
     .insertInto("sample")
-    .values({ id: uuidv7(), name: input.name, nature: input.nature })
+    .values({
+      id: uuidv7(),
+      name: input.name,
+      nature: input.nature,
+      type: input.type,
+    })
     .returningAll()
     .executeTakeFirstOrThrow();
   return toSample(row);

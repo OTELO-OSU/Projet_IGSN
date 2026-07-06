@@ -5,6 +5,7 @@ const validSample = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Basalte du Massif Central",
   nature: "thin_section",
+  type: "core.section",
   igsn: null,
   published: false,
   createdAt: "2026-07-02T10:00:00.000Z",
@@ -20,11 +21,19 @@ describe("sampleSchema", () => {
       id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
       name: "Basalte du Massif Central",
       nature: "thin_section",
+      type: "core.section",
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
       updatedAt: new Date("2026-07-02T10:00:00.000Z"),
     });
+  });
+
+  it("should accept a null type (not classified yet)", () => {
+    // Act
+    const result = sampleSchema.safeParse({ ...validSample, type: null });
+    // Assert
+    expect(result.success).toBe(true);
   });
 
   it.each([
@@ -34,6 +43,7 @@ describe("sampleSchema", () => {
     { ...validSample, id: "not-a-uuid" },
     { ...validSample, published: "yes" },
     { ...validSample, igsn: "not-an-igsn" },
+    { ...validSample, type: "half_round" },
   ])("should reject an invalid sample #%#", (input) => {
     // Arrange / Act
     const result = sampleSchema.safeParse(input);
@@ -62,7 +72,36 @@ describe("createSampleSchema", () => {
       nature,
     });
     // Assert
-    expect(result).toEqual({ name: "Grès de Fontainebleau", nature });
+    expect(result).toEqual({
+      name: "Grès de Fontainebleau",
+      nature,
+      type: null,
+    });
+  });
+
+  it("should accept an explicit type", () => {
+    // Arrange / Act
+    const result = createSampleSchema.parse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      type: "dredge",
+    });
+    // Assert
+    expect(result).toEqual({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      type: "dredge",
+    });
+  });
+
+  it("should default a missing type to null", () => {
+    // Arrange / Act
+    const result = createSampleSchema.parse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+    });
+    // Assert
+    expect(result.type).toBeNull();
   });
 
   it("should trim the name", () => {
@@ -75,6 +114,7 @@ describe("createSampleSchema", () => {
     expect(result).toEqual({
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
+      type: null,
     });
   });
 
@@ -82,6 +122,7 @@ describe("createSampleSchema", () => {
     { name: "", nature: "rock_powder" },
     { name: "Grès", nature: "Roche inconnue" },
     { nature: "rock_powder" },
+    { name: "Grès", nature: "rock_powder", type: "half_round" },
   ])("should reject invalid create input #%#", (input) => {
     // Arrange / Act
     const result = createSampleSchema.safeParse(input);

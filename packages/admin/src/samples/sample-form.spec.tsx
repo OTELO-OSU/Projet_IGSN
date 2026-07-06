@@ -33,6 +33,7 @@ describe("SampleForm", () => {
       expect(onSubmit).toHaveBeenCalledWith({
         name: "Basalte du Massif Central",
         nature: "thin_section",
+        type: null,
       }),
     );
   });
@@ -46,6 +47,7 @@ describe("SampleForm", () => {
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
+          type: "core.section",
         }}
         submitLabel="Save"
       />,
@@ -57,10 +59,12 @@ describe("SampleForm", () => {
 
     await screen.getByRole("button", { name: "Save" }).click();
 
+    // The form has no type field yet; saving must keep the existing type.
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         name: "Basalte du Massif Central",
         nature: "thin_section",
+        type: "core.section",
       }),
     );
   });
@@ -86,6 +90,7 @@ describe("SampleForm", () => {
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
+          type: null,
         }}
         submitLabel="Save"
       />,
@@ -97,6 +102,7 @@ describe("SampleForm", () => {
       expect(onValuesChange).toHaveBeenLastCalledWith({
         name: "Grès de Fontainebleau",
         nature: "thin_section",
+        type: null,
       }),
     );
   });

@@ -47,6 +47,8 @@ export function SampleForm({
     defaultValues: {
       name: defaultValues?.name ?? "",
       nature: defaultValues?.nature ?? ("" as Nature | ""),
+      // Not editable here yet; carried through so saving keeps the value.
+      type: defaultValues?.type ?? null,
     },
     listeners: {
       onChange: ({ formApi }) => onValuesChange?.(formApi.state.values),

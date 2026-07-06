@@ -10,6 +10,7 @@ export function toSample(row: Selectable<DB["sample"]>): Sample {
     id: row.id,
     name: row.name,
     nature: row.nature,
+    type: row.type,
     igsn: row.igsn,
     published: row.published,
     createdAt: row.created_at,

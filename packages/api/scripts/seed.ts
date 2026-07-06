@@ -44,26 +44,31 @@ export const SEED_SAMPLES: SeedSample[] = [
     id: "00000000-0000-7000-8000-000000000001",
     name: "Fontainebleau Sandstone",
     nature: "rock_powder",
+    type: "dredge",
   },
   {
     id: "00000000-0000-7000-8000-000000000002",
     name: "Massif Central Basalt",
     nature: "hand_sample",
+    type: "core.section",
   },
   {
     id: "00000000-0000-7000-8000-000000000003",
     name: "Brittany Granite",
     nature: "thin_section",
+    type: "core.piece",
   },
   {
     id: "00000000-0000-7000-8000-000000000004",
     name: "Jura Limestone",
     nature: "rock_chips",
+    type: "dredge",
   },
   {
     id: "00000000-0000-7000-8000-000000000005",
     name: "Ardennes Schist",
     nature: "polished_section",
+    type: null,
   },
   // Published, so they show in the public frontend. Ids reused from the tests;
   // the igsn is derived from the id, matching how publish generates it.
@@ -71,6 +76,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     id: "01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69",
     name: "Basalt 42",
     nature: "hand_sample",
+    type: null,
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69"),
     published: true,
   },
@@ -78,6 +84,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     id: "01890a5d-ac96-774b-bcce-b302099a8057",
     name: "Granite 7",
     nature: "thin_section",
+    type: null,
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),
     published: true,
   },

@@ -11,6 +11,7 @@ describe("getPublishedSampleByIgsn", () => {
     const created = await insertSample(db, {
       name: "Basalte du Massif Central",
       nature: "thin_section",
+      type: null,
     });
     const published = await publishSample(db, created.id);
     // Act
