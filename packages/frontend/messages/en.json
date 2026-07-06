@@ -3,6 +3,9 @@
   "app_title": "IGSN",
   "app_subtitle": "Sample Library",
   "sign_in": "Sign in",
+  "samples_title": "Samples",
+  "sample_section_sample": "Sample",
+  "sample_field_nature": "Nature",
   "footer_logo_republique_francaise": "République Française",
   "footer_logo_gaia_data": "Gaia Data"
 }

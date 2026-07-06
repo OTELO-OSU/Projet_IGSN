@@ -1,0 +1,80 @@
+import { listSamples } from "#/domain/samples/client/list-samples.ts";
+
+const iso = "2026-01-02T03:04:05.000Z";
+
+const sampleJson = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+  name: "Basalt 42",
+  nature: "hand_sample",
+  igsn: "0123456789ABCDEFGHJKMNPQRS",
+  published: true,
+  createdAt: iso,
+  updatedAt: iso,
+};
+
+function stubFetch(
+  body: unknown,
+  status = 200,
+): { fetch: typeof fetch; lastUrl: () => string | undefined } {
+  let seen: string | undefined;
+  const fetchFn: typeof fetch = async (input) => {
+    seen =
+      input instanceof URL
+        ? input.href
+        : typeof input === "string"
+          ? input
+          : input.url;
+    return new Response(JSON.stringify(body), { status });
+  };
+  return { fetch: fetchFn, lastUrl: () => seen };
+}
+
+describe("listSamples", () => {
+  it("should parse the response into data and total", async () => {
+    const { fetch } = stubFetch({ data: [sampleJson], meta: { total: 7 } });
+
+    const result = await listSamples({ page: 1, perPage: 25 }, fetch);
+
+    expect(result).toEqual({
+      total: 7,
+      data: [
+        {
+          id: sampleJson.id,
+          name: "Basalt 42",
+          nature: "hand_sample",
+          igsn: "0123456789ABCDEFGHJKMNPQRS",
+          published: true,
+          createdAt: new Date(iso),
+          updatedAt: new Date(iso),
+        },
+      ],
+    });
+  });
+
+  it("should send page and perPage as query params", async () => {
+    const { fetch, lastUrl } = stubFetch({ data: [], meta: { total: 0 } });
+
+    await listSamples({ page: 3, perPage: 50 }, fetch);
+
+    const url = new URL(lastUrl() ?? "");
+    expect(url.pathname).toBe("/samples");
+    expect(url.searchParams.get("page")).toBe("3");
+    expect(url.searchParams.get("perPage")).toBe("50");
+  });
+
+  it("should throw on a non-2xx response", async () => {
+    const { fetch } = stubFetch({}, 500);
+
+    await expect(listSamples({ page: 1, perPage: 25 }, fetch)).rejects.toThrow(
+      /500/,
+    );
+  });
+
+  it("should throw when the response shape is invalid", async () => {
+    const { fetch } = stubFetch({ data: [{ id: "not-a-uuid" }] });
+
+    await expect(
+      listSamples({ page: 1, perPage: 25 }, fetch),
+    ).rejects.toThrow();
+  });
+});
