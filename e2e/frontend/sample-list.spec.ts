@@ -6,8 +6,12 @@ test.describe("sample list", () => {
     const list = sampleListPage(page);
     await list.goto();
 
+    // The public list carries only published samples, each linked by its IGSN.
     for (const sample of samples) {
-      await list.expectSampleLink(sample.name, sample.id);
+      if (!sample.published || sample.igsn === null) {
+        continue;
+      }
+      await list.expectSampleLink(sample.name, sample.igsn);
     }
   });
 });

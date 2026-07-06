@@ -4,10 +4,10 @@ import { frontendUrl } from "../urls";
 
 export function sampleDetailPage(page: Page) {
   return {
-    goto: (id: string) => page.goto(`${frontendUrl}/samples/${id}`),
-    expectSample: async (name: string, id: string) => {
+    goto: (igsn: string) => page.goto(`${frontendUrl}/samples/${igsn}`),
+    expectSample: async (name: string, igsn: string) => {
       await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
-      await expect(page.getByText(id)).toBeVisible();
+      await expect(page.getByText(igsn)).toBeVisible();
     },
     expectNature: async (label: string) => {
       await expect(page.getByText("Nature")).toBeVisible();

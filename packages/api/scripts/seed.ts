@@ -34,8 +34,9 @@ type SeedSample = CreateSample & {
 // Shared seed data, reused by the E2E reset (see scripts/reset-and-seed.ts), so
 // kept English per the i18n testing rule. Ids are static (not generated) so
 // tests and future features can reference a seed row by a known id; they stay
-// sorted like the app's uuidv7 keys. The first row is `rock_powder`: the
-// frontend detail E2E asserts samples[0]'s nature. Run this script directly
+// sorted like the app's uuidv7 keys. Only the published rows below are visible
+// on the public frontend; the frontend detail E2E asserts the first published
+// row's nature (`hand_sample`). Run this script directly
 // (`pnpm -F @projet-igsn/api seed`) to populate the local dev database;
 // importing this module does not seed.
 export const SEED_SAMPLES: SeedSample[] = [
