@@ -88,6 +88,15 @@ describe("EditSamplePage", () => {
       .toBeDisabled();
   });
 
+  it("should disable Publish while a type edit is unsaved", async () => {
+    const screen = await renderEditPage();
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("option", { name: "Dredge" }).click();
+    await expect
+      .element(screen.getByRole("button", { name: "Publish" }))
+      .toBeDisabled();
+  });
+
   it("should show the publication status as a read-only field", async () => {
     const screen = await renderEditPage();
     const field = screen.getByRole("switch", { name: "Published" });

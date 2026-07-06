@@ -51,7 +51,9 @@ function SelectTrigger({
 function SelectContent({
   className,
   children,
-  position = "item-aligned",
+  // Upstream shadcn default. Item-aligned content opens over the trigger and
+  // swallows the click's pointerup, closing the select again under load.
+  position = "popper",
   align = "center",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {

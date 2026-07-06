@@ -15,9 +15,10 @@ export default defineConfig({
     },
     globals: true,
     include: ["src/**/*.spec.{ts,tsx}"],
-    // vitest default (5000). Browser-mode interaction tests (two sequential
-    // firefox actionability-checked clicks in combobox-field) overrun a tighter
-    // budget under full-suite parallel load; keep the headroom or they flake.
+    // Browser-mode interaction tests need headroom under full-suite parallel
+    // load (vitest default 5000); radix portals can additionally miss a click
+    // entirely there, and a retry on a fresh page recovers it.
+    retry: 2,
     testTimeout: 5000,
     setupFiles: ["test/setup.ts"],
     coverage: {

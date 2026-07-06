@@ -21,6 +21,7 @@ function EditSamplePage() {
   const [formValues, setFormValues] = useState<{
     name: string;
     nature: string;
+    type: string | null;
   } | null>(null);
 
   if (query.isPending) {
@@ -38,7 +39,8 @@ function EditSamplePage() {
   const hasUnsavedChanges =
     formValues !== null &&
     (formValues.name !== query.data.name ||
-      formValues.nature !== query.data.nature);
+      formValues.nature !== query.data.nature ||
+      formValues.type !== query.data.type);
 
   return (
     <>
