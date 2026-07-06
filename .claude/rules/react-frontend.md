@@ -23,6 +23,15 @@ measured case the compiler can't cover (leave a comment why).
 - Ask only for the props a component uses. Pass the specific fields it needs
   (e.g. `title` and `description`), not a whole object it barely reads.
 
+## App shell
+
+Each app owns one shared shell in the root route: a `<header>` landmark and a
+`<main>` landmark wrapping the route `Outlet`. Keep `<main>` full-bleed
+(`w-full`); each page owns its own width wrapper (`mx-auto w-full max-w-6xl`),
+so a page can also go edge-to-edge (a full-bleed hero) when its design needs it.
+Pages render inside `<main>` and MUST NOT declare their own `<header>`/`<main>`;
+one of each landmark per document.
+
 ## State management
 
 Treat each concern separately:

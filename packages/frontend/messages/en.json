@@ -1,0 +1,8 @@
+{
+  "$schema": "https://inlang.com/schema/inlang-message-format",
+  "app_title": "IGSN",
+  "app_subtitle": "Sample Library",
+  "sign_in": "Sign in",
+  "footer_logo_republique_francaise": "République Française",
+  "footer_logo_gaia_data": "Gaia Data"
+}

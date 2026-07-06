@@ -1,5 +1,8 @@
 pnpm -F @projet-igsn/frontend generate-routes
+pnpm -F @projet-igsn/frontend compile-i18n
+
 pnpm -F @projet-igsn/admin generate-routes
+pnpm -F @projet-igsn/admin compile-i18n
 
 pnpm lint:apply
 pnpm fmt:apply

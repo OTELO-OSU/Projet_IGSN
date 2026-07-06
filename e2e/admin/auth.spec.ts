@@ -1,9 +1,9 @@
 import { test } from "@playwright/test";
 
-import { adminPage } from "./support/admin.page";
-import { keycloakProfilePage } from "./support/keycloak-profile.page";
-import { orcidLoginPage } from "./support/orcid-login.page";
-import { shibbolethLoginPage } from "./support/shibboleth-login.page";
+import { adminPage } from "../support/admin/admin.page";
+import { keycloakProfilePage } from "../support/admin/keycloak-profile.page";
+import { orcidLoginPage } from "../support/admin/orcid-login.page";
+import { shibbolethLoginPage } from "../support/admin/shibboleth-login.page";
 
 test.describe("authentication", () => {
   test("a researcher signs in through their institution", async ({ page }) => {

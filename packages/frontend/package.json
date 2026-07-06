@@ -8,11 +8,13 @@
   "scripts": {
     "dev": "vite dev",
     "generate-routes": "tsr generate",
+    "compile-i18n": "node scripts/compile-i18n.ts",
     "build": "vite build",
     "start": "node .output/server/index.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@inlang/paraglide-js": "catalog:",
     "@projet-igsn/design-system": "workspace:*",
     "@tanstack/react-devtools": "catalog:",
     "@tanstack/react-form": "catalog:",

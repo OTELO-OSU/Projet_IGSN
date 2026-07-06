@@ -28,7 +28,9 @@ services:
       context: .
       dockerfile: ./packages/api/Dockerfile
       target: prod
-    command: ["pnpm", "-F", "@projet-igsn/api", "migrate"]
+    # Run node directly (like the api CMD and CD), not `pnpm run`: prod runs as
+    # USER node but /app is root-owned, and `pnpm run` writes a temp file there.
+    command: ["node", "migrate.ts"]
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
@@ -56,7 +58,7 @@ services:
       # compose network from the keycloak service (same 18080 port, see below).
       OIDC_ISSUER: http://localhost:18080/realms/igsn
       OIDC_JWKS_URI: http://keycloak:18080/realms/igsn/protocol/openid-connect/certs
-      CORS_ORIGINS: http://localhost:4001
+      CORS_ORIGINS: http://localhost:4001,http://localhost:4000
     depends_on:
       postgres:
         condition: service_healthy
@@ -86,9 +88,14 @@ services:
       context: .
       dockerfile: ./packages/frontend/Dockerfile
       target: prod
-    # Nitro binds $PORT; listen on 3000 to match the mapping.
+      args:
+        # Browser-side: baked into the bundle, host-facing port-shifted api.
+        VITE_API_URL: http://localhost:4002
+    # Nitro binds $PORT; listen on 3000 to match the mapping. SSR reaches the api
+    # over the compose network (server-to-server, no CORS).
     environment:
       PORT: "3000"
+      API_URL: http://api:3002
     ports:
       - "4000:3000"
 

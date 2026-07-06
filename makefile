@@ -4,11 +4,11 @@ default: help
 # project so it runs beside `make dev`). Bring it up, wait until it answers, and
 # tear it down (incl. the throwaway pg volume) when the calling recipe exits.
 E2E_COMPOSE = docker compose -p igsn-e2e -f docker-compose.e2e.yml
-E2E_URL = ADMIN_URL=http://localhost:4001
+E2E_URL = ADMIN_URL=http://localhost:4001 FRONTEND_URL=http://localhost:4000
 E2E_UP = trap '$(E2E_COMPOSE) down -v' EXIT; \
 	$(E2E_COMPOSE) up -d --build && \
-	echo "waiting for admin, keycloak and saml-idp..." && \
-	timeout 300 sh -c 'until curl -sfo /dev/null http://localhost:4001 && curl -sfo /dev/null http://localhost:18080/realms/igsn/.well-known/openid-configuration && curl -sfo /dev/null http://localhost:18081/simplesaml/saml2/idp/metadata.php; do sleep 2; done'
+	echo "waiting for admin, frontend, keycloak and saml-idp..." && \
+	timeout 300 sh -c 'until curl -sfo /dev/null http://localhost:4001 && curl -sfo /dev/null http://localhost:4000 && curl -sfo /dev/null http://localhost:18080/realms/igsn/.well-known/openid-configuration && curl -sfo /dev/null http://localhost:18081/simplesaml/saml2/idp/metadata.php; do sleep 2; done'
 
 help:									## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
