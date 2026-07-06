@@ -13,4 +13,7 @@ export type ListSamplesResult = {
 export type SampleRepository = {
   list(params: ListSamplesParams): Promise<ListSamplesResult>;
   create(input: CreateSample): Promise<Sample>;
+  findById(id: string): Promise<Sample | null>;
+  update(id: string, input: CreateSample): Promise<Sample | null>;
+  publish(id: string): Promise<Sample | null>;
 };

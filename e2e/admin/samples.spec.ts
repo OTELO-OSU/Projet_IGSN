@@ -1,6 +1,7 @@
 import { test } from "@playwright/test";
 
 import { sampleCreatePage } from "../support/admin/sample-create.page";
+import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 
@@ -25,10 +26,16 @@ test.describe("samples", () => {
     const name = `Basalte du Massif Central ${Date.now()}`;
     await create.fillName(name);
     await create.selectNature("Thin section");
-    await create.publish();
+    await create.submit();
 
-    // Publishing returns to the list, where the new sample tops the table
-    // (ordered by last modified).
+    // Creating opens the new sample for further editing.
+    const edit = sampleEditPage(page);
+    await edit.expectVisible();
+    await edit.expectName(name);
+
+    // Back on the list, the new sample tops the table (ordered by last
+    // modified).
+    await edit.goToList();
     await list.expectVisible();
     await list.expectSampleRow(name);
   });
@@ -40,7 +47,7 @@ test.describe("samples", () => {
     await list.goToCreate();
 
     const create = sampleCreatePage(page);
-    await create.publish();
+    await create.submit();
 
     await create.expectNameRequired();
     await create.expectVisible();

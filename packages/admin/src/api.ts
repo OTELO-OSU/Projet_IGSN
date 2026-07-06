@@ -1,8 +1,5 @@
+import { API_URL } from "./api-url.ts";
 import { userManager } from "./auth/oidc-config.ts";
-
-// The api base URL is baked at build time (Vite). Defaults to the dev api; e2e
-// and prod override it via VITE_API_URL.
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3002";
 
 export type Me = {
   sub: string;
@@ -12,7 +9,7 @@ export type Me = {
 };
 
 const getMe = (token: string) =>
-  fetch(`${apiUrl}/me`, { headers: { Authorization: `Bearer ${token}` } });
+  fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}` } });
 
 // Calls the protected /me route with the Keycloak access token. On 401 the
 // session is renewed once via the refresh token and the call retried; if the

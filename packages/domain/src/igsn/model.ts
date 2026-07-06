@@ -1,16 +1,15 @@
 import { z } from "zod";
 
-import { normalizeIgsn } from "./helper";
+// Crockford base32, as produced by generateIgsnSuffix: no I, L, O, U.
+const IGSN_SUFFIX_PATTERN = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
 
-const IGSN_PATTERN = /^10\.\d{4,9}\/[-._;()/:a-z0-9]+$/i;
+const INVALID_IGSN_SUFFIX_MESSAGE =
+  "Invalid IGSN suffix: expected 26 Crockford base32 characters";
 
-const INVALID_IGSN_MESSAGE =
-  "Invalid IGSN: expected a DOI like 10.<registrant>/<suffix>";
-
-export const igsnSchema = z
+export const igsnSuffixSchema = z
   .string()
   .trim()
-  .regex(IGSN_PATTERN, INVALID_IGSN_MESSAGE)
-  .transform(normalizeIgsn);
+  .regex(IGSN_SUFFIX_PATTERN, INVALID_IGSN_SUFFIX_MESSAGE)
+  .toUpperCase();
 
-export type Igsn = z.infer<typeof igsnSchema>;
+export type IgsnSuffix = z.infer<typeof igsnSuffixSchema>;

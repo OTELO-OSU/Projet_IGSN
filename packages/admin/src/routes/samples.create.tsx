@@ -21,11 +21,16 @@ function CreateSamplePage() {
       ) : null}
 
       <SampleForm
+        submitLabel={m.action_create()}
         isPending={createSample.isPending}
         onCancel={() => navigate({ to: "/" })}
         onSubmit={(value) =>
           createSample.mutate(value, {
-            onSuccess: () => navigate({ to: "/" }),
+            onSuccess: (sample) =>
+              navigate({
+                to: "/samples/$sampleId",
+                params: { sampleId: sample.id },
+              }),
           })
         }
       />

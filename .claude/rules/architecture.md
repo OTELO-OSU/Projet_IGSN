@@ -27,8 +27,9 @@ One folder per entity, one concern per file, kebab-case folder. No barrel/index.
 - `<entity>/<model>-validator.ts`: request validators shared by more than one
   package (e.g. `sample-validator.ts` holds `createSampleSchema`). `model.ts`
   owns the persisted entity; input-shape validators live here.
-- `<entity>/helper.ts`: shared logic that is neither a model nor a repository
-  (e.g. `igsn/helper.ts` holds `normalizeIgsn`, used by `igsn/model.ts`).
+- `<entity>/<function>.ts`: shared logic that is neither a model nor a
+  repository, one function per file (e.g. `igsn/generate-igsn-suffix.ts` holds
+  `generateIgsnSuffix`).
 
 Relative imports inside `domain` MUST carry the explicit `.ts` extension
 (`./model.ts`), since `api` resolves this source under `nodenext` and Node's

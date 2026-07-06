@@ -1,37 +1,44 @@
-import { igsnSchema } from "./model";
+import { generateIgsnSuffix } from "./generate-igsn-suffix.ts";
+import { igsnSuffixSchema } from "./model.ts";
 
-describe("igsnSchema", () => {
+describe("igsnSuffixSchema", () => {
   it.each([
-    "10.60510/IGSN123",
-    "10.58052/IECUR0097",
-    "10.1234/abc-._;()/:XYZ",
-    "  10.60510/igsn123  ",
-  ])("should accept the valid IGSN %s", (input) => {
+    "01K072TVWVFK5A1RRZ5MY4PPK9",
+    "01k072tvwvfk5a1rrz5my4ppk9",
+    "  01K072TVWVFK5A1RRZ5MY4PPK9  ",
+  ])("should accept the valid suffix %s", (input) => {
     // Arrange / Act
-    const result = igsnSchema.safeParse(input);
+    const result = igsnSuffixSchema.safeParse(input);
     // Assert
     expect(result.success).toBe(true);
   });
 
   it.each([
     "",
-    "IGSN123",
-    "10./abc",
-    "10.60510",
-    "11.60510/abc",
-    "10.60510/",
-    "10.60510/ab cd",
-  ])("should reject the invalid IGSN %s", (input) => {
+    "01K072TVWVFK5A1RRZ5MY4PPK", // 25 chars
+    "01K072TVWVFK5A1RRZ5MY4PPK99", // 27 chars
+    "01L072TVWVFK5A1RRZ5MY4PPK9", // L excluded from Crockford base32
+    "01K072TVWVFK-A1RRZ5MY4PPK9",
+  ])("should reject the invalid suffix %s", (input) => {
     // Arrange / Act
-    const result = igsnSchema.safeParse(input);
+    const result = igsnSuffixSchema.safeParse(input);
     // Assert
     expect(result.success).toBe(false);
   });
 
-  it("should normalize a parsed IGSN to canonical uppercase", () => {
+  it("should normalize a parsed suffix to uppercase", () => {
     // Arrange / Act
-    const result = igsnSchema.parse("  10.60510/igsn123  ");
+    const result = igsnSuffixSchema.parse("  01k072tvwvfk5a1rrz5my4ppk9  ");
     // Assert
-    expect(result).toBe("10.60510/IGSN123");
+    expect(result).toBe("01K072TVWVFK5A1RRZ5MY4PPK9");
+  });
+
+  it("should accept a suffix produced by generateIgsnSuffix", () => {
+    // Arrange
+    const suffix = generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69");
+    // Act
+    const result = igsnSuffixSchema.safeParse(suffix);
+    // Assert
+    expect(result.success).toBe(true);
   });
 });

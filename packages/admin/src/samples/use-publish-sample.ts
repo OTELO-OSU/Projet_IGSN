@@ -1,23 +1,19 @@
-import type { CreateSample } from "@projet-igsn/domain/sample/sample";
-
 import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useCreateSample() {
+export function usePublishSample(id: string) {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: CreateSample) => {
-      const res = await apiFetch(new URL("samples", API_URL), {
+    mutationFn: async () => {
+      const res = await apiFetch(new URL(`samples/${id}/publish`, API_URL), {
         method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(input),
       });
       if (!res.ok) {
-        throw new Error(`Failed to create sample (${res.status})`);
+        throw new Error(`Failed to publish sample (${res.status})`);
       }
       return sampleResponseSchema.parse(await res.json()).data;
     },

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { igsnSuffixSchema } from "../igsn/model.ts";
 import { natureSchema } from "./nature.ts";
 
 export const nameSchema = z.string().trim().min(1);
@@ -8,6 +9,9 @@ export const sampleSchema = z.object({
   id: z.uuid(),
   name: nameSchema,
   nature: natureSchema,
+  // Null until the sample is published.
+  igsn: igsnSuffixSchema.nullable(),
+  published: z.boolean(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });

@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@projet-igsn/design-system/components/ui/table";
 import { formatDate } from "@projet-igsn/design-system/lib/format-date";
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
   flexRender,
@@ -23,7 +24,17 @@ const columns: ColumnDef<Sample>[] = [
   {
     accessorKey: "name",
     header: () => m.column_name(),
-    cell: ({ row }) => row.original.name,
+    // The row's onClick is mouse-only; this link is the keyboard and
+    // assistive-tech path to the same page.
+    cell: ({ row }) => (
+      <Link
+        to="/samples/$sampleId"
+        params={{ sampleId: row.original.id }}
+        className="hover:underline"
+      >
+        {row.original.name}
+      </Link>
+    ),
   },
   {
     accessorKey: "nature",
@@ -38,6 +49,7 @@ const columns: ColumnDef<Sample>[] = [
 ];
 
 export function SampleTable({ samples }: { samples: Sample[] }) {
+  const navigate = useNavigate();
   const table = useReactTable({
     data: samples,
     columns,
@@ -72,7 +84,16 @@ export function SampleTable({ samples }: { samples: Sample[] }) {
           </TableRow>
         ) : (
           table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow
+              key={row.id}
+              className="cursor-pointer"
+              onClick={() =>
+                navigate({
+                  to: "/samples/$sampleId",
+                  params: { sampleId: row.original.id },
+                })
+              }
+            >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
