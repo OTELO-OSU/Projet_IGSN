@@ -5,43 +5,34 @@ import { describe, expect } from "vitest";
 import { createApp } from "../app.ts";
 import { pgTest } from "../tests/pg-test.ts";
 
-// requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization
-// header, so these tests just send (or omit) it.
+// Seed samples via the authenticated admin routes so the public reads have data.
 const authHeader = { Authorization: "Bearer test-token" };
 
-// Invalid payloads are sent through the raw request (the typed RPC client would
-// reject them at compile time), so the server's runtime validation is exercised.
-async function postSample(app: ReturnType<typeof createApp>, body: unknown) {
-  return app.request("/samples", {
-    method: "POST",
-    headers: { "content-type": "application/json", ...authHeader },
-    body: JSON.stringify(body),
-  });
+type Client = ReturnType<typeof testClient<ReturnType<typeof createApp>>>;
+
+async function createSample(client: Client, name: string) {
+  const created = await client.admin.samples.$post(
+    { json: { name, nature: "rock_powder" } },
+    { headers: authHeader },
+  );
+  return sampleResponseSchema.parse(await created.json()).data;
 }
 
-describe("sample routes", () => {
-  pgTest("should create a sample and return 201", async ({ db }) => {
-    // Arrange
-    const client = testClient(createApp(db));
-    // Act
-    const res = await client.samples.$post(
-      { json: { name: "Basalte du Massif Central", nature: "thin_section" } },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(201);
-    expect(await res.json()).toMatchObject({
-      data: { name: "Basalte du Massif Central", nature: "thin_section" },
-    });
-  });
+async function publishSample(client: Client, id: string) {
+  const res = await client.admin.samples[":id"].publish.$post(
+    { param: { id } },
+    { headers: authHeader },
+  );
+  return sampleResponseSchema.parse(await res.json()).data;
+}
 
-  pgTest("should list created samples", async ({ db }) => {
+describe("public sample routes", () => {
+  pgTest("should list only published samples", async ({ db }) => {
     // Arrange
     const client = testClient(createApp(db));
-    await client.samples.$post(
-      { json: { name: "Grès de Fontainebleau", nature: "rock_powder" } },
-      { headers: authHeader },
-    );
+    const draft = await createSample(client, "Grès de Fontainebleau");
+    await publishSample(client, draft.id);
+    await createSample(client, "Basalte du Massif Central"); // unpublished draft
     // Act
     const res = await client.samples.$get({
       query: { page: "1", perPage: "10" },
@@ -49,196 +40,55 @@ describe("sample routes", () => {
     // Assert
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({
-      data: [{ name: "Grès de Fontainebleau" }],
+      data: [{ name: "Grès de Fontainebleau", published: true }],
       meta: { total: 1 },
     });
   });
 
-  pgTest("should reject an unauthenticated create with 401", async ({ db }) => {
-    // Act
-    const res = await createApp(db).request("/samples", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: "Grès", nature: "rock_powder" }),
-    });
-    // Assert
-    expect(res.status).toBe(401);
-  });
-
-  pgTest("should reject an empty name with 400", async ({ db }) => {
-    // Act
-    const res = await postSample(createApp(db), {
-      name: "",
-      nature: "rock_powder",
-    });
-    // Assert
-    expect(res.status).toBe(400);
-  });
-
-  pgTest("should reject an unknown nature with 400", async ({ db }) => {
-    // Act
-    const res = await postSample(createApp(db), {
-      name: "Grès",
-      nature: "Roche inconnue",
-    });
-    // Assert
-    expect(res.status).toBe(400);
-  });
-
-  pgTest("should reject unknown fields with 400", async ({ db }) => {
-    // Act
-    const res = await postSample(createApp(db), {
-      name: "Grès",
-      nature: "rock_powder",
-      extra: "x",
-    });
-    // Assert
-    expect(res.status).toBe(400);
-  });
-
-  pgTest("should get a sample by id", async ({ db }) => {
-    // Arrange
-    const client = testClient(createApp(db));
-    const created = await client.samples.$post(
-      { json: { name: "Basalte du Massif Central", nature: "thin_section" } },
-      { headers: authHeader },
-    );
-    // The RPC json type is a status union; the schema narrows it to the body.
-    const { data } = sampleResponseSchema.parse(await created.json());
-    // Act
-    const res = await client.samples[":id"].$get({ param: { id: data.id } });
-    // Assert
-    expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({
-      data: { id: data.id, name: "Basalte du Massif Central" },
-    });
-  });
-
-  pgTest("should answer 404 for an unknown sample id", async ({ db }) => {
-    // Act
-    const res = await testClient(createApp(db)).samples[":id"].$get({
-      param: { id: "01890a5d-ac96-774b-bcce-b302099a8057" },
-    });
-    // Assert
-    expect(res.status).toBe(404);
-  });
-
-  pgTest("should answer 404 for a malformed sample id", async ({ db }) => {
-    // Act
-    const res = await createApp(db).request("/samples/not-a-uuid");
-    // Assert
-    expect(res.status).toBe(404);
-  });
-
-  pgTest("should update a sample", async ({ db }) => {
-    // Arrange
-    const client = testClient(createApp(db));
-    const created = await client.samples.$post(
-      { json: { name: "Basalte du Massif Central", nature: "thin_section" } },
-      { headers: authHeader },
-    );
-    const { data } = sampleResponseSchema.parse(await created.json());
-    // Act
-    const res = await client.samples[":id"].$put(
-      {
-        param: { id: data.id },
-        json: { name: "Grès de Fontainebleau", nature: "rock_powder" },
-      },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({
-      data: {
-        id: data.id,
-        name: "Grès de Fontainebleau",
-        nature: "rock_powder",
-      },
-    });
-  });
-
-  pgTest("should reject an unauthenticated update with 401", async ({ db }) => {
-    // Act
-    const res = await createApp(db).request(
-      "/samples/01890a5d-ac96-774b-bcce-b302099a8057",
-      {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ name: "Grès", nature: "rock_powder" }),
-      },
-    );
-    // Assert
-    expect(res.status).toBe(401);
-  });
-
-  pgTest("should reject an invalid update body with 400", async ({ db }) => {
-    // Act
-    const res = await createApp(db).request(
-      "/samples/01890a5d-ac96-774b-bcce-b302099a8057",
-      {
-        method: "PUT",
-        headers: { "content-type": "application/json", ...authHeader },
-        body: JSON.stringify({ name: "", nature: "rock_powder" }),
-      },
-    );
-    // Assert
-    expect(res.status).toBe(400);
-  });
-
-  pgTest("should publish a sample", async ({ db }) => {
-    // Arrange
-    const client = testClient(createApp(db));
-    const created = await client.samples.$post(
-      { json: { name: "Basalte du Massif Central", nature: "thin_section" } },
-      { headers: authHeader },
-    );
-    const { data } = sampleResponseSchema.parse(await created.json());
-    // Act
-    const res = await client.samples[":id"].publish.$post(
-      { param: { id: data.id } },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ data: { id: data.id } });
-  });
-
   pgTest(
-    "should reject an unauthenticated publish with 401",
+    "should return a published sample by its igsn without authentication",
     async ({ db }) => {
+      // Arrange
+      const client = testClient(createApp(db));
+      const draft = await createSample(client, "Basalte du Massif Central");
+      const published = await publishSample(client, draft.id);
       // Act
-      const res = await createApp(db).request(
-        "/samples/01890a5d-ac96-774b-bcce-b302099a8057/publish",
-        { method: "POST" },
-      );
+      const res = await client.samples[":igsn"].$get({
+        param: { igsn: published.igsn! },
+      });
       // Assert
-      expect(res.status).toBe(401);
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({
+        data: { igsn: published.igsn, name: "Basalte du Massif Central" },
+      });
     },
   );
 
-  pgTest(
-    "should answer 404 when publishing a missing sample",
-    async ({ db }) => {
-      // Act
-      const res = await testClient(createApp(db)).samples[":id"].publish.$post(
-        { param: { id: "01890a5d-ac96-774b-bcce-b302099a8057" } },
-        { headers: authHeader },
-      );
-      // Assert
-      expect(res.status).toBe(404);
-    },
-  );
-
-  pgTest("should answer 404 when updating a missing sample", async ({ db }) => {
+  pgTest("should not expose an unpublished sample", async ({ db }) => {
+    // Arrange: a draft never gets an igsn, so it is unreachable by the public get.
+    const client = testClient(createApp(db));
+    await createSample(client, "Grès de Fontainebleau");
     // Act
-    const res = await testClient(createApp(db)).samples[":id"].$put(
-      {
-        param: { id: "01890a5d-ac96-774b-bcce-b302099a8057" },
-        json: { name: "Grès", nature: "rock_powder" },
-      },
-      { headers: authHeader },
-    );
+    const res = await client.samples[":igsn"].$get({
+      param: { igsn: "0123456789ABCDEFGHJKMNPQRS" },
+    });
     // Assert
     expect(res.status).toBe(404);
+  });
+
+  pgTest("should answer 404 for an unknown igsn", async ({ db }) => {
+    // Act
+    const res = await testClient(createApp(db)).samples[":igsn"].$get({
+      param: { igsn: "0123456789ABCDEFGHJKMNPQRS" },
+    });
+    // Assert
+    expect(res.status).toBe(404);
+  });
+
+  pgTest("should reject a malformed igsn with 400", async ({ db }) => {
+    // Act
+    const res = await createApp(db).request("/samples/not-an-igsn");
+    // Assert
+    expect(res.status).toBe(400);
   });
 });

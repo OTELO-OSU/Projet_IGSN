@@ -11,7 +11,7 @@ export function useCreateSample() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateSample) => {
-      const res = await apiFetch(new URL("samples", API_URL), {
+      const res = await apiFetch(new URL("admin/samples", API_URL), {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(input),

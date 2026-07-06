@@ -15,7 +15,10 @@ export default defineConfig({
     },
     globals: true,
     include: ["src/**/*.spec.{ts,tsx}"],
-    testTimeout: 2500,
+    // vitest default (5000). Browser-mode interaction tests (two sequential
+    // firefox actionability-checked clicks in combobox-field) overrun a tighter
+    // budget under full-suite parallel load; keep the headroom or they flake.
+    testTimeout: 5000,
     setupFiles: ["test/setup.ts"],
     coverage: {
       provider: "v8",

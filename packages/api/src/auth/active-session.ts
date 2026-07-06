@@ -15,11 +15,20 @@ export const requireActiveSession = createMiddleware(async (c, next) => {
   if (!authorization) {
     throw new HTTPException(401, { message: "Unauthorized" });
   }
-  const res = await fetch(userinfoUri, {
-    headers: { Authorization: authorization },
-  });
-  if (!res.ok) {
+  try {
+    const res = await fetch(userinfoUri, {
+      headers: { Authorization: authorization },
+    });
+
+    if (!res.ok) {
+      throw new HTTPException(401, { message: "Unauthorized" });
+    }
+  } catch {
+    // Treat an unreachable userinfo endpoint as an unconfirmed session (401), not
+    // a server error: fail closed on the same contract callers expect from a
+    // revoked session, rather than surfacing a 500 on a transient network blip.
     throw new HTTPException(401, { message: "Unauthorized" });
   }
+
   await next();
 });

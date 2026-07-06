@@ -36,7 +36,7 @@ services:
   # One-off: apply migrations, then exit. The api waits for success.
   migrate:
     image: igsn-api:preprod
-    command: ["node", "migrate.ts"]
+    command: ["node", "scripts/migrate.ts"]
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"

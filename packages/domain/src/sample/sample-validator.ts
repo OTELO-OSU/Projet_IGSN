@@ -26,3 +26,5 @@ export const listSamplesResponseSchema = z.object({
 export type ListSamplesResponse = z.infer<typeof listSamplesResponseSchema>;
 
 export const sampleResponseSchema = z.object({ data: sampleSchema });
+
+export type SampleResponse = z.infer<typeof sampleResponseSchema>;

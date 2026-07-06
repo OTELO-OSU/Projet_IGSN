@@ -1,5 +1,5 @@
 import { API_URL } from "./api-url.ts";
-import { userManager } from "./auth/oidc-config.ts";
+import { withAuthToken, withSessionRenewal } from "./use-api-client.ts";
 
 export type Me = {
   sub: string;
@@ -8,23 +8,13 @@ export type Me = {
   email?: string;
 };
 
-const getMe = (token: string) =>
-  fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}` } });
-
-// Calls the protected /me route with the Keycloak access token. On 401 the
-// session is renewed once via the refresh token and the call retried; if the
-// renewal fails, fall back to an interactive sign-in (GT-SSO REQ-TOKEN-01).
-// Throws on any other non-2xx.
+// Calls the protected /admin/me route with the Keycloak access token through
+// the shared authed client, so a 401 renews the session and retries (or falls
+// back to interactive sign-in) exactly like every other authed call. Throws on
+// any other non-2xx.
 export async function fetchMe(token: string): Promise<Me> {
-  let res = await getMe(token);
-  if (res.status === 401) {
-    const renewed = await userManager.signinSilent().catch(() => null);
-    if (!renewed) {
-      void userManager.signinRedirect();
-      throw new Error("Session expired");
-    }
-    res = await getMe(renewed.access_token);
-  }
+  const apiFetch = withSessionRenewal(withAuthToken(fetch, token));
+  const res = await apiFetch(`${API_URL}/admin/me`);
   if (!res.ok) throw new Error(`API responded ${res.status}`);
   return res.json() as Promise<Me>;
 }

@@ -9,7 +9,7 @@ export function useSamples(params: { page: number; perPage: number }) {
   return useQuery({
     queryKey: ["samples", params],
     queryFn: async () => {
-      const url = new URL("samples", API_URL);
+      const url = new URL("admin/samples", API_URL);
       url.searchParams.set("page", String(params.page));
       url.searchParams.set("perPage", String(params.perPage));
 

@@ -1,5 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
+import { natureLabel } from "../nature-label";
+
 export function sampleListPage(page: Page) {
   return {
     expectVisible: () =>
@@ -18,5 +20,15 @@ export function sampleListPage(page: Page) {
     },
     expectSampleRow: (name: string) =>
       expect(page.getByRole("cell", { name })).toBeVisible(),
+    // Assert the row shows both the sample name and its nature label in the same
+    // row, so a mismatched nature can't pass unnoticed.
+    expectSampleRowWithNature: async (name: string, nature: string) => {
+      const row = page
+        .getByRole("row")
+        .filter({ has: page.getByRole("cell", { name }) });
+      await expect(
+        row.getByRole("cell", { name: natureLabel(nature) }),
+      ).toBeVisible();
+    },
   };
 }

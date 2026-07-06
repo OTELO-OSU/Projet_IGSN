@@ -1,9 +1,8 @@
-import { test } from "@playwright/test";
-
 import { adminPage } from "../support/admin/admin.page";
 import { keycloakProfilePage } from "../support/admin/keycloak-profile.page";
 import { orcidLoginPage } from "../support/admin/orcid-login.page";
 import { shibbolethLoginPage } from "../support/admin/shibboleth-login.page";
+import { test } from "../support/db";
 
 test.describe("authentication", () => {
   test("a researcher signs in through their institution", async ({ page }) => {

@@ -1,55 +1,32 @@
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
-import type { ListSamplesResponse } from "@projet-igsn/domain/sample/sample-validator";
+import type {
+  ListSamplesResponse,
+  SampleResponse,
+} from "@projet-igsn/domain/sample/sample-validator";
 
 import { Hono } from "hono";
 
-import { requireAuth } from "../auth/middleware.ts";
-import {
-  validateCreateSampleBody,
-  validateIdParam,
-  validateListQuery,
-} from "./validator.ts";
+import { validateIgsnParam, validateListQuery } from "./validator.ts";
 
+// Public, unauthenticated reads for the frontend: published samples only, looked
+// up by IGSN. Writes and admin reads (all samples, by id) live in admin-routes.ts
+// under the authenticated /admin mount.
 export function createSampleRoutes(repository: SampleRepository) {
   return new Hono()
     .get("/", validateListQuery, async (c) => {
       const { page, perPage } = c.req.valid("query");
-      const { data, total } = await repository.list({ page, perPage });
+      const { data, total } = await repository.listPublished({ page, perPage });
       const body: ListSamplesResponse = { data, meta: { total } };
       return c.json(body);
     })
-    .post("/", requireAuth, validateCreateSampleBody, async (c) => {
-      const sample = await repository.create(c.req.valid("json"));
-      return c.json({ data: sample }, 201);
-    })
-    .get("/:id", validateIdParam, async (c) => {
-      const sample = await repository.findById(c.req.valid("param").id);
+    .get("/:igsn", validateIgsnParam, async (c) => {
+      const sample = await repository.getPublishedByIgsn(
+        c.req.valid("param").igsn,
+      );
       if (!sample) {
-        return c.json({ error: "Not found" }, 404);
+        return c.json({ error: "Sample not found" }, 404);
       }
-      return c.json({ data: sample });
-    })
-    .put(
-      "/:id",
-      requireAuth,
-      validateIdParam,
-      validateCreateSampleBody,
-      async (c) => {
-        const sample = await repository.update(
-          c.req.valid("param").id,
-          c.req.valid("json"),
-        );
-        if (!sample) {
-          return c.json({ error: "Not found" }, 404);
-        }
-        return c.json({ data: sample });
-      },
-    )
-    .post("/:id/publish", requireAuth, validateIdParam, async (c) => {
-      const sample = await repository.publish(c.req.valid("param").id);
-      if (!sample) {
-        return c.json({ error: "Not found" }, 404);
-      }
-      return c.json({ data: sample });
+      const body: SampleResponse = { data: sample };
+      return c.json(body);
     });
 }
