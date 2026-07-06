@@ -7,6 +7,7 @@ import { withTransaction } from "../transaction.ts";
 import { getSample } from "./service/get-sample.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { listSamples } from "./service/list-sample.ts";
+import { publishSample } from "./service/publish-sample.ts";
 import { updateSample } from "./service/update-sample.ts";
 
 export function createSampleRepository(db: Kysely<DB>): SampleRepository {
@@ -16,5 +17,6 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
     findById: (id) => withTransaction(db, (trx) => getSample(trx, id)),
     update: (id, input) =>
       withTransaction(db, (trx) => updateSample(trx, id, input)),
+    publish: (id) => withTransaction(db, (trx) => publishSample(trx, id)),
   };
 }

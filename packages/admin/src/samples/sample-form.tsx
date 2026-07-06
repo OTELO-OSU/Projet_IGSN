@@ -2,6 +2,9 @@ import type { Nature } from "@projet-igsn/domain/sample/nature";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { Input } from "@projet-igsn/design-system/components/ui/input";
+import { Label } from "@projet-igsn/design-system/components/ui/label";
+import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import {
   type CreateSample,
@@ -19,14 +22,23 @@ const natureItems = natureSchema.options.map((nature) => ({
 type SampleFormProps = {
   onSubmit: (value: CreateSample) => void;
   onCancel: () => void;
+  // Reports every value change, letting the page track unsaved edits.
+  onValuesChange?: (value: { name: string; nature: string }) => void;
+  // When set, shows the IGSN as a read-only field (empty until published).
+  igsn?: string | null;
+  // When set, shows the publication status as a read-only field.
+  published?: boolean;
   isPending?: boolean;
   defaultValues?: CreateSample;
-  submitLabel?: string;
+  submitLabel: string;
 };
 
 export function SampleForm({
   onSubmit,
   onCancel,
+  onValuesChange,
+  igsn,
+  published,
   isPending,
   defaultValues,
   submitLabel,
@@ -35,6 +47,9 @@ export function SampleForm({
     defaultValues: {
       name: defaultValues?.name ?? "",
       nature: defaultValues?.nature ?? ("" as Nature | ""),
+    },
+    listeners: {
+      onChange: ({ formApi }) => onValuesChange?.(formApi.state.values),
     },
     onSubmit: ({ value }) => {
       // The API is the real trust boundary; re-parse before sending.
@@ -65,6 +80,20 @@ export function SampleForm({
           {(field) => <field.TextField label={`${m.field_name()} *`} />}
         </form.AppField>
 
+        {igsn !== undefined ? (
+          <div className="grid gap-2">
+            <Label htmlFor="sample-igsn">{m.field_igsn()}</Label>
+            <Input id="sample-igsn" value={igsn ?? ""} readOnly />
+          </div>
+        ) : null}
+
+        {published !== undefined ? (
+          <div className="grid gap-2">
+            <Label htmlFor="sample-published">{m.field_published()}</Label>
+            <Switch id="sample-published" checked={published} disabled />
+          </div>
+        ) : null}
+
         <form.AppField
           name="nature"
           validators={{
@@ -89,10 +118,7 @@ export function SampleForm({
           {m.action_cancel()}
         </Button>
         <form.AppForm>
-          <form.SubmitButton
-            label={submitLabel ?? m.action_publish()}
-            disabled={isPending}
-          />
+          <form.SubmitButton label={submitLabel} disabled={isPending} />
         </form.AppForm>
       </div>
     </form>

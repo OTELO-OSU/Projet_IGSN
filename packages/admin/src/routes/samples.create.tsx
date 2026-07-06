@@ -21,6 +21,7 @@ function CreateSamplePage() {
       ) : null}
 
       <SampleForm
+        submitLabel={m.action_create()}
         isPending={createSample.isPending}
         onCancel={() => navigate({ to: "/" })}
         onSubmit={(value) =>

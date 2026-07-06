@@ -44,5 +44,12 @@ export function createSampleRoutes(repository: SampleRepository) {
         }
         return c.json({ data: sample });
       },
-    );
+    )
+    .post("/:id/publish", requireAuth, validateIdParam, async (c) => {
+      const sample = await repository.publish(c.req.valid("param").id);
+      if (!sample) {
+        return c.json({ error: "Not found" }, 404);
+      }
+      return c.json({ data: sample });
+    });
 }

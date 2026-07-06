@@ -185,6 +185,50 @@ describe("sample routes", () => {
     expect(res.status).toBe(400);
   });
 
+  pgTest("should publish a sample", async ({ db }) => {
+    // Arrange
+    const client = testClient(createApp(db));
+    const created = await client.samples.$post(
+      { json: { name: "Basalte du Massif Central", nature: "thin_section" } },
+      { headers: authHeader },
+    );
+    const { data } = sampleResponseSchema.parse(await created.json());
+    // Act
+    const res = await client.samples[":id"].publish.$post(
+      { param: { id: data.id } },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ data: { id: data.id } });
+  });
+
+  pgTest(
+    "should reject an unauthenticated publish with 401",
+    async ({ db }) => {
+      // Act
+      const res = await createApp(db).request(
+        "/samples/01890a5d-ac96-774b-bcce-b302099a8057/publish",
+        { method: "POST" },
+      );
+      // Assert
+      expect(res.status).toBe(401);
+    },
+  );
+
+  pgTest(
+    "should answer 404 when publishing a missing sample",
+    async ({ db }) => {
+      // Act
+      const res = await testClient(createApp(db)).samples[":id"].publish.$post(
+        { param: { id: "01890a5d-ac96-774b-bcce-b302099a8057" } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(404);
+    },
+  );
+
   pgTest("should answer 404 when updating a missing sample", async ({ db }) => {
     // Act
     const res = await testClient(createApp(db)).samples[":id"].$put(
