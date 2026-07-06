@@ -32,6 +32,19 @@ describe("AuthGate", () => {
       .toBeEnabled();
   });
 
+  it("should start sign-in with a fresh nonce and the broker hint", async () => {
+    const screen = await render(<AuthGate />);
+
+    await screen
+      .getByRole("button", { name: "Sign in with your institution" })
+      .click();
+
+    expect(auth.signinRedirect).toHaveBeenCalledWith({
+      nonce: expect.any(String),
+      extraQueryParams: { kc_idp_hint: "shibboleth" },
+    });
+  });
+
   it("denies app access to a user signed in through ORCID", async () => {
     auth.isAuthenticated = true;
     auth.user = { profile: { identity_provider: "orcid" } };

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Extends [ADR 0002 (production auth)](0002-production-auth-keycloak.md),
+Accepted. Extends [ADR 0003 (production auth)](0003-production-auth-keycloak.md),
 which governs true prod. This one covers preprod only.
 
 ## Context
@@ -10,7 +10,7 @@ which governs true prod. This one covers preprod only.
 Preprod mirrors the prod topology (apps + Postgres behind Caddy on one EC2 box) to
 exercise flows before prod exists. Login brokers RENATER (SAML) and ORCID through
 Keycloak. Registering with real RENATER/eduGAIN is a heavyweight external process,
-not worth it for a throwaway preprod. ADR 0002 keeps the dev realm files out of prod
+not worth it for a throwaway preprod. ADR 0003 keeps the dev realm files out of prod
 but leaves preprod undefined.
 
 ## Decision
@@ -34,7 +34,7 @@ by Caddy.
 - **Five mock RENATER users** in `saml-idp/authsources.php` log in as `firstname.lastname`,
   mirroring the eduPersonPrincipalName + email + name RENATER releases. The mock-orcid
   users reuse their names so an ORCID login represents the same person as a RENATER
-  account (the linking case in ADR 0002).
+  account (the linking case in ADR 0003).
 - **State is ephemeral** (H2 in-memory): brokered users re-provision and the realm
   re-imports on each boot. Acceptable for staging.
 - **ORCID sign-in stays gated** in the admin UI. Wiring the broker only makes preprod
@@ -44,6 +44,6 @@ by Caddy.
 
 Preprod carries the dev realm's insecure-by-design traits (`sslRequired: none`, a local
 `test`/`test` admin, unsigned SAML). Intentional for staging, must not leak into prod:
-**prod still follows ADR 0002** (external hardened Keycloak, real IdPs, no test user, no
+**prod still follows ADR 0003** (external hardened Keycloak, real IdPs, no test user, no
 mock). If preprod ever needs durable Keycloak state, switch it from `start-dev` (H2) to
 `start` against Postgres.

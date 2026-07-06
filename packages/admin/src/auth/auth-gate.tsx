@@ -14,7 +14,12 @@ import { CenteredScreen } from "./centered-screen.tsx";
 // provisioned on first login (first-broker-login). Authenticated users see the
 // app (the routed children) behind this gate.
 const signInWith = (auth: ReturnType<typeof useAuth>, idp: string) => () =>
-  void auth.signinRedirect({ extraQueryParams: { kc_idp_hint: idp } });
+  void auth.signinRedirect({
+    // oidc-client-ts sends no nonce by default on the code flow; given one it
+    // stores it and verifies the id_token claim (GT-SSO REQ-PARAM-00/01).
+    nonce: crypto.randomUUID(),
+    extraQueryParams: { kc_idp_hint: idp },
+  });
 
 export function AuthGate({ children }: { children?: ReactNode }) {
   const auth = useAuth();
@@ -49,7 +54,7 @@ export function AuthGate({ children }: { children?: ReactNode }) {
 
   // ORCID is a link-then-login mechanism, not a cold-start path: an ORCID-only
   // account has no app access until it is linked to an institution account (see
-  // docs/adr/0002-production-auth-keycloak.md). Keycloak sets the identity_provider
+  // docs/adr/0003-production-auth-keycloak.md). Keycloak sets the identity_provider
   // claim on brokered logins; institution and local logins are not "orcid".
   if (auth.user?.profile.identity_provider === "orcid") {
     return (

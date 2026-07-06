@@ -15,7 +15,10 @@
       "standardFlowEnabled": true,
       "redirectUris": [
         "${ORCID_BROKER_REDIRECT_URI:http://localhost:8080/realms/igsn/broker/orcid/endpoint}"
-      ]
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "${ORCID_BROKER_REDIRECT_URI:http://localhost:8080/realms/igsn/broker/orcid/endpoint}/logout_response"
+      }
     }
   ],
   "users": [

@@ -1,3 +1,5 @@
+import { userManager } from "./auth/oidc-config.ts";
+
 // The api base URL is baked at build time (Vite). Defaults to the dev api; e2e
 // and prod override it via VITE_API_URL.
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3002";
@@ -9,11 +11,23 @@ export type Me = {
   email?: string;
 };
 
-// Calls the protected /me route with the Keycloak access token; throws on non-2xx.
+const getMe = (token: string) =>
+  fetch(`${apiUrl}/me`, { headers: { Authorization: `Bearer ${token}` } });
+
+// Calls the protected /me route with the Keycloak access token. On 401 the
+// session is renewed once via the refresh token and the call retried; if the
+// renewal fails, fall back to an interactive sign-in (GT-SSO REQ-TOKEN-01).
+// Throws on any other non-2xx.
 export async function fetchMe(token: string): Promise<Me> {
-  const res = await fetch(`${apiUrl}/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  let res = await getMe(token);
+  if (res.status === 401) {
+    const renewed = await userManager.signinSilent().catch(() => null);
+    if (!renewed) {
+      void userManager.signinRedirect();
+      throw new Error("Session expired");
+    }
+    res = await getMe(renewed.access_token);
+  }
   if (!res.ok) throw new Error(`API responded ${res.status}`);
   return res.json() as Promise<Me>;
 }

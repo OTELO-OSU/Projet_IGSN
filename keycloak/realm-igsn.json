@@ -3,6 +3,10 @@
   "enabled": true,
   "sslRequired": "none",
   "registrationAllowed": false,
+  "accessTokenLifespan": 300,
+  "ssoSessionIdleTimeout": 1800,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
   "roles": {
     "realm": [{ "name": "admin", "description": "IGSN administrator" }]
   },
@@ -13,7 +17,7 @@
       "enabled": true,
       "publicClient": true,
       "standardFlowEnabled": true,
-      "directAccessGrantsEnabled": true,
+      "directAccessGrantsEnabled": false,
       "redirectUris": ["${ADMIN_REDIRECT_URI:http://localhost:3001/*}"],
       "webOrigins": ["${ADMIN_WEB_ORIGIN:http://localhost:3001}"],
       "attributes": {
@@ -31,6 +35,16 @@
             "jsonType.label": "String",
             "id.token.claim": "true",
             "access.token.claim": "true"
+          }
+        },
+        {
+          "name": "igsn-api-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "config": {
+            "included.custom.audience": "igsn-api",
+            "access.token.claim": "true",
+            "id.token.claim": "false"
           }
         }
       ]
@@ -60,6 +74,7 @@
       "firstBrokerLoginFlowAlias": "first broker login",
       "config": {
         "singleSignOnServiceUrl": "${SHIBBOLETH_SSO_URL:http://localhost:8081/simplesaml/saml2/idp/SSOService.php}",
+        "singleLogoutServiceUrl": "${SHIBBOLETH_SLO_URL:http://localhost:8081/simplesaml/saml2/idp/SingleLogoutService.php}",
         "nameIDPolicyFormat": "urn:oasis:names:tc:SAML:2.0:nameid-format:persistent",
         "principalType": "ATTRIBUTE",
         "principalAttribute": "eduPersonPrincipalName",
@@ -80,6 +95,7 @@
         "clientId": "${ORCID_CLIENT_ID:igsn-broker}",
         "clientSecret": "${ORCID_CLIENT_SECRET:mock-orcid-secret}",
         "authorizationUrl": "${ORCID_AUTHORIZATION_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/auth}",
+        "logoutUrl": "${ORCID_LOGOUT_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/logout}",
         "tokenUrl": "${ORCID_TOKEN_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/token}",
         "userInfoUrl": "${ORCID_USERINFO_URL:http://localhost:8080/realms/mock-orcid/protocol/openid-connect/userinfo}",
         "issuer": "${ORCID_ISSUER:http://localhost:8080/realms/mock-orcid}",

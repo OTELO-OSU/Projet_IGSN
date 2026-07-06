@@ -27,6 +27,16 @@ route: enforce the per-sample role (Contributor/Editor) and Admin checks on the
 server for every state-changing operation. Never trust a role or user id from
 the client; derive it from the session/token.
 
+Realm roles come from the verified token (`realm_access.roles`) via the shared
+role guard. Critical actions (deletions, rights changes, invitations) must
+also revalidate the session live against Keycloak with the userinfo guard
+(GaiaData
+[REQ-CRIT-01](../../docs/adr/0006-gaiadata-sso-compliance.md#gt-sso-requirements));
+a locally valid JWT is not enough there. If per-user data is ever persisted,
+IdP account deletion MUST propagate
+([REQ-USER-01](../../docs/adr/0006-gaiadata-sso-compliance.md#gt-sso-requirements)):
+deactivate the local account on signal, with a stale-account fail-safe.
+
 ## Mass assignment
 
 Explicitly pick the fields a role may set. Never spread a request body into a

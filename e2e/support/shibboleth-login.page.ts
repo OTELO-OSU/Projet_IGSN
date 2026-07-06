@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 // The institution (Shibboleth/SAML) login page — in dev, the SimpleSAMLphp IdP.
 export function shibbolethLoginPage(page: Page) {
@@ -8,5 +8,8 @@ export function shibbolethLoginPage(page: Page) {
       await page.getByLabel(/password/i).fill(password);
       await page.getByRole("button", { name: /login/i }).click();
     },
+    // Proves the IdP session ended: it asks for credentials again.
+    expectCredentialsPrompt: () =>
+      expect(page.getByLabel(/username/i)).toBeVisible(),
   };
 }

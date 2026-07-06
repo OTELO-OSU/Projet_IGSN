@@ -7,13 +7,16 @@ import { jwk } from "hono/jwk";
 const issuer = process.env.OIDC_ISSUER ?? "http://localhost:8080/realms/igsn";
 const jwksUri =
   process.env.OIDC_JWKS_URI ?? `${issuer}/protocol/openid-connect/certs`;
+// Dedicated audience per SP and environment (GaiaData REQ-TOKEN-03/04); the
+// local realm injects it via the igsn-api audience mapper on igsn-admin.
+const audience = process.env.OIDC_AUDIENCE ?? "igsn-api";
 
 // Populates c.get("jwtPayload") with the verified claims; 401s otherwise.
 // alg is pinned to RS256 (Keycloak's default) to rule out algorithm confusion.
 export const requireAuth = jwk({
   jwks_uri: jwksUri,
   alg: ["RS256"],
-  verification: { iss: issuer },
+  verification: { iss: issuer, aud: audience },
 });
 
 // The Keycloak claims the api actually reads off a verified token.
@@ -22,4 +25,5 @@ export type KeycloakClaims = {
   preferred_username?: string;
   name?: string;
   email?: string;
+  realm_access?: { roles?: string[] };
 };
