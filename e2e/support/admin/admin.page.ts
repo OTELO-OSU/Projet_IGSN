@@ -1,10 +1,12 @@
 import { expect, type Page } from "@playwright/test";
 
+import { adminUrl } from "../urls";
+
 // The admin SPA: the login screen (provider buttons) and, once authenticated,
 // the header with the sign-out control.
 export function adminPage(page: Page) {
   return {
-    goto: () => page.goto("/"),
+    goto: () => page.goto(`${adminUrl}/`),
     signInWithInstitution: () =>
       page
         .getByRole("button", { name: "Sign in with your institution" })

@@ -429,6 +429,9 @@ importers:
 
   packages/frontend:
     dependencies:
+      '@inlang/paraglide-js':
+        specifier: 'catalog:'
+        version: 2.20.2(typescript@6.0.3)
       '@projet-igsn/design-system':
         specifier: workspace:*
         version: link:../design-system

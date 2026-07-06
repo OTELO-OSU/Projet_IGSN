@@ -1,8 +1,8 @@
 import { test } from "@playwright/test";
 
-import { sampleCreatePage } from "./support/sample-create.page";
-import { sampleListPage } from "./support/sample-list.page";
-import { RESEARCHERS, signInAsResearcher } from "./support/sign-in";
+import { sampleCreatePage } from "../support/admin/sample-create.page";
+import { sampleListPage } from "../support/admin/sample-list.page";
+import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 
 test.describe("samples", () => {
   test("a researcher browses the samples list", async ({ page }) => {

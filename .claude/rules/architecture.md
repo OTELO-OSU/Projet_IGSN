@@ -7,8 +7,7 @@
   MUST live here. No I/O, no DB, no HTTP.
 - `api`: implements the services/repositories declared in `domain`, mapping them
   to the database. Holds the trust boundary and the wiring, not the contracts.
-- `admin` / `frontend` _(planned)_: consume `domain` types and schemas; call
-  `api` for CRUD.
+- `admin` / `frontend`: consume `domain` types and schemas; call `api` for CRUD.
 
 Two hard rules:
 
@@ -41,6 +40,27 @@ ESM runtime requires it.
 - `<entity>/routes.ts`: Hono sub-app mounted in `app.ts`.
 - `<entity>/validator.ts`: request validators used only by `api`. Anything a
   second package needs belongs in `domain/<entity>/<model>-validator.ts`.
+
+`frontend` / `admin` keep entity code under `src/domain/<entity>/`, one concern
+per file (data fetch, react-query hook, presentational component). Routes stay in
+`src/routes/`; they wire data to the entity's components, holding no business
+logic themselves.
+
+Under `src/domain/<entity>/`, group by concern in subfolders:
+
+- `client/`: one API fetch helper per operation (the `fetch` call + response
+  Zod parse).
+- `hook/`: one react-query file per operation, holding that operation's
+  `queryOptions` factory and its hook.
+- Presentational components stay at the entity root (`sample-list.tsx`,
+  `sample-view.tsx`).
+
+API client naming: the fetch function is `getXxxByYyy` / `listXxx`, its
+react-query hook is `useGetXxxByYyy` / `useListXxx`, and both files share the
+kebab-case fetch-function name (`client/get-sample-by-id.ts`,
+`hook/get-sample-by-id.ts`). One operation per hook file, never a combined
+`sample-query.ts`. Keep the `queryOptions` factory (`getXxxByYyyQueryOptions`)
+in the hook file so route loaders can prefetch; the hook wraps it for components.
 
 ## Decision records (ADR)
 
