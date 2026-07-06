@@ -11,7 +11,7 @@ export function sampleCreatePage(page: Page) {
       await page.getByRole("combobox").click();
       await page.getByRole("option", { name: label }).click();
     },
-    publish: () => page.getByRole("button", { name: "Publish" }).click(),
+    submit: () => page.getByRole("button", { name: "Create" }).click(),
     expectNameRequired: () =>
       expect(page.getByText("Name is required")).toBeVisible(),
   };
