@@ -1,9 +1,8 @@
 import { listSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
+import { API_URL } from "#/api-url.ts";
 import { useApiClient } from "#/use-api-client.ts";
-
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3002";
 
 export function useSamples(params: { page: number; perPage: number }) {
   const apiFetch = useApiClient();

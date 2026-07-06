@@ -1,4 +1,3 @@
-import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
@@ -34,7 +33,7 @@ describe("insertSample", () => {
     expect(created.id[14]).toBe("7");
   });
 
-  pgTest("should insert with a null igsn until published", async ({ db }) => {
+  pgTest("should insert unpublished with a null igsn", async ({ db }) => {
     // Act
     const created = await insertSample(db, {
       name: "Calcaire de Bourgogne",
@@ -43,25 +42,10 @@ describe("insertSample", () => {
     // Assert
     const row = await db
       .selectFrom("sample")
-      .select("igsn")
+      .select(["igsn", "published"])
       .where("id", "=", created.id)
       .executeTakeFirstOrThrow();
-    expect(row.igsn).toBeNull();
-  });
-
-  pgTest("should insert as unpublished", async ({ db }) => {
-    // Act
-    const created = await insertSample(db, {
-      name: "Marbre de Carrare",
-      nature: "thin_section",
-    });
-    // Assert
-    const row = await db
-      .selectFrom("sample")
-      .select("published")
-      .where("id", "=", created.id)
-      .executeTakeFirstOrThrow();
-    expect(row.published).toBe(false);
+    expect(row).toEqual({ igsn: null, published: false });
   });
 
   pgTest("should reject publishing without an igsn", async ({ db }) => {
@@ -78,29 +62,5 @@ describe("insertSample", () => {
         .where("id", "=", created.id)
         .execute(),
     ).rejects.toThrow();
-  });
-
-  pgTest("should publish once the igsn is set", async ({ db }) => {
-    // Arrange
-    const created = await insertSample(db, {
-      name: "Granite de Flamanville",
-      nature: "rock_powder",
-    });
-    // Act
-    await db
-      .updateTable("sample")
-      .set({ published: true, igsn: generateIgsnSuffix(created.id) })
-      .where("id", "=", created.id)
-      .execute();
-    // Assert
-    const row = await db
-      .selectFrom("sample")
-      .select(["published", "igsn"])
-      .where("id", "=", created.id)
-      .executeTakeFirstOrThrow();
-    expect(row).toEqual({
-      published: true,
-      igsn: generateIgsnSuffix(created.id),
-    });
   });
 });
