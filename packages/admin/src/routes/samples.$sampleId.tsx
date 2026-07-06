@@ -74,8 +74,6 @@ function EditSamplePage() {
         submitLabel={m.action_save()}
         isPending={updateSample.isPending || publishSample.isPending}
         onCancel={() => navigate({ to: "/" })}
-        // No redirect on save: the invalidated sample query refetches, the
-        // saved values become the new baseline, and Publish re-enables.
         onSubmit={(value) => updateSample.mutate(value)}
         onValuesChange={setFormValues}
       />
