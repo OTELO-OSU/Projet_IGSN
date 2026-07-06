@@ -37,6 +37,34 @@ describe("SampleForm", () => {
     );
   });
 
+  it("should prefill the fields and use the given submit label", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm
+        onSubmit={onSubmit}
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+        }}
+        submitLabel="Save"
+      />,
+    );
+
+    await expect
+      .element(screen.getByLabelText(/name/i))
+      .toHaveValue("Basalte du Massif Central");
+
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+      }),
+    );
+  });
+
   it("should call onCancel when Cancel is clicked", async () => {
     const onCancel = vi.fn();
     const screen = await render(

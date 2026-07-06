@@ -20,11 +20,22 @@ type SampleFormProps = {
   onSubmit: (value: CreateSample) => void;
   onCancel: () => void;
   isPending?: boolean;
+  defaultValues?: CreateSample;
+  submitLabel?: string;
 };
 
-export function SampleForm({ onSubmit, onCancel, isPending }: SampleFormProps) {
+export function SampleForm({
+  onSubmit,
+  onCancel,
+  isPending,
+  defaultValues,
+  submitLabel,
+}: SampleFormProps) {
   const form = useAppForm({
-    defaultValues: { name: "", nature: "" as Nature | "" },
+    defaultValues: {
+      name: defaultValues?.name ?? "",
+      nature: defaultValues?.nature ?? ("" as Nature | ""),
+    },
     onSubmit: ({ value }) => {
       // The API is the real trust boundary; re-parse before sending.
       const parsed = createSampleSchema.safeParse(value);
@@ -78,7 +89,10 @@ export function SampleForm({ onSubmit, onCancel, isPending }: SampleFormProps) {
           {m.action_cancel()}
         </Button>
         <form.AppForm>
-          <form.SubmitButton label={m.action_publish()} disabled={isPending} />
+          <form.SubmitButton
+            label={submitLabel ?? m.action_publish()}
+            disabled={isPending}
+          />
         </form.AppForm>
       </div>
     </form>

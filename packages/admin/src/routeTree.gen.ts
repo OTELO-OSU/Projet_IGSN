@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SamplesCreateRouteImport } from './routes/samples.create'
+import { Route as SamplesSampleIdRouteImport } from './routes/samples.$sampleId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -22,30 +23,39 @@ const SamplesCreateRoute = SamplesCreateRouteImport.update({
   path: '/samples/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SamplesSampleIdRoute = SamplesSampleIdRouteImport.update({
+  id: '/samples/$sampleId',
+  path: '/samples/$sampleId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/samples/create'
+  fullPaths: '/' | '/samples/$sampleId' | '/samples/create'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/samples/create'
-  id: '__root__' | '/' | '/samples/create'
+  to: '/' | '/samples/$sampleId' | '/samples/create'
+  id: '__root__' | '/' | '/samples/$sampleId' | '/samples/create'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SamplesSampleIdRoute: typeof SamplesSampleIdRoute
   SamplesCreateRoute: typeof SamplesCreateRoute
 }
 
@@ -65,11 +75,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SamplesCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/samples/$sampleId': {
+      id: '/samples/$sampleId'
+      path: '/samples/$sampleId'
+      fullPath: '/samples/$sampleId'
+      preLoaderRoute: typeof SamplesSampleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SamplesSampleIdRoute: SamplesSampleIdRoute,
   SamplesCreateRoute: SamplesCreateRoute,
 }
 export const routeTree = rootRouteImport

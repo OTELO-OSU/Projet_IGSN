@@ -7,21 +7,22 @@ import { useApiClient } from "#/use-api-client.ts";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3002";
 
-export function useCreateSample() {
+export function useUpdateSample(id: string) {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateSample) => {
-      const res = await apiFetch(new URL("samples", API_URL), {
-        method: "POST",
+      const res = await apiFetch(new URL(`samples/${id}`, API_URL), {
+        method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(input),
       });
       if (!res.ok) {
-        throw new Error(`Failed to create sample (${res.status})`);
+        throw new Error(`Failed to update sample (${res.status})`);
       }
       return sampleResponseSchema.parse(await res.json()).data;
     },
+    // Prefix match: refreshes both the list and this sample's detail query.
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["samples"] }),
   });
 }
