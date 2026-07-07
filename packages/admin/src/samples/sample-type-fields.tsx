@@ -1,5 +1,3 @@
-import type { Nature } from "@projet-igsn/domain/sample/nature";
-
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { SAMPLE_TYPES, type SampleType } from "@projet-igsn/domain/sample/type";
 
@@ -32,11 +30,10 @@ export function composeType({
 
 export function SampleTypeFields() {
   // Options only drive type inference; the form itself comes from the parent's
-  // <form.AppForm> context.
+  // <form.AppForm> context. Declared shape: just the fields this component
+  // handles; the parent form may hold more.
   const form = useTypedAppFormContext({
     defaultValues: {
-      name: "",
-      nature: "" as Nature | "",
       type: "" as SampleType | "",
       subType: "",
     },
@@ -73,9 +70,10 @@ export function SampleTypeFields() {
                   // The sub-type refines the chosen type; label it as such.
                   label={typeLabel(type)}
                   items={[
-                    // The bare type is the "no sub-type" choice; it composes
-                    // to the root path, so no sentinel value is needed.
-                    { value: type, label: m.sub_type_none() },
+                    // The bare type is the "no sub-type" choice, shown under
+                    // its own label; it composes to the root path, so no
+                    // sentinel value is needed.
+                    { value: type, label: typeLabel(type) },
                     ...items,
                   ]}
                   placeholder={m.sub_type_placeholder()}

@@ -131,7 +131,7 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should submit the bare type when the None sub-type is picked", async () => {
+  it("should submit the bare type when its option is picked in the sub-type", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm onSubmit={onSubmit} onCancel={noop} submitLabel="Create" />,
@@ -145,7 +145,7 @@ describe("SampleForm", () => {
     await screen.getByRole("combobox", { name: "Core" }).click();
     await screen.getByRole("option", { name: "Half round" }).click();
     await screen.getByRole("combobox", { name: "Core" }).click();
-    await screen.getByRole("option", { name: "None" }).click();
+    await screen.getByRole("option", { name: "Core", exact: true }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
