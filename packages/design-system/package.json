@@ -20,6 +20,7 @@
     "lucide-react": "catalog:",
     "radix-ui": "catalog:",
     "react": "catalog:",
+    "sonner": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwindcss": "catalog:",
     "tw-animate-css": "catalog:"

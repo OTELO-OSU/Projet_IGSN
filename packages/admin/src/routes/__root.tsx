@@ -1,5 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 
+import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 
 import { getLocale } from "#/paraglide/runtime.js";
@@ -14,6 +15,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     component: () => (
       <AuthGate>
         <Outlet />
+        <Toaster />
       </AuthGate>
     ),
   },

@@ -1,9 +1,11 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
+import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
+import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
 
 export function useUpdateSample(id: string) {
@@ -21,7 +23,11 @@ export function useUpdateSample(id: string) {
       }
       return sampleResponseSchema.parse(await res.json()).data;
     },
-    // Prefix match: refreshes both the list and this sample's detail query.
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["samples"] }),
+    onSuccess: () => {
+      toast.success(m.edit_sample_success());
+      // Prefix match: refreshes both the list and this sample's detail query.
+      return queryClient.invalidateQueries({ queryKey: ["samples"] });
+    },
+    onError: () => toast.error(m.edit_sample_error()),
   });
 }

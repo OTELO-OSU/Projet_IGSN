@@ -2,7 +2,6 @@ import type { Nature } from "@projet-igsn/domain/sample/nature";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { Input } from "@projet-igsn/design-system/components/ui/input";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
@@ -12,6 +11,7 @@ import {
 } from "@projet-igsn/domain/sample/sample";
 import { type SampleType } from "@projet-igsn/domain/sample/type";
 
+import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { natureLabel } from "#/samples/nature-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
@@ -30,7 +30,7 @@ type SampleFormProps = {
   onCancel: () => void;
   // When set, renders a "Save & Publish" button that saves then publishes.
   onPublish?: (value: CreateSample) => void;
-  // When set, shows the IGSN as a read-only field (empty until published).
+  // Used for the public-page link of a published sample.
   igsn?: string | null;
   // When set, shows the publication status as a read-only field.
   published?: boolean;
@@ -92,13 +92,6 @@ export function SampleForm({
           {(field) => <field.TextField label={`${m.field_name()} *`} />}
         </form.AppField>
 
-        {igsn !== undefined ? (
-          <div className="grid gap-2">
-            <Label htmlFor="sample-igsn">{m.field_igsn()}</Label>
-            <Input id="sample-igsn" value={igsn ?? ""} readOnly />
-          </div>
-        ) : null}
-
         {published !== undefined ? (
           <div className="grid gap-2">
             <Label htmlFor="sample-published">{m.field_published()}</Label>
@@ -148,6 +141,12 @@ export function SampleForm({
               />
             )}
           </form.Subscribe>
+        ) : published && igsn ? (
+          <Button asChild variant="outline">
+            <a href={`${FRONTEND_URL}/samples/${igsn}`}>
+              {m.action_view_public_page()}
+            </a>
+          </Button>
         ) : null}
       </div>
     </form>

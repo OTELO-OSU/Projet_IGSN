@@ -32,14 +32,17 @@ function EditSamplePage() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
-
-      {updateSample.isError ? (
-        <p role="alert">{m.edit_sample_error()}</p>
-      ) : null}
-      {publishSample.isError ? (
-        <p role="alert">{m.publish_sample_error()}</p>
-      ) : null}
+      <div>
+        <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
+        {isPublished && query.data.igsn ? (
+          <p
+            aria-label={m.field_igsn()}
+            className="text-muted-foreground text-sm"
+          >
+            {query.data.igsn}
+          </p>
+        ) : null}
+      </div>
 
       <SampleForm
         defaultValues={{

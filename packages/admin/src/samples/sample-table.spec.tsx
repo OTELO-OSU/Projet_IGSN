@@ -11,18 +11,17 @@ import { render } from "vitest-browser-react";
 
 import { SampleTable } from "./sample-table.tsx";
 
-const samples: Sample[] = [
-  {
-    id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
-    name: "Basalte du Massif Central",
-    nature: "thin_section",
-    type: null,
-    igsn: null,
-    published: false,
-    createdAt: new Date("2026-06-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-07-01T10:00:00.000Z"),
-  },
-];
+const sample: Sample = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+  name: "Basalte du Massif Central",
+  nature: "thin_section",
+  type: null,
+  igsn: null,
+  published: false,
+  createdAt: new Date("2026-06-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-07-01T10:00:00.000Z"),
+};
+const samples = [sample];
 
 // The table links to the edit route, so render it inside a minimal router
 // with a stub edit page to observe navigation.
@@ -46,11 +45,23 @@ function renderTable(data: Sample[]) {
 }
 
 describe("SampleTable", () => {
-  it("should render the column headers", async () => {
+  it("should render the column headers with IGSN first", async () => {
     const screen = await renderTable(samples);
+    await expect
+      .element(screen.getByRole("row").nth(0))
+      .toHaveTextContent(/^IGSN/);
     await expect.element(screen.getByText("Name")).toBeInTheDocument();
     await expect.element(screen.getByText("Nature")).toBeInTheDocument();
     await expect.element(screen.getByText("Last modified")).toBeInTheDocument();
+  });
+
+  it("should render the IGSN of a published sample", async () => {
+    const screen = await renderTable([
+      { ...sample, igsn: "01K072TVWVFK5A1RRZ5MY4PPK9", published: true },
+    ]);
+    await expect
+      .element(screen.getByText("01K072TVWVFK5A1RRZ5MY4PPK9"))
+      .toBeInTheDocument();
   });
 
   it("should render a sample row with the last-modified date as yyyy-mm-dd", async () => {

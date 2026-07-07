@@ -22,6 +22,11 @@ import { natureLabel } from "#/samples/nature-label.ts";
 
 const columns: ColumnDef<Sample>[] = [
   {
+    accessorKey: "igsn",
+    header: () => m.column_igsn(),
+    cell: ({ row }) => row.original.igsn,
+  },
+  {
     accessorKey: "name",
     header: () => m.column_name(),
     // The row's onClick is mouse-only; this link is the keyboard and

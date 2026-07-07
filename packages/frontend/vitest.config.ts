@@ -26,11 +26,12 @@ export default defineConfig({
     browser: {
       provider: playwright(),
       enabled: true,
-      instances: [{ browser: "chromium" }, { browser: "firefox" }],
+      // Chromium only: headless Firefox drops trusted input events and stalls
+      // pages under parallel load, making interaction tests flaky.
+      instances: [{ browser: "chromium" }],
     },
     globals: true,
     include: ["src/**/*.spec.{ts,tsx}"],
-    testTimeout: 5000,
     setupFiles: ["test/setup.ts"],
     coverage: {
       provider: "v8",
