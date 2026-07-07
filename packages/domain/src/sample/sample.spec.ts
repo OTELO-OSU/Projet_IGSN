@@ -6,6 +6,7 @@ const validSample = {
   name: "Basalte du Massif Central",
   nature: "thin_section",
   type: "core.section",
+  material: null,
   igsn: null,
   published: false,
   createdAt: "2026-07-02T10:00:00.000Z",
@@ -22,6 +23,7 @@ describe("sampleSchema", () => {
       name: "Basalte du Massif Central",
       nature: "thin_section",
       type: "core.section",
+      material: null,
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -65,19 +67,22 @@ describe("sampleSchema", () => {
 });
 
 describe("createSampleSchema", () => {
-  it.each(NATURES)("should accept a name and the nature %s", (nature) => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature,
-    });
-    // Assert
-    expect(result).toEqual({
-      name: "Grès de Fontainebleau",
-      nature,
-      type: null,
-    });
-  });
+  it.each(NATURES)(
+    "should accept a name and the nature %s, defaulting type to null and omitting material",
+    (nature) => {
+      // Arrange / Act
+      const result = createSampleSchema.parse({
+        name: "Grès de Fontainebleau",
+        nature,
+      });
+      // Assert
+      expect(result).toEqual({
+        name: "Grès de Fontainebleau",
+        nature,
+        type: null,
+      });
+    },
+  );
 
   it("should accept an explicit type", () => {
     // Arrange / Act
@@ -118,11 +123,42 @@ describe("createSampleSchema", () => {
     });
   });
 
+  it("should accept a create payload with a material path and no rockType", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Basalt 42",
+      nature: "hand_sample",
+      material: "rock.igneous",
+    });
+    expect(result).toMatchObject({ success: true });
+  });
+
+  it("should reject a create payload carrying an unknown rockType field", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Basalt 42",
+      nature: "hand_sample",
+      material: "rock",
+      rockType: "igneous",
+    });
+    // strictObject: unknown keys are rejected.
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject an unknown material path", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Basalt 42",
+      nature: "hand_sample",
+      material: "gemstone",
+    });
+    expect(result.success).toBe(false);
+  });
+
   it.each([
     { name: "", nature: "rock_powder" },
     { name: "Grès", nature: "Roche inconnue" },
     { nature: "rock_powder" },
+    // unknown vocabulary codes
     { name: "Grès", nature: "rock_powder", type: "half_round" },
+    { name: "Grès", nature: "rock_powder", material: "lava" },
   ])("should reject invalid create input #%#", (input) => {
     // Arrange / Act
     const result = createSampleSchema.safeParse(input);

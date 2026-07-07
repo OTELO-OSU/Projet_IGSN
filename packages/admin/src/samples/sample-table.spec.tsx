@@ -17,6 +17,7 @@ const samples: Sample[] = [
     name: "Basalte du Massif Central",
     nature: "thin_section",
     type: null,
+    material: null,
     igsn: null,
     published: false,
     createdAt: new Date("2026-06-01T00:00:00.000Z"),
