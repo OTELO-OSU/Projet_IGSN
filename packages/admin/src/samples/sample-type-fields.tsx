@@ -1,16 +1,12 @@
 import type { Nature } from "@projet-igsn/domain/sample/nature";
 
 import { withForm } from "@projet-igsn/design-system/components/form/app-form";
-import {
-  SAMPLE_TYPE_TREE,
-  SAMPLE_TYPES,
-  type SampleType,
-} from "@projet-igsn/domain/sample/type";
+import { SAMPLE_TYPES, type SampleType } from "@projet-igsn/domain/sample/type";
 
 import { m } from "#/paraglide/messages.js";
 import { typeLabel } from "#/samples/type-label.ts";
 
-const typeItems = (Object.keys(SAMPLE_TYPE_TREE) as SampleType[]).map(
+const typeItems = SAMPLE_TYPES.filter((type) => !type.includes(".")).map(
   (type) => ({ value: type, label: typeLabel(type) }),
 );
 

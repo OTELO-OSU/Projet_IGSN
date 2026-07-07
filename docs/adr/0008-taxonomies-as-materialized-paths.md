@@ -19,18 +19,18 @@ Store a hierarchical classification as one text column holding the
 dot-separated path of codes from the root, e.g. `rock.igneous.volcanic`.
 An ancestor path (`rock`) is a valid, partial classification.
 
-The vocabulary itself is a nested const tree in `domain`
-(`sample/type.ts`), and `taxonomy/taxonomy-paths.ts` derives the set of
-valid paths for a Zod enum plus a literal union type. The same tree will
-drive cascading selects in forms and i18n labels, so form, API validation,
-and database stay consistent from one definition. The database does not
+The vocabulary itself is a flat Zod enum of paths in `domain`
+(`sample/type.ts`), the single definition behind the form selects, i18n
+labels, API validation, and database values. A generic tree-to-paths
+helper was considered and dropped while there is one taxonomy; add it
+when a second vocabulary lands. The database does not
 duplicate the vocabulary in a CHECK constraint; the API validates through
 the domain schema at its trust boundary.
 
 ## Consequences
 
-- A new taxonomy is one tree const and one `z.enum` line; depth changes need
-  no schema migration.
+- A new taxonomy is one `z.enum` of paths; depth changes need no schema
+  migration.
 - The column uses the Postgres `ltree` type: the codes are valid ltree labels,
   ancestor queries are native (`type <@ 'core'`, GiST-indexable when needed),
   and the database rejects malformed paths. The driver reads and writes it as
