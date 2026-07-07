@@ -1,5 +1,7 @@
 import { listSamples } from "#/domain/samples/client/list-samples.ts";
 
+import { stubFetch } from "../../../../test/stub-fetch.ts";
+
 const iso = "2026-01-02T03:04:05.000Z";
 
 const sampleJson = {
@@ -12,23 +14,6 @@ const sampleJson = {
   createdAt: iso,
   updatedAt: iso,
 };
-
-function stubFetch(
-  body: unknown,
-  status = 200,
-): { fetch: typeof fetch; lastUrl: () => string | undefined } {
-  let seen: string | undefined;
-  const fetchFn: typeof fetch = async (input) => {
-    seen =
-      input instanceof URL
-        ? input.href
-        : typeof input === "string"
-          ? input
-          : input.url;
-    return new Response(JSON.stringify(body), { status });
-  };
-  return { fetch: fetchFn, lastUrl: () => seen };
-}
 
 describe("listSamples", () => {
   it("should parse the response into data and total", async () => {

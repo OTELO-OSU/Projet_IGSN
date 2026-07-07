@@ -216,30 +216,33 @@ describe("SampleForm", () => {
     expect(onCancel).toHaveBeenCalled();
   });
 
-  it("should report value changes as the user edits", async () => {
-    const onValuesChange = vi.fn();
+  it("should call onPublish, not onSubmit, when Save & Publish is confirmed", async () => {
+    const onSubmit = vi.fn();
+    const onPublish = vi.fn();
     const screen = await render(
       <SampleForm
-        onSubmit={noop}
+        onSubmit={onSubmit}
+        onPublish={onPublish}
         onCancel={noop}
-        onValuesChange={onValuesChange}
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: null,
         }}
-        submitLabel="Save"
+        submitLabel="Save as draft"
       />,
     );
 
-    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen.getByRole("button", { name: "Save & Publish" }).click();
+    await screen.getByRole("button", { name: "Confirm" }).click();
 
     await vi.waitFor(() =>
-      expect(onValuesChange).toHaveBeenLastCalledWith({
-        name: "Grès de Fontainebleau",
+      expect(onPublish).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
       }),
     );
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

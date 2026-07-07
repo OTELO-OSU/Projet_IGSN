@@ -5,6 +5,7 @@ import {
   useGetSampleByIgsn,
 } from "#/domain/samples/hook/get-sample-by-igsn.ts";
 import { SampleView } from "#/domain/samples/sample-view.tsx";
+import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/samples/$igsn")({
   loader: async ({ context, params }) => {
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/samples/$igsn")({
     return { title: sample.name };
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData?.title ?? "Projet IGSN" }],
+    meta: [{ title: loaderData?.title ?? m.app_title() }],
   }),
   component: SampleDetail,
 });

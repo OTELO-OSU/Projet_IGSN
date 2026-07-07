@@ -1,8 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
-import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
 import { useSample } from "#/samples/use-sample.ts";
@@ -18,11 +16,6 @@ function EditSamplePage() {
   const query = useSample(sampleId);
   const updateSample = useUpdateSample(sampleId);
   const publishSample = usePublishSample(sampleId);
-  const [formValues, setFormValues] = useState<{
-    name: string;
-    nature: string;
-    type: string | null;
-  } | null>(null);
 
   if (query.isPending) {
     return <p>{m.samples_loading()}</p>;
@@ -34,33 +27,12 @@ function EditSamplePage() {
     return <p role="alert">{m.sample_not_found()}</p>;
   }
 
-  // Unsaved edits gate Publish; a saved form (query.data refetched after
-  // update) or a reverted edit re-enables it.
-  const hasUnsavedChanges =
-    formValues !== null &&
-    (formValues.name !== query.data.name ||
-      formValues.nature !== query.data.nature ||
-      formValues.type !== query.data.type);
+  const isPublished = query.data.published;
+  const isPending = updateSample.isPending || publishSample.isPending;
 
   return (
     <>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
-        {query.data.published ? null : (
-          <PublishSampleButton
-            disabled={
-              hasUnsavedChanges ||
-              updateSample.isPending ||
-              publishSample.isPending
-            }
-            onPublish={() =>
-              publishSample.mutate(undefined, {
-                onSuccess: () => navigate({ to: "/" }),
-              })
-            }
-          />
-        )}
-      </div>
+      <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
 
       {updateSample.isError ? (
         <p role="alert">{m.edit_sample_error()}</p>
@@ -76,12 +48,25 @@ function EditSamplePage() {
           type: query.data.type,
         }}
         igsn={query.data.igsn}
-        published={query.data.published}
-        submitLabel={m.action_save()}
-        isPending={updateSample.isPending || publishSample.isPending}
+        published={isPublished}
+        submitLabel={
+          isPublished ? m.action_publish_updates() : m.action_save_draft()
+        }
+        isPending={isPending}
         onCancel={() => navigate({ to: "/" })}
         onSubmit={(value) => updateSample.mutate(value)}
-        onValuesChange={setFormValues}
+        // Draft only: save the edits, then publish, then return to the list.
+        onPublish={
+          isPublished
+            ? undefined
+            : (value) =>
+                updateSample.mutate(value, {
+                  onSuccess: () =>
+                    publishSample.mutate(undefined, {
+                      onSuccess: () => navigate({ to: "/" }),
+                    }),
+                })
+        }
       />
     </>
   );

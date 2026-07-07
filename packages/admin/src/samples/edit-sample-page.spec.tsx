@@ -23,8 +23,9 @@ vi.mock("react-oidc-context", () => ({
 
 const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
 
-// In-memory API: GET returns the current sample, PUT saves it. Lets the page
-// run its real save/refetch cycle without a backend.
+// In-memory API: GET returns the current sample, PUT saves it, POST /publish
+// publishes it. Records write calls so tests can assert the save-then-publish
+// order. Lets the page run its real save/refetch cycle without a backend.
 function fakeApi(published = false) {
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -36,13 +37,16 @@ function fakeApi(published = false) {
     createdAt: "2026-06-01T00:00:00.000Z",
     updatedAt: "2026-07-01T10:00:00.000Z",
   };
+  const calls: string[] = [];
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = input instanceof Request ? input.url : input.toString();
     if (init?.method === "PUT" && typeof init.body === "string") {
       sample = { ...sample, ...JSON.parse(init.body) };
+      calls.push(`PUT ${sample.name}`);
     }
     if (init?.method === "POST" && url.endsWith("/publish")) {
       sample = { ...sample, published: true, igsn: IGSN };
+      calls.push("PUBLISH");
     }
     const body = url.includes("samples?")
       ? { data: [sample], meta: { total: 1 } }
@@ -52,83 +56,77 @@ function fakeApi(published = false) {
       headers: { "content-type": "application/json" },
     });
   });
-  return sample.id;
+  return { id: sample.id, calls };
 }
 
 async function renderEditPage(published = false) {
-  const id = fakeApi(published);
+  const { id, calls } = fakeApi(published);
   const queryClient = new QueryClient();
   const router = createRouter({
     routeTree,
     context: { queryClient },
     history: createMemoryHistory({ initialEntries: [`/samples/${id}`] }),
   });
-  return render(
+  const screen = await render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>
     </StrictMode>,
   );
+  return { screen, calls };
 }
 
 describe("EditSamplePage", () => {
-  it("should enable Publish when the form opens", async () => {
-    const screen = await renderEditPage();
+  it("should offer Save as draft and Save & Publish on a draft", async () => {
+    const { screen } = await renderEditPage();
     await expect
-      .element(screen.getByRole("button", { name: "Publish" }))
+      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByRole("button", { name: "Save & Publish" }))
       .toBeEnabled();
   });
 
-  it("should disable Publish while an edit is unsaved", async () => {
-    const screen = await renderEditPage();
-    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
-    await expect
-      .element(screen.getByRole("button", { name: "Publish" }))
-      .toBeDisabled();
-  });
-
-  it("should disable Publish while a type edit is unsaved", async () => {
-    const screen = await renderEditPage();
-    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
-    await screen.getByRole("option", { name: "Dredge" }).click();
-    await expect
-      .element(screen.getByRole("button", { name: "Publish" }))
-      .toBeDisabled();
-  });
-
   it("should show the publication status as a read-only field", async () => {
-    const screen = await renderEditPage();
+    const { screen } = await renderEditPage();
     const field = screen.getByRole("switch", { name: "Published" });
     await expect.element(field).not.toBeChecked();
     await expect.element(field).toBeDisabled();
   });
 
   it("should show an empty read-only IGSN until published", async () => {
-    const screen = await renderEditPage();
+    const { screen } = await renderEditPage();
     const field = screen.getByLabelText("IGSN");
     await expect.element(field).toHaveValue("");
     await expect.element(field).toHaveAttribute("readonly");
   });
 
   it("should show the IGSN of a published sample", async () => {
-    const screen = await renderEditPage(true);
+    const { screen } = await renderEditPage(true);
     await expect.element(screen.getByLabelText("IGSN")).toHaveValue(IGSN);
   });
 
-  it("should not offer Publish on an already published sample", async () => {
-    const screen = await renderEditPage(true);
+  it("should offer only Publish updates on an already published sample", async () => {
+    const { screen } = await renderEditPage(true);
     await expect
       .element(screen.getByRole("switch", { name: "Published" }))
       .toBeChecked();
     await expect
-      .element(screen.getByRole("button", { name: "Publish" }))
+      .element(screen.getByRole("button", { name: "Publish updates" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: "Save & Publish" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Save as draft" }))
       .not.toBeInTheDocument();
   });
 
-  it("should warn that publishing is irreversible and publish on confirm", async () => {
-    const screen = await renderEditPage();
-    await screen.getByRole("button", { name: "Publish" }).click();
+  it("should save the edits, then publish, and warn it is irreversible", async () => {
+    const { screen, calls } = await renderEditPage();
+    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen.getByRole("button", { name: "Save & Publish" }).click();
 
     await expect.element(screen.getByText(/irreversible/i)).toBeVisible();
 
@@ -138,18 +136,20 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("heading", { name: "Samples" }))
       .toBeVisible();
+    // The edited name was saved before publishing.
+    expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH"]);
   });
 
-  it("should stay on the page and re-enable Publish after saving", async () => {
-    const screen = await renderEditPage();
+  it("should stay on the page after Save as draft", async () => {
+    const { screen, calls } = await renderEditPage();
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
-    await screen.getByRole("button", { name: "Save" }).click();
+    await screen.getByRole("button", { name: "Save as draft" }).click();
 
     await expect
       .element(screen.getByRole("heading", { name: "Edit sample" }))
       .toBeVisible();
-    await expect
-      .element(screen.getByRole("button", { name: "Publish" }))
-      .toBeEnabled();
+    await vi.waitFor(() =>
+      expect(calls).toEqual(["PUT Grès de Fontainebleau"]),
+    );
   });
 });

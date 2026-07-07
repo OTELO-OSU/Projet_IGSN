@@ -6,7 +6,7 @@ import { LogOut } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 
-import { ApiGreeting } from "../api-greeting.tsx";
+import { UserName } from "../user-name.tsx";
 
 export function AppLayout({
   onSignOut,
@@ -30,7 +30,7 @@ export function AppLayout({
             {m.app_title()}
           </Link>
           <div className="flex items-center gap-4">
-            <ApiGreeting />
+            <UserName />
             <Button
               type="button"
               variant="outline"

@@ -25,7 +25,6 @@ export function SampleView({ name, igsn, nature }: SampleViewProps) {
             <li>
               <a
                 href="#sample"
-                aria-current="page"
                 className="border-l-2 border-sky-800 pl-3 font-medium text-sky-900"
               >
                 {m.sample_section_sample()}

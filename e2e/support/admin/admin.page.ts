@@ -20,9 +20,9 @@ export function adminPage(page: Page) {
       expect(page.getByRole("alert")).toContainText(/do not have access/i),
     expectSignedIn: () =>
       expect(page.getByRole("button", { name: "Sign out" })).toBeVisible(),
-    // The header greeting is filled from the api's protected /me route, so seeing
-    // it proves the Keycloak token verified server-side, not just in the SPA.
-    expectApiVerified: (name: string) =>
-      expect(page.getByText(`API verified you as ${name}`)).toBeVisible(),
+    // The header name is filled from the api's protected /me route, so seeing it
+    // proves the Keycloak token verified server-side, not just in the SPA.
+    expectUserName: (name: string) =>
+      expect(page.getByText(name)).toBeVisible(),
   };
 }
