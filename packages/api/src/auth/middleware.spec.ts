@@ -82,7 +82,7 @@ const validClaims = () => ({
 });
 
 const getMe = async (db: Parameters<typeof createApp>[0], token: string) =>
-  testClient(createApp(db)).me.$get(undefined, {
+  testClient(createApp(db)).admin.me.$get(undefined, {
     headers: { Authorization: `Bearer ${token}` },
   });
 

@@ -48,6 +48,16 @@ describe("requireActiveSession", () => {
     expect(res.status).toBe(401);
   });
 
+  it("should return 401 when the userinfo endpoint is unreachable", async () => {
+    fetchMock.mockRejectedValue(new Error("network down"));
+
+    const res = await testClient(app()).critical.$post(undefined, {
+      headers: { Authorization: "Bearer tok" },
+    });
+
+    expect(res.status).toBe(401);
+  });
+
   it("should return 401 without calling Keycloak when no token is presented", async () => {
     const res = await testClient(app()).critical.$post();
 

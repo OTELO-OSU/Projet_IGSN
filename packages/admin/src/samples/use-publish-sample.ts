@@ -9,9 +9,12 @@ export function usePublishSample(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async () => {
-      const res = await apiFetch(new URL(`samples/${id}/publish`, API_URL), {
-        method: "POST",
-      });
+      const res = await apiFetch(
+        new URL(`admin/samples/${id}/publish`, API_URL),
+        {
+          method: "POST",
+        },
+      );
       if (!res.ok) {
         throw new Error(`Failed to publish sample (${res.status})`);
       }

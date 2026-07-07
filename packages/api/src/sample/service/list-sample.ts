@@ -11,10 +11,12 @@ import { toSample } from "./to-sample.ts";
 export async function listSamples(
   db: Transactional<DB>,
   { page, perPage }: ListSamplesParams,
+  publishedOnly = false,
 ): Promise<ListSamplesResult> {
   const rows = await db
     .selectFrom("sample")
     .selectAll()
+    .$if(publishedOnly, (qb) => qb.where("published", "=", true))
     .orderBy("updated_at", "desc")
     .orderBy("id", "desc")
     .limit(perPage)
@@ -24,6 +26,7 @@ export async function listSamples(
   const { count } = await db
     .selectFrom("sample")
     .select((eb) => eb.fn.countAll<number>().as("count"))
+    .$if(publishedOnly, (qb) => qb.where("published", "=", true))
     .executeTakeFirstOrThrow();
 
   return { data: rows.map(toSample), total: Number(count) };

@@ -15,11 +15,11 @@ describe("app", () => {
     });
   });
 
-  describe("GET /me", () => {
+  describe("GET /admin/me", () => {
     pgTest("rejects a request with no bearer token", async ({ db }) => {
       const client = testClient(createApp(db));
 
-      const res = await client.me.$get();
+      const res = await client.admin.me.$get();
       expect(res.status).toBe(401);
     });
   });

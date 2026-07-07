@@ -30,7 +30,7 @@ services:
       target: prod
     # Run node directly (like the api CMD and CD), not `pnpm run`: prod runs as
     # USER node but /app is root-owned, and `pnpm run` writes a temp file there.
-    command: ["node", "migrate.ts"]
+    command: ["node", "scripts/migrate.ts"]
     environment:
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"

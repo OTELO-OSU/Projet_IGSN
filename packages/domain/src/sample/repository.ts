@@ -12,8 +12,10 @@ export type ListSamplesResult = {
 
 export type SampleRepository = {
   list(params: ListSamplesParams): Promise<ListSamplesResult>;
+  listPublished(params: ListSamplesParams): Promise<ListSamplesResult>;
+  get(id: string): Promise<Sample | null>;
+  getPublishedByIgsn(igsn: string): Promise<Sample | null>;
   create(input: CreateSample): Promise<Sample>;
-  findById(id: string): Promise<Sample | null>;
   update(id: string, input: CreateSample): Promise<Sample | null>;
   publish(id: string): Promise<Sample | null>;
 };

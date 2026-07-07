@@ -9,7 +9,7 @@ export function useSample(id: string) {
   return useQuery({
     queryKey: ["samples", id],
     queryFn: async () => {
-      const res = await apiFetch(new URL(`samples/${id}`, API_URL));
+      const res = await apiFetch(new URL(`admin/samples/${id}`, API_URL));
       if (res.status === 404) {
         return null;
       }
