@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
+import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import { Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 
 import { getLocale } from "#/paraglide/runtime.js";
@@ -13,10 +14,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       document.documentElement.setAttribute("lang", getLocale());
     },
     component: () => (
-      <AuthGate>
-        <Outlet />
-        <Toaster />
-      </AuthGate>
+      <TooltipProvider>
+        <AuthGate>
+          <Outlet />
+          <Toaster />
+        </AuthGate>
+      </TooltipProvider>
     ),
   },
 );

@@ -19,6 +19,7 @@ export async function updateSample(
       name: input.name,
       nature: input.nature,
       type: input.type,
+      material: input.material ?? null,
       updated_at: sql`now()`,
     })
     .where("id", "=", id)

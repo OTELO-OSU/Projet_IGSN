@@ -8,6 +8,9 @@ export default defineConfig({
         test: {
           name: "claude",
           include: ["./.claude/hooks/*.test.mjs"],
+          maxWorkers: 2,
+          maxConcurrency: 2,
+          testTimeout: 5000,
         },
       },
     ],

@@ -5,6 +5,32 @@ import { insertSample } from "./insert-sample.ts";
 import { listSamples } from "./list-sample.ts";
 
 describe("insertSample", () => {
+  pgTest("should round-trip a full ltree material path", async ({ db }) => {
+    const created = await insertSample(db, {
+      name: "Basalt 42",
+      nature: "hand_sample",
+      type: null,
+      material: "rock.igneous",
+    });
+    expect(created).toMatchObject({
+      name: "Basalt 42",
+      nature: "hand_sample",
+      material: "rock.igneous",
+    });
+  });
+
+  pgTest(
+    "should persist a null material for an unclassified draft",
+    async ({ db }) => {
+      const created = await insertSample(db, {
+        name: "Unclassified",
+        nature: "hand_sample",
+        type: null,
+      });
+      expect(created.material).toBeNull();
+    },
+  );
+
   pgTest("should insert and read back a sample", async ({ db }) => {
     // Act
     const created = await insertSample(db, {

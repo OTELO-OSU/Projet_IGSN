@@ -32,6 +32,12 @@ function SampleDetail() {
   }
 
   return (
-    <SampleView name={sample.name} igsn={sample.igsn} nature={sample.nature} />
+    <SampleView
+      name={sample.name}
+      igsn={sample.igsn}
+      nature={sample.nature}
+      type={sample.type}
+      material={sample.material}
+    />
   );
 }

@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
+import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
@@ -49,26 +50,36 @@ function EditSamplePage() {
           name: query.data.name,
           nature: query.data.nature,
           type: query.data.type,
+          material: query.data.material,
         }}
-        igsn={query.data.igsn}
-        published={isPublished}
-        submitLabel={
-          isPublished ? m.action_publish_updates() : m.action_save_draft()
-        }
         isPending={isPending}
         onCancel={() => navigate({ to: "/" })}
-        onSubmit={(value) => updateSample.mutate(value)}
-        // Draft only: save the edits, then publish, then return to the list.
-        onPublish={
-          isPublished
-            ? undefined
-            : (value) =>
-                updateSample.mutate(value, {
-                  onSuccess: () =>
-                    publishSample.mutate(undefined, {
-                      onSuccess: () => navigate({ to: "/" }),
-                    }),
-                })
+        secondaryAction={{
+          kind: "submit",
+          label: isPublished
+            ? m.action_publish_updates()
+            : m.action_save_draft(),
+          onSubmit: (value) => updateSample.mutate(value),
+        }}
+        primaryAction={
+          isPublished && query.data.igsn
+            ? {
+                kind: "link",
+                label: m.action_view_public_page(),
+                href: `${FRONTEND_URL}/samples/${query.data.igsn}`,
+              }
+            : {
+                kind: "publish",
+                label: m.action_save_publish(),
+                // Draft: save the edits, publish, then return to the list.
+                onPublish: (value) =>
+                  updateSample.mutate(value, {
+                    onSuccess: () =>
+                      publishSample.mutate(undefined, {
+                        onSuccess: () => navigate({ to: "/" }),
+                      }),
+                  }),
+              }
         }
       />
     </>

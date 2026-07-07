@@ -16,6 +16,16 @@ Two hard rules:
 - A service or repository signature/interface MUST live in `domain`; only its
   implementation lives in `api`.
 
+## Publish constraints
+
+The reasons a sample cannot be published live in ONE place:
+`domain/sample/sample-publish-blockers.ts` (`samplePublishBlockers`).
+`isSamplePublishable` and the admin publish tooltip both derive from it. When you
+add a publish constraint, add a code to `publishBlockerSchema` and push it in
+`samplePublishBlockers`; the admin label map (`publish-blocker-label.ts`) is an
+exhaustive `Record<PublishBlocker, () => string>`, so it fails to compile until
+the new reason is translated and thus shown in the tooltip.
+
 ## File layout
 
 One folder per entity, one concern per file, kebab-case folder. No barrel/index.

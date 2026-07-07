@@ -26,12 +26,19 @@ const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
 // In-memory API: GET returns the current sample, PUT saves it, POST /publish
 // publishes it. Records write calls so tests can assert the save-then-publish
 // order. Lets the page run its real save/refetch cycle without a backend.
-function fakeApi(published = false, fail: "save" | "publish" | false = false) {
+// Default type and material are leaves so Save & Publish starts enabled (see
+// samplePublishBlockers).
+function fakeApi(
+  published = false,
+  material: string | null = "fossil",
+  fail: "save" | "publish" | false = false,
+) {
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
     name: "Basalte du Massif Central",
     nature: "thin_section",
-    type: null,
+    type: "dredge",
+    material,
     igsn: published ? IGSN : null,
     published,
     createdAt: "2026-06-01T00:00:00.000Z",
@@ -67,9 +74,10 @@ function fakeApi(published = false, fail: "save" | "publish" | false = false) {
 
 async function renderEditPage(
   published = false,
+  material: string | null = "fossil",
   fail: "save" | "publish" | false = false,
 ) {
-  const { id, calls } = fakeApi(published, fail);
+  const { id, calls } = fakeApi(published, material, fail);
   const queryClient = new QueryClient();
   const router = createRouter({
     routeTree,
@@ -97,11 +105,25 @@ describe("EditSamplePage", () => {
       .toBeEnabled();
   });
 
-  it("should show the publication status as a read-only field", async () => {
-    const { screen } = await renderEditPage();
-    const field = screen.getByRole("switch", { name: "Published" });
-    await expect.element(field).not.toBeChecked();
-    await expect.element(field).toBeDisabled();
+  it("should disable Save & Publish and explain in a tooltip when the sample has no material", async () => {
+    const { screen } = await renderEditPage(false, null);
+    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    await expect.element(publish).toBeDisabled();
+
+    // The disabled button is not focusable; its tooltip trigger (the wrapping
+    // span) reveals the reason on focus, the way a keyboard user would find it.
+    publish.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/set the material before publishing/i);
+  });
+
+  it("should render the material cascade prefilled on the Sample type tab", async () => {
+    const { screen } = await renderEditPage(false, "rock.igneous");
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await expect
+      .element(screen.getByLabelText(/^rock$/i))
+      .toHaveTextContent("Igneous");
   });
 
   it("should not show an IGSN on a draft", async () => {
@@ -121,9 +143,6 @@ describe("EditSamplePage", () => {
 
   it("should offer only Publish updates on an already published sample", async () => {
     const { screen } = await renderEditPage(true);
-    await expect
-      .element(screen.getByRole("switch", { name: "Published" }))
-      .toBeChecked();
     await expect
       .element(screen.getByRole("button", { name: "Publish updates" }))
       .toBeVisible();
@@ -190,7 +209,7 @@ describe("EditSamplePage", () => {
   });
 
   it("should show an error toast when saving fails", async () => {
-    const { screen } = await renderEditPage(false, "save");
+    const { screen } = await renderEditPage(false, "fossil", "save");
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
     await screen.getByRole("button", { name: "Save as draft" }).click();
 
@@ -200,7 +219,7 @@ describe("EditSamplePage", () => {
   });
 
   it("should show an error toast when publishing fails", async () => {
-    const { screen } = await renderEditPage(false, "publish");
+    const { screen } = await renderEditPage(false, "fossil", "publish");
     await screen.getByRole("button", { name: "Save & Publish" }).click();
     await screen.getByRole("button", { name: "Confirm" }).click();
 

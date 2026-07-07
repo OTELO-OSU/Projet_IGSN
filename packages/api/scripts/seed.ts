@@ -1,4 +1,7 @@
-import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
+import type { MaterialPath } from "@projet-igsn/domain/sample/material";
+import type { Nature } from "@projet-igsn/domain/sample/nature";
+import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { SampleType } from "@projet-igsn/domain/sample/type";
 import type { Kysely } from "kysely";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
@@ -19,14 +22,23 @@ export async function seed(
 ): Promise<Sample[]> {
   const rows = await db
     .insertInto("sample")
-    .values(samples)
+    .values(
+      samples.map(({ material, ...rest }) => ({
+        ...rest,
+        material: material ?? null,
+      })),
+    )
     .returningAll()
     .execute();
   return rows.map(toSample);
 }
 
-type SeedSample = CreateSample & {
+type SeedSample = {
   id: string;
+  name: string;
+  nature: Nature;
+  type?: SampleType | null;
+  material?: MaterialPath;
   igsn?: string;
   published?: boolean;
 };
@@ -45,38 +57,46 @@ export const SEED_SAMPLES: SeedSample[] = [
     name: "Fontainebleau Sandstone",
     nature: "rock_powder",
     type: "dredge",
+    material: "rock.sedimentary",
   },
   {
     id: "00000000-0000-7000-8000-000000000002",
     name: "Massif Central Basalt",
     nature: "hand_sample",
     type: "core.section",
+    material: "rock.igneous",
   },
   {
     id: "00000000-0000-7000-8000-000000000003",
     name: "Brittany Granite",
     nature: "thin_section",
     type: "core.piece",
+    material: "rock.igneous",
   },
   {
     id: "00000000-0000-7000-8000-000000000004",
     name: "Jura Limestone",
     nature: "rock_chips",
     type: "dredge",
+    material: "rock.sedimentary",
   },
   {
     id: "00000000-0000-7000-8000-000000000005",
     name: "Ardennes Schist",
     nature: "polished_section",
     type: null,
+    material: "rock.metamorphic",
   },
   // Published, so they show in the public frontend. Ids reused from the tests;
-  // the igsn is derived from the id, matching how publish generates it.
+  // the igsn is derived from the id, matching how publish generates it. A
+  // published sample must carry a leaf material path (enforced at the publish
+  // boundary).
   {
     id: "01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69",
     name: "Basalt 42",
     nature: "hand_sample",
     type: null,
+    material: "rock.igneous",
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69"),
     published: true,
   },
@@ -85,6 +105,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     name: "Granite 7",
     nature: "thin_section",
     type: null,
+    material: "rock.igneous",
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),
     published: true,
   },

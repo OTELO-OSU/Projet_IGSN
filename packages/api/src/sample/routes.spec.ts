@@ -12,7 +12,16 @@ type Client = ReturnType<typeof testClient<ReturnType<typeof createApp>>>;
 
 async function createSample(client: Client, name: string) {
   const created = await client.admin.samples.$post(
-    { json: { name, nature: "rock_powder", type: null } },
+    // A leaf type and leaf material are required to publish, so seed both for
+    // the publish helper.
+    {
+      json: {
+        name,
+        nature: "rock_powder",
+        type: "individual_sample",
+        material: "sediment",
+      },
+    },
     { headers: authHeader },
   );
   return sampleResponseSchema.parse(await created.json()).data;

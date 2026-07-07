@@ -1,4 +1,4 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
 // E2E needs the full dev stack (Keycloak + mock IdPs + apps), so there is no
 // `webServer` here — start it with `make dev`, then `make test-e2e`.
@@ -21,7 +21,20 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [
-    { name: "admin", testDir: "./e2e/admin" },
-    { name: "frontend", testDir: "./e2e/frontend" },
+    {
+      name: "admin",
+      testDir: "./e2e/admin",
+      use: { ...devices["Desktop Chrome"], ...devices["Desktop Firefox"] },
+    },
+    {
+      name: "frontend",
+      testDir: "./e2e/frontend",
+      use: {
+        ...devices["Desktop Chrome"],
+        ...devices["Desktop Firefox"],
+        ...devices["Pixel 9"],
+        ...devices["iPhone 12"],
+      },
+    },
   ],
 });

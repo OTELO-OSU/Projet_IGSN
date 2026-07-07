@@ -11,6 +11,9 @@ type SampleTable = {
   // Taxonomy path (e.g. "core.section"); null until classified. Stored as
   // ltree, which the driver reads and writes as text.
   type: string | null;
+  // Hierarchical classification path stored as ltree; Kysely has no ltree type,
+  // so it is a plain string. Null until the sample is classified.
+  material: string | null;
   // Null until the sample is published; then derived from the id with generateIgsnSuffix.
   igsn: string | null;
   published: Generated<boolean>;

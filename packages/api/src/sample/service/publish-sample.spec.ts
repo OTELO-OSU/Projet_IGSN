@@ -14,6 +14,7 @@ describe("publishSample", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
+        material: "sediment",
       });
       // Act
       const published = await publishSample(db, created.id);
@@ -56,6 +57,7 @@ describe("publishSample", () => {
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
       type: null,
+      material: "sediment",
     });
     await publishSample(db, created.id);
     // Act

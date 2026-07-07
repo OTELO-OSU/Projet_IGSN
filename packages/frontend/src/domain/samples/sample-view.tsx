@@ -1,15 +1,59 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
+import { ChevronRightIcon } from "lucide-react";
+
+import { materialPathLabel } from "#/domain/samples/material-path-label.ts";
 import { natureLabel } from "#/domain/samples/nature-label.ts";
+import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
+import { typeLabel } from "#/domain/samples/type-label.ts";
 import { m } from "#/paraglide/messages.js";
 
 type SampleViewProps = {
   name: Sample["name"];
   igsn: Sample["igsn"];
   nature: Sample["nature"];
+  type: Sample["type"];
+  material: Sample["material"];
 };
 
-export function SampleView({ name, igsn, nature }: SampleViewProps) {
+// A dot-joined classification path rendered as a breadcrumb: each ancestor
+// label separated by a chevron. aria-labelledby names the list after its row
+// label ("Type"/"Material"), and the chevron carries a ">" label so the path
+// reads "Rock > Igneous" to assistive tech.
+type BreadcrumbProps = {
+  labelId: string;
+  segments: { path: string; label: string }[];
+};
+
+function ClassificationBreadcrumb({ labelId, segments }: BreadcrumbProps) {
+  return (
+    <ol
+      aria-labelledby={labelId}
+      className="flex flex-wrap items-center gap-1 font-medium"
+    >
+      {segments.map((segment, index) => (
+        <li key={segment.path} className="flex items-center gap-1">
+          {index > 0 ? (
+            <ChevronRightIcon
+              role="img"
+              aria-label=">"
+              className="text-muted-foreground size-4"
+            />
+          ) : null}
+          {segment.label}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+export function SampleView({
+  name,
+  igsn,
+  nature,
+  type,
+  material,
+}: SampleViewProps) {
   return (
     <div>
       <div className="bg-sky-700 text-white">
@@ -46,11 +90,46 @@ export function SampleView({ name, igsn, nature }: SampleViewProps) {
           </h2>
           <dl className="mt-2 divide-y">
             <div className="flex gap-4 px-4 py-3">
-              <dt className="text-muted-foreground w-40">
+              <dt
+                id="sample-field-nature"
+                className="text-muted-foreground w-40"
+              >
                 {m.sample_field_nature()}
               </dt>
               <dd className="font-medium">{natureLabel(nature)}</dd>
             </div>
+            {type ? (
+              <div className="flex gap-4 px-4 py-3">
+                <dt
+                  id="sample-field-type"
+                  className="text-muted-foreground w-40"
+                >
+                  {m.sample_field_type()}
+                </dt>
+                <dd>
+                  <ClassificationBreadcrumb
+                    labelId="sample-field-type"
+                    segments={pathBreadcrumb(type, typeLabel)}
+                  />
+                </dd>
+              </div>
+            ) : null}
+            {material ? (
+              <div className="flex gap-4 px-4 py-3">
+                <dt
+                  id="sample-field-material"
+                  className="text-muted-foreground w-40"
+                >
+                  {m.sample_field_material()}
+                </dt>
+                <dd>
+                  <ClassificationBreadcrumb
+                    labelId="sample-field-material"
+                    segments={pathBreadcrumb(material, materialPathLabel)}
+                  />
+                </dd>
+              </div>
+            ) : null}
           </dl>
         </section>
       </div>

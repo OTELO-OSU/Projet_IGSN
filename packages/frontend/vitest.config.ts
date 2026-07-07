@@ -19,6 +19,9 @@ export default defineConfig({
     }),
     react(),
   ],
+  // lucide-react (and other deps) must resolve the same React instance as the
+  // renderer, or their useContext hooks see a null React.
+  resolve: { dedupe: ["react"] },
   // The `url` strategy pulls in urlpattern-polyfill; pre-bundle it so vitest
   // doesn't re-optimize and reload mid-run (a documented flaky-test trigger).
   optimizeDeps: { include: ["@inlang/paraglide-js/urlpattern-polyfill"] },
@@ -32,6 +35,9 @@ export default defineConfig({
     },
     globals: true,
     include: ["src/**/*.spec.{ts,tsx}"],
+    maxWorkers: 2,
+    maxConcurrency: 2,
+    testTimeout: 5000,
     setupFiles: ["test/setup.ts"],
     coverage: {
       provider: "v8",

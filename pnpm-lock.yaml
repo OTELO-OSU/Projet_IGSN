@@ -188,6 +188,9 @@ importers:
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.61.1
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.13.1
       husky:
         specifier: 'catalog:'
         version: 9.1.7
