@@ -53,22 +53,26 @@ export const SampleTypeFields = withForm({
           }}
         >
           {(field) => (
-            <field.SelectField
+            <field.ComboboxField
               label={m.field_type()}
               items={typeItems}
               placeholder={m.type_placeholder()}
+              searchPlaceholder={m.type_search_placeholder()}
+              emptyText={m.type_empty()}
             />
           )}
         </form.AppField>
 
         <form.Subscribe selector={(state) => state.values.type}>
           {(type) => {
-            const items = type ? subTypeItems(type) : [];
+            if (!type) return null;
+            const items = subTypeItems(type);
             return items.length > 0 ? (
               <form.AppField name="subType">
                 {(field) => (
-                  <field.SelectField
-                    label={m.field_sub_type()}
+                  <field.ComboboxField
+                    // The sub-type refines the chosen type; label it as such.
+                    label={typeLabel(type)}
                     items={[
                       // The bare type is the "no sub-type" choice; it composes
                       // to the root path, so no sentinel value is needed.
@@ -76,6 +80,8 @@ export const SampleTypeFields = withForm({
                       ...items,
                     ]}
                     placeholder={m.sub_type_placeholder()}
+                    searchPlaceholder={m.sub_type_search_placeholder()}
+                    emptyText={m.sub_type_empty()}
                   />
                 )}
               </form.AppField>

@@ -96,14 +96,14 @@ describe("SampleForm", () => {
     );
 
     await expect
-      .element(screen.getByRole("combobox", { name: "Sub-type" }))
+      .element(screen.getByRole("combobox", { name: "Core" }))
       .not.toBeInTheDocument();
 
     await screen.getByRole("combobox", { name: "Type", exact: true }).click();
     await screen.getByRole("option", { name: "Core" }).click();
 
     await expect
-      .element(screen.getByRole("combobox", { name: "Sub-type" }))
+      .element(screen.getByRole("combobox", { name: "Core" }))
       .toBeVisible();
   });
 
@@ -118,7 +118,7 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("combobox", { name: "Type", exact: true }).click();
     await screen.getByRole("option", { name: "Core" }).click();
-    await screen.getByRole("combobox", { name: "Sub-type" }).click();
+    await screen.getByRole("combobox", { name: "Core" }).click();
     await screen.getByRole("option", { name: "Half round" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -142,9 +142,9 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("combobox", { name: "Type", exact: true }).click();
     await screen.getByRole("option", { name: "Core" }).click();
-    await screen.getByRole("combobox", { name: "Sub-type" }).click();
+    await screen.getByRole("combobox", { name: "Core" }).click();
     await screen.getByRole("option", { name: "Half round" }).click();
-    await screen.getByRole("combobox", { name: "Sub-type" }).click();
+    await screen.getByRole("combobox", { name: "Core" }).click();
     await screen.getByRole("option", { name: "None" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -168,7 +168,7 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("combobox", { name: "Type", exact: true }).click();
     await screen.getByRole("option", { name: "Core" }).click();
-    await screen.getByRole("combobox", { name: "Sub-type" }).click();
+    await screen.getByRole("combobox", { name: "Core" }).click();
     await screen.getByRole("option", { name: "Half round" }).click();
     await screen.getByRole("combobox", { name: "Type", exact: true }).click();
     await screen.getByRole("option", { name: "Dredge" }).click();
@@ -201,7 +201,7 @@ describe("SampleForm", () => {
       .element(screen.getByRole("combobox", { name: "Type", exact: true }))
       .toHaveTextContent("Core");
     await expect
-      .element(screen.getByRole("combobox", { name: "Sub-type" }))
+      .element(screen.getByRole("combobox", { name: "Core" }))
       .toHaveTextContent("Section");
   });
 

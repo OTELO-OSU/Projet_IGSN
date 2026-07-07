@@ -31,9 +31,10 @@ the domain schema at its trust boundary.
 
 - A new taxonomy is one tree const and one `z.enum` line; depth changes need
   no schema migration.
-- Ancestor queries are prefix matches (`LIKE 'rock.igneous.%'`), indexable
-  with a plain btree (`text_pattern_ops`); Postgres `ltree` is the upgrade
-  path if that ever falls short.
+- The column uses the Postgres `ltree` type: the codes are valid ltree labels,
+  ancestor queries are native (`type <@ 'core'`, GiST-indexable when needed),
+  and the database rejects malformed paths. The driver reads and writes it as
+  text, so application code sees plain strings.
 - Renaming or restructuring a code requires a data migration of stored paths,
   the usual materialized-path trade-off.
 - Vocabularies are fixed at deploy time; runtime-editable taxonomies would
