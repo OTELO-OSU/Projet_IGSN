@@ -65,6 +65,7 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: null,
         material: null,
+        collectionMethod: null,
       }),
     );
   });
@@ -79,6 +80,7 @@ describe("SampleForm", () => {
           nature: "thin_section",
           type: "core.section",
           material: null,
+          collectionMethod: null,
         }}
         primaryAction={{ kind: "submit", label: "Save", onSubmit }}
       />,
@@ -96,6 +98,7 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: "core.section",
         material: null,
+        collectionMethod: null,
       }),
     );
   });
@@ -120,6 +123,7 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: "dredge",
         material: null,
+        collectionMethod: null,
       }),
     );
   });
@@ -164,6 +168,7 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: "core.half_round",
         material: null,
+        collectionMethod: null,
       }),
     );
   });
@@ -213,6 +218,7 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: "dredge",
         material: null,
+        collectionMethod: null,
       }),
     );
   });
@@ -226,6 +232,7 @@ describe("SampleForm", () => {
           nature: "thin_section",
           type: "core.section",
           material: null,
+          collectionMethod: null,
         }}
         primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
       />,
@@ -264,8 +271,134 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: null,
         material: "rock.igneous",
+        collectionMethod: null,
       }),
     );
+  });
+
+  it("should walk the collection-method levels and submit the deepest path", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen
+      .getByRole("combobox", { name: "Collection Method", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Coring" }).click();
+    await screen.getByRole("combobox", { name: "Coring", exact: true }).click();
+    await screen.getByRole("option", { name: "GravityCorer" }).click();
+    await screen
+      .getByRole("combobox", { name: "GravityCorer", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Giant" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: null,
+        material: null,
+        collectionMethod: "coring.gravity_corer.giant",
+      }),
+    );
+  });
+
+  it("should submit the parent method when its own option is picked", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen
+      .getByRole("combobox", { name: "Collection Method", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Coring" }).click();
+    await screen.getByRole("combobox", { name: "Coring", exact: true }).click();
+    await screen.getByRole("option", { name: "Coring", exact: true }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: null,
+        material: null,
+        collectionMethod: "coring",
+      }),
+    );
+  });
+
+  it("should reset deeper collection-method levels when an upper level changes", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen
+      .getByRole("combobox", { name: "Collection Method", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Coring" }).click();
+    await screen.getByRole("combobox", { name: "Coring", exact: true }).click();
+    await screen.getByRole("option", { name: "GravityCorer" }).click();
+    await screen
+      .getByRole("combobox", { name: "Collection Method", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Dredging" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: null,
+        material: null,
+        collectionMethod: "dredging",
+      }),
+    );
+  });
+
+  it("should prefill the collection-method levels from a nested path", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: null,
+          material: null,
+          collectionMethod: "coring.gravity_corer.giant",
+        }}
+        primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+      />,
+    );
+
+    await expect
+      .element(
+        screen.getByRole("combobox", {
+          name: "Collection Method",
+          exact: true,
+        }),
+      )
+      .toHaveTextContent("Coring");
+    await expect
+      .element(screen.getByRole("combobox", { name: "Coring", exact: true }))
+      .toHaveTextContent("GravityCorer");
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "GravityCorer", exact: true }),
+      )
+      .toHaveTextContent("Giant");
   });
 
   it("should call onCancel when Cancel is clicked", async () => {
@@ -292,6 +425,7 @@ describe("SampleForm", () => {
           nature: "thin_section",
           type: "dredge",
           material: "fossil",
+          collectionMethod: null,
         }}
         secondaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
         primaryAction={{ kind: "publish", label: "Save & Publish", onPublish }}
@@ -307,6 +441,7 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: "dredge",
         material: "fossil",
+        collectionMethod: null,
       }),
     );
     expect(onSubmit).not.toHaveBeenCalled();
@@ -322,6 +457,7 @@ describe("SampleForm", () => {
             nature: "thin_section",
             type: "dredge",
             material: null,
+            collectionMethod: null,
           }}
           secondaryAction={{
             kind: "submit",
@@ -358,6 +494,7 @@ describe("SampleForm", () => {
             nature: "thin_section",
             type: null,
             material: "fossil",
+            collectionMethod: null,
           }}
           secondaryAction={{
             kind: "submit",
@@ -391,6 +528,7 @@ describe("SampleForm", () => {
           nature: "thin_section",
           type: null,
           material: "fossil",
+          collectionMethod: null,
         }}
         secondaryAction={{
           kind: "submit",

@@ -18,6 +18,7 @@ import {
 } from "@tanstack/react-table";
 
 import { m } from "#/paraglide/messages.js";
+import { collectionMethodLabel } from "#/samples/collection-method-label.ts";
 import { natureLabel } from "#/samples/nature-label.ts";
 
 const columns: ColumnDef<Sample>[] = [
@@ -45,6 +46,14 @@ const columns: ColumnDef<Sample>[] = [
     accessorKey: "nature",
     header: () => m.column_nature(),
     cell: ({ row }) => natureLabel(row.original.nature),
+  },
+  {
+    accessorKey: "collectionMethod",
+    header: () => m.column_collection_method(),
+    cell: ({ row }) =>
+      row.original.collectionMethod
+        ? collectionMethodLabel(row.original.collectionMethod)
+        : "",
   },
   {
     accessorKey: "updatedAt",

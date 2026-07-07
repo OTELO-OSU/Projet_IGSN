@@ -37,12 +37,14 @@ describe("insertSample", () => {
       name: "Basalte du Massif Central",
       nature: "thin_section",
       type: "core.section",
+      collectionMethod: "coring.gravity_corer.giant",
     });
     // Assert
     expect(created).toMatchObject({
       name: "Basalte du Massif Central",
       nature: "thin_section",
       type: "core.section",
+      collectionMethod: "coring.gravity_corer.giant",
     });
     expect(created.createdAt).toBeInstanceOf(Date);
 
@@ -57,6 +59,7 @@ describe("insertSample", () => {
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
       type: null,
+      collectionMethod: null,
     });
     // Assert: the version nibble of a v7 UUID is "7".
     expect(created.id[14]).toBe("7");
@@ -68,6 +71,7 @@ describe("insertSample", () => {
       name: "Calcaire de Bourgogne",
       nature: "rock_powder",
       type: null,
+      collectionMethod: null,
     });
     // Assert
     const row = await db
@@ -84,6 +88,7 @@ describe("insertSample", () => {
       name: "Granite de Flamanville",
       nature: "rock_powder",
       type: null,
+      collectionMethod: null,
     });
     // Act / Assert
     await expect(

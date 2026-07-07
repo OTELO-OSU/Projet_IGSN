@@ -25,6 +25,11 @@ import { type SampleType } from "@projet-igsn/domain/sample/type";
 import { z } from "zod";
 
 import { m } from "#/paraglide/messages.js";
+import {
+  CollectionMethodField,
+  composeCollectionMethod,
+  toCollectionMethodPath,
+} from "#/samples/collection-method-field.tsx";
 import { MaterialPathField } from "#/samples/material-path-field.tsx";
 import { natureLabel } from "#/samples/nature-label.ts";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
@@ -98,6 +103,9 @@ export function SampleForm({
       // Empty-string sentinel <-> null: the cascade works in strings, the
       // domain schema in `MaterialPath | null`.
       material: defaultValues?.material ?? "",
+      collectionMethodPath: toCollectionMethodPath(
+        defaultValues?.collectionMethod ?? null,
+      ),
     },
     // Wrap the superRefine schema in a function so it is typed against the
     // whole form value; forward its issue to the sub-type field.
@@ -121,6 +129,7 @@ export function SampleForm({
         nature: value.nature,
         type: composeType(value),
         material: value.material || null,
+        collectionMethod: composeCollectionMethod(value.collectionMethodPath),
       });
       if (!parsed.success) return;
       meta.onValid?.(parsed.data);
@@ -249,6 +258,10 @@ export function SampleForm({
               />
             )}
           </form.AppField>
+
+          <form.AppForm>
+            <CollectionMethodField />
+          </form.AppForm>
         </TabsContent>
 
         <TabsContent value="type" className="grid gap-4">

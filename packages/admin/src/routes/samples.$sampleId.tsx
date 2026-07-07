@@ -51,6 +51,7 @@ function EditSamplePage() {
           nature: query.data.nature,
           type: query.data.type,
           material: query.data.material,
+          collectionMethod: query.data.collectionMethod,
         }}
         isPending={isPending}
         onCancel={() => navigate({ to: "/" })}

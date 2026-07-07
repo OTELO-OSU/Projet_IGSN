@@ -30,6 +30,7 @@ describe("admin sample routes", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: null,
+          collectionMethod: null,
         },
       },
       { headers: authHeader },
@@ -50,6 +51,7 @@ describe("admin sample routes", () => {
           name: "Grès de Fontainebleau",
           nature: "rock_powder",
           type: null,
+          collectionMethod: null,
         },
       },
       { headers: authHeader },
@@ -76,6 +78,7 @@ describe("admin sample routes", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: null,
+          collectionMethod: null,
         },
       },
       { headers: authHeader },
@@ -112,6 +115,7 @@ describe("admin sample routes", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: null,
+          collectionMethod: null,
         },
       },
       { headers: authHeader },
@@ -125,6 +129,7 @@ describe("admin sample routes", () => {
           name: "Grès de Fontainebleau",
           nature: "rock_powder",
           type: null,
+          collectionMethod: null,
         },
       },
       { headers: authHeader },
@@ -145,7 +150,12 @@ describe("admin sample routes", () => {
     const res = await testClient(createApp(db)).admin.samples[":id"].$put(
       {
         param: { id: "01890a5d-ac96-774b-bcce-b302099a8057" },
-        json: { name: "Grès", nature: "rock_powder", type: null },
+        json: {
+          name: "Grès",
+          nature: "rock_powder",
+          type: null,
+          collectionMethod: null,
+        },
       },
       { headers: authHeader },
     );
@@ -163,6 +173,7 @@ describe("admin sample routes", () => {
           nature: "thin_section",
           type: "individual_sample",
           material: "sediment",
+          collectionMethod: null,
         },
       },
       { headers: authHeader },
@@ -283,6 +294,33 @@ describe("admin sample routes", () => {
       });
       expect(res.status).toBe(400);
     });
+
+    pgTest(
+      "should create a sample with a collection method",
+      async ({ db }) => {
+        const res = await postSample(createApp(db), {
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          collectionMethod: "coring.gravity_corer",
+        });
+        expect(res.status).toBe(201);
+        expect(await res.json()).toMatchObject({
+          data: { collectionMethod: "coring.gravity_corer" },
+        });
+      },
+    );
+
+    pgTest(
+      "should reject an unknown collection method with 400",
+      async ({ db }) => {
+        const res = await postSample(createApp(db), {
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          collectionMethod: "gravity_corer",
+        });
+        expect(res.status).toBe(400);
+      },
+    );
 
     pgTest("should reject unknown fields with 400", async ({ db }) => {
       const res = await postSample(createApp(db), {

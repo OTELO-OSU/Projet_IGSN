@@ -11,6 +11,7 @@ describe("getSample", () => {
       name: "Basalte du Massif Central",
       nature: "thin_section",
       type: null,
+      collectionMethod: null,
     });
     // Act
     const found = await getSample(db, created.id);

@@ -10,6 +10,7 @@ const base: Sample = {
   nature: "hand_sample",
   type: "individual_sample",
   material: "rock.igneous",
+  collectionMethod: null,
   igsn: null,
   published: false,
   createdAt: new Date("2026-01-01T00:00:00Z"),

@@ -7,6 +7,7 @@ const validSample = {
   nature: "thin_section",
   type: "core.section",
   material: null,
+  collectionMethod: "coring.gravity_corer",
   igsn: null,
   published: false,
   createdAt: "2026-07-02T10:00:00.000Z",
@@ -24,6 +25,7 @@ describe("sampleSchema", () => {
       nature: "thin_section",
       type: "core.section",
       material: null,
+      collectionMethod: "coring.gravity_corer",
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -46,6 +48,7 @@ describe("sampleSchema", () => {
     { ...validSample, published: "yes" },
     { ...validSample, igsn: "not-an-igsn" },
     { ...validSample, type: "half_round" },
+    { ...validSample, collectionMethod: "gravity_corer" },
   ])("should reject an invalid sample #%#", (input) => {
     // Arrange / Act
     const result = sampleSchema.safeParse(input);
@@ -93,6 +96,22 @@ describe("createSampleSchema", () => {
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
       type: "dredge",
+    });
+  });
+
+  it("should accept an explicit collection method", () => {
+    // Arrange / Act
+    const result = createSampleSchema.parse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      collectionMethod: "coring.gravity_corer.giant",
+    });
+    // Assert
+    expect(result).toEqual({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: "coring.gravity_corer.giant",
     });
   });
 
@@ -156,6 +175,7 @@ describe("createSampleSchema", () => {
     { name: "Grès", nature: "rock_powder", type: "half_round" },
     // unknown vocabulary codes
     { name: "Grès", nature: "rock_powder", material: "lava" },
+    { name: "Grès", nature: "rock_powder", collectionMethod: "gravity_corer" },
   ])("should reject invalid create input #%#", (input) => {
     // Arrange / Act
     const result = createSampleSchema.safeParse(input);
