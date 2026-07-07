@@ -13,21 +13,24 @@ import {
 import { m } from "#/paraglide/messages.js";
 
 type PublishSampleButtonProps = {
+  label: string;
   disabled?: boolean;
   onPublish: () => void;
 };
 
 // Publishing assigns a permanent IGSN and cannot be undone, hence the
-// destructive styling and the confirmation dialog.
+// confirmation dialog. type="button" so opening the dialog never submits the
+// surrounding form as a draft.
 export function PublishSampleButton({
+  label,
   disabled,
   onPublish,
 }: PublishSampleButtonProps) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="destructive" disabled={disabled}>
-          {m.action_publish()}
+        <Button type="button" disabled={disabled}>
+          {label}
         </Button>
       </DialogTrigger>
       <DialogContent closeLabel={m.action_close()}>

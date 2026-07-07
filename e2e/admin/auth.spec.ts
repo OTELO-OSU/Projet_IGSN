@@ -16,7 +16,7 @@ test.describe("authentication", () => {
     );
 
     await admin.expectSignedIn();
-    await admin.expectApiVerified("Marie Dupont");
+    await admin.expectUserName("Marie Dupont");
   });
 
   // Signing out must end the whole SSO chain (app + Keycloak + IdP): clicking

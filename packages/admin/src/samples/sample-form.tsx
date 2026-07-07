@@ -14,6 +14,7 @@ import { type SampleType } from "@projet-igsn/domain/sample/type";
 
 import { m } from "#/paraglide/messages.js";
 import { natureLabel } from "#/samples/nature-label.ts";
+import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
 import {
   SampleTypeFields,
   composeType,
@@ -27,12 +28,8 @@ const natureItems = natureSchema.options.map((nature) => ({
 type SampleFormProps = {
   onSubmit: (value: CreateSample) => void;
   onCancel: () => void;
-  // Reports every value change, letting the page track unsaved edits.
-  onValuesChange?: (value: {
-    name: string;
-    nature: string;
-    type: string | null;
-  }) => void;
+  // When set, renders a "Save & Publish" button that saves then publishes.
+  onPublish?: (value: CreateSample) => void;
   // When set, shows the IGSN as a read-only field (empty until published).
   igsn?: string | null;
   // When set, shows the publication status as a read-only field.
@@ -45,7 +42,7 @@ type SampleFormProps = {
 export function SampleForm({
   onSubmit,
   onCancel,
-  onValuesChange,
+  onPublish,
   igsn,
   published,
   isPending,
@@ -60,26 +57,18 @@ export function SampleForm({
       type: (defaultType?.split(".")[0] ?? "") as SampleType | "",
       subType: defaultType?.includes(".") ? (defaultType as string) : "",
     },
-    listeners: {
-      onChange: ({ formApi }) => {
-        const { name, nature } = formApi.state.values;
-        onValuesChange?.({
-          name,
-          nature,
-          type: composeType(formApi.state.values),
-        });
-      },
-    },
-    onSubmit: ({ value }) => {
+    // The publish button carries { publish: true }; the primary button and
+    // Enter submit with the default (save only). See TanStack Form onSubmitMeta.
+    onSubmitMeta: { publish: false },
+    onSubmit: ({ value, meta }) => {
       // The API is the real trust boundary; re-parse before sending.
       const parsed = createSampleSchema.safeParse({
         name: value.name,
         nature: value.nature,
         type: composeType(value),
       });
-      if (parsed.success) {
-        onSubmit(parsed.data);
-      }
+      if (!parsed.success) return;
+      (meta.publish ? onPublish : onSubmit)?.(parsed.data);
     },
   });
 
@@ -147,6 +136,19 @@ export function SampleForm({
         <form.AppForm>
           <form.SubmitButton label={submitLabel} disabled={isPending} />
         </form.AppForm>
+        {onPublish ? (
+          // Gate on canSubmit too: confirming the irreversible-publish dialog on
+          // an invalid form would close it and silently do nothing.
+          <form.Subscribe selector={(state) => state.canSubmit}>
+            {(canSubmit) => (
+              <PublishSampleButton
+                label={m.action_save_publish()}
+                disabled={isPending || !canSubmit}
+                onPublish={() => void form.handleSubmit({ publish: true })}
+              />
+            )}
+          </form.Subscribe>
+        ) : null}
       </div>
     </form>
   );

@@ -38,3 +38,6 @@ infra/preprod/certs/
 !.devcontainer/.mnt-*/.gitkeep
 .pnpm-store
 .ms-playwright
+## Local development container configuration files
+.devcontainer.json
+.devcontainer-lock.json

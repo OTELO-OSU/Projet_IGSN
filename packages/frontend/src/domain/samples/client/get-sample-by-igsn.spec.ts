@@ -1,5 +1,7 @@
 import { getSampleByIgsn } from "#/domain/samples/client/get-sample-by-igsn.ts";
 
+import { stubFetch } from "../../../../test/stub-fetch.ts";
+
 const iso = "2026-01-02T03:04:05.000Z";
 const igsn = "0123456789ABCDEFGHJKMNPQRS";
 
@@ -13,23 +15,6 @@ const sampleJson = {
   createdAt: iso,
   updatedAt: iso,
 };
-
-function stubFetch(
-  body: unknown,
-  status = 200,
-): { fetch: typeof fetch; lastUrl: () => string | undefined } {
-  let seen: string | undefined;
-  const fetchFn: typeof fetch = async (input) => {
-    seen =
-      input instanceof URL
-        ? input.href
-        : typeof input === "string"
-          ? input
-          : input.url;
-    return new Response(JSON.stringify(body), { status });
-  };
-  return { fetch: fetchFn, lastUrl: () => seen };
-}
 
 describe("getSampleByIgsn", () => {
   it("should parse the response into a sample", async () => {

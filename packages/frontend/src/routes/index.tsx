@@ -1,3 +1,5 @@
+import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { createFileRoute } from "@tanstack/react-router";
 
 import {
@@ -7,16 +9,19 @@ import {
 import { SampleList } from "#/domain/samples/sample-list.tsx";
 import { m } from "#/paraglide/messages.js";
 
-const listParams = { page: 1, perPage: 25 };
-
 export const Route = createFileRoute("/")({
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(listSamplesQueryOptions(listParams)),
+  validateSearch: listSamplesQuerySchema,
+  loaderDeps: ({ search: { page, perPage } }) => ({ page, perPage }),
+  loader: ({ context, deps }) =>
+    context.queryClient.ensureQueryData(listSamplesQueryOptions(deps)),
   component: Home,
 });
 
 function Home() {
-  const { data } = useListSamples(listParams);
+  const { page, perPage } = Route.useSearch();
+  const navigate = Route.useNavigate();
+  const { data } = useListSamples({ page, perPage });
+  const pageCount = Math.max(1, Math.ceil(data.total / perPage));
 
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-8">
@@ -24,6 +29,29 @@ function Home() {
         {m.samples_title()}
       </h1>
       <SampleList samples={data.data} />
+
+      <nav
+        aria-label={m.pagination_label()}
+        className="mt-8 flex items-center justify-center gap-4"
+      >
+        <Button
+          variant="outline"
+          disabled={page <= 1}
+          onClick={() => navigate({ search: { page: page - 1, perPage } })}
+        >
+          {m.pagination_previous()}
+        </Button>
+        <span aria-live="polite">
+          {page} / {pageCount}
+        </span>
+        <Button
+          variant="outline"
+          disabled={page >= pageCount}
+          onClick={() => navigate({ search: { page: page + 1, perPage } })}
+        >
+          {m.pagination_next()}
+        </Button>
+      </nav>
     </div>
   );
 }
