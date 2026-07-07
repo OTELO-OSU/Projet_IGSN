@@ -2,7 +2,6 @@ import type { Nature } from "@projet-igsn/domain/sample/nature";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { Input } from "@projet-igsn/design-system/components/ui/input";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
@@ -95,7 +94,7 @@ export function SampleForm({
         {igsn !== undefined ? (
           <div className="grid gap-2">
             <Label htmlFor="sample-igsn">{m.field_igsn()}</Label>
-            <Input id="sample-igsn" value={igsn ?? ""} readOnly />
+            <p id="sample-igsn">{igsn ?? ""}</p>
           </div>
         ) : null}
 
