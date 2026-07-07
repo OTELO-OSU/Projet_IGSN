@@ -7,9 +7,9 @@ import { TextField } from "./text-field.tsx";
 
 // Typed form kit (see @tanstack/react-form "Form Composition"). `useAppForm`
 // yields forms with fields/actions pre-bound to these components, taking
-// per-form defaultValues and validators; `withForm` splits a large form into
-// composable, type-safe pieces.
-export const { useAppForm, withForm } = createFormHook({
+// per-form defaultValues and validators; `useTypedAppFormContext` lets a child
+// rendered inside `form.AppForm` grab that form, typed by the same options.
+export const { useAppForm, useTypedAppFormContext } = createFormHook({
   fieldComponents: { TextField, ComboboxField },
   formComponents: { SubmitButton },
   fieldContext,

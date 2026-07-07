@@ -1,6 +1,6 @@
 import type { Nature } from "@projet-igsn/domain/sample/nature";
 
-import { withForm } from "@projet-igsn/design-system/components/form/app-form";
+import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { SAMPLE_TYPES, type SampleType } from "@projet-igsn/domain/sample/type";
 
 import { m } from "#/paraglide/messages.js";
@@ -30,61 +30,63 @@ export function composeType({
   return subType || type || null;
 }
 
-export const SampleTypeFields = withForm({
-  // Shape only used for type inference; the values come from the parent form.
-  defaultValues: {
-    name: "",
-    nature: "" as Nature | "",
-    type: "" as SampleType | "",
-    subType: "",
-  },
-  render: function SampleTypeFieldsRender({ form }) {
-    return (
-      <>
-        <form.AppField
-          name="type"
-          listeners={{
-            // A new type invalidates the previous refinement.
-            onChange: () => form.setFieldValue("subType", ""),
-          }}
-        >
-          {(field) => (
-            <field.ComboboxField
-              label={m.field_type()}
-              items={typeItems}
-              placeholder={m.type_placeholder()}
-              searchPlaceholder={m.type_search_placeholder()}
-              emptyText={m.type_empty()}
-            />
-          )}
-        </form.AppField>
+export function SampleTypeFields() {
+  // Options only drive type inference; the form itself comes from the parent's
+  // <form.AppForm> context.
+  const form = useTypedAppFormContext({
+    defaultValues: {
+      name: "",
+      nature: "" as Nature | "",
+      type: "" as SampleType | "",
+      subType: "",
+    },
+  });
 
-        <form.Subscribe selector={(state) => state.values.type}>
-          {(type) => {
-            if (!type) return null;
-            const items = subTypeItems(type);
-            return items.length > 0 ? (
-              <form.AppField name="subType">
-                {(field) => (
-                  <field.ComboboxField
-                    // The sub-type refines the chosen type; label it as such.
-                    label={typeLabel(type)}
-                    items={[
-                      // The bare type is the "no sub-type" choice; it composes
-                      // to the root path, so no sentinel value is needed.
-                      { value: type, label: m.sub_type_none() },
-                      ...items,
-                    ]}
-                    placeholder={m.sub_type_placeholder()}
-                    searchPlaceholder={m.sub_type_search_placeholder()}
-                    emptyText={m.sub_type_empty()}
-                  />
-                )}
-              </form.AppField>
-            ) : null;
-          }}
-        </form.Subscribe>
-      </>
-    );
-  },
-});
+  return (
+    <>
+      <form.AppField
+        name="type"
+        listeners={{
+          // A new type invalidates the previous refinement.
+          onChange: () => form.setFieldValue("subType", ""),
+        }}
+      >
+        {(field) => (
+          <field.ComboboxField
+            label={m.field_type()}
+            items={typeItems}
+            placeholder={m.type_placeholder()}
+            searchPlaceholder={m.type_search_placeholder()}
+            emptyText={m.type_empty()}
+          />
+        )}
+      </form.AppField>
+
+      <form.Subscribe selector={(state) => state.values.type}>
+        {(type) => {
+          if (!type) return null;
+          const items = subTypeItems(type);
+          return items.length > 0 ? (
+            <form.AppField name="subType">
+              {(field) => (
+                <field.ComboboxField
+                  // The sub-type refines the chosen type; label it as such.
+                  label={typeLabel(type)}
+                  items={[
+                    // The bare type is the "no sub-type" choice; it composes
+                    // to the root path, so no sentinel value is needed.
+                    { value: type, label: m.sub_type_none() },
+                    ...items,
+                  ]}
+                  placeholder={m.sub_type_placeholder()}
+                  searchPlaceholder={m.sub_type_search_placeholder()}
+                  emptyText={m.sub_type_empty()}
+                />
+              )}
+            </form.AppField>
+          ) : null;
+        }}
+      </form.Subscribe>
+    </>
+  );
+}

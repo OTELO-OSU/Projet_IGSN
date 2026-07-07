@@ -135,7 +135,9 @@ export function SampleForm({
           )}
         </form.AppField>
 
-        <SampleTypeFields form={form} />
+        <form.AppForm>
+          <SampleTypeFields />
+        </form.AppForm>
       </div>
 
       <div className="flex justify-end gap-2">
