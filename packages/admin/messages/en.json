@@ -22,6 +22,7 @@
   "action_close": "Close",
   "publish_sample_title": "Publish sample",
   "publish_sample_warning": "Publishing is irreversible. The sample will be assigned a permanent IGSN and become publicly visible.",
+  "column_igsn": "IGSN",
   "column_name": "Name",
   "column_nature": "Nature",
   "column_last_modified": "Last modified",

@@ -104,16 +104,14 @@ describe("EditSamplePage", () => {
     await expect.element(field).toBeDisabled();
   });
 
-  it("should show an empty read-only IGSN until published", async () => {
+  it("should show an empty IGSN until published", async () => {
     const { screen } = await renderEditPage();
-    const field = screen.getByLabelText("IGSN");
-    await expect.element(field).toHaveValue("");
-    await expect.element(field).toHaveAttribute("readonly");
+    await expect.element(screen.getByLabelText("IGSN")).toBeEmptyDOMElement();
   });
 
   it("should show the IGSN of a published sample", async () => {
     const { screen } = await renderEditPage(true);
-    await expect.element(screen.getByLabelText("IGSN")).toHaveValue(IGSN);
+    await expect.element(screen.getByLabelText("IGSN")).toHaveTextContent(IGSN);
   });
 
   it("should offer only Publish updates on an already published sample", async () => {

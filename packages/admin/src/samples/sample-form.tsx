@@ -94,7 +94,8 @@ export function SampleForm({
         {igsn !== undefined ? (
           <div className="grid gap-2">
             <Label htmlFor="sample-igsn">{m.field_igsn()}</Label>
-            <p id="sample-igsn">{igsn ?? ""}</p>
+            {/* output, not p: the label needs a labelable element to announce */}
+            <output id="sample-igsn">{igsn ?? ""}</output>
           </div>
         ) : null}
 
