@@ -104,12 +104,17 @@ describe("EditSamplePage", () => {
     await expect.element(field).toBeDisabled();
   });
 
-  it("should show an empty IGSN until published", async () => {
+  it("should not show an IGSN on a draft", async () => {
     const { screen } = await renderEditPage();
-    await expect.element(screen.getByLabelText("IGSN")).toBeEmptyDOMElement();
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByText(IGSN, { exact: false }))
+      .not.toBeInTheDocument();
   });
 
-  it("should show the IGSN of a published sample", async () => {
+  it("should show the IGSN of a published sample under the title", async () => {
     const { screen } = await renderEditPage(true);
     await expect.element(screen.getByLabelText("IGSN")).toHaveTextContent(IGSN);
   });

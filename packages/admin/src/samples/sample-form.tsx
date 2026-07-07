@@ -30,7 +30,7 @@ type SampleFormProps = {
   onCancel: () => void;
   // When set, renders a "Save & Publish" button that saves then publishes.
   onPublish?: (value: CreateSample) => void;
-  // When set, shows the IGSN as a read-only field (empty until published).
+  // Used for the public-page link of a published sample.
   igsn?: string | null;
   // When set, shows the publication status as a read-only field.
   published?: boolean;
@@ -91,14 +91,6 @@ export function SampleForm({
         >
           {(field) => <field.TextField label={`${m.field_name()} *`} />}
         </form.AppField>
-
-        {igsn !== undefined ? (
-          <div className="grid gap-2">
-            <Label htmlFor="sample-igsn">{m.field_igsn()}</Label>
-            {/* output, not p: the label needs a labelable element to announce */}
-            <output id="sample-igsn">{igsn ?? ""}</output>
-          </div>
-        ) : null}
 
         {published !== undefined ? (
           <div className="grid gap-2">
