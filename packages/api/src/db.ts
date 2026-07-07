@@ -8,6 +8,9 @@ type SampleTable = {
   id: string;
   name: string;
   nature: string;
+  // Taxonomy path (e.g. "core.section"); null until classified. Stored as
+  // ltree, which the driver reads and writes as text.
+  type: string | null;
   // Null until the sample is published; then derived from the id with generateIgsnSuffix.
   igsn: string | null;
   published: Generated<boolean>;

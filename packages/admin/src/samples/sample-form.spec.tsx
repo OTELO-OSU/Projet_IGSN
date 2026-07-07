@@ -25,7 +25,7 @@ describe("SampleForm", () => {
     );
 
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox").click();
+    await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -33,6 +33,7 @@ describe("SampleForm", () => {
       expect(onSubmit).toHaveBeenCalledWith({
         name: "Basalte du Massif Central",
         nature: "thin_section",
+        type: null,
       }),
     );
   });
@@ -46,6 +47,7 @@ describe("SampleForm", () => {
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
+          type: "core.section",
         }}
         submitLabel="Save"
       />,
@@ -61,8 +63,146 @@ describe("SampleForm", () => {
       expect(onSubmit).toHaveBeenCalledWith({
         name: "Basalte du Massif Central",
         nature: "thin_section",
+        type: "core.section",
       }),
     );
+  });
+
+  it("should submit the selected type", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onSubmit={onSubmit} onCancel={noop} submitLabel="Create" />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("option", { name: "Dredge" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: "dredge",
+      }),
+    );
+  });
+
+  it("should show the sub-type select only for a type with sub-values", async () => {
+    const screen = await render(
+      <SampleForm onSubmit={noop} onCancel={noop} submitLabel="Create" />,
+    );
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Core" }))
+      .not.toBeInTheDocument();
+
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("option", { name: "Core" }).click();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Core" }))
+      .toBeVisible();
+  });
+
+  it("should submit the selected sub-type as the full type path", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onSubmit={onSubmit} onCancel={noop} submitLabel="Create" />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("option", { name: "Core" }).click();
+    await screen.getByRole("combobox", { name: "Core" }).click();
+    await screen.getByRole("option", { name: "Half round" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: "core.half_round",
+      }),
+    );
+  });
+
+  it("should submit the bare type when its option is picked in the sub-type", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onSubmit={onSubmit} onCancel={noop} submitLabel="Create" />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("option", { name: "Core" }).click();
+    await screen.getByRole("combobox", { name: "Core" }).click();
+    await screen.getByRole("option", { name: "Half round" }).click();
+    await screen.getByRole("combobox", { name: "Core" }).click();
+    await screen.getByRole("option", { name: "Core", exact: true }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: "core",
+      }),
+    );
+  });
+
+  it("should reset the sub-type when the type changes", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onSubmit={onSubmit} onCancel={noop} submitLabel="Create" />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("option", { name: "Core" }).click();
+    await screen.getByRole("combobox", { name: "Core" }).click();
+    await screen.getByRole("option", { name: "Half round" }).click();
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("option", { name: "Dredge" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: "dredge",
+      }),
+    );
+  });
+
+  it("should prefill the type and sub-type selects from a nested path", async () => {
+    const screen = await render(
+      <SampleForm
+        onSubmit={noop}
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "core.section",
+        }}
+        submitLabel="Save"
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Type", exact: true }))
+      .toHaveTextContent("Core");
+    await expect
+      .element(screen.getByRole("combobox", { name: "Core" }))
+      .toHaveTextContent("Section");
   });
 
   it("should call onCancel when Cancel is clicked", async () => {
@@ -86,6 +226,7 @@ describe("SampleForm", () => {
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
+          type: null,
         }}
         submitLabel="Save"
       />,
@@ -97,6 +238,7 @@ describe("SampleForm", () => {
       expect(onValuesChange).toHaveBeenLastCalledWith({
         name: "Grès de Fontainebleau",
         nature: "thin_section",
+        type: null,
       }),
     );
   });

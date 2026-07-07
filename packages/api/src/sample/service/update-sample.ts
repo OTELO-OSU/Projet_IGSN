@@ -15,7 +15,12 @@ export async function updateSample(
   const row = await db
     .updateTable("sample")
     // Fields listed explicitly: never spread request input into an update.
-    .set({ name: input.name, nature: input.nature, updated_at: sql`now()` })
+    .set({
+      name: input.name,
+      nature: input.nature,
+      type: input.type,
+      updated_at: sql`now()`,
+    })
     .where("id", "=", id)
     .returningAll()
     .executeTakeFirst();

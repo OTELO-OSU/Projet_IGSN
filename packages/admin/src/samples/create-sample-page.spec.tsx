@@ -68,7 +68,7 @@ describe("CreateSamplePage", () => {
   it("should redirect to the new sample's edit page after creation", async () => {
     const screen = await renderCreatePage();
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox").click();
+    await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("button", { name: "Create" }).click();
 

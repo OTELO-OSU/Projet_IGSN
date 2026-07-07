@@ -10,9 +10,14 @@ import {
   type CreateSample,
   createSampleSchema,
 } from "@projet-igsn/domain/sample/sample";
+import { type SampleType } from "@projet-igsn/domain/sample/type";
 
 import { m } from "#/paraglide/messages.js";
 import { natureLabel } from "#/samples/nature-label.ts";
+import {
+  SampleTypeFields,
+  composeType,
+} from "#/samples/sample-type-fields.tsx";
 
 const natureItems = natureSchema.options.map((nature) => ({
   value: nature,
@@ -23,7 +28,11 @@ type SampleFormProps = {
   onSubmit: (value: CreateSample) => void;
   onCancel: () => void;
   // Reports every value change, letting the page track unsaved edits.
-  onValuesChange?: (value: { name: string; nature: string }) => void;
+  onValuesChange?: (value: {
+    name: string;
+    nature: string;
+    type: string | null;
+  }) => void;
   // When set, shows the IGSN as a read-only field (empty until published).
   igsn?: string | null;
   // When set, shows the publication status as a read-only field.
@@ -43,17 +52,31 @@ export function SampleForm({
   defaultValues,
   submitLabel,
 }: SampleFormProps) {
+  const defaultType = defaultValues?.type ?? null;
   const form = useAppForm({
     defaultValues: {
       name: defaultValues?.name ?? "",
       nature: defaultValues?.nature ?? ("" as Nature | ""),
+      type: (defaultType?.split(".")[0] ?? "") as SampleType | "",
+      subType: defaultType?.includes(".") ? (defaultType as string) : "",
     },
     listeners: {
-      onChange: ({ formApi }) => onValuesChange?.(formApi.state.values),
+      onChange: ({ formApi }) => {
+        const { name, nature } = formApi.state.values;
+        onValuesChange?.({
+          name,
+          nature,
+          type: composeType(formApi.state.values),
+        });
+      },
     },
     onSubmit: ({ value }) => {
       // The API is the real trust boundary; re-parse before sending.
-      const parsed = createSampleSchema.safeParse(value);
+      const parsed = createSampleSchema.safeParse({
+        name: value.name,
+        nature: value.nature,
+        type: composeType(value),
+      });
       if (parsed.success) {
         onSubmit(parsed.data);
       }
@@ -111,6 +134,10 @@ export function SampleForm({
             />
           )}
         </form.AppField>
+
+        <form.AppForm>
+          <SampleTypeFields />
+        </form.AppForm>
       </div>
 
       <div className="flex justify-end gap-2">

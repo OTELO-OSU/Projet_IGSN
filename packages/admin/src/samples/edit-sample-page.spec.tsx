@@ -30,6 +30,7 @@ function fakeApi(published = false) {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
     name: "Basalte du Massif Central",
     nature: "thin_section",
+    type: null,
     igsn: published ? IGSN : null,
     published,
     createdAt: "2026-06-01T00:00:00.000Z",
@@ -82,6 +83,15 @@ describe("EditSamplePage", () => {
   it("should disable Publish while an edit is unsaved", async () => {
     const screen = await renderEditPage();
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await expect
+      .element(screen.getByRole("button", { name: "Publish" }))
+      .toBeDisabled();
+  });
+
+  it("should disable Publish while a type edit is unsaved", async () => {
+    const screen = await renderEditPage();
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("option", { name: "Dredge" }).click();
     await expect
       .element(screen.getByRole("button", { name: "Publish" }))
       .toBeDisabled();

@@ -10,11 +10,13 @@ describe("insertSample", () => {
     const created = await insertSample(db, {
       name: "Basalte du Massif Central",
       nature: "thin_section",
+      type: "core.section",
     });
     // Assert
     expect(created).toMatchObject({
       name: "Basalte du Massif Central",
       nature: "thin_section",
+      type: "core.section",
     });
     expect(created.createdAt).toBeInstanceOf(Date);
 
@@ -28,6 +30,7 @@ describe("insertSample", () => {
     const created = await insertSample(db, {
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
+      type: null,
     });
     // Assert: the version nibble of a v7 UUID is "7".
     expect(created.id[14]).toBe("7");
@@ -38,6 +41,7 @@ describe("insertSample", () => {
     const created = await insertSample(db, {
       name: "Calcaire de Bourgogne",
       nature: "rock_powder",
+      type: null,
     });
     // Assert
     const row = await db
@@ -53,6 +57,7 @@ describe("insertSample", () => {
     const created = await insertSample(db, {
       name: "Granite de Flamanville",
       nature: "rock_powder",
+      type: null,
     });
     // Act / Assert
     await expect(

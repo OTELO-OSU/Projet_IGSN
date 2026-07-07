@@ -8,7 +8,7 @@ export function sampleCreatePage(page: Page) {
       ).toBeVisible(),
     fillName: (name: string) => page.getByLabel(/name/i).fill(name),
     selectNature: async (label: string) => {
-      await page.getByRole("combobox").click();
+      await page.getByRole("combobox", { name: /nature/i }).click();
       await page.getByRole("option", { name: label }).click();
     },
     submit: () => page.getByRole("button", { name: "Create" }).click(),

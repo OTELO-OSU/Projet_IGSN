@@ -10,10 +10,12 @@ describe("listSamples", () => {
     const older = await insertSample(db, {
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
+      type: null,
     });
     const newer = await insertSample(db, {
       name: "Basalte du Massif Central",
       nature: "thin_section",
+      type: null,
     });
     // now() is the transaction timestamp, identical for both inserts; set
     // distinct updated_at values so the ordering is deterministic.
@@ -39,7 +41,7 @@ describe("listSamples", () => {
   pgTest("should paginate with limit and offset", async ({ db }) => {
     // Arrange
     for (const name of ["Un", "Deux", "Trois"]) {
-      await insertSample(db, { name, nature: "hand_sample" });
+      await insertSample(db, { name, nature: "hand_sample", type: null });
     }
     // Act
     const page1 = await listSamples(db, { page: 1, perPage: 2 });

@@ -12,7 +12,7 @@ type Client = ReturnType<typeof testClient<ReturnType<typeof createApp>>>;
 
 async function createSample(client: Client, name: string) {
   const created = await client.admin.samples.$post(
-    { json: { name, nature: "rock_powder" } },
+    { json: { name, nature: "rock_powder", type: null } },
     { headers: authHeader },
   );
   return sampleResponseSchema.parse(await created.json()).data;
