@@ -26,5 +26,6 @@ export function usePublishSample(id: string) {
       toast.success(m.publish_sample_success());
       return queryClient.invalidateQueries({ queryKey: ["samples"] });
     },
+    onError: () => toast.error(m.publish_sample_error()),
   });
 }

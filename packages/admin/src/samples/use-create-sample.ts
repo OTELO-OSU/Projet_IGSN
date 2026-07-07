@@ -27,5 +27,6 @@ export function useCreateSample() {
       toast.success(m.create_sample_success());
       return queryClient.invalidateQueries({ queryKey: ["samples"] });
     },
+    onError: () => toast.error(m.create_sample_error()),
   });
 }

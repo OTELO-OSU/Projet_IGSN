@@ -16,10 +16,6 @@ function CreateSamplePage() {
     <>
       <h1 className="text-2xl font-bold">{m.create_sample_title()}</h1>
 
-      {createSample.isError ? (
-        <p role="alert">{m.create_sample_error()}</p>
-      ) : null}
-
       <SampleForm
         submitLabel={m.action_create()}
         isPending={createSample.isPending}

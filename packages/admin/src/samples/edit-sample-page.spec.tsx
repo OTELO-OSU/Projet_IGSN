@@ -26,7 +26,7 @@ const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
 // In-memory API: GET returns the current sample, PUT saves it, POST /publish
 // publishes it. Records write calls so tests can assert the save-then-publish
 // order. Lets the page run its real save/refetch cycle without a backend.
-function fakeApi(published = false) {
+function fakeApi(published = false, fail: "save" | "publish" | false = false) {
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
     name: "Basalte du Massif Central",
@@ -40,6 +40,12 @@ function fakeApi(published = false) {
   const calls: string[] = [];
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
     const url = input instanceof Request ? input.url : input.toString();
+    if (
+      (fail === "save" && init?.method === "PUT") ||
+      (fail === "publish" && init?.method === "POST")
+    ) {
+      return new Response(null, { status: 500 });
+    }
     if (init?.method === "PUT" && typeof init.body === "string") {
       sample = { ...sample, ...JSON.parse(init.body) };
       calls.push(`PUT ${sample.name}`);
@@ -59,8 +65,11 @@ function fakeApi(published = false) {
   return { id: sample.id, calls };
 }
 
-async function renderEditPage(published = false) {
-  const { id, calls } = fakeApi(published);
+async function renderEditPage(
+  published = false,
+  fail: "save" | "publish" | false = false,
+) {
+  const { id, calls } = fakeApi(published, fail);
   const queryClient = new QueryClient();
   const router = createRouter({
     routeTree,
@@ -158,6 +167,26 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Sample published");
+  });
+
+  it("should show an error toast when saving fails", async () => {
+    const { screen } = await renderEditPage(false, "save");
+    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen.getByRole("button", { name: "Save as draft" }).click();
+
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Could not update the sample. Please try again.");
+  });
+
+  it("should show an error toast when publishing fails", async () => {
+    const { screen } = await renderEditPage(false, "publish");
+    await screen.getByRole("button", { name: "Save & Publish" }).click();
+    await screen.getByRole("button", { name: "Confirm" }).click();
+
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Could not publish the sample. Please try again.");
   });
 
   it("should stay on the page after Save as draft", async () => {

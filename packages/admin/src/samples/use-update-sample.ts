@@ -28,5 +28,6 @@ export function useUpdateSample(id: string) {
       // Prefix match: refreshes both the list and this sample's detail query.
       return queryClient.invalidateQueries({ queryKey: ["samples"] });
     },
+    onError: () => toast.error(m.edit_sample_error()),
   });
 }

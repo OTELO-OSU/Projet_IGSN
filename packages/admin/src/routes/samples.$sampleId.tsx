@@ -34,13 +34,6 @@ function EditSamplePage() {
     <>
       <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
 
-      {updateSample.isError ? (
-        <p role="alert">{m.edit_sample_error()}</p>
-      ) : null}
-      {publishSample.isError ? (
-        <p role="alert">{m.publish_sample_error()}</p>
-      ) : null}
-
       <SampleForm
         defaultValues={{
           name: query.data.name,

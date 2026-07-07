@@ -23,9 +23,12 @@ vi.mock("react-oidc-context", () => ({
 
 // In-memory API: POST creates the sample, GET returns it. Lets the page run
 // its real create-then-navigate cycle without a backend.
-function fakeApi() {
+function fakeApi(failWrites = false) {
   let sample: Record<string, unknown> | null = null;
   vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
+    if (failWrites && init?.method === "POST") {
+      return new Response(null, { status: 500 });
+    }
     if (init?.method === "POST" && typeof init.body === "string") {
       sample = {
         id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -47,8 +50,8 @@ function fakeApi() {
   });
 }
 
-async function renderCreatePage() {
-  fakeApi();
+async function renderCreatePage(failWrites = false) {
+  fakeApi(failWrites);
   const queryClient = new QueryClient();
   const router = createRouter({
     routeTree,
@@ -90,5 +93,17 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Sample created");
+  });
+
+  it("should show an error toast when creation fails", async () => {
+    const screen = await renderCreatePage(true);
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox").click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Could not create the sample. Please try again.");
   });
 });
