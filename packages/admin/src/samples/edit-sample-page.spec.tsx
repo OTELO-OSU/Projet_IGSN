@@ -140,6 +140,26 @@ describe("EditSamplePage", () => {
     expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH"]);
   });
 
+  it("should show a toast after saving", async () => {
+    const { screen } = await renderEditPage();
+    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen.getByRole("button", { name: "Save as draft" }).click();
+
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Sample saved");
+  });
+
+  it("should show a toast after publishing", async () => {
+    const { screen } = await renderEditPage();
+    await screen.getByRole("button", { name: "Save & Publish" }).click();
+    await screen.getByRole("button", { name: "Confirm" }).click();
+
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Sample published");
+  });
+
   it("should stay on the page after Save as draft", async () => {
     const { screen, calls } = await renderEditPage();
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");

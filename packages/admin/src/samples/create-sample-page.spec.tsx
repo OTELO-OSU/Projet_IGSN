@@ -79,4 +79,16 @@ describe("CreateSamplePage", () => {
       .element(screen.getByLabelText(/name/i))
       .toHaveValue("Basalte du Massif Central");
   });
+
+  it("should show a toast after creation", async () => {
+    const screen = await renderCreatePage();
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox").click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Sample created");
+  });
 });
