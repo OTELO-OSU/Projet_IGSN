@@ -1,7 +1,13 @@
 import { test as base } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 
-export type SeededSample = { id: string; name: string; nature: string };
+export type SeededSample = {
+  id: string;
+  name: string;
+  nature: string;
+  igsn: string | null;
+  published: boolean;
+};
 
 function resetAndSeed(): SeededSample[] {
   // ponytail: hard-coded to the `igsn-e2e-api-1` container that `make test-e2e`

@@ -16,6 +16,7 @@
   "dependencies": {
     "@inlang/paraglide-js": "catalog:",
     "@projet-igsn/design-system": "workspace:*",
+    "@projet-igsn/domain": "workspace:*",
     "@tanstack/react-devtools": "catalog:",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-query": "catalog:",
