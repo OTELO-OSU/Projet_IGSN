@@ -11,6 +11,7 @@ import {
 } from "@projet-igsn/domain/sample/sample";
 import { type SampleType } from "@projet-igsn/domain/sample/type";
 
+import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { natureLabel } from "#/samples/nature-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
@@ -148,6 +149,12 @@ export function SampleForm({
               />
             )}
           </form.Subscribe>
+        ) : published && igsn ? (
+          <Button asChild variant="outline">
+            <a href={`${FRONTEND_URL}/samples/${igsn}`}>
+              {m.action_view_public_page()}
+            </a>
+          </Button>
         ) : null}
       </div>
     </form>

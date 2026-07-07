@@ -130,6 +130,23 @@ describe("EditSamplePage", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should link to the public page once published", async () => {
+    const { screen } = await renderEditPage(true);
+    await expect
+      .element(screen.getByRole("link", { name: "View public page" }))
+      .toHaveAttribute("href", `http://localhost:3000/samples/${IGSN}`);
+  });
+
+  it("should not link to the public page on a draft", async () => {
+    const { screen } = await renderEditPage();
+    await expect
+      .element(screen.getByRole("button", { name: "Save & Publish" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("link", { name: "View public page" }))
+      .not.toBeInTheDocument();
+  });
+
   it("should save the edits, then publish, and warn it is irreversible", async () => {
     const { screen, calls } = await renderEditPage();
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");

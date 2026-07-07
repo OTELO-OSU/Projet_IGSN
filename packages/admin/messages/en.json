@@ -20,6 +20,7 @@
   "action_publish_updates": "Publish updates",
   "action_confirm": "Confirm",
   "action_close": "Close",
+  "action_view_public_page": "View public page",
   "publish_sample_title": "Publish sample",
   "publish_sample_warning": "Publishing is irreversible. The sample will be assigned a permanent IGSN and become publicly visible.",
   "column_igsn": "IGSN",

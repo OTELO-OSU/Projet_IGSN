@@ -86,7 +86,7 @@ describe("CreateSamplePage", () => {
   it("should show a toast after creation", async () => {
     const screen = await renderCreatePage();
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox").click();
+    await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -98,7 +98,7 @@ describe("CreateSamplePage", () => {
   it("should show an error toast when creation fails", async () => {
     const screen = await renderCreatePage(true);
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox").click();
+    await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("button", { name: "Create" }).click();
 
