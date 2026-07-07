@@ -3,7 +3,7 @@ import { z } from "zod";
 // Hierarchical controlled vocabulary stored as dot-separated ltree paths, like
 // sampleType. An ancestor path ("coring") is a valid, partial classification.
 // Declaration order is the order the form walks: a parent is always declared
-// before its children (buildCollectionMethodTree relies on it).
+// before its children (HierarchySelectField's tree builder relies on it).
 export const collectionMethodSchema = z.enum([
   "blasting",
   "camera_sled_camera_tow",

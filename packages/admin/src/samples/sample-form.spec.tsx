@@ -10,22 +10,22 @@ const noop = () => {};
 
 describe("sampleTypeFormSchema", () => {
   it.each([
-    { type: "", subType: "" }, // no type chosen yet (draft)
-    { type: "dredge", subType: "" }, // leaf root type, no sub-values
-    { type: "core", subType: "core.piece" }, // core refined to a leaf
+    { typePath: [] }, // no type chosen yet (draft)
+    { typePath: ["dredge"] }, // leaf root type, no sub-values
+    { typePath: ["core", "core.piece"] }, // core refined to a leaf
   ])("should accept %o", (value) => {
     expect(sampleTypeFormSchema.safeParse(value).success).toBe(true);
   });
 
   it.each([
-    { type: "core", subType: "" }, // core picked, no sub-type
-    { type: "core", subType: "core" }, // bare "core" sub-option is still vague
+    { typePath: ["core"] }, // core picked, no sub-type
+    { typePath: ["core", "core"] }, // bare "core" sub-option is still vague
   ])("should require a sub-type for %o", (value) => {
     const result = sampleTypeFormSchema.safeParse(value);
     expect(result.success).toBe(false);
     expect(result.error?.issues).toEqual([
       expect.objectContaining({
-        path: ["subType"],
+        path: ["typePath", 1],
         message: "Select a sub-type.",
       }),
     ]);
