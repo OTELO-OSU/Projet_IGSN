@@ -1,6 +1,6 @@
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
-import { page, userEvent } from "vitest/browser";
+import { page } from "vitest/browser";
 
 import { Pagination } from "./pagination.tsx";
 
@@ -106,13 +106,8 @@ describe("Pagination", () => {
       />,
     );
 
-    // Drive the Radix Select by keyboard: a pointer click races open/close on
-    // the trigger in headless Firefox. Enter opens, typeahead jumps to "25",
-    // Enter commits.
-    screen.getByRole("combobox").element().focus();
-    await userEvent.keyboard("{Enter}");
-    await expect.element(page.getByRole("listbox")).toBeVisible();
-    await userEvent.keyboard("25{Enter}");
+    await screen.getByRole("combobox").click();
+    await page.getByRole("option", { name: "25" }).click();
 
     expect(onPerPageChange).toHaveBeenCalledWith(25);
   });
