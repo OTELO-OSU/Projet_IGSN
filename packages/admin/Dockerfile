@@ -35,16 +35,18 @@ CMD ["pnpm", "-F", "@projet-igsn/admin", "dev"]
 
 FROM base AS build
 
-# Vite bakes VITE_* at build time: the API URL, Keycloak authority, and client id
-# are fixed into the bundle here. Default to the dev stack; e2e overrides the
-# authority (different port), prod overrides them for the real Keycloak (see
-# docs/adr/0003-production-auth-keycloak.md).
+# Vite bakes VITE_* at build time: the API URL, Keycloak authority, client id,
+# and public frontend URL are fixed into the bundle here. Default to the dev
+# stack; e2e overrides the authority (different port), prod overrides them for
+# the real Keycloak (see docs/adr/0003-production-auth-keycloak.md).
 ARG VITE_API_URL=http://localhost:3002
 ENV VITE_API_URL=$VITE_API_URL
 ARG VITE_OIDC_AUTHORITY=http://localhost:8080/realms/igsn
 ENV VITE_OIDC_AUTHORITY=$VITE_OIDC_AUTHORITY
 ARG VITE_OIDC_CLIENT_ID=igsn-admin
 ENV VITE_OIDC_CLIENT_ID=$VITE_OIDC_CLIENT_ID
+ARG VITE_FRONTEND_URL=http://localhost:3000
+ENV VITE_FRONTEND_URL=$VITE_FRONTEND_URL
 
 RUN pnpm -F @projet-igsn/admin build
 
