@@ -13,6 +13,7 @@
     "./components/form/*": "./src/components/form/*.tsx"
   },
   "dependencies": {
+    "@projet-igsn/domain": "workspace:*",
     "@tanstack/react-form": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
