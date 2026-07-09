@@ -9,9 +9,11 @@ export function useSamples(params: {
   perPage: number;
   sort?: "status";
   order?: "asc" | "desc";
+  search?: string;
 }) {
   const apiFetch = useApiClient();
   return useQuery({
+    // params carries search, so the query refetches when the search changes.
     queryKey: ["samples", params],
     queryFn: async () => {
       const url = new URL("admin/samples", API_URL);
@@ -21,6 +23,7 @@ export function useSamples(params: {
         url.searchParams.set("sort", params.sort);
         url.searchParams.set("order", params.order ?? "asc");
       }
+      if (params.search) url.searchParams.set("search", params.search);
 
       const res = await apiFetch(url);
       if (!res.ok) {

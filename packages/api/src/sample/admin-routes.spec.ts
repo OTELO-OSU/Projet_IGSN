@@ -1,4 +1,7 @@
-import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
+import {
+  listSamplesResponseSchema,
+  sampleResponseSchema,
+} from "@projet-igsn/domain/sample/sample-validator";
 import { testClient } from "hono/testing";
 import { describe, expect } from "vitest";
 
@@ -67,6 +70,112 @@ describe("admin sample routes", () => {
       data: [{ name: "Grès de Fontainebleau" }],
       meta: { total: 1 },
     });
+  });
+
+  describe("search", () => {
+    pgTest(
+      "should filter samples by name, ignoring case and diacritics",
+      async ({ db }) => {
+        // Arrange
+        const client = testClient(createApp(db));
+        await client.admin.samples.$post(
+          {
+            json: {
+              name: "Grès de Fontainebleau",
+              nature: "rock_powder",
+              type: null,
+              collectionMethod: null,
+            },
+          },
+          { headers: authHeader },
+        );
+        await client.admin.samples.$post(
+          {
+            json: {
+              name: "Basalte du Massif Central",
+              nature: "thin_section",
+              type: null,
+              collectionMethod: null,
+            },
+          },
+          { headers: authHeader },
+        );
+        // Act
+        const res = await client.admin.samples.$get(
+          { query: { page: "1", perPage: "10", search: "GRES" } },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        expect(await res.json()).toMatchObject({
+          data: [{ name: "Grès de Fontainebleau" }],
+          meta: { total: 1 },
+        });
+      },
+    );
+
+    pgTest(
+      "should return both published and unpublished samples that match",
+      async ({ db }) => {
+        // Arrange
+        const client = testClient(createApp(db));
+        // A publishable draft that is then published: admin search must still
+        // see it, unlike the public route which is published-only.
+        const created = await client.admin.samples.$post(
+          {
+            json: {
+              name: "Granite published",
+              nature: "thin_section",
+              type: "individual_sample",
+              material: "sediment",
+              specificName: "GR-2026-001",
+            },
+          },
+          { headers: authHeader },
+        );
+        const { data } = sampleResponseSchema.parse(await created.json());
+        await client.admin.samples[":id"].publish.$post(
+          { param: { id: data.id } },
+          { headers: authHeader },
+        );
+        await client.admin.samples.$post(
+          {
+            json: {
+              name: "Granite draft",
+              nature: "thin_section",
+              type: null,
+              collectionMethod: null,
+            },
+          },
+          { headers: authHeader },
+        );
+        // A non-matching sample must be excluded by the filter.
+        await client.admin.samples.$post(
+          {
+            json: {
+              name: "Basalte du Massif Central",
+              nature: "thin_section",
+              type: null,
+              collectionMethod: null,
+            },
+          },
+          { headers: authHeader },
+        );
+        // Act
+        const res = await client.admin.samples.$get(
+          { query: { page: "1", perPage: "10", search: "granite" } },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        const body = listSamplesResponseSchema.parse(await res.json());
+        expect(body.meta.total).toBe(2);
+        expect(body.data.map((sample) => sample.name).sort()).toEqual([
+          "Granite draft",
+          "Granite published",
+        ]);
+      },
+    );
   });
 
   pgTest("should get a sample by id", async ({ db }) => {

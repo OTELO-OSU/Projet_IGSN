@@ -8,6 +8,7 @@ import { type SortingState } from "@tanstack/react-table";
 
 import { Pagination } from "#/pagination/pagination.tsx";
 import { m } from "#/paraglide/messages.js";
+import { SampleSearchField } from "#/samples/sample-search-field.tsx";
 import { SampleTable } from "#/samples/sample-table.tsx";
 import { useSamples } from "#/samples/use-samples.ts";
 
@@ -17,9 +18,9 @@ export const Route = createFileRoute("/")({
 });
 
 function SampleListPage() {
-  const { page, perPage, sort, order } = Route.useSearch();
+  const { page, perPage, sort, order, search } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const query = useSamples({ page, perPage, sort, order });
+  const query = useSamples({ page, perPage, sort, order, search });
 
   const total = query.data?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / perPage));
@@ -39,6 +40,15 @@ function SampleListPage() {
         </Button>
       </div>
 
+      <SampleSearchField
+        defaultValue={search}
+        onSearch={(value) =>
+          navigate({
+            search: { page: 1, perPage, sort, order, search: value || undefined },
+          })
+        }
+      />
+
       {query.isPending ? (
         <p>{m.samples_loading()}</p>
       ) : query.isError ? (
@@ -57,6 +67,7 @@ function SampleListPage() {
                 perPage,
                 sort: next[0] ? "status" : undefined,
                 order: next[0]?.desc ? "desc" : "asc",
+                search,
               },
             });
           }}
@@ -69,10 +80,12 @@ function SampleListPage() {
         perPage={perPage}
         pageSizes={PAGE_SIZES}
         onPageChange={(nextPage) =>
-          navigate({ search: { page: nextPage, perPage, sort, order } })
+          navigate({ search: { page: nextPage, perPage, sort, order, search } })
         }
         onPerPageChange={(nextPerPage) =>
-          navigate({ search: { page: 1, perPage: nextPerPage, sort, order } })
+          navigate({
+            search: { page: 1, perPage: nextPerPage, sort, order, search },
+          })
         }
       />
     </>

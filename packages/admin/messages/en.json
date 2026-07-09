@@ -10,6 +10,8 @@
   "auth_no_access": "You do not have access to the app. Sign in through your institution first, then link your ORCID.",
   "user_name_error": "Could not load your account.",
   "samples_title": "Samples",
+  "samples_search_label": "Search samples",
+  "samples_search_placeholder": "Search by name, specific name or IGSN",
   "samples_empty": "No results",
   "samples_loading": "Loading samples...",
   "samples_error": "Could not load samples",
