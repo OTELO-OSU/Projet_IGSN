@@ -1,29 +1,30 @@
-import { Input } from "@projet-igsn/design-system/components/ui/input";
 import { SearchIcon } from "lucide-react";
 import { useRef } from "react";
 
-type SampleSearchFieldProps = {
-  defaultValue: string;
+import { Input } from "./input.tsx";
+
+type SearchFieldProps = {
+  defaultValue?: string;
   label: string;
   placeholder: string;
   onSearch: (value: string) => void;
 };
 
-// Debounce so a fast typist does not fire one URL navigation (and Suspense
-// refetch) per keystroke; only the settled term hits the query.
+// Debounce so a fast typist does not fire one query per keystroke; only the
+// settled term is reported.
 const DEBOUNCE_MS = 300;
 
-export function SampleSearchField({
+// Uncontrolled: the caller (usually the URL) is the source of truth, the input
+// just seeds from defaultValue, so there is no prop-into-state mirroring.
+export function SearchField({
   defaultValue,
   label,
   placeholder,
   onSearch,
-}: SampleSearchFieldProps) {
+}: SearchFieldProps) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   return (
     <div role="search">
-      {/* Uncontrolled: the URL is the source of truth, the input just seeds
-          from it, so there is no prop-into-state mirroring to keep in sync. */}
       <label>
         <span className="sr-only">{label}</span>
         <div className="relative">

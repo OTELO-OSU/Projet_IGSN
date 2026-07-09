@@ -1,4 +1,5 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { SearchField } from "@projet-igsn/design-system/components/ui/search-field";
 import {
   PAGE_SIZES,
   listSamplesQuerySchema,
@@ -8,7 +9,6 @@ import { type SortingState } from "@tanstack/react-table";
 
 import { Pagination } from "#/pagination/pagination.tsx";
 import { m } from "#/paraglide/messages.js";
-import { SampleSearchField } from "#/samples/sample-search-field.tsx";
 import { SampleTable } from "#/samples/sample-table.tsx";
 import { useSamples } from "#/samples/use-samples.ts";
 
@@ -40,11 +40,19 @@ function SampleListPage() {
         </Button>
       </div>
 
-      <SampleSearchField
+      <SearchField
         defaultValue={search}
+        label={m.samples_search_label()}
+        placeholder={m.samples_search_placeholder()}
         onSearch={(value) =>
           navigate({
-            search: { page: 1, perPage, sort, order, search: value || undefined },
+            search: {
+              page: 1,
+              perPage,
+              sort,
+              order,
+              search: value || undefined,
+            },
           })
         }
       />

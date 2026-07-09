@@ -13,6 +13,9 @@ import { toSample } from "./to-sample.ts";
 // Case- and diacritic-insensitive match on name, specific_name and igsn.
 // `search` is LIKE-escaped and bound as a parameter (never concatenated), and
 // unaccent needs the migration-enabled Postgres extension.
+// ponytail: seq scan (leading-wildcard ILIKE over unaccent() can't use a btree).
+// Fine at registry scale; if the table grows, add pg_trgm GIN expression indexes
+// on an IMMUTABLE unaccent() wrapper of each column.
 function matchesSearch(search: string) {
   const pattern = `%${search.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
   return sql<boolean>`(

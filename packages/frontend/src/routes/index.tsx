@@ -1,4 +1,5 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { SearchField } from "@projet-igsn/design-system/components/ui/search-field";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -7,7 +8,6 @@ import {
   useListSamples,
 } from "#/domain/samples/hook/list-samples.ts";
 import { SampleList } from "#/domain/samples/sample-list.tsx";
-import { SampleSearchField } from "#/domain/samples/sample-search-field.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/")({
@@ -30,7 +30,7 @@ function Home() {
         {m.samples_title()}
       </h1>
       <div className="mb-6">
-        <SampleSearchField
+        <SearchField
           defaultValue={search ?? ""}
           label={m.samples_search_label()}
           placeholder={m.samples_search_placeholder()}
