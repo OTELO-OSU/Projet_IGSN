@@ -10,15 +10,28 @@ import type { DB } from "../../db.ts";
 import { type Transactional } from "../../transaction.ts";
 import { toSample } from "./to-sample.ts";
 
+// Case- and diacritic-insensitive match on name, specific_name and igsn.
+// `search` is LIKE-escaped and bound as a parameter (never concatenated), and
+// unaccent needs the migration-enabled Postgres extension.
+function matchesSearch(search: string) {
+  const pattern = `%${search.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+  return sql<boolean>`(
+    unaccent(name) ILIKE unaccent(${pattern})
+    OR unaccent(specific_name) ILIKE unaccent(${pattern})
+    OR unaccent(igsn) ILIKE unaccent(${pattern})
+  )`;
+}
+
 export async function listSamples(
   db: Transactional<DB>,
-  { page, perPage, sort, order = "asc" }: ListSamplesParams,
+  { page, perPage, sort, order = "asc", search }: ListSamplesParams,
   publishedOnly = false,
 ): Promise<ListSamplesResult> {
   const rows = await db
     .selectFrom("sample")
     .selectAll()
     .$if(publishedOnly, (qb) => qb.where("published", "=", true))
+    .$if(search !== undefined, (qb) => qb.where(matchesSearch(search!)))
     // Status is IGSN presence; last-modified stays as the tiebreak.
     .$if(sort === "status", (qb) => qb.orderBy(sql`igsn is not null`, order))
     .orderBy("updated_at", "desc")
@@ -31,6 +44,7 @@ export async function listSamples(
     .selectFrom("sample")
     .select((eb) => eb.fn.countAll<number>().as("count"))
     .$if(publishedOnly, (qb) => qb.where("published", "=", true))
+    .$if(search !== undefined, (qb) => qb.where(matchesSearch(search!)))
     .executeTakeFirstOrThrow();
 
   return { data: rows.map(toSample), total: Number(count) };
