@@ -28,6 +28,13 @@ const columns: ColumnDef<Sample>[] = [
     cell: ({ row }) => row.original.igsn,
   },
   {
+    id: "status",
+    header: () => m.column_status(),
+    // Derived, not stored: a sample is published exactly when it has an IGSN.
+    cell: ({ row }) =>
+      row.original.igsn ? m.status_published() : m.status_draft(),
+  },
+  {
     accessorKey: "name",
     header: () => m.column_name(),
     // The row's onClick is mouse-only; this link is the keyboard and

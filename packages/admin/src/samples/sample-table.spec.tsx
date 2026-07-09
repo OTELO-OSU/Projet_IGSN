@@ -52,6 +52,7 @@ describe("SampleTable", () => {
     await expect
       .element(screen.getByRole("row").nth(0))
       .toHaveTextContent(/^IGSN/);
+    await expect.element(screen.getByText("Status")).toBeInTheDocument();
     await expect.element(screen.getByText("Name")).toBeInTheDocument();
     await expect.element(screen.getByText("Nature")).toBeInTheDocument();
     await expect
@@ -67,6 +68,18 @@ describe("SampleTable", () => {
     await expect
       .element(screen.getByText("01K072TVWVFK5A1RRZ5MY4PPK9"))
       .toBeInTheDocument();
+  });
+
+  it("should show a Published status when the sample has an IGSN", async () => {
+    const screen = await renderTable([
+      { ...sample, igsn: "01K072TVWVFK5A1RRZ5MY4PPK9", published: true },
+    ]);
+    await expect.element(screen.getByText("Published")).toBeInTheDocument();
+  });
+
+  it("should show a Draft status when the sample has no IGSN", async () => {
+    const screen = await renderTable(samples);
+    await expect.element(screen.getByText("Draft")).toBeInTheDocument();
   });
 
   it("should render a sample row with the last-modified date as yyyy-mm-dd", async () => {
