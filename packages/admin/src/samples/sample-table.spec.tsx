@@ -82,6 +82,30 @@ describe("SampleTable", () => {
     await expect.element(screen.getByText("Draft")).toBeInTheDocument();
   });
 
+  it("should sort by status when the Status header is clicked", async () => {
+    const published: Sample = {
+      ...sample,
+      id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
+      name: "Published sample",
+      igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
+      published: true,
+    };
+    // Published listed first, so the ascending sort visibly reorders.
+    const screen = await renderTable([published, sample]);
+
+    await screen.getByRole("button", { name: "Status" }).click();
+    // Ascending: drafts (no IGSN) come first.
+    await expect
+      .element(screen.getByRole("row").nth(1))
+      .toHaveTextContent("Draft");
+
+    await screen.getByRole("button", { name: "Status" }).click();
+    // Descending: published (IGSN present) come first.
+    await expect
+      .element(screen.getByRole("row").nth(1))
+      .toHaveTextContent("Published");
+  });
+
   it("should render a sample row with the last-modified date as yyyy-mm-dd", async () => {
     const screen = await renderTable(samples);
     await expect

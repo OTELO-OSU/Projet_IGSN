@@ -1,5 +1,6 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
+import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -14,6 +15,7 @@ import {
   type ColumnDef,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 
@@ -29,10 +31,29 @@ const columns: ColumnDef<Sample>[] = [
   },
   {
     id: "status",
-    header: () => m.column_status(),
     // Derived, not stored: a sample is published exactly when it has an IGSN.
+    // The accessor drives sorting; the first click sorts ascending (drafts
+    // first), which numeric accessors would otherwise invert.
+    accessorFn: (sample) => (sample.igsn ? 1 : 0),
+    sortDescFirst: false,
+    header: ({ column }) => (
+      <button
+        type="button"
+        onClick={column.getToggleSortingHandler()}
+        className="cursor-pointer"
+      >
+        {m.column_status()}
+        {{ asc: " ↑", desc: " ↓" }[column.getIsSorted() as string] ?? ""}
+      </button>
+    ),
     cell: ({ row }) =>
-      row.original.igsn ? m.status_published() : m.status_draft(),
+      row.original.igsn ? (
+        <Badge className="bg-green-100 text-green-800" variant="secondary">
+          {m.status_published()}
+        </Badge>
+      ) : (
+        <Badge variant="secondary">{m.status_draft()}</Badge>
+      ),
   },
   {
     accessorKey: "name",
@@ -75,6 +96,7 @@ export function SampleTable({ samples }: { samples: Sample[] }) {
     data: samples,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
   return (
