@@ -2,6 +2,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { ChevronRightIcon } from "lucide-react";
 
+import { collectionMethodLabel } from "#/domain/samples/collection-method-label.ts";
 import { materialPathLabel } from "#/domain/samples/material-path-label.ts";
 import { natureLabel } from "#/domain/samples/nature-label.ts";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
@@ -14,6 +15,7 @@ type SampleViewProps = {
   nature: Sample["nature"];
   type: Sample["type"];
   material: Sample["material"];
+  collectionMethod: Sample["collectionMethod"];
 };
 
 // A dot-joined classification path rendered as a breadcrumb: each ancestor
@@ -53,6 +55,7 @@ export function SampleView({
   nature,
   type,
   material,
+  collectionMethod,
 }: SampleViewProps) {
   return (
     <div>
@@ -126,6 +129,25 @@ export function SampleView({
                   <ClassificationBreadcrumb
                     labelId="sample-field-material"
                     segments={pathBreadcrumb(material, materialPathLabel)}
+                  />
+                </dd>
+              </div>
+            ) : null}
+            {collectionMethod ? (
+              <div className="flex gap-4 px-4 py-3">
+                <dt
+                  id="sample-field-collection-method"
+                  className="text-muted-foreground w-40"
+                >
+                  {m.sample_field_collection_method()}
+                </dt>
+                <dd>
+                  <ClassificationBreadcrumb
+                    labelId="sample-field-collection-method"
+                    segments={pathBreadcrumb(
+                      collectionMethod,
+                      collectionMethodLabel,
+                    )}
                   />
                 </dd>
               </div>

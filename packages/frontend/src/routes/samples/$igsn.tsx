@@ -38,6 +38,7 @@ function SampleDetail() {
       nature={sample.nature}
       type={sample.type}
       material={sample.material}
+      collectionMethod={sample.collectionMethod}
     />
   );
 }
