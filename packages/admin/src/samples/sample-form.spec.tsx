@@ -112,7 +112,6 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Dredge" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
@@ -133,7 +132,6 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
-    await screen.getByRole("tab", { name: "Sample type" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Core" }))
       .not.toBeInTheDocument();
@@ -155,7 +153,6 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Core" }).click();
     await screen.getByRole("combobox", { name: "Core" }).click();
@@ -182,7 +179,6 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Core" }).click();
     // Pick the bare "Core" option: it is not a specific-enough classification.
@@ -203,7 +199,6 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Core" }).click();
     await screen.getByRole("combobox", { name: "Core" }).click();
@@ -238,7 +233,6 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Sample type" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
       .toHaveTextContent("Core");

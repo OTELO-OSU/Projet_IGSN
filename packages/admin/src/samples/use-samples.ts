@@ -4,7 +4,12 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { API_URL } from "#/api-url.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useSamples(params: { page: number; perPage: number }) {
+export function useSamples(params: {
+  page: number;
+  perPage: number;
+  sort?: "status";
+  order?: "asc" | "desc";
+}) {
   const apiFetch = useApiClient();
   return useQuery({
     queryKey: ["samples", params],
@@ -12,6 +17,10 @@ export function useSamples(params: { page: number; perPage: number }) {
       const url = new URL("admin/samples", API_URL);
       url.searchParams.set("page", String(params.page));
       url.searchParams.set("perPage", String(params.perPage));
+      if (params.sort) {
+        url.searchParams.set("sort", params.sort);
+        url.searchParams.set("order", params.order ?? "asc");
+      }
 
       const res = await apiFetch(url);
       if (!res.ok) {

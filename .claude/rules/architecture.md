@@ -16,6 +16,14 @@ Two hard rules:
 - A service or repository signature/interface MUST live in `domain`; only its
   implementation lives in `api`.
 
+## Server-side sorting and filtering
+
+Lists are paginated server-side, so sorting and filtering MUST be too, in the
+Postgres query (Kysely `orderBy`/`where`), never in the client or on a fetched
+page. Sorting one page client-side lies about the dataset. Declare the
+sort/filter params in the list query schema in `domain`, pass them through the
+repository, and keep them in the URL app-side (see the URL-as-state rule).
+
 ## Publish constraints
 
 The reasons a sample cannot be published live in ONE place:

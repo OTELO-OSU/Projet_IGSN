@@ -18,8 +18,13 @@ import {
 export function createSampleAdminRoutes(repository: SampleRepository) {
   return new Hono()
     .get("/", validateListQuery, async (c) => {
-      const { page, perPage } = c.req.valid("query");
-      const { data, total } = await repository.list({ page, perPage });
+      const { page, perPage, sort, order } = c.req.valid("query");
+      const { data, total } = await repository.list({
+        page,
+        perPage,
+        sort,
+        order,
+      });
       const body: ListSamplesResponse = { data, meta: { total } };
       return c.json(body);
     })

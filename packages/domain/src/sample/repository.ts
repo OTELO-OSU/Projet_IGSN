@@ -3,6 +3,8 @@ import type { CreateSample, Sample } from "./sample.ts";
 export type ListSamplesParams = {
   page: number;
   perPage: number;
+  sort?: "status";
+  order?: "asc" | "desc";
 };
 
 export type ListSamplesResult = {

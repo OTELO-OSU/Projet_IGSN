@@ -1,5 +1,6 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
+import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -12,6 +13,8 @@ import { formatDate } from "@projet-igsn/design-system/lib/format-date";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
+  type OnChangeFn,
+  type SortingState,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -26,6 +29,33 @@ const columns: ColumnDef<Sample>[] = [
     accessorKey: "igsn",
     header: () => m.column_igsn(),
     cell: ({ row }) => row.original.igsn,
+  },
+  {
+    id: "status",
+    // Derived, not stored: a sample is published exactly when it has an IGSN.
+    // Sorting is manual (server-side, keyed on IGSN presence); the accessor
+    // never orders rows, it only marks the column sortable. First click sorts
+    // ascending, drafts first.
+    accessorFn: (sample) => (sample.igsn ? 1 : 0),
+    sortDescFirst: false,
+    header: ({ column }) => (
+      <button
+        type="button"
+        onClick={column.getToggleSortingHandler()}
+        className="cursor-pointer"
+      >
+        {m.column_status()}
+        {{ asc: " ↑", desc: " ↓" }[column.getIsSorted() as string] ?? ""}
+      </button>
+    ),
+    cell: ({ row }) =>
+      row.original.igsn ? (
+        <Badge className="bg-green-100 text-green-800" variant="secondary">
+          {m.status_published()}
+        </Badge>
+      ) : (
+        <Badge variant="secondary">{m.status_draft()}</Badge>
+      ),
   },
   {
     accessorKey: "name",
@@ -62,12 +92,27 @@ const columns: ColumnDef<Sample>[] = [
   },
 ];
 
-export function SampleTable({ samples }: { samples: Sample[] }) {
+type SampleTableProps = {
+  samples: Sample[];
+  // Sorting is controlled: the route owns it (URL state) and the API applies
+  // it, since sorting only the current page client-side would be wrong.
+  sorting: SortingState;
+  onSortingChange: OnChangeFn<SortingState>;
+};
+
+export function SampleTable({
+  samples,
+  sorting,
+  onSortingChange,
+}: SampleTableProps) {
   const navigate = useNavigate();
   const table = useReactTable({
     data: samples,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    manualSorting: true,
+    state: { sorting },
+    onSortingChange,
   });
 
   return (

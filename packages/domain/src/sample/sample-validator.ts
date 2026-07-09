@@ -14,6 +14,12 @@ export const listSamplesQuerySchema = z.object({
     .transform((size): number =>
       PAGE_SIZES.includes(size) ? size : DEFAULT_PAGE_SIZE,
     ),
+  // Sorting is applied server-side (the list is paginated). "status" orders by
+  // IGSN presence: a sample is published exactly when it has an IGSN.
+  sort: z.enum(["status"]).optional().catch(undefined),
+  // Optional, not defaulted: a default would make the key required in typed
+  // clients. Consumers treat an absent order as asc.
+  order: z.enum(["asc", "desc"]).optional().catch(undefined),
 });
 
 export type ListSamplesQuery = z.infer<typeof listSamplesQuerySchema>;

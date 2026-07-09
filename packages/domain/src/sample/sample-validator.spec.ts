@@ -31,4 +31,35 @@ describe("listSamplesQuerySchema", () => {
       expect(listSamplesQuerySchema.parse({ page }).page).toBe(1);
     },
   );
+
+  it.each(["asc", "desc"] as const)(
+    "should accept sorting by status %s",
+    (order) => {
+      expect(listSamplesQuerySchema.parse({ sort: "status", order })).toEqual({
+        page: 1,
+        perPage: DEFAULT_PAGE_SIZE,
+        sort: "status",
+        order,
+      });
+    },
+  );
+
+  it("should leave the order optional (consumers default to asc)", () => {
+    expect(
+      listSamplesQuerySchema.parse({ sort: "status" }).order,
+    ).toBeUndefined();
+  });
+
+  it("should drop an unknown sort", () => {
+    expect(listSamplesQuerySchema.parse({ sort: "name" }).sort).toBeUndefined();
+  });
+
+  it("should drop an unknown order", () => {
+    const result = listSamplesQuerySchema.parse({
+      sort: "status",
+      order: "sideways",
+    });
+    expect(result.sort).toBe("status");
+    expect(result.order).toBeUndefined();
+  });
 });
