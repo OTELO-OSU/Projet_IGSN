@@ -53,7 +53,7 @@ services:
     restart: unless-stopped
     environment:
       PORT: "8080"
-      CORS_ORIGINS: "https://igsn-admin.${DOMAIN}"
+      CORS_ORIGINS: "https://igsn-admin.${DOMAIN},https://igsn.${DOMAIN}"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       DATABASE_NAME: ${DATABASE_NAME}
@@ -129,7 +129,7 @@ services:
     restart: unless-stopped
     environment:
       PORT: "8080"
-      VITE_API_URL: "https://igsn-api.${DOMAIN}"
+      API_URL: "https://igsn-api.${DOMAIN}"
     healthcheck: *healthcheck
 
   # Edge: terminates TLS with the Cloudflare Origin CA cert (mounted from the
