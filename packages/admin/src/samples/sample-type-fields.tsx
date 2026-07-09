@@ -50,7 +50,7 @@ export function SampleTypeFields() {
       >
         {(field) => (
           <field.ComboboxField
-            label={m.field_type()}
+            label={`${m.field_type()} *`}
             items={typeItems}
             placeholder={m.type_placeholder()}
             searchPlaceholder={m.type_search_placeholder()}
@@ -68,11 +68,12 @@ export function SampleTypeFields() {
               {(field) => (
                 <field.ComboboxField
                   // The sub-type refines the chosen type; label it as such.
-                  label={typeLabel(type)}
+                  label={`${typeLabel(type)} *`}
                   items={[
-                    // The bare type is the "no sub-type" choice, shown under
-                    // its own label; it composes to the root path, so no
-                    // sentinel value is needed.
+                    // The bare type composes to the root path (no sentinel
+                    // needed), but sampleTypeFormSchema rejects it: a specific
+                    // sub-type is required once a type with sub-values is
+                    // picked.
                     { value: type, label: typeLabel(type) },
                     ...items,
                   ]}

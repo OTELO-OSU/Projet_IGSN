@@ -17,18 +17,20 @@ function CreateSamplePage() {
       <h1 className="text-2xl font-bold">{m.create_sample_title()}</h1>
 
       <SampleForm
-        submitLabel={m.action_create()}
         isPending={createSample.isPending}
         onCancel={() => navigate({ to: "/" })}
-        onSubmit={(value) =>
-          createSample.mutate(value, {
-            onSuccess: (sample) =>
-              navigate({
-                to: "/samples/$sampleId",
-                params: { sampleId: sample.id },
-              }),
-          })
-        }
+        primaryAction={{
+          kind: "submit",
+          label: m.action_create(),
+          onSubmit: (value) =>
+            createSample.mutate(value, {
+              onSuccess: (sample) =>
+                navigate({
+                  to: "/samples/$sampleId",
+                  params: { sampleId: sample.id },
+                }),
+            }),
+        }}
       />
     </>
   );

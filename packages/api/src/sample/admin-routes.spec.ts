@@ -161,7 +161,8 @@ describe("admin sample routes", () => {
         json: {
           name: "Basalte du Massif Central",
           nature: "thin_section",
-          type: null,
+          type: "individual_sample",
+          material: "sediment",
         },
       },
       { headers: authHeader },
@@ -176,6 +177,59 @@ describe("admin sample routes", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ data: { id: data.id } });
   });
+
+  pgTest(
+    "should answer 409 when publishing a sample with no material",
+    async ({ db }) => {
+      // Arrange
+      const client = testClient(createApp(db));
+      const created = await client.admin.samples.$post(
+        {
+          json: {
+            name: "Unclassified draft",
+            nature: "thin_section",
+            type: null,
+          },
+        },
+        { headers: authHeader },
+      );
+      const { data } = sampleResponseSchema.parse(await created.json());
+      // Act
+      const res = await client.admin.samples[":id"].publish.$post(
+        { param: { id: data.id } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(409);
+    },
+  );
+
+  pgTest(
+    "should answer 409 when publishing a sample with an internal-node material",
+    async ({ db }) => {
+      // Arrange
+      const client = testClient(createApp(db));
+      const created = await client.admin.samples.$post(
+        {
+          json: {
+            name: "Rock draft",
+            nature: "thin_section",
+            type: null,
+            material: "rock",
+          },
+        },
+        { headers: authHeader },
+      );
+      const { data } = sampleResponseSchema.parse(await created.json());
+      // Act
+      const res = await client.admin.samples[":id"].publish.$post(
+        { param: { id: data.id } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(409);
+    },
+  );
 
   pgTest(
     "should answer 404 when publishing a missing sample",
@@ -235,6 +289,37 @@ describe("admin sample routes", () => {
         name: "Grès",
         nature: "rock_powder",
         extra: "x",
+      });
+      expect(res.status).toBe(400);
+    });
+
+    pgTest(
+      "should create a sample with a leaf material path",
+      async ({ db }) => {
+        const client = testClient(createApp(db));
+        const res = await client.admin.samples.$post(
+          {
+            json: {
+              name: "Basalt",
+              nature: "thin_section",
+              type: null,
+              material: "rock.igneous",
+            },
+          },
+          { headers: authHeader },
+        );
+        expect(res.status).toBe(201);
+        expect(await res.json()).toMatchObject({
+          data: { name: "Basalt", material: "rock.igneous" },
+        });
+      },
+    );
+
+    pgTest("should reject an unknown material with 400", async ({ db }) => {
+      const res = await postSample(createApp(db), {
+        name: "Grès",
+        nature: "rock_powder",
+        material: "lava",
       });
       expect(res.status).toBe(400);
     });

@@ -18,6 +18,9 @@ export default defineConfig({
     globals: true,
     include: ["src/**/*.spec.{ts,tsx}"],
     setupFiles: ["test/setup.ts"],
+    maxWorkers: 2,
+    maxConcurrency: 2,
+    testTimeout: 5000,
     coverage: {
       provider: "v8",
     },
