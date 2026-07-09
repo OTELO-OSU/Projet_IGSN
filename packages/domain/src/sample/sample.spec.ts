@@ -33,13 +33,6 @@ describe("sampleSchema", () => {
     });
   });
 
-  it("should accept a null type (not classified yet)", () => {
-    // Act
-    const result = sampleSchema.safeParse({ ...validSample, type: null });
-    // Assert
-    expect(result.success).toBe(true);
-  });
-
   it.each([
     { ...validSample, name: "" },
     { ...validSample, name: "   " },
@@ -48,6 +41,7 @@ describe("sampleSchema", () => {
     { ...validSample, published: "yes" },
     { ...validSample, igsn: "not-an-igsn" },
     { ...validSample, type: "half_round" },
+    { ...validSample, type: null },
     { ...validSample, collectionMethod: "gravity_corer" },
   ])("should reject an invalid sample #%#", (input) => {
     // Arrange / Act
@@ -75,26 +69,12 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.parse({
       name: "Grès de Fontainebleau",
       nature,
-    });
-    // Assert
-    expect(result).toEqual({
-      name: "Grès de Fontainebleau",
-      nature,
-      type: null,
-    });
-  });
-
-  it("should accept an explicit type", () => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
       type: "dredge",
     });
     // Assert
     expect(result).toEqual({
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature,
       type: "dredge",
     });
   });
@@ -104,25 +84,16 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.parse({
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
+      type: "dredge",
       collectionMethod: "coring.gravity_corer.giant",
     });
     // Assert
     expect(result).toEqual({
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
-      type: null,
+      type: "dredge",
       collectionMethod: "coring.gravity_corer.giant",
     });
-  });
-
-  it("should default a missing type to null", () => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-    });
-    // Assert
-    expect(result.type).toBeNull();
   });
 
   it("should trim the name", () => {
@@ -130,12 +101,13 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.parse({
       name: "  Grès de Fontainebleau  ",
       nature: "rock_powder",
+      type: "dredge",
     });
     // Assert
     expect(result).toEqual({
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
-      type: null,
+      type: "dredge",
     });
   });
 
@@ -143,6 +115,7 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse({
       name: "Basalt 42",
       nature: "hand_sample",
+      type: "dredge",
       material: "rock.igneous",
     });
     expect(result).toMatchObject({ success: true });
@@ -152,6 +125,7 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse({
       name: "Basalt 42",
       nature: "hand_sample",
+      type: "dredge",
       material: "rock",
       rockType: "igneous",
     });
@@ -163,19 +137,33 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse({
       name: "Basalt 42",
       nature: "hand_sample",
+      type: "dredge",
       material: "gemstone",
     });
     expect(result.success).toBe(false);
   });
 
   it.each([
-    { name: "", nature: "rock_powder" },
-    { name: "Grès", nature: "Roche inconnue" },
-    { nature: "rock_powder" },
+    { name: "", nature: "rock_powder", type: "dredge" },
+    { name: "Grès", nature: "Roche inconnue", type: "dredge" },
+    { nature: "rock_powder", type: "dredge" },
     { name: "Grès", nature: "rock_powder", type: "half_round" },
+    // type is mandatory: missing or null is rejected
+    { name: "Grès", nature: "rock_powder" },
+    { name: "Grès", nature: "rock_powder", type: null },
     // unknown vocabulary codes
-    { name: "Grès", nature: "rock_powder", material: "lava" },
-    { name: "Grès", nature: "rock_powder", collectionMethod: "gravity_corer" },
+    {
+      name: "Grès",
+      nature: "rock_powder",
+      type: "dredge",
+      material: "lava",
+    },
+    {
+      name: "Grès",
+      nature: "rock_powder",
+      type: "dredge",
+      collectionMethod: "gravity_corer",
+    },
   ])("should reject invalid create input #%#", (input) => {
     // Arrange / Act
     const result = createSampleSchema.safeParse(input);
@@ -188,6 +176,7 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse({
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
+      type: "dredge",
       id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
     });
     // Assert

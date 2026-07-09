@@ -9,14 +9,14 @@ describe("searchSamplesByMaterialKey", () => {
     await insertSample(db, {
       name: "Basalt",
       nature: "hand_sample",
-      type: null,
+      type: "individual_sample",
       material: "rock.igneous",
       collectionMethod: null,
     });
     await insertSample(db, {
       name: "Schist",
       nature: "hand_sample",
-      type: null,
+      type: "individual_sample",
       material: "rock.metamorphic",
       collectionMethod: null,
     });
@@ -34,7 +34,7 @@ describe("searchSamplesByMaterialKey", () => {
       await insertSample(db, {
         name: "Basalt",
         nature: "hand_sample",
-        type: null,
+        type: "individual_sample",
         material: "rock.igneous",
         collectionMethod: null,
       });

@@ -28,6 +28,7 @@ test.describe("samples", () => {
     const name = `Basalte du Massif Central ${Date.now()}`;
     await create.fillName(name);
     await create.selectNature("Thin section");
+    await create.selectType("Dredge");
     await create.submit();
 
     // Creating opens the new sample for further editing.

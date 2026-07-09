@@ -98,22 +98,17 @@ export function SampleView({
               </dt>
               <dd className="font-medium">{natureLabel(nature)}</dd>
             </div>
-            {type ? (
-              <div className="flex gap-4 px-4 py-3">
-                <dt
-                  id="sample-field-type"
-                  className="text-muted-foreground w-40"
-                >
-                  {m.sample_field_type()}
-                </dt>
-                <dd>
-                  <ClassificationBreadcrumb
-                    labelId="sample-field-type"
-                    segments={pathBreadcrumb(type, typeLabel)}
-                  />
-                </dd>
-              </div>
-            ) : null}
+            <div className="flex gap-4 px-4 py-3">
+              <dt id="sample-field-type" className="text-muted-foreground w-40">
+                {m.sample_field_type()}
+              </dt>
+              <dd>
+                <ClassificationBreadcrumb
+                  labelId="sample-field-type"
+                  segments={pathBreadcrumb(type, typeLabel)}
+                />
+              </dd>
+            </div>
             {material ? (
               <div className="flex gap-4 px-4 py-3">
                 <dt

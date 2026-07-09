@@ -29,7 +29,7 @@ describe("admin sample routes", () => {
         json: {
           name: "Basalte du Massif Central",
           nature: "thin_section",
-          type: null,
+          type: "individual_sample",
           collectionMethod: null,
         },
       },
@@ -50,7 +50,7 @@ describe("admin sample routes", () => {
         json: {
           name: "Grès de Fontainebleau",
           nature: "rock_powder",
-          type: null,
+          type: "individual_sample",
           collectionMethod: null,
         },
       },
@@ -77,7 +77,7 @@ describe("admin sample routes", () => {
         json: {
           name: "Basalte du Massif Central",
           nature: "thin_section",
-          type: null,
+          type: "individual_sample",
           collectionMethod: null,
         },
       },
@@ -114,7 +114,7 @@ describe("admin sample routes", () => {
         json: {
           name: "Basalte du Massif Central",
           nature: "thin_section",
-          type: null,
+          type: "individual_sample",
           collectionMethod: null,
         },
       },
@@ -128,7 +128,7 @@ describe("admin sample routes", () => {
         json: {
           name: "Grès de Fontainebleau",
           nature: "rock_powder",
-          type: null,
+          type: "individual_sample",
           collectionMethod: null,
         },
       },
@@ -153,7 +153,7 @@ describe("admin sample routes", () => {
         json: {
           name: "Grès",
           nature: "rock_powder",
-          type: null,
+          type: "individual_sample",
           collectionMethod: null,
         },
       },
@@ -199,7 +199,7 @@ describe("admin sample routes", () => {
           json: {
             name: "Unclassified draft",
             nature: "thin_section",
-            type: null,
+            type: "individual_sample",
           },
         },
         { headers: authHeader },
@@ -225,7 +225,7 @@ describe("admin sample routes", () => {
           json: {
             name: "Rock draft",
             nature: "thin_section",
-            type: null,
+            type: "individual_sample",
             material: "rock",
           },
         },
@@ -262,6 +262,7 @@ describe("admin sample routes", () => {
       const res = await postSample(createApp(db), {
         name: "",
         nature: "rock_powder",
+        type: "individual_sample",
       });
       expect(res.status).toBe(400);
     });
@@ -270,6 +271,7 @@ describe("admin sample routes", () => {
       const res = await postSample(createApp(db), {
         name: "Grès",
         nature: "Roche inconnue",
+        type: "individual_sample",
       });
       expect(res.status).toBe(400);
     });
@@ -295,12 +297,30 @@ describe("admin sample routes", () => {
       expect(res.status).toBe(400);
     });
 
+    pgTest("should reject a missing type with 400", async ({ db }) => {
+      const res = await postSample(createApp(db), {
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+      });
+      expect(res.status).toBe(400);
+    });
+
+    pgTest("should reject a null type with 400", async ({ db }) => {
+      const res = await postSample(createApp(db), {
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: null,
+      });
+      expect(res.status).toBe(400);
+    });
+
     pgTest(
       "should create a sample with a collection method",
       async ({ db }) => {
         const res = await postSample(createApp(db), {
           name: "Basalte du Massif Central",
           nature: "thin_section",
+          type: "individual_sample",
           collectionMethod: "coring.gravity_corer",
         });
         expect(res.status).toBe(201);
@@ -316,6 +336,7 @@ describe("admin sample routes", () => {
         const res = await postSample(createApp(db), {
           name: "Basalte du Massif Central",
           nature: "thin_section",
+          type: "individual_sample",
           collectionMethod: "gravity_corer",
         });
         expect(res.status).toBe(400);
@@ -326,6 +347,7 @@ describe("admin sample routes", () => {
       const res = await postSample(createApp(db), {
         name: "Grès",
         nature: "rock_powder",
+        type: "individual_sample",
         extra: "x",
       });
       expect(res.status).toBe(400);
@@ -340,7 +362,7 @@ describe("admin sample routes", () => {
             json: {
               name: "Basalt",
               nature: "thin_section",
-              type: null,
+              type: "individual_sample",
               material: "rock.igneous",
             },
           },
@@ -357,6 +379,7 @@ describe("admin sample routes", () => {
       const res = await postSample(createApp(db), {
         name: "Grès",
         nature: "rock_powder",
+        type: "individual_sample",
         material: "lava",
       });
       expect(res.status).toBe(400);

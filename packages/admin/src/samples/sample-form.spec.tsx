@@ -10,11 +10,21 @@ const noop = () => {};
 
 describe("sampleTypeFormSchema", () => {
   it.each([
-    { typePath: [] }, // no type chosen yet (draft)
     { typePath: ["dredge"] }, // leaf root type, no sub-values
     { typePath: ["core", "core.piece"] }, // core refined to a leaf
   ])("should accept %o", (value) => {
     expect(sampleTypeFormSchema.safeParse(value).success).toBe(true);
+  });
+
+  it("should require a type when none is chosen", () => {
+    const result = sampleTypeFormSchema.safeParse({ typePath: [] });
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        path: ["typePath", 0],
+        message: "Type is required",
+      }),
+    ]);
   });
 
   it.each([
@@ -48,7 +58,7 @@ describe("SampleForm", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("should submit the entered name and selected nature with null type and material", async () => {
+  it("should reject a missing type and not submit", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
@@ -59,15 +69,10 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("button", { name: "Create" }).click();
 
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: null,
-        material: null,
-        collectionMethod: null,
-      }),
-    );
+    // The error sits on the type select, which lives in the other tab.
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await expect.element(screen.getByText("Type is required")).toBeVisible();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("should prefill the fields and use the given primary label", async () => {
@@ -258,6 +263,8 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
 
     await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Dredge" }).click();
     await screen.getByLabelText(/^material \*/i).click();
     await screen.getByRole("option", { name: "Rock", exact: true }).click();
     await screen.getByLabelText(/^rock$/i).click();
@@ -269,7 +276,7 @@ describe("SampleForm", () => {
       expect(onSubmit).toHaveBeenCalledWith({
         name: "Basalt",
         nature: "thin_section",
-        type: null,
+        type: "dredge",
         material: "rock.igneous",
         collectionMethod: null,
       }),
@@ -295,13 +302,16 @@ describe("SampleForm", () => {
       .getByRole("combobox", { name: "GravityCorer", exact: true })
       .click();
     await screen.getByRole("option", { name: "Giant" }).click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Dredge" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
         name: "Basalte du Massif Central",
         nature: "thin_section",
-        type: null,
+        type: "dredge",
         material: null,
         collectionMethod: "coring.gravity_corer.giant",
       }),
@@ -315,7 +325,7 @@ describe("SampleForm", () => {
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
-          type: null,
+          type: "dredge",
           material: null,
           collectionMethod: "coring.gravity_corer.giant",
         }}
@@ -424,7 +434,7 @@ describe("SampleForm", () => {
       .toHaveTextContent(/set the material before publishing/i);
   });
 
-  it("should disable Save & Publish and explain in a tooltip when the type is missing", async () => {
+  it("should disable Save & Publish and explain in a tooltip when the type is incomplete", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -432,7 +442,7 @@ describe("SampleForm", () => {
           defaultValues={{
             name: "Basalte du Massif Central",
             nature: "thin_section",
-            type: null,
+            type: "core",
             material: "fossil",
             collectionMethod: null,
           }}
@@ -456,7 +466,7 @@ describe("SampleForm", () => {
     publish.element().parentElement?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/set the sample type before publishing/i);
+      .toHaveTextContent(/classify the type down to a specific sub-type/i);
   });
 
   it("should render a link action as an anchor to the public page", async () => {
@@ -466,7 +476,7 @@ describe("SampleForm", () => {
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
-          type: null,
+          type: "dredge",
           material: "fossil",
           collectionMethod: null,
         }}

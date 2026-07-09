@@ -67,12 +67,22 @@ async function renderCreatePage(failWrites = false) {
   );
 }
 
+// Fill every mandatory field (name, nature, type) so Create can submit.
+async function fillRequiredFields(
+  screen: Awaited<ReturnType<typeof renderCreatePage>>,
+) {
+  await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+  await screen.getByRole("combobox", { name: /nature/i }).click();
+  await screen.getByText("Thin section").click();
+  await screen.getByRole("tab", { name: "Sample type" }).click();
+  await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+  await screen.getByRole("option", { name: "Dredge" }).click();
+}
+
 describe("CreateSamplePage", () => {
   it("should redirect to the new sample's edit page after creation", async () => {
     const screen = await renderCreatePage();
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox", { name: /nature/i }).click();
-    await screen.getByText("Thin section").click();
+    await fillRequiredFields(screen);
     await screen.getByRole("button", { name: "Create" }).click();
 
     await expect
@@ -85,9 +95,7 @@ describe("CreateSamplePage", () => {
 
   it("should show a toast after creation", async () => {
     const screen = await renderCreatePage();
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox", { name: /nature/i }).click();
-    await screen.getByText("Thin section").click();
+    await fillRequiredFields(screen);
     await screen.getByRole("button", { name: "Create" }).click();
 
     await expect
@@ -97,9 +105,7 @@ describe("CreateSamplePage", () => {
 
   it("should show an error toast when creation fails", async () => {
     const screen = await renderCreatePage(true);
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox", { name: /nature/i }).click();
-    await screen.getByText("Thin section").click();
+    await fillRequiredFields(screen);
     await screen.getByRole("button", { name: "Create" }).click();
 
     await expect

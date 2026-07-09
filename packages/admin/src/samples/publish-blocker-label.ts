@@ -6,7 +6,6 @@ import { m } from "#/paraglide/messages.js";
 // adding a PublishBlocker without its message fails to compile here, so the
 // publish tooltip always explains every constraint.
 const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
-  type_missing: m.publish_blocked_type_missing,
   type_incomplete: m.publish_blocked_type_incomplete,
   material_missing: m.publish_blocked_material_missing,
   material_not_publishable: m.publish_blocked_material_not_publishable,

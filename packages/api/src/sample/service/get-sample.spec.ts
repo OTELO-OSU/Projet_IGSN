@@ -10,7 +10,7 @@ describe("getSample", () => {
     const created = await insertSample(db, {
       name: "Basalte du Massif Central",
       nature: "thin_section",
-      type: null,
+      type: "individual_sample",
       collectionMethod: null,
     });
     // Act

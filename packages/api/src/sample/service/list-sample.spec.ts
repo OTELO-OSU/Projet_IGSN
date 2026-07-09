@@ -10,13 +10,13 @@ describe("listSamples", () => {
     const older = await insertSample(db, {
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
-      type: null,
+      type: "individual_sample",
       collectionMethod: null,
     });
     const newer = await insertSample(db, {
       name: "Basalte du Massif Central",
       nature: "thin_section",
-      type: null,
+      type: "individual_sample",
       collectionMethod: null,
     });
     // now() is the transaction timestamp, identical for both inserts; set
@@ -46,7 +46,7 @@ describe("listSamples", () => {
       await insertSample(db, {
         name,
         nature: "hand_sample",
-        type: null,
+        type: "individual_sample",
         collectionMethod: null,
       });
     }

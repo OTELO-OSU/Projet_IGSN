@@ -40,7 +40,7 @@ type SeedSample = {
   id: string;
   name: string;
   nature: Nature;
-  type?: SampleType | null;
+  type: SampleType;
   material?: MaterialPath;
   collectionMethod?: CollectionMethod | null;
   igsn?: string;
@@ -92,7 +92,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     id: "00000000-0000-7000-8000-000000000005",
     name: "Ardennes Schist",
     nature: "polished_section",
-    type: null,
+    type: "core.half_round",
     material: "rock.metamorphic",
     collectionMethod: null,
   },
@@ -104,7 +104,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     id: "01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69",
     name: "Basalt 42",
     nature: "hand_sample",
-    type: null,
+    type: "individual_sample",
     material: "rock.igneous",
     collectionMethod: null,
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69"),
@@ -114,7 +114,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     id: "01890a5d-ac96-774b-bcce-b302099a8057",
     name: "Granite 7",
     nature: "thin_section",
-    type: null,
+    type: "dredge",
     material: "rock.igneous",
     collectionMethod: null,
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),

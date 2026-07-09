@@ -28,7 +28,7 @@ describe("SampleView", () => {
         name="Basalt 42"
         igsn="0123456789ABCDEFGHJKMNPQRS"
         nature="rock_powder"
-        type={null}
+        type="dredge"
         material={null}
       />,
     );
@@ -64,7 +64,7 @@ describe("SampleView", () => {
         name="Basalt 42"
         igsn="0123456789ABCDEFGHJKMNPQRS"
         nature="rock_powder"
-        type={null}
+        type="dredge"
         material="rock.igneous"
       />,
     );
@@ -79,20 +79,17 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
-  it("should omit type and material rows when unclassified", async () => {
+  it("should omit the material row when unclassified", async () => {
     const screen = await render(
       <SampleView
         name="Basalt 42"
         igsn="0123456789ABCDEFGHJKMNPQRS"
         nature="rock_powder"
-        type={null}
+        type="dredge"
         material={null}
       />,
     );
 
-    await expect
-      .element(screen.getByRole("list", { name: "Type" }))
-      .not.toBeInTheDocument();
     await expect
       .element(screen.getByRole("list", { name: "Material" }))
       .not.toBeInTheDocument();
