@@ -15,7 +15,7 @@ const sample: Sample = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Basalte du Massif Central",
   nature: "thin_section",
-  type: "dredge",
+  type: null,
   material: null,
   collectionMethod: "coring.gravity_corer",
   igsn: null,

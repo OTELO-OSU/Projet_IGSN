@@ -22,6 +22,12 @@ describe("samplePublishBlockers", () => {
     expect(samplePublishBlockers(base)).toEqual([]);
   });
 
+  it("should report type_missing when type is null", () => {
+    expect(samplePublishBlockers({ ...base, type: null })).toEqual([
+      "type_missing",
+    ]);
+  });
+
   it("should report type_incomplete when the type is an ancestor path", () => {
     expect(samplePublishBlockers({ ...base, type: "core" })).toEqual([
       "type_incomplete",
@@ -30,8 +36,8 @@ describe("samplePublishBlockers", () => {
 
   it("should report both type and material blockers independently", () => {
     expect(
-      samplePublishBlockers({ ...base, type: "core", material: null }),
-    ).toEqual(["type_incomplete", "material_missing"]);
+      samplePublishBlockers({ ...base, type: null, material: null }),
+    ).toEqual(["type_missing", "material_missing"]);
   });
 
   it("should report material_missing when material is null", () => {

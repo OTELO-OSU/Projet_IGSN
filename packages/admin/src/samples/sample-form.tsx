@@ -41,22 +41,15 @@ const natureItems = natureSchema.options.map((nature) => ({
   label: natureLabel(nature),
 }));
 
-// Form-level rules: a type is mandatory, and once a non-leaf ("core" is the
-// only root with sub-values) is picked, a specific sub-type is required. Read
-// at form level so it sees the whole walk; the issue targets the select
-// missing a value: the root when nothing is picked, the level below the
-// composed path when the walk stops on a non-leaf.
+// Form-level rule: "core" is the only root type with sub-values, and a bare
+// "core" is too vague to keep. Once it (or any non-leaf) is picked, a specific
+// sub-type is required. Read at form level so it sees the whole walk; the issue
+// targets the level below the composed path, the select missing a refinement.
 export const sampleTypeFormSchema = z
   .object({ typePath: z.array(z.string()) })
   .superRefine((value, ctx) => {
     const type = composeHierarchyValue(value.typePath);
-    if (!type) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["typePath", 0],
-        message: m.field_type_required(),
-      });
-    } else if (!isSampleTypeLeaf(type as SampleType)) {
+    if (type && !isSampleTypeLeaf(type as SampleType)) {
       ctx.addIssue({
         code: "custom",
         path: ["typePath", type.split(".").length],

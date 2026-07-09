@@ -13,7 +13,7 @@ describe("publishSample", () => {
       const created = await insertSample(db, {
         name: "Basalte du Massif Central",
         nature: "thin_section",
-        type: "individual_sample",
+        type: null,
         material: "sediment",
         collectionMethod: null,
       });
@@ -24,7 +24,7 @@ describe("publishSample", () => {
         id: created.id,
         name: "Basalte du Massif Central",
         nature: "thin_section",
-        type: "individual_sample",
+        type: null,
       });
 
       const row = await db
@@ -57,7 +57,7 @@ describe("publishSample", () => {
     const created = await insertSample(db, {
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
-      type: "individual_sample",
+      type: null,
       material: "sediment",
       collectionMethod: null,
     });

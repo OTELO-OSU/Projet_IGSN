@@ -8,9 +8,9 @@ type SampleTable = {
   id: string;
   name: string;
   nature: string;
-  // Taxonomy path (e.g. "core.section"), mandatory at declaration. Stored as
+  // Taxonomy path (e.g. "core.section"); null until classified. Stored as
   // ltree, which the driver reads and writes as text.
-  type: string;
+  type: string | null;
   // Hierarchical classification path stored as ltree; Kysely has no ltree type,
   // so it is a plain string. Null until the sample is classified.
   material: string | null;

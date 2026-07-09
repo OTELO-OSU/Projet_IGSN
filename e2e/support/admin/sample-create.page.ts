@@ -11,10 +11,6 @@ export function sampleCreatePage(page: Page) {
       await page.getByRole("combobox", { name: /nature/i }).click();
       await page.getByRole("option", { name: label }).click();
     },
-    selectType: async (label: string) => {
-      await page.getByRole("combobox", { name: "Type *", exact: true }).click();
-      await page.getByRole("option", { name: label }).click();
-    },
     submit: () => page.getByRole("button", { name: "Create" }).click(),
     expectNameRequired: () =>
       expect(page.getByText("Name is required")).toBeVisible(),

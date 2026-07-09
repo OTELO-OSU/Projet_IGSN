@@ -12,7 +12,8 @@ export const sampleSchema = z.object({
   id: z.uuid(),
   name: nameSchema,
   nature: natureSchema,
-  type: sampleTypeSchema,
+  // Null until the sample is classified.
+  type: sampleTypeSchema.nullable(),
   // Hierarchical classification path; null until the sample is classified.
   material: materialPathSchema.nullable(),
   // Null until the collection method is recorded.
@@ -32,7 +33,7 @@ export type Sample = z.infer<typeof sampleSchema>;
 export const createSampleSchema = z.strictObject({
   name: nameSchema,
   nature: natureSchema,
-  type: sampleTypeSchema,
+  type: sampleTypeSchema.nullable().default(null),
   material: materialPathSchema.nullish(),
   // Optional at creation, like material: omitted or null on a draft.
   collectionMethod: collectionMethodSchema.nullish(),

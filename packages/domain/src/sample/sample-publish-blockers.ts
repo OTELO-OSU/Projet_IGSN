@@ -12,6 +12,7 @@ import { sampleSchema } from "./sample.ts";
 // caller that lists reasons (e.g. the admin publish tooltip) maps this enum
 // exhaustively, so a new code fails to compile until it is handled.
 export const publishBlockerSchema = z.enum([
+  "type_missing",
   "type_incomplete",
   "material_missing",
   "material_not_publishable",
@@ -35,6 +36,7 @@ export const publishableSampleSchema = sampleSchema
   .pick({ type: true, material: true })
   .superRefine((sample, ctx) => {
     const typeBlocker = ((): PublishBlocker | null => {
+      if (sample.type === null) return "type_missing";
       if (!isSampleTypeLeaf(sample.type)) return "type_incomplete";
       return null;
     })();

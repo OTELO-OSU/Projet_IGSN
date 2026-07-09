@@ -9,7 +9,7 @@ describe("insertSample", () => {
     const created = await insertSample(db, {
       name: "Basalt 42",
       nature: "hand_sample",
-      type: "individual_sample",
+      type: null,
       material: "rock.igneous",
     });
     expect(created).toMatchObject({
@@ -25,7 +25,7 @@ describe("insertSample", () => {
       const created = await insertSample(db, {
         name: "Unclassified",
         nature: "hand_sample",
-        type: "individual_sample",
+        type: null,
       });
       expect(created.material).toBeNull();
     },
@@ -58,7 +58,7 @@ describe("insertSample", () => {
     const created = await insertSample(db, {
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
-      type: "individual_sample",
+      type: null,
       collectionMethod: null,
     });
     // Assert: the version nibble of a v7 UUID is "7".
@@ -70,7 +70,7 @@ describe("insertSample", () => {
     const created = await insertSample(db, {
       name: "Calcaire de Bourgogne",
       nature: "rock_powder",
-      type: "individual_sample",
+      type: null,
       collectionMethod: null,
     });
     // Assert
@@ -87,7 +87,7 @@ describe("insertSample", () => {
     const created = await insertSample(db, {
       name: "Granite de Flamanville",
       nature: "rock_powder",
-      type: "individual_sample",
+      type: null,
       collectionMethod: null,
     });
     // Act / Assert

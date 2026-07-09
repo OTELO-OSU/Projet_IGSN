@@ -21,9 +21,9 @@ describe("isSamplePublishable", () => {
     expect(isSamplePublishable(draft)).toBe(false);
   });
 
-  it("should reject a sample with a non-leaf type", () => {
+  it("should reject a sample with no type", () => {
     expect(
-      isSamplePublishable({ ...draft, type: "core", material: "rock.igneous" }),
+      isSamplePublishable({ ...draft, type: null, material: "rock.igneous" }),
     ).toBe(false);
   });
 

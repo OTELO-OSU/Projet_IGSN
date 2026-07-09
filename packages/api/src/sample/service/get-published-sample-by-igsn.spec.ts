@@ -11,7 +11,7 @@ describe("getPublishedSampleByIgsn", () => {
     const created = await insertSample(db, {
       name: "Basalte du Massif Central",
       nature: "thin_section",
-      type: "individual_sample",
+      type: null,
       material: "sediment",
       collectionMethod: null,
     });
