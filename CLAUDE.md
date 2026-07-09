@@ -3,7 +3,7 @@
 ## Domain
 
 A registry assigning unique **IGSN** identifiers to **geological samples**
-(physical samples of the solid Earth), making them discoverable and reusable by
+(physical samples of the solid Earth, extraterestrial samples...), making them discoverable and reusable by
 researchers worldwide, including from campaigns that can no longer be run.
 
 **In scope:** physical samples of the solid Earth, future samples.

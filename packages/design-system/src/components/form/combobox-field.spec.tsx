@@ -63,6 +63,20 @@ describe("ComboboxField", () => {
       .toHaveTextContent("Thin section");
   });
 
+  it("should clear the selection when the selected item is picked again", async () => {
+    await render(<Harness />);
+    const combobox = page.getByRole("combobox", { name: "Nature" });
+
+    await combobox.click();
+    await page.getByText("Thin section").click();
+    await expect.element(combobox).toHaveTextContent("Thin section");
+
+    await combobox.click();
+    await page.getByRole("option", { name: "Thin section" }).click();
+
+    await expect.element(combobox).toHaveTextContent("Select a nature");
+  });
+
   it("should announce an accessible error when invalid", async () => {
     await render(<Harness />);
 

@@ -27,7 +27,7 @@ repository, and keep them in the URL app-side (see the URL-as-state rule).
 ## Publish constraints
 
 The reasons a sample cannot be published live in ONE place:
-`domain/sample/sample-publish-blockers.ts` (`samplePublishBlockers`).
+`domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`).
 `isSamplePublishable` and the admin publish tooltip both derive from it. When you
 add a publish constraint, add a code to `publishBlockerSchema` and push it in
 `samplePublishBlockers`; the admin label map (`publish-blocker-label.ts`) is an

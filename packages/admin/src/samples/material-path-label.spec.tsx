@@ -1,3 +1,4 @@
+import { MATERIAL_TREE } from "@projet-igsn/domain/sample/material/classification";
 import { describe, expect, it } from "vitest";
 
 import { materialPathLabel } from "./material-path-label.ts";
@@ -12,4 +13,11 @@ describe("materialPathLabel", () => {
   ])("should label %s as its node name %s", (path, label) => {
     expect(materialPathLabel(path as never)).toBe(label);
   });
+
+  it.each(Object.keys(MATERIAL_TREE))(
+    "should resolve a non-empty label for the node %s",
+    (segment) => {
+      expect(materialPathLabel(segment as never)).toBeTruthy();
+    },
+  );
 });

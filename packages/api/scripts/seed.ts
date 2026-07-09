@@ -1,11 +1,9 @@
-import type { CollectionMethod } from "@projet-igsn/domain/sample/collection-method";
-import type { MaterialPath } from "@projet-igsn/domain/sample/material";
-import type { Nature } from "@projet-igsn/domain/sample/nature";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
-import type { SampleType } from "@projet-igsn/domain/sample/type";
 import type { Kysely } from "kysely";
+import type { z } from "zod";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
+import { sampleSchema } from "@projet-igsn/domain/sample/sample";
 import { fileURLToPath } from "node:url";
 
 import type { DB } from "../src/db.ts";
@@ -23,29 +21,45 @@ export async function seed(
 ): Promise<Sample[]> {
   const rows = await db
     .insertInto("sample")
+    // Parse each seed row against the domain schema so invalid codes, paths, or
+    // ids fail here rather than landing in the database.
     // collectionMethod is camelCase in the domain; the column is snake_case.
     .values(
-      samples.map(({ material, collectionMethod, ...rest }) => ({
-        ...rest,
-        material: material ?? null,
-        collection_method: collectionMethod ?? null,
-      })),
+      samples
+        .map((sample) => seedSampleSchema.parse(sample))
+        .map(({ material, collectionMethod, ...rest }) => ({
+          ...rest,
+          material: material ?? null,
+          collection_method: collectionMethod ?? null,
+        })),
     )
     .returningAll()
     .execute();
   return rows.map(toSample);
 }
 
-type SeedSample = {
-  id: string;
-  name: string;
-  nature: Nature;
-  type?: SampleType | null;
-  material?: MaterialPath;
-  collectionMethod?: CollectionMethod | null;
-  igsn?: string;
-  published?: boolean;
-};
+// created_at/updated_at are database defaults, so they are omitted; the rest
+// are optional because a draft seed row may not be classified or published.
+const seedSampleSchema = sampleSchema
+  .pick({
+    id: true,
+    name: true,
+    nature: true,
+    type: true,
+    material: true,
+    collectionMethod: true,
+    igsn: true,
+    published: true,
+  })
+  .partial({
+    type: true,
+    material: true,
+    collectionMethod: true,
+    igsn: true,
+    published: true,
+  });
+
+type SeedSample = z.infer<typeof seedSampleSchema>;
 
 // Shared seed data, reused by the E2E reset (see scripts/reset-and-seed.ts), so
 // kept English per the i18n testing rule. Ids are static (not generated) so
@@ -92,7 +106,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     id: "00000000-0000-7000-8000-000000000005",
     name: "Ardennes Schist",
     nature: "polished_section",
-    type: null,
+    type: "core.piece",
     material: "rock.metamorphic",
     collectionMethod: null,
   },
@@ -104,9 +118,9 @@ export const SEED_SAMPLES: SeedSample[] = [
     id: "01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69",
     name: "Basalt 42",
     nature: "hand_sample",
-    type: null,
+    type: "core.half_round",
     material: "rock.igneous",
-    collectionMethod: null,
+    collectionMethod: "blasting",
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69"),
     published: true,
   },
@@ -114,9 +128,9 @@ export const SEED_SAMPLES: SeedSample[] = [
     id: "01890a5d-ac96-774b-bcce-b302099a8057",
     name: "Granite 7",
     nature: "thin_section",
-    type: null,
+    type: "core.piece",
     material: "rock.igneous",
-    collectionMethod: null,
+    collectionMethod: "coring.camera_mounted",
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),
     published: true,
   },

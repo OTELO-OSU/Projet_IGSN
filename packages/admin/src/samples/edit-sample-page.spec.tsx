@@ -124,7 +124,7 @@ describe("EditSamplePage", () => {
     const { screen } = await renderEditPage(false, "rock.igneous");
     await screen.getByRole("tab", { name: "Sample type" }).click();
     await expect
-      .element(screen.getByLabelText(/^rock$/i))
+      .element(screen.getByRole("combobox", { name: "Rock *", exact: true }))
       .toHaveTextContent("Igneous");
   });
 

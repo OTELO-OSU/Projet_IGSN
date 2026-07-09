@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted
+Accepted. Amended by ADR 0011 (vocabulary authored as a tree, expanded to the
+same paths); ltree storage below is unchanged.
 
 ## Context
 
@@ -35,15 +36,10 @@ parent of every non-root path is itself a member (asserted by a spec), children,
 leaf-ness, and ancestors derive by string-prefix helpers (`materialChildren`,
 `isMaterialLeaf`) with no tree data structure.
 
-Publication requires two orthogonal conditions, both in `domain`:
-
-- the path is a leaf (fully classified), and
-- its root type is on the `PUBLISHABLE_MATERIAL_TYPES` allowlist (in-scope for
-  the solid-Earth registry).
-
-`samplePublishBlockers` reports `material_missing`, `material_not_publishable`,
-or `material_incomplete` accordingly, and the admin label map stays an
-exhaustive `Record`, so a new code fails to compile until it is translated.
+Publication requires the material path to be a leaf (fully classified);
+`samplePublishBlockers` reports `material_missing` or `material_incomplete`
+accordingly, and the admin label map stays an exhaustive `Record`, so a new
+code fails to compile until it is translated.
 
 The admin form classifies through cascading comboboxes derived from the tree,
 bound to the single `material` field. Key search is a repository function
@@ -79,8 +75,7 @@ served by the GiST index.
 - The vocabulary currently ships two levels: the six material roots (rock,
   sediment, mineral, fossil, synthetic_rock_mineral, extraterrestrial_rock) and
   the five rock subtypes (igneous, metamorphic, sedimentary, hydrothermal,
-  unknown). `synthetic_rock_mineral` and `extraterrestrial_rock` are outside the
-  solid-Earth scope, so they are omitted from `PUBLISHABLE_MATERIAL_TYPES` and
-  nothing under them can be published. Adding deeper levels is a data-only change
+  unknown). Every root is publishable once its path is complete. Adding deeper
+  levels is a data-only change
   (extend `MATERIAL_PATHS`, the label map, and the messages); the mechanism is
   identical at any depth, and the integrity spec catches an orphan or a typo.

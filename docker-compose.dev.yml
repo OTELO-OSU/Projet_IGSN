@@ -148,7 +148,7 @@ services:
       # its own network, so the fetch URL points at the keycloak service directly.
       OIDC_ISSUER: http://localhost:8080/realms/igsn
       OIDC_JWKS_URI: http://keycloak:8080/realms/igsn/protocol/openid-connect/certs
-      CORS_ORIGINS: "http://localhost:3000,http://localhost:3001"
+      CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       DATABASE_NAME: igsn

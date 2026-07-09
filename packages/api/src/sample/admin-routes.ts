@@ -4,7 +4,7 @@ import type {
   SampleResponse,
 } from "@projet-igsn/domain/sample/sample-validator";
 
-import { isSamplePublishable } from "@projet-igsn/domain/sample/is-sample-publishable";
+import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-sample-publishable";
 import { Hono } from "hono";
 
 import {

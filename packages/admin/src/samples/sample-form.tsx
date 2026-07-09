@@ -18,19 +18,16 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
-import { isSampleTypeLeaf } from "@projet-igsn/domain/sample/is-sample-type-leaf";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
+import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import {
   type CreateSample,
   createSampleSchema,
 } from "@projet-igsn/domain/sample/sample";
-import { samplePublishBlockers } from "@projet-igsn/domain/sample/sample-publish-blockers";
-import { type SampleType } from "@projet-igsn/domain/sample/type";
-import { z } from "zod";
 
 import { m } from "#/paraglide/messages.js";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
-import { MaterialPathField } from "#/samples/material-path-field.tsx";
+import { MaterialField } from "#/samples/material-field.tsx";
 import { natureLabel } from "#/samples/nature-label.ts";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
@@ -40,23 +37,6 @@ const natureItems = natureSchema.options.map((nature) => ({
   value: nature,
   label: natureLabel(nature),
 }));
-
-// Form-level rule: "core" is the only root type with sub-values, and a bare
-// "core" is too vague to keep. Once it (or any non-leaf) is picked, a specific
-// sub-type is required. Read at form level so it sees the whole walk; the issue
-// targets the level below the composed path, the select missing a refinement.
-export const sampleTypeFormSchema = z
-  .object({ typePath: z.array(z.string()) })
-  .superRefine((value, ctx) => {
-    const type = composeHierarchyValue(value.typePath);
-    if (type && !isSampleTypeLeaf(type as SampleType)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["typePath", type.split(".").length],
-        message: m.field_sub_type_required(),
-      });
-    }
-  });
 
 // A footer button. `submit` saves; `publish` saves then publishes (with
 // confirmation + a blocker tooltip); `link` navigates (e.g. the public page).
@@ -95,30 +75,11 @@ export function SampleForm({
       name: defaultValues?.name ?? "",
       nature: defaultValues?.nature ?? ("" as Nature | ""),
       typePath: toHierarchyPath(defaultValues?.type ?? null),
-      // Empty-string sentinel <-> null: the cascade works in strings, the
-      // domain schema in `MaterialPath | null`.
-      material: defaultValues?.material ?? "",
+      materialPath: toHierarchyPath(defaultValues?.material ?? null),
       collectionMethodPath: toHierarchyPath(
         defaultValues?.collectionMethod ?? null,
       ),
       specificName: defaultValues?.specificName ?? "",
-    },
-    // Wrap the superRefine schema in a function so it is typed against the
-    // whole form value; forward its issue to the level field it targets.
-    validators: {
-      onChange: ({ value }) => {
-        const issue = sampleTypeFormSchema.safeParse(value).error?.issues[0];
-        // Field components read `error.message`, so wrap the string to match.
-        return issue
-          ? {
-              fields: {
-                [`typePath[${String(issue.path[1])}]`]: {
-                  message: issue.message,
-                },
-              },
-            }
-          : undefined;
-      },
     },
     // The clicked button passes its callback as meta; Enter uses defaultSubmit.
     onSubmitMeta: { onValid: defaultSubmit } as {
@@ -130,7 +91,7 @@ export function SampleForm({
         name: value.name,
         nature: value.nature,
         type: composeHierarchyValue(value.typePath),
-        material: value.material || null,
+        material: composeHierarchyValue(value.materialPath),
         collectionMethod: composeHierarchyValue(value.collectionMethodPath),
         specificName: value.specificName.trim() || null,
       });
@@ -157,15 +118,15 @@ export function SampleForm({
           selector={(state) => ({
             canSubmit: state.canSubmit,
             typePath: state.values.typePath,
-            material: state.values.material,
+            materialPath: state.values.materialPath,
           })}
         >
-          {({ canSubmit, typePath, material }) => {
+          {({ canSubmit, typePath, materialPath }) => {
             // Form state holds looser select strings; the runtime values match
             // the domain, so cast to the fields samplePublishBlockers reads.
             const reasons = samplePublishBlockers({
               type: composeHierarchyValue(typePath),
-              material: material || null,
+              material: composeHierarchyValue(materialPath),
             } as Pick<Sample, "type" | "material">).map(publishBlockerLabel);
             const button = (
               <PublishSampleButton
@@ -273,14 +234,9 @@ export function SampleForm({
         <TabsContent value="type" className="grid gap-4">
           <section className="grid gap-4">
             <h2 className="text-lg font-semibold">{m.section_material()}</h2>
-            <form.AppField name="material">
-              {(field) => (
-                <MaterialPathField
-                  value={field.state.value}
-                  onChange={(path) => field.handleChange(path)}
-                />
-              )}
-            </form.AppField>
+            <form.AppForm>
+              <MaterialField />
+            </form.AppForm>
           </section>
 
           <form.AppField name="specificName">
