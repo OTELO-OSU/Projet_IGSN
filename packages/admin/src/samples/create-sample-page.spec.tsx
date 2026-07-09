@@ -74,7 +74,6 @@ async function fillRequiredFields(
   await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
   await screen.getByRole("combobox", { name: /nature/i }).click();
   await screen.getByText("Thin section").click();
-  await screen.getByRole("tab", { name: "Sample type" }).click();
   await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
   await screen.getByRole("option", { name: "Dredge" }).click();
 }

@@ -248,6 +248,10 @@ export function SampleForm({
             {(field) => <field.TextField label={`${m.field_name()} *`} />}
           </form.AppField>
 
+          <form.AppForm>
+            <SampleTypeFields />
+          </form.AppForm>
+
           <form.AppField
             name="nature"
             validators={{
@@ -272,10 +276,6 @@ export function SampleForm({
         </TabsContent>
 
         <TabsContent value="type" className="grid gap-4">
-          <form.AppForm>
-            <SampleTypeFields />
-          </form.AppForm>
-
           <section className="grid gap-4">
             <h2 className="text-lg font-semibold">{m.section_material()}</h2>
             <form.AppField name="material">
