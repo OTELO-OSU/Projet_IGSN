@@ -4,6 +4,8 @@
   "app_subtitle": "Sample Library",
   "sign_in": "Sign in",
   "samples_title": "Samples",
+  "samples_search_label": "Search samples",
+  "samples_search_placeholder": "Search by name, specific name or IGSN",
   "sample_section_sample": "Sample",
   "sample_field_nature": "Nature",
   "sample_field_type": "Type",

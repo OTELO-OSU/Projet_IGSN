@@ -7,20 +7,21 @@ import {
   useListSamples,
 } from "#/domain/samples/hook/list-samples.ts";
 import { SampleList } from "#/domain/samples/sample-list.tsx";
+import { SampleSearchField } from "#/domain/samples/sample-search-field.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/")({
   validateSearch: listSamplesQuerySchema,
-  loaderDeps: ({ search: { page, perPage } }) => ({ page, perPage }),
+  loaderDeps: ({ search }) => search,
   loader: ({ context, deps }) =>
     context.queryClient.ensureQueryData(listSamplesQueryOptions(deps)),
   component: Home,
 });
 
 function Home() {
-  const { page, perPage } = Route.useSearch();
+  const { page, perPage, search } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const { data } = useListSamples({ page, perPage });
+  const { data } = useListSamples({ page, perPage, search });
   const pageCount = Math.max(1, Math.ceil(data.total / perPage));
 
   return (
@@ -28,6 +29,19 @@ function Home() {
       <h1 className="mb-6 text-3xl font-bold text-sky-900">
         {m.samples_title()}
       </h1>
+      <div className="mb-6">
+        <SampleSearchField
+          defaultValue={search ?? ""}
+          label={m.samples_search_label()}
+          placeholder={m.samples_search_placeholder()}
+          // New search resets to page 1; empty clears the URL param.
+          onSearch={(value) =>
+            navigate({
+              search: { page: 1, perPage, search: value || undefined },
+            })
+          }
+        />
+      </div>
       <SampleList samples={data.data} />
 
       <nav
