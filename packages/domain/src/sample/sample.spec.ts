@@ -8,6 +8,7 @@ const validSample = {
   type: "core.section",
   material: null,
   collectionMethod: "coring.gravity_corer",
+  specificName: null,
   igsn: null,
   published: false,
   createdAt: "2026-07-02T10:00:00.000Z",
@@ -26,6 +27,7 @@ describe("sampleSchema", () => {
       type: "core.section",
       material: null,
       collectionMethod: "coring.gravity_corer",
+      specificName: null,
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -49,6 +51,8 @@ describe("sampleSchema", () => {
     { ...validSample, igsn: "not-an-igsn" },
     { ...validSample, type: "half_round" },
     { ...validSample, collectionMethod: "gravity_corer" },
+    { ...validSample, specificName: "" },
+    { ...validSample, specificName: "   " },
   ])("should reject an invalid sample #%#", (input) => {
     // Arrange / Act
     const result = sampleSchema.safeParse(input);
@@ -115,6 +119,22 @@ describe("createSampleSchema", () => {
     });
   });
 
+  it("should accept an explicit specific name", () => {
+    // Arrange / Act
+    const result = createSampleSchema.parse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      specificName: "FTB-2026-042",
+    });
+    // Assert
+    expect(result).toEqual({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      type: null,
+      specificName: "FTB-2026-042",
+    });
+  });
+
   it("should default a missing type to null", () => {
     // Arrange / Act
     const result = createSampleSchema.parse({
@@ -176,6 +196,7 @@ describe("createSampleSchema", () => {
     // unknown vocabulary codes
     { name: "Grès", nature: "rock_powder", material: "lava" },
     { name: "Grès", nature: "rock_powder", collectionMethod: "gravity_corer" },
+    { name: "Grès", nature: "rock_powder", specificName: "" },
   ])("should reject invalid create input #%#", (input) => {
     // Arrange / Act
     const result = createSampleSchema.safeParse(input);

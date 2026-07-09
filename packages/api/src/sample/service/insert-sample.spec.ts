@@ -28,6 +28,7 @@ describe("insertSample", () => {
         type: null,
       });
       expect(created.material).toBeNull();
+      expect(created.specificName).toBeNull();
     },
   );
 
@@ -38,6 +39,7 @@ describe("insertSample", () => {
       nature: "thin_section",
       type: "core.section",
       collectionMethod: "coring.gravity_corer.giant",
+      specificName: "MC-2026-007",
     });
     // Assert
     expect(created).toMatchObject({
@@ -45,6 +47,7 @@ describe("insertSample", () => {
       nature: "thin_section",
       type: "core.section",
       collectionMethod: "coring.gravity_corer.giant",
+      specificName: "MC-2026-007",
     });
     expect(created.createdAt).toBeInstanceOf(Date);
 

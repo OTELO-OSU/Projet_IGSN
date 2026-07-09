@@ -21,6 +21,7 @@ export async function updateSample(
       type: input.type,
       material: input.material ?? null,
       collection_method: input.collectionMethod ?? null,
+      specific_name: input.specificName ?? null,
       updated_at: sql`now()`,
     })
     .where("id", "=", id)

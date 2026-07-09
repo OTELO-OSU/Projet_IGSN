@@ -10,6 +10,7 @@ const draft: Sample = {
   type: "individual_sample",
   material: null,
   collectionMethod: null,
+  specificName: "BAS-42-001",
   igsn: null,
   published: false,
   createdAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -33,6 +34,16 @@ describe("isSamplePublishable", () => {
       expect(isSamplePublishable({ ...draft, material })).toBe(false);
     },
   );
+
+  it("should reject a sample with no specific name", () => {
+    expect(
+      isSamplePublishable({
+        ...draft,
+        material: "rock.igneous",
+        specificName: null,
+      }),
+    ).toBe(false);
+  });
 
   it("should accept a leaf material under an in-scope type", () => {
     expect(

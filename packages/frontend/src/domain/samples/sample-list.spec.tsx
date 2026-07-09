@@ -10,8 +10,12 @@ import { render } from "vitest-browser-react";
 import { SampleList } from "./sample-list.tsx";
 
 const samples = [
-  { igsn: "0123456789ABCDEFGHJKMNPQRS", name: "Basalt 42" },
-  { igsn: "TVWXYZ0123456789ABCDEFGHJK", name: "Granite 7" },
+  {
+    igsn: "0123456789ABCDEFGHJKMNPQRS",
+    name: "Basalt 42",
+    specificName: "BAS-42-001",
+  },
+  { igsn: "TVWXYZ0123456789ABCDEFGHJK", name: "Granite 7", specificName: null },
 ];
 
 // SampleList navigates with the router <Link>, so it must render inside a
@@ -50,5 +54,14 @@ describe("SampleList", () => {
     await expect
       .element(screen.getByRole("link", { name: /Granite 7/ }))
       .toBeInTheDocument();
+  });
+
+  it("should show the specific name when the sample has one", async () => {
+    const screen = await renderSampleList();
+
+    await expect
+      .element(screen.getByRole("link", { name: /BAS-42-001/ }))
+      .toHaveAttribute("href", "/samples/0123456789ABCDEFGHJKMNPQRS");
+    await expect.element(screen.getByText("BAS-42-001")).toBeInTheDocument();
   });
 });

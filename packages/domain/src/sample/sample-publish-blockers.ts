@@ -17,6 +17,7 @@ export const publishBlockerSchema = z.enum([
   "material_missing",
   "material_not_publishable",
   "material_incomplete",
+  "specific_name_missing",
 ]);
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
@@ -28,12 +29,12 @@ export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
 // (most fundamental) blocker is: a value must be set before it is worth asking
 // to classify it deeper.
 //
-// Publishability depends only on type and material, so we refine the picked
-// pair, not the whole sample: this lets the admin form check an in-progress
+// Publishability depends only on type, material and specificName, so we refine
+// the picked trio, not the whole sample: this lets the admin form check an in-progress
 // sample (which has no id/igsn/timestamps yet) without the base parse failing
 // before the refinement runs.
 export const publishableSampleSchema = sampleSchema
-  .pick({ type: true, material: true })
+  .pick({ type: true, material: true, specificName: true })
   .superRefine((sample, ctx) => {
     const typeBlocker = ((): PublishBlocker | null => {
       if (sample.type === null) return "type_missing";
@@ -47,7 +48,9 @@ export const publishableSampleSchema = sampleSchema
       if (!isMaterialLeaf(sample.material)) return "material_incomplete";
       return null;
     })();
-    for (const blocker of [typeBlocker, materialBlocker]) {
+    const specificNameBlocker: PublishBlocker | null =
+      sample.specificName === null ? "specific_name_missing" : null;
+    for (const blocker of [typeBlocker, materialBlocker, specificNameBlocker]) {
       if (blocker) {
         ctx.addIssue({ code: "custom", params: { blocker }, message: blocker });
       }
@@ -55,7 +58,7 @@ export const publishableSampleSchema = sampleSchema
   });
 
 export function samplePublishBlockers(
-  sample: Pick<Sample, "type" | "material">,
+  sample: Pick<Sample, "type" | "material" | "specificName">,
 ): PublishBlocker[] {
   const result = publishableSampleSchema.safeParse(sample);
   if (result.success) return [];

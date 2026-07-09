@@ -101,6 +101,7 @@ export function SampleForm({
       collectionMethodPath: toHierarchyPath(
         defaultValues?.collectionMethod ?? null,
       ),
+      specificName: defaultValues?.specificName ?? "",
     },
     // Wrap the superRefine schema in a function so it is typed against the
     // whole form value; forward its issue to the level field it targets.
@@ -131,6 +132,7 @@ export function SampleForm({
         type: composeHierarchyValue(value.typePath),
         material: value.material || null,
         collectionMethod: composeHierarchyValue(value.collectionMethodPath),
+        specificName: value.specificName.trim() || null,
       });
       if (!parsed.success) return;
       meta.onValid?.(parsed.data);
@@ -156,15 +158,19 @@ export function SampleForm({
             canSubmit: state.canSubmit,
             typePath: state.values.typePath,
             material: state.values.material,
+            specificName: state.values.specificName,
           })}
         >
-          {({ canSubmit, typePath, material }) => {
+          {({ canSubmit, typePath, material, specificName }) => {
             // Form state holds looser select strings; the runtime values match
             // the domain, so cast to the fields samplePublishBlockers reads.
             const reasons = samplePublishBlockers({
               type: composeHierarchyValue(typePath),
               material: material || null,
-            } as Pick<Sample, "type" | "material">).map(publishBlockerLabel);
+              specificName: specificName.trim() || null,
+            } as Pick<Sample, "type" | "material" | "specificName">).map(
+              publishBlockerLabel,
+            );
             const button = (
               <PublishSampleButton
                 label={action.label}
@@ -280,6 +286,10 @@ export function SampleForm({
               )}
             </form.AppField>
           </section>
+
+          <form.AppField name="specificName">
+            {(field) => <field.TextField label={m.field_specific_name()} />}
+          </form.AppField>
         </TabsContent>
       </Tabs>
 

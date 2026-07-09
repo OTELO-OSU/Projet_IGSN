@@ -10,16 +10,21 @@ const authHeader = { Authorization: "Bearer test-token" };
 
 type Client = ReturnType<typeof testClient<ReturnType<typeof createApp>>>;
 
-async function createSample(client: Client, name: string) {
+async function createSample(
+  client: Client,
+  name: string,
+  specificName = `${name} 001`,
+) {
   const created = await client.admin.samples.$post(
-    // A leaf type and leaf material are required to publish, so seed both for
-    // the publish helper.
+    // A leaf type, leaf material and specific name are required to publish,
+    // so seed them all for the publish helper.
     {
       json: {
         name,
         nature: "rock_powder",
         type: "individual_sample",
         material: "sediment",
+        specificName,
       },
     },
     { headers: authHeader },

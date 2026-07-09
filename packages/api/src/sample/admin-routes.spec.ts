@@ -174,6 +174,7 @@ describe("admin sample routes", () => {
           type: "individual_sample",
           material: "sediment",
           collectionMethod: null,
+          specificName: "MC-2026-007",
         },
       },
       { headers: authHeader },
@@ -227,6 +228,33 @@ describe("admin sample routes", () => {
             nature: "thin_section",
             type: null,
             material: "rock",
+          },
+        },
+        { headers: authHeader },
+      );
+      const { data } = sampleResponseSchema.parse(await created.json());
+      // Act
+      const res = await client.admin.samples[":id"].publish.$post(
+        { param: { id: data.id } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(409);
+    },
+  );
+
+  pgTest(
+    "should answer 409 when publishing a sample with no specific name",
+    async ({ db }) => {
+      // Arrange
+      const client = testClient(createApp(db));
+      const created = await client.admin.samples.$post(
+        {
+          json: {
+            name: "No specific name",
+            nature: "thin_section",
+            type: "individual_sample",
+            material: "sediment",
           },
         },
         { headers: authHeader },

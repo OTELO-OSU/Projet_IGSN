@@ -11,6 +11,7 @@ const base: Sample = {
   type: "individual_sample",
   material: "rock.igneous",
   collectionMethod: null,
+  specificName: "BAS-42-001",
   igsn: null,
   published: false,
   createdAt: new Date("2026-01-01T00:00:00Z"),
@@ -49,6 +50,12 @@ describe("samplePublishBlockers", () => {
   it("should report material_incomplete when the path is an internal node", () => {
     expect(samplePublishBlockers({ ...base, material: "rock" })).toEqual([
       "material_incomplete",
+    ]);
+  });
+
+  it("should report specific_name_missing when specificName is null", () => {
+    expect(samplePublishBlockers({ ...base, specificName: null })).toEqual([
+      "specific_name_missing",
     ]);
   });
 
