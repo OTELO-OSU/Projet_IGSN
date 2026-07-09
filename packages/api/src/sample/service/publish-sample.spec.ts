@@ -15,6 +15,7 @@ describe("publishSample", () => {
         nature: "thin_section",
         type: null,
         material: "sediment",
+        collectionMethod: null,
       });
       // Act
       const published = await publishSample(db, created.id);
@@ -58,6 +59,7 @@ describe("publishSample", () => {
       nature: "rock_powder",
       type: null,
       material: "sediment",
+      collectionMethod: null,
     });
     await publishSample(db, created.id);
     // Act

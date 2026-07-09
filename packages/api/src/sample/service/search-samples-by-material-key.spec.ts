@@ -11,12 +11,14 @@ describe("searchSamplesByMaterialKey", () => {
       nature: "hand_sample",
       type: null,
       material: "rock.igneous",
+      collectionMethod: null,
     });
     await insertSample(db, {
       name: "Schist",
       nature: "hand_sample",
       type: null,
       material: "rock.metamorphic",
+      collectionMethod: null,
     });
 
     const igneous = await searchSamplesByMaterialKey(db, "igneous");
@@ -34,6 +36,7 @@ describe("searchSamplesByMaterialKey", () => {
         nature: "hand_sample",
         type: null,
         material: "rock.igneous",
+        collectionMethod: null,
       });
       expect(await searchSamplesByMaterialKey(db, "hydrothermal")).toEqual([]);
     },

@@ -2,6 +2,10 @@ import type { Nature } from "@projet-igsn/domain/sample/nature";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
+import {
+  composeHierarchyValue,
+  toHierarchyPath,
+} from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   Tabs,
@@ -25,14 +29,12 @@ import { type SampleType } from "@projet-igsn/domain/sample/type";
 import { z } from "zod";
 
 import { m } from "#/paraglide/messages.js";
+import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { MaterialPathField } from "#/samples/material-path-field.tsx";
 import { natureLabel } from "#/samples/nature-label.ts";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
-import {
-  SampleTypeFields,
-  composeType,
-} from "#/samples/sample-type-fields.tsx";
+import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 
 const natureItems = natureSchema.options.map((nature) => ({
   value: nature,
@@ -41,16 +43,16 @@ const natureItems = natureSchema.options.map((nature) => ({
 
 // Form-level rule: "core" is the only root type with sub-values, and a bare
 // "core" is too vague to keep. Once it (or any non-leaf) is picked, a specific
-// sub-type is required. Read at form level so it sees both selects; the issue
-// targets `subType` (the "Core" select) so the error shows on that field.
+// sub-type is required. Read at form level so it sees the whole walk; the issue
+// targets the level below the composed path, the select missing a refinement.
 export const sampleTypeFormSchema = z
-  .object({ type: z.string(), subType: z.string() })
+  .object({ typePath: z.array(z.string()) })
   .superRefine((value, ctx) => {
-    const type = composeType(value);
+    const type = composeHierarchyValue(value.typePath);
     if (type && !isSampleTypeLeaf(type as SampleType)) {
       ctx.addIssue({
         code: "custom",
-        path: ["subType"],
+        path: ["typePath", type.split(".").length],
         message: m.field_sub_type_required(),
       });
     }
@@ -79,7 +81,6 @@ export function SampleForm({
   primaryAction,
   secondaryAction,
 }: SampleFormProps) {
-  const defaultType = defaultValues?.type ?? null;
   // Enter submits natively through the lone submit-kind button; route it to
   // that action (prefer primary). Publish and link never fire on Enter.
   const defaultSubmit =
@@ -93,20 +94,28 @@ export function SampleForm({
     defaultValues: {
       name: defaultValues?.name ?? "",
       nature: defaultValues?.nature ?? ("" as Nature | ""),
-      type: (defaultType?.split(".")[0] ?? "") as SampleType | "",
-      subType: defaultType?.includes(".") ? (defaultType as string) : "",
+      typePath: toHierarchyPath(defaultValues?.type ?? null),
       // Empty-string sentinel <-> null: the cascade works in strings, the
       // domain schema in `MaterialPath | null`.
       material: defaultValues?.material ?? "",
+      collectionMethodPath: toHierarchyPath(
+        defaultValues?.collectionMethod ?? null,
+      ),
     },
     // Wrap the superRefine schema in a function so it is typed against the
-    // whole form value; forward its issue to the sub-type field.
+    // whole form value; forward its issue to the level field it targets.
     validators: {
       onChange: ({ value }) => {
-        const { error } = sampleTypeFormSchema.safeParse(value);
+        const issue = sampleTypeFormSchema.safeParse(value).error?.issues[0];
         // Field components read `error.message`, so wrap the string to match.
-        return error
-          ? { fields: { subType: { message: error.issues[0]?.message } } }
+        return issue
+          ? {
+              fields: {
+                [`typePath[${String(issue.path[1])}]`]: {
+                  message: issue.message,
+                },
+              },
+            }
           : undefined;
       },
     },
@@ -119,8 +128,9 @@ export function SampleForm({
       const parsed = createSampleSchema.safeParse({
         name: value.name,
         nature: value.nature,
-        type: composeType(value),
+        type: composeHierarchyValue(value.typePath),
         material: value.material || null,
+        collectionMethod: composeHierarchyValue(value.collectionMethodPath),
       });
       if (!parsed.success) return;
       meta.onValid?.(parsed.data);
@@ -144,16 +154,15 @@ export function SampleForm({
         <form.Subscribe
           selector={(state) => ({
             canSubmit: state.canSubmit,
-            type: state.values.type,
-            subType: state.values.subType,
+            typePath: state.values.typePath,
             material: state.values.material,
           })}
         >
-          {({ canSubmit, type, subType, material }) => {
+          {({ canSubmit, typePath, material }) => {
             // Form state holds looser select strings; the runtime values match
             // the domain, so cast to the fields samplePublishBlockers reads.
             const reasons = samplePublishBlockers({
-              type: composeType({ type, subType }),
+              type: composeHierarchyValue(typePath),
               material: material || null,
             } as Pick<Sample, "type" | "material">).map(publishBlockerLabel);
             const button = (
@@ -249,6 +258,10 @@ export function SampleForm({
               />
             )}
           </form.AppField>
+
+          <form.AppForm>
+            <CollectionMethodField />
+          </form.AppForm>
         </TabsContent>
 
         <TabsContent value="type" className="grid gap-4">

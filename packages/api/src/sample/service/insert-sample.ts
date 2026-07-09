@@ -19,6 +19,7 @@ export async function insertSample(
       nature: input.nature,
       type: input.type,
       material: input.material ?? null,
+      collection_method: input.collectionMethod ?? null,
     })
     .returningAll()
     .executeTakeFirstOrThrow();

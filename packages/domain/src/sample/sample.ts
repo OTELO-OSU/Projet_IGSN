@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { igsnSuffixSchema } from "../igsn/model.ts";
+import { collectionMethodSchema } from "./collection-method.ts";
 import { materialPathSchema } from "./material.ts";
 import { natureSchema } from "./nature.ts";
 import { sampleTypeSchema } from "./type.ts";
@@ -15,6 +16,8 @@ export const sampleSchema = z.object({
   type: sampleTypeSchema.nullable(),
   // Hierarchical classification path; null until the sample is classified.
   material: materialPathSchema.nullable(),
+  // Null until the collection method is recorded.
+  collectionMethod: collectionMethodSchema.nullable(),
   // Null until the sample is published.
   igsn: igsnSuffixSchema.nullable(),
   published: z.boolean(),
@@ -32,6 +35,8 @@ export const createSampleSchema = z.strictObject({
   nature: natureSchema,
   type: sampleTypeSchema.nullable().default(null),
   material: materialPathSchema.nullish(),
+  // Optional at creation, like material: omitted or null on a draft.
+  collectionMethod: collectionMethodSchema.nullish(),
 });
 
 export type CreateSample = z.infer<typeof createSampleSchema>;

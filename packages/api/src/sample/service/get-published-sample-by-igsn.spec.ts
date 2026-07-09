@@ -13,6 +13,7 @@ describe("getPublishedSampleByIgsn", () => {
       nature: "thin_section",
       type: null,
       material: "sediment",
+      collectionMethod: null,
     });
     const published = await publishSample(db, created.id);
     // Act

@@ -39,6 +39,7 @@ function fakeApi(
     nature: "thin_section",
     type: "dredge",
     material,
+    collectionMethod: null,
     igsn: published ? IGSN : null,
     published,
     createdAt: "2026-06-01T00:00:00.000Z",

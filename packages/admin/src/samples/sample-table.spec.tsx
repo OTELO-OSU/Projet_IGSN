@@ -17,6 +17,7 @@ const sample: Sample = {
   nature: "thin_section",
   type: null,
   material: null,
+  collectionMethod: "coring.gravity_corer",
   igsn: null,
   published: false,
   createdAt: new Date("2026-06-01T00:00:00.000Z"),
@@ -53,6 +54,9 @@ describe("SampleTable", () => {
       .toHaveTextContent(/^IGSN/);
     await expect.element(screen.getByText("Name")).toBeInTheDocument();
     await expect.element(screen.getByText("Nature")).toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Collection Method"))
+      .toBeInTheDocument();
     await expect.element(screen.getByText("Last modified")).toBeInTheDocument();
   });
 
@@ -71,6 +75,7 @@ describe("SampleTable", () => {
       .element(screen.getByText("Basalte du Massif Central"))
       .toBeInTheDocument();
     await expect.element(screen.getByText("Thin section")).toBeInTheDocument();
+    await expect.element(screen.getByText("GravityCorer")).toBeInTheDocument();
     await expect.element(screen.getByText("2026-07-01")).toBeInTheDocument();
   });
 

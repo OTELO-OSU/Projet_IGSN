@@ -9,6 +9,7 @@ const draft: Sample = {
   nature: "thin_section",
   type: "individual_sample",
   material: null,
+  collectionMethod: null,
   igsn: null,
   published: false,
   createdAt: new Date("2026-07-02T10:00:00.000Z"),

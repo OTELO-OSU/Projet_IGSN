@@ -14,6 +14,9 @@ type SampleTable = {
   // Hierarchical classification path stored as ltree; Kysely has no ltree type,
   // so it is a plain string. Null until the sample is classified.
   material: string | null;
+  // Collection-method taxonomy path (e.g. "coring.gravity_corer"); null until
+  // recorded. Stored as ltree, read/written as text.
+  collection_method: string | null;
   // Null until the sample is published; then derived from the id with generateIgsnSuffix.
   igsn: string | null;
   published: Generated<boolean>;

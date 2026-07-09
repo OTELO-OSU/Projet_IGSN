@@ -8,6 +8,7 @@ const row = {
   nature: "rock_powder",
   type: "dredge",
   material: "rock.igneous",
+  collection_method: "coring.gravity_corer",
   igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
   published: false,
   created_at: new Date("2026-01-01T00:00:00.000Z"),
@@ -25,6 +26,7 @@ describe("toSample", () => {
       nature: "rock_powder",
       type: "dredge",
       material: "rock.igneous",
+      collectionMethod: "coring.gravity_corer",
       igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
       published: false,
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -38,6 +40,12 @@ describe("toSample", () => {
 
   it("should throw when the type is not a known taxonomy path", () => {
     expect(() => toSample({ ...row, type: "half_round" })).toThrow();
+  });
+
+  it("should throw when the collection method is not a known taxonomy path", () => {
+    expect(() =>
+      toSample({ ...row, collection_method: "gravity_corer" }),
+    ).toThrow();
   });
 
   it("should throw when the name is empty", () => {
