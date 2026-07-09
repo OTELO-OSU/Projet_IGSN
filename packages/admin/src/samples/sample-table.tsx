@@ -13,9 +13,10 @@ import { formatDate } from "@projet-igsn/design-system/lib/format-date";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
+  type OnChangeFn,
+  type SortingState,
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 
@@ -32,8 +33,9 @@ const columns: ColumnDef<Sample>[] = [
   {
     id: "status",
     // Derived, not stored: a sample is published exactly when it has an IGSN.
-    // The accessor drives sorting; the first click sorts ascending (drafts
-    // first), which numeric accessors would otherwise invert.
+    // Sorting is manual (server-side, keyed on IGSN presence); the accessor
+    // never orders rows, it only marks the column sortable. First click sorts
+    // ascending, drafts first.
     accessorFn: (sample) => (sample.igsn ? 1 : 0),
     sortDescFirst: false,
     header: ({ column }) => (
@@ -90,13 +92,27 @@ const columns: ColumnDef<Sample>[] = [
   },
 ];
 
-export function SampleTable({ samples }: { samples: Sample[] }) {
+type SampleTableProps = {
+  samples: Sample[];
+  // Sorting is controlled: the route owns it (URL state) and the API applies
+  // it, since sorting only the current page client-side would be wrong.
+  sorting: SortingState;
+  onSortingChange: OnChangeFn<SortingState>;
+};
+
+export function SampleTable({
+  samples,
+  sorting,
+  onSortingChange,
+}: SampleTableProps) {
   const navigate = useNavigate();
   const table = useReactTable({
     data: samples,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
+    manualSorting: true,
+    state: { sorting },
+    onSortingChange,
   });
 
   return (

@@ -7,6 +7,9 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
+import { type SortingState } from "@tanstack/react-table";
+import { useState } from "react";
+import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { SampleTable } from "./sample-table.tsx";
@@ -26,13 +29,30 @@ const sample: Sample = {
 const samples = [sample];
 
 // The table links to the edit route, so render it inside a minimal router
-// with a stub edit page to observe navigation.
-function renderTable(data: Sample[]) {
+// with a stub edit page to observe navigation. Sorting is controlled by the
+// caller (URL state in the app); the harness holds it in local state so
+// header toggles behave as in the real page.
+function renderTable(data: Sample[], onSortingChange = vi.fn()) {
+  function Harness() {
+    const [sorting, setSorting] = useState<SortingState>([]);
+    return (
+      <SampleTable
+        samples={data}
+        sorting={sorting}
+        onSortingChange={(updater) => {
+          setSorting(updater);
+          onSortingChange(
+            typeof updater === "function" ? updater(sorting) : updater,
+          );
+        }}
+      />
+    );
+  }
   const rootRoute = createRootRoute();
   const indexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/",
-    component: () => <SampleTable samples={data} />,
+    component: Harness,
   });
   const editRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -82,28 +102,20 @@ describe("SampleTable", () => {
     await expect.element(screen.getByText("Draft")).toBeInTheDocument();
   });
 
-  it("should sort by status when the Status header is clicked", async () => {
-    const published: Sample = {
-      ...sample,
-      id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
-      name: "Published sample",
-      igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
-      published: true,
-    };
-    // Published listed first, so the ascending sort visibly reorders.
-    const screen = await renderTable([published, sample]);
+  it("should request an asc then desc status sort when the header is clicked", async () => {
+    // Sorting is manual: the table reports toggles, the API orders the rows.
+    const onSortingChange = vi.fn();
+    const screen = await renderTable(samples, onSortingChange);
 
     await screen.getByRole("button", { name: "Status" }).click();
-    // Ascending: drafts (no IGSN) come first.
-    await expect
-      .element(screen.getByRole("row").nth(1))
-      .toHaveTextContent("Draft");
+    expect(onSortingChange).toHaveBeenLastCalledWith([
+      { id: "status", desc: false },
+    ]);
 
-    await screen.getByRole("button", { name: "Status" }).click();
-    // Descending: published (IGSN present) come first.
-    await expect
-      .element(screen.getByRole("row").nth(1))
-      .toHaveTextContent("Published");
+    await screen.getByRole("button", { name: "Status ↑" }).click();
+    expect(onSortingChange).toHaveBeenLastCalledWith([
+      { id: "status", desc: true },
+    ]);
   });
 
   it("should render a sample row with the last-modified date as yyyy-mm-dd", async () => {
