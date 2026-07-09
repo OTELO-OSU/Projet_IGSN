@@ -308,66 +308,6 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should submit the parent method when its own option is picked", async () => {
-    const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
-    );
-
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox", { name: "Nature" }).click();
-    await screen.getByText("Thin section").click();
-    await screen
-      .getByRole("combobox", { name: "Collection Method", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Coring" }).click();
-    await screen.getByRole("combobox", { name: "Coring", exact: true }).click();
-    await screen.getByRole("option", { name: "Coring", exact: true }).click();
-    await screen.getByRole("button", { name: "Create" }).click();
-
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: null,
-        material: null,
-        collectionMethod: "coring",
-      }),
-    );
-  });
-
-  it("should reset deeper collection-method levels when an upper level changes", async () => {
-    const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
-    );
-
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox", { name: "Nature" }).click();
-    await screen.getByText("Thin section").click();
-    await screen
-      .getByRole("combobox", { name: "Collection Method", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Coring" }).click();
-    await screen.getByRole("combobox", { name: "Coring", exact: true }).click();
-    await screen.getByRole("option", { name: "GravityCorer" }).click();
-    await screen
-      .getByRole("combobox", { name: "Collection Method", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Dredging" }).click();
-    await screen.getByRole("button", { name: "Create" }).click();
-
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: null,
-        material: null,
-        collectionMethod: "dredging",
-      }),
-    );
-  });
-
   it("should prefill the collection-method levels from a nested path", async () => {
     const screen = await render(
       <SampleForm

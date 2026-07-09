@@ -60,7 +60,9 @@ type HierarchyLevelProps<T extends string> = Omit<
   HierarchySelectFieldProps<T>,
   "choices" | "rootLabel"
 > & {
-  roots: HierarchyNode<T>[];
+  // The nodes offered at this level: the tree roots at depth 0, then the
+  // selected parent's children.
+  nodes: HierarchyNode<T>[];
   depth: number;
   // The selected parent node whose children this level offers; null at the root.
   parent: HierarchyNode<T> | null;
@@ -73,7 +75,7 @@ function HierarchyLevel<T extends string>({
   placeholder,
   searchPlaceholder,
   emptyText,
-  roots,
+  nodes,
   depth,
   parent,
   label,
@@ -81,7 +83,6 @@ function HierarchyLevel<T extends string>({
   const form = useTypedAppFormContext({
     defaultValues: {} as Record<string, string[]>,
   });
-  const nodes = parent ? parent.children : roots;
   if (nodes.length === 0) return null; // Leaf: nothing left to refine.
 
   const items = [
@@ -123,7 +124,7 @@ function HierarchyLevel<T extends string>({
               placeholder={placeholder}
               searchPlaceholder={searchPlaceholder}
               emptyText={emptyText}
-              roots={roots}
+              nodes={child.children}
               depth={depth + 1}
               parent={child}
               label={getLabel(child.path)}
@@ -143,11 +144,10 @@ export function HierarchySelectField<T extends string>({
   rootLabel,
   ...rest
 }: HierarchySelectFieldProps<T>) {
-  const roots = buildHierarchyTree(choices);
   return (
     <HierarchyLevel
       {...rest}
-      roots={roots}
+      nodes={buildHierarchyTree(choices)}
       depth={0}
       parent={null}
       label={rootLabel}
