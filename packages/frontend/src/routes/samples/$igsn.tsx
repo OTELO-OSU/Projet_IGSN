@@ -40,6 +40,7 @@ function SampleDetail() {
       material={sample.material}
       texture={sample.texture}
       collectionMethod={sample.collectionMethod}
+      collectionMethodDescription={sample.collectionMethodDescription}
     />
   );
 }

@@ -21,6 +21,7 @@ export async function insertSample(
       material: input.material ?? null,
       texture: input.texture ?? null,
       collection_method: input.collectionMethod ?? null,
+      collection_method_description: input.collectionMethodDescription ?? null,
       specific_name: input.specificName ?? null,
     })
     .returningAll()

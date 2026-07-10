@@ -21,6 +21,8 @@ export const sampleSchema = z.object({
   texture: textureSchema.nullable(),
   // Null until the collection method is recorded.
   collectionMethod: collectionMethodSchema.nullable(),
+  // Free-text detail on the collection method; optional, null when not provided.
+  collectionMethodDescription: nameSchema.nullable(),
   // Precise sample designation; optional, null when not provided.
   specificName: nameSchema.nullable(),
   // Null until the sample is published.
@@ -45,6 +47,7 @@ export const createSampleSchema = z
     texture: textureSchema.nullish(),
     // Optional at creation, like material: omitted or null on a draft.
     collectionMethod: collectionMethodSchema.nullish(),
+    collectionMethodDescription: nameSchema.nullish(),
     specificName: nameSchema.nullish(),
   })
   // A texture must match the selected material's branch. This guards the

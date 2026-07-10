@@ -9,6 +9,7 @@ const validSample = {
   material: null,
   texture: null,
   collectionMethod: "coring.gravity_corer",
+  collectionMethodDescription: null,
   specificName: null,
   igsn: null,
   published: false,
@@ -29,12 +30,23 @@ describe("sampleSchema", () => {
       material: null,
       texture: null,
       collectionMethod: "coring.gravity_corer",
+      collectionMethodDescription: null,
       specificName: null,
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
       updatedAt: new Date("2026-07-02T10:00:00.000Z"),
     });
+  });
+
+  it("should accept a collection method description", () => {
+    // Act
+    const result = sampleSchema.safeParse({
+      ...validSample,
+      collectionMethodDescription: "Collected at low tide, 30 cm depth",
+    });
+    // Assert
+    expect(result.success).toBe(true);
   });
 
   it("should accept a null type (not classified yet)", () => {
@@ -53,6 +65,8 @@ describe("sampleSchema", () => {
     { ...validSample, igsn: "not-an-igsn" },
     { ...validSample, type: "half_round" },
     { ...validSample, collectionMethod: "gravity_corer" },
+    { ...validSample, collectionMethodDescription: "" },
+    { ...validSample, collectionMethodDescription: "   " },
     { ...validSample, specificName: "" },
     { ...validSample, specificName: "   " },
   ])("should reject an invalid sample #%#", (input) => {
@@ -118,6 +132,22 @@ describe("createSampleSchema", () => {
       nature: "rock_powder",
       type: null,
       collectionMethod: "coring.gravity_corer.giant",
+    });
+  });
+
+  it("should accept an explicit collection method description", () => {
+    // Arrange / Act
+    const result = createSampleSchema.parse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      collectionMethodDescription: "Collected at low tide, 30 cm depth",
+    });
+    // Assert
+    expect(result).toEqual({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      type: null,
+      collectionMethodDescription: "Collected at low tide, 30 cm depth",
     });
   });
 
@@ -242,6 +272,11 @@ describe("createSampleSchema", () => {
     // unknown vocabulary codes
     { name: "Grès", nature: "rock_powder", material: "lava" },
     { name: "Grès", nature: "rock_powder", collectionMethod: "gravity_corer" },
+    {
+      name: "Grès",
+      nature: "rock_powder",
+      collectionMethodDescription: "",
+    },
     { name: "Grès", nature: "rock_powder", specificName: "" },
   ])("should reject invalid create input #%#", (input) => {
     // Arrange / Act

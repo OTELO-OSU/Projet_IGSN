@@ -11,6 +11,7 @@ const draft: Sample = {
   material: null,
   texture: null,
   collectionMethod: null,
+  collectionMethodDescription: null,
   specificName: "BAS-42-001",
   igsn: null,
   published: false,

@@ -14,6 +14,7 @@ export function toSample(row: Selectable<DB["sample"]>): Sample {
     material: row.material,
     texture: row.texture,
     collectionMethod: row.collection_method,
+    collectionMethodDescription: row.collection_method_description,
     specificName: row.specific_name,
     igsn: row.igsn,
     published: row.published,

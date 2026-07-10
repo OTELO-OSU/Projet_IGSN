@@ -81,6 +81,8 @@ export function SampleForm({
       collectionMethodPath: toHierarchyPath(
         defaultValues?.collectionMethod ?? null,
       ),
+      collectionMethodDescription:
+        defaultValues?.collectionMethodDescription ?? "",
       specificName: defaultValues?.specificName ?? "",
     },
     // The clicked button passes its callback as meta; Enter uses defaultSubmit.
@@ -97,6 +99,8 @@ export function SampleForm({
         // Optional and only valid for an igneous branch; omit when unset.
         ...(value.texture ? { texture: value.texture } : {}),
         collectionMethod: composeHierarchyValue(value.collectionMethodPath),
+        collectionMethodDescription:
+          value.collectionMethodDescription.trim() || null,
         specificName: value.specificName.trim() || null,
       });
       if (!parsed.success) return;
@@ -233,6 +237,14 @@ export function SampleForm({
           <form.AppForm>
             <CollectionMethodField />
           </form.AppForm>
+
+          <form.AppField name="collectionMethodDescription">
+            {(field) => (
+              <field.TextareaField
+                label={m.field_collection_method_description()}
+              />
+            )}
+          </form.AppField>
         </TabsContent>
 
         <TabsContent value="type" className="grid gap-4">

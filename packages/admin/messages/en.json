@@ -75,6 +75,7 @@
   "field_specific_name": "Specific Name",
   "column_collection_method": "Collection Method",
   "field_collection_method": "Collection Method",
+  "field_collection_method_description": "Collection Method Description",
   "collection_method_placeholder": "Select a collection method",
   "collection_method_search_placeholder": "Search collection method...",
   "collection_method_empty": "No collection method found",

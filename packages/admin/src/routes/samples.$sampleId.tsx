@@ -52,6 +52,7 @@ function EditSamplePage() {
           type: query.data.type,
           material: query.data.material,
           collectionMethod: query.data.collectionMethod,
+          collectionMethodDescription: query.data.collectionMethodDescription,
           specificName: query.data.specificName,
         }}
         isPending={isPending}

@@ -44,6 +44,7 @@ describe("insertSample", () => {
       });
       expect(created.material).toBeNull();
       expect(created.specificName).toBeNull();
+      expect(created.collectionMethodDescription).toBeNull();
     },
   );
 
@@ -54,6 +55,7 @@ describe("insertSample", () => {
       nature: "thin_section",
       type: "core.section",
       collectionMethod: "coring.gravity_corer.giant",
+      collectionMethodDescription: "Deployed from the aft A-frame",
       specificName: "MC-2026-007",
     });
     // Assert
@@ -62,6 +64,7 @@ describe("insertSample", () => {
       nature: "thin_section",
       type: "core.section",
       collectionMethod: "coring.gravity_corer.giant",
+      collectionMethodDescription: "Deployed from the aft A-frame",
       specificName: "MC-2026-007",
     });
     expect(created.createdAt).toBeInstanceOf(Date);
