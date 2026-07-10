@@ -12,6 +12,25 @@ type SampleListItem = Pick<Sample, "igsn" | "name" | "material">;
 // Registry name shared with the ::highlight() rule in styles.css.
 const SEARCH_HIGHLIGHT = "sample-search-match";
 
+// A DOM Range over the [start, end) slice of a text node.
+function toRange(node: Node, [start, end]: [number, number]): Range {
+  const range = new Range();
+  range.setStart(node, start);
+  range.setEnd(node, end);
+  return range;
+}
+
+// Every match of `query` inside a [data-highlight] element's text node, as Ranges.
+function elementRanges(element: Element, query: string): Range[] {
+  const node = element.firstChild;
+  if (node?.nodeType !== Node.TEXT_NODE) {
+    return [];
+  }
+  return matchRanges(node.textContent ?? "", query).map((match) =>
+    toRange(node, match),
+  );
+}
+
 // Tint the material badge by its root so a category is recognisable at a glance.
 // The roots are the fixed MATERIAL_ROOTS set, so this map is exhaustive.
 const MATERIAL_BADGE_CLASS: Record<string, string> = {
@@ -47,19 +66,9 @@ export function SampleList({
       return;
     }
 
-    const ranges: Range[] = [];
-    for (const element of container.querySelectorAll("[data-highlight]")) {
-      const node = element.firstChild;
-      if (node?.nodeType !== Node.TEXT_NODE) {
-        continue;
-      }
-      for (const [start, end] of matchRanges(node.textContent ?? "", trimmed)) {
-        const range = new Range();
-        range.setStart(node, start);
-        range.setEnd(node, end);
-        ranges.push(range);
-      }
-    }
+    const ranges = [...container.querySelectorAll("[data-highlight]")].flatMap(
+      (element) => elementRanges(element, trimmed),
+    );
     CSS.highlights.set(SEARCH_HIGHLIGHT, new Highlight(...ranges));
 
     return () => {
