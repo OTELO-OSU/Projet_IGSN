@@ -25,13 +25,13 @@ Adding a node is **pure data**: no migration, no UI change. Follow TDD (spec fir
 
 ## How the three differ
 
-|                 | material                                                   | `type`                         | `collectionMethod`                          |
-| --------------- | ---------------------------------------------------------- | ------------------------------ | ------------------------------------------- |
-| Authored in     | `classification.ts` roots + `classification/*-subtree.ts`  | inline `vocabulary.ts`         | inline `vocabulary.ts`                      |
-| Completeness    | per node: mandatory unless `optional: true`                | leaf-only (nothing optional)   | none: every non-leaf is `optional: true`    |
-| Gates publish?  | yes (`isMaterialComplete`)                                 | yes (`isSampleTypeComplete`)   | no                                          |
-| Admin label map | `material-path-label.ts` (dynamic lookup)                  | `type-label.ts` (typed Record) | `collection-method-label.ts` (typed Record) |
-| i18n key        | bare code (`rock`)                                         | `type_*`                       | `collection_method_*`                       |
+|                | material                                                  | `type`                                 | `collectionMethod`                       |
+| -------------- | --------------------------------------------------------- | -------------------------------------- | ---------------------------------------- |
+| Authored in    | `classification.ts` roots + `classification/*-subtree.ts` | inline `vocabulary.ts`                 | inline `vocabulary.ts`                   |
+| Completeness   | per node: mandatory unless `optional: true`               | leaf-only (nothing optional)           | none: every non-leaf is `optional: true` |
+| Gates publish? | yes (`isMaterialComplete`)                                | yes (`isSampleTypeComplete`)           | no                                       |
+| App label map  | `vocabulary-label.ts` (dynamic lookup)                    | `vocabulary-label.ts` (dynamic lookup) | `vocabulary-label.ts` (dynamic lookup)   |
+| i18n key       | bare code (`rock`)                                        | `type_*`                               | `collection_method_*`                    |
 
 A node with children must be refined unless marked `optional: true`; leaves are
 always valid stops. `type` marks nothing; `collectionMethod` marks every
@@ -116,13 +116,12 @@ expect(sampleTypeSchema.safeParse("core.core").success).toBe(true);
    // classification.ts: const materialTree = { rock: {...}, ...rockTree } satisfies ...
    ```
 
-3. **Label.** Add the English message to `packages/design-system/messages/en.json`,
-   then wire the admin label map:
-   - `type` / `collectionMethod`: add `<code>: m.<key>` to the typed Record in
-     `type-label.ts` / `collection-method-label.ts`. Compile-enforced.
-   - material: `material-path-label.ts` looks up dynamically (raw-code fallback),
-     so it is NOT compile-enforced, but `material-path-label.spec.tsx` asserts
-     every key exists. Miss the `en.json` entry and it goes red.
+3. **Label.** Add the English message to `packages/design-system/messages/en.json`.
+   Nothing to wire: both apps resolve all three vocabularies through
+   `vocabulary-label.ts` (domain-owned key mapping, dynamic paraglide lookup
+   with raw-key fallback). The lookup is NOT compile-enforced, but
+   `vocabulary-label.spec.ts` walks every tree key and goes red on a missing
+   `en.json` entry.
 
 4. **Publishability.** Nothing to wire: `type`/material inherit their gate via
    `isSampleTypeComplete` / `isMaterialComplete`; `collectionMethod` never blocks.
