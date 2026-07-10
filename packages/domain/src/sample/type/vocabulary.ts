@@ -4,8 +4,9 @@ import { expandPaths } from "../path/expand-paths.ts";
 import { type TreeNode } from "../path/tree-node.ts";
 
 // Hierarchical sample-type vocabulary (ADR 0011), a segment-keyed tree like
-// material (see classification.ts). Every level is mandatory, so a type is
-// complete only at a leaf (see isSampleTypeComplete) and no node is optional.
+// material (see classification.ts). Every level is mandatory (the default: no
+// node is marked `optional: true`), so a type is complete only at a leaf (see
+// isSampleTypeComplete).
 //
 // A choices entry or root must be a key of this tree; a mistyped literal trips
 // the tree spec (vocabulary.spec.ts). `core` lists itself as a child (the
@@ -80,6 +81,12 @@ export const SAMPLE_TYPE_ROOTS = [
 ] as const satisfies readonly SampleTypeSegment[];
 
 export const SAMPLE_TYPES = expandPaths(SAMPLE_TYPE_TREE, SAMPLE_TYPE_ROOTS);
+
+// The vocabulary as one self-describing bundle for HierarchySelectField.
+export const SAMPLE_TYPE_HIERARCHY = {
+  roots: SAMPLE_TYPE_ROOTS,
+  nodes: SAMPLE_TYPE_TREE,
+};
 
 // A validated dot-joined path. Not a literal union: the valid set is derived
 // from the tree at runtime and enforced by the schema, not the type.

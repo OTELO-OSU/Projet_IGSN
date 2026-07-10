@@ -23,7 +23,6 @@ const materialTree = {
       "hydrothermal",
       "unknown",
     ],
-    optional: false,
   },
   sediment: {
     label: "sediment",
@@ -33,7 +32,6 @@ const materialTree = {
       "biogenic",
       "physico_chemical",
     ],
-    optional: false,
   },
   mineral: { label: "mineral" },
   fossil: { label: "fossil" },
@@ -61,6 +59,12 @@ export const MATERIAL_ROOTS = [
 ] as const satisfies readonly MaterialSegment[];
 
 export const MATERIAL_PATHS = expandPaths(MATERIAL_TREE, MATERIAL_ROOTS);
+
+// The vocabulary as one self-describing bundle for HierarchySelectField.
+export const MATERIAL_HIERARCHY = {
+  roots: MATERIAL_ROOTS,
+  nodes: MATERIAL_TREE,
+};
 
 // A validated dot-joined path. Not a literal union: the valid set is derived
 // from the tree at runtime and enforced by the schema, not the type.

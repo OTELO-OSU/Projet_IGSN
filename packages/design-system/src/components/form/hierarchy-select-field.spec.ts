@@ -1,95 +1,135 @@
 import {
-  buildHierarchyTree,
+  canStopAtPath,
   composeHierarchyValue,
+  hierarchyChildren,
   hierarchyLevelItems,
+  hierarchyPathLabel,
   levelLabel,
   toHierarchyPath,
+  type Hierarchy,
 } from "./hierarchy-select-field.tsx";
 
-describe("buildHierarchyTree", () => {
-  it("should nest dot-separated paths under their parent, in order", () => {
-    const tree = buildHierarchyTree(["a", "a.x", "a.x.1", "a.y", "b"]);
-    expect(tree).toEqual([
-      {
-        path: "a",
-        children: [
-          {
-            path: "a.x",
-            children: [{ path: "a.x.1", children: [] }],
-          },
-          { path: "a.y", children: [] },
-        ],
-      },
-      { path: "b", children: [] },
+// A fixture exercising every tree feature: a must-refine node (rock, the
+// default), an optional node with children (sedimentary), plain leaves, a
+// self-child stop (water.water) with its dotted childless override. Labels are
+// codes, as the domain trees carry them.
+const hierarchy: Hierarchy = {
+  roots: ["rock", "water"],
+  nodes: {
+    rock: {
+      label: "rock",
+      choices: ["igneous", "sedimentary"],
+    },
+    igneous: { label: "igneous" },
+    sedimentary: { label: "sedimentary", optional: true, choices: ["sand"] },
+    sand: { label: "sand" },
+    water: { label: "water", optional: true, choices: ["water", "sea"] },
+    "water.water": { label: "water_only" },
+    sea: { label: "sea" },
+  },
+};
+
+const translate = (code: string) => code.toUpperCase();
+
+describe("hierarchyChildren", () => {
+  it("should offer the roots at the top level", () => {
+    expect(hierarchyChildren(hierarchy, null)).toEqual(["rock", "water"]);
+  });
+
+  it("should compose a node's choices onto its path", () => {
+    expect(hierarchyChildren(hierarchy, "rock")).toEqual([
+      "rock.igneous",
+      "rock.sedimentary",
     ]);
   });
 
-  it("should return an empty tree for no choices", () => {
-    expect(buildHierarchyTree([])).toEqual([]);
+  it("should return no children for a leaf", () => {
+    expect(hierarchyChildren(hierarchy, "rock.igneous")).toEqual([]);
+  });
+
+  it("should resolve the longest matching suffix, so a dotted override terminates a self-child", () => {
+    expect(hierarchyChildren(hierarchy, "water.water")).toEqual([]);
+  });
+});
+
+describe("canStopAtPath", () => {
+  it.each([
+    "rock.igneous", // leaf
+    "rock.sedimentary", // optional node with children
+    "water.water", // dotted override: a childless leaf
+    "water", // optional node with children
+  ])("should allow stopping at %s", (path) => {
+    expect(canStopAtPath(hierarchy, path)).toBe(true);
+  });
+
+  it("should forbid stopping at a non-leaf not marked optional", () => {
+    expect(canStopAtPath(hierarchy, "rock")).toBe(false);
+  });
+});
+
+describe("hierarchyPathLabel", () => {
+  it("should render a path's node label code through translate", () => {
+    expect(hierarchyPathLabel(hierarchy, "rock.igneous", translate)).toBe(
+      "IGNEOUS",
+    );
+  });
+
+  it("should default to the raw code", () => {
+    expect(hierarchyPathLabel(hierarchy, "rock.igneous")).toBe("igneous");
+  });
+
+  it("should let a dotted override label its occurrence differently", () => {
+    expect(hierarchyPathLabel(hierarchy, "water.water")).toBe("water_only");
   });
 });
 
 describe("hierarchyLevelItems", () => {
-  const label = (path: string) => path.toUpperCase();
-  const nodes = [
-    { path: "core.section", children: [] },
-    { path: "core.piece", children: [] },
-  ];
-
-  it("should list only the child nodes at the root (no parent)", () => {
-    expect(hierarchyLevelItems(null, nodes, label, () => true)).toEqual([
-      { value: "core.section", label: "CORE.SECTION" },
-      { value: "core.piece", label: "CORE.PIECE" },
+  it("should list only the roots at the top level (no parent)", () => {
+    expect(hierarchyLevelItems(hierarchy, null, translate)).toEqual([
+      { value: "rock", label: "ROCK" },
+      { value: "water", label: "WATER" },
     ]);
   });
 
   it("should prepend the parent-itself option when stopping at the parent is allowed", () => {
-    const parent = { path: "core", children: nodes };
-    expect(hierarchyLevelItems(parent, nodes, label, () => true)).toEqual([
-      { value: "core", label: "CORE" },
-      { value: "core.section", label: "CORE.SECTION" },
-      { value: "core.piece", label: "CORE.PIECE" },
+    expect(
+      hierarchyLevelItems(hierarchy, "rock.sedimentary", translate),
+    ).toEqual([
+      { value: "rock.sedimentary", label: "SEDIMENTARY" },
+      { value: "rock.sedimentary.sand", label: "SAND" },
     ]);
   });
 
   it("should omit the parent-itself option when stopping at the parent is not allowed", () => {
-    const parent = { path: "core", children: nodes };
-    expect(hierarchyLevelItems(parent, nodes, label, () => false)).toEqual([
-      { value: "core.section", label: "CORE.SECTION" },
-      { value: "core.piece", label: "CORE.PIECE" },
+    expect(hierarchyLevelItems(hierarchy, "rock", translate)).toEqual([
+      { value: "rock.igneous", label: "IGNEOUS" },
+      { value: "rock.sedimentary", label: "SEDIMENTARY" },
     ]);
   });
 
   it("should not synthesize the parent-itself option when a self-child models it", () => {
-    // The vocabulary already offers `core.core` as the "stop here" value, so the
-    // synthetic `core` option would render the same label twice.
-    const selfChildNodes = [
-      { path: "core.core", children: [] },
-      { path: "core.piece", children: [] },
-    ];
-    const parent = { path: "core", children: selfChildNodes };
-    expect(
-      hierarchyLevelItems(parent, selfChildNodes, label, () => true),
-    ).toEqual([
-      { value: "core.core", label: "CORE.CORE" },
-      { value: "core.piece", label: "CORE.PIECE" },
+    // The vocabulary already offers `water.water` as the "stop here" value, so
+    // the synthetic `water` option would render the same label twice.
+    expect(hierarchyLevelItems(hierarchy, "water", translate)).toEqual([
+      { value: "water.water", label: "WATER_ONLY" },
+      { value: "water.sea", label: "SEA" },
     ]);
   });
 });
 
 describe("levelLabel", () => {
-  const core = { path: "core", children: [] };
-
   it("should leave the root level to the caller's marker", () => {
-    expect(levelLabel("Type *", null, () => false)).toBe("Type *");
+    expect(levelLabel(hierarchy, "Material *", null)).toBe("Material *");
   });
 
   it("should mark a nested level required when its parent cannot stop there", () => {
-    expect(levelLabel("Core", core, () => false)).toBe("Core *");
+    expect(levelLabel(hierarchy, "Rock", "rock")).toBe("Rock *");
   });
 
   it("should not mark a nested level when its parent may stop there", () => {
-    expect(levelLabel("Core", core, () => true)).toBe("Core");
+    expect(levelLabel(hierarchy, "Sedimentary", "rock.sedimentary")).toBe(
+      "Sedimentary",
+    );
   });
 });
 

@@ -75,6 +75,15 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
+    # Hot source is bind-mounted, not compose-watch synced: sync can silently
+    # drop events on bulk changes (git checkout, rebase) and leave the container
+    # serving a stale mixed tree; a mount cannot go stale (ADR 0013). Watch only
+    # covers the cold files (configs) and the restart/rebuild triggers.
+    volumes:
+      - ./packages/frontend/src:/app/packages/frontend/src
+      - ./packages/frontend/messages:/app/packages/frontend/messages
+      - ./packages/domain/src:/app/packages/domain/src
+      - ./packages/design-system/src:/app/packages/design-system/src
     develop:
       watch:
         - action: sync
@@ -82,16 +91,20 @@ services:
           target: /app/packages/frontend
           ignore:
             - node_modules/
+            - src/
+            - messages/
         - action: sync
           path: ./packages/domain
           target: /app/packages/domain
           ignore:
             - node_modules/
+            - src/
         - action: sync
           path: ./packages/design-system
           target: /app/packages/design-system
           ignore:
             - node_modules/
+            - src/
         - action: sync+restart
           path: ./tsconfig.base.json
           target: /app/tsconfig.base.json
@@ -112,6 +125,12 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
+    # Same bind-mount rationale as frontend (ADR 0013).
+    volumes:
+      - ./packages/admin/src:/app/packages/admin/src
+      - ./packages/admin/messages:/app/packages/admin/messages
+      - ./packages/domain/src:/app/packages/domain/src
+      - ./packages/design-system/src:/app/packages/design-system/src
     develop:
       watch:
         - action: sync
@@ -119,16 +138,20 @@ services:
           target: /app/packages/admin
           ignore:
             - node_modules/
+            - src/
+            - messages/
         - action: sync
           path: ./packages/domain
           target: /app/packages/domain
           ignore:
             - node_modules/
+            - src/
         - action: sync
           path: ./packages/design-system
           target: /app/packages/design-system
           ignore:
             - node_modules/
+            - src/
         - action: sync+restart
           path: ./tsconfig.base.json
           target: /app/tsconfig.base.json
@@ -163,6 +186,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    # Same bind-mount rationale as frontend (ADR 0013). Read-only: the api
+    # generates nothing into src, so it keeps running as root safely.
+    volumes:
+      - ./packages/api/src:/app/packages/api/src:ro
+      - ./packages/domain/src:/app/packages/domain/src:ro
     develop:
       watch:
         - action: sync
@@ -170,11 +198,13 @@ services:
           target: /app/packages/api
           ignore:
             - node_modules/
+            - src/
         - action: sync
           path: ./packages/domain
           target: /app/packages/domain
           ignore:
             - node_modules/
+            - src/
         - action: sync+restart
           path: ./tsconfig.base.json
           target: /app/tsconfig.base.json

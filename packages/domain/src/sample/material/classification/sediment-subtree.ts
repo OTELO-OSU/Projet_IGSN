@@ -2,34 +2,30 @@ import { type TreeNode } from "../../path/tree-node.ts";
 
 // Descendants of the `sediment` root (screenshot "Sediment classification").
 // Spread into the material tree in classification.ts. Every inner box is pink
-// (mandatory), so parents carry `optional: false`; leaves are valid stops. The
-// shared `other` leaf lives in classification.ts (reused by rock too).
+// (mandatory, the default: no node is marked `optional: true`); leaves are
+// valid stops. The shared `other` leaf lives in classification.ts (reused by
+// rock too).
 export const sedimentTree = {
   exogenous_detritic: {
     label: "exogenous_detritic",
     choices: ["gravel", "sand", "silt", "clay", "heterogeneous"],
-    optional: false,
   },
   volcano_detritic: {
     label: "volcano_detritic",
     choices: ["bomb", "lapilli", "ash"],
-    optional: false,
   },
   biogenic: {
     label: "biogenic",
     choices: ["carbonate", "siliceous", "organic_rich", "bioprecipitated"],
-    optional: false,
   },
   physico_chemical: {
     label: "physico_chemical",
     choices: ["precipitates", "alteration_residual_products"],
-    optional: false,
   },
 
   gravel: {
     label: "gravel",
     choices: ["boulder", "cobble", "pebble", "granule"],
-    optional: false,
   },
   boulder: { label: "boulder" },
   cobble: { label: "cobble" },
@@ -47,7 +43,6 @@ export const sedimentTree = {
       "fine_sand",
       "very_fine_sand",
     ],
-    optional: false,
   },
   very_coarse_sand: { label: "very_coarse_sand" },
   coarse_sand: { label: "coarse_sand" },
@@ -64,7 +59,6 @@ export const sedimentTree = {
       "fine_silt",
       "very_fine_silt",
     ],
-    optional: false,
   },
   very_coarse_silt: { label: "very_coarse_silt" },
   coarse_silt: { label: "coarse_silt" },
@@ -76,7 +70,6 @@ export const sedimentTree = {
   heterogeneous: {
     label: "heterogeneous",
     choices: ["diamicton", "other"],
-    optional: false,
   },
   diamicton: { label: "diamicton" },
 
@@ -84,17 +77,14 @@ export const sedimentTree = {
   bomb: {
     label: "bomb",
     choices: ["pumices", "glass", "crystals", "rock_fragments"],
-    optional: false,
   },
   lapilli: {
     label: "lapilli",
     choices: ["pumices", "glass", "crystals", "rock_fragments"],
-    optional: false,
   },
   ash: {
     label: "ash",
     choices: ["pumices", "glass", "crystals", "rock_fragments"],
-    optional: false,
   },
   pumices: { label: "pumices" },
   glass: { label: "glass" },
@@ -104,18 +94,15 @@ export const sedimentTree = {
   carbonate: {
     label: "carbonate",
     choices: ["grain_supported", "mud_supported", "boundstone"],
-    optional: false,
   },
   grain_supported: {
     label: "grain_supported",
     choices: ["rudstone", "grainstone", "packstone"],
-    optional: false,
   },
   rudstone: { label: "rudstone" },
   mud_supported: {
     label: "mud_supported",
     choices: ["floatstone", "wackestone", "mudstone"],
-    optional: false,
   },
   floatstone: { label: "floatstone" },
   // `boundstone` is a childless leaf elsewhere; here it needs textural children,
@@ -123,7 +110,6 @@ export const sedimentTree = {
   "carbonate.boundstone": {
     label: "boundstone",
     choices: ["frame", "baffle", "bind"],
-    optional: false,
   },
   frame: { label: "frame" },
   baffle: { label: "baffle" },
@@ -132,7 +118,6 @@ export const sedimentTree = {
   siliceous: {
     label: "siliceous",
     choices: ["diatoms", "radiolarians", "sponges"],
-    optional: false,
   },
   diatoms: { label: "diatoms" },
   radiolarians: { label: "radiolarians" },
@@ -141,7 +126,6 @@ export const sedimentTree = {
   organic_rich: {
     label: "organic_rich",
     choices: ["peat", "coal", "algal_rich", "organic_mud", "other"],
-    optional: false,
   },
   peat: { label: "peat" },
   algal_rich: { label: "algal_rich" },
@@ -150,7 +134,6 @@ export const sedimentTree = {
   bioprecipitated: {
     label: "bioprecipitated",
     choices: ["microbialites", "organic_decay_induced"],
-    optional: false,
   },
   microbialites: { label: "microbialites" },
   organic_decay_induced: { label: "organic_decay_induced" },
@@ -158,7 +141,6 @@ export const sedimentTree = {
   precipitates: {
     label: "precipitates",
     choices: ["evaporitic", "metalliferous", "carbonated", "phosphated"],
-    optional: false,
   },
   evaporitic: { label: "evaporitic" },
   metalliferous: { label: "metalliferous" },
@@ -168,7 +150,6 @@ export const sedimentTree = {
   alteration_residual_products: {
     label: "alteration_residual_products",
     choices: ["regoliths", "altered_clays"],
-    optional: false,
   },
   regoliths: { label: "regoliths" },
   altered_clays: { label: "altered_clays" },

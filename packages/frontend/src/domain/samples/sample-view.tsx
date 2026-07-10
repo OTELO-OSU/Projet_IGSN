@@ -2,11 +2,13 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { ChevronRightIcon } from "lucide-react";
 
-import { collectionMethodLabel } from "#/domain/samples/collection-method-label.ts";
-import { materialPathLabel } from "#/domain/samples/material-path-label.ts";
 import { natureLabel } from "#/domain/samples/nature-label.ts";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
-import { typeLabel } from "#/domain/samples/type-label.ts";
+import {
+  collectionMethodLabel,
+  materialPathLabel,
+  typeLabel,
+} from "#/domain/samples/vocabulary-label.ts";
 import { m } from "#/paraglide/messages.js";
 
 type SampleViewProps = {

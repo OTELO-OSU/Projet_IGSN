@@ -6,6 +6,13 @@ paths:
 
 # Testing
 
+## E2E before ending a session
+
+A session that changed app code (`admin`, `frontend`, `api`, or what they
+consume from `domain`/`design-system`) does not end on unit tests alone: run
+`make test-e2e` (it starts its own throwaway stack) and report the verdict.
+Skip it only for changes with no runtime surface (docs, rules, specs alone).
+
 ## Tests are mandatory
 
 Every function and component MUST have tests. Untested code does not ship.
