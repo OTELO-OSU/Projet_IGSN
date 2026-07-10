@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 import { igsnSuffixSchema } from "../igsn/model.ts";
-import { collectionMethodSchema } from "./collection-method.ts";
-import { materialPathSchema } from "./material.ts";
+import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
+import { materialPathSchema } from "./material/classification.ts";
 import { natureSchema } from "./nature.ts";
-import { sampleTypeSchema } from "./type.ts";
+import { sampleTypeSchema } from "./type/vocabulary.ts";
 
 export const nameSchema = z.string().trim().min(1);
 
@@ -14,7 +14,6 @@ export const sampleSchema = z.object({
   nature: natureSchema,
   // Null until the sample is classified.
   type: sampleTypeSchema.nullable(),
-  // Hierarchical classification path; null until the sample is classified.
   material: materialPathSchema.nullable(),
   // Null until the collection method is recorded.
   collectionMethod: collectionMethodSchema.nullable(),

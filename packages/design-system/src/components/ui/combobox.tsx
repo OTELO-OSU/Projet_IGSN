@@ -72,8 +72,9 @@ export function Combobox({
                   // Values are machine codes; match the visible label too so
                   // typing part of it finds the item.
                   keywords={[item.label]}
+                  // Re-selecting the current item clears it (empty value).
                   onSelect={() => {
-                    onChange(item.value);
+                    onChange(item.value === value ? "" : item.value);
                     setOpen(false);
                   }}
                 >

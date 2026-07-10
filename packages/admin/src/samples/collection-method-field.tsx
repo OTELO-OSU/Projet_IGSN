@@ -1,5 +1,5 @@
 import { HierarchySelectField } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
-import { COLLECTION_METHODS } from "@projet-igsn/domain/sample/collection-method";
+import { collectionMethodHierarchy } from "@projet-igsn/domain/sample/collection-method/hierarchy";
 
 import { m } from "#/paraglide/messages.js";
 import { collectionMethodLabel } from "#/samples/collection-method-label.ts";
@@ -8,7 +8,7 @@ export function CollectionMethodField() {
   return (
     <HierarchySelectField
       name="collectionMethodPath"
-      choices={COLLECTION_METHODS}
+      hierarchy={collectionMethodHierarchy}
       getLabel={collectionMethodLabel}
       rootLabel={m.field_collection_method()}
       placeholder={m.collection_method_placeholder()}

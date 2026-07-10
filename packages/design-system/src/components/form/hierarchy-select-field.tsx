@@ -26,6 +26,43 @@ export function buildHierarchyTree<T extends string>(
   return roots;
 }
 
+// The options offered at a level: the parent-itself "stop here" option (only
+// when stopping at the parent is allowed) followed by the child nodes. The
+// parent option composes to the parent path; a vocabulary that forbids stopping
+// at an ancestor (sample type must reach a leaf) omits it via canStopAt.
+//
+// When the vocabulary already models "stop here" as an explicit self-child
+// (e.g. `coring.coring`), that child IS the stop option, so the synthetic
+// parent option is dropped to avoid showing the same label twice.
+export function hierarchyLevelItems<T extends string>(
+  parent: HierarchyNode<T> | null,
+  nodes: HierarchyNode<T>[],
+  getLabel: (path: T) => string,
+  canStopAt: (path: T) => boolean,
+): { value: T; label: string }[] {
+  const parentSegment = parent?.path.split(".").at(-1);
+  const hasSelfChild = nodes.some(
+    (node) => node.path.split(".").at(-1) === parentSegment,
+  );
+  return [
+    ...(parent && canStopAt(parent.path) && !hasSelfChild
+      ? [{ value: parent.path, label: getLabel(parent.path) }]
+      : []),
+    ...nodes.map((node) => ({ value: node.path, label: getLabel(node.path) })),
+  ];
+}
+
+// A nested level is required (must be refined) when its parent is not a valid
+// stopping point, so it carries the ` *` marker. The root level owns its marker
+// via the caller's rootLabel (parent is null).
+export function levelLabel<T extends string>(
+  label: string,
+  parent: HierarchyNode<T> | null,
+  canStopAt: (path: T) => boolean,
+): string {
+  return parent && !canStopAt(parent.path) ? `${label} *` : label;
+}
+
 // The field holds one value per level (the full path picked at that level); the
 // chosen value is the deepest one. Picking a level's own option keeps the parent
 // path, so it composes to that ancestor.
@@ -41,12 +78,23 @@ export function toHierarchyPath(value: string | null): string[] {
   return segments.map((_, index) => segments.slice(0, index + 1).join("."));
 }
 
+// A vocabulary as one bundle: its flat paths and, optionally, its completeness
+// policy. Composed in `domain` per vocabulary (material, type, collection method).
+export type Hierarchy<T extends string> = {
+  // Flat controlled vocabulary of dot-separated paths.
+  paths: readonly T[];
+  // Whether stopping at a given path is a valid choice; drives whether a level
+  // offers its parent as a "no further refinement" option. Defaults to always
+  // allowed (collection method); sample type passes its leaf-only policy.
+  canStopAt?: (path: T) => boolean;
+};
+
 type HierarchySelectFieldProps<T extends string> = {
   // Form field holding the per-level path (a string[]); must exist in the
   // parent form's defaultValues.
   name: string;
-  // Flat controlled vocabulary of dot-separated paths.
-  choices: readonly T[];
+  // The vocabulary's paths and completeness policy (see Hierarchy).
+  hierarchy: Hierarchy<T>;
   // Resolves a path to its (translated) label; owned by the calling package.
   getLabel: (path: T) => string;
   // Label of the first level; deeper levels are labelled by their parent's value.
@@ -58,7 +106,7 @@ type HierarchySelectFieldProps<T extends string> = {
 
 type HierarchyLevelProps<T extends string> = Omit<
   HierarchySelectFieldProps<T>,
-  "choices" | "rootLabel"
+  "hierarchy" | "rootLabel"
 > & {
   // The nodes offered at this level: the tree roots at depth 0, then the
   // selected parent's children.
@@ -67,6 +115,7 @@ type HierarchyLevelProps<T extends string> = Omit<
   // The selected parent node whose children this level offers; null at the root.
   parent: HierarchyNode<T> | null;
   label: string;
+  canStopAt: (path: T) => boolean;
 };
 
 function HierarchyLevel<T extends string>({
@@ -79,18 +128,14 @@ function HierarchyLevel<T extends string>({
   depth,
   parent,
   label,
+  canStopAt,
 }: HierarchyLevelProps<T>) {
   const form = useTypedAppFormContext({
     defaultValues: {} as Record<string, string[]>,
   });
   if (nodes.length === 0) return null; // Leaf: nothing left to refine.
 
-  const items = [
-    // The parent-itself option means "no further refinement"; it composes to
-    // the parent path and stops the walk. Absent at the root.
-    ...(parent ? [{ value: parent.path, label: getLabel(parent.path) }] : []),
-    ...nodes.map((node) => ({ value: node.path, label: getLabel(node.path) })),
-  ];
+  const items = hierarchyLevelItems(parent, nodes, getLabel, canStopAt);
 
   return (
     <>
@@ -104,7 +149,7 @@ function HierarchyLevel<T extends string>({
       >
         {(field) => (
           <field.ComboboxField
-            label={label}
+            label={levelLabel(label, parent, canStopAt)}
             items={items}
             placeholder={placeholder}
             searchPlaceholder={searchPlaceholder}
@@ -128,6 +173,7 @@ function HierarchyLevel<T extends string>({
               depth={depth + 1}
               parent={child}
               label={getLabel(child.path)}
+              canStopAt={canStopAt}
             />
           ) : null;
         }}
@@ -140,14 +186,15 @@ function HierarchyLevel<T extends string>({
 // select per level, each labelled by the value picked above it, walking the tree
 // recursively as deep as the taxonomy goes. Render inside a `form.AppForm`.
 export function HierarchySelectField<T extends string>({
-  choices,
+  hierarchy,
   rootLabel,
   ...rest
 }: HierarchySelectFieldProps<T>) {
   return (
     <HierarchyLevel
       {...rest}
-      nodes={buildHierarchyTree(choices)}
+      canStopAt={hierarchy.canStopAt ?? (() => true)}
+      nodes={buildHierarchyTree(hierarchy.paths)}
       depth={0}
       parent={null}
       label={rootLabel}

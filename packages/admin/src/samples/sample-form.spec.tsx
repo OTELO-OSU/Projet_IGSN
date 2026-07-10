@@ -4,33 +4,9 @@ import { TooltipProvider } from "@projet-igsn/design-system/components/ui/toolti
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
-import { SampleForm, sampleTypeFormSchema } from "./sample-form.tsx";
+import { SampleForm } from "./sample-form.tsx";
 
 const noop = () => {};
-
-describe("sampleTypeFormSchema", () => {
-  it.each([
-    { typePath: [] }, // no type chosen yet (draft)
-    { typePath: ["dredge"] }, // leaf root type, no sub-values
-    { typePath: ["core", "core.piece"] }, // core refined to a leaf
-  ])("should accept %o", (value) => {
-    expect(sampleTypeFormSchema.safeParse(value).success).toBe(true);
-  });
-
-  it.each([
-    { typePath: ["core"] }, // core picked, no sub-type
-    { typePath: ["core", "core"] }, // bare "core" sub-option is still vague
-  ])("should require a sub-type for %o", (value) => {
-    const result = sampleTypeFormSchema.safeParse(value);
-    expect(result.success).toBe(false);
-    expect(result.error?.issues).toEqual([
-      expect.objectContaining({
-        path: ["typePath", 1],
-        message: "Select a sub-type.",
-      }),
-    ]);
-  });
-});
 
 const createAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Create", onSubmit }) as const;
@@ -174,7 +150,7 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should reject a bare core type and require a sub-type", async () => {
+  it("should save a bare ancestor type as a draft (completeness is a publish gate)", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
@@ -185,13 +161,20 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Core" }).click();
-    // Pick the bare "Core" option: it is not a specific-enough classification.
-    await screen.getByRole("combobox", { name: "Core" }).click();
-    await screen.getByRole("option", { name: "Core", exact: true }).click();
+    // Leave the sub-type unset: "core" is a valid, if unrefined, draft. It only
+    // blocks publication, not saving.
     await screen.getByRole("button", { name: "Create" }).click();
 
-    await expect.element(screen.getByText("Select a sub-type.")).toBeVisible();
-    expect(onSubmit).not.toHaveBeenCalled();
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: "core",
+        material: null,
+        specificName: null,
+        collectionMethod: null,
+      }),
+    );
   });
 
   it("should reset the sub-type when the type changes", async () => {
@@ -257,9 +240,11 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
 
     await screen.getByRole("tab", { name: "Sample type" }).click();
-    await screen.getByLabelText(/^material \*/i).click();
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
     await screen.getByRole("option", { name: "Rock", exact: true }).click();
-    await screen.getByLabelText(/^rock$/i).click();
+    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
     await screen.getByRole("option", { name: "Igneous", exact: true }).click();
 
     await screen.getByRole("button", { name: "Create" }).click();
