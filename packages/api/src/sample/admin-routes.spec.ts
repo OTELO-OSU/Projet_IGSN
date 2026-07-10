@@ -127,7 +127,7 @@ describe("admin sample routes", () => {
               name: "Granite published",
               nature: "thin_section",
               type: "individual_sample",
-              material: "mineral",
+              material: "sediment.exogenous_detritic.clay",
               specificName: "GR-2026-001",
             },
           },
@@ -281,7 +281,7 @@ describe("admin sample routes", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "individual_sample",
-          material: "mineral",
+          material: "sediment.exogenous_detritic.clay",
           collectionMethod: null,
           specificName: "MC-2026-007",
         },
@@ -361,7 +361,7 @@ describe("admin sample routes", () => {
           name: "No specific name",
           nature: "thin_section",
           type: "individual_sample",
-          material: "mineral",
+          material: "sediment.exogenous_detritic.clay",
         },
       },
       { headers: authHeader },
@@ -466,7 +466,7 @@ describe("admin sample routes", () => {
     });
 
     pgTest(
-      "should create a sample with a leaf material path",
+      "should create a sample with a leaf material path and texture",
       async ({ db }) => {
         const client = testClient(createApp(db));
         const res = await client.admin.samples.$post(
@@ -475,15 +475,33 @@ describe("admin sample routes", () => {
               name: "Basalt",
               nature: "thin_section",
               type: null,
-              material: "rock.igneous",
+              material: "rock.igneous.plutonic.felsic.granite",
+              texture: "phaneritic",
             },
           },
           { headers: authHeader },
         );
         expect(res.status).toBe(201);
         expect(await res.json()).toMatchObject({
-          data: { name: "Basalt", material: "rock.igneous" },
+          data: {
+            name: "Basalt",
+            material: "rock.igneous.plutonic.felsic.granite",
+            texture: "phaneritic",
+          },
         });
+      },
+    );
+
+    pgTest(
+      "should reject a texture inconsistent with the material with 400",
+      async ({ db }) => {
+        const res = await postSample(createApp(db), {
+          name: "Basalt",
+          nature: "thin_section",
+          material: "rock.igneous.volcanic.mafic.basalt",
+          texture: "cumulate",
+        });
+        expect(res.status).toBe(400);
       },
     );
 

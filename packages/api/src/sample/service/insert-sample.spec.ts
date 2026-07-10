@@ -10,12 +10,27 @@ describe("insertSample", () => {
       name: "Basalt 42",
       nature: "hand_sample",
       type: null,
-      material: "rock.igneous",
+      material: "rock.igneous.plutonic.felsic.granite",
     });
     expect(created).toMatchObject({
       name: "Basalt 42",
       nature: "hand_sample",
-      material: "rock.igneous",
+      material: "rock.igneous.plutonic.felsic.granite",
+      texture: null,
+    });
+  });
+
+  pgTest("should round-trip an igneous texture", async ({ db }) => {
+    const created = await insertSample(db, {
+      name: "Granite 1",
+      nature: "hand_sample",
+      type: null,
+      material: "rock.igneous.plutonic.felsic.granite",
+      texture: "phaneritic",
+    });
+    expect(created).toMatchObject({
+      material: "rock.igneous.plutonic.felsic.granite",
+      texture: "phaneritic",
     });
   });
 

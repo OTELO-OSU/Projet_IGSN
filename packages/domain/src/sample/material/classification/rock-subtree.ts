@@ -5,7 +5,11 @@ import { type TreeNode } from "../../path/tree-node.ts";
 // classification.ts. The shared `other` leaf lives there, since sediment reuses
 // it too (the full path is the identity, ADR 0010).
 export const rockTree = {
-  igneous: { label: "igneous" },
+  igneous: {
+    label: "igneous",
+    choices: ["plutonic", "volcanic"],
+    optional: false,
+  },
   metamorphic: { label: "metamorphic" },
   sedimentary: {
     label: "sedimentary",
@@ -20,6 +24,119 @@ export const rockTree = {
   hydrothermal: { label: "hydrothermal" },
   unknown: { label: "unknown" },
 
+  // Igneous subtree (screenshot): plutonic/volcanic (Niv.2), then chemistry
+  // (Niv.3, shared codes), then specific rocks (Niv.4). Each chemistry code
+  // recurs under both branches with different children, so a bare key satisfies
+  // the tree spec and a dotted `plutonic.*` / `volcanic.*` override carries that
+  // branch's choices. `carbonatite` and `hyperalkaline_rocks` are shared leaves
+  // of both `exotic` branches (path is identity). Every level is mandatory down
+  // to a rock leaf (optional: false).
+  plutonic: {
+    label: "plutonic",
+    choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
+    optional: false,
+  },
+  volcanic: {
+    label: "volcanic",
+    choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
+    optional: false,
+  },
+
+  felsic: { label: "felsic" },
+  intermediate: { label: "intermediate" },
+  mafic: { label: "mafic" },
+  ultramafic: { label: "ultramafic" },
+  exotic: { label: "exotic" },
+
+  "plutonic.felsic": {
+    label: "felsic",
+    choices: ["granite", "granodiorite", "tonalite", "trondhjemite"],
+    optional: false,
+  },
+  "plutonic.intermediate": {
+    label: "intermediate",
+    choices: ["syenite", "monzonite", "diorite"],
+    optional: false,
+  },
+  "plutonic.mafic": {
+    label: "mafic",
+    choices: ["gabbro", "norite", "anorthosite", "troctolite"],
+    optional: false,
+  },
+  "plutonic.ultramafic": {
+    label: "ultramafic",
+    choices: ["peridotite", "pyroxenite", "hornblendite"],
+    optional: false,
+  },
+  "plutonic.exotic": {
+    label: "exotic",
+    choices: ["carbonatite", "hyperalkaline_rocks"],
+    optional: false,
+  },
+
+  "volcanic.felsic": {
+    label: "felsic",
+    choices: ["rhyolite", "dacite"],
+    optional: false,
+  },
+  "volcanic.intermediate": {
+    label: "intermediate",
+    choices: ["trachyte", "latite", "andesite", "phonolite"],
+    optional: false,
+  },
+  "volcanic.mafic": {
+    label: "mafic",
+    choices: ["basalt", "basanite", "tephrite"],
+    optional: false,
+  },
+  "volcanic.ultramafic": {
+    label: "ultramafic",
+    choices: ["komatiite", "picrite"],
+    optional: false,
+  },
+  "volcanic.exotic": {
+    label: "exotic",
+    choices: [
+      "carbonatite",
+      "foidite",
+      "kimberlite",
+      "lamprophyre",
+      "hyperalkaline_rocks",
+    ],
+    optional: false,
+  },
+
+  granite: { label: "granite" },
+  granodiorite: { label: "granodiorite" },
+  tonalite: { label: "tonalite" },
+  trondhjemite: { label: "trondhjemite" },
+  syenite: { label: "syenite" },
+  monzonite: { label: "monzonite" },
+  diorite: { label: "diorite" },
+  gabbro: { label: "gabbro" },
+  norite: { label: "norite" },
+  anorthosite: { label: "anorthosite" },
+  troctolite: { label: "troctolite" },
+  peridotite: { label: "peridotite" },
+  pyroxenite: { label: "pyroxenite" },
+  hornblendite: { label: "hornblendite" },
+  carbonatite: { label: "carbonatite" },
+  hyperalkaline_rocks: { label: "hyperalkaline_rocks" },
+  rhyolite: { label: "rhyolite" },
+  dacite: { label: "dacite" },
+  trachyte: { label: "trachyte" },
+  latite: { label: "latite" },
+  andesite: { label: "andesite" },
+  phonolite: { label: "phonolite" },
+  basalt: { label: "basalt" },
+  basanite: { label: "basanite" },
+  tephrite: { label: "tephrite" },
+  komatiite: { label: "komatiite" },
+  picrite: { label: "picrite" },
+  foidite: { label: "foidite" },
+  kimberlite: { label: "kimberlite" },
+  lamprophyre: { label: "lamprophyre" },
+
   microbialite: { label: "microbialite" },
   volcaniclastic_rock: { label: "volcaniclastic_rock" },
   hybrid_sedimentary_rock: { label: "hybrid_sedimentary_rock" },
@@ -30,7 +147,7 @@ export const rockTree = {
       "rudite",
       "olistostrome",
       "paraconglomerate",
-      "silicastic_sedimentary_rock",
+      "siliciclastic_sedimentary_rock",
       "sandstone",
       "mudstone",
       "other",
@@ -39,7 +156,7 @@ export const rockTree = {
   rudite: { label: "rudite" },
   olistostrome: { label: "olistostrome" },
   paraconglomerate: { label: "paraconglomerate" },
-  silicastic_sedimentary_rock: { label: "silicastic_sedimentary_rock" },
+  siliciclastic_sedimentary_rock: { label: "siliciclastic_sedimentary_rock" },
   sandstone: { label: "sandstone" },
   mudstone: { label: "mudstone" },
 
@@ -176,7 +293,7 @@ export const rockTree = {
       "ooid_ironstone",
       "pisoid_ironstone",
       "oncoid_ironstone",
-      "microooid_ironstone",
+      "microoncoid_ironstone",
       "peloid_ironstone",
       "banded_iron_formation",
       "other",
@@ -194,7 +311,7 @@ export const rockTree = {
   ooid_ironstone: { label: "ooid_ironstone" },
   pisoid_ironstone: { label: "pisoid_ironstone" },
   oncoid_ironstone: { label: "oncoid_ironstone" },
-  microooid_ironstone: { label: "microooid_ironstone" },
+  microoncoid_ironstone: { label: "microoncoid_ironstone" },
   peloid_ironstone: { label: "peloid_ironstone" },
   banded_iron_formation: { label: "banded_iron_formation" },
 

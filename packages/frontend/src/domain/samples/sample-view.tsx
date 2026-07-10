@@ -4,6 +4,7 @@ import { ChevronRightIcon } from "lucide-react";
 
 import { natureLabel } from "#/domain/samples/nature-label.ts";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
+import { textureLabel } from "#/domain/samples/texture-label.ts";
 import {
   collectionMethodLabel,
   materialPathLabel,
@@ -17,6 +18,7 @@ type SampleViewProps = {
   nature: Sample["nature"];
   type: Sample["type"];
   material: Sample["material"];
+  texture: Sample["texture"];
   collectionMethod: Sample["collectionMethod"];
 };
 
@@ -57,6 +59,7 @@ export function SampleView({
   nature,
   type,
   material,
+  texture,
   collectionMethod,
 }: SampleViewProps) {
   return (
@@ -133,6 +136,17 @@ export function SampleView({
                     segments={pathBreadcrumb(material, materialPathLabel)}
                   />
                 </dd>
+              </div>
+            ) : null}
+            {texture ? (
+              <div className="flex gap-4 px-4 py-3">
+                <dt
+                  id="sample-field-texture"
+                  className="text-muted-foreground w-40"
+                >
+                  {m.sample_field_texture()}
+                </dt>
+                <dd className="font-medium">{textureLabel(texture)}</dd>
               </div>
             ) : null}
             {collectionMethod ? (

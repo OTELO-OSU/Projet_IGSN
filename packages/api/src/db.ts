@@ -14,6 +14,9 @@ type SampleTable = {
   // Hierarchical classification path stored as ltree; Kysely has no ltree type,
   // so it is a plain string. Null until the sample is classified.
   material: string | null;
+  // Igneous texture (flat controlled vocabulary); null unless the material is a
+  // plutonic/volcanic path. Not part of the material tree, so plain text.
+  texture: string | null;
   // Collection-method taxonomy path (e.g. "coring.gravity_corer"); null until
   // recorded. Stored as ltree, read/written as text.
   collection_method: string | null;

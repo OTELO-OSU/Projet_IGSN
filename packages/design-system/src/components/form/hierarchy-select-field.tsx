@@ -136,6 +136,10 @@ type HierarchySelectFieldProps = {
   placeholder: string;
   searchPlaceholder: string;
   emptyText: string;
+  // Fired whenever any level's selection changes, after the deeper levels are
+  // truncated. Lets a caller reset a dependent field (e.g. a texture that only
+  // applies to some branches) when the chosen path changes.
+  onChange?: () => void;
 };
 
 type HierarchyLevelProps = Omit<HierarchySelectFieldProps, "rootLabel"> & {
@@ -152,6 +156,7 @@ function HierarchyLevel({
   placeholder,
   searchPlaceholder,
   emptyText,
+  onChange,
   depth,
   parent,
   label,
@@ -170,8 +175,10 @@ function HierarchyLevel({
         name={`${name}[${depth}]`}
         listeners={{
           // A new choice at this level invalidates every deeper level.
-          onChange: () =>
-            form.setFieldValue(name, (path) => path.slice(0, depth + 1)),
+          onChange: () => {
+            form.setFieldValue(name, (path) => path.slice(0, depth + 1));
+            onChange?.();
+          },
         }}
       >
         {(field) => (
@@ -198,6 +205,7 @@ function HierarchyLevel({
               placeholder={placeholder}
               searchPlaceholder={searchPlaceholder}
               emptyText={emptyText}
+              onChange={onChange}
               depth={depth + 1}
               parent={child}
               label={hierarchyPathLabel(hierarchy, child, translate)}

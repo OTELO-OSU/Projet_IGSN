@@ -32,6 +32,7 @@ import { natureLabel } from "#/samples/nature-label.ts";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
+import { TextureField } from "#/samples/texture-field.tsx";
 
 const natureItems = natureSchema.options.map((nature) => ({
   value: nature,
@@ -76,6 +77,7 @@ export function SampleForm({
       nature: defaultValues?.nature ?? ("" as Nature | ""),
       typePath: toHierarchyPath(defaultValues?.type ?? null),
       materialPath: toHierarchyPath(defaultValues?.material ?? null),
+      texture: defaultValues?.texture ?? "",
       collectionMethodPath: toHierarchyPath(
         defaultValues?.collectionMethod ?? null,
       ),
@@ -92,6 +94,8 @@ export function SampleForm({
         nature: value.nature,
         type: composeHierarchyValue(value.typePath),
         material: composeHierarchyValue(value.materialPath),
+        // Optional and only valid for an igneous branch; omit when unset.
+        ...(value.texture ? { texture: value.texture } : {}),
         collectionMethod: composeHierarchyValue(value.collectionMethodPath),
         specificName: value.specificName.trim() || null,
       });
@@ -236,6 +240,9 @@ export function SampleForm({
             <h2 className="text-lg font-semibold">{m.section_material()}</h2>
             <form.AppForm>
               <MaterialField />
+            </form.AppForm>
+            <form.AppForm>
+              <TextureField />
             </form.AppForm>
           </section>
 

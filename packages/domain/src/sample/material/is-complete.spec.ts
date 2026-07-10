@@ -4,7 +4,6 @@ import { isMaterialComplete } from "./is-complete.ts";
 
 describe("isMaterialComplete", () => {
   it.each([
-    "rock.igneous",
     "rock.metamorphic",
     "rock.hydrothermal",
     "rock.unknown",
@@ -27,12 +26,19 @@ describe("isMaterialComplete", () => {
     "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.limestone",
     "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.other",
     "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.ironstone.banded_iron_formation",
+    "rock.igneous.plutonic.felsic.granite",
+    "rock.igneous.volcanic.exotic.foidite",
+    "rock.igneous.plutonic.exotic.carbonatite",
   ])("should be true for the valid stopping point %s", (path) => {
     expect(isMaterialComplete(path)).toBe(true);
   });
 
   it.each([
     "rock",
+    "rock.igneous",
+    "rock.igneous.plutonic",
+    "rock.igneous.plutonic.felsic",
+    "rock.igneous.volcanic.exotic",
     "sediment",
     "sediment.biogenic",
     "sediment.biogenic.carbonate",

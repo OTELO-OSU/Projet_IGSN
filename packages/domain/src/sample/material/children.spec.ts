@@ -24,6 +24,38 @@ describe("materialChildren", () => {
     ]);
   });
 
+  it("should return the plutonic and volcanic branches under igneous", () => {
+    expect(materialChildren("rock.igneous")).toEqual([
+      "rock.igneous.plutonic",
+      "rock.igneous.volcanic",
+    ]);
+  });
+
+  it("should return the five chemistry nodes under a plutonic branch", () => {
+    expect(materialChildren("rock.igneous.plutonic")).toEqual([
+      "rock.igneous.plutonic.felsic",
+      "rock.igneous.plutonic.intermediate",
+      "rock.igneous.plutonic.mafic",
+      "rock.igneous.plutonic.ultramafic",
+      "rock.igneous.plutonic.exotic",
+    ]);
+  });
+
+  it("should give felsic branch-specific rocks (dotted override)", () => {
+    const plutonicFelsic = "rock.igneous.plutonic.felsic";
+    expect(materialChildren(plutonicFelsic)).toEqual([
+      `${plutonicFelsic}.granite`,
+      `${plutonicFelsic}.granodiorite`,
+      `${plutonicFelsic}.tonalite`,
+      `${plutonicFelsic}.trondhjemite`,
+    ]);
+    const volcanicFelsic = "rock.igneous.volcanic.felsic";
+    expect(materialChildren(volcanicFelsic)).toEqual([
+      `${volcanicFelsic}.rhyolite`,
+      `${volcanicFelsic}.dacite`,
+    ]);
+  });
+
   it("should return the direct children of the sedimentary subtree", () => {
     expect(materialChildren("rock.sedimentary")).toEqual([
       "rock.sedimentary.microbialite",

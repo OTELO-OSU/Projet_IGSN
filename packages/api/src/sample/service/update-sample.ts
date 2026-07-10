@@ -20,6 +20,7 @@ export async function updateSample(
       nature: input.nature,
       type: input.type,
       material: input.material ?? null,
+      texture: input.texture ?? null,
       collection_method: input.collectionMethod ?? null,
       specific_name: input.specificName ?? null,
       updated_at: sql`now()`,

@@ -11,6 +11,10 @@ describe("materialPathSchema", () => {
   it.each([
     "rock",
     "rock.igneous",
+    "rock.igneous.plutonic.felsic.granite",
+    "rock.igneous.volcanic.exotic.foidite",
+    "rock.igneous.plutonic.exotic.carbonatite",
+    "rock.igneous.volcanic.exotic.carbonatite",
     "fossil",
     "rock.sedimentary.microbialite",
     "rock.sedimentary.clastic_sedimentary_rock.other",
@@ -31,6 +35,8 @@ describe("materialPathSchema", () => {
     "rock.igneous.",
     "rock.sedimentary.nonexistent",
     "rock.sedimentary.clastic_sedimentary_rock.limestone",
+    "rock.igneous.volcanic.felsic.granite",
+    "rock.igneous.plutonic.mafic.rhyolite",
     "sediment.nonexistent",
     "sediment.exogenous_detritic.silt.medium_sand",
   ])("should reject the unknown or malformed path %s", (path) => {

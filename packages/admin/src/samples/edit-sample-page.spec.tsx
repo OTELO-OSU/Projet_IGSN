@@ -39,6 +39,7 @@ function fakeApi(
     nature: "thin_section",
     type: "dredge",
     material,
+    texture: null,
     collectionMethod: null,
     specificName: "MC-2026-007",
     igsn: published ? IGSN : null,

@@ -10,6 +10,7 @@
   "sample_field_nature": "Nature",
   "sample_field_type": "Type",
   "sample_field_material": "Material",
+  "sample_field_texture": "Texture",
   "sample_field_collection_method": "Collection method",
   "collection_method_blasting": "Blasting",
   "collection_method_camera_sled_camera_tow": "Camera SledCamera Tow",
