@@ -29,6 +29,12 @@ describe("isMaterialComplete", () => {
     "rock.igneous.plutonic.felsic.granite",
     "rock.igneous.volcanic.exotic.foidite",
     "rock.igneous.plutonic.exotic.carbonatite",
+    "extraterrestrial_rock.micrometeorites",
+    "extraterrestrial_rock.returned_samples.lunar_sample.rock",
+    "extraterrestrial_rock.returned_samples.asteroid.other",
+    "extraterrestrial_rock.meteorites.chondrites.enstatite_chondrites.ehb",
+    "extraterrestrial_rock.meteorites.achondrites.stony_achondrite.hed.eucrite",
+    "extraterrestrial_rock.meteorites.achondrites.iron_meteorite.iab.main_group",
   ])("should be true for the valid stopping point %s", (path) => {
     expect(isMaterialComplete(path)).toBe(true);
   });
@@ -49,6 +55,12 @@ describe("isMaterialComplete", () => {
     "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock",
     "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.evaporite",
     "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.siliceous_rock",
+    "extraterrestrial_rock",
+    "extraterrestrial_rock.returned_samples",
+    "extraterrestrial_rock.returned_samples.lunar_sample",
+    "extraterrestrial_rock.meteorites.chondrites",
+    "extraterrestrial_rock.meteorites.achondrites.iron_meteorite.iab",
+    "extraterrestrial_rock.meteorites.achondrites.stony_iron_meteorite.pallasite",
   ])("should be false for a node that must be refined %s", (path) => {
     expect(isMaterialComplete(path)).toBe(false);
   });

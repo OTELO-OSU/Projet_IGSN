@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { unresolvedEntries } from "../../../test/unresolved-entries.ts";
 import {
-  COLLECTION_METHOD_ROOTS,
   COLLECTION_METHOD_TREE,
   COLLECTION_METHODS,
   collectionMethodSchema,
@@ -49,27 +49,9 @@ describe("COLLECTION_METHODS", () => {
 });
 
 describe("COLLECTION_METHOD_TREE", () => {
-  const keys = new Set(Object.keys(COLLECTION_METHOD_TREE));
-
-  it.each(COLLECTION_METHOD_ROOTS)(
-    "should define the root %s as a node",
-    (root) => {
-      expect(keys.has(root)).toBe(true);
-    },
-  );
-
-  it.each(
-    Object.entries(COLLECTION_METHOD_TREE).flatMap(([parent, node]) =>
-      (node.choices ?? []).map((child) => [parent, child] as const),
-    ),
-  )("should define the child %s (of %s) as a node", (_parent, child) => {
-    expect(keys.has(child)).toBe(true);
+  it("should resolve every entry from some path", () => {
+    expect(
+      unresolvedEntries(COLLECTION_METHOD_TREE, COLLECTION_METHODS),
+    ).toEqual([]);
   });
-
-  it.each(Object.entries(COLLECTION_METHOD_TREE))(
-    "should give %s a non-empty label code",
-    (_segment, node) => {
-      expect(node.label).toMatch(/^[a-z0-9_]+$/);
-    },
-  );
 });

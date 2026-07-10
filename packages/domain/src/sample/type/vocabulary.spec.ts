@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { unresolvedEntries } from "../../../test/unresolved-entries.ts";
 import {
-  SAMPLE_TYPE_ROOTS,
   SAMPLE_TYPE_TREE,
   SAMPLE_TYPES,
   sampleTypeSchema,
@@ -53,24 +53,7 @@ describe("SAMPLE_TYPES", () => {
 });
 
 describe("SAMPLE_TYPE_TREE", () => {
-  const keys = new Set(Object.keys(SAMPLE_TYPE_TREE));
-
-  it.each(SAMPLE_TYPE_ROOTS)("should define the root %s as a node", (root) => {
-    expect(keys.has(root)).toBe(true);
+  it("should resolve every entry from some path", () => {
+    expect(unresolvedEntries(SAMPLE_TYPE_TREE, SAMPLE_TYPES)).toEqual([]);
   });
-
-  it.each(
-    Object.entries(SAMPLE_TYPE_TREE).flatMap(([parent, node]) =>
-      (node.choices ?? []).map((child) => [parent, child] as const),
-    ),
-  )("should define the child %s (of %s) as a node", (_parent, child) => {
-    expect(keys.has(child)).toBe(true);
-  });
-
-  it.each(Object.entries(SAMPLE_TYPE_TREE))(
-    "should give %s a non-empty label code",
-    (_segment, node) => {
-      expect(node.label).toMatch(/^[a-z0-9_]+$/);
-    },
-  );
 });

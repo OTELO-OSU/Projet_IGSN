@@ -39,7 +39,7 @@ describe("isSamplePublishable", () => {
 
   it.each<MaterialPath>([
     "rock.igneous.plutonic.felsic.granite",
-    "extraterrestrial_rock",
+    "extraterrestrial_rock.micrometeorites",
   ])("should accept a sample with complete material %s", (material) => {
     expect(isSamplePublishable({ ...draft, material })).toBe(true);
   });

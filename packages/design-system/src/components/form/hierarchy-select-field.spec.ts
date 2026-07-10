@@ -10,22 +10,18 @@ import {
 } from "./hierarchy-select-field.tsx";
 
 // A fixture exercising every tree feature: a must-refine node (rock, the
-// default), an optional node with children (sedimentary), plain leaves, a
-// self-child stop (water.water) with its dotted childless override. Labels are
-// codes, as the domain trees carry them.
+// default), an optional node with children (sedimentary), a self-child stop
+// (water.water) with its dotted childless override. Plain leaves (igneous,
+// sand, sea) have no entry: an undefined segment defaults to a childless leaf.
+// A node's label code defaults to its own segment; only the water.water
+// override relabels its occurrence (water_only).
 const hierarchy: Hierarchy = {
   roots: ["rock", "water"],
   nodes: {
-    rock: {
-      label: "rock",
-      choices: ["igneous", "sedimentary"],
-    },
-    igneous: { label: "igneous" },
-    sedimentary: { label: "sedimentary", optional: true, choices: ["sand"] },
-    sand: { label: "sand" },
-    water: { label: "water", optional: true, choices: ["water", "sea"] },
+    rock: { choices: ["igneous", "sedimentary"] },
+    sedimentary: { optional: true, choices: ["sand"] },
+    water: { optional: true, choices: ["water", "sea"] },
     "water.water": { label: "water_only" },
-    sea: { label: "sea" },
   },
 };
 
@@ -68,7 +64,13 @@ describe("canStopAtPath", () => {
 });
 
 describe("hierarchyPathLabel", () => {
-  it("should render a path's node label code through translate", () => {
+  it("should render a path's label code through translate", () => {
+    expect(hierarchyPathLabel(hierarchy, "rock.sedimentary", translate)).toBe(
+      "SEDIMENTARY",
+    );
+  });
+
+  it("should label an undefined segment by its own code, not the full path", () => {
     expect(hierarchyPathLabel(hierarchy, "rock.igneous", translate)).toBe(
       "IGNEOUS",
     );

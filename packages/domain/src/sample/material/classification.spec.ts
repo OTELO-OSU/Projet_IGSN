@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { unresolvedEntries } from "../../../test/unresolved-entries.ts";
 import {
   MATERIAL_PATHS,
-  MATERIAL_ROOTS,
   MATERIAL_TREE,
   materialPathSchema,
 } from "./classification.ts";
@@ -23,6 +23,15 @@ describe("materialPathSchema", () => {
     "sediment.exogenous_detritic.sand.medium_sand",
     "sediment.volcano_detritic.bomb.pumices",
     "sediment.biogenic.carbonate.boundstone.frame",
+    "extraterrestrial_rock.micrometeorites",
+    "extraterrestrial_rock.returned_samples.lunar_sample.rock",
+    "extraterrestrial_rock.returned_samples.asteroid.ryugu",
+    "extraterrestrial_rock.meteorites.chondrites.carbonaceous_chondrites.cvred",
+    "extraterrestrial_rock.meteorites.chondrites.ordinary_chondrites.h_l",
+    "extraterrestrial_rock.meteorites.achondrite_primitive.polymict_ureilite",
+    "extraterrestrial_rock.meteorites.achondrites.stony_achondrite.lunar_meteorite.troctolite_anorthosite_melt_breccia",
+    "extraterrestrial_rock.meteorites.achondrites.iron_meteorite.iab.main_group",
+    "extraterrestrial_rock.meteorites.achondrites.stony_iron_meteorite.pallasite.eagle_station_group",
   ])("should accept the known path %s", (path) => {
     expect(materialPathSchema.parse(path)).toBe(path);
   });
@@ -39,6 +48,11 @@ describe("materialPathSchema", () => {
     "rock.igneous.plutonic.mafic.rhyolite",
     "sediment.nonexistent",
     "sediment.exogenous_detritic.silt.medium_sand",
+    // The lunar rock leaf is a dotted override: bare `rock`'s children must not
+    // expand under it, and igneous only lives under the rock root.
+    "extraterrestrial_rock.returned_samples.lunar_sample.rock.igneous",
+    "extraterrestrial_rock.ungrouped",
+    "extraterrestrial_rock.meteorites.iron_meteorite",
   ])("should reject the unknown or malformed path %s", (path) => {
     expect(materialPathSchema.safeParse(path).success).toBe(false);
   });
@@ -61,24 +75,7 @@ describe("materialPathSchema", () => {
 });
 
 describe("MATERIAL_TREE", () => {
-  const keys = new Set(Object.keys(MATERIAL_TREE));
-
-  it.each(MATERIAL_ROOTS)("should define the root %s as a node", (root) => {
-    expect(keys.has(root)).toBe(true);
+  it("should resolve every entry from some path", () => {
+    expect(unresolvedEntries(MATERIAL_TREE, MATERIAL_PATHS)).toEqual([]);
   });
-
-  it.each(
-    Object.entries(MATERIAL_TREE).flatMap(([parent, node]) =>
-      (node.choices ?? []).map((child) => [parent, child] as const),
-    ),
-  )("should define the child %s (of %s) as a node", (_parent, child) => {
-    expect(keys.has(child)).toBe(true);
-  });
-
-  it.each(Object.entries(MATERIAL_TREE))(
-    "should give %s a non-empty label code",
-    (_segment, node) => {
-      expect(node.label).toMatch(/^[a-z0-9_]+$/);
-    },
-  );
 });

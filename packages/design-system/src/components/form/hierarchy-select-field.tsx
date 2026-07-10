@@ -1,19 +1,21 @@
 import { useTypedAppFormContext } from "./app-form.tsx";
 
 // Structural mirror of the domain vocabulary trees (design-system MUST NOT
-// import domain). `label` is the node's own code; the widget renders it through
-// its `translate` prop. A node with children must be refined unless marked
-// `optional: true` (the only valid non-leaf stop); `choices` lists the child
-// segment codes.
+// import domain). A node's label code defaults to its own segment; `label`
+// overrides it. The widget renders the code through its `translate` prop. A
+// node with children must be refined unless marked `optional: true` (the only
+// valid non-leaf stop); `choices` lists the child segment codes.
 export type HierarchyNodeDef = {
-  label: string;
+  label?: string;
   optional?: boolean;
   choices?: readonly string[];
 };
 
 // A hierarchical vocabulary as one self-describing bundle: its entry segments
 // and its segment-keyed nodes, where a dotted key overrides the bare segment in
-// that context (the full path is the identity, ADR 0010).
+// that context (the full path is the identity, ADR 0010). A segment with no
+// entry is a childless leaf labelled by its own code, so only nodes carrying
+// choices, optionality, or a context override need one.
 export type Hierarchy = {
   roots: readonly string[];
   nodes: Record<string, HierarchyNodeDef | undefined>;
@@ -38,14 +40,16 @@ function resolveNode(
 const identity = (code: string) => code;
 
 // The label of a path: its node's label code run through the caller's
-// translation. Node-resolved, so a dotted override key can label its occurrence
-// differently from the bare segment.
+// translation. Defaults to the path's own segment; a node's `label` (e.g. on a
+// dotted override key) relabels its occurrence.
 export function hierarchyPathLabel(
   hierarchy: Hierarchy,
   path: string,
   translate: (code: string) => string = identity,
 ): string {
-  return translate(resolveNode(hierarchy, path)?.label ?? path);
+  return translate(
+    resolveNode(hierarchy, path)?.label ?? path.split(".").at(-1) ?? path,
+  );
 }
 
 // The paths offered under `parent`: the roots at the top level (null parent),

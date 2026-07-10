@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { expandPaths } from "../path/expand-paths.ts";
 import { type TreeNode } from "../path/tree-node.ts";
+import { extraterrestrialRockTree } from "./classification/extraterrestrial-rock-subtree.ts";
 import { rockTree } from "./classification/rock-subtree.ts";
 import { sedimentTree } from "./classification/sediment-subtree.ts";
 
@@ -10,12 +11,13 @@ import { sedimentTree } from "./classification/sediment-subtree.ts";
 // the identity, ADR 0010). Stored in the DB as a dot-joined ltree path of codes;
 // a sample's path may stop at any valid stop (see is-complete).
 //
-// The roots live here; the two large subtrees are spread in from their own files
-// for readability (rock-subtree.ts, sediment-subtree.ts). `other` is a single
-// shared leaf reused under every parent of both subtrees.
+// The roots live here; the large subtrees are spread in from their own files
+// for readability (rock-subtree.ts, sediment-subtree.ts,
+// extraterrestrial-rock-subtree.ts). A segment with no entry (plain leaves like
+// `mineral`, `fossil`, `other`) defaults to a childless leaf labelled by its
+// own code (see tree-node.ts).
 const materialTree = {
   rock: {
-    label: "rock",
     choices: [
       "igneous",
       "metamorphic",
@@ -25,7 +27,6 @@ const materialTree = {
     ],
   },
   sediment: {
-    label: "sediment",
     choices: [
       "exogenous_detritic",
       "volcano_detritic",
@@ -33,14 +34,13 @@ const materialTree = {
       "physico_chemical",
     ],
   },
-  mineral: { label: "mineral" },
-  fossil: { label: "fossil" },
-  synthetic_rock_mineral: { label: "synthetic_rock_mineral" },
-  extraterrestrial_rock: { label: "extraterrestrial_rock" },
-  other: { label: "other" },
+  extraterrestrial_rock: {
+    choices: ["returned_samples", "meteorites", "micrometeorites"],
+  },
 
   ...rockTree,
   ...sedimentTree,
+  ...extraterrestrialRockTree,
 } satisfies Record<string, TreeNode>;
 
 export type MaterialSegment = keyof typeof materialTree;
@@ -48,7 +48,9 @@ export type MaterialSegment = keyof typeof materialTree;
 // Widen values to TreeNode for uniform reads, keeping the literal keys.
 export const MATERIAL_TREE: Record<MaterialSegment, TreeNode> = materialTree;
 
-// Entry points: the segments a classification can start from.
+// Entry points: the segments a classification can start from. A root without a
+// tree entry is a plain leaf; a typo here surfaces in the apps' label-coverage
+// specs (an untranslatable segment).
 export const MATERIAL_ROOTS = [
   "rock",
   "sediment",
@@ -56,7 +58,7 @@ export const MATERIAL_ROOTS = [
   "fossil",
   "synthetic_rock_mineral",
   "extraterrestrial_rock",
-] as const satisfies readonly MaterialSegment[];
+] as const;
 
 export const MATERIAL_PATHS = expandPaths(MATERIAL_TREE, MATERIAL_ROOTS);
 

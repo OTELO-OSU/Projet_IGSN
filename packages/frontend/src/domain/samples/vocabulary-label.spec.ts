@@ -1,9 +1,9 @@
 import { collectionMethodLabelKey } from "@projet-igsn/domain/sample/collection-method/label";
-import { COLLECTION_METHOD_TREE } from "@projet-igsn/domain/sample/collection-method/vocabulary";
-import { MATERIAL_TREE } from "@projet-igsn/domain/sample/material/classification";
+import { COLLECTION_METHODS } from "@projet-igsn/domain/sample/collection-method/vocabulary";
+import { MATERIAL_PATHS } from "@projet-igsn/domain/sample/material/classification";
 import { materialLabelKey } from "@projet-igsn/domain/sample/material/label";
 import { sampleTypeLabelKey } from "@projet-igsn/domain/sample/type/label";
-import { SAMPLE_TYPE_TREE } from "@projet-igsn/domain/sample/type/vocabulary";
+import { SAMPLE_TYPES } from "@projet-igsn/domain/sample/type/vocabulary";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -34,22 +34,23 @@ describe("typeLabel", () => {
   });
 });
 
-// The dynamic message lookup is not compile-enforced, so walk every tree key
-// and fail on any label that fell back to its raw message key.
+// The dynamic message lookup is not compile-enforced, so walk every vocabulary
+// path (covering segments with no tree entry, which default to leaves) and fail
+// on any label that fell back to its raw message key.
 describe("vocabulary label coverage", () => {
   it.each([
-    ["material", MATERIAL_TREE, materialPathLabel, materialLabelKey],
-    ["type", SAMPLE_TYPE_TREE, typeLabel, sampleTypeLabelKey],
+    ["material", MATERIAL_PATHS, materialPathLabel, materialLabelKey],
+    ["type", SAMPLE_TYPES, typeLabel, sampleTypeLabelKey],
     [
       "collection method",
-      COLLECTION_METHOD_TREE,
+      COLLECTION_METHODS,
       collectionMethodLabel,
       collectionMethodLabelKey,
     ],
   ] as const)(
-    "should translate every %s node",
-    (_vocabulary, tree, label, labelKey) => {
-      const untranslated = Object.keys(tree).filter(
+    "should translate every %s path",
+    (_vocabulary, paths, label, labelKey) => {
+      const untranslated = paths.filter(
         (path) => label(path) === labelKey(path),
       );
       expect(untranslated).toEqual([]);
