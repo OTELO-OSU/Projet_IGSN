@@ -25,13 +25,13 @@ Adding a node is **pure data**: no migration, no UI change. Follow TDD (spec fir
 
 ## How the three differ
 
-|                 | material                                    | `type`                         | `collectionMethod`                          |
-| --------------- | ------------------------------------------- | ------------------------------ | ------------------------------------------- |
-| Authored in     | inline `classification.ts`                  | inline `vocabulary.ts`         | inline `vocabulary.ts`                      |
-| Completeness    | per node: optional unless `optional: false` | leaf-only                      | none: every node is a valid stop            |
-| Gates publish?  | yes (`isMaterialComplete`)                  | yes (`isSampleTypeComplete`)   | no                                          |
-| Admin label map | `material-path-label.ts` (dynamic lookup)   | `type-label.ts` (typed Record) | `collection-method-label.ts` (typed Record) |
-| i18n key        | bare code (`rock`)                          | `type_*`                       | `collection_method_*`                       |
+|                 | material                                                  | `type`                         | `collectionMethod`                          |
+| --------------- | --------------------------------------------------------- | ------------------------------ | ------------------------------------------- |
+| Authored in     | `classification.ts` roots + `classification/*-subtree.ts` | inline `vocabulary.ts`         | inline `vocabulary.ts`                      |
+| Completeness    | per node: optional unless `optional: false`               | leaf-only                      | none: every node is a valid stop            |
+| Gates publish?  | yes (`isMaterialComplete`)                                | yes (`isSampleTypeComplete`)   | no                                          |
+| Admin label map | `material-path-label.ts` (dynamic lookup)                 | `type-label.ts` (typed Record) | `collection-method-label.ts` (typed Record) |
+| i18n key        | bare code (`rock`)                                        | `type_*`                       | `collection_method_*`                       |
 
 The `optional` flag only bites in material; the others have a vocabulary-wide
 policy and ignore it.
@@ -52,8 +52,14 @@ A code may recur under several parents (full path is the identity). To reuse a
 code as a childless leaf under a parent that also has it as an inner node, add a
 dotted override key (`"core.core": { label: "core" }`) so `expandPaths` stops there.
 
-**Conflict = STOP and ask.** If the code already exists as a key of the same tree
-(or its i18n key), do not rename or silently reuse. Ask.
+**Duplicates across ALL subtrees.** Material spreads fragments
+(`{ ...rockTree, ...sedimentTree }`): a bare key defined twice is not a compile
+error, the later spread silently shadows the earlier. Grep a new key across
+`classification.ts` and every `classification/*-subtree.ts` (and its i18n key)
+first. Shared leaves like `other` live once, in the assembler.
+
+**Conflict = STOP and ask.** Already a key anywhere in the tree (or its i18n
+key)? Do not rename or silently reuse. Ask.
 
 ## Self-referencing node (`Core > Core`)
 
@@ -90,19 +96,23 @@ expect(sampleTypeSchema.safeParse("core.core").success).toBe(true);
    - `collectionMethod`: `collection-method/vocabulary.spec.ts`, `collection-method/segment.spec.ts`.
    - Shared child/leaf/expand behavior: `path/*.spec.ts`.
 
-2. **Add the node.** All three trees are authored inline in one file
-   (`vocabulary.ts` / `classification.ts`): add the key to the tree, add its
-   literal code to the parent's `choices` (a root: add the literal to the roots
-   array). For material also set `optional: false` if the node is pink. A mistyped
-   `choices`/root literal is caught by the tree spec (`should define the child`),
-   and a bad root literal fails to compile against the `satisfies` guard.
+2. **Add the node.** `type`/`collectionMethod` are inline in one `vocabulary.ts`.
+   Material is split: `classification.ts` holds the roots and shared `other` leaf
+   and spreads per-root fragments (`classification/rock-subtree.ts`,
+   `classification/sediment-subtree.ts`); add a node to its root's fragment (a new
+   root or cross-subtree leaf goes in `classification.ts`, a dotted override next
+   to its parent). Each fragment has its own `satisfies Record<string, TreeNode>`.
+
+   Add the key, add its literal to the parent's `choices` (a root: to the roots
+   array), and set `optional: false` if material and pink. A mistyped `choices`/root
+   literal fails the tree spec (`should define the child`) or the `satisfies` guard.
 
    ```ts
-   // inline tree node: literal choices; parent and children are sibling keys
-   const materialTree = {
-     rock: { label: "rock", choices: ["igneous"], optional: false },
-     igneous: { label: "igneous" },
-   } satisfies Record<string, TreeNode>;
+   export const rockTree = { igneous: { label: "igneous" } } satisfies Record<
+     string,
+     TreeNode
+   >;
+   // classification.ts: const materialTree = { rock: {...}, ...rockTree } satisfies ...
    ```
 
 3. **Label.** Add the English message to `packages/design-system/messages/en.json`,

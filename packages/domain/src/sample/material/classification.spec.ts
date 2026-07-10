@@ -8,19 +8,34 @@ import {
 } from "./classification.ts";
 
 describe("materialPathSchema", () => {
-  it.each(["rock", "rock.igneous", "fossil"])(
-    "should accept the known path %s",
-    (path) => {
-      expect(materialPathSchema.parse(path)).toBe(path);
-    },
-  );
+  it.each([
+    "rock",
+    "rock.igneous",
+    "fossil",
+    "rock.sedimentary.microbialite",
+    "rock.sedimentary.clastic_sedimentary_rock.other",
+    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.limestone",
+    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.ironstone.banded_iron_formation",
+    "sediment.exogenous_detritic.sand.medium_sand",
+    "sediment.volcano_detritic.bomb.pumices",
+    "sediment.biogenic.carbonate.boundstone.frame",
+  ])("should accept the known path %s", (path) => {
+    expect(materialPathSchema.parse(path)).toBe(path);
+  });
 
-  it.each(["", "rock.unknownchild", "gemstone", "Rock", "rock.igneous."])(
-    "should reject the unknown or malformed path %s",
-    (path) => {
-      expect(materialPathSchema.safeParse(path).success).toBe(false);
-    },
-  );
+  it.each([
+    "",
+    "rock.unknownchild",
+    "gemstone",
+    "Rock",
+    "rock.igneous.",
+    "rock.sedimentary.nonexistent",
+    "rock.sedimentary.clastic_sedimentary_rock.limestone",
+    "sediment.nonexistent",
+    "sediment.exogenous_detritic.silt.medium_sand",
+  ])("should reject the unknown or malformed path %s", (path) => {
+    expect(materialPathSchema.safeParse(path).success).toBe(false);
+  });
 
   it("should only contain lower_snake_case ltree-safe segments", () => {
     for (const path of MATERIAL_PATHS) {

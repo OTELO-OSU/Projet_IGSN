@@ -23,7 +23,7 @@ async function createSample(
         name,
         nature: "rock_powder",
         type: "individual_sample",
-        material: "sediment",
+        material: "mineral",
         specificName,
       },
     },
