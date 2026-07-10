@@ -73,6 +73,11 @@ const columns: ColumnDef<Sample>[] = [
     ),
   },
   {
+    accessorKey: "specificName",
+    header: () => m.column_specific_name(),
+    cell: ({ row }) => row.original.specificName,
+  },
+  {
     accessorKey: "nature",
     header: () => m.column_nature(),
     cell: ({ row }) => natureLabel(row.original.nature),

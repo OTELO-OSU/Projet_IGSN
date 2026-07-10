@@ -20,6 +20,7 @@ export async function insertSample(
       type: input.type,
       material: input.material ?? null,
       collection_method: input.collectionMethod ?? null,
+      specific_name: input.specificName ?? null,
     })
     .returningAll()
     .executeTakeFirstOrThrow();

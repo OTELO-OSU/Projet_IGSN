@@ -66,6 +66,7 @@ describe("SampleForm", () => {
         type: null,
         material: null,
         collectionMethod: null,
+        specificName: null,
       }),
     );
   });
@@ -99,6 +100,7 @@ describe("SampleForm", () => {
         type: "core.section",
         material: null,
         collectionMethod: null,
+        specificName: null,
       }),
     );
   });
@@ -123,6 +125,7 @@ describe("SampleForm", () => {
         type: "dredge",
         material: null,
         collectionMethod: null,
+        specificName: null,
       }),
     );
   });
@@ -166,6 +169,7 @@ describe("SampleForm", () => {
         type: "core.half_round",
         material: null,
         collectionMethod: null,
+        specificName: null,
       }),
     );
   });
@@ -214,6 +218,7 @@ describe("SampleForm", () => {
         type: "dredge",
         material: null,
         collectionMethod: null,
+        specificName: null,
       }),
     );
   });
@@ -266,6 +271,32 @@ describe("SampleForm", () => {
         type: null,
         material: "rock.igneous",
         collectionMethod: null,
+        specificName: null,
+      }),
+    );
+  });
+
+  it("should submit the entered specific name", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByLabelText(/specific name/i).fill("MC-2026-007");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: null,
+        material: null,
+        collectionMethod: null,
+        specificName: "MC-2026-007",
       }),
     );
   });
@@ -298,6 +329,7 @@ describe("SampleForm", () => {
         type: null,
         material: null,
         collectionMethod: "coring.gravity_corer.giant",
+        specificName: null,
       }),
     );
   });
@@ -360,6 +392,7 @@ describe("SampleForm", () => {
           type: "dredge",
           material: "fossil",
           collectionMethod: null,
+          specificName: "MC-2026-007",
         }}
         secondaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
         primaryAction={{ kind: "publish", label: "Save & Publish", onPublish }}
@@ -376,6 +409,7 @@ describe("SampleForm", () => {
         type: "dredge",
         material: "fossil",
         collectionMethod: null,
+        specificName: "MC-2026-007",
       }),
     );
     expect(onSubmit).not.toHaveBeenCalled();
@@ -451,6 +485,37 @@ describe("SampleForm", () => {
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/set the sample type before publishing/i);
+  });
+
+  it("should enable Save & Publish when the specific name is missing", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          defaultValues={{
+            name: "Basalte du Massif Central",
+            nature: "thin_section",
+            type: "dredge",
+            material: "fossil",
+            collectionMethod: null,
+          }}
+          secondaryAction={{
+            kind: "submit",
+            label: "Save as draft",
+            onSubmit: noop,
+          }}
+          primaryAction={{
+            kind: "publish",
+            label: "Save & Publish",
+            onPublish: noop,
+          }}
+        />
+      </TooltipProvider>,
+    );
+
+    await expect
+      .element(screen.getByRole("button", { name: "Save & Publish" }))
+      .toBeEnabled();
   });
 
   it("should render a link action as an anchor to the public page", async () => {

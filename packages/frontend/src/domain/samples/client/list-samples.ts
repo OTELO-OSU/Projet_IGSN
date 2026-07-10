@@ -4,16 +4,21 @@ import { listSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-val
 
 import { baseApiUrl } from "#/api.ts";
 
-export type ListSamplesParams = { page: number; perPage: number };
+export type ListSamplesParams = {
+  page: number;
+  perPage: number;
+  search?: string;
+};
 export type ListSamplesResult = { data: Sample[]; total: number };
 
 export async function listSamples(
-  { page, perPage }: ListSamplesParams,
+  { page, perPage, search }: ListSamplesParams,
   fetchFn: typeof fetch = fetch,
 ): Promise<ListSamplesResult> {
   const url = new URL("samples", baseApiUrl);
   url.searchParams.set("page", String(page));
   url.searchParams.set("perPage", String(perPage));
+  if (search) url.searchParams.set("search", search);
 
   const res = await fetchFn(url);
   if (!res.ok) {

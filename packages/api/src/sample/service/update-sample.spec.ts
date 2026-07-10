@@ -6,7 +6,7 @@ import { updateSample } from "./update-sample.ts";
 
 describe("updateSample", () => {
   pgTest(
-    "should update the name, nature, type and collection method",
+    "should update the name, nature, type, collection method and specific name",
     async ({ db }) => {
       // Arrange
       const created = await insertSample(db, {
@@ -21,6 +21,7 @@ describe("updateSample", () => {
         nature: "rock_powder",
         type: "dredge",
         collectionMethod: "dredging.chain_bag",
+        specificName: "FTB-2026-042",
       });
       // Assert
       expect(updated).toMatchObject({
@@ -29,6 +30,7 @@ describe("updateSample", () => {
         nature: "rock_powder",
         type: "dredge",
         collectionMethod: "dredging.chain_bag",
+        specificName: "FTB-2026-042",
         createdAt: created.createdAt,
       });
     },

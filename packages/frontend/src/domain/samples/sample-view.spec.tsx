@@ -11,6 +11,7 @@ describe("SampleView", () => {
         nature="rock_powder"
         type="core.half_round"
         material="rock.igneous"
+        collectionMethod="coring.gravity_corer"
       />,
     );
 
@@ -30,6 +31,7 @@ describe("SampleView", () => {
         nature="rock_powder"
         type={null}
         material={null}
+        collectionMethod={null}
       />,
     );
 
@@ -44,6 +46,7 @@ describe("SampleView", () => {
         nature="rock_powder"
         type="core.half_round"
         material={null}
+        collectionMethod={null}
       />,
     );
 
@@ -66,6 +69,7 @@ describe("SampleView", () => {
         nature="rock_powder"
         type={null}
         material="rock.igneous"
+        collectionMethod={null}
       />,
     );
 
@@ -79,7 +83,7 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
-  it("should omit type and material rows when unclassified", async () => {
+  it("should show the collection method hierarchy as a breadcrumb labelled by its field", async () => {
     const screen = await render(
       <SampleView
         name="Basalt 42"
@@ -87,6 +91,33 @@ describe("SampleView", () => {
         nature="rock_powder"
         type={null}
         material={null}
+        collectionMethod="coring.gravity_corer"
+      />,
+    );
+
+    const collectionMethod = screen.getByRole("list", {
+      name: "Collection method",
+    });
+    await expect
+      .element(collectionMethod.getByText("Coring", { exact: true }))
+      .toBeInTheDocument();
+    await expect
+      .element(collectionMethod.getByText("GravityCorer"))
+      .toBeInTheDocument();
+    await expect
+      .element(collectionMethod.getByRole("img", { name: ">" }))
+      .toBeInTheDocument();
+  });
+
+  it("should omit type, material, and collection method rows when unclassified", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        collectionMethod={null}
       />,
     );
 
@@ -95,6 +126,9 @@ describe("SampleView", () => {
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByRole("list", { name: "Material" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("list", { name: "Collection method" }))
       .not.toBeInTheDocument();
   });
 });

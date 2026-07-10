@@ -11,6 +11,7 @@ const base: Sample = {
   type: "individual_sample",
   material: "rock.igneous",
   collectionMethod: null,
+  specificName: "BAS-42-001",
   igsn: null,
   published: false,
   createdAt: new Date("2026-01-01T00:00:00Z"),

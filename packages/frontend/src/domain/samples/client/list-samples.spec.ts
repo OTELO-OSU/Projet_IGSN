@@ -11,6 +11,7 @@ const sampleJson = {
   type: null,
   material: "rock.igneous",
   collectionMethod: null,
+  specificName: "BAS-42-001",
   igsn: "0123456789ABCDEFGHJKMNPQRS",
   published: true,
   createdAt: iso,
@@ -33,6 +34,7 @@ describe("listSamples", () => {
           type: null,
           material: "rock.igneous",
           collectionMethod: null,
+          specificName: "BAS-42-001",
           igsn: "0123456789ABCDEFGHJKMNPQRS",
           published: true,
           createdAt: new Date(iso),
@@ -51,6 +53,22 @@ describe("listSamples", () => {
     expect(url.pathname).toBe("/samples");
     expect(url.searchParams.get("page")).toBe("3");
     expect(url.searchParams.get("perPage")).toBe("50");
+  });
+
+  it("should send the search term as a query param when provided", async () => {
+    const { fetch, lastUrl } = stubFetch({ data: [], meta: { total: 0 } });
+
+    await listSamples({ page: 1, perPage: 25, search: "granite" }, fetch);
+
+    expect(new URL(lastUrl() ?? "").searchParams.get("search")).toBe("granite");
+  });
+
+  it("should omit the search param when not provided", async () => {
+    const { fetch, lastUrl } = stubFetch({ data: [], meta: { total: 0 } });
+
+    await listSamples({ page: 1, perPage: 25 }, fetch);
+
+    expect(new URL(lastUrl() ?? "").searchParams.has("search")).toBe(false);
   });
 
   it("should throw on a non-2xx response", async () => {

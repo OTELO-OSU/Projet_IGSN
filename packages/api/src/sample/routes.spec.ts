@@ -10,16 +10,21 @@ const authHeader = { Authorization: "Bearer test-token" };
 
 type Client = ReturnType<typeof testClient<ReturnType<typeof createApp>>>;
 
-async function createSample(client: Client, name: string) {
+async function createSample(
+  client: Client,
+  name: string,
+  specificName = `${name} 001`,
+) {
   const created = await client.admin.samples.$post(
-    // A leaf type and leaf material are required to publish, so seed both for
-    // the publish helper.
+    // A leaf type, leaf material and specific name are required to publish,
+    // so seed them all for the publish helper.
     {
       json: {
         name,
         nature: "rock_powder",
         type: "individual_sample",
         material: "sediment",
+        specificName,
       },
     },
     { headers: authHeader },
@@ -53,6 +58,122 @@ describe("public sample routes", () => {
       meta: { total: 1 },
     });
   });
+
+  pgTest(
+    "should filter published samples by name, ignoring case and diacritics",
+    async ({ db }) => {
+      // Arrange
+      const client = testClient(createApp(db));
+      const gres = await createSample(client, "Grès de Fontainebleau");
+      await publishSample(client, gres.id);
+      const basalt = await createSample(client, "Basalte du Massif Central");
+      await publishSample(client, basalt.id);
+      // Act
+      const res = await client.samples.$get({
+        query: { page: "1", perPage: "10", search: "GRES" },
+      });
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({
+        data: [{ name: "Grès de Fontainebleau" }],
+        meta: { total: 1 },
+      });
+    },
+  );
+
+  pgTest("should filter published samples by specific name", async ({ db }) => {
+    // Arrange
+    const client = testClient(createApp(db));
+    const match = await createSample(
+      client,
+      "Sandstone",
+      "Fontainebleau facies",
+    );
+    await publishSample(client, match.id);
+    const other = await createSample(client, "Basalt", "Massif Central facies");
+    await publishSample(client, other.id);
+    // Act
+    const res = await client.samples.$get({
+      query: { page: "1", perPage: "10", search: "fontainebleau" },
+    });
+    // Assert
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      data: [{ name: "Sandstone" }],
+      meta: { total: 1 },
+    });
+  });
+
+  pgTest("should filter published samples by igsn", async ({ db }) => {
+    // Arrange
+    const client = testClient(createApp(db));
+    const draft = await createSample(client, "Sandstone");
+    const published = await publishSample(client, draft.id);
+    const other = await createSample(client, "Basalt");
+    await publishSample(client, other.id);
+    // Act
+    const res = await client.samples.$get({
+      query: {
+        page: "1",
+        perPage: "10",
+        search: published.igsn!.toLowerCase(),
+      },
+    });
+    // Assert
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      data: [{ igsn: published.igsn }],
+      meta: { total: 1 },
+    });
+  });
+
+  pgTest(
+    "should return an empty list when no sample matches the search",
+    async ({ db }) => {
+      // Arrange
+      const client = testClient(createApp(db));
+      const draft = await createSample(client, "Sandstone");
+      await publishSample(client, draft.id);
+      // Act
+      const res = await client.samples.$get({
+        query: { page: "1", perPage: "10", search: "granite" },
+      });
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ data: [], meta: { total: 0 } });
+    },
+  );
+
+  pgTest(
+    "should treat like wildcards in the search literally",
+    async ({ db }) => {
+      // Arrange
+      const client = testClient(createApp(db));
+      const draft = await createSample(client, "Sandstone");
+      await publishSample(client, draft.id);
+      // Act: "%" would match everything if not escaped
+      const res = await client.samples.$get({
+        query: { page: "1", perPage: "10", search: "%" },
+      });
+      // Assert
+      expect(await res.json()).toMatchObject({ data: [], meta: { total: 0 } });
+    },
+  );
+
+  pgTest(
+    "should never return an unpublished sample from a search",
+    async ({ db }) => {
+      // Arrange: matching draft, never published
+      const client = testClient(createApp(db));
+      await createSample(client, "Grès de Fontainebleau");
+      // Act
+      const res = await client.samples.$get({
+        query: { page: "1", perPage: "10", search: "gres" },
+      });
+      // Assert
+      expect(await res.json()).toMatchObject({ data: [], meta: { total: 0 } });
+    },
+  );
 
   pgTest(
     "should return a published sample by its igsn without authentication",

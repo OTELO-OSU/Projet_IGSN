@@ -5,6 +5,7 @@ export type ListSamplesParams = {
   perPage: number;
   sort?: "status";
   order?: "asc" | "desc";
+  search?: string;
 };
 
 export type ListSamplesResult = {

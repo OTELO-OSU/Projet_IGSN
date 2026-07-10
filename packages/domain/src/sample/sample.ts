@@ -18,6 +18,8 @@ export const sampleSchema = z.object({
   material: materialPathSchema.nullable(),
   // Null until the collection method is recorded.
   collectionMethod: collectionMethodSchema.nullable(),
+  // Precise sample designation; optional, null when not provided.
+  specificName: nameSchema.nullable(),
   // Null until the sample is published.
   igsn: igsnSuffixSchema.nullable(),
   published: z.boolean(),
@@ -37,6 +39,7 @@ export const createSampleSchema = z.strictObject({
   material: materialPathSchema.nullish(),
   // Optional at creation, like material: omitted or null on a draft.
   collectionMethod: collectionMethodSchema.nullish(),
+  specificName: nameSchema.nullish(),
 });
 
 export type CreateSample = z.infer<typeof createSampleSchema>;

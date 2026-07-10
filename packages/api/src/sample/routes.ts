@@ -14,8 +14,12 @@ import { validateIgsnParam, validateListQuery } from "./validator.ts";
 export function createSampleRoutes(repository: SampleRepository) {
   return new Hono()
     .get("/", validateListQuery, async (c) => {
-      const { page, perPage } = c.req.valid("query");
-      const { data, total } = await repository.listPublished({ page, perPage });
+      const { page, perPage, search } = c.req.valid("query");
+      const { data, total } = await repository.listPublished({
+        page,
+        perPage,
+        search,
+      });
       const body: ListSamplesResponse = { data, meta: { total } };
       return c.json(body);
     })

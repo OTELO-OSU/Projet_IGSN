@@ -62,4 +62,17 @@ describe("listSamplesQuerySchema", () => {
     expect(result.sort).toBe("status");
     expect(result.order).toBeUndefined();
   });
+
+  it("should accept and trim a search term", () => {
+    expect(listSamplesQuerySchema.parse({ search: "  gres " }).search).toBe(
+      "gres",
+    );
+  });
+
+  it.each(["", "   ", 42])(
+    "should drop a blank or non-string search %j",
+    (search) => {
+      expect(listSamplesQuerySchema.parse({ search }).search).toBeUndefined();
+    },
+  );
 });

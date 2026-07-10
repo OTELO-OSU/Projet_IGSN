@@ -9,7 +9,11 @@ export function sampleListPage(page: Page) {
     goToCreate: () => page.getByRole("link", { name: "Create" }).click(),
     expectColumns: async () => {
       await expect(
-        page.getByRole("columnheader", { name: "Name" }),
+        // Exact: "Specific Name" also contains "Name".
+        page.getByRole("columnheader", { name: "Name", exact: true }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("columnheader", { name: "Specific Name" }),
       ).toBeVisible();
       await expect(
         page.getByRole("columnheader", { name: "Nature" }),

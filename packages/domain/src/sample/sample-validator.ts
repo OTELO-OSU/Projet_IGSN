@@ -20,6 +20,8 @@ export const listSamplesQuerySchema = z.object({
   // Optional, not defaulted: a default would make the key required in typed
   // clients. Consumers treat an absent order as asc.
   order: z.enum(["asc", "desc"]).optional().catch(undefined),
+  // Blank or non-string search degrades to "no filter", like page/perPage.
+  search: z.string().trim().min(1).optional().catch(undefined),
 });
 
 export type ListSamplesQuery = z.infer<typeof listSamplesQuerySchema>;

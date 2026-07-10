@@ -40,6 +40,7 @@ function fakeApi(
     type: "dredge",
     material,
     collectionMethod: null,
+    specificName: "MC-2026-007",
     igsn: published ? IGSN : null,
     published,
     createdAt: "2026-06-01T00:00:00.000Z",

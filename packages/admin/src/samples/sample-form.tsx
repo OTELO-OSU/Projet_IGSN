@@ -101,6 +101,7 @@ export function SampleForm({
       collectionMethodPath: toHierarchyPath(
         defaultValues?.collectionMethod ?? null,
       ),
+      specificName: defaultValues?.specificName ?? "",
     },
     // Wrap the superRefine schema in a function so it is typed against the
     // whole form value; forward its issue to the level field it targets.
@@ -131,6 +132,7 @@ export function SampleForm({
         type: composeHierarchyValue(value.typePath),
         material: value.material || null,
         collectionMethod: composeHierarchyValue(value.collectionMethodPath),
+        specificName: value.specificName.trim() || null,
       });
       if (!parsed.success) return;
       meta.onValid?.(parsed.data);
@@ -280,6 +282,10 @@ export function SampleForm({
               )}
             </form.AppField>
           </section>
+
+          <form.AppField name="specificName">
+            {(field) => <field.TextField label={m.field_specific_name()} />}
+          </form.AppField>
         </TabsContent>
       </Tabs>
 
