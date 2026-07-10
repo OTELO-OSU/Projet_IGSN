@@ -23,6 +23,15 @@ describe("materialPathSchema", () => {
     "sediment.exogenous_detritic.sand.medium_sand",
     "sediment.volcano_detritic.bomb.pumices",
     "sediment.biogenic.carbonate.boundstone.frame",
+    "extraterrestrial_rock.micrometeorites",
+    "extraterrestrial_rock.returned_samples.lunar_sample.rock",
+    "extraterrestrial_rock.returned_samples.asteroid.ryugu",
+    "extraterrestrial_rock.meteorites.chondrites.carbonaceous_chondrites.cvred",
+    "extraterrestrial_rock.meteorites.chondrites.ordinary_chondrites.h_l",
+    "extraterrestrial_rock.meteorites.achondrite_primitive.polymict_ureilite",
+    "extraterrestrial_rock.meteorites.achondrites.stony_achondrite.lunar_meteorite.troctolite_anorthosite_melt_breccia",
+    "extraterrestrial_rock.meteorites.achondrites.iron_meteorite.iab.main_group",
+    "extraterrestrial_rock.meteorites.achondrites.stony_iron_meteorite.pallasite.eagle_station_group",
   ])("should accept the known path %s", (path) => {
     expect(materialPathSchema.parse(path)).toBe(path);
   });
@@ -39,6 +48,11 @@ describe("materialPathSchema", () => {
     "rock.igneous.plutonic.mafic.rhyolite",
     "sediment.nonexistent",
     "sediment.exogenous_detritic.silt.medium_sand",
+    // The lunar rock leaf is a dotted override: bare `rock`'s children must not
+    // expand under it, and igneous only lives under the rock root.
+    "extraterrestrial_rock.returned_samples.lunar_sample.rock.igneous",
+    "extraterrestrial_rock.ungrouped",
+    "extraterrestrial_rock.meteorites.iron_meteorite",
   ])("should reject the unknown or malformed path %s", (path) => {
     expect(materialPathSchema.safeParse(path).success).toBe(false);
   });

@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { expandPaths } from "../path/expand-paths.ts";
 import { type TreeNode } from "../path/tree-node.ts";
+import { extraterrestrialRockTree } from "./classification/extraterrestrial-rock-subtree.ts";
 import { rockTree } from "./classification/rock-subtree.ts";
 import { sedimentTree } from "./classification/sediment-subtree.ts";
 
@@ -36,11 +37,23 @@ const materialTree = {
   mineral: { label: "mineral" },
   fossil: { label: "fossil" },
   synthetic_rock_mineral: { label: "synthetic_rock_mineral" },
-  extraterrestrial_rock: { label: "extraterrestrial_rock" },
+  extraterrestrial_rock: {
+    label: "extraterrestrial_rock",
+    choices: ["returned_samples", "meteorites", "micrometeorites"],
+  },
   other: { label: "other" },
+
+  // Leaves shared across subtrees (igneous rock and lunar meteorite), living
+  // once here like `other` so neither fragment silently shadows the other.
+  gabbro: { label: "gabbro" },
+  norite: { label: "norite" },
+  anorthosite: { label: "anorthosite" },
+  troctolite: { label: "troctolite" },
+  basalt: { label: "basalt" },
 
   ...rockTree,
   ...sedimentTree,
+  ...extraterrestrialRockTree,
 } satisfies Record<string, TreeNode>;
 
 export type MaterialSegment = keyof typeof materialTree;

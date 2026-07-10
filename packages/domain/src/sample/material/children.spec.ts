@@ -115,6 +115,41 @@ describe("materialChildren", () => {
     ).toEqual([]);
   });
 
+  it("should return the direct children of the extraterrestrial root", () => {
+    expect(materialChildren("extraterrestrial_rock")).toEqual([
+      "extraterrestrial_rock.returned_samples",
+      "extraterrestrial_rock.meteorites",
+      "extraterrestrial_rock.micrometeorites",
+    ]);
+  });
+
+  it("should give the lunar rock leaf no children (dotted override of the rock root)", () => {
+    expect(
+      materialChildren("extraterrestrial_rock.returned_samples.lunar_sample"),
+    ).toEqual([
+      "extraterrestrial_rock.returned_samples.lunar_sample.rock",
+      "extraterrestrial_rock.returned_samples.lunar_sample.soil",
+      "extraterrestrial_rock.returned_samples.lunar_sample.core",
+    ]);
+    expect(
+      materialChildren(
+        "extraterrestrial_rock.returned_samples.lunar_sample.rock",
+      ),
+    ).toEqual([]);
+  });
+
+  it("should return the direct children of the IAB iron meteorite (Niv.5)", () => {
+    const iab =
+      "extraterrestrial_rock.meteorites.achondrites.iron_meteorite.iab";
+    expect(materialChildren(iab)).toEqual([
+      `${iab}.main_group`,
+      `${iab}.shl`,
+      `${iab}.shh`,
+      `${iab}.sll`,
+      `${iab}.ungrouped`,
+    ]);
+  });
+
   it("should return an empty array for a leaf", () => {
     expect(materialChildren("fossil")).toEqual([]);
   });

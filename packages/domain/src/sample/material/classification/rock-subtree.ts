@@ -8,7 +8,6 @@ export const rockTree = {
   igneous: {
     label: "igneous",
     choices: ["plutonic", "volcanic"],
-    optional: false,
   },
   metamorphic: { label: "metamorphic" },
   sedimentary: {
@@ -30,16 +29,14 @@ export const rockTree = {
   // the tree spec and a dotted `plutonic.*` / `volcanic.*` override carries that
   // branch's choices. `carbonatite` and `hyperalkaline_rocks` are shared leaves
   // of both `exotic` branches (path is identity). Every level is mandatory down
-  // to a rock leaf (optional: false).
+  // to a rock leaf (the default: nothing is marked `optional: true`).
   plutonic: {
     label: "plutonic",
     choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
-    optional: false,
   },
   volcanic: {
     label: "volcanic",
     choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
-    optional: false,
   },
 
   felsic: { label: "felsic" },
@@ -51,48 +48,39 @@ export const rockTree = {
   "plutonic.felsic": {
     label: "felsic",
     choices: ["granite", "granodiorite", "tonalite", "trondhjemite"],
-    optional: false,
   },
   "plutonic.intermediate": {
     label: "intermediate",
     choices: ["syenite", "monzonite", "diorite"],
-    optional: false,
   },
   "plutonic.mafic": {
     label: "mafic",
     choices: ["gabbro", "norite", "anorthosite", "troctolite"],
-    optional: false,
   },
   "plutonic.ultramafic": {
     label: "ultramafic",
     choices: ["peridotite", "pyroxenite", "hornblendite"],
-    optional: false,
   },
   "plutonic.exotic": {
     label: "exotic",
     choices: ["carbonatite", "hyperalkaline_rocks"],
-    optional: false,
   },
 
   "volcanic.felsic": {
     label: "felsic",
     choices: ["rhyolite", "dacite"],
-    optional: false,
   },
   "volcanic.intermediate": {
     label: "intermediate",
     choices: ["trachyte", "latite", "andesite", "phonolite"],
-    optional: false,
   },
   "volcanic.mafic": {
     label: "mafic",
     choices: ["basalt", "basanite", "tephrite"],
-    optional: false,
   },
   "volcanic.ultramafic": {
     label: "ultramafic",
     choices: ["komatiite", "picrite"],
-    optional: false,
   },
   "volcanic.exotic": {
     label: "exotic",
@@ -103,7 +91,6 @@ export const rockTree = {
       "lamprophyre",
       "hyperalkaline_rocks",
     ],
-    optional: false,
   },
 
   granite: { label: "granite" },
@@ -113,10 +100,6 @@ export const rockTree = {
   syenite: { label: "syenite" },
   monzonite: { label: "monzonite" },
   diorite: { label: "diorite" },
-  gabbro: { label: "gabbro" },
-  norite: { label: "norite" },
-  anorthosite: { label: "anorthosite" },
-  troctolite: { label: "troctolite" },
   peridotite: { label: "peridotite" },
   pyroxenite: { label: "pyroxenite" },
   hornblendite: { label: "hornblendite" },
@@ -128,7 +111,6 @@ export const rockTree = {
   latite: { label: "latite" },
   andesite: { label: "andesite" },
   phonolite: { label: "phonolite" },
-  basalt: { label: "basalt" },
   basanite: { label: "basanite" },
   tephrite: { label: "tephrite" },
   komatiite: { label: "komatiite" },
