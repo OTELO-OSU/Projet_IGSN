@@ -53,12 +53,6 @@ describe("samplePublishBlockers", () => {
     ]);
   });
 
-  it("should report specific_name_missing when specificName is null", () => {
-    expect(samplePublishBlockers({ ...base, specificName: null })).toEqual([
-      "specific_name_missing",
-    ]);
-  });
-
   it("should report material_not_publishable for an out-of-scope type", () => {
     // "extraterrestrial_rock" is omitted from PUBLISHABLE_MATERIAL_TYPES.
     expect(

@@ -35,14 +35,14 @@ describe("isSamplePublishable", () => {
     },
   );
 
-  it("should reject a sample with no specific name", () => {
+  it("should accept a sample with no specific name", () => {
     expect(
       isSamplePublishable({
         ...draft,
         material: "rock.igneous",
         specificName: null,
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it("should accept a leaf material under an in-scope type", () => {

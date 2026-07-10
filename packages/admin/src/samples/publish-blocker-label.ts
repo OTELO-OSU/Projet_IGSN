@@ -11,7 +11,6 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   material_missing: m.publish_blocked_material_missing,
   material_not_publishable: m.publish_blocked_material_not_publishable,
   material_incomplete: m.publish_blocked_material_incomplete,
-  specific_name_missing: m.publish_blocked_specific_name_missing,
 };
 
 export function publishBlockerLabel(blocker: PublishBlocker): string {

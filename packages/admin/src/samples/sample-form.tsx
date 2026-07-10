@@ -158,19 +158,15 @@ export function SampleForm({
             canSubmit: state.canSubmit,
             typePath: state.values.typePath,
             material: state.values.material,
-            specificName: state.values.specificName,
           })}
         >
-          {({ canSubmit, typePath, material, specificName }) => {
+          {({ canSubmit, typePath, material }) => {
             // Form state holds looser select strings; the runtime values match
             // the domain, so cast to the fields samplePublishBlockers reads.
             const reasons = samplePublishBlockers({
               type: composeHierarchyValue(typePath),
               material: material || null,
-              specificName: specificName.trim() || null,
-            } as Pick<Sample, "type" | "material" | "specificName">).map(
-              publishBlockerLabel,
-            );
+            } as Pick<Sample, "type" | "material">).map(publishBlockerLabel);
             const button = (
               <PublishSampleButton
                 label={action.label}

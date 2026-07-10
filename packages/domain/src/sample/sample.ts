@@ -18,8 +18,7 @@ export const sampleSchema = z.object({
   material: materialPathSchema.nullable(),
   // Null until the collection method is recorded.
   collectionMethod: collectionMethodSchema.nullable(),
-  // Precise sample designation; null on a draft, required to publish
-  // (see samplePublishBlockers).
+  // Precise sample designation; optional, null when not provided.
   specificName: nameSchema.nullable(),
   // Null until the sample is published.
   igsn: igsnSuffixSchema.nullable(),

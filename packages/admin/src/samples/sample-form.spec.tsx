@@ -384,8 +384,8 @@ describe("SampleForm", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        // A leaf type, leaf material and specific name are required to
-        // publish, so Save & Publish is enabled.
+        // A leaf type and leaf material are required to publish, so Save &
+        // Publish is enabled.
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
@@ -487,7 +487,7 @@ describe("SampleForm", () => {
       .toHaveTextContent(/set the sample type before publishing/i);
   });
 
-  it("should disable Save & Publish and explain in a tooltip when the specific name is missing", async () => {
+  it("should enable Save & Publish when the specific name is missing", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -513,13 +513,9 @@ describe("SampleForm", () => {
       </TooltipProvider>,
     );
 
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
-    await expect.element(publish).toBeDisabled();
-
-    publish.element().parentElement?.focus();
     await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/set the specific name before publishing/i);
+      .element(screen.getByRole("button", { name: "Save & Publish" }))
+      .toBeEnabled();
   });
 
   it("should render a link action as an anchor to the public page", async () => {
