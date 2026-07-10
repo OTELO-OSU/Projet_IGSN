@@ -29,8 +29,10 @@ The widget receives the tree itself as one self-describing `hierarchy` prop,
   (mandatory by default, tightening ADR 0011's `optional !== false` reading).
   This replaces `canStopAt`, and is exported as `canStopAtPath` so a
   consistency spec can call it.
-- `getLabel` stays injected: the tree carries stable codes, labels resolve per
-  app (i18n rule).
+- No `getLabel` prop: labels derive from the tree too. Each node's `label`
+  carries its code; the widget renders it through a `translate` prop
+  (`(code) => string`, defaulting to the raw code), so translation stays
+  app-side (i18n rule).
 
 Domain-side, each vocabulary exports its bundle
 (`MATERIAL_HIERARCHY`, `SAMPLE_TYPE_HIERARCHY`, `COLLECTION_METHOD_HIERARCHY`),
@@ -46,8 +48,8 @@ vocabulary, closing the drift hazard between the UI and the publish gate.
 
 ## Consequences
 
-- Callers pass `hierarchy` + `getLabel`; they cannot express a stop policy that
-  contradicts the tree.
+- Callers pass one translated `hierarchy`; they cannot express a stop policy or
+  a label that contradicts the tree.
 - A new vocabulary needs only its tree and label map; the widget needs no
   per-vocabulary wiring.
 - The `T extends string` generic is gone: paths are runtime-derived strings and

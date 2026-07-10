@@ -1,9 +1,10 @@
 import { useTypedAppFormContext } from "./app-form.tsx";
 
 // Structural mirror of the domain vocabulary trees (design-system MUST NOT
-// import domain). `label` is the node's own code, not a translation; a node
-// with children must be refined unless marked `optional: true` (the only valid
-// non-leaf stop); `choices` lists the child segment codes.
+// import domain). `label` is the node's own code; the widget renders it through
+// its `translate` prop. A node with children must be refined unless marked
+// `optional: true` (the only valid non-leaf stop); `choices` lists the child
+// segment codes.
 export type HierarchyNodeDef = {
   label: string;
   optional?: boolean;
@@ -32,6 +33,19 @@ function resolveNode(
     if (node) return node;
   }
   return undefined;
+}
+
+const identity = (code: string) => code;
+
+// The label of a path: its node's label code run through the caller's
+// translation. Node-resolved, so a dotted override key can label its occurrence
+// differently from the bare segment.
+export function hierarchyPathLabel(
+  hierarchy: Hierarchy,
+  path: string,
+  translate: (code: string) => string = identity,
+): string {
+  return translate(resolveNode(hierarchy, path)?.label ?? path);
 }
 
 // The paths offered under `parent`: the roots at the top level (null parent),
@@ -63,18 +77,22 @@ export function canStopAtPath(hierarchy: Hierarchy, path: string): boolean {
 export function hierarchyLevelItems(
   hierarchy: Hierarchy,
   parent: string | null,
-  getLabel: (path: string) => string,
+  translate: (code: string) => string = identity,
 ): { value: string; label: string }[] {
   const children = hierarchyChildren(hierarchy, parent);
   const parentSegment = parent?.split(".").at(-1);
   const hasSelfChild = children.some(
     (child) => child.split(".").at(-1) === parentSegment,
   );
+  const item = (path: string) => ({
+    value: path,
+    label: hierarchyPathLabel(hierarchy, path, translate),
+  });
   return [
     ...(parent && canStopAtPath(hierarchy, parent) && !hasSelfChild
-      ? [{ value: parent, label: getLabel(parent) }]
+      ? [item(parent)]
       : []),
-    ...children.map((child) => ({ value: child, label: getLabel(child) })),
+    ...children.map(item),
   ];
 }
 
@@ -108,10 +126,11 @@ type HierarchySelectFieldProps = {
   // Form field holding the per-level path (a string[]); must exist in the
   // parent form's defaultValues.
   name: string;
-  // The vocabulary tree; choices and stop-ability derive from it.
+  // The vocabulary tree; choices, labels, and stop-ability all derive from it.
   hierarchy: Hierarchy;
-  // Resolves a path code to its translated label; owned by the calling package.
-  getLabel: (path: string) => string;
+  // Translates a node's label code; owned by the calling package (i18n rule).
+  // Defaults to rendering the raw code.
+  translate?: (code: string) => string;
   // Label of the first level; deeper levels are labelled by their parent's value.
   rootLabel: string;
   placeholder: string;
@@ -129,7 +148,7 @@ type HierarchyLevelProps = Omit<HierarchySelectFieldProps, "rootLabel"> & {
 function HierarchyLevel({
   name,
   hierarchy,
-  getLabel,
+  translate = identity,
   placeholder,
   searchPlaceholder,
   emptyText,
@@ -143,7 +162,7 @@ function HierarchyLevel({
   const children = hierarchyChildren(hierarchy, parent);
   if (children.length === 0) return null; // Leaf: nothing left to refine.
 
-  const items = hierarchyLevelItems(hierarchy, parent, getLabel);
+  const items = hierarchyLevelItems(hierarchy, parent, translate);
 
   return (
     <>
@@ -175,13 +194,13 @@ function HierarchyLevel({
             <HierarchyLevel
               name={name}
               hierarchy={hierarchy}
-              getLabel={getLabel}
+              translate={translate}
               placeholder={placeholder}
               searchPlaceholder={searchPlaceholder}
               emptyText={emptyText}
               depth={depth + 1}
               parent={child}
-              label={getLabel(child)}
+              label={hierarchyPathLabel(hierarchy, child, translate)}
             />
           ) : null;
         }}

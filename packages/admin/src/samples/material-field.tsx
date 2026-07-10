@@ -2,7 +2,7 @@ import { HierarchySelectField } from "@projet-igsn/design-system/components/form
 import { MATERIAL_HIERARCHY } from "@projet-igsn/domain/sample/material/classification";
 
 import { m } from "#/paraglide/messages.js";
-import { materialPathLabel } from "#/samples/material-path-label.ts";
+import { materialPathLabel } from "#/samples/vocabulary-label.ts";
 
 // Material shares the generic hierarchy cascade with type and collection method;
 // the tree itself carries the completeness policy (a node with children must be
@@ -13,7 +13,7 @@ export function MaterialField() {
     <HierarchySelectField
       name="materialPath"
       hierarchy={MATERIAL_HIERARCHY}
-      getLabel={materialPathLabel}
+      translate={materialPathLabel}
       rootLabel={`${m.field_material()} *`}
       placeholder={m.material_placeholder()}
       searchPlaceholder={m.material_search_placeholder()}
