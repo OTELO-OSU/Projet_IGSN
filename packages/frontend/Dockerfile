@@ -8,13 +8,17 @@ RUN apk upgrade --no-cache && apk add --no-cache curl
 
 RUN npm install -g pnpm
 
-RUN mkdir -p /app/packages
+# Everything under /app runs as node (uid 1000 = the host dev user): dev
+# bind-mounts src and the server generates files through the mount (paraglide,
+# routeTree.gen.ts), which must not come back root-owned on the host.
+RUN mkdir -p /app/packages && chown node:node /app /app/packages
+USER node
 
 # Manifests first so the `pnpm install` layer caches across source edits.
-ADD package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
-ADD packages/frontend/package.json /app/packages/frontend/
-ADD packages/domain/package.json /app/packages/domain/
-ADD packages/design-system/package.json /app/packages/design-system/
+ADD --chown=node:node package.json pnpm-lock.yaml pnpm-workspace.yaml /app/
+ADD --chown=node:node packages/frontend/package.json /app/packages/frontend/
+ADD --chown=node:node packages/domain/package.json /app/packages/domain/
+ADD --chown=node:node packages/design-system/package.json /app/packages/design-system/
 
 WORKDIR /app/packages/frontend
 
@@ -24,10 +28,10 @@ WORKDIR /app/packages/frontend
 RUN pnpm -F "@projet-igsn/frontend..." install --frozen-lockfile
 
 # Then the source (busts only the layers below, not the install above).
-ADD tsconfig.base.json /app/
-ADD packages/frontend /app/packages/frontend
-ADD packages/domain /app/packages/domain
-ADD packages/design-system /app/packages/design-system
+ADD --chown=node:node tsconfig.base.json /app/
+ADD --chown=node:node packages/frontend /app/packages/frontend
+ADD --chown=node:node packages/domain /app/packages/domain
+ADD --chown=node:node packages/design-system /app/packages/design-system
 
 FROM base AS dev
 
@@ -55,7 +59,7 @@ ENV PORT=8080
 # from the runtime env by the SSR server.
 COPY --from=build /app/packages/frontend/.output /app/.output
 
-# Drop root: the SSR server only reads its (root-owned, world-readable) output.
+# Drop root: the SSR server only reads its (node-owned, world-readable) output.
 USER node
 
 CMD ["node", ".output/server/index.mjs"]
