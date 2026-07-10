@@ -7,6 +7,7 @@ const validSample = {
   nature: "thin_section",
   type: "core.section",
   material: null,
+  texture: null,
   collectionMethod: "coring.gravity_corer",
   specificName: null,
   igsn: null,
@@ -26,6 +27,7 @@ describe("sampleSchema", () => {
       nature: "thin_section",
       type: "core.section",
       material: null,
+      texture: null,
       collectionMethod: "coring.gravity_corer",
       specificName: null,
       igsn: null,
@@ -167,6 +169,50 @@ describe("createSampleSchema", () => {
     });
     expect(result).toMatchObject({ success: true });
   });
+
+  it("should accept a texture valid for the plutonic material branch", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Granite 1",
+      nature: "hand_sample",
+      material: "rock.igneous.plutonic.felsic.granite",
+      texture: "phaneritic",
+    });
+    expect(result).toMatchObject({ success: true });
+  });
+
+  it("should accept porphyritic under a volcanic material (shared texture)", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Basalt 1",
+      nature: "hand_sample",
+      material: "rock.igneous.volcanic.mafic.basalt",
+      texture: "porphyritic",
+    });
+    expect(result).toMatchObject({ success: true });
+  });
+
+  it.each([
+    // A plutonic-only texture under a volcanic material.
+    { material: "rock.igneous.volcanic.mafic.basalt", texture: "cumulate" },
+    // A volcanic-only texture under a plutonic material.
+    { material: "rock.igneous.plutonic.felsic.granite", texture: "glassy" },
+    // A texture with no igneous branch selected.
+    { material: "rock.igneous", texture: "phaneritic" },
+    // A texture with a non-igneous material.
+    { material: "rock.sedimentary.microbialite", texture: "phaneritic" },
+    // A texture with no material at all.
+    { material: null, texture: "phaneritic" },
+  ])(
+    "should reject a texture inconsistent with the material %o",
+    ({ material, texture }) => {
+      const result = createSampleSchema.safeParse({
+        name: "Sample",
+        nature: "hand_sample",
+        material,
+        texture,
+      });
+      expect(result.success).toBe(false);
+    },
+  );
 
   it("should reject a create payload carrying an unknown rockType field", () => {
     const result = createSampleSchema.safeParse({

@@ -12,6 +12,7 @@ export function toSample(row: Selectable<DB["sample"]>): Sample {
     nature: row.nature,
     type: row.type,
     material: row.material,
+    texture: row.texture,
     collectionMethod: row.collection_method,
     specificName: row.specific_name,
     igsn: row.igsn,

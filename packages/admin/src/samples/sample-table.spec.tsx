@@ -20,6 +20,7 @@ const sample: Sample = {
   nature: "thin_section",
   type: null,
   material: null,
+  texture: null,
   collectionMethod: "coring.gravity_corer",
   specificName: "MC-2026-007",
   igsn: null,

@@ -11,6 +11,7 @@ describe("SampleView", () => {
         nature="rock_powder"
         type="core.half_round"
         material="rock.igneous"
+        texture={null}
         collectionMethod="coring.gravity_corer"
       />,
     );
@@ -31,6 +32,7 @@ describe("SampleView", () => {
         nature="rock_powder"
         type={null}
         material={null}
+        texture={null}
         collectionMethod={null}
       />,
     );
@@ -46,6 +48,7 @@ describe("SampleView", () => {
         nature="rock_powder"
         type="core.half_round"
         material={null}
+        texture={null}
         collectionMethod={null}
       />,
     );
@@ -69,6 +72,7 @@ describe("SampleView", () => {
         nature="rock_powder"
         type={null}
         material="rock.igneous"
+        texture={null}
         collectionMethod={null}
       />,
     );
@@ -83,6 +87,22 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
+  it("should show the translated texture when set", async () => {
+    const screen = await render(
+      <SampleView
+        name="Granite 1"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material="rock.igneous.plutonic.felsic.granite"
+        texture="phaneritic"
+        collectionMethod={null}
+      />,
+    );
+
+    await expect.element(screen.getByText("Phaneritic")).toBeInTheDocument();
+  });
+
   it("should show the collection method hierarchy as a breadcrumb labelled by its field", async () => {
     const screen = await render(
       <SampleView
@@ -91,6 +111,7 @@ describe("SampleView", () => {
         nature="rock_powder"
         type={null}
         material={null}
+        texture={null}
         collectionMethod="coring.gravity_corer"
       />,
     );
@@ -117,6 +138,7 @@ describe("SampleView", () => {
         nature="rock_powder"
         type={null}
         material={null}
+        texture={null}
         collectionMethod={null}
       />,
     );

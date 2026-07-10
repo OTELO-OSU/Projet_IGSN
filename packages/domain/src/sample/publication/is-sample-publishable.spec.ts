@@ -9,6 +9,7 @@ const draft: Sample = {
   nature: "thin_section",
   type: "individual_sample",
   material: null,
+  texture: null,
   collectionMethod: null,
   specificName: "BAS-42-001",
   igsn: null,
@@ -24,7 +25,11 @@ describe("isSamplePublishable", () => {
 
   it("should reject a sample with no type", () => {
     expect(
-      isSamplePublishable({ ...draft, type: null, material: "rock.igneous" }),
+      isSamplePublishable({
+        ...draft,
+        type: null,
+        material: "rock.igneous.plutonic.felsic.granite",
+      }),
     ).toBe(false);
   });
 
@@ -32,18 +37,18 @@ describe("isSamplePublishable", () => {
     expect(isSamplePublishable({ ...draft, material: "rock" })).toBe(false);
   });
 
-  it.each<MaterialPath>(["rock.igneous", "extraterrestrial_rock"])(
-    "should accept a sample with complete material %s",
-    (material) => {
-      expect(isSamplePublishable({ ...draft, material })).toBe(true);
-    },
-  );
+  it.each<MaterialPath>([
+    "rock.igneous.plutonic.felsic.granite",
+    "extraterrestrial_rock",
+  ])("should accept a sample with complete material %s", (material) => {
+    expect(isSamplePublishable({ ...draft, material })).toBe(true);
+  });
 
   it("should accept a sample with no specific name", () => {
     expect(
       isSamplePublishable({
         ...draft,
-        material: "rock.igneous",
+        material: "rock.igneous.plutonic.felsic.granite",
         specificName: null,
       }),
     ).toBe(true);
@@ -53,7 +58,7 @@ describe("isSamplePublishable", () => {
     expect(
       isSamplePublishable({
         ...draft,
-        material: "rock.igneous",
+        material: "rock.igneous.plutonic.felsic.granite",
       }),
     ).toBe(true);
   });

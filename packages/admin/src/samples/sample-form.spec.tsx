@@ -261,6 +261,166 @@ describe("SampleForm", () => {
     );
   });
 
+  it("should show the texture field for an igneous branch and submit the chosen texture", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Granite");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+
+    // Texture is hidden until a plutonic/volcanic branch is chosen.
+    await expect
+      .element(screen.getByRole("combobox", { name: "Texture" }))
+      .not.toBeInTheDocument();
+
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Rock", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
+    await screen.getByRole("option", { name: "Igneous", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Igneous *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Plutonic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Felsic", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Felsic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Granite", exact: true }).click();
+
+    await screen.getByRole("combobox", { name: "Texture" }).click();
+    await screen.getByRole("option", { name: "Phaneritic" }).click();
+
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Granite",
+        nature: "thin_section",
+        type: null,
+        material: "rock.igneous.plutonic.felsic.granite",
+        texture: "phaneritic",
+        collectionMethod: null,
+        specificName: null,
+      }),
+    );
+  });
+
+  it("should keep the texture when refining deeper within the same branch", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Granite");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Rock", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
+    await screen.getByRole("option", { name: "Igneous", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Igneous *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
+
+    // Pick a plutonic texture, then refine the branch deeper: it must survive
+    // because it is still valid for the (still plutonic) refined path.
+    await screen.getByRole("combobox", { name: "Texture" }).click();
+    await screen.getByRole("option", { name: "Phaneritic" }).click();
+
+    await screen
+      .getByRole("combobox", { name: "Plutonic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Felsic", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Felsic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Granite", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Texture" }))
+      .toHaveTextContent("Phaneritic");
+
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Granite",
+        nature: "thin_section",
+        type: null,
+        material: "rock.igneous.plutonic.felsic.granite",
+        texture: "phaneritic",
+        collectionMethod: null,
+        specificName: null,
+      }),
+    );
+  });
+
+  it("should drop the texture when the material branch changes", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Rock");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Rock", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
+    await screen.getByRole("option", { name: "Igneous", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Igneous *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
+
+    // Pick a plutonic texture, then switch the branch: it must be dropped.
+    await screen.getByRole("combobox", { name: "Texture" }).click();
+    await screen.getByRole("option", { name: "Phaneritic" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Texture" }))
+      .toHaveTextContent("Phaneritic");
+
+    await screen
+      .getByRole("combobox", { name: "Igneous *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Volcanic", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Texture" }))
+      .not.toHaveTextContent("Phaneritic");
+
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Rock",
+        nature: "thin_section",
+        type: null,
+        material: "rock.igneous.volcanic",
+        collectionMethod: null,
+        specificName: null,
+      }),
+    );
+  });
+
   it("should submit the entered specific name", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
