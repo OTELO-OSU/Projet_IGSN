@@ -240,8 +240,9 @@ export function SampleForm({
 
           <form.AppField name="collectionMethodDescription">
             {(field) => (
-              <field.TextareaField
+              <field.TextField
                 label={m.field_collection_method_description()}
+                multiline
               />
             )}
           </form.AppField>

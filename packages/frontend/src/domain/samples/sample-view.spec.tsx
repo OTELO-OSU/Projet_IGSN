@@ -158,25 +158,6 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
-  it("should omit the collection method description row when null", async () => {
-    const screen = await render(
-      <SampleView
-        name="Basalt 42"
-        igsn="0123456789ABCDEFGHJKMNPQRS"
-        nature="rock_powder"
-        type={null}
-        material={null}
-        texture={null}
-        collectionMethod="coring.gravity_corer"
-        collectionMethodDescription={null}
-      />,
-    );
-
-    await expect
-      .element(screen.getByText("Collection method details"))
-      .not.toBeInTheDocument();
-  });
-
   it("should omit type, material, and collection method rows when unclassified", async () => {
     const screen = await render(
       <SampleView
@@ -199,6 +180,9 @@ describe("SampleView", () => {
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByRole("list", { name: "Collection method" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Collection method details"))
       .not.toBeInTheDocument();
   });
 });

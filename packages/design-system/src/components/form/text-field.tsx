@@ -1,15 +1,23 @@
 import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
+import { Textarea } from "../ui/textarea.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
-export function TextField({ label }: { label: string }) {
+export function TextField({
+  label,
+  multiline = false,
+}: {
+  label: string;
+  multiline?: boolean;
+}) {
   const field = useFieldContext<string>();
   const error = field.state.meta.errors[0];
   const errorId = `${field.name}-error`;
+  const Control = multiline ? Textarea : Input;
   return (
     <div className="grid gap-2">
       <Label htmlFor={field.name}>{label}</Label>
-      <Input
+      <Control
         id={field.name}
         value={field.state.value}
         onBlur={field.handleBlur}

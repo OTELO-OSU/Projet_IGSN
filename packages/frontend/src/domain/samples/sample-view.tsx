@@ -172,10 +172,7 @@ export function SampleView({
             ) : null}
             {collectionMethodDescription ? (
               <div className="flex gap-4 px-4 py-3">
-                <dt
-                  id="sample-field-collection-method-description"
-                  className="text-muted-foreground w-40"
-                >
+                <dt className="text-muted-foreground w-40">
                   {m.sample_field_collection_method_description()}
                 </dt>
                 <dd className="font-medium">{collectionMethodDescription}</dd>
