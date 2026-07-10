@@ -77,7 +77,7 @@ export function canStopAtPath(hierarchy: Hierarchy, path: string): boolean {
 export function hierarchyLevelItems(
   hierarchy: Hierarchy,
   parent: string | null,
-  translate: (code: string) => string = identity,
+  translate: (code: string) => string,
 ): { value: string; label: string }[] {
   const children = hierarchyChildren(hierarchy, parent);
   const parentSegment = parent?.split(".").at(-1);

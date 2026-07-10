@@ -4,9 +4,11 @@ import { ChevronRightIcon } from "lucide-react";
 
 import { natureLabel } from "#/domain/samples/nature-label.ts";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
-import { collectionMethodLabel } from "#/domain/samples/vocabulary-label.ts";
-import { materialPathLabel } from "#/domain/samples/vocabulary-label.ts";
-import { typeLabel } from "#/domain/samples/vocabulary-label.ts";
+import {
+  collectionMethodLabel,
+  materialPathLabel,
+  typeLabel,
+} from "#/domain/samples/vocabulary-label.ts";
 import { m } from "#/paraglide/messages.js";
 
 type SampleViewProps = {
