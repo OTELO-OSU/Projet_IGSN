@@ -6,11 +6,9 @@ import { type TreeNode } from "../../path/tree-node.ts";
 // childless leaves labelled by their own code (see tree-node.ts).
 export const rockTree = {
   igneous: {
-    label: "igneous",
     choices: ["plutonic", "volcanic"],
   },
   sedimentary: {
-    label: "sedimentary",
     choices: [
       "microbialite",
       "clastic_sedimentary_rock",
@@ -28,11 +26,9 @@ export const rockTree = {
   // branches (path is identity). Every level is mandatory down to a rock leaf
   // (the default: nothing is marked `optional: true`).
   plutonic: {
-    label: "plutonic",
     choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
   },
   volcanic: {
-    label: "volcanic",
     choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
   },
 
@@ -85,7 +81,6 @@ export const rockTree = {
   },
 
   clastic_sedimentary_rock: {
-    label: "clastic_sedimentary_rock",
     choices: [
       "rudite",
       "olistostrome",
@@ -98,7 +93,6 @@ export const rockTree = {
   },
 
   biochemical_and_chemical_sedimentary_rock: {
-    label: "biochemical_and_chemical_sedimentary_rock",
     choices: [
       "concretion",
       "coprolite",
@@ -120,7 +114,6 @@ export const rockTree = {
   },
 
   carbonate_rock: {
-    label: "carbonate_rock",
     choices: [
       "limestone",
       "dolostone",
@@ -136,7 +129,6 @@ export const rockTree = {
   },
 
   evaporite: {
-    label: "evaporite",
     choices: [
       "gypsum_stone",
       "anhydrite_stone",
@@ -157,7 +149,6 @@ export const rockTree = {
   },
 
   phosphorite: {
-    label: "phosphorite",
     choices: [
       "guano",
       "phosphate_mudstone",
@@ -174,7 +165,6 @@ export const rockTree = {
   },
 
   ironstone: {
-    label: "ironstone",
     choices: [
       "goethite_stone",
       "hematite_stone",
@@ -196,12 +186,10 @@ export const rockTree = {
   },
 
   organic_rich_rock: {
-    label: "organic_rich_rock",
     choices: ["coal", "asphaltite", "sapropelite", "other"],
   },
 
   siliceous_rock: {
-    label: "siliceous_rock",
     choices: [
       "diatomite",
       "radiolarite",

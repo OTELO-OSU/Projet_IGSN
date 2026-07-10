@@ -15,7 +15,6 @@ import { type TreeNode } from "../path/tree-node.ts";
 // resolution) instead of cycling on bare `core`.
 const typeTree = {
   core: {
-    label: "core",
     choices: [
       "core",
       "half_round",

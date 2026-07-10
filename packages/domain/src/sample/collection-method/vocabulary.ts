@@ -14,7 +14,6 @@ import { type TreeNode } from "../path/tree-node.ts";
 // dotted childless override so expandPaths stops there instead of cycling.
 const collectionMethodTree = {
   coring: {
-    label: "coring",
     optional: true,
     choices: [
       "coring",
@@ -40,7 +39,6 @@ const collectionMethodTree = {
   },
   "coring.coring": { label: "coring" },
   gravity_corer: {
-    label: "gravity_corer",
     optional: true,
     choices: [
       "gravity_corer",
@@ -55,7 +53,6 @@ const collectionMethodTree = {
   },
   "gravity_corer.gravity_corer": { label: "gravity_corer" },
   piston_corer: {
-    label: "piston_corer",
     optional: true,
     choices: [
       "giant",
@@ -72,13 +69,11 @@ const collectionMethodTree = {
     ],
   },
   dredging: {
-    label: "dredging",
     optional: true,
     choices: ["dredging", "chain_bag", "chain_bag_dredge"],
   },
   "dredging.dredging": { label: "dredging" },
   grab: {
-    label: "grab",
     optional: true,
     choices: ["grab", "hov", "rov"],
   },

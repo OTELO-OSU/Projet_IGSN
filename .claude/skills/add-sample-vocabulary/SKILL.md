@@ -15,11 +15,13 @@ of `lower_snake_case` codes stored as Postgres `ltree` (ADR
 (`rock`, `coring`) is a valid partial value.
 
 **All three share one shape**: a segment-keyed tree of `TreeNode`
-(`{ label, choices?, optional? }`), `satisfies Record<string, TreeNode>`, widened
+(`{ label?, choices?, optional? }`), `satisfies Record<string, TreeNode>`, widened
 to `Record<Key, TreeNode>`, expanded by `expandPaths(TREE, ROOTS)`, validated by a
 Zod `.refine` against that list. A segment with no entry defaults to a childless
-leaf labelled by its own code: plain leaves need NO entry, only nodes carrying
-`choices`, `optional`, or a dotted context override do. Navigated by the generic helpers in `path/`:
+leaf; a node's label code defaults to its own segment, so bare-segment entries
+omit `label` and every dotted override key states its `label` explicitly. Plain
+leaves need NO entry, only nodes carrying `choices`, `optional`, or a dotted
+context override do. Navigated by the generic helpers in `path/`:
 `pathSegment`, `pathChildren`, `isPathLeaf`, `isPathComplete(paths, path, isOptional)`
 (the `isOptional` callback is each vocabulary's completeness policy).
 
@@ -72,7 +74,7 @@ A node can list itself as a child: `Core > Core`. Put the literal `"core"` in
 recursion:
 
 ```ts
-core: { label: "core", choices: ["core", "half_round", /* ... */] },
+core: { choices: ["core", "half_round", /* ... */] },
 "core.core": { label: "core" }, // childless override terminating core.core
 ```
 
@@ -112,11 +114,11 @@ expect(sampleTypeSchema.safeParse("core.core").success).toBe(true);
    `optional: true` (material and yellow), or needs a dotted override. A mistyped
    literal silently becomes a leaf; the apps' label-coverage specs catch it (no
    translation for the typo'd segment), and every defined entry must resolve from
-   some path (`should resolve the entry` in the tree spec).
+   some path (`should resolve every entry` in the tree spec).
 
    ```ts
    export const rockTree = {
-     igneous: { label: "igneous", choices: ["plutonic", "volcanic"] },
+     igneous: { choices: ["plutonic", "volcanic"] },
    } satisfies Record<string, TreeNode>;
    // classification.ts: const materialTree = { rock: {...}, ...rockTree } satisfies ...
    ```

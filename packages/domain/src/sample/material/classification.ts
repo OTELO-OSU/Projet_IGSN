@@ -18,7 +18,6 @@ import { sedimentTree } from "./classification/sediment-subtree.ts";
 // own code (see tree-node.ts).
 const materialTree = {
   rock: {
-    label: "rock",
     choices: [
       "igneous",
       "metamorphic",
@@ -28,7 +27,6 @@ const materialTree = {
     ],
   },
   sediment: {
-    label: "sediment",
     choices: [
       "exogenous_detritic",
       "volcano_detritic",
@@ -37,7 +35,6 @@ const materialTree = {
     ],
   },
   extraterrestrial_rock: {
-    label: "extraterrestrial_rock",
     choices: ["returned_samples", "meteorites", "micrometeorites"],
   },
 

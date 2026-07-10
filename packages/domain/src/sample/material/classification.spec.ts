@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolvePathNode } from "../path/resolve-node.ts";
+import { unresolvedEntries } from "../../../test/unresolved-entries.ts";
 import {
   MATERIAL_PATHS,
   MATERIAL_TREE,
@@ -75,23 +75,7 @@ describe("materialPathSchema", () => {
 });
 
 describe("MATERIAL_TREE", () => {
-  // An undefined segment defaults to a childless leaf, so a mistyped entry key
-  // would silently drop its choices: every entry must resolve for some path.
-  it.each(Object.keys(MATERIAL_TREE))(
-    "should resolve the entry %s from some path",
-    (key) => {
-      expect(
-        MATERIAL_PATHS.some(
-          (path) => resolvePathNode(MATERIAL_TREE, path)?.key === key,
-        ),
-      ).toBe(true);
-    },
-  );
-
-  it.each(Object.entries(MATERIAL_TREE))(
-    "should give %s a non-empty label code",
-    (_segment, node) => {
-      expect(node.label).toMatch(/^[a-z0-9_]+$/);
-    },
-  );
+  it("should resolve every entry from some path", () => {
+    expect(unresolvedEntries(MATERIAL_TREE, MATERIAL_PATHS)).toEqual([]);
+  });
 });

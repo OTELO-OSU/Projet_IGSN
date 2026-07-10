@@ -7,16 +7,13 @@ import { type TreeNode } from "../../path/tree-node.ts";
 // childless leaves labelled by their own code (see tree-node.ts).
 export const extraterrestrialRockTree = {
   returned_samples: {
-    label: "returned_samples",
     choices: ["lunar_sample", "asteroid", "other"],
   },
   meteorites: {
-    label: "meteorites",
     choices: ["chondrites", "achondrite_primitive", "achondrites"],
   },
 
   lunar_sample: {
-    label: "lunar_sample",
     choices: ["rock", "soil", "core"],
   },
   // `rock` is the material root elsewhere; here it is a childless leaf, so
@@ -24,12 +21,10 @@ export const extraterrestrialRockTree = {
   "lunar_sample.rock": { label: "rock" },
 
   asteroid: {
-    label: "asteroid",
     choices: ["itokawa", "ryugu", "bennu", "other"],
   },
 
   chondrites: {
-    label: "chondrites",
     choices: [
       "carbonaceous_chondrites",
       "ordinary_chondrites",
@@ -40,7 +35,6 @@ export const extraterrestrialRockTree = {
     ],
   },
   carbonaceous_chondrites: {
-    label: "carbonaceous_chondrites",
     choices: [
       "ci",
       "cm",
@@ -60,17 +54,14 @@ export const extraterrestrialRockTree = {
   },
 
   ordinary_chondrites: {
-    label: "ordinary_chondrites",
     choices: ["h", "l", "ll", "h_l", "l_ll", "ungrouped"],
   },
 
   enstatite_chondrites: {
-    label: "enstatite_chondrites",
     choices: ["eh", "eha", "ehb", "el", "ela", "elb"],
   },
 
   achondrite_primitive: {
-    label: "achondrite_primitive",
     choices: [
       "lodranite",
       "acapulcoite",
@@ -83,11 +74,9 @@ export const extraterrestrialRockTree = {
   },
 
   achondrites: {
-    label: "achondrites",
     choices: ["stony_achondrite", "iron_meteorite", "stony_iron_meteorite"],
   },
   stony_achondrite: {
-    label: "stony_achondrite",
     choices: [
       "martian_meteorite",
       "lunar_meteorite",
@@ -100,7 +89,6 @@ export const extraterrestrialRockTree = {
   },
 
   martian_meteorite: {
-    label: "martian_meteorite",
     choices: [
       "nakhlite",
       "shergottite",
@@ -114,7 +102,6 @@ export const extraterrestrialRockTree = {
   },
 
   lunar_meteorite: {
-    label: "lunar_meteorite",
     choices: [
       "anorthosite",
       "basaltic_breccia",
@@ -138,12 +125,10 @@ export const extraterrestrialRockTree = {
   },
 
   hed: {
-    label: "hed",
     choices: ["howardite", "eucrite", "diogenite"],
   },
 
   iron_meteorite: {
-    label: "iron_meteorite",
     choices: [
       "iab",
       "ic",
@@ -162,16 +147,13 @@ export const extraterrestrialRockTree = {
     ],
   },
   iab: {
-    label: "iab",
     choices: ["main_group", "shl", "shh", "sll", "ungrouped"],
   },
 
   stony_iron_meteorite: {
-    label: "stony_iron_meteorite",
     choices: ["mesosiderite", "pallasite"],
   },
   pallasite: {
-    label: "pallasite",
     choices: ["main_group", "eagle_station_group", "ungrouped"],
   },
 } satisfies Record<string, TreeNode>;

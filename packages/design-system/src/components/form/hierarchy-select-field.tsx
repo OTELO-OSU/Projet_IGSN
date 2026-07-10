@@ -1,12 +1,12 @@
 import { useTypedAppFormContext } from "./app-form.tsx";
 
 // Structural mirror of the domain vocabulary trees (design-system MUST NOT
-// import domain). `label` is the node's own code; the widget renders it through
-// its `translate` prop. A node with children must be refined unless marked
-// `optional: true` (the only valid non-leaf stop); `choices` lists the child
-// segment codes.
+// import domain). A node's label code defaults to its own segment; `label`
+// overrides it. The widget renders the code through its `translate` prop. A
+// node with children must be refined unless marked `optional: true` (the only
+// valid non-leaf stop); `choices` lists the child segment codes.
 export type HierarchyNodeDef = {
-  label: string;
+  label?: string;
   optional?: boolean;
   choices?: readonly string[];
 };
@@ -40,8 +40,8 @@ function resolveNode(
 const identity = (code: string) => code;
 
 // The label of a path: its node's label code run through the caller's
-// translation. Node-resolved, so a dotted override key can label its occurrence
-// differently from the bare segment; an undefined segment labels as its own code.
+// translation. Defaults to the path's own segment; a node's `label` (e.g. on a
+// dotted override key) relabels its occurrence.
 export function hierarchyPathLabel(
   hierarchy: Hierarchy,
   path: string,
