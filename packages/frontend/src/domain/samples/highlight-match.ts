@@ -18,7 +18,10 @@ export function matchRanges(text: string, query: string): [number, number][] {
   // Normalized haystack plus, for every normalized code point, the index of the
   // original character it came from (a char can normalize to 0..n code points).
   const chars = Array.from({ length: text.length }, (_, i) =>
-    [...normalize(text[i] ?? "")].map((codePoint) => [codePoint, i] as const),
+    Array.from(
+      normalize(text[i] ?? ""),
+      (codePoint) => [codePoint, i] as const,
+    ),
   ).flat();
   const haystack = chars.map(([codePoint]) => codePoint).join("");
   const originalIndex = chars.map(([, i]) => i);
