@@ -2,35 +2,26 @@ import { type TreeNode } from "../../path/tree-node.ts";
 
 // Descendants of the `sediment` root (screenshot "Sediment classification").
 // Spread into the material tree in classification.ts. Every inner box is pink
-// (mandatory), so parents carry `optional: false`; leaves are valid stops. The
-// shared `other` leaf lives in classification.ts (reused by rock too).
+// (mandatory, the default: no node is marked `optional: true`); leaves are
+// valid stops. The shared `other` leaf lives in classification.ts (reused by
+// rock too).
 export const sedimentTree = {
   exogenous_detritic: {
     label: "exogenous_detritic",
-    choices: ["gravel", "sand", "silt", "clay", "heterogeneous"],
-    optional: false,
-  },
+    choices: ["gravel", "sand", "silt", "clay", "heterogeneous"],  },
   volcano_detritic: {
     label: "volcano_detritic",
-    choices: ["bomb", "lapilli", "ash"],
-    optional: false,
-  },
+    choices: ["bomb", "lapilli", "ash"],  },
   biogenic: {
     label: "biogenic",
-    choices: ["carbonate", "siliceous", "organic_rich", "bioprecipitated"],
-    optional: false,
-  },
+    choices: ["carbonate", "siliceous", "organic_rich", "bioprecipitated"],  },
   physico_chemical: {
     label: "physico_chemical",
-    choices: ["precipitates", "alteration_residual_products"],
-    optional: false,
-  },
+    choices: ["precipitates", "alteration_residual_products"],  },
 
   gravel: {
     label: "gravel",
-    choices: ["boulder", "cobble", "pebble", "granule"],
-    optional: false,
-  },
+    choices: ["boulder", "cobble", "pebble", "granule"],  },
   boulder: { label: "boulder" },
   cobble: { label: "cobble" },
   pebble: { label: "pebble" },
@@ -46,9 +37,7 @@ export const sedimentTree = {
       "medium_sand",
       "fine_sand",
       "very_fine_sand",
-    ],
-    optional: false,
-  },
+    ],  },
   very_coarse_sand: { label: "very_coarse_sand" },
   coarse_sand: { label: "coarse_sand" },
   medium_sand: { label: "medium_sand" },
@@ -63,9 +52,7 @@ export const sedimentTree = {
       "medium_silt",
       "fine_silt",
       "very_fine_silt",
-    ],
-    optional: false,
-  },
+    ],  },
   very_coarse_silt: { label: "very_coarse_silt" },
   coarse_silt: { label: "coarse_silt" },
   medium_silt: { label: "medium_silt" },
@@ -75,27 +62,19 @@ export const sedimentTree = {
   clay: { label: "clay" },
   heterogeneous: {
     label: "heterogeneous",
-    choices: ["diamicton", "other"],
-    optional: false,
-  },
+    choices: ["diamicton", "other"],  },
   diamicton: { label: "diamicton" },
 
   // Bomb, Lapilli and Ash share the same four constituents.
   bomb: {
     label: "bomb",
-    choices: ["pumices", "glass", "crystals", "rock_fragments"],
-    optional: false,
-  },
+    choices: ["pumices", "glass", "crystals", "rock_fragments"],  },
   lapilli: {
     label: "lapilli",
-    choices: ["pumices", "glass", "crystals", "rock_fragments"],
-    optional: false,
-  },
+    choices: ["pumices", "glass", "crystals", "rock_fragments"],  },
   ash: {
     label: "ash",
-    choices: ["pumices", "glass", "crystals", "rock_fragments"],
-    optional: false,
-  },
+    choices: ["pumices", "glass", "crystals", "rock_fragments"],  },
   pumices: { label: "pumices" },
   glass: { label: "glass" },
   crystals: { label: "crystals" },
@@ -103,63 +82,47 @@ export const sedimentTree = {
 
   carbonate: {
     label: "carbonate",
-    choices: ["grain_supported", "mud_supported", "boundstone"],
-    optional: false,
-  },
+    choices: ["grain_supported", "mud_supported", "boundstone"],  },
   grain_supported: {
     label: "grain_supported",
-    choices: ["rudstone", "grainstone", "packstone"],
-    optional: false,
-  },
+    choices: ["rudstone", "grainstone", "packstone"],  },
   rudstone: { label: "rudstone" },
   mud_supported: {
     label: "mud_supported",
-    choices: ["floatstone", "wackestone", "mudstone"],
-    optional: false,
-  },
+    choices: ["floatstone", "wackestone", "mudstone"],  },
   floatstone: { label: "floatstone" },
   // `boundstone` is a childless leaf elsewhere; here it needs textural children,
   // so override it only in the carbonate context (longest-suffix match).
   "carbonate.boundstone": {
     label: "boundstone",
-    choices: ["frame", "baffle", "bind"],
-    optional: false,
-  },
+    choices: ["frame", "baffle", "bind"],  },
   frame: { label: "frame" },
   baffle: { label: "baffle" },
   bind: { label: "bind" },
 
   siliceous: {
     label: "siliceous",
-    choices: ["diatoms", "radiolarians", "sponges"],
-    optional: false,
-  },
+    choices: ["diatoms", "radiolarians", "sponges"],  },
   diatoms: { label: "diatoms" },
   radiolarians: { label: "radiolarians" },
   sponges: { label: "sponges" },
 
   organic_rich: {
     label: "organic_rich",
-    choices: ["peat", "coal", "algal_rich", "organic_mud", "other"],
-    optional: false,
-  },
+    choices: ["peat", "coal", "algal_rich", "organic_mud", "other"],  },
   peat: { label: "peat" },
   algal_rich: { label: "algal_rich" },
   organic_mud: { label: "organic_mud" },
 
   bioprecipitated: {
     label: "bioprecipitated",
-    choices: ["microbialites", "organic_decay_induced"],
-    optional: false,
-  },
+    choices: ["microbialites", "organic_decay_induced"],  },
   microbialites: { label: "microbialites" },
   organic_decay_induced: { label: "organic_decay_induced" },
 
   precipitates: {
     label: "precipitates",
-    choices: ["evaporitic", "metalliferous", "carbonated", "phosphated"],
-    optional: false,
-  },
+    choices: ["evaporitic", "metalliferous", "carbonated", "phosphated"],  },
   evaporitic: { label: "evaporitic" },
   metalliferous: { label: "metalliferous" },
   carbonated: { label: "carbonated" },
@@ -167,9 +130,7 @@ export const sedimentTree = {
 
   alteration_residual_products: {
     label: "alteration_residual_products",
-    choices: ["regoliths", "altered_clays"],
-    optional: false,
-  },
+    choices: ["regoliths", "altered_clays"],  },
   regoliths: { label: "regoliths" },
   altered_clays: { label: "altered_clays" },
 } satisfies Record<string, TreeNode>;

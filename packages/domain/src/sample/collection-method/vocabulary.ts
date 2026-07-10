@@ -5,7 +5,7 @@ import { type TreeNode } from "../path/tree-node.ts";
 
 // Hierarchical collection-method vocabulary, a segment-keyed tree like material
 // (see classification.ts). Every level is optional: any node is a valid stop, so
-// nothing is marked `optional: false` and there is no completeness gate (a
+// every non-leaf is marked `optional: true` and there is no completeness gate (a
 // collection method never blocks publication).
 //
 // A choices entry or root must be a key of this tree; a mistyped literal trips
@@ -16,6 +16,7 @@ const collectionMethodTree = {
   camera_sled_camera_tow: { label: "camera_sled_camera_tow" },
   coring: {
     label: "coring",
+    optional: true,
     choices: [
       "coring",
       "box_corer",
@@ -41,6 +42,7 @@ const collectionMethodTree = {
   "coring.coring": { label: "coring" },
   gravity_corer: {
     label: "gravity_corer",
+    optional: true,
     choices: [
       "gravity_corer",
       "giant",
@@ -55,6 +57,7 @@ const collectionMethodTree = {
   "gravity_corer.gravity_corer": { label: "gravity_corer" },
   piston_corer: {
     label: "piston_corer",
+    optional: true,
     choices: [
       "giant",
       "stationary_piston",
@@ -91,6 +94,7 @@ const collectionMethodTree = {
   stationary_piston: { label: "stationary_piston" },
   dredging: {
     label: "dredging",
+    optional: true,
     choices: ["dredging", "chain_bag", "chain_bag_dredge"],
   },
   "dredging.dredging": { label: "dredging" },
@@ -99,6 +103,7 @@ const collectionMethodTree = {
   experimental_apparatus: { label: "experimental_apparatus" },
   grab: {
     label: "grab",
+    optional: true,
     choices: ["grab", "hov", "rov"],
   },
   "grab.grab": { label: "grab" },

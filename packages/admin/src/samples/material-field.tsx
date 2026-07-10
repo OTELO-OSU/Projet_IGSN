@@ -5,8 +5,9 @@ import { m } from "#/paraglide/messages.js";
 import { materialPathLabel } from "#/samples/material-path-label.ts";
 
 // Material shares the generic hierarchy cascade with type and collection method;
-// the tree itself carries the completeness policy (`optional: false` marks a
-// node that must be refined), so an ancestor like "rock" offers only its children.
+// the tree itself carries the completeness policy (a node with children must be
+// refined unless marked `optional: true`), so an ancestor like "rock" offers
+// only its children.
 export function MaterialField() {
   return (
     <HierarchySelectField

@@ -6,14 +6,13 @@ import {
   type SampleType,
 } from "./vocabulary.ts";
 
-// Type's completeness policy, same read as material's: a node is an optional
-// stop unless the tree marks it `optional: false`. The tree flags `core` (the
-// only non-leaf), so a type is complete only at a leaf; an ancestor path
-// ("core") is a valid draft but not publishable.
+// Type's completeness policy, same read as material's: a node must be refined
+// unless the tree marks it `optional: true`. Nothing is, so a type is complete
+// only at a leaf; an ancestor path ("core") is a valid draft but not publishable.
 export function isSampleTypeComplete(type: SampleType): boolean {
   return isPathComplete(
     SAMPLE_TYPES,
     type,
-    (node) => resolvePathNode(SAMPLE_TYPE_TREE, node)?.node.optional !== false,
+    (node) => resolvePathNode(SAMPLE_TYPE_TREE, node)?.node.optional === true,
   );
 }

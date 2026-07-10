@@ -4,8 +4,9 @@ import { expandPaths } from "../path/expand-paths.ts";
 import { type TreeNode } from "../path/tree-node.ts";
 
 // Hierarchical sample-type vocabulary (ADR 0011), a segment-keyed tree like
-// material (see classification.ts). Every level is mandatory, so a type is
-// complete only at a leaf (see isSampleTypeComplete) and no node is optional.
+// material (see classification.ts). Every level is mandatory (the default: no
+// node is marked `optional: true`), so a type is complete only at a leaf (see
+// isSampleTypeComplete).
 //
 // A choices entry or root must be a key of this tree; a mistyped literal trips
 // the tree spec (vocabulary.spec.ts). `core` lists itself as a child (the
@@ -15,8 +16,6 @@ import { type TreeNode } from "../path/tree-node.ts";
 const typeTree = {
   core: {
     label: "core",
-    // The only non-leaf: a bare "core" must be refined (leaf-only completeness).
-    optional: false,
     choices: [
       "core",
       "half_round",

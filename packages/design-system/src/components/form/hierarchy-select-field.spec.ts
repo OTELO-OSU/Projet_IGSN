@@ -8,21 +8,20 @@ import {
   type Hierarchy,
 } from "./hierarchy-select-field.tsx";
 
-// A fixture exercising every tree feature: a must-refine node (rock), an
-// optional node with children (sedimentary), plain leaves, a self-child stop
-// (water.water) with its dotted childless override.
+// A fixture exercising every tree feature: a must-refine node (rock, the
+// default), an optional node with children (sedimentary), plain leaves, a
+// self-child stop (water.water) with its dotted childless override.
 const hierarchy: Hierarchy = {
   roots: ["rock", "water"],
   nodes: {
     rock: {
       label: "rock",
-      optional: false,
       choices: ["igneous", "sedimentary"],
     },
     igneous: { label: "igneous" },
-    sedimentary: { label: "sedimentary", choices: ["sand"] },
+    sedimentary: { label: "sedimentary", optional: true, choices: ["sand"] },
     sand: { label: "sand" },
-    water: { label: "water", choices: ["water", "sea"] },
+    water: { label: "water", optional: true, choices: ["water", "sea"] },
     "water.water": { label: "water" },
     sea: { label: "sea" },
   },
@@ -61,7 +60,7 @@ describe("canStopAtPath", () => {
     expect(canStopAtPath(hierarchy, path)).toBe(true);
   });
 
-  it("should forbid stopping at a node marked optional: false", () => {
+  it("should forbid stopping at a non-leaf not marked optional", () => {
     expect(canStopAtPath(hierarchy, "rock")).toBe(false);
   });
 });

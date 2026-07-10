@@ -25,7 +25,8 @@ The widget receives the tree itself as one self-describing `hierarchy` prop,
 - Children of a path are the resolved node's `choices` composed onto the path;
   level 0 offers `roots`. This replaces `buildHierarchyTree` and the `choices`
   prop.
-- A path is a valid stop when it is a leaf or its node has `optional !== false`.
+- A path is a valid stop when it is a leaf or its node has `optional: true`
+  (mandatory by default, tightening ADR 0011's `optional !== false` reading).
   This replaces `canStopAt`, and is exported as `canStopAtPath` so a
   consistency spec can call it.
 - `getLabel` stays injected: the tree carries stable codes, labels resolve per
@@ -33,8 +34,9 @@ The widget receives the tree itself as one self-describing `hierarchy` prop,
 
 Domain-side, each vocabulary exports its bundle
 (`MATERIAL_HIERARCHY`, `SAMPLE_TYPE_HIERARCHY`, `COLLECTION_METHOD_HIERARCHY`),
-`core` is marked `optional: false` (the only non-leaf sample type), and
-`isSampleTypeComplete` unifies on the same tree read as `isMaterialComplete`.
+collection method marks its non-leaves `optional: true` (every node is a valid
+stop there), material and type mark nothing (their non-leaves must be refined),
+and `isSampleTypeComplete` unifies on the same tree read as `isMaterialComplete`.
 The stop policy is thus expressed once per source of truth. No cycle detection
 in the widget: domain `expandPaths` still runs at import and throws on cycles.
 

@@ -25,23 +25,24 @@ Adding a node is **pure data**: no migration, no UI change. Follow TDD (spec fir
 
 ## How the three differ
 
-|                 | material                                                  | `type`                         | `collectionMethod`                          |
-| --------------- | --------------------------------------------------------- | ------------------------------ | ------------------------------------------- |
-| Authored in     | `classification.ts` roots + `classification/*-subtree.ts` | inline `vocabulary.ts`         | inline `vocabulary.ts`                      |
-| Completeness    | per node: optional unless `optional: false`               | leaf-only                      | none: every node is a valid stop            |
-| Gates publish?  | yes (`isMaterialComplete`)                                | yes (`isSampleTypeComplete`)   | no                                          |
-| Admin label map | `material-path-label.ts` (dynamic lookup)                 | `type-label.ts` (typed Record) | `collection-method-label.ts` (typed Record) |
-| i18n key        | bare code (`rock`)                                        | `type_*`                       | `collection_method_*`                       |
+|                 | material                                                   | `type`                         | `collectionMethod`                          |
+| --------------- | ---------------------------------------------------------- | ------------------------------ | ------------------------------------------- |
+| Authored in     | `classification.ts` roots + `classification/*-subtree.ts`  | inline `vocabulary.ts`         | inline `vocabulary.ts`                      |
+| Completeness    | per node: mandatory unless `optional: true`                | leaf-only (nothing optional)   | none: every non-leaf is `optional: true`    |
+| Gates publish?  | yes (`isMaterialComplete`)                                 | yes (`isSampleTypeComplete`)   | no                                          |
+| Admin label map | `material-path-label.ts` (dynamic lookup)                  | `type-label.ts` (typed Record) | `collection-method-label.ts` (typed Record) |
+| i18n key        | bare code (`rock`)                                         | `type_*`                       | `collection_method_*`                       |
 
-The `optional` flag only bites in material; the others have a vocabulary-wide
-policy and ignore it.
+A node with children must be refined unless marked `optional: true`; leaves are
+always valid stops. `type` marks nothing; `collectionMethod` marks every
+non-leaf.
 
 ## Material source screenshots
 
 Material usually arrives as a color-legended screenshot:
 
-- **Pink = mandatory**: parent is not a valid stop, give it `optional: false`.
-- **Yellow = optional**: valid stop, leave `optional` off. Leaves are always stops.
+- **Pink = mandatory**: parent is not a valid stop, leave `optional` off (the default).
+- **Yellow = optional**: valid stop, give it `optional: true`. Leaves are always stops.
 
 Ambiguous or unlegended color: ask, do not guess.
 
@@ -104,7 +105,7 @@ expect(sampleTypeSchema.safeParse("core.core").success).toBe(true);
    to its parent). Each fragment has its own `satisfies Record<string, TreeNode>`.
 
    Add the key, add its literal to the parent's `choices` (a root: to the roots
-   array), and set `optional: false` if material and pink. A mistyped `choices`/root
+   array), and set `optional: true` if material and yellow. A mistyped `choices`/root
    literal fails the tree spec (`should define the child`) or the `satisfies` guard.
 
    ```ts

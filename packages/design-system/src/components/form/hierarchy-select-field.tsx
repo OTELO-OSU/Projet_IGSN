@@ -1,9 +1,9 @@
 import { useTypedAppFormContext } from "./app-form.tsx";
 
 // Structural mirror of the domain vocabulary trees (design-system MUST NOT
-// import domain). `label` is the node's own code, not a translation; `optional:
-// false` marks a node that must be refined, so it is not a valid stop;
-// `choices` lists the child segment codes.
+// import domain). `label` is the node's own code, not a translation; a node
+// with children must be refined unless marked `optional: true` (the only valid
+// non-leaf stop); `choices` lists the child segment codes.
 export type HierarchyNodeDef = {
   label: string;
   optional?: boolean;
@@ -46,11 +46,11 @@ export function hierarchyChildren(
 }
 
 // A path is a valid stop when it has nothing left to refine (leaf) or its node
-// is optional. Exported so consumers can prove the widget's stop options match
-// their own completeness policy.
+// is marked optional. Exported so consumers can prove the widget's stop options
+// match their own completeness policy.
 export function canStopAtPath(hierarchy: Hierarchy, path: string): boolean {
   const node = resolveNode(hierarchy, path);
-  return !node?.choices?.length || node.optional !== false;
+  return !node?.choices?.length || node.optional === true;
 }
 
 // The options offered at a level: the parent-itself "stop here" option (only

@@ -23,7 +23,6 @@ const materialTree = {
       "hydrothermal",
       "unknown",
     ],
-    optional: false,
   },
   sediment: {
     label: "sediment",
@@ -32,9 +31,7 @@ const materialTree = {
       "volcano_detritic",
       "biogenic",
       "physico_chemical",
-    ],
-    optional: false,
-  },
+    ],  },
   mineral: { label: "mineral" },
   fossil: { label: "fossil" },
   synthetic_rock_mineral: { label: "synthetic_rock_mineral" },
