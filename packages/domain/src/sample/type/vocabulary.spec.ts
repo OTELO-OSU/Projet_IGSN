@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { resolvePathNode } from "../path/resolve-node.ts";
 import {
-  SAMPLE_TYPE_ROOTS,
   SAMPLE_TYPE_TREE,
   SAMPLE_TYPES,
   sampleTypeSchema,
@@ -53,19 +53,18 @@ describe("SAMPLE_TYPES", () => {
 });
 
 describe("SAMPLE_TYPE_TREE", () => {
-  const keys = new Set(Object.keys(SAMPLE_TYPE_TREE));
-
-  it.each(SAMPLE_TYPE_ROOTS)("should define the root %s as a node", (root) => {
-    expect(keys.has(root)).toBe(true);
-  });
-
-  it.each(
-    Object.entries(SAMPLE_TYPE_TREE).flatMap(([parent, node]) =>
-      (node.choices ?? []).map((child) => [parent, child] as const),
-    ),
-  )("should define the child %s (of %s) as a node", (_parent, child) => {
-    expect(keys.has(child)).toBe(true);
-  });
+  // An undefined segment defaults to a childless leaf, so a mistyped entry key
+  // would silently drop its choices: every entry must resolve for some path.
+  it.each(Object.keys(SAMPLE_TYPE_TREE))(
+    "should resolve the entry %s from some path",
+    (key) => {
+      expect(
+        SAMPLE_TYPES.some(
+          (path) => resolvePathNode(SAMPLE_TYPE_TREE, path)?.key === key,
+        ),
+      ).toBe(true);
+    },
+  );
 
   it.each(Object.entries(SAMPLE_TYPE_TREE))(
     "should give %s a non-empty label code",

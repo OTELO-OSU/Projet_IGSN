@@ -2,14 +2,13 @@ import { type TreeNode } from "../../path/tree-node.ts";
 
 // Descendants of the `rock` root (MINDAT): igneous, metamorphic, the sedimentary
 // subtree, hydrothermal, unknown. Spread into the material tree in
-// classification.ts. The shared `other` leaf lives there, since sediment reuses
-// it too (the full path is the identity, ADR 0010).
+// classification.ts. Segments without an entry (metamorphic, granite...) are
+// childless leaves labelled by their own code (see tree-node.ts).
 export const rockTree = {
   igneous: {
     label: "igneous",
     choices: ["plutonic", "volcanic"],
   },
-  metamorphic: { label: "metamorphic" },
   sedimentary: {
     label: "sedimentary",
     choices: [
@@ -20,16 +19,14 @@ export const rockTree = {
       "hybrid_sedimentary_rock",
     ],
   },
-  hydrothermal: { label: "hydrothermal" },
-  unknown: { label: "unknown" },
 
   // Igneous subtree (screenshot): plutonic/volcanic (Niv.2), then chemistry
   // (Niv.3, shared codes), then specific rocks (Niv.4). Each chemistry code
-  // recurs under both branches with different children, so a bare key satisfies
-  // the tree spec and a dotted `plutonic.*` / `volcanic.*` override carries that
-  // branch's choices. `carbonatite` and `hyperalkaline_rocks` are shared leaves
-  // of both `exotic` branches (path is identity). Every level is mandatory down
-  // to a rock leaf (the default: nothing is marked `optional: true`).
+  // recurs under both branches with different children, so a dotted
+  // `plutonic.*` / `volcanic.*` override carries that branch's choices.
+  // `carbonatite` and `hyperalkaline_rocks` are shared leaves of both `exotic`
+  // branches (path is identity). Every level is mandatory down to a rock leaf
+  // (the default: nothing is marked `optional: true`).
   plutonic: {
     label: "plutonic",
     choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
@@ -38,12 +35,6 @@ export const rockTree = {
     label: "volcanic",
     choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
   },
-
-  felsic: { label: "felsic" },
-  intermediate: { label: "intermediate" },
-  mafic: { label: "mafic" },
-  ultramafic: { label: "ultramafic" },
-  exotic: { label: "exotic" },
 
   "plutonic.felsic": {
     label: "felsic",
@@ -93,36 +84,6 @@ export const rockTree = {
     ],
   },
 
-  granite: { label: "granite" },
-  granodiorite: { label: "granodiorite" },
-  tonalite: { label: "tonalite" },
-  trondhjemite: { label: "trondhjemite" },
-  syenite: { label: "syenite" },
-  monzonite: { label: "monzonite" },
-  diorite: { label: "diorite" },
-  peridotite: { label: "peridotite" },
-  pyroxenite: { label: "pyroxenite" },
-  hornblendite: { label: "hornblendite" },
-  carbonatite: { label: "carbonatite" },
-  hyperalkaline_rocks: { label: "hyperalkaline_rocks" },
-  rhyolite: { label: "rhyolite" },
-  dacite: { label: "dacite" },
-  trachyte: { label: "trachyte" },
-  latite: { label: "latite" },
-  andesite: { label: "andesite" },
-  phonolite: { label: "phonolite" },
-  basanite: { label: "basanite" },
-  tephrite: { label: "tephrite" },
-  komatiite: { label: "komatiite" },
-  picrite: { label: "picrite" },
-  foidite: { label: "foidite" },
-  kimberlite: { label: "kimberlite" },
-  lamprophyre: { label: "lamprophyre" },
-
-  microbialite: { label: "microbialite" },
-  volcaniclastic_rock: { label: "volcaniclastic_rock" },
-  hybrid_sedimentary_rock: { label: "hybrid_sedimentary_rock" },
-
   clastic_sedimentary_rock: {
     label: "clastic_sedimentary_rock",
     choices: [
@@ -135,12 +96,6 @@ export const rockTree = {
       "other",
     ],
   },
-  rudite: { label: "rudite" },
-  olistostrome: { label: "olistostrome" },
-  paraconglomerate: { label: "paraconglomerate" },
-  siliciclastic_sedimentary_rock: { label: "siliciclastic_sedimentary_rock" },
-  sandstone: { label: "sandstone" },
-  mudstone: { label: "mudstone" },
 
   biochemical_and_chemical_sedimentary_rock: {
     label: "biochemical_and_chemical_sedimentary_rock",
@@ -163,15 +118,6 @@ export const rockTree = {
       "other",
     ],
   },
-  concretion: { label: "concretion" },
-  coprolite: { label: "coprolite" },
-  moronite: { label: "moronite" },
-  oolite: { label: "oolite" },
-  pisolite: { label: "pisolite" },
-  grainstone: { label: "grainstone" },
-  wackestone: { label: "wackestone" },
-  packstone: { label: "packstone" },
-  boundstone: { label: "boundstone" },
 
   carbonate_rock: {
     label: "carbonate_rock",
@@ -188,15 +134,6 @@ export const rockTree = {
       "other",
     ],
   },
-  limestone: { label: "limestone" },
-  dolostone: { label: "dolostone" },
-  magnesite_stone: { label: "magnesite_stone" },
-  na_carbonate_rock: { label: "na_carbonate_rock" },
-  framestone: { label: "framestone" },
-  pseudosparstone: { label: "pseudosparstone" },
-  sparstone: { label: "sparstone" },
-  microsparstone: { label: "microsparstone" },
-  microstone: { label: "microstone" },
 
   evaporite: {
     label: "evaporite",
@@ -218,20 +155,6 @@ export const rockTree = {
       "other",
     ],
   },
-  gypsum_stone: { label: "gypsum_stone" },
-  anhydrite_stone: { label: "anhydrite_stone" },
-  gypsum_anhydrite_stone: { label: "gypsum_anhydrite_stone" },
-  baryte_stone: { label: "baryte_stone" },
-  polyhalite_stone: { label: "polyhalite_stone" },
-  kierserite_stone: { label: "kierserite_stone" },
-  kainite_stone: { label: "kainite_stone" },
-  halite_stone: { label: "halite_stone" },
-  sylvite_stone: { label: "sylvite_stone" },
-  carnallite_stone: { label: "carnallite_stone" },
-  borax_stone: { label: "borax_stone" },
-  kernite_stone: { label: "kernite_stone" },
-  ulexite_stone: { label: "ulexite_stone" },
-  colemanite_stone: { label: "colemanite_stone" },
 
   phosphorite: {
     label: "phosphorite",
@@ -249,16 +172,6 @@ export const rockTree = {
       "other",
     ],
   },
-  guano: { label: "guano" },
-  phosphate_mudstone: { label: "phosphate_mudstone" },
-  phosphate_packstone: { label: "phosphate_packstone" },
-  phosphate_grainstone: { label: "phosphate_grainstone" },
-  phosphate_boundstone: { label: "phosphate_boundstone" },
-  ooid_phosphorite: { label: "ooid_phosphorite" },
-  pisoid_phosphorite: { label: "pisoid_phosphorite" },
-  oncoid_phosphorite: { label: "oncoid_phosphorite" },
-  microoncoid_phosphorite: { label: "microoncoid_phosphorite" },
-  peloid_phosphorite: { label: "peloid_phosphorite" },
 
   ironstone: {
     label: "ironstone",
@@ -281,29 +194,11 @@ export const rockTree = {
       "other",
     ],
   },
-  goethite_stone: { label: "goethite_stone" },
-  hematite_stone: { label: "hematite_stone" },
-  limonite_stone: { label: "limonite_stone" },
-  siderite_stone: { label: "siderite_stone" },
-  iron_mudstone: { label: "iron_mudstone" },
-  iron_wackestone: { label: "iron_wackestone" },
-  iron_packstone: { label: "iron_packstone" },
-  iron_grainstone: { label: "iron_grainstone" },
-  iron_boundstone: { label: "iron_boundstone" },
-  ooid_ironstone: { label: "ooid_ironstone" },
-  pisoid_ironstone: { label: "pisoid_ironstone" },
-  oncoid_ironstone: { label: "oncoid_ironstone" },
-  microoncoid_ironstone: { label: "microoncoid_ironstone" },
-  peloid_ironstone: { label: "peloid_ironstone" },
-  banded_iron_formation: { label: "banded_iron_formation" },
 
   organic_rich_rock: {
     label: "organic_rich_rock",
     choices: ["coal", "asphaltite", "sapropelite", "other"],
   },
-  coal: { label: "coal" },
-  asphaltite: { label: "asphaltite" },
-  sapropelite: { label: "sapropelite" },
 
   siliceous_rock: {
     label: "siliceous_rock",
@@ -317,10 +212,4 @@ export const rockTree = {
       "other",
     ],
   },
-  diatomite: { label: "diatomite" },
-  radiolarite: { label: "radiolarite" },
-  spiculite: { label: "spiculite" },
-  sinter: { label: "sinter" },
-  porcellanite: { label: "porcellanite" },
-  chert: { label: "chert" },
 } satisfies Record<string, TreeNode>;

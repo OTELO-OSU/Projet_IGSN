@@ -8,12 +8,11 @@ import { type TreeNode } from "../path/tree-node.ts";
 // every non-leaf is marked `optional: true` and there is no completeness gate (a
 // collection method never blocks publication).
 //
-// A choices entry or root must be a key of this tree; a mistyped literal trips
-// the tree spec (vocabulary.spec.ts). A segment reused under several parents
-// (e.g. `giant` under gravity and piston corers) is one key referenced from each.
+// A segment with no entry (blasting, giant...) is a childless leaf labelled by
+// its own code (see tree-node.ts), reusable under several parents (e.g. `giant`
+// under gravity and piston corers). Each self-child (`coring.coring`...) keeps a
+// dotted childless override so expandPaths stops there instead of cycling.
 const collectionMethodTree = {
-  blasting: { label: "blasting" },
-  camera_sled_camera_tow: { label: "camera_sled_camera_tow" },
   coring: {
     label: "coring",
     optional: true,
@@ -72,49 +71,18 @@ const collectionMethodTree = {
       "hollow_auger_corer",
     ],
   },
-  box_corer: { label: "box_corer" },
-  camera_mounted: { label: "camera_mounted" },
-  drill_corer: { label: "drill_corer" },
-  free_fall_corer: { label: "free_fall_corer" },
-  hand_held_corer: { label: "hand_held_corer" },
-  kastenlot_corer: { label: "kastenlot_corer" },
-  multi_corer: { label: "multi_corer" },
-  rock_corer: { label: "rock_corer" },
-  side_saddle_corer: { label: "side_saddle_corer" },
-  submersible_mounted_corer: { label: "submersible_mounted_corer" },
-  trigger_weight_corer: { label: "trigger_weight_corer" },
-  vibrating_corer: { label: "vibrating_corer" },
-  tube_without_corer: { label: "tube_without_corer" },
-  russian_corer: { label: "russian_corer" },
-  freeze_corer: { label: "freeze_corer" },
-  hollow_auger_corer: { label: "hollow_auger_corer" },
-  giant: { label: "giant" },
-  pilot: { label: "pilot" },
-  casq_corer: { label: "casq_corer" },
-  stationary_piston: { label: "stationary_piston" },
   dredging: {
     label: "dredging",
     optional: true,
     choices: ["dredging", "chain_bag", "chain_bag_dredge"],
   },
   "dredging.dredging": { label: "dredging" },
-  chain_bag: { label: "chain_bag" },
-  chain_bag_dredge: { label: "chain_bag_dredge" },
-  experimental_apparatus: { label: "experimental_apparatus" },
   grab: {
     label: "grab",
     optional: true,
     choices: ["grab", "hov", "rov"],
   },
   "grab.grab": { label: "grab" },
-  hov: { label: "hov" },
-  rov: { label: "rov" },
-  manual: { label: "manual" },
-  probe: { label: "probe" },
-  sediment_trap: { label: "sediment_trap" },
-  spatial_mission: { label: "spatial_mission" },
-  suspended_sediment: { label: "suspended_sediment" },
-  unknown: { label: "unknown" },
 } satisfies Record<string, TreeNode>;
 
 export type CollectionMethodSegment = keyof typeof collectionMethodTree;
@@ -123,7 +91,9 @@ export type CollectionMethodSegment = keyof typeof collectionMethodTree;
 export const COLLECTION_METHOD_TREE: Record<CollectionMethodSegment, TreeNode> =
   collectionMethodTree;
 
-// Entry points: the segments a collection method can start from.
+// Entry points: the segments a collection method can start from. A root without
+// a tree entry is a plain leaf; a typo here surfaces in the apps' label-coverage
+// specs.
 export const COLLECTION_METHOD_ROOTS = [
   "blasting",
   "camera_sled_camera_tow",
@@ -137,7 +107,7 @@ export const COLLECTION_METHOD_ROOTS = [
   "spatial_mission",
   "suspended_sediment",
   "unknown",
-] as const satisfies readonly CollectionMethodSegment[];
+] as const;
 
 export const COLLECTION_METHODS = expandPaths(
   COLLECTION_METHOD_TREE,

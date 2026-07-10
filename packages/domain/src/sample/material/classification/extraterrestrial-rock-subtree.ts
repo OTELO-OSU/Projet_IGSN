@@ -2,10 +2,9 @@ import { type TreeNode } from "../../path/tree-node.ts";
 
 // Descendants of the `extraterrestrial_rock` root (screenshot "Extraterrestrial
 // rocks classification"). Spread into the material tree in classification.ts.
-// Every parent is mandatory (the default: no node is marked `optional: true`);
-// leaves are valid stops. The shared `other` leaf lives in classification.ts;
-// `ungrouped` is this subtree's own shared leaf, reused under several parents
-// (the full path is the identity, ADR 0010).
+// Every parent is mandatory (the default: no node is marked `optional: true`).
+// Segments without an entry (micrometeorites, ungrouped, ryugu...) are
+// childless leaves labelled by their own code (see tree-node.ts).
 export const extraterrestrialRockTree = {
   returned_samples: {
     label: "returned_samples",
@@ -15,8 +14,6 @@ export const extraterrestrialRockTree = {
     label: "meteorites",
     choices: ["chondrites", "achondrite_primitive", "achondrites"],
   },
-  micrometeorites: { label: "micrometeorites" },
-  ungrouped: { label: "ungrouped" },
 
   lunar_sample: {
     label: "lunar_sample",
@@ -25,16 +22,11 @@ export const extraterrestrialRockTree = {
   // `rock` is the material root elsewhere; here it is a childless leaf, so
   // override it only in the lunar-sample context (longest-suffix match).
   "lunar_sample.rock": { label: "rock" },
-  soil: { label: "soil" },
-  core: { label: "core" },
 
   asteroid: {
     label: "asteroid",
     choices: ["itokawa", "ryugu", "bennu", "other"],
   },
-  itokawa: { label: "itokawa" },
-  ryugu: { label: "ryugu" },
-  bennu: { label: "bennu" },
 
   chondrites: {
     label: "chondrites",
@@ -66,43 +58,16 @@ export const extraterrestrialRockTree = {
       "ungrouped",
     ],
   },
-  ci: { label: "ci" },
-  cm: { label: "cm" },
-  co: { label: "co" },
-  cv: { label: "cv" },
-  cvox: { label: "cvox" },
-  cvred: { label: "cvred" },
-  ch: { label: "ch" },
-  cb: { label: "cb" },
-  cba: { label: "cba" },
-  cbb: { label: "cbb" },
-  cl: { label: "cl" },
-  ck: { label: "ck" },
-  cr: { label: "cr" },
 
   ordinary_chondrites: {
     label: "ordinary_chondrites",
     choices: ["h", "l", "ll", "h_l", "l_ll", "ungrouped"],
   },
-  h: { label: "h" },
-  l: { label: "l" },
-  ll: { label: "ll" },
-  h_l: { label: "h_l" },
-  l_ll: { label: "l_ll" },
 
   enstatite_chondrites: {
     label: "enstatite_chondrites",
     choices: ["eh", "eha", "ehb", "el", "ela", "elb"],
   },
-  eh: { label: "eh" },
-  eha: { label: "eha" },
-  ehb: { label: "ehb" },
-  el: { label: "el" },
-  ela: { label: "ela" },
-  elb: { label: "elb" },
-
-  rumuruti_chondrites: { label: "rumuruti_chondrites" },
-  kakangarites: { label: "kakangarites" },
 
   achondrite_primitive: {
     label: "achondrite_primitive",
@@ -116,12 +81,6 @@ export const extraterrestrialRockTree = {
       "ungrouped",
     ],
   },
-  lodranite: { label: "lodranite" },
-  acapulcoite: { label: "acapulcoite" },
-  brachinite: { label: "brachinite" },
-  ureilite: { label: "ureilite" },
-  polymict_ureilite: { label: "polymict_ureilite" },
-  winonaite: { label: "winonaite" },
 
   achondrites: {
     label: "achondrites",
@@ -139,9 +98,6 @@ export const extraterrestrialRockTree = {
       "ungrouped",
     ],
   },
-  enstatite_achondrite: { label: "enstatite_achondrite" },
-  angrite: { label: "angrite" },
-  aubrite: { label: "aubrite" },
 
   martian_meteorite: {
     label: "martian_meteorite",
@@ -156,13 +112,6 @@ export const extraterrestrialRockTree = {
       "other",
     ],
   },
-  nakhlite: { label: "nakhlite" },
-  shergottite: { label: "shergottite" },
-  chassignite: { label: "chassignite" },
-  orthopyroxenite: { label: "orthopyroxenite" },
-  augite_basalt: { label: "augite_basalt" },
-  polymict_breccia: { label: "polymict_breccia" },
-  vesicular_basalt: { label: "vesicular_basalt" },
 
   lunar_meteorite: {
     label: "lunar_meteorite",
@@ -187,30 +136,11 @@ export const extraterrestrialRockTree = {
       "other",
     ],
   },
-  // anorthosite, basalt, gabbro, norite and troctolite are shared with the
-  // igneous rock subtree; they live once in classification.ts (like `other`).
-  basaltic_breccia: { label: "basaltic_breccia" },
-  basaltic_gabbroic_breccia: { label: "basaltic_gabbroic_breccia" },
-  feldspathic_breccia: { label: "feldspathic_breccia" },
-  feldspathic_melt_breccia: { label: "feldspathic_melt_breccia" },
-  fragmental_breccia: { label: "fragmental_breccia" },
-  melt_breccia: { label: "melt_breccia" },
-  olivine_gabbro: { label: "olivine_gabbro" },
-  olivine_gabbronorite: { label: "olivine_gabbronorite" },
-  troctolite_anorthosite: { label: "troctolite_anorthosite" },
-  troctolite_anorthosite_melt_breccia: {
-    label: "troctolite_anorthosite_melt_breccia",
-  },
-  troctolite_melt_breccia: { label: "troctolite_melt_breccia" },
-  troctolite_melt_rock: { label: "troctolite_melt_rock" },
 
   hed: {
     label: "hed",
     choices: ["howardite", "eucrite", "diogenite"],
   },
-  howardite: { label: "howardite" },
-  eucrite: { label: "eucrite" },
-  diogenite: { label: "diogenite" },
 
   iron_meteorite: {
     label: "iron_meteorite",
@@ -235,31 +165,13 @@ export const extraterrestrialRockTree = {
     label: "iab",
     choices: ["main_group", "shl", "shh", "sll", "ungrouped"],
   },
-  main_group: { label: "main_group" },
-  shl: { label: "shl" },
-  shh: { label: "shh" },
-  sll: { label: "sll" },
-  ic: { label: "ic" },
-  iiab: { label: "iiab" },
-  iic: { label: "iic" },
-  iid: { label: "iid" },
-  iie: { label: "iie" },
-  iif: { label: "iif" },
-  iig: { label: "iig" },
-  iiiab: { label: "iiiab" },
-  iiie: { label: "iiie" },
-  iiif: { label: "iiif" },
-  iva: { label: "iva" },
-  ivb: { label: "ivb" },
 
   stony_iron_meteorite: {
     label: "stony_iron_meteorite",
     choices: ["mesosiderite", "pallasite"],
   },
-  mesosiderite: { label: "mesosiderite" },
   pallasite: {
     label: "pallasite",
     choices: ["main_group", "eagle_station_group", "ungrouped"],
   },
-  eagle_station_group: { label: "eagle_station_group" },
 } satisfies Record<string, TreeNode>;

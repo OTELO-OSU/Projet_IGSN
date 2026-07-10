@@ -17,7 +17,9 @@ of `lower_snake_case` codes stored as Postgres `ltree` (ADR
 **All three share one shape**: a segment-keyed tree of `TreeNode`
 (`{ label, choices?, optional? }`), `satisfies Record<string, TreeNode>`, widened
 to `Record<Key, TreeNode>`, expanded by `expandPaths(TREE, ROOTS)`, validated by a
-Zod `.refine` against that list. Navigated by the generic helpers in `path/`:
+Zod `.refine` against that list. A segment with no entry defaults to a childless
+leaf labelled by its own code: plain leaves need NO entry, only nodes carrying
+`choices`, `optional`, or a dotted context override do. Navigated by the generic helpers in `path/`:
 `pathSegment`, `pathChildren`, `isPathLeaf`, `isPathComplete(paths, path, isOptional)`
 (the `isOptional` callback is each vocabulary's completeness policy).
 
@@ -55,9 +57,10 @@ dotted override key (`"core.core": { label: "core" }`) so `expandPaths` stops th
 
 **Duplicates across ALL subtrees.** Material spreads fragments
 (`{ ...rockTree, ...sedimentTree }`): a bare key defined twice is not a compile
-error, the later spread silently shadows the earlier. Grep a new key across
-`classification.ts` and every `classification/*-subtree.ts` (and its i18n key)
-first. Shared leaves like `other` live once, in the assembler.
+error, the later spread silently shadows the earlier. Before DEFINING a bare key
+(one with choices/optional), grep it across `classification.ts` and every
+`classification/*-subtree.ts` (and its i18n key) first. Plain leaves have no
+entry, so they cannot shadow anything.
 
 **Conflict = STOP and ask.** Already a key anywhere in the tree (or its i18n
 key)? Do not rename or silently reuse. Ask.
@@ -98,21 +101,23 @@ expect(sampleTypeSchema.safeParse("core.core").success).toBe(true);
    - Shared child/leaf/expand behavior: `path/*.spec.ts`.
 
 2. **Add the node.** `type`/`collectionMethod` are inline in one `vocabulary.ts`.
-   Material is split: `classification.ts` holds the roots and shared `other` leaf
-   and spreads per-root fragments (`classification/rock-subtree.ts`,
-   `classification/sediment-subtree.ts`); add a node to its root's fragment (a new
-   root or cross-subtree leaf goes in `classification.ts`, a dotted override next
-   to its parent). Each fragment has its own `satisfies Record<string, TreeNode>`.
+   Material is split: `classification.ts` holds the roots and spreads per-root
+   fragments (`classification/rock-subtree.ts`, `classification/sediment-subtree.ts`,
+   `classification/extraterrestrial-rock-subtree.ts`); a node goes in its root's
+   fragment (a new root in `classification.ts`, a dotted override next to its
+   parent). Each fragment has its own `satisfies Record<string, TreeNode>`.
 
-   Add the key, add its literal to the parent's `choices` (a root: to the roots
-   array), and set `optional: true` if material and yellow. A mistyped `choices`/root
-   literal fails the tree spec (`should define the child`) or the `satisfies` guard.
+   A plain leaf is ONE line: its literal in the parent's `choices` (a root: in
+   the roots array). Define a tree entry only when the node has `choices`, is
+   `optional: true` (material and yellow), or needs a dotted override. A mistyped
+   literal silently becomes a leaf; the apps' label-coverage specs catch it (no
+   translation for the typo'd segment), and every defined entry must resolve from
+   some path (`should resolve the entry` in the tree spec).
 
    ```ts
-   export const rockTree = { igneous: { label: "igneous" } } satisfies Record<
-     string,
-     TreeNode
-   >;
+   export const rockTree = {
+     igneous: { label: "igneous", choices: ["plutonic", "volcanic"] },
+   } satisfies Record<string, TreeNode>;
    // classification.ts: const materialTree = { rock: {...}, ...rockTree } satisfies ...
    ```
 
@@ -120,7 +125,7 @@ expect(sampleTypeSchema.safeParse("core.core").success).toBe(true);
    Nothing to wire: both apps resolve all three vocabularies through
    `vocabulary-label.ts` (domain-owned key mapping, dynamic paraglide lookup
    with raw-key fallback). The lookup is NOT compile-enforced, but
-   `vocabulary-label.spec.ts` walks every tree key and goes red on a missing
+   `vocabulary-label.spec.ts` walks every expanded path and goes red on a missing
    `en.json` entry.
 
 4. **Publishability.** Nothing to wire: `type`/material inherit their gate via

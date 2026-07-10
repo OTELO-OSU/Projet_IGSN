@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { resolvePathNode } from "../path/resolve-node.ts";
 import {
-  COLLECTION_METHOD_ROOTS,
   COLLECTION_METHOD_TREE,
   COLLECTION_METHODS,
   collectionMethodSchema,
@@ -49,22 +49,18 @@ describe("COLLECTION_METHODS", () => {
 });
 
 describe("COLLECTION_METHOD_TREE", () => {
-  const keys = new Set(Object.keys(COLLECTION_METHOD_TREE));
-
-  it.each(COLLECTION_METHOD_ROOTS)(
-    "should define the root %s as a node",
-    (root) => {
-      expect(keys.has(root)).toBe(true);
+  // An undefined segment defaults to a childless leaf, so a mistyped entry key
+  // would silently drop its choices: every entry must resolve for some path.
+  it.each(Object.keys(COLLECTION_METHOD_TREE))(
+    "should resolve the entry %s from some path",
+    (key) => {
+      expect(
+        COLLECTION_METHODS.some(
+          (path) => resolvePathNode(COLLECTION_METHOD_TREE, path)?.key === key,
+        ),
+      ).toBe(true);
     },
   );
-
-  it.each(
-    Object.entries(COLLECTION_METHOD_TREE).flatMap(([parent, node]) =>
-      (node.choices ?? []).map((child) => [parent, child] as const),
-    ),
-  )("should define the child %s (of %s) as a node", (_parent, child) => {
-    expect(keys.has(child)).toBe(true);
-  });
 
   it.each(Object.entries(COLLECTION_METHOD_TREE))(
     "should give %s a non-empty label code",
