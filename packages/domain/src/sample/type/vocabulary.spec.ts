@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  SAMPLE_TYPE_HIERARCHY,
   SAMPLE_TYPE_ROOTS,
   SAMPLE_TYPE_TREE,
   SAMPLE_TYPES,
@@ -74,13 +73,4 @@ describe("SAMPLE_TYPE_TREE", () => {
       expect(node.label).toMatch(/^[a-z0-9_]+$/);
     },
   );
-});
-
-describe("SAMPLE_TYPE_HIERARCHY", () => {
-  it("should bundle the existing roots and nodes", () => {
-    expect(SAMPLE_TYPE_HIERARCHY).toEqual({
-      roots: SAMPLE_TYPE_ROOTS,
-      nodes: SAMPLE_TYPE_TREE,
-    });
-  });
 });

@@ -168,7 +168,8 @@ function HierarchyLevel({
 
       <form.Subscribe selector={(state) => state.values[name]?.[depth]}>
         {(selected) => {
-          const child = children.find((path) => path === selected);
+          const child =
+            selected && children.includes(selected) ? selected : null;
           // The parent-itself option is not a child, so it stops the recursion.
           return child ? (
             <HierarchyLevel
