@@ -139,6 +139,12 @@ export const COLLECTION_METHODS = expandPaths(
   COLLECTION_METHOD_ROOTS,
 );
 
+// The vocabulary as one self-describing bundle for HierarchySelectField.
+export const COLLECTION_METHOD_HIERARCHY = {
+  roots: COLLECTION_METHOD_ROOTS,
+  nodes: COLLECTION_METHOD_TREE,
+};
+
 // A validated dot-joined path. Not a literal union: the valid set is derived
 // from the tree at runtime and enforced by the schema, not the type.
 export type CollectionMethod = string;

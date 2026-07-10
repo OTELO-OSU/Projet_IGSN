@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  MATERIAL_HIERARCHY,
   MATERIAL_PATHS,
   MATERIAL_ROOTS,
   MATERIAL_TREE,
@@ -75,4 +76,13 @@ describe("MATERIAL_TREE", () => {
       expect(node.label).toMatch(/^[a-z0-9_]+$/);
     },
   );
+});
+
+describe("MATERIAL_HIERARCHY", () => {
+  it("should bundle the existing roots and nodes", () => {
+    expect(MATERIAL_HIERARCHY).toEqual({
+      roots: MATERIAL_ROOTS,
+      nodes: MATERIAL_TREE,
+    });
+  });
 });

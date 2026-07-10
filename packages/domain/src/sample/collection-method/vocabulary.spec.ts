@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  COLLECTION_METHOD_HIERARCHY,
   COLLECTION_METHOD_ROOTS,
   COLLECTION_METHOD_TREE,
   COLLECTION_METHODS,
@@ -72,4 +73,13 @@ describe("COLLECTION_METHOD_TREE", () => {
       expect(node.label).toMatch(/^[a-z0-9_]+$/);
     },
   );
+});
+
+describe("COLLECTION_METHOD_HIERARCHY", () => {
+  it("should bundle the existing roots and nodes", () => {
+    expect(COLLECTION_METHOD_HIERARCHY).toEqual({
+      roots: COLLECTION_METHOD_ROOTS,
+      nodes: COLLECTION_METHOD_TREE,
+    });
+  });
 });

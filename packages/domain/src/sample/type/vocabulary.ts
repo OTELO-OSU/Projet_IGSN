@@ -15,6 +15,8 @@ import { type TreeNode } from "../path/tree-node.ts";
 const typeTree = {
   core: {
     label: "core",
+    // The only non-leaf: a bare "core" must be refined (leaf-only completeness).
+    optional: false,
     choices: [
       "core",
       "half_round",
@@ -80,6 +82,12 @@ export const SAMPLE_TYPE_ROOTS = [
 ] as const satisfies readonly SampleTypeSegment[];
 
 export const SAMPLE_TYPES = expandPaths(SAMPLE_TYPE_TREE, SAMPLE_TYPE_ROOTS);
+
+// The vocabulary as one self-describing bundle for HierarchySelectField.
+export const SAMPLE_TYPE_HIERARCHY = {
+  roots: SAMPLE_TYPE_ROOTS,
+  nodes: SAMPLE_TYPE_TREE,
+};
 
 // A validated dot-joined path. Not a literal union: the valid set is derived
 // from the tree at runtime and enforced by the schema, not the type.
