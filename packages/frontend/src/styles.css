@@ -9,3 +9,9 @@ body,
 #app {
   min-height: 100%;
 }
+
+/* Search matches painted via the CSS Custom Highlight API (see sample-list.tsx). */
+::highlight(sample-search-match) {
+  background-color: var(--color-yellow-200);
+  color: inherit;
+}

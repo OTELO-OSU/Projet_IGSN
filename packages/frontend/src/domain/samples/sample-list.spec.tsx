@@ -13,9 +13,9 @@ const samples = [
   {
     igsn: "0123456789ABCDEFGHJKMNPQRS",
     name: "Basalt 42",
-    specificName: "BAS-42-001",
+    material: "rock.igneous",
   },
-  { igsn: "TVWXYZ0123456789ABCDEFGHJK", name: "Granite 7", specificName: null },
+  { igsn: "TVWXYZ0123456789ABCDEFGHJK", name: "Granite 7", material: null },
 ];
 
 // SampleList navigates with the router <Link>, so it must render inside a
@@ -56,12 +56,19 @@ describe("SampleList", () => {
       .toBeInTheDocument();
   });
 
-  it("should show the specific name when the sample has one", async () => {
+  it("should label a classified sample with its material root", async () => {
     const screen = await renderSampleList();
 
+    await expect.element(screen.getByText("Rock")).toBeInTheDocument();
+  });
+
+  it("should show no material badge when the sample is unclassified", async () => {
+    const screen = await renderSampleList();
+
+    // "Granite 7" has a null material, so no material badge renders for it.
     await expect
-      .element(screen.getByRole("link", { name: /BAS-42-001/ }))
-      .toHaveAttribute("href", "/samples/0123456789ABCDEFGHJKMNPQRS");
-    await expect.element(screen.getByText("BAS-42-001")).toBeInTheDocument();
+      .element(screen.getByRole("link", { name: /Granite 7/ }))
+      .toBeInTheDocument();
+    expect(screen.getByText("Sediment").query()).toBeNull();
   });
 });

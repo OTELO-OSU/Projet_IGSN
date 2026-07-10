@@ -53,5 +53,6 @@ function createTranslatedPathnames(
 
 export const translatedPathnames = createTranslatedPathnames({
   "/": { en: "/" },
+  "/search": { en: "/search" },
   "/samples/$igsn": { en: "/samples/$igsn" },
 });
