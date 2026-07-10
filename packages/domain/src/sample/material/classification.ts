@@ -2,11 +2,17 @@ import { z } from "zod";
 
 import { expandPaths } from "../path/expand-paths.ts";
 import { type TreeNode } from "../path/tree-node.ts";
+import { rockTree } from "./classification/rock-subtree.ts";
+import { sedimentTree } from "./classification/sediment-subtree.ts";
 
 // Hierarchical material classification (ADR 0011), a segment-keyed tree: every
 // segment is defined once and may be reused under several parents (the path is
 // the identity, ADR 0010). Stored in the DB as a dot-joined ltree path of codes;
 // a sample's path may stop at any valid stop (see is-complete).
+//
+// The roots live here; the two large subtrees are spread in from their own files
+// for readability (rock-subtree.ts, sediment-subtree.ts). `other` is a single
+// shared leaf reused under every parent of both subtrees.
 const materialTree = {
   rock: {
     label: "rock",
@@ -19,16 +25,24 @@ const materialTree = {
     ],
     optional: false,
   },
-  igneous: { label: "igneous" },
-  metamorphic: { label: "metamorphic" },
-  sedimentary: { label: "sedimentary" },
-  hydrothermal: { label: "hydrothermal" },
-  unknown: { label: "unknown" },
-  sediment: { label: "sediment" },
+  sediment: {
+    label: "sediment",
+    choices: [
+      "exogenous_detritic",
+      "volcano_detritic",
+      "biogenic",
+      "physico_chemical",
+    ],
+    optional: false,
+  },
   mineral: { label: "mineral" },
   fossil: { label: "fossil" },
   synthetic_rock_mineral: { label: "synthetic_rock_mineral" },
   extraterrestrial_rock: { label: "extraterrestrial_rock" },
+  other: { label: "other" },
+
+  ...rockTree,
+  ...sedimentTree,
 } satisfies Record<string, TreeNode>;
 
 export type MaterialSegment = keyof typeof materialTree;
