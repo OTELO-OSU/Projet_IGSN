@@ -4,11 +4,13 @@ import { isMaterialComplete } from "./is-complete.ts";
 
 describe("isMaterialComplete", () => {
   it.each([
-    "rock.metamorphic",
     "rock.hydrothermal",
     "rock.unknown",
     "mineral",
     "fossil",
+    "rock.metamorphic.strongly_metamorphosed.gneiss",
+    "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
+    "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.clastic_sedimentary_rock.rudite",
     "sediment.exogenous_detritic.clay",
     "sediment.exogenous_detritic.sand.medium_sand",
     "sediment.exogenous_detritic.silt.very_fine_silt",
@@ -41,6 +43,10 @@ describe("isMaterialComplete", () => {
 
   it.each([
     "rock",
+    "rock.metamorphic",
+    "rock.metamorphic.weakly_metamorphosed",
+    "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock",
+    "rock.metamorphic.strongly_metamorphosed",
     "rock.igneous",
     "rock.igneous.plutonic",
     "rock.igneous.plutonic.felsic",

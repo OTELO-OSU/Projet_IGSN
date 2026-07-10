@@ -12,6 +12,7 @@ describe("SampleView", () => {
         type="core.half_round"
         material="rock.igneous"
         texture={null}
+        metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
       />,
@@ -34,6 +35,7 @@ describe("SampleView", () => {
         type={null}
         material={null}
         texture={null}
+        metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
       />,
@@ -51,6 +53,7 @@ describe("SampleView", () => {
         type="core.half_round"
         material={null}
         texture={null}
+        metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
       />,
@@ -76,6 +79,7 @@ describe("SampleView", () => {
         type={null}
         material="rock.igneous"
         texture={null}
+        metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
       />,
@@ -100,12 +104,33 @@ describe("SampleView", () => {
         type={null}
         material="rock.igneous.plutonic.felsic.granite"
         texture="phaneritic"
+        metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
       />,
     );
 
     await expect.element(screen.getByText("Phaneritic")).toBeInTheDocument();
+  });
+
+  it("should show the translated metamorphic facies when set", async () => {
+    const screen = await render(
+      <SampleView
+        name="Gneiss 1"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material="rock.metamorphic.strongly_metamorphosed.gneiss"
+        texture={null}
+        metamorphicFacies="amphibolite"
+        collectionMethod={null}
+        collectionMethodDescription={null}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("Amphibolite facies"))
+      .toBeInTheDocument();
   });
 
   it("should show the collection method hierarchy as a breadcrumb labelled by its field", async () => {
@@ -117,6 +142,7 @@ describe("SampleView", () => {
         type={null}
         material={null}
         texture={null}
+        metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
       />,
@@ -145,6 +171,7 @@ describe("SampleView", () => {
         type={null}
         material={null}
         texture={null}
+        metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription="Cored at low tide from the reef flat"
       />,
@@ -167,6 +194,7 @@ describe("SampleView", () => {
         type={null}
         material={null}
         texture={null}
+        metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
       />,

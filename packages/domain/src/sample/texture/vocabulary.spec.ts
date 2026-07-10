@@ -40,6 +40,22 @@ describe("texturesFor", () => {
     );
   });
 
+  it("should return the plutonic textures under the metamorphic meta_igneous_rock branch", () => {
+    expect(
+      texturesFor(
+        "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
+      ),
+    ).toEqual(PLUTONIC_TEXTURES);
+  });
+
+  it("should return the volcanic textures under the metamorphic meta_igneous_rock branch", () => {
+    expect(
+      texturesFor(
+        "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.volcanic.mafic.basalt",
+      ),
+    ).toEqual(VOLCANIC_TEXTURES);
+  });
+
   it.each([null, "rock.igneous", "rock.sedimentary.microbialite", "mineral"])(
     "should return no textures for non-igneous-branch material %s",
     (material) => {

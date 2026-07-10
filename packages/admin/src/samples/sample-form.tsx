@@ -28,6 +28,7 @@ import {
 import { m } from "#/paraglide/messages.js";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
+import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { natureLabel } from "#/samples/nature-label.ts";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
@@ -78,6 +79,7 @@ export function SampleForm({
       typePath: toHierarchyPath(defaultValues?.type ?? null),
       materialPath: toHierarchyPath(defaultValues?.material ?? null),
       texture: defaultValues?.texture ?? "",
+      metamorphicFacies: defaultValues?.metamorphicFacies ?? "",
       collectionMethodPath: toHierarchyPath(
         defaultValues?.collectionMethod ?? null,
       ),
@@ -98,6 +100,10 @@ export function SampleForm({
         material: composeHierarchyValue(value.materialPath),
         // Optional and only valid for an igneous branch; omit when unset.
         ...(value.texture ? { texture: value.texture } : {}),
+        // Optional and only valid for a metamorphic material; omit when unset.
+        ...(value.metamorphicFacies
+          ? { metamorphicFacies: value.metamorphicFacies }
+          : {}),
         collectionMethod: composeHierarchyValue(value.collectionMethodPath),
         collectionMethodDescription:
           value.collectionMethodDescription.trim() || null,
@@ -112,7 +118,9 @@ export function SampleForm({
     if (action.kind === "link") {
       return (
         <Button asChild variant={variant}>
-          <a href={action.href}>{action.label}</a>
+          <a href={action.href} target="_blank" rel="noopener noreferrer">
+            {action.label}
+          </a>
         </Button>
       );
     }
@@ -127,15 +135,19 @@ export function SampleForm({
             canSubmit: state.canSubmit,
             typePath: state.values.typePath,
             materialPath: state.values.materialPath,
+            metamorphicFacies: state.values.metamorphicFacies,
           })}
         >
-          {({ canSubmit, typePath, materialPath }) => {
+          {({ canSubmit, typePath, materialPath, metamorphicFacies }) => {
             // Form state holds looser select strings; the runtime values match
             // the domain, so cast to the fields samplePublishBlockers reads.
             const reasons = samplePublishBlockers({
               type: composeHierarchyValue(typePath),
               material: composeHierarchyValue(materialPath),
-            } as Pick<Sample, "type" | "material">).map(publishBlockerLabel);
+              metamorphicFacies: metamorphicFacies || null,
+            } as Pick<Sample, "type" | "material" | "metamorphicFacies">).map(
+              publishBlockerLabel,
+            );
             const button = (
               <PublishSampleButton
                 label={action.label}
@@ -256,6 +268,9 @@ export function SampleForm({
             </form.AppForm>
             <form.AppForm>
               <TextureField />
+            </form.AppForm>
+            <form.AppForm>
+              <MetamorphicFaciesField />
             </form.AppForm>
           </section>
 

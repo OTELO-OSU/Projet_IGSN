@@ -11,6 +11,7 @@ const base: Sample = {
   type: "individual_sample",
   material: "rock.igneous.plutonic.felsic.granite",
   texture: null,
+  metamorphicFacies: null,
   collectionMethod: null,
   collectionMethodDescription: null,
   specificName: "BAS-42-001",
@@ -53,6 +54,42 @@ describe("samplePublishBlockers", () => {
     expect(samplePublishBlockers({ ...base, material: "rock" })).toEqual([
       "material_incomplete",
     ]);
+  });
+
+  it("should report metamorphic_facies_missing for a metamorphic sample without a facies", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        metamorphicFacies: null,
+      }),
+    ).toEqual(["metamorphic_facies_missing"]);
+  });
+
+  it("should not report metamorphic_facies_missing once the facies is set", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        metamorphicFacies: "amphibolite",
+      }),
+    ).toEqual([]);
+  });
+
+  it("should not require a facies for a non-metamorphic sample", () => {
+    expect(samplePublishBlockers({ ...base, metamorphicFacies: null })).toEqual(
+      [],
+    );
+  });
+
+  it("should report metamorphic_facies_missing for an out-of-vocabulary facies", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        metamorphicFacies: "bogus" as Sample["metamorphicFacies"],
+      }),
+    ).toEqual(["metamorphic_facies_missing"]);
   });
 
   it("should report a blocker for a value outside the vocabulary rather than treat it as publishable", () => {

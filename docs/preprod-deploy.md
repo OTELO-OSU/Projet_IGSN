@@ -1,98 +1,51 @@
 # Preprod deployment
 
-Three apps plus Postgres as Docker containers on one EC2 host, behind a Caddy
-reverse proxy. No CD: deploy manually with `make preprod-deploy`
-([deploy.sh](../infra/preprod/scripts/deploy.sh)). Everything preprod (OpenTofu,
-scripts, compose stack) lives under [infra/preprod/](../infra/preprod); prod will
-be a sibling `infra/prod/`.
+Deploying to already stood-up infra. See also:
 
-## Architecture
+- [preprod-architecture.md](preprod-architecture.md): the architecture overview.
+- [preprod-setup.md](preprod-setup.md): first-time infra setup and infra changes.
 
-- **EC2** host (Amazon Linux 2023, IMDSv2-only, encrypted root volume). cloud-init
-  installs Docker + compose. Only 80/443 are public; SSH is opened per-deploy and
-  revoked.
-- **Postgres** container with a persistent volume (`pgdata`), never exposed off
-  the host. Credentials live in the host `docker-compose.env`.
-- **Cloudflare** proxies the hostnames (orange cloud, SSL mode Full (strict)) and
-  terminates TLS at its edge, re-originating HTTPS to the host.
-- **Auth** is the dev throwaway Keycloak plus the mock SAML IdP (see
-  [ADR 0004](adr/0004-preprod-auth-stack.md)), at `igsn-auth.$DOMAIN` (Keycloak)
-  and `igsn-idp.$DOMAIN` (IdP). `KEYCLOAK_PASSWORD` in the host env file is the
-  Keycloak admin password and the shared SAML-user password.
-- **Caddy** ([Caddyfile](../infra/preprod/Caddyfile)) serves a Cloudflare Origin
-  CA cert (mounted from `~/certs`) and proxies each host: `igsn.$DOMAIN` ->
-  frontend, `igsn-admin.$DOMAIN` -> admin, `igsn-api.$DOMAIN` -> api,
-  `igsn-auth.$DOMAIN` -> Keycloak, `igsn-idp.$DOMAIN` -> SAML IdP, plus security
-  headers. Hosts are flat single-level subdomains, not nested: the `*.$DOMAIN`
-  cert covers only one label deep. No Let's Encrypt: ACME can't validate behind
-  the Cloudflare proxy.
-- **Images** are built on your laptop and shipped over SSH
-  (`docker save | gzip | ssh 'docker load'`). No registry.
+## One-time per dev
 
-## One-time setup
+Both steps below are done once per dev, not on every deploy.
 
-1. Init tofu (partial S3 backend, S3-native locking; see
-   [infra/preprod/tf/backend.hcl](../infra/preprod/tf/backend.hcl)). The state
-   bucket must exist first.
+### Required laptop permissions
 
-   ```
-   make preprod-tofu-init
-   make preprod-tofu-apply
-   ```
+AWS identity: `ec2-instance-connect:SendSSHPublicKey`,
+`ec2:AuthorizeSecurityGroupIngress`, `ec2:RevokeSecurityGroupIngress`, and read
+access to the tofu state. Local tools: `docker`, the AWS CLI (`aws`),
+`ssh`/`scp`, and an SSH
+key at `~/.ssh/id_ed25519.pub` (or set `SSH_PUBLIC_KEY`).
 
-   State lives in S3, so another dev with AWS access just re-runs
-   `make preprod-tofu-init` to pull the shared config; no apply unless changing
-   infra.
+### Pull the tofu config
 
-2. Point Cloudflare at the EIP. Create proxied (orange cloud) A records for
-   `igsn.$DOMAIN`, `igsn-admin.$DOMAIN`, `igsn-api.$DOMAIN`, `igsn-auth.$DOMAIN`,
-   and `igsn-idp.$DOMAIN`, and set SSL/TLS mode to **Full (strict)**:
+The infra is already stood up, so you do NOT run apply. Pull the shared tofu
+config once. State lives in S3, so init pulls everything you need:
 
-   ```
-   tofu -chdir=infra/preprod/tf output -raw public_ip
-   ```
+```
+aws login              # or otherwise configure AWS credentials
+make preprod-tofu-init
+```
 
-3. Create a Cloudflare Origin CA certificate (Cloudflare dashboard: SSL/TLS ->
-   Origin Server -> Create Certificate), covering `$DOMAIN` and `*.$DOMAIN`.
-   Save the two PEM blocks to `infra/preprod/certs/` (gitignored):
+Only run `make preprod-tofu-apply` when you are deliberately changing infra (see
+[preprod-setup.md](preprod-setup.md)).
 
-   ```
-   mkdir -p infra/preprod/certs
-   # paste the certificate  -> infra/preprod/certs/origin.pem
-   # paste the private key   -> infra/preprod/certs/origin.key
-   ```
+### Install your SSH key
 
-4. Create the host env file. Copy the example, set strong `DATABASE_PASSWORD`
-   and `KEYCLOAK_PASSWORD`:
+Bootstraps via EC2 Instance Connect, then adds your key to `authorized_keys`:
 
-   ```
-   cp infra/preprod/docker-compose.env.example infra/preprod/docker-compose.env
-   # edit it
-   ```
-
-5. Install your SSH key on the host once. Bootstraps via EC2 Instance Connect,
-   then adds your key to `authorized_keys`:
-
-   ```
-   make preprod-ssh-send-key                                      # ~/.ssh/id_ed25519.pub
-   make preprod-ssh-send-key SSH_PUBLIC_KEY_PATH=~/.ssh/other.pub  # a different key
-   ```
-
-6. Copy the env file and the origin cert to the host:
-
-   ```
-   infra/preprod/scripts/ssh-access.sh grant
-   scp infra/preprod/docker-compose.env ec2-user@<eip>:~/
-   scp -r infra/preprod/certs ec2-user@<eip>:~/
-   infra/preprod/scripts/ssh-access.sh revoke
-   ```
+```
+make preprod-ssh-send-key                                      # ~/.ssh/id_ed25519.pub
+make preprod-ssh-send-key SSH_PUBLIC_KEY_PATH=~/.ssh/other.pub  # a different key
+```
 
 ## Deploy
 
-From the repo root, with AWS credentials configured:
+Once the two steps above are done, deploy from the repo root with AWS
+credentials configured:
 
 ```
-make preprod-deploy DOMAIN=igsn.example.org
+make preprod-deploy DOMAIN=<domain>
 ```
 
 The script builds the three images, opens SSH to your current public IP, ships
@@ -108,20 +61,11 @@ the images + [docker-compose.yml](../infra/preprod/docker-compose.yml) + Caddyfi
 
 ```
 make preprod-ssh                             # open, ssh in, revoke on disconnect
-infra/preprod/scripts/ssh-access.sh grant    # open :22, then: ssh ec2-user@<eip>
-infra/preprod/scripts/ssh-access.sh revoke   # close :22 again
 ```
 
 All assume your key is installed (`make preprod-ssh-send-key`) and share
 [common.sh](../infra/preprod/scripts/common.sh) (infra outputs +
 `ssh_open`/`ssh_close`).
-
-### Required laptop permissions
-
-AWS identity: `ec2-instance-connect:SendSSHPublicKey`,
-`ec2:AuthorizeSecurityGroupIngress`, `ec2:RevokeSecurityGroupIngress`, and read
-access to the tofu state. Local tools: `docker`, `aws`, `ssh`/`scp`, and an SSH
-key at `~/.ssh/id_ed25519.pub` (or set `SSH_PUBLIC_KEY`).
 
 ### Runtime secrets
 

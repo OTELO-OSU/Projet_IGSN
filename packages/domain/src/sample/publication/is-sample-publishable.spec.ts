@@ -10,6 +10,7 @@ const draft: Sample = {
   type: "individual_sample",
   material: null,
   texture: null,
+  metamorphicFacies: null,
   collectionMethod: null,
   collectionMethodDescription: null,
   specificName: "BAS-42-001",

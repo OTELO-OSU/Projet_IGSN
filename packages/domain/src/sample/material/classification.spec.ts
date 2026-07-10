@@ -32,6 +32,9 @@ describe("materialPathSchema", () => {
     "extraterrestrial_rock.meteorites.achondrites.stony_achondrite.lunar_meteorite.troctolite_anorthosite_melt_breccia",
     "extraterrestrial_rock.meteorites.achondrites.iron_meteorite.iab.main_group",
     "extraterrestrial_rock.meteorites.achondrites.stony_iron_meteorite.pallasite.eagle_station_group",
+    "rock.metamorphic.strongly_metamorphosed.gneiss",
+    "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.volcanic.mafic.basalt",
+    "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.microbialite",
   ])("should accept the known path %s", (path) => {
     expect(materialPathSchema.parse(path)).toBe(path);
   });
@@ -53,6 +56,8 @@ describe("materialPathSchema", () => {
     "extraterrestrial_rock.returned_samples.lunar_sample.rock.igneous",
     "extraterrestrial_rock.ungrouped",
     "extraterrestrial_rock.meteorites.iron_meteorite",
+    "rock.metamorphic.nonexistent",
+    "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.granite",
   ])("should reject the unknown or malformed path %s", (path) => {
     expect(materialPathSchema.safeParse(path).success).toBe(false);
   });

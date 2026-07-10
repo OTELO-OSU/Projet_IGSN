@@ -52,15 +52,29 @@ export const VOLCANIC_TEXTURES = [
   "hyaloclastic",
 ] as const satisfies readonly Texture[];
 
+// Paths under which each texture set applies. The plutonic/volcanic branch
+// lives under `igneous` and is reused under metamorphic `meta_igneous_rock`, so
+// each branch has two paths.
+const TEXTURE_BRANCHES = [
+  { path: "rock.igneous.plutonic", textures: PLUTONIC_TEXTURES },
+  { path: "rock.igneous.volcanic", textures: VOLCANIC_TEXTURES },
+  {
+    path: "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic",
+    textures: PLUTONIC_TEXTURES,
+  },
+  {
+    path: "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.volcanic",
+    textures: VOLCANIC_TEXTURES,
+  },
+];
+
 // The textures valid for a material path: the branch's set, or none unless the
-// path is under the igneous plutonic/volcanic branch.
+// path is under a plutonic/volcanic branch.
 export function texturesFor(material: string | null): readonly Texture[] {
   if (!material) return [];
-  const segments = material.split(".");
-  const igneous = segments.indexOf("igneous");
-  if (igneous === -1) return [];
-  const branch = segments[igneous + 1];
-  if (branch === "plutonic") return PLUTONIC_TEXTURES;
-  if (branch === "volcanic") return VOLCANIC_TEXTURES;
-  return [];
+  return (
+    TEXTURE_BRANCHES.find(
+      (b) => material === b.path || material.startsWith(`${b.path}.`),
+    )?.textures ?? []
+  );
 }

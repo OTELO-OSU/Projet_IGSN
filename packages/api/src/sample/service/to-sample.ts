@@ -13,6 +13,7 @@ export function toSample(row: Selectable<DB["sample"]>): Sample {
     type: row.type,
     material: row.material,
     texture: row.texture,
+    metamorphicFacies: row.metamorphic_facies,
     collectionMethod: row.collection_method,
     collectionMethodDescription: row.collection_method_description,
     specificName: row.specific_name,

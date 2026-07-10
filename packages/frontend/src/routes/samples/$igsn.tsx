@@ -39,6 +39,7 @@ function SampleDetail() {
       type={sample.type}
       material={sample.material}
       texture={sample.texture}
+      metamorphicFacies={sample.metamorphicFacies}
       collectionMethod={sample.collectionMethod}
       collectionMethodDescription={sample.collectionMethodDescription}
     />

@@ -8,6 +8,7 @@ const validSample = {
   type: "core.section",
   material: null,
   texture: null,
+  metamorphicFacies: null,
   collectionMethod: "coring.gravity_corer",
   collectionMethodDescription: null,
   specificName: null,
@@ -29,6 +30,7 @@ describe("sampleSchema", () => {
       type: "core.section",
       material: null,
       texture: null,
+      metamorphicFacies: null,
       collectionMethod: "coring.gravity_corer",
       collectionMethodDescription: null,
       specificName: null,
@@ -239,6 +241,37 @@ describe("createSampleSchema", () => {
         nature: "hand_sample",
         material,
         texture,
+      });
+      expect(result.success).toBe(false);
+    },
+  );
+
+  it("should accept a metamorphic facies for a metamorphic material", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Gneiss 1",
+      nature: "hand_sample",
+      material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+      metamorphicFacies: "amphibolite",
+    });
+    expect(result).toMatchObject({ success: true });
+  });
+
+  it.each([
+    // A facies with a non-metamorphic material.
+    {
+      material: "rock.igneous.plutonic.felsic.granite",
+      metamorphicFacies: "amphibolite",
+    },
+    // A facies with no material at all.
+    { material: null, metamorphicFacies: "amphibolite" },
+  ])(
+    "should reject a metamorphic facies inconsistent with the material %o",
+    ({ material, metamorphicFacies }) => {
+      const result = createSampleSchema.safeParse({
+        name: "Sample",
+        nature: "hand_sample",
+        material,
+        metamorphicFacies,
       });
       expect(result.success).toBe(false);
     },

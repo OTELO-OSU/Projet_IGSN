@@ -24,6 +24,34 @@ describe("materialChildren", () => {
     ]);
   });
 
+  it("should return the weakly and strongly degree nodes under metamorphic", () => {
+    expect(materialChildren("rock.metamorphic")).toEqual([
+      "rock.metamorphic.weakly_metamorphosed",
+      "rock.metamorphic.strongly_metamorphosed",
+    ]);
+  });
+
+  it("should reuse the igneous branches under meta_igneous_rock", () => {
+    const metaIgneous =
+      "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock";
+    expect(materialChildren(metaIgneous)).toEqual([
+      `${metaIgneous}.plutonic`,
+      `${metaIgneous}.volcanic`,
+    ]);
+  });
+
+  it("should reuse the sedimentary children under meta_sedimentary_rock", () => {
+    const metaSed =
+      "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock";
+    expect(materialChildren(metaSed)).toEqual([
+      `${metaSed}.microbialite`,
+      `${metaSed}.clastic_sedimentary_rock`,
+      `${metaSed}.biochemical_and_chemical_sedimentary_rock`,
+      `${metaSed}.volcaniclastic_rock`,
+      `${metaSed}.hybrid_sedimentary_rock`,
+    ]);
+  });
+
   it("should return the plutonic and volcanic branches under igneous", () => {
     expect(materialChildren("rock.igneous")).toEqual([
       "rock.igneous.plutonic",

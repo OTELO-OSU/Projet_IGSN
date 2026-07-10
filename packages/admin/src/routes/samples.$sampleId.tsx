@@ -51,6 +51,8 @@ function EditSamplePage() {
           nature: query.data.nature,
           type: query.data.type,
           material: query.data.material,
+          texture: query.data.texture,
+          metamorphicFacies: query.data.metamorphicFacies,
           collectionMethod: query.data.collectionMethod,
           collectionMethodDescription: query.data.collectionMethodDescription,
           specificName: query.data.specificName,

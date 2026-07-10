@@ -32,6 +32,8 @@ function fakeApi(
   published = false,
   material: string | null = "fossil",
   fail: "save" | "publish" | false = false,
+  metamorphicFacies: string | null = null,
+  texture: string | null = null,
 ) {
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -39,7 +41,8 @@ function fakeApi(
     nature: "thin_section",
     type: "dredge",
     material,
-    texture: null,
+    texture,
+    metamorphicFacies,
     collectionMethod: null,
     collectionMethodDescription: null,
     specificName: "MC-2026-007",
@@ -80,8 +83,16 @@ async function renderEditPage(
   published = false,
   material: string | null = "fossil",
   fail: "save" | "publish" | false = false,
+  metamorphicFacies: string | null = null,
+  texture: string | null = null,
 ) {
-  const { id, calls } = fakeApi(published, material, fail);
+  const { id, calls } = fakeApi(
+    published,
+    material,
+    fail,
+    metamorphicFacies,
+    texture,
+  );
   const queryClient = new QueryClient();
   const router = createRouter({
     routeTree,
@@ -128,6 +139,33 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Rock *", exact: true }))
       .toHaveTextContent("Igneous");
+  });
+
+  it("should render the metamorphic facies prefilled on the Sample type tab", async () => {
+    const { screen } = await renderEditPage(
+      false,
+      "rock.metamorphic.strongly_metamorphosed.gneiss",
+      false,
+      "amphibolite",
+    );
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Metamorphic facies" }))
+      .toHaveTextContent("Amphibolite facies");
+  });
+
+  it("should render the igneous texture prefilled on the Sample type tab", async () => {
+    const { screen } = await renderEditPage(
+      false,
+      "rock.igneous.plutonic",
+      false,
+      null,
+      "phaneritic",
+    );
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Texture" }))
+      .toHaveTextContent("Phaneritic");
   });
 
   it("should not show an IGSN on a draft", async () => {
