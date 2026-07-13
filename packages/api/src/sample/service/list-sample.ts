@@ -8,6 +8,7 @@ import { sql } from "kysely";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
+import { readLocations } from "./read-location.ts";
 import { toSample } from "./to-sample.ts";
 
 // Case- and diacritic-insensitive match on name, specific_name and igsn.
@@ -50,5 +51,12 @@ export async function listSamples(
     .$if(search !== undefined, (qb) => qb.where(matchesSearch(search!)))
     .executeTakeFirstOrThrow();
 
-  return { data: rows.map(toSample), total: Number(count) };
+  const locations = await readLocations(
+    db,
+    rows.map((row) => row.id),
+  );
+  return {
+    data: rows.map((row) => toSample(row, locations.get(row.id) ?? null)),
+    total: Number(count),
+  };
 }

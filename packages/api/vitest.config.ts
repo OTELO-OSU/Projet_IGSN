@@ -9,7 +9,7 @@ export default defineConfig({
   plugins: [
     kyselyPostgres<DB>({
       config: {
-        dockerContainer: { image: "postgres", tag: "17-alpine" },
+        dockerContainer: { image: "postgis/postgis", tag: "17-3.5" },
         database: "testdb",
         username: "test",
         password: "test",

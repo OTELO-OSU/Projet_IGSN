@@ -5,7 +5,9 @@ import { v7 as uuidv7 } from "uuid";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
+import { readLocation } from "./read-location.ts";
 import { toSample } from "./to-sample.ts";
+import { writeLocation } from "./write-location.ts";
 
 export async function insertSample(
   db: Transactional<DB>,
@@ -27,5 +29,6 @@ export async function insertSample(
     })
     .returningAll()
     .executeTakeFirstOrThrow();
-  return toSample(row);
+  await writeLocation(db, row.id, input.location);
+  return toSample(row, await readLocation(db, row.id));
 }

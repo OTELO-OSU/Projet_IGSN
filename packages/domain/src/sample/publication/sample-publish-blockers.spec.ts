@@ -15,6 +15,7 @@ const base: Sample = {
   collectionMethod: null,
   collectionMethodDescription: null,
   specificName: "BAS-42-001",
+  location: null,
   igsn: null,
   published: false,
   createdAt: new Date("2026-01-01T00:00:00Z"),

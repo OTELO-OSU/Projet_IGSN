@@ -12,6 +12,7 @@ const validSample = {
   collectionMethod: "coring.gravity_corer",
   collectionMethodDescription: null,
   specificName: null,
+  location: null,
   igsn: null,
   published: false,
   createdAt: "2026-07-02T10:00:00.000Z",
@@ -34,6 +35,7 @@ describe("sampleSchema", () => {
       collectionMethod: "coring.gravity_corer",
       collectionMethodDescription: null,
       specificName: null,
+      location: null,
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -54,6 +56,24 @@ describe("sampleSchema", () => {
   it("should accept a null type (not classified yet)", () => {
     // Act
     const result = sampleSchema.safeParse({ ...validSample, type: null });
+    // Assert
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept a sample with a location", () => {
+    // Act
+    const result = sampleSchema.safeParse({
+      ...validSample,
+      location: {
+        position: {
+          type: "area",
+          westLongitude: 5,
+          eastLongitude: 8,
+          southLatitude: 44,
+          northLatitude: 46,
+        },
+      },
+    });
     // Assert
     expect(result.success).toBe(true);
   });
@@ -293,6 +313,36 @@ describe("createSampleSchema", () => {
       name: "Basalt 42",
       nature: "hand_sample",
       material: "gemstone",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("should accept a create payload with a location", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Basalt 42",
+      nature: "hand_sample",
+      location: {
+        position: { type: "point", longitude: 2.35, latitude: 48.85 },
+      },
+    });
+    expect(result).toMatchObject({ success: true });
+  });
+
+  it("should accept a synthetic material without a location", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Synthetic 1",
+      nature: "hand_sample",
+      material: "synthetic_rock_mineral",
+    });
+    expect(result).toMatchObject({ success: true });
+  });
+
+  it("should reject a synthetic material carrying a location", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Synthetic 1",
+      nature: "hand_sample",
+      material: "synthetic_rock_mineral",
+      location: { position: { type: "point", longitude: 0, latitude: 0 } },
     });
     expect(result.success).toBe(false);
   });

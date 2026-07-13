@@ -9,7 +9,7 @@
 # browser and for its own broker calls. Run via `make test-e2e` (uses -p igsn-e2e).
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgis/postgis:17-3.5
     environment:
       POSTGRES_USER: igsn
       POSTGRES_PASSWORD: igsn # local throwaway; real password is AWS-managed
