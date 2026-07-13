@@ -536,6 +536,32 @@ describe("admin sample routes", () => {
     );
 
     pgTest(
+      "should create a metamorphic sample with no facies",
+      async ({ db }) => {
+        const client = testClient(createApp(db));
+        const res = await client.admin.samples.$post(
+          {
+            json: {
+              name: "Gneiss",
+              nature: "thin_section",
+              type: null,
+              material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+            },
+          },
+          { headers: authHeader },
+        );
+        expect(res.status).toBe(201);
+        expect(await res.json()).toMatchObject({
+          data: {
+            name: "Gneiss",
+            material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+            metamorphicFacies: null,
+          },
+        });
+      },
+    );
+
+    pgTest(
       "should reject a facies on a non-metamorphic material with 400",
       async ({ db }) => {
         const res = await postSample(createApp(db), {

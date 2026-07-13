@@ -99,6 +99,41 @@ describe("CreateSamplePage", () => {
       .toHaveTextContent("Sample created");
   });
 
+  it("should create a metamorphic sample with no facies", async () => {
+    const screen = await renderCreatePage();
+    await screen.getByLabelText(/name/i).fill("Gneiss");
+    await screen.getByRole("combobox", { name: /nature/i }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Rock", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
+    await screen
+      .getByRole("option", { name: "Metamorphic", exact: true })
+      .click();
+    await screen
+      .getByRole("combobox", { name: "Metamorphic *", exact: true })
+      .click();
+    await screen
+      .getByRole("option", { name: "Strongly metamorphosed", exact: true })
+      .click();
+    await screen
+      .getByRole("combobox", { name: "Strongly metamorphosed *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Gneiss", exact: true }).click();
+
+    // Leave the facies unset: it is optional and must not block creation.
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    await expect.element(screen.getByLabelText(/name/i)).toHaveValue("Gneiss");
+  });
+
   it("should show an error toast when creation fails", async () => {
     const screen = await renderCreatePage(true);
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
