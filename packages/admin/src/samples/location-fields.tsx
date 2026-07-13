@@ -56,6 +56,16 @@ const isElevationEntered = (location: LocationDraft): boolean =>
       ? Boolean(location.elevationMin || location.elevationMax)
       : false;
 
+// Unit and datum share one rule: each is required once an elevation value is
+// entered. The validators stay inline (TanStack types onChange per field name);
+// this is just the shared body they both call.
+const elevationRequired = (
+  value: string,
+  location: LocationDraft,
+  message: () => string,
+) =>
+  isElevationEntered(location) && !value ? { message: message() } : undefined;
+
 // Mark a field required with a trailing "*" once the condition holds, matching
 // the static "Type *" markers (accessibility rule: required shown in text).
 const withRequired = (label: string, required: boolean): string =>
@@ -248,10 +258,11 @@ export function LocationFields() {
                     "location.elevationMax",
                   ],
                   onChange: ({ value, fieldApi }) =>
-                    isElevationEntered(fieldApi.form.state.values.location) &&
-                    !value
-                      ? { message: m.field_elevation_unit_required() }
-                      : undefined,
+                    elevationRequired(
+                      value,
+                      fieldApi.form.state.values.location,
+                      m.field_elevation_unit_required,
+                    ),
                 }}
               >
                 {(field) => (
@@ -274,10 +285,11 @@ export function LocationFields() {
                     "location.elevationMax",
                   ],
                   onChange: ({ value, fieldApi }) =>
-                    isElevationEntered(fieldApi.form.state.values.location) &&
-                    !value
-                      ? { message: m.field_vertical_datum_required() }
-                      : undefined,
+                    elevationRequired(
+                      value,
+                      fieldApi.form.state.values.location,
+                      m.field_vertical_datum_required,
+                    ),
                 }}
               >
                 {(field) => (
