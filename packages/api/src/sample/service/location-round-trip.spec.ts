@@ -51,6 +51,27 @@ describe("sample location persistence", () => {
   );
 
   pgTest(
+    "should round-trip a partial elevation (a draft with a lone bound)",
+    async ({ db }) => {
+      // A draft may save an elevation before it is complete (ADR 0017); the
+      // lone bound must survive the round-trip, not be dropped.
+      const location = {
+        position: {
+          type: "area" as const,
+          westLongitude: 5,
+          eastLongitude: 8,
+          southLatitude: 44,
+          northLatitude: 46,
+          elevation: { min: -200 },
+        },
+      };
+      const created = await insertSample(db, { ...base, location });
+      expect(created.location).toMatchObject(location);
+      expect(await getSample(db, created.id)).toEqual(created);
+    },
+  );
+
+  pgTest(
     "should round-trip an area with elevation, region and nav",
     async ({ db }) => {
       const location = {

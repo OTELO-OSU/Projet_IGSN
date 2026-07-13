@@ -7,6 +7,7 @@ import type { DB } from "../../db.ts";
 import { type Transactional } from "../../transaction.ts";
 import { readLocation } from "./read-location.ts";
 import { toSample } from "./to-sample.ts";
+import { upsertSampleAge } from "./upsert-sample-age.ts";
 import { writeLocation } from "./write-location.ts";
 
 export async function insertSample(
@@ -30,5 +31,6 @@ export async function insertSample(
     .returningAll()
     .executeTakeFirstOrThrow();
   await writeLocation(db, row.id, input.location);
-  return toSample(row, await readLocation(db, row.id));
+  const ageRow = await upsertSampleAge(db, row.id, input.age);
+  return toSample(row, await readLocation(db, row.id), ageRow);
 }

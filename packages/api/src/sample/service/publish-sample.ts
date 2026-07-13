@@ -5,6 +5,7 @@ import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffi
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
+import { getSampleAge } from "./get-sample-age.ts";
 import { readLocation } from "./read-location.ts";
 import { toSample } from "./to-sample.ts";
 
@@ -19,5 +20,9 @@ export async function publishSample(
     .returningAll()
     .executeTakeFirst();
   if (!row) return null;
-  return toSample(row, await readLocation(db, id));
+  const [location, age] = await Promise.all([
+    readLocation(db, id),
+    getSampleAge(db, id),
+  ]);
+  return toSample(row, location, age);
 }

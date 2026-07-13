@@ -19,9 +19,38 @@ export const publishBlockerSchema = z.enum([
   "material_incomplete",
   "metamorphic_facies_missing",
   "location_position_missing",
+  "elevation_unit_datum_missing",
+  "elevation_range_incomplete",
+  "numeric_age_unit_missing",
+  "numeric_age_reference_missing",
+  "numeric_age_range_incomplete",
+  "geological_age_range_incomplete",
 ]);
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
+
+// The three numeric age bounds, each with its own `<bound>Unit`/`<bound>YearsUnit`.
+const NUMERIC_BOUNDS = [
+  "numericAge",
+  "numericAgeMin",
+  "numericAgeMax",
+] as const;
+
+// A bound with a value must state its unit before publish.
+function boundNeedsUnit(
+  age: NonNullable<Sample["age"]>,
+  bound: (typeof NUMERIC_BOUNDS)[number],
+): boolean {
+  return age[bound] != null && age[`${bound}Unit`] === null;
+}
+
+// A bound stated in annum ("a") is a calendar point and needs its reference set.
+function annumNeedsReference(
+  age: NonNullable<Sample["age"]>,
+  bound: (typeof NUMERIC_BOUNDS)[number],
+): boolean {
+  return age[`${bound}Unit`] === "a" && age[`${bound}YearsUnit`] === null;
+}
 
 // Single source of truth for publishability: an empty result means publishable.
 // Type and material are independent dimensions, so both are reported; within
@@ -30,7 +59,10 @@ export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
 // the type is only nominally validated (`SampleType`/`MaterialPath` are `string`),
 // so a malformed value must gate publication rather than slip through.
 export function samplePublishBlockers(
-  sample: Pick<Sample, "type" | "material" | "metamorphicFacies" | "location">,
+  sample: Pick<
+    Sample,
+    "type" | "material" | "metamorphicFacies" | "location" | "age"
+  >,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
 
@@ -75,6 +107,52 @@ export function samplePublishBlockers(
     !sample.location?.position
   ) {
     blockers.push("location_position_missing");
+  }
+
+  // An elevation is optional, but a recorded one must be complete before publish
+  // (a draft may leave it half-filled, like age; ADR 0014): both bounds set, and
+  // a shared unit and datum. The schema already guarantees min <= max and whole
+  // numbers; here we gate the missing pieces.
+  const elevation = sample.location?.position?.elevation;
+  if (elevation != null) {
+    if (elevation.unit == null || elevation.datum == null) {
+      blockers.push("elevation_unit_datum_missing");
+    }
+    if ((elevation.min == null) !== (elevation.max == null)) {
+      blockers.push("elevation_range_incomplete");
+    }
+  }
+
+  // Age is optional, but a recorded numeric value must state its unit before the
+  // sample is published (a draft may omit it). Stratigraphic ages carry no unit.
+  const age = sample.age;
+  if (
+    age != null &&
+    NUMERIC_BOUNDS.some((bound) => boundNeedsUnit(age, bound))
+  ) {
+    blockers.push("numeric_age_unit_missing");
+  }
+
+  // An age in annum is a point on a calendar, so it needs a reference (CE/BCE/
+  // BP/cal BP) before publishing; other units are magnitudes and carry none. A
+  // draft may still omit it, so this gates publication rather than the schema.
+  if (
+    age != null &&
+    NUMERIC_BOUNDS.some((bound) => annumNeedsReference(age, bound))
+  ) {
+    blockers.push("numeric_age_reference_missing");
+  }
+
+  // A half-entered range (one bound only) is a valid draft but cannot publish:
+  // a range needs both bounds. Checked here rather than in ageSchema so editing
+  // and saving a draft mid-range is not blocked (matches the unit rule above).
+  if (age != null) {
+    if ((age.numericAgeMin != null) !== (age.numericAgeMax != null)) {
+      blockers.push("numeric_age_range_incomplete");
+    }
+    if ((age.geologicalAgeMin != null) !== (age.geologicalAgeMax != null)) {
+      blockers.push("geological_age_range_incomplete");
+    }
   }
 
   return blockers;

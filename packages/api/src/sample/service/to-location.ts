@@ -31,9 +31,17 @@ export function toLocation(row: LocationRow | undefined): Location | null {
   });
 }
 
-// Signed elevation range (min === max for a point), or omitted when absent.
+// Signed elevation range (min === max for a point), or omitted when absent. A
+// draft may hold a partial elevation (a lone bound, or bounds without a unit or
+// datum; ADR 0017), so any non-null part keeps the elevation on round-trip.
 function toElevation(row: LocationRow) {
-  if (row.elevation_min === null || row.elevation_max === null) return {};
+  if (
+    row.elevation_min === null &&
+    row.elevation_max === null &&
+    row.elevation_unit === null &&
+    row.vertical_datum === null
+  )
+    return {};
   return {
     elevation: {
       min: row.elevation_min,

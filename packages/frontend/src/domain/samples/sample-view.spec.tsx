@@ -16,6 +16,7 @@ describe("SampleView", () => {
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -40,6 +41,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -59,6 +61,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -86,6 +89,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -112,6 +116,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -131,6 +136,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -152,6 +158,7 @@ describe("SampleView", () => {
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -182,6 +189,7 @@ describe("SampleView", () => {
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription="Cored at low tide from the reef flat"
         location={null}
+        age={null}
       />,
     );
 
@@ -191,6 +199,101 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByText("Cored at low tide from the reef flat"))
       .toBeInTheDocument();
+  });
+
+  const emptyAge = {
+    numericAge: null,
+    numericAgeUnit: null,
+    numericAgeYearsUnit: null,
+    numericAgeMin: null,
+    numericAgeMinUnit: null,
+    numericAgeMinYearsUnit: null,
+    numericAgeMax: null,
+    numericAgeMaxUnit: null,
+    numericAgeMaxYearsUnit: null,
+    geologicalAge: null,
+    geologicalAgeMin: null,
+    geologicalAgeMax: null,
+    geologicalUnit: null,
+  };
+
+  const baseProps = {
+    name: "Basalt 42",
+    igsn: "0123456789ABCDEFGHJKMNPQRS",
+    nature: "rock_powder",
+    type: null,
+    material: null,
+    texture: null,
+    metamorphicFacies: null,
+    collectionMethod: null,
+    collectionMethodDescription: null,
+    location: null,
+    age: null,
+  } as const;
+
+  it("should show a single numeric age with its unit", async () => {
+    const screen = await render(
+      <SampleView
+        {...baseProps}
+        age={{ ...emptyAge, numericAge: 120, numericAgeUnit: "ma" }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Age" }))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("120 Ma")).toBeInTheDocument();
+  });
+
+  it("should show a numeric age range with a unit per bound", async () => {
+    const screen = await render(
+      <SampleView
+        {...baseProps}
+        age={{
+          ...emptyAge,
+          numericAgeMin: 500,
+          numericAgeMinUnit: "ka",
+          numericAgeMax: 2,
+          numericAgeMaxUnit: "ga",
+        }}
+      />,
+    );
+
+    await expect.element(screen.getByText("500 ka–2 Ga")).toBeInTheDocument();
+  });
+
+  it("should show the translated geological age", async () => {
+    const screen = await render(
+      <SampleView
+        {...baseProps}
+        age={{ ...emptyAge, geologicalAge: "ics8" }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("Cretaceous Upper"))
+      .toBeInTheDocument();
+  });
+
+  it("should show the free-text geological unit", async () => {
+    const screen = await render(
+      <SampleView
+        {...baseProps}
+        age={{ ...emptyAge, geologicalUnit: "Green Sandstone Fm" }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("Green Sandstone Fm"))
+      .toBeInTheDocument();
+  });
+
+  it("should omit the Age section when there is no age", async () => {
+    const screen = await render(<SampleView {...baseProps} age={null} />);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Age" }))
+      .not.toBeInTheDocument();
   });
 
   it("should omit type, material, and collection method rows when unclassified", async () => {
@@ -206,6 +309,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -247,6 +351,7 @@ describe("SampleView", () => {
           },
           navigationType: "GPS",
         }}
+        age={null}
       />,
     );
 
@@ -291,6 +396,7 @@ describe("SampleView", () => {
             elevation: { min: 100, max: 200, unit: "m", datum: "wgs84" },
           },
         }}
+        age={null}
       />,
     );
 
@@ -336,6 +442,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         location={{ region: { kind: "continent", country: "FR" } }}
+        age={null}
       />,
     );
 
@@ -356,6 +463,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         location={{ region: { kind: "ocean", oceanSea: "pacific_ocean" } }}
+        age={null}
       />,
     );
 
@@ -383,6 +491,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         location={{ region }}
+        age={null}
       />,
     );
 
@@ -406,6 +515,7 @@ describe("SampleView", () => {
           localityName: "Reef flat",
           localityDescription: "Southern reef flat, Tahiti",
         }}
+        age={null}
       />,
     );
 

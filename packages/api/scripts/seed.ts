@@ -35,7 +35,7 @@ export async function seed(
     )
     .returningAll()
     .execute();
-  // Seed rows carry no location.
+  // Seed rows carry no location and no age.
   return rows.map((row) => toSample(row, null));
 }
 

@@ -1,6 +1,7 @@
 import { toHierarchyPath } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { describe, expect, it } from "vitest";
 
+import { EMPTY_AGE_FORM_VALUES } from "./age-form.ts";
 import { toLocationDraft } from "./compose-location.ts";
 import { type SampleDraft, sampleDraftSchema } from "./sample-draft-schema.ts";
 
@@ -15,6 +16,7 @@ const draft: SampleDraft = {
   collectionMethodDescription: null,
   specificName: null,
   location: toLocationDraft(null),
+  age: EMPTY_AGE_FORM_VALUES,
 };
 
 describe("sampleDraftSchema", () => {

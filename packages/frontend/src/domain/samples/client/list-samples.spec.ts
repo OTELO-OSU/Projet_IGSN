@@ -43,6 +43,7 @@ describe("listSamples", () => {
           collectionMethodDescription: null,
           specificName: "BAS-42-001",
           location: null,
+          age: null,
           igsn: "0123456789ABCDEFGHJKMNPQRS",
           published: true,
           createdAt: new Date(iso),

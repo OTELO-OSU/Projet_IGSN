@@ -42,6 +42,7 @@ describe("getSampleByIgsn", () => {
       collectionMethodDescription: null,
       specificName: "BAS-42-001",
       location: null,
+      age: null,
       igsn,
       published: true,
       createdAt: new Date(iso),

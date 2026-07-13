@@ -4,7 +4,6 @@ import { LOCATION_TYPES } from "@projet-igsn/domain/sample/location/location-typ
 
 import { m } from "#/paraglide/messages.js";
 import { LocationAreaFields } from "#/samples/location-area-fields.tsx";
-import { LocationElevationFields } from "#/samples/location-elevation-fields.tsx";
 import { locationTypeLabel } from "#/samples/location-label.ts";
 import { LocationNavigationTypeField } from "#/samples/location-navigation-type-field.tsx";
 import { LocationPointFields } from "#/samples/location-point-fields.tsx";
@@ -64,7 +63,6 @@ export function LocationFields() {
         }
       </form.Subscribe>
 
-      <LocationElevationFields />
       <LocationNavigationTypeField />
       <LocationRegionFields />
 

@@ -10,12 +10,18 @@ import {
 import { z } from "zod";
 
 import {
+  type AgeFormValues,
+  ageFormValues,
+  toAgeInput,
+} from "#/samples/age-form.ts";
+import {
   composeLocation,
   type LocationDraft,
   toLocationDraft,
 } from "#/samples/compose-location.ts";
 
-// The sample form's flat draft, as held by the form store.
+// The sample form's flat draft, as held by the form store. Age nests under its
+// own key (like location), so the form's `age.*` paths mirror the domain shape.
 export type SampleDraft = {
   name: string | undefined;
   nature: CreateSample["nature"] | undefined;
@@ -27,6 +33,7 @@ export type SampleDraft = {
   collectionMethodDescription: string | null | undefined;
   specificName: string | null | undefined;
   location: LocationDraft;
+  age: AgeFormValues;
 };
 
 // A saved (or default) sample, spread into the flat draft the form store
@@ -44,10 +51,13 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   collectionMethodDescription: value?.collectionMethodDescription,
   specificName: value?.specificName,
   location: toLocationDraft(value?.location),
+  age: ageFormValues(value?.age),
 });
 
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
+  // Assemble the age block; omit it entirely when empty (like texture).
+  const age = toAgeInput(draft.age);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -71,6 +81,7 @@ const composeCreateSample = (draft: SampleDraft) => {
       locationRequirement(material) === "forbidden"
         ? null
         : composeLocation(draft.location),
+    ...(age ? { age } : {}),
   };
 };
 
