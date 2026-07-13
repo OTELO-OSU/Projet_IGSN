@@ -488,6 +488,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -552,6 +553,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -599,6 +601,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
