@@ -38,7 +38,7 @@ describe("TextField", () => {
     await textarea.fill("A fine-grained basalt sample");
 
     await expect.element(textarea).toHaveValue("A fine-grained basalt sample");
-    expect((await textarea.element()).tagName).toBe("TEXTAREA");
+    expect(textarea.element().tagName).toBe("TEXTAREA");
   });
 
   it("should announce an accessible error when the field is invalid", async () => {
