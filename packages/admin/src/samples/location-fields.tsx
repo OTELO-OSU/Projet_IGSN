@@ -44,6 +44,16 @@ const navigationTypeItems = NAVIGATION_TYPES.map((value) => ({
   label: value,
 }));
 
+// An elevation value is meaningless without its unit and datum, so both are
+// required as soon as a value is entered, even in a draft (ADR 0014). Scoped to
+// the visible value field so a stale value from the other geometry never counts.
+const isElevationEntered = (location: LocationDraft): boolean =>
+  location.type === "point"
+    ? Boolean(location.elevationValue)
+    : location.type === "area"
+      ? Boolean(location.elevationMin || location.elevationMax)
+      : false;
+
 // The Location tab. Every part is optional and independent (ADR 0014): the
 // geometry toggle governs only the coordinate block, while region, navigation
 // type and locality stand alone. Render inside a `form.AppForm`. The form store
@@ -125,7 +135,21 @@ export function LocationFields() {
           {(type) =>
             type ? (
               <div className="grid gap-4 sm:grid-cols-2">
-                <form.AppField name="location.elevationUnit">
+                <form.AppField
+                  name="location.elevationUnit"
+                  validators={{
+                    onChangeListenTo: [
+                      "location.elevationValue",
+                      "location.elevationMin",
+                      "location.elevationMax",
+                    ],
+                    onChange: ({ value, fieldApi }) =>
+                      isElevationEntered(fieldApi.form.state.values.location) &&
+                      !value
+                        ? { message: m.field_elevation_unit_required() }
+                        : undefined,
+                  }}
+                >
                   {(field) => (
                     <field.ComboboxField
                       label={m.field_elevation_unit()}
@@ -136,7 +160,21 @@ export function LocationFields() {
                     />
                   )}
                 </form.AppField>
-                <form.AppField name="location.elevationDatum">
+                <form.AppField
+                  name="location.elevationDatum"
+                  validators={{
+                    onChangeListenTo: [
+                      "location.elevationValue",
+                      "location.elevationMin",
+                      "location.elevationMax",
+                    ],
+                    onChange: ({ value, fieldApi }) =>
+                      isElevationEntered(fieldApi.form.state.values.location) &&
+                      !value
+                        ? { message: m.field_vertical_datum_required() }
+                        : undefined,
+                  }}
+                >
                   {(field) => (
                     <field.ComboboxField
                       label={m.field_vertical_datum()}

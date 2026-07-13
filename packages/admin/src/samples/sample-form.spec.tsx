@@ -1034,4 +1034,58 @@ describe("SampleForm", () => {
       ),
     );
   });
+
+  it("should require a unit and datum once an elevation is entered, even for a draft", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(onSubmit)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("combobox", { name: "Geometry" }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    await screen.getByLabelText("Longitude").fill("3");
+    await screen.getByLabelText("Latitude").fill("45");
+    await screen.getByLabelText("Elevation / bathymetry").fill("-1200");
+
+    // Entering a value forces both unit and datum, and a draft save is blocked.
+    await expect
+      .element(screen.getByText("Select a unit for the elevation."))
+      .toBeVisible();
+    await screen.getByRole("button", { name: "Create" }).click();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    // Providing both clears the block and the elevation is submitted.
+    await screen.getByRole("combobox", { name: "Unit" }).click();
+    await screen.getByRole("option", { name: "m", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Vertical datum" }).click();
+    await screen.getByRole("option", { name: "Mean sea level" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: {
+              type: "point",
+              longitude: 3,
+              latitude: 45,
+              elevation: { value: -1200, unit: "m", datum: "msl" },
+            },
+          },
+        }),
+      ),
+    );
+  });
 });
