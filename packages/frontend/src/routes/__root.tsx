@@ -14,7 +14,7 @@ import type { MyRouterContext } from "../router-context";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import { m } from "../paraglide/messages.js";
 import { getLocale, localizeHref } from "../paraglide/runtime.js";
-import appCss from "../styles.css?url";
+import "../styles.css";
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: ({ matches }) => {
@@ -36,10 +36,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         },
       ],
       links: [
-        {
-          rel: "stylesheet",
-          href: appCss,
-        },
         {
           rel: "canonical",
           href: localizeHref(path, { locale: "en" }),
