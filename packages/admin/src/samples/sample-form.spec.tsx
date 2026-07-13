@@ -1018,7 +1018,7 @@ describe("SampleForm", () => {
     );
 
     await screen.getByRole("tab", { name: "Location" }).click();
-    await screen.getByRole("combobox", { name: "Geometry" }).click();
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude").fill("3.5");
     await screen.getByLabelText("Latitude").fill("-45");
@@ -1053,7 +1053,7 @@ describe("SampleForm", () => {
     );
 
     await screen.getByRole("tab", { name: "Location" }).click();
-    await screen.getByRole("combobox", { name: "Geometry" }).click();
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude").fill("3");
     await screen.getByLabelText("Latitude").fill("45");
@@ -1115,7 +1115,7 @@ describe("SampleForm", () => {
     );
 
     await screen.getByRole("tab", { name: "Location" }).click();
-    await screen.getByRole("combobox", { name: "Geometry" }).click();
+    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
     await screen.getByRole("option", { name: "Area" }).click();
 
     // Neither bound is marked required until one is entered.
