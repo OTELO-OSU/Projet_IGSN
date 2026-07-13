@@ -1158,4 +1158,33 @@ describe("SampleForm", () => {
       .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
       .not.toBeInTheDocument();
   });
+
+  it("should show navigation type only after a geometry is chosen", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Navigation type" }))
+      .not.toBeInTheDocument();
+
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Navigation type" }))
+      .toBeVisible();
+  });
 });

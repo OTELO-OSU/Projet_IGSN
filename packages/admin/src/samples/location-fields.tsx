@@ -76,52 +76,50 @@ export function LocationFields() {
     defaultValues: {} as { location: LocationDraft; materialPath: string[] },
   });
   return (
-    <div className="grid gap-6">
-      <section className="grid gap-4">
-        <h2 className="text-lg font-semibold">
-          {m.section_location_position()}
-        </h2>
-        <form.Subscribe
-          selector={(state) => isPositionRequired(state.values.materialPath)}
-        >
-          {(required) => (
-            <form.AppField name="location.type">
-              {(field) => (
-                <field.ComboboxField
-                  label={withRequired(m.field_location_type(), required)}
-                  items={typeItems}
-                  placeholder={m.location_type_placeholder()}
-                  searchPlaceholder={m.location_type_search_placeholder()}
-                  emptyText={m.location_type_empty()}
-                />
-              )}
-            </form.AppField>
-          )}
-        </form.Subscribe>
+    <div className="grid gap-4">
+      <form.Subscribe
+        selector={(state) => isPositionRequired(state.values.materialPath)}
+      >
+        {(required) => (
+          <form.AppField name="location.type">
+            {(field) => (
+              <field.ComboboxField
+                label={withRequired(m.field_location_type(), required)}
+                items={typeItems}
+                placeholder={m.location_type_placeholder()}
+                searchPlaceholder={m.location_type_search_placeholder()}
+                emptyText={m.location_type_empty()}
+              />
+            )}
+          </form.AppField>
+        )}
+      </form.Subscribe>
 
-        <form.Subscribe
-          selector={(state) => ({
-            type: state.values.location.type,
-            required: isPositionRequired(state.values.materialPath),
-          })}
-        >
-          {({ type, required }) =>
-            type === "point" ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <form.AppField name="location.longitude">
-                  {(field) => (
-                    <field.NumberField
-                      label={withRequired(m.field_longitude(), required)}
-                    />
-                  )}
-                </form.AppField>
-                <form.AppField name="location.latitude">
-                  {(field) => (
-                    <field.NumberField
-                      label={withRequired(m.field_latitude(), required)}
-                    />
-                  )}
-                </form.AppField>
+      <form.Subscribe
+        selector={(state) => ({
+          type: state.values.location.type,
+          required: isPositionRequired(state.values.materialPath),
+        })}
+      >
+        {({ type, required }) =>
+          type === "point" ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <form.AppField name="location.longitude">
+                {(field) => (
+                  <field.NumberField
+                    label={withRequired(m.field_longitude(), required)}
+                  />
+                )}
+              </form.AppField>
+              <form.AppField name="location.latitude">
+                {(field) => (
+                  <field.NumberField
+                    label={withRequired(m.field_latitude(), required)}
+                  />
+                )}
+              </form.AppField>
+              {/* Alone on its row, so it spans both columns. */}
+              <div className="sm:col-span-2">
                 <form.AppField name="location.elevationValue">
                   {(field) => (
                     // Signed value: bathymetry below the datum, elevation above.
@@ -135,229 +133,224 @@ export function LocationFields() {
                   )}
                 </form.AppField>
               </div>
-            ) : type === "area" ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <form.AppField name="location.westLongitude">
-                  {(field) => (
-                    <field.NumberField
-                      label={withRequired(m.field_west_longitude(), required)}
-                    />
-                  )}
-                </form.AppField>
-                <form.AppField name="location.eastLongitude">
-                  {(field) => (
-                    <field.NumberField
-                      label={withRequired(m.field_east_longitude(), required)}
-                    />
-                  )}
-                </form.AppField>
-                <form.AppField name="location.southLatitude">
-                  {(field) => (
-                    <field.NumberField
-                      label={withRequired(m.field_south_latitude(), required)}
-                    />
-                  )}
-                </form.AppField>
-                <form.AppField name="location.northLatitude">
-                  {(field) => (
-                    <field.NumberField
-                      label={withRequired(m.field_north_latitude(), required)}
-                    />
-                  )}
-                </form.AppField>
-                {/* An area elevation is a range: setting one bound requires the
+            </div>
+          ) : type === "area" ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <form.AppField name="location.westLongitude">
+                {(field) => (
+                  <field.NumberField
+                    label={withRequired(m.field_west_longitude(), required)}
+                  />
+                )}
+              </form.AppField>
+              <form.AppField name="location.eastLongitude">
+                {(field) => (
+                  <field.NumberField
+                    label={withRequired(m.field_east_longitude(), required)}
+                  />
+                )}
+              </form.AppField>
+              <form.AppField name="location.southLatitude">
+                {(field) => (
+                  <field.NumberField
+                    label={withRequired(m.field_south_latitude(), required)}
+                  />
+                )}
+              </form.AppField>
+              <form.AppField name="location.northLatitude">
+                {(field) => (
+                  <field.NumberField
+                    label={withRequired(m.field_north_latitude(), required)}
+                  />
+                )}
+              </form.AppField>
+              {/* An area elevation is a range: setting one bound requires the
                     other, so each is marked required once its sibling is set. */}
-                <form.Subscribe
-                  selector={(state) => ({
-                    minSet: Boolean(state.values.location.elevationMin),
-                    maxSet: Boolean(state.values.location.elevationMax),
-                  })}
-                >
-                  {({ minSet, maxSet }) => (
-                    <>
-                      <form.AppField
-                        name="location.elevationMin"
-                        validators={{
-                          onChangeListenTo: ["location.elevationMax"],
-                          onChange: ({ value, fieldApi }) =>
-                            fieldApi.form.state.values.location.elevationMax &&
-                            !value
-                              ? { message: m.field_elevation_min_required() }
-                              : undefined,
-                        }}
-                      >
-                        {(field) => (
-                          <field.NumberField
-                            label={withRequired(
-                              m.field_elevation_min(),
-                              maxSet,
-                            )}
-                          />
-                        )}
-                      </form.AppField>
-                      <form.AppField
-                        name="location.elevationMax"
-                        validators={{
-                          onChangeListenTo: ["location.elevationMin"],
-                          onChange: ({ value, fieldApi }) =>
-                            fieldApi.form.state.values.location.elevationMin &&
-                            !value
-                              ? { message: m.field_elevation_max_required() }
-                              : undefined,
-                        }}
-                      >
-                        {(field) => (
-                          <field.NumberField
-                            label={withRequired(
-                              m.field_elevation_max(),
-                              minSet,
-                            )}
-                          />
-                        )}
-                      </form.AppField>
-                    </>
-                  )}
-                </form.Subscribe>
-              </div>
-            ) : null
-          }
-        </form.Subscribe>
+              <form.Subscribe
+                selector={(state) => ({
+                  minSet: Boolean(state.values.location.elevationMin),
+                  maxSet: Boolean(state.values.location.elevationMax),
+                })}
+              >
+                {({ minSet, maxSet }) => (
+                  <>
+                    <form.AppField
+                      name="location.elevationMin"
+                      validators={{
+                        onChangeListenTo: ["location.elevationMax"],
+                        onChange: ({ value, fieldApi }) =>
+                          fieldApi.form.state.values.location.elevationMax &&
+                          !value
+                            ? { message: m.field_elevation_min_required() }
+                            : undefined,
+                      }}
+                    >
+                      {(field) => (
+                        <field.NumberField
+                          label={withRequired(m.field_elevation_min(), maxSet)}
+                        />
+                      )}
+                    </form.AppField>
+                    <form.AppField
+                      name="location.elevationMax"
+                      validators={{
+                        onChangeListenTo: ["location.elevationMin"],
+                        onChange: ({ value, fieldApi }) =>
+                          fieldApi.form.state.values.location.elevationMin &&
+                          !value
+                            ? { message: m.field_elevation_max_required() }
+                            : undefined,
+                      }}
+                    >
+                      {(field) => (
+                        <field.NumberField
+                          label={withRequired(m.field_elevation_max(), minSet)}
+                        />
+                      )}
+                    </form.AppField>
+                  </>
+                )}
+              </form.Subscribe>
+            </div>
+          ) : null
+        }
+      </form.Subscribe>
 
-        <form.Subscribe
-          selector={(state) => ({
-            show: Boolean(state.values.location.type),
-            // Unit and datum become required (and marked "*") once a value is set.
-            required: isElevationEntered(state.values.location),
-          })}
-        >
-          {({ show, required }) =>
-            show ? (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <form.AppField
-                  name="location.elevationUnit"
-                  validators={{
-                    onChangeListenTo: [
-                      "location.elevationValue",
-                      "location.elevationMin",
-                      "location.elevationMax",
-                    ],
-                    onChange: ({ value, fieldApi }) =>
-                      isElevationEntered(fieldApi.form.state.values.location) &&
-                      !value
-                        ? { message: m.field_elevation_unit_required() }
-                        : undefined,
-                  }}
-                >
-                  {(field) => (
-                    <field.ComboboxField
-                      label={withRequired(m.field_elevation_unit(), required)}
-                      items={unitItems}
-                      placeholder={m.elevation_unit_placeholder()}
-                      searchPlaceholder={m.elevation_unit_search_placeholder()}
-                      emptyText={m.elevation_unit_empty()}
-                    />
-                  )}
-                </form.AppField>
-                <form.AppField
-                  name="location.elevationDatum"
-                  validators={{
-                    onChangeListenTo: [
-                      "location.elevationValue",
-                      "location.elevationMin",
-                      "location.elevationMax",
-                    ],
-                    onChange: ({ value, fieldApi }) =>
-                      isElevationEntered(fieldApi.form.state.values.location) &&
-                      !value
-                        ? { message: m.field_vertical_datum_required() }
-                        : undefined,
-                  }}
-                >
-                  {(field) => (
-                    <field.ComboboxField
-                      label={withRequired(m.field_vertical_datum(), required)}
-                      items={datumItems}
-                      placeholder={m.vertical_datum_placeholder()}
-                      searchPlaceholder={m.vertical_datum_search_placeholder()}
-                      emptyText={m.vertical_datum_empty()}
-                    />
-                  )}
-                </form.AppField>
-              </div>
-            ) : null
-          }
-        </form.Subscribe>
-      </section>
-
-      <section className="grid gap-4">
-        <h2 className="text-lg font-semibold">{m.section_location_region()}</h2>
-        <form.AppField name="location.regionKind">
-          {(field) => (
-            <field.ComboboxField
-              label={m.field_region_kind()}
-              items={regionKindItems}
-              placeholder={m.region_kind_placeholder()}
-              searchPlaceholder={m.region_kind_search_placeholder()}
-              emptyText={m.region_kind_empty()}
-            />
-          )}
-        </form.AppField>
-
-        <form.Subscribe selector={(state) => state.values.location.regionKind}>
-          {(regionKind) =>
-            regionKind === "continent" ? (
-              <form.AppField name="location.country">
+      <form.Subscribe
+        selector={(state) => ({
+          show: Boolean(state.values.location.type),
+          // Unit and datum become required (and marked "*") once a value is set.
+          required: isElevationEntered(state.values.location),
+        })}
+      >
+        {({ show, required }) =>
+          show ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <form.AppField
+                name="location.elevationUnit"
+                validators={{
+                  onChangeListenTo: [
+                    "location.elevationValue",
+                    "location.elevationMin",
+                    "location.elevationMax",
+                  ],
+                  onChange: ({ value, fieldApi }) =>
+                    isElevationEntered(fieldApi.form.state.values.location) &&
+                    !value
+                      ? { message: m.field_elevation_unit_required() }
+                      : undefined,
+                }}
+              >
                 {(field) => (
                   <field.ComboboxField
-                    label={m.field_country()}
-                    items={countryItems}
-                    placeholder={m.country_placeholder()}
-                    searchPlaceholder={m.country_search_placeholder()}
-                    emptyText={m.country_empty()}
+                    label={withRequired(m.field_elevation_unit(), required)}
+                    items={unitItems}
+                    placeholder={m.elevation_unit_placeholder()}
+                    searchPlaceholder={m.elevation_unit_search_placeholder()}
+                    emptyText={m.elevation_unit_empty()}
                   />
                 )}
               </form.AppField>
-            ) : regionKind === "ocean" ? (
-              <form.AppField name="location.oceanSea">
+              <form.AppField
+                name="location.elevationDatum"
+                validators={{
+                  onChangeListenTo: [
+                    "location.elevationValue",
+                    "location.elevationMin",
+                    "location.elevationMax",
+                  ],
+                  onChange: ({ value, fieldApi }) =>
+                    isElevationEntered(fieldApi.form.state.values.location) &&
+                    !value
+                      ? { message: m.field_vertical_datum_required() }
+                      : undefined,
+                }}
+              >
                 {(field) => (
                   <field.ComboboxField
-                    label={m.field_ocean_sea()}
-                    items={oceanSeaItems}
-                    placeholder={m.ocean_sea_placeholder()}
-                    searchPlaceholder={m.ocean_sea_search_placeholder()}
-                    emptyText={m.ocean_sea_empty()}
+                    label={withRequired(m.field_vertical_datum(), required)}
+                    items={datumItems}
+                    placeholder={m.vertical_datum_placeholder()}
+                    searchPlaceholder={m.vertical_datum_search_placeholder()}
+                    emptyText={m.vertical_datum_empty()}
                   />
                 )}
               </form.AppField>
-            ) : null
-          }
-        </form.Subscribe>
-      </section>
+            </div>
+          ) : null
+        }
+      </form.Subscribe>
 
-      <section className="grid gap-4">
-        <h2 className="text-lg font-semibold">
-          {m.section_location_context()}
-        </h2>
-        <form.AppField name="location.navigationType">
-          {(field) => (
-            <field.ComboboxField
-              label={m.field_navigation_type()}
-              items={navigationTypeItems}
-              placeholder={m.navigation_type_placeholder()}
-              searchPlaceholder={m.navigation_type_search_placeholder()}
-              emptyText={m.navigation_type_empty()}
-            />
-          )}
-        </form.AppField>
-        <form.AppField name="location.localityName">
-          {(field) => <field.TextField label={m.field_locality_name()} />}
-        </form.AppField>
-        <form.AppField name="location.localityDescription">
-          {(field) => (
-            <field.TextField label={m.field_locality_description()} multiline />
-          )}
-        </form.AppField>
-      </section>
+      {/* Navigation type qualifies how the coordinates were fixed, so it only
+            applies once a geometry (point or area) is chosen. */}
+      <form.Subscribe selector={(state) => Boolean(state.values.location.type)}>
+        {(show) =>
+          show ? (
+            <form.AppField name="location.navigationType">
+              {(field) => (
+                <field.ComboboxField
+                  label={m.field_navigation_type()}
+                  items={navigationTypeItems}
+                  placeholder={m.navigation_type_placeholder()}
+                  searchPlaceholder={m.navigation_type_search_placeholder()}
+                  emptyText={m.navigation_type_empty()}
+                />
+              )}
+            </form.AppField>
+          ) : null
+        }
+      </form.Subscribe>
+
+      <form.AppField name="location.regionKind">
+        {(field) => (
+          <field.ComboboxField
+            label={m.field_region_kind()}
+            items={regionKindItems}
+            placeholder={m.region_kind_placeholder()}
+            searchPlaceholder={m.region_kind_search_placeholder()}
+            emptyText={m.region_kind_empty()}
+          />
+        )}
+      </form.AppField>
+
+      <form.Subscribe selector={(state) => state.values.location.regionKind}>
+        {(regionKind) =>
+          regionKind === "continent" ? (
+            <form.AppField name="location.country">
+              {(field) => (
+                <field.ComboboxField
+                  label={m.field_country()}
+                  items={countryItems}
+                  placeholder={m.country_placeholder()}
+                  searchPlaceholder={m.country_search_placeholder()}
+                  emptyText={m.country_empty()}
+                />
+              )}
+            </form.AppField>
+          ) : regionKind === "ocean" ? (
+            <form.AppField name="location.oceanSea">
+              {(field) => (
+                <field.ComboboxField
+                  label={m.field_ocean_sea()}
+                  items={oceanSeaItems}
+                  placeholder={m.ocean_sea_placeholder()}
+                  searchPlaceholder={m.ocean_sea_search_placeholder()}
+                  emptyText={m.ocean_sea_empty()}
+                />
+              )}
+            </form.AppField>
+          ) : null
+        }
+      </form.Subscribe>
+
+      <form.AppField name="location.localityName">
+        {(field) => <field.TextField label={m.field_locality_name()} />}
+      </form.AppField>
+      <form.AppField name="location.localityDescription">
+        {(field) => (
+          <field.TextField label={m.field_locality_description()} multiline />
+        )}
+      </form.AppField>
     </div>
   );
 }
