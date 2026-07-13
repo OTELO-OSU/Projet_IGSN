@@ -1,6 +1,6 @@
-import naturesEn from "../../packages/design-system/messages/en.json";
+import naturesEn from "../../packages/domain/messages/en.json";
 
-// Nature code -> English label, read straight from the design-system message
+// Nature code -> English label, read straight from the domain message
 // catalog the apps render from, so the E2E asserts the exact on-screen text
 // (English, per the i18n testing rule) without a second copy to keep in sync.
 export function natureLabel(nature: string): string {

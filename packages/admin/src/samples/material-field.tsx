@@ -8,7 +8,7 @@ import { faciesFor } from "@projet-igsn/domain/sample/metamorphic-facies/vocabul
 import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
-import { materialPathLabel } from "#/samples/vocabulary-label.ts";
+import { materialPathLabel } from "#/samples/sample-labels.ts";
 
 // Material shares the generic hierarchy cascade with type and collection method;
 // the tree itself carries the completeness policy (a node with children must be

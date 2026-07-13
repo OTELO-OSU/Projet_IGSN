@@ -9,7 +9,7 @@
   "plugin.inlang.messageFormat": {
     "pathPattern": [
       "./messages/{locale}.json",
-      "../design-system/messages/{locale}.json"
+      "../domain/messages/{locale}.json"
     ]
   }
 }

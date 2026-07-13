@@ -3,7 +3,7 @@ import { composeHierarchyValue } from "@projet-igsn/design-system/components/for
 import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
-import { textureLabel } from "#/samples/texture-label.ts";
+import { textureLabel } from "#/samples/sample-labels.ts";
 
 // Igneous texture selector: shown only when the chosen material is a plutonic or
 // volcanic branch (the vocabulary that applies then). The material field resets

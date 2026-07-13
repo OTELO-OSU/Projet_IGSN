@@ -5,7 +5,7 @@ import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
 import { matchRanges } from "#/domain/samples/highlight-match.ts";
-import { materialPathLabel } from "#/domain/samples/vocabulary-label.ts";
+import { materialPathLabel } from "#/domain/samples/sample-labels.ts";
 
 type SampleListItem = Pick<Sample, "igsn" | "name" | "material">;
 
