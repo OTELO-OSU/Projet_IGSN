@@ -25,11 +25,11 @@ describe("locationSchema", () => {
   it.each<[string, unknown]>([
     ["a bare point", { position: point }],
     [
-      "a point with a signed elevation",
+      "a point with a signed elevation (a degenerate range)",
       {
         position: {
           ...point,
-          elevation: { value: -1200, unit: "m", datum: "msl" },
+          elevation: { min: -1200, max: -1200, unit: "m", datum: "msl" },
         },
       },
     ],
@@ -84,7 +84,16 @@ describe("locationSchema", () => {
     [
       "an elevation missing its unit",
       {
-        position: { ...point, elevation: { value: 10, datum: "msl" } },
+        position: { ...point, elevation: { min: 10, max: 10, datum: "msl" } },
+      },
+    ],
+    [
+      "a fractional elevation",
+      {
+        position: {
+          ...point,
+          elevation: { min: 10.5, max: 10.5, unit: "m", datum: "msl" },
+        },
       },
     ],
     ["a continent region without a country", { region: { kind: "continent" } }],

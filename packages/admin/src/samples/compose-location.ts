@@ -66,9 +66,15 @@ function composePosition(draft: LocationDraft): Location["position"] {
     const latitude = num(draft.latitude);
     if (longitude === undefined || latitude === undefined) return undefined;
     const value = num(draft.elevationValue);
+    // A point is the degenerate range where min === max (ADR 0014).
     const elevation =
       value !== undefined && draft.elevationUnit && draft.elevationDatum
-        ? { value, unit: draft.elevationUnit, datum: draft.elevationDatum }
+        ? {
+            min: value,
+            max: value,
+            unit: draft.elevationUnit,
+            datum: draft.elevationDatum,
+          }
         : undefined;
     return { type: "point", longitude, latitude, elevation };
   }
@@ -146,8 +152,7 @@ export function toLocationDraft(
   const { position, region } = location;
   const point = position?.type === "point" ? position : undefined;
   const area = position?.type === "area" ? position : undefined;
-  const pointElevation = point?.elevation;
-  const areaElevation = area?.elevation;
+  const elevation = position?.elevation;
   return {
     type: position?.type ?? "",
     longitude: text(point?.longitude),
@@ -156,11 +161,12 @@ export function toLocationDraft(
     eastLongitude: text(area?.eastLongitude),
     southLatitude: text(area?.southLatitude),
     northLatitude: text(area?.northLatitude),
-    elevationValue: text(pointElevation?.value),
-    elevationMin: text(areaElevation?.min),
-    elevationMax: text(areaElevation?.max),
-    elevationUnit: pointElevation?.unit ?? areaElevation?.unit ?? "",
-    elevationDatum: pointElevation?.datum ?? areaElevation?.datum ?? "",
+    // A point's single value is the degenerate range's min (=== max).
+    elevationValue: text(point ? elevation?.min : undefined),
+    elevationMin: text(area ? elevation?.min : undefined),
+    elevationMax: text(area ? elevation?.max : undefined),
+    elevationUnit: elevation?.unit ?? "",
+    elevationDatum: elevation?.datum ?? "",
     regionKind: region?.kind ?? "",
     country: region?.kind === "continent" ? region.country : "",
     oceanSea: region?.kind === "ocean" ? region.oceanSea : "",

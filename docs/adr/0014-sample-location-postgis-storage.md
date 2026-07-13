@@ -62,7 +62,7 @@ alone (a locality-only location is valid).
 
 ```
 location = {
-  position?:  { type:"point", longitude, latitude, elevation?:{ value, unit, datum } }
+  position?:  { type:"point", longitude, latitude, elevation?:{ min, max, unit, datum } }
             | { type:"area",  westLongitude, eastLongitude, southLatitude, northLatitude,
                               elevation?:{ min, max, unit, datum } }
   region?:    { kind:"continent", country } | { kind:"ocean", oceanSea }
@@ -73,10 +73,13 @@ location = {
 ```
 
 `position` is a `z.discriminatedUnion("type", ...)`, itself optional. Elevation
-attaches to the position (single signed `value` for a point, positive elevation
-and negative bathymetry; `min`/`max` for an area; `unit` and `datum` required
-once present). Cross-field coherence (`north >= south`, elevation `min <= max`)
-lives in a `superRefine` on `locationSchema`.
+attaches to the position as a signed integer range in whole units (positive
+elevation above the datum, negative bathymetry below), with a shared `unit` and
+`datum` required once present; a point is the degenerate range where
+`min === max`, and the form asks for a single value. Stored in two `integer`
+columns (`elevation_min`/`elevation_max`): a native range type is unsound here
+because the unit varies per row. Cross-field coherence (`north >= south`,
+elevation `min <= max`) lives in a `superRefine` on `locationSchema`.
 
 **Vocabularies** stay codes per the i18n rule:
 

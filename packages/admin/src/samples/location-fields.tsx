@@ -91,7 +91,16 @@ export function LocationFields() {
                   {(field) => <field.NumberField label={m.field_latitude()} />}
                 </form.AppField>
                 <form.AppField name="location.elevationValue">
-                  {(field) => <field.NumberField label={m.field_elevation()} />}
+                  {(field) => (
+                    // Signed value: bathymetry below the datum, elevation above.
+                    <field.NumberField
+                      label={
+                        Number(field.state.value) < 0
+                          ? m.field_bathymetry()
+                          : m.field_elevation()
+                      }
+                    />
+                  )}
                 </form.AppField>
               </div>
             ) : type === "area" ? (

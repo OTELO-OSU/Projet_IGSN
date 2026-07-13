@@ -36,7 +36,7 @@ describe("composeLocation", () => {
         type: "point",
         longitude: 3.5,
         latitude: -45,
-        elevation: { value: -1200, unit: "m", datum: "msl" },
+        elevation: { min: -1200, max: -1200, unit: "m", datum: "msl" },
       },
     });
   });
@@ -112,7 +112,7 @@ describe("toLocationDraft", () => {
         type: "point",
         longitude: 3.5,
         latitude: -45,
-        elevation: { value: -1200, unit: "m", datum: "msl" },
+        elevation: { min: -1200, max: -1200, unit: "m", datum: "msl" },
       },
       region: { kind: "continent", country: "FR" },
       navigationType: "GPS",

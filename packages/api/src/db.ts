@@ -46,7 +46,6 @@ type LocationTable = {
   area_east_longitude: number | null;
   area_south_latitude: number | null;
   area_north_latitude: number | null;
-  elevation: number | null;
   elevation_min: number | null;
   elevation_max: number | null;
   elevation_unit: string | null;

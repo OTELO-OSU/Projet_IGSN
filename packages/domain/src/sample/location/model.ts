@@ -17,16 +17,12 @@ const freeText = z.string().trim().min(1);
 const longitudeSchema = z.number().min(-180).max(180);
 const latitudeSchema = z.number().min(-90).max(90);
 
-// Signed elevation: positive above the datum (elevation), negative below
-// (bathymetry). A point carries one value; an area carries a min and a max.
-const pointElevationSchema = z.object({
-  value: z.number(),
-  unit: elevationUnitSchema,
-  datum: verticalDatumSchema,
-});
-const areaElevationSchema = z.object({
-  min: z.number(),
-  max: z.number(),
+// Signed elevation range in whole units: positive above the datum (elevation),
+// negative below (bathymetry). Always a range with a shared unit and datum; a
+// point is the degenerate range where min === max (ADR 0014).
+const elevationSchema = z.object({
+  min: z.number().int(),
+  max: z.number().int(),
   unit: elevationUnitSchema,
   datum: verticalDatumSchema,
 });
@@ -36,7 +32,7 @@ const positionSchema = z.discriminatedUnion("type", [
     type: z.literal("point"),
     longitude: longitudeSchema,
     latitude: latitudeSchema,
-    elevation: pointElevationSchema.nullish(),
+    elevation: elevationSchema.nullish(),
   }),
   z.object({
     type: z.literal("area"),
@@ -44,7 +40,7 @@ const positionSchema = z.discriminatedUnion("type", [
     eastLongitude: longitudeSchema,
     southLatitude: latitudeSchema,
     northLatitude: latitudeSchema,
-    elevation: areaElevationSchema.nullish(),
+    elevation: elevationSchema.nullish(),
   }),
 ]);
 
@@ -66,8 +62,11 @@ export const locationSchema = z
   // are real invariants.
   .superRefine((location, ctx) => {
     const { position } = location;
-    if (position?.type !== "area") return;
-    if (position.northLatitude < position.southLatitude) {
+    if (!position) return;
+    if (
+      position.type === "area" &&
+      position.northLatitude < position.southLatitude
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["position", "northLatitude"],

@@ -29,6 +29,28 @@ describe("sample location persistence", () => {
   });
 
   pgTest(
+    "should round-trip a point elevation as a degenerate range",
+    async ({ db }) => {
+      const location = {
+        position: {
+          type: "point" as const,
+          longitude: 2.35,
+          latitude: 48.85,
+          elevation: {
+            min: -1200,
+            max: -1200,
+            unit: "m" as const,
+            datum: "msl" as const,
+          },
+        },
+      };
+      const created = await insertSample(db, { ...base, location });
+      expect(created.location).toEqual(location);
+      expect(await getSample(db, created.id)).toEqual(created);
+    },
+  );
+
+  pgTest(
     "should round-trip an area with elevation, region and nav",
     async ({ db }) => {
       const location = {

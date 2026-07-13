@@ -16,8 +16,8 @@ async function createSample(
   specificName = `${name} 001`,
 ) {
   const created = await client.admin.samples.$post(
-    // A leaf type, leaf material and specific name are required to publish,
-    // so seed them all for the publish helper.
+    // A leaf type, leaf material, a location and a specific name are required
+    // to publish, so seed them all for the publish helper.
     {
       json: {
         name,
@@ -25,6 +25,7 @@ async function createSample(
         type: "individual_sample",
         material: "sediment.exogenous_detritic.clay",
         specificName,
+        location: { position: { type: "point", longitude: 0, latitude: 0 } },
       },
     },
     { headers: authHeader },

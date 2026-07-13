@@ -31,21 +31,26 @@ export function toLocation(row: LocationRow | undefined): Location | null {
   });
 }
 
+// Signed elevation range (min === max for a point), or omitted when absent.
+function toElevation(row: LocationRow) {
+  if (row.elevation_min === null || row.elevation_max === null) return {};
+  return {
+    elevation: {
+      min: row.elevation_min,
+      max: row.elevation_max,
+      unit: row.elevation_unit,
+      datum: row.vertical_datum,
+    },
+  };
+}
+
 function toPosition(row: LocationRow) {
   if (row.type === "point") {
     return {
       type: "point",
       longitude: row.point_longitude,
       latitude: row.point_latitude,
-      ...(row.elevation !== null
-        ? {
-            elevation: {
-              value: row.elevation,
-              unit: row.elevation_unit,
-              datum: row.vertical_datum,
-            },
-          }
-        : {}),
+      ...toElevation(row),
     };
   }
   if (row.type === "area") {
@@ -55,16 +60,7 @@ function toPosition(row: LocationRow) {
       eastLongitude: row.area_east_longitude,
       southLatitude: row.area_south_latitude,
       northLatitude: row.area_north_latitude,
-      ...(row.elevation_min !== null || row.elevation_max !== null
-        ? {
-            elevation: {
-              min: row.elevation_min,
-              max: row.elevation_max,
-              unit: row.elevation_unit,
-              datum: row.vertical_datum,
-            },
-          }
-        : {}),
+      ...toElevation(row),
     };
   }
   return null;
@@ -99,9 +95,8 @@ export function toLocationValues(
     area_east_longitude: area?.eastLongitude ?? null,
     area_south_latitude: area?.southLatitude ?? null,
     area_north_latitude: area?.northLatitude ?? null,
-    elevation: point?.elevation?.value ?? null,
-    elevation_min: area?.elevation?.min ?? null,
-    elevation_max: area?.elevation?.max ?? null,
+    elevation_min: elevation?.min ?? null,
+    elevation_max: elevation?.max ?? null,
     elevation_unit: elevation?.unit ?? null,
     vertical_datum: elevation?.datum ?? null,
     navigation_type: location.navigationType ?? null,

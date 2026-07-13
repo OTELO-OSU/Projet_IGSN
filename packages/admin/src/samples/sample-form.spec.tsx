@@ -1057,7 +1057,11 @@ describe("SampleForm", () => {
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude").fill("3");
     await screen.getByLabelText("Latitude").fill("45");
-    await screen.getByLabelText("Elevation / bathymetry").fill("-1200");
+    // The label reads "Elevation" until a negative value flips it to "Bathymetry".
+    await screen.getByLabelText("Elevation").fill("-1200");
+    await expect
+      .element(screen.getByLabelText("Bathymetry"))
+      .toHaveValue(-1200);
 
     // Entering a value forces both unit and datum, and a draft save is blocked.
     await expect
@@ -1081,7 +1085,7 @@ describe("SampleForm", () => {
               type: "point",
               longitude: 3,
               latitude: 45,
-              elevation: { value: -1200, unit: "m", datum: "msl" },
+              elevation: { min: -1200, max: -1200, unit: "m", datum: "msl" },
             },
           },
         }),

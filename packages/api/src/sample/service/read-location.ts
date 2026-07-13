@@ -16,7 +16,6 @@ const LOCATION_COLUMNS = [
   "area_east_longitude",
   "area_south_latitude",
   "area_north_latitude",
-  "elevation",
   "elevation_min",
   "elevation_max",
   "elevation_unit",
