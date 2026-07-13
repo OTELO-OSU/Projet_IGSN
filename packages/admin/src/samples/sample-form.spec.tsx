@@ -1063,17 +1063,22 @@ describe("SampleForm", () => {
       .element(screen.getByLabelText("Bathymetry"))
       .toHaveValue(-1200);
 
-    // Entering a value marks unit and datum required, forces them, and blocks a
-    // draft save.
+    // Entering a value marks unit and datum required, but the error stays hidden
+    // until the user acts on the field.
     await expect.element(screen.getByLabelText("Unit *")).toBeVisible();
     await expect
       .element(screen.getByLabelText("Vertical datum *"))
       .toBeVisible();
     await expect
       .element(screen.getByText("Select a unit for the elevation."))
-      .toBeVisible();
+      .not.toBeInTheDocument();
+
+    // Submitting is blocked and reveals the error (submit touches every field).
     await screen.getByRole("button", { name: "Create" }).click();
     expect(onSubmit).not.toHaveBeenCalled();
+    await expect
+      .element(screen.getByText("Select a unit for the elevation."))
+      .toBeVisible();
 
     // Providing both clears the block and the elevation is submitted.
     await screen.getByRole("combobox", { name: "Unit *" }).click();

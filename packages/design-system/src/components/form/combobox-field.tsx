@@ -13,7 +13,13 @@ type ComboboxFieldProps = {
 
 export function ComboboxField({ label, ...combobox }: ComboboxFieldProps) {
   const field = useFieldContext<string>();
-  const error = field.state.meta.errors[0];
+  // Only surface an error once the user has touched the field, so a requirement
+  // triggered by a sibling change (e.g. unit becomes required when an elevation
+  // is entered) does not flash red before they act. Submitting marks every field
+  // touched, so the error still shows on a save attempt.
+  const error = field.state.meta.isTouched
+    ? field.state.meta.errors[0]
+    : undefined;
   const errorId = `${field.name}-error`;
   return (
     <div className="grid gap-2">
