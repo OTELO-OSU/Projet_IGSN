@@ -22,6 +22,7 @@ const sample: Sample = {
   material: null,
   texture: null,
   collectionMethod: "coring.gravity_corer",
+  collectionMethodDescription: null,
   specificName: "MC-2026-007",
   igsn: null,
   published: false,

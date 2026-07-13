@@ -18,6 +18,7 @@
   "sample_field_material": "Material",
   "sample_field_texture": "Texture",
   "sample_field_collection_method": "Collection method",
+  "sample_field_collection_method_description": "Collection method details",
   "collection_method_blasting": "Blasting",
   "collection_method_camera_sled_camera_tow": "Camera SledCamera Tow",
   "collection_method_coring": "Coring",

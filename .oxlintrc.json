@@ -5,7 +5,7 @@
     "typeCheck": true
   },
   "categories": {
-    "correctness": "warn"
+    "correctness": "error"
   },
   "rules": {
     "eslint/no-unused-vars": "error",

@@ -41,6 +41,7 @@ function fakeApi(
     material,
     texture: null,
     collectionMethod: null,
+    collectionMethodDescription: null,
     specificName: "MC-2026-007",
     igsn: published ? IGSN : null,
     published,

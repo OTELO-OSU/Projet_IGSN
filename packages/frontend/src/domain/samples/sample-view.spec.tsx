@@ -13,6 +13,7 @@ describe("SampleView", () => {
         material="rock.igneous"
         texture={null}
         collectionMethod="coring.gravity_corer"
+        collectionMethodDescription={null}
       />,
     );
 
@@ -34,6 +35,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         collectionMethod={null}
+        collectionMethodDescription={null}
       />,
     );
 
@@ -50,6 +52,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         collectionMethod={null}
+        collectionMethodDescription={null}
       />,
     );
 
@@ -74,6 +77,7 @@ describe("SampleView", () => {
         material="rock.igneous"
         texture={null}
         collectionMethod={null}
+        collectionMethodDescription={null}
       />,
     );
 
@@ -97,6 +101,7 @@ describe("SampleView", () => {
         material="rock.igneous.plutonic.felsic.granite"
         texture="phaneritic"
         collectionMethod={null}
+        collectionMethodDescription={null}
       />,
     );
 
@@ -113,6 +118,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         collectionMethod="coring.gravity_corer"
+        collectionMethodDescription={null}
       />,
     );
 
@@ -130,6 +136,28 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
+  it("should show the collection method description when set", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        collectionMethod="coring.gravity_corer"
+        collectionMethodDescription="Cored at low tide from the reef flat"
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("Collection method details"))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Cored at low tide from the reef flat"))
+      .toBeInTheDocument();
+  });
+
   it("should omit type, material, and collection method rows when unclassified", async () => {
     const screen = await render(
       <SampleView
@@ -140,6 +168,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         collectionMethod={null}
+        collectionMethodDescription={null}
       />,
     );
 
@@ -151,6 +180,9 @@ describe("SampleView", () => {
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByRole("list", { name: "Collection method" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Collection method details"))
       .not.toBeInTheDocument();
   });
 });

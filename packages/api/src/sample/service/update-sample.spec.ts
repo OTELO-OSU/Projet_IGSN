@@ -6,7 +6,7 @@ import { updateSample } from "./update-sample.ts";
 
 describe("updateSample", () => {
   pgTest(
-    "should update the name, nature, type, collection method and specific name",
+    "should update the name, nature, type, collection method, its description and specific name",
     async ({ db }) => {
       // Arrange
       const created = await insertSample(db, {
@@ -21,6 +21,7 @@ describe("updateSample", () => {
         nature: "rock_powder",
         type: "dredge",
         collectionMethod: "dredging.chain_bag",
+        collectionMethodDescription: "Chain bag dredge on the second pass",
         specificName: "FTB-2026-042",
       });
       // Assert
@@ -30,6 +31,7 @@ describe("updateSample", () => {
         nature: "rock_powder",
         type: "dredge",
         collectionMethod: "dredging.chain_bag",
+        collectionMethodDescription: "Chain bag dredge on the second pass",
         specificName: "FTB-2026-042",
         createdAt: created.createdAt,
       });

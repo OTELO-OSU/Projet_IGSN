@@ -20,6 +20,7 @@ type SampleViewProps = {
   material: Sample["material"];
   texture: Sample["texture"];
   collectionMethod: Sample["collectionMethod"];
+  collectionMethodDescription: Sample["collectionMethodDescription"];
 };
 
 // A dot-joined classification path rendered as a breadcrumb: each ancestor
@@ -61,6 +62,7 @@ export function SampleView({
   material,
   texture,
   collectionMethod,
+  collectionMethodDescription,
 }: SampleViewProps) {
   return (
     <div>
@@ -166,6 +168,14 @@ export function SampleView({
                     )}
                   />
                 </dd>
+              </div>
+            ) : null}
+            {collectionMethodDescription ? (
+              <div className="flex gap-4 px-4 py-3">
+                <dt className="text-muted-foreground w-40">
+                  {m.sample_field_collection_method_description()}
+                </dt>
+                <dd className="font-medium">{collectionMethodDescription}</dd>
               </div>
             ) : null}
           </dl>

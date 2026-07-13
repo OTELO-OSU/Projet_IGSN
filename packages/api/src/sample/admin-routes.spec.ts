@@ -436,10 +436,14 @@ describe("admin sample routes", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           collectionMethod: "coring.gravity_corer",
+          collectionMethodDescription: "Short barrel, soft sediment",
         });
         expect(res.status).toBe(201);
         expect(await res.json()).toMatchObject({
-          data: { collectionMethod: "coring.gravity_corer" },
+          data: {
+            collectionMethod: "coring.gravity_corer",
+            collectionMethodDescription: "Short barrel, soft sediment",
+          },
         });
       },
     );

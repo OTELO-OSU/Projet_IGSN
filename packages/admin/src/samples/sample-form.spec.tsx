@@ -42,6 +42,7 @@ describe("SampleForm", () => {
         type: null,
         material: null,
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: null,
       }),
     );
@@ -58,6 +59,7 @@ describe("SampleForm", () => {
           type: "core.section",
           material: null,
           collectionMethod: null,
+          collectionMethodDescription: null,
         }}
         primaryAction={{ kind: "submit", label: "Save", onSubmit }}
       />,
@@ -76,6 +78,7 @@ describe("SampleForm", () => {
         type: "core.section",
         material: null,
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: null,
       }),
     );
@@ -101,6 +104,7 @@ describe("SampleForm", () => {
         type: "dredge",
         material: null,
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: null,
       }),
     );
@@ -145,6 +149,7 @@ describe("SampleForm", () => {
         type: "core.half_round",
         material: null,
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: null,
       }),
     );
@@ -173,6 +178,7 @@ describe("SampleForm", () => {
         material: null,
         specificName: null,
         collectionMethod: null,
+        collectionMethodDescription: null,
       }),
     );
   });
@@ -201,6 +207,7 @@ describe("SampleForm", () => {
         type: "dredge",
         material: null,
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: null,
       }),
     );
@@ -216,6 +223,7 @@ describe("SampleForm", () => {
           type: "core.section",
           material: null,
           collectionMethod: null,
+          collectionMethodDescription: null,
         }}
         primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
       />,
@@ -256,6 +264,7 @@ describe("SampleForm", () => {
         type: null,
         material: "rock.igneous",
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: null,
       }),
     );
@@ -309,6 +318,7 @@ describe("SampleForm", () => {
         material: "rock.igneous.plutonic.felsic.granite",
         texture: "phaneritic",
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: null,
       }),
     );
@@ -364,6 +374,7 @@ describe("SampleForm", () => {
         material: "rock.igneous.plutonic.felsic.granite",
         texture: "phaneritic",
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: null,
       }),
     );
@@ -416,6 +427,7 @@ describe("SampleForm", () => {
         type: null,
         material: "rock.igneous.volcanic",
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: null,
       }),
     );
@@ -441,6 +453,7 @@ describe("SampleForm", () => {
         type: null,
         material: null,
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: "MC-2026-007",
       }),
     );
@@ -474,6 +487,7 @@ describe("SampleForm", () => {
         type: null,
         material: null,
         collectionMethod: "coring.gravity_corer.giant",
+        collectionMethodDescription: null,
         specificName: null,
       }),
     );
@@ -489,6 +503,7 @@ describe("SampleForm", () => {
           type: null,
           material: null,
           collectionMethod: "coring.gravity_corer.giant",
+          collectionMethodDescription: null,
         }}
         primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
       />,
@@ -510,6 +525,59 @@ describe("SampleForm", () => {
         screen.getByRole("combobox", { name: "GravityCorer", exact: true }),
       )
       .toHaveTextContent("Giant");
+  });
+
+  it("should submit the entered collection method description", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen
+      .getByLabelText("Collection Method Description")
+      .fill("Cored at low tide from the northern outcrop");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: null,
+        material: null,
+        collectionMethod: null,
+        collectionMethodDescription:
+          "Cored at low tide from the northern outcrop",
+        specificName: null,
+      }),
+    );
+  });
+
+  it("should submit a blank collection method description as null", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByLabelText("Collection Method Description").fill("   ");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: null,
+        material: null,
+        collectionMethod: null,
+        collectionMethodDescription: null,
+        specificName: null,
+      }),
+    );
   });
 
   it("should call onCancel when Cancel is clicked", async () => {
@@ -537,6 +605,7 @@ describe("SampleForm", () => {
           type: "dredge",
           material: "fossil",
           collectionMethod: null,
+          collectionMethodDescription: null,
           specificName: "MC-2026-007",
         }}
         secondaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
@@ -554,6 +623,7 @@ describe("SampleForm", () => {
         type: "dredge",
         material: "fossil",
         collectionMethod: null,
+        collectionMethodDescription: null,
         specificName: "MC-2026-007",
       }),
     );
@@ -571,6 +641,7 @@ describe("SampleForm", () => {
             type: "dredge",
             material: null,
             collectionMethod: null,
+            collectionMethodDescription: null,
           }}
           secondaryAction={{
             kind: "submit",
@@ -608,6 +679,7 @@ describe("SampleForm", () => {
             type: null,
             material: "fossil",
             collectionMethod: null,
+            collectionMethodDescription: null,
           }}
           secondaryAction={{
             kind: "submit",
@@ -643,6 +715,7 @@ describe("SampleForm", () => {
             type: "dredge",
             material: "fossil",
             collectionMethod: null,
+            collectionMethodDescription: null,
           }}
           secondaryAction={{
             kind: "submit",
@@ -673,6 +746,7 @@ describe("SampleForm", () => {
           type: null,
           material: "fossil",
           collectionMethod: null,
+          collectionMethodDescription: null,
         }}
         secondaryAction={{
           kind: "submit",

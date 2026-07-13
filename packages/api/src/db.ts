@@ -20,6 +20,8 @@ type SampleTable = {
   // Collection-method taxonomy path (e.g. "coring.gravity_corer"); null until
   // recorded. Stored as ltree, read/written as text.
   collection_method: string | null;
+  // Free-text detail on the collection method; null when not provided.
+  collection_method_description: string | null;
   // Precise designation; null on a draft, required to publish (domain rule).
   specific_name: string | null;
   // Null until the sample is published; then derived from the id with generateIgsnSuffix.
