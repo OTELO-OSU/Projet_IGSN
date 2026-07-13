@@ -1063,7 +1063,12 @@ describe("SampleForm", () => {
       .element(screen.getByLabelText("Bathymetry"))
       .toHaveValue(-1200);
 
-    // Entering a value forces both unit and datum, and a draft save is blocked.
+    // Entering a value marks unit and datum required, forces them, and blocks a
+    // draft save.
+    await expect.element(screen.getByLabelText("Unit *")).toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Vertical datum *"))
+      .toBeVisible();
     await expect
       .element(screen.getByText("Select a unit for the elevation."))
       .toBeVisible();
@@ -1071,9 +1076,9 @@ describe("SampleForm", () => {
     expect(onSubmit).not.toHaveBeenCalled();
 
     // Providing both clears the block and the elevation is submitted.
-    await screen.getByRole("combobox", { name: "Unit" }).click();
+    await screen.getByRole("combobox", { name: "Unit *" }).click();
     await screen.getByRole("option", { name: "m", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Vertical datum" }).click();
+    await screen.getByRole("combobox", { name: "Vertical datum *" }).click();
     await screen.getByRole("option", { name: "Mean sea level" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -1091,5 +1096,40 @@ describe("SampleForm", () => {
         }),
       ),
     );
+  });
+
+  it("should require the other bound once one area elevation bound is set", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("combobox", { name: "Geometry" }).click();
+    await screen.getByRole("option", { name: "Area" }).click();
+
+    // Neither bound is marked required until one is entered.
+    await expect
+      .element(screen.getByLabelText("Maximum elevation"))
+      .toBeVisible();
+    await screen.getByLabelText("Minimum elevation").fill("-200");
+
+    // Setting min marks max required and shows its error.
+    await expect
+      .element(screen.getByLabelText("Maximum elevation *"))
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("Enter the maximum elevation too."))
+      .toBeVisible();
   });
 });

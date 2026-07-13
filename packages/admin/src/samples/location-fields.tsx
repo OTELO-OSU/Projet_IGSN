@@ -54,6 +54,11 @@ const isElevationEntered = (location: LocationDraft): boolean =>
       ? Boolean(location.elevationMin || location.elevationMax)
       : false;
 
+// Mark a field required with a trailing "*" once the condition holds, matching
+// the static "Type *" markers (accessibility rule: required shown in text).
+const withRequired = (label: string, required: boolean): string =>
+  required ? `${label} *` : label;
+
 // The Location tab. Every part is optional and independent (ADR 0014): the
 // geometry toggle governs only the coordinate block, while region, navigation
 // type and locality stand alone. Render inside a `form.AppForm`. The form store
@@ -125,24 +130,73 @@ export function LocationFields() {
                     <field.NumberField label={m.field_north_latitude()} />
                   )}
                 </form.AppField>
-                <form.AppField name="location.elevationMin">
-                  {(field) => (
-                    <field.NumberField label={m.field_elevation_min()} />
+                {/* An area elevation is a range: setting one bound requires the
+                    other, so each is marked required once its sibling is set. */}
+                <form.Subscribe
+                  selector={(state) => ({
+                    minSet: Boolean(state.values.location.elevationMin),
+                    maxSet: Boolean(state.values.location.elevationMax),
+                  })}
+                >
+                  {({ minSet, maxSet }) => (
+                    <>
+                      <form.AppField
+                        name="location.elevationMin"
+                        validators={{
+                          onChangeListenTo: ["location.elevationMax"],
+                          onChange: ({ value, fieldApi }) =>
+                            fieldApi.form.state.values.location.elevationMax &&
+                            !value
+                              ? { message: m.field_elevation_min_required() }
+                              : undefined,
+                        }}
+                      >
+                        {(field) => (
+                          <field.NumberField
+                            label={withRequired(
+                              m.field_elevation_min(),
+                              maxSet,
+                            )}
+                          />
+                        )}
+                      </form.AppField>
+                      <form.AppField
+                        name="location.elevationMax"
+                        validators={{
+                          onChangeListenTo: ["location.elevationMin"],
+                          onChange: ({ value, fieldApi }) =>
+                            fieldApi.form.state.values.location.elevationMin &&
+                            !value
+                              ? { message: m.field_elevation_max_required() }
+                              : undefined,
+                        }}
+                      >
+                        {(field) => (
+                          <field.NumberField
+                            label={withRequired(
+                              m.field_elevation_max(),
+                              minSet,
+                            )}
+                          />
+                        )}
+                      </form.AppField>
+                    </>
                   )}
-                </form.AppField>
-                <form.AppField name="location.elevationMax">
-                  {(field) => (
-                    <field.NumberField label={m.field_elevation_max()} />
-                  )}
-                </form.AppField>
+                </form.Subscribe>
               </div>
             ) : null
           }
         </form.Subscribe>
 
-        <form.Subscribe selector={(state) => state.values.location.type}>
-          {(type) =>
-            type ? (
+        <form.Subscribe
+          selector={(state) => ({
+            show: Boolean(state.values.location.type),
+            // Unit and datum become required (and marked "*") once a value is set.
+            required: isElevationEntered(state.values.location),
+          })}
+        >
+          {({ show, required }) =>
+            show ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <form.AppField
                   name="location.elevationUnit"
@@ -161,7 +215,7 @@ export function LocationFields() {
                 >
                   {(field) => (
                     <field.ComboboxField
-                      label={m.field_elevation_unit()}
+                      label={withRequired(m.field_elevation_unit(), required)}
                       items={unitItems}
                       placeholder={m.elevation_unit_placeholder()}
                       searchPlaceholder={m.elevation_unit_search_placeholder()}
@@ -186,7 +240,7 @@ export function LocationFields() {
                 >
                   {(field) => (
                     <field.ComboboxField
-                      label={m.field_vertical_datum()}
+                      label={withRequired(m.field_vertical_datum(), required)}
                       items={datumItems}
                       placeholder={m.vertical_datum_placeholder()}
                       searchPlaceholder={m.vertical_datum_search_placeholder()}
