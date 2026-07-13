@@ -1,6 +1,8 @@
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
+import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { COUNTRIES } from "@projet-igsn/domain/sample/location/country";
 import { ELEVATION_UNITS } from "@projet-igsn/domain/sample/location/elevation-unit";
+import { locationRequirement } from "@projet-igsn/domain/sample/location/location-requirement";
 import { LOCATION_TYPES } from "@projet-igsn/domain/sample/location/location-type";
 import { NAVIGATION_TYPES } from "@projet-igsn/domain/sample/location/navigation-type";
 import { OCEAN_SEAS } from "@projet-igsn/domain/sample/location/ocean-sea";
@@ -59,13 +61,19 @@ const isElevationEntered = (location: LocationDraft): boolean =>
 const withRequired = (label: string, required: boolean): string =>
   required ? `${label} *` : label;
 
+// A position (type + coordinates) is required to publish unless the material
+// exempts it (returned samples) or forbids it (synthetic); the "*" mirrors the
+// location_position_missing publish blocker, so it does not block a draft save.
+const isPositionRequired = (materialPath: string[]): boolean =>
+  locationRequirement(composeHierarchyValue(materialPath)) === "required";
+
 // The Location tab. Every part is optional and independent (ADR 0014): the
 // geometry toggle governs only the coordinate block, while region, navigation
 // type and locality stand alone. Render inside a `form.AppForm`. The form store
 // holds the flat `location.*` draft; `composeLocation` maps it back on submit.
 export function LocationFields() {
   const form = useTypedAppFormContext({
-    defaultValues: {} as { location: LocationDraft },
+    defaultValues: {} as { location: LocationDraft; materialPath: string[] },
   });
   return (
     <div className="grid gap-6">
@@ -73,27 +81,46 @@ export function LocationFields() {
         <h2 className="text-lg font-semibold">
           {m.section_location_position()}
         </h2>
-        <form.AppField name="location.type">
-          {(field) => (
-            <field.ComboboxField
-              label={m.field_location_type()}
-              items={typeItems}
-              placeholder={m.location_type_placeholder()}
-              searchPlaceholder={m.location_type_search_placeholder()}
-              emptyText={m.location_type_empty()}
-            />
+        <form.Subscribe
+          selector={(state) => isPositionRequired(state.values.materialPath)}
+        >
+          {(required) => (
+            <form.AppField name="location.type">
+              {(field) => (
+                <field.ComboboxField
+                  label={withRequired(m.field_location_type(), required)}
+                  items={typeItems}
+                  placeholder={m.location_type_placeholder()}
+                  searchPlaceholder={m.location_type_search_placeholder()}
+                  emptyText={m.location_type_empty()}
+                />
+              )}
+            </form.AppField>
           )}
-        </form.AppField>
+        </form.Subscribe>
 
-        <form.Subscribe selector={(state) => state.values.location.type}>
-          {(type) =>
+        <form.Subscribe
+          selector={(state) => ({
+            type: state.values.location.type,
+            required: isPositionRequired(state.values.materialPath),
+          })}
+        >
+          {({ type, required }) =>
             type === "point" ? (
               <div className="grid gap-4 sm:grid-cols-2">
                 <form.AppField name="location.longitude">
-                  {(field) => <field.NumberField label={m.field_longitude()} />}
+                  {(field) => (
+                    <field.NumberField
+                      label={withRequired(m.field_longitude(), required)}
+                    />
+                  )}
                 </form.AppField>
                 <form.AppField name="location.latitude">
-                  {(field) => <field.NumberField label={m.field_latitude()} />}
+                  {(field) => (
+                    <field.NumberField
+                      label={withRequired(m.field_latitude(), required)}
+                    />
+                  )}
                 </form.AppField>
                 <form.AppField name="location.elevationValue">
                   {(field) => (
@@ -112,22 +139,30 @@ export function LocationFields() {
               <div className="grid gap-4 sm:grid-cols-2">
                 <form.AppField name="location.westLongitude">
                   {(field) => (
-                    <field.NumberField label={m.field_west_longitude()} />
+                    <field.NumberField
+                      label={withRequired(m.field_west_longitude(), required)}
+                    />
                   )}
                 </form.AppField>
                 <form.AppField name="location.eastLongitude">
                   {(field) => (
-                    <field.NumberField label={m.field_east_longitude()} />
+                    <field.NumberField
+                      label={withRequired(m.field_east_longitude(), required)}
+                    />
                   )}
                 </form.AppField>
                 <form.AppField name="location.southLatitude">
                   {(field) => (
-                    <field.NumberField label={m.field_south_latitude()} />
+                    <field.NumberField
+                      label={withRequired(m.field_south_latitude(), required)}
+                    />
                   )}
                 </form.AppField>
                 <form.AppField name="location.northLatitude">
                   {(field) => (
-                    <field.NumberField label={m.field_north_latitude()} />
+                    <field.NumberField
+                      label={withRequired(m.field_north_latitude(), required)}
+                    />
                   )}
                 </form.AppField>
                 {/* An area elevation is a range: setting one bound requires the

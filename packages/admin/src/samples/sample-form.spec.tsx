@@ -1018,10 +1018,10 @@ describe("SampleForm", () => {
     );
 
     await screen.getByRole("tab", { name: "Location" }).click();
-    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
-    await screen.getByLabelText("Longitude").fill("3.5");
-    await screen.getByLabelText("Latitude").fill("-45");
+    await screen.getByLabelText("Longitude *").fill("3.5");
+    await screen.getByLabelText("Latitude *").fill("-45");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -1053,10 +1053,10 @@ describe("SampleForm", () => {
     );
 
     await screen.getByRole("tab", { name: "Location" }).click();
-    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
-    await screen.getByLabelText("Longitude").fill("3");
-    await screen.getByLabelText("Latitude").fill("45");
+    await screen.getByLabelText("Longitude *").fill("3");
+    await screen.getByLabelText("Latitude *").fill("45");
     // The label reads "Elevation" until a negative value flips it to "Bathymetry".
     await screen.getByLabelText("Elevation").fill("-1200");
     await expect
@@ -1115,7 +1115,7 @@ describe("SampleForm", () => {
     );
 
     await screen.getByRole("tab", { name: "Location" }).click();
-    await screen.getByRole("combobox", { name: "Type", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Area" }).click();
 
     // Neither bound is marked required until one is entered.
@@ -1131,5 +1131,31 @@ describe("SampleForm", () => {
     await expect
       .element(screen.getByText("Enter the maximum elevation too."))
       .toBeVisible();
+  });
+
+  it("should not mark the location required for an exempt material", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Lunar regolith",
+          nature: "thin_section",
+          type: "dredge",
+          // Returned extraterrestrial samples may omit an exact location.
+          material: "extraterrestrial_rock.returned_samples.other",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Type", exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
+      .not.toBeInTheDocument();
   });
 });
