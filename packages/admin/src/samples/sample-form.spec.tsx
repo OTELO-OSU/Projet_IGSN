@@ -1159,6 +1159,48 @@ describe("SampleForm", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should disable unit and datum until an elevation is set and clear them when it is removed", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+
+    // No value yet: unit and datum are disabled.
+    await expect
+      .element(screen.getByRole("combobox", { name: "Unit" }))
+      .toBeDisabled();
+
+    // A value enables them; select both.
+    await screen.getByLabelText("Elevation").fill("100");
+    await screen.getByRole("combobox", { name: "Unit *" }).click();
+    await screen.getByRole("option", { name: "m", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Vertical datum *" }).click();
+    await screen.getByRole("option", { name: "Mean sea level" }).click();
+
+    // Clearing the value disables them again and resets their selection.
+    await screen.getByLabelText("Elevation").fill("");
+    await expect
+      .element(screen.getByRole("combobox", { name: "Unit" }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Unit" }))
+      .toHaveTextContent("Select a unit");
+  });
+
   it("should show navigation type only after a geometry is chosen", async () => {
     const screen = await render(
       <SampleForm

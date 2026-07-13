@@ -75,6 +75,14 @@ export function LocationFields() {
   const form = useTypedAppFormContext({
     defaultValues: {} as { location: LocationDraft; materialPath: string[] },
   });
+  // Unit and datum are meaningless without a value, so reset them whenever the
+  // elevation is emptied (for an area, once both bounds are gone).
+  const clearElevationUnitsWhenEmpty = () => {
+    if (!isElevationEntered(form.state.values.location)) {
+      form.setFieldValue("location.elevationUnit", "");
+      form.setFieldValue("location.elevationDatum", "");
+    }
+  };
   return (
     <div className="grid gap-4">
       <form.Subscribe
@@ -120,7 +128,10 @@ export function LocationFields() {
               </form.AppField>
               {/* Alone on its row, so it spans both columns. */}
               <div className="sm:col-span-2">
-                <form.AppField name="location.elevationValue">
+                <form.AppField
+                  name="location.elevationValue"
+                  listeners={{ onChange: clearElevationUnitsWhenEmpty }}
+                >
                   {(field) => (
                     // Signed value: bathymetry below the datum, elevation above.
                     <field.NumberField
@@ -184,6 +195,7 @@ export function LocationFields() {
                             ? { message: m.field_elevation_min_required() }
                             : undefined,
                       }}
+                      listeners={{ onChange: clearElevationUnitsWhenEmpty }}
                     >
                       {(field) => (
                         <field.NumberField
@@ -201,6 +213,7 @@ export function LocationFields() {
                             ? { message: m.field_elevation_max_required() }
                             : undefined,
                       }}
+                      listeners={{ onChange: clearElevationUnitsWhenEmpty }}
                     >
                       {(field) => (
                         <field.NumberField
@@ -248,6 +261,7 @@ export function LocationFields() {
                     placeholder={m.elevation_unit_placeholder()}
                     searchPlaceholder={m.elevation_unit_search_placeholder()}
                     emptyText={m.elevation_unit_empty()}
+                    disabled={!required}
                   />
                 )}
               </form.AppField>
@@ -273,6 +287,7 @@ export function LocationFields() {
                     placeholder={m.vertical_datum_placeholder()}
                     searchPlaceholder={m.vertical_datum_search_placeholder()}
                     emptyText={m.vertical_datum_empty()}
+                    disabled={!required}
                   />
                 )}
               </form.AppField>

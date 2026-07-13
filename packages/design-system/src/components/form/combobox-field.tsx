@@ -8,6 +8,7 @@ type ComboboxFieldProps = {
   placeholder: string;
   searchPlaceholder: string;
   emptyText: string;
+  disabled?: boolean;
 };
 
 export function ComboboxField({ label, ...combobox }: ComboboxFieldProps) {
