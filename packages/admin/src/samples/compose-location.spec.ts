@@ -87,6 +87,26 @@ describe("composeLocation", () => {
     ).toEqual({ region: { kind: "ocean", oceanSea: "atlantic_ocean" } });
   });
 
+  it("should drop navigation type when there is no position", () => {
+    expect(composeLocation(draft({ navigationType: "GPS" }))).toBeNull();
+  });
+
+  it("should keep navigation type alongside a position", () => {
+    expect(
+      composeLocation(
+        draft({
+          type: "point",
+          longitude: "3",
+          latitude: "45",
+          navigationType: "GPS",
+        }),
+      ),
+    ).toEqual({
+      position: { type: "point", longitude: 3, latitude: 45 },
+      navigationType: "GPS",
+    });
+  });
+
   it("should drop elevation when unit or datum is missing", () => {
     expect(
       composeLocation(

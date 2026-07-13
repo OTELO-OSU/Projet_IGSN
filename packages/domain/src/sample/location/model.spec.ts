@@ -135,6 +135,7 @@ describe("locationSchema", () => {
       { position: { type: "point", longitude: 0, latitude: 100 } },
     ],
     ["an unknown navigation type", { navigationType: "sonar" }],
+    ["a navigation type without a position", { navigationType: "GPS" }],
     ["an unknown position type", { position: { type: "line" } }],
   ])("should reject %s", (_label, value) => {
     expect(locationSchema.safeParse(value).success).toBe(false);

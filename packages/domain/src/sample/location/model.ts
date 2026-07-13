@@ -62,6 +62,17 @@ export const locationSchema = z
   // are real invariants.
   .superRefine((location, ctx) => {
     const { position } = location;
+    // Navigation type records how the coordinates were fixed, so it is
+    // meaningless without a position (ADR 0014). The discriminated unions
+    // already bind coordinates to their type and country/ocean to the region
+    // kind, so those pairings cannot come apart.
+    if (location.navigationType != null && !position) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["navigationType"],
+        message: "navigationType requires a position",
+      });
+    }
     if (!position) return;
     if (
       position.type === "area" &&

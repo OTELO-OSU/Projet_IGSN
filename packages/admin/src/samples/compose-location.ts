@@ -122,7 +122,11 @@ function composeRegion(draft: LocationDraft): Location["region"] {
 export function composeLocation(draft: LocationDraft): Location | null {
   const position = composePosition(draft);
   const region = composeRegion(draft);
-  const navigationType = draft.navigationType || undefined;
+  // Navigation type is meaningless without a position, so drop it otherwise
+  // (the field is only shown once a geometry is chosen, but its value lingers).
+  const navigationType = position
+    ? draft.navigationType || undefined
+    : undefined;
   const localityName = draft.localityName.trim() || undefined;
   const localityDescription = draft.localityDescription.trim() || undefined;
   if (
