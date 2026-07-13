@@ -44,6 +44,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -80,6 +81,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -106,6 +108,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -151,6 +154,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -179,6 +183,7 @@ describe("SampleForm", () => {
         specificName: null,
         collectionMethod: null,
         collectionMethodDescription: null,
+        location: null,
       }),
     );
   });
@@ -209,6 +214,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -266,6 +272,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -320,6 +327,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -376,6 +384,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -429,6 +438,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -615,6 +625,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: "MC-2026-007",
+        location: null,
       }),
     );
   });
@@ -649,6 +660,7 @@ describe("SampleForm", () => {
         collectionMethod: "coring.gravity_corer.giant",
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -711,6 +723,7 @@ describe("SampleForm", () => {
         collectionMethodDescription:
           "Cored at low tide from the northern outcrop",
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -736,6 +749,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        location: null,
       }),
     );
   });
@@ -757,8 +771,8 @@ describe("SampleForm", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        // A leaf type and leaf material are required to publish, so Save &
-        // Publish is enabled.
+        // A leaf type and leaf material and a location (a point position) are
+        // required to publish, so Save & Publish is enabled.
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
@@ -767,6 +781,7 @@ describe("SampleForm", () => {
           collectionMethod: null,
           collectionMethodDescription: null,
           specificName: "MC-2026-007",
+          location: { position: { type: "point", longitude: 3, latitude: 45 } },
         }}
         secondaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
         primaryAction={{ kind: "publish", label: "Save & Publish", onPublish }}
@@ -785,6 +800,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: "MC-2026-007",
+        location: { position: { type: "point", longitude: 3, latitude: 45 } },
       }),
     );
     expect(onSubmit).not.toHaveBeenCalled();
@@ -876,6 +892,9 @@ describe("SampleForm", () => {
             material: "fossil",
             collectionMethod: null,
             collectionMethodDescription: null,
+            location: {
+              position: { type: "point", longitude: 3, latitude: 45 },
+            },
           }}
           secondaryAction={{
             kind: "submit",
@@ -924,5 +943,95 @@ describe("SampleForm", () => {
     await expect
       .element(screen.getByRole("link", { name: "View public page" }))
       .toHaveAttribute("href", "https://example.test/samples/IGSN123");
+  });
+
+  it("should hide the Location tab for a synthetic material", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Synthetic corundum",
+          nature: "thin_section",
+          type: "dredge",
+          material: "synthetic_rock_mineral",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("tab", { name: "Sample type" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("tab", { name: "Location" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should block publish and explain when a required location is missing", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          defaultValues={{
+            name: "Basalte du Massif Central",
+            nature: "thin_section",
+            type: "dredge",
+            material: "fossil",
+            collectionMethod: null,
+            collectionMethodDescription: null,
+          }}
+          primaryAction={{
+            kind: "publish",
+            label: "Save & Publish",
+            onPublish: noop,
+          }}
+        />
+      </TooltipProvider>,
+    );
+
+    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    await expect.element(publish).toBeDisabled();
+
+    publish.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/set the sample location/i);
+  });
+
+  it("should submit a point location entered on the Location tab", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(onSubmit)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("combobox", { name: "Geometry" }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    await screen.getByLabelText("Longitude").fill("3.5");
+    await screen.getByLabelText("Latitude").fill("-45");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: { type: "point", longitude: 3.5, latitude: -45 },
+          },
+        }),
+      ),
+    );
   });
 });

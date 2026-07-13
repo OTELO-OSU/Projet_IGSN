@@ -18,6 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { locationRequirement } from "@projet-igsn/domain/sample/location/location-requirement";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import {
@@ -27,6 +28,11 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
+import {
+  composeLocation,
+  toLocationDraft,
+} from "#/samples/compose-location.ts";
+import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
@@ -86,6 +92,7 @@ export function SampleForm({
       collectionMethodDescription:
         defaultValues?.collectionMethodDescription ?? "",
       specificName: defaultValues?.specificName ?? "",
+      location: toLocationDraft(defaultValues?.location),
     },
     // The clicked button passes its callback as meta; Enter uses defaultSubmit.
     onSubmitMeta: { onValid: defaultSubmit } as {
@@ -108,6 +115,7 @@ export function SampleForm({
         collectionMethodDescription:
           value.collectionMethodDescription.trim() || null,
         specificName: value.specificName.trim() || null,
+        location: composeLocation(value.location),
       });
       if (!parsed.success) return;
       meta.onValid?.(parsed.data);
@@ -136,18 +144,27 @@ export function SampleForm({
             typePath: state.values.typePath,
             materialPath: state.values.materialPath,
             metamorphicFacies: state.values.metamorphicFacies,
+            location: state.values.location,
           })}
         >
-          {({ canSubmit, typePath, materialPath, metamorphicFacies }) => {
+          {({
+            canSubmit,
+            typePath,
+            materialPath,
+            metamorphicFacies,
+            location,
+          }) => {
             // Form state holds looser select strings; the runtime values match
             // the domain, so cast to the fields samplePublishBlockers reads.
             const reasons = samplePublishBlockers({
               type: composeHierarchyValue(typePath),
               material: composeHierarchyValue(materialPath),
               metamorphicFacies: metamorphicFacies || null,
-            } as Pick<Sample, "type" | "material" | "metamorphicFacies">).map(
-              publishBlockerLabel,
-            );
+              location: composeLocation(location),
+            } as Pick<
+              Sample,
+              "type" | "material" | "metamorphicFacies" | "location"
+            >).map(publishBlockerLabel);
             const button = (
               <PublishSampleButton
                 label={action.label}
@@ -209,6 +226,23 @@ export function SampleForm({
             {m.tab_sample_classification()}
           </TabsTrigger>
           <TabsTrigger value="type">{m.tab_sample_type()}</TabsTrigger>
+          {/* Synthetic samples must not carry a location (ADR 0014), so the tab
+              is hidden for them; it stays for optional and required materials. */}
+          <form.Subscribe
+            selector={(state) =>
+              locationRequirement(
+                composeHierarchyValue(state.values.materialPath),
+              ) !== "forbidden"
+            }
+          >
+            {(showLocation) =>
+              showLocation ? (
+                <TabsTrigger value="location">
+                  {m.tab_sample_location()}
+                </TabsTrigger>
+              ) : null
+            }
+          </form.Subscribe>
         </TabsList>
 
         {/* Values live in the form store, not the field components, so a field
@@ -277,6 +311,12 @@ export function SampleForm({
           <form.AppField name="specificName">
             {(field) => <field.TextField label={m.field_specific_name()} />}
           </form.AppField>
+        </TabsContent>
+
+        <TabsContent value="location" className="grid gap-4">
+          <form.AppForm>
+            <LocationFields />
+          </form.AppForm>
         </TabsContent>
       </Tabs>
 
