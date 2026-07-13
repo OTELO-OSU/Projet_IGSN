@@ -433,6 +433,166 @@ describe("SampleForm", () => {
     );
   });
 
+  it("should show and submit a metamorphic facies for a metamorphic material", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Gneiss");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Rock", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
+    await screen
+      .getByRole("option", { name: "Metamorphic", exact: true })
+      .click();
+    await screen
+      .getByRole("combobox", { name: "Metamorphic *", exact: true })
+      .click();
+    await screen
+      .getByRole("option", { name: "Strongly metamorphosed", exact: true })
+      .click();
+    await screen
+      .getByRole("combobox", { name: "Strongly metamorphosed *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Gneiss", exact: true }).click();
+
+    await screen.getByRole("combobox", { name: "Metamorphic facies" }).click();
+    await screen.getByRole("option", { name: "Amphibolite facies" }).click();
+
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Gneiss",
+        nature: "thin_section",
+        type: null,
+        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        metamorphicFacies: "amphibolite",
+        collectionMethod: null,
+        collectionMethodDescription: null,
+        specificName: null,
+      }),
+    );
+  });
+
+  it("should recurse into the reused igneous subtree under weakly metamorphosed", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Meta-granite");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Rock", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
+    await screen
+      .getByRole("option", { name: "Metamorphic", exact: true })
+      .click();
+    await screen
+      .getByRole("combobox", { name: "Metamorphic *", exact: true })
+      .click();
+    await screen
+      .getByRole("option", { name: "Weakly metamorphosed", exact: true })
+      .click();
+    await screen
+      .getByRole("combobox", { name: "Weakly metamorphosed *", exact: true })
+      .click();
+    await screen
+      .getByRole("option", { name: "Meta-igneous rock", exact: true })
+      .click();
+    await screen
+      .getByRole("combobox", { name: "Meta-igneous rock *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Plutonic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Felsic", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Felsic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Granite", exact: true }).click();
+
+    await screen.getByRole("combobox", { name: "Metamorphic facies" }).click();
+    await screen.getByRole("option", { name: "Amphibolite facies" }).click();
+
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Meta-granite",
+        nature: "thin_section",
+        type: null,
+        material:
+          "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
+        metamorphicFacies: "amphibolite",
+        collectionMethod: null,
+        collectionMethodDescription: null,
+        specificName: null,
+      }),
+    );
+  });
+
+  it("should drop the metamorphic facies when the material leaves metamorphic", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Rock");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Rock", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
+    await screen
+      .getByRole("option", { name: "Metamorphic", exact: true })
+      .click();
+
+    // Pick a facies, then switch the rock away from metamorphic: it must be
+    // dropped and the facies field hidden.
+    await screen.getByRole("combobox", { name: "Metamorphic facies" }).click();
+    await screen.getByRole("option", { name: "Amphibolite facies" }).click();
+
+    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
+    await screen.getByRole("option", { name: "Igneous", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Metamorphic facies" }))
+      .not.toBeInTheDocument();
+
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Rock",
+        nature: "thin_section",
+        type: null,
+        material: "rock.igneous",
+        collectionMethod: null,
+        collectionMethodDescription: null,
+        specificName: null,
+      }),
+    );
+  });
+
   it("should submit the entered specific name", async () => {
     const onSubmit = vi.fn();
     const screen = await render(

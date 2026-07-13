@@ -17,6 +17,7 @@
   "sample_field_type": "Type",
   "sample_field_material": "Material",
   "sample_field_texture": "Texture",
+  "sample_field_metamorphic_facies": "Metamorphic facies",
   "sample_field_collection_method": "Collection method",
   "sample_field_collection_method_description": "Collection method details",
   "collection_method_blasting": "Blasting",

@@ -13,7 +13,7 @@
 # DNS A records for {igsn.,igsn-admin.,igsn-api.,igsn-auth.,igsn-idp.}$DOMAIN must point at the host EIP.
 # The host docker-compose.env must set KEYCLOAK_PASSWORD (Keycloak admin + SAML users).
 #
-# Usage:  make preprod-deploy DOMAIN=igsn.example.org   (or: DOMAIN=... infra/preprod/scripts/deploy.sh)
+# Usage:  make preprod-deploy DOMAIN=<domain>   (or: DOMAIN=... infra/preprod/scripts/deploy.sh)
 set -euo pipefail
 
 : "${DOMAIN:?set DOMAIN to the domain whose A records point at the host EIP}"

@@ -4,6 +4,7 @@ import type { Sample } from "../sample.ts";
 
 import { MATERIAL_PATHS } from "../material/classification.ts";
 import { isMaterialComplete } from "../material/is-complete.ts";
+import { faciesFor } from "../metamorphic-facies/vocabulary.ts";
 import { isSampleTypeComplete } from "../type/is-complete.ts";
 import { SAMPLE_TYPES } from "../type/vocabulary.ts";
 
@@ -15,6 +16,7 @@ export const publishBlockerSchema = z.enum([
   "type_incomplete",
   "material_missing",
   "material_incomplete",
+  "metamorphic_facies_missing",
 ]);
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
@@ -26,7 +28,7 @@ export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
 // the type is only nominally validated (`SampleType`/`MaterialPath` are `string`),
 // so a malformed value must gate publication rather than slip through.
 export function samplePublishBlockers(
-  sample: Pick<Sample, "type" | "material">,
+  sample: Pick<Sample, "type" | "material" | "metamorphicFacies">,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
 
@@ -46,6 +48,18 @@ export function samplePublishBlockers(
     !isMaterialComplete(sample.material)
   ) {
     blockers.push("material_incomplete");
+  }
+
+  // A metamorphic sample must declare its facies (a separate required field). A
+  // null or out-of-vocabulary value blocks: metamorphicFacies is only nominally
+  // validated here, so a malformed value must gate publication, not slip through.
+  const facies = faciesFor(sample.material);
+  if (
+    facies.length > 0 &&
+    (sample.metamorphicFacies === null ||
+      !facies.includes(sample.metamorphicFacies))
+  ) {
+    blockers.push("metamorphic_facies_missing");
   }
 
   return blockers;

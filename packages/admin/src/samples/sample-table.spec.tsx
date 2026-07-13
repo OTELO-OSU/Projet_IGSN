@@ -21,6 +21,7 @@ const sample: Sample = {
   type: null,
   material: null,
   texture: null,
+  metamorphicFacies: null,
   collectionMethod: "coring.gravity_corer",
   collectionMethodDescription: null,
   specificName: "MC-2026-007",

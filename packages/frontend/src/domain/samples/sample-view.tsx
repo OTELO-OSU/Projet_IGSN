@@ -2,6 +2,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { ChevronRightIcon } from "lucide-react";
 
+import { metamorphicFaciesLabel } from "#/domain/samples/metamorphic-facies-label.ts";
 import { natureLabel } from "#/domain/samples/nature-label.ts";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
 import { textureLabel } from "#/domain/samples/texture-label.ts";
@@ -19,6 +20,7 @@ type SampleViewProps = {
   type: Sample["type"];
   material: Sample["material"];
   texture: Sample["texture"];
+  metamorphicFacies: Sample["metamorphicFacies"];
   collectionMethod: Sample["collectionMethod"];
   collectionMethodDescription: Sample["collectionMethodDescription"];
 };
@@ -61,6 +63,7 @@ export function SampleView({
   type,
   material,
   texture,
+  metamorphicFacies,
   collectionMethod,
   collectionMethodDescription,
 }: SampleViewProps) {
@@ -149,6 +152,19 @@ export function SampleView({
                   {m.sample_field_texture()}
                 </dt>
                 <dd className="font-medium">{textureLabel(texture)}</dd>
+              </div>
+            ) : null}
+            {metamorphicFacies ? (
+              <div className="flex gap-4 px-4 py-3">
+                <dt
+                  id="sample-field-metamorphic-facies"
+                  className="text-muted-foreground w-40"
+                >
+                  {m.sample_field_metamorphic_facies()}
+                </dt>
+                <dd className="font-medium">
+                  {metamorphicFaciesLabel(metamorphicFacies)}
+                </dd>
               </div>
             ) : null}
             {collectionMethod ? (

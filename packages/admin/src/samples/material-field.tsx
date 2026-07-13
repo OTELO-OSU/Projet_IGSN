@@ -4,6 +4,7 @@ import {
   HierarchySelectField,
 } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { MATERIAL_HIERARCHY } from "@projet-igsn/domain/sample/material/classification";
+import { faciesFor } from "@projet-igsn/domain/sample/metamorphic-facies/vocabulary";
 import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
@@ -15,7 +16,11 @@ import { materialPathLabel } from "#/samples/vocabulary-label.ts";
 // only its children.
 export function MaterialField() {
   const form = useTypedAppFormContext({
-    defaultValues: {} as { materialPath: string[]; texture: string },
+    defaultValues: {} as {
+      materialPath: string[];
+      texture: string;
+      metamorphicFacies: string;
+    },
   });
   return (
     <HierarchySelectField
@@ -26,16 +31,20 @@ export function MaterialField() {
       placeholder={m.material_placeholder()}
       searchPlaceholder={m.material_search_placeholder()}
       emptyText={m.material_empty()}
-      // Texture depends on the plutonic/volcanic branch, so drop it only when it
-      // no longer applies to the new path (branch switch or leaving igneous),
-      // not when refining deeper within the same branch (see TextureField).
+      // Texture and metamorphic facies depend on the material branch, so drop
+      // each only when it no longer applies to the new path (branch switch or
+      // leaving igneous/metamorphic), not when refining deeper within the same
+      // branch (see TextureField / MetamorphicFaciesField).
       onChange={() => {
-        const { materialPath, texture } = form.state.values;
-        const textures: readonly string[] = texturesFor(
-          composeHierarchyValue(materialPath ?? []),
-        );
+        const { materialPath, texture, metamorphicFacies } = form.state.values;
+        const material = composeHierarchyValue(materialPath ?? []);
+        const textures: readonly string[] = texturesFor(material);
         if (texture && !textures.includes(texture)) {
           form.setFieldValue("texture", "");
+        }
+        const facies: readonly string[] = faciesFor(material);
+        if (metamorphicFacies && !facies.includes(metamorphicFacies)) {
+          form.setFieldValue("metamorphicFacies", "");
         }
       }}
     />

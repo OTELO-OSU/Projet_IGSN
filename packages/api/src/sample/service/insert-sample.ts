@@ -20,6 +20,7 @@ export async function insertSample(
       type: input.type,
       material: input.material ?? null,
       texture: input.texture ?? null,
+      metamorphic_facies: input.metamorphicFacies ?? null,
       collection_method: input.collectionMethod ?? null,
       collection_method_description: input.collectionMethodDescription ?? null,
       specific_name: input.specificName ?? null,

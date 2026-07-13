@@ -3,6 +3,10 @@ import { z } from "zod";
 import { igsnSuffixSchema } from "../igsn/model.ts";
 import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
 import { materialPathSchema } from "./material/classification.ts";
+import {
+  faciesFor,
+  metamorphicFaciesSchema,
+} from "./metamorphic-facies/vocabulary.ts";
 import { natureSchema } from "./nature.ts";
 import { textureSchema, texturesFor } from "./texture/vocabulary.ts";
 import { sampleTypeSchema } from "./type/vocabulary.ts";
@@ -19,6 +23,10 @@ export const sampleSchema = z.object({
   // Igneous texture; only set for a plutonic/volcanic material (see texturesFor),
   // null otherwise. Not part of the material tree.
   texture: textureSchema.nullable(),
+  // Metamorphic facies; only set for a metamorphic material (see faciesFor),
+  // null otherwise. Not part of the material tree, but required to publish a
+  // metamorphic sample (see sample-publish-blockers).
+  metamorphicFacies: metamorphicFaciesSchema.nullable(),
   // Null until the collection method is recorded.
   collectionMethod: collectionMethodSchema.nullable(),
   // Free-text detail on the collection method; optional, null when not provided.
@@ -45,6 +53,9 @@ export const createSampleSchema = z
     material: materialPathSchema.nullish(),
     // Optional; valid only for the material's igneous branch (see texturesFor).
     texture: textureSchema.nullish(),
+    // Optional at creation; valid only for a metamorphic material (see faciesFor).
+    // Required only at publish, not at creation (like material).
+    metamorphicFacies: metamorphicFaciesSchema.nullish(),
     // Optional at creation, like material: omitted or null on a draft.
     collectionMethod: collectionMethodSchema.nullish(),
     collectionMethodDescription: nameSchema.nullish(),
@@ -59,6 +70,18 @@ export const createSampleSchema = z
         code: "custom",
         path: ["texture"],
         message: "texture is not valid for the selected material",
+      });
+    }
+  })
+  // A facies is only valid when the material is metamorphic. Guards the
+  // "facies resets when the material changes" invariant server-side.
+  .superRefine((value, ctx) => {
+    if (value.metamorphicFacies == null) return;
+    if (!faciesFor(value.material ?? null).includes(value.metamorphicFacies)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["metamorphicFacies"],
+        message: "metamorphic facies is not valid for the selected material",
       });
     }
   });

@@ -32,9 +32,10 @@ function fakeApi(failWrites = false) {
     if (init?.method === "POST" && typeof init.body === "string") {
       sample = {
         id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
-        // Persisted default (the texture column is nullable), overridable by the
-        // submitted body below.
+        // Persisted defaults (the texture and metamorphic_facies columns are
+        // nullable), overridable by the submitted body below.
         texture: null,
+        metamorphicFacies: null,
         ...JSON.parse(init.body),
         igsn: null,
         published: false,
@@ -96,6 +97,41 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Sample created");
+  });
+
+  it("should create a metamorphic sample with no facies", async () => {
+    const screen = await renderCreatePage();
+    await screen.getByLabelText(/name/i).fill("Gneiss");
+    await screen.getByRole("combobox", { name: /nature/i }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Rock", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
+    await screen
+      .getByRole("option", { name: "Metamorphic", exact: true })
+      .click();
+    await screen
+      .getByRole("combobox", { name: "Metamorphic *", exact: true })
+      .click();
+    await screen
+      .getByRole("option", { name: "Strongly metamorphosed", exact: true })
+      .click();
+    await screen
+      .getByRole("combobox", { name: "Strongly metamorphosed *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Gneiss", exact: true }).click();
+
+    // Leave the facies unset: it is optional and must not block creation.
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    await expect.element(screen.getByLabelText(/name/i)).toHaveValue("Gneiss");
   });
 
   it("should show an error toast when creation fails", async () => {

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { expandPaths } from "../path/expand-paths.ts";
 import { type TreeNode } from "../path/tree-node.ts";
 import { extraterrestrialRockTree } from "./classification/extraterrestrial-rock-subtree.ts";
+import { metamorphicTree } from "./classification/metamorphic-subtree.ts";
 import { rockTree } from "./classification/rock-subtree.ts";
 import { sedimentTree } from "./classification/sediment-subtree.ts";
 
@@ -39,6 +40,7 @@ const materialTree = {
   },
 
   ...rockTree,
+  ...metamorphicTree,
   ...sedimentTree,
   ...extraterrestrialRockTree,
 } satisfies Record<string, TreeNode>;

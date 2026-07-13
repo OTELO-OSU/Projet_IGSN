@@ -8,6 +8,7 @@ export const rockTree = {
   igneous: {
     choices: ["plutonic", "volcanic"],
   },
+  metamorphic: { choices: ["weakly_metamorphosed", "strongly_metamorphosed"] },
   sedimentary: {
     choices: [
       "microbialite",

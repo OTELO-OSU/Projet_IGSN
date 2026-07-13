@@ -34,6 +34,20 @@ describe("insertSample", () => {
     });
   });
 
+  pgTest("should round-trip a metamorphic facies", async ({ db }) => {
+    const created = await insertSample(db, {
+      name: "Gneiss 1",
+      nature: "hand_sample",
+      type: null,
+      material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+      metamorphicFacies: "amphibolite",
+    });
+    expect(created).toMatchObject({
+      material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+      metamorphicFacies: "amphibolite",
+    });
+  });
+
   pgTest(
     "should persist a null material for an unclassified draft",
     async ({ db }) => {
