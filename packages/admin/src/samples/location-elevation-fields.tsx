@@ -19,9 +19,10 @@ const datumItems = VERTICAL_DATUMS.map((value) => ({
 // the visible value field so a stale value from the other geometry never counts.
 const isElevationEntered = (location: LocationDraft): boolean =>
   location.type === "point"
-    ? Boolean(location.elevationValue)
+    ? location.elevationValue !== undefined
     : location.type === "area"
-      ? Boolean(location.elevationMin || location.elevationMax)
+      ? location.elevationMin !== undefined ||
+        location.elevationMax !== undefined
       : false;
 
 // Unit and datum share one rule: each is required once an elevation value is

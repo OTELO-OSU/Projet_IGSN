@@ -1,4 +1,5 @@
 import { m } from "#/paraglide/messages.js";
+import { elevationIntegerError } from "#/samples/elevation-integer-error.ts";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 import { withRequired } from "#/samples/with-required.ts";
 
@@ -9,32 +10,28 @@ export function LocationAreaFields({ required }: { required: boolean }) {
     <div className="grid gap-4 sm:grid-cols-2">
       <form.AppField name="location.westLongitude">
         {(field) => (
-          <field.TextField
-            number
+          <field.NumberField
             label={withRequired(m.field_west_longitude(), required)}
           />
         )}
       </form.AppField>
       <form.AppField name="location.eastLongitude">
         {(field) => (
-          <field.TextField
-            number
+          <field.NumberField
             label={withRequired(m.field_east_longitude(), required)}
           />
         )}
       </form.AppField>
       <form.AppField name="location.southLatitude">
         {(field) => (
-          <field.TextField
-            number
+          <field.NumberField
             label={withRequired(m.field_south_latitude(), required)}
           />
         )}
       </form.AppField>
       <form.AppField name="location.northLatitude">
         {(field) => (
-          <field.TextField
-            number
+          <field.NumberField
             label={withRequired(m.field_north_latitude(), required)}
           />
         )}
@@ -43,8 +40,8 @@ export function LocationAreaFields({ required }: { required: boolean }) {
           so each is marked required once its sibling is set. */}
       <form.Subscribe
         selector={(state) => ({
-          minSet: Boolean(state.values.location.elevationMin),
-          maxSet: Boolean(state.values.location.elevationMax),
+          minSet: state.values.location.elevationMin !== undefined,
+          maxSet: state.values.location.elevationMax !== undefined,
         })}
       >
         {({ minSet, maxSet }) => (
@@ -54,14 +51,15 @@ export function LocationAreaFields({ required }: { required: boolean }) {
               validators={{
                 onChangeListenTo: ["location.elevationMax"],
                 onChange: ({ value, fieldApi }) =>
-                  fieldApi.form.state.values.location.elevationMax && !value
+                  elevationIntegerError(value) ??
+                  (fieldApi.form.state.values.location.elevationMax !==
+                    undefined && value === undefined
                     ? { message: m.field_elevation_min_required() }
-                    : undefined,
+                    : undefined),
               }}
             >
               {(field) => (
-                <field.TextField
-                  number
+                <field.NumberField
                   label={withRequired(m.field_elevation_min(), maxSet)}
                 />
               )}
@@ -71,14 +69,15 @@ export function LocationAreaFields({ required }: { required: boolean }) {
               validators={{
                 onChangeListenTo: ["location.elevationMin"],
                 onChange: ({ value, fieldApi }) =>
-                  fieldApi.form.state.values.location.elevationMin && !value
+                  elevationIntegerError(value) ??
+                  (fieldApi.form.state.values.location.elevationMin !==
+                    undefined && value === undefined
                     ? { message: m.field_elevation_max_required() }
-                    : undefined,
+                    : undefined),
               }}
             >
               {(field) => (
-                <field.TextField
-                  number
+                <field.NumberField
                   label={withRequired(m.field_elevation_max(), minSet)}
                 />
               )}

@@ -24,9 +24,9 @@ describe("composeLocation", () => {
       composeLocation(
         draft({
           type: "point",
-          longitude: "3.5",
-          latitude: "-45",
-          elevationValue: "-1200",
+          longitude: 3.5,
+          latitude: -45,
+          elevationValue: -1200,
           elevationUnit: "m",
           elevationDatum: "msl",
         }),
@@ -46,10 +46,10 @@ describe("composeLocation", () => {
       composeLocation(
         draft({
           type: "area",
-          westLongitude: "1",
-          eastLongitude: "2",
-          southLatitude: "3",
-          northLatitude: "4",
+          westLongitude: 1,
+          eastLongitude: 2,
+          southLatitude: 3,
+          northLatitude: 4,
         }),
       ),
     ).toEqual({
@@ -66,7 +66,7 @@ describe("composeLocation", () => {
   it("should drop an incomplete point position but keep a locality", () => {
     expect(
       composeLocation(
-        draft({ type: "point", longitude: "3", localityName: "Vent field" }),
+        draft({ type: "point", longitude: 3, localityName: "Vent field" }),
       ),
     ).toEqual({ localityName: "Vent field" });
   });
@@ -96,8 +96,8 @@ describe("composeLocation", () => {
       composeLocation(
         draft({
           type: "point",
-          longitude: "3",
-          latitude: "45",
+          longitude: 3,
+          latitude: 45,
           navigationType: "GPS",
         }),
       ),
@@ -112,9 +112,9 @@ describe("composeLocation", () => {
       composeLocation(
         draft({
           type: "point",
-          longitude: "0",
-          latitude: "0",
-          elevationValue: "100",
+          longitude: 0,
+          latitude: 0,
+          elevationValue: 100,
         }),
       ),
     ).toEqual({ position: { type: "point", longitude: 0, latitude: 0 } });

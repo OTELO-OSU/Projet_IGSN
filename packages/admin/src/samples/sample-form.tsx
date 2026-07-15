@@ -80,7 +80,7 @@ export function SampleForm({
 
   const form = useAppForm({
     defaultValues: {
-      name: defaultValues?.name ?? "",
+      name: defaultValues?.name,
       nature: defaultValues?.nature ?? ("" as Nature | ""),
       typePath: toHierarchyPath(defaultValues?.type ?? null),
       materialPath: toHierarchyPath(defaultValues?.material ?? null),
@@ -89,9 +89,8 @@ export function SampleForm({
       collectionMethodPath: toHierarchyPath(
         defaultValues?.collectionMethod ?? null,
       ),
-      collectionMethodDescription:
-        defaultValues?.collectionMethodDescription ?? "",
-      specificName: defaultValues?.specificName ?? "",
+      collectionMethodDescription: defaultValues?.collectionMethodDescription,
+      specificName: defaultValues?.specificName,
       location: toLocationDraft(defaultValues?.location),
     },
     // The clicked button passes its callback as meta; Enter uses defaultSubmit.
@@ -113,8 +112,8 @@ export function SampleForm({
           : {}),
         collectionMethod: composeHierarchyValue(value.collectionMethodPath),
         collectionMethodDescription:
-          value.collectionMethodDescription.trim() || null,
-        specificName: value.specificName.trim() || null,
+          value.collectionMethodDescription?.trim() || null,
+        specificName: value.specificName?.trim() || null,
         location: composeLocation(value.location),
       });
       if (!parsed.success) return;
@@ -252,7 +251,9 @@ export function SampleForm({
             name="name"
             validators={{
               onChange: ({ value }) =>
-                value.trim() ? undefined : { message: m.field_name_required() },
+                value?.trim()
+                  ? undefined
+                  : { message: m.field_name_required() },
             }}
           >
             {(field) => <field.TextField label={`${m.field_name()} *`} />}

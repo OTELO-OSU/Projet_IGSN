@@ -4,15 +4,7 @@ import { page } from "vitest/browser";
 
 import { useAppForm } from "./app-form.tsx";
 
-function Harness({
-  label,
-  multiline,
-  number,
-}: {
-  label: string;
-  multiline?: boolean;
-  number?: boolean;
-}) {
+function Harness({ label, multiline }: { label: string; multiline?: boolean }) {
   const form = useAppForm({ defaultValues: { name: "" } });
   return (
     <form>
@@ -23,19 +15,30 @@ function Harness({
             value ? undefined : { message: "Name is required" },
         }}
       >
-        {(field) => (
-          <field.TextField
-            label={label}
-            multiline={multiline}
-            number={number}
-          />
-        )}
+        {(field) => <field.TextField label={label} multiline={multiline} />}
+      </form.AppField>
+    </form>
+  );
+}
+
+function NullishHarness() {
+  const form = useAppForm({ defaultValues: { name: null as string | null } });
+  return (
+    <form>
+      <form.AppField name="name">
+        {(field) => <field.TextField label="Sample name" />}
       </form.AppField>
     </form>
   );
 }
 
 describe("TextField", () => {
+  it("should render a nullish value as an empty input", async () => {
+    await render(<NullishHarness />);
+
+    await expect.element(page.getByLabelText("Sample name")).toHaveValue("");
+  });
+
   it("should render an input associated with its label", async () => {
     await render(<Harness label="Sample name" />);
 
@@ -43,16 +46,6 @@ describe("TextField", () => {
     await input.fill("Basalt 42");
 
     await expect.element(input).toHaveValue("Basalt 42");
-  });
-
-  it("should render a numeric input accepting decimals when number", async () => {
-    await render(<Harness label="Longitude" number />);
-
-    const input = page.getByLabelText("Longitude");
-    await input.fill("-12.5");
-
-    await expect.element(input).toHaveValue(-12.5);
-    await expect.element(input).toHaveAttribute("type", "number");
   });
 
   it("should render a labelled textarea when multiline", async () => {

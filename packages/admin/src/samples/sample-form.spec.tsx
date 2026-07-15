@@ -1106,6 +1106,64 @@ describe("SampleForm", () => {
     );
   });
 
+  it("should reject a non-integer point elevation", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    await screen.getByLabelText("Elevation").fill("12.5");
+
+    await expect
+      .element(screen.getByText("Enter a whole number for the elevation."))
+      .toBeVisible();
+
+    // A whole number clears the error.
+    await screen.getByLabelText("Elevation").fill("12");
+    await expect
+      .element(screen.getByText("Enter a whole number for the elevation."))
+      .not.toBeInTheDocument();
+  });
+
+  it("should reject a non-integer area elevation bound", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Area" }).click();
+    await screen.getByLabelText("Minimum elevation").fill("-200.5");
+
+    await expect
+      .element(screen.getByText("Enter a whole number for the elevation."))
+      .toBeVisible();
+  });
+
   it("should require the other bound once one area elevation bound is set", async () => {
     const screen = await render(
       <SampleForm
