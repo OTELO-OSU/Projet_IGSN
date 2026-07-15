@@ -21,10 +21,7 @@ import {
 import { locationRequirement } from "@projet-igsn/domain/sample/location/location-requirement";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
-import {
-  type CreateSample,
-  createSampleSchema,
-} from "@projet-igsn/domain/sample/sample";
+import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { m } from "#/paraglide/messages.js";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
@@ -37,6 +34,8 @@ import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
+import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
+import { sampleDraftSchema } from "#/samples/sample-draft-schema.ts";
 import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
@@ -97,25 +96,25 @@ export function SampleForm({
     onSubmitMeta: { onValid: defaultSubmit } as {
       onValid: ((value: CreateSample) => void) | undefined;
     },
+    // The domain schema (the one the API enforces) gates every submit and pins
+    // its issues on the offending fields, so a rule the form has no dedicated
+    // validator for still surfaces instead of silently blocking.
+    validators: {
+      onSubmit: ({ value }) => {
+        const parsed = sampleDraftSchema.safeParse(value);
+        return parsed.success
+          ? undefined
+          : {
+              fields: sampleDraftFieldErrors(
+                parsed.error.issues,
+                value.location.type,
+              ),
+            };
+      },
+    },
     onSubmit: ({ value, meta }) => {
-      // The API is the real trust boundary; re-parse before sending.
-      const parsed = createSampleSchema.safeParse({
-        name: value.name,
-        nature: value.nature,
-        type: composeHierarchyValue(value.typePath),
-        material: composeHierarchyValue(value.materialPath),
-        // Optional and only valid for an igneous branch; omit when unset.
-        ...(value.texture ? { texture: value.texture } : {}),
-        // Optional and only valid for a metamorphic material; omit when unset.
-        ...(value.metamorphicFacies
-          ? { metamorphicFacies: value.metamorphicFacies }
-          : {}),
-        collectionMethod: composeHierarchyValue(value.collectionMethodPath),
-        collectionMethodDescription:
-          value.collectionMethodDescription?.trim() || null,
-        specificName: value.specificName?.trim() || null,
-        location: composeLocation(value.location),
-      });
+      const parsed = sampleDraftSchema.safeParse(value);
+      // Unreachable: the onSubmit validator gates. Kept as a typed narrow.
       if (!parsed.success) return;
       meta.onValid?.(parsed.data);
     },

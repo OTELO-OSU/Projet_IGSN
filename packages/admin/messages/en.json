@@ -97,6 +97,7 @@
   "field_elevation_max": "Maximum elevation",
   "field_elevation_max_required": "Enter the maximum elevation too.",
   "field_elevation_integer": "Enter a whole number for the elevation.",
+  "field_invalid": "Invalid value.",
   "field_elevation_unit": "Unit",
   "elevation_unit_placeholder": "Select a unit",
   "elevation_unit_search_placeholder": "Search unit...",

@@ -1106,6 +1106,51 @@ describe("SampleForm", () => {
     );
   });
 
+  it("should show a field error when a value the schema rejects is submitted", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(onSubmit)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    // 200 is out of the longitude range; only the domain schema knows that.
+    await screen.getByLabelText("Longitude *").fill("200");
+    await screen.getByLabelText("Latitude *").fill("45");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    await expect.element(screen.getByText("Invalid value.")).toBeVisible();
+
+    // Fixing the value clears the error and the sample submits.
+    await screen.getByLabelText("Longitude *").fill("20");
+    await expect
+      .element(screen.getByText("Invalid value."))
+      .not.toBeInTheDocument();
+    await screen.getByRole("button", { name: "Create" }).click();
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: { type: "point", longitude: 20, latitude: 45 },
+          },
+        }),
+      ),
+    );
+  });
+
   it("should reject a non-integer point elevation", async () => {
     const screen = await render(
       <SampleForm
