@@ -124,14 +124,16 @@ export function LocationFields() {
             <div className="grid gap-4 sm:grid-cols-2">
               <form.AppField name="location.longitude">
                 {(field) => (
-                  <field.NumberField
+                  <field.TextField
+                    number
                     label={withRequired(m.field_longitude(), required)}
                   />
                 )}
               </form.AppField>
               <form.AppField name="location.latitude">
                 {(field) => (
-                  <field.NumberField
+                  <field.TextField
+                    number
                     label={withRequired(m.field_latitude(), required)}
                   />
                 )}
@@ -144,7 +146,8 @@ export function LocationFields() {
                 >
                   {(field) => (
                     // Signed value: bathymetry below the datum, elevation above.
-                    <field.NumberField
+                    <field.TextField
+                      number
                       label={
                         Number(field.state.value) < 0
                           ? m.field_bathymetry()
@@ -159,28 +162,32 @@ export function LocationFields() {
             <div className="grid gap-4 sm:grid-cols-2">
               <form.AppField name="location.westLongitude">
                 {(field) => (
-                  <field.NumberField
+                  <field.TextField
+                    number
                     label={withRequired(m.field_west_longitude(), required)}
                   />
                 )}
               </form.AppField>
               <form.AppField name="location.eastLongitude">
                 {(field) => (
-                  <field.NumberField
+                  <field.TextField
+                    number
                     label={withRequired(m.field_east_longitude(), required)}
                   />
                 )}
               </form.AppField>
               <form.AppField name="location.southLatitude">
                 {(field) => (
-                  <field.NumberField
+                  <field.TextField
+                    number
                     label={withRequired(m.field_south_latitude(), required)}
                   />
                 )}
               </form.AppField>
               <form.AppField name="location.northLatitude">
                 {(field) => (
-                  <field.NumberField
+                  <field.TextField
+                    number
                     label={withRequired(m.field_north_latitude(), required)}
                   />
                 )}
@@ -208,7 +215,8 @@ export function LocationFields() {
                       listeners={{ onChange: clearElevationUnitsWhenEmpty }}
                     >
                       {(field) => (
-                        <field.NumberField
+                        <field.TextField
+                          number
                           label={withRequired(m.field_elevation_min(), maxSet)}
                         />
                       )}
@@ -226,7 +234,8 @@ export function LocationFields() {
                       listeners={{ onChange: clearElevationUnitsWhenEmpty }}
                     >
                       {(field) => (
-                        <field.NumberField
+                        <field.TextField
+                          number
                           label={withRequired(m.field_elevation_max(), minSet)}
                         />
                       )}

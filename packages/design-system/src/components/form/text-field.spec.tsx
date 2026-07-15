@@ -4,7 +4,15 @@ import { page } from "vitest/browser";
 
 import { useAppForm } from "./app-form.tsx";
 
-function Harness({ label, multiline }: { label: string; multiline?: boolean }) {
+function Harness({
+  label,
+  multiline,
+  number,
+}: {
+  label: string;
+  multiline?: boolean;
+  number?: boolean;
+}) {
   const form = useAppForm({ defaultValues: { name: "" } });
   return (
     <form>
@@ -15,7 +23,13 @@ function Harness({ label, multiline }: { label: string; multiline?: boolean }) {
             value ? undefined : { message: "Name is required" },
         }}
       >
-        {(field) => <field.TextField label={label} multiline={multiline} />}
+        {(field) => (
+          <field.TextField
+            label={label}
+            multiline={multiline}
+            number={number}
+          />
+        )}
       </form.AppField>
     </form>
   );
@@ -29,6 +43,16 @@ describe("TextField", () => {
     await input.fill("Basalt 42");
 
     await expect.element(input).toHaveValue("Basalt 42");
+  });
+
+  it("should render a numeric input accepting decimals when number", async () => {
+    await render(<Harness label="Longitude" number />);
+
+    const input = page.getByLabelText("Longitude");
+    await input.fill("-12.5");
+
+    await expect.element(input).toHaveValue(-12.5);
+    await expect.element(input).toHaveAttribute("type", "number");
   });
 
   it("should render a labelled textarea when multiline", async () => {
