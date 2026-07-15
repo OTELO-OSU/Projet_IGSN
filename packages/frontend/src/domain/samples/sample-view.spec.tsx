@@ -15,6 +15,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
+        location={null}
       />,
     );
 
@@ -38,6 +39,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        location={null}
       />,
     );
 
@@ -56,6 +58,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        location={null}
       />,
     );
 
@@ -82,6 +85,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        location={null}
       />,
     );
 
@@ -107,6 +111,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        location={null}
       />,
     );
 
@@ -125,6 +130,7 @@ describe("SampleView", () => {
         metamorphicFacies="amphibolite"
         collectionMethod={null}
         collectionMethodDescription={null}
+        location={null}
       />,
     );
 
@@ -145,6 +151,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
+        location={null}
       />,
     );
 
@@ -174,6 +181,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription="Cored at low tide from the reef flat"
+        location={null}
       />,
     );
 
@@ -197,6 +205,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        location={null}
       />,
     );
 
@@ -212,5 +221,172 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByText("Collection method details"))
       .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("heading", { name: "Location" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show a point location with its coordinates, elevation and navigation type", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        location={{
+          position: {
+            type: "point",
+            longitude: -149.83,
+            latitude: -17.53,
+            elevation: { min: -2500, max: -2500, unit: "m", datum: "msl" },
+          },
+          navigationType: "GPS",
+        }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Location" }))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("Latitude")).toBeInTheDocument();
+    await expect
+      .element(screen.getByText("-17.53", { exact: true }))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("Longitude")).toBeInTheDocument();
+    await expect
+      .element(screen.getByText("-149.83", { exact: true }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("-2500 m (Mean sea level)"))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("GPS", { exact: true }))
+      .toBeInTheDocument();
+  });
+
+  it("should show an area location with its bounds and elevation range", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        location={{
+          position: {
+            type: "area",
+            westLongitude: -5.5,
+            eastLongitude: 10.25,
+            southLatitude: 41.5,
+            northLatitude: 51.5,
+            elevation: { min: 100, max: 200, unit: "m", datum: "wgs84" },
+          },
+        }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("West longitude"))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("-5.5", { exact: true }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("East longitude"))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("10.25", { exact: true }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("South latitude"))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("41.5", { exact: true }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("North latitude"))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("51.5", { exact: true }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("100 – 200 m (WGS84 ellipsoid)"))
+      .toBeInTheDocument();
+  });
+
+  it("should show the region as a localized country name", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        location={{ region: { kind: "continent", country: "FR" } }}
+      />,
+    );
+
+    await expect.element(screen.getByText("Region")).toBeInTheDocument();
+    await expect.element(screen.getByText("France")).toBeInTheDocument();
+  });
+
+  it("should show the region as an ocean name", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        location={{ region: { kind: "ocean", oceanSea: "pacific_ocean" } }}
+      />,
+    );
+
+    await expect.element(screen.getByText("Region")).toBeInTheDocument();
+    await expect.element(screen.getByText("Pacific Ocean")).toBeInTheDocument();
+  });
+
+  it("should show the locality name and description", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        location={{
+          localityName: "Reef flat",
+          localityDescription: "Southern reef flat, Tahiti",
+        }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("Reef flat", { exact: true }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Southern reef flat, Tahiti"))
+      .toBeInTheDocument();
   });
 });
