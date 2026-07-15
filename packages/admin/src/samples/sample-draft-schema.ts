@@ -13,11 +13,11 @@ import {
 // The sample form's flat draft, as held by the form store.
 export type SampleDraft = {
   name: string | undefined;
-  nature: CreateSample["nature"] | "";
+  nature: CreateSample["nature"] | undefined;
   typePath: string[];
   materialPath: string[];
-  texture: NonNullable<CreateSample["texture"]> | "";
-  metamorphicFacies: NonNullable<CreateSample["metamorphicFacies"]> | "";
+  texture: CreateSample["texture"] | undefined;
+  metamorphicFacies: CreateSample["metamorphicFacies"] | undefined;
   collectionMethodPath: string[];
   collectionMethodDescription: string | null | undefined;
   specificName: string | null | undefined;

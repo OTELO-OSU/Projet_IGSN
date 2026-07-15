@@ -1151,6 +1151,34 @@ describe("SampleForm", () => {
     );
   });
 
+  it("should reject an incomplete point instead of silently dropping it", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(onSubmit)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    // Longitude without latitude: the draft used to save without the point.
+    await screen.getByLabelText("Longitude *").fill("3");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    expect(onSubmit).not.toHaveBeenCalled();
+    await expect.element(screen.getByText("Invalid value.")).toBeVisible();
+  });
+
   it("should reject a non-integer point elevation", async () => {
     const screen = await render(
       <SampleForm

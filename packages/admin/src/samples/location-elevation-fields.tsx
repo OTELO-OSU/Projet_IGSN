@@ -29,7 +29,7 @@ const isElevationEntered = (location: LocationDraft): boolean =>
 // entered. The validators stay inline (TanStack types onChange per field name);
 // this is just the shared body they both call.
 const elevationRequired = (
-  value: string,
+  value: string | null | undefined,
   location: LocationDraft,
   message: () => string,
 ) =>

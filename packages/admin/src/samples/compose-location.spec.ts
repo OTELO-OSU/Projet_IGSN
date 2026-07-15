@@ -63,12 +63,21 @@ describe("composeLocation", () => {
     });
   });
 
-  it("should drop an incomplete point position but keep a locality", () => {
+  it("should keep an incomplete point position for the schema to reject", () => {
     expect(
       composeLocation(
         draft({ type: "point", longitude: 3, localityName: "Vent field" }),
       ),
-    ).toEqual({ localityName: "Vent field" });
+    ).toEqual({
+      position: { type: "point", longitude: 3 },
+      localityName: "Vent field",
+    });
+  });
+
+  it("should keep an incomplete region for the schema to reject", () => {
+    expect(composeLocation(draft({ regionKind: "continent" }))).toEqual({
+      region: { kind: "continent" },
+    });
   });
 
   it("should compose a continent region and drop a blank locality", () => {
@@ -107,7 +116,7 @@ describe("composeLocation", () => {
     });
   });
 
-  it("should drop elevation when unit or datum is missing", () => {
+  it("should keep an entered elevation missing its unit and datum for the schema to reject", () => {
     expect(
       composeLocation(
         draft({
@@ -115,6 +124,29 @@ describe("composeLocation", () => {
           longitude: 0,
           latitude: 0,
           elevationValue: 100,
+        }),
+      ),
+    ).toEqual({
+      position: {
+        type: "point",
+        longitude: 0,
+        latitude: 0,
+        elevation: { min: 100, max: 100 },
+      },
+    });
+  });
+
+  it("should exclude a unit and datum left behind by an emptied elevation", () => {
+    // Those fields are disabled without a value, so a schema error on them
+    // could never be fixed; a lingering selection is not entered data.
+    expect(
+      composeLocation(
+        draft({
+          type: "point",
+          longitude: 0,
+          latitude: 0,
+          elevationUnit: "m",
+          elevationDatum: "msl",
         }),
       ),
     ).toEqual({ position: { type: "point", longitude: 0, latitude: 0 } });

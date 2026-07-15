@@ -1,4 +1,3 @@
-import type { Nature } from "@projet-igsn/domain/sample/nature";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
@@ -80,11 +79,11 @@ export function SampleForm({
   const form = useAppForm({
     defaultValues: {
       name: defaultValues?.name,
-      nature: defaultValues?.nature ?? ("" as Nature | ""),
+      nature: defaultValues?.nature,
       typePath: toHierarchyPath(defaultValues?.type ?? null),
       materialPath: toHierarchyPath(defaultValues?.material ?? null),
-      texture: defaultValues?.texture ?? "",
-      metamorphicFacies: defaultValues?.metamorphicFacies ?? "",
+      texture: defaultValues?.texture,
+      metamorphicFacies: defaultValues?.metamorphicFacies,
       collectionMethodPath: toHierarchyPath(
         defaultValues?.collectionMethod ?? null,
       ),

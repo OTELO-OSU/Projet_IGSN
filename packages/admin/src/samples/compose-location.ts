@@ -5,14 +5,13 @@ import type { NavigationType } from "@projet-igsn/domain/sample/location/navigat
 import type { OceanSea } from "@projet-igsn/domain/sample/location/ocean-sea";
 import type { VerticalDatum } from "@projet-igsn/domain/sample/location/vertical-datum";
 
-// The Location tab's flat form draft: numbers as `number | undefined`
-// (NumberField owns the string conversion, so the draft never holds NaN),
-// free text as-is (TextField renders nullish as empty), selects as their
-// code, "" when unset. `composeLocation` maps it back to a domain Location
-// for submit and `toLocationDraft` fills it from a saved sample;
-// createSampleSchema validates.
+// The Location tab's flat form draft: every field holds its typed value or
+// nullish when unset (the bound fields render nullish as empty, so the draft
+// never holds NaN or an "" sentinel). `composeLocation` composes it into a
+// location candidate for submit (locationSchema, via sampleDraftSchema,
+// judges completeness) and `toLocationDraft` fills it from a saved sample.
 export type LocationDraft = {
-  type: "" | "point" | "area";
+  type: "point" | "area" | null | undefined;
   longitude: number | undefined;
   latitude: number | undefined;
   westLongitude: number | undefined;
@@ -22,18 +21,18 @@ export type LocationDraft = {
   elevationValue: number | undefined;
   elevationMin: number | undefined;
   elevationMax: number | undefined;
-  elevationUnit: "" | ElevationUnit;
-  elevationDatum: "" | VerticalDatum;
-  regionKind: "" | "continent" | "ocean";
-  country: "" | Country;
-  oceanSea: "" | OceanSea;
-  navigationType: "" | NavigationType;
+  elevationUnit: ElevationUnit | null | undefined;
+  elevationDatum: VerticalDatum | null | undefined;
+  regionKind: "continent" | "ocean" | null | undefined;
+  country: Country | null | undefined;
+  oceanSea: OceanSea | null | undefined;
+  navigationType: NavigationType | null | undefined;
   localityName: string | null | undefined;
   localityDescription: string | null | undefined;
 };
 
 export const emptyLocationDraft: LocationDraft = {
-  type: "",
+  type: undefined,
   longitude: undefined,
   latitude: undefined,
   westLongitude: undefined,
@@ -43,75 +42,117 @@ export const emptyLocationDraft: LocationDraft = {
   elevationValue: undefined,
   elevationMin: undefined,
   elevationMax: undefined,
-  elevationUnit: "",
-  elevationDatum: "",
-  regionKind: "",
-  country: "",
-  oceanSea: "",
-  navigationType: "",
+  elevationUnit: undefined,
+  elevationDatum: undefined,
+  regionKind: undefined,
+  country: undefined,
+  oceanSea: undefined,
+  navigationType: undefined,
   localityName: undefined,
   localityDescription: undefined,
 };
 
-function composePosition(draft: LocationDraft): Location["position"] {
+// A location as composed from the draft, before locationSchema judges it: the
+// Location shape with possibly missing leaf values. Compose does not decide
+// completeness; the schema (via sampleDraftSchema) rejects partial data on the
+// offending field. Compose only excludes values hidden behind the UI state,
+// since a schema error on a hidden or disabled field could never be fixed.
+type ElevationCandidate = {
+  min: number | undefined;
+  max: number | undefined;
+  unit: ElevationUnit | undefined;
+  datum: VerticalDatum | undefined;
+};
+
+export type LocationCandidate = {
+  position:
+    | {
+        type: "point";
+        longitude: number | undefined;
+        latitude: number | undefined;
+        elevation: ElevationCandidate | undefined;
+      }
+    | {
+        type: "area";
+        westLongitude: number | undefined;
+        eastLongitude: number | undefined;
+        southLatitude: number | undefined;
+        northLatitude: number | undefined;
+        elevation: ElevationCandidate | undefined;
+      }
+    | undefined;
+  region:
+    | { kind: "continent"; country: Country | undefined }
+    | { kind: "ocean"; oceanSea: OceanSea | undefined }
+    | undefined;
+  navigationType: NavigationType | undefined;
+  localityName: string | undefined;
+  localityDescription: string | undefined;
+};
+
+// Elevation flows through once a value is entered. A unit or datum left behind
+// by an emptied value is excluded: those fields are disabled without a value,
+// so a lingering selection is a UI leftover, not entered data.
+function composeElevation(
+  min: number | undefined,
+  max: number | undefined,
+  draft: LocationDraft,
+): ElevationCandidate | undefined {
+  if (min === undefined && max === undefined) return undefined;
+  return {
+    min,
+    max,
+    unit: draft.elevationUnit || undefined,
+    datum: draft.elevationDatum || undefined,
+  };
+}
+
+function composePosition(draft: LocationDraft): LocationCandidate["position"] {
   if (draft.type === "point") {
-    const { longitude, latitude, elevationValue: value } = draft;
-    if (longitude === undefined || latitude === undefined) return undefined;
-    // A point is the degenerate range where min === max (ADR 0014).
-    const elevation =
-      value !== undefined && draft.elevationUnit && draft.elevationDatum
-        ? {
-            min: value,
-            max: value,
-            unit: draft.elevationUnit,
-            datum: draft.elevationDatum,
-          }
-        : undefined;
-    return { type: "point", longitude, latitude, elevation };
+    return {
+      type: "point",
+      longitude: draft.longitude,
+      latitude: draft.latitude,
+      // A point is the degenerate range where min === max (ADR 0014).
+      elevation: composeElevation(
+        draft.elevationValue,
+        draft.elevationValue,
+        draft,
+      ),
+    };
   }
   if (draft.type === "area") {
-    const { westLongitude, eastLongitude, southLatitude, northLatitude } =
-      draft;
-    if (
-      westLongitude === undefined ||
-      eastLongitude === undefined ||
-      southLatitude === undefined ||
-      northLatitude === undefined
-    )
-      return undefined;
-    const { elevationMin: min, elevationMax: max } = draft;
-    const elevation =
-      min !== undefined &&
-      max !== undefined &&
-      draft.elevationUnit &&
-      draft.elevationDatum
-        ? { min, max, unit: draft.elevationUnit, datum: draft.elevationDatum }
-        : undefined;
     return {
       type: "area",
-      westLongitude,
-      eastLongitude,
-      southLatitude,
-      northLatitude,
-      elevation,
+      westLongitude: draft.westLongitude,
+      eastLongitude: draft.eastLongitude,
+      southLatitude: draft.southLatitude,
+      northLatitude: draft.northLatitude,
+      elevation: composeElevation(
+        draft.elevationMin,
+        draft.elevationMax,
+        draft,
+      ),
     };
   }
   return undefined;
 }
 
-function composeRegion(draft: LocationDraft): Location["region"] {
-  if (draft.regionKind === "continent" && draft.country)
-    return { kind: "continent", country: draft.country };
-  if (draft.regionKind === "ocean" && draft.oceanSea)
-    return { kind: "ocean", oceanSea: draft.oceanSea };
+function composeRegion(draft: LocationDraft): LocationCandidate["region"] {
+  if (draft.regionKind === "continent")
+    return { kind: "continent", country: draft.country || undefined };
+  if (draft.regionKind === "ocean")
+    return { kind: "ocean", oceanSea: draft.oceanSea || undefined };
   return undefined;
 }
 
-export function composeLocation(draft: LocationDraft): Location | null {
+export function composeLocation(
+  draft: LocationDraft,
+): LocationCandidate | null {
   const position = composePosition(draft);
   const region = composeRegion(draft);
-  // Navigation type is meaningless without a position, so drop it otherwise
-  // (the field is only shown once a geometry is chosen, but its value lingers).
+  // The navigation type field is only shown once a geometry is chosen, so a
+  // lingering value without one is a hidden leftover, not data.
   const navigationType = position
     ? draft.navigationType || undefined
     : undefined;
@@ -140,7 +181,7 @@ export function toLocationDraft(
   const area = position?.type === "area" ? position : undefined;
   const elevation = position?.elevation;
   return {
-    type: position?.type ?? "",
+    type: position?.type,
     longitude: point?.longitude,
     latitude: point?.latitude,
     westLongitude: area?.westLongitude,
@@ -151,12 +192,12 @@ export function toLocationDraft(
     elevationValue: point ? elevation?.min : undefined,
     elevationMin: area ? elevation?.min : undefined,
     elevationMax: area ? elevation?.max : undefined,
-    elevationUnit: elevation?.unit ?? "",
-    elevationDatum: elevation?.datum ?? "",
-    regionKind: region?.kind ?? "",
-    country: region?.kind === "continent" ? region.country : "",
-    oceanSea: region?.kind === "ocean" ? region.oceanSea : "",
-    navigationType: location.navigationType ?? "",
+    elevationUnit: elevation?.unit,
+    elevationDatum: elevation?.datum,
+    regionKind: region?.kind,
+    country: region?.kind === "continent" ? region.country : undefined,
+    oceanSea: region?.kind === "ocean" ? region.oceanSea : undefined,
+    navigationType: location.navigationType,
     localityName: location.localityName,
     localityDescription: location.localityDescription,
   };
