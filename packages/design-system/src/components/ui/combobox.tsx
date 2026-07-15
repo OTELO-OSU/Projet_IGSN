@@ -24,6 +24,7 @@ type ComboboxProps = {
   placeholder: string;
   searchPlaceholder: string;
   emptyText: string;
+  disabled?: boolean;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 };
@@ -37,6 +38,7 @@ export function Combobox({
   placeholder,
   searchPlaceholder,
   emptyText,
+  disabled,
   ...aria
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
@@ -51,6 +53,7 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          disabled={disabled}
           onBlur={onBlur}
           className="w-full justify-between font-normal"
           {...aria}

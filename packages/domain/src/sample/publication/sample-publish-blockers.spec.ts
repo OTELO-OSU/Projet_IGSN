@@ -15,7 +15,7 @@ const base: Sample = {
   collectionMethod: null,
   collectionMethodDescription: null,
   specificName: "BAS-42-001",
-  location: null,
+  location: { position: { type: "point", longitude: 0, latitude: 0 } },
   igsn: null,
   published: false,
   createdAt: new Date("2026-01-01T00:00:00Z"),
@@ -101,5 +101,46 @@ describe("samplePublishBlockers", () => {
         material: "not_a_material",
       }),
     ).toEqual(["type_incomplete", "material_incomplete"]);
+  });
+
+  it("should report location_position_missing when a required material has no position", () => {
+    expect(samplePublishBlockers({ ...base, location: null })).toEqual([
+      "location_position_missing",
+    ]);
+  });
+
+  it("should report location_position_missing when a location has no position", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        location: { localityName: "Somewhere" },
+      }),
+    ).toEqual(["location_position_missing"]);
+  });
+
+  it("should not require a location for synthetic material", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        material: "synthetic_rock_mineral",
+        location: null,
+      }),
+    ).toEqual([]);
+  });
+
+  it("should not require a location for an extraterrestrial returned sample", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        material: "extraterrestrial_rock.returned_samples.other",
+        location: null,
+      }),
+    ).toEqual([]);
+  });
+
+  it("should not add a location blocker while the material is still incomplete", () => {
+    expect(
+      samplePublishBlockers({ ...base, material: "rock", location: null }),
+    ).toEqual(["material_incomplete"]);
   });
 });
