@@ -14,6 +14,7 @@ const draft: Sample = {
   collectionMethod: null,
   collectionMethodDescription: null,
   specificName: "BAS-42-001",
+  location: null,
   igsn: null,
   published: false,
   createdAt: new Date("2026-07-02T10:00:00.000Z"),

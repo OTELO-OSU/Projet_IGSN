@@ -17,6 +17,8 @@ export function toSample(row: Selectable<DB["sample"]>): Sample {
     collectionMethod: row.collection_method,
     collectionMethodDescription: row.collection_method_description,
     specificName: row.specific_name,
+    // Location storage lands with the PostGIS layer; until then samples carry none.
+    location: null,
     igsn: row.igsn,
     published: row.published,
     createdAt: row.created_at,

@@ -25,6 +25,7 @@ const sample: Sample = {
   collectionMethod: "coring.gravity_corer",
   collectionMethodDescription: null,
   specificName: "MC-2026-007",
+  location: null,
   igsn: null,
   published: false,
   createdAt: new Date("2026-06-01T00:00:00.000Z"),

@@ -35,6 +35,7 @@ describe("toSample", () => {
       collectionMethod: "coring.gravity_corer",
       collectionMethodDescription: "Giant corer, 20 m barrel",
       specificName: "FTB-2026-042",
+      location: null,
       igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
       published: false,
       createdAt: new Date("2026-01-01T00:00:00.000Z"),

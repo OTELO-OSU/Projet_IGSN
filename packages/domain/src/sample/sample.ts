@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { igsnSuffixSchema } from "../igsn/model.ts";
 import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
+import { locationRequirement } from "./location/location-requirement.ts";
+import { locationSchema } from "./location/model.ts";
 import { materialPathSchema } from "./material/classification.ts";
 import {
   faciesFor,
@@ -33,6 +35,8 @@ export const sampleSchema = z.object({
   collectionMethodDescription: nameSchema.nullable(),
   // Precise sample designation; optional, null when not provided.
   specificName: nameSchema.nullable(),
+  // Geographic location; null when the sample has none (see location/model.ts).
+  location: locationSchema.nullable(),
   // Null until the sample is published.
   igsn: igsnSuffixSchema.nullable(),
   published: z.boolean(),
@@ -60,16 +64,30 @@ export const createSampleSchema = z
     collectionMethod: collectionMethodSchema.nullish(),
     collectionMethodDescription: nameSchema.nullish(),
     specificName: nameSchema.nullish(),
+    location: locationSchema.nullish(),
   })
-  // A texture must match the selected material's branch. This guards the
-  // "texture resets when the material changes" invariant server-side.
   .superRefine((value, ctx) => {
-    if (value.texture == null) return;
-    if (!texturesFor(value.material ?? null).includes(value.texture)) {
+    // A texture must match the selected material's branch. This guards the
+    // "texture resets when the material changes" invariant server-side.
+    if (
+      value.texture != null &&
+      !texturesFor(value.material ?? null).includes(value.texture)
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["texture"],
         message: "texture is not valid for the selected material",
+      });
+    }
+    // Synthetic material derives its location from the structure ROR (ADR 0014).
+    if (
+      value.location != null &&
+      locationRequirement(value.material ?? null) === "forbidden"
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["location"],
+        message: "a synthetic sample must not have a location",
       });
     }
   })
