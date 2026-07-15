@@ -3,7 +3,6 @@ import type { LocationType } from "@projet-igsn/domain/sample/location/location-
 import type { VerticalDatum } from "@projet-igsn/domain/sample/location/vertical-datum";
 
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
-import { oceanSeaName } from "@projet-igsn/domain/sample/location/ocean-sea-label";
 
 import { m } from "#/paraglide/messages.js";
 
@@ -43,5 +42,3 @@ export function regionKindLabel(kind: RegionKind): string {
 export function countryName(code: Country): string {
   return countryLabel(code, "en");
 }
-
-export { oceanSeaName };

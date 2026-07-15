@@ -129,21 +129,18 @@ export function composeLocation(draft: LocationDraft): Location | null {
     : undefined;
   const localityName = draft.localityName.trim() || undefined;
   const localityDescription = draft.localityDescription.trim() || undefined;
-  if (
-    !position &&
-    !region &&
-    !navigationType &&
-    !localityName &&
-    !localityDescription
-  )
-    return null;
-  return {
-    ...(position ? { position } : {}),
-    ...(region ? { region } : {}),
-    ...(navigationType ? { navigationType } : {}),
-    ...(localityName ? { localityName } : {}),
-    ...(localityDescription ? { localityDescription } : {}),
+  const location = {
+    position,
+    region,
+    navigationType,
+    localityName,
+    localityDescription,
   };
+  // All parts unset means no location at all; undefined values are dropped by
+  // JSON on the wire, so the stored shape stays minimal.
+  return Object.values(location).some((part) => part !== undefined)
+    ? location
+    : null;
 }
 
 const text = (value: number | undefined): string =>

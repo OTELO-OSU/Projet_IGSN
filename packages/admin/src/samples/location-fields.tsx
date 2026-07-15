@@ -6,6 +6,7 @@ import { locationRequirement } from "@projet-igsn/domain/sample/location/locatio
 import { LOCATION_TYPES } from "@projet-igsn/domain/sample/location/location-type";
 import { NAVIGATION_TYPES } from "@projet-igsn/domain/sample/location/navigation-type";
 import { OCEAN_SEAS } from "@projet-igsn/domain/sample/location/ocean-sea";
+import { oceanSeaName } from "@projet-igsn/domain/sample/location/ocean-sea-label";
 import { VERTICAL_DATUMS } from "@projet-igsn/domain/sample/location/vertical-datum";
 
 import { m } from "#/paraglide/messages.js";
@@ -13,7 +14,6 @@ import { type LocationDraft } from "#/samples/compose-location.ts";
 import {
   countryName,
   locationTypeLabel,
-  oceanSeaName,
   regionKindLabel,
   verticalDatumLabel,
 } from "#/samples/location-label.ts";
