@@ -3,7 +3,7 @@ import { composeHierarchyValue } from "@projet-igsn/design-system/components/for
 import { faciesFor } from "@projet-igsn/domain/sample/metamorphic-facies/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
-import { metamorphicFaciesLabel } from "#/samples/metamorphic-facies-label.ts";
+import { metamorphicFaciesLabel } from "#/samples/sample-labels.ts";
 
 // Metamorphic facies selector: shown only when the chosen material is
 // metamorphic (the vocabulary that applies then). The material field resets this

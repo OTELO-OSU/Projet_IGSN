@@ -2,15 +2,15 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { ChevronRightIcon } from "lucide-react";
 
-import { metamorphicFaciesLabel } from "#/domain/samples/metamorphic-facies-label.ts";
-import { natureLabel } from "#/domain/samples/nature-label.ts";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
-import { textureLabel } from "#/domain/samples/texture-label.ts";
 import {
   collectionMethodLabel,
   materialPathLabel,
+  metamorphicFaciesLabel,
+  natureLabel,
+  textureLabel,
   typeLabel,
-} from "#/domain/samples/vocabulary-label.ts";
+} from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
 type SampleViewProps = {

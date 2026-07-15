@@ -2,7 +2,7 @@ import { HierarchySelectField } from "@projet-igsn/design-system/components/form
 import { COLLECTION_METHOD_HIERARCHY } from "@projet-igsn/domain/sample/collection-method/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
-import { collectionMethodLabel } from "#/samples/vocabulary-label.ts";
+import { collectionMethodLabel } from "#/samples/sample-labels.ts";
 
 export function CollectionMethodField() {
   return (

@@ -21,8 +21,7 @@ import {
 } from "@tanstack/react-table";
 
 import { m } from "#/paraglide/messages.js";
-import { natureLabel } from "#/samples/nature-label.ts";
-import { collectionMethodLabel } from "#/samples/vocabulary-label.ts";
+import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
 
 const columns: ColumnDef<Sample>[] = [
   {

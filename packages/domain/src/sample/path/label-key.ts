@@ -6,6 +6,9 @@ import { pathSegment } from "./segment.ts";
 // frontend); each app resolves the key against its own paraglide runtime. A
 // segment reused under several parents shares one key, since labels are
 // per-segment (.claude/rules/i18n.md).
-export function pathLabelKey(prefix: string, path: string): string {
+export function pathLabelKey<P extends string>(
+  prefix: P,
+  path: string,
+): `${P}_${string}` {
   return `${prefix}_${pathSegment(path)}`;
 }

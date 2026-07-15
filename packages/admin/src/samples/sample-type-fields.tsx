@@ -2,7 +2,7 @@ import { HierarchySelectField } from "@projet-igsn/design-system/components/form
 import { SAMPLE_TYPE_HIERARCHY } from "@projet-igsn/domain/sample/type/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
-import { typeLabel } from "#/samples/vocabulary-label.ts";
+import { typeLabel } from "#/samples/sample-labels.ts";
 
 export function SampleTypeFields() {
   return (
