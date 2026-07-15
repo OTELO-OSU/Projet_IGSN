@@ -2,6 +2,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { ChevronRightIcon } from "lucide-react";
 
+import { LocationView } from "#/domain/samples/location-view.tsx";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
 import {
   collectionMethodLabel,
@@ -23,6 +24,7 @@ type SampleViewProps = {
   metamorphicFacies: Sample["metamorphicFacies"];
   collectionMethod: Sample["collectionMethod"];
   collectionMethodDescription: Sample["collectionMethodDescription"];
+  location: Sample["location"];
 };
 
 // A dot-joined classification path rendered as a breadcrumb: each ancestor
@@ -66,6 +68,7 @@ export function SampleView({
   metamorphicFacies,
   collectionMethod,
   collectionMethodDescription,
+  location,
 }: SampleViewProps) {
   return (
     <div>
@@ -78,7 +81,7 @@ export function SampleView({
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
         <nav aria-label={m.sample_section_sample()} className="w-40 shrink-0">
-          <ul>
+          <ul className="grid gap-2">
             <li>
               <a
                 href="#sample"
@@ -87,115 +90,139 @@ export function SampleView({
                 {m.sample_section_sample()}
               </a>
             </li>
+            {location ? (
+              <li>
+                <a
+                  href="#location"
+                  className="border-l-2 border-sky-800 pl-3 font-medium text-sky-900"
+                >
+                  {m.sample_section_location()}
+                </a>
+              </li>
+            ) : null}
           </ul>
         </nav>
 
-        <section
-          id="sample"
-          aria-labelledby="sample-heading"
-          className="flex-1"
-        >
-          <h2
-            id="sample-heading"
-            className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
-          >
-            {m.sample_section_sample()}
-          </h2>
-          <dl className="mt-2 divide-y">
-            <div className="flex gap-4 px-4 py-3">
-              <dt
-                id="sample-field-nature"
-                className="text-muted-foreground w-40"
+        <div className="flex-1">
+          <section id="sample" aria-labelledby="sample-heading">
+            <h2
+              id="sample-heading"
+              className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
+            >
+              {m.sample_section_sample()}
+            </h2>
+            <dl className="mt-2 divide-y">
+              <div className="flex gap-4 px-4 py-3">
+                <dt
+                  id="sample-field-nature"
+                  className="text-muted-foreground w-40"
+                >
+                  {m.sample_field_nature()}
+                </dt>
+                <dd className="font-medium">{natureLabel(nature)}</dd>
+              </div>
+              {type ? (
+                <div className="flex gap-4 px-4 py-3">
+                  <dt
+                    id="sample-field-type"
+                    className="text-muted-foreground w-40"
+                  >
+                    {m.sample_field_type()}
+                  </dt>
+                  <dd>
+                    <ClassificationBreadcrumb
+                      labelId="sample-field-type"
+                      segments={pathBreadcrumb(type, typeLabel)}
+                    />
+                  </dd>
+                </div>
+              ) : null}
+              {material ? (
+                <div className="flex gap-4 px-4 py-3">
+                  <dt
+                    id="sample-field-material"
+                    className="text-muted-foreground w-40"
+                  >
+                    {m.sample_field_material()}
+                  </dt>
+                  <dd>
+                    <ClassificationBreadcrumb
+                      labelId="sample-field-material"
+                      segments={pathBreadcrumb(material, materialPathLabel)}
+                    />
+                  </dd>
+                </div>
+              ) : null}
+              {texture ? (
+                <div className="flex gap-4 px-4 py-3">
+                  <dt
+                    id="sample-field-texture"
+                    className="text-muted-foreground w-40"
+                  >
+                    {m.sample_field_texture()}
+                  </dt>
+                  <dd className="font-medium">{textureLabel(texture)}</dd>
+                </div>
+              ) : null}
+              {metamorphicFacies ? (
+                <div className="flex gap-4 px-4 py-3">
+                  <dt
+                    id="sample-field-metamorphic-facies"
+                    className="text-muted-foreground w-40"
+                  >
+                    {m.sample_field_metamorphic_facies()}
+                  </dt>
+                  <dd className="font-medium">
+                    {metamorphicFaciesLabel(metamorphicFacies)}
+                  </dd>
+                </div>
+              ) : null}
+              {collectionMethod ? (
+                <div className="flex gap-4 px-4 py-3">
+                  <dt
+                    id="sample-field-collection-method"
+                    className="text-muted-foreground w-40"
+                  >
+                    {m.sample_field_collection_method()}
+                  </dt>
+                  <dd>
+                    <ClassificationBreadcrumb
+                      labelId="sample-field-collection-method"
+                      segments={pathBreadcrumb(
+                        collectionMethod,
+                        collectionMethodLabel,
+                      )}
+                    />
+                  </dd>
+                </div>
+              ) : null}
+              {collectionMethodDescription ? (
+                <div className="flex gap-4 px-4 py-3">
+                  <dt className="text-muted-foreground w-40">
+                    {m.sample_field_collection_method_description()}
+                  </dt>
+                  <dd className="font-medium">{collectionMethodDescription}</dd>
+                </div>
+              ) : null}
+            </dl>
+          </section>
+
+          {location ? (
+            <section
+              id="location"
+              aria-labelledby="location-heading"
+              className="mt-8"
+            >
+              <h2
+                id="location-heading"
+                className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
               >
-                {m.sample_field_nature()}
-              </dt>
-              <dd className="font-medium">{natureLabel(nature)}</dd>
-            </div>
-            {type ? (
-              <div className="flex gap-4 px-4 py-3">
-                <dt
-                  id="sample-field-type"
-                  className="text-muted-foreground w-40"
-                >
-                  {m.sample_field_type()}
-                </dt>
-                <dd>
-                  <ClassificationBreadcrumb
-                    labelId="sample-field-type"
-                    segments={pathBreadcrumb(type, typeLabel)}
-                  />
-                </dd>
-              </div>
-            ) : null}
-            {material ? (
-              <div className="flex gap-4 px-4 py-3">
-                <dt
-                  id="sample-field-material"
-                  className="text-muted-foreground w-40"
-                >
-                  {m.sample_field_material()}
-                </dt>
-                <dd>
-                  <ClassificationBreadcrumb
-                    labelId="sample-field-material"
-                    segments={pathBreadcrumb(material, materialPathLabel)}
-                  />
-                </dd>
-              </div>
-            ) : null}
-            {texture ? (
-              <div className="flex gap-4 px-4 py-3">
-                <dt
-                  id="sample-field-texture"
-                  className="text-muted-foreground w-40"
-                >
-                  {m.sample_field_texture()}
-                </dt>
-                <dd className="font-medium">{textureLabel(texture)}</dd>
-              </div>
-            ) : null}
-            {metamorphicFacies ? (
-              <div className="flex gap-4 px-4 py-3">
-                <dt
-                  id="sample-field-metamorphic-facies"
-                  className="text-muted-foreground w-40"
-                >
-                  {m.sample_field_metamorphic_facies()}
-                </dt>
-                <dd className="font-medium">
-                  {metamorphicFaciesLabel(metamorphicFacies)}
-                </dd>
-              </div>
-            ) : null}
-            {collectionMethod ? (
-              <div className="flex gap-4 px-4 py-3">
-                <dt
-                  id="sample-field-collection-method"
-                  className="text-muted-foreground w-40"
-                >
-                  {m.sample_field_collection_method()}
-                </dt>
-                <dd>
-                  <ClassificationBreadcrumb
-                    labelId="sample-field-collection-method"
-                    segments={pathBreadcrumb(
-                      collectionMethod,
-                      collectionMethodLabel,
-                    )}
-                  />
-                </dd>
-              </div>
-            ) : null}
-            {collectionMethodDescription ? (
-              <div className="flex gap-4 px-4 py-3">
-                <dt className="text-muted-foreground w-40">
-                  {m.sample_field_collection_method_description()}
-                </dt>
-                <dd className="font-medium">{collectionMethodDescription}</dd>
-              </div>
-            ) : null}
-          </dl>
-        </section>
+                {m.sample_section_location()}
+              </h2>
+              <LocationView location={location} />
+            </section>
+          ) : null}
+        </div>
       </div>
     </div>
   );
