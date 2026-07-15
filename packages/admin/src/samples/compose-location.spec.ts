@@ -4,19 +4,18 @@ import { describe, expect, it } from "vitest";
 
 import {
   composeLocation,
-  emptyLocationDraft,
   type LocationDraft,
   toLocationDraft,
 } from "./compose-location.ts";
 
 const draft = (over: Partial<LocationDraft>): LocationDraft => ({
-  ...emptyLocationDraft,
+  ...toLocationDraft(null),
   ...over,
 });
 
 describe("composeLocation", () => {
   it("should return null for an empty draft", () => {
-    expect(composeLocation(emptyLocationDraft)).toBeNull();
+    expect(composeLocation(draft({}))).toBeNull();
   });
 
   it("should compose a point position with elevation", () => {
@@ -154,8 +153,12 @@ describe("composeLocation", () => {
 });
 
 describe("toLocationDraft", () => {
-  it("should return the empty draft for a null location", () => {
-    expect(toLocationDraft(null)).toEqual(emptyLocationDraft);
+  it("should return a draft with every field unset for a null location", () => {
+    expect(
+      Object.values(toLocationDraft(null)).every(
+        (value) => value === undefined,
+      ),
+    ).toBe(true);
   });
 
   it.each<Location>([

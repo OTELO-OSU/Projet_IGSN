@@ -31,27 +31,6 @@ export type LocationDraft = {
   localityDescription: string | null | undefined;
 };
 
-export const emptyLocationDraft: LocationDraft = {
-  type: undefined,
-  longitude: undefined,
-  latitude: undefined,
-  westLongitude: undefined,
-  eastLongitude: undefined,
-  southLatitude: undefined,
-  northLatitude: undefined,
-  elevationValue: undefined,
-  elevationMin: undefined,
-  elevationMax: undefined,
-  elevationUnit: undefined,
-  elevationDatum: undefined,
-  regionKind: undefined,
-  country: undefined,
-  oceanSea: undefined,
-  navigationType: undefined,
-  localityName: undefined,
-  localityDescription: undefined,
-};
-
 // A location as composed from the draft, before locationSchema judges it: the
 // Location shape with possibly missing leaf values. Compose does not decide
 // completeness; the schema (via sampleDraftSchema) rejects partial data on the
@@ -64,7 +43,7 @@ type ElevationCandidate = {
   datum: VerticalDatum | undefined;
 };
 
-export type LocationCandidate = {
+type LocationCandidate = {
   position:
     | {
         type: "point";
@@ -175,8 +154,8 @@ export function composeLocation(
 export function toLocationDraft(
   location: Location | null | undefined,
 ): LocationDraft {
-  if (!location) return emptyLocationDraft;
-  const { position, region } = location;
+  const position = location?.position;
+  const region = location?.region;
   const point = position?.type === "point" ? position : undefined;
   const area = position?.type === "area" ? position : undefined;
   const elevation = position?.elevation;
@@ -197,8 +176,8 @@ export function toLocationDraft(
     regionKind: region?.kind,
     country: region?.kind === "continent" ? region.country : undefined,
     oceanSea: region?.kind === "ocean" ? region.oceanSea : undefined,
-    navigationType: location.navigationType,
-    localityName: location.localityName,
-    localityDescription: location.localityDescription,
+    navigationType: location?.navigationType,
+    localityName: location?.localityName,
+    localityDescription: location?.localityDescription,
   };
 }

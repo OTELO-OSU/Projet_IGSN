@@ -1,7 +1,7 @@
 import { toHierarchyPath } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { describe, expect, it } from "vitest";
 
-import { emptyLocationDraft } from "./compose-location.ts";
+import { toLocationDraft } from "./compose-location.ts";
 import { type SampleDraft, sampleDraftSchema } from "./sample-draft-schema.ts";
 
 const draft: SampleDraft = {
@@ -14,7 +14,7 @@ const draft: SampleDraft = {
   collectionMethodPath: toHierarchyPath(null),
   collectionMethodDescription: null,
   specificName: null,
-  location: emptyLocationDraft,
+  location: toLocationDraft(null),
 };
 
 describe("sampleDraftSchema", () => {
@@ -35,7 +35,7 @@ describe("sampleDraftSchema", () => {
     const result = sampleDraftSchema.safeParse({
       ...draft,
       location: {
-        ...emptyLocationDraft,
+        ...toLocationDraft(null),
         type: "point",
         longitude: 200,
         latitude: 45,
