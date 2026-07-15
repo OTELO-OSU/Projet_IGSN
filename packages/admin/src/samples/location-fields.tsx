@@ -85,14 +85,8 @@ export function LocationFields() {
   const form = useTypedAppFormContext({
     defaultValues: {} as { location: LocationDraft; materialPath: string[] },
   });
-  // Unit and datum are meaningless without a value, so reset them whenever the
-  // elevation is emptied (for an area, once both bounds are gone).
-  const clearElevationUnitsWhenEmpty = () => {
-    if (!isElevationEntered(form.state.values.location)) {
-      form.setFieldValue("location.elevationUnit", "");
-      form.setFieldValue("location.elevationDatum", "");
-    }
-  };
+  // A unit/datum left behind by an emptied elevation is harmless: the fields
+  // disable and composeLocation drops them without a value.
   return (
     <div className="grid gap-4">
       <form.Subscribe
@@ -140,10 +134,7 @@ export function LocationFields() {
               </form.AppField>
               {/* Alone on its row, so it spans both columns. */}
               <div className="sm:col-span-2">
-                <form.AppField
-                  name="location.elevationValue"
-                  listeners={{ onChange: clearElevationUnitsWhenEmpty }}
-                >
+                <form.AppField name="location.elevationValue">
                   {(field) => (
                     // Signed value: bathymetry below the datum, elevation above.
                     <field.TextField
@@ -212,7 +203,6 @@ export function LocationFields() {
                             ? { message: m.field_elevation_min_required() }
                             : undefined,
                       }}
-                      listeners={{ onChange: clearElevationUnitsWhenEmpty }}
                     >
                       {(field) => (
                         <field.TextField
@@ -231,7 +221,6 @@ export function LocationFields() {
                             ? { message: m.field_elevation_max_required() }
                             : undefined,
                       }}
-                      listeners={{ onChange: clearElevationUnitsWhenEmpty }}
                     >
                       {(field) => (
                         <field.TextField

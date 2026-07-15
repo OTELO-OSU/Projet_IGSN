@@ -1167,7 +1167,7 @@ describe("SampleForm", () => {
       .not.toBeInTheDocument();
   });
 
-  it("should disable unit and datum until an elevation is set and clear them when it is removed", async () => {
+  it("should disable unit and datum until an elevation is set", async () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -1199,14 +1199,16 @@ describe("SampleForm", () => {
     await screen.getByRole("combobox", { name: "Vertical datum *" }).click();
     await screen.getByRole("option", { name: "Mean sea level" }).click();
 
-    // Clearing the value disables them again and resets their selection.
+    // Clearing the value disables them again; the selection stays (harmless:
+    // composeLocation drops unit/datum without a value) and is restored if the
+    // user re-enters an elevation.
     await screen.getByLabelText("Elevation").fill("");
     await expect
       .element(screen.getByRole("combobox", { name: "Unit" }))
       .toBeDisabled();
     await expect
       .element(screen.getByRole("combobox", { name: "Unit" }))
-      .toHaveTextContent("Select a unit");
+      .toHaveTextContent("m");
   });
 
   it("should show navigation type only after a geometry is chosen", async () => {
