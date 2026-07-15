@@ -19,14 +19,24 @@ x-healthcheck: &healthcheck
 
 services:
   postgres:
-    image: postgres:17-alpine
+    # Alpine variant, unlike dev's Debian one: the existing pgdata volume was
+    # initialized under musl, and moving to glibc would change collation and
+    # corrupt text index ordering.
+    image: postgis/postgis:17-3.5-alpine
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME}"]
+      # -h localhost forces a TCP check: the postgis image runs its init behind a
+      # socket-only server, so a socket pg_isready reports ready while TCP 5432 is
+      # still refused.
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DATABASE_USER} -d ${DATABASE_NAME} -h localhost",
+        ]
       interval: 5s
       timeout: 3s
       retries: 15

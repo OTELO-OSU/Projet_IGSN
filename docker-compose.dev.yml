@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgis/postgis:17-3.5
     container_name: postgres
     environment:
       POSTGRES_USER: igsn
@@ -8,7 +8,10 @@ services:
       POSTGRES_DB: igsn
     # No HTTP endpoint, so this one keeps pg_isready rather than curl.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U igsn -d igsn"]
+      # -h localhost forces a TCP check: the postgis image runs its init behind a
+      # socket-only server, so a socket pg_isready reports ready while TCP 5432 is
+      # still refused.
+      test: ["CMD-SHELL", "pg_isready -U igsn -d igsn -h localhost"]
       interval: 2s
       timeout: 3s
       retries: 15

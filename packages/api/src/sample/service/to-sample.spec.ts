@@ -22,7 +22,7 @@ const row = {
 describe("toSample", () => {
   it("should map a db row to a domain Sample with camelCase fields", () => {
     // Act
-    const sample = toSample(row);
+    const sample = toSample(row, null);
     // Assert
     expect(sample).toEqual({
       id: "018f4d3a-1f2b-7c00-8000-000000000000",
@@ -43,25 +43,32 @@ describe("toSample", () => {
     });
   });
 
+  it("should carry the location through", () => {
+    const location = {
+      position: { type: "point" as const, longitude: 2.35, latitude: 48.85 },
+    };
+    expect(toSample(row, location).location).toEqual(location);
+  });
+
   it("should throw when the nature is not a known value", () => {
-    expect(() => toSample({ ...row, nature: "inconnu" })).toThrow();
+    expect(() => toSample({ ...row, nature: "inconnu" }, null)).toThrow();
   });
 
   it("should throw when the type is not a known taxonomy path", () => {
-    expect(() => toSample({ ...row, type: "half_round" })).toThrow();
+    expect(() => toSample({ ...row, type: "half_round" }, null)).toThrow();
   });
 
   it("should throw when the collection method is not a known taxonomy path", () => {
     expect(() =>
-      toSample({ ...row, collection_method: "gravity_corer" }),
+      toSample({ ...row, collection_method: "gravity_corer" }, null),
     ).toThrow();
   });
 
   it("should throw when the name is empty", () => {
-    expect(() => toSample({ ...row, name: "" })).toThrow();
+    expect(() => toSample({ ...row, name: "" }, null)).toThrow();
   });
 
   it("should throw when the id is not a uuid", () => {
-    expect(() => toSample({ ...row, id: "pas-un-uuid" })).toThrow();
+    expect(() => toSample({ ...row, id: "pas-un-uuid" }, null)).toThrow();
   });
 });

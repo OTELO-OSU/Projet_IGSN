@@ -3,6 +3,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
+import { readLocation } from "./read-location.ts";
 import { toSample } from "./to-sample.ts";
 
 export async function getPublishedSampleByIgsn(
@@ -15,5 +16,6 @@ export async function getPublishedSampleByIgsn(
     .where("igsn", "=", igsn)
     .where("published", "=", true)
     .executeTakeFirst();
-  return row ? toSample(row) : null;
+  if (!row) return null;
+  return toSample(row, await readLocation(db, row.id));
 }
