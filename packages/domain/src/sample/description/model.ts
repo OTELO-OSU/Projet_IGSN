@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { isFutureDate } from "./is-future-date.ts";
 import { massUnitSchema } from "./mass-unit.ts";
 import { sizeUnitSchema } from "./size-unit.ts";
 import { volumeUnitSchema } from "./volume-unit.ts";
@@ -49,6 +50,16 @@ export const descriptionSchema = z
         path: ["collectionDate", "start"],
         message: "collection date start must not be after end",
       });
+    }
+    // A sample cannot have been collected in the future.
+    for (const bound of ["start", "end"] as const) {
+      if (period != null && isFutureDate(period[bound])) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["collectionDate", bound],
+          message: "collection date must not be in the future",
+        });
+      }
     }
     // The explanation documents why/how the sample is oriented, so it is
     // meaningless unless the orientation question was answered yes.

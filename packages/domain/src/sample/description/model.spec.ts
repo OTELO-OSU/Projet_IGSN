@@ -48,6 +48,13 @@ describe("descriptionSchema", () => {
     },
   );
 
+  it.each([
+    { start: "9999-01-01", end: "9999-01-02" },
+    { start: "2014-10-01", end: "9999-01-01" },
+  ])("should reject the future collection date %j", (collectionDate) => {
+    expect(descriptionSchema.safeParse({ collectionDate }).success).toBe(false);
+  });
+
   it("should reject a collection date missing one end of the range", () => {
     const result = descriptionSchema.safeParse({
       collectionDate: { start: "2014-10-24" },
