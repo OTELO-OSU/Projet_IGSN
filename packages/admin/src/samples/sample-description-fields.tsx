@@ -96,12 +96,6 @@ export function SampleDescriptionFields() {
         }
       </form.Subscribe>
 
-      <form.AppField name="description.openDescription">
-        {(field) => (
-          <field.TextField label={m.field_open_description()} multiline />
-        )}
-      </form.AppField>
-
       {measurementFields.map(({ key, label, unitLabel, items }) => (
         <div key={key} className="grid gap-4 sm:grid-cols-2">
           <form.AppField name={`description.${key}Value`}>
@@ -120,6 +114,12 @@ export function SampleDescriptionFields() {
           </form.AppField>
         </div>
       ))}
+
+      <form.AppField name="description.openDescription">
+        {(field) => (
+          <field.TextField label={m.field_open_description()} multiline />
+        )}
+      </form.AppField>
     </div>
   );
 }
