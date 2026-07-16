@@ -31,7 +31,7 @@ import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
 import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
-  publishedSampleDraftSchema,
+  publishedSampleSchema,
   type SampleDraft,
   sampleDraftSchema,
   toSampleDraft,
@@ -89,7 +89,7 @@ export function SampleForm({
   secondaryAction,
 }: SampleFormProps) {
   const validate = validateDraft(
-    published ? publishedSampleDraftSchema : sampleDraftSchema,
+    published ? publishedSampleSchema : sampleDraftSchema,
   );
   // Enter submits natively through the lone submit-kind button; route it to
   // that action (prefer primary). Publish and link never fire on Enter.

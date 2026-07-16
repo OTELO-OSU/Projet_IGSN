@@ -6,9 +6,9 @@ import {
   samplePublishBlockers,
 } from "./sample-publish-blockers.ts";
 
-// Where each publish blocker pins its issue on the update payload, so a form
-// can show the error on the offending field. Exhaustive: a new blocker fails
-// to compile until it chooses a path.
+// Where each publish blocker pins its issue on the payload, so a form can
+// show the error on the offending field. Exhaustive: a new blocker fails to
+// compile until it chooses a path.
 const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   type_missing: ["type"],
   type_incomplete: ["type"],
@@ -19,11 +19,12 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   collection_date_missing: ["description", "collectionDate"],
 };
 
-// An update to a published sample must keep it publishable: the create shape,
+// The shape of a sample that is, or is becoming, published: the create shape,
 // plus every publish blocker raised as an issue (samplePublishBlockers stays
 // the single source of truth; params.code carries the blocker so consumers
-// translate without matching message text). Drafts keep createSampleSchema.
-export const updatePublishedSampleSchema = createSampleSchema.superRefine(
+// translate without matching message text). One bar for the first publish and
+// for updates to a published sample; only drafts keep createSampleSchema.
+export const publishedSampleSchema = createSampleSchema.superRefine(
   (value, ctx) => {
     const blockers = samplePublishBlockers({
       type: value.type ?? null,
@@ -43,4 +44,4 @@ export const updatePublishedSampleSchema = createSampleSchema.superRefine(
   },
 );
 
-export type UpdatePublishedSample = z.infer<typeof updatePublishedSampleSchema>;
+export type PublishedSample = z.infer<typeof publishedSampleSchema>;

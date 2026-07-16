@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { updatePublishedSampleSchema } from "./update-published-sample-schema.ts";
+import { publishedSampleSchema } from "./published-sample-schema.ts";
 
 // A payload that keeps the sample publishable (no blockers).
 const publishable = {
@@ -12,11 +12,9 @@ const publishable = {
   description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
 };
 
-describe("updatePublishedSampleSchema", () => {
+describe("publishedSampleSchema", () => {
   it("should accept an update that keeps the sample publishable", () => {
-    expect(updatePublishedSampleSchema.safeParse(publishable).success).toBe(
-      true,
-    );
+    expect(publishedSampleSchema.safeParse(publishable).success).toBe(true);
   });
 
   it.each([
@@ -36,7 +34,7 @@ describe("updatePublishedSampleSchema", () => {
   ])(
     "should reject an update that raises %s, pinned on its field",
     (blocker, payload, path) => {
-      const result = updatePublishedSampleSchema.safeParse(payload);
+      const result = publishedSampleSchema.safeParse(payload);
       if (result.success) throw new Error("expected the parse to fail");
       expect(
         result.error.issues.map((issue) => ({
@@ -48,7 +46,7 @@ describe("updatePublishedSampleSchema", () => {
   );
 
   it("should still reject what createSampleSchema rejects", () => {
-    const result = updatePublishedSampleSchema.safeParse({
+    const result = publishedSampleSchema.safeParse({
       ...publishable,
       name: "",
     });

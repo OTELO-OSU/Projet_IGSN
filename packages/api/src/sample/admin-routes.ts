@@ -5,7 +5,7 @@ import type {
 } from "@projet-igsn/domain/sample/sample-validator";
 
 import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-sample-publishable";
-import { updatePublishedSampleSchema } from "@projet-igsn/domain/sample/publication/update-published-sample-schema";
+import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import { Hono } from "hono";
 
 import {
@@ -53,7 +53,7 @@ export function createSampleAdminRoutes(repository: SampleRepository) {
       // the looser create schema. Same get/write race note as publish below.
       if (
         current.published &&
-        !updatePublishedSampleSchema.safeParse(c.req.valid("json")).success
+        !publishedSampleSchema.safeParse(c.req.valid("json")).success
       ) {
         return c.json(
           { error: "Update would make the published sample unpublishable" },

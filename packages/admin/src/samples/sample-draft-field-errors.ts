@@ -65,7 +65,7 @@ type DraftIssue = {
 // from their path and zod code, anything else falls back to a generic message.
 function issueMessage(path: string, issue: DraftIssue): string {
   const reason = (issue.params as { code?: string } | undefined)?.code;
-  // A publish-blocker issue (updatePublishedSampleSchema) reuses the tooltip
+  // A publish-blocker issue (publishedSampleSchema) reuses the tooltip
   // translations, so the field explains itself the same way the button does.
   const blocker = publishBlockerSchema.safeParse(reason);
   if (blocker.success) {
