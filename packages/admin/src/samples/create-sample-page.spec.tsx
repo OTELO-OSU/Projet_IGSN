@@ -36,6 +36,7 @@ function fakeApi(failWrites = false) {
         // nullable), overridable by the submitted body below.
         texture: null,
         metamorphicFacies: null,
+        location: null,
         ...JSON.parse(init.body),
         igsn: null,
         published: false,

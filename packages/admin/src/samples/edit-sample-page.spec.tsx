@@ -46,6 +46,7 @@ function fakeApi(
     collectionMethod: null,
     collectionMethodDescription: null,
     specificName: "MC-2026-007",
+    location: { position: { type: "point", longitude: 3, latitude: 45 } },
     igsn: published ? IGSN : null,
     published,
     createdAt: "2026-06-01T00:00:00.000Z",
