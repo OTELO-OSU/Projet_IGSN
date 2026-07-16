@@ -59,7 +59,8 @@ describe("sampleDraftSchema", () => {
         ...draft,
         description: {
           ...toDescriptionDraft(null),
-          collectionDate: "2026-01-05",
+          collectionDateStart: "2026-01-05",
+          collectionDateEnd: "2026-01-05",
           massValue: 1.2,
           massUnit: "kg",
         },

@@ -6,12 +6,8 @@ import {
 } from "@projet-igsn/domain/sample/description/volume-unit";
 
 import { m } from "#/paraglide/messages.js";
+import { CollectionDatesField } from "#/samples/collection-dates-field.tsx";
 import { useDescriptionForm } from "#/samples/use-description-form.ts";
-
-const modeItems = [
-  { value: "single", label: m.collection_date_mode_single() },
-  { value: "range", label: m.collection_date_mode_range() },
-];
 
 const orientedItems = [
   { value: "yes", label: m.oriented_yes() },
@@ -61,57 +57,15 @@ const measurementFields = [
 ];
 
 // The Description tab (ADR 0015). Every part is optional and independent; the
-// single/range toggle governs only which date inputs show (a single date is
-// submitted as the degenerate range start === end), and the orientation
-// explanation only shows for an oriented sample. Render inside a
-// `form.AppForm`. The form store holds the flat `description.*` draft;
-// `composeDescription` maps it back on submit.
+// collection date group (with its single/range mode) lives in
+// CollectionDatesField, and the orientation explanation only shows for an
+// oriented sample. Render inside a `form.AppForm`. The form store holds the
+// flat `description.*` draft; `composeDescription` maps it back on submit.
 export function SampleDescriptionFields() {
   const form = useDescriptionForm();
   return (
     <div className="grid gap-4">
-      <form.AppField name="description.collectionDateMode">
-        {(field) => (
-          <field.ComboboxField
-            label={m.field_collection_date_mode()}
-            items={modeItems}
-            placeholder={m.collection_date_mode_placeholder()}
-            searchPlaceholder={m.collection_date_mode_search_placeholder()}
-            emptyText={m.collection_date_mode_empty()}
-          />
-        )}
-      </form.AppField>
-
-      <form.Subscribe
-        selector={(state) => state.values.description.collectionDateMode}
-      >
-        {(mode) =>
-          mode === "range" ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <form.AppField name="description.collectionDateStart">
-                {(field) => (
-                  <field.DateField
-                    label={`${m.field_collection_date_start()} *`}
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name="description.collectionDateEnd">
-                {(field) => (
-                  <field.DateField
-                    label={`${m.field_collection_date_end()} *`}
-                  />
-                )}
-              </form.AppField>
-            </div>
-          ) : (
-            <form.AppField name="description.collectionDate">
-              {(field) => (
-                <field.DateField label={`${m.field_collection_date()} *`} />
-              )}
-            </form.AppField>
-          )
-        }
-      </form.Subscribe>
+      <CollectionDatesField />
 
       <form.AppField name="description.oriented">
         {(field) => (

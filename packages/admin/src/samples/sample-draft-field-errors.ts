@@ -1,5 +1,4 @@
 import { m } from "#/paraglide/messages.js";
-import { type DescriptionDraft } from "#/samples/compose-description.ts";
 import { type LocationDraft } from "#/samples/compose-location.ts";
 
 // Measurement leaves (description.length.value...) map back to the flat
@@ -9,12 +8,12 @@ const MEASUREMENT_PATH =
 
 // Maps a domain-schema issue path (composed CreateSample shape) back to the
 // flat draft field that produced the value. Elevation min/max both come from
-// the single value input when the geometry is a point (degenerate range);
-// collection date start/end both come from the single date input in single mode.
+// the single value input when the geometry is a point (degenerate range); the
+// collection date always maps to its range bounds (in single mode the visible
+// input is the start field, mirrored into the end).
 const draftFieldName = (
   path: string,
   locationType: LocationDraft["type"],
-  collectionDateMode: DescriptionDraft["collectionDateMode"],
 ): string => {
   if (path.startsWith("location.position.elevation.min"))
     return locationType === "point"
@@ -34,11 +33,9 @@ const draftFieldName = (
   if (path.startsWith("location.region."))
     return `location.${path.slice("location.region.".length)}`;
   if (path.startsWith("description.collectionDate."))
-    return collectionDateMode === "single"
-      ? "description.collectionDate"
-      : path === "description.collectionDate.start"
-        ? "description.collectionDateStart"
-        : "description.collectionDateEnd";
+    return path === "description.collectionDate.start"
+      ? "description.collectionDateStart"
+      : "description.collectionDateEnd";
   const measurement = MEASUREMENT_PATH.exec(path);
   if (measurement)
     return `description.${measurement[1]}${
@@ -57,15 +54,10 @@ const draftFieldName = (
 export function sampleDraftFieldErrors(
   issues: ReadonlyArray<{ path: ReadonlyArray<PropertyKey> }>,
   locationType: LocationDraft["type"],
-  collectionDateMode: DescriptionDraft["collectionDateMode"],
 ): Record<string, { message: string }> {
   const fields: Record<string, { message: string }> = {};
   for (const issue of issues) {
-    const field = draftFieldName(
-      issue.path.join("."),
-      locationType,
-      collectionDateMode,
-    );
+    const field = draftFieldName(issue.path.join("."), locationType);
     fields[field] ??= { message: m.field_invalid() };
   }
   return fields;

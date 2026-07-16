@@ -105,6 +105,64 @@ describe("SampleDescriptionFields", () => {
       .toHaveValue("2026-02-10");
   });
 
+  it("should collapse a range to its start when switching back to single mode", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderDescriptionTab(onSubmit);
+
+    await screen.getByRole("combobox", { name: "Collection date" }).click();
+    await screen.getByRole("option", { name: "Date range" }).click();
+    await screen.getByLabelText("Start date").fill("2026-01-05");
+    await screen.getByLabelText("End date").fill("2026-02-10");
+    await screen.getByRole("combobox", { name: "Collection date" }).click();
+    await screen.getByRole("option", { name: "Single date" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Date *", { exact: true }))
+      .toHaveValue("2026-01-05");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: {
+            collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+          },
+        }),
+      ),
+    );
+  });
+
+  it("should reject the same date on both range bounds, until single mode is used instead", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderDescriptionTab(onSubmit);
+
+    await screen.getByRole("combobox", { name: "Collection date" }).click();
+    await screen.getByRole("option", { name: "Date range" }).click();
+    await screen.getByLabelText("Start date").fill("2026-01-05");
+    await screen.getByLabelText("End date").fill("2026-01-05");
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent(/use the single date mode/i);
+    await screen.getByRole("button", { name: "Create" }).click();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    // Following the advice clears the error and submits the degenerate range.
+    await screen.getByRole("combobox", { name: "Collection date" }).click();
+    await screen.getByRole("option", { name: "Single date" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: {
+            collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+          },
+        }),
+      ),
+    );
+  });
+
   it("should show the orientation explanation only when the sample is oriented", async () => {
     const screen = await renderDescriptionTab();
 

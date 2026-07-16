@@ -68,7 +68,6 @@ const validate = ({ value }: { value: SampleDraft }) => {
         fields: sampleDraftFieldErrors(
           parsed.error.issues,
           value.location.type,
-          value.description.collectionDateMode,
         ),
       };
 };

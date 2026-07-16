@@ -4,12 +4,10 @@ import type { SizeUnit } from "@projet-igsn/domain/sample/description/size-unit"
 import type { VolumeUnit } from "@projet-igsn/domain/sample/description/volume-unit";
 
 // The Description tab's flat form draft, mirroring compose-location.ts: every
-// field holds its typed value or nullish when unset. `collectionDateMode` is
-// pure UI state (single date vs range); it lives in the form store so it
-// survives the tab unmounting, but never reaches the submitted sample.
+// field holds its typed value or nullish when unset. The store always carries
+// the canonical range; the single-date/range mode is component state of
+// CollectionDatesField (single mode mirrors one input into both ends).
 export type DescriptionDraft = {
-  collectionDateMode: "single" | "range";
-  collectionDate: string | undefined;
   collectionDateStart: string | undefined;
   collectionDateEnd: string | undefined;
   oriented: "yes" | "no" | null | undefined;
@@ -31,8 +29,8 @@ export type DescriptionDraft = {
 // it: the Description shape with possibly missing leaf values. Compose does
 // not decide completeness; the schema (via sampleDraftSchema) rejects a
 // half-filled pair on the offending field. Compose only excludes values hidden
-// behind the UI state (the other date mode's fields, an explanation without
-// oriented = yes), since an error on a hidden field could never be fixed.
+// behind the UI state (an explanation without oriented = yes), since an error
+// on a hidden field could never be fixed.
 type MeasurementCandidate<Unit> = {
   value: number | undefined;
   unit: Unit | undefined;
@@ -60,16 +58,11 @@ const composeMeasurement = <Unit extends string>(
 ): MeasurementCandidate<Unit> | undefined =>
   value === undefined && !unit ? undefined : { value, unit: unit ?? undefined };
 
+// A single collection date arrives as the mirrored degenerate range
+// start === end (ADR 0015), so compose sees one shape for both modes.
 function composeCollectionDate(
   draft: DescriptionDraft,
 ): DescriptionCandidate["collectionDate"] {
-  // A single collection date is the degenerate range start === end (ADR 0015).
-  // The other mode's fields are hidden, so their values are UI leftovers.
-  if (draft.collectionDateMode !== "range") {
-    return draft.collectionDate
-      ? { start: draft.collectionDate, end: draft.collectionDate }
-      : undefined;
-  }
   return draft.collectionDateStart === undefined &&
     draft.collectionDateEnd === undefined
     ? undefined
@@ -111,13 +104,9 @@ export function composeDescription(
 export function toDescriptionDraft(
   description: Description | null | undefined,
 ): DescriptionDraft {
-  const period = description?.collectionDate ?? undefined;
-  const isSingle = period === undefined || period.start === period.end;
   return {
-    collectionDateMode: isSingle ? "single" : "range",
-    collectionDate: period && isSingle ? period.start : undefined,
-    collectionDateStart: period && !isSingle ? period.start : undefined,
-    collectionDateEnd: period && !isSingle ? period.end : undefined,
+    collectionDateStart: description?.collectionDate?.start,
+    collectionDateEnd: description?.collectionDate?.end,
     oriented:
       description?.oriented == null
         ? undefined

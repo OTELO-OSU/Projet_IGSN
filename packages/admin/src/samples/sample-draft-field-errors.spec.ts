@@ -16,7 +16,6 @@ describe("sampleDraftFieldErrors", () => {
           { path: ["location", "region", "kind"] },
         ],
         "area",
-        "single",
       ),
     ).toEqual({
       name: { message: "Invalid value." },
@@ -34,7 +33,6 @@ describe("sampleDraftFieldErrors", () => {
       sampleDraftFieldErrors(
         [{ path: ["location", "position", "elevation", "min"] }],
         "point",
-        "single",
       ),
     ).toEqual({ "location.elevationValue": { message: "Invalid value." } });
   });
@@ -50,7 +48,6 @@ describe("sampleDraftFieldErrors", () => {
           { path: ["description", "orientationExplanation"] },
         ],
         undefined,
-        "range",
       ),
     ).toEqual({
       "description.collectionDateStart": { message: "Invalid value." },
@@ -59,15 +56,5 @@ describe("sampleDraftFieldErrors", () => {
       "description.massUnit": { message: "Invalid value." },
       "description.orientationExplanation": { message: "Invalid value." },
     });
-  });
-
-  it("should map a collection date bound to the single date input in single mode", () => {
-    expect(
-      sampleDraftFieldErrors(
-        [{ path: ["description", "collectionDate", "start"] }],
-        undefined,
-        "single",
-      ),
-    ).toEqual({ "description.collectionDate": { message: "Invalid value." } });
   });
 });

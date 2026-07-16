@@ -150,6 +150,7 @@
   "field_collection_date": "Date",
   "field_collection_date_start": "Start date",
   "field_collection_date_end": "End date",
+  "collection_date_range_identical": "Start and end are the same date; use the single date mode instead.",
   "field_oriented": "Oriented sample",
   "oriented_yes": "Yes",
   "oriented_no": "No",

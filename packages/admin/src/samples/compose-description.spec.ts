@@ -18,17 +18,21 @@ describe("composeDescription", () => {
     expect(composeDescription(draft({}))).toBeNull();
   });
 
-  it("should compose a single date as the degenerate range start === end", () => {
-    expect(composeDescription(draft({ collectionDate: "2026-01-05" }))).toEqual(
-      { collectionDate: { start: "2026-01-05", end: "2026-01-05" } },
-    );
+  it("should compose the mirrored degenerate range of a single date", () => {
+    expect(
+      composeDescription(
+        draft({
+          collectionDateStart: "2026-01-05",
+          collectionDateEnd: "2026-01-05",
+        }),
+      ),
+    ).toEqual({ collectionDate: { start: "2026-01-05", end: "2026-01-05" } });
   });
 
   it("should compose a range from its start and end", () => {
     expect(
       composeDescription(
         draft({
-          collectionDateMode: "range",
           collectionDateStart: "2026-01-05",
           collectionDateEnd: "2026-02-10",
         }),
@@ -40,32 +44,8 @@ describe("composeDescription", () => {
 
   it("should keep a half-filled range for the schema to reject", () => {
     expect(
-      composeDescription(
-        draft({
-          collectionDateMode: "range",
-          collectionDateStart: "2026-01-05",
-        }),
-      ),
+      composeDescription(draft({ collectionDateStart: "2026-01-05" })),
     ).toEqual({ collectionDate: { start: "2026-01-05" } });
-  });
-
-  it("should ignore the single date left behind when the mode is range", () => {
-    expect(
-      composeDescription(
-        draft({ collectionDateMode: "range", collectionDate: "2026-01-05" }),
-      ),
-    ).toBeNull();
-  });
-
-  it("should ignore range bounds left behind when the mode is single", () => {
-    expect(
-      composeDescription(
-        draft({
-          collectionDateStart: "2026-01-05",
-          collectionDateEnd: "2026-02-10",
-        }),
-      ),
-    ).toBeNull();
   });
 
   it("should compose an oriented sample with its explanation", () => {
@@ -116,25 +96,16 @@ describe("composeDescription", () => {
 });
 
 describe("toDescriptionDraft", () => {
-  it("should return a single-mode draft with every field unset for a null description", () => {
-    expect(toDescriptionDraft(null)).toEqual({ collectionDateMode: "single" });
+  it("should return a draft with every field unset for a null description", () => {
+    expect(toDescriptionDraft(null)).toEqual({});
   });
 
-  it("should open in single mode when start === end", () => {
-    expect(
-      toDescriptionDraft({
-        collectionDate: { start: "2026-01-05", end: "2026-01-05" },
-      }),
-    ).toEqual({ collectionDateMode: "single", collectionDate: "2026-01-05" });
-  });
-
-  it("should open in range mode when start differs from end", () => {
+  it("should fill both range bounds from the stored collection date", () => {
     expect(
       toDescriptionDraft({
         collectionDate: { start: "2026-01-05", end: "2026-02-10" },
       }),
     ).toEqual({
-      collectionDateMode: "range",
       collectionDateStart: "2026-01-05",
       collectionDateEnd: "2026-02-10",
     });
