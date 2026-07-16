@@ -44,7 +44,7 @@ describe("SampleDescriptionFields", () => {
     await expect
       .element(screen.getByLabelText("Start date"))
       .not.toBeInTheDocument();
-    await screen.getByLabelText("Date", { exact: true }).fill("2026-01-05");
+    await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -85,7 +85,7 @@ describe("SampleDescriptionFields", () => {
     });
 
     await expect
-      .element(screen.getByLabelText("Date", { exact: true }))
+      .element(screen.getByLabelText("Date *", { exact: true }))
       .toHaveValue("2026-01-05");
     await expect
       .element(screen.getByLabelText("Start date"))
@@ -165,7 +165,7 @@ describe("SampleDescriptionFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
-    await screen.getByLabelText("Date", { exact: true }).fill("2026-01-05");
+    await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
     await screen.getByRole("combobox", { name: "Oriented sample" }).click();
     await screen.getByRole("option", { name: "Yes" }).click();
     await screen

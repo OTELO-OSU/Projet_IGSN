@@ -90,18 +90,24 @@ export function SampleDescriptionFields() {
             <div className="grid gap-4 sm:grid-cols-2">
               <form.AppField name="description.collectionDateStart">
                 {(field) => (
-                  <field.DateField label={m.field_collection_date_start()} />
+                  <field.DateField
+                    label={`${m.field_collection_date_start()} *`}
+                  />
                 )}
               </form.AppField>
               <form.AppField name="description.collectionDateEnd">
                 {(field) => (
-                  <field.DateField label={m.field_collection_date_end()} />
+                  <field.DateField
+                    label={`${m.field_collection_date_end()} *`}
+                  />
                 )}
               </form.AppField>
             </div>
           ) : (
             <form.AppField name="description.collectionDate">
-              {(field) => <field.DateField label={m.field_collection_date()} />}
+              {(field) => (
+                <field.DateField label={`${m.field_collection_date()} *`} />
+              )}
             </form.AppField>
           )
         }
