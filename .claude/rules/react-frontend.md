@@ -63,7 +63,8 @@ Reuse the existing bound inputs (`TextField`, `SubmitButton`...) via
 to `packages/design-system/src/components/form/` and register it in `app-form.tsx`
 so every form gets it, never inline a one-off input in an app.
 
-A required field carries a trailing "\*" in its label, in text, never color
+Required means required to publish, not to save a draft: a field whose absence
+blocks publication carries a trailing "\*" in its label, in text, never color
 alone. A conditional requirement adds the marker the moment it starts to hold
 and drops it when it stops (`withRequired`).
 

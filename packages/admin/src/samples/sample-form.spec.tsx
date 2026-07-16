@@ -537,7 +537,10 @@ describe("SampleForm", () => {
       .click();
     await screen.getByRole("option", { name: "Granite", exact: true }).click();
 
-    await screen.getByRole("combobox", { name: "Metamorphic facies" }).click();
+    // Marked required: a metamorphic sample cannot publish without a facies.
+    await screen
+      .getByRole("combobox", { name: "Metamorphic facies *", exact: true })
+      .click();
     await screen.getByRole("option", { name: "Amphibolite facies" }).click();
 
     await screen.getByRole("button", { name: "Create" }).click();
