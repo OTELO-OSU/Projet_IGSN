@@ -61,6 +61,22 @@ Reuse the existing bound inputs (`TextField`, `SubmitButton`...) via
 to `packages/design-system/src/components/form/` and register it in `app-form.tsx`
 so every form gets it, never inline a one-off input in an app.
 
+Values hidden by UI state (a field for the other branch of a toggle, a tab
+hidden by another value) follow three rules (ADR 0015):
+
+1. While editing, keep them: hiding a field never clears its value, so
+   switching back restores what the user entered. Values live in the form
+   store, not in component state that unmounts.
+2. On save, drop them: the compose step excludes values hidden behind the
+   current UI state before validation, so a hidden value is never submitted
+   and never raises a schema error the user cannot see or fix.
+3. After a successful save, clear them: reset the form to the draft rebuilt
+   from the submitted value, so dropped leftovers do not look saved. Visible
+   fields are unaffected.
+
+Every rule that hides a field needs its matching exclusion in the compose
+step; a hidden field without one turns save into a silent noop.
+
 ## Extract hooks
 
 When a component accumulates complex state logic (several related `useState`s,
