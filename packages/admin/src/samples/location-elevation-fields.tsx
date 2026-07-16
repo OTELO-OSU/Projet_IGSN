@@ -24,7 +24,6 @@ const metaFields = [
     // Elevation units are language-neutral symbols (their own label).
     items: ELEVATION_UNITS.map((value) => ({ value, label: value })),
     label: m.field_elevation_unit,
-    requiredMessage: m.field_elevation_unit_required,
     placeholder: m.elevation_unit_placeholder,
     searchPlaceholder: m.elevation_unit_search_placeholder,
     emptyText: m.elevation_unit_empty,
@@ -36,70 +35,49 @@ const metaFields = [
       label: verticalDatumLabel(value),
     })),
     label: m.field_vertical_datum,
-    requiredMessage: m.field_vertical_datum_required,
     placeholder: m.vertical_datum_placeholder,
     searchPlaceholder: m.vertical_datum_search_placeholder,
     emptyText: m.vertical_datum_empty,
   },
 ];
 
-// Elevation unit and vertical datum, shown once a geometry is chosen and
-// enabled (and required) once an elevation value is entered. A unit/datum left
-// behind by an emptied elevation is harmless: the fields disable and
-// composeLocation drops them without a value.
+// Elevation unit and vertical datum, rendered as grid children alongside the
+// elevation value(s) so they share one row (see the point/area field grids).
+// Disabled until an elevation value is entered, then marked required with a "*":
+// a hint only, since completeness gates publish, not the draft (publish blocker
+// elevation_unit_datum_missing; ADR 0014). A unit/datum left behind by an
+// emptied elevation is harmless: the fields disable and composeLocation drops
+// them without a value.
 export function LocationElevationFields() {
   const form = useLocationForm();
   return (
     <form.Subscribe
-      selector={(state) => ({
-        show: Boolean(state.values.location.type),
-        required: isElevationEntered(state.values.location),
-      })}
+      selector={(state) => isElevationEntered(state.values.location)}
     >
-      {({ show, required }) =>
-        show ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {metaFields.map(
-              ({
-                key,
-                items,
-                label,
-                requiredMessage,
-                placeholder,
-                searchPlaceholder,
-                emptyText,
-              }) => (
-                <form.AppField
-                  key={key}
-                  name={`location.${key}`}
-                  validators={{
-                    onChangeListenTo: [
-                      "location.elevationValue",
-                      "location.elevationMin",
-                      "location.elevationMax",
-                    ],
-                    onChange: ({ value, fieldApi }) =>
-                      isElevationEntered(fieldApi.form.state.values.location) &&
-                      !value
-                        ? { message: requiredMessage() }
-                        : undefined,
-                  }}
-                >
-                  {(field) => (
-                    <field.ComboboxField
-                      label={withRequired(label(), required)}
-                      items={items}
-                      placeholder={placeholder()}
-                      searchPlaceholder={searchPlaceholder()}
-                      emptyText={emptyText()}
-                      disabled={!required}
-                    />
-                  )}
-                </form.AppField>
-              ),
-            )}
-          </div>
-        ) : null
+      {(required) =>
+        metaFields.map(
+          ({
+            key,
+            items,
+            label,
+            placeholder,
+            searchPlaceholder,
+            emptyText,
+          }) => (
+            <form.AppField key={key} name={`location.${key}`}>
+              {(field) => (
+                <field.ComboboxField
+                  label={withRequired(label(), required)}
+                  items={items}
+                  placeholder={placeholder()}
+                  searchPlaceholder={searchPlaceholder()}
+                  emptyText={emptyText()}
+                  disabled={!required}
+                />
+              )}
+            </form.AppField>
+          ),
+        )
       }
     </form.Subscribe>
   );

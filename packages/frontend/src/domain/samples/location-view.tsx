@@ -17,10 +17,14 @@ const VERTICAL_DATUM_LABELS: Record<VerticalDatum, () => string> = {
 type Elevation = NonNullable<NonNullable<Location["position"]>["elevation"]>;
 
 // "-2500 m (Mean sea level)" for a point (min === max), "100 – 200 m (...)"
-// for a range. Signed: negative is below the datum (bathymetry).
+// for a range. Signed: negative is below the datum (bathymetry). A published
+// elevation is always complete (publish blockers enforce it), but the schema
+// types the parts as nullish, so each is appended only when present.
 const elevationText = ({ min, max, unit, datum }: Elevation): string => {
   const range = min === max ? String(min) : `${min} – ${max}`;
-  return `${range} ${unit} (${VERTICAL_DATUM_LABELS[datum]()})`;
+  const unitText = unit ? ` ${unit}` : "";
+  const datumText = datum ? ` (${VERTICAL_DATUM_LABELS[datum]()})` : "";
+  return `${range}${unitText}${datumText}`;
 };
 
 // The location rows of the sample detail page, one per part actually present
