@@ -59,9 +59,30 @@ type LocationTable = {
   geom: Generated<string>;
 };
 
+// 0:1 with sample (sample_id is PK + cascading FK). Every field nullable: an
+// empty age is simply no row. Numeric columns are double precision, so the
+// driver reads them as numbers; codes and units are text.
+type SampleAgeTable = {
+  sample_id: string;
+  numeric_age: number | null;
+  numeric_age_unit: string | null;
+  numeric_age_years_unit: string | null;
+  numeric_age_min: number | null;
+  numeric_age_min_unit: string | null;
+  numeric_age_min_years_unit: string | null;
+  numeric_age_max: number | null;
+  numeric_age_max_unit: string | null;
+  numeric_age_max_years_unit: string | null;
+  geological_age: string | null;
+  geological_age_min: string | null;
+  geological_age_max: string | null;
+  geological_unit: string | null;
+};
+
 export type DB = {
   sample: SampleTable;
   location: LocationTable;
+  sample_age: SampleAgeTable;
 };
 
 const dbConfigSchema = z.object({

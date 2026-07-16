@@ -51,12 +51,22 @@ export async function listSamples(
     .$if(search !== undefined, (qb) => qb.where(matchesSearch(search!)))
     .executeTakeFirstOrThrow();
 
-  const locations = await readLocations(
-    db,
-    rows.map((row) => row.id),
-  );
+  const ids = rows.map((row) => row.id);
+  const locations = await readLocations(db, ids);
+  // One extra query for the whole page's age rows (0:1), keyed by sample id.
+  const ageRows = ids.length
+    ? await db
+        .selectFrom("sample_age")
+        .selectAll()
+        .where("sample_id", "in", ids)
+        .execute()
+    : [];
+  const ageById = new Map(ageRows.map((age) => [age.sample_id, age]));
+
   return {
-    data: rows.map((row) => toSample(row, locations.get(row.id) ?? null)),
+    data: rows.map((row) =>
+      toSample(row, locations.get(row.id) ?? null, ageById.get(row.id)),
+    ),
     total: Number(count),
   };
 }

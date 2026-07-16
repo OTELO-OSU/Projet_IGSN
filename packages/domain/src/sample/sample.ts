@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { igsnSuffixSchema } from "../igsn/model.ts";
+import { ageSchema } from "./age/model.ts";
 import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
 import { locationRequirement } from "./location/location-requirement.ts";
 import { locationSchema } from "./location/model.ts";
@@ -37,6 +38,9 @@ export const sampleSchema = z.object({
   specificName: nameSchema.nullable(),
   // Geographic location; null when the sample has none (see location/model.ts).
   location: locationSchema.nullable(),
+  // Geological age; null until recorded (stored in the sample_age table).
+  // Defaulted so a payload without the key reads as "no age recorded".
+  age: ageSchema.nullable().default(null),
   // Null until the sample is published.
   igsn: igsnSuffixSchema.nullable(),
   published: z.boolean(),
@@ -65,6 +69,7 @@ export const createSampleSchema = z
     collectionMethodDescription: nameSchema.nullish(),
     specificName: nameSchema.nullish(),
     location: locationSchema.nullish(),
+    age: ageSchema.nullish(),
   })
   .superRefine((value, ctx) => {
     // A texture must match the selected material's branch. This guards the

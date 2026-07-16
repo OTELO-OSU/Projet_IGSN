@@ -1,5 +1,8 @@
 import type Catalog from "../../messages/en.json";
 
+import { type GeologicalAge } from "./age/geological-age.ts";
+import { type NumericUnit } from "./age/numeric-unit.ts";
+import { type YearsUnit } from "./age/years-unit.ts";
 import { collectionMethodLabelKey } from "./collection-method/label.ts";
 import { materialLabelKey } from "./material/label.ts";
 import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
@@ -21,6 +24,9 @@ type AssertKeys<T extends MessageKey> = T;
 type _natureKeys = AssertKeys<`nature_${Nature}`>;
 type _textureKeys = AssertKeys<`texture_${Texture}`>;
 type _faciesKeys = AssertKeys<`metamorphic_facies_${MetamorphicFacies}`>;
+type _numericUnitKeys = AssertKeys<`age_unit_${NumericUnit}`>;
+type _yearsUnitKeys = AssertKeys<`age_years_${YearsUnit}`>;
+type _geologicalAgeKeys = AssertKeys<`age_${GeologicalAge}`>;
 
 // A message catalog: the app's compiled paraglide `m`, keyed by the catalog's
 // own message keys (minus the `$`-prefixed metadata entries, e.g. `$schema`,
@@ -39,6 +45,9 @@ export type SampleLabels = {
   textureLabel: (texture: Texture) => string;
   metamorphicFaciesLabel: (facies: MetamorphicFacies) => string;
   natureLabel: (nature: Nature) => string;
+  numericUnitLabel: (unit: NumericUnit) => string;
+  yearsUnitLabel: (unit: YearsUnit) => string;
+  geologicalAgeLabel: (age: GeologicalAge) => string;
 };
 
 // The sample label resolvers, bound to one app's message catalog. Paraglide
@@ -55,5 +64,8 @@ export function createSampleLabels(m: Messages): SampleLabels {
       m,
     ),
     natureLabel: vocabularyLabel((nature) => `nature_${nature}`, m),
+    numericUnitLabel: vocabularyLabel((unit) => `age_unit_${unit}`, m),
+    yearsUnitLabel: vocabularyLabel((unit) => `age_years_${unit}`, m),
+    geologicalAgeLabel: vocabularyLabel((age) => `age_${age}`, m),
   };
 }

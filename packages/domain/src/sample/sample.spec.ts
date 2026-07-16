@@ -13,6 +13,7 @@ const validSample = {
   collectionMethodDescription: null,
   specificName: null,
   location: null,
+  age: null,
   igsn: null,
   published: false,
   createdAt: "2026-07-02T10:00:00.000Z",
@@ -36,6 +37,7 @@ describe("sampleSchema", () => {
       collectionMethodDescription: null,
       specificName: null,
       location: null,
+      age: null,
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -187,6 +189,38 @@ describe("createSampleSchema", () => {
       type: null,
       specificName: "FTB-2026-042",
     });
+  });
+
+  it("should accept an explicit age", () => {
+    // Arrange / Act
+    const result = createSampleSchema.parse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      age: {
+        numericAge: 12000,
+        numericAgeUnit: "a",
+        numericAgeYearsUnit: "bp",
+      },
+    });
+    // Assert
+    expect(result).toMatchObject({
+      age: {
+        numericAge: 12000,
+        numericAgeUnit: "a",
+        numericAgeYearsUnit: "bp",
+      },
+    });
+  });
+
+  it("should reject an age with a single value and a range together", () => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      age: { numericAge: 120, numericAgeMin: 100, numericAgeMax: 140 },
+    });
+    // Assert
+    expect(result.success).toBe(false);
   });
 
   it("should default a missing type to null", () => {
