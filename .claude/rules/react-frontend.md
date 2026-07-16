@@ -63,6 +63,14 @@ Reuse the existing bound inputs (`TextField`, `SubmitButton`...) via
 to `packages/design-system/src/components/form/` and register it in `app-form.tsx`
 so every form gets it, never inline a one-off input in an app.
 
+A required field carries a trailing "\*" in its label, in text, never color
+alone. A conditional requirement adds the marker the moment it starts to hold
+and drops it when it stops (`withRequired`).
+
+Is a field meaningless until a sibling is filled (a unit without its value)?
+Disable it until the sibling is set, mark it required once enabled, and have
+the schema reject its value while the sibling is missing.
+
 Values hidden by UI state (a field for the other branch of a toggle, a tab
 hidden by another value) follow three rules (ADR 0015):
 
