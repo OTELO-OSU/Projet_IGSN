@@ -363,6 +363,33 @@ describe("SampleView", () => {
     await expect.element(screen.getByText("Pacific Ocean")).toBeInTheDocument();
   });
 
+  it.each<[string, { kind: "continent" } | { kind: "ocean" }, string]>([
+    [
+      "a leafless continent region",
+      { kind: "continent" },
+      "Continent / country",
+    ],
+    ["a leafless ocean region", { kind: "ocean" }, "Ocean / sea"],
+  ])("should show %s as its kind label", async (_label, region, expected) => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        location={{ region }}
+      />,
+    );
+
+    await expect.element(screen.getByText("Region")).toBeInTheDocument();
+    await expect.element(screen.getByText(expected)).toBeInTheDocument();
+  });
+
   it("should show the locality name and description", async () => {
     const screen = await render(
       <SampleView

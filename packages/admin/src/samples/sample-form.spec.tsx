@@ -1342,6 +1342,63 @@ describe("SampleForm", () => {
       .toHaveTextContent("m");
   });
 
+  it("should clear values the save dropped, keeping only what was submitted", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(onSubmit)}
+      />,
+    );
+
+    // Enter a point, then switch to an area: the point values linger (handy
+    // while editing) but only the area is part of the submitted location.
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    await screen.getByLabelText("Longitude *").fill("3");
+    await screen.getByLabelText("Latitude *").fill("45");
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Area" }).click();
+    await screen.getByLabelText("West longitude *").fill("5");
+    await screen.getByLabelText("East longitude *").fill("8");
+    await screen.getByLabelText("South latitude *").fill("44");
+    await screen.getByLabelText("North latitude *").fill("46");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: {
+              type: "area",
+              westLongitude: 5,
+              eastLongitude: 8,
+              southLatitude: 44,
+              northLatitude: 46,
+            },
+          },
+        }),
+      ),
+    );
+
+    // After the save the unsaved point leftovers are gone.
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    await expect
+      .element(screen.getByLabelText("Longitude *"))
+      .toHaveValue(null);
+    await expect.element(screen.getByLabelText("Latitude *")).toHaveValue(null);
+  });
+
   it("should show navigation type only after a geometry is chosen", async () => {
     const screen = await render(
       <SampleForm

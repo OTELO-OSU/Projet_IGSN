@@ -31,6 +31,26 @@ describe("sampleDraftSchema", () => {
     });
   });
 
+  it("should drop a lingering location when the material forbids one", () => {
+    // The location tab hides for synthetic materials, so a location entered
+    // before the switch must be cleared, not block the save invisibly.
+    const result = sampleDraftSchema.parse({
+      ...draft,
+      materialPath: toHierarchyPath("synthetic_rock_mineral"),
+      location: {
+        ...toLocationDraft(null),
+        type: "point",
+        longitude: 2.35,
+        latitude: 48.85,
+      },
+    });
+
+    expect(result).toMatchObject({
+      material: "synthetic_rock_mineral",
+      location: null,
+    });
+  });
+
   it("should reject a value only the domain schema constrains", () => {
     const result = sampleDraftSchema.safeParse({
       ...draft,

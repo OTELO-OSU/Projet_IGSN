@@ -1,10 +1,7 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
-import {
-  composeHierarchyValue,
-  toHierarchyPath,
-} from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   Tabs,
@@ -24,17 +21,18 @@ import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { m } from "#/paraglide/messages.js";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
-import {
-  composeLocation,
-  toLocationDraft,
-} from "#/samples/compose-location.ts";
+import { composeLocation } from "#/samples/compose-location.ts";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
-import { sampleDraftSchema } from "#/samples/sample-draft-schema.ts";
+import {
+  type SampleDraft,
+  sampleDraftSchema,
+  toSampleDraft,
+} from "#/samples/sample-draft-schema.ts";
 import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
@@ -60,6 +58,18 @@ type SampleFormProps = {
   secondaryAction?: SampleFormAction;
 };
 
+const validate = ({ value }: { value: SampleDraft }) => {
+  const parsed = sampleDraftSchema.safeParse(value);
+  return parsed.success
+    ? undefined
+    : {
+        fields: sampleDraftFieldErrors(
+          parsed.error.issues,
+          value.location.type,
+        ),
+      };
+};
+
 export function SampleForm({
   onCancel,
   isPending,
@@ -77,20 +87,7 @@ export function SampleForm({
         : undefined;
 
   const form = useAppForm({
-    defaultValues: {
-      name: defaultValues?.name,
-      nature: defaultValues?.nature,
-      typePath: toHierarchyPath(defaultValues?.type ?? null),
-      materialPath: toHierarchyPath(defaultValues?.material ?? null),
-      texture: defaultValues?.texture,
-      metamorphicFacies: defaultValues?.metamorphicFacies,
-      collectionMethodPath: toHierarchyPath(
-        defaultValues?.collectionMethod ?? null,
-      ),
-      collectionMethodDescription: defaultValues?.collectionMethodDescription,
-      specificName: defaultValues?.specificName,
-      location: toLocationDraft(defaultValues?.location),
-    },
+    defaultValues: toSampleDraft(defaultValues),
     // The clicked button passes its callback as meta; Enter uses defaultSubmit.
     onSubmitMeta: { onValid: defaultSubmit } as {
       onValid: ((value: CreateSample) => void) | undefined;
@@ -99,23 +96,18 @@ export function SampleForm({
     // its issues on the offending fields, so a rule the form has no dedicated
     // validator for still surfaces instead of silently blocking.
     validators: {
-      onSubmit: ({ value }) => {
-        const parsed = sampleDraftSchema.safeParse(value);
-        return parsed.success
-          ? undefined
-          : {
-              fields: sampleDraftFieldErrors(
-                parsed.error.issues,
-                value.location.type,
-              ),
-            };
-      },
+      onSubmit: validate,
+      onChange: validate,
     },
-    onSubmit: ({ value, meta }) => {
+    onSubmit: ({ value, meta, formApi }) => {
       const parsed = sampleDraftSchema.safeParse(value);
       // Unreachable: the onSubmit validator gates. Kept as a typed narrow.
       if (!parsed.success) return;
       meta.onValid?.(parsed.data);
+      // Reset to what was submitted: leftovers the save dropped (a hidden
+      // geometry's coordinates, the other region kind's leaf) must not
+      // resurface when the user switches back after saving.
+      formApi.reset(toSampleDraft(parsed.data));
     },
   });
 
