@@ -44,6 +44,8 @@ Treat each concern separately:
   typed forms with `createFormHook`/`useAppForm` (see
   `@projet-igsn/design-system/components/form/app-form`)
   so fields and submit share one accessible markup and error pattern.
+  Is the value submitted to the API? No → the value is derivable; keep
+  component state, re-derived from the form values on mount.
 
 Don't reach for a global state manager. Keep state local; lift to Context only
 when genuinely shared across distant components.
