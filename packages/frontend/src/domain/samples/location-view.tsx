@@ -64,10 +64,15 @@ export function LocationView({ location }: { location: Location }) {
   if (region) {
     rows.push({
       label: m.sample_field_region(),
+      // The leaf is optional ("ocean, unknown which"); fall back to the kind.
       value:
         region.kind === "continent"
-          ? countryLabel(region.country, getLocale())
-          : oceanSeaName(region.oceanSea),
+          ? region.country
+            ? countryLabel(region.country, getLocale())
+            : m.region_kind_continent()
+          : region.oceanSea
+            ? oceanSeaName(region.oceanSea)
+            : m.region_kind_ocean(),
     });
   }
   if (location.navigationType) {

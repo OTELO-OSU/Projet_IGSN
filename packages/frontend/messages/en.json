@@ -29,6 +29,8 @@
   "sample_field_north_latitude": "North latitude",
   "sample_field_elevation": "Elevation",
   "sample_field_region": "Region",
+  "region_kind_continent": "Continent / country",
+  "region_kind_ocean": "Ocean / sea",
   "sample_field_navigation_type": "Navigation type",
   "sample_field_locality_name": "Locality name",
   "sample_field_locality_description": "Locality description",
