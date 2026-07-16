@@ -18,13 +18,16 @@ const longitudeSchema = z.number().min(-180).max(180);
 const latitudeSchema = z.number().min(-90).max(90);
 
 // Signed elevation range in whole units: positive above the datum (elevation),
-// negative below (bathymetry). Always a range with a shared unit and datum; a
-// point is the degenerate range where min === max (ADR 0014).
+// negative below (bathymetry). A point is the degenerate range where
+// min === max (ADR 0014). Completeness (both bounds, a shared unit and datum) is
+// required to publish, not to save a draft, so every part is nullish here and
+// the missing pieces surface as publish blockers (like age; ADR 0014). Only the
+// data-validity invariants stay in the schema: whole numbers and min <= max.
 const elevationSchema = z.object({
-  min: z.number().int(),
-  max: z.number().int(),
-  unit: elevationUnitSchema,
-  datum: verticalDatumSchema,
+  min: z.number().int().nullish(),
+  max: z.number().int().nullish(),
+  unit: elevationUnitSchema.nullish(),
+  datum: verticalDatumSchema.nullish(),
 });
 
 const positionSchema = z.discriminatedUnion("type", [
@@ -86,7 +89,12 @@ export const locationSchema = z
         message: "northLatitude must be greater than or equal to southLatitude",
       });
     }
-    if (position.elevation && position.elevation.min > position.elevation.max) {
+    const elevation = position.elevation;
+    if (
+      elevation?.min != null &&
+      elevation.max != null &&
+      elevation.min > elevation.max
+    ) {
       ctx.addIssue({
         code: "custom",
         path: ["position", "elevation", "min"],

@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted
+Accepted. Amended by ADR 0017 (elevation completeness gates publish, not the
+draft schema).
 
 ## Context
 

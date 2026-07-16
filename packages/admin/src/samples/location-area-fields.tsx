@@ -1,5 +1,6 @@
 import { m } from "#/paraglide/messages.js";
 import { elevationIntegerError } from "#/samples/elevation-integer-error.ts";
+import { LocationElevationFields } from "#/samples/location-elevation-fields.tsx";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 import { withRequired } from "#/samples/with-required.ts";
 
@@ -10,34 +11,37 @@ const boundFields = [
   ["location.northLatitude", m.field_north_latitude],
 ] as const;
 
-// An area elevation is a range: setting one bound requires the other, so each
-// bound is required (and marked so) once its sibling is set.
+// An area elevation is a range: a range needs both bounds, so each bound is
+// marked required with a "*" once its sibling is set. The "*" is a hint only,
+// since a half-entered range gates publish, not the draft (publish blocker
+// elevation_range_incomplete; ADR 0014).
 const rangeFields = [
   {
     key: "elevationMin",
     siblingKey: "elevationMax",
     label: m.field_elevation_min,
-    requiredMessage: m.field_elevation_min_required,
   },
   {
     key: "elevationMax",
     siblingKey: "elevationMin",
     label: m.field_elevation_max,
-    requiredMessage: m.field_elevation_max_required,
   },
 ] as const;
 
-// Area coordinates: the four bounds and the elevation range.
+// Area coordinates: the four bounds (two per row), then the elevation range
+// sharing its row with the unit/datum fields (min/max/unit/datum, 1/1/1/1).
 export function LocationAreaFields({ required }: { required: boolean }) {
   const form = useLocationForm();
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 sm:grid-cols-4">
       {boundFields.map(([name, label]) => (
-        <form.AppField key={name} name={name}>
-          {(field) => (
-            <field.NumberField label={withRequired(label(), required)} />
-          )}
-        </form.AppField>
+        <div key={name} className="sm:col-span-2">
+          <form.AppField name={name}>
+            {(field) => (
+              <field.NumberField label={withRequired(label(), required)} />
+            )}
+          </form.AppField>
+        </div>
       ))}
       <form.Subscribe
         selector={(state) => ({
@@ -46,18 +50,12 @@ export function LocationAreaFields({ required }: { required: boolean }) {
         })}
       >
         {(isSet) =>
-          rangeFields.map(({ key, siblingKey, label, requiredMessage }) => (
+          rangeFields.map(({ key, siblingKey, label }) => (
             <form.AppField
               key={key}
               name={`location.${key}`}
               validators={{
-                onChangeListenTo: [`location.${siblingKey}`],
-                onChange: ({ value, fieldApi }) =>
-                  elevationIntegerError(value) ??
-                  (fieldApi.form.state.values.location[siblingKey] !==
-                    undefined && value === undefined
-                    ? { message: requiredMessage() }
-                    : undefined),
+                onChange: ({ value }) => elevationIntegerError(value),
               }}
             >
               {(field) => (
@@ -69,6 +67,7 @@ export function LocationAreaFields({ required }: { required: boolean }) {
           ))
         }
       </form.Subscribe>
+      <LocationElevationFields />
     </div>
   );
 }
