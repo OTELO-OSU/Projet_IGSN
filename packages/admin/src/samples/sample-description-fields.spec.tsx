@@ -214,6 +214,24 @@ describe("SampleDescriptionFields", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it("should disable the unit until its value is set, then mark it required", async () => {
+    const screen = await renderDescriptionTab();
+
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Volume unit", exact: true }),
+      )
+      .toBeDisabled();
+
+    await screen.getByLabelText("Volume", { exact: true }).fill("250");
+
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Volume unit *", exact: true }),
+      )
+      .toBeEnabled();
+  });
+
   it("should reject a non positive measurement value", async () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
@@ -273,12 +291,14 @@ describe("SampleDescriptionFields", () => {
     );
   });
 
-  it("should block submit with an error on the value when a unit has no value", async () => {
+  it("should block submit with an error on the value when clearing it leaves its unit behind", async () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
+    await screen.getByLabelText("Length", { exact: true }).fill("10");
     await screen.getByRole("combobox", { name: "Length unit" }).click();
     await screen.getByRole("option", { name: "cm", exact: true }).click();
+    await screen.getByLabelText("Length", { exact: true }).fill("");
     await screen.getByRole("button", { name: "Create" }).click();
 
     expect(onSubmit).not.toHaveBeenCalled();
