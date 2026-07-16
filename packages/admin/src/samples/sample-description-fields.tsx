@@ -98,10 +98,38 @@ export function SampleDescriptionFields() {
 
       {measurementFields.map(({ key, label, unitLabel, items }) => (
         <div key={key} className="grid gap-4 sm:grid-cols-2">
-          <form.AppField name={`description.${key}Value`}>
+          {/* A measurement is a value + unit pair: each half requires the
+              other once set (live, readable; the domain schema re-checks on
+              submit), and only positive values measure anything. */}
+          <form.AppField
+            name={`description.${key}Value`}
+            validators={{
+              onChangeListenTo: [`description.${key}Unit`],
+              onChange: ({ value, fieldApi }) => {
+                if (value !== undefined && value <= 0) {
+                  return { message: m.field_measurement_positive() };
+                }
+                return value === undefined &&
+                  fieldApi.form.getFieldValue(`description.${key}Unit`)
+                  ? { message: m.field_measurement_value_required() }
+                  : undefined;
+              },
+            }}
+          >
             {(field) => <field.NumberField label={label()} />}
           </form.AppField>
-          <form.AppField name={`description.${key}Unit`}>
+          <form.AppField
+            name={`description.${key}Unit`}
+            validators={{
+              onChangeListenTo: [`description.${key}Value`],
+              onChange: ({ value, fieldApi }) =>
+                !value &&
+                fieldApi.form.getFieldValue(`description.${key}Value`) !==
+                  undefined
+                  ? { message: m.field_measurement_unit_required() }
+                  : undefined,
+            }}
+          >
             {(field) => (
               <field.ComboboxField
                 label={unitLabel()}

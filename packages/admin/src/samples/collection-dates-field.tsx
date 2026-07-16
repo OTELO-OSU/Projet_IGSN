@@ -1,5 +1,6 @@
 import { Combobox } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
+import { isFutureDate } from "@projet-igsn/domain/sample/description/is-future-date";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
@@ -46,13 +47,25 @@ export function CollectionDatesField() {
     }
   };
 
-  const identicalTo =
-    (sibling: "collectionDateStart" | "collectionDateEnd") =>
-    ({ value }: { value: string | undefined }) =>
-      value !== undefined &&
-      value === form.getFieldValue(`description.${sibling}`)
-        ? { message: m.collection_date_range_identical() }
-        : undefined;
+  // Range-bound live validation: no future date, and start strictly before
+  // end (equal bounds are what single mode is for). The pair check runs on
+  // both fields (each listens to its sibling), so the error reads on both.
+  const rangeBound = ({ value }: { value: string | undefined }) => {
+    if (value === undefined) return undefined;
+    if (isFutureDate(value)) {
+      return { message: m.field_collection_date_future() };
+    }
+    const start = form.getFieldValue("description.collectionDateStart");
+    const end = form.getFieldValue("description.collectionDateEnd");
+    if (start === undefined || end === undefined) return undefined;
+    if (start === end) {
+      return { message: m.collection_date_range_identical() };
+    }
+    if (start > end) {
+      return { message: m.field_collection_date_order() };
+    }
+    return undefined;
+  };
 
   return (
     <div className="grid gap-4">
@@ -77,6 +90,12 @@ export function CollectionDatesField() {
             onChange: ({ value }) =>
               form.setFieldValue("description.collectionDateEnd", value),
           }}
+          validators={{
+            onChange: ({ value }) =>
+              value !== undefined && isFutureDate(value)
+                ? { message: m.field_collection_date_future() }
+                : undefined,
+          }}
         >
           {(field) => (
             <field.DateField label={`${m.field_collection_date()} *`} />
@@ -86,7 +105,10 @@ export function CollectionDatesField() {
         <div className="grid gap-4 sm:grid-cols-2">
           <form.AppField
             name="description.collectionDateStart"
-            validators={{ onChange: identicalTo("collectionDateEnd") }}
+            validators={{
+              onChangeListenTo: ["description.collectionDateEnd"],
+              onChange: rangeBound,
+            }}
           >
             {(field) => (
               <field.DateField label={`${m.field_collection_date_start()} *`} />
@@ -94,7 +116,10 @@ export function CollectionDatesField() {
           </form.AppField>
           <form.AppField
             name="description.collectionDateEnd"
-            validators={{ onChange: identicalTo("collectionDateStart") }}
+            validators={{
+              onChangeListenTo: ["description.collectionDateStart"],
+              onChange: rangeBound,
+            }}
           >
             {(field) => (
               <field.DateField label={`${m.field_collection_date_end()} *`} />

@@ -141,8 +141,12 @@ describe("SampleDescriptionFields", () => {
     await screen.getByLabelText("Start date").fill("2026-01-05");
     await screen.getByLabelText("End date").fill("2026-01-05");
 
+    // Both bounds carry the error: each field validates the pair.
     await expect
-      .element(screen.getByRole("alert"))
+      .element(screen.getByRole("alert").first())
+      .toHaveTextContent(/use the single date mode/i);
+    await expect
+      .element(screen.getByRole("alert").nth(1))
       .toHaveTextContent(/use the single date mode/i);
     await screen.getByRole("button", { name: "Create" }).click();
     expect(onSubmit).not.toHaveBeenCalled();
@@ -161,6 +165,66 @@ describe("SampleDescriptionFields", () => {
         }),
       ),
     );
+  });
+
+  it("should reject a range whose start is after its end, on both fields", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderDescriptionTab(onSubmit);
+
+    await screen.getByRole("combobox", { name: "Collection date" }).click();
+    await screen.getByRole("option", { name: "Date range" }).click();
+    await screen.getByLabelText("Start date").fill("2026-02-10");
+    await screen.getByLabelText("End date").fill("2026-01-05");
+
+    await expect
+      .element(screen.getByRole("alert").first())
+      .toHaveTextContent("The start date must be before the end date.");
+    await expect
+      .element(screen.getByRole("alert").nth(1))
+      .toHaveTextContent("The start date must be before the end date.");
+    await screen.getByRole("button", { name: "Create" }).click();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    // Fixing either bound clears the error on both and the range submits.
+    await screen.getByLabelText("End date").fill("2026-03-01");
+    await expect.element(screen.getByRole("alert")).not.toBeInTheDocument();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: {
+            collectionDate: { start: "2026-02-10", end: "2026-03-01" },
+          },
+        }),
+      ),
+    );
+  });
+
+  it("should reject a collection date in the future", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderDescriptionTab(onSubmit);
+
+    await screen.getByLabelText("Date *", { exact: true }).fill("2999-01-01");
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent("The collection date cannot be in the future.");
+    await screen.getByRole("button", { name: "Create" }).click();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("should reject a non positive measurement value", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderDescriptionTab(onSubmit);
+
+    await screen.getByLabelText("Mass", { exact: true }).fill("-3");
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent("Enter a number greater than zero.");
+    await screen.getByRole("button", { name: "Create" }).click();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("should show the orientation explanation only when the sample is oriented", async () => {
@@ -191,7 +255,9 @@ describe("SampleDescriptionFields", () => {
     await screen.getByRole("button", { name: "Create" }).click();
 
     expect(onSubmit).not.toHaveBeenCalled();
-    await expect.element(screen.getByText("Invalid value.")).toBeVisible();
+    await expect
+      .element(screen.getByText("Select a unit for the entered value."))
+      .toBeVisible();
 
     // Selecting the unit clears the error and the measurement submits.
     await screen.getByRole("combobox", { name: "Mass unit" }).click();
@@ -216,7 +282,9 @@ describe("SampleDescriptionFields", () => {
     await screen.getByRole("button", { name: "Create" }).click();
 
     expect(onSubmit).not.toHaveBeenCalled();
-    await expect.element(screen.getByText("Invalid value.")).toBeVisible();
+    await expect
+      .element(screen.getByText("Enter a value for the selected unit."))
+      .toBeVisible();
   });
 
   it("should submit a full description", async () => {
