@@ -1038,7 +1038,7 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should require a unit and datum once an elevation is entered, even for a draft", async () => {
+  it("should save a partial elevation as a draft, marking unit and datum as a publish hint", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm
@@ -1066,30 +1066,15 @@ describe("SampleForm", () => {
       .element(screen.getByLabelText("Bathymetry"))
       .toHaveValue(-1200);
 
-    // Entering a value marks unit and datum required, but the error stays hidden
-    // until the user acts on the field.
+    // Entering a value marks unit and datum required, but that "*" is only a
+    // publish hint: completeness gates publish, not the draft (ADR 0017).
     await expect.element(screen.getByLabelText("Unit *")).toBeVisible();
     await expect
       .element(screen.getByLabelText("Vertical datum *"))
       .toBeVisible();
-    await expect
-      .element(screen.getByText("Select a unit for the elevation."))
-      .not.toBeInTheDocument();
 
-    // Submitting is blocked and reveals the error (submit touches every field).
+    // The draft saves the partial elevation without a unit or datum.
     await screen.getByRole("button", { name: "Create" }).click();
-    expect(onSubmit).not.toHaveBeenCalled();
-    await expect
-      .element(screen.getByText("Select a unit for the elevation."))
-      .toBeVisible();
-
-    // Providing both clears the block and the elevation is submitted.
-    await screen.getByRole("combobox", { name: "Unit *" }).click();
-    await screen.getByRole("option", { name: "m", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Vertical datum *" }).click();
-    await screen.getByRole("option", { name: "Mean sea level" }).click();
-    await screen.getByRole("button", { name: "Create" }).click();
-
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1098,7 +1083,7 @@ describe("SampleForm", () => {
               type: "point",
               longitude: 3,
               latitude: 45,
-              elevation: { min: -1200, max: -1200, unit: "m", datum: "msl" },
+              elevation: { min: -1200, max: -1200 },
             },
           },
         }),
@@ -1237,7 +1222,7 @@ describe("SampleForm", () => {
       .toBeVisible();
   });
 
-  it("should require the other bound once one area elevation bound is set", async () => {
+  it("should mark the other bound required once one area elevation bound is set", async () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -1263,12 +1248,10 @@ describe("SampleForm", () => {
       .toBeVisible();
     await screen.getByLabelText("Minimum elevation").fill("-200");
 
-    // Setting min marks max required and shows its error.
+    // Setting min marks max required, a publish hint only: a half-entered range
+    // gates publish, not the draft (ADR 0017).
     await expect
       .element(screen.getByLabelText("Maximum elevation *"))
-      .toBeVisible();
-    await expect
-      .element(screen.getByText("Enter the maximum elevation too."))
       .toBeVisible();
   });
 
