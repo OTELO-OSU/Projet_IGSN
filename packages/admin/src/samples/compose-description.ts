@@ -55,14 +55,12 @@ type DescriptionCandidate = {
 const composeMeasurement = <Unit extends string>(
   value: number | undefined,
   unit: Unit | null | undefined,
-): MeasurementCandidate<Unit> | undefined =>
+) =>
   value === undefined && !unit ? undefined : { value, unit: unit ?? undefined };
 
 // A single collection date arrives as the mirrored degenerate range
 // start === end (ADR 0015), so compose sees one shape for both modes.
-function composeCollectionDate(
-  draft: DescriptionDraft,
-): DescriptionCandidate["collectionDate"] {
+function composeCollectionDate(draft: DescriptionDraft) {
   return draft.collectionDateStart === undefined &&
     draft.collectionDateEnd === undefined
     ? undefined
