@@ -19,6 +19,7 @@ export const publishBlockerSchema = z.enum([
   "material_incomplete",
   "metamorphic_facies_missing",
   "location_position_missing",
+  "collection_date_missing",
 ]);
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
@@ -30,7 +31,10 @@ export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
 // the type is only nominally validated (`SampleType`/`MaterialPath` are `string`),
 // so a malformed value must gate publication rather than slip through.
 export function samplePublishBlockers(
-  sample: Pick<Sample, "type" | "material" | "metamorphicFacies" | "location">,
+  sample: Pick<
+    Sample,
+    "type" | "material" | "metamorphicFacies" | "location" | "description"
+  >,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
 
@@ -75,6 +79,12 @@ export function samplePublishBlockers(
     !sample.location?.position
   ) {
     blockers.push("location_position_missing");
+  }
+
+  // The collection date (a range; a single date is start === end) is required
+  // to publish, like material/type it stays optional on a draft (ADR 0015).
+  if (sample.description?.collectionDate == null) {
+    blockers.push("collection_date_missing");
   }
 
   return blockers;

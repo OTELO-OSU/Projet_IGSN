@@ -5,6 +5,7 @@ import { v7 as uuidv7 } from "uuid";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
+import { descriptionColumns } from "./description-columns.ts";
 import { readLocation } from "./read-location.ts";
 import { toSample } from "./to-sample.ts";
 import { writeLocation } from "./write-location.ts";
@@ -26,6 +27,7 @@ export async function insertSample(
       collection_method: input.collectionMethod ?? null,
       collection_method_description: input.collectionMethodDescription ?? null,
       specific_name: input.specificName ?? null,
+      ...descriptionColumns(input.description),
     })
     .returningAll()
     .executeTakeFirstOrThrow();

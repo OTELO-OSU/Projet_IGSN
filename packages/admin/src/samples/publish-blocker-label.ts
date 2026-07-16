@@ -12,6 +12,7 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   material_incomplete: m.publish_blocked_material_incomplete,
   metamorphic_facies_missing: m.publish_blocked_metamorphic_facies_missing,
   location_position_missing: m.publish_blocked_location_position_missing,
+  collection_date_missing: m.publish_blocked_collection_date_missing,
 };
 
 export function publishBlockerLabel(blocker: PublishBlocker): string {

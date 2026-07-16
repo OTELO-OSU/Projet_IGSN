@@ -774,8 +774,8 @@ describe("SampleForm", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        // A leaf type and leaf material and a location (a point position) are
-        // required to publish, so Save & Publish is enabled.
+        // A leaf type, a leaf material, a location (a point position) and a
+        // collection date are required to publish, so Save & Publish is enabled.
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
@@ -785,6 +785,9 @@ describe("SampleForm", () => {
           collectionMethodDescription: null,
           specificName: "MC-2026-007",
           location: { position: { type: "point", longitude: 3, latitude: 45 } },
+          description: {
+            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+          },
         }}
         secondaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
         primaryAction={{ kind: "publish", label: "Save & Publish", onPublish }}
@@ -883,6 +886,45 @@ describe("SampleForm", () => {
       .toHaveTextContent(/set the sample type before publishing/i);
   });
 
+  it("should disable Save & Publish and explain in a tooltip when the collection date is missing", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          defaultValues={{
+            name: "Basalte du Massif Central",
+            nature: "thin_section",
+            type: "dredge",
+            material: "fossil",
+            collectionMethod: null,
+            collectionMethodDescription: null,
+            location: {
+              position: { type: "point", longitude: 3, latitude: 45 },
+            },
+          }}
+          secondaryAction={{
+            kind: "submit",
+            label: "Save as draft",
+            onSubmit: noop,
+          }}
+          primaryAction={{
+            kind: "publish",
+            label: "Save & Publish",
+            onPublish: noop,
+          }}
+        />
+      </TooltipProvider>,
+    );
+
+    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    await expect.element(publish).toBeDisabled();
+
+    publish.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/set the collection date before publishing/i);
+  });
+
   it("should enable Save & Publish when the specific name is missing", async () => {
     const screen = await render(
       <TooltipProvider>
@@ -897,6 +939,9 @@ describe("SampleForm", () => {
             collectionMethodDescription: null,
             location: {
               position: { type: "point", longitude: 3, latitude: 45 },
+            },
+            description: {
+              collectionDate: { start: "2026-01-01", end: "2026-01-01" },
             },
           }}
           secondaryAction={{

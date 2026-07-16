@@ -150,9 +150,16 @@ export function SampleForm({
               material: composeHierarchyValue(materialPath),
               metamorphicFacies: metamorphicFacies || null,
               location: composeLocation(location),
+              // ponytail: read from defaultValues until the form gets
+              // description fields; edits to it are not live in the tooltip.
+              description: defaultValues?.description ?? null,
             } as Pick<
               Sample,
-              "type" | "material" | "metamorphicFacies" | "location"
+              | "type"
+              | "material"
+              | "metamorphicFacies"
+              | "location"
+              | "description"
             >).map(publishBlockerLabel);
             const button = (
               <PublishSampleButton

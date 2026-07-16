@@ -16,6 +16,7 @@ const base: Sample = {
   collectionMethodDescription: null,
   specificName: "BAS-42-001",
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
+  description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
   igsn: null,
   published: false,
   createdAt: new Date("2026-01-01T00:00:00Z"),
@@ -142,5 +143,20 @@ describe("samplePublishBlockers", () => {
     expect(
       samplePublishBlockers({ ...base, material: "rock", location: null }),
     ).toEqual(["material_incomplete"]);
+  });
+
+  it("should report collection_date_missing when the sample has no description", () => {
+    expect(samplePublishBlockers({ ...base, description: null })).toEqual([
+      "collection_date_missing",
+    ]);
+  });
+
+  it("should report collection_date_missing when the description has no collection date", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        description: { openDescription: "Coarse-grained" },
+      }),
+    ).toEqual(["collection_date_missing"]);
   });
 });

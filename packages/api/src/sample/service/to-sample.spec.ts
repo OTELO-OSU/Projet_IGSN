@@ -51,6 +51,7 @@ describe("toSample", () => {
       collectionMethodDescription: "Giant corer, 20 m barrel",
       specificName: "FTB-2026-042",
       location: null,
+      description: null,
       igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
       published: false,
       createdAt: new Date("2026-01-01T00:00:00.000Z"),

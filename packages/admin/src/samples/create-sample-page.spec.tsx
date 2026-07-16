@@ -32,10 +32,11 @@ function fakeApi(failWrites = false) {
     if (init?.method === "POST" && typeof init.body === "string") {
       sample = {
         id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
-        // Persisted defaults (the texture and metamorphic_facies columns are
-        // nullable), overridable by the submitted body below.
+        // Persisted defaults (the texture, metamorphic_facies and description
+        // columns are nullable), overridable by the submitted body below.
         texture: null,
         metamorphicFacies: null,
+        description: null,
         ...JSON.parse(init.body),
         igsn: null,
         published: false,

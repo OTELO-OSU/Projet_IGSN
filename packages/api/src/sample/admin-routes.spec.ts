@@ -288,6 +288,9 @@ describe("admin sample routes", () => {
           collectionMethod: null,
           specificName: "MC-2026-007",
           location: { position: { type: "point", longitude: 3, latitude: 45 } },
+          description: {
+            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+          },
         },
       },
       { headers: authHeader },
@@ -367,6 +370,9 @@ describe("admin sample routes", () => {
           type: "individual_sample",
           material: "sediment.exogenous_detritic.clay",
           location: { position: { type: "point", longitude: 3, latitude: 45 } },
+          description: {
+            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+          },
         },
       },
       { headers: authHeader },

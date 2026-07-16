@@ -77,6 +77,7 @@
   "publish_blocked_material_incomplete": "Classify the material down to a specific type before publishing.",
   "publish_blocked_metamorphic_facies_missing": "Set the metamorphic facies before publishing.",
   "publish_blocked_location_position_missing": "Set the sample location (a point or an area) before publishing.",
+  "publish_blocked_collection_date_missing": "Set the collection date before publishing.",
   "tab_sample_location": "Location",
   "field_location_type": "Type",
   "location_type_placeholder": "Point or area",
