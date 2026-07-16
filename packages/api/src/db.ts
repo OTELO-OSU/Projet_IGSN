@@ -34,8 +34,34 @@ type SampleTable = {
   updated_at: Generated<Date>;
 };
 
+// A sample's location (ADR 0014), 1:1 with sample via sample_id. Raw coordinate
+// columns round-trip as JS numbers; `geom` is a DB-generated geography (never
+// inserted, never selected into the app), referenced only in spatial predicates.
+type LocationTable = {
+  sample_id: string;
+  type: string | null;
+  point_longitude: number | null;
+  point_latitude: number | null;
+  area_west_longitude: number | null;
+  area_east_longitude: number | null;
+  area_south_latitude: number | null;
+  area_north_latitude: number | null;
+  elevation_min: number | null;
+  elevation_max: number | null;
+  elevation_unit: string | null;
+  vertical_datum: string | null;
+  navigation_type: string | null;
+  region_kind: string | null;
+  country: string | null;
+  ocean_sea: string | null;
+  locality_name: string | null;
+  locality_description: string | null;
+  geom: Generated<string>;
+};
+
 export type DB = {
   sample: SampleTable;
+  location: LocationTable;
 };
 
 const dbConfigSchema = z.object({

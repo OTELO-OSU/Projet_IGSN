@@ -5,7 +5,9 @@ import { sql } from "kysely";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
+import { readLocation } from "./read-location.ts";
 import { toSample } from "./to-sample.ts";
+import { writeLocation } from "./write-location.ts";
 
 export async function updateSample(
   db: Transactional<DB>,
@@ -30,5 +32,7 @@ export async function updateSample(
     .where("id", "=", id)
     .returningAll()
     .executeTakeFirst();
-  return row ? toSample(row) : null;
+  if (!row) return null;
+  await writeLocation(db, id, input.location);
+  return toSample(row, await readLocation(db, id));
 }

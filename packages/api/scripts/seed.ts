@@ -35,7 +35,8 @@ export async function seed(
     )
     .returningAll()
     .execute();
-  return rows.map(toSample);
+  // Seed rows carry no location.
+  return rows.map((row) => toSample(row, null));
 }
 
 // created_at/updated_at are database defaults, so they are omitted; the rest

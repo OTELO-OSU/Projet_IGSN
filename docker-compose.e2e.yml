@@ -9,13 +9,16 @@
 # browser and for its own broker calls. Run via `make test-e2e` (uses -p igsn-e2e).
 services:
   postgres:
-    image: postgres:17-alpine
+    image: postgis/postgis:17-3.5
     environment:
       POSTGRES_USER: igsn
       POSTGRES_PASSWORD: igsn # local throwaway; real password is AWS-managed
       POSTGRES_DB: igsn
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U igsn -d igsn"]
+      # -h localhost forces a TCP check: the postgis image runs its init behind a
+      # socket-only server, so a socket pg_isready reports ready while TCP 5432 is
+      # still refused (migrate connects over TCP and would race the init).
+      test: ["CMD-SHELL", "pg_isready -U igsn -d igsn -h localhost"]
       interval: 2s
       timeout: 3s
       retries: 15
