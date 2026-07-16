@@ -1,6 +1,7 @@
 import { toHierarchyPath } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { describe, expect, it } from "vitest";
 
+import { toDescriptionDraft } from "./compose-description.ts";
 import { toLocationDraft } from "./compose-location.ts";
 import { type SampleDraft, sampleDraftSchema } from "./sample-draft-schema.ts";
 
@@ -15,6 +16,7 @@ const draft: SampleDraft = {
   collectionMethodDescription: null,
   specificName: null,
   location: toLocationDraft(null),
+  description: toDescriptionDraft(null),
 };
 
 describe("sampleDraftSchema", () => {
@@ -51,6 +53,33 @@ describe("sampleDraftSchema", () => {
     });
   });
 
+  it("should compose an entered description into the domain shape", () => {
+    expect(
+      sampleDraftSchema.parse({
+        ...draft,
+        description: {
+          ...toDescriptionDraft(null),
+          collectionDate: "2026-01-05",
+          massValue: 1.2,
+          massUnit: "kg",
+        },
+      }),
+    ).toEqual({
+      name: "Basalt 42",
+      nature: "thin_section",
+      type: "dredge",
+      material: "fossil",
+      collectionMethod: null,
+      collectionMethodDescription: null,
+      specificName: null,
+      location: null,
+      description: {
+        collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+        mass: { value: 1.2, unit: "kg" },
+      },
+    });
+  });
+
   it("should reject a value only the domain schema constrains", () => {
     const result = sampleDraftSchema.safeParse({
       ...draft,
@@ -65,6 +94,18 @@ describe("sampleDraftSchema", () => {
     if (result.success) throw new Error("expected the parse to fail");
     expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
       "location.position.longitude",
+    ]);
+  });
+
+  it("should reject a measurement value missing its unit", () => {
+    const result = sampleDraftSchema.safeParse({
+      ...draft,
+      description: { ...toDescriptionDraft(null), massValue: 5 },
+    });
+
+    if (result.success) throw new Error("expected the parse to fail");
+    expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
+      "description.mass.unit",
     ]);
   });
 });

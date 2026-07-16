@@ -21,12 +21,14 @@ import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { m } from "#/paraglide/messages.js";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
+import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
+import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
   type SampleDraft,
@@ -66,6 +68,7 @@ const validate = ({ value }: { value: SampleDraft }) => {
         fields: sampleDraftFieldErrors(
           parsed.error.issues,
           value.location.type,
+          value.description.collectionDateMode,
         ),
       };
 };
@@ -134,6 +137,7 @@ export function SampleForm({
             materialPath: state.values.materialPath,
             metamorphicFacies: state.values.metamorphicFacies,
             location: state.values.location,
+            description: state.values.description,
           })}
         >
           {({
@@ -142,6 +146,7 @@ export function SampleForm({
             materialPath,
             metamorphicFacies,
             location,
+            description,
           }) => {
             // Form state holds looser select strings; the runtime values match
             // the domain, so cast to the fields samplePublishBlockers reads.
@@ -150,9 +155,7 @@ export function SampleForm({
               material: composeHierarchyValue(materialPath),
               metamorphicFacies: metamorphicFacies || null,
               location: composeLocation(location),
-              // ponytail: read from defaultValues until the form gets
-              // description fields; edits to it are not live in the tooltip.
-              description: defaultValues?.description ?? null,
+              description: composeDescription(description),
             } as Pick<
               Sample,
               | "type"
@@ -239,6 +242,9 @@ export function SampleForm({
               ) : null
             }
           </form.Subscribe>
+          <TabsTrigger value="description">
+            {m.tab_sample_description()}
+          </TabsTrigger>
         </TabsList>
 
         {/* Values live in the form store, not the field components, so a field
@@ -314,6 +320,12 @@ export function SampleForm({
         <TabsContent value="location" className="grid gap-4">
           <form.AppForm>
             <LocationFields />
+          </form.AppForm>
+        </TabsContent>
+
+        <TabsContent value="description" className="grid gap-4">
+          <form.AppForm>
+            <SampleDescriptionFields />
           </form.AppForm>
         </TabsContent>
       </Tabs>

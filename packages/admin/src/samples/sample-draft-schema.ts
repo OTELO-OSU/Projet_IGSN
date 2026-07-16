@@ -10,6 +10,11 @@ import {
 import { z } from "zod";
 
 import {
+  composeDescription,
+  type DescriptionDraft,
+  toDescriptionDraft,
+} from "#/samples/compose-description.ts";
+import {
   composeLocation,
   type LocationDraft,
   toLocationDraft,
@@ -27,6 +32,7 @@ export type SampleDraft = {
   collectionMethodDescription: string | null | undefined;
   specificName: string | null | undefined;
   location: LocationDraft;
+  description: DescriptionDraft;
 };
 
 // A saved (or default) sample, spread into the flat draft the form store
@@ -44,10 +50,12 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   collectionMethodDescription: value?.collectionMethodDescription,
   specificName: value?.specificName,
   location: toLocationDraft(value?.location),
+  description: toDescriptionDraft(value?.description),
 });
 
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
+  const description = composeDescription(draft.description);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -71,6 +79,9 @@ const composeCreateSample = (draft: SampleDraft) => {
       locationRequirement(material) === "forbidden"
         ? null
         : composeLocation(draft.location),
+    // Omitted when the whole section is empty: the API clears the description
+    // columns for an absent description just like for a null one.
+    ...(description ? { description } : {}),
   };
 };
 
