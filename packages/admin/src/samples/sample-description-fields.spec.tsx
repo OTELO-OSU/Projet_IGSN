@@ -31,7 +31,7 @@ async function renderDescriptionTab(
       primaryAction={createAction(onSubmit)}
     />,
   );
-  await screen.getByRole("tab", { name: "Description" }).click();
+  await screen.getByRole("tab", { name: "Physical description" }).click();
   return screen;
 }
 

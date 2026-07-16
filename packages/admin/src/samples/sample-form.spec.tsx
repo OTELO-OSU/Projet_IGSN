@@ -996,7 +996,7 @@ describe("SampleForm", () => {
       .toHaveAttribute("href", "https://example.test/samples/IGSN123");
   });
 
-  it("should hide the Location tab for a synthetic material", async () => {
+  it("should hide the Location section for a synthetic material", async () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -1012,11 +1012,13 @@ describe("SampleForm", () => {
       />,
     );
 
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+
     await expect
-      .element(screen.getByRole("tab", { name: "Sample type" }))
+      .element(screen.getByRole("heading", { name: "Description" }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("tab", { name: "Location" }))
+      .element(screen.getByRole("heading", { name: "Location" }))
       .not.toBeInTheDocument();
   });
 
@@ -1068,7 +1070,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude *").fill("3.5");
@@ -1103,7 +1105,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude *").fill("3");
@@ -1171,7 +1173,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     // 200 is out of the longitude range; only the domain schema knows that.
@@ -1216,7 +1218,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     // Longitude without latitude: the draft used to save without the point.
@@ -1243,7 +1245,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Elevation").fill("12.5");
@@ -1275,7 +1277,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Area" }).click();
     await screen.getByLabelText("Minimum elevation").fill("-200.5");
@@ -1301,7 +1303,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Area" }).click();
 
@@ -1337,7 +1339,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Type", exact: true }))
       .toBeVisible();
@@ -1362,13 +1364,13 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
 
     // No value yet: unit and datum are disabled.
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit" }))
+      .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
       .toBeDisabled();
 
     // A value enables them; select both.
@@ -1383,10 +1385,10 @@ describe("SampleForm", () => {
     // user re-enters an elevation.
     await screen.getByLabelText("Elevation").fill("");
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit" }))
+      .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
       .toBeDisabled();
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit" }))
+      .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
       .toHaveTextContent("m");
   });
 
@@ -1463,7 +1465,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Navigation type" }))
       .not.toBeInTheDocument();

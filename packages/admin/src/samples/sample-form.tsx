@@ -224,25 +224,8 @@ export function SampleForm({
             {m.tab_sample_classification()}
           </TabsTrigger>
           <TabsTrigger value="type">{m.tab_sample_type()}</TabsTrigger>
-          {/* Synthetic samples must not carry a location (ADR 0014), so the tab
-              is hidden for them; it stays for optional and required materials. */}
-          <form.Subscribe
-            selector={(state) =>
-              locationRequirement(
-                composeHierarchyValue(state.values.materialPath),
-              ) !== "forbidden"
-            }
-          >
-            {(showLocation) =>
-              showLocation ? (
-                <TabsTrigger value="location">
-                  {m.tab_sample_location()}
-                </TabsTrigger>
-              ) : null
-            }
-          </form.Subscribe>
-          <TabsTrigger value="description">
-            {m.tab_sample_description()}
+          <TabsTrigger value="physical-description">
+            {m.tab_physical_description()}
           </TabsTrigger>
         </TabsList>
 
@@ -316,16 +299,37 @@ export function SampleForm({
           </form.AppField>
         </TabsContent>
 
-        <TabsContent value="location" className="grid gap-4">
-          <form.AppForm>
-            <LocationFields />
-          </form.AppForm>
-        </TabsContent>
+        <TabsContent value="physical-description" className="grid gap-6">
+          <section className="grid gap-4">
+            <h2 className="text-lg font-semibold">{m.section_description()}</h2>
+            <form.AppForm>
+              <SampleDescriptionFields />
+            </form.AppForm>
+          </section>
 
-        <TabsContent value="description" className="grid gap-4">
-          <form.AppForm>
-            <SampleDescriptionFields />
-          </form.AppForm>
+          {/* Synthetic samples must not carry a location (ADR 0014), so the
+              section is hidden for them; it stays for optional and required
+              materials. */}
+          <form.Subscribe
+            selector={(state) =>
+              locationRequirement(
+                composeHierarchyValue(state.values.materialPath),
+              ) !== "forbidden"
+            }
+          >
+            {(showLocation) =>
+              showLocation ? (
+                <section className="grid gap-4">
+                  <h2 className="text-lg font-semibold">
+                    {m.section_location()}
+                  </h2>
+                  <form.AppForm>
+                    <LocationFields />
+                  </form.AppForm>
+                </section>
+              ) : null
+            }
+          </form.Subscribe>
         </TabsContent>
       </Tabs>
 
