@@ -81,8 +81,9 @@ export function composeDescription(
   const description = {
     collectionDate: composeCollectionDate(draft),
     oriented,
-    // The explanation field is only shown when oriented is yes, so a value
-    // lingering after switching away is a hidden leftover, not entered data.
+    // The explanation field is disabled unless oriented is yes, so a value
+    // lingering after switching away is an uneditable leftover, not entered
+    // data.
     orientationExplanation:
       oriented === true
         ? draft.orientationExplanation?.trim() || undefined

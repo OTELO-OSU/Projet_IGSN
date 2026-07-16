@@ -245,24 +245,24 @@ describe("SampleDescriptionFields", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("should show the orientation explanation only when the sample is oriented", async () => {
+  it("should disable the orientation explanation until the sample is oriented", async () => {
     const screen = await renderDescriptionTab();
 
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
-      .not.toBeInTheDocument();
+      .toBeDisabled();
 
     await screen.getByRole("combobox", { name: "Oriented sample" }).click();
     await screen.getByRole("option", { name: "Yes" }).click();
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
-      .toBeVisible();
+      .toBeEnabled();
 
     await screen.getByRole("combobox", { name: "Oriented sample" }).click();
     await screen.getByRole("option", { name: "No" }).click();
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
-      .not.toBeInTheDocument();
+      .toBeDisabled();
   });
 
   it("should block submit with an error on the unit when a value has no unit", async () => {

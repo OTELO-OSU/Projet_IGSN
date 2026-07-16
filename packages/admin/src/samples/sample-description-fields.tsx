@@ -11,7 +11,7 @@ const orientedItems = [
 // The Description tab (ADR 0015). Every part is optional and independent; the
 // collection date group (with its single/range mode) lives in
 // CollectionDatesField, the measurement pairs in MeasurementFields, and the
-// orientation explanation only shows for an oriented sample. Render inside a
+// orientation explanation is disabled until the sample is oriented. Render inside a
 // `form.AppForm`. The form store holds the flat `description.*` draft;
 // `composeDescription` maps it back on submit.
 export function SampleDescriptionFields() {
@@ -35,18 +35,17 @@ export function SampleDescriptionFields() {
       <form.Subscribe
         selector={(state) => state.values.description.oriented === "yes"}
       >
-        {(oriented) =>
-          oriented ? (
-            <form.AppField name="description.orientationExplanation">
-              {(field) => (
-                <field.TextField
-                  label={m.field_orientation_explanation()}
-                  multiline
-                />
-              )}
-            </form.AppField>
-          ) : null
-        }
+        {(oriented) => (
+          <form.AppField name="description.orientationExplanation">
+            {(field) => (
+              <field.TextField
+                label={m.field_orientation_explanation()}
+                multiline
+                disabled={!oriented}
+              />
+            )}
+          </form.AppField>
+        )}
       </form.Subscribe>
 
       <MeasurementFields />
