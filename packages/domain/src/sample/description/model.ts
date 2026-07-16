@@ -44,11 +44,14 @@ export const descriptionSchema = z
   .superRefine((description, ctx) => {
     // ISO dates order correctly as strings.
     const period = description.collectionDate;
+    // params.code lets consumers (the admin form) translate the issue without
+    // matching on the message text.
     if (period != null && period.start > period.end) {
       ctx.addIssue({
         code: "custom",
         path: ["collectionDate", "start"],
         message: "collection date start must not be after end",
+        params: { code: "collection_date_order" },
       });
     }
     // A sample cannot have been collected in the future.
@@ -58,6 +61,7 @@ export const descriptionSchema = z
           code: "custom",
           path: ["collectionDate", bound],
           message: "collection date must not be in the future",
+          params: { code: "collection_date_future" },
         });
       }
     }

@@ -52,9 +52,67 @@ describe("sampleDraftFieldErrors", () => {
     ).toEqual({
       "description.collectionDateStart": { message: "Invalid value." },
       "description.collectionDateEnd": { message: "Invalid value." },
-      "description.lengthValue": { message: "Invalid value." },
-      "description.massUnit": { message: "Invalid value." },
+      "description.lengthValue": {
+        message: "Enter a value for the selected unit.",
+      },
+      "description.massUnit": {
+        message: "Select a unit for the entered value.",
+      },
       "description.orientationExplanation": { message: "Invalid value." },
+    });
+  });
+
+  it("should translate a non positive measurement value", () => {
+    expect(
+      sampleDraftFieldErrors(
+        [{ path: ["description", "mass", "value"], code: "too_small" }],
+        undefined,
+      ),
+    ).toEqual({
+      "description.massValue": {
+        message: "Enter a number greater than zero.",
+      },
+    });
+  });
+
+  it("should translate a future collection date", () => {
+    expect(
+      sampleDraftFieldErrors(
+        [
+          {
+            path: ["description", "collectionDate", "end"],
+            code: "custom",
+            params: { code: "collection_date_future" },
+          },
+        ],
+        undefined,
+      ),
+    ).toEqual({
+      "description.collectionDateEnd": {
+        message: "The collection date cannot be in the future.",
+      },
+    });
+  });
+
+  it("should read the range order error on both date fields", () => {
+    expect(
+      sampleDraftFieldErrors(
+        [
+          {
+            path: ["description", "collectionDate", "start"],
+            code: "custom",
+            params: { code: "collection_date_order" },
+          },
+        ],
+        undefined,
+      ),
+    ).toEqual({
+      "description.collectionDateStart": {
+        message: "The start date must be before the end date.",
+      },
+      "description.collectionDateEnd": {
+        message: "The start date must be before the end date.",
+      },
     });
   });
 });

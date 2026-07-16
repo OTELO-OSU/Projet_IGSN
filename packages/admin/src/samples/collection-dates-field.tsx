@@ -1,6 +1,5 @@
 import { Combobox } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
-import { isFutureDate } from "@projet-igsn/domain/sample/description/is-future-date";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
@@ -47,24 +46,17 @@ export function CollectionDatesField() {
     }
   };
 
-  // Range-bound live validation: no future date, and start strictly before
-  // end (equal bounds are what single mode is for). The pair check runs on
-  // both fields (each listens to its sibling), so the error reads on both.
-  const rangeBound = ({ value }: { value: string | undefined }) => {
-    if (value === undefined) return undefined;
-    if (isFutureDate(value)) {
-      return { message: m.field_collection_date_future() };
-    }
+  // Equal bounds are valid domain data (the degenerate single date), so this
+  // is UI steering toward single mode, not schema validation; every other
+  // date rule (future, ordering) comes from the domain schema via the form's
+  // live validator. Runs on both fields (each listens to its sibling), so the
+  // advice reads on both.
+  const identicalRange = () => {
     const start = form.getFieldValue("description.collectionDateStart");
     const end = form.getFieldValue("description.collectionDateEnd");
-    if (start === undefined || end === undefined) return undefined;
-    if (start === end) {
-      return { message: m.collection_date_range_identical() };
-    }
-    if (start > end) {
-      return { message: m.field_collection_date_order() };
-    }
-    return undefined;
+    return start !== undefined && start === end
+      ? { message: m.collection_date_range_identical() }
+      : undefined;
   };
 
   return (
@@ -90,12 +82,6 @@ export function CollectionDatesField() {
             onChange: ({ value }) =>
               form.setFieldValue("description.collectionDateEnd", value),
           }}
-          validators={{
-            onChange: ({ value }) =>
-              value !== undefined && isFutureDate(value)
-                ? { message: m.field_collection_date_future() }
-                : undefined,
-          }}
         >
           {(field) => (
             <field.DateField label={`${m.field_collection_date()} *`} />
@@ -107,7 +93,7 @@ export function CollectionDatesField() {
             name="description.collectionDateStart"
             validators={{
               onChangeListenTo: ["description.collectionDateEnd"],
-              onChange: rangeBound,
+              onChange: identicalRange,
             }}
           >
             {(field) => (
@@ -118,7 +104,7 @@ export function CollectionDatesField() {
             name="description.collectionDateEnd"
             validators={{
               onChangeListenTo: ["description.collectionDateStart"],
-              onChange: rangeBound,
+              onChange: identicalRange,
             }}
           >
             {(field) => (

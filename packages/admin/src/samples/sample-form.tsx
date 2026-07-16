@@ -44,6 +44,19 @@ const natureItems = natureSchema.options.map((nature) => ({
   label: natureLabel(nature),
 }));
 
+// Draft -> domain-schema issues -> per-field translated errors.
+const validateDraft = ({ value }: { value: SampleDraft }) => {
+  const parsed = sampleDraftSchema.safeParse(value);
+  return parsed.success
+    ? undefined
+    : {
+        fields: sampleDraftFieldErrors(
+          parsed.error.issues,
+          value.location.type,
+        ),
+      };
+};
+
 // A footer button. `submit` saves; `publish` saves then publishes (with
 // confirmation + a blocker tooltip); `link` navigates (e.g. the public page).
 export type SampleFormAction =
@@ -58,18 +71,6 @@ type SampleFormProps = {
   // Rendered accented; `secondaryAction`, when set, sits before it as outline.
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
-};
-
-const validate = ({ value }: { value: SampleDraft }) => {
-  const parsed = sampleDraftSchema.safeParse(value);
-  return parsed.success
-    ? undefined
-    : {
-        fields: sampleDraftFieldErrors(
-          parsed.error.issues,
-          value.location.type,
-        ),
-      };
 };
 
 export function SampleForm({
@@ -94,12 +95,29 @@ export function SampleForm({
     onSubmitMeta: { onValid: defaultSubmit } as {
       onValid: ((value: CreateSample) => void) | undefined;
     },
-    // The domain schema (the one the API enforces) gates every submit and pins
-    // its issues on the offending fields, so a rule the form has no dedicated
-    // validator for still surfaces instead of silently blocking.
+    // The domain schema (the one the API enforces) is the single source of
+    // validation: it runs live on every change and gates every submit, its
+    // issues translated and pinned on the offending fields. The live pass
+    // only flags touched fields, so typing in one input never lights up the
+    // rest of the form; submit flags everything.
     validators: {
-      onSubmit: validate,
-      onChange: validate,
+      onChange: (context) => {
+        const result = validateDraft(context);
+        if (!result) return undefined;
+        const fieldMeta = context.formApi.state.fieldMeta as Record<
+          string,
+          { isTouched: boolean } | undefined
+        >;
+        const touched = Object.fromEntries(
+          Object.entries(result.fields).filter(
+            ([name]) => fieldMeta[name]?.isTouched,
+          ),
+        );
+        return Object.keys(touched).length > 0
+          ? { fields: touched }
+          : undefined;
+      },
+      onSubmit: validateDraft,
     },
     onSubmit: ({ value, meta, formApi }) => {
       const parsed = sampleDraftSchema.safeParse(value);
