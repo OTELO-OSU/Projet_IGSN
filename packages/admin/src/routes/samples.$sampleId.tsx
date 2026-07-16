@@ -60,6 +60,7 @@ function EditSamplePage() {
           description: query.data.description,
         }}
         isPending={isPending}
+        published={isPublished}
         onCancel={() => navigate({ to: "/" })}
         secondaryAction={{
           kind: "submit",

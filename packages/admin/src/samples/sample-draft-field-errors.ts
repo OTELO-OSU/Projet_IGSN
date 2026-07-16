@@ -1,5 +1,8 @@
+import { publishBlockerSchema } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+
 import { m } from "#/paraglide/messages.js";
 import { type LocationDraft } from "#/samples/compose-location.ts";
+import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 
 // Measurement leaves (description.length.value...) map back to the flat
 // value/unit draft fields (description.lengthValue...).
@@ -32,6 +35,10 @@ const draftFieldName = (
   if (path === "location.region.kind") return "location.regionKind";
   if (path.startsWith("location.region."))
     return `location.${path.slice("location.region.".length)}`;
+  // Publish-blocker container paths pin on the field the user can act on.
+  if (path === "location") return "location.type";
+  if (path === "description.collectionDate")
+    return "description.collectionDateStart";
   if (path.startsWith("description.collectionDate."))
     return path === "description.collectionDate.start"
       ? "description.collectionDateStart"
@@ -58,6 +65,12 @@ type DraftIssue = {
 // from their path and zod code, anything else falls back to a generic message.
 function issueMessage(path: string, issue: DraftIssue): string {
   const reason = (issue.params as { code?: string } | undefined)?.code;
+  // A publish-blocker issue (updatePublishedSampleSchema) reuses the tooltip
+  // translations, so the field explains itself the same way the button does.
+  const blocker = publishBlockerSchema.safeParse(reason);
+  if (blocker.success) {
+    return publishBlockerLabel(blocker.data);
+  }
   if (reason === "collection_date_future") {
     return m.field_collection_date_future();
   }

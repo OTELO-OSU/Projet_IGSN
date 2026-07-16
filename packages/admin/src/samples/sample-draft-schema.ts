@@ -3,6 +3,7 @@ import {
   toHierarchyPath,
 } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { locationRequirement } from "@projet-igsn/domain/sample/location/location-requirement";
+import { updatePublishedSampleSchema } from "@projet-igsn/domain/sample/publication/update-published-sample-schema";
 import {
   type CreateSample,
   createSampleSchema,
@@ -91,4 +92,12 @@ const composeCreateSample = (draft: SampleDraft) => {
 export const sampleDraftSchema = z.preprocess(
   (draft) => composeCreateSample(draft as SampleDraft),
   createSampleSchema,
+);
+
+// A published sample's edits must keep it publishable: same draft, validated
+// against the published-update schema (publish blockers become field issues),
+// like the API's PUT does for a published sample.
+export const publishedSampleDraftSchema = z.preprocess(
+  (draft) => composeCreateSample(draft as SampleDraft),
+  updatePublishedSampleSchema,
 );

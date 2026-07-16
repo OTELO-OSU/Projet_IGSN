@@ -31,6 +31,7 @@ import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
 import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
+  publishedSampleDraftSchema,
   type SampleDraft,
   sampleDraftSchema,
   toSampleDraft,
@@ -44,18 +45,22 @@ const natureItems = natureSchema.options.map((nature) => ({
   label: natureLabel(nature),
 }));
 
-// Draft -> domain-schema issues -> per-field translated errors.
-const validateDraft = ({ value }: { value: SampleDraft }) => {
-  const parsed = sampleDraftSchema.safeParse(value);
-  return parsed.success
-    ? undefined
-    : {
-        fields: sampleDraftFieldErrors(
-          parsed.error.issues,
-          value.location.type,
-        ),
-      };
-};
+// Draft -> domain-schema issues -> per-field translated errors. A published
+// sample validates against the publishable shape, a draft against the create
+// shape (same split as the API's PUT).
+const validateDraft =
+  (schema: typeof sampleDraftSchema) =>
+  ({ value }: { value: SampleDraft }) => {
+    const parsed = schema.safeParse(value);
+    return parsed.success
+      ? undefined
+      : {
+          fields: sampleDraftFieldErrors(
+            parsed.error.issues,
+            value.location.type,
+          ),
+        };
+  };
 
 // A footer button. `submit` saves; `publish` saves then publishes (with
 // confirmation + a blocker tooltip); `link` navigates (e.g. the public page).
@@ -68,6 +73,8 @@ type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
   defaultValues?: CreateSample;
+  // A published sample's edits must keep it publishable (stricter schema).
+  published?: boolean;
   // Rendered accented; `secondaryAction`, when set, sits before it as outline.
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
@@ -77,9 +84,13 @@ export function SampleForm({
   onCancel,
   isPending,
   defaultValues,
+  published = false,
   primaryAction,
   secondaryAction,
 }: SampleFormProps) {
+  const validate = validateDraft(
+    published ? publishedSampleDraftSchema : sampleDraftSchema,
+  );
   // Enter submits natively through the lone submit-kind button; route it to
   // that action (prefer primary). Publish and link never fire on Enter.
   const defaultSubmit =
@@ -102,7 +113,7 @@ export function SampleForm({
     // rest of the form; submit flags everything.
     validators: {
       onChange: (context) => {
-        const result = validateDraft(context);
+        const result = validate(context);
         if (!result) return undefined;
         const fieldMeta = context.formApi.state.fieldMeta as Record<
           string,
@@ -117,7 +128,7 @@ export function SampleForm({
           ? { fields: touched }
           : undefined;
       },
-      onSubmit: validateDraft,
+      onSubmit: validate,
     },
     onSubmit: ({ value, meta, formApi }) => {
       const parsed = sampleDraftSchema.safeParse(value);

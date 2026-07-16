@@ -257,6 +257,65 @@ describe("admin sample routes", () => {
     });
   });
 
+  pgTest(
+    "should answer 409 when an update would make a published sample unpublishable",
+    async ({ db }) => {
+      // Arrange: create a publishable sample and publish it.
+      const client = testClient(createApp(db));
+      const publishable = {
+        name: "Basalte du Massif Central",
+        nature: "thin_section" as const,
+        type: "individual_sample",
+        material: "sediment.exogenous_detritic.clay",
+        location: {
+          position: { type: "point" as const, longitude: 3, latitude: 45 },
+        },
+        description: {
+          collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+        },
+      };
+      const created = await client.admin.samples.$post(
+        { json: publishable },
+        { headers: authHeader },
+      );
+      const { data } = sampleResponseSchema.parse(await created.json());
+      await client.admin.samples[":id"].publish.$post(
+        { param: { id: data.id } },
+        { headers: authHeader },
+      );
+      // Act: strip the collection date, a publish requirement.
+      const res = await client.admin.samples[":id"].$put(
+        {
+          param: { id: data.id },
+          json: { ...publishable, description: null },
+        },
+        { headers: authHeader },
+      );
+      // Assert: rejected, and the stored sample keeps its date.
+      expect(res.status).toBe(409);
+      const kept = await client.admin.samples[":id"].$get(
+        { param: { id: data.id } },
+        { headers: authHeader },
+      );
+      expect(await kept.json()).toMatchObject({
+        data: {
+          description: {
+            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+          },
+        },
+      });
+      // A publishable update still goes through.
+      const ok = await client.admin.samples[":id"].$put(
+        {
+          param: { id: data.id },
+          json: { ...publishable, name: "Basalte (revu)" },
+        },
+        { headers: authHeader },
+      );
+      expect(ok.status).toBe(200);
+    },
+  );
+
   pgTest("should answer 404 when updating a missing sample", async ({ db }) => {
     // Act
     const res = await testClient(createApp(db)).admin.samples[":id"].$put(
