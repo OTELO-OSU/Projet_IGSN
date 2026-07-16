@@ -1,4 +1,3 @@
-import type { Nature } from "@projet-igsn/domain/sample/nature";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
@@ -18,19 +17,24 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { locationRequirement } from "@projet-igsn/domain/sample/location/location-requirement";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
-import {
-  type CreateSample,
-  createSampleSchema,
-} from "@projet-igsn/domain/sample/sample";
+import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { m } from "#/paraglide/messages.js";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
+import {
+  composeLocation,
+  toLocationDraft,
+} from "#/samples/compose-location.ts";
+import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
+import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
+import { sampleDraftSchema } from "#/samples/sample-draft-schema.ts";
 import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
@@ -74,41 +78,42 @@ export function SampleForm({
 
   const form = useAppForm({
     defaultValues: {
-      name: defaultValues?.name ?? "",
-      nature: defaultValues?.nature ?? ("" as Nature | ""),
+      name: defaultValues?.name,
+      nature: defaultValues?.nature,
       typePath: toHierarchyPath(defaultValues?.type ?? null),
       materialPath: toHierarchyPath(defaultValues?.material ?? null),
-      texture: defaultValues?.texture ?? "",
-      metamorphicFacies: defaultValues?.metamorphicFacies ?? "",
+      texture: defaultValues?.texture,
+      metamorphicFacies: defaultValues?.metamorphicFacies,
       collectionMethodPath: toHierarchyPath(
         defaultValues?.collectionMethod ?? null,
       ),
-      collectionMethodDescription:
-        defaultValues?.collectionMethodDescription ?? "",
-      specificName: defaultValues?.specificName ?? "",
+      collectionMethodDescription: defaultValues?.collectionMethodDescription,
+      specificName: defaultValues?.specificName,
+      location: toLocationDraft(defaultValues?.location),
     },
     // The clicked button passes its callback as meta; Enter uses defaultSubmit.
     onSubmitMeta: { onValid: defaultSubmit } as {
       onValid: ((value: CreateSample) => void) | undefined;
     },
+    // The domain schema (the one the API enforces) gates every submit and pins
+    // its issues on the offending fields, so a rule the form has no dedicated
+    // validator for still surfaces instead of silently blocking.
+    validators: {
+      onSubmit: ({ value }) => {
+        const parsed = sampleDraftSchema.safeParse(value);
+        return parsed.success
+          ? undefined
+          : {
+              fields: sampleDraftFieldErrors(
+                parsed.error.issues,
+                value.location.type,
+              ),
+            };
+      },
+    },
     onSubmit: ({ value, meta }) => {
-      // The API is the real trust boundary; re-parse before sending.
-      const parsed = createSampleSchema.safeParse({
-        name: value.name,
-        nature: value.nature,
-        type: composeHierarchyValue(value.typePath),
-        material: composeHierarchyValue(value.materialPath),
-        // Optional and only valid for an igneous branch; omit when unset.
-        ...(value.texture ? { texture: value.texture } : {}),
-        // Optional and only valid for a metamorphic material; omit when unset.
-        ...(value.metamorphicFacies
-          ? { metamorphicFacies: value.metamorphicFacies }
-          : {}),
-        collectionMethod: composeHierarchyValue(value.collectionMethodPath),
-        collectionMethodDescription:
-          value.collectionMethodDescription.trim() || null,
-        specificName: value.specificName.trim() || null,
-      });
+      const parsed = sampleDraftSchema.safeParse(value);
+      // Unreachable: the onSubmit validator gates. Kept as a typed narrow.
       if (!parsed.success) return;
       meta.onValid?.(parsed.data);
     },
@@ -136,18 +141,27 @@ export function SampleForm({
             typePath: state.values.typePath,
             materialPath: state.values.materialPath,
             metamorphicFacies: state.values.metamorphicFacies,
+            location: state.values.location,
           })}
         >
-          {({ canSubmit, typePath, materialPath, metamorphicFacies }) => {
+          {({
+            canSubmit,
+            typePath,
+            materialPath,
+            metamorphicFacies,
+            location,
+          }) => {
             // Form state holds looser select strings; the runtime values match
             // the domain, so cast to the fields samplePublishBlockers reads.
             const reasons = samplePublishBlockers({
               type: composeHierarchyValue(typePath),
               material: composeHierarchyValue(materialPath),
               metamorphicFacies: metamorphicFacies || null,
-            } as Pick<Sample, "type" | "material" | "metamorphicFacies">).map(
-              publishBlockerLabel,
-            );
+              location: composeLocation(location),
+            } as Pick<
+              Sample,
+              "type" | "material" | "metamorphicFacies" | "location"
+            >).map(publishBlockerLabel);
             const button = (
               <PublishSampleButton
                 label={action.label}
@@ -209,6 +223,23 @@ export function SampleForm({
             {m.tab_sample_classification()}
           </TabsTrigger>
           <TabsTrigger value="type">{m.tab_sample_type()}</TabsTrigger>
+          {/* Synthetic samples must not carry a location (ADR 0014), so the tab
+              is hidden for them; it stays for optional and required materials. */}
+          <form.Subscribe
+            selector={(state) =>
+              locationRequirement(
+                composeHierarchyValue(state.values.materialPath),
+              ) !== "forbidden"
+            }
+          >
+            {(showLocation) =>
+              showLocation ? (
+                <TabsTrigger value="location">
+                  {m.tab_sample_location()}
+                </TabsTrigger>
+              ) : null
+            }
+          </form.Subscribe>
         </TabsList>
 
         {/* Values live in the form store, not the field components, so a field
@@ -218,7 +249,9 @@ export function SampleForm({
             name="name"
             validators={{
               onChange: ({ value }) =>
-                value.trim() ? undefined : { message: m.field_name_required() },
+                value?.trim()
+                  ? undefined
+                  : { message: m.field_name_required() },
             }}
           >
             {(field) => <field.TextField label={`${m.field_name()} *`} />}
@@ -277,6 +310,12 @@ export function SampleForm({
           <form.AppField name="specificName">
             {(field) => <field.TextField label={m.field_specific_name()} />}
           </form.AppField>
+        </TabsContent>
+
+        <TabsContent value="location" className="grid gap-4">
+          <form.AppForm>
+            <LocationFields />
+          </form.AppForm>
         </TabsContent>
       </Tabs>
 

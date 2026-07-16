@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { Sample } from "../sample.ts";
 
+import { locationRequirement } from "../location/location-requirement.ts";
 import { MATERIAL_PATHS } from "../material/classification.ts";
 import { isMaterialComplete } from "../material/is-complete.ts";
 import { faciesFor } from "../metamorphic-facies/vocabulary.ts";
@@ -17,6 +18,7 @@ export const publishBlockerSchema = z.enum([
   "material_missing",
   "material_incomplete",
   "metamorphic_facies_missing",
+  "location_position_missing",
 ]);
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
@@ -28,7 +30,7 @@ export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
 // the type is only nominally validated (`SampleType`/`MaterialPath` are `string`),
 // so a malformed value must gate publication rather than slip through.
 export function samplePublishBlockers(
-  sample: Pick<Sample, "type" | "material" | "metamorphicFacies">,
+  sample: Pick<Sample, "type" | "material" | "metamorphicFacies" | "location">,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
 
@@ -41,12 +43,13 @@ export function samplePublishBlockers(
     blockers.push("type_incomplete");
   }
 
+  const materialComplete =
+    sample.material !== null &&
+    MATERIAL_PATHS.includes(sample.material) &&
+    isMaterialComplete(sample.material);
   if (sample.material === null) {
     blockers.push("material_missing");
-  } else if (
-    !MATERIAL_PATHS.includes(sample.material) ||
-    !isMaterialComplete(sample.material)
-  ) {
+  } else if (!materialComplete) {
     blockers.push("material_incomplete");
   }
 
@@ -60,6 +63,18 @@ export function samplePublishBlockers(
       !facies.includes(sample.metamorphicFacies))
   ) {
     blockers.push("metamorphic_facies_missing");
+  }
+
+  // A location (a point or area position) is required to publish unless the
+  // material forbids it (synthetic) or exempts it (returned samples). Evaluated
+  // only once the material is a complete path, so an incomplete material (which
+  // already blocks) does not also raise this (ADR 0014).
+  if (
+    materialComplete &&
+    locationRequirement(sample.material) === "required" &&
+    !sample.location?.position
+  ) {
+    blockers.push("location_position_missing");
   }
 
   return blockers;

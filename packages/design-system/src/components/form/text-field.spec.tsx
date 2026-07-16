@@ -21,7 +21,24 @@ function Harness({ label, multiline }: { label: string; multiline?: boolean }) {
   );
 }
 
+function NullishHarness() {
+  const form = useAppForm({ defaultValues: { name: null as string | null } });
+  return (
+    <form>
+      <form.AppField name="name">
+        {(field) => <field.TextField label="Sample name" />}
+      </form.AppField>
+    </form>
+  );
+}
+
 describe("TextField", () => {
+  it("should render a nullish value as an empty input", async () => {
+    await render(<NullishHarness />);
+
+    await expect.element(page.getByLabelText("Sample name")).toHaveValue("");
+  });
+
   it("should render an input associated with its label", async () => {
     await render(<Harness label="Sample name" />);
 

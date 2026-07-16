@@ -14,7 +14,7 @@ const draft: Sample = {
   collectionMethod: null,
   collectionMethodDescription: null,
   specificName: "BAS-42-001",
-  location: null,
+  location: { position: { type: "point", longitude: 0, latitude: 0 } },
   igsn: null,
   published: false,
   createdAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -38,6 +38,16 @@ describe("isSamplePublishable", () => {
 
   it("should reject a sample whose material path is incomplete", () => {
     expect(isSamplePublishable({ ...draft, material: "rock" })).toBe(false);
+  });
+
+  it("should reject a complete-material sample with no location", () => {
+    expect(
+      isSamplePublishable({
+        ...draft,
+        material: "rock.igneous.plutonic.felsic.granite",
+        location: null,
+      }),
+    ).toBe(false);
   });
 
   it.each<MaterialPath>([

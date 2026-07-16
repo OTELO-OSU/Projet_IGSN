@@ -9,7 +9,7 @@ const items = [
   { value: "thin_section", label: "Thin section" },
 ];
 
-function Harness() {
+function Harness({ disabled }: { disabled?: boolean } = {}) {
   const form = useAppForm({
     defaultValues: { nature: "" },
     onSubmit: () => {},
@@ -35,6 +35,7 @@ function Harness() {
             placeholder="Select a nature"
             searchPlaceholder="Search nature..."
             emptyText="No nature found"
+            disabled={disabled}
           />
         )}
       </form.AppField>
@@ -75,6 +76,14 @@ describe("ComboboxField", () => {
     await page.getByRole("option", { name: "Thin section" }).click();
 
     await expect.element(combobox).toHaveTextContent("Select a nature");
+  });
+
+  it("should render a disabled control when disabled", async () => {
+    await render(<Harness disabled />);
+
+    await expect
+      .element(page.getByRole("combobox", { name: "Nature" }))
+      .toBeDisabled();
   });
 
   it("should announce an accessible error when invalid", async () => {
