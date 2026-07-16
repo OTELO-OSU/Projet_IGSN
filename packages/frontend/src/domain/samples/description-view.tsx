@@ -59,6 +59,13 @@ export function DescriptionView({ description }: { description: Description }) {
     { label: m.sample_field_width(), measurement: description.width },
     { label: m.sample_field_thickness(), measurement: description.thickness },
     { label: m.sample_field_mass(), measurement: description.mass },
+    {
+      label: m.sample_field_volume(),
+      measurement: description.volume && {
+        ...description.volume,
+        unit: volumeUnitLabel[description.volume.unit],
+      },
+    },
   ];
   for (const { label, measurement } of measurements) {
     if (measurement) {
@@ -67,12 +74,6 @@ export function DescriptionView({ description }: { description: Description }) {
         value: `${measurement.value} ${measurement.unit}`,
       });
     }
-  }
-  if (description.volume) {
-    rows.push({
-      label: m.sample_field_volume(),
-      value: `${description.volume.value} ${volumeUnitLabel[description.volume.unit]}`,
-    });
   }
   return (
     <dl className="mt-2 divide-y">
