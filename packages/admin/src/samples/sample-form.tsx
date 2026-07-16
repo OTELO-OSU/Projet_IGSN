@@ -20,6 +20,8 @@ import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sa
 import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { m } from "#/paraglide/messages.js";
+import { AgeFields } from "#/samples/age-fields.tsx";
+import { toAgeInput } from "#/samples/age-form.ts";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { composeLocation } from "#/samples/compose-location.ts";
 import { LocationFields } from "#/samples/location-fields.tsx";
@@ -92,9 +94,6 @@ export function SampleForm({
     onSubmitMeta: { onValid: defaultSubmit } as {
       onValid: ((value: CreateSample) => void) | undefined;
     },
-    // The domain schema (the one the API enforces) gates every submit and pins
-    // its issues on the offending fields, so a rule the form has no dedicated
-    // validator for still surfaces instead of silently blocking.
     validators: {
       onSubmit: validate,
       onChange: validate,
@@ -134,6 +133,7 @@ export function SampleForm({
             materialPath: state.values.materialPath,
             metamorphicFacies: state.values.metamorphicFacies,
             location: state.values.location,
+            age: toAgeInput(state.values.age),
           })}
         >
           {({
@@ -142,6 +142,7 @@ export function SampleForm({
             materialPath,
             metamorphicFacies,
             location,
+            age,
           }) => {
             // Form state holds looser select strings; the runtime values match
             // the domain, so cast to the fields samplePublishBlockers reads.
@@ -150,9 +151,10 @@ export function SampleForm({
               material: composeHierarchyValue(materialPath),
               metamorphicFacies: metamorphicFacies || null,
               location: composeLocation(location),
+              age,
             } as Pick<
               Sample,
-              "type" | "material" | "metamorphicFacies" | "location"
+              "type" | "material" | "metamorphicFacies" | "location" | "age"
             >).map(publishBlockerLabel);
             const button = (
               <PublishSampleButton
@@ -232,6 +234,9 @@ export function SampleForm({
               ) : null
             }
           </form.Subscribe>
+          <TabsTrigger value="physical">
+            {m.tab_physical_description()}
+          </TabsTrigger>
         </TabsList>
 
         {/* Values live in the form store, not the field components, so a field
@@ -307,6 +312,12 @@ export function SampleForm({
         <TabsContent value="location" className="grid gap-4">
           <form.AppForm>
             <LocationFields />
+          </form.AppForm>
+        </TabsContent>
+
+        <TabsContent value="physical" className="grid gap-4">
+          <form.AppForm>
+            <AgeFields />
           </form.AppForm>
         </TabsContent>
       </Tabs>

@@ -57,6 +57,7 @@ function EditSamplePage() {
           collectionMethodDescription: query.data.collectionMethodDescription,
           specificName: query.data.specificName,
           location: query.data.location,
+          age: query.data.age,
         }}
         isPending={isPending}
         onCancel={() => navigate({ to: "/" })}
