@@ -1411,7 +1411,7 @@ describe("SampleForm", () => {
 
     // Enter a point, then switch to an area: the point values linger (handy
     // while editing) but only the area is part of the submitted location.
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude *").fill("3");

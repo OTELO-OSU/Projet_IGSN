@@ -425,6 +425,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={{ region }}
       />,
     );
