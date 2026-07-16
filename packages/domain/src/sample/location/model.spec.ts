@@ -61,6 +61,8 @@ describe("locationSchema", () => {
       "an ocean region",
       { region: { kind: "ocean", oceanSea: "atlantic_ocean" } },
     ],
+    ["a continent region without a country", { region: { kind: "continent" } }],
+    ["an ocean region without an ocean/sea", { region: { kind: "ocean" } }],
     ["a navigation type", { position: point, navigationType: "GPS" }],
     ["a locality without coordinates", { localityName: "Vent field 7" }],
     ["an empty location", {}],
@@ -96,7 +98,6 @@ describe("locationSchema", () => {
         },
       },
     ],
-    ["a continent region without a country", { region: { kind: "continent" } }],
     [
       "a continent region with an unknown country",
       { region: { kind: "continent", country: "XX" } },

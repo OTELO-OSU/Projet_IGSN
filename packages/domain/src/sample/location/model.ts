@@ -44,9 +44,11 @@ const positionSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
+// The leaf is optional: a region kind alone (e.g. "ocean, unknown which") is
+// valid data, in draft and published alike.
 const regionSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("continent"), country: countrySchema }),
-  z.object({ kind: z.literal("ocean"), oceanSea: oceanSeaSchema }),
+  z.object({ kind: z.literal("continent"), country: countrySchema.nullish() }),
+  z.object({ kind: z.literal("ocean"), oceanSea: oceanSeaSchema.nullish() }),
 ]);
 
 export const locationSchema = z
