@@ -24,6 +24,8 @@ export function toSample(
     collectionMethodDescription: row.collection_method_description,
     specificName: row.specific_name,
     location,
+    // The description columns land with the description storage migration.
+    description: null,
     igsn: row.igsn,
     published: row.published,
     createdAt: row.created_at,

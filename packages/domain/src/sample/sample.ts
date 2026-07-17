@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { igsnSuffixSchema } from "../igsn/model.ts";
 import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
+import { descriptionSchema } from "./description/model.ts";
 import { locationRequirement } from "./location/location-requirement.ts";
 import { locationSchema } from "./location/model.ts";
 import { materialPathSchema } from "./material/classification.ts";
@@ -37,6 +38,8 @@ export const sampleSchema = z.object({
   specificName: nameSchema.nullable(),
   // Geographic location; null when the sample has none (see location/model.ts).
   location: locationSchema.nullable(),
+  // Physical description; null when the sample has none (see description/model.ts).
+  description: descriptionSchema.nullable(),
   // Null until the sample is published.
   igsn: igsnSuffixSchema.nullable(),
   published: z.boolean(),
@@ -65,6 +68,9 @@ export const createSampleSchema = z
     collectionMethodDescription: nameSchema.nullish(),
     specificName: nameSchema.nullish(),
     location: locationSchema.nullish(),
+    // Optional at creation; its collection date is required only at publish
+    // (see sample-publish-blockers).
+    description: descriptionSchema.nullish(),
   })
   .superRefine((value, ctx) => {
     // A texture must match the selected material's branch. This guards the

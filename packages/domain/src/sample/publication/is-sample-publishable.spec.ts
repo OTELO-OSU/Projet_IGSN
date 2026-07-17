@@ -15,6 +15,7 @@ const draft: Sample = {
   collectionMethodDescription: null,
   specificName: "BAS-42-001",
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
+  description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
   igsn: null,
   published: false,
   createdAt: new Date("2026-07-02T10:00:00.000Z"),
