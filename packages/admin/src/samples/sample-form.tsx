@@ -1,6 +1,7 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
+import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
@@ -14,7 +15,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
-import { locationRequirement } from "@projet-igsn/domain/sample/location/location-requirement";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { type CreateSample } from "@projet-igsn/domain/sample/sample";
@@ -23,12 +23,11 @@ import { m } from "#/paraglide/messages.js";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
-import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
+import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
-import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
   publishedSampleSchema,
@@ -310,8 +309,7 @@ export function SampleForm({
         </TabsContent>
 
         <TabsContent value="type" className="grid gap-4">
-          <section className="grid gap-4">
-            <h2 className="text-lg font-semibold">{m.section_material()}</h2>
+          <FormSection title={m.section_material()}>
             <form.AppForm>
               <MaterialField />
             </form.AppForm>
@@ -321,7 +319,7 @@ export function SampleForm({
             <form.AppForm>
               <MetamorphicFaciesField />
             </form.AppForm>
-          </section>
+          </FormSection>
 
           <form.AppField name="specificName">
             {(field) => <field.TextField label={m.field_specific_name()} />}
@@ -329,36 +327,9 @@ export function SampleForm({
         </TabsContent>
 
         <TabsContent value="physical-description" className="grid gap-6">
-          <section className="grid gap-4">
-            <h2 className="text-lg font-semibold">{m.section_description()}</h2>
-            <form.AppForm>
-              <SampleDescriptionFields />
-            </form.AppForm>
-          </section>
-
-          {/* Synthetic samples must not carry a location (ADR 0014), so the
-              section is hidden for them; it stays for optional and required
-              materials. */}
-          <form.Subscribe
-            selector={(state) =>
-              locationRequirement(
-                composeHierarchyValue(state.values.materialPath),
-              ) !== "forbidden"
-            }
-          >
-            {(showLocation) =>
-              showLocation ? (
-                <section className="grid gap-4">
-                  <h2 className="text-lg font-semibold">
-                    {m.section_location()}
-                  </h2>
-                  <form.AppForm>
-                    <LocationFields />
-                  </form.AppForm>
-                </section>
-              ) : null
-            }
-          </form.Subscribe>
+          <form.AppForm>
+            <PhysicalDescriptionFields />
+          </form.AppForm>
         </TabsContent>
       </Tabs>
 
