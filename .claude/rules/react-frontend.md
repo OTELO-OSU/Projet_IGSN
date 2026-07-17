@@ -44,38 +44,15 @@ Treat each concern separately:
   typed forms with `createFormHook`/`useAppForm` (see
   `@projet-igsn/design-system/components/form/app-form`)
   so fields and submit share one accessible markup and error pattern.
+  Is the value submitted to the API? No → the value is derivable; keep
+  component state, re-derived from the form values on mount.
 
 Don't reach for a global state manager. Keep state local; lift to Context only
 when genuinely shared across distant components.
 
 ## Forms
 
-Build every form with `useAppForm` from
-`@projet-igsn/design-system/components/form/app-form`, not raw
-`@tanstack/react-form`. It yields fields and actions pre-bound to the shared,
-accessible form inputs; pass per-form `defaultValues` and `validators` (a zod
-schema from `domain`).
-
-Reuse the existing bound inputs (`TextField`, `SubmitButton`...) via
-`form.AppField` / `form.AppForm`. Need an input the kit doesn't have yet? Add it
-to `packages/design-system/src/components/form/` and register it in `app-form.tsx`
-so every form gets it, never inline a one-off input in an app.
-
-Values hidden by UI state (a field for the other branch of a toggle, a tab
-hidden by another value) follow three rules (ADR 0015):
-
-1. While editing, keep them: hiding a field never clears its value, so
-   switching back restores what the user entered. Values live in the form
-   store, not in component state that unmounts.
-2. On save, drop them: the compose step excludes values hidden behind the
-   current UI state before validation, so a hidden value is never submitted
-   and never raises a schema error the user cannot see or fix.
-3. After a successful save, clear them: reset the form to the draft rebuilt
-   from the submitted value, so dropped leftovers do not look saved. Visible
-   fields are unaffected.
-
-Every rule that hides a field needs its matching exclusion in the compose
-step; a hidden field without one turns save into a silent noop.
+See [forms.md](forms.md).
 
 ## Extract hooks
 

@@ -15,10 +15,12 @@ export function TextField({
   label,
   multiline = false,
   number = false,
+  disabled = false,
 }: {
   label: string;
   multiline?: boolean;
   number?: boolean;
+  disabled?: boolean;
 }) {
   const field = useFieldContext<string | number | null | undefined>();
   const error = field.state.meta.errors[0];
@@ -35,6 +37,7 @@ export function TextField({
         // convert. A number feeds React's number-input path unstringified,
         // which keeps intermediate text like "3." while typing.
         value={field.state.value ?? ""}
+        disabled={disabled}
         onBlur={field.handleBlur}
         onChange={(event) =>
           field.handleChange(

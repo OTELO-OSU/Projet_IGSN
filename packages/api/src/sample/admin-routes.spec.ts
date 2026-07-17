@@ -283,15 +283,15 @@ describe("admin sample routes", () => {
         { param: { id: data.id } },
         { headers: authHeader },
       );
-      // Act: strip the material, a publish requirement.
+      // Act: strip the collection date, a publish requirement.
       const res = await client.admin.samples[":id"].$put(
         {
           param: { id: data.id },
-          json: { ...publishable, material: null },
+          json: { ...publishable, description: null },
         },
         { headers: authHeader },
       );
-      // Assert: rejected, and the stored sample keeps its material.
+      // Assert: rejected, and the stored sample keeps its date.
       expect(res.status).toBe(409);
       const kept = await client.admin.samples[":id"].$get(
         { param: { id: data.id } },
@@ -299,7 +299,9 @@ describe("admin sample routes", () => {
       );
       expect(await kept.json()).toMatchObject({
         data: {
-          material: "sediment.exogenous_detritic.clay",
+          description: {
+            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+          },
         },
       });
       // A publishable update still goes through.

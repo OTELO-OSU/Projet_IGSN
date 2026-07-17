@@ -3,12 +3,18 @@ import {
   toHierarchyPath,
 } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { locationRequirement } from "@projet-igsn/domain/sample/location/location-requirement";
+import { publishedSampleSchema as domainPublishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import {
   type CreateSample,
   createSampleSchema,
 } from "@projet-igsn/domain/sample/sample";
 import { z } from "zod";
 
+import {
+  composeDescription,
+  type DescriptionDraft,
+  toDescriptionDraft,
+} from "#/samples/compose-description.ts";
 import {
   composeLocation,
   type LocationDraft,
@@ -27,6 +33,7 @@ export type SampleDraft = {
   collectionMethodDescription: string | null | undefined;
   specificName: string | null | undefined;
   location: LocationDraft;
+  description: DescriptionDraft;
 };
 
 // A saved (or default) sample, spread into the flat draft the form store
@@ -44,10 +51,12 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   collectionMethodDescription: value?.collectionMethodDescription,
   specificName: value?.specificName,
   location: toLocationDraft(value?.location),
+  description: toDescriptionDraft(value?.description),
 });
 
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
+  const description = composeDescription(draft.description);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -71,6 +80,9 @@ const composeCreateSample = (draft: SampleDraft) => {
       locationRequirement(material) === "forbidden"
         ? null
         : composeLocation(draft.location),
+    // Omitted when the whole section is empty: the API clears the description
+    // columns for an absent description just like for a null one.
+    ...(description ? { description } : {}),
   };
 };
 
@@ -80,4 +92,12 @@ const composeCreateSample = (draft: SampleDraft) => {
 export const sampleDraftSchema = z.preprocess(
   (draft) => composeCreateSample(draft as SampleDraft),
   createSampleSchema,
+);
+
+// The same draft, validated against the domain's published-sample schema
+// (publish blockers become field issues): one bar for a sample that is, or is
+// becoming, published, like the API's PUT does for a published sample.
+export const publishedSampleSchema = z.preprocess(
+  (draft) => composeCreateSample(draft as SampleDraft),
+  domainPublishedSampleSchema,
 );

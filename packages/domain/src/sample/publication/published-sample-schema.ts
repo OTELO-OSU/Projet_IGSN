@@ -16,6 +16,7 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   material_incomplete: ["material"],
   metamorphic_facies_missing: ["metamorphicFacies"],
   location_position_missing: ["location"],
+  collection_date_missing: ["description", "collectionDate"],
 };
 
 // The shape of a sample that is, or is becoming, published: the create shape,
@@ -30,6 +31,7 @@ export const publishedSampleSchema = createSampleSchema.superRefine(
       material: value.material ?? null,
       metamorphicFacies: value.metamorphicFacies ?? null,
       location: value.location ?? null,
+      description: value.description ?? null,
     });
     for (const blocker of blockers) {
       ctx.addIssue({

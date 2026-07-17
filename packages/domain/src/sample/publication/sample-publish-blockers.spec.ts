@@ -144,4 +144,19 @@ describe("samplePublishBlockers", () => {
       samplePublishBlockers({ ...base, material: "rock", location: null }),
     ).toEqual(["material_incomplete"]);
   });
+
+  it("should report collection_date_missing when the sample has no description", () => {
+    expect(samplePublishBlockers({ ...base, description: null })).toEqual([
+      "collection_date_missing",
+    ]);
+  });
+
+  it("should report collection_date_missing when the description has no collection date", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        description: { openDescription: "Coarse-grained" },
+      }),
+    ).toEqual(["collection_date_missing"]);
+  });
 });
