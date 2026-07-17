@@ -28,6 +28,7 @@ import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
+import { SampleConditionFields } from "#/samples/sample-condition-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
   publishedSampleSchema,
@@ -257,6 +258,9 @@ export function SampleForm({
           <TabsTrigger value="physical-description">
             {m.tab_physical_description()}
           </TabsTrigger>
+          <TabsTrigger value="condition">
+            {m.tab_sample_condition()}
+          </TabsTrigger>
         </TabsList>
 
         {/* Values live in the form store, not the field components, so a field
@@ -335,6 +339,14 @@ export function SampleForm({
           <form.AppForm>
             <PhysicalDescriptionFields />
           </form.AppForm>
+        </TabsContent>
+
+        <TabsContent value="condition" className="grid gap-6">
+          <FormSection title={m.section_condition()}>
+            <form.AppForm>
+              <SampleConditionFields />
+            </form.AppForm>
+          </FormSection>
         </TabsContent>
       </Tabs>
 

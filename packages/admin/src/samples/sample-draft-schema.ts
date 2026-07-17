@@ -11,6 +11,11 @@ import {
 import { z } from "zod";
 
 import {
+  composeCondition,
+  type ConditionDraft,
+  toConditionDraft,
+} from "#/samples/compose-condition.ts";
+import {
   composeDescription,
   type DescriptionDraft,
   toDescriptionDraft,
@@ -34,6 +39,7 @@ export type SampleDraft = {
   specificName: string | null | undefined;
   location: LocationDraft;
   description: DescriptionDraft;
+  condition: ConditionDraft;
 };
 
 // A saved (or default) sample, spread into the flat draft the form store
@@ -52,11 +58,13 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   specificName: value?.specificName,
   location: toLocationDraft(value?.location),
   description: toDescriptionDraft(value?.description),
+  condition: toConditionDraft(value?.condition),
 });
 
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
   const description = composeDescription(draft.description);
+  const condition = composeCondition(draft.condition);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -83,6 +91,8 @@ const composeCreateSample = (draft: SampleDraft) => {
     // Omitted when the whole section is empty: the API clears the description
     // columns for an absent description just like for a null one.
     ...(description ? { description } : {}),
+    // Same contract for the condition columns.
+    ...(condition ? { condition } : {}),
   };
 };
 

@@ -14,4 +14,10 @@ export const {
   textureLabel,
   metamorphicFaciesLabel,
   natureLabel,
+  packagingLabel,
+  storageConditionLabel,
+  temperatureTypeLabel,
+  humidityTypeLabel,
+  lightLabel,
+  pressureTypeLabel,
 } = createSampleLabels(m as unknown as Messages);

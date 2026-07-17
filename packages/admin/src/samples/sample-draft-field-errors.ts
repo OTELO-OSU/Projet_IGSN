@@ -9,6 +9,11 @@ import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 const MEASUREMENT_PATH =
   /^description\.(length|width|thickness|mass|volume)\.(value|unit)$/;
 
+// Condition readings nest value/unit under their category
+// (condition.temperature.measurement.value -> condition.temperatureValue).
+const READING_PATH =
+  /^condition\.(temperature|pressure)\.measurement\.(value|unit)$/;
+
 // Maps a domain-schema issue path (composed CreateSample shape) back to the
 // flat draft field that produced the value. Elevation min/max both come from
 // the single value input when the geometry is a point (degenerate range); the
@@ -48,6 +53,16 @@ const draftFieldName = (
     return `description.${measurement[1]}${
       measurement[2] === "value" ? "Value" : "Unit"
     }`;
+  const reading = READING_PATH.exec(path);
+  if (reading)
+    return `condition.${reading[1]}${
+      reading[2] === "value" ? "Value" : "Unit"
+    }`;
+  if (path === "condition.temperature.type") return "condition.temperatureType";
+  if (path === "condition.pressure.type") return "condition.pressureType";
+  if (path === "condition.humidity.type") return "condition.humidityType";
+  if (path === "condition.humidity.percentage")
+    return "condition.humidityPercentage";
   if (path === "type") return "typePath";
   if (path === "material") return "materialPath";
   if (path === "collectionMethod") return "collectionMethodPath";
@@ -77,7 +92,14 @@ function issueMessage(path: string, issue: DraftIssue): string {
   if (reason === "collection_date_order") {
     return m.field_collection_date_order();
   }
-  const measurement = MEASUREMENT_PATH.exec(path);
+  if (reason === "humidity_percentage_range") {
+    return m.field_humidity_percentage_range();
+  }
+  if (path === "condition.humidity.percentage") {
+    // Outside the range refinement, only the 0-100 bounds remain.
+    return m.field_humidity_percentage_bounds();
+  }
+  const measurement = MEASUREMENT_PATH.exec(path) ?? READING_PATH.exec(path);
   if (measurement) {
     if (measurement[2] === "unit") return m.field_measurement_unit_required();
     return issue.code === "too_small"
