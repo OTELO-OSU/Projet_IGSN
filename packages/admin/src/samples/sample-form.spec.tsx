@@ -537,7 +537,10 @@ describe("SampleForm", () => {
       .click();
     await screen.getByRole("option", { name: "Granite", exact: true }).click();
 
-    await screen.getByRole("combobox", { name: "Metamorphic facies" }).click();
+    // Marked required: a metamorphic sample cannot publish without a facies.
+    await screen
+      .getByRole("combobox", { name: "Metamorphic facies *", exact: true })
+      .click();
     await screen.getByRole("option", { name: "Amphibolite facies" }).click();
 
     await screen.getByRole("button", { name: "Create" }).click();
@@ -774,8 +777,8 @@ describe("SampleForm", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        // A leaf type and leaf material and a location (a point position) are
-        // required to publish, so Save & Publish is enabled.
+        // A leaf type, a leaf material, a location (a point position) and a
+        // collection date are required to publish, so Save & Publish is enabled.
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
@@ -785,6 +788,9 @@ describe("SampleForm", () => {
           collectionMethodDescription: null,
           specificName: "MC-2026-007",
           location: { position: { type: "point", longitude: 3, latitude: 45 } },
+          description: {
+            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+          },
         }}
         secondaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
         primaryAction={{ kind: "publish", label: "Save & Publish", onPublish }}
@@ -804,6 +810,9 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: "MC-2026-007",
         location: { position: { type: "point", longitude: 3, latitude: 45 } },
+        description: {
+          collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+        },
       }),
     );
     expect(onSubmit).not.toHaveBeenCalled();
@@ -883,6 +892,45 @@ describe("SampleForm", () => {
       .toHaveTextContent(/set the sample type before publishing/i);
   });
 
+  it("should disable Save & Publish and explain in a tooltip when the collection date is missing", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          defaultValues={{
+            name: "Basalte du Massif Central",
+            nature: "thin_section",
+            type: "dredge",
+            material: "fossil",
+            collectionMethod: null,
+            collectionMethodDescription: null,
+            location: {
+              position: { type: "point", longitude: 3, latitude: 45 },
+            },
+          }}
+          secondaryAction={{
+            kind: "submit",
+            label: "Save as draft",
+            onSubmit: noop,
+          }}
+          primaryAction={{
+            kind: "publish",
+            label: "Save & Publish",
+            onPublish: noop,
+          }}
+        />
+      </TooltipProvider>,
+    );
+
+    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    await expect.element(publish).toBeDisabled();
+
+    publish.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/set the collection date before publishing/i);
+  });
+
   it("should enable Save & Publish when the specific name is missing", async () => {
     const screen = await render(
       <TooltipProvider>
@@ -897,6 +945,9 @@ describe("SampleForm", () => {
             collectionMethodDescription: null,
             location: {
               position: { type: "point", longitude: 3, latitude: 45 },
+            },
+            description: {
+              collectionDate: { start: "2026-01-01", end: "2026-01-01" },
             },
           }}
           secondaryAction={{
@@ -948,7 +999,7 @@ describe("SampleForm", () => {
       .toHaveAttribute("href", "https://example.test/samples/IGSN123");
   });
 
-  it("should hide the Location tab for a synthetic material", async () => {
+  it("should hide the Location section for a synthetic material", async () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -964,11 +1015,13 @@ describe("SampleForm", () => {
       />,
     );
 
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+
     await expect
-      .element(screen.getByRole("tab", { name: "Sample type" }))
+      .element(screen.getByRole("heading", { name: "Description" }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("tab", { name: "Location" }))
+      .element(screen.getByRole("heading", { name: "Location" }))
       .not.toBeInTheDocument();
   });
 
@@ -1020,7 +1073,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude *").fill("3.5");
@@ -1055,7 +1108,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude *").fill("3");
@@ -1123,7 +1176,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     // 200 is out of the longitude range; only the domain schema knows that.
@@ -1168,7 +1221,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     // Longitude without latitude: the draft used to save without the point.
@@ -1195,7 +1248,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Elevation").fill("12.5");
@@ -1227,7 +1280,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Area" }).click();
     await screen.getByLabelText("Minimum elevation").fill("-200.5");
@@ -1253,7 +1306,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Area" }).click();
 
@@ -1289,7 +1342,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Type", exact: true }))
       .toBeVisible();
@@ -1314,13 +1367,13 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
 
     // No value yet: unit and datum are disabled.
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit" }))
+      .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
       .toBeDisabled();
 
     // A value enables them; select both.
@@ -1335,10 +1388,10 @@ describe("SampleForm", () => {
     // user re-enters an elevation.
     await screen.getByLabelText("Elevation").fill("");
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit" }))
+      .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
       .toBeDisabled();
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit" }))
+      .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
       .toHaveTextContent("m");
   });
 
@@ -1361,7 +1414,7 @@ describe("SampleForm", () => {
 
     // Enter a point, then switch to an area: the point values linger (handy
     // while editing) but only the area is part of the submitted location.
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude *").fill("3");
@@ -1415,7 +1468,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Location" }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Navigation type" }))
       .not.toBeInTheDocument();

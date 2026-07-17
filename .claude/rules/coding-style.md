@@ -16,11 +16,15 @@ paths:
 - DDD: model the domain explicitly (samples, sub-samples, IGSN, roles). Shared
   business logic and contracts live in `domain`, implementations in `api`;
   name types and functions after domain concepts.
-- Functional: prefer pure functions, composition, and `map`/`filter`/`reduce`.
+- Functional: can a caller observe the call's effects anywhere but its return
+  value? Yes → hidden side effect; remove it, or return the change. Compose
+  with `map`/`filter`/`reduce`.
 - Composition over inheritance: compose small functions and types; no class
   hierarchies.
-- Least knowledge: implementation details don't bleed between caller and callee.
-- Single responsibility: a file has only one reason to change.
+- Least knowledge: can a caller use the unit from its signature alone, and can
+  the unit run without knowing its callers? Either no → a detail is leaking.
+- Single responsibility: does a part of a component or function carry its own
+  state, logic, or validation? Yes → extract that part into its own file.
 
 ## Immutability
 

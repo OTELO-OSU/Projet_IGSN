@@ -185,6 +185,25 @@ describe("EditSamplePage", () => {
     await expect.element(screen.getByLabelText("IGSN")).toHaveTextContent(IGSN);
   });
 
+  it("should refuse Publish updates that would make the sample unpublishable", async () => {
+    const { screen, calls } = await renderEditPage(true);
+
+    // Clearing the collection date strips a publish requirement.
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByLabelText("Date *", { exact: true }).fill("");
+    await screen.getByRole("button", { name: "Publish updates" }).click();
+
+    await expect
+      .element(screen.getByText("Set the collection date before publishing."))
+      .toBeVisible();
+    expect(calls).toEqual([]);
+
+    // Restoring the date lets the update through.
+    await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-02");
+    await screen.getByRole("button", { name: "Publish updates" }).click();
+    await vi.waitFor(() => expect(calls.length).toBeGreaterThan(0));
+  });
+
   it("should offer only Publish updates on an already published sample", async () => {
     const { screen } = await renderEditPage(true);
     await expect

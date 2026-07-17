@@ -21,14 +21,17 @@ import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { m } from "#/paraglide/messages.js";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
+import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
+import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
+  publishedSampleSchema,
   type SampleDraft,
   sampleDraftSchema,
   toSampleDraft,
@@ -42,6 +45,23 @@ const natureItems = natureSchema.options.map((nature) => ({
   label: natureLabel(nature),
 }));
 
+// Draft -> domain-schema issues -> per-field translated errors. A published
+// sample validates against the publishable shape, a draft against the create
+// shape (same split as the API's PUT).
+const validateDraft =
+  (schema: typeof sampleDraftSchema) =>
+  ({ value }: { value: SampleDraft }) => {
+    const parsed = schema.safeParse(value);
+    return parsed.success
+      ? undefined
+      : {
+          fields: sampleDraftFieldErrors(
+            parsed.error.issues,
+            value.location.type,
+          ),
+        };
+  };
+
 // A footer button. `submit` saves; `publish` saves then publishes (with
 // confirmation + a blocker tooltip); `link` navigates (e.g. the public page).
 export type SampleFormAction =
@@ -53,30 +73,24 @@ type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
   defaultValues?: CreateSample;
+  // A published sample's edits must keep it publishable (stricter schema).
+  published?: boolean;
   // Rendered accented; `secondaryAction`, when set, sits before it as outline.
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
-};
-
-const validate = ({ value }: { value: SampleDraft }) => {
-  const parsed = sampleDraftSchema.safeParse(value);
-  return parsed.success
-    ? undefined
-    : {
-        fields: sampleDraftFieldErrors(
-          parsed.error.issues,
-          value.location.type,
-        ),
-      };
 };
 
 export function SampleForm({
   onCancel,
   isPending,
   defaultValues,
+  published = false,
   primaryAction,
   secondaryAction,
 }: SampleFormProps) {
+  const validate = validateDraft(
+    published ? publishedSampleSchema : sampleDraftSchema,
+  );
   // Enter submits natively through the lone submit-kind button; route it to
   // that action (prefer primary). Publish and link never fire on Enter.
   const defaultSubmit =
@@ -92,12 +106,29 @@ export function SampleForm({
     onSubmitMeta: { onValid: defaultSubmit } as {
       onValid: ((value: CreateSample) => void) | undefined;
     },
-    // The domain schema (the one the API enforces) gates every submit and pins
-    // its issues on the offending fields, so a rule the form has no dedicated
-    // validator for still surfaces instead of silently blocking.
+    // The domain schema (the one the API enforces) is the single source of
+    // validation: it runs live on every change and gates every submit, its
+    // issues translated and pinned on the offending fields. The live pass
+    // only flags touched fields, so typing in one input never lights up the
+    // rest of the form; submit flags everything.
     validators: {
+      onChange: (context) => {
+        const result = validate(context);
+        if (!result) return undefined;
+        const fieldMeta = context.formApi.state.fieldMeta as Record<
+          string,
+          { isTouched: boolean } | undefined
+        >;
+        const touched = Object.fromEntries(
+          Object.entries(result.fields).filter(
+            ([name]) => fieldMeta[name]?.isTouched,
+          ),
+        );
+        return Object.keys(touched).length > 0
+          ? { fields: touched }
+          : undefined;
+      },
       onSubmit: validate,
-      onChange: validate,
     },
     onSubmit: ({ value, meta, formApi }) => {
       const parsed = sampleDraftSchema.safeParse(value);
@@ -134,6 +165,7 @@ export function SampleForm({
             materialPath: state.values.materialPath,
             metamorphicFacies: state.values.metamorphicFacies,
             location: state.values.location,
+            description: state.values.description,
           })}
         >
           {({
@@ -142,6 +174,7 @@ export function SampleForm({
             materialPath,
             metamorphicFacies,
             location,
+            description,
           }) => {
             // Form state holds looser select strings; the runtime values match
             // the domain, so cast to the fields samplePublishBlockers reads.
@@ -150,9 +183,14 @@ export function SampleForm({
               material: composeHierarchyValue(materialPath),
               metamorphicFacies: metamorphicFacies || null,
               location: composeLocation(location),
+              description: composeDescription(description),
             } as Pick<
               Sample,
-              "type" | "material" | "metamorphicFacies" | "location"
+              | "type"
+              | "material"
+              | "metamorphicFacies"
+              | "location"
+              | "description"
             >).map(publishBlockerLabel);
             const button = (
               <PublishSampleButton
@@ -215,23 +253,9 @@ export function SampleForm({
             {m.tab_sample_classification()}
           </TabsTrigger>
           <TabsTrigger value="type">{m.tab_sample_type()}</TabsTrigger>
-          {/* Synthetic samples must not carry a location (ADR 0014), so the tab
-              is hidden for them; it stays for optional and required materials. */}
-          <form.Subscribe
-            selector={(state) =>
-              locationRequirement(
-                composeHierarchyValue(state.values.materialPath),
-              ) !== "forbidden"
-            }
-          >
-            {(showLocation) =>
-              showLocation ? (
-                <TabsTrigger value="location">
-                  {m.tab_sample_location()}
-                </TabsTrigger>
-              ) : null
-            }
-          </form.Subscribe>
+          <TabsTrigger value="physical-description">
+            {m.tab_physical_description()}
+          </TabsTrigger>
         </TabsList>
 
         {/* Values live in the form store, not the field components, so a field
@@ -304,10 +328,37 @@ export function SampleForm({
           </form.AppField>
         </TabsContent>
 
-        <TabsContent value="location" className="grid gap-4">
-          <form.AppForm>
-            <LocationFields />
-          </form.AppForm>
+        <TabsContent value="physical-description" className="grid gap-6">
+          <section className="grid gap-4">
+            <h2 className="text-lg font-semibold">{m.section_description()}</h2>
+            <form.AppForm>
+              <SampleDescriptionFields />
+            </form.AppForm>
+          </section>
+
+          {/* Synthetic samples must not carry a location (ADR 0014), so the
+              section is hidden for them; it stays for optional and required
+              materials. */}
+          <form.Subscribe
+            selector={(state) =>
+              locationRequirement(
+                composeHierarchyValue(state.values.materialPath),
+              ) !== "forbidden"
+            }
+          >
+            {(showLocation) =>
+              showLocation ? (
+                <section className="grid gap-4">
+                  <h2 className="text-lg font-semibold">
+                    {m.section_location()}
+                  </h2>
+                  <form.AppForm>
+                    <LocationFields />
+                  </form.AppForm>
+                </section>
+              ) : null
+            }
+          </form.Subscribe>
         </TabsContent>
       </Tabs>
 

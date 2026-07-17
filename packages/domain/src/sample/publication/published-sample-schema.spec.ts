@@ -18,6 +18,11 @@ describe("publishedSampleSchema", () => {
   });
 
   it.each([
+    [
+      "collection_date_missing",
+      { ...publishable, description: null },
+      "description.collectionDate",
+    ],
     ["material_missing", { ...publishable, material: null }, "material"],
     ["material_incomplete", { ...publishable, material: "rock" }, "material"],
     ["type_missing", { ...publishable, type: null }, "type"],

@@ -4,7 +4,15 @@ import { page } from "vitest/browser";
 
 import { useAppForm } from "./app-form.tsx";
 
-function Harness({ label, multiline }: { label: string; multiline?: boolean }) {
+function Harness({
+  label,
+  multiline,
+  disabled,
+}: {
+  label: string;
+  multiline?: boolean;
+  disabled?: boolean;
+}) {
   const form = useAppForm({ defaultValues: { name: "" } });
   return (
     <form>
@@ -15,7 +23,13 @@ function Harness({ label, multiline }: { label: string; multiline?: boolean }) {
             value ? undefined : { message: "Name is required" },
         }}
       >
-        {(field) => <field.TextField label={label} multiline={multiline} />}
+        {(field) => (
+          <field.TextField
+            label={label}
+            multiline={multiline}
+            disabled={disabled}
+          />
+        )}
       </form.AppField>
     </form>
   );
@@ -56,6 +70,12 @@ describe("TextField", () => {
 
     await expect.element(textarea).toHaveValue("A fine-grained basalt sample");
     expect(textarea.element().tagName).toBe("TEXTAREA");
+  });
+
+  it("should render a disabled input when disabled", async () => {
+    await render(<Harness label="Sample name" disabled />);
+
+    await expect.element(page.getByLabelText("Sample name")).toBeDisabled();
   });
 
   it("should announce an accessible error when the field is invalid", async () => {

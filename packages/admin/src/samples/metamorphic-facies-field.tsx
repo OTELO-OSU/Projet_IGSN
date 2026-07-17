@@ -6,9 +6,11 @@ import { m } from "#/paraglide/messages.js";
 import { metamorphicFaciesLabel } from "#/samples/sample-labels.ts";
 
 // Metamorphic facies selector: shown only when the chosen material is
-// metamorphic (the vocabulary that applies then). The material field resets this
-// value when the material changes, so a stale facies never survives a switch
-// away from a metamorphic material. Render inside a `form.AppForm`.
+// metamorphic (the vocabulary that applies then), which is exactly when the
+// facies is required to publish, hence the static "*" marker. The material
+// field resets this value when the material changes, so a stale facies never
+// survives a switch away from a metamorphic material. Render inside a
+// `form.AppForm`.
 export function MetamorphicFaciesField() {
   const form = useTypedAppFormContext({
     defaultValues: {} as { materialPath: string[]; metamorphicFacies: string },
@@ -26,7 +28,7 @@ export function MetamorphicFaciesField() {
           <form.AppField name="metamorphicFacies">
             {(field) => (
               <field.ComboboxField
-                label={m.field_metamorphic_facies()}
+                label={`${m.field_metamorphic_facies()} *`}
                 items={items}
                 placeholder={m.metamorphic_facies_placeholder()}
                 searchPlaceholder={m.metamorphic_facies_search_placeholder()}
