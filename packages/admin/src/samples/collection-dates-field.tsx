@@ -1,14 +1,10 @@
-import { Combobox } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
+import { Switch } from "@projet-igsn/design-system/components/ui/switch";
+import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import { useDescriptionForm } from "#/samples/use-description-form.ts";
-
-const modeItems = [
-  { value: "single", label: m.collection_date_mode_single() },
-  { value: "range", label: m.collection_date_mode_range() },
-];
 
 // The collection date group (required to publish, hence the "*" markers). The
 // form store only ever holds the canonical range; the single-date/range mode
@@ -19,18 +15,17 @@ const modeItems = [
 // ends is rejected here, since that is what single mode is for.
 export function CollectionDatesField() {
   const form = useDescriptionForm();
-  const [mode, setMode] = useState<"single" | "range">(() => {
+  const [isRange, setIsRange] = useState(() => {
     const { collectionDateStart, collectionDateEnd } =
       form.state.values.description;
-    return collectionDateStart === collectionDateEnd ? "single" : "range";
+    return collectionDateStart !== collectionDateEnd;
   });
 
-  const selectMode = (value: string) => {
-    if (value !== "single" && value !== "range") return;
-    setMode(value);
+  const toggleRange = (checked: boolean) => {
+    setIsRange(checked);
     // Collapsing a range keeps its start; the end mirrors it again so the
     // store never carries a stale bound the single input cannot show.
-    if (value === "single") {
+    if (!checked) {
       form.setFieldValue(
         "description.collectionDateEnd",
         form.getFieldValue("description.collectionDateStart"),
@@ -60,59 +55,86 @@ export function CollectionDatesField() {
   };
 
   return (
-    <div className="grid gap-4">
-      <div className="grid gap-2">
-        <Label htmlFor="collection-date-mode">
-          {`${m.field_collection_date_mode()} *`}
-        </Label>
-        <Combobox
-          id="collection-date-mode"
-          value={mode}
-          onChange={selectMode}
-          items={modeItems}
-          placeholder={m.collection_date_mode_placeholder()}
-          searchPlaceholder={m.collection_date_mode_search_placeholder()}
-          emptyText={m.collection_date_mode_empty()}
-        />
-      </div>
-      {mode === "single" ? (
-        <form.AppField
-          name="description.collectionDateStart"
-          listeners={{
-            onChange: ({ value }) =>
-              form.setFieldValue("description.collectionDateEnd", value),
-          }}
+    // A legend cannot share its line with the switch, so the group role +
+    // labelledby carries the "Collection date" name instead of a fieldset.
+    <div
+      role="group"
+      aria-labelledby="collection-dates-label"
+      className="grid gap-2"
+    >
+      <div className="flex items-center gap-4">
+        <span
+          id="collection-dates-label"
+          className="text-sm leading-none font-medium"
         >
-          {(field) => (
-            <field.DateField label={`${m.field_collection_date()} *`} />
-          )}
-        </form.AppField>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <form.AppField
-            name="description.collectionDateStart"
-            validators={{
-              onChangeListenTo: ["description.collectionDateEnd"],
-              onChange: identicalRange,
-            }}
-          >
-            {(field) => (
-              <field.DateField label={`${m.field_collection_date_start()} *`} />
-            )}
-          </form.AppField>
-          <form.AppField
-            name="description.collectionDateEnd"
-            validators={{
-              onChangeListenTo: ["description.collectionDateStart"],
-              onChange: identicalRange,
-            }}
-          >
-            {(field) => (
-              <field.DateField label={`${m.field_collection_date_end()} *`} />
-            )}
-          </form.AppField>
+          {withRequired(m.field_collection_dates(), true)}
+        </span>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="collection-date-mode"
+            checked={isRange}
+            onCheckedChange={toggleRange}
+          />
+          <Label htmlFor="collection-date-mode">
+            {m.collection_date_mode_range()}
+          </Label>
         </div>
-      )}
+      </div>
+      <div className="flex flex-wrap items-start gap-4">
+        {isRange ? (
+          <>
+            <div className="flex-1">
+              <form.AppField
+                name="description.collectionDateStart"
+                validators={{
+                  onChangeListenTo: ["description.collectionDateEnd"],
+                  onChange: identicalRange,
+                }}
+              >
+                {(field) => (
+                  <field.DateField
+                    label={m.field_collection_date_start()}
+                    requiredToPublish
+                  />
+                )}
+              </form.AppField>
+            </div>
+            <div className="flex-1">
+              <form.AppField
+                name="description.collectionDateEnd"
+                validators={{
+                  onChangeListenTo: ["description.collectionDateStart"],
+                  onChange: identicalRange,
+                }}
+              >
+                {(field) => (
+                  <field.DateField
+                    label={m.field_collection_date_end()}
+                    requiredToPublish
+                  />
+                )}
+              </form.AppField>
+            </div>
+          </>
+        ) : (
+          <div className="flex-1">
+            <form.AppField
+              name="description.collectionDateStart"
+              listeners={{
+                onChange: ({ value }) =>
+                  form.setFieldValue("description.collectionDateEnd", value),
+              }}
+            >
+              {(field) => (
+                <field.DateField
+                  label={m.field_collection_date()}
+                  requiredToPublish
+                />
+              )}
+            </form.AppField>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

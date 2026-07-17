@@ -27,7 +27,8 @@ export function MaterialField() {
       name="materialPath"
       hierarchy={MATERIAL_HIERARCHY}
       translate={materialPathLabel}
-      rootLabel={`${m.field_material()} *`}
+      rootLabel={m.field_material()}
+      requiredToPublish
       placeholder={m.material_placeholder()}
       searchPlaceholder={m.material_search_placeholder()}
       emptyText={m.material_empty()}

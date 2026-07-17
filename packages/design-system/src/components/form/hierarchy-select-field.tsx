@@ -1,3 +1,4 @@
+import { withRequired } from "../../lib/with-required.ts";
 import { useTypedAppFormContext } from "./app-form.tsx";
 
 // Structural mirror of the domain vocabulary trees (design-system MUST NOT
@@ -108,7 +109,10 @@ export function levelLabel(
   label: string,
   parent: string | null,
 ): string {
-  return parent && !canStopAtPath(hierarchy, parent) ? `${label} *` : label;
+  return withRequired(
+    label,
+    Boolean(parent && !canStopAtPath(hierarchy, parent)),
+  );
 }
 
 // The field holds one value per level (the full path picked at that level); the
@@ -137,6 +141,9 @@ type HierarchySelectFieldProps = {
   translate?: (code: string) => string;
   // Label of the first level; deeper levels are labelled by their parent's value.
   rootLabel: string;
+  // Marks the root label with the trailing "*" publish marker; deeper levels
+  // derive their own from the tree's stop rules.
+  requiredToPublish?: boolean;
   placeholder: string;
   searchPlaceholder: string;
   emptyText: string;
@@ -146,7 +153,10 @@ type HierarchySelectFieldProps = {
   onChange?: () => void;
 };
 
-type HierarchyLevelProps = Omit<HierarchySelectFieldProps, "rootLabel"> & {
+type HierarchyLevelProps = Omit<
+  HierarchySelectFieldProps,
+  "rootLabel" | "requiredToPublish"
+> & {
   depth: number;
   // The selected path whose children this level offers; null at the root.
   parent: string | null;
@@ -226,7 +236,15 @@ function HierarchyLevel({
 // recursively as deep as the taxonomy goes. Render inside a `form.AppForm`.
 export function HierarchySelectField({
   rootLabel,
+  requiredToPublish = false,
   ...rest
 }: HierarchySelectFieldProps) {
-  return <HierarchyLevel {...rest} depth={0} parent={null} label={rootLabel} />;
+  return (
+    <HierarchyLevel
+      {...rest}
+      depth={0}
+      parent={null}
+      label={withRequired(rootLabel, requiredToPublish)}
+    />
+  );
 }

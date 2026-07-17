@@ -10,7 +10,8 @@ export function SampleTypeFields() {
       name="typePath"
       hierarchy={SAMPLE_TYPE_HIERARCHY}
       translate={typeLabel}
-      rootLabel={`${m.field_type()} *`}
+      rootLabel={m.field_type()}
+      requiredToPublish
       placeholder={m.type_placeholder()}
       searchPlaceholder={m.type_search_placeholder()}
       emptyText={m.type_empty()}

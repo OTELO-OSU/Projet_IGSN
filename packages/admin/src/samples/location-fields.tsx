@@ -10,7 +10,6 @@ import { LocationNavigationTypeField } from "#/samples/location-navigation-type-
 import { LocationPointFields } from "#/samples/location-point-fields.tsx";
 import { LocationRegionFields } from "#/samples/location-region-fields.tsx";
 import { useLocationForm } from "#/samples/use-location-form.ts";
-import { withRequired } from "#/samples/with-required.ts";
 
 const typeItems = LOCATION_TYPES.map((value) => ({
   value,
@@ -38,7 +37,8 @@ export function LocationFields() {
           <form.AppField name="location.type">
             {(field) => (
               <field.ComboboxField
-                label={withRequired(m.field_location_type(), required)}
+                label={m.field_location_type()}
+                requiredToPublish={required}
                 items={typeItems}
                 placeholder={m.location_type_placeholder()}
                 searchPlaceholder={m.location_type_search_placeholder()}

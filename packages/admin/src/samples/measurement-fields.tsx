@@ -7,7 +7,6 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 import { useDescriptionForm } from "#/samples/use-description-form.ts";
-import { withRequired } from "#/samples/with-required.ts";
 
 // Size and mass units are language-neutral symbols (their own label); volume
 // units need the display map for superscripts (see volumeUnitLabel).
@@ -73,7 +72,8 @@ export function MeasurementFields() {
               <form.AppField name={`description.${key}Unit`}>
                 {(field) => (
                   <field.ComboboxField
-                    label={withRequired(unitLabel(), required)}
+                    label={unitLabel()}
+                    requiredToPublish={required}
                     items={items}
                     placeholder={m.unit_placeholder()}
                     searchPlaceholder={m.unit_search_placeholder()}
