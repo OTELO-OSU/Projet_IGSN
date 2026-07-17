@@ -54,64 +54,81 @@ export function CollectionDatesField() {
   };
 
   return (
-    <div className="flex flex-wrap items-start gap-4">
-      {/* pt-8 keeps the switch level with the inputs, whose labels sit above. */}
-      <div className="flex items-center gap-2 pt-8">
-        <Switch
-          id="collection-date-mode"
-          checked={isRange}
-          onCheckedChange={toggleRange}
-        />
-        <Label htmlFor="collection-date-mode">
-          {m.collection_date_mode_range()}
-        </Label>
+    // A legend cannot share its line with the switch, so the group role +
+    // labelledby carries the "Collection date" name instead of a fieldset.
+    <div
+      role="group"
+      aria-labelledby="collection-dates-label"
+      className="grid gap-2"
+    >
+      <div className="flex items-center gap-4">
+        <span
+          id="collection-dates-label"
+          className="text-sm leading-none font-medium"
+        >
+          {`${m.field_collection_dates()} *`}
+        </span>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="collection-date-mode"
+            checked={isRange}
+            onCheckedChange={toggleRange}
+          />
+          <Label htmlFor="collection-date-mode">
+            {m.collection_date_mode_range()}
+          </Label>
+        </div>
       </div>
-      {isRange ? (
-        <>
+      <div className="flex flex-wrap items-start gap-4">
+        {isRange ? (
+          <>
+            <div className="flex-1">
+              <form.AppField
+                name="description.collectionDateStart"
+                validators={{
+                  onChangeListenTo: ["description.collectionDateEnd"],
+                  onChange: identicalRange,
+                }}
+              >
+                {(field) => (
+                  <field.DateField
+                    label={`${m.field_collection_date_start()} *`}
+                  />
+                )}
+              </form.AppField>
+            </div>
+            <div className="flex-1">
+              <form.AppField
+                name="description.collectionDateEnd"
+                validators={{
+                  onChangeListenTo: ["description.collectionDateStart"],
+                  onChange: identicalRange,
+                }}
+              >
+                {(field) => (
+                  <field.DateField
+                    label={`${m.field_collection_date_end()} *`}
+                  />
+                )}
+              </form.AppField>
+            </div>
+          </>
+        ) : (
           <div className="flex-1">
             <form.AppField
               name="description.collectionDateStart"
-              validators={{
-                onChangeListenTo: ["description.collectionDateEnd"],
-                onChange: identicalRange,
+              listeners={{
+                onChange: ({ value }) =>
+                  form.setFieldValue("description.collectionDateEnd", value),
               }}
             >
               {(field) => (
-                <field.DateField
-                  label={`${m.field_collection_date_start()} *`}
-                />
+                <field.DateField label={`${m.field_collection_date()} *`} />
               )}
             </form.AppField>
           </div>
-          <div className="flex-1">
-            <form.AppField
-              name="description.collectionDateEnd"
-              validators={{
-                onChangeListenTo: ["description.collectionDateStart"],
-                onChange: identicalRange,
-              }}
-            >
-              {(field) => (
-                <field.DateField label={`${m.field_collection_date_end()} *`} />
-              )}
-            </form.AppField>
-          </div>
-        </>
-      ) : (
-        <div className="flex-1">
-          <form.AppField
-            name="description.collectionDateStart"
-            listeners={{
-              onChange: ({ value }) =>
-                form.setFieldValue("description.collectionDateEnd", value),
-            }}
-          >
-            {(field) => (
-              <field.DateField label={`${m.field_collection_date()} *`} />
-            )}
-          </form.AppField>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

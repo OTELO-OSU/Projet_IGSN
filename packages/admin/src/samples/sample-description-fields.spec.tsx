@@ -42,6 +42,9 @@ describe("SampleDescriptionFields", () => {
 
     // Single date is the default mode: one date input, no range bounds.
     await expect
+      .element(screen.getByRole("group", { name: "Collection date *" }))
+      .toBeVisible();
+    await expect
       .element(screen.getByLabelText("Start date"))
       .not.toBeInTheDocument();
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");

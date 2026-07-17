@@ -142,6 +142,7 @@
   "collection_method_search_placeholder": "Search collection method...",
   "collection_method_empty": "No collection method found",
   "section_description": "Description",
+  "field_collection_dates": "Collection date",
   "collection_date_mode_range": "Date range",
   "field_collection_date": "Date",
   "field_collection_date_start": "Start date",
