@@ -13,6 +13,7 @@ const validSample = {
   collectionMethodDescription: null,
   specificName: null,
   location: null,
+  description: null,
   igsn: null,
   published: false,
   createdAt: "2026-07-02T10:00:00.000Z",
@@ -36,6 +37,7 @@ describe("sampleSchema", () => {
       collectionMethodDescription: null,
       specificName: null,
       location: null,
+      description: null,
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -56,6 +58,19 @@ describe("sampleSchema", () => {
   it("should accept a null type (not classified yet)", () => {
     // Act
     const result = sampleSchema.safeParse({ ...validSample, type: null });
+    // Assert
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept a sample with a description", () => {
+    // Act
+    const result = sampleSchema.safeParse({
+      ...validSample,
+      description: {
+        collectionDate: { start: "2014-10-01", end: "2014-10-24" },
+        mass: { value: 1.2, unit: "kg" },
+      },
+    });
     // Assert
     expect(result.success).toBe(true);
   });
