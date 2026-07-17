@@ -15,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { type CreateSample } from "@projet-igsn/domain/sample/sample";
@@ -269,7 +270,9 @@ export function SampleForm({
                   : { message: m.field_name_required() },
             }}
           >
-            {(field) => <field.TextField label={`${m.field_name()} *`} />}
+            {(field) => (
+              <field.TextField label={withRequired(m.field_name(), true)} />
+            )}
           </form.AppField>
 
           <form.AppForm>
@@ -285,7 +288,7 @@ export function SampleForm({
           >
             {(field) => (
               <field.ComboboxField
-                label={`${m.field_nature()} *`}
+                label={withRequired(m.field_nature(), true)}
                 items={natureItems}
                 placeholder={m.nature_placeholder()}
                 searchPlaceholder={m.nature_search_placeholder()}

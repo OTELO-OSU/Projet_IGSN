@@ -3,6 +3,7 @@ import {
   composeHierarchyValue,
   HierarchySelectField,
 } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { MATERIAL_HIERARCHY } from "@projet-igsn/domain/sample/material/classification";
 import { faciesFor } from "@projet-igsn/domain/sample/metamorphic-facies/vocabulary";
 import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
@@ -27,7 +28,7 @@ export function MaterialField() {
       name="materialPath"
       hierarchy={MATERIAL_HIERARCHY}
       translate={materialPathLabel}
-      rootLabel={`${m.field_material()} *`}
+      rootLabel={withRequired(m.field_material(), true)}
       placeholder={m.material_placeholder()}
       searchPlaceholder={m.material_search_placeholder()}
       emptyText={m.material_empty()}

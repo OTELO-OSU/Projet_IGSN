@@ -1,3 +1,4 @@
+import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { ELEVATION_UNITS } from "@projet-igsn/domain/sample/location/elevation-unit";
 import { VERTICAL_DATUMS } from "@projet-igsn/domain/sample/location/vertical-datum";
 
@@ -5,7 +6,6 @@ import { m } from "#/paraglide/messages.js";
 import { type LocationDraft } from "#/samples/compose-location.ts";
 import { verticalDatumLabel } from "#/samples/location-label.ts";
 import { useLocationForm } from "#/samples/use-location-form.ts";
-import { withRequired } from "#/samples/with-required.ts";
 
 // An elevation value is meaningless without its unit and datum, so both are
 // required as soon as a value is entered, even in a draft (ADR 0014). Scoped to

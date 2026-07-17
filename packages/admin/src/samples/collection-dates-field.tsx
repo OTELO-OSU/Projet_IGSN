@@ -1,5 +1,6 @@
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
+import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
@@ -66,7 +67,7 @@ export function CollectionDatesField() {
           id="collection-dates-label"
           className="text-sm leading-none font-medium"
         >
-          {`${m.field_collection_dates()} *`}
+          {withRequired(m.field_collection_dates(), true)}
         </span>
         <div className="flex items-center gap-2">
           <Switch
@@ -92,7 +93,7 @@ export function CollectionDatesField() {
               >
                 {(field) => (
                   <field.DateField
-                    label={`${m.field_collection_date_start()} *`}
+                    label={withRequired(m.field_collection_date_start(), true)}
                   />
                 )}
               </form.AppField>
@@ -107,7 +108,7 @@ export function CollectionDatesField() {
               >
                 {(field) => (
                   <field.DateField
-                    label={`${m.field_collection_date_end()} *`}
+                    label={withRequired(m.field_collection_date_end(), true)}
                   />
                 )}
               </form.AppField>
@@ -123,7 +124,9 @@ export function CollectionDatesField() {
               }}
             >
               {(field) => (
-                <field.DateField label={`${m.field_collection_date()} *`} />
+                <field.DateField
+                  label={withRequired(m.field_collection_date(), true)}
+                />
               )}
             </form.AppField>
           </div>

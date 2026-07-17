@@ -1,4 +1,5 @@
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { locationRequirement } from "@projet-igsn/domain/sample/location/location-requirement";
 import { LOCATION_TYPES } from "@projet-igsn/domain/sample/location/location-type";
 
@@ -10,7 +11,6 @@ import { LocationNavigationTypeField } from "#/samples/location-navigation-type-
 import { LocationPointFields } from "#/samples/location-point-fields.tsx";
 import { LocationRegionFields } from "#/samples/location-region-fields.tsx";
 import { useLocationForm } from "#/samples/use-location-form.ts";
-import { withRequired } from "#/samples/with-required.ts";
 
 const typeItems = LOCATION_TYPES.map((value) => ({
   value,

@@ -1,3 +1,4 @@
+import { withRequired } from "../../lib/with-required.ts";
 import { useTypedAppFormContext } from "./app-form.tsx";
 
 // Structural mirror of the domain vocabulary trees (design-system MUST NOT
@@ -108,7 +109,10 @@ export function levelLabel(
   label: string,
   parent: string | null,
 ): string {
-  return parent && !canStopAtPath(hierarchy, parent) ? `${label} *` : label;
+  return withRequired(
+    label,
+    Boolean(parent && !canStopAtPath(hierarchy, parent)),
+  );
 }
 
 // The field holds one value per level (the full path picked at that level); the

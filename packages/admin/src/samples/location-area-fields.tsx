@@ -1,7 +1,8 @@
+import { withRequired } from "@projet-igsn/design-system/lib/with-required";
+
 import { m } from "#/paraglide/messages.js";
 import { elevationIntegerError } from "#/samples/elevation-integer-error.ts";
 import { useLocationForm } from "#/samples/use-location-form.ts";
-import { withRequired } from "#/samples/with-required.ts";
 
 const boundFields = [
   ["location.westLongitude", m.field_west_longitude],

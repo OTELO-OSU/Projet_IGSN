@@ -1,3 +1,4 @@
+import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { MASS_UNITS } from "@projet-igsn/domain/sample/description/mass-unit";
 import { SIZE_UNITS } from "@projet-igsn/domain/sample/description/size-unit";
 import {
@@ -7,7 +8,6 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 import { useDescriptionForm } from "#/samples/use-description-form.ts";
-import { withRequired } from "#/samples/with-required.ts";
 
 // Size and mass units are language-neutral symbols (their own label); volume
 // units need the display map for superscripts (see volumeUnitLabel).
