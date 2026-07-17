@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { measurementSchema } from "../measurement.ts";
 import { isFutureDate } from "./is-future-date.ts";
 import { massUnitSchema } from "./mass-unit.ts";
 import { sizeUnitSchema } from "./size-unit.ts";
@@ -11,12 +12,6 @@ import { volumeUnitSchema } from "./volume-unit.ts";
 // nameSchema is not imported from sample.ts: sample.ts imports this module, so
 // the dependency must not run the other way (same seam as location/model.ts).
 const freeText = z.string().trim().min(1);
-
-// A measurement pairs a value with its unit, both required once the object is
-// present: "the unit is mandatory exactly when its value is set" holds
-// structurally, no refinement to forget (ADR 0015).
-const measurementSchema = <U extends z.ZodType>(unit: U) =>
-  z.object({ value: z.number().positive(), unit });
 
 // Collection period, date-only ISO strings (no time, no timezone). A single
 // collection date is the degenerate range start === end (ADR 0015).

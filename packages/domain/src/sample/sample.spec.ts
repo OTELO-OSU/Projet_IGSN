@@ -14,6 +14,7 @@ const validSample = {
   specificName: null,
   location: null,
   description: null,
+  condition: null,
   igsn: null,
   published: false,
   createdAt: "2026-07-02T10:00:00.000Z",
@@ -38,6 +39,7 @@ describe("sampleSchema", () => {
       specificName: null,
       location: null,
       description: null,
+      condition: null,
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -69,6 +71,22 @@ describe("sampleSchema", () => {
       description: {
         collectionDate: { start: "2014-10-01", end: "2014-10-24" },
         mass: { value: 1.2, unit: "kg" },
+      },
+    });
+    // Assert
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept a sample with a condition", () => {
+    // Act
+    const result = sampleSchema.safeParse({
+      ...validSample,
+      condition: {
+        packaging: "glass_bottle",
+        temperature: {
+          type: "frozen",
+          measurement: { value: -18, unit: "celsius" },
+        },
       },
     });
     // Assert

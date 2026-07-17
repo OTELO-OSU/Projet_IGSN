@@ -1,6 +1,12 @@
 import type Catalog from "../../messages/en.json";
 
 import { collectionMethodLabelKey } from "./collection-method/label.ts";
+import { type HumidityType } from "./condition/humidity-type.ts";
+import { type Light } from "./condition/light.ts";
+import { type Packaging } from "./condition/packaging.ts";
+import { type PressureType } from "./condition/pressure-type.ts";
+import { type StorageCondition } from "./condition/storage-condition.ts";
+import { type TemperatureType } from "./condition/temperature-type.ts";
 import { materialLabelKey } from "./material/label.ts";
 import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
 import { type Nature } from "./nature.ts";
@@ -21,6 +27,13 @@ type AssertKeys<T extends MessageKey> = T;
 type _natureKeys = AssertKeys<`nature_${Nature}`>;
 type _textureKeys = AssertKeys<`texture_${Texture}`>;
 type _faciesKeys = AssertKeys<`metamorphic_facies_${MetamorphicFacies}`>;
+type _packagingKeys = AssertKeys<`packaging_${Packaging}`>;
+type _storageConditionKeys =
+  AssertKeys<`storage_condition_${StorageCondition}`>;
+type _temperatureTypeKeys = AssertKeys<`temperature_${TemperatureType}`>;
+type _humidityTypeKeys = AssertKeys<`humidity_${HumidityType}`>;
+type _lightKeys = AssertKeys<`light_${Light}`>;
+type _pressureTypeKeys = AssertKeys<`pressure_${PressureType}`>;
 
 // A message catalog: the app's compiled paraglide `m`, keyed by the catalog's
 // own message keys (minus the `$`-prefixed metadata entries, e.g. `$schema`,
@@ -39,6 +52,12 @@ export type SampleLabels = {
   textureLabel: (texture: Texture) => string;
   metamorphicFaciesLabel: (facies: MetamorphicFacies) => string;
   natureLabel: (nature: Nature) => string;
+  packagingLabel: (packaging: Packaging) => string;
+  storageConditionLabel: (storageCondition: StorageCondition) => string;
+  temperatureTypeLabel: (type: TemperatureType) => string;
+  humidityTypeLabel: (type: HumidityType) => string;
+  lightLabel: (light: Light) => string;
+  pressureTypeLabel: (type: PressureType) => string;
 };
 
 // The sample label resolvers, bound to one app's message catalog. Paraglide
@@ -55,5 +74,14 @@ export function createSampleLabels(m: Messages): SampleLabels {
       m,
     ),
     natureLabel: vocabularyLabel((nature) => `nature_${nature}`, m),
+    packagingLabel: vocabularyLabel((packaging) => `packaging_${packaging}`, m),
+    storageConditionLabel: vocabularyLabel(
+      (storageCondition) => `storage_condition_${storageCondition}`,
+      m,
+    ),
+    temperatureTypeLabel: vocabularyLabel((type) => `temperature_${type}`, m),
+    humidityTypeLabel: vocabularyLabel((type) => `humidity_${type}`, m),
+    lightLabel: vocabularyLabel((light) => `light_${light}`, m),
+    pressureTypeLabel: vocabularyLabel((type) => `pressure_${type}`, m),
   };
 }

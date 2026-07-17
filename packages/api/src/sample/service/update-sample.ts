@@ -5,6 +5,7 @@ import { sql } from "kysely";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
+import { conditionColumns } from "./condition-columns.ts";
 import { descriptionColumns } from "./description-columns.ts";
 import { locationColumns } from "./to-location.ts";
 import { toSample } from "./to-sample.ts";
@@ -29,6 +30,7 @@ export async function updateSample(
       specific_name: input.specificName ?? null,
       ...descriptionColumns(input.description),
       ...locationColumns(input.location),
+      ...conditionColumns(input.condition),
       updated_at: sql`now()`,
     })
     .where("id", "=", id)

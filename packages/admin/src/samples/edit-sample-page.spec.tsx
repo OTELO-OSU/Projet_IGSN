@@ -48,6 +48,7 @@ function fakeApi(
     specificName: "MC-2026-007",
     location: { position: { type: "point", longitude: 3, latitude: 45 } },
     description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
+    condition: null,
     igsn: published ? IGSN : null,
     published,
     createdAt: "2026-06-01T00:00:00.000Z",
