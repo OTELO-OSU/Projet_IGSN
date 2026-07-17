@@ -123,21 +123,18 @@ describe("sample location persistence", () => {
     });
   });
 
-  pgTest(
-    "should delete the location row when updated to null",
-    async ({ db }) => {
-      const created = await insertSample(db, {
-        ...base,
-        location: { position: { type: "point", longitude: 1, latitude: 1 } },
-      });
-      const updated = await updateSample(db, created.id, {
-        ...base,
-        location: null,
-      });
-      expect(updated?.location).toBeNull();
-      expect((await getSample(db, created.id))?.location).toBeNull();
-    },
-  );
+  pgTest("should clear the location when updated to null", async ({ db }) => {
+    const created = await insertSample(db, {
+      ...base,
+      location: { position: { type: "point", longitude: 1, latitude: 1 } },
+    });
+    const updated = await updateSample(db, created.id, {
+      ...base,
+      location: null,
+    });
+    expect(updated?.location).toBeNull();
+    expect((await getSample(db, created.id))?.location).toBeNull();
+  });
 
   pgTest("should return the location in a list", async ({ db }) => {
     const created = await insertSample(db, {
@@ -162,16 +159,16 @@ describe("sample location persistence", () => {
           position: { type: "point", longitude: 2.35, latitude: 48.85 },
         },
       });
-      const inFrance = await sql<{ sample_id: string }>`
-        SELECT sample_id FROM location
+      const inFrance = await sql<{ id: string }>`
+        SELECT id FROM sample
         WHERE ST_Intersects(geom, ST_MakeEnvelope(0, 43, 7, 50, 4326)::geography)
       `.execute(db);
-      const inJapan = await sql<{ sample_id: string }>`
-        SELECT sample_id FROM location
+      const inJapan = await sql<{ id: string }>`
+        SELECT id FROM sample
         WHERE ST_Intersects(geom, ST_MakeEnvelope(135, 34, 140, 36, 4326)::geography)
       `.execute(db);
-      expect(inFrance.rows.map((r) => r.sample_id)).toContain(paris.id);
-      expect(inJapan.rows.map((r) => r.sample_id)).not.toContain(paris.id);
+      expect(inFrance.rows.map((r) => r.id)).toContain(paris.id);
+      expect(inJapan.rows.map((r) => r.id)).not.toContain(paris.id);
     },
   );
 });

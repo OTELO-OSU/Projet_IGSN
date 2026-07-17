@@ -2,7 +2,10 @@
 
 ## Status
 
-Accepted
+Accepted, amended: the separate 1:1 `location` table proved needless (the
+location is always read and written with its sample), so its columns now live
+on `sample`, `type` renamed `location_type`. The PostGIS, raw-coordinate, and
+generated `geom` decisions stand unchanged.
 
 ## Context
 

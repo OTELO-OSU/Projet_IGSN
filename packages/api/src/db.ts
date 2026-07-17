@@ -45,19 +45,11 @@ type SampleTable = {
   mass_unit: string | null;
   volume_value: number | null;
   volume_unit: string | null;
-  // Null until the sample is published; then derived from the id with generateIgsnSuffix.
-  igsn: string | null;
-  published: Generated<boolean>;
-  created_at: Generated<Date>;
-  updated_at: Generated<Date>;
-};
-
-// A sample's location (ADR 0014), 1:1 with sample via sample_id. Raw coordinate
-// columns round-trip as JS numbers; `geom` is a DB-generated geography (never
-// inserted, never selected into the app), referenced only in spatial predicates.
-type LocationTable = {
-  sample_id: string;
-  type: string | null;
+  // Location (ADR 0014). `location_type` (point/area), not `type`: that is the
+  // taxonomy path above. Raw coordinate columns round-trip as JS numbers;
+  // `geom` is a DB-generated geography (never inserted), referenced only in
+  // spatial predicates.
+  location_type: string | null;
   point_longitude: number | null;
   point_latitude: number | null;
   area_west_longitude: number | null;
@@ -74,12 +66,16 @@ type LocationTable = {
   ocean_sea: string | null;
   locality_name: string | null;
   locality_description: string | null;
-  geom: Generated<string>;
+  geom: Generated<string | null>;
+  // Null until the sample is published; then derived from the id with generateIgsnSuffix.
+  igsn: string | null;
+  published: Generated<boolean>;
+  created_at: Generated<Date>;
+  updated_at: Generated<Date>;
 };
 
 export type DB = {
   sample: SampleTable;
-  location: LocationTable;
 };
 
 const dbConfigSchema = z.object({
