@@ -62,8 +62,7 @@ describe("SampleDescriptionFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
-    await screen.getByRole("combobox", { name: "Collection date" }).click();
-    await screen.getByRole("option", { name: "Date range" }).click();
+    await screen.getByRole("switch", { name: "Date range" }).click();
     await screen.getByLabelText("Start date").fill("2026-01-05");
     await screen.getByLabelText("End date").fill("2026-02-10");
     await screen.getByRole("button", { name: "Create" }).click();
@@ -109,12 +108,10 @@ describe("SampleDescriptionFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
-    await screen.getByRole("combobox", { name: "Collection date" }).click();
-    await screen.getByRole("option", { name: "Date range" }).click();
+    await screen.getByRole("switch", { name: "Date range" }).click();
     await screen.getByLabelText("Start date").fill("2026-01-05");
     await screen.getByLabelText("End date").fill("2026-02-10");
-    await screen.getByRole("combobox", { name: "Collection date" }).click();
-    await screen.getByRole("option", { name: "Single date" }).click();
+    await screen.getByRole("switch", { name: "Date range" }).click();
 
     await expect
       .element(screen.getByLabelText("Date *", { exact: true }))
@@ -136,8 +133,7 @@ describe("SampleDescriptionFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
-    await screen.getByRole("combobox", { name: "Collection date" }).click();
-    await screen.getByRole("option", { name: "Date range" }).click();
+    await screen.getByRole("switch", { name: "Date range" }).click();
     await screen.getByLabelText("Start date").fill("2026-01-05");
     await screen.getByLabelText("End date").fill("2026-01-05");
 
@@ -152,8 +148,7 @@ describe("SampleDescriptionFields", () => {
     expect(onSubmit).not.toHaveBeenCalled();
 
     // Following the advice clears the error and submits the degenerate range.
-    await screen.getByRole("combobox", { name: "Collection date" }).click();
-    await screen.getByRole("option", { name: "Single date" }).click();
+    await screen.getByRole("switch", { name: "Date range" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -171,8 +166,7 @@ describe("SampleDescriptionFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
-    await screen.getByRole("combobox", { name: "Collection date" }).click();
-    await screen.getByRole("option", { name: "Date range" }).click();
+    await screen.getByRole("switch", { name: "Date range" }).click();
     await screen.getByLabelText("Start date").fill("2026-02-10");
     await screen.getByLabelText("End date").fill("2026-01-05");
 
