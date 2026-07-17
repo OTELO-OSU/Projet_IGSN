@@ -55,6 +55,12 @@ db-reset:								## Fully reset the dev Postgres database, then re-run migration
 		psql -U igsn -d igsn -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 	@docker compose -f docker-compose.dev.yml run --rm api pnpm -F @projet-igsn/api migrate
 
+material-tree:							## Dump the full material tree, indented by depth
+	@pnpm -F @projet-igsn/domain material-tree
+
+material-tree-json:						## Dump the material vocabulary structure as JSON
+	@pnpm -F @projet-igsn/domain material-tree:json
+
 generate-routes:
 	@pnpm -F @projet-igsn/frontend generate-routes
 

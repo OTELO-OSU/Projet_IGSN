@@ -6,6 +6,10 @@
   "exports": {
     "./*": "./src/*.ts"
   },
+  "scripts": {
+    "material-tree": "node scripts/dump-material-tree.ts",
+    "material-tree:json": "node scripts/dump-material-json.ts"
+  },
   "dependencies": {
     "zod": "catalog:"
   },
