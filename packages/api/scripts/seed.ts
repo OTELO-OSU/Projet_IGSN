@@ -1,4 +1,4 @@
-import type { Kysely } from "kysely";
+import type { Kysely, Selectable } from "kysely";
 import type { z } from "zod";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
@@ -18,13 +18,10 @@ export async function seed(
   db: Kysely<DB>,
   samples: SeedSample[],
 ): Promise<
-  {
-    id: string;
-    name: string;
-    nature: string;
-    igsn: string | null;
-    published: boolean;
-  }[]
+  Pick<
+    Selectable<DB["sample"]>,
+    "id" | "name" | "nature" | "igsn" | "published"
+  >[]
 > {
   return (
     db
