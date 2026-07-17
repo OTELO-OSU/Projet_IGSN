@@ -93,7 +93,8 @@ export function CollectionDatesField() {
               >
                 {(field) => (
                   <field.DateField
-                    label={withRequired(m.field_collection_date_start(), true)}
+                    label={m.field_collection_date_start()}
+                    requiredToPublish
                   />
                 )}
               </form.AppField>
@@ -108,7 +109,8 @@ export function CollectionDatesField() {
               >
                 {(field) => (
                   <field.DateField
-                    label={withRequired(m.field_collection_date_end(), true)}
+                    label={m.field_collection_date_end()}
+                    requiredToPublish
                   />
                 )}
               </form.AppField>
@@ -125,7 +127,8 @@ export function CollectionDatesField() {
             >
               {(field) => (
                 <field.DateField
-                  label={withRequired(m.field_collection_date(), true)}
+                  label={m.field_collection_date()}
+                  requiredToPublish
                 />
               )}
             </form.AppField>

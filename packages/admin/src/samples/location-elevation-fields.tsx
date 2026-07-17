@@ -1,4 +1,3 @@
-import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { ELEVATION_UNITS } from "@projet-igsn/domain/sample/location/elevation-unit";
 import { VERTICAL_DATUMS } from "@projet-igsn/domain/sample/location/vertical-datum";
 
@@ -87,7 +86,8 @@ export function LocationElevationFields() {
                 >
                   {(field) => (
                     <field.ComboboxField
-                      label={withRequired(label(), required)}
+                      label={label()}
+                      requiredToPublish={required}
                       items={items}
                       placeholder={placeholder()}
                       searchPlaceholder={searchPlaceholder()}

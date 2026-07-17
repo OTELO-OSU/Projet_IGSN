@@ -1,3 +1,4 @@
+import { withRequired } from "../../lib/with-required.ts";
 import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
 import { Textarea } from "../ui/textarea.tsx";
@@ -16,11 +17,15 @@ export function TextField({
   multiline = false,
   number = false,
   disabled = false,
+  // Marks the label with a trailing "*"; never the native required attribute,
+  // a draft must save without the value.
+  requiredToPublish = false,
 }: {
   label: string;
   multiline?: boolean;
   number?: boolean;
   disabled?: boolean;
+  requiredToPublish?: boolean;
 }) {
   const field = useFieldContext<string | number | null | undefined>();
   const error = field.state.meta.errors[0];
@@ -28,7 +33,9 @@ export function TextField({
   const Control = multiline ? Textarea : Input;
   return (
     <div className="grid gap-2">
-      <Label htmlFor={field.name}>{label}</Label>
+      <Label htmlFor={field.name}>
+        {withRequired(label, requiredToPublish)}
+      </Label>
       <Control
         id={field.name}
         // step="any" allows decimals.

@@ -8,10 +8,12 @@ function Harness({
   label,
   multiline,
   disabled,
+  requiredToPublish,
 }: {
   label: string;
   multiline?: boolean;
   disabled?: boolean;
+  requiredToPublish?: boolean;
 }) {
   const form = useAppForm({ defaultValues: { name: "" } });
   return (
@@ -28,6 +30,7 @@ function Harness({
             label={label}
             multiline={multiline}
             disabled={disabled}
+            requiredToPublish={requiredToPublish}
           />
         )}
       </form.AppField>
@@ -60,6 +63,12 @@ describe("TextField", () => {
     await input.fill("Basalt 42");
 
     await expect.element(input).toHaveValue("Basalt 42");
+  });
+
+  it("should mark the label with a trailing * when requiredToPublish", async () => {
+    await render(<Harness label="Sample name" requiredToPublish />);
+
+    await expect.element(page.getByLabelText("Sample name *")).toBeVisible();
   });
 
   it("should render a labelled textarea when multiline", async () => {

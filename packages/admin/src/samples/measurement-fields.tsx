@@ -1,4 +1,3 @@
-import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { MASS_UNITS } from "@projet-igsn/domain/sample/description/mass-unit";
 import { SIZE_UNITS } from "@projet-igsn/domain/sample/description/size-unit";
 import {
@@ -73,7 +72,8 @@ export function MeasurementFields() {
               <form.AppField name={`description.${key}Unit`}>
                 {(field) => (
                   <field.ComboboxField
-                    label={withRequired(unitLabel(), required)}
+                    label={unitLabel()}
+                    requiredToPublish={required}
                     items={items}
                     placeholder={m.unit_placeholder()}
                     searchPlaceholder={m.unit_search_placeholder()}

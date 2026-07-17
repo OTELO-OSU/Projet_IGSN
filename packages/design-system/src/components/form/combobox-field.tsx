@@ -1,3 +1,4 @@
+import { withRequired } from "../../lib/with-required.ts";
 import { Combobox, type ComboboxItem } from "../ui/combobox.tsx";
 import { Label } from "../ui/label.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
@@ -9,9 +10,14 @@ type ComboboxFieldProps = {
   searchPlaceholder: string;
   emptyText: string;
   disabled?: boolean;
+  requiredToPublish?: boolean;
 };
 
-export function ComboboxField({ label, ...combobox }: ComboboxFieldProps) {
+export function ComboboxField({
+  label,
+  requiredToPublish = false,
+  ...combobox
+}: ComboboxFieldProps) {
   const field = useFieldContext<string | null | undefined>();
   // Only surface an error once the user has touched the field, so a requirement
   // triggered by a sibling change (e.g. unit becomes required when an elevation
@@ -23,7 +29,9 @@ export function ComboboxField({ label, ...combobox }: ComboboxFieldProps) {
   const errorId = `${field.name}-error`;
   return (
     <div className="grid gap-2">
-      <Label htmlFor={field.name}>{label}</Label>
+      <Label htmlFor={field.name}>
+        {withRequired(label, requiredToPublish)}
+      </Label>
       <Combobox
         id={field.name}
         // The Combobox primitive speaks "" for "no selection"; the form store

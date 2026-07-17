@@ -1,5 +1,4 @@
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
-import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { locationRequirement } from "@projet-igsn/domain/sample/location/location-requirement";
 import { LOCATION_TYPES } from "@projet-igsn/domain/sample/location/location-type";
 
@@ -38,7 +37,8 @@ export function LocationFields() {
           <form.AppField name="location.type">
             {(field) => (
               <field.ComboboxField
-                label={withRequired(m.field_location_type(), required)}
+                label={m.field_location_type()}
+                requiredToPublish={required}
                 items={typeItems}
                 placeholder={m.location_type_placeholder()}
                 searchPlaceholder={m.location_type_search_placeholder()}

@@ -1,6 +1,5 @@
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
-import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { faciesFor } from "@projet-igsn/domain/sample/metamorphic-facies/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
@@ -29,7 +28,8 @@ export function MetamorphicFaciesField() {
           <form.AppField name="metamorphicFacies">
             {(field) => (
               <field.ComboboxField
-                label={withRequired(m.field_metamorphic_facies(), true)}
+                label={m.field_metamorphic_facies()}
+                requiredToPublish
                 items={items}
                 placeholder={m.metamorphic_facies_placeholder()}
                 searchPlaceholder={m.metamorphic_facies_search_placeholder()}

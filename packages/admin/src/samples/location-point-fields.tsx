@@ -1,5 +1,3 @@
-import { withRequired } from "@projet-igsn/design-system/lib/with-required";
-
 import { m } from "#/paraglide/messages.js";
 import { elevationIntegerError } from "#/samples/elevation-integer-error.ts";
 import { useLocationForm } from "#/samples/use-location-form.ts";
@@ -12,14 +10,16 @@ export function LocationPointFields({ required }: { required: boolean }) {
       <form.AppField name="location.longitude">
         {(field) => (
           <field.NumberField
-            label={withRequired(m.field_longitude(), required)}
+            label={m.field_longitude()}
+            requiredToPublish={required}
           />
         )}
       </form.AppField>
       <form.AppField name="location.latitude">
         {(field) => (
           <field.NumberField
-            label={withRequired(m.field_latitude(), required)}
+            label={m.field_latitude()}
+            requiredToPublish={required}
           />
         )}
       </form.AppField>

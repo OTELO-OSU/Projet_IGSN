@@ -1,5 +1,3 @@
-import { withRequired } from "@projet-igsn/design-system/lib/with-required";
-
 import { m } from "#/paraglide/messages.js";
 import { elevationIntegerError } from "#/samples/elevation-integer-error.ts";
 import { useLocationForm } from "#/samples/use-location-form.ts";
@@ -36,7 +34,7 @@ export function LocationAreaFields({ required }: { required: boolean }) {
       {boundFields.map(([name, label]) => (
         <form.AppField key={name} name={name}>
           {(field) => (
-            <field.NumberField label={withRequired(label(), required)} />
+            <field.NumberField label={label()} requiredToPublish={required} />
           )}
         </form.AppField>
       ))}
@@ -63,7 +61,8 @@ export function LocationAreaFields({ required }: { required: boolean }) {
             >
               {(field) => (
                 <field.NumberField
-                  label={withRequired(label(), isSet[siblingKey])}
+                  label={label()}
+                  requiredToPublish={isSet[siblingKey]}
                 />
               )}
             </form.AppField>
