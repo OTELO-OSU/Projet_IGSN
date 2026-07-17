@@ -42,6 +42,7 @@ function SampleDetail() {
       metamorphicFacies={sample.metamorphicFacies}
       collectionMethod={sample.collectionMethod}
       collectionMethodDescription={sample.collectionMethodDescription}
+      description={sample.description}
       location={sample.location}
     />
   );

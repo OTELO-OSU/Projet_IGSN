@@ -2,6 +2,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { ChevronRightIcon } from "lucide-react";
 
+import { DescriptionView } from "#/domain/samples/description-view.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
 import {
@@ -24,6 +25,7 @@ type SampleViewProps = {
   metamorphicFacies: Sample["metamorphicFacies"];
   collectionMethod: Sample["collectionMethod"];
   collectionMethodDescription: Sample["collectionMethodDescription"];
+  description: Sample["description"];
   location: Sample["location"];
 };
 
@@ -68,6 +70,7 @@ export function SampleView({
   metamorphicFacies,
   collectionMethod,
   collectionMethodDescription,
+  description,
   location,
 }: SampleViewProps) {
   return (
@@ -90,6 +93,16 @@ export function SampleView({
                 {m.sample_section_sample()}
               </a>
             </li>
+            {description ? (
+              <li>
+                <a
+                  href="#description"
+                  className="border-l-2 border-sky-800 pl-3 font-medium text-sky-900"
+                >
+                  {m.sample_section_description()}
+                </a>
+              </li>
+            ) : null}
             {location ? (
               <li>
                 <a
@@ -206,6 +219,22 @@ export function SampleView({
               ) : null}
             </dl>
           </section>
+
+          {description ? (
+            <section
+              id="description"
+              aria-labelledby="description-heading"
+              className="mt-8"
+            >
+              <h2
+                id="description-heading"
+                className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
+              >
+                {m.sample_section_description()}
+              </h2>
+              <DescriptionView description={description} />
+            </section>
+          ) : null}
 
           {location ? (
             <section

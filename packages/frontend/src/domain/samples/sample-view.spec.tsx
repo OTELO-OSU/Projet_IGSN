@@ -15,6 +15,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
+        description={null}
         location={null}
       />,
     );
@@ -39,6 +40,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={null}
       />,
     );
@@ -58,6 +60,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={null}
       />,
     );
@@ -85,6 +88,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={null}
       />,
     );
@@ -111,6 +115,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={null}
       />,
     );
@@ -130,6 +135,7 @@ describe("SampleView", () => {
         metamorphicFacies="amphibolite"
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={null}
       />,
     );
@@ -151,6 +157,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
+        description={null}
         location={null}
       />,
     );
@@ -181,6 +188,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription="Cored at low tide from the reef flat"
+        description={null}
         location={null}
       />,
     );
@@ -205,6 +213,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={null}
       />,
     );
@@ -224,6 +233,36 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByRole("heading", { name: "Location" }))
       .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("heading", { name: "Description" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show the description section with its rows when set", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        description={{
+          collectionDate: { start: "2024-03-05", end: "2024-03-05" },
+          mass: { value: 1.4, unit: "kg" },
+        }}
+        location={null}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Description" }))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("March 5, 2024")).toBeInTheDocument();
+    await expect.element(screen.getByText("1.4 kg")).toBeInTheDocument();
   });
 
   it("should show a point location with its coordinates, elevation and navigation type", async () => {
@@ -238,6 +277,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={{
           position: {
             type: "point",
@@ -281,6 +321,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={{
           position: {
             type: "area",
@@ -335,6 +376,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={{ region: { kind: "continent", country: "FR" } }}
       />,
     );
@@ -355,6 +397,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={{ region: { kind: "ocean", oceanSea: "pacific_ocean" } }}
       />,
     );
@@ -382,6 +425,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={{ region }}
       />,
     );
@@ -402,6 +446,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        description={null}
         location={{
           localityName: "Reef flat",
           localityDescription: "Southern reef flat, Tahiti",
