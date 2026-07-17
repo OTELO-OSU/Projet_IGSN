@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
@@ -44,6 +45,48 @@ function Harness({ disabled }: { disabled?: boolean } = {}) {
   );
 }
 
+// The field mounts only on demand (like a form tab): a submit while it is
+// hidden cannot mark it touched, yet its submit error must show once visible.
+function HiddenFieldHarness() {
+  const [visible, setVisible] = useState(false);
+  const form = useAppForm({
+    defaultValues: { nature: "" },
+    validators: {
+      onSubmit: ({ value }: { value: { nature: string } }) =>
+        value.nature
+          ? undefined
+          : { fields: { nature: { message: "Nature is required" } } },
+    },
+    onSubmit: () => {},
+  });
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        void form.handleSubmit();
+      }}
+    >
+      {visible ? (
+        <form.AppField name="nature">
+          {(field) => (
+            <field.ComboboxField
+              label="Nature"
+              items={items}
+              placeholder="Select a nature"
+              searchPlaceholder="Search nature..."
+              emptyText="No nature found"
+            />
+          )}
+        </form.AppField>
+      ) : null}
+      <button type="button" onClick={() => setVisible(true)}>
+        Show
+      </button>
+      <button type="submit">Publish</button>
+    </form>
+  );
+}
+
 describe("ComboboxField", () => {
   it("should show the placeholder until an item is selected", async () => {
     await render(<Harness />);
@@ -84,6 +127,17 @@ describe("ComboboxField", () => {
     await expect
       .element(page.getByRole("combobox", { name: "Nature" }))
       .toBeDisabled();
+  });
+
+  it("should show a submit error on a field that was hidden at submit time", async () => {
+    await render(<HiddenFieldHarness />);
+
+    await page.getByRole("button", { name: "Publish" }).click();
+    await page.getByRole("button", { name: "Show" }).click();
+
+    await expect
+      .element(page.getByRole("alert"))
+      .toHaveTextContent("Nature is required");
   });
 
   it("should announce an accessible error when invalid", async () => {

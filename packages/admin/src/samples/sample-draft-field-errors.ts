@@ -14,15 +14,36 @@ const MEASUREMENT_PATH =
 const READING_PATH =
   /^condition\.(temperature|pressure)\.measurement\.(value|unit)$/;
 
+// Domain value -> the hierarchy draft field holding its per-level walk. Every
+// HierarchySelectField in the form needs an entry here: the widget registers
+// one field per level (`name[depth]`), never the bare name, so an issue on the
+// domain value pins on the next level to refine (the combobox after the
+// deepest pick, the one the user must act on) or it would render nowhere.
+const HIERARCHY_PATHS = {
+  type: "typePath",
+  material: "materialPath",
+  collectionMethod: "collectionMethodPath",
+} as const;
+
+// The draft fields the mapping reads: the location mode (elevation pinning)
+// and the hierarchy paths, whose depth decides which level combobox an issue
+// pins on.
+type DraftContext = {
+  typePath: string[];
+  materialPath: string[];
+  collectionMethodPath: string[];
+  location: Pick<LocationDraft, "type">;
+};
+
 // Maps a domain-schema issue path (composed CreateSample shape) back to the
 // flat draft field that produced the value. Elevation min/max both come from
 // the single value input when the geometry is a point (degenerate range); the
 // collection date always maps to its range bounds (in single mode the visible
-// input is the start field, mirrored into the end).
-const draftFieldName = (
-  path: string,
-  locationType: LocationDraft["type"],
-): string => {
+// input is the start field, mirrored into the end). A hierarchy issue pins on
+// the next level to refine (the combobox after the deepest pick), the one the
+// user must act on; an error on the bare path name would render nowhere.
+const draftFieldName = (path: string, draft: DraftContext): string => {
+  const locationType = draft.location.type;
   if (path.startsWith("location.position.elevation.min"))
     return locationType === "point"
       ? "location.elevationValue"
@@ -63,9 +84,8 @@ const draftFieldName = (
   if (path === "condition.humidity.type") return "condition.humidityType";
   if (path === "condition.humidity.percentage")
     return "condition.humidityPercentage";
-  if (path === "type") return "typePath";
-  if (path === "material") return "materialPath";
-  if (path === "collectionMethod") return "collectionMethodPath";
+  const hierarchy = HIERARCHY_PATHS[path as keyof typeof HIERARCHY_PATHS];
+  if (hierarchy) return `${hierarchy}[${draft[hierarchy].length}]`;
   return path;
 };
 
@@ -115,13 +135,13 @@ function issueMessage(path: string, issue: DraftIssue): string {
 // integer...) show their specific message first.
 export function sampleDraftFieldErrors(
   issues: ReadonlyArray<DraftIssue>,
-  locationType: LocationDraft["type"],
+  draft: DraftContext,
 ): Record<string, { message: string }> {
   const fields: Record<string, { message: string }> = {};
   for (const issue of issues) {
     const path = issue.path.join(".");
     const message = issueMessage(path, issue);
-    fields[draftFieldName(path, locationType)] ??= { message };
+    fields[draftFieldName(path, draft)] ??= { message };
     // The range order concerns the pair, so the error reads on both bounds
     // (the domain pins it on start only).
     if (

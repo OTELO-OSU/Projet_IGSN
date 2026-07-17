@@ -19,13 +19,15 @@ export function ComboboxField({
   ...combobox
 }: ComboboxFieldProps) {
   const field = useFieldContext<string | null | undefined>();
-  // Only surface an error once the user has touched the field, so a requirement
-  // triggered by a sibling change (e.g. unit becomes required when an elevation
-  // is entered) does not flash red before they act. Submitting marks every field
-  // touched, so the error still shows on a save attempt.
+  // A change-sourced error waits for the touch, so a requirement triggered by
+  // a sibling change (e.g. unit becomes required when an elevation is entered)
+  // does not flash red before the user acts. A submit-sourced error always
+  // shows: submitting IS the user acting, and a field unmounted at submit time
+  // (on a hidden tab) is never marked touched, so gating it on the touch would
+  // hide the very error that blocked the save.
   const error = field.state.meta.isTouched
     ? field.state.meta.errors[0]
-    : undefined;
+    : field.state.meta.errorMap.onSubmit;
   const errorId = `${field.name}-error`;
   return (
     <div className="grid gap-2">

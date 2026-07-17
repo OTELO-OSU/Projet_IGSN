@@ -2,6 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import { sampleDraftFieldErrors } from "./sample-draft-field-errors.ts";
 
+// The draft context the mapping reads: the location mode and the hierarchy
+// paths (a hierarchy issue pins on the next level's combobox).
+const draft = (over?: {
+  typePath?: string[];
+  materialPath?: string[];
+  collectionMethodPath?: string[];
+  locationType?: "point" | "area" | null | undefined;
+}) => ({
+  typePath: over?.typePath ?? [],
+  materialPath: over?.materialPath ?? [],
+  collectionMethodPath: over?.collectionMethodPath ?? [],
+  location: { type: over?.locationType },
+});
+
 describe("sampleDraftFieldErrors", () => {
   it("should pin issues on the draft fields that produced them", () => {
     expect(
@@ -15,12 +29,12 @@ describe("sampleDraftFieldErrors", () => {
           { path: ["location", "position", "elevation", "datum"] },
           { path: ["location", "region", "kind"] },
         ],
-        "area",
+        draft({ locationType: "area" }),
       ),
     ).toEqual({
       name: { message: "Invalid value." },
-      typePath: { message: "Invalid value." },
-      collectionMethodPath: { message: "Invalid value." },
+      "typePath[0]": { message: "Invalid value." },
+      "collectionMethodPath[0]": { message: "Invalid value." },
       "location.longitude": { message: "Invalid value." },
       "location.elevationMin": { message: "Invalid value." },
       "location.elevationDatum": { message: "Invalid value." },
@@ -28,11 +42,33 @@ describe("sampleDraftFieldErrors", () => {
     });
   });
 
+  it("should pin a hierarchy issue on the next level to refine", () => {
+    // material "rock.igneous" walks two levels, so the error belongs to the
+    // third combobox, the one the user must pick to complete the path.
+    expect(
+      sampleDraftFieldErrors(
+        [
+          {
+            path: ["material"],
+            code: "custom",
+            params: { code: "material_incomplete" },
+          },
+        ],
+        draft({ materialPath: ["rock", "rock.igneous"] }),
+      ),
+    ).toEqual({
+      "materialPath[2]": {
+        message:
+          "Classify the material down to a specific type before publishing.",
+      },
+    });
+  });
+
   it("should map an elevation bound to the single value input for a point", () => {
     expect(
       sampleDraftFieldErrors(
         [{ path: ["location", "position", "elevation", "min"] }],
-        "point",
+        draft({ locationType: "point" }),
       ),
     ).toEqual({ "location.elevationValue": { message: "Invalid value." } });
   });
@@ -47,7 +83,7 @@ describe("sampleDraftFieldErrors", () => {
           { path: ["description", "mass", "unit"] },
           { path: ["description", "orientationExplanation"] },
         ],
-        undefined,
+        draft(),
       ),
     ).toEqual({
       "description.collectionDateStart": { message: "Invalid value." },
@@ -66,7 +102,7 @@ describe("sampleDraftFieldErrors", () => {
     expect(
       sampleDraftFieldErrors(
         [{ path: ["description", "mass", "value"], code: "too_small" }],
-        undefined,
+        draft(),
       ),
     ).toEqual({
       "description.massValue": {
@@ -85,7 +121,7 @@ describe("sampleDraftFieldErrors", () => {
             params: { code: "collection_date_future" },
           },
         ],
-        undefined,
+        draft(),
       ),
     ).toEqual({
       "description.collectionDateEnd": {
@@ -104,7 +140,7 @@ describe("sampleDraftFieldErrors", () => {
             params: { code: "collection_date_order" },
           },
         ],
-        undefined,
+        draft(),
       ),
     ).toEqual({
       "description.collectionDateStart": {
