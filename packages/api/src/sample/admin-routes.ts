@@ -5,6 +5,7 @@ import type {
 } from "@projet-igsn/domain/sample/sample-validator";
 
 import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-sample-publishable";
+import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import { Hono } from "hono";
 
 import {
@@ -42,10 +43,24 @@ export function createSampleAdminRoutes(repository: SampleRepository) {
       return c.json({ data: sample }, 201);
     })
     .put("/:id", validateIdParam, validateCreateSampleBody, async (c) => {
-      const sample = await repository.update(
-        c.req.valid("param").id,
-        c.req.valid("json"),
-      );
+      const id = c.req.valid("param").id;
+      const current = await repository.get(id);
+      if (!current) {
+        return c.json({ error: "Not found" }, 404);
+      }
+      // A published sample must stay publishable: reject an update that strips
+      // a publish requirement (e.g. clears the collection date). Drafts keep
+      // the looser create schema. Same get/write race note as publish below.
+      if (
+        current.published &&
+        !publishedSampleSchema.safeParse(c.req.valid("json")).success
+      ) {
+        return c.json(
+          { error: "Update would make the published sample unpublishable" },
+          409,
+        );
+      }
+      const sample = await repository.update(id, c.req.valid("json"));
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
