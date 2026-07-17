@@ -1,5 +1,4 @@
-import type { Sample } from "@projet-igsn/domain/sample/sample";
-import type { Kysely } from "kysely";
+import type { Kysely, Selectable } from "kysely";
 import type { z } from "zod";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
@@ -9,34 +8,39 @@ import { fileURLToPath } from "node:url";
 import type { DB } from "../src/db.ts";
 
 import { createDb } from "../src/db.ts";
-import { toSample } from "../src/sample/service/to-sample.ts";
 
-// Inserts the given samples (with their fixed ids) and returns the created
-// rows. Shared by the dev seed below and the E2E reset-and-seed script.
-// Inserts directly rather than via the repository, whose `create` generates a
-// fresh uuid and would discard these static ids.
+// Inserts the given samples (with their fixed ids) and returns the columns the
+// E2E fixture reads (see e2e/support/db.ts). Shared by the dev seed below and
+// the E2E reset-and-seed script. Inserts directly rather than via the
+// repository, whose `create` generates a fresh uuid and would discard these
+// static ids.
 export async function seed(
   db: Kysely<DB>,
   samples: SeedSample[],
-): Promise<Sample[]> {
-  const rows = await db
-    .insertInto("sample")
-    // Parse each seed row against the domain schema so invalid codes, paths, or
-    // ids fail here rather than landing in the database.
-    // collectionMethod is camelCase in the domain; the column is snake_case.
-    .values(
-      samples
-        .map((sample) => seedSampleSchema.parse(sample))
-        .map(({ material, collectionMethod, ...rest }) => ({
-          ...rest,
-          material: material ?? null,
-          collection_method: collectionMethod ?? null,
-        })),
-    )
-    .returningAll()
-    .execute();
-  // Seed rows carry no location.
-  return rows.map((row) => toSample(row, null));
+): Promise<
+  Pick<
+    Selectable<DB["sample"]>,
+    "id" | "name" | "nature" | "igsn" | "published"
+  >[]
+> {
+  return (
+    db
+      .insertInto("sample")
+      // Parse each seed row against the domain schema so a bad code, path, or id
+      // in a fixture fails the E2E seed rather than landing in the database.
+      // collectionMethod is camelCase in the domain; the column is snake_case.
+      .values(
+        samples
+          .map((sample) => seedSampleSchema.parse(sample))
+          .map(({ material, collectionMethod, ...rest }) => ({
+            ...rest,
+            material: material ?? null,
+            collection_method: collectionMethod ?? null,
+          })),
+      )
+      .returning(["id", "name", "nature", "igsn", "published"])
+      .execute()
+  );
 }
 
 // created_at/updated_at are database defaults, so they are omitted; the rest

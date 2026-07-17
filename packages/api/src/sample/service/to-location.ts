@@ -1,4 +1,4 @@
-import type { Insertable, Selectable } from "kysely";
+import type { Selectable } from "kysely";
 
 import {
   type Location,
@@ -7,18 +7,16 @@ import {
 
 import type { DB } from "../../db.ts";
 
-// The location row minus the DB-generated geography (never read into the app).
-type LocationRow = Omit<Selectable<DB["location"]>, "geom">;
+type SampleRow = Selectable<DB["sample"]>;
 
-// DB row (snake_case, flat) -> domain Location (nested), validated at the
-// boundary. `undefined` (no row) maps to null: the sample has no location.
-// Absent fields are omitted rather than set to null, so a stored location
-// round-trips to the same minimal shape the client sent.
-export function toLocation(row: LocationRow | undefined): Location | null {
-  if (!row) return null;
+// Flat sample columns (snake_case) -> nested domain Location, validated at the
+// boundary. Absent fields are omitted rather than set to null, so a stored
+// location round-trips to the same minimal shape the client sent; null when
+// every part is absent, so a sample without one carries `location: null`.
+export function toLocation(row: SampleRow): Location | null {
   const position = toPosition(row);
   const region = toRegion(row);
-  return locationSchema.parse({
+  const location = {
     ...(position ? { position } : {}),
     ...(region ? { region } : {}),
     ...(row.navigation_type !== null
@@ -28,11 +26,13 @@ export function toLocation(row: LocationRow | undefined): Location | null {
     ...(row.locality_description !== null
       ? { localityDescription: row.locality_description }
       : {}),
-  });
+  };
+  if (Object.keys(location).length === 0) return null;
+  return locationSchema.parse(location);
 }
 
 // Signed elevation range (min === max for a point), or omitted when absent.
-function toElevation(row: LocationRow) {
+function toElevation(row: SampleRow) {
   if (row.elevation_min === null || row.elevation_max === null) return {};
   return {
     elevation: {
@@ -44,8 +44,8 @@ function toElevation(row: LocationRow) {
   };
 }
 
-function toPosition(row: LocationRow) {
-  if (row.type === "point") {
+function toPosition(row: SampleRow) {
+  if (row.location_type === "point") {
     return {
       type: "point",
       longitude: row.point_longitude,
@@ -53,7 +53,7 @@ function toPosition(row: LocationRow) {
       ...toElevation(row),
     };
   }
-  if (row.type === "area") {
+  if (row.location_type === "area") {
     return {
       type: "area",
       westLongitude: row.area_west_longitude,
@@ -66,7 +66,7 @@ function toPosition(row: LocationRow) {
   return null;
 }
 
-function toRegion(row: LocationRow) {
+function toRegion(row: SampleRow) {
   if (row.region_kind === "continent") {
     return { kind: "continent", country: row.country };
   }
@@ -76,19 +76,17 @@ function toRegion(row: LocationRow) {
   return null;
 }
 
-// domain Location -> flat insertable columns. `geom` is DB-generated and omitted.
-export function toLocationValues(
-  sampleId: string,
-  location: Location,
-): Insertable<DB["location"]> {
-  const position = location.position ?? null;
+// Domain location -> flat sample columns (ADR 0014), shared by insert and
+// update. A null/absent location writes null everywhere, so an update clears
+// what the input no longer carries. `geom` is DB-generated and omitted.
+export function locationColumns(location: Location | null | undefined) {
+  const position = location?.position ?? null;
   const point = position?.type === "point" ? position : null;
   const area = position?.type === "area" ? position : null;
   const elevation = position?.elevation ?? null;
-  const region = location.region ?? null;
+  const region = location?.region ?? null;
   return {
-    sample_id: sampleId,
-    type: position?.type ?? null,
+    location_type: position?.type ?? null,
     point_longitude: point?.longitude ?? null,
     point_latitude: point?.latitude ?? null,
     area_west_longitude: area?.westLongitude ?? null,
@@ -99,11 +97,11 @@ export function toLocationValues(
     elevation_max: elevation?.max ?? null,
     elevation_unit: elevation?.unit ?? null,
     vertical_datum: elevation?.datum ?? null,
-    navigation_type: location.navigationType ?? null,
+    navigation_type: location?.navigationType ?? null,
     region_kind: region?.kind ?? null,
     country: region?.kind === "continent" ? region.country : null,
     ocean_sea: region?.kind === "ocean" ? region.oceanSea : null,
-    locality_name: location.localityName ?? null,
-    locality_description: location.localityDescription ?? null,
+    locality_name: location?.localityName ?? null,
+    locality_description: location?.localityDescription ?? null,
   };
 }

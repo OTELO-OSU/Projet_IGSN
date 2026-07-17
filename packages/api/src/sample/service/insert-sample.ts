@@ -6,9 +6,8 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 import { descriptionColumns } from "./description-columns.ts";
-import { readLocation } from "./read-location.ts";
+import { locationColumns } from "./to-location.ts";
 import { toSample } from "./to-sample.ts";
-import { writeLocation } from "./write-location.ts";
 
 export async function insertSample(
   db: Transactional<DB>,
@@ -28,9 +27,9 @@ export async function insertSample(
       collection_method_description: input.collectionMethodDescription ?? null,
       specific_name: input.specificName ?? null,
       ...descriptionColumns(input.description),
+      ...locationColumns(input.location),
     })
     .returningAll()
     .executeTakeFirstOrThrow();
-  await writeLocation(db, row.id, input.location);
-  return toSample(row, await readLocation(db, row.id));
+  return toSample(row);
 }

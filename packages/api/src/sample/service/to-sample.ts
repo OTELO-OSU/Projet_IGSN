@@ -1,9 +1,10 @@
-import type { Location } from "@projet-igsn/domain/sample/location/model";
 import type { Selectable } from "kysely";
 
 import { type Sample, sampleSchema } from "@projet-igsn/domain/sample/sample";
 
 import type { DB } from "../../db.ts";
+
+import { toLocation } from "./to-location.ts";
 
 // `date` columns come back from postgres.js as UTC-midnight Date objects;
 // slicing the ISO string recovers the day with no timezone drift (ADR 0015).
@@ -46,12 +47,7 @@ function toDescription(row: Selectable<DB["sample"]>) {
 }
 
 // DB row (snake_case) -> domain Sample (camelCase), validated at the boundary.
-// The location lives in its own 1:1 table (see read-location.ts), so it is read
-// separately and passed in.
-export function toSample(
-  row: Selectable<DB["sample"]>,
-  location: Location | null,
-): Sample {
+export function toSample(row: Selectable<DB["sample"]>): Sample {
   return sampleSchema.parse({
     id: row.id,
     name: row.name,
@@ -63,7 +59,7 @@ export function toSample(
     collectionMethod: row.collection_method,
     collectionMethodDescription: row.collection_method_description,
     specificName: row.specific_name,
-    location,
+    location: toLocation(row),
     description: toDescription(row),
     igsn: row.igsn,
     published: row.published,
