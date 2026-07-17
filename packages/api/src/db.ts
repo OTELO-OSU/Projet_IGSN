@@ -1,4 +1,4 @@
-import { Kysely, type Generated } from "kysely";
+import { Kysely, type ColumnType, type Generated } from "kysely";
 import { PostgresJSDialect } from "kysely-postgres-js";
 import postgres from "postgres";
 import { z } from "zod";
@@ -27,6 +27,24 @@ type SampleTable = {
   collection_method_description: string | null;
   // Precise designation; null on a draft, required to publish (domain rule).
   specific_name: string | null;
+  // Sample description (ADR 0015), all nullable. Collection dates are `date`
+  // columns: postgres.js parses them into UTC-midnight Date objects on read,
+  // while the app writes them as YYYY-MM-DD strings.
+  collection_date_start: ColumnType<Date, string, string> | null;
+  collection_date_end: ColumnType<Date, string, string> | null;
+  oriented: boolean | null;
+  orientation_explanation: string | null;
+  open_description: string | null;
+  length_value: number | null;
+  length_unit: string | null;
+  width_value: number | null;
+  width_unit: string | null;
+  thickness_value: number | null;
+  thickness_unit: string | null;
+  mass_value: number | null;
+  mass_unit: string | null;
+  volume_value: number | null;
+  volume_unit: string | null;
   // Null until the sample is published; then derived from the id with generateIgsnSuffix.
   igsn: string | null;
   published: Generated<boolean>;
