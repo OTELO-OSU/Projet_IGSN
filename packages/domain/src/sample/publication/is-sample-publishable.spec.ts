@@ -18,6 +18,8 @@ const draft: Sample = {
   description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
   condition: null,
   age: null,
+  links: [],
+  attachments: [],
   igsn: null,
   published: false,
   createdAt: new Date("2026-07-02T10:00:00.000Z"),

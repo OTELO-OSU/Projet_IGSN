@@ -47,6 +47,8 @@ describe("getSampleByIgsn", () => {
       description: null,
       condition: null,
       age: null,
+      links: [],
+      attachments: [],
       igsn,
       published: true,
       createdAt: new Date(iso),

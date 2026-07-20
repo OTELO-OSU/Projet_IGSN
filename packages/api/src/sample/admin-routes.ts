@@ -1,3 +1,4 @@
+import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   ListSamplesResponse,
@@ -8,7 +9,11 @@ import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-s
 import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import { Hono } from "hono";
 
+import { attachmentDownload } from "./attachment-download.ts";
 import {
+  validateAttachmentDescriptionBody,
+  validateAttachmentParams,
+  validateAttachmentUpload,
   validateCreateSampleBody,
   validateIdParam,
   validateListQuery,
@@ -16,7 +21,10 @@ import {
 
 // Full sample CRUD for the admin app. Authentication is enforced once by the
 // requireAuth guard on the /admin mount (see app.ts), so no per-route guard here.
-export function createSampleAdminRoutes(repository: SampleRepository) {
+export function createSampleAdminRoutes(
+  repository: SampleRepository,
+  attachments: SampleAttachmentRepository,
+) {
   return new Hono()
     .get("/", validateListQuery, async (c) => {
       const { page, perPage, sort, order, search } = c.req.valid("query");
@@ -82,5 +90,68 @@ export function createSampleAdminRoutes(repository: SampleRepository) {
       }
       const published = await repository.publish(id);
       return c.json({ data: published });
-    });
+    })
+    .post(
+      "/:id/attachments",
+      validateIdParam,
+      validateAttachmentUpload,
+      async (c) => {
+        const { file, description } = c.req.valid("form");
+        const created = await attachments.create(
+          c.req.valid("param").id,
+          {
+            name: file.name,
+            // The client may omit the type; store a neutral one over "".
+            mediaType: file.type || "application/octet-stream",
+            description: description ?? null,
+          },
+          new Uint8Array(await file.arrayBuffer()),
+        );
+        if (!created) {
+          return c.json({ error: "Sample not found" }, 404);
+        }
+        return c.json({ data: created }, 201);
+      },
+    )
+    .get(
+      "/:id/attachments/:attachmentId",
+      validateAttachmentParams,
+      async (c) => {
+        const { id, attachmentId } = c.req.valid("param");
+        const found = await attachments.getContent(id, attachmentId);
+        if (!found) {
+          return c.json({ error: "Attachment not found" }, 404);
+        }
+        return attachmentDownload(found.attachment, found.content);
+      },
+    )
+    .put(
+      "/:id/attachments/:attachmentId",
+      validateAttachmentParams,
+      validateAttachmentDescriptionBody,
+      async (c) => {
+        const { id, attachmentId } = c.req.valid("param");
+        const updated = await attachments.updateDescription(
+          id,
+          attachmentId,
+          c.req.valid("json").description,
+        );
+        if (!updated) {
+          return c.json({ error: "Attachment not found" }, 404);
+        }
+        return c.json({ data: updated });
+      },
+    )
+    .delete(
+      "/:id/attachments/:attachmentId",
+      validateAttachmentParams,
+      async (c) => {
+        const { id, attachmentId } = c.req.valid("param");
+        const removed = await attachments.remove(id, attachmentId);
+        if (!removed) {
+          return c.json({ error: "Attachment not found" }, 404);
+        }
+        return c.body(null, 204);
+      },
+    );
 }

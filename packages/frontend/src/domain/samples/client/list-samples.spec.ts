@@ -48,6 +48,8 @@ describe("listSamples", () => {
           description: null,
           condition: null,
           age: null,
+          links: [],
+          attachments: [],
           igsn: "0123456789ABCDEFGHJKMNPQRS",
           published: true,
           createdAt: new Date(iso),

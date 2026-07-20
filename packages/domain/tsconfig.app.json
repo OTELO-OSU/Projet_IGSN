@@ -4,6 +4,6 @@
   "exclude": ["src/**/*.spec.ts"],
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-    "lib": ["ES2024"]
+    "lib": ["ES2024", "DOM"]
   }
 }

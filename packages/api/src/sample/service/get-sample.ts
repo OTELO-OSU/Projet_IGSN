@@ -3,7 +3,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { toSample } from "./to-sample.ts";
+import { withSampleChildren } from "./with-sample-children.ts";
 
 export async function getSample(
   db: Transactional<DB>,
@@ -15,5 +15,6 @@ export async function getSample(
     .where("id", "=", id)
     .executeTakeFirst();
   if (!row) return null;
-  return toSample(row);
+  const [sample] = await withSampleChildren(db, [row]);
+  return sample!;
 }

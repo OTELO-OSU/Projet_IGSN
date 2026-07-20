@@ -42,11 +42,38 @@ describe("sampleSchema", () => {
       description: null,
       condition: null,
       age: null,
+      links: [],
+      attachments: [],
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
       updatedAt: new Date("2026-07-02T10:00:00.000Z"),
     });
+  });
+
+  it("should accept a sample with links and attachments", () => {
+    // Act
+    const result = sampleSchema.safeParse({
+      ...validSample,
+      links: [
+        {
+          id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
+          url: "https://doi.org/10.1594/IEDA.100252",
+          description: null,
+        },
+      ],
+      attachments: [
+        {
+          id: "3f2504e0-4f89-41d3-9a0c-0305e82c3303",
+          name: "analysis.pdf",
+          mediaType: "application/pdf",
+          sizeBytes: 12345,
+          description: "XRF analysis report",
+        },
+      ],
+    });
+    // Assert
+    expect(result.success).toBe(true);
   });
 
   it("should accept a collection method description", () => {
@@ -245,6 +272,40 @@ describe("createSampleSchema", () => {
         numericAgeYearsUnit: "bp",
       },
     });
+  });
+
+  it("should accept explicit links", () => {
+    // Arrange / Act
+    const result = createSampleSchema.parse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      links: [
+        { url: "https://doi.org/10.1594/IEDA.100252" },
+        {
+          url: "https://doi.org/10.5880/GFZ.2026.001",
+          description: "Companion dataset",
+        },
+      ],
+    });
+    // Assert
+    expect(result.links).toEqual([
+      { url: "https://doi.org/10.1594/IEDA.100252" },
+      {
+        url: "https://doi.org/10.5880/GFZ.2026.001",
+        description: "Companion dataset",
+      },
+    ]);
+  });
+
+  it("should reject a link that is not a DOI url", () => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      links: [{ url: "https://example.com/paper" }],
+    });
+    // Assert
+    expect(result.success).toBe(false);
   });
 
   it("should reject an age with an inverted numeric range", () => {

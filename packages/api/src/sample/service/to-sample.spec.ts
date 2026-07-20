@@ -102,11 +102,68 @@ describe("toSample", () => {
       description: null,
       condition: null,
       age: null,
+      links: [],
+      attachments: [],
       igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
       published: false,
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
       updatedAt: new Date("2026-06-01T00:00:00.000Z"),
     });
+  });
+
+  it("should map link and attachment child rows", () => {
+    // Act
+    const sample = toSample(
+      row,
+      [
+        {
+          id: "018f4d3a-1f2b-7c00-8000-000000000001",
+          sample_id: row.id,
+          url: "https://doi.org/10.1594/IEDA.100252",
+          description: null,
+        },
+      ],
+      [
+        {
+          id: "018f4d3a-1f2b-7c00-8000-000000000002",
+          sample_id: row.id,
+          name: "analysis.pdf",
+          media_type: "application/pdf",
+          size_bytes: 12345,
+          description: "XRF analysis report",
+        },
+      ],
+    );
+    // Assert
+    expect(sample.links).toEqual([
+      {
+        id: "018f4d3a-1f2b-7c00-8000-000000000001",
+        url: "https://doi.org/10.1594/IEDA.100252",
+        description: null,
+      },
+    ]);
+    expect(sample.attachments).toEqual([
+      {
+        id: "018f4d3a-1f2b-7c00-8000-000000000002",
+        name: "analysis.pdf",
+        mediaType: "application/pdf",
+        sizeBytes: 12345,
+        description: "XRF analysis report",
+      },
+    ]);
+  });
+
+  it("should throw when a link url is not a DOI url", () => {
+    expect(() =>
+      toSample(row, [
+        {
+          id: "018f4d3a-1f2b-7c00-8000-000000000001",
+          sample_id: row.id,
+          url: "https://example.com/paper",
+          description: null,
+        },
+      ]),
+    ).toThrow();
   });
 
   it("should map location columns to a nested location", () => {
