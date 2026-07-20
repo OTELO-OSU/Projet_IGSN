@@ -2,7 +2,7 @@ import type { Description } from "@projet-igsn/domain/sample/description/model";
 
 import { volumeUnitLabel } from "@projet-igsn/domain/sample/description/volume-unit";
 
-import { FieldRows } from "#/domain/samples/field-rows.tsx";
+import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
 
@@ -22,37 +22,10 @@ const collectionDateText = ({
     : `${format.format(new Date(start))} – ${format.format(new Date(end))}`;
 };
 
-// The description rows of the sample detail page, one per part actually
-// present (every part of a Description is optional; the parent hides the
-// whole section when the sample has none).
+// The description rows of the sample detail page; FieldRow drops the parts
+// the sample lacks (every part of a Description is optional; the parent hides
+// the whole section when the sample has none).
 export function DescriptionView({ description }: { description: Description }) {
-  const rows: { label: string; value: string }[] = [];
-  if (description.collectionDate) {
-    rows.push({
-      label: m.sample_field_collection_date(),
-      value: collectionDateText(description.collectionDate),
-    });
-  }
-  if (description.oriented != null) {
-    rows.push({
-      label: m.sample_field_oriented(),
-      value: description.oriented
-        ? m.sample_oriented_yes()
-        : m.sample_oriented_no(),
-    });
-  }
-  if (description.orientationExplanation) {
-    rows.push({
-      label: m.sample_field_orientation_explanation(),
-      value: description.orientationExplanation,
-    });
-  }
-  if (description.openDescription) {
-    rows.push({
-      label: m.sample_field_open_description(),
-      value: description.openDescription,
-    });
-  }
   // Size and mass unit codes are their own display labels; volume codes are
   // not (cm3 renders as cm³), hence volumeUnitLabel.
   const measurements = [
@@ -68,13 +41,40 @@ export function DescriptionView({ description }: { description: Description }) {
       },
     },
   ];
-  for (const { label, measurement } of measurements) {
-    if (measurement) {
-      rows.push({
-        label,
-        value: `${measurement.value} ${measurement.unit}`,
-      });
-    }
-  }
-  return <FieldRows rows={rows} />;
+  return (
+    <FieldRows>
+      <FieldRow
+        label={m.sample_field_collection_date()}
+        value={
+          description.collectionDate &&
+          collectionDateText(description.collectionDate)
+        }
+      />
+      <FieldRow
+        label={m.sample_field_oriented()}
+        value={
+          description.oriented == null
+            ? null
+            : description.oriented
+              ? m.sample_oriented_yes()
+              : m.sample_oriented_no()
+        }
+      />
+      <FieldRow
+        label={m.sample_field_orientation_explanation()}
+        value={description.orientationExplanation}
+      />
+      <FieldRow
+        label={m.sample_field_open_description()}
+        value={description.openDescription}
+      />
+      {measurements.map(({ label, measurement }) => (
+        <FieldRow
+          key={label}
+          label={label}
+          value={measurement && `${measurement.value} ${measurement.unit}`}
+        />
+      ))}
+    </FieldRows>
+  );
 }

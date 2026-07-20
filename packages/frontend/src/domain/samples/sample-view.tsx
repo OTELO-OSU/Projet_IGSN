@@ -2,11 +2,9 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { ChevronRightIcon } from "lucide-react";
 
-import type { FieldRow } from "#/domain/samples/field-rows.tsx";
-
 import { ConditionView } from "#/domain/samples/condition-view.tsx";
 import { DescriptionView } from "#/domain/samples/description-view.tsx";
-import { FieldRows } from "#/domain/samples/field-rows.tsx";
+import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
 import {
@@ -65,22 +63,35 @@ function ClassificationBreadcrumb({ labelId, segments }: BreadcrumbProps) {
   );
 }
 
+type BreadcrumbFieldRowProps = {
+  id: string;
+  label: string;
+  path: string | null | undefined;
+  pathLabel: (path: string) => string;
+};
+
 // A classification row: the dt id lets the breadcrumb name itself after it.
-const breadcrumbRow = (
-  id: string,
-  label: string,
-  path: string,
-  pathLabel: (path: string) => string,
-): FieldRow => ({
+function BreadcrumbFieldRow({
   id,
   label,
-  value: (
-    <ClassificationBreadcrumb
-      labelId={id}
-      segments={pathBreadcrumb(path, pathLabel)}
+  path,
+  pathLabel,
+}: BreadcrumbFieldRowProps) {
+  return (
+    <FieldRow
+      id={id}
+      label={label}
+      value={
+        path && (
+          <ClassificationBreadcrumb
+            labelId={id}
+            segments={pathBreadcrumb(path, pathLabel)}
+          />
+        )
+      }
     />
-  ),
-});
+  );
+}
 
 export function SampleView({
   name,
@@ -96,94 +107,69 @@ export function SampleView({
   condition,
   location,
 }: SampleViewProps) {
-  const sampleRows: FieldRow[] = [
-    { label: m.sample_field_nature(), value: natureLabel(nature) },
-  ];
-  if (type) {
-    sampleRows.push(
-      breadcrumbRow(
-        "sample-field-type",
-        m.sample_field_type(),
-        type,
-        typeLabel,
-      ),
-    );
-  }
-  if (material) {
-    sampleRows.push(
-      breadcrumbRow(
-        "sample-field-material",
-        m.sample_field_material(),
-        material,
-        materialPathLabel,
-      ),
-    );
-  }
-  if (texture) {
-    sampleRows.push({
-      label: m.sample_field_texture(),
-      value: textureLabel(texture),
-    });
-  }
-  if (metamorphicFacies) {
-    sampleRows.push({
-      label: m.sample_field_metamorphic_facies(),
-      value: metamorphicFaciesLabel(metamorphicFacies),
-    });
-  }
-  if (collectionMethod) {
-    sampleRows.push(
-      breadcrumbRow(
-        "sample-field-collection-method",
-        m.sample_field_collection_method(),
-        collectionMethod,
-        collectionMethodLabel,
-      ),
-    );
-  }
-  if (collectionMethodDescription) {
-    sampleRows.push({
-      label: m.sample_field_collection_method_description(),
-      value: collectionMethodDescription,
-    });
-  }
-
   // One entry per section actually present; drives the nav and the body, so a
   // section cannot appear in one without the other.
   const sections = [
     {
       id: "sample",
       title: m.sample_section_sample(),
-      content: <FieldRows rows={sampleRows} />,
+      content: (
+        <FieldRows>
+          <FieldRow
+            label={m.sample_field_nature()}
+            value={natureLabel(nature)}
+          />
+          <BreadcrumbFieldRow
+            id="sample-field-type"
+            label={m.sample_field_type()}
+            path={type}
+            pathLabel={typeLabel}
+          />
+          <BreadcrumbFieldRow
+            id="sample-field-material"
+            label={m.sample_field_material()}
+            path={material}
+            pathLabel={materialPathLabel}
+          />
+          <FieldRow
+            label={m.sample_field_texture()}
+            value={texture && textureLabel(texture)}
+          />
+          <FieldRow
+            label={m.sample_field_metamorphic_facies()}
+            value={
+              metamorphicFacies && metamorphicFaciesLabel(metamorphicFacies)
+            }
+          />
+          <BreadcrumbFieldRow
+            id="sample-field-collection-method"
+            label={m.sample_field_collection_method()}
+            path={collectionMethod}
+            pathLabel={collectionMethodLabel}
+          />
+          <FieldRow
+            label={m.sample_field_collection_method_description()}
+            value={collectionMethodDescription}
+          />
+        </FieldRows>
+      ),
     },
-    ...(description
-      ? [
-          {
-            id: "description",
-            title: m.sample_section_description(),
-            content: <DescriptionView description={description} />,
-          },
-        ]
-      : []),
-    ...(location
-      ? [
-          {
-            id: "location",
-            title: m.sample_section_location(),
-            content: <LocationView location={location} />,
-          },
-        ]
-      : []),
-    ...(condition
-      ? [
-          {
-            id: "condition",
-            title: m.sample_section_condition(),
-            content: <ConditionView condition={condition} />,
-          },
-        ]
-      : []),
-  ];
+    description && {
+      id: "description",
+      title: m.sample_section_description(),
+      content: <DescriptionView description={description} />,
+    },
+    location && {
+      id: "location",
+      title: m.sample_section_location(),
+      content: <LocationView location={location} />,
+    },
+    condition && {
+      id: "condition",
+      title: m.sample_section_condition(),
+      content: <ConditionView condition={condition} />,
+    },
+  ].filter((section) => section != null);
 
   return (
     <div>

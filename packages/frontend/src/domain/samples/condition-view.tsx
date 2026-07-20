@@ -3,7 +3,7 @@ import type { Condition } from "@projet-igsn/domain/sample/condition/model";
 import { pressureUnitLabel } from "@projet-igsn/domain/sample/condition/pressure-unit";
 import { temperatureUnitLabel } from "@projet-igsn/domain/sample/condition/temperature-unit";
 
-import { FieldRows } from "#/domain/samples/field-rows.tsx";
+import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import {
   humidityTypeLabel,
   lightLabel,
@@ -19,68 +19,71 @@ import { m } from "#/paraglide/messages.js";
 const withReading = (label: string, reading: string | null): string =>
   reading == null ? label : `${label} (${reading})`;
 
-// The condition rows of the sample detail page, one per part actually present
-// (every part of a Condition is optional; the parent hides the whole section
-// when the sample has none).
+// The condition rows of the sample detail page; FieldRow drops the parts the
+// sample lacks (every part of a Condition is optional; the parent hides the
+// whole section when the sample has none).
 export function ConditionView({ condition }: { condition: Condition }) {
-  const rows: { label: string; value: string }[] = [];
-  if (condition.packaging) {
-    rows.push({
-      label: m.sample_field_packaging(),
-      value: packagingLabel(condition.packaging),
-    });
-  }
-  if (condition.storageConditions) {
-    rows.push({
-      label: m.sample_field_storage_conditions(),
-      value: condition.storageConditions.map(storageConditionLabel).join(", "),
-    });
-  }
-  if (condition.temperature) {
-    const { type, measurement } = condition.temperature;
-    rows.push({
-      label: m.sample_field_temperature(),
-      value: withReading(
-        temperatureTypeLabel(type),
-        measurement
-          ? `${measurement.value} ${temperatureUnitLabel[measurement.unit]}`
-          : null,
-      ),
-    });
-  }
-  if (condition.humidity) {
-    const { type, percentage } = condition.humidity;
-    rows.push({
-      label: m.sample_field_humidity(),
-      value: withReading(
-        humidityTypeLabel(type),
-        percentage == null ? null : `${percentage}%`,
-      ),
-    });
-  }
-  if (condition.light) {
-    rows.push({
-      label: m.sample_field_light(),
-      value: lightLabel(condition.light),
-    });
-  }
-  if (condition.pressure) {
-    const { type, measurement } = condition.pressure;
-    rows.push({
-      label: m.sample_field_pressure(),
-      value: withReading(
-        pressureTypeLabel(type),
-        measurement
-          ? `${measurement.value} ${pressureUnitLabel[measurement.unit]}`
-          : null,
-      ),
-    });
-  }
-  if (condition.specificConditions) {
-    rows.push({
-      label: m.sample_field_specific_conditions(),
-      value: condition.specificConditions,
-    });
-  }
-  return <FieldRows rows={rows} />;
+  const {
+    packaging,
+    storageConditions,
+    temperature,
+    humidity,
+    light,
+    pressure,
+    specificConditions,
+  } = condition;
+  return (
+    <FieldRows>
+      <FieldRow
+        label={m.sample_field_packaging()}
+        value={packaging && packagingLabel(packaging)}
+      />
+      <FieldRow
+        label={m.sample_field_storage_conditions()}
+        value={storageConditions?.map(storageConditionLabel).join(", ")}
+      />
+      <FieldRow
+        label={m.sample_field_temperature()}
+        value={
+          temperature &&
+          withReading(
+            temperatureTypeLabel(temperature.type),
+            temperature.measurement
+              ? `${temperature.measurement.value} ${temperatureUnitLabel[temperature.measurement.unit]}`
+              : null,
+          )
+        }
+      />
+      <FieldRow
+        label={m.sample_field_humidity()}
+        value={
+          humidity &&
+          withReading(
+            humidityTypeLabel(humidity.type),
+            humidity.percentage == null ? null : `${humidity.percentage}%`,
+          )
+        }
+      />
+      <FieldRow
+        label={m.sample_field_light()}
+        value={light && lightLabel(light)}
+      />
+      <FieldRow
+        label={m.sample_field_pressure()}
+        value={
+          pressure &&
+          withReading(
+            pressureTypeLabel(pressure.type),
+            pressure.measurement
+              ? `${pressure.measurement.value} ${pressureUnitLabel[pressure.measurement.unit]}`
+              : null,
+          )
+        }
+      />
+      <FieldRow
+        label={m.sample_field_specific_conditions()}
+        value={specificConditions}
+      />
+    </FieldRows>
+  );
 }
