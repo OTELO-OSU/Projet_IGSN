@@ -8,6 +8,7 @@ import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
 import {
+  availabilityLabel,
   collectionMethodLabel,
   materialPathLabel,
   metamorphicFaciesLabel,
@@ -30,6 +31,8 @@ type SampleViewProps = {
   description: Sample["description"];
   condition: Sample["condition"];
   location: Sample["location"];
+  availability: Sample["availability"];
+  publicationYear: Sample["publicationYear"];
 };
 
 // A dot-joined classification path rendered as a breadcrumb: each ancestor
@@ -106,6 +109,8 @@ export function SampleView({
   description,
   condition,
   location,
+  availability,
+  publicationYear,
 }: SampleViewProps) {
   // One entry per section actually present; drives the nav and the body, so a
   // section cannot appear in one without the other.
@@ -150,6 +155,14 @@ export function SampleView({
           <FieldRow
             label={m.sample_field_collection_method_description()}
             value={collectionMethodDescription}
+          />
+          <FieldRow
+            label={m.sample_field_availability()}
+            value={availability && availabilityLabel(availability)}
+          />
+          <FieldRow
+            label={m.sample_field_publication_year()}
+            value={publicationYear}
           />
         </FieldRows>
       ),

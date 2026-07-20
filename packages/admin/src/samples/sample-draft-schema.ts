@@ -40,6 +40,7 @@ export type SampleDraft = {
   location: LocationDraft;
   description: DescriptionDraft;
   condition: ConditionDraft;
+  availability: CreateSample["availability"] | undefined;
 };
 
 // A saved (or default) sample, spread into the flat draft the form store
@@ -59,6 +60,8 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   location: toLocationDraft(value?.location),
   description: toDescriptionDraft(value?.description),
   condition: toConditionDraft(value?.condition),
+  // Defaults to "exists" per the declaration flow; still required to publish.
+  availability: value?.availability ?? "exists",
 });
 
 const composeCreateSample = (draft: SampleDraft) => {
@@ -95,6 +98,8 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(description ? { description } : {}),
     // Same contract for the condition columns.
     ...(condition ? { condition } : {}),
+    // Required only at publish; omit on a draft that has not answered it yet.
+    ...(draft.availability ? { availability: draft.availability } : {}),
   };
 };
 

@@ -16,8 +16,9 @@ async function createSample(
   specificName = `${name} 001`,
 ) {
   const created = await client.admin.samples.$post(
-    // A leaf type, leaf material, a location, a collection date and a specific
-    // name are required to publish, so seed them all for the publish helper.
+    // A leaf type, leaf material, a location, a collection date, a specific
+    // name and an availability are required to publish, so seed them all for the
+    // publish helper.
     {
       json: {
         name,
@@ -29,6 +30,7 @@ async function createSample(
         description: {
           collectionDate: { start: "2026-01-01", end: "2026-01-01" },
         },
+        availability: "exists",
       },
     },
     { headers: authHeader },

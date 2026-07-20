@@ -368,6 +368,7 @@ describe("SampleDescriptionFields", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });

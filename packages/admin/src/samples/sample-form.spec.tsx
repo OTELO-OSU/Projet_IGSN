@@ -45,6 +45,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -82,6 +83,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -109,6 +111,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -155,6 +158,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -184,6 +188,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -215,6 +220,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -273,6 +279,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -328,6 +335,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -385,6 +393,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -439,6 +448,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -489,6 +499,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -557,6 +568,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -605,6 +617,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -632,6 +645,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: "MC-2026-007",
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -667,6 +681,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -730,6 +745,7 @@ describe("SampleForm", () => {
           "Cored at low tide from the northern outcrop",
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -756,6 +772,7 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
+        availability: "exists",
       }),
     );
   });
@@ -791,6 +808,7 @@ describe("SampleForm", () => {
           description: {
             collectionDate: { start: "2026-01-01", end: "2026-01-01" },
           },
+          availability: "exists",
         }}
         secondaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
         primaryAction={{ kind: "publish", label: "Save & Publish", onPublish }}
@@ -813,6 +831,7 @@ describe("SampleForm", () => {
         description: {
           collectionDate: { start: "2026-01-01", end: "2026-01-01" },
         },
+        availability: "exists",
       }),
     );
     expect(onSubmit).not.toHaveBeenCalled();
@@ -949,6 +968,7 @@ describe("SampleForm", () => {
             description: {
               collectionDate: { start: "2026-01-01", end: "2026-01-01" },
             },
+            availability: "exists",
           }}
           secondaryAction={{
             kind: "submit",
@@ -964,6 +984,43 @@ describe("SampleForm", () => {
       </TooltipProvider>,
     );
 
+    await expect
+      .element(screen.getByRole("button", { name: "Save & Publish" }))
+      .toBeEnabled();
+  });
+
+  it("should default availability to Exists and not block publish on it", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          defaultValues={{
+            name: "Basalte du Massif Central",
+            nature: "thin_section",
+            type: "dredge",
+            material: "fossil",
+            collectionMethod: null,
+            collectionMethodDescription: null,
+            location: {
+              position: { type: "point", longitude: 3, latitude: 45 },
+            },
+            description: {
+              collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+            },
+          }}
+          primaryAction={{
+            kind: "publish",
+            label: "Save & Publish",
+            onPublish: noop,
+          }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: /availability/i }))
+      .toHaveTextContent("Exists");
     await expect
       .element(screen.getByRole("button", { name: "Save & Publish" }))
       .toBeEnabled();
@@ -1501,6 +1558,7 @@ describe("SampleForm", () => {
             location: null,
             description: null,
             condition: null,
+            availability: "exists",
           }}
           primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
         />
@@ -1566,6 +1624,7 @@ describe("SampleForm", () => {
         description: {
           collectionDate: { start: "2026-01-01", end: "2026-01-01" },
         },
+        availability: "exists",
       }),
     );
   });

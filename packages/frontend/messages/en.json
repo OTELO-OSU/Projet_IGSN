@@ -20,6 +20,8 @@
   "sample_field_metamorphic_facies": "Metamorphic facies",
   "sample_field_collection_method": "Collection method",
   "sample_field_collection_method_description": "Collection method details",
+  "sample_field_availability": "Availability",
+  "sample_field_publication_year": "Publication year",
   "sample_section_description": "Description",
   "sample_field_collection_date": "Collection date",
   "sample_field_oriented": "Oriented",

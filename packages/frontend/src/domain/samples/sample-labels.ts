@@ -20,4 +20,5 @@ export const {
   humidityTypeLabel,
   lightLabel,
   pressureTypeLabel,
+  availabilityLabel,
 } = createSampleLabels(m as unknown as Messages);

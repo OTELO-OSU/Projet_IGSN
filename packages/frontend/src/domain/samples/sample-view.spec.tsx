@@ -15,6 +15,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={null}
@@ -41,6 +43,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={null}
@@ -62,6 +66,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={null}
@@ -91,6 +97,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={null}
@@ -119,6 +127,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={null}
@@ -140,6 +150,8 @@ describe("SampleView", () => {
         metamorphicFacies="amphibolite"
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={null}
@@ -163,6 +175,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={null}
@@ -198,6 +212,8 @@ describe("SampleView", () => {
         description={null}
         condition={null}
         location={null}
+        availability={null}
+        publicationYear={null}
       />,
     );
 
@@ -207,6 +223,36 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByText("Cored at low tide from the reef flat"))
       .toBeInTheDocument();
+  });
+
+  it("should show the translated availability and the publication year when set", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        description={null}
+        condition={null}
+        location={null}
+        availability="no_longer_exists"
+        publicationYear={2026}
+      />,
+    );
+
+    await expect.element(screen.getByText("Availability")).toBeInTheDocument();
+    await expect
+      .element(screen.getByText("No longer exists"))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Publication year"))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("2026")).toBeInTheDocument();
   });
 
   it("should omit type, material, and collection method rows when unclassified", async () => {
@@ -221,6 +267,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={null}
@@ -259,6 +307,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={{
           collectionDate: { start: "2024-03-05", end: "2024-03-05" },
           mass: { value: 1.4, unit: "kg" },
@@ -296,6 +346,8 @@ describe("SampleView", () => {
           },
         }}
         location={null}
+        availability={null}
+        publicationYear={null}
       />,
     );
 
@@ -324,6 +376,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={{
@@ -369,6 +423,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={{
@@ -425,6 +481,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={{ region: { kind: "continent", country: "FR" } }}
@@ -447,6 +505,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={{ region: { kind: "ocean", oceanSea: "pacific_ocean" } }}
@@ -476,6 +536,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={{ region }}
@@ -498,6 +560,8 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        availability={null}
+        publicationYear={null}
         description={null}
         condition={null}
         location={{

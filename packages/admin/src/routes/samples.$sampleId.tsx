@@ -59,6 +59,7 @@ function EditSamplePage() {
           location: query.data.location,
           description: query.data.description,
           condition: query.data.condition,
+          availability: query.data.availability,
         }}
         isPending={isPending}
         published={isPublished}

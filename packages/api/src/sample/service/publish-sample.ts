@@ -1,6 +1,7 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
+import { sql } from "kysely";
 
 import type { DB } from "../../db.ts";
 
@@ -13,7 +14,12 @@ export async function publishSample(
 ): Promise<Sample | null> {
   const row = await db
     .updateTable("sample")
-    .set({ published: true, igsn: generateIgsnSuffix(id) })
+    .set({
+      published: true,
+      igsn: generateIgsnSuffix(id),
+      // Captured once on first publish, preserved on any re-publish.
+      publication_year: sql`coalesce(publication_year, extract(year from now())::int)`,
+    })
     .where("id", "=", id)
     .returningAll()
     .executeTakeFirst();
