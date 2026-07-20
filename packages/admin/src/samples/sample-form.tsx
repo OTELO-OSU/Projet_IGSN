@@ -41,6 +41,7 @@ import {
   toSampleDraft,
 } from "#/samples/sample-draft-schema.ts";
 import { availabilityLabel, natureLabel } from "#/samples/sample-labels.ts";
+import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
 
@@ -373,6 +374,12 @@ export function SampleForm({
           <form.AppForm>
             <AgeFields />
           </form.AppForm>
+
+          <FormSection title={m.section_security()}>
+            <form.AppForm>
+              <SampleSecurityFields />
+            </form.AppForm>
+          </FormSection>
         </TabsContent>
       </Tabs>
 

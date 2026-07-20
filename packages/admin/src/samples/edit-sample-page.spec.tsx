@@ -35,6 +35,7 @@ function fakeApi(
   metamorphicFacies: string | null = null,
   texture: string | null = null,
   availability: "exists" | "no_longer_exists" = "exists",
+  security: Record<string, unknown> | null = null,
 ) {
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -50,7 +51,7 @@ function fakeApi(
     location: { position: { type: "point", longitude: 3, latitude: 45 } },
     description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
     condition: null,
-    security: null,
+    security,
     availability,
     publicationYear: published ? 2026 : null,
     igsn: published ? IGSN : null,
@@ -93,6 +94,7 @@ async function renderEditPage(
   metamorphicFacies: string | null = null,
   texture: string | null = null,
   availability: "exists" | "no_longer_exists" = "exists",
+  security: Record<string, unknown> | null = null,
 ) {
   const { id, calls } = fakeApi(
     published,
@@ -101,6 +103,7 @@ async function renderEditPage(
     metamorphicFacies,
     texture,
     availability,
+    security,
   );
   const queryClient = new QueryClient();
   const router = createRouter({
@@ -190,6 +193,25 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("combobox", { name: /availability/i }))
       .toHaveTextContent("No longer exists");
+  });
+
+  it("should prefill a declared security hazard from the saved sample", async () => {
+    const { screen } = await renderEditPage(
+      false,
+      "fossil",
+      false,
+      null,
+      null,
+      "exists",
+      { radioactivity: true, radioactivityExplanation: "3.2 kBq alpha" },
+    );
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Radioactivity" }))
+      .toHaveTextContent("Yes");
+    await expect
+      .element(screen.getByLabelText("Radioactivity explanation"))
+      .toHaveValue("3.2 kBq alpha");
   });
 
   it("should not show an IGSN on a draft", async () => {

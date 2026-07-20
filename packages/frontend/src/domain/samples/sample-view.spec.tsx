@@ -15,6 +15,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -44,6 +45,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -68,6 +70,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -100,6 +103,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -131,6 +135,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -155,6 +160,7 @@ describe("SampleView", () => {
         metamorphicFacies="amphibolite"
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -181,6 +187,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -219,6 +226,7 @@ describe("SampleView", () => {
         description={null}
         condition={null}
         location={null}
+        security={null}
         availability={null}
         publicationYear={null}
         age={null}
@@ -248,6 +256,7 @@ describe("SampleView", () => {
         description={null}
         condition={null}
         location={null}
+        security={null}
         availability="no_longer_exists"
         publicationYear={2026}
         age={null}
@@ -287,6 +296,7 @@ describe("SampleView", () => {
     description: null,
     condition: null,
     location: null,
+    security: null,
     availability: null,
     publicationYear: null,
     age: null,
@@ -365,6 +375,26 @@ describe("SampleView", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should show the security as its own section with its hazards", async () => {
+    const screen = await render(
+      <SampleView
+        {...baseProps}
+        security={{
+          radioactivity: true,
+          radioactivityExplanation: "3.2 kBq alpha",
+        }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Security" }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Radioactivity", { exact: true }))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("3.2 kBq alpha")).toBeInTheDocument();
+  });
+
   it("should omit type, material, and collection method rows when unclassified", async () => {
     const screen = await render(
       <SampleView
@@ -377,6 +407,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -418,6 +449,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={{
@@ -458,6 +490,7 @@ describe("SampleView", () => {
           },
         }}
         location={null}
+        security={null}
         availability={null}
         publicationYear={null}
         age={null}
@@ -489,6 +522,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -537,6 +571,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -596,6 +631,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -621,6 +657,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -653,6 +690,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
@@ -678,6 +716,7 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}

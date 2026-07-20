@@ -59,6 +59,7 @@ function EditSamplePage() {
           location: query.data.location,
           description: query.data.description,
           condition: query.data.condition,
+          security: query.data.security,
           availability: query.data.availability,
           age: query.data.age,
         }}
