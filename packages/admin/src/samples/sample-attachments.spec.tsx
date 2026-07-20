@@ -64,12 +64,9 @@ function renderAttachments(attachments = [attachment]) {
 }
 
 const file = (name: string) =>
-  new File([new TextEncoder().encode("col1\n1\n")], name, {
-    type: "text/csv",
-  });
+  new File(["col1\n1\n"], name, { type: "text/csv" });
 
-const calledUrl = (input: RequestInfo | URL | undefined) =>
-  input instanceof Request ? input.url : String(input);
+const calledUrl = (input: RequestInfo | URL | undefined) => (input as URL).href;
 
 describe("SampleAttachments", () => {
   it("should upload every picked file, showing a progress bar each", async () => {
@@ -182,8 +179,9 @@ describe("SampleAttachments", () => {
     const fetchSpy = vi
       .spyOn(window, "fetch")
       .mockResolvedValue(new Response(new Blob(["csv"]), { status: 200 }));
-    const createObjectURL = vi.fn(() => "blob:test");
-    vi.stubGlobal("URL", Object.assign(URL, { createObjectURL }));
+    const createObjectURL = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:test");
     const screen = await renderAttachments();
 
     await screen

@@ -7,7 +7,7 @@ import { useAuth } from "react-oidc-context";
 import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
 
-export type AttachmentUpload = { key: string; name: string; progress: number };
+type AttachmentUpload = { key: string; name: string; progress: number };
 
 // XHR instead of the shared fetch client: fetch cannot report request-body
 // progress, and a 100 MB video deserves a real progress bar. ponytail: no
