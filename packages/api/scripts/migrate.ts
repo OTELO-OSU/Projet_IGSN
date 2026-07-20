@@ -1,5 +1,6 @@
-import { Kysely, FileMigrationProvider, Migrator } from "kysely";
+import { Kysely } from "kysely";
 import { PostgresJSDialect } from "kysely-postgres-js";
+import { FileMigrationProvider, Migrator } from "kysely/migration";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
