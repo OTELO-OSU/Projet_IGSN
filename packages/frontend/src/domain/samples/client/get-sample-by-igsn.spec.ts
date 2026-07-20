@@ -46,6 +46,7 @@ describe("getSampleByIgsn", () => {
       location: null,
       description: null,
       condition: null,
+      age: null,
       igsn,
       published: true,
       createdAt: new Date(iso),

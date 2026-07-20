@@ -28,6 +28,7 @@ const sample: Sample = {
   location: null,
   description: null,
   condition: null,
+  age: null,
   igsn: null,
   published: false,
   createdAt: new Date("2026-06-01T00:00:00.000Z"),

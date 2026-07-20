@@ -167,10 +167,11 @@ export function toLocationDraft(
     eastLongitude: area?.eastLongitude,
     southLatitude: area?.southLatitude,
     northLatitude: area?.northLatitude,
-    // A point's single value is the degenerate range's min (=== max).
-    elevationValue: point ? elevation?.min : undefined,
-    elevationMin: area ? elevation?.min : undefined,
-    elevationMax: area ? elevation?.max : undefined,
+    // A point's single value is the degenerate range's min (=== max). The
+    // schema types the bounds as nullish; the draft holds `undefined` for unset.
+    elevationValue: point ? (elevation?.min ?? undefined) : undefined,
+    elevationMin: area ? (elevation?.min ?? undefined) : undefined,
+    elevationMax: area ? (elevation?.max ?? undefined) : undefined,
     elevationUnit: elevation?.unit,
     elevationDatum: elevation?.datum,
     regionKind: region?.kind,

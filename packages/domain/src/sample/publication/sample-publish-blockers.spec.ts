@@ -18,6 +18,7 @@ const base: Sample = {
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
   description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
   condition: null,
+  age: null,
   igsn: null,
   published: false,
   createdAt: new Date("2026-01-01T00:00:00Z"),
@@ -160,4 +161,176 @@ describe("samplePublishBlockers", () => {
       }),
     ).toEqual(["collection_date_missing"]);
   });
+
+  const emptyAge: NonNullable<Sample["age"]> = {
+    numericAgeMin: null,
+    numericAgeMax: null,
+    numericAgeUnit: null,
+    numericAgeYearsUnit: null,
+    geologicalAgeMin: null,
+    geologicalAgeMax: null,
+    geologicalUnit: null,
+  };
+
+  it("should not require an age to publish", () => {
+    expect(samplePublishBlockers({ ...base, age: null })).toEqual([]);
+  });
+
+  it("should report numeric_age_unit_missing when a numeric value has no unit", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: { ...emptyAge, numericAgeMin: 120, numericAgeMax: 120 },
+      }),
+    ).toEqual(["numeric_age_unit_missing"]);
+  });
+
+  it("should report numeric_age_unit_missing when a range has no unit", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: { ...emptyAge, numericAgeMin: 500, numericAgeMax: 2000 },
+      }),
+    ).toEqual(["numeric_age_unit_missing"]);
+  });
+
+  it("should not report a blocker when a numeric value has its unit", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 120,
+          numericAgeMax: 120,
+          numericAgeUnit: "ma",
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it("should not report a blocker for a stratigraphic-only age", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: {
+          ...emptyAge,
+          geologicalAgeMin: "ics8",
+          geologicalAgeMax: "ics8",
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it("should report numeric_age_range_incomplete when only one numeric bound is set", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: { ...emptyAge, numericAgeMin: 100, numericAgeUnit: "ma" },
+      }),
+    ).toEqual(["numeric_age_range_incomplete"]);
+  });
+
+  it("should report geological_age_range_incomplete when only one stratigraphic bound is set", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: { ...emptyAge, geologicalAgeMax: "ics12" },
+      }),
+    ).toEqual(["geological_age_range_incomplete"]);
+  });
+
+  it("should not report a range blocker once both bounds are set", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 100,
+          numericAgeMax: 140,
+          numericAgeUnit: "ma",
+          geologicalAgeMin: "ics8",
+          geologicalAgeMax: "ics12",
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it("should report numeric_age_reference_missing when an annum value has no reference", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 120,
+          numericAgeMax: 120,
+          numericAgeUnit: "a",
+        },
+      }),
+    ).toEqual(["numeric_age_reference_missing"]);
+  });
+
+  it("should not report numeric_age_reference_missing once the annum value has a reference", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 120,
+          numericAgeMax: 120,
+          numericAgeUnit: "a",
+          numericAgeYearsUnit: "bp",
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it("should not require a reference for a non-annum unit", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 120,
+          numericAgeMax: 120,
+          numericAgeUnit: "ka",
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  const withElevation = (
+    elevation: NonNullable<
+      NonNullable<NonNullable<Sample["location"]>["position"]>
+    >["elevation"],
+  ): Sample => ({
+    ...base,
+    location: {
+      position: { type: "point", longitude: 0, latitude: 0, elevation },
+    },
+  });
+
+  it("should not require an elevation to publish", () => {
+    expect(samplePublishBlockers(base)).toEqual([]);
+  });
+
+  it("should not report a blocker for a complete elevation", () => {
+    expect(
+      samplePublishBlockers(
+        withElevation({ min: -2500, max: -2500, unit: "m", datum: "msl" }),
+      ),
+    ).toEqual([]);
+  });
+
+  it.each([
+    ["a missing bound", { min: 100, max: null, unit: "m", datum: "msl" }],
+    ["a missing unit", { min: 100, max: 200, unit: null, datum: "msl" }],
+    ["a missing datum", { min: 100, max: 200, unit: "m", datum: null }],
+  ] as const)(
+    "should report elevation_incomplete for %s",
+    (_label, elevation) => {
+      expect(samplePublishBlockers(withElevation(elevation))).toEqual([
+        "elevation_incomplete",
+      ]);
+    },
+  );
 });

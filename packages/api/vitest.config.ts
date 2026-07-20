@@ -10,9 +10,6 @@ export default defineConfig({
     kyselyPostgres<DB>({
       config: {
         dockerContainer: { image: "postgis/postgis", tag: "17-3.5" },
-        database: "testdb",
-        username: "test",
-        password: "test",
         port: randomInt(20000, 40000),
       },
       migrationFolder: path.resolve(__dirname, "migrations"),

@@ -45,6 +45,17 @@ type SampleTable = {
   mass_unit: string | null;
   volume_value: number | null;
   volume_unit: string | null;
+  // Age sub-datum: flat nullable columns (an empty age is all-null). A non-range
+  // value stores the same number/code in both bounds (min == max). Numeric bounds
+  // are double precision (read as numbers); unit and codes are text. Shared unit
+  // and years unit apply to the whole numeric age; geological_unit is free text.
+  numeric_age_min: number | null;
+  numeric_age_max: number | null;
+  numeric_age_unit: string | null;
+  numeric_age_years_unit: string | null;
+  geological_age_min: string | null;
+  geological_age_max: string | null;
+  geological_unit: string | null;
   // Location (ADR 0014). `location_type` (point/area), not `type`: that is the
   // taxonomy path above. Raw coordinate columns round-trip as JS numbers;
   // `geom` is a DB-generated geography (never inserted), referenced only in

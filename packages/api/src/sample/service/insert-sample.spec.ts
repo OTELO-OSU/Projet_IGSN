@@ -88,6 +88,45 @@ describe("insertSample", () => {
     expect(data[0]).toMatchObject({ name: "Basalte du Massif Central" });
   });
 
+  pgTest("should round-trip a full age", async ({ db }) => {
+    // Act
+    const created = await insertSample(db, {
+      name: "Basalt 42",
+      nature: "hand_sample",
+      type: null,
+      age: {
+        numericAgeMin: 12000,
+        numericAgeMax: 12000,
+        numericAgeUnit: "a",
+        numericAgeYearsUnit: "bp",
+        geologicalAgeMin: "ics8",
+        geologicalAgeMax: "ics12",
+        geologicalUnit: "Green Sandstone Fm",
+      },
+    });
+    // Assert: read back through the list path.
+    const { data } = await listSamples(db, { page: 1, perPage: 10 });
+    expect(data[0]?.age).toEqual({
+      numericAgeMin: 12000,
+      numericAgeMax: 12000,
+      numericAgeUnit: "a",
+      numericAgeYearsUnit: "bp",
+      geologicalAgeMin: "ics8",
+      geologicalAgeMax: "ics12",
+      geologicalUnit: "Green Sandstone Fm",
+    });
+    expect(created.age?.numericAgeMin).toBe(12000);
+  });
+
+  pgTest("should persist a null age when none is given", async ({ db }) => {
+    const created = await insertSample(db, {
+      name: "Unclassified",
+      nature: "hand_sample",
+      type: null,
+    });
+    expect(created.age).toBeNull();
+  });
+
   pgTest("should generate a source UUIDv7 id", async ({ db }) => {
     // Act
     const created = await insertSample(db, {

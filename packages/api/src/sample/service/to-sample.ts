@@ -87,7 +87,29 @@ function toCondition(row: Selectable<DB["sample"]>) {
 }
 
 // DB row (snake_case) -> domain Sample (camelCase), validated at the boundary.
+// Location is flat on the row (see to-location.ts). Age is flat too: all-null
+// age columns -> null age. sampleSchema.parse validates the codes at the boundary.
 export function toSample(row: Selectable<DB["sample"]>): Sample {
+  const ageColumns = [
+    row.numeric_age_min,
+    row.numeric_age_max,
+    row.numeric_age_unit,
+    row.numeric_age_years_unit,
+    row.geological_age_min,
+    row.geological_age_max,
+    row.geological_unit,
+  ];
+  const age = ageColumns.every((value) => value === null)
+    ? null
+    : {
+        numericAgeMin: row.numeric_age_min,
+        numericAgeMax: row.numeric_age_max,
+        numericAgeUnit: row.numeric_age_unit,
+        numericAgeYearsUnit: row.numeric_age_years_unit,
+        geologicalAgeMin: row.geological_age_min,
+        geologicalAgeMax: row.geological_age_max,
+        geologicalUnit: row.geological_unit,
+      };
   return sampleSchema.parse({
     id: row.id,
     name: row.name,
@@ -102,6 +124,7 @@ export function toSample(row: Selectable<DB["sample"]>): Sample {
     location: toLocation(row),
     description: toDescription(row),
     condition: toCondition(row),
+    age,
     igsn: row.igsn,
     published: row.published,
     createdAt: row.created_at,

@@ -20,6 +20,11 @@ export const publishBlockerSchema = z.enum([
   "metamorphic_facies_missing",
   "location_position_missing",
   "collection_date_missing",
+  "numeric_age_unit_missing",
+  "numeric_age_reference_missing",
+  "numeric_age_range_incomplete",
+  "geological_age_range_incomplete",
+  "elevation_incomplete",
 ]);
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
@@ -33,7 +38,12 @@ export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
 export function samplePublishBlockers(
   sample: Pick<
     Sample,
-    "type" | "material" | "metamorphicFacies" | "location" | "description"
+    | "type"
+    | "material"
+    | "metamorphicFacies"
+    | "location"
+    | "description"
+    | "age"
   >,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
@@ -85,6 +95,54 @@ export function samplePublishBlockers(
   // to publish, like material/type it stays optional on a draft (ADR 0015).
   if (sample.description?.collectionDate == null) {
     blockers.push("collection_date_missing");
+  }
+
+  // Age is optional, but a recorded numeric value must state its (shared) unit
+  // before the sample is published (a draft may omit it). Stratigraphic ages
+  // carry no unit.
+  const age = sample.age;
+  const hasNumericValue =
+    age != null && (age.numericAgeMin != null || age.numericAgeMax != null);
+  if (hasNumericValue && age.numericAgeUnit === null) {
+    blockers.push("numeric_age_unit_missing");
+  }
+
+  // An age in annum is a point on a calendar, so it needs a reference (CE/BCE/
+  // BP/cal BP) before publishing; other units are magnitudes and carry none. A
+  // draft may still omit it, so this gates publication rather than the schema.
+  if (
+    hasNumericValue &&
+    age.numericAgeUnit === "a" &&
+    age.numericAgeYearsUnit === null
+  ) {
+    blockers.push("numeric_age_reference_missing");
+  }
+
+  // A half-entered range (one bound only) is a valid draft but cannot publish:
+  // a range needs both bounds. Checked here rather than in ageSchema so editing
+  // and saving a draft mid-range is not blocked (matches the unit rule above).
+  if (age != null) {
+    if ((age.numericAgeMin != null) !== (age.numericAgeMax != null)) {
+      blockers.push("numeric_age_range_incomplete");
+    }
+    if ((age.geologicalAgeMin != null) !== (age.geologicalAgeMax != null)) {
+      blockers.push("geological_age_range_incomplete");
+    }
+  }
+
+  // Elevation is optional, but once any part is recorded it must be complete to
+  // publish (both bounds, a unit and a datum), like the age ranges above. A
+  // draft may hold a partial elevation; this gates publication, not the schema
+  // (ADR 0014).
+  const elevation = sample.location?.position?.elevation;
+  if (
+    elevation != null &&
+    (elevation.min == null ||
+      elevation.max == null ||
+      elevation.unit == null ||
+      elevation.datum == null)
+  ) {
+    blockers.push("elevation_incomplete");
   }
 
   return blockers;

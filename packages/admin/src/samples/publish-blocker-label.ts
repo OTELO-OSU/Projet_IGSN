@@ -13,6 +13,13 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   metamorphic_facies_missing: m.publish_blocked_metamorphic_facies_missing,
   location_position_missing: m.publish_blocked_location_position_missing,
   collection_date_missing: m.publish_blocked_collection_date_missing,
+  numeric_age_unit_missing: m.publish_blocked_numeric_age_unit_missing,
+  numeric_age_reference_missing:
+    m.publish_blocked_numeric_age_reference_missing,
+  numeric_age_range_incomplete: m.publish_blocked_numeric_age_range_incomplete,
+  geological_age_range_incomplete:
+    m.publish_blocked_geological_age_range_incomplete,
+  elevation_incomplete: m.publish_blocked_elevation_incomplete,
 };
 
 export function publishBlockerLabel(blocker: PublishBlocker): string {

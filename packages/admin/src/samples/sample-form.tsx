@@ -183,6 +183,7 @@ export function SampleForm({
               metamorphicFacies: metamorphicFacies || null,
               location: composeLocation(location),
               description: composeDescription(description),
+              age: null,
             } as Pick<
               Sample,
               | "type"
@@ -190,6 +191,7 @@ export function SampleForm({
               | "metamorphicFacies"
               | "location"
               | "description"
+              | "age"
             >).map(publishBlockerLabel);
             const button = (
               <PublishSampleButton
