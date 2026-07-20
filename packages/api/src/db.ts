@@ -110,13 +110,11 @@ type SampleLinkTable = {
 };
 
 // Attached-file metadata (ADR 0017); the content lives on disk keyed by id.
-// size_bytes is integer, plenty for the domain upload cap.
 type SampleAttachmentTable = {
   id: string;
   sample_id: string;
   name: string;
   media_type: string;
-  size_bytes: number;
   description: string | null;
 };
 

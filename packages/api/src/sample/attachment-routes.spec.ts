@@ -77,7 +77,6 @@ describe("admin attachment routes", () => {
       expect(data).toMatchObject({
         name: "measurements.csv",
         mediaType: "text/csv",
-        sizeBytes: csv.byteLength,
         description: "Raw measurements",
       });
       const read = await client.admin.samples[":id"].$get(

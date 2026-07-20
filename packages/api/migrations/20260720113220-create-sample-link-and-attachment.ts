@@ -27,7 +27,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     )
     .addColumn("name", "text", (col) => col.notNull())
     .addColumn("media_type", "text", (col) => col.notNull())
-    .addColumn("size_bytes", "integer", (col) => col.notNull())
     .addColumn("description", "text")
     .execute();
   await db.schema

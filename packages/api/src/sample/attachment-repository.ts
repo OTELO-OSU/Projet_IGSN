@@ -23,7 +23,6 @@ function toAttachment(
     id: row.id,
     name: row.name,
     mediaType: row.media_type,
-    sizeBytes: row.size_bytes,
     description: row.description,
   });
 }
@@ -57,7 +56,6 @@ export function createSampleAttachmentRepository(
             sample_id: sampleId,
             name: input.name,
             media_type: input.mediaType,
-            size_bytes: content.byteLength,
             description: input.description,
           })
           .returningAll()

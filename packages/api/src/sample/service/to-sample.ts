@@ -140,7 +140,6 @@ export function toSample(
       id: attachment.id,
       name: attachment.name,
       mediaType: attachment.media_type,
-      sizeBytes: attachment.size_bytes,
       description: attachment.description,
     })),
     igsn: row.igsn,

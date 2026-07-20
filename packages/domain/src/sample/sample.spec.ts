@@ -67,7 +67,6 @@ describe("sampleSchema", () => {
           id: "3f2504e0-4f89-41d3-9a0c-0305e82c3303",
           name: "analysis.pdf",
           mediaType: "application/pdf",
-          sizeBytes: 12345,
           description: "XRF analysis report",
         },
       ],

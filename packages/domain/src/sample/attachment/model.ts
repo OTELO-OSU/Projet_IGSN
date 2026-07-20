@@ -11,7 +11,6 @@ export const sampleAttachmentSchema = z.object({
   // Original file name, kept for the download.
   name: freeText,
   mediaType: freeText,
-  sizeBytes: z.number().int().positive(),
   description: freeText.nullable(),
 });
 

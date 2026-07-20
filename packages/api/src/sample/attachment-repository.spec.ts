@@ -42,7 +42,6 @@ describe("sampleAttachmentRepository", () => {
       expect(created).toMatchObject({
         name: "measurements.csv",
         mediaType: "text/csv",
-        sizeBytes: content.byteLength,
         description: "Raw XRF measurements",
       });
       const found = await repository.getContent(sample.id, created!.id);

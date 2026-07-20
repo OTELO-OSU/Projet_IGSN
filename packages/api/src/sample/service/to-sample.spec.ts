@@ -129,7 +129,6 @@ describe("toSample", () => {
           sample_id: row.id,
           name: "analysis.pdf",
           media_type: "application/pdf",
-          size_bytes: 12345,
           description: "XRF analysis report",
         },
       ],
@@ -147,7 +146,6 @@ describe("toSample", () => {
         id: "018f4d3a-1f2b-7c00-8000-000000000002",
         name: "analysis.pdf",
         mediaType: "application/pdf",
-        sizeBytes: 12345,
         description: "XRF analysis report",
       },
     ]);
