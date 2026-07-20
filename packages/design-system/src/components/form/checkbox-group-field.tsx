@@ -2,7 +2,7 @@ import { Checkbox } from "../ui/checkbox.tsx";
 import { Label } from "../ui/label.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
-export type CheckboxGroupItem = {
+type CheckboxGroupItem = {
   value: string;
   label: string;
   disabled?: boolean;

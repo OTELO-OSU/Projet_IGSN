@@ -35,7 +35,7 @@ export async function seed(
       // collectionMethod is camelCase in the domain; the column is snake_case.
       .values(
         samples
-          .map((sample) => parseSeedSample(sample))
+          .map(parseSeedSample)
           .map(
             ({
               material,

@@ -1,3 +1,4 @@
+import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { HUMIDITY_TYPES } from "@projet-igsn/domain/sample/condition/humidity-type";
 import { LIGHTS } from "@projet-igsn/domain/sample/condition/light";
 import { PACKAGINGS } from "@projet-igsn/domain/sample/condition/packaging";
@@ -14,6 +15,7 @@ import {
 } from "@projet-igsn/domain/sample/condition/temperature-unit";
 
 import { m } from "#/paraglide/messages.js";
+import { type ConditionDraft } from "#/samples/compose-condition.ts";
 import {
   humidityTypeLabel,
   lightLabel,
@@ -22,7 +24,6 @@ import {
   storageConditionLabel,
   temperatureTypeLabel,
 } from "#/samples/sample-labels.ts";
-import { useConditionForm } from "#/samples/use-condition-form.ts";
 
 const packagingItems = PACKAGINGS.map((value) => ({
   value,
@@ -94,7 +95,12 @@ const storageConditionItems = (selected: readonly string[]) => {
 // store holds the flat `condition.*` draft; `composeCondition` maps it back
 // on submit.
 export function SampleConditionFields() {
-  const form = useConditionForm();
+  // The sample form, typed down to what this tab reads: the flat
+  // `condition.*` draft (same seam as use-description-form.ts, inlined while
+  // this is its only consumer).
+  const form = useTypedAppFormContext({
+    defaultValues: {} as { condition: ConditionDraft },
+  });
   return (
     <div className="grid gap-4">
       <form.AppField name="condition.packaging">
@@ -109,20 +115,14 @@ export function SampleConditionFields() {
         )}
       </form.AppField>
 
-      <form.Subscribe
-        selector={(state) => state.values.condition.storageConditions}
-      >
-        {(selected) => (
-          <form.AppField name="condition.storageConditions">
-            {(field) => (
-              <field.CheckboxGroupField
-                label={m.field_storage_conditions()}
-                items={storageConditionItems(selected)}
-              />
-            )}
-          </form.AppField>
+      <form.AppField name="condition.storageConditions">
+        {(field) => (
+          <field.CheckboxGroupField
+            label={m.field_storage_conditions()}
+            items={storageConditionItems(field.state.value)}
+          />
         )}
-      </form.Subscribe>
+      </form.AppField>
 
       {readings.map((reading) => (
         <div key={reading.key} className="grid gap-4 sm:grid-cols-3">
