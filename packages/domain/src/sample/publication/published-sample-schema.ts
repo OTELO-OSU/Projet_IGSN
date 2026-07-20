@@ -22,6 +22,7 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   numeric_age_range_incomplete: ["age"],
   geological_age_range_incomplete: ["age"],
   elevation_incomplete: ["location", "position", "elevation"],
+  availability_missing: ["availability"],
 };
 
 // The shape of a sample that is, or is becoming, published: the create shape,
@@ -38,6 +39,7 @@ export const publishedSampleSchema = createSampleSchema.superRefine(
       location: value.location ?? null,
       description: value.description ?? null,
       age: value.age ?? null,
+      availability: value.availability ?? null,
     });
     for (const blocker of blockers) {
       ctx.addIssue({

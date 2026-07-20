@@ -170,6 +170,9 @@ export function SampleForm({
           location: composeLocation(location),
           description: composeDescription(description),
           age: null,
+          // Not yet an editable form field; wired with the availability
+          // section. Null keeps the publish gate honest until then.
+          availability: null,
         } as Pick<
           Sample,
           | "type"
@@ -178,6 +181,7 @@ export function SampleForm({
           | "location"
           | "description"
           | "age"
+          | "availability"
         >).map(publishBlockerLabel);
         const button = renderButton(
           isPending || !canSubmit || reasons.length > 0,

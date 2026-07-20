@@ -83,6 +83,7 @@
   "publish_blocked_numeric_age_range_incomplete": "A numeric age range needs both a minimum and a maximum before publishing.",
   "publish_blocked_geological_age_range_incomplete": "A stratigraphic age range needs both a minimum and a maximum before publishing.",
   "publish_blocked_elevation_incomplete": "An elevation needs both bounds, a unit and a datum before publishing.",
+  "publish_blocked_availability_missing": "State whether the sample still exists before publishing.",
   "tab_physical_description": "Physical description",
   "section_location": "Location",
   "field_location_type": "Type",

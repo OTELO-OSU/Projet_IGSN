@@ -20,6 +20,7 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   geological_age_range_incomplete:
     m.publish_blocked_geological_age_range_incomplete,
   elevation_incomplete: m.publish_blocked_elevation_incomplete,
+  availability_missing: m.publish_blocked_availability_missing,
 };
 
 export function publishBlockerLabel(blocker: PublishBlocker): string {

@@ -25,6 +25,7 @@ export const publishBlockerSchema = z.enum([
   "numeric_age_range_incomplete",
   "geological_age_range_incomplete",
   "elevation_incomplete",
+  "availability_missing",
 ]);
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
@@ -44,6 +45,7 @@ export function samplePublishBlockers(
     | "location"
     | "description"
     | "age"
+    | "availability"
   >,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
@@ -143,6 +145,12 @@ export function samplePublishBlockers(
       elevation.datum == null)
   ) {
     blockers.push("elevation_incomplete");
+  }
+
+  // Availability (exists / no longer exists) is optional on a draft but must be
+  // declared before publishing, so a reader always knows if the sample survives.
+  if (sample.availability == null) {
+    blockers.push("availability_missing");
   }
 
   return blockers;
