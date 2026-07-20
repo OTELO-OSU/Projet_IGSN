@@ -4,6 +4,7 @@ import type { VerticalDatum } from "@projet-igsn/domain/sample/location/vertical
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
 import { oceanSeaName } from "@projet-igsn/domain/sample/location/ocean-sea-label";
 
+import { FieldRows } from "#/domain/samples/field-rows.tsx";
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
 
@@ -101,14 +102,5 @@ export function LocationView({ location }: { location: Location }) {
       value: location.localityDescription,
     });
   }
-  return (
-    <dl className="mt-2 divide-y">
-      {rows.map(({ label, value }) => (
-        <div key={label} className="flex gap-4 px-4 py-3">
-          <dt className="text-muted-foreground w-40">{label}</dt>
-          <dd className="font-medium">{value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
+  return <FieldRows rows={rows} />;
 }

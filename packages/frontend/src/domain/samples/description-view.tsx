@@ -2,6 +2,7 @@ import type { Description } from "@projet-igsn/domain/sample/description/model";
 
 import { volumeUnitLabel } from "@projet-igsn/domain/sample/description/volume-unit";
 
+import { FieldRows } from "#/domain/samples/field-rows.tsx";
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
 
@@ -75,14 +76,5 @@ export function DescriptionView({ description }: { description: Description }) {
       });
     }
   }
-  return (
-    <dl className="mt-2 divide-y">
-      {rows.map(({ label, value }) => (
-        <div key={label} className="flex gap-4 px-4 py-3">
-          <dt className="text-muted-foreground w-40">{label}</dt>
-          <dd className="font-medium">{value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
+  return <FieldRows rows={rows} />;
 }

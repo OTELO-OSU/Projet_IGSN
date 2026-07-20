@@ -2,8 +2,11 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { ChevronRightIcon } from "lucide-react";
 
+import type { FieldRow } from "#/domain/samples/field-rows.tsx";
+
 import { ConditionView } from "#/domain/samples/condition-view.tsx";
 import { DescriptionView } from "#/domain/samples/description-view.tsx";
+import { FieldRows } from "#/domain/samples/field-rows.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
 import {
@@ -62,6 +65,23 @@ function ClassificationBreadcrumb({ labelId, segments }: BreadcrumbProps) {
   );
 }
 
+// A classification row: the dt id lets the breadcrumb name itself after it.
+const breadcrumbRow = (
+  id: string,
+  label: string,
+  path: string,
+  pathLabel: (path: string) => string,
+): FieldRow => ({
+  id,
+  label,
+  value: (
+    <ClassificationBreadcrumb
+      labelId={id}
+      segments={pathBreadcrumb(path, pathLabel)}
+    />
+  ),
+});
+
 export function SampleView({
   name,
   igsn,
@@ -76,6 +96,95 @@ export function SampleView({
   condition,
   location,
 }: SampleViewProps) {
+  const sampleRows: FieldRow[] = [
+    { label: m.sample_field_nature(), value: natureLabel(nature) },
+  ];
+  if (type) {
+    sampleRows.push(
+      breadcrumbRow(
+        "sample-field-type",
+        m.sample_field_type(),
+        type,
+        typeLabel,
+      ),
+    );
+  }
+  if (material) {
+    sampleRows.push(
+      breadcrumbRow(
+        "sample-field-material",
+        m.sample_field_material(),
+        material,
+        materialPathLabel,
+      ),
+    );
+  }
+  if (texture) {
+    sampleRows.push({
+      label: m.sample_field_texture(),
+      value: textureLabel(texture),
+    });
+  }
+  if (metamorphicFacies) {
+    sampleRows.push({
+      label: m.sample_field_metamorphic_facies(),
+      value: metamorphicFaciesLabel(metamorphicFacies),
+    });
+  }
+  if (collectionMethod) {
+    sampleRows.push(
+      breadcrumbRow(
+        "sample-field-collection-method",
+        m.sample_field_collection_method(),
+        collectionMethod,
+        collectionMethodLabel,
+      ),
+    );
+  }
+  if (collectionMethodDescription) {
+    sampleRows.push({
+      label: m.sample_field_collection_method_description(),
+      value: collectionMethodDescription,
+    });
+  }
+
+  // One entry per section actually present; drives the nav and the body, so a
+  // section cannot appear in one without the other.
+  const sections = [
+    {
+      id: "sample",
+      title: m.sample_section_sample(),
+      content: <FieldRows rows={sampleRows} />,
+    },
+    ...(description
+      ? [
+          {
+            id: "description",
+            title: m.sample_section_description(),
+            content: <DescriptionView description={description} />,
+          },
+        ]
+      : []),
+    ...(location
+      ? [
+          {
+            id: "location",
+            title: m.sample_section_location(),
+            content: <LocationView location={location} />,
+          },
+        ]
+      : []),
+    ...(condition
+      ? [
+          {
+            id: "condition",
+            title: m.sample_section_condition(),
+            content: <ConditionView condition={condition} />,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div>
       <div className="bg-sky-700 text-white">
@@ -93,198 +202,36 @@ export function SampleView({
           className="sticky top-6 w-40 shrink-0 self-start"
         >
           <ul className="grid gap-2">
-            <li>
-              <a
-                href="#sample"
-                className="border-l-2 border-sky-800 pl-3 font-medium text-sky-900"
-              >
-                {m.sample_section_sample()}
-              </a>
-            </li>
-            {description ? (
-              <li>
+            {sections.map(({ id, title }) => (
+              <li key={id}>
                 <a
-                  href="#description"
+                  href={`#${id}`}
                   className="border-l-2 border-sky-800 pl-3 font-medium text-sky-900"
                 >
-                  {m.sample_section_description()}
+                  {title}
                 </a>
               </li>
-            ) : null}
-            {location ? (
-              <li>
-                <a
-                  href="#location"
-                  className="border-l-2 border-sky-800 pl-3 font-medium text-sky-900"
-                >
-                  {m.sample_section_location()}
-                </a>
-              </li>
-            ) : null}
-            {condition ? (
-              <li>
-                <a
-                  href="#condition"
-                  className="border-l-2 border-sky-800 pl-3 font-medium text-sky-900"
-                >
-                  {m.sample_section_condition()}
-                </a>
-              </li>
-            ) : null}
+            ))}
           </ul>
         </nav>
 
         <div className="flex-1">
-          <section id="sample" aria-labelledby="sample-heading">
-            <h2
-              id="sample-heading"
-              className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
-            >
-              {m.sample_section_sample()}
-            </h2>
-            <dl className="mt-2 divide-y">
-              <div className="flex gap-4 px-4 py-3">
-                <dt
-                  id="sample-field-nature"
-                  className="text-muted-foreground w-40"
-                >
-                  {m.sample_field_nature()}
-                </dt>
-                <dd className="font-medium">{natureLabel(nature)}</dd>
-              </div>
-              {type ? (
-                <div className="flex gap-4 px-4 py-3">
-                  <dt
-                    id="sample-field-type"
-                    className="text-muted-foreground w-40"
-                  >
-                    {m.sample_field_type()}
-                  </dt>
-                  <dd>
-                    <ClassificationBreadcrumb
-                      labelId="sample-field-type"
-                      segments={pathBreadcrumb(type, typeLabel)}
-                    />
-                  </dd>
-                </div>
-              ) : null}
-              {material ? (
-                <div className="flex gap-4 px-4 py-3">
-                  <dt
-                    id="sample-field-material"
-                    className="text-muted-foreground w-40"
-                  >
-                    {m.sample_field_material()}
-                  </dt>
-                  <dd>
-                    <ClassificationBreadcrumb
-                      labelId="sample-field-material"
-                      segments={pathBreadcrumb(material, materialPathLabel)}
-                    />
-                  </dd>
-                </div>
-              ) : null}
-              {texture ? (
-                <div className="flex gap-4 px-4 py-3">
-                  <dt
-                    id="sample-field-texture"
-                    className="text-muted-foreground w-40"
-                  >
-                    {m.sample_field_texture()}
-                  </dt>
-                  <dd className="font-medium">{textureLabel(texture)}</dd>
-                </div>
-              ) : null}
-              {metamorphicFacies ? (
-                <div className="flex gap-4 px-4 py-3">
-                  <dt
-                    id="sample-field-metamorphic-facies"
-                    className="text-muted-foreground w-40"
-                  >
-                    {m.sample_field_metamorphic_facies()}
-                  </dt>
-                  <dd className="font-medium">
-                    {metamorphicFaciesLabel(metamorphicFacies)}
-                  </dd>
-                </div>
-              ) : null}
-              {collectionMethod ? (
-                <div className="flex gap-4 px-4 py-3">
-                  <dt
-                    id="sample-field-collection-method"
-                    className="text-muted-foreground w-40"
-                  >
-                    {m.sample_field_collection_method()}
-                  </dt>
-                  <dd>
-                    <ClassificationBreadcrumb
-                      labelId="sample-field-collection-method"
-                      segments={pathBreadcrumb(
-                        collectionMethod,
-                        collectionMethodLabel,
-                      )}
-                    />
-                  </dd>
-                </div>
-              ) : null}
-              {collectionMethodDescription ? (
-                <div className="flex gap-4 px-4 py-3">
-                  <dt className="text-muted-foreground w-40">
-                    {m.sample_field_collection_method_description()}
-                  </dt>
-                  <dd className="font-medium">{collectionMethodDescription}</dd>
-                </div>
-              ) : null}
-            </dl>
-          </section>
-
-          {description ? (
+          {sections.map(({ id, title, content }) => (
             <section
-              id="description"
-              aria-labelledby="description-heading"
-              className="mt-8"
+              key={id}
+              id={id}
+              aria-labelledby={`${id}-heading`}
+              className="mt-8 first:mt-0"
             >
               <h2
-                id="description-heading"
+                id={`${id}-heading`}
                 className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
               >
-                {m.sample_section_description()}
+                {title}
               </h2>
-              <DescriptionView description={description} />
+              {content}
             </section>
-          ) : null}
-
-          {location ? (
-            <section
-              id="location"
-              aria-labelledby="location-heading"
-              className="mt-8"
-            >
-              <h2
-                id="location-heading"
-                className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
-              >
-                {m.sample_section_location()}
-              </h2>
-              <LocationView location={location} />
-            </section>
-          ) : null}
-
-          {condition ? (
-            <section
-              id="condition"
-              aria-labelledby="condition-heading"
-              className="mt-8"
-            >
-              <h2
-                id="condition-heading"
-                className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
-              >
-                {m.sample_section_condition()}
-              </h2>
-              <ConditionView condition={condition} />
-            </section>
-          ) : null}
+          ))}
         </div>
       </div>
     </div>

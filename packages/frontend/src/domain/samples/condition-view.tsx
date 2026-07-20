@@ -3,6 +3,7 @@ import type { Condition } from "@projet-igsn/domain/sample/condition/model";
 import { pressureUnitLabel } from "@projet-igsn/domain/sample/condition/pressure-unit";
 import { temperatureUnitLabel } from "@projet-igsn/domain/sample/condition/temperature-unit";
 
+import { FieldRows } from "#/domain/samples/field-rows.tsx";
 import {
   humidityTypeLabel,
   lightLabel,
@@ -81,14 +82,5 @@ export function ConditionView({ condition }: { condition: Condition }) {
       value: condition.specificConditions,
     });
   }
-  return (
-    <dl className="mt-2 divide-y">
-      {rows.map(({ label, value }) => (
-        <div key={label} className="flex gap-4 px-4 py-3">
-          <dt className="text-muted-foreground w-40">{label}</dt>
-          <dd className="font-medium">{value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
+  return <FieldRows rows={rows} />;
 }
