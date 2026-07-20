@@ -124,6 +124,26 @@ describe("admin attachment routes", () => {
     expect(res.status).toBe(400);
   });
 
+  pgTest(
+    "should default a missing file type to application/octet-stream",
+    async ({ db }) => {
+      const client = await createTestApp(db);
+      const sample = await createSample(client);
+      const res = await client.admin.samples[":id"].attachments.$post(
+        {
+          param: { id: sample.id },
+          // A File built without a type reaches the server with "".
+          form: { file: new File([csv], "data.csv") },
+        },
+        { headers: authHeader },
+      );
+      expect(res.status).toBe(201);
+      expect(await res.json()).toMatchObject({
+        data: { mediaType: "application/octet-stream" },
+      });
+    },
+  );
+
   pgTest("should 404 an upload to an unknown sample", async ({ db }) => {
     const client = await createTestApp(db);
     const res = await uploadAttachment(
@@ -221,6 +241,23 @@ describe("admin attachment routes", () => {
     expect(
       sampleResponseSchema.parse(await read.json()).data.attachments,
     ).toEqual([]);
+  });
+
+  pgTest("should 404 a delete of an unknown attachment", async ({ db }) => {
+    const client = await createTestApp(db);
+    const sample = await createSample(client);
+    const res = await client.admin.samples[":id"].attachments[
+      ":attachmentId"
+    ].$delete(
+      {
+        param: {
+          id: sample.id,
+          attachmentId: "00000000-0000-7000-8000-000000000000",
+        },
+      },
+      { headers: authHeader },
+    );
+    expect(res.status).toBe(404);
   });
 });
 
