@@ -1,5 +1,6 @@
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
@@ -18,10 +19,7 @@ export function TextureField() {
       {(materialPath) => {
         const textures = texturesFor(composeHierarchyValue(materialPath ?? []));
         if (textures.length === 0) return null;
-        const items = textures.map((texture) => ({
-          value: texture,
-          label: textureLabel(texture),
-        }));
+        const items = toComboboxItems(textures, textureLabel);
         return (
           <form.AppField name="texture">
             {(field) => (

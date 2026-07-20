@@ -5,6 +5,7 @@ import { useAppForm } from "@projet-igsn/design-system/components/form/app-form"
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import {
   Tabs,
   TabsContent,
@@ -41,10 +42,7 @@ import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
 
-const natureItems = natureSchema.options.map((nature) => ({
-  value: nature,
-  label: natureLabel(nature),
-}));
+const natureItems = toComboboxItems(natureSchema.options, natureLabel);
 
 // Draft -> domain-schema issues -> per-field translated errors. A published
 // sample validates against the publishable shape, a draft against the create

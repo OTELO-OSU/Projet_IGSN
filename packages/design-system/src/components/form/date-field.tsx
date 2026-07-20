@@ -1,6 +1,7 @@
 import { withRequired } from "../../lib/with-required.ts";
 import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
+import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 // A date-only input (native picker, no dependency): the form store holds an
@@ -13,8 +14,7 @@ export function DateField({
   requiredToPublish?: boolean;
 }) {
   const field = useFieldContext<string | null | undefined>();
-  const error = field.state.meta.errors[0];
-  const errorId = `${field.name}-error`;
+  const { error, errorId, ariaProps } = useFieldError();
   return (
     <div className="grid gap-2">
       <Label htmlFor={field.name}>
@@ -28,14 +28,9 @@ export function DateField({
         onChange={(event) =>
           field.handleChange(event.target.value || undefined)
         }
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        {...ariaProps}
       />
-      {error ? (
-        <p id={errorId} role="alert" className="text-destructive text-sm">
-          {error.message}
-        </p>
-      ) : null}
+      <FieldError error={error} errorId={errorId} />
     </div>
   );
 }

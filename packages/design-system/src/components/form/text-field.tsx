@@ -2,6 +2,7 @@ import { withRequired } from "../../lib/with-required.ts";
 import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
 import { Textarea } from "../ui/textarea.tsx";
+import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 // Blank or partial numeric input reads as undefined, never NaN.
@@ -28,8 +29,7 @@ export function TextField({
   requiredToPublish?: boolean;
 }) {
   const field = useFieldContext<string | number | null | undefined>();
-  const error = field.state.meta.errors[0];
-  const errorId = `${field.name}-error`;
+  const { error, errorId, ariaProps } = useFieldError();
   const Control = multiline ? Textarea : Input;
   return (
     <div className="grid gap-2">
@@ -51,14 +51,9 @@ export function TextField({
             number ? toNumber(event.target.value) : event.target.value,
           )
         }
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        {...ariaProps}
       />
-      {error ? (
-        <p id={errorId} role="alert" className="text-destructive text-sm">
-          {error.message}
-        </p>
-      ) : null}
+      <FieldError error={error} errorId={errorId} />
     </div>
   );
 }

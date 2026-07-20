@@ -1,3 +1,4 @@
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { ELEVATION_UNITS } from "@projet-igsn/domain/sample/location/elevation-unit";
 import { VERTICAL_DATUMS } from "@projet-igsn/domain/sample/location/vertical-datum";
 
@@ -21,7 +22,7 @@ const metaFields = [
   {
     key: "elevationUnit" as const,
     // Elevation units are language-neutral symbols (their own label).
-    items: ELEVATION_UNITS.map((value) => ({ value, label: value })),
+    items: toComboboxItems(ELEVATION_UNITS, (value) => value),
     label: m.field_elevation_unit,
     requiredMessage: m.field_elevation_unit_required,
     placeholder: m.elevation_unit_placeholder,
@@ -30,10 +31,7 @@ const metaFields = [
   },
   {
     key: "elevationDatum" as const,
-    items: VERTICAL_DATUMS.map((value) => ({
-      value,
-      label: verticalDatumLabel(value),
-    })),
+    items: toComboboxItems(VERTICAL_DATUMS, verticalDatumLabel),
     label: m.field_vertical_datum,
     requiredMessage: m.field_vertical_datum_required,
     placeholder: m.vertical_datum_placeholder,

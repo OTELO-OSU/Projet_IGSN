@@ -1,3 +1,4 @@
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { COUNTRIES } from "@projet-igsn/domain/sample/location/country";
 import { OCEAN_SEAS } from "@projet-igsn/domain/sample/location/ocean-sea";
 import { oceanSeaName } from "@projet-igsn/domain/sample/location/ocean-sea-label";
@@ -6,18 +7,12 @@ import { m } from "#/paraglide/messages.js";
 import { countryName, regionKindLabel } from "#/samples/location-label.ts";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 
-const regionKindItems = (["continent", "ocean"] as const).map((value) => ({
-  value,
-  label: regionKindLabel(value),
-}));
-const countryItems = COUNTRIES.map((value) => ({
-  value,
-  label: countryName(value),
-}));
-const oceanSeaItems = OCEAN_SEAS.map((value) => ({
-  value,
-  label: oceanSeaName(value),
-}));
+const regionKindItems = toComboboxItems(
+  ["continent", "ocean"] as const,
+  regionKindLabel,
+);
+const countryItems = toComboboxItems(COUNTRIES, countryName);
+const oceanSeaItems = toComboboxItems(OCEAN_SEAS, oceanSeaName);
 
 // Region: a continent/ocean toggle, then the matching country or ocean/sea list.
 export function LocationRegionFields() {

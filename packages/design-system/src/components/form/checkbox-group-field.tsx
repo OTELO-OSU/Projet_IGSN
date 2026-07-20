@@ -1,5 +1,6 @@
 import { Checkbox } from "../ui/checkbox.tsx";
 import { Label } from "../ui/label.tsx";
+import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 type CheckboxGroupItem = {
@@ -20,8 +21,9 @@ export function CheckboxGroupField({
   items: CheckboxGroupItem[];
 }) {
   const field = useFieldContext<string[]>();
-  const error = field.state.meta.errors[0];
-  const errorId = `${field.name}-error`;
+  // The group splits the aria wiring: the description sits on the fieldset,
+  // the invalid flag on each checkbox.
+  const { error, errorId } = useFieldError();
   const checked = field.state.value ?? [];
   const toggle = (value: string, on: boolean) =>
     field.handleChange(
@@ -50,11 +52,7 @@ export function CheckboxGroupField({
           <Label htmlFor={`${field.name}-${item.value}`}>{item.label}</Label>
         </div>
       ))}
-      {error ? (
-        <p id={errorId} role="alert" className="text-destructive text-sm">
-          {error.message}
-        </p>
-      ) : null}
+      <FieldError error={error} errorId={errorId} />
     </fieldset>
   );
 }

@@ -1,4 +1,5 @@
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { HUMIDITY_TYPES } from "@projet-igsn/domain/sample/condition/humidity-type";
 import { LIGHTS } from "@projet-igsn/domain/sample/condition/light";
 import { PACKAGINGS } from "@projet-igsn/domain/sample/condition/packaging";
@@ -25,15 +26,9 @@ import {
   temperatureTypeLabel,
 } from "#/samples/sample-labels.ts";
 
-const packagingItems = PACKAGINGS.map((value) => ({
-  value,
-  label: packagingLabel(value),
-}));
-const lightItems = LIGHTS.map((value) => ({ value, label: lightLabel(value) }));
-const humidityTypeItems = HUMIDITY_TYPES.map((value) => ({
-  value,
-  label: humidityTypeLabel(value),
-}));
+const packagingItems = toComboboxItems(PACKAGINGS, packagingLabel);
+const lightItems = toComboboxItems(LIGHTS, lightLabel);
+const humidityTypeItems = toComboboxItems(HUMIDITY_TYPES, humidityTypeLabel);
 
 // Temperature and pressure share the reading-row shape: a category, then a
 // value whose unit becomes required once it is entered (see MeasurementFields).
@@ -46,14 +41,11 @@ const readings = [
     placeholder: m.temperature_placeholder,
     searchPlaceholder: m.temperature_search_placeholder,
     emptyText: m.temperature_empty,
-    typeItems: TEMPERATURE_TYPES.map((value) => ({
-      value,
-      label: temperatureTypeLabel(value),
-    })),
-    unitItems: TEMPERATURE_UNITS.map((value) => ({
-      value,
-      label: temperatureUnitLabel[value],
-    })),
+    typeItems: toComboboxItems(TEMPERATURE_TYPES, temperatureTypeLabel),
+    unitItems: toComboboxItems(
+      TEMPERATURE_UNITS,
+      (value) => temperatureUnitLabel[value],
+    ),
   },
   {
     key: "pressure" as const,
@@ -63,14 +55,11 @@ const readings = [
     placeholder: m.pressure_placeholder,
     searchPlaceholder: m.pressure_search_placeholder,
     emptyText: m.pressure_empty,
-    typeItems: PRESSURE_TYPES.map((value) => ({
-      value,
-      label: pressureTypeLabel(value),
-    })),
-    unitItems: PRESSURE_UNITS.map((value) => ({
-      value,
-      label: pressureUnitLabel[value],
-    })),
+    typeItems: toComboboxItems(PRESSURE_TYPES, pressureTypeLabel),
+    unitItems: toComboboxItems(
+      PRESSURE_UNITS,
+      (value) => pressureUnitLabel[value],
+    ),
   },
 ];
 
