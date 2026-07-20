@@ -11,7 +11,7 @@ const createAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Create", onSubmit }) as const;
 
 // Renders the form with the required fields prefilled and opens the
-// Condition tab, so each test only drives the condition inputs.
+// Physical description tab, so each test only drives the condition inputs.
 async function renderConditionTab(
   onSubmit: (value: CreateSample) => void = noop,
   condition?: CreateSample["condition"],
@@ -31,7 +31,7 @@ async function renderConditionTab(
       primaryAction={createAction(onSubmit)}
     />,
   );
-  await screen.getByRole("tab", { name: "Sample condition" }).click();
+  await screen.getByRole("tab", { name: "Physical description" }).click();
   return screen;
 }
 
