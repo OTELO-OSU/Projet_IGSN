@@ -36,6 +36,11 @@ import {
   toSecurityDraft,
 } from "#/samples/compose-security.ts";
 
+// A DOI link row as the form holds it: plain strings, blank when empty. The
+// key only gives the row a stable React identity across removals; the compose
+// step never reads it.
+export type LinkDraft = { key: string; url: string; description: string };
+
 // The sample form's flat draft, as held by the form store. Age nests under its
 // own key (like location), so the form's `age.*` paths mirror the domain shape.
 export type SampleDraft = {
@@ -54,6 +59,7 @@ export type SampleDraft = {
   security: SecurityDraft;
   availability: CreateSample["availability"] | undefined;
   age: AgeFormValues;
+  links: LinkDraft[];
 };
 
 // A saved (or default) sample, spread into the flat draft the form store
@@ -77,7 +83,23 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   // Defaults to "exists" per the declaration flow; still required to publish.
   availability: value?.availability ?? "exists",
   age: ageFormValues(value?.age),
+  links: (value?.links ?? []).map((link) => ({
+    key: crypto.randomUUID(),
+    url: link.url,
+    description: link.description ?? "",
+  })),
 });
+
+// A fully blank row is an abandoned "Add a link" click: drop it. A row with
+// any content is kept as-is, so a description without its url still raises
+// the schema error on the row's url field.
+const composeLinks = (links: LinkDraft[]) =>
+  links
+    .filter((link) => link.url.trim() || link.description.trim())
+    .map((link) => ({
+      url: link.url.trim(),
+      description: link.description.trim() || null,
+    }));
 
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
@@ -86,6 +108,7 @@ const composeCreateSample = (draft: SampleDraft) => {
   // Assemble the age block; omit it entirely when empty (like texture).
   const age = toAgeInput(draft.age);
   const security = composeSecurity(draft.security);
+  const links = composeLinks(draft.links);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -121,6 +144,9 @@ const composeCreateSample = (draft: SampleDraft) => {
     // Required only at publish; omit on a draft that has not answered it yet.
     ...(draft.availability ? { availability: draft.availability } : {}),
     ...(age ? { age } : {}),
+    // Omitted when empty: the API replaces links wholesale, and an absent key
+    // clears them just like an empty array.
+    ...(links.length > 0 ? { links } : {}),
   };
 };
 

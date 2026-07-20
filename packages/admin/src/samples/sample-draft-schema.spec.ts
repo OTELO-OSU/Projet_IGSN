@@ -6,7 +6,11 @@ import { toConditionDraft } from "./compose-condition.ts";
 import { toDescriptionDraft } from "./compose-description.ts";
 import { toLocationDraft } from "./compose-location.ts";
 import { toSecurityDraft } from "./compose-security.ts";
-import { type SampleDraft, sampleDraftSchema } from "./sample-draft-schema.ts";
+import {
+  type SampleDraft,
+  sampleDraftSchema,
+  toSampleDraft,
+} from "./sample-draft-schema.ts";
 
 const draft: SampleDraft = {
   name: "Basalt 42",
@@ -24,6 +28,7 @@ const draft: SampleDraft = {
   security: toSecurityDraft(null),
   availability: "exists",
   age: EMPTY_AGE_FORM_VALUES,
+  links: [],
 };
 
 describe("sampleDraftSchema", () => {
@@ -134,6 +139,80 @@ describe("sampleDraftSchema", () => {
     if (result.success) throw new Error("expected the parse to fail");
     expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
       "description.mass.unit",
+    ]);
+  });
+
+  it("should compose link rows, dropping blank ones", () => {
+    const result = sampleDraftSchema.parse({
+      ...draft,
+      links: [
+        {
+          key: "k1",
+          url: " https://doi.org/10.1594/IEDA.100252 ",
+          description: "  ",
+        },
+        {
+          key: "k2",
+          url: "https://doi.org/10.5880/GFZ.2026.001",
+          description: "Companion dataset",
+        },
+        { key: "k3", url: "", description: "" },
+      ],
+    });
+
+    expect(result.links).toEqual([
+      { url: "https://doi.org/10.1594/IEDA.100252", description: null },
+      {
+        url: "https://doi.org/10.5880/GFZ.2026.001",
+        description: "Companion dataset",
+      },
+    ]);
+  });
+
+  it("should omit links when every row is blank", () => {
+    const result = sampleDraftSchema.parse({
+      ...draft,
+      links: [{ key: "k1", url: "", description: "" }],
+    });
+
+    expect(result).not.toHaveProperty("links");
+  });
+
+  it("should reject a description without its url on the row's url", () => {
+    const result = sampleDraftSchema.safeParse({
+      ...draft,
+      links: [
+        {
+          key: "k1",
+          url: "https://doi.org/10.1594/IEDA.100252",
+          description: "",
+        },
+        { key: "k2", url: "", description: "Companion dataset" },
+      ],
+    });
+
+    if (result.success) throw new Error("expected the parse to fail");
+    expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
+      "links.1.url",
+    ]);
+  });
+
+  it("should round-trip saved links into the draft", () => {
+    expect(
+      toSampleDraft({
+        name: "Basalt 42",
+        nature: "thin_section",
+        type: null,
+        links: [
+          { url: "https://doi.org/10.1594/IEDA.100252", description: null },
+        ],
+      }).links,
+    ).toEqual([
+      {
+        key: expect.any(String),
+        url: "https://doi.org/10.1594/IEDA.100252",
+        description: "",
+      },
     ]);
   });
 });

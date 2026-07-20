@@ -41,6 +41,7 @@ import {
   toSampleDraft,
 } from "#/samples/sample-draft-schema.ts";
 import { availabilityLabel, natureLabel } from "#/samples/sample-labels.ts";
+import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
@@ -79,6 +80,10 @@ type SampleFormProps = {
   // Rendered accented; `secondaryAction`, when set, sits before it as outline.
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
+  // The attached-files section of the Links tab. Only the edit page can
+  // provide it (uploads need a saved sample), so its absence hides the whole
+  // Links tab during creation.
+  attachmentsSection?: ReactNode;
 };
 
 export function SampleForm({
@@ -88,6 +93,7 @@ export function SampleForm({
   published = false,
   primaryAction,
   secondaryAction,
+  attachmentsSection,
 }: SampleFormProps) {
   const validate = validateDraft(
     published ? publishedSampleSchema : sampleDraftSchema,
@@ -277,6 +283,9 @@ export function SampleForm({
           <TabsTrigger value="physical-description">
             {m.tab_physical_description()}
           </TabsTrigger>
+          {attachmentsSection ? (
+            <TabsTrigger value="links">{m.tab_links()}</TabsTrigger>
+          ) : null}
         </TabsList>
 
         {/* Values live in the form store, not the field components, so a field
@@ -381,6 +390,15 @@ export function SampleForm({
             </form.AppForm>
           </FormSection>
         </TabsContent>
+
+        {attachmentsSection ? (
+          <TabsContent value="links" className="grid gap-6">
+            <form.AppForm>
+              <SampleLinksFields />
+            </form.AppForm>
+            {attachmentsSection}
+          </TabsContent>
+        ) : null}
       </Tabs>
 
       <div className="flex justify-end gap-2">
