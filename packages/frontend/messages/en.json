@@ -63,5 +63,9 @@
   "pagination_previous": "Previous",
   "pagination_next": "Next",
   "footer_logo_republique_francaise": "République Française",
-  "footer_logo_gaia_data": "Gaia Data"
+  "footer_logo_gaia_data": "Gaia Data",
+  "sample_section_age": "Age",
+  "sample_field_numeric_age": "Numeric age",
+  "sample_field_geological_age": "Geological age",
+  "sample_field_geological_unit": "Geological unit"
 }

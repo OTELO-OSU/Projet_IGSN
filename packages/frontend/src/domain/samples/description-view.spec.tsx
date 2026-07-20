@@ -64,7 +64,7 @@ describe("DescriptionView", () => {
     );
 
     await expect
-      .element(screen.getByText("March 5, 2024 – April 1, 2024"))
+      .element(screen.getByText("March 5, 2024 - April 1, 2024"))
       .toBeInTheDocument();
   });
 

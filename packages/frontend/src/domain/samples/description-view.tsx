@@ -6,7 +6,7 @@ import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
 
-// "March 5, 2024" for a single date (start === end), "March 5 – April 1, ..."
+// "March 5, 2024" for a single date (start === end), "March 5 - April 1, ..."
 // as two dates otherwise. The strings are date-only, so parsing yields UTC
 // midnight; formatting in UTC avoids an off-by-one-day drift.
 const collectionDateText = ({
@@ -19,7 +19,7 @@ const collectionDateText = ({
   });
   return start === end
     ? format.format(new Date(start))
-    : `${format.format(new Date(start))} – ${format.format(new Date(end))}`;
+    : `${format.format(new Date(start))} - ${format.format(new Date(end))}`;
 };
 
 // The description rows of the sample detail page; FieldRow drops the parts

@@ -47,6 +47,7 @@ function SampleDetail() {
       location={sample.location}
       availability={sample.availability}
       publicationYear={sample.publicationYear}
+      age={sample.age}
     />
   );
 }

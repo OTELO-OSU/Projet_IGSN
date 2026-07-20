@@ -2,6 +2,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { ChevronRightIcon } from "lucide-react";
 
+import { AgeView, hasAge } from "#/domain/samples/age-view.tsx";
 import { ConditionView } from "#/domain/samples/condition-view.tsx";
 import { DescriptionView } from "#/domain/samples/description-view.tsx";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
@@ -33,6 +34,7 @@ type SampleViewProps = {
   location: Sample["location"];
   availability: Sample["availability"];
   publicationYear: Sample["publicationYear"];
+  age: Sample["age"];
 };
 
 // A dot-joined classification path rendered as a breadcrumb: each ancestor
@@ -111,6 +113,7 @@ export function SampleView({
   location,
   availability,
   publicationYear,
+  age,
 }: SampleViewProps) {
   // One entry per section actually present; drives the nav and the body, so a
   // section cannot appear in one without the other.
@@ -182,6 +185,13 @@ export function SampleView({
       title: m.sample_section_condition(),
       content: <ConditionView condition={condition} />,
     },
+    hasAge(age)
+      ? {
+          id: "age",
+          title: m.sample_section_age(),
+          content: <AgeView age={age} />,
+        }
+      : null,
   ].filter((section) => section != null);
 
   return (

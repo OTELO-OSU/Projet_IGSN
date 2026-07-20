@@ -159,7 +159,7 @@ describe("EditSamplePage", () => {
     );
     await screen.getByRole("tab", { name: "Sample type" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: "Metamorphic facies" }))
+      .element(screen.getByRole("combobox", { name: "Metamorphic facies *" }))
       .toHaveTextContent("Amphibolite facies");
   });
 

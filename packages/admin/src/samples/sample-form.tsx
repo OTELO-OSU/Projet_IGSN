@@ -23,6 +23,8 @@ import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sa
 import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { m } from "#/paraglide/messages.js";
+import { AgeFields } from "#/samples/age-fields.tsx";
+import { toAgeInput } from "#/samples/age-form.ts";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
@@ -156,6 +158,7 @@ export function SampleForm({
         location: state.values.location,
         description: state.values.description,
         availability: state.values.availability,
+        age: toAgeInput(state.values.age),
       })}
     >
       {({
@@ -166,6 +169,7 @@ export function SampleForm({
         location,
         description,
         availability,
+        age,
       }) => {
         // Form state holds looser select strings; the runtime values match
         // the domain, so cast to the fields samplePublishBlockers reads.
@@ -175,7 +179,7 @@ export function SampleForm({
           metamorphicFacies: metamorphicFacies || null,
           location: composeLocation(location),
           description: composeDescription(description),
-          age: null,
+          age,
           availability: availability ?? null,
         } as Pick<
           Sample,
@@ -365,6 +369,10 @@ export function SampleForm({
               )}
             </form.AppField>
           </FormSection>
+
+          <form.AppForm>
+            <AgeFields />
+          </form.AppForm>
         </TabsContent>
       </Tabs>
 
