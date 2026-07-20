@@ -1025,6 +1025,34 @@ describe("SampleForm", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should hide the Location section until the material determines its requirement", async () => {
+    // With no material, the form cannot know whether a location is required,
+    // optional or forbidden, so it does not ask yet.
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await expect
+      .element(screen.getByRole("heading", { name: "Description" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("heading", { name: "Location" }))
+      .not.toBeInTheDocument();
+
+    // The first material segment settles it (every rock completion requires
+    // a location), so the section appears.
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Rock", exact: true }).click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await expect
+      .element(screen.getByRole("heading", { name: "Location" }))
+      .toBeVisible();
+  });
+
   it("should block publish and explain when a required location is missing", async () => {
     const screen = await render(
       <TooltipProvider>
@@ -1450,6 +1478,96 @@ describe("SampleForm", () => {
       .element(screen.getByLabelText("Longitude *"))
       .toHaveValue(null);
     await expect.element(screen.getByLabelText("Latitude *")).toHaveValue(null);
+  });
+
+  it("should gate Publish updates on the blockers until the published sample is publishable again", async () => {
+    // A published sample that predates the publish constraints (seeded
+    // directly): its save must behave like the first publish, a disabled
+    // button whose tooltip lists every blocker, until they are all fixed.
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={{
+            name: "Granite 7",
+            nature: "thin_section",
+            type: "core.piece",
+            material: "rock.igneous",
+            collectionMethod: "coring.camera_mounted",
+            collectionMethodDescription: null,
+            specificName: null,
+            location: null,
+            description: null,
+            condition: null,
+          }}
+          primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
+        />
+      </TooltipProvider>,
+    );
+
+    const save = screen.getByRole("button", { name: "Publish updates" });
+    await expect.element(save).toBeDisabled();
+    save.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(
+        /classify the material down to a specific type before publishing/i,
+      );
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/set the collection date before publishing/i);
+
+    // Fix the material; the location requirement only activates once the
+    // material is a complete path, so the tooltip reveals it live.
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen
+      .getByRole("combobox", { name: "Igneous *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Plutonic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Felsic", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Felsic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Granite", exact: true }).click();
+
+    await expect.element(save).toBeDisabled();
+    save.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/set the sample location/i);
+
+    // Fix the date and the location: the button enables and the save goes
+    // through.
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-01");
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    await screen.getByLabelText("Longitude *").fill("3");
+    await screen.getByLabelText("Latitude *").fill("45");
+
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Granite 7",
+        nature: "thin_section",
+        type: "core.piece",
+        material: "rock.igneous.plutonic.felsic.granite",
+        collectionMethod: "coring.camera_mounted",
+        collectionMethodDescription: null,
+        specificName: null,
+        location: { position: { type: "point", longitude: 3, latitude: 45 } },
+        description: {
+          collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+        },
+      }),
+    );
   });
 
   it("should show navigation type only after a geometry is chosen", async () => {

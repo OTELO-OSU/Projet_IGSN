@@ -1,9 +1,11 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { ReactNode } from "react";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import {
   Tabs,
   TabsContent,
@@ -28,6 +30,7 @@ import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
+import { SampleConditionFields } from "#/samples/sample-condition-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
   publishedSampleSchema,
@@ -39,10 +42,7 @@ import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
 
-const natureItems = natureSchema.options.map((nature) => ({
-  value: nature,
-  label: natureLabel(nature),
-}));
+const natureItems = toComboboxItems(natureSchema.options, natureLabel);
 
 // Draft -> domain-schema issues -> per-field translated errors. A published
 // sample validates against the publishable shape, a draft against the create
@@ -53,12 +53,7 @@ const validateDraft =
     const parsed = schema.safeParse(value);
     return parsed.success
       ? undefined
-      : {
-          fields: sampleDraftFieldErrors(
-            parsed.error.issues,
-            value.location.type,
-          ),
-        };
+      : { fields: sampleDraftFieldErrors(parsed.error.issues, value) };
   };
 
 // A footer button. `submit` saves; `publish` saves then publishes (with
@@ -141,6 +136,75 @@ export function SampleForm({
     },
   });
 
+  // Gate a button on canSubmit (an invalid form would silently do nothing)
+  // and on the publish blockers, which the tooltip lists so the disabled
+  // button explains itself. Used by Save & Publish and, for a published
+  // sample, by the plain save: both must hold the publishable bar.
+  const renderPublishGated = (
+    renderButton: (disabled: boolean) => ReactNode,
+  ) => (
+    <form.Subscribe
+      selector={(state) => ({
+        canSubmit: state.canSubmit,
+        typePath: state.values.typePath,
+        materialPath: state.values.materialPath,
+        metamorphicFacies: state.values.metamorphicFacies,
+        location: state.values.location,
+        description: state.values.description,
+      })}
+    >
+      {({
+        canSubmit,
+        typePath,
+        materialPath,
+        metamorphicFacies,
+        location,
+        description,
+      }) => {
+        // Form state holds looser select strings; the runtime values match
+        // the domain, so cast to the fields samplePublishBlockers reads.
+        const reasons = samplePublishBlockers({
+          type: composeHierarchyValue(typePath),
+          material: composeHierarchyValue(materialPath),
+          metamorphicFacies: metamorphicFacies || null,
+          location: composeLocation(location),
+          description: composeDescription(description),
+          age: null,
+        } as Pick<
+          Sample,
+          | "type"
+          | "material"
+          | "metamorphicFacies"
+          | "location"
+          | "description"
+          | "age"
+        >).map(publishBlockerLabel);
+        const button = renderButton(
+          isPending || !canSubmit || reasons.length > 0,
+        );
+        return reasons.length > 0 ? (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              {/* The disabled button is not focusable, so the span carries
+                  the tooltip: hover and keyboard both reveal the reason. */}
+              <span tabIndex={0}>{button}</span>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="font-medium">{m.publish_blocked_title()}</p>
+              <ul className="list-disc ps-4">
+                {reasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          button
+        );
+      }}
+    </form.Subscribe>
+  );
+
   const renderAction = (action: SampleFormAction, variant?: "outline") => {
     if (action.kind === "link") {
       return (
@@ -152,91 +216,34 @@ export function SampleForm({
       );
     }
     if (action.kind === "publish") {
-      // Gate on canSubmit (an invalid form would close the confirm dialog and
-      // silently do nothing) and on the publish blockers, which the tooltip
-      // lists so the disabled button explains itself. Save & Publish saves
-      // first, so unsaved edits are not a blocker here.
-      return (
-        <form.Subscribe
-          selector={(state) => ({
-            canSubmit: state.canSubmit,
-            typePath: state.values.typePath,
-            materialPath: state.values.materialPath,
-            metamorphicFacies: state.values.metamorphicFacies,
-            location: state.values.location,
-            description: state.values.description,
-          })}
-        >
-          {({
-            canSubmit,
-            typePath,
-            materialPath,
-            metamorphicFacies,
-            location,
-            description,
-          }) => {
-            // Form state holds looser select strings; the runtime values match
-            // the domain, so cast to the fields samplePublishBlockers reads.
-            const reasons = samplePublishBlockers({
-              type: composeHierarchyValue(typePath),
-              material: composeHierarchyValue(materialPath),
-              metamorphicFacies: metamorphicFacies || null,
-              location: composeLocation(location),
-              description: composeDescription(description),
-              age: null,
-            } as Pick<
-              Sample,
-              | "type"
-              | "material"
-              | "metamorphicFacies"
-              | "location"
-              | "description"
-              | "age"
-            >).map(publishBlockerLabel);
-            const button = (
-              <PublishSampleButton
-                label={action.label}
-                disabled={isPending || !canSubmit || reasons.length > 0}
-                onPublish={() =>
-                  void form.handleSubmit({ onValid: action.onPublish })
-                }
-              />
-            );
-            return reasons.length > 0 ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  {/* The disabled button is not focusable, so the span carries
-                      the tooltip: hover and keyboard both reveal the reason. */}
-                  <span tabIndex={0}>{button}</span>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="font-medium">{m.publish_blocked_title()}</p>
-                  <ul className="list-disc ps-4">
-                    {reasons.map((reason) => (
-                      <li key={reason}>{reason}</li>
-                    ))}
-                  </ul>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              button
-            );
-          }}
-        </form.Subscribe>
-      );
+      // Save & Publish saves first, so unsaved edits are not a blocker here.
+      return renderPublishGated((disabled) => (
+        <PublishSampleButton
+          label={action.label}
+          disabled={disabled}
+          onPublish={() =>
+            void form.handleSubmit({ onValid: action.onPublish })
+          }
+        />
+      ));
     }
     // ponytail: a native submit button routes through the form's default meta
     // (defaultSubmit), so only one submit-kind action is supported at a time.
     // No caller needs two; add explicit per-button meta if that ever changes.
-    return (
+    const submitButton = (disabled: boolean) => (
       <form.AppForm>
         <form.SubmitButton
           label={action.label}
           variant={variant}
-          disabled={isPending}
+          disabled={disabled}
         />
       </form.AppForm>
     );
+    // A published sample's save must keep it publishable, so it gates on the
+    // blockers like the first publish; a draft saves freely.
+    return published
+      ? renderPublishGated(submitButton)
+      : submitButton(isPending ?? false);
   };
 
   return (
@@ -256,6 +263,9 @@ export function SampleForm({
           <TabsTrigger value="type">{m.tab_sample_type()}</TabsTrigger>
           <TabsTrigger value="physical-description">
             {m.tab_physical_description()}
+          </TabsTrigger>
+          <TabsTrigger value="condition">
+            {m.tab_sample_condition()}
           </TabsTrigger>
         </TabsList>
 
@@ -335,6 +345,14 @@ export function SampleForm({
           <form.AppForm>
             <PhysicalDescriptionFields />
           </form.AppForm>
+        </TabsContent>
+
+        <TabsContent value="condition" className="grid gap-6">
+          <FormSection title={m.section_condition()}>
+            <form.AppForm>
+              <SampleConditionFields />
+            </form.AppForm>
+          </FormSection>
         </TabsContent>
       </Tabs>
 

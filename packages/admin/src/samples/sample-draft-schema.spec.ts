@@ -1,6 +1,7 @@
 import { toHierarchyPath } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { describe, expect, it } from "vitest";
 
+import { toConditionDraft } from "./compose-condition.ts";
 import { toDescriptionDraft } from "./compose-description.ts";
 import { toLocationDraft } from "./compose-location.ts";
 import { type SampleDraft, sampleDraftSchema } from "./sample-draft-schema.ts";
@@ -17,6 +18,7 @@ const draft: SampleDraft = {
   specificName: null,
   location: toLocationDraft(null),
   description: toDescriptionDraft(null),
+  condition: toConditionDraft(null),
 };
 
 describe("sampleDraftSchema", () => {
@@ -51,6 +53,24 @@ describe("sampleDraftSchema", () => {
       material: "synthetic_rock_mineral",
       location: null,
     });
+  });
+
+  it("should drop a lingering location when the material no longer determines its requirement", () => {
+    // The location section hides while the requirement is undetermined (the
+    // material was cleared), so a location entered before must be cleared,
+    // not block the save invisibly.
+    const result = sampleDraftSchema.parse({
+      ...draft,
+      materialPath: [],
+      location: {
+        ...toLocationDraft(null),
+        type: "point",
+        longitude: 2.35,
+        latitude: 48.85,
+      },
+    });
+
+    expect(result).toMatchObject({ material: null, location: null });
   });
 
   it("should compose an entered description into the domain shape", () => {

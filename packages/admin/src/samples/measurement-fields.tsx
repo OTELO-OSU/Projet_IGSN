@@ -1,3 +1,4 @@
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { MASS_UNITS } from "@projet-igsn/domain/sample/description/mass-unit";
 import { SIZE_UNITS } from "@projet-igsn/domain/sample/description/size-unit";
 import {
@@ -10,12 +11,12 @@ import { useDescriptionForm } from "#/samples/use-description-form.ts";
 
 // Size and mass units are language-neutral symbols (their own label); volume
 // units need the display map for superscripts (see volumeUnitLabel).
-const sizeUnitItems = SIZE_UNITS.map((value) => ({ value, label: value }));
-const massUnitItems = MASS_UNITS.map((value) => ({ value, label: value }));
-const volumeUnitItems = VOLUME_UNITS.map((value) => ({
-  value,
-  label: volumeUnitLabel[value],
-}));
+const sizeUnitItems = toComboboxItems(SIZE_UNITS, (value) => value);
+const massUnitItems = toComboboxItems(MASS_UNITS, (value) => value);
+const volumeUnitItems = toComboboxItems(
+  VOLUME_UNITS,
+  (value) => volumeUnitLabel[value],
+);
 
 const measurements = [
   {

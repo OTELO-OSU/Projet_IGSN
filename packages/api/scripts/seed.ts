@@ -2,12 +2,18 @@ import type { Kysely, Selectable } from "kysely";
 import type { z } from "zod";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
-import { sampleSchema } from "@projet-igsn/domain/sample/sample";
+import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
+import {
+  createSampleSchema,
+  sampleSchema,
+} from "@projet-igsn/domain/sample/sample";
 import { fileURLToPath } from "node:url";
 
 import type { DB } from "../src/db.ts";
 
 import { createDb } from "../src/db.ts";
+import { descriptionColumns } from "../src/sample/service/description-columns.ts";
+import { locationColumns } from "../src/sample/service/to-location.ts";
 
 // Inserts the given samples (with their fixed ids) and returns the columns the
 // E2E fixture reads (see e2e/support/db.ts). Shared by the dev seed below and
@@ -26,17 +32,25 @@ export async function seed(
   return (
     db
       .insertInto("sample")
-      // Parse each seed row against the domain schema so a bad code, path, or id
-      // in a fixture fails the E2E seed rather than landing in the database.
       // collectionMethod is camelCase in the domain; the column is snake_case.
       .values(
         samples
-          .map((sample) => seedSampleSchema.parse(sample))
-          .map(({ material, collectionMethod, ...rest }) => ({
-            ...rest,
-            material: material ?? null,
-            collection_method: collectionMethod ?? null,
-          })),
+          .map(parseSeedSample)
+          .map(
+            ({
+              material,
+              collectionMethod,
+              location,
+              description,
+              ...rest
+            }) => ({
+              ...rest,
+              material: material ?? null,
+              collection_method: collectionMethod ?? null,
+              ...locationColumns(location),
+              ...descriptionColumns(description),
+            }),
+          ),
       )
       .returning(["id", "name", "nature", "igsn", "published"])
       .execute()
@@ -53,6 +67,8 @@ const seedSampleSchema = sampleSchema
     type: true,
     material: true,
     collectionMethod: true,
+    location: true,
+    description: true,
     igsn: true,
     published: true,
   })
@@ -60,11 +76,32 @@ const seedSampleSchema = sampleSchema
     type: true,
     material: true,
     collectionMethod: true,
+    location: true,
+    description: true,
     igsn: true,
     published: true,
   });
 
 type SeedSample = z.infer<typeof seedSampleSchema>;
+
+// A seed row must hold the bar the API enforces on the same data: the create
+// schema for a draft, the published schema (publish blockers raised as
+// issues) for a published row, since seeding bypasses the publish flow.
+// Exported so seed.spec.ts fails the suite on drift, not just the next seed
+// run.
+export function parseSeedSample(sample: SeedSample): SeedSample {
+  const parsed = seedSampleSchema.parse(sample);
+  const { id: _id, igsn: _igsn, published, ...create } = parsed;
+  const result = (
+    published ? publishedSampleSchema : createSampleSchema
+  ).safeParse(create);
+  if (!result.success) {
+    throw new Error(
+      `seed row "${parsed.name}" fails its ${published ? "published" : "draft"} schema: ${result.error.message}`,
+    );
+  }
+  return parsed;
+}
 
 // Shared seed data, reused by the E2E reset (see scripts/reset-and-seed.ts), so
 // kept English per the i18n testing rule. Ids are static (not generated) so
@@ -117,15 +154,22 @@ export const SEED_SAMPLES: SeedSample[] = [
   },
   // Published, so they show in the public frontend. Ids reused from the tests;
   // the igsn is derived from the id, matching how publish generates it. A
-  // published sample must carry a leaf material path (enforced at the publish
-  // boundary).
+  // published row must satisfy every publish blocker (leaf material, location
+  // position, collection date...); seed() enforces it, since inserting
+  // directly bypasses the publish boundary.
   {
     id: "01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69",
     name: "Basalt 42",
     nature: "hand_sample",
     type: "core.half_round",
-    material: "rock.igneous",
+    material: "rock.igneous.volcanic.mafic.basalt",
     collectionMethod: "blasting",
+    location: {
+      position: { type: "point", longitude: 2.96, latitude: 45.77 },
+    },
+    description: {
+      collectionDate: { start: "2025-06-15", end: "2025-06-15" },
+    },
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69"),
     published: true,
   },
@@ -134,8 +178,14 @@ export const SEED_SAMPLES: SeedSample[] = [
     name: "Granite 7",
     nature: "thin_section",
     type: "core.piece",
-    material: "rock.igneous",
+    material: "rock.igneous.plutonic.felsic.granite",
     collectionMethod: "coring.camera_mounted",
+    location: {
+      position: { type: "point", longitude: -2.83, latitude: 48.28 },
+    },
+    description: {
+      collectionDate: { start: "2025-04-02", end: "2025-04-02" },
+    },
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),
     published: true,
   },

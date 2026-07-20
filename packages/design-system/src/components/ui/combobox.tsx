@@ -15,6 +15,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "./popover.tsx";
 
 export type ComboboxItem = { value: string; label: string };
 
+// Builds the items list from an enum's values and its label resolver; pass
+// the identity for language-neutral codes that are their own label.
+export const toComboboxItems = <Value extends string>(
+  values: readonly Value[],
+  label: (value: Value) => string,
+): ComboboxItem[] => values.map((value) => ({ value, label: label(value) }));
+
 type ComboboxProps = {
   items: ComboboxItem[];
   value: string;

@@ -3,6 +3,11 @@ import type { Description } from "@projet-igsn/domain/sample/description/model";
 import type { SizeUnit } from "@projet-igsn/domain/sample/description/size-unit";
 import type { VolumeUnit } from "@projet-igsn/domain/sample/description/volume-unit";
 
+import {
+  composeMeasurement,
+  type MeasurementCandidate,
+} from "#/samples/compose-measurement.ts";
+
 // The Description tab's flat form draft, mirroring compose-location.ts: every
 // field holds its typed value or nullish when unset. The store always carries
 // the canonical range; the single-date/range mode is component state of
@@ -31,11 +36,6 @@ export type DescriptionDraft = {
 // half-filled pair on the offending field. Compose only excludes values hidden
 // behind the UI state (an explanation without oriented = yes), since an error
 // on a hidden field could never be fixed.
-type MeasurementCandidate<Unit> = {
-  value: number | undefined;
-  unit: Unit | undefined;
-};
-
 type DescriptionCandidate = {
   collectionDate:
     | { start: string | undefined; end: string | undefined }
@@ -49,14 +49,6 @@ type DescriptionCandidate = {
   mass: MeasurementCandidate<MassUnit> | undefined;
   volume: MeasurementCandidate<VolumeUnit> | undefined;
 };
-
-// A pair flows through once either half is set, so the schema can flag the
-// missing half; both halves unset means the measurement was not entered.
-const composeMeasurement = <Unit extends string>(
-  value: number | undefined,
-  unit: Unit | null | undefined,
-) =>
-  value === undefined && !unit ? undefined : { value, unit: unit ?? undefined };
 
 // A single collection date arrives as the mirrored degenerate range
 // start === end (ADR 0015), so compose sees one shape for both modes.

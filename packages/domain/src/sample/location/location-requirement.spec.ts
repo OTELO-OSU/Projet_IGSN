@@ -18,8 +18,12 @@ describe("locationRequirement", () => {
     expect(locationRequirement(material)).toBe("optional");
   });
 
-  it("should make a location optional for an unclassified (null) material", () => {
-    expect(locationRequirement(null)).toBe("optional");
+  it("should be undetermined for an unclassified (null) material", () => {
+    expect(locationRequirement(null)).toBe("undetermined");
+  });
+
+  it("should be undetermined for a bare extraterrestrial_rock (returned samples would make it optional)", () => {
+    expect(locationRequirement("extraterrestrial_rock")).toBe("undetermined");
   });
 
   it.each([

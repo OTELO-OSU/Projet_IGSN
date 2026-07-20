@@ -1,5 +1,6 @@
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { faciesFor } from "@projet-igsn/domain/sample/metamorphic-facies/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
@@ -20,10 +21,7 @@ export function MetamorphicFaciesField() {
       {(materialPath) => {
         const facies = faciesFor(composeHierarchyValue(materialPath ?? []));
         if (facies.length === 0) return null;
-        const items = facies.map((code) => ({
-          value: code,
-          label: metamorphicFaciesLabel(code),
-        }));
+        const items = toComboboxItems(facies, metamorphicFaciesLabel);
         return (
           <form.AppField name="metamorphicFacies">
             {(field) => (

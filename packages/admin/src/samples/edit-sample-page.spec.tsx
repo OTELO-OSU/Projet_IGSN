@@ -188,20 +188,23 @@ describe("EditSamplePage", () => {
 
   it("should refuse Publish updates that would make the sample unpublishable", async () => {
     const { screen, calls } = await renderEditPage(true);
+    const save = screen.getByRole("button", { name: "Publish updates" });
 
-    // Clearing the collection date strips a publish requirement.
+    // Clearing the collection date strips a publish requirement: the button
+    // disables and its tooltip explains, like the first publish.
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByLabelText("Date *", { exact: true }).fill("");
-    await screen.getByRole("button", { name: "Publish updates" }).click();
-
+    await expect.element(save).toBeDisabled();
+    save.element().parentElement?.focus();
     await expect
-      .element(screen.getByText("Set the collection date before publishing."))
-      .toBeVisible();
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Set the collection date before publishing.");
     expect(calls).toEqual([]);
 
     // Restoring the date lets the update through.
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-02");
-    await screen.getByRole("button", { name: "Publish updates" }).click();
+    await expect.element(save).toBeEnabled();
+    await save.click();
     await vi.waitFor(() => expect(calls.length).toBeGreaterThan(0));
   });
 

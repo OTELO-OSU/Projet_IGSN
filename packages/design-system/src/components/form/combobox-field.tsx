@@ -1,6 +1,7 @@
 import { withRequired } from "../../lib/with-required.ts";
 import { Combobox, type ComboboxItem } from "../ui/combobox.tsx";
 import { Label } from "../ui/label.tsx";
+import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 type ComboboxFieldProps = {
@@ -19,14 +20,7 @@ export function ComboboxField({
   ...combobox
 }: ComboboxFieldProps) {
   const field = useFieldContext<string | null | undefined>();
-  // Only surface an error once the user has touched the field, so a requirement
-  // triggered by a sibling change (e.g. unit becomes required when an elevation
-  // is entered) does not flash red before they act. Submitting marks every field
-  // touched, so the error still shows on a save attempt.
-  const error = field.state.meta.isTouched
-    ? field.state.meta.errors[0]
-    : undefined;
-  const errorId = `${field.name}-error`;
+  const { error, errorId, ariaProps } = useFieldError({ waitForTouch: true });
   return (
     <div className="grid gap-2">
       <Label htmlFor={field.name}>
@@ -39,15 +33,10 @@ export function ComboboxField({
         value={field.state.value ?? ""}
         onChange={(value) => field.handleChange(value || undefined)}
         onBlur={field.handleBlur}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : undefined}
+        {...ariaProps}
         {...combobox}
       />
-      {error ? (
-        <p id={errorId} role="alert" className="text-destructive text-sm">
-          {error.message}
-        </p>
-      ) : null}
+      <FieldError error={error} errorId={errorId} />
     </div>
   );
 }

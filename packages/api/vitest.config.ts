@@ -17,7 +17,7 @@ export default defineConfig({
   ],
   test: {
     globals: true,
-    include: ["src/**/*.spec.ts"],
+    include: ["{src,scripts}/**/*.spec.ts"],
     maxWorkers: 2,
     maxConcurrency: 2,
     testTimeout: 2500,

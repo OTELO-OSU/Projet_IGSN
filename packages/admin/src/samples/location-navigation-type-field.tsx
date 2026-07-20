@@ -1,13 +1,11 @@
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { NAVIGATION_TYPES } from "@projet-igsn/domain/sample/location/navigation-type";
 
 import { m } from "#/paraglide/messages.js";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 
 // Navigation types are language-neutral codes (their own label).
-const navigationTypeItems = NAVIGATION_TYPES.map((value) => ({
-  value,
-  label: value,
-}));
+const navigationTypeItems = toComboboxItems(NAVIGATION_TYPES, (value) => value);
 
 // Navigation type qualifies how the coordinates were fixed, so it only applies
 // once a geometry (point or area) is chosen.

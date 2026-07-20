@@ -11,6 +11,11 @@ import {
 import { z } from "zod";
 
 import {
+  composeCondition,
+  type ConditionDraft,
+  toConditionDraft,
+} from "#/samples/compose-condition.ts";
+import {
   composeDescription,
   type DescriptionDraft,
   toDescriptionDraft,
@@ -34,6 +39,7 @@ export type SampleDraft = {
   specificName: string | null | undefined;
   location: LocationDraft;
   description: DescriptionDraft;
+  condition: ConditionDraft;
 };
 
 // A saved (or default) sample, spread into the flat draft the form store
@@ -52,11 +58,13 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   specificName: value?.specificName,
   location: toLocationDraft(value?.location),
   description: toDescriptionDraft(value?.description),
+  condition: toConditionDraft(value?.condition),
 });
 
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
   const description = composeDescription(draft.description);
+  const condition = composeCondition(draft.condition);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -72,17 +80,21 @@ const composeCreateSample = (draft: SampleDraft) => {
     collectionMethodDescription:
       draft.collectionMethodDescription?.trim() || null,
     specificName: draft.specificName?.trim() || null,
-    // The location tab hides when the material forbids a location (synthetic,
-    // ADR 0014), so a location entered before the switch is a hidden leftover:
-    // drop it rather than let the schema pin an error on fields the user
-    // cannot see (an unfixable, silent save failure).
-    location:
-      locationRequirement(material) === "forbidden"
-        ? null
-        : composeLocation(draft.location),
+    // The location section hides when the material forbids a location
+    // (synthetic, ADR 0014) or does not determine its requirement yet, so a
+    // location entered before the switch is a hidden leftover: drop it rather
+    // than let the schema pin an error on fields the user cannot see (an
+    // unfixable, silent save failure).
+    location: ["forbidden", "undetermined"].includes(
+      locationRequirement(material),
+    )
+      ? null
+      : composeLocation(draft.location),
     // Omitted when the whole section is empty: the API clears the description
     // columns for an absent description just like for a null one.
     ...(description ? { description } : {}),
+    // Same contract for the condition columns.
+    ...(condition ? { condition } : {}),
   };
 };
 

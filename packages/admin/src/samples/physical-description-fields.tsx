@@ -17,15 +17,17 @@ export function PhysicalDescriptionFields() {
         <SampleDescriptionFields />
       </FormSection>
 
-      {/* Synthetic samples must not carry a location (ADR 0014), so the
-          section is hidden for them; it stays for optional and required
-          materials. */}
+      {/* The section shows only once the material settles how to validate it
+          (required or optional). Synthetic samples must not carry a location
+          (ADR 0014), and an undetermined material cannot be asked about one
+          yet, so both cases hide it. */}
       <form.Subscribe
-        selector={(state) =>
-          locationRequirement(
+        selector={(state) => {
+          const requirement = locationRequirement(
             composeHierarchyValue(state.values.materialPath),
-          ) !== "forbidden"
-        }
+          );
+          return requirement === "required" || requirement === "optional";
+        }}
       >
         {(showLocation) =>
           showLocation ? (

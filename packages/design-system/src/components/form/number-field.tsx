@@ -4,11 +4,18 @@ import { TextField } from "./text-field.tsx";
 export function NumberField({
   label,
   requiredToPublish,
+  disabled,
 }: {
   label: string;
   requiredToPublish?: boolean;
+  disabled?: boolean;
 }) {
   return (
-    <TextField number label={label} requiredToPublish={requiredToPublish} />
+    <TextField
+      number
+      label={label}
+      requiredToPublish={requiredToPublish}
+      disabled={disabled}
+    />
   );
 }
