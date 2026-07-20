@@ -27,6 +27,7 @@ const sample: Sample = {
   specificName: "MC-2026-007",
   location: null,
   description: null,
+  condition: null,
   igsn: null,
   published: false,
   createdAt: new Date("2026-06-01T00:00:00.000Z"),

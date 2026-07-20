@@ -67,6 +67,21 @@ type SampleTable = {
   locality_name: string | null;
   locality_description: string | null;
   geom: Generated<string | null>;
+  // Sample condition (stored like the description, ADR 0016), all nullable.
+  // The storage conditions multi-select is a text array; null when not
+  // filled, never empty.
+  packaging: string | null;
+  storage_conditions: string[] | null;
+  temperature_type: string | null;
+  temperature_value: number | null;
+  temperature_unit: string | null;
+  humidity_type: string | null;
+  humidity_percentage: number | null;
+  light: string | null;
+  pressure_type: string | null;
+  pressure_value: number | null;
+  pressure_unit: string | null;
+  specific_conditions: string | null;
   // Null until the sample is published; then derived from the id with generateIgsnSuffix.
   igsn: string | null;
   published: Generated<boolean>;
