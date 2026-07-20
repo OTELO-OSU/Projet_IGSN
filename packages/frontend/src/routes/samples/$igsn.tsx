@@ -43,6 +43,7 @@ function SampleDetail() {
       collectionMethod={sample.collectionMethod}
       collectionMethodDescription={sample.collectionMethodDescription}
       description={sample.description}
+      condition={sample.condition}
       location={sample.location}
     />
   );

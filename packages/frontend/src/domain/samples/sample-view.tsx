@@ -2,6 +2,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { ChevronRightIcon } from "lucide-react";
 
+import { ConditionView } from "#/domain/samples/condition-view.tsx";
 import { DescriptionView } from "#/domain/samples/description-view.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
@@ -26,6 +27,7 @@ type SampleViewProps = {
   collectionMethod: Sample["collectionMethod"];
   collectionMethodDescription: Sample["collectionMethodDescription"];
   description: Sample["description"];
+  condition: Sample["condition"];
   location: Sample["location"];
 };
 
@@ -71,6 +73,7 @@ export function SampleView({
   collectionMethod,
   collectionMethodDescription,
   description,
+  condition,
   location,
 }: SampleViewProps) {
   return (
@@ -93,7 +96,7 @@ export function SampleView({
                 {m.sample_section_sample()}
               </a>
             </li>
-            {description ? (
+            {description || condition ? (
               <li>
                 <a
                   href="#description"
@@ -220,7 +223,7 @@ export function SampleView({
             </dl>
           </section>
 
-          {description ? (
+          {description || condition ? (
             <section
               id="description"
               aria-labelledby="description-heading"
@@ -232,7 +235,19 @@ export function SampleView({
               >
                 {m.sample_section_description()}
               </h2>
-              <DescriptionView description={description} />
+              {description ? (
+                <DescriptionView description={description} />
+              ) : null}
+              {/* The conditioning state belongs to the physical description,
+                  so it reads as a sub-part of this section, not its own. */}
+              {condition ? (
+                <>
+                  <h3 className="mt-4 px-4 font-semibold text-sky-900">
+                    {m.sample_section_condition()}
+                  </h3>
+                  <ConditionView condition={condition} />
+                </>
+              ) : null}
             </section>
           ) : null}
 
