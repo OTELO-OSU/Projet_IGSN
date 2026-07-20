@@ -39,6 +39,33 @@ describe("publishSample", () => {
     },
   );
 
+  pgTest("should return the sample's age", async ({ db }) => {
+    // Arrange
+    const created = await insertSample(db, {
+      name: "Basalt 42",
+      nature: "hand_sample",
+      type: null,
+      age: {
+        numericAgeMin: 120,
+        numericAgeMax: 120,
+        numericAgeUnit: "ma",
+        numericAgeYearsUnit: null,
+        geologicalAgeMin: "ics8",
+        geologicalAgeMax: "ics8",
+        geologicalUnit: null,
+      },
+    });
+    // Act
+    const published = await publishSample(db, created.id);
+    // Assert
+    expect(published?.age).toMatchObject({
+      numericAgeMin: 120,
+      numericAgeMax: 120,
+      numericAgeUnit: "ma",
+      geologicalAgeMin: "ics8",
+    });
+  });
+
   pgTest(
     "should return null when the sample does not exist",
     async ({ db }) => {

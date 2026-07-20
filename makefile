@@ -24,6 +24,18 @@ lint:
 test:
 	@pnpm test
 
+test-domain:							## Run domain tests only
+	@pnpm test --project @projet-igsn/domain
+
+test-api:								## Run api tests only
+	@pnpm test --project @projet-igsn/api
+
+test-frontend:							## Run frontend tests only
+	@pnpm test --project @projet-igsn/frontend
+
+test-admin:								## Run admin tests only
+	@pnpm test --project @projet-igsn/admin
+
 test-browser:
 	@pnpm test:browser
 

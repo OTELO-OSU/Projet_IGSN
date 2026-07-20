@@ -58,10 +58,28 @@ const row = {
   pressure_value: null,
   pressure_unit: null,
   specific_conditions: null,
+  numeric_age_min: null,
+  numeric_age_max: null,
+  numeric_age_unit: null,
+  numeric_age_years_unit: null,
+  geological_age_min: null,
+  geological_age_max: null,
+  geological_unit: null,
   igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
   published: false,
   created_at: new Date("2026-01-01T00:00:00.000Z"),
   updated_at: new Date("2026-06-01T00:00:00.000Z"),
+};
+
+const ageRow = {
+  ...row,
+  numeric_age_min: 12000,
+  numeric_age_max: 12000,
+  numeric_age_unit: "a",
+  numeric_age_years_unit: "bp",
+  geological_age_min: "ics8",
+  geological_age_max: "ics12",
+  geological_unit: "Green Sandstone Fm",
 };
 
 describe("toSample", () => {
@@ -83,6 +101,7 @@ describe("toSample", () => {
       location: null,
       description: null,
       condition: null,
+      age: null,
       igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
       published: false,
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
@@ -100,6 +119,27 @@ describe("toSample", () => {
     expect(sample.location).toEqual({
       position: { type: "point", longitude: 2.35, latitude: 48.85 },
     });
+  });
+
+  it("should map the age columns to the sample's age", () => {
+    // Act
+    const sample = toSample(ageRow);
+    // Assert
+    expect(sample.age).toEqual({
+      numericAgeMin: 12000,
+      numericAgeMax: 12000,
+      numericAgeUnit: "a",
+      numericAgeYearsUnit: "bp",
+      geologicalAgeMin: "ics8",
+      geologicalAgeMax: "ics12",
+      geologicalUnit: "Green Sandstone Fm",
+    });
+  });
+
+  it("should throw when the age carries an unknown geological code", () => {
+    expect(() =>
+      toSample({ ...ageRow, geological_age_min: "ics99" }),
+    ).toThrow();
   });
 
   it("should throw when the nature is not a known value", () => {

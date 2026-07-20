@@ -47,6 +47,7 @@ describe("listSamples", () => {
           location: null,
           description: null,
           condition: null,
+          age: null,
           igsn: "0123456789ABCDEFGHJKMNPQRS",
           published: true,
           createdAt: new Date(iso),

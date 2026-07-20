@@ -38,6 +38,56 @@ describe("updateSample", () => {
     },
   );
 
+  pgTest("should upsert then clear the age", async ({ db }) => {
+    // Arrange: create without an age.
+    const created = await insertSample(db, {
+      name: "Basalt 42",
+      nature: "hand_sample",
+      type: null,
+    });
+    expect(created.age).toBeNull();
+    // Act: add an age.
+    const withAge = await updateSample(db, created.id, {
+      name: "Basalt 42",
+      nature: "hand_sample",
+      type: null,
+      age: {
+        numericAgeMin: 4.2,
+        numericAgeMax: 4.2,
+        numericAgeUnit: "ga",
+        numericAgeYearsUnit: null,
+        geologicalAgeMin: null,
+        geologicalAgeMax: null,
+        geologicalUnit: null,
+      },
+    });
+    // Assert
+    expect(withAge?.age).toMatchObject({
+      numericAgeMin: 4.2,
+      numericAgeMax: 4.2,
+      numericAgeUnit: "ga",
+    });
+    // Act: clear the age with an explicit null.
+    const cleared = await updateSample(db, created.id, {
+      name: "Basalt 42",
+      nature: "hand_sample",
+      type: null,
+      age: null,
+    });
+    // Assert
+    expect(cleared?.age).toBeNull();
+    const row = await db
+      .selectFrom("sample")
+      .select(["numeric_age_min", "numeric_age_max", "numeric_age_unit"])
+      .where("id", "=", created.id)
+      .executeTakeFirstOrThrow();
+    expect(row).toEqual({
+      numeric_age_min: null,
+      numeric_age_max: null,
+      numeric_age_unit: null,
+    });
+  });
+
   pgTest("should bump updatedAt", async ({ db }) => {
     // Arrange: back-date the row, since now() is frozen inside the test
     // transaction and a plain before/after comparison would always pass.
