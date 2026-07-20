@@ -2,9 +2,11 @@ import { z } from "zod";
 
 import { igsnSuffixSchema } from "../igsn/model.ts";
 import { ageSchema } from "./age/model.ts";
+import { sampleAttachmentSchema } from "./attachment/model.ts";
 import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
 import { conditionSchema } from "./condition/model.ts";
 import { descriptionSchema } from "./description/model.ts";
+import { createSampleLinkSchema, sampleLinkSchema } from "./link/model.ts";
 import { locationRequirement } from "./location/location-requirement.ts";
 import { locationSchema } from "./location/model.ts";
 import { materialPathSchema } from "./material/classification.ts";
@@ -47,6 +49,10 @@ export const sampleSchema = z.object({
   // Geological age; null until recorded (flat columns on the sample table).
   // Defaulted so a payload without the key reads as "no age recorded".
   age: ageSchema.nullable().default(null),
+  // Related DOI links and attached files (ADR 0017); empty arrays when none.
+  // Defaulted so payloads predating the feature keep parsing.
+  links: z.array(sampleLinkSchema).default([]),
+  attachments: z.array(sampleAttachmentSchema).default([]),
   // Null until the sample is published.
   igsn: igsnSuffixSchema.nullable(),
   published: z.boolean(),
@@ -81,6 +87,9 @@ export const createSampleSchema = z
     // Optional at creation and at publication (no publish blocker).
     condition: conditionSchema.nullish(),
     age: ageSchema.nullish(),
+    // Related DOI links, replaced wholesale on update. Attachments are not
+    // part of this payload: their content uploads through dedicated routes.
+    links: z.array(createSampleLinkSchema).optional(),
   })
   .superRefine((value, ctx) => {
     // A texture must match the selected material's branch. This guards the

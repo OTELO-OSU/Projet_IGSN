@@ -89,7 +89,13 @@ function toCondition(row: Selectable<DB["sample"]>) {
 // DB row (snake_case) -> domain Sample (camelCase), validated at the boundary.
 // Location is flat on the row (see to-location.ts). Age is flat too: all-null
 // age columns -> null age. sampleSchema.parse validates the codes at the boundary.
-export function toSample(row: Selectable<DB["sample"]>): Sample {
+// Links and attachments are child rows (see with-sample-children.ts); the
+// schema defaults them to [] when a caller has none to attach.
+export function toSample(
+  row: Selectable<DB["sample"]>,
+  links: Selectable<DB["sample_link"]>[] = [],
+  attachments: Selectable<DB["sample_attachment"]>[] = [],
+): Sample {
   const ageColumns = [
     row.numeric_age_min,
     row.numeric_age_max,
@@ -125,6 +131,17 @@ export function toSample(row: Selectable<DB["sample"]>): Sample {
     description: toDescription(row),
     condition: toCondition(row),
     age,
+    links: links.map((link) => ({
+      id: link.id,
+      url: link.url,
+      description: link.description,
+    })),
+    attachments: attachments.map((attachment) => ({
+      id: attachment.id,
+      name: attachment.name,
+      mediaType: attachment.media_type,
+      description: attachment.description,
+    })),
     igsn: row.igsn,
     published: row.published,
     createdAt: row.created_at,

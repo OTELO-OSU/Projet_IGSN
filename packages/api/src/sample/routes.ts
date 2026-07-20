@@ -1,3 +1,4 @@
+import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   ListSamplesResponse,
@@ -6,12 +7,20 @@ import type {
 
 import { Hono } from "hono";
 
-import { validateIgsnParam, validateListQuery } from "./validator.ts";
+import { attachmentDownload } from "./attachment-download.ts";
+import {
+  validateIgsnAttachmentParams,
+  validateIgsnParam,
+  validateListQuery,
+} from "./validator.ts";
 
 // Public, unauthenticated reads for the frontend: published samples only, looked
 // up by IGSN. Writes and admin reads (all samples, by id) live in admin-routes.ts
 // under the authenticated /admin mount.
-export function createSampleRoutes(repository: SampleRepository) {
+export function createSampleRoutes(
+  repository: SampleRepository,
+  attachments: SampleAttachmentRepository,
+) {
   return new Hono()
     .get("/", validateListQuery, async (c) => {
       const { page, perPage, search } = c.req.valid("query");
@@ -32,5 +41,22 @@ export function createSampleRoutes(repository: SampleRepository) {
       }
       const body: SampleResponse = { data: sample };
       return c.json(body);
-    });
+    })
+    .get(
+      "/:igsn/attachments/:attachmentId",
+      validateIgsnAttachmentParams,
+      async (c) => {
+        const { igsn, attachmentId } = c.req.valid("param");
+        // Resolving through the published-only lookup keeps draft files private.
+        const sample = await repository.getPublishedByIgsn(igsn);
+        if (!sample) {
+          return c.json({ error: "Sample not found" }, 404);
+        }
+        const found = await attachments.getContent(sample.id, attachmentId);
+        if (!found) {
+          return c.json({ error: "Attachment not found" }, 404);
+        }
+        return attachmentDownload(found.attachment, found.content);
+      },
+    );
 }

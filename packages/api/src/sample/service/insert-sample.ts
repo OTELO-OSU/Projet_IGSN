@@ -7,9 +7,10 @@ import type { DB } from "../../db.ts";
 import { type Transactional } from "../../transaction.ts";
 import { conditionColumns } from "./condition-columns.ts";
 import { descriptionColumns } from "./description-columns.ts";
+import { replaceSampleLinks } from "./replace-sample-links.ts";
 import { toAgeColumns } from "./to-age-columns.ts";
 import { locationColumns } from "./to-location.ts";
-import { toSample } from "./to-sample.ts";
+import { withSampleChildren } from "./with-sample-children.ts";
 
 export async function insertSample(
   db: Transactional<DB>,
@@ -35,5 +36,7 @@ export async function insertSample(
     })
     .returningAll()
     .executeTakeFirstOrThrow();
-  return toSample(row);
+  await replaceSampleLinks(db, row.id, input.links ?? []);
+  const [sample] = await withSampleChildren(db, [row]);
+  return sample!;
 }

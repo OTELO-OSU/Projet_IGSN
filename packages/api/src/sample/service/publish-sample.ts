@@ -5,7 +5,7 @@ import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffi
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { toSample } from "./to-sample.ts";
+import { withSampleChildren } from "./with-sample-children.ts";
 
 export async function publishSample(
   db: Transactional<DB>,
@@ -18,5 +18,6 @@ export async function publishSample(
     .returningAll()
     .executeTakeFirst();
   if (!row) return null;
-  return toSample(row);
+  const [sample] = await withSampleChildren(db, [row]);
+  return sample!;
 }

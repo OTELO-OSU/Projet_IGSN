@@ -73,7 +73,12 @@ services:
       # fetched over the compose network from the keycloak service directly.
       OIDC_ISSUER: "https://igsn-auth.${DOMAIN}/realms/igsn"
       OIDC_JWKS_URI: "http://keycloak:8080/realms/igsn/protocol/openid-connect/certs"
+      # Uploaded sample attachments (ADR 0017); a named volume so blobs
+      # survive image redeploys. A Ceph mount will take over this path.
+      ATTACHMENTS_DIR: /data/attachments
     healthcheck: *healthcheck
+    volumes:
+      - attachments:/data/attachments
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -175,5 +180,6 @@ services:
 
 volumes:
   pgdata:
+  attachments:
   caddy_data:
   caddy_config:

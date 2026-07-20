@@ -100,8 +100,28 @@ type SampleTable = {
   updated_at: Generated<Date>;
 };
 
+// Related DOI links, one-to-many with sample (ADR 0017). Ids are app-generated
+// UUIDv7, so ordering by id is creation order.
+type SampleLinkTable = {
+  id: string;
+  sample_id: string;
+  url: string;
+  description: string | null;
+};
+
+// Attached-file metadata (ADR 0017); the content lives on disk keyed by id.
+type SampleAttachmentTable = {
+  id: string;
+  sample_id: string;
+  name: string;
+  media_type: string;
+  description: string | null;
+};
+
 export type DB = {
   sample: SampleTable;
+  sample_link: SampleLinkTable;
+  sample_attachment: SampleAttachmentTable;
 };
 
 const dbConfigSchema = z.object({

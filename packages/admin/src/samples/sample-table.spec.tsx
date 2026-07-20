@@ -29,6 +29,8 @@ const sample: Sample = {
   description: null,
   condition: null,
   age: null,
+  links: [],
+  attachments: [],
   igsn: null,
   published: false,
   createdAt: new Date("2026-06-01T00:00:00.000Z"),

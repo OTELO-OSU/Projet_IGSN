@@ -8,7 +8,7 @@ import { sql } from "kysely";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { toSample } from "./to-sample.ts";
+import { withSampleChildren } from "./with-sample-children.ts";
 
 // Case- and diacritic-insensitive match on name, specific_name and igsn.
 // `search` is LIKE-escaped and bound as a parameter (never concatenated), and
@@ -51,7 +51,7 @@ export async function listSamples(
     .executeTakeFirstOrThrow();
 
   return {
-    data: rows.map(toSample),
+    data: await withSampleChildren(db, rows),
     total: Number(count),
   };
 }

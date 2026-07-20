@@ -3,7 +3,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { toSample } from "./to-sample.ts";
+import { withSampleChildren } from "./with-sample-children.ts";
 
 export async function getPublishedSampleByIgsn(
   db: Transactional<DB>,
@@ -16,5 +16,6 @@ export async function getPublishedSampleByIgsn(
     .where("published", "=", true)
     .executeTakeFirst();
   if (!row) return null;
-  return toSample(row);
+  const [sample] = await withSampleChildren(db, [row]);
+  return sample!;
 }

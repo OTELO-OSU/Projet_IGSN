@@ -13,6 +13,9 @@
 **/__screenshots__
 **/.vitest-attachments
 
+# Uploaded sample attachment blobs (dev/test/e2e debug output, ADR 0017)
+packages/api/attachments
+
 # Environment files
 **/*.local
 **/.env
