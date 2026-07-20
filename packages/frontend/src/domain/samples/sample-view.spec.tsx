@@ -275,43 +275,7 @@ describe("SampleView", () => {
     await expect.element(screen.getByText("1.4 kg")).toBeInTheDocument();
   });
 
-  it("should show the condition inside the description section", async () => {
-    const screen = await render(
-      <SampleView
-        name="Basalt 42"
-        igsn="0123456789ABCDEFGHJKMNPQRS"
-        nature="rock_powder"
-        type={null}
-        material={null}
-        texture={null}
-        metamorphicFacies={null}
-        collectionMethod={null}
-        collectionMethodDescription={null}
-        description={{ mass: { value: 1.4, unit: "kg" } }}
-        condition={{
-          packaging: "glass_bottle",
-          temperature: {
-            type: "frozen",
-            measurement: { value: -18, unit: "celsius" },
-          },
-        }}
-        location={null}
-      />,
-    );
-
-    await expect
-      .element(screen.getByRole("heading", { level: 2, name: "Description" }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("heading", { level: 3, name: "Condition" }))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Glass bottle")).toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Frozen (-18 °C)"))
-      .toBeInTheDocument();
-  });
-
-  it("should show the description section for a condition alone", async () => {
+  it("should show the condition as its own section with its rows", async () => {
     const screen = await render(
       <SampleView
         name="Basalt 42"
@@ -324,19 +288,27 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
-        condition={{ light: "total_darkness" }}
+        condition={{
+          packaging: "glass_bottle",
+          temperature: {
+            type: "frozen",
+            measurement: { value: -18, unit: "celsius" },
+          },
+        }}
         location={null}
       />,
     );
 
     await expect
-      .element(screen.getByRole("heading", { level: 2, name: "Description" }))
+      .element(screen.getByRole("heading", { level: 2, name: "Condition" }))
       .toBeInTheDocument();
+    // A condition alone does not open the description section.
     await expect
-      .element(screen.getByRole("heading", { level: 3, name: "Condition" }))
-      .toBeInTheDocument();
+      .element(screen.getByRole("heading", { name: "Description" }))
+      .not.toBeInTheDocument();
+    await expect.element(screen.getByText("Glass bottle")).toBeInTheDocument();
     await expect
-      .element(screen.getByText("Total darkness"))
+      .element(screen.getByText("Frozen (-18 °C)"))
       .toBeInTheDocument();
   });
 

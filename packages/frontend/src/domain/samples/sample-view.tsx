@@ -86,7 +86,12 @@ export function SampleView({
       </div>
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
-        <nav aria-label={m.sample_section_sample()} className="w-40 shrink-0">
+        {/* self-start keeps the nav its own height (a stretched flex child
+            never sticks); it then follows the scroll alongside the sections. */}
+        <nav
+          aria-label={m.sample_section_sample()}
+          className="sticky top-6 w-40 shrink-0 self-start"
+        >
           <ul className="grid gap-2">
             <li>
               <a
@@ -96,7 +101,7 @@ export function SampleView({
                 {m.sample_section_sample()}
               </a>
             </li>
-            {description || condition ? (
+            {description ? (
               <li>
                 <a
                   href="#description"
@@ -113,6 +118,16 @@ export function SampleView({
                   className="border-l-2 border-sky-800 pl-3 font-medium text-sky-900"
                 >
                   {m.sample_section_location()}
+                </a>
+              </li>
+            ) : null}
+            {condition ? (
+              <li>
+                <a
+                  href="#condition"
+                  className="border-l-2 border-sky-800 pl-3 font-medium text-sky-900"
+                >
+                  {m.sample_section_condition()}
                 </a>
               </li>
             ) : null}
@@ -223,7 +238,7 @@ export function SampleView({
             </dl>
           </section>
 
-          {description || condition ? (
+          {description ? (
             <section
               id="description"
               aria-labelledby="description-heading"
@@ -235,19 +250,7 @@ export function SampleView({
               >
                 {m.sample_section_description()}
               </h2>
-              {description ? (
-                <DescriptionView description={description} />
-              ) : null}
-              {/* The conditioning state belongs to the physical description,
-                  so it reads as a sub-part of this section, not its own. */}
-              {condition ? (
-                <>
-                  <h3 className="mt-4 px-4 font-semibold text-sky-900">
-                    {m.sample_section_condition()}
-                  </h3>
-                  <ConditionView condition={condition} />
-                </>
-              ) : null}
+              <DescriptionView description={description} />
             </section>
           ) : null}
 
@@ -264,6 +267,22 @@ export function SampleView({
                 {m.sample_section_location()}
               </h2>
               <LocationView location={location} />
+            </section>
+          ) : null}
+
+          {condition ? (
+            <section
+              id="condition"
+              aria-labelledby="condition-heading"
+              className="mt-8"
+            >
+              <h2
+                id="condition-heading"
+                className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
+              >
+                {m.sample_section_condition()}
+              </h2>
+              <ConditionView condition={condition} />
             </section>
           ) : null}
         </div>
