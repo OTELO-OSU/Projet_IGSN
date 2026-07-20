@@ -34,6 +34,7 @@ function fakeApi(
   fail: "save" | "publish" | false = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
+  availability: "exists" | "no_longer_exists" = "exists",
 ) {
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -49,6 +50,9 @@ function fakeApi(
     location: { position: { type: "point", longitude: 3, latitude: 45 } },
     description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
     condition: null,
+    security: null,
+    availability,
+    publicationYear: published ? 2026 : null,
     igsn: published ? IGSN : null,
     published,
     createdAt: "2026-06-01T00:00:00.000Z",
@@ -88,6 +92,7 @@ async function renderEditPage(
   fail: "save" | "publish" | false = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
+  availability: "exists" | "no_longer_exists" = "exists",
 ) {
   const { id, calls } = fakeApi(
     published,
@@ -95,6 +100,7 @@ async function renderEditPage(
     fail,
     metamorphicFacies,
     texture,
+    availability,
   );
   const queryClient = new QueryClient();
   const router = createRouter({
@@ -169,6 +175,21 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Texture" }))
       .toHaveTextContent("Phaneritic");
+  });
+
+  it("should prefill availability from the saved sample instead of resetting it to Exists", async () => {
+    const { screen } = await renderEditPage(
+      false,
+      "fossil",
+      false,
+      null,
+      null,
+      "no_longer_exists",
+    );
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: /availability/i }))
+      .toHaveTextContent("No longer exists");
   });
 
   it("should not show an IGSN on a draft", async () => {

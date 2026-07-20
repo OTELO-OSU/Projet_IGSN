@@ -93,6 +93,18 @@ type SampleTable = {
   pressure_value: number | null;
   pressure_unit: string | null;
   specific_conditions: string | null;
+  // Safety hazards (like the condition, ADR 0016), all nullable. Each hazard is
+  // a boolean flag with an optional free-text explanation.
+  radioactivity: boolean | null;
+  radioactivity_explanation: string | null;
+  asbestos_rich: boolean | null;
+  asbestos_explanation: string | null;
+  chemical_risk: boolean | null;
+  chemical_risk_explanation: string | null;
+  // Whether the physical sample still exists; null on a draft, required to publish.
+  availability: string | null;
+  // Year of first publication; null until published, set once at publish.
+  publication_year: number | null;
   // Null until the sample is published; then derived from the id with generateIgsnSuffix.
   igsn: string | null;
   published: Generated<boolean>;

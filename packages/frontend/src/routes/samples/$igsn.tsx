@@ -45,6 +45,8 @@ function SampleDetail() {
       description={sample.description}
       condition={sample.condition}
       location={sample.location}
+      availability={sample.availability}
+      publicationYear={sample.publicationYear}
     />
   );
 }

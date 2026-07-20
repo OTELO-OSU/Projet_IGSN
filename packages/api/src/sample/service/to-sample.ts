@@ -86,6 +86,20 @@ function toCondition(row: Selectable<DB["sample"]>) {
   });
 }
 
+// Flat security columns -> nested domain security (same storage pattern as the
+// condition, ADR 0016). A sample without any hazard recorded carries
+// `security: null`.
+function toSecurity(row: Selectable<DB["sample"]>) {
+  return prune({
+    radioactivity: row.radioactivity,
+    radioactivityExplanation: row.radioactivity_explanation,
+    asbestosRich: row.asbestos_rich,
+    asbestosExplanation: row.asbestos_explanation,
+    chemicalRisk: row.chemical_risk,
+    chemicalRiskExplanation: row.chemical_risk_explanation,
+  });
+}
+
 // DB row (snake_case) -> domain Sample (camelCase), validated at the boundary.
 // Location is flat on the row (see to-location.ts). Age is flat too: all-null
 // age columns -> null age. sampleSchema.parse validates the codes at the boundary.
@@ -142,6 +156,9 @@ export function toSample(
       mediaType: attachment.media_type,
       description: attachment.description,
     })),
+    security: toSecurity(row),
+    availability: row.availability,
+    publicationYear: row.publication_year,
     igsn: row.igsn,
     published: row.published,
     createdAt: row.created_at,

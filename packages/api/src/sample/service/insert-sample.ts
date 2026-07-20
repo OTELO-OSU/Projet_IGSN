@@ -8,6 +8,7 @@ import { type Transactional } from "../../transaction.ts";
 import { conditionColumns } from "./condition-columns.ts";
 import { descriptionColumns } from "./description-columns.ts";
 import { replaceSampleLinks } from "./replace-sample-links.ts";
+import { securityColumns } from "./security-columns.ts";
 import { toAgeColumns } from "./to-age-columns.ts";
 import { locationColumns } from "./to-location.ts";
 import { withSampleChildren } from "./with-sample-children.ts";
@@ -29,10 +30,12 @@ export async function insertSample(
       collection_method: input.collectionMethod ?? null,
       collection_method_description: input.collectionMethodDescription ?? null,
       specific_name: input.specificName ?? null,
+      availability: input.availability ?? null,
       ...descriptionColumns(input.description),
       ...locationColumns(input.location),
       ...conditionColumns(input.condition),
       ...toAgeColumns(input.age),
+      ...securityColumns(input.security),
     })
     .returningAll()
     .executeTakeFirstOrThrow();

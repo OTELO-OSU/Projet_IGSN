@@ -132,6 +132,7 @@ describe("admin sample routes", () => {
               location: {
                 position: { type: "point", longitude: 3, latitude: 45 },
               },
+              availability: "exists",
             },
           },
           { headers: authHeader },
@@ -273,6 +274,7 @@ describe("admin sample routes", () => {
         description: {
           collectionDate: { start: "2026-01-01", end: "2026-01-01" },
         },
+        availability: "exists" as const,
       };
       const created = await client.admin.samples.$post(
         { json: publishable },
@@ -350,6 +352,7 @@ describe("admin sample routes", () => {
           description: {
             collectionDate: { start: "2026-01-01", end: "2026-01-01" },
           },
+          availability: "exists",
         },
       },
       { headers: authHeader },
@@ -432,6 +435,7 @@ describe("admin sample routes", () => {
           description: {
             collectionDate: { start: "2026-01-01", end: "2026-01-01" },
           },
+          availability: "exists",
         },
       },
       { headers: authHeader },

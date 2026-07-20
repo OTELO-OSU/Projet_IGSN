@@ -69,6 +69,7 @@ const seedSampleSchema = sampleSchema
     collectionMethod: true,
     location: true,
     description: true,
+    availability: true,
     igsn: true,
     published: true,
   })
@@ -78,6 +79,7 @@ const seedSampleSchema = sampleSchema
     collectionMethod: true,
     location: true,
     description: true,
+    availability: true,
     igsn: true,
     published: true,
   });
@@ -170,6 +172,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     description: {
       collectionDate: { start: "2025-06-15", end: "2025-06-15" },
     },
+    availability: "exists",
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69"),
     published: true,
   },
@@ -186,6 +189,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     description: {
       collectionDate: { start: "2025-04-02", end: "2025-04-02" },
     },
+    availability: "exists",
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),
     published: true,
   },

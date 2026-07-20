@@ -3,6 +3,7 @@ import type Catalog from "../../messages/en.json";
 import { type GeologicalAge } from "./age/geological-age.ts";
 import { type NumericUnit } from "./age/numeric-unit.ts";
 import { type YearsUnit } from "./age/years-unit.ts";
+import { type Availability } from "./availability/availability.ts";
 import { collectionMethodLabelKey } from "./collection-method/label.ts";
 import { type HumidityType } from "./condition/humidity-type.ts";
 import { type Light } from "./condition/light.ts";
@@ -40,6 +41,7 @@ type _pressureTypeKeys = AssertKeys<`pressure_${PressureType}`>;
 type _numericUnitKeys = AssertKeys<`age_unit_${NumericUnit}`>;
 type _yearsUnitKeys = AssertKeys<`age_years_${YearsUnit}`>;
 type _geologicalAgeKeys = AssertKeys<`age_${GeologicalAge}`>;
+type _availabilityKeys = AssertKeys<`availability_${Availability}`>;
 
 // A message catalog: the app's compiled paraglide `m`, keyed by the catalog's
 // own message keys (minus the `$`-prefixed metadata entries, e.g. `$schema`,
@@ -67,6 +69,7 @@ export type SampleLabels = {
   numericUnitLabel: (unit: NumericUnit) => string;
   yearsUnitLabel: (unit: YearsUnit) => string;
   geologicalAgeLabel: (age: GeologicalAge) => string;
+  availabilityLabel: (availability: Availability) => string;
 };
 
 // The sample label resolvers, bound to one app's message catalog. Paraglide
@@ -95,5 +98,9 @@ export function createSampleLabels(m: Messages): SampleLabels {
     numericUnitLabel: vocabularyLabel((unit) => `age_unit_${unit}`, m),
     yearsUnitLabel: vocabularyLabel((unit) => `age_years_${unit}`, m),
     geologicalAgeLabel: vocabularyLabel((age) => `age_${age}`, m),
+    availabilityLabel: vocabularyLabel(
+      (availability) => `availability_${availability}`,
+      m,
+    ),
   };
 }

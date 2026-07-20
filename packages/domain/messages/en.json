@@ -1,5 +1,7 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "availability_exists": "Exists",
+  "availability_no_longer_exists": "No longer exists",
   "nature_hand_sample": "Hand sample",
   "nature_inapplicable": "Inapplicable",
   "nature_multiple_sample": "Multiple sample",

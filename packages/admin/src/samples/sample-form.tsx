@@ -17,6 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { availabilitySchema } from "@projet-igsn/domain/sample/availability/availability";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { type CreateSample } from "@projet-igsn/domain/sample/sample";
@@ -37,11 +38,15 @@ import {
   sampleDraftSchema,
   toSampleDraft,
 } from "#/samples/sample-draft-schema.ts";
-import { natureLabel } from "#/samples/sample-labels.ts";
+import { availabilityLabel, natureLabel } from "#/samples/sample-labels.ts";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
 
 const natureItems = toComboboxItems(natureSchema.options, natureLabel);
+const availabilityItems = toComboboxItems(
+  availabilitySchema.options,
+  availabilityLabel,
+);
 
 // Draft -> domain-schema issues -> per-field translated errors. A published
 // sample validates against the publishable shape, a draft against the create
@@ -150,6 +155,7 @@ export function SampleForm({
         metamorphicFacies: state.values.metamorphicFacies,
         location: state.values.location,
         description: state.values.description,
+        availability: state.values.availability,
       })}
     >
       {({
@@ -159,6 +165,7 @@ export function SampleForm({
         metamorphicFacies,
         location,
         description,
+        availability,
       }) => {
         // Form state holds looser select strings; the runtime values match
         // the domain, so cast to the fields samplePublishBlockers reads.
@@ -169,6 +176,7 @@ export function SampleForm({
           location: composeLocation(location),
           description: composeDescription(description),
           age: null,
+          availability: availability ?? null,
         } as Pick<
           Sample,
           | "type"
@@ -177,6 +185,7 @@ export function SampleForm({
           | "location"
           | "description"
           | "age"
+          | "availability"
         >).map(publishBlockerLabel);
         const button = renderButton(
           isPending || !canSubmit || reasons.length > 0,
@@ -341,6 +350,21 @@ export function SampleForm({
           <form.AppForm>
             <PhysicalDescriptionFields />
           </form.AppForm>
+
+          <FormSection title={m.section_availability()}>
+            <form.AppField name="availability">
+              {(field) => (
+                <field.ComboboxField
+                  label={m.field_availability()}
+                  requiredToPublish
+                  items={availabilityItems}
+                  placeholder={m.availability_placeholder()}
+                  searchPlaceholder={m.availability_search_placeholder()}
+                  emptyText={m.availability_empty()}
+                />
+              )}
+            </form.AppField>
+          </FormSection>
         </TabsContent>
       </Tabs>
 

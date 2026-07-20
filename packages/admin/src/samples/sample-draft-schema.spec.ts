@@ -19,6 +19,7 @@ const draft: SampleDraft = {
   location: toLocationDraft(null),
   description: toDescriptionDraft(null),
   condition: toConditionDraft(null),
+  availability: "exists",
 };
 
 describe("sampleDraftSchema", () => {
@@ -32,6 +33,7 @@ describe("sampleDraftSchema", () => {
       collectionMethodDescription: null,
       specificName: null,
       location: null,
+      availability: "exists",
     });
   });
 
@@ -94,6 +96,7 @@ describe("sampleDraftSchema", () => {
       collectionMethodDescription: null,
       specificName: null,
       location: null,
+      availability: "exists",
       description: {
         collectionDate: { start: "2026-01-05", end: "2026-01-05" },
         mass: { value: 1.2, unit: "kg" },

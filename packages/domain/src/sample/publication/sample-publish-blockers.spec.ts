@@ -21,6 +21,9 @@ const base: Sample = {
   age: null,
   links: [],
   attachments: [],
+  security: null,
+  availability: "exists",
+  publicationYear: null,
   igsn: null,
   published: false,
   createdAt: new Date("2026-01-01T00:00:00Z"),
@@ -35,6 +38,12 @@ describe("samplePublishBlockers", () => {
   it("should report type_missing when type is null", () => {
     expect(samplePublishBlockers({ ...base, type: null })).toEqual([
       "type_missing",
+    ]);
+  });
+
+  it("should report availability_missing when availability is null", () => {
+    expect(samplePublishBlockers({ ...base, availability: null })).toEqual([
+      "availability_missing",
     ]);
   });
 

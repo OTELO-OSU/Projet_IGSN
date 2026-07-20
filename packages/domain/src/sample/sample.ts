@@ -3,6 +3,7 @@ import { z } from "zod";
 import { igsnSuffixSchema } from "../igsn/model.ts";
 import { ageSchema } from "./age/model.ts";
 import { sampleAttachmentSchema } from "./attachment/model.ts";
+import { availabilitySchema } from "./availability/availability.ts";
 import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
 import { conditionSchema } from "./condition/model.ts";
 import { descriptionSchema } from "./description/model.ts";
@@ -15,6 +16,7 @@ import {
   metamorphicFaciesSchema,
 } from "./metamorphic-facies/vocabulary.ts";
 import { natureSchema } from "./nature.ts";
+import { securitySchema } from "./security/model.ts";
 import { textureSchema, texturesFor } from "./texture/vocabulary.ts";
 import { sampleTypeSchema } from "./type/vocabulary.ts";
 
@@ -53,6 +55,13 @@ export const sampleSchema = z.object({
   // Defaulted so payloads predating the feature keep parsing.
   links: z.array(sampleLinkSchema).default([]),
   attachments: z.array(sampleAttachmentSchema).default([]),
+  // Safety hazards; null when the sample has none (see security/model.ts).
+  security: securitySchema.nullable(),
+  // Whether the physical sample still exists; null on a draft, required to
+  // publish (see sample-publish-blockers).
+  availability: availabilitySchema.nullable(),
+  // Year of first publication; auto-set at publish, null on an unpublished draft.
+  publicationYear: z.number().int().positive().nullable(),
   // Null until the sample is published.
   igsn: igsnSuffixSchema.nullable(),
   published: z.boolean(),
@@ -90,6 +99,11 @@ export const createSampleSchema = z
     // Related DOI links, replaced wholesale on update. Attachments are not
     // part of this payload: their content uploads through dedicated routes.
     links: z.array(createSampleLinkSchema).optional(),
+    // Safety hazards; optional at creation and at publication.
+    security: securitySchema.nullish(),
+    // Optional on a draft (null); required only at publish (see
+    // sample-publish-blockers).
+    availability: availabilitySchema.nullish(),
   })
   .superRefine((value, ctx) => {
     // A texture must match the selected material's branch. This guards the

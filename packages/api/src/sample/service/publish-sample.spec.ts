@@ -1,4 +1,5 @@
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
+import { sql } from "kysely";
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
@@ -76,6 +77,42 @@ describe("publishSample", () => {
       );
       // Assert
       expect(published).toBeNull();
+    },
+  );
+
+  pgTest(
+    "should set the publication year to the current year",
+    async ({ db }) => {
+      // Arrange
+      const created = await insertSample(db, {
+        name: "Basalt 42",
+        nature: "hand_sample",
+        type: null,
+      });
+      const { year } = await db
+        .selectNoFrom(sql<number>`extract(year from now())::int`.as("year"))
+        .executeTakeFirstOrThrow();
+      // Act
+      const published = await publishSample(db, created.id);
+      // Assert
+      expect(published?.publicationYear).toBe(year);
+    },
+  );
+
+  pgTest(
+    "should keep the first publication year when published twice",
+    async ({ db }) => {
+      // Arrange
+      const created = await insertSample(db, {
+        name: "Basalt 42",
+        nature: "hand_sample",
+        type: null,
+      });
+      const first = await publishSample(db, created.id);
+      // Act
+      const republished = await publishSample(db, created.id);
+      // Assert
+      expect(republished?.publicationYear).toBe(first?.publicationYear);
     },
   );
 
