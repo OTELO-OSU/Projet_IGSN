@@ -2,8 +2,11 @@ import type { Kysely, Selectable } from "kysely";
 import type { z } from "zod";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
-import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
-import { sampleSchema } from "@projet-igsn/domain/sample/sample";
+import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
+import {
+  createSampleSchema,
+  sampleSchema,
+} from "@projet-igsn/domain/sample/sample";
 import { fileURLToPath } from "node:url";
 
 import type { DB } from "../src/db.ts";
@@ -29,12 +32,10 @@ export async function seed(
   return (
     db
       .insertInto("sample")
-      // Parse each seed row against the domain schema so a bad code, path, or id
-      // in a fixture fails the E2E seed rather than landing in the database.
       // collectionMethod is camelCase in the domain; the column is snake_case.
       .values(
         samples
-          .map((sample) => seedSampleSchema.parse(sample))
+          .map((sample) => parseSeedSample(sample))
           .map(
             ({
               material,
@@ -42,32 +43,13 @@ export async function seed(
               location,
               description,
               ...rest
-            }) => {
-              // Seeding bypasses the publish flow, so enforce its invariant
-              // here: a published seed row must be publishable, or the admin
-              // form (publishedSampleSchema) refuses every later edit.
-              const blockers = rest.published
-                ? samplePublishBlockers({
-                    type: rest.type ?? null,
-                    material: material ?? null,
-                    metamorphicFacies: null,
-                    location: location ?? null,
-                    description: description ?? null,
-                  })
-                : [];
-              if (blockers.length > 0) {
-                throw new Error(
-                  `published seed row "${rest.name}" is not publishable: ${blockers.join(", ")}`,
-                );
-              }
-              return {
-                ...rest,
-                material: material ?? null,
-                collection_method: collectionMethod ?? null,
-                ...locationColumns(location),
-                ...descriptionColumns(description),
-              };
-            },
+            }) => ({
+              ...rest,
+              material: material ?? null,
+              collection_method: collectionMethod ?? null,
+              ...locationColumns(location),
+              ...descriptionColumns(description),
+            }),
           ),
       )
       .returning(["id", "name", "nature", "igsn", "published"])
@@ -101,6 +83,25 @@ const seedSampleSchema = sampleSchema
   });
 
 type SeedSample = z.infer<typeof seedSampleSchema>;
+
+// A seed row must hold the bar the API enforces on the same data: the create
+// schema for a draft, the published schema (publish blockers raised as
+// issues) for a published row, since seeding bypasses the publish flow.
+// Exported so seed.spec.ts fails the suite on drift, not just the next seed
+// run.
+export function parseSeedSample(sample: SeedSample): SeedSample {
+  const parsed = seedSampleSchema.parse(sample);
+  const { id: _id, igsn: _igsn, published, ...create } = parsed;
+  const result = (
+    published ? publishedSampleSchema : createSampleSchema
+  ).safeParse(create);
+  if (!result.success) {
+    throw new Error(
+      `seed row "${parsed.name}" fails its ${published ? "published" : "draft"} schema: ${result.error.message}`,
+    );
+  }
+  return parsed;
+}
 
 // Shared seed data, reused by the E2E reset (see scripts/reset-and-seed.ts), so
 // kept English per the i18n testing rule. Ids are static (not generated) so
