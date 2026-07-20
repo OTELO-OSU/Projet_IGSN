@@ -4,11 +4,12 @@ import { locationRequirement } from "@projet-igsn/domain/sample/location/locatio
 
 import { m } from "#/paraglide/messages.js";
 import { LocationFields } from "#/samples/location-fields.tsx";
+import { SampleConditionFields } from "#/samples/sample-condition-fields.tsx";
 import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 
-// The Physical description tab: the description section, then the location
-// section. Render inside a `form.AppForm`.
+// The Physical description tab: the description section, the location
+// section, then the condition section. Render inside a `form.AppForm`.
 export function PhysicalDescriptionFields() {
   const form = useLocationForm();
   return (
@@ -37,6 +38,10 @@ export function PhysicalDescriptionFields() {
           ) : null
         }
       </form.Subscribe>
+
+      <FormSection title={m.section_condition()}>
+        <SampleConditionFields />
+      </FormSection>
     </>
   );
 }

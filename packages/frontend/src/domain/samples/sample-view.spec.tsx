@@ -16,6 +16,7 @@ describe("SampleView", () => {
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={null}
       />,
     );
@@ -41,6 +42,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={null}
       />,
     );
@@ -61,6 +63,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={null}
       />,
     );
@@ -89,6 +92,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={null}
       />,
     );
@@ -116,6 +120,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={null}
       />,
     );
@@ -136,6 +141,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={null}
       />,
     );
@@ -158,6 +164,7 @@ describe("SampleView", () => {
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={null}
       />,
     );
@@ -189,6 +196,7 @@ describe("SampleView", () => {
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription="Cored at low tide from the reef flat"
         description={null}
+        condition={null}
         location={null}
       />,
     );
@@ -214,6 +222,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={null}
       />,
     );
@@ -254,6 +263,7 @@ describe("SampleView", () => {
           collectionDate: { start: "2024-03-05", end: "2024-03-05" },
           mass: { value: 1.4, unit: "kg" },
         }}
+        condition={null}
         location={null}
       />,
     );
@@ -263,6 +273,43 @@ describe("SampleView", () => {
       .toBeInTheDocument();
     await expect.element(screen.getByText("March 5, 2024")).toBeInTheDocument();
     await expect.element(screen.getByText("1.4 kg")).toBeInTheDocument();
+  });
+
+  it("should show the condition as its own section with its rows", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        description={null}
+        condition={{
+          packaging: "glass_bottle",
+          temperature: {
+            type: "frozen",
+            measurement: { value: -18, unit: "celsius" },
+          },
+        }}
+        location={null}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Condition" }))
+      .toBeInTheDocument();
+    // A condition alone does not open the description section.
+    await expect
+      .element(screen.getByRole("heading", { name: "Description" }))
+      .not.toBeInTheDocument();
+    await expect.element(screen.getByText("Glass bottle")).toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Frozen (-18 °C)"))
+      .toBeInTheDocument();
   });
 
   it("should show a point location with its coordinates, elevation and navigation type", async () => {
@@ -278,6 +325,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={{
           position: {
             type: "point",
@@ -322,6 +370,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={{
           position: {
             type: "area",
@@ -377,6 +426,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={{ region: { kind: "continent", country: "FR" } }}
       />,
     );
@@ -398,6 +448,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={{ region: { kind: "ocean", oceanSea: "pacific_ocean" } }}
       />,
     );
@@ -426,6 +477,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={{ region }}
       />,
     );
@@ -447,6 +499,7 @@ describe("SampleView", () => {
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
+        condition={null}
         location={{
           localityName: "Reef flat",
           localityDescription: "Southern reef flat, Tahiti",
