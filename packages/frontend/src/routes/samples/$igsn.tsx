@@ -44,6 +44,7 @@ function SampleDetail() {
       collectionMethodDescription={sample.collectionMethodDescription}
       description={sample.description}
       location={sample.location}
+      age={sample.age}
     />
   );
 }

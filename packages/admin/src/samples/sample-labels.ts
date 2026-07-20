@@ -14,4 +14,7 @@ export const {
   textureLabel,
   metamorphicFaciesLabel,
   natureLabel,
+  numericUnitLabel,
+  yearsUnitLabel,
+  geologicalAgeLabel,
 } = createSampleLabels(m as unknown as Messages);

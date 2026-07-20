@@ -23,7 +23,6 @@ const metaFields = [
     // Elevation units are language-neutral symbols (their own label).
     items: ELEVATION_UNITS.map((value) => ({ value, label: value })),
     label: m.field_elevation_unit,
-    requiredMessage: m.field_elevation_unit_required,
     placeholder: m.elevation_unit_placeholder,
     searchPlaceholder: m.elevation_unit_search_placeholder,
     emptyText: m.elevation_unit_empty,
@@ -35,7 +34,6 @@ const metaFields = [
       label: verticalDatumLabel(value),
     })),
     label: m.field_vertical_datum,
-    requiredMessage: m.field_vertical_datum_required,
     placeholder: m.vertical_datum_placeholder,
     searchPlaceholder: m.vertical_datum_search_placeholder,
     emptyText: m.vertical_datum_empty,
@@ -43,9 +41,10 @@ const metaFields = [
 ];
 
 // Elevation unit and vertical datum, shown once a geometry is chosen and
-// enabled (and required) once an elevation value is entered. A unit/datum left
-// behind by an emptied elevation is harmless: the fields disable and
-// composeLocation drops them without a value.
+// enabled (and marked required to publish) once an elevation value is entered.
+// A missing unit/datum only blocks publish, not a draft, so there is no draft
+// validator; a unit/datum left behind by an emptied elevation is harmless: the
+// fields disable and composeLocation drops them without a value.
 export function LocationElevationFields() {
   const form = useLocationForm();
   return (
@@ -63,27 +62,11 @@ export function LocationElevationFields() {
                 key,
                 items,
                 label,
-                requiredMessage,
                 placeholder,
                 searchPlaceholder,
                 emptyText,
               }) => (
-                <form.AppField
-                  key={key}
-                  name={`location.${key}`}
-                  validators={{
-                    onChangeListenTo: [
-                      "location.elevationValue",
-                      "location.elevationMin",
-                      "location.elevationMax",
-                    ],
-                    onChange: ({ value, fieldApi }) =>
-                      isElevationEntered(fieldApi.form.state.values.location) &&
-                      !value
-                        ? { message: requiredMessage() }
-                        : undefined,
-                  }}
-                >
+                <form.AppField key={key} name={`location.${key}`}>
                   {(field) => (
                     <field.ComboboxField
                       label={label()}

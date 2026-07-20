@@ -11,6 +11,11 @@ import {
 import { z } from "zod";
 
 import {
+  type AgeFormValues,
+  ageFormValues,
+  toAgeInput,
+} from "#/samples/age-form.ts";
+import {
   composeDescription,
   type DescriptionDraft,
   toDescriptionDraft,
@@ -21,7 +26,8 @@ import {
   toLocationDraft,
 } from "#/samples/compose-location.ts";
 
-// The sample form's flat draft, as held by the form store.
+// The sample form's flat draft, as held by the form store. Age nests under its
+// own key (like location), so the form's `age.*` paths mirror the domain shape.
 export type SampleDraft = {
   name: string | undefined;
   nature: CreateSample["nature"] | undefined;
@@ -34,6 +40,7 @@ export type SampleDraft = {
   specificName: string | null | undefined;
   location: LocationDraft;
   description: DescriptionDraft;
+  age: AgeFormValues;
 };
 
 // A saved (or default) sample, spread into the flat draft the form store
@@ -52,11 +59,14 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   specificName: value?.specificName,
   location: toLocationDraft(value?.location),
   description: toDescriptionDraft(value?.description),
+  age: ageFormValues(value?.age),
 });
 
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
   const description = composeDescription(draft.description);
+  // Assemble the age block; omit it entirely when empty (like texture).
+  const age = toAgeInput(draft.age);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -83,6 +93,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     // Omitted when the whole section is empty: the API clears the description
     // columns for an absent description just like for a null one.
     ...(description ? { description } : {}),
+    ...(age ? { age } : {}),
   };
 };
 

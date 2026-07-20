@@ -17,6 +17,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -42,6 +43,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -62,6 +64,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -90,6 +93,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -117,6 +121,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -137,6 +142,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -159,6 +165,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -190,6 +197,7 @@ describe("SampleView", () => {
         collectionMethodDescription="Cored at low tide from the reef flat"
         description={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -199,6 +207,104 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByText("Cored at low tide from the reef flat"))
       .toBeInTheDocument();
+  });
+
+  const emptyAge = {
+    numericAgeMin: null,
+    numericAgeMax: null,
+    numericAgeUnit: null,
+    numericAgeYearsUnit: null,
+    geologicalAgeMin: null,
+    geologicalAgeMax: null,
+    geologicalUnit: null,
+  };
+
+  const baseProps = {
+    name: "Basalt 42",
+    igsn: "0123456789ABCDEFGHJKMNPQRS",
+    nature: "rock_powder",
+    type: null,
+    material: null,
+    texture: null,
+    metamorphicFacies: null,
+    collectionMethod: null,
+    collectionMethodDescription: null,
+    description: null,
+    location: null,
+    age: null,
+  } as const;
+
+  it("should show a single numeric age with its unit", async () => {
+    const screen = await render(
+      <SampleView
+        {...baseProps}
+        age={{
+          ...emptyAge,
+          numericAgeMin: 120,
+          numericAgeMax: 120,
+          numericAgeUnit: "ma",
+        }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Age" }))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("120 Ma")).toBeInTheDocument();
+  });
+
+  it("should show a numeric age range with a shared unit", async () => {
+    const screen = await render(
+      <SampleView
+        {...baseProps}
+        age={{
+          ...emptyAge,
+          numericAgeMin: 500,
+          numericAgeMax: 2000,
+          numericAgeUnit: "ka",
+        }}
+      />,
+    );
+
+    await expect.element(screen.getByText("500–2000 ka")).toBeInTheDocument();
+  });
+
+  it("should show the translated geological age", async () => {
+    const screen = await render(
+      <SampleView
+        {...baseProps}
+        age={{
+          ...emptyAge,
+          geologicalAgeMin: "ics8",
+          geologicalAgeMax: "ics8",
+        }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("Cretaceous Upper"))
+      .toBeInTheDocument();
+  });
+
+  it("should show the free-text geological unit", async () => {
+    const screen = await render(
+      <SampleView
+        {...baseProps}
+        age={{ ...emptyAge, geologicalUnit: "Green Sandstone Fm" }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("Green Sandstone Fm"))
+      .toBeInTheDocument();
+  });
+
+  it("should omit the Age section when there is no age", async () => {
+    const screen = await render(<SampleView {...baseProps} age={null} />);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Age" }))
+      .not.toBeInTheDocument();
   });
 
   it("should omit type, material, and collection method rows when unclassified", async () => {
@@ -215,6 +321,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={null}
+        age={null}
       />,
     );
 
@@ -255,6 +362,7 @@ describe("SampleView", () => {
           mass: { value: 1.4, unit: "kg" },
         }}
         location={null}
+        age={null}
       />,
     );
 
@@ -287,6 +395,7 @@ describe("SampleView", () => {
           },
           navigationType: "GPS",
         }}
+        age={null}
       />,
     );
 
@@ -332,6 +441,7 @@ describe("SampleView", () => {
             elevation: { min: 100, max: 200, unit: "m", datum: "wgs84" },
           },
         }}
+        age={null}
       />,
     );
 
@@ -378,6 +488,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={{ region: { kind: "continent", country: "FR" } }}
+        age={null}
       />,
     );
 
@@ -399,6 +510,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={{ region: { kind: "ocean", oceanSea: "pacific_ocean" } }}
+        age={null}
       />,
     );
 
@@ -427,6 +539,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         location={{ region }}
+        age={null}
       />,
     );
 
@@ -451,6 +564,7 @@ describe("SampleView", () => {
           localityName: "Reef flat",
           localityDescription: "Southern reef flat, Tahiti",
         }}
+        age={null}
       />,
     );
 
