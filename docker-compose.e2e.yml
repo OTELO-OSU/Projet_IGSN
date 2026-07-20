@@ -62,6 +62,11 @@ services:
       OIDC_ISSUER: http://localhost:18080/realms/igsn
       OIDC_JWKS_URI: http://keycloak:18080/realms/igsn/protocol/openid-connect/certs
       CORS_ORIGINS: http://localhost:4001,http://localhost:4000
+      # Uploaded sample attachments (ADR 0017); bind-mounted to
+      # packages/api/attachments so the blobs are inspectable from the host.
+      ATTACHMENTS_DIR: /data/attachments
+    volumes:
+      - ./packages/api/attachments:/data/attachments
     depends_on:
       postgres:
         condition: service_healthy

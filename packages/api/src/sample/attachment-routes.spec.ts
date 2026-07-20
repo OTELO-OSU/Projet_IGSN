@@ -1,7 +1,5 @@
 import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { testClient } from "hono/testing";
-import { mkdtemp } from "node:fs/promises";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect } from "vitest";
 
@@ -20,8 +18,10 @@ function csvFile(name = "measurements.csv") {
 
 type Client = ReturnType<typeof testClient<ReturnType<typeof createApp>>>;
 
-async function createTestApp(db: Parameters<typeof createApp>[0]) {
-  const attachmentsDir = await mkdtemp(join(tmpdir(), "igsn-attachments-"));
+// The real dev folder (gitignored), so uploaded blobs stay inspectable.
+const attachmentsDir = join(import.meta.dirname, "..", "..", "attachments");
+
+function createTestApp(db: Parameters<typeof createApp>[0]) {
   return testClient(createApp(db, { attachmentsDir }));
 }
 
@@ -67,7 +67,7 @@ describe("admin attachment routes", () => {
     "should upload an attachment and expose it on the sample",
     async ({ db }) => {
       // Arrange
-      const client = await createTestApp(db);
+      const client = createTestApp(db);
       const sample = await createSample(client);
       // Act
       const res = await uploadAttachment(client, sample.id, "Raw measurements");
@@ -90,7 +90,7 @@ describe("admin attachment routes", () => {
   );
 
   pgTest("should reject an unauthenticated upload", async ({ db }) => {
-    const client = await createTestApp(db);
+    const client = createTestApp(db);
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments.$post({
       param: { id: sample.id },
@@ -100,7 +100,7 @@ describe("admin attachment routes", () => {
   });
 
   pgTest("should accept any file type", async ({ db }) => {
-    const client = await createTestApp(db);
+    const client = createTestApp(db);
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments.$post(
       {
@@ -118,7 +118,7 @@ describe("admin attachment routes", () => {
   });
 
   pgTest("should reject a description without a file", async ({ db }) => {
-    const client = await createTestApp(db);
+    const client = createTestApp(db);
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments.$post(
       // Cast: the typed client rightly forbids this payload; the server must too.
@@ -134,7 +134,7 @@ describe("admin attachment routes", () => {
   pgTest(
     "should default a missing file type to application/octet-stream",
     async ({ db }) => {
-      const client = await createTestApp(db);
+      const client = createTestApp(db);
       const sample = await createSample(client);
       const res = await client.admin.samples[":id"].attachments.$post(
         {
@@ -152,7 +152,7 @@ describe("admin attachment routes", () => {
   );
 
   pgTest("should 404 an upload to an unknown sample", async ({ db }) => {
-    const client = await createTestApp(db);
+    const client = createTestApp(db);
     const res = await uploadAttachment(
       client,
       "00000000-0000-7000-8000-000000000000",
@@ -162,7 +162,7 @@ describe("admin attachment routes", () => {
 
   pgTest("should download the attachment", async ({ db }) => {
     // Arrange
-    const client = await createTestApp(db);
+    const client = createTestApp(db);
     const sample = await createSample(client);
     const uploaded = await uploadAttachment(client, sample.id);
     const { data } = (await uploaded.json()) as { data: { id: string } };
@@ -184,7 +184,7 @@ describe("admin attachment routes", () => {
 
   pgTest("should update then clear the description", async ({ db }) => {
     // Arrange
-    const client = await createTestApp(db);
+    const client = createTestApp(db);
     const sample = await createSample(client);
     const uploaded = await uploadAttachment(client, sample.id, "Old");
     const { data } = (await uploaded.json()) as { data: { id: string } };
@@ -208,7 +208,7 @@ describe("admin attachment routes", () => {
   pgTest(
     "should 404 a description update on an unknown attachment",
     async ({ db }) => {
-      const client = await createTestApp(db);
+      const client = createTestApp(db);
       const sample = await createSample(client);
       const res = await client.admin.samples[":id"].attachments[
         ":attachmentId"
@@ -228,7 +228,7 @@ describe("admin attachment routes", () => {
 
   pgTest("should delete the attachment", async ({ db }) => {
     // Arrange
-    const client = await createTestApp(db);
+    const client = createTestApp(db);
     const sample = await createSample(client);
     const uploaded = await uploadAttachment(client, sample.id);
     const { data } = (await uploaded.json()) as { data: { id: string } };
@@ -251,7 +251,7 @@ describe("admin attachment routes", () => {
   });
 
   pgTest("should 404 a delete of an unknown attachment", async ({ db }) => {
-    const client = await createTestApp(db);
+    const client = createTestApp(db);
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments[
       ":attachmentId"
@@ -283,7 +283,7 @@ describe("public attachment download", () => {
 
   pgTest("should download a published sample's attachment", async ({ db }) => {
     // Arrange
-    const client = await createTestApp(db);
+    const client = createTestApp(db);
     const { igsn, attachmentId } = await publishWithAttachment(client);
     // Act: no auth header, the route is public.
     const res = await client.samples[":igsn"].attachments[":attachmentId"].$get(
@@ -295,7 +295,7 @@ describe("public attachment download", () => {
   });
 
   pgTest("should 404 an unknown attachment id", async ({ db }) => {
-    const client = await createTestApp(db);
+    const client = createTestApp(db);
     const { igsn } = await publishWithAttachment(client);
     const res = await client.samples[":igsn"].attachments[":attachmentId"].$get(
       {
@@ -310,7 +310,7 @@ describe("public attachment download", () => {
     async ({ db }) => {
       // Arrange: an attachment on a draft, plus a published sample whose IGSN
       // the request borrows; neither pairing may resolve.
-      const client = await createTestApp(db);
+      const client = createTestApp(db);
       const draft = await createSample(client);
       const uploaded = await uploadAttachment(client, draft.id);
       const { data } = (await uploaded.json()) as { data: { id: string } };

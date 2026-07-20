@@ -15,7 +15,7 @@ export function createApp(
   database: Kysely<DB>,
   {
     // Local disk for now; a Ceph mount will take over this path (ADR 0017).
-    attachmentsDir = process.env.ATTACHMENTS_DIR ?? "data/attachments",
+    attachmentsDir = process.env.ATTACHMENTS_DIR ?? "attachments",
   }: { attachmentsDir?: string } = {},
 ) {
   const corsOrigins = (process.env.CORS_ORIGINS ?? "")

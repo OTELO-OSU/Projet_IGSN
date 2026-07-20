@@ -1,7 +1,6 @@
 import type { Kysely } from "kysely";
 
-import { mkdtemp, readdir } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect } from "vitest";
 
@@ -20,15 +19,18 @@ const input = {
   description: "Raw XRF measurements",
 };
 
+// The real dev folder (gitignored), not a temp dir: uploaded blobs stay
+// inspectable after a run. Blob names are uuid-prefixed, so tests never collide.
+const dir = join(import.meta.dirname, "..", "..", "attachments");
+
 async function arrange(db: Kysely<DB>) {
-  const dir = await mkdtemp(join(tmpdir(), "igsn-attachments-"));
   const repository = createSampleAttachmentRepository(db, dir);
   const sample = await insertSample(db, {
     name: "Attached sample",
     nature: "hand_sample",
     type: null,
   });
-  return { dir, repository, sample };
+  return { repository, sample };
 }
 
 describe("sampleAttachmentRepository", () => {
@@ -99,15 +101,45 @@ describe("sampleAttachmentRepository", () => {
     },
   );
 
+  pgTest(
+    "should store the blob under a readable debug name",
+    async ({ db }) => {
+      const { repository, sample } = await arrange(db);
+      // Act
+      const created = await repository.create(sample.id, input, content);
+      // Assert: blobs are grouped in a per-sample folder.
+      expect(await readdir(join(dir, sample.id))).toContain(
+        `${created!.id}-measurements.csv`,
+      );
+    },
+  );
+
+  pgTest(
+    "should keep two attachments with the same file name",
+    async ({ db }) => {
+      const { repository, sample } = await arrange(db);
+      // Act
+      const first = await repository.create(sample.id, input, content);
+      const second = await repository.create(sample.id, input, content);
+      // Assert: the uuid prefix keeps the blobs apart on disk.
+      expect(second!.id).not.toBe(first!.id);
+      const files = await readdir(join(dir, sample.id));
+      expect(files).toContain(`${first!.id}-measurements.csv`);
+      expect(files).toContain(`${second!.id}-measurements.csv`);
+    },
+  );
+
   pgTest("should remove the row and the blob", async ({ db }) => {
-    const { dir, repository, sample } = await arrange(db);
+    const { repository, sample } = await arrange(db);
     const created = await repository.create(sample.id, input, content);
     // Act
     const removed = await repository.remove(sample.id, created!.id);
     // Assert
     expect(removed).toBe(true);
     expect(await repository.getContent(sample.id, created!.id)).toBeNull();
-    expect(await readdir(dir)).toEqual([]);
+    expect(await readdir(join(dir, sample.id))).not.toContain(
+      `${created!.id}-measurements.csv`,
+    );
   });
 
   pgTest("should report a missing attachment on remove", async ({ db }) => {

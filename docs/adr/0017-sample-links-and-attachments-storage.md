@@ -29,11 +29,16 @@ Attachments cannot (their content is binary), so they get their own
 authenticated routes: multipart upload, description update, delete, download;
 the public app downloads through the published-only IGSN lookup.
 
-File content lives on the server filesystem (`ATTACHMENTS_DIR`, a named
-volume in dev), one blob per attachment named by the attachment uuid. No
-user-controlled string ever becomes a path. Only sample publication metadata
-lives in Postgres; swapping the disk for Ceph later touches only the fs calls
-in `attachment-repository.ts`.
+File content lives on the server filesystem (`ATTACHMENTS_DIR`, bind-mounted
+to the gitignored `packages/api/attachments` in dev, test, and e2e so blobs
+are inspectable), one blob per attachment at
+`<sampleId>/<attachmentId>-<sanitized original name>`. Both ids are
+server-generated uuids and the appended name is allow-listed to `[\w.-]`, so
+no user-controlled path segment ever reaches the filesystem; the attachment
+uuid keys the blob and makes identical file names collision-free, and the
+readable name and per-sample folder are debug sugar. Only sample publication
+metadata lives in Postgres; swapping the disk for Ceph later touches only the
+fs calls in `attachment-repository.ts`.
 
 Uploads are validated in `domain` (shared with the admin form): any file type
 (documents, scans, photos, video...) under a 100 MB cap, enforced again by the

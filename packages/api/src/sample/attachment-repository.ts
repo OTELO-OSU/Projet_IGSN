@@ -27,14 +27,22 @@ function toAttachment(
   });
 }
 
-// Metadata row in Postgres, content on disk keyed by the row's UUID (ADR 0017):
-// no user-controlled path ever reaches the filesystem. Swapping the filesystem
+// Metadata row in Postgres, content on disk at <sampleId>/<attachmentId>-<name>
+// (ADR 0017). Both ids are server-generated uuids and the appended original
+// name is allow-listed to [\w.-], so no user-controlled path segment ever
+// reaches the filesystem; the uuid prefix makes identical file names
+// collision-free and the readable name is debug sugar. Swapping the filesystem
 // for Ceph later only touches the fs calls here.
 export function createSampleAttachmentRepository(
   db: Kysely<DB>,
   storageDir: string,
 ): SampleAttachmentRepository {
-  const pathFor = (id: string) => join(storageDir, id);
+  const dirFor = (sampleId: string) => join(storageDir, sampleId);
+  const pathFor = (sampleId: string, id: string, name: string) =>
+    join(
+      dirFor(sampleId),
+      `${id}-${name.replace(/[^\w.-]/g, "_").slice(0, 100)}`,
+    );
 
   return {
     create: (
@@ -63,8 +71,8 @@ export function createSampleAttachmentRepository(
         // Blob write happens inside the transaction: a failed write rolls the
         // row back. A commit failure can leave an orphan blob; harmless, as
         // nothing references it.
-        await mkdir(storageDir, { recursive: true });
-        await writeFile(pathFor(row.id), content);
+        await mkdir(dirFor(sampleId), { recursive: true });
+        await writeFile(pathFor(sampleId, row.id, row.name), content);
         return toAttachment(row);
       }),
 
@@ -93,7 +101,7 @@ export function createSampleAttachmentRepository(
           .returningAll()
           .executeTakeFirst();
         if (!deleted) return false;
-        await rm(pathFor(deleted.id), { force: true });
+        await rm(pathFor(sampleId, deleted.id, deleted.name), { force: true });
         return true;
       }),
 
@@ -106,7 +114,7 @@ export function createSampleAttachmentRepository(
           .where("sample_id", "=", sampleId)
           .executeTakeFirst();
         if (!row) return null;
-        const content = await readFile(pathFor(row.id));
+        const content = await readFile(pathFor(sampleId, row.id, row.name));
         return {
           attachment: toAttachment(row),
           content: new Uint8Array(content),
