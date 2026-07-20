@@ -99,15 +99,22 @@ describe("admin attachment routes", () => {
     expect(res.status).toBe(401);
   });
 
-  pgTest("should reject a file type outside the allow-list", async ({ db }) => {
+  pgTest("should accept any file type", async ({ db }) => {
     const client = await createTestApp(db);
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments.$post(
-      { param: { id: sample.id }, form: { file: csvFile("page.html") } },
+      {
+        param: { id: sample.id },
+        form: {
+          file: new File([csv], "field-footage.mp4", { type: "video/mp4" }),
+        },
+      },
       { headers: authHeader },
     );
-    expect(res.status).toBe(400);
-    expect(await res.json()).toEqual({ error: "Invalid attachment" });
+    expect(res.status).toBe(201);
+    expect(await res.json()).toMatchObject({
+      data: { name: "field-footage.mp4", mediaType: "video/mp4" },
+    });
   });
 
   pgTest("should reject a description without a file", async ({ db }) => {

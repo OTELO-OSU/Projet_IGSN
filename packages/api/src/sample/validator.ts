@@ -76,8 +76,8 @@ export const validateIgsnAttachmentParams = validator("param", (value, c) => {
   return parsed.data;
 });
 
-// Multipart upload: the domain schema caps the size and allow-lists the
-// extension before any byte reaches storage.
+// Multipart upload: the domain schema caps the size before any byte reaches
+// storage; any file type is accepted (downloads never render inline).
 export const validateAttachmentUpload = validator("form", (value, c) => {
   const parsed = uploadSampleAttachmentSchema.safeParse(value);
   if (!parsed.success) {

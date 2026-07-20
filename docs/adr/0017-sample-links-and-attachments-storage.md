@@ -35,8 +35,10 @@ user-controlled string ever becomes a path. Only sample publication metadata
 lives in Postgres; swapping the disk for Ceph later touches only the fs calls
 in `attachment-repository.ts`.
 
-Uploads are validated in `domain` (shared with the admin form): extension
-allow-list and a 20 MB cap, enforced again by the api at the trust boundary.
+Uploads are validated in `domain` (shared with the admin form): any file type
+(documents, scans, photos, video...) under a 100 MB cap, enforced again by the
+api at the trust boundary. The cap is what keeps the api's buffered upload
+safe; raising it means streaming the multipart body instead.
 
 ## Consequences
 
