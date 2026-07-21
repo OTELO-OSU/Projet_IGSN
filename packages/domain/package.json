@@ -8,7 +8,8 @@
   },
   "scripts": {
     "material-tree": "node scripts/dump-material-tree.ts",
-    "material-tree:json": "node scripts/dump-material-json.ts"
+    "material-tree:json": "node scripts/dump-material-json.ts",
+    "generate-organizations": "node scripts/generate-organizations.ts"
   },
   "dependencies": {
     "zod": "catalog:"

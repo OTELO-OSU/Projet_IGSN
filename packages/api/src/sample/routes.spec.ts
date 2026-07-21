@@ -31,6 +31,11 @@ async function createSample(
           collectionDate: { start: "2026-01-01", end: "2026-01-01" },
         },
         availability: "exists",
+        scientificContext: {
+          provenanceStatus: "historical_specimen",
+          collectionCurator: "Georges Cuvier",
+          collectionOrigin: "scientific_expedition",
+        },
       },
     },
     { headers: authHeader },

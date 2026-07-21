@@ -18,6 +18,7 @@ const base: Sample = {
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
   description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
   condition: null,
+  scientificContext: null,
   age: null,
   links: [],
   attachments: [],

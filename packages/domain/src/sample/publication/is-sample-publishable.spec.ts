@@ -17,6 +17,11 @@ const draft: Sample = {
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
   description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
   condition: null,
+  scientificContext: {
+    provenanceStatus: "historical_specimen",
+    collectionCurator: "Georges Cuvier",
+    collectionOrigin: "scientific_expedition",
+  },
   age: null,
   links: [],
   attachments: [],

@@ -13,6 +13,7 @@ import type { DB } from "../src/db.ts";
 
 import { createDb } from "../src/db.ts";
 import { descriptionColumns } from "../src/sample/service/description-columns.ts";
+import { scientificContextColumns } from "../src/sample/service/scientific-context-columns.ts";
 import { locationColumns } from "../src/sample/service/to-location.ts";
 
 // Inserts the given samples (with their fixed ids) and returns the columns the
@@ -42,6 +43,7 @@ export async function seed(
               collectionMethod,
               location,
               description,
+              scientificContext,
               ...rest
             }) => ({
               ...rest,
@@ -49,6 +51,7 @@ export async function seed(
               collection_method: collectionMethod ?? null,
               ...locationColumns(location),
               ...descriptionColumns(description),
+              ...scientificContextColumns(scientificContext),
             }),
           ),
       )
@@ -70,6 +73,7 @@ const seedSampleSchema = sampleSchema
     location: true,
     description: true,
     availability: true,
+    scientificContext: true,
     igsn: true,
     published: true,
   })
@@ -80,6 +84,7 @@ const seedSampleSchema = sampleSchema
     location: true,
     description: true,
     availability: true,
+    scientificContext: true,
     igsn: true,
     published: true,
   });
@@ -173,6 +178,14 @@ export const SEED_SAMPLES: SeedSample[] = [
       collectionDate: { start: "2025-06-15", end: "2025-06-15" },
     },
     availability: "exists",
+    scientificContext: {
+      provenanceStatus: "recent_collection",
+      funderOrganization: "02feahw73",
+      researchProgramName: "Chaîne des Puys Survey",
+      researchProgramChief: "Jean Dupont",
+      researchStructure: "02rx3b187",
+      collectorName: "Claire Martin",
+    },
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69"),
     published: true,
   },
@@ -190,6 +203,12 @@ export const SEED_SAMPLES: SeedSample[] = [
       collectionDate: { start: "2025-04-02", end: "2025-04-02" },
     },
     availability: "exists",
+    scientificContext: {
+      provenanceStatus: "historical_specimen",
+      collectionCurator: "Paul Bernard",
+      collectionOrigin: "scientific_expedition",
+      collectionContextDescription: "Armorican Massif reference collection",
+    },
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),
     published: true,
   },

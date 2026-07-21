@@ -55,6 +55,7 @@ describe("listSamples", () => {
           location: null,
           description: null,
           condition: null,
+          scientificContext: null,
           age: null,
           links: [],
           attachments: [],

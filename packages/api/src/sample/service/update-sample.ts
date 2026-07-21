@@ -9,6 +9,7 @@ import { conditionColumns } from "./condition-columns.ts";
 import { descriptionColumns } from "./description-columns.ts";
 import { economicInterestColumns } from "./economic-interest-columns.ts";
 import { replaceSampleLinks } from "./replace-sample-links.ts";
+import { scientificContextColumns } from "./scientific-context-columns.ts";
 import { securityColumns } from "./security-columns.ts";
 import { toAgeColumns } from "./to-age-columns.ts";
 import { locationColumns } from "./to-location.ts";
@@ -36,6 +37,7 @@ export async function updateSample(
       ...descriptionColumns(input.description),
       ...locationColumns(input.location),
       ...conditionColumns(input.condition),
+      ...scientificContextColumns(input.scientificContext),
       ...toAgeColumns(input.age),
       ...securityColumns(input.security),
       ...economicInterestColumns(input),

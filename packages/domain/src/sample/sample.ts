@@ -19,6 +19,7 @@ import {
   metamorphicFaciesSchema,
 } from "./metamorphic-facies/vocabulary.ts";
 import { natureSchema } from "./nature.ts";
+import { scientificContextSchema } from "./scientific-context/model.ts";
 import { securitySchema } from "./security/model.ts";
 import { textureSchema, texturesFor } from "./texture/vocabulary.ts";
 import { sampleTypeSchema } from "./type/vocabulary.ts";
@@ -51,6 +52,10 @@ export const sampleSchema = z.object({
   description: descriptionSchema.nullable(),
   // Storage/conditioning state; null when the sample has none (see condition/model.ts).
   condition: conditionSchema.nullable(),
+  // Scientific context (provenance, programme or collection); null when the
+  // sample has none (see scientific-context/model.ts). Defaulted so a payload
+  // predating the feature reads as "no context recorded".
+  scientificContext: scientificContextSchema.nullable().default(null),
   // Geological age; null until recorded (flat columns on the sample table).
   // Defaulted so a payload without the key reads as "no age recorded".
   age: ageSchema.nullable().default(null),
@@ -108,6 +113,9 @@ export const createSampleSchema = z
     description: descriptionSchema.nullish(),
     // Optional at creation and at publication (no publish blocker).
     condition: conditionSchema.nullish(),
+    // Optional at creation; the provenance status and its branch's mandatory
+    // fields are required only at publish (see sample-publish-blockers).
+    scientificContext: scientificContextSchema.nullish(),
     age: ageSchema.nullish(),
     // Related DOI links, replaced wholesale on update.
     links: z.array(createSampleLinkSchema).optional(),

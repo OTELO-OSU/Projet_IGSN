@@ -101,6 +101,25 @@ type SampleTable = {
   asbestos_explanation: string | null;
   chemical_risk: boolean | null;
   chemical_risk_explanation: string | null;
+  // Scientific context (provenance), all nullable text. `sc_provenance_status`
+  // is the discriminant; each branch's fields are separate columns, shared
+  // `sc_collector_name` serves both. ROR ids and vocabulary codes are text.
+  sc_provenance_status: string | null;
+  sc_funder_organization: string | null;
+  sc_research_program_name: string | null;
+  sc_research_program_chief: string | null;
+  sc_research_program_chief_orcid: string | null;
+  sc_research_structure: string | null;
+  sc_collector_name: string | null;
+  sc_collector_orcid: string | null;
+  sc_research_campaign: string | null;
+  sc_funding: string | null;
+  sc_research_program_description: string | null;
+  sc_field_name: string | null;
+  sc_mission_description: string | null;
+  sc_collection_curator: string | null;
+  sc_collection_origin: string | null;
+  sc_collection_context_description: string | null;
   // Whether the physical sample still exists; null on a draft, required to publish.
   availability: string | null;
   // Year of first publication; null until published, set once at publish.
