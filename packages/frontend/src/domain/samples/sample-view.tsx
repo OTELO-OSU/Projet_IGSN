@@ -17,6 +17,7 @@ import {
   textureLabel,
   typeLabel,
 } from "#/domain/samples/sample-labels.ts";
+import { SecurityView } from "#/domain/samples/security-view.tsx";
 import { m } from "#/paraglide/messages.js";
 
 type SampleViewProps = {
@@ -32,6 +33,7 @@ type SampleViewProps = {
   description: Sample["description"];
   condition: Sample["condition"];
   location: Sample["location"];
+  security: Sample["security"];
   availability: Sample["availability"];
   publicationYear: Sample["publicationYear"];
   age: Sample["age"];
@@ -111,6 +113,7 @@ export function SampleView({
   description,
   condition,
   location,
+  security,
   availability,
   publicationYear,
   age,
@@ -192,6 +195,11 @@ export function SampleView({
           content: <AgeView age={age} />,
         }
       : null,
+    security && {
+      id: "security",
+      title: m.sample_section_security(),
+      content: <SecurityView security={security} />,
+    },
   ].filter((section) => section != null);
 
   return (

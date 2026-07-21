@@ -30,6 +30,11 @@ import {
   type LocationDraft,
   toLocationDraft,
 } from "#/samples/compose-location.ts";
+import {
+  composeSecurity,
+  type SecurityDraft,
+  toSecurityDraft,
+} from "#/samples/compose-security.ts";
 
 // The sample form's flat draft, as held by the form store. Age nests under its
 // own key (like location), so the form's `age.*` paths mirror the domain shape.
@@ -46,6 +51,7 @@ export type SampleDraft = {
   location: LocationDraft;
   description: DescriptionDraft;
   condition: ConditionDraft;
+  security: SecurityDraft;
   availability: CreateSample["availability"] | undefined;
   age: AgeFormValues;
 };
@@ -67,6 +73,7 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   location: toLocationDraft(value?.location),
   description: toDescriptionDraft(value?.description),
   condition: toConditionDraft(value?.condition),
+  security: toSecurityDraft(value?.security),
   // Defaults to "exists" per the declaration flow; still required to publish.
   availability: value?.availability ?? "exists",
   age: ageFormValues(value?.age),
@@ -78,6 +85,7 @@ const composeCreateSample = (draft: SampleDraft) => {
   const condition = composeCondition(draft.condition);
   // Assemble the age block; omit it entirely when empty (like texture).
   const age = toAgeInput(draft.age);
+  const security = composeSecurity(draft.security);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -108,6 +116,8 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(description ? { description } : {}),
     // Same contract for the condition columns.
     ...(condition ? { condition } : {}),
+    // Same contract for the security columns.
+    ...(security ? { security } : {}),
     // Required only at publish; omit on a draft that has not answered it yet.
     ...(draft.availability ? { availability: draft.availability } : {}),
     ...(age ? { age } : {}),

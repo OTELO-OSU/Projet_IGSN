@@ -5,6 +5,7 @@ import { EMPTY_AGE_FORM_VALUES } from "./age-form.ts";
 import { toConditionDraft } from "./compose-condition.ts";
 import { toDescriptionDraft } from "./compose-description.ts";
 import { toLocationDraft } from "./compose-location.ts";
+import { toSecurityDraft } from "./compose-security.ts";
 import { type SampleDraft, sampleDraftSchema } from "./sample-draft-schema.ts";
 
 const draft: SampleDraft = {
@@ -20,6 +21,7 @@ const draft: SampleDraft = {
   location: toLocationDraft(null),
   description: toDescriptionDraft(null),
   condition: toConditionDraft(null),
+  security: toSecurityDraft(null),
   availability: "exists",
   age: EMPTY_AGE_FORM_VALUES,
 };

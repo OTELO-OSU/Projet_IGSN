@@ -45,6 +45,7 @@ function SampleDetail() {
       description={sample.description}
       condition={sample.condition}
       location={sample.location}
+      security={sample.security}
       availability={sample.availability}
       publicationYear={sample.publicationYear}
       age={sample.age}
