@@ -25,22 +25,22 @@ function createTestApp(db: Parameters<typeof createApp>[0]) {
   return testClient(createApp(db, { attachmentsDir }));
 }
 
+const sampleBody = {
+  name: "Grès de Fontainebleau",
+  nature: "rock_powder",
+  type: "individual_sample",
+  material: "sediment.exogenous_detritic.clay",
+  specificName: "FTB-2026-042",
+  availability: "exists",
+  location: { position: { type: "point", longitude: 0, latitude: 0 } },
+  description: {
+    collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+  },
+} as const;
+
 async function createSample(client: Client) {
   const res = await client.admin.samples.$post(
-    {
-      json: {
-        name: "Grès de Fontainebleau",
-        nature: "rock_powder",
-        type: "individual_sample",
-        material: "sediment.exogenous_detritic.clay",
-        specificName: "FTB-2026-042",
-        availability: "exists",
-        location: { position: { type: "point", longitude: 0, latitude: 0 } },
-        description: {
-          collectionDate: { start: "2026-01-01", end: "2026-01-01" },
-        },
-      },
-    },
+    { json: sampleBody },
     { headers: authHeader },
   );
   return sampleResponseSchema.parse(await res.json()).data;
@@ -183,90 +183,54 @@ describe("admin attachment routes", () => {
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(csv);
   });
 
-  pgTest("should update then clear the description", async ({ db }) => {
-    // Arrange
-    const client = createTestApp(db);
-    const sample = await createSample(client);
-    const uploaded = await uploadAttachment(client, sample.id, "Old");
-    const { data } = (await uploaded.json()) as { data: { id: string } };
-    // Act
-    const res = await client.admin.samples[":id"].attachments[
-      ":attachmentId"
-    ].$put(
-      {
-        param: { id: sample.id, attachmentId: data.id },
-        json: { description: null },
-      },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({
-      data: { ...data, description: null },
-    });
-  });
-
   pgTest(
-    "should 404 a description update on an unknown attachment",
+    "should reconcile attachments through the sample update",
     async ({ db }) => {
+      // Arrange
       const client = createTestApp(db);
       const sample = await createSample(client);
-      const res = await client.admin.samples[":id"].attachments[
-        ":attachmentId"
-      ].$put(
+      const keptRes = await uploadAttachment(client, sample.id, "Raw");
+      const kept = ((await keptRes.json()) as { data: { id: string } }).data;
+      await uploadAttachment(client, sample.id, "To drop");
+      // Act: list only one attachment, with a new description.
+      const res = await client.admin.samples[":id"].$put(
         {
-          param: {
-            id: sample.id,
-            attachmentId: "00000000-0000-7000-8000-000000000000",
+          param: { id: sample.id },
+          json: {
+            ...sampleBody,
+            attachments: [{ id: kept.id, description: "Calibrated" }],
           },
-          json: { description: "ghost" },
         },
         { headers: authHeader },
       );
-      expect(res.status).toBe(404);
+      // Assert: the listed one keeps its file with the new description, the
+      // unlisted one is gone.
+      expect(res.status).toBe(200);
+      expect(
+        sampleResponseSchema.parse(await res.json()).data.attachments,
+      ).toEqual([{ ...kept, description: "Calibrated" }]);
     },
   );
 
-  pgTest("should delete the attachment", async ({ db }) => {
-    // Arrange
-    const client = createTestApp(db);
-    const sample = await createSample(client);
-    const uploaded = await uploadAttachment(client, sample.id);
-    const { data } = (await uploaded.json()) as { data: { id: string } };
-    // Act
-    const res = await client.admin.samples[":id"].attachments[
-      ":attachmentId"
-    ].$delete(
-      { param: { id: sample.id, attachmentId: data.id } },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(204);
-    const read = await client.admin.samples[":id"].$get(
-      { param: { id: sample.id } },
-      { headers: authHeader },
-    );
-    expect(
-      sampleResponseSchema.parse(await read.json()).data.attachments,
-    ).toEqual([]);
-  });
-
-  pgTest("should 404 a delete of an unknown attachment", async ({ db }) => {
-    const client = createTestApp(db);
-    const sample = await createSample(client);
-    const res = await client.admin.samples[":id"].attachments[
-      ":attachmentId"
-    ].$delete(
-      {
-        param: {
-          id: sample.id,
-          attachmentId: "00000000-0000-7000-8000-000000000000",
-        },
-      },
-      { headers: authHeader },
-    );
-    expect(res.status).toBe(404);
-  });
+  pgTest(
+    "should remove every attachment when the sample update omits them",
+    async ({ db }) => {
+      // Arrange: PUT semantics, like links.
+      const client = createTestApp(db);
+      const sample = await createSample(client);
+      await uploadAttachment(client, sample.id, "Raw");
+      // Act
+      const res = await client.admin.samples[":id"].$put(
+        { param: { id: sample.id }, json: sampleBody },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(
+        sampleResponseSchema.parse(await res.json()).data.attachments,
+      ).toEqual([]);
+    },
+  );
 });
 
 describe("public attachment download", () => {

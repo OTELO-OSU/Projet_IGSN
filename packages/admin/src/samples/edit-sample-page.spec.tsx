@@ -8,6 +8,7 @@ import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
+import { FakeXhr } from "../../test/fake-xhr.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
 vi.mock("react-oidc-context", () => ({
@@ -69,7 +70,10 @@ function fakeApi(
       return new Response(null, { status: 500 });
     }
     if (init?.method === "PUT" && typeof init.body === "string") {
-      sample = { ...sample, ...JSON.parse(init.body) };
+      // The attachments payload carries {id, description} entries, not the
+      // full attachments; drop them to keep the fake sample parseable.
+      const { attachments: _attachments, ...body } = JSON.parse(init.body);
+      sample = { ...sample, ...body };
       calls.push(`PUT ${sample.name}`);
     }
     if (init?.method === "POST" && url.endsWith("/publish")) {
@@ -348,6 +352,57 @@ describe("EditSamplePage", () => {
       .toBeVisible();
     await vi.waitFor(() =>
       expect(calls).toEqual(["PUT Grès de Fontainebleau"]),
+    );
+  });
+
+  it("should upload files staged in the Links tab only when saving, before the save", async () => {
+    FakeXhr.instances = [];
+    vi.stubGlobal("XMLHttpRequest", FakeXhr);
+    const { screen, calls } = await renderEditPage();
+
+    await screen.getByRole("tab", { name: "Links" }).click();
+    await screen
+      .getByLabelText("Browse files")
+      .upload([new File(["col1\n1\n"], "data.csv", { type: "text/csv" })]);
+
+    // Staged, listed, but nothing sent yet: cancelling now would leave the
+    // server untouched.
+    await expect.element(screen.getByText("data.csv")).toBeVisible();
+    expect(FakeXhr.instances).toHaveLength(0);
+
+    await screen.getByRole("button", { name: "Save as draft" }).click();
+
+    await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+    expect(FakeXhr.instances[0]!.url).toContain("/attachments");
+    // The save waits for the uploads to settle.
+    expect(calls).toEqual([]);
+    FakeXhr.instances[0]!.finish();
+    await vi.waitFor(() =>
+      expect(calls).toEqual(["PUT Basalte du Massif Central"]),
+    );
+  });
+
+  it("should still save the sample when a staged upload fails", async () => {
+    FakeXhr.instances = [];
+    vi.stubGlobal("XMLHttpRequest", FakeXhr);
+    const { screen, calls } = await renderEditPage();
+
+    await screen.getByRole("tab", { name: "Links" }).click();
+    await screen
+      .getByLabelText("Browse files")
+      .upload([new File(["col1\n1\n"], "data.csv", { type: "text/csv" })]);
+    // The upload dialog shows whatever tab is active when submitting.
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+    await screen.getByRole("button", { name: "Save as draft" }).click();
+
+    await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+    FakeXhr.instances[0]!.finish(500);
+
+    await expect
+      .element(screen.getByRole("dialog"))
+      .toHaveTextContent("Could not upload.");
+    await vi.waitFor(() =>
+      expect(calls).toEqual(["PUT Basalte du Massif Central"]),
     );
   });
 });

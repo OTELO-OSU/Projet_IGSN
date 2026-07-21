@@ -16,3 +16,16 @@ export const uploadSampleAttachmentSchema = z.strictObject({
 export type UploadSampleAttachment = z.infer<
   typeof uploadSampleAttachmentSchema
 >;
+
+// Attachment metadata carried by the sample update payload: the id of an
+// already-uploaded attachment and its description. Content never travels
+// here; it uploads through the dedicated attachment route first, and the
+// payload then references the returned id.
+export const updateSampleAttachmentSchema = z.strictObject({
+  id: z.uuid(),
+  description: z.string().trim().min(1).nullable(),
+});
+
+export type UpdateSampleAttachment = z.infer<
+  typeof updateSampleAttachmentSchema
+>;

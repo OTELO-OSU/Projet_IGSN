@@ -17,6 +17,16 @@ const draft = (over?: {
 });
 
 describe("sampleDraftFieldErrors", () => {
+  it("should pin a link issue on the row's indexed field", () => {
+    expect(
+      sampleDraftFieldErrors([{ path: ["links", 1, "url"] }], draft()),
+    ).toEqual({
+      "links[1].url": {
+        message: "Enter a DOI URL (https://doi.org/...).",
+      },
+    });
+  });
+
   it("should pin issues on the draft fields that produced them", () => {
     expect(
       sampleDraftFieldErrors(

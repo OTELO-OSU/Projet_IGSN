@@ -76,33 +76,37 @@ export function createSampleAttachmentRepository(
         return toAttachment(row);
       }),
 
-    updateDescription: (
-      sampleId: string,
-      attachmentId: string,
-      description: string | null,
-    ) =>
+    reconcile: (sampleId, attachments) =>
       withTransaction(db, async (trx) => {
-        const row = await trx
-          .updateTable("sample_attachment")
-          .set({ description })
-          .where("id", "=", attachmentId)
+        const keep = new Map(attachments.map((a) => [a.id, a.description]));
+        const existing = await trx
+          .selectFrom("sample_attachment")
+          .selectAll()
           .where("sample_id", "=", sampleId)
-          .returningAll()
-          .executeTakeFirst();
-        return row ? toAttachment(row) : null;
-      }),
-
-    remove: (sampleId: string, attachmentId: string) =>
-      withTransaction(db, async (trx) => {
-        const deleted = await trx
-          .deleteFrom("sample_attachment")
-          .where("id", "=", attachmentId)
-          .where("sample_id", "=", sampleId)
-          .returningAll()
-          .executeTakeFirst();
-        if (!deleted) return false;
-        await rm(pathFor(sampleId, deleted.id, deleted.name), { force: true });
-        return true;
+          .execute();
+        // Blob removal happens inside the transaction, like create: a failed
+        // rm rolls the row deletions back; a commit failure can leave a blob
+        // deleted early, acceptable for rows the caller asked to drop.
+        await Promise.all(
+          existing.map(async (row) => {
+            if (!keep.has(row.id)) {
+              await trx
+                .deleteFrom("sample_attachment")
+                .where("id", "=", row.id)
+                .execute();
+              await rm(pathFor(sampleId, row.id, row.name), { force: true });
+              return;
+            }
+            const description = keep.get(row.id) ?? null;
+            if (description !== row.description) {
+              await trx
+                .updateTable("sample_attachment")
+                .set({ description })
+                .where("id", "=", row.id)
+                .execute();
+            }
+          }),
+        );
       }),
 
     getContent: (sampleId: string, attachmentId: string) =>

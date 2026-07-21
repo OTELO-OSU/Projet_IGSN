@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { igsnSuffixSchema } from "../igsn/model.ts";
 import { ageSchema } from "./age/model.ts";
+import { updateSampleAttachmentSchema } from "./attachment/attachment-validator.ts";
 import { sampleAttachmentSchema } from "./attachment/model.ts";
 import { availabilitySchema } from "./availability/availability.ts";
 import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
@@ -96,9 +97,13 @@ export const createSampleSchema = z
     // Optional at creation and at publication (no publish blocker).
     condition: conditionSchema.nullish(),
     age: ageSchema.nullish(),
-    // Related DOI links, replaced wholesale on update. Attachments are not
-    // part of this payload: their content uploads through dedicated routes.
+    // Related DOI links, replaced wholesale on update.
     links: z.array(createSampleLinkSchema).optional(),
+    // Attachment metadata, reconciled wholesale on update like links: a
+    // listed attachment keeps or updates its description, an unlisted one is
+    // deleted with its content. The content itself uploads through the
+    // dedicated attachment route first; this payload references the id.
+    attachments: z.array(updateSampleAttachmentSchema).optional(),
     // Safety hazards; optional at creation and at publication.
     security: securitySchema.nullish(),
     // Optional on a draft (null); required only at publish (see

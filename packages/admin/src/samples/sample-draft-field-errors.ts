@@ -14,6 +14,10 @@ const MEASUREMENT_PATH =
 const READING_PATH =
   /^condition\.(temperature|pressure)\.measurement\.(value|unit)$/;
 
+// Link rows are an array: the domain path (links.0.url) maps to the form's
+// indexed field name (links[0].url).
+const LINK_PATH = /^links\.(\d+)\.(url|description)$/;
+
 // Domain value -> the hierarchy draft field holding its per-level walk. Every
 // HierarchySelectField in the form needs an entry here: the widget registers
 // one field per level (`name[depth]`), never the bare name, so an issue on the
@@ -86,6 +90,8 @@ const draftFieldName = (path: string, draft: DraftContext): string => {
     return "condition.humidityPercentage";
   const hierarchy = HIERARCHY_PATHS[path as keyof typeof HIERARCHY_PATHS];
   if (hierarchy) return `${hierarchy}[${draft[hierarchy].length}]`;
+  const link = LINK_PATH.exec(path);
+  if (link) return `links[${link[1]}].${link[2]}`;
   return path;
 };
 
@@ -126,6 +132,8 @@ function issueMessage(path: string, issue: DraftIssue): string {
       ? m.field_measurement_positive()
       : m.field_measurement_value_required();
   }
+  // Whatever the url fails on (blank, non-DOI), the fix is the same: a DOI.
+  if (LINK_PATH.exec(path)?.[2] === "url") return m.field_doi_url_invalid();
   return m.field_invalid();
 }
 
