@@ -12,10 +12,7 @@ import { m } from "#/paraglide/messages.js";
 const publicApiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3002";
 
 const attachmentUrl = (igsn: string, attachmentId: string) =>
-  new URL(
-    `samples/${igsn}/attachments/${attachmentId}`,
-    publicApiUrl.endsWith("/") ? publicApiUrl : `${publicApiUrl}/`,
-  ).href;
+  `${publicApiUrl.replace(/\/$/, "")}/samples/${igsn}/attachments/${attachmentId}`;
 
 type LinksViewProps = {
   igsn: string;
