@@ -1,14 +1,27 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
+import type { ReactElement } from "react";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { SampleForm } from "./sample-form.tsx";
 
+vi.mock("react-oidc-context", () => ({
+  useAuth: () => ({ user: { access_token: "tok" } }),
+}));
+
+const SAMPLE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
+
 const noop = () => {};
 
 const saveAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Save", onSubmit }) as const;
+
+const renderForm = (ui: ReactElement) =>
+  render(
+    <QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>,
+  );
 
 const defaultValues: CreateSample = {
   name: "Basalte du Massif Central",
@@ -22,12 +35,12 @@ const defaultValues: CreateSample = {
 };
 
 const renderEditForm = (onSubmit: (value: CreateSample) => void) =>
-  render(
+  renderForm(
     <SampleForm
       onCancel={noop}
       defaultValues={defaultValues}
       primaryAction={saveAction(onSubmit)}
-      attachmentsSection={<div />}
+      sampleId={SAMPLE_ID}
     />,
   );
 
@@ -116,7 +129,7 @@ describe("SampleForm links tab", () => {
   });
 
   it("should prefill saved links", async () => {
-    const screen = await render(
+    const screen = await renderForm(
       <SampleForm
         onCancel={noop}
         defaultValues={{
@@ -129,7 +142,7 @@ describe("SampleForm links tab", () => {
           ],
         }}
         primaryAction={saveAction(vi.fn())}
-        attachmentsSection={<div />}
+        sampleId={SAMPLE_ID}
       />,
     );
 

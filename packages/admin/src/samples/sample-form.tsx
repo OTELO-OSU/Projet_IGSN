@@ -1,3 +1,4 @@
+import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { ReactNode } from "react";
 
@@ -33,6 +34,7 @@ import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
+import { SampleAttachments } from "#/samples/sample-attachments.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
   publishedSampleSchema,
@@ -80,10 +82,10 @@ type SampleFormProps = {
   // Rendered accented; `secondaryAction`, when set, sits before it as outline.
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
-  // The attached-files section of the Links tab. Only the edit page can
-  // provide it (uploads need a saved sample), so its absence hides the whole
-  // Links tab during creation.
-  attachmentsSection?: ReactNode;
+  // The Links tab (DOI links + file attachments) shows only for a saved
+  // sample: uploads need a sample id, so creation (no id yet) hides it.
+  sampleId?: string;
+  attachments?: SampleAttachment[];
 };
 
 export function SampleForm({
@@ -93,7 +95,8 @@ export function SampleForm({
   published = false,
   primaryAction,
   secondaryAction,
-  attachmentsSection,
+  sampleId,
+  attachments = [],
 }: SampleFormProps) {
   const validate = validateDraft(
     published ? publishedSampleSchema : sampleDraftSchema,
@@ -283,7 +286,7 @@ export function SampleForm({
           <TabsTrigger value="physical-description">
             {m.tab_physical_description()}
           </TabsTrigger>
-          {attachmentsSection ? (
+          {sampleId ? (
             <TabsTrigger value="links">{m.tab_links()}</TabsTrigger>
           ) : null}
         </TabsList>
@@ -391,12 +394,12 @@ export function SampleForm({
           </FormSection>
         </TabsContent>
 
-        {attachmentsSection ? (
+        {sampleId ? (
           <TabsContent value="links" className="grid gap-6">
             <form.AppForm>
               <SampleLinksFields />
             </form.AppForm>
-            {attachmentsSection}
+            <SampleAttachments sampleId={sampleId} attachments={attachments} />
           </TabsContent>
         ) : null}
       </Tabs>

@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
-import { SampleAttachments } from "#/samples/sample-attachments.tsx";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
 import { useSample } from "#/samples/use-sample.ts";
@@ -65,12 +64,8 @@ function EditSamplePage() {
           age: query.data.age,
           links: query.data.links,
         }}
-        attachmentsSection={
-          <SampleAttachments
-            sampleId={query.data.id}
-            attachments={query.data.attachments}
-          />
-        }
+        sampleId={query.data.id}
+        attachments={query.data.attachments}
         isPending={isPending}
         published={isPublished}
         onCancel={() => navigate({ to: "/" })}
