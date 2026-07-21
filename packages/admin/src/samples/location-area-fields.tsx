@@ -9,20 +9,19 @@ const boundFields = [
   ["location.northLatitude", m.field_north_latitude],
 ] as const;
 
-// An area elevation is a range: setting one bound requires the other, so each
-// bound is required (and marked so) once its sibling is set.
+// An area elevation is a range. Setting one bound marks the other required to
+// publish, but a half-range still saves as a draft: completeness gates publish,
+// not the draft, so there is no draft validator for the missing bound.
 const rangeFields = [
   {
     key: "elevationMin",
     siblingKey: "elevationMax",
     label: m.field_elevation_min,
-    requiredMessage: m.field_elevation_min_required,
   },
   {
     key: "elevationMax",
     siblingKey: "elevationMin",
     label: m.field_elevation_max,
-    requiredMessage: m.field_elevation_max_required,
   },
 ] as const;
 
@@ -45,18 +44,12 @@ export function LocationAreaFields({ required }: { required: boolean }) {
         })}
       >
         {(isSet) =>
-          rangeFields.map(({ key, siblingKey, label, requiredMessage }) => (
+          rangeFields.map(({ key, siblingKey, label }) => (
             <form.AppField
               key={key}
               name={`location.${key}`}
               validators={{
-                onChangeListenTo: [`location.${siblingKey}`],
-                onChange: ({ value, fieldApi }) =>
-                  elevationIntegerError(value) ??
-                  (fieldApi.form.state.values.location[siblingKey] !==
-                    undefined && value === undefined
-                    ? { message: requiredMessage() }
-                    : undefined),
+                onChange: ({ value }) => elevationIntegerError(value),
               }}
             >
               {(field) => (

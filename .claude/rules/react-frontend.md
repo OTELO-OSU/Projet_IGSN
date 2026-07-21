@@ -54,6 +54,16 @@ when genuinely shared across distant components.
 
 See [forms.md](forms.md).
 
+### Completeness gates publish, not the draft
+
+Optional sub-data (age) save partially in a draft; completeness is
+enforced only at publish via `samplePublishBlockers`, never in the draft schema.
+The domain schema (`createSampleSchema`) keeps only data-validity invariants
+(value types, `min <= max`, whole numbers) and never requires a field just
+because a sibling is present. The form still marks fields with a `*` and
+disables controls until they are reachable, but that is a publish hint, not a
+draft error: a researcher can record a partial value and complete it later.
+
 ## Extract hooks
 
 When a component accumulates complex state logic (several related `useState`s,

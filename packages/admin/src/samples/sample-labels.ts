@@ -21,4 +21,7 @@ export const {
   lightLabel,
   pressureTypeLabel,
   availabilityLabel,
+  numericUnitLabel,
+  yearsUnitLabel,
+  geologicalAgeLabel,
 } = createSampleLabels(m as unknown as Messages);

@@ -8,7 +8,7 @@ catalog:
   "@babel/core": ^7.29.0
   "@hono/node-server": ^2.0.5
   "@inlang/paraglide-js": ^2.20.2
-  "@kysely-vitest/postgres": ^0.4.1
+  "@kysely-vitest/postgres": ^0.4.2
   "@playwright/test": ^1.61.1
   "@rolldown/plugin-babel": ^0.2.3
   "@tailwindcss/typography": ^0.5.20
@@ -68,8 +68,8 @@ catalogMode: strict
 
 minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
-  - "@kysely-vitest/core@0.4.1"
-  - "@kysely-vitest/postgres@0.4.1"
+  - "@kysely-vitest/core"
+  - "@kysely-vitest/postgres"
   - kysely@0.29.4
 
 trustPolicy: no-downgrade

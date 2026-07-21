@@ -11,6 +11,11 @@ import {
 import { z } from "zod";
 
 import {
+  type AgeFormValues,
+  ageFormValues,
+  toAgeInput,
+} from "#/samples/age-form.ts";
+import {
   composeCondition,
   type ConditionDraft,
   toConditionDraft,
@@ -26,7 +31,8 @@ import {
   toLocationDraft,
 } from "#/samples/compose-location.ts";
 
-// The sample form's flat draft, as held by the form store.
+// The sample form's flat draft, as held by the form store. Age nests under its
+// own key (like location), so the form's `age.*` paths mirror the domain shape.
 export type SampleDraft = {
   name: string | undefined;
   nature: CreateSample["nature"] | undefined;
@@ -41,6 +47,7 @@ export type SampleDraft = {
   description: DescriptionDraft;
   condition: ConditionDraft;
   availability: CreateSample["availability"] | undefined;
+  age: AgeFormValues;
 };
 
 // A saved (or default) sample, spread into the flat draft the form store
@@ -62,12 +69,15 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   condition: toConditionDraft(value?.condition),
   // Defaults to "exists" per the declaration flow; still required to publish.
   availability: value?.availability ?? "exists",
+  age: ageFormValues(value?.age),
 });
 
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
   const description = composeDescription(draft.description);
   const condition = composeCondition(draft.condition);
+  // Assemble the age block; omit it entirely when empty (like texture).
+  const age = toAgeInput(draft.age);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -100,6 +110,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(condition ? { condition } : {}),
     // Required only at publish; omit on a draft that has not answered it yet.
     ...(draft.availability ? { availability: draft.availability } : {}),
+    ...(age ? { age } : {}),
   };
 };
 

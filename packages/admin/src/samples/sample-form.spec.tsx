@@ -483,7 +483,9 @@ describe("SampleForm", () => {
       .click();
     await screen.getByRole("option", { name: "Gneiss", exact: true }).click();
 
-    await screen.getByRole("combobox", { name: "Metamorphic facies" }).click();
+    await screen
+      .getByRole("combobox", { name: "Metamorphic facies *" })
+      .click();
     await screen.getByRole("option", { name: "Amphibolite facies" }).click();
 
     await screen.getByRole("button", { name: "Create" }).click();
@@ -595,14 +597,16 @@ describe("SampleForm", () => {
 
     // Pick a facies, then switch the rock away from metamorphic: it must be
     // dropped and the facies field hidden.
-    await screen.getByRole("combobox", { name: "Metamorphic facies" }).click();
+    await screen
+      .getByRole("combobox", { name: "Metamorphic facies *" })
+      .click();
     await screen.getByRole("option", { name: "Amphibolite facies" }).click();
 
     await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
     await screen.getByRole("option", { name: "Igneous", exact: true }).click();
 
     await expect
-      .element(screen.getByRole("combobox", { name: "Metamorphic facies" }))
+      .element(screen.getByRole("combobox", { name: "Metamorphic facies *" }))
       .not.toBeInTheDocument();
 
     await screen.getByRole("button", { name: "Create" }).click();
@@ -775,6 +779,239 @@ describe("SampleForm", () => {
         availability: "exists",
       }),
     );
+  });
+
+  it("should submit a single numeric age with unit and years unit", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("switch", { name: "Record a numeric age" }).click();
+
+    await screen.getByLabelText("Numeric age", { exact: true }).fill("12000");
+    await screen.getByRole("combobox", { name: "Units" }).click();
+    await screen.getByRole("option", { name: "a (years)" }).click();
+    // The reference picker enables only once the unit is annum.
+    await screen.getByRole("combobox", { name: "Reference" }).click();
+    await screen.getByRole("option", { name: "BP", exact: true }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: null,
+        material: null,
+        collectionMethod: null,
+        collectionMethodDescription: null,
+        specificName: null,
+        location: null,
+        availability: "exists",
+        age: {
+          numericAgeMin: 12000,
+          numericAgeMax: 12000,
+          numericAgeUnit: "a",
+          numericAgeYearsUnit: "bp",
+          geologicalAgeMin: null,
+          geologicalAgeMax: null,
+          geologicalUnit: null,
+        },
+      }),
+    );
+  });
+
+  it("should disable the unit until a value is entered and the reference until the unit is annum", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("switch", { name: "Record a numeric age" }).click();
+
+    // No value yet: the unit (and so the reference) are disabled.
+    await expect
+      .element(screen.getByRole("combobox", { name: "Units" }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Reference" }))
+      .toBeDisabled();
+
+    // A value enables the unit; the reference stays disabled until unit is annum.
+    await screen.getByLabelText("Numeric age", { exact: true }).fill("120");
+    await expect
+      .element(screen.getByRole("combobox", { name: "Units *" }))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Reference" }))
+      .toBeDisabled();
+
+    await screen.getByRole("combobox", { name: "Units *" }).click();
+    await screen.getByRole("option", { name: "a (years)" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Reference *" }))
+      .toBeEnabled();
+  });
+
+  it("should swap to min/max inputs when Range mode is selected", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("switch", { name: "Record a numeric age" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Numeric age", { exact: true }))
+      .toBeInTheDocument();
+
+    // The numeric block's Range radio is the first "Range (min / max)" option.
+    await screen
+      .getByRole("radio", { name: "Range (min / max)" })
+      .first()
+      .click();
+
+    await expect
+      .element(screen.getByLabelText("Numeric age", { exact: true }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByLabelText("Numeric age minimum"))
+      .toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Numeric age maximum"))
+      .toBeVisible();
+  });
+
+  it("should hide the numeric block by default and reveal it when its toggle is turned on", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await expect
+      .element(screen.getByLabelText("Numeric age", { exact: true }))
+      .not.toBeInTheDocument();
+
+    await screen.getByRole("switch", { name: "Record a numeric age" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Numeric age", { exact: true }))
+      .toBeInTheDocument();
+  });
+
+  it("should save a half-entered numeric range as a draft without erroring", async () => {
+    // Range completeness is a publish blocker, not a live draft error: filling
+    // one bound must not error mid-entry and must still save as a draft.
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("switch", { name: "Record a numeric age" }).click();
+    await screen
+      .getByRole("radio", { name: "Range (min / max)" })
+      .first()
+      .click();
+    await screen.getByLabelText("Numeric age minimum").fill("100");
+
+    await expect
+      .element(
+        screen.getByText(
+          "A numeric age range needs both a minimum and a maximum.",
+        ),
+      )
+      .not.toBeInTheDocument();
+
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          age: expect.objectContaining({
+            numericAgeMin: 100,
+            numericAgeMax: null,
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("should clear the reference when the unit leaves annum so the form can submit", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("switch", { name: "Record a numeric age" }).click();
+
+    await screen.getByLabelText("Numeric age", { exact: true }).fill("120");
+    // Pick annum, choose a reference, then move the unit off annum: the (now
+    // disabled) reference must be cleared, not left to fail validation unseen.
+    await screen.getByRole("combobox", { name: "Units" }).click();
+    await screen.getByRole("option", { name: "a (years)" }).click();
+    await screen.getByRole("combobox", { name: "Reference" }).click();
+    await screen.getByRole("option", { name: "BP", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Units" }).click();
+    await screen.getByRole("option", { name: "Ma", exact: true }).click();
+
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          age: expect.objectContaining({
+            numericAgeMin: 120,
+            numericAgeMax: 120,
+            numericAgeUnit: "ma",
+            numericAgeYearsUnit: null,
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("should prefill the age from defaultValues", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: null,
+          material: null,
+          collectionMethod: null,
+          collectionMethodDescription: null,
+          age: {
+            numericAgeMin: 120,
+            numericAgeMax: 120,
+            numericAgeUnit: "ma",
+            numericAgeYearsUnit: null,
+            geologicalAgeMin: null,
+            geologicalAgeMax: null,
+            geologicalUnit: null,
+          },
+        }}
+        primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Numeric age", { exact: true }))
+      .toHaveValue(120);
   });
 
   it("should call onCancel when Cancel is clicked", async () => {
@@ -1176,7 +1413,7 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should require a unit and datum once an elevation is entered, even for a draft", async () => {
+  it("should save a draft elevation without its unit or datum (publish-only)", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm
@@ -1204,24 +1441,54 @@ describe("SampleForm", () => {
       .element(screen.getByLabelText("Bathymetry"))
       .toHaveValue(-1200);
 
-    // Entering a value marks unit and datum required, but the error stays hidden
-    // until the user acts on the field.
+    // Entering a value marks unit and datum with a "*", but that is only a
+    // publish hint: a draft saves with the elevation and no unit or datum.
     await expect.element(screen.getByLabelText("Unit *")).toBeVisible();
     await expect
       .element(screen.getByLabelText("Vertical datum *"))
       .toBeVisible();
-    await expect
-      .element(screen.getByText("Select a unit for the elevation."))
-      .not.toBeInTheDocument();
-
-    // Submitting is blocked and reveals the error (submit touches every field).
     await screen.getByRole("button", { name: "Create" }).click();
-    expect(onSubmit).not.toHaveBeenCalled();
-    await expect
-      .element(screen.getByText("Select a unit for the elevation."))
-      .toBeVisible();
 
-    // Providing both clears the block and the elevation is submitted.
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: {
+              type: "point",
+              longitude: 3,
+              latitude: 45,
+              elevation: { min: -1200, max: -1200 },
+            },
+          },
+        }),
+      ),
+    );
+  });
+
+  it("should include the elevation unit and datum once selected", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(onSubmit)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    await screen.getByLabelText("Longitude *").fill("3");
+    await screen.getByLabelText("Latitude *").fill("45");
+    await screen.getByLabelText("Elevation").fill("-1200");
+
     await screen.getByRole("combobox", { name: "Unit *" }).click();
     await screen.getByRole("option", { name: "m", exact: true }).click();
     await screen.getByRole("combobox", { name: "Vertical datum *" }).click();
@@ -1375,7 +1642,8 @@ describe("SampleForm", () => {
       .toBeVisible();
   });
 
-  it("should require the other bound once one area elevation bound is set", async () => {
+  it("should mark the other bound required but still save a half-range draft", async () => {
+    const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -1387,13 +1655,17 @@ describe("SampleForm", () => {
           collectionMethod: null,
           collectionMethodDescription: null,
         }}
-        primaryAction={createAction(noop)}
+        primaryAction={createAction(onSubmit)}
       />,
     );
 
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Area" }).click();
+    await screen.getByLabelText("West longitude *").fill("5");
+    await screen.getByLabelText("East longitude *").fill("8");
+    await screen.getByLabelText("South latitude *").fill("44");
+    await screen.getByLabelText("North latitude *").fill("46");
 
     // Neither bound is marked required until one is entered.
     await expect
@@ -1401,13 +1673,29 @@ describe("SampleForm", () => {
       .toBeVisible();
     await screen.getByLabelText("Minimum elevation").fill("-200");
 
-    // Setting min marks max required and shows its error.
+    // Setting min marks max with a "*" (a publish hint), but the half-range
+    // still saves as a draft: completeness gates publish, not the draft.
     await expect
       .element(screen.getByLabelText("Maximum elevation *"))
       .toBeVisible();
-    await expect
-      .element(screen.getByText("Enter the maximum elevation too."))
-      .toBeVisible();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: {
+              type: "area",
+              westLongitude: 5,
+              eastLongitude: 8,
+              southLatitude: 44,
+              northLatitude: 46,
+              elevation: { min: -200 },
+            },
+          },
+        }),
+      ),
+    );
   });
 
   it("should not mark the location required for an exempt material", async () => {
