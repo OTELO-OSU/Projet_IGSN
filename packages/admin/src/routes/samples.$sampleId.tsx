@@ -67,6 +67,12 @@ function EditSamplePage() {
           availability: query.data.availability,
           age: query.data.age,
           links: query.data.links,
+          economicInterest: query.data.economicInterest,
+          economicInterestElements: query.data.economicInterestElements,
+          economicResourceTypePrecision:
+            query.data.economicResourceTypePrecision,
+          economicDepositName: query.data.economicDepositName,
+          economicDepositDescription: query.data.economicDepositDescription,
         }}
         sampleId={query.data.id}
         attachments={query.data.attachments}

@@ -4,6 +4,11 @@ import catalog from "../../messages/en.json";
 import { collectionMethodLabelKey } from "./collection-method/label.ts";
 import { COLLECTION_METHODS } from "./collection-method/vocabulary.ts";
 import { createSampleLabels, type Messages } from "./create-sample-labels.ts";
+import { economicInterestLabelKey } from "./economic-interest/label.ts";
+import {
+  ECONOMIC_INTEREST_PATHS,
+  ECONOMIC_INTEREST_TREE,
+} from "./economic-interest/vocabulary.ts";
 import { MATERIAL_PATHS } from "./material/classification.ts";
 import { materialLabelKey } from "./material/label.ts";
 import { sampleTypeLabelKey } from "./type/label.ts";
@@ -19,8 +24,12 @@ const m = Object.fromEntries(
     .map(([key, text]) => [key, () => text]),
 ) as unknown as Messages;
 
-const { materialPathLabel, typeLabel, collectionMethodLabel } =
-  createSampleLabels(m);
+const {
+  materialPathLabel,
+  typeLabel,
+  collectionMethodLabel,
+  economicInterestLabel,
+} = createSampleLabels(m);
 
 describe("materialPathLabel", () => {
   it.each([
@@ -58,6 +67,12 @@ describe("tree vocabulary label coverage", () => {
       collectionMethodLabel,
       collectionMethodLabelKey,
     ],
+    [
+      "economic interest",
+      ECONOMIC_INTEREST_PATHS,
+      economicInterestLabel,
+      economicInterestLabelKey,
+    ],
   ] as const)(
     "should translate every %s path",
     (_vocabulary, paths, label, labelKey) => {
@@ -67,4 +82,17 @@ describe("tree vocabulary label coverage", () => {
       expect(untranslated).toEqual([]);
     },
   );
+
+  // A node's childLabel names the level it opens; it is a code, not a path, so
+  // the walk above never covers it. Fail on any childLabel that falls back to
+  // its raw message key.
+  it("should translate every economic-interest childLabel code", () => {
+    const childLabels = Object.values(ECONOMIC_INTEREST_TREE)
+      .map((node) => node.childLabel)
+      .filter((code): code is string => code !== undefined);
+    const untranslated = childLabels.filter(
+      (code) => economicInterestLabel(code) === economicInterestLabelKey(code),
+    );
+    expect(untranslated).toEqual([]);
+  });
 });

@@ -11,6 +11,8 @@ import { type Packaging } from "./condition/packaging.ts";
 import { type PressureType } from "./condition/pressure-type.ts";
 import { type StorageCondition } from "./condition/storage-condition.ts";
 import { type TemperatureType } from "./condition/temperature-type.ts";
+import { economicInterestLabelKey } from "./economic-interest/label.ts";
+import { type Element } from "./element/vocabulary.ts";
 import { materialLabelKey } from "./material/label.ts";
 import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
 import { type Nature } from "./nature.ts";
@@ -42,6 +44,7 @@ type _numericUnitKeys = AssertKeys<`age_unit_${NumericUnit}`>;
 type _yearsUnitKeys = AssertKeys<`age_years_${YearsUnit}`>;
 type _geologicalAgeKeys = AssertKeys<`age_${GeologicalAge}`>;
 type _availabilityKeys = AssertKeys<`availability_${Availability}`>;
+type _elementKeys = AssertKeys<`element_${Element}`>;
 
 // A message catalog: the app's compiled paraglide `m`, keyed by the catalog's
 // own message keys (minus the `$`-prefixed metadata entries, e.g. `$schema`,
@@ -57,6 +60,8 @@ export type SampleLabels = {
   materialPathLabel: (path: string) => string;
   typeLabel: (path: string) => string;
   collectionMethodLabel: (path: string) => string;
+  economicInterestLabel: (path: string) => string;
+  elementLabel: (element: Element) => string;
   textureLabel: (texture: Texture) => string;
   metamorphicFaciesLabel: (facies: MetamorphicFacies) => string;
   natureLabel: (nature: Nature) => string;
@@ -80,6 +85,8 @@ export function createSampleLabels(m: Messages): SampleLabels {
     materialPathLabel: vocabularyLabel(materialLabelKey, m),
     typeLabel: vocabularyLabel(sampleTypeLabelKey, m),
     collectionMethodLabel: vocabularyLabel(collectionMethodLabelKey, m),
+    economicInterestLabel: vocabularyLabel(economicInterestLabelKey, m),
+    elementLabel: vocabularyLabel((element) => `element_${element}`, m),
     textureLabel: vocabularyLabel((texture) => `texture_${texture}`, m),
     metamorphicFaciesLabel: vocabularyLabel(
       (facies) => `metamorphic_facies_${facies}`,

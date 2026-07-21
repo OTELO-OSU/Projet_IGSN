@@ -13,4 +13,8 @@ export type TreeNode = {
   label?: string;
   optional?: boolean;
   choices?: readonly string[];
+  // A label code naming the level this node opens for its children (e.g.
+  // "resource_type" for the level under "yes"), translated like `label`.
+  // Absent: the level is labelled by the parent's picked value.
+  childLabel?: string;
 };

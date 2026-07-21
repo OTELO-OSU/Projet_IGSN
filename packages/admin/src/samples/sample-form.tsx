@@ -43,6 +43,7 @@ import {
   sampleDraftSchema,
   toSampleDraft,
 } from "#/samples/sample-draft-schema.ts";
+import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest-fields.tsx";
 import { availabilityLabel, natureLabel } from "#/samples/sample-labels.ts";
 import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
@@ -406,6 +407,12 @@ export function SampleForm({
           <FormSection title={m.section_security()}>
             <form.AppForm>
               <SampleSecurityFields />
+            </form.AppForm>
+          </FormSection>
+
+          <FormSection title={m.section_economic_interest()}>
+            <form.AppForm>
+              <SampleEconomicInterestFields />
             </form.AppForm>
           </FormSection>
         </TabsContent>

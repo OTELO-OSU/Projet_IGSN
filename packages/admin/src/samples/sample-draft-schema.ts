@@ -26,6 +26,11 @@ import {
   toDescriptionDraft,
 } from "#/samples/compose-description.ts";
 import {
+  composeEconomicInterest,
+  type EconomicInterestDraft,
+  toEconomicInterestDraft,
+} from "#/samples/compose-economic-interest.ts";
+import {
   composeLocation,
   type LocationDraft,
   toLocationDraft,
@@ -60,7 +65,7 @@ export type SampleDraft = {
   availability: CreateSample["availability"] | undefined;
   age: AgeFormValues;
   links: LinkDraft[];
-};
+} & EconomicInterestDraft;
 
 // A saved (or default) sample, spread into the flat draft the form store
 // holds. Used for the initial values and to reset the form after a save, so
@@ -88,6 +93,7 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
     url: link.url,
     description: link.description ?? "",
   })),
+  ...toEconomicInterestDraft(value),
 });
 
 // A fully blank row is an abandoned "Add a link" click: drop it. A row with
@@ -109,6 +115,7 @@ const composeCreateSample = (draft: SampleDraft) => {
   const age = toAgeInput(draft.age);
   const security = composeSecurity(draft.security);
   const links = composeLinks(draft.links);
+  const economic = composeEconomicInterest(draft);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -147,6 +154,11 @@ const composeCreateSample = (draft: SampleDraft) => {
     // Omitted when empty: the API replaces links wholesale, and an absent key
     // clears them just like an empty array.
     ...(links.length > 0 ? { links } : {}),
+    // The Economic interest section is omitted when no answer is given (like
+    // the description/condition/security sections); the API reads an absent
+    // field as null. Once answered, the whole block is emitted, with the detail
+    // the answer hides already dropped by composeEconomicInterest.
+    ...(economic.economicInterest !== null ? economic : {}),
   };
 };
 

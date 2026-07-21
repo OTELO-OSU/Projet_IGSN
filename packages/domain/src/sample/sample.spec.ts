@@ -19,6 +19,11 @@ const validSample = {
   security: null,
   availability: "exists",
   publicationYear: null,
+  economicInterest: null,
+  economicInterestElements: [],
+  economicResourceTypePrecision: null,
+  economicDepositName: null,
+  economicDepositDescription: null,
   igsn: null,
   published: false,
   createdAt: "2026-07-02T10:00:00.000Z",
@@ -50,6 +55,11 @@ describe("sampleSchema", () => {
       security: null,
       availability: "exists",
       publicationYear: null,
+      economicInterest: null,
+      economicInterestElements: [],
+      economicResourceTypePrecision: null,
+      economicDepositName: null,
+      economicDepositDescription: null,
       igsn: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -300,6 +310,49 @@ describe("createSampleSchema", () => {
         description: "Companion dataset",
       },
     ]);
+  });
+
+  it("should accept an explicit economic interest", () => {
+    // Arrange / Act
+    const result = createSampleSchema.parse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      economicInterest: "yes.mineral_and_ore.uranium.sandstone",
+      economicInterestElements: ["u", "fe"],
+      economicResourceTypePrecision: "high-grade ore",
+      economicDepositName: "Cigar Lake",
+      economicDepositDescription: "Unconformity-related uranium deposit",
+    });
+    // Assert
+    expect(result).toMatchObject({
+      economicInterest: "yes.mineral_and_ore.uranium.sandstone",
+      economicInterestElements: ["u", "fe"],
+      economicResourceTypePrecision: "high-grade ore",
+      economicDepositName: "Cigar Lake",
+      economicDepositDescription: "Unconformity-related uranium deposit",
+    });
+  });
+
+  it("should reject an unknown economic interest path", () => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      economicInterest: "yes.mineral_and_ore.unobtanium",
+    });
+    // Assert
+    expect(result.success).toBe(false);
+  });
+
+  it("should reject an unknown economic interest element", () => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      economicInterestElements: ["fe", "xx"],
+    });
+    // Assert
+    expect(result.success).toBe(false);
   });
 
   it("should reject a link that is not a DOI url", () => {

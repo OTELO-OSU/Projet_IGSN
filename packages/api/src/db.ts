@@ -105,6 +105,16 @@ type SampleTable = {
   availability: string | null;
   // Year of first publication; null until published, set once at publish.
   publication_year: number | null;
+  // Economic interest as a dot-path rooted at the yes/no/unknown answer (resource
+  // type / deposit / uranium sub-type follow under `yes`); an ltree read and
+  // written as text like material and collection_method; null until set.
+  economic_interest: string | null;
+  // Chemical-element codes (text[]); null when unset, never empty.
+  economic_interest_elements: string[] | null;
+  // Free-text economic detail; null when not provided.
+  economic_resource_type_precision: string | null;
+  economic_deposit_name: string | null;
+  economic_deposit_description: string | null;
   // Null until the sample is published; then derived from the id with generateIgsnSuffix.
   igsn: string | null;
   published: Generated<boolean>;

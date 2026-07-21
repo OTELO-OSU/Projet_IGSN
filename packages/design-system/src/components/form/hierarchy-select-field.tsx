@@ -10,6 +10,9 @@ export type HierarchyNodeDef = {
   label?: string;
   optional?: boolean;
   choices?: readonly string[];
+  // A label code naming the level this node opens for its children (translated
+  // like `label`). Absent: the level is labelled by the parent's picked value.
+  childLabel?: string;
 };
 
 // A hierarchical vocabulary as one self-describing bundle: its entry segments
@@ -53,6 +56,20 @@ export function hierarchyPathLabel(
   );
 }
 
+// The label of the level a node opens for its children. A node can name the
+// choice with its own `childLabel` code (e.g. "Resource type" under "Yes");
+// absent, it falls back to the node's path label (the value picked above).
+export function hierarchyChildLabel(
+  hierarchy: Hierarchy,
+  parent: string,
+  translate: (code: string) => string = identity,
+): string {
+  const node = resolveNode(hierarchy, parent);
+  return translate(
+    node?.childLabel ?? node?.label ?? parent.split(".").at(-1) ?? parent,
+  );
+}
+
 // The paths offered under `parent`: the roots at the top level (null parent),
 // then the parent node's choices composed onto its path.
 export function hierarchyChildren(
@@ -72,33 +89,21 @@ export function canStopAtPath(hierarchy: Hierarchy, path: string): boolean {
   return !node?.choices?.length || node.optional === true;
 }
 
-// The options offered at a level: the parent-itself "stop here" option (only
-// when stopping at the parent is allowed) followed by the children. The parent
-// option composes to the parent path.
-//
-// When the vocabulary already models "stop here" as an explicit self-child
-// (e.g. `coring.coring`), that child IS the stop option, so the synthetic
-// parent option is dropped to avoid showing the same label twice.
+// The options offered at a level: just the children. When stopping at an
+// optional parent is allowed, the user stops by leaving the level blank
+// (composeHierarchyValue keeps the ancestor), so there is no synthetic
+// "stop here" option echoing the parent inside its own refinement select. A
+// vocabulary that wants an explicit stop *item* models it as a real self-child
+// (e.g. `coring.coring`), which is a child and renders here on its own.
 export function hierarchyLevelItems(
   hierarchy: Hierarchy,
   parent: string | null,
   translate: (code: string) => string,
 ): { value: string; label: string }[] {
-  const children = hierarchyChildren(hierarchy, parent);
-  const parentSegment = parent?.split(".").at(-1);
-  const hasSelfChild = children.some(
-    (child) => child.split(".").at(-1) === parentSegment,
-  );
-  const item = (path: string) => ({
+  return hierarchyChildren(hierarchy, parent).map((path) => ({
     value: path,
     label: hierarchyPathLabel(hierarchy, path, translate),
-  });
-  return [
-    ...(parent && canStopAtPath(hierarchy, parent) && !hasSelfChild
-      ? [item(parent)]
-      : []),
-    ...children.map(item),
-  ];
+  }));
 }
 
 // A nested level is required (must be refined) when its parent is not a valid
@@ -222,7 +227,7 @@ function HierarchyLevel({
               onChange={onChange}
               depth={depth + 1}
               parent={child}
-              label={hierarchyPathLabel(hierarchy, child, translate)}
+              label={hierarchyChildLabel(hierarchy, child, translate)}
             />
           ) : null;
         }}

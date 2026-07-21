@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { EMPTY_AGE_FORM_VALUES } from "./age-form.ts";
 import { toConditionDraft } from "./compose-condition.ts";
 import { toDescriptionDraft } from "./compose-description.ts";
+import { toEconomicInterestDraft } from "./compose-economic-interest.ts";
 import { toLocationDraft } from "./compose-location.ts";
 import { toSecurityDraft } from "./compose-security.ts";
 import {
@@ -29,6 +30,7 @@ const draft: SampleDraft = {
   availability: "exists",
   age: EMPTY_AGE_FORM_VALUES,
   links: [],
+  ...toEconomicInterestDraft(undefined),
 };
 
 describe("sampleDraftSchema", () => {
