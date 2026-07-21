@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { SampleForm } from "#/samples/sample-form.tsx";
+import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
 import { useSample } from "#/samples/use-sample.ts";
 import { useUpdateSample } from "#/samples/use-update-sample.ts";
@@ -17,6 +18,9 @@ function EditSamplePage() {
   const query = useSample(sampleId);
   const updateSample = useUpdateSample(sampleId);
   const publishSample = usePublishSample(sampleId);
+  // Lives here, not in the (unmounting) Links tab, so staged files survive
+  // tab switches; the form uploads them on submit.
+  const attachmentChanges = useAttachmentChanges(sampleId);
 
   if (query.isPending) {
     return <p>{m.samples_loading()}</p>;
@@ -66,6 +70,7 @@ function EditSamplePage() {
         }}
         sampleId={query.data.id}
         attachments={query.data.attachments}
+        attachmentChanges={attachmentChanges}
         isPending={isPending}
         published={isPublished}
         onCancel={() => navigate({ to: "/" })}

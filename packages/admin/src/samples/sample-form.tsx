@@ -34,6 +34,7 @@ import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
+import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
 import { SampleAttachments } from "#/samples/sample-attachments.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
@@ -47,6 +48,7 @@ import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
+import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 
 const natureItems = toComboboxItems(natureSchema.options, natureLabel);
 const availabilityItems = toComboboxItems(
@@ -86,6 +88,10 @@ type SampleFormProps = {
   // sample: uploads need a sample id, so creation (no id yet) hides it.
   sampleId?: string;
   attachments?: SampleAttachment[];
+  // Staged attachment changes (uploads, deletions, description edits);
+  // applied only when the form submits, so cancelling leaves the server
+  // untouched.
+  attachmentChanges?: SampleAttachmentChanges;
 };
 
 export function SampleForm({
@@ -97,6 +103,7 @@ export function SampleForm({
   secondaryAction,
   sampleId,
   attachments = [],
+  attachmentChanges,
 }: SampleFormProps) {
   const validate = validateDraft(
     published ? publishedSampleSchema : sampleDraftSchema,
@@ -140,11 +147,20 @@ export function SampleForm({
       },
       onSubmit: validate,
     },
-    onSubmit: ({ value, meta, formApi }) => {
+    onSubmit: async ({ value, meta, formApi }) => {
       const parsed = sampleDraftSchema.safeParse(value);
       // Unreachable: the onSubmit validator gates. Kept as a typed narrow.
       if (!parsed.success) return;
-      meta.onValid?.(parsed.data);
+      // Staged attachment changes only reach the server on submit: files
+      // upload first (with their description), then the sample payload lists
+      // every attachment to keep and the API deletes the rest. A failed
+      // upload stays staged for a retry and never blocks saving the rest.
+      const committed = attachmentChanges
+        ? await attachmentChanges.commit(attachments)
+        : undefined;
+      meta.onValid?.(
+        committed ? { ...parsed.data, attachments: committed } : parsed.data,
+      );
       // Reset to what was submitted: leftovers the save dropped (a hidden
       // geometry's coordinates, the other region kind's leaf) must not
       // resurface when the user switches back after saving.
@@ -399,10 +415,22 @@ export function SampleForm({
             <form.AppForm>
               <SampleLinksFields />
             </form.AppForm>
-            <SampleAttachments sampleId={sampleId} attachments={attachments} />
+            {attachmentChanges ? (
+              <SampleAttachments
+                sampleId={sampleId}
+                attachments={attachments}
+                changes={attachmentChanges}
+              />
+            ) : null}
           </TabsContent>
         ) : null}
       </Tabs>
+
+      {/* Outside the Tabs: the upload progress dialog must show on submit
+          whatever tab is active. */}
+      {attachmentChanges ? (
+        <SampleAttachmentUploadDialog changes={attachmentChanges} />
+      ) : null}
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="ghost" onClick={onCancel}>

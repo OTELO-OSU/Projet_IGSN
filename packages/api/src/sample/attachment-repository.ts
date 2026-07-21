@@ -92,6 +92,39 @@ export function createSampleAttachmentRepository(
         return row ? toAttachment(row) : null;
       }),
 
+    reconcile: (sampleId, attachments) =>
+      withTransaction(db, async (trx) => {
+        const keep = new Map(attachments.map((a) => [a.id, a.description]));
+        const existing = await trx
+          .selectFrom("sample_attachment")
+          .selectAll()
+          .where("sample_id", "=", sampleId)
+          .execute();
+        // Blob removal happens inside the transaction, like create: a failed
+        // rm rolls the row deletions back; a commit failure can leave a blob
+        // deleted early, acceptable for rows the caller asked to drop.
+        await Promise.all(
+          existing.map(async (row) => {
+            if (!keep.has(row.id)) {
+              await trx
+                .deleteFrom("sample_attachment")
+                .where("id", "=", row.id)
+                .execute();
+              await rm(pathFor(sampleId, row.id, row.name), { force: true });
+              return;
+            }
+            const description = keep.get(row.id) ?? null;
+            if (description !== row.description) {
+              await trx
+                .updateTable("sample_attachment")
+                .set({ description })
+                .where("id", "=", row.id)
+                .execute();
+            }
+          }),
+        );
+      }),
+
     remove: (sampleId: string, attachmentId: string) =>
       withTransaction(db, async (trx) => {
         const deleted = await trx

@@ -1,3 +1,4 @@
+import type { UpdateSampleAttachment } from "./attachment-validator.ts";
 import type { SampleAttachment } from "./model.ts";
 
 export type CreateSampleAttachment = {
@@ -20,6 +21,13 @@ export type SampleAttachmentRepository = {
     attachmentId: string,
     description: string | null,
   ): Promise<SampleAttachment | null>;
+  // Reconciles the sample's attachments against the given list (the sample
+  // update payload): a listed attachment gets its description updated, an
+  // unlisted one is removed with its content. Unknown ids are ignored.
+  reconcile(
+    sampleId: string,
+    attachments: UpdateSampleAttachment[],
+  ): Promise<void>;
   remove(sampleId: string, attachmentId: string): Promise<boolean>;
   getContent(
     sampleId: string,

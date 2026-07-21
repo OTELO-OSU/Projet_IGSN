@@ -152,4 +152,66 @@ describe("sampleAttachmentRepository", () => {
       ),
     ).toBe(false);
   });
+
+  pgTest(
+    "should reconcile: update listed descriptions, remove unlisted rows and blobs",
+    async ({ db }) => {
+      const { repository, sample } = await arrange(db);
+      const kept = await repository.create(sample.id, input, content);
+      const dropped = await repository.create(
+        sample.id,
+        { ...input, name: "photo.jpg", mediaType: "image/jpeg" },
+        content,
+      );
+      // Act
+      await repository.reconcile(sample.id, [
+        { id: kept!.id, description: "Calibrated measurements" },
+      ]);
+      // Assert
+      expect((await getSample(db, sample.id))?.attachments).toEqual([
+        { ...kept, description: "Calibrated measurements" },
+      ]);
+      expect(await readdir(join(dir, sample.id))).not.toContain(
+        `${dropped!.id}-photo.jpg`,
+      );
+    },
+  );
+
+  pgTest(
+    "should reconcile an empty list by removing every attachment",
+    async ({ db }) => {
+      const { repository, sample } = await arrange(db);
+      const created = await repository.create(sample.id, input, content);
+      // Act
+      await repository.reconcile(sample.id, []);
+      // Assert
+      expect((await getSample(db, sample.id))?.attachments).toEqual([]);
+      expect(await readdir(join(dir, sample.id))).not.toContain(
+        `${created!.id}-measurements.csv`,
+      );
+    },
+  );
+
+  pgTest(
+    "should not touch another sample's attachments on reconcile",
+    async ({ db }) => {
+      const { repository, sample } = await arrange(db);
+      const other = await insertSample(db, {
+        name: "Other sample",
+        nature: "hand_sample",
+        type: null,
+      });
+      const created = await repository.create(sample.id, input, content);
+      const otherCreated = await repository.create(other.id, input, content);
+      // Act: reconciling `other` with the foreign id neither hijacks it nor
+      // keeps it; the foreign attachment simply is not other's to keep.
+      await repository.reconcile(other.id, [
+        { id: created!.id, description: "hijack" },
+      ]);
+      // Assert
+      expect((await getSample(db, sample.id))?.attachments).toEqual([created]);
+      expect((await getSample(db, other.id))?.attachments).toEqual([]);
+      expect(otherCreated).not.toBeNull();
+    },
+  );
 });

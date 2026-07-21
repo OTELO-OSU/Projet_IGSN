@@ -19,7 +19,7 @@ import {
 // under the authenticated /admin mount.
 export function createSampleRoutes(
   repository: SampleRepository,
-  attachments: SampleAttachmentRepository,
+  attachmentsRepository: SampleAttachmentRepository,
 ) {
   return new Hono()
     .get("/", validateListQuery, async (c) => {
@@ -52,7 +52,10 @@ export function createSampleRoutes(
         if (!sample) {
           return c.json({ error: "Sample not found" }, 404);
         }
-        const found = await attachments.getContent(sample.id, attachmentId);
+        const found = await attachmentsRepository.getContent(
+          sample.id,
+          attachmentId,
+        );
         if (!found) {
           return c.json({ error: "Attachment not found" }, 404);
         }

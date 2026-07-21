@@ -1,8 +1,14 @@
+import type { UpdateSampleAttachment } from "@projet-igsn/domain/sample/attachment/attachment-validator";
+import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
+import { FakeXhr } from "../../test/fake-xhr.ts";
+import { SampleAttachmentUploadDialog } from "./sample-attachment-upload-dialog.tsx";
 import { SampleAttachments } from "./sample-attachments.tsx";
+import { useAttachmentChanges } from "./use-attachment-changes.ts";
 
 vi.mock("react-oidc-context", () => ({
   useAuth: () => ({ user: { access_token: "tok" } }),
@@ -17,48 +23,49 @@ const attachment = {
   description: "Raw measurements",
 };
 
-// The upload hook talks XHR (fetch has no upload progress); this fake records
-// each instance and lets a test drive progress and completion by hand.
-class FakeXhr {
-  static instances: FakeXhr[] = [];
-  upload: {
-    onprogress:
-      | ((event: {
-          lengthComputable: boolean;
-          loaded: number;
-          total: number;
-        }) => void)
-      | null;
-  } = { onprogress: null };
-  onload: (() => void) | null = null;
-  onerror: (() => void) | null = null;
-  status = 0;
-  url = "";
-  body: FormData | null = null;
-  open(_method: string, url: string) {
-    this.url = url;
-  }
-  setRequestHeader() {}
-  send(body: FormData) {
-    this.body = body;
-    FakeXhr.instances.push(this);
-  }
-  finish(status = 201) {
-    this.upload.onprogress?.({ lengthComputable: true, loaded: 1, total: 2 });
-    this.status = status;
-    this.onload?.();
-  }
-}
-
 beforeEach(() => {
   FakeXhr.instances = [];
   vi.stubGlobal("XMLHttpRequest", FakeXhr);
 });
 
-function renderAttachments(attachments = [attachment]) {
+type HarnessProps = {
+  attachments: SampleAttachment[];
+  onCommit?: (payload: UpdateSampleAttachment[]) => void;
+};
+
+// The staging state lives in the hook (owned by the edit page); the Save
+// button stands in for the form submit, which uploads the staged files and
+// sends the committed payload with the sample update.
+function Harness({ attachments, onCommit }: HarnessProps) {
+  const changes = useAttachmentChanges(SAMPLE_ID);
+  return (
+    <>
+      <SampleAttachments
+        sampleId={SAMPLE_ID}
+        attachments={attachments}
+        changes={changes}
+      />
+      <SampleAttachmentUploadDialog changes={changes} />
+      <button
+        type="button"
+        onClick={async () => {
+          const payload = await changes.commit(attachments);
+          onCommit?.(payload);
+        }}
+      >
+        Save
+      </button>
+    </>
+  );
+}
+
+function renderAttachments(
+  attachments = [attachment],
+  onCommit?: (payload: UpdateSampleAttachment[]) => void,
+) {
   return render(
     <QueryClientProvider client={new QueryClient()}>
-      <SampleAttachments sampleId={SAMPLE_ID} attachments={attachments} />
+      <Harness attachments={attachments} onCommit={onCommit} />
     </QueryClientProvider>,
   );
 }
@@ -69,33 +76,21 @@ const file = (name: string) =>
 const calledUrl = (input: RequestInfo | URL | undefined) => (input as URL).href;
 
 describe("SampleAttachments", () => {
-  it("should upload every picked file, showing a progress bar each", async () => {
+  it("should stage picked files without uploading them", async () => {
     const screen = await renderAttachments([]);
 
     await screen
       .getByLabelText("Browse files")
       .upload([file("a.csv"), file("b.csv")]);
 
-    await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(2));
-    await expect
-      .element(screen.getByRole("progressbar", { name: "Uploading a.csv" }))
-      .toBeVisible();
-    await expect
-      .element(screen.getByRole("progressbar", { name: "Uploading b.csv" }))
-      .toBeVisible();
-    expect(FakeXhr.instances[0]!.url).toContain(
-      `admin/samples/${SAMPLE_ID}/attachments`,
-    );
-
-    FakeXhr.instances.forEach((xhr) => xhr.finish());
-    await vi.waitFor(() =>
-      expect(
-        screen.getByRole("progressbar", { name: /Uploading/ }).query(),
-      ).toBeNull(),
-    );
+    await expect.element(screen.getByText("a.csv")).toBeVisible();
+    await expect.element(screen.getByText("b.csv")).toBeVisible();
+    // Staged files carry a badge telling them apart from saved attachments.
+    expect(screen.getByText("New").all()).toHaveLength(2);
+    expect(FakeXhr.instances).toHaveLength(0);
   });
 
-  it("should upload files dropped on the zone", async () => {
+  it("should stage files dropped on the zone without uploading them", async () => {
     const screen = await renderAttachments([]);
 
     const dataTransfer = new DataTransfer();
@@ -108,7 +103,123 @@ describe("SampleAttachments", () => {
       new DragEvent("drop", { dataTransfer, bubbles: true, cancelable: true }),
     );
 
+    await expect.element(screen.getByText("dropped-1.csv")).toBeVisible();
+    await expect.element(screen.getByText("dropped-2.csv")).toBeVisible();
+    expect(FakeXhr.instances).toHaveLength(0);
+  });
+
+  it("should download a staged file locally", async () => {
+    const createObjectURL = vi
+      .spyOn(URL, "createObjectURL")
+      .mockReturnValue("blob:test");
+    const fetchSpy = vi.spyOn(window, "fetch");
+    const screen = await renderAttachments([]);
+
+    await screen.getByLabelText("Browse files").upload([file("a.csv")]);
+    await screen.getByRole("button", { name: "Download a.csv" }).click();
+
+    // Served from the staged File, no server round-trip.
+    await vi.waitFor(() => expect(createObjectURL).toHaveBeenCalled());
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("should unstage a file when its remove button is clicked", async () => {
+    const screen = await renderAttachments([]);
+
+    await screen
+      .getByLabelText("Browse files")
+      .upload([file("a.csv"), file("b.csv")]);
+    await screen.getByRole("button", { name: "Remove a.csv" }).click();
+
+    expect(screen.getByText("a.csv").query()).toBeNull();
+    await expect.element(screen.getByText("b.csv")).toBeVisible();
+  });
+
+  it("should upload the staged files on save, showing the progress in a dialog", async () => {
+    const screen = await renderAttachments([]);
+
+    await screen
+      .getByLabelText("Browse files")
+      .upload([file("a.csv"), file("b.csv")]);
+    await screen.getByRole("button", { name: "Save" }).click();
+
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(2));
+    const dialog = screen.getByRole("dialog");
+    await expect.element(dialog).toBeVisible();
+    await expect
+      .element(screen.getByRole("progressbar", { name: "Uploading a.csv" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("progressbar", { name: "Uploading b.csv" }))
+      .toBeVisible();
+    expect(FakeXhr.instances[0]!.url).toContain(
+      `admin/samples/${SAMPLE_ID}/attachments`,
+    );
+
+    // The dialog stays open on the recap so the user can confirm it.
+    FakeXhr.instances.forEach((xhr) => xhr.finish());
+    await expect.element(dialog).toHaveTextContent("Uploaded");
+    await screen.getByRole("button", { name: "Close" }).click();
+    await vi.waitFor(() => expect(dialog.query()).toBeNull());
+  });
+
+  it("should upload a staged file with its description and list it in the payload", async () => {
+    const onCommit = vi.fn();
+    const screen = await renderAttachments([], onCommit);
+
+    await screen.getByLabelText("Browse files").upload([file("a.csv")]);
+    await screen.getByLabelText("Description of a.csv").fill("Raw data");
+
+    // Edited locally, nothing sent yet.
+    expect(FakeXhr.instances).toHaveLength(0);
+
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+    expect(FakeXhr.instances[0]!.body!.get("description")).toBe("Raw data");
+
+    const created = {
+      id: "3f2504e0-4f89-41d3-9a0c-0305e82c3303",
+      name: "a.csv",
+      mediaType: "text/csv",
+      description: "Raw data",
+    };
+    FakeXhr.instances[0]!.finish(201, JSON.stringify({ data: created }));
+
+    await vi.waitFor(() =>
+      expect(onCommit).toHaveBeenCalledWith([
+        { id: created.id, description: "Raw data" },
+      ]),
+    );
+  });
+
+  it("should recap uploaded and failed files, keeping the failed one staged for retry", async () => {
+    const screen = await renderAttachments([]);
+
+    await screen
+      .getByLabelText("Browse files")
+      .upload([file("a.csv"), file("b.csv")]);
+    await screen.getByRole("button", { name: "Save" }).click();
+    await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(2));
+    FakeXhr.instances[0]!.finish();
+    FakeXhr.instances[1]!.finish(500);
+
+    // The dialog stays open with the recap until the user closes it.
+    const dialog = screen.getByRole("dialog");
+    await expect.element(dialog).toHaveTextContent("a.csv");
+    await expect.element(dialog).toHaveTextContent("Uploaded");
+    await expect.element(dialog).toHaveTextContent("b.csv");
+    await expect.element(dialog).toHaveTextContent("Could not upload.");
+    await screen.getByRole("button", { name: "Close" }).click();
+
+    // The uploaded file left the staging list; the failed one stays, flagged.
+    expect(screen.getByText("a.csv").query()).toBeNull();
+    await expect.element(screen.getByText("b.csv")).toBeVisible();
+    await expect.element(screen.getByText("Could not upload.")).toBeVisible();
+
+    // Saving again retries only the failed file.
+    await screen.getByRole("button", { name: "Save" }).click();
+    await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(3));
   });
 
   it("should list the saved attachments", async () => {
@@ -128,51 +239,61 @@ describe("SampleAttachments", () => {
       .toBeVisible();
   });
 
-  it("should save an edited description on blur", async () => {
-    const fetchSpy = vi
-      .spyOn(window, "fetch")
-      .mockResolvedValue(new Response("{}", { status: 200 }));
-    const screen = await renderAttachments();
+  it("should put an edited description in the committed payload without any direct call", async () => {
+    const onCommit = vi.fn();
+    const fetchSpy = vi.spyOn(window, "fetch");
+    const screen = await renderAttachments([attachment], onCommit);
 
-    const input = screen.getByLabelText("Description of measurements.csv");
-    await input.fill("XRF measurements");
-    // Clicking elsewhere blurs the input, which triggers the save.
-    await screen.getByText("measurements.csv").click();
+    await screen
+      .getByLabelText("Description of measurements.csv")
+      .fill("XRF measurements");
+    await screen.getByRole("button", { name: "Save" }).click();
 
-    await vi.waitFor(() => {
-      const call = fetchSpy.mock.calls.find(
-        ([, init]) => init?.method === "PUT",
-      );
-      expect(call).toBeDefined();
-      expect(calledUrl(call![0])).toContain(
-        `admin/samples/${SAMPLE_ID}/attachments/${attachment.id}`,
-      );
-      expect(call![1]!.body).toBe(
-        JSON.stringify({ description: "XRF measurements" }),
-      );
-    });
+    await vi.waitFor(() =>
+      expect(onCommit).toHaveBeenCalledWith([
+        { id: attachment.id, description: "XRF measurements" },
+      ]),
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("should delete the attachment after confirmation", async () => {
-    const fetchSpy = vi
-      .spyOn(window, "fetch")
-      .mockResolvedValue(new Response(null, { status: 204 }));
-    const screen = await renderAttachments();
+  it("should omit a marked attachment from the committed payload without any direct call", async () => {
+    const onCommit = vi.fn();
+    const fetchSpy = vi.spyOn(window, "fetch");
+    const screen = await renderAttachments([attachment], onCommit);
 
     await screen
       .getByRole("button", { name: "Delete measurements.csv" })
       .click();
-    await screen.getByRole("button", { name: "Confirm" }).click();
 
-    await vi.waitFor(() => {
-      const call = fetchSpy.mock.calls.find(
-        ([, init]) => init?.method === "DELETE",
-      );
-      expect(call).toBeDefined();
-      expect(calledUrl(call![0])).toContain(
-        `admin/samples/${SAMPLE_ID}/attachments/${attachment.id}`,
-      );
-    });
+    // Marked, flagged, but nothing sent and nothing committed yet.
+    await expect
+      .element(screen.getByText("Will be deleted on save."))
+      .toBeVisible();
+
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await vi.waitFor(() => expect(onCommit).toHaveBeenCalledWith([]));
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it("should keep a marked attachment restored before the save", async () => {
+    const onCommit = vi.fn();
+    const screen = await renderAttachments([attachment], onCommit);
+
+    await screen
+      .getByRole("button", { name: "Delete measurements.csv" })
+      .click();
+    await screen
+      .getByRole("button", { name: "Restore measurements.csv" })
+      .click();
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await vi.waitFor(() =>
+      expect(onCommit).toHaveBeenCalledWith([
+        { id: attachment.id, description: "Raw measurements" },
+      ]),
+    );
   });
 
   it("should download the attachment through the authed client", async () => {

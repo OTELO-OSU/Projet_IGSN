@@ -18,35 +18,38 @@ export function SampleLinksFields() {
       <form.Subscribe selector={(state) => state.values.links}>
         {(links) =>
           links.map((link, index) => (
-            <div key={link.key} className="flex items-start gap-2">
-              <div className="grid flex-1 items-start gap-4 sm:grid-cols-2">
-                <form.AppField name={`links[${index}].url`}>
-                  {(field) => (
-                    <field.TextField
-                      label={m.field_doi_url({ index: index + 1 })}
-                    />
-                  )}
-                </form.AppField>
-                <form.AppField name={`links[${index}].description`}>
-                  {(field) => (
-                    <field.TextField
-                      label={m.field_link_description({ index: index + 1 })}
-                    />
-                  )}
-                </form.AppField>
+            <div key={link.key} className="grid gap-2">
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <form.AppField name={`links[${index}].url`}>
+                    {(field) => (
+                      <field.TextField
+                        label={m.field_doi_url({ index: index + 1 })}
+                      />
+                    )}
+                  </form.AppField>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  // Label height (text-sm leading-none) + the field's gap-2:
+                  // lines the icon up with the input, error text or not.
+                  className="mt-[22px]"
+                  aria-label={m.action_remove_link({ index: index + 1 })}
+                  onClick={() => form.removeFieldValue("links", index)}
+                >
+                  <Trash2 aria-hidden />
+                </Button>
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                // Label height (text-sm leading-none) + the field's gap-2:
-                // lines the icon up with the inputs, error text or not.
-                className="mt-[22px]"
-                aria-label={m.action_remove_link({ index: index + 1 })}
-                onClick={() => form.removeFieldValue("links", index)}
-              >
-                <Trash2 aria-hidden />
-              </Button>
+              <form.AppField name={`links[${index}].description`}>
+                {(field) => (
+                  <field.TextField
+                    label={m.field_link_description({ index: index + 1 })}
+                    multiline
+                  />
+                )}
+              </form.AppField>
             </div>
           ))
         }

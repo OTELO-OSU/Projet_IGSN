@@ -1,136 +1,196 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
+import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@projet-igsn/design-system/components/ui/dialog";
-import { Input } from "@projet-igsn/design-system/components/ui/input";
-import { Download, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { Label } from "@projet-igsn/design-system/components/ui/label";
+import { Textarea } from "@projet-igsn/design-system/components/ui/textarea";
+import { cn } from "@projet-igsn/design-system/lib/utils";
+import { Download, Trash2, Undo2 } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { AttachmentDropZone } from "#/samples/attachment-drop-zone.tsx";
-import { useDeleteAttachment } from "#/samples/use-delete-attachment.ts";
+import { saveBlob } from "#/samples/save-blob.ts";
+import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { useDownloadAttachment } from "#/samples/use-download-attachment.ts";
-import { useUpdateAttachmentDescription } from "#/samples/use-update-attachment-description.ts";
-import { useUploadAttachments } from "#/samples/use-upload-attachments.ts";
 
 type SampleAttachmentsProps = {
   sampleId: string;
   attachments: SampleAttachment[];
+  // Owned by the page (via useAttachmentChanges), not this component: the tab
+  // content unmounts when hidden, and staged changes must survive tab
+  // switches. Everything staged here only reaches the server on form submit.
+  changes: SampleAttachmentChanges;
 };
 
 type AttachmentRowProps = {
   sampleId: string;
   attachment: SampleAttachment;
+  changes: SampleAttachmentChanges;
 };
 
-// One saved attachment: name, editable description (saved on blur), download
-// and delete. Deleting removes the blob for good, hence the confirmation.
-function AttachmentRow({ sampleId, attachment }: AttachmentRowProps) {
-  const [description, setDescription] = useState(attachment.description ?? "");
-  const updateDescription = useUpdateAttachmentDescription(sampleId);
-  const deleteAttachment = useDeleteAttachment(sampleId);
+// One saved attachment: name, editable description, download, delete. Edits
+// and deletion are staged in `changes` (applied on submit), so delete is a
+// reversible mark with a restore button, not an immediate call.
+function AttachmentRow({ sampleId, attachment, changes }: AttachmentRowProps) {
   const download = useDownloadAttachment(sampleId);
+  const isMarkedForDeletion = changes.deletions.includes(attachment.id);
 
   return (
-    <li className="flex items-center gap-2">
-      <span className="min-w-0 flex-1 truncate text-sm" title={attachment.name}>
-        {attachment.name}
-      </span>
-      <Input
-        className="flex-1"
-        value={description}
-        aria-label={m.attachment_description({ name: attachment.name })}
-        onChange={(event) => setDescription(event.target.value)}
-        onBlur={() => {
-          const trimmed = description.trim() || null;
-          if (trimmed !== attachment.description) {
-            updateDescription.mutate({
-              attachmentId: attachment.id,
-              description: trimmed,
-            });
-          }
-        }}
-      />
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        aria-label={m.action_download_attachment({ name: attachment.name })}
-        onClick={() => void download(attachment)}
-      >
-        <Download aria-hidden />
-      </Button>
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={m.action_delete_attachment({ name: attachment.name })}
-          >
-            <Trash2 aria-hidden />
-          </Button>
-        </DialogTrigger>
-        <DialogContent closeLabel={m.action_close()}>
-          <DialogHeader>
-            <DialogTitle>{m.attachment_delete_title()}</DialogTitle>
-            <DialogDescription>
-              {m.attachment_delete_warning()}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter showCloseButton closeLabel={m.action_cancel()}>
-            <DialogClose asChild>
-              <Button
-                variant="destructive"
-                onClick={() => deleteAttachment.mutate(attachment.id)}
-              >
-                {m.action_confirm()}
-              </Button>
-            </DialogClose>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+    <li className="grid gap-2">
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate text-sm",
+            isMarkedForDeletion && "line-through",
+          )}
+          title={attachment.name}
+        >
+          {attachment.name}
+        </span>
+        {isMarkedForDeletion ? (
+          <>
+            <span className="text-destructive text-sm">
+              {m.attachment_marked_for_deletion()}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={m.action_restore_attachment({
+                name: attachment.name,
+              })}
+              onClick={() => changes.restore(attachment.id)}
+            >
+              <Undo2 aria-hidden />
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={m.action_download_attachment({
+                name: attachment.name,
+              })}
+              onClick={() => void download(attachment)}
+            >
+              <Download aria-hidden />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={m.action_delete_attachment({ name: attachment.name })}
+              onClick={() => changes.markDelete(attachment.id)}
+            >
+              <Trash2 aria-hidden />
+            </Button>
+          </>
+        )}
+      </div>
+      {isMarkedForDeletion ? null : (
+        <div className="grid gap-2">
+          <Label htmlFor={`attachment-description-${attachment.id}`}>
+            {m.field_description()}
+          </Label>
+          <Textarea
+            id={`attachment-description-${attachment.id}`}
+            value={
+              changes.descriptions[attachment.id] ??
+              attachment.description ??
+              ""
+            }
+            aria-label={m.attachment_description({ name: attachment.name })}
+            onChange={(event) =>
+              changes.setDescription(attachment.id, event.target.value)
+            }
+          />
+        </div>
+      )}
     </li>
   );
 }
 
 // The attached-files section of the Links tab: a multi-file drop zone, the
-// in-flight uploads with their progress bars, then the saved attachments.
+// staged files awaiting the form submit (upload progress shows in
+// SampleAttachmentUploadDialog), then the saved attachments.
 export function SampleAttachments({
   sampleId,
   attachments,
+  changes,
 }: SampleAttachmentsProps) {
-  const { uploads, upload } = useUploadAttachments(sampleId);
+  const { pending, addFiles, removeFile, setPendingDescription } = changes;
 
   return (
     <FormSection title={m.section_attachments()}>
-      <AttachmentDropZone onFiles={(files) => void upload(files)} />
-      {uploads.length > 0 ? (
+      <AttachmentDropZone onFiles={addFiles} />
+      {/* Same layout as a saved row, so staged files read as attachments. */}
+      {pending.length > 0 ? (
         <ul className="grid gap-2">
-          {uploads.map((pending) => (
-            <li key={pending.key} className="flex items-center gap-2 text-sm">
-              <span className="min-w-0 flex-1 truncate">{pending.name}</span>
-              <progress
-                value={pending.progress}
-                max={100}
-                aria-label={m.attachment_uploading({ name: pending.name })}
-                className="h-2 w-40"
-              />
+          {pending.map((staged) => (
+            <li key={staged.key} className="grid gap-2">
+              <div className="flex items-center gap-2">
+                {/* The badge lives inside the name cell so the row keeps the
+                    exact same layout as a saved attachment. */}
+                <span
+                  className="min-w-0 flex-1 truncate text-sm"
+                  title={staged.file.name}
+                >
+                  {staged.file.name}
+                  <Badge variant="secondary" className="ms-2">
+                    {m.attachment_new_badge()}
+                  </Badge>
+                </span>
+                {staged.error ? (
+                  <span className="text-destructive text-sm">
+                    {m.attachment_upload_failed()}
+                  </span>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={m.action_download_attachment({
+                    name: staged.file.name,
+                  })}
+                  onClick={() => saveBlob(staged.file, staged.file.name)}
+                >
+                  <Download aria-hidden />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={m.action_remove_attachment({
+                    name: staged.file.name,
+                  })}
+                  onClick={() => removeFile(staged.key)}
+                >
+                  <Trash2 aria-hidden />
+                </Button>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor={`staged-description-${staged.key}`}>
+                  {m.field_description()}
+                </Label>
+                <Textarea
+                  id={`staged-description-${staged.key}`}
+                  value={staged.description ?? ""}
+                  aria-label={m.attachment_description({
+                    name: staged.file.name,
+                  })}
+                  onChange={(event) =>
+                    setPendingDescription(staged.key, event.target.value)
+                  }
+                />
+              </div>
             </li>
           ))}
         </ul>
       ) : null}
-      {attachments.length === 0 && uploads.length === 0 ? (
+      {attachments.length === 0 && pending.length === 0 ? (
         <p className="text-muted-foreground text-sm">{m.attachments_empty()}</p>
       ) : (
         <ul className="grid gap-2">
@@ -139,6 +199,7 @@ export function SampleAttachments({
               key={attachment.id}
               sampleId={sampleId}
               attachment={attachment}
+              changes={changes}
             />
           ))}
         </ul>

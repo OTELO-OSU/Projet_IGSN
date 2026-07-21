@@ -23,7 +23,7 @@ import {
 // requireAuth guard on the /admin mount (see app.ts), so no per-route guard here.
 export function createSampleAdminRoutes(
   repository: SampleRepository,
-  attachments: SampleAttachmentRepository,
+  attachmentsRepository: SampleAttachmentRepository,
 ) {
   return new Hono()
     .get("/", validateListQuery, async (c) => {
@@ -68,6 +68,13 @@ export function createSampleAdminRoutes(
           409,
         );
       }
+      // Attachment metadata rides the sample payload, reconciled wholesale
+      // like links; the content itself was uploaded beforehand through the
+      // attachment routes, so an unlisted attachment is deleted here.
+      await attachmentsRepository.reconcile(
+        id,
+        c.req.valid("json").attachments ?? [],
+      );
       const sample = await repository.update(id, c.req.valid("json"));
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
@@ -97,7 +104,7 @@ export function createSampleAdminRoutes(
       validateAttachmentUpload,
       async (c) => {
         const { file, description } = c.req.valid("form");
-        const created = await attachments.create(
+        const created = await attachmentsRepository.create(
           c.req.valid("param").id,
           {
             name: file.name,
@@ -118,7 +125,7 @@ export function createSampleAdminRoutes(
       validateAttachmentParams,
       async (c) => {
         const { id, attachmentId } = c.req.valid("param");
-        const found = await attachments.getContent(id, attachmentId);
+        const found = await attachmentsRepository.getContent(id, attachmentId);
         if (!found) {
           return c.json({ error: "Attachment not found" }, 404);
         }
@@ -131,7 +138,7 @@ export function createSampleAdminRoutes(
       validateAttachmentDescriptionBody,
       async (c) => {
         const { id, attachmentId } = c.req.valid("param");
-        const updated = await attachments.updateDescription(
+        const updated = await attachmentsRepository.updateDescription(
           id,
           attachmentId,
           c.req.valid("json").description,
@@ -147,7 +154,7 @@ export function createSampleAdminRoutes(
       validateAttachmentParams,
       async (c) => {
         const { id, attachmentId } = c.req.valid("param");
-        const removed = await attachments.remove(id, attachmentId);
+        const removed = await attachmentsRepository.remove(id, attachmentId);
         if (!removed) {
           return c.json({ error: "Attachment not found" }, 404);
         }
