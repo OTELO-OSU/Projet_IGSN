@@ -32,9 +32,9 @@ export function NumericValueField({
         onChange: ({ value }) => {
           if (mirrorName) form.setFieldValue(`age.${mirrorName}`, value);
           const { numericAgeMin, numericAgeMax } = form.state.values.age;
-          if (!numericAgeMin?.trim() && !numericAgeMax?.trim()) {
-            form.setFieldValue("age.numericAgeUnit", "");
-            form.setFieldValue("age.numericAgeYearsUnit", "");
+          if (numericAgeMin == null && numericAgeMax == null) {
+            form.setFieldValue("age.numericAgeUnit", undefined);
+            form.setFieldValue("age.numericAgeYearsUnit", undefined);
           }
         },
       }}
@@ -43,12 +43,12 @@ export function NumericValueField({
         <form.Subscribe
           selector={(state) =>
             requiredWhenName
-              ? Boolean(state.values.age[requiredWhenName].trim())
+              ? state.values.age[requiredWhenName] != null
               : false
           }
         >
           {(required) => (
-            <field.TextField label={label} requiredToPublish={required} />
+            <field.NumberField label={label} requiredToPublish={required} />
           )}
         </form.Subscribe>
       )}

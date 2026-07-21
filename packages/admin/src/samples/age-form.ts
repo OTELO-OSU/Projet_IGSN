@@ -1,73 +1,51 @@
 import type { Age } from "@projet-igsn/domain/sample/age/model";
 
-// The Age block held in the form store as loose strings (numbers are typed into
-// text inputs; selects hold "" when empty). Mapped to/from the domain Age here
-// so the mapping is pure and unit-testable, away from the component. A non-range
-// value stores the same number/code in both bounds (min == max).
+// The Age block held in the form store, mirroring the domain `Age` shape so the
+// fields cast their own values (NumberField stores numbers, ComboboxField/
+// TextField store undefined when cleared). Nullish is tolerated everywhere so
+// an empty field can be null (default) or undefined (just cleared). A non-range
+// value stores the same number/code in both bounds (min == max). Mapped to/from
+// the domain Age here so the mapping is pure and unit-testable.
 export type AgeFormValues = {
-  numericAgeMin: string;
-  numericAgeMax: string;
-  numericAgeUnit: string;
-  numericAgeYearsUnit: string;
-  geologicalAgeMin: string;
-  geologicalAgeMax: string;
-  geologicalUnit: string;
+  numericAgeMin: number | null | undefined;
+  numericAgeMax: number | null | undefined;
+  numericAgeUnit: string | null | undefined;
+  numericAgeYearsUnit: string | null | undefined;
+  geologicalAgeMin: string | null | undefined;
+  geologicalAgeMax: string | null | undefined;
+  geologicalUnit: string | null | undefined;
 };
 
 export const EMPTY_AGE_FORM_VALUES: AgeFormValues = {
-  numericAgeMin: "",
-  numericAgeMax: "",
-  numericAgeUnit: "",
-  numericAgeYearsUnit: "",
-  geologicalAgeMin: "",
-  geologicalAgeMax: "",
-  geologicalUnit: "",
+  numericAgeMin: null,
+  numericAgeMax: null,
+  numericAgeUnit: null,
+  numericAgeYearsUnit: null,
+  geologicalAgeMin: null,
+  geologicalAgeMax: null,
+  geologicalUnit: null,
 };
 
-const numberField = (value: number | null): string =>
-  value == null ? "" : String(value);
-
-// Persisted age -> loose form values, for edit prefill.
+// Persisted age -> form values, for edit prefill. The domain Age shape already
+// fits the form store.
 export function ageFormValues(age: Age | null | undefined): AgeFormValues {
-  if (!age) return EMPTY_AGE_FORM_VALUES;
-  return {
-    numericAgeMin: numberField(age.numericAgeMin),
-    numericAgeMax: numberField(age.numericAgeMax),
-    numericAgeUnit: age.numericAgeUnit ?? "",
-    numericAgeYearsUnit: age.numericAgeYearsUnit ?? "",
-    geologicalAgeMin: age.geologicalAgeMin ?? "",
-    geologicalAgeMax: age.geologicalAgeMax ?? "",
-    geologicalUnit: age.geologicalUnit ?? "",
-  };
+  return age ?? EMPTY_AGE_FORM_VALUES;
 }
 
-// A trimmed non-empty numeric string -> number; anything else -> null. A bad
-// number (e.g. "12x") becomes null here; the domain schema re-validates on
-// publish.
-const toNumber = (value: string): number | null => {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-// Combobox fields hold undefined (not "") when their selection is cleared, so
-// tolerate nullish here.
-const toText = (value: string | null | undefined): string | null =>
-  value?.trim() || null;
-
-// Loose form values -> domain age input, or null when the whole block is empty
-// (so an untouched Age tab stores no age). The result is validated by
-// createSampleSchema before it leaves the form.
+// Form values -> domain age input, or null when the whole block is empty (so an
+// untouched Age tab stores no age). Fields already hold numbers/codes/undefined;
+// normalize nullish to null and free-text to a trimmed non-empty string (like
+// sibling free-text fields). The result is validated by createSampleSchema
+// before it leaves the form.
 export function toAgeInput(values: AgeFormValues): Age | null {
   const age = {
-    numericAgeMin: toNumber(values.numericAgeMin),
-    numericAgeMax: toNumber(values.numericAgeMax),
-    numericAgeUnit: toText(values.numericAgeUnit),
-    numericAgeYearsUnit: toText(values.numericAgeYearsUnit),
-    geologicalAgeMin: toText(values.geologicalAgeMin),
-    geologicalAgeMax: toText(values.geologicalAgeMax),
-    geologicalUnit: toText(values.geologicalUnit),
+    numericAgeMin: values.numericAgeMin ?? null,
+    numericAgeMax: values.numericAgeMax ?? null,
+    numericAgeUnit: values.numericAgeUnit ?? null,
+    numericAgeYearsUnit: values.numericAgeYearsUnit ?? null,
+    geologicalAgeMin: values.geologicalAgeMin ?? null,
+    geologicalAgeMax: values.geologicalAgeMax ?? null,
+    geologicalUnit: values.geologicalUnit?.trim() || null,
   };
   const isEmpty = Object.values(age).every((value) => value == null);
   return isEmpty ? null : (age as Age);

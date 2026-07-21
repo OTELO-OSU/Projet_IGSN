@@ -42,19 +42,20 @@ export function NumericAgeFormSection() {
   const form = useAgeForm();
   const values = form.state.values.age;
   const clear = (fields: (keyof AgeFormValues)[]) => {
-    for (const name of fields) form.setFieldValue(`age.${name}`, "");
+    for (const name of fields) form.setFieldValue(`age.${name}`, undefined);
   };
 
   // Off by default; on when edit prefill carries a value for the block.
   const [enabled, setEnabled] = useState(() =>
-    ALL_FIELDS.some((name) => values[name]),
+    ALL_FIELDS.some((name) => values[name] != null),
   );
   // A non-range value stores min == max; a real or half-entered range is range
-  // mode.
+  // mode. Guard with `!= null` so a `0` bound is not misread as empty.
   const [mode, setMode] = useState<AgeMode>(() =>
-    values.numericAgeMin && values.numericAgeMin === values.numericAgeMax
+    values.numericAgeMin != null &&
+    values.numericAgeMin === values.numericAgeMax
       ? "fixed"
-      : values.numericAgeMin || values.numericAgeMax
+      : values.numericAgeMin != null || values.numericAgeMax != null
         ? "range"
         : "fixed",
   );
@@ -119,7 +120,7 @@ export function NumericAgeFormSection() {
                 // unit changes to anything else.
                 onChange: ({ value }) => {
                   if (value !== numericUnitSchema.enum.a)
-                    form.setFieldValue("age.numericAgeYearsUnit", "");
+                    form.setFieldValue("age.numericAgeYearsUnit", undefined);
                 },
               }}
             >
@@ -129,10 +130,8 @@ export function NumericAgeFormSection() {
                 // numeric_age_unit_missing); disabled until then.
                 <form.Subscribe
                   selector={(state) =>
-                    Boolean(
-                      state.values.age.numericAgeMin.trim() ||
-                      state.values.age.numericAgeMax.trim(),
-                    )
+                    state.values.age.numericAgeMin != null ||
+                    state.values.age.numericAgeMax != null
                   }
                 >
                   {(required) => (

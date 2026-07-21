@@ -14,8 +14,8 @@ describe("toAgeInput", () => {
   it("should assemble a single numeric age stored in both bounds", () => {
     const result = toAgeInput({
       ...EMPTY_AGE_FORM_VALUES,
-      numericAgeMin: "12000",
-      numericAgeMax: "12000",
+      numericAgeMin: 12000,
+      numericAgeMax: 12000,
       numericAgeUnit: "a",
       numericAgeYearsUnit: "bp",
     });
@@ -30,29 +30,13 @@ describe("toAgeInput", () => {
     });
   });
 
-  it("should parse decimals and trim", () => {
-    const result = toAgeInput({
-      ...EMPTY_AGE_FORM_VALUES,
-      numericAgeMin: " 4.2 ",
-    });
-    expect(result).toMatchObject({ numericAgeMin: 4.2 });
-  });
-
-  it("should map a non-numeric value to null", () => {
-    const result = toAgeInput({
-      ...EMPTY_AGE_FORM_VALUES,
-      numericAgeMin: "12x",
-    });
-    expect(result).toBeNull();
-  });
-
-  it("should treat an unselected unit combobox (undefined) as empty", () => {
+  it("should normalize a cleared combobox (undefined) to null", () => {
     // ComboboxField stores undefined, not "", when the selection is cleared.
     const result = toAgeInput({
       ...EMPTY_AGE_FORM_VALUES,
-      numericAgeMin: "5",
-      numericAgeMax: "5",
-      numericAgeUnit: undefined as unknown as string,
+      numericAgeMin: 5,
+      numericAgeMax: 5,
+      numericAgeUnit: undefined,
     });
     expect(result).toMatchObject({ numericAgeMin: 5, numericAgeUnit: null });
   });
@@ -69,32 +53,19 @@ describe("toAgeInput", () => {
       numericAgeMin: null,
     });
   });
+
+  it("should drop a blank geological unit to null", () => {
+    const result = toAgeInput({
+      ...EMPTY_AGE_FORM_VALUES,
+      geologicalUnit: "   ",
+    });
+    expect(result).toBeNull();
+  });
 });
 
 describe("ageFormValues", () => {
   it("should return empty values for a null age", () => {
     expect(ageFormValues(null)).toEqual(EMPTY_AGE_FORM_VALUES);
-  });
-
-  it("should stringify numbers and pass through codes for edit prefill", () => {
-    const result = ageFormValues({
-      numericAgeMin: 120,
-      numericAgeMax: 120,
-      numericAgeUnit: "ma",
-      numericAgeYearsUnit: null,
-      geologicalAgeMin: "ics8",
-      geologicalAgeMax: "ics8",
-      geologicalUnit: "Green Sandstone Fm",
-    });
-    expect(result).toEqual({
-      ...EMPTY_AGE_FORM_VALUES,
-      numericAgeMin: "120",
-      numericAgeMax: "120",
-      numericAgeUnit: "ma",
-      geologicalAgeMin: "ics8",
-      geologicalAgeMax: "ics8",
-      geologicalUnit: "Green Sandstone Fm",
-    });
   });
 
   it("should round-trip a numeric range through toAgeInput", () => {

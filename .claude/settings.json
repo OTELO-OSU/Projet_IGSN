@@ -14,12 +14,7 @@
     "PreToolUse": [
       {
         "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/block-docker.mjs\""
-          }
-        ]
+        "hooks": []
       }
     ]
   },

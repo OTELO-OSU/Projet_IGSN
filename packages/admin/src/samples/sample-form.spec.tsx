@@ -1011,7 +1011,7 @@ describe("SampleForm", () => {
 
     await expect
       .element(screen.getByLabelText("Numeric age", { exact: true }))
-      .toHaveValue("120");
+      .toHaveValue(120);
   });
 
   it("should call onCancel when Cancel is clicked", async () => {

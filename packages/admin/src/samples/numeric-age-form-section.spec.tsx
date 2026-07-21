@@ -29,7 +29,7 @@ describe("NumericAgeFormSection", () => {
 
     await expect.element(toggle()).not.toBeChecked();
     await expect
-      .element(page.getByRole("textbox", { name: "Numeric age" }))
+      .element(page.getByRole("spinbutton", { name: "Numeric age" }))
       .not.toBeInTheDocument();
   });
 
@@ -42,7 +42,7 @@ describe("NumericAgeFormSection", () => {
       .element(page.getByRole("radio", { name: "Fixed value" }))
       .toBeChecked();
     await expect
-      .element(page.getByRole("textbox", { name: "Numeric age" }))
+      .element(page.getByRole("spinbutton", { name: "Numeric age" }))
       .toBeInTheDocument();
   });
 
@@ -53,10 +53,10 @@ describe("NumericAgeFormSection", () => {
     await page.getByRole("radio", { name: "Range (min / max)" }).click();
 
     await expect
-      .element(page.getByRole("textbox", { name: "Numeric age minimum" }))
+      .element(page.getByRole("spinbutton", { name: "Numeric age minimum" }))
       .toBeInTheDocument();
     await expect
-      .element(page.getByRole("textbox", { name: "Numeric age maximum" }))
+      .element(page.getByRole("spinbutton", { name: "Numeric age maximum" }))
       .toBeInTheDocument();
   });
 
@@ -64,36 +64,36 @@ describe("NumericAgeFormSection", () => {
     await render(<Harness />);
 
     await toggle().click();
-    await page.getByRole("textbox", { name: "Numeric age" }).fill("42");
+    await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
     await toggle().click();
     await toggle().click();
 
     await expect
-      .element(page.getByRole("textbox", { name: "Numeric age" }))
-      .toHaveValue("");
+      .element(page.getByRole("spinbutton", { name: "Numeric age" }))
+      .toHaveValue(null);
   });
 
   it("should clear the fixed value when switching to range and back", async () => {
     await render(<Harness />);
 
     await toggle().click();
-    await page.getByRole("textbox", { name: "Numeric age" }).fill("42");
+    await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
     await page.getByRole("radio", { name: "Range (min / max)" }).click();
     await page.getByRole("radio", { name: "Fixed value" }).click();
 
     await expect
-      .element(page.getByRole("textbox", { name: "Numeric age" }))
-      .toHaveValue("");
+      .element(page.getByRole("spinbutton", { name: "Numeric age" }))
+      .toHaveValue(null);
   });
 
   it("should clear the unit when its value is emptied", async () => {
     await render(<Harness />);
 
     await toggle().click();
-    await page.getByRole("textbox", { name: "Numeric age" }).fill("42");
+    await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
     await page.getByRole("combobox", { name: "Units *" }).click();
     await page.getByRole("option", { name: "Ma", exact: true }).click();
-    await page.getByRole("textbox", { name: "Numeric age" }).fill("");
+    await page.getByRole("spinbutton", { name: "Numeric age" }).fill("");
 
     await expect
       .element(page.getByRole("combobox", { name: "Units" }))
@@ -101,17 +101,15 @@ describe("NumericAgeFormSection", () => {
   });
 
   it("should start enabled in fixed mode when a fixed value is prefilled", async () => {
-    await render(
-      <Harness values={{ numericAgeMin: "5", numericAgeMax: "5" }} />,
-    );
+    await render(<Harness values={{ numericAgeMin: 5, numericAgeMax: 5 }} />);
 
     await expect.element(toggle()).toBeChecked();
     await expect
       .element(page.getByRole("radio", { name: "Fixed value" }))
       .toBeChecked();
     await expect
-      .element(page.getByRole("textbox", { name: "Numeric age" }))
-      .toHaveValue("5");
+      .element(page.getByRole("spinbutton", { name: "Numeric age" }))
+      .toHaveValue(5);
   });
 
   it("should mark the other bound required once one range bound has a value", async () => {
@@ -119,25 +117,27 @@ describe("NumericAgeFormSection", () => {
 
     await toggle().click();
     await page.getByRole("radio", { name: "Range (min / max)" }).click();
-    await page.getByRole("textbox", { name: "Numeric age minimum" }).fill("10");
+    await page
+      .getByRole("spinbutton", { name: "Numeric age minimum" })
+      .fill("10");
 
     await expect
-      .element(page.getByRole("textbox", { name: "Numeric age maximum *" }))
+      .element(page.getByRole("spinbutton", { name: "Numeric age maximum *" }))
       .toBeInTheDocument();
     await expect
-      .element(page.getByRole("textbox", { name: "Numeric age minimum" }))
+      .element(page.getByRole("spinbutton", { name: "Numeric age minimum" }))
       .toBeInTheDocument();
   });
 
   it("should start enabled in range mode when a range value is prefilled", async () => {
-    await render(<Harness values={{ numericAgeMin: "10" }} />);
+    await render(<Harness values={{ numericAgeMin: 10 }} />);
 
     await expect.element(toggle()).toBeChecked();
     await expect
       .element(page.getByRole("radio", { name: "Range (min / max)" }))
       .toBeChecked();
     await expect
-      .element(page.getByRole("textbox", { name: "Numeric age minimum" }))
-      .toHaveValue("10");
+      .element(page.getByRole("spinbutton", { name: "Numeric age minimum" }))
+      .toHaveValue(10);
   });
 });

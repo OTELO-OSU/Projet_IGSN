@@ -45,7 +45,7 @@ export function GeologicalField({
         <form.Subscribe
           selector={(state) =>
             requiredWhenName
-              ? Boolean(state.values.age[requiredWhenName]?.trim())
+              ? state.values.age[requiredWhenName] != null
               : false
           }
         >

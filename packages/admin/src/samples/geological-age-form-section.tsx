@@ -24,7 +24,7 @@ export function GeologicalAgeFormSection() {
   const form = useAgeForm();
   const values = form.state.values.age;
   const clear = (fields: (keyof AgeFormValues)[]) => {
-    for (const name of fields) form.setFieldValue(`age.${name}`, "");
+    for (const name of fields) form.setFieldValue(`age.${name}`, undefined);
   };
 
   // Off by default; on when edit prefill carries a time-scale bound.

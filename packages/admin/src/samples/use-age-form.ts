@@ -2,9 +2,9 @@ import { useTypedAppFormContext } from "@projet-igsn/design-system/components/fo
 
 import { type AgeFormValues } from "#/samples/age-form.ts";
 
-// The sample form, typed down to the Age tab's loose string values, nested
-// under `age`. Each age field component grabs the form from context with this
-// hook and addresses its fields as `age.*`.
+// The sample form, typed down to the Age tab's domain-native values (mirroring
+// `Age`), nested under `age`. Each age field component grabs the form from
+// context with this hook and addresses its fields as `age.*`.
 export function useAgeForm() {
   return useTypedAppFormContext({
     defaultValues: {} as { age: AgeFormValues },
