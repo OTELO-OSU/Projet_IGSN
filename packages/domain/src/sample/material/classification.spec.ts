@@ -35,6 +35,9 @@ describe("materialPathSchema", () => {
     "rock.metamorphic.strongly_metamorphosed.gneiss",
     "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.volcanic.mafic.basalt",
     "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.microbialite",
+    "rock.hydrothermal.breccia",
+    "rock.hydrothermal.carbonate",
+    "rock.hydrothermal.sulfide",
   ])("should accept the known path %s", (path) => {
     expect(materialPathSchema.parse(path)).toBe(path);
   });
@@ -58,6 +61,10 @@ describe("materialPathSchema", () => {
     "extraterrestrial_rock.meteorites.iron_meteorite",
     "rock.metamorphic.nonexistent",
     "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.granite",
+    "rock.hydrothermal.nonexistent",
+    // hydrothermal.carbonate is a dotted-override leaf: the sediment carbonate
+    // node's children must not expand under it.
+    "rock.hydrothermal.carbonate.grain_supported",
   ])("should reject the unknown or malformed path %s", (path) => {
     expect(materialPathSchema.safeParse(path).success).toBe(false);
   });

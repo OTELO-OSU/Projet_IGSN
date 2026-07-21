@@ -4,7 +4,9 @@ import { isMaterialComplete } from "./is-complete.ts";
 
 describe("isMaterialComplete", () => {
   it.each([
-    "rock.hydrothermal",
+    "rock.hydrothermal.breccia",
+    "rock.hydrothermal.carbonate",
+    "rock.hydrothermal.sulfide",
     "rock.unknown",
     "mineral",
     "fossil",
@@ -43,6 +45,7 @@ describe("isMaterialComplete", () => {
 
   it.each([
     "rock",
+    "rock.hydrothermal",
     "rock.metamorphic",
     "rock.metamorphic.weakly_metamorphosed",
     "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock",

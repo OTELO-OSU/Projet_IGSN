@@ -111,6 +111,21 @@ describe("materialChildren", () => {
     ]);
   });
 
+  it("should return the six mineralization types under hydrothermal", () => {
+    expect(materialChildren("rock.hydrothermal")).toEqual([
+      "rock.hydrothermal.breccia",
+      "rock.hydrothermal.carbonate",
+      "rock.hydrothermal.oxide",
+      "rock.hydrothermal.stockwork",
+      "rock.hydrothermal.sulfate",
+      "rock.hydrothermal.sulfide",
+    ]);
+  });
+
+  it("should give the hydrothermal carbonate leaf no children (dotted override)", () => {
+    expect(materialChildren("rock.hydrothermal.carbonate")).toEqual([]);
+  });
+
   it("should return the direct children of the sediment root", () => {
     expect(materialChildren("sediment")).toEqual([
       "sediment.exogenous_detritic",
