@@ -6,6 +6,7 @@ import { AgeView, hasAge } from "#/domain/samples/age-view.tsx";
 import { ConditionView } from "#/domain/samples/condition-view.tsx";
 import { DescriptionView } from "#/domain/samples/description-view.tsx";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
+import { LinksView } from "#/domain/samples/links-view.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
 import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
 import {
@@ -37,6 +38,9 @@ type SampleViewProps = {
   availability: Sample["availability"];
   publicationYear: Sample["publicationYear"];
   age: Sample["age"];
+  // Defaulted so the many link-less renders (and tests) can omit them.
+  links?: Sample["links"];
+  attachments?: Sample["attachments"];
 };
 
 // A dot-joined classification path rendered as a breadcrumb: each ancestor
@@ -117,6 +121,8 @@ export function SampleView({
   availability,
   publicationYear,
   age,
+  links = [],
+  attachments = [],
 }: SampleViewProps) {
   // One entry per section actually present; drives the nav and the body, so a
   // section cannot appear in one without the other.
@@ -200,7 +206,17 @@ export function SampleView({
       title: m.sample_section_security(),
       content: <SecurityView security={security} />,
     },
-  ].filter((section) => section != null);
+    // Attachment downloads resolve by IGSN, so the section needs one; a public
+    // sample always has one, so the guard only narrows the type.
+    igsn != null &&
+      (links.length > 0 || attachments.length > 0) && {
+        id: "links",
+        title: m.sample_section_links(),
+        content: (
+          <LinksView igsn={igsn} links={links} attachments={attachments} />
+        ),
+      },
+  ].filter((section) => section != null && section !== false);
 
   return (
     <div>
