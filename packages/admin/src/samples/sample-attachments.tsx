@@ -1,4 +1,6 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
@@ -10,7 +12,6 @@ import { Download, Trash2, Undo2 } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { AttachmentDropZone } from "#/samples/attachment-drop-zone.tsx";
-import { saveBlob } from "#/samples/save-blob.ts";
 import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { useDownloadAttachment } from "#/samples/use-download-attachment.ts";
 
@@ -22,6 +23,86 @@ type SampleAttachmentsProps = {
   // switches. Everything staged here only reaches the server on form submit.
   changes: SampleAttachmentChanges;
 };
+
+type RowActionProps = {
+  icon: LucideIcon;
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+};
+
+function RowAction({ icon: Icon, label, onClick, disabled }: RowActionProps) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      disabled={disabled}
+      aria-label={label}
+      onClick={onClick}
+    >
+      <Icon aria-hidden />
+    </Button>
+  );
+}
+
+type AttachmentRowLayoutProps = {
+  name: string;
+  // Rendered inside the name cell so staged and saved rows keep one layout.
+  badge?: ReactNode;
+  // Destructive note before the actions (marked for deletion, upload failed).
+  status?: string;
+  actions: ReactNode;
+  isStruck?: boolean;
+  // null hides the description block (a row marked for deletion).
+  description: {
+    id: string;
+    value: string;
+    onChange: (value: string) => void;
+  } | null;
+};
+
+// One attachment row, staged or saved: truncated name, actions, description.
+function AttachmentRowLayout({
+  name,
+  badge,
+  status,
+  actions,
+  isStruck,
+  description,
+}: AttachmentRowLayoutProps) {
+  return (
+    <li className="grid gap-2">
+      <div className="flex items-center gap-2">
+        <span
+          className={cn(
+            "min-w-0 flex-1 truncate text-sm",
+            isStruck && "line-through",
+          )}
+          title={name}
+        >
+          {name}
+          {badge}
+        </span>
+        {status ? (
+          <span className="text-destructive text-sm">{status}</span>
+        ) : null}
+        {actions}
+      </div>
+      {description ? (
+        <div className="grid gap-2">
+          <Label htmlFor={description.id}>{m.field_description()}</Label>
+          <Textarea
+            id={description.id}
+            value={description.value}
+            aria-label={m.attachment_description({ name })}
+            onChange={(event) => description.onChange(event.target.value)}
+          />
+        </div>
+      ) : null}
+    </li>
+  );
+}
 
 type AttachmentRowProps = {
   sampleId: string;
@@ -37,79 +118,47 @@ function AttachmentRow({ sampleId, attachment, changes }: AttachmentRowProps) {
   const isMarkedForDeletion = changes.deletions.includes(attachment.id);
 
   return (
-    <li className="grid gap-2">
-      <div className="flex items-center gap-2">
-        <span
-          className={cn(
-            "min-w-0 flex-1 truncate text-sm",
-            isMarkedForDeletion && "line-through",
-          )}
-          title={attachment.name}
-        >
-          {attachment.name}
-        </span>
-        {isMarkedForDeletion ? (
-          <>
-            <span className="text-destructive text-sm">
-              {m.attachment_marked_for_deletion()}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={m.action_restore_attachment({
-                name: attachment.name,
-              })}
-              onClick={() => changes.restore(attachment.id)}
-            >
-              <Undo2 aria-hidden />
-            </Button>
-          </>
+    <AttachmentRowLayout
+      name={attachment.name}
+      isStruck={isMarkedForDeletion}
+      status={
+        isMarkedForDeletion ? m.attachment_marked_for_deletion() : undefined
+      }
+      actions={
+        isMarkedForDeletion ? (
+          <RowAction
+            icon={Undo2}
+            label={m.action_restore_attachment({ name: attachment.name })}
+            onClick={() => changes.restore(attachment.id)}
+          />
         ) : (
           <>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={m.action_download_attachment({
-                name: attachment.name,
-              })}
+            <RowAction
+              icon={Download}
+              label={m.action_download_attachment({ name: attachment.name })}
               onClick={() => void download(attachment)}
-            >
-              <Download aria-hidden />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={m.action_delete_attachment({ name: attachment.name })}
+            />
+            <RowAction
+              icon={Trash2}
+              label={m.action_delete_attachment({ name: attachment.name })}
               onClick={() => changes.markDelete(attachment.id)}
-            >
-              <Trash2 aria-hidden />
-            </Button>
+            />
           </>
-        )}
-      </div>
-      {isMarkedForDeletion ? null : (
-        <div className="grid gap-2">
-          <Label htmlFor={`attachment-description-${attachment.id}`}>
-            {m.field_description()}
-          </Label>
-          <Textarea
-            id={`attachment-description-${attachment.id}`}
-            value={
-              changes.descriptions[attachment.id] ??
-              attachment.description ??
-              ""
+        )
+      }
+      description={
+        isMarkedForDeletion
+          ? null
+          : {
+              id: `attachment-description-${attachment.id}`,
+              value:
+                changes.descriptions[attachment.id] ??
+                attachment.description ??
+                "",
+              onChange: (value) => changes.setDescription(attachment.id, value),
             }
-            aria-label={m.attachment_description({ name: attachment.name })}
-            onChange={(event) =>
-              changes.setDescription(attachment.id, event.target.value)
-            }
-          />
-        </div>
-      )}
-    </li>
+      }
+    />
   );
 }
 
@@ -126,67 +175,44 @@ export function SampleAttachments({
   return (
     <FormSection title={m.section_attachments()}>
       <AttachmentDropZone onFiles={addFiles} />
-      {/* Same layout as a saved row, so staged files read as attachments. */}
       {pending.length > 0 ? (
         <ul className="grid gap-2">
           {pending.map((staged) => (
-            <li key={staged.key} className="grid gap-2">
-              <div className="flex items-center gap-2">
-                {/* The badge lives inside the name cell so the row keeps the
-                    exact same layout as a saved attachment. */}
-                <span
-                  className="min-w-0 flex-1 truncate text-sm"
-                  title={staged.file.name}
-                >
-                  {staged.file.name}
-                  <Badge variant="secondary" className="ms-2">
-                    {m.attachment_new_badge()}
-                  </Badge>
-                </span>
-                {staged.error ? (
-                  <span className="text-destructive text-sm">
-                    {m.attachment_upload_failed()}
-                  </span>
-                ) : null}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={m.action_download_attachment({
-                    name: staged.file.name,
-                  })}
-                  onClick={() => saveBlob(staged.file, staged.file.name)}
-                >
-                  <Download aria-hidden />
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={m.action_remove_attachment({
-                    name: staged.file.name,
-                  })}
-                  onClick={() => removeFile(staged.key)}
-                >
-                  <Trash2 aria-hidden />
-                </Button>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor={`staged-description-${staged.key}`}>
-                  {m.field_description()}
-                </Label>
-                <Textarea
-                  id={`staged-description-${staged.key}`}
-                  value={staged.description ?? ""}
-                  aria-label={m.attachment_description({
-                    name: staged.file.name,
-                  })}
-                  onChange={(event) =>
-                    setPendingDescription(staged.key, event.target.value)
-                  }
-                />
-              </div>
-            </li>
+            <AttachmentRowLayout
+              key={staged.key}
+              name={staged.file.name}
+              badge={
+                <Badge variant="secondary" className="ms-2">
+                  {m.attachment_new_badge()}
+                </Badge>
+              }
+              status={staged.error ? m.attachment_upload_failed() : undefined}
+              actions={
+                <>
+                  {/* Disabled, not hidden: keeps the row aligned with saved
+                      ones. The file is still on the user's disk. */}
+                  <RowAction
+                    icon={Download}
+                    label={m.action_download_attachment({
+                      name: staged.file.name,
+                    })}
+                    disabled
+                  />
+                  <RowAction
+                    icon={Trash2}
+                    label={m.action_remove_attachment({
+                      name: staged.file.name,
+                    })}
+                    onClick={() => removeFile(staged.key)}
+                  />
+                </>
+              }
+              description={{
+                id: `staged-description-${staged.key}`,
+                value: staged.description ?? "",
+                onChange: (value) => setPendingDescription(staged.key, value),
+              }}
+            />
           ))}
         </ul>
       ) : null}

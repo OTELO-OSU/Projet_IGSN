@@ -108,19 +108,14 @@ describe("SampleAttachments", () => {
     expect(FakeXhr.instances).toHaveLength(0);
   });
 
-  it("should download a staged file locally", async () => {
-    const createObjectURL = vi
-      .spyOn(URL, "createObjectURL")
-      .mockReturnValue("blob:test");
-    const fetchSpy = vi.spyOn(window, "fetch");
+  it("should disable download on a staged file", async () => {
     const screen = await renderAttachments([]);
 
     await screen.getByLabelText("Browse files").upload([file("a.csv")]);
-    await screen.getByRole("button", { name: "Download a.csv" }).click();
 
-    // Served from the staged File, no server round-trip.
-    await vi.waitFor(() => expect(createObjectURL).toHaveBeenCalled());
-    expect(fetchSpy).not.toHaveBeenCalled();
+    await expect
+      .element(screen.getByRole("button", { name: "Download a.csv" }))
+      .toBeDisabled();
   });
 
   it("should unstage a file when its remove button is clicked", async () => {
