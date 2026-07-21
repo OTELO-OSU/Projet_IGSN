@@ -155,11 +155,13 @@ describe("SampleAttachments", () => {
     expect(FakeXhr.instances[0]!.url).toContain(
       `admin/samples/${SAMPLE_ID}/attachments`,
     );
+    // No way to dismiss the dialog while uploads are running.
+    expect(screen.getByRole("button", { name: "Confirm" }).query()).toBeNull();
 
-    // The dialog stays open on the recap so the user can confirm it.
+    // The dialog stays open on the recap until the user confirms it.
     FakeXhr.instances.forEach((xhr) => xhr.finish());
     await expect.element(dialog).toHaveTextContent("Uploaded");
-    await screen.getByRole("button", { name: "Close" }).click();
+    await screen.getByRole("button", { name: "Confirm" }).click();
     await vi.waitFor(() => expect(dialog.query()).toBeNull());
   });
 
@@ -210,7 +212,7 @@ describe("SampleAttachments", () => {
     await expect.element(dialog).toHaveTextContent("Uploaded");
     await expect.element(dialog).toHaveTextContent("b.csv");
     await expect.element(dialog).toHaveTextContent("Could not upload.");
-    await screen.getByRole("button", { name: "Close" }).click();
+    await screen.getByRole("button", { name: "Confirm" }).click();
 
     // The uploaded file left the staging list; the failed one stays, flagged.
     expect(screen.getByText("a.csv").query()).toBeNull();
