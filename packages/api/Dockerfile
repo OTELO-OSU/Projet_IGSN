@@ -42,6 +42,11 @@ ADD tsconfig.base.json /app/
 ADD packages/api /app/packages/api
 ADD packages/domain /app/packages/domain
 
+# Attachment blobs live here (ADR 0017). Created node-owned in the image so a
+# fresh named volume mounted on it inherits that ownership; without this the
+# volume mountpoint is root-owned and every upload fails with EACCES.
+RUN install -d -o node -g node /data/attachments
+
 # Drop root: the app only reads its (root-owned, world-readable) files at runtime.
 USER node
 
