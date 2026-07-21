@@ -11,7 +11,6 @@ import { Hono } from "hono";
 
 import { attachmentDownload } from "./attachment-download.ts";
 import {
-  validateAttachmentDescriptionBody,
   validateAttachmentParams,
   validateAttachmentUpload,
   validateCreateSampleBody,
@@ -130,35 +129,6 @@ export function createSampleAdminRoutes(
           return c.json({ error: "Attachment not found" }, 404);
         }
         return attachmentDownload(found.attachment, found.content);
-      },
-    )
-    .put(
-      "/:id/attachments/:attachmentId",
-      validateAttachmentParams,
-      validateAttachmentDescriptionBody,
-      async (c) => {
-        const { id, attachmentId } = c.req.valid("param");
-        const updated = await attachmentsRepository.updateDescription(
-          id,
-          attachmentId,
-          c.req.valid("json").description,
-        );
-        if (!updated) {
-          return c.json({ error: "Attachment not found" }, 404);
-        }
-        return c.json({ data: updated });
-      },
-    )
-    .delete(
-      "/:id/attachments/:attachmentId",
-      validateAttachmentParams,
-      async (c) => {
-        const { id, attachmentId } = c.req.valid("param");
-        const removed = await attachmentsRepository.remove(id, attachmentId);
-        if (!removed) {
-          return c.json({ error: "Attachment not found" }, 404);
-        }
-        return c.body(null, 204);
       },
     );
 }

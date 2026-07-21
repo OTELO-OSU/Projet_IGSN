@@ -76,22 +76,6 @@ export function createSampleAttachmentRepository(
         return toAttachment(row);
       }),
 
-    updateDescription: (
-      sampleId: string,
-      attachmentId: string,
-      description: string | null,
-    ) =>
-      withTransaction(db, async (trx) => {
-        const row = await trx
-          .updateTable("sample_attachment")
-          .set({ description })
-          .where("id", "=", attachmentId)
-          .where("sample_id", "=", sampleId)
-          .returningAll()
-          .executeTakeFirst();
-        return row ? toAttachment(row) : null;
-      }),
-
     reconcile: (sampleId, attachments) =>
       withTransaction(db, async (trx) => {
         const keep = new Map(attachments.map((a) => [a.id, a.description]));
@@ -123,19 +107,6 @@ export function createSampleAttachmentRepository(
             }
           }),
         );
-      }),
-
-    remove: (sampleId: string, attachmentId: string) =>
-      withTransaction(db, async (trx) => {
-        const deleted = await trx
-          .deleteFrom("sample_attachment")
-          .where("id", "=", attachmentId)
-          .where("sample_id", "=", sampleId)
-          .returningAll()
-          .executeTakeFirst();
-        if (!deleted) return false;
-        await rm(pathFor(sampleId, deleted.id, deleted.name), { force: true });
-        return true;
       }),
 
     getContent: (sampleId: string, attachmentId: string) =>

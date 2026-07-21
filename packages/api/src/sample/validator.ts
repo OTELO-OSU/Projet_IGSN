@@ -1,9 +1,6 @@
 import { igsnSuffixSchema } from "@projet-igsn/domain/igsn/model";
 import { uploadSampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/attachment-validator";
-import {
-  createSampleSchema,
-  nameSchema,
-} from "@projet-igsn/domain/sample/sample";
+import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { validator } from "hono/validator";
 import { z } from "zod";
@@ -18,10 +15,6 @@ const attachmentParamsSchema = idParamSchema.extend({
 
 const igsnAttachmentParamsSchema = igsnParamSchema.extend({
   attachmentId: z.uuid(),
-});
-
-const attachmentDescriptionSchema = z.strictObject({
-  description: nameSchema.nullable(),
 });
 
 // A malformed uuid can match no sample, and unvalidated it would make the
@@ -85,14 +78,3 @@ export const validateAttachmentUpload = validator("form", (value, c) => {
   }
   return parsed.data;
 });
-
-export const validateAttachmentDescriptionBody = validator(
-  "json",
-  (value, c) => {
-    const parsed = attachmentDescriptionSchema.safeParse(value);
-    if (!parsed.success) {
-      return c.json({ error: "Invalid description" }, 400);
-    }
-    return parsed.data;
-  },
-);

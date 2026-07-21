@@ -71,36 +71,6 @@ describe("sampleAttachmentRepository", () => {
     ).toBeNull();
   });
 
-  pgTest("should update the description", async ({ db }) => {
-    const { repository, sample } = await arrange(db);
-    const created = await repository.create(sample.id, input, content);
-    // Act
-    const updated = await repository.updateDescription(
-      sample.id,
-      created!.id,
-      null,
-    );
-    // Assert
-    expect(updated).toEqual({ ...created, description: null });
-  });
-
-  pgTest(
-    "should not update an attachment of another sample",
-    async ({ db }) => {
-      const { repository, sample } = await arrange(db);
-      const other = await insertSample(db, {
-        name: "Other sample",
-        nature: "hand_sample",
-        type: null,
-      });
-      const created = await repository.create(sample.id, input, content);
-      // Act / Assert
-      expect(
-        await repository.updateDescription(other.id, created!.id, "hijack"),
-      ).toBeNull();
-    },
-  );
-
   pgTest(
     "should store the blob under a readable debug name",
     async ({ db }) => {
@@ -128,30 +98,6 @@ describe("sampleAttachmentRepository", () => {
       expect(files).toContain(`${second!.id}-measurements.csv`);
     },
   );
-
-  pgTest("should remove the row and the blob", async ({ db }) => {
-    const { repository, sample } = await arrange(db);
-    const created = await repository.create(sample.id, input, content);
-    // Act
-    const removed = await repository.remove(sample.id, created!.id);
-    // Assert
-    expect(removed).toBe(true);
-    expect(await repository.getContent(sample.id, created!.id)).toBeNull();
-    expect(await readdir(join(dir, sample.id))).not.toContain(
-      `${created!.id}-measurements.csv`,
-    );
-  });
-
-  pgTest("should report a missing attachment on remove", async ({ db }) => {
-    const { repository, sample } = await arrange(db);
-    // Act / Assert
-    expect(
-      await repository.remove(
-        sample.id,
-        "00000000-0000-7000-8000-000000000000",
-      ),
-    ).toBe(false);
-  });
 
   pgTest(
     "should reconcile: update listed descriptions, remove unlisted rows and blobs",

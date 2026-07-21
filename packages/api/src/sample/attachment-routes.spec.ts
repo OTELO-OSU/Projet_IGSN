@@ -183,50 +183,6 @@ describe("admin attachment routes", () => {
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(csv);
   });
 
-  pgTest("should update then clear the description", async ({ db }) => {
-    // Arrange
-    const client = createTestApp(db);
-    const sample = await createSample(client);
-    const uploaded = await uploadAttachment(client, sample.id, "Old");
-    const { data } = (await uploaded.json()) as { data: { id: string } };
-    // Act
-    const res = await client.admin.samples[":id"].attachments[
-      ":attachmentId"
-    ].$put(
-      {
-        param: { id: sample.id, attachmentId: data.id },
-        json: { description: null },
-      },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({
-      data: { ...data, description: null },
-    });
-  });
-
-  pgTest(
-    "should 404 a description update on an unknown attachment",
-    async ({ db }) => {
-      const client = createTestApp(db);
-      const sample = await createSample(client);
-      const res = await client.admin.samples[":id"].attachments[
-        ":attachmentId"
-      ].$put(
-        {
-          param: {
-            id: sample.id,
-            attachmentId: "00000000-0000-7000-8000-000000000000",
-          },
-          json: { description: "ghost" },
-        },
-        { headers: authHeader },
-      );
-      expect(res.status).toBe(404);
-    },
-  );
-
   pgTest(
     "should reconcile attachments through the sample update",
     async ({ db }) => {
@@ -275,47 +231,6 @@ describe("admin attachment routes", () => {
       ).toEqual([]);
     },
   );
-
-  pgTest("should delete the attachment", async ({ db }) => {
-    // Arrange
-    const client = createTestApp(db);
-    const sample = await createSample(client);
-    const uploaded = await uploadAttachment(client, sample.id);
-    const { data } = (await uploaded.json()) as { data: { id: string } };
-    // Act
-    const res = await client.admin.samples[":id"].attachments[
-      ":attachmentId"
-    ].$delete(
-      { param: { id: sample.id, attachmentId: data.id } },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(204);
-    const read = await client.admin.samples[":id"].$get(
-      { param: { id: sample.id } },
-      { headers: authHeader },
-    );
-    expect(
-      sampleResponseSchema.parse(await read.json()).data.attachments,
-    ).toEqual([]);
-  });
-
-  pgTest("should 404 a delete of an unknown attachment", async ({ db }) => {
-    const client = createTestApp(db);
-    const sample = await createSample(client);
-    const res = await client.admin.samples[":id"].attachments[
-      ":attachmentId"
-    ].$delete(
-      {
-        param: {
-          id: sample.id,
-          attachmentId: "00000000-0000-7000-8000-000000000000",
-        },
-      },
-      { headers: authHeader },
-    );
-    expect(res.status).toBe(404);
-  });
 });
 
 describe("public attachment download", () => {

@@ -8,18 +8,13 @@ export type CreateSampleAttachment = {
 };
 
 // Rows and blob move together: create persists the metadata and the content,
-// remove drops both. Methods return null/false when the sample or the
-// attachment does not exist.
+// reconcile drops both for unlisted attachments. Methods return null when the
+// sample or the attachment does not exist.
 export type SampleAttachmentRepository = {
   create(
     sampleId: string,
     input: CreateSampleAttachment,
     content: Uint8Array,
-  ): Promise<SampleAttachment | null>;
-  updateDescription(
-    sampleId: string,
-    attachmentId: string,
-    description: string | null,
   ): Promise<SampleAttachment | null>;
   // Reconciles the sample's attachments against the given list (the sample
   // update payload): a listed attachment gets its description updated, an
@@ -28,7 +23,6 @@ export type SampleAttachmentRepository = {
     sampleId: string,
     attachments: UpdateSampleAttachment[],
   ): Promise<void>;
-  remove(sampleId: string, attachmentId: string): Promise<boolean>;
   getContent(
     sampleId: string,
     attachmentId: string,
