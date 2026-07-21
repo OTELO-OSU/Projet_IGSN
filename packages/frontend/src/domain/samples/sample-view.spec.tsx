@@ -45,11 +45,13 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
         condition={null}
         location={null}
+        age={null}
         links={[
           {
             id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -84,11 +86,13 @@ describe("SampleView", () => {
         metamorphicFacies={null}
         collectionMethod={null}
         collectionMethodDescription={null}
+        security={null}
         availability={null}
         publicationYear={null}
         description={null}
         condition={null}
         location={null}
+        age={null}
       />,
     );
 

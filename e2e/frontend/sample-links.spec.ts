@@ -30,8 +30,10 @@ test.describe("sample links on the public page", () => {
       "https://doi.org/10.5880/GFZ.2026.001",
       "Field measurements dataset",
     );
-    await edit.publishUpdates();
+    // Staged on pick, uploaded by the save behind the recap dialog.
     await edit.uploadAttachments([fixture("test.txt")]);
+    await edit.publishUpdates();
+    await edit.confirmUploads();
     await edit.expectAttachment("test.txt");
 
     // The reader finds them on the public detail page.

@@ -23,15 +23,13 @@ test.describe("sample links", () => {
     await edit.expectVisible();
     await edit.openLinksTab();
 
-    // The DOI link rides the sample document.
+    // The DOI link and the files ride the same save: files are staged on
+    // pick and only upload with the sample document.
     await edit.addLink(
       1,
       "https://doi.org/10.1594/IEDA.100252",
       "Companion dataset",
     );
-    await edit.saveDraft();
-
-    // Several files at once through the drop zone's input.
     await edit.uploadAttachments([
       fixture("fichierTest.pdf"),
       fixture("test.png"),
@@ -40,6 +38,8 @@ test.describe("sample links", () => {
     await edit.expectAttachment("fichierTest.pdf");
     await edit.expectAttachment("test.png");
     await edit.expectAttachment("test.txt");
+    await edit.saveDraft();
+    await edit.confirmUploads();
 
     // Everything survives a full reload: link and files come back from the API.
     await page.reload();

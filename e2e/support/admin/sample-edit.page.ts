@@ -22,14 +22,22 @@ export function sampleEditPage(page: Page) {
       );
     },
     // The labelled (visually hidden) file input behind the Browse button;
-    // several paths at once exercise the multi-file upload.
+    // several paths at once exercise the multi-file upload. Files are only
+    // staged here: they upload on save, behind the recap dialog.
     uploadAttachments: (paths: string[]) =>
       page.getByLabel("Browse files").setInputFiles(paths),
-    // The description field only exists on a SAVED attachment row, so this
-    // waits out the upload: the bare file name would also match the transient
-    // uploading row and let the journey race ahead of the POST.
+    // Matches the description field of a staged or saved row; after a reload
+    // only a saved row can match, which is the persistence assertion.
     expectAttachment: (name: string) =>
       expect(page.getByLabel(`Description of ${name}`)).toBeVisible(),
+    // Saving with staged files opens the upload dialog; its Confirm button
+    // only renders once every upload settles, so clicking it waits them out.
+    confirmUploads: async () => {
+      await page.getByRole("button", { name: "Confirm" }).click();
+      await expect(
+        page.getByRole("dialog", { name: "Uploading files" }),
+      ).toBeHidden();
+    },
 
     // A draft saves freely; a published sample saves through the stricter
     // "Publish updates" action. Both toast the same success.
