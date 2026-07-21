@@ -7,6 +7,7 @@ export function sampleListPage(page: Page) {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Samples" })).toBeVisible(),
     goToCreate: () => page.getByRole("link", { name: "Create" }).click(),
+    openSample: (name: string) => page.getByRole("link", { name }).click(),
     expectColumns: async () => {
       await expect(
         // Exact: "Specific Name" also contains "Name".
