@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "test-warden": {
+      "command": "npx",
+      "args": ["-y", "test-warden"]
+    }
+  }
+}
