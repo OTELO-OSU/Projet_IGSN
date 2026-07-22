@@ -6,6 +6,36 @@ import { sampleSchema } from "./sample.ts";
 export const PAGE_SIZES = [10, 25, 50];
 export const DEFAULT_PAGE_SIZE = 25;
 
+// A geographic bounding box parsed from the URL param "west,south,east,north"
+// (degrees). ponytail: v1 ceiling is west <= east; a dateline-wrapping box
+// (west > east) is rejected here. Supporting it later means splitting the
+// envelope into an OR of two boxes at longitude 180, deferred.
+export const bboxSchema = z.string().transform((value, ctx) => {
+  const parts = value.split(",").map(Number);
+  const invalid = () => {
+    ctx.addIssue({ code: "custom", message: "Invalid bounding box" });
+    return z.NEVER;
+  };
+  if (parts.length !== 4 || !parts.every(Number.isFinite)) return invalid();
+  const [west, south, east, north] = parts as [number, number, number, number];
+  if (
+    west < -180 ||
+    west > 180 ||
+    east < -180 ||
+    east > 180 ||
+    south < -90 ||
+    south > 90 ||
+    north < -90 ||
+    north > 90 ||
+    north < south ||
+    east < west
+  )
+    return invalid();
+  return { west, south, east, north };
+});
+
+export type Bbox = z.infer<typeof bboxSchema>;
+
 export const listSamplesQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1).catch(1),
   perPage: z.coerce
@@ -28,6 +58,8 @@ export const listSamplesQuerySchema = z.object({
   ageMin: z.coerce.number().optional().catch(undefined),
   ageMax: z.coerce.number().optional().catch(undefined),
   ageUnit: numericUnitSchema.optional().catch(undefined),
+  // Malformed or out-of-range boxes degrade to "no filter", like search.
+  bbox: bboxSchema.optional().catch(undefined),
 });
 
 export type ListSamplesQuery = z.infer<typeof listSamplesQuerySchema>;

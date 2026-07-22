@@ -1,4 +1,5 @@
 import type { NumericUnit } from "./age/numeric-unit.ts";
+import type { Bbox } from "./sample-validator.ts";
 import type { CreateSample, Sample } from "./sample.ts";
 
 export type ListSamplesParams = {
@@ -10,6 +11,7 @@ export type ListSamplesParams = {
   ageMin?: number;
   ageMax?: number;
   ageUnit?: NumericUnit;
+  bbox?: Bbox;
 };
 
 export type ListSamplesResult = {

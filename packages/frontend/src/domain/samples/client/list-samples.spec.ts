@@ -103,6 +103,24 @@ describe("listSamples", () => {
     expect(new URL(lastUrl() ?? "").searchParams.has("search")).toBe(false);
   });
 
+  it("should send the bbox as a query param when provided", async () => {
+    const { fetch, lastUrl } = stubFetch({ data: [], meta: { total: 0 } });
+
+    await listSamples({ page: 1, perPage: 25, bbox: "-10,40,10,50" }, fetch);
+
+    expect(new URL(lastUrl() ?? "").searchParams.get("bbox")).toBe(
+      "-10,40,10,50",
+    );
+  });
+
+  it("should omit the bbox param when not provided", async () => {
+    const { fetch, lastUrl } = stubFetch({ data: [], meta: { total: 0 } });
+
+    await listSamples({ page: 1, perPage: 25 }, fetch);
+
+    expect(new URL(lastUrl() ?? "").searchParams.has("bbox")).toBe(false);
+  });
+
   it("should throw on a non-2xx response", async () => {
     const { fetch } = stubFetch({}, 500);
 
