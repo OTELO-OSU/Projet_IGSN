@@ -5,7 +5,7 @@ import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffi
 
 import type { SeedSample } from "./seed.ts";
 
-// Demo dataset for the public frontend / admin walkthrough: 100 geologically
+// Demo dataset for the public frontend / admin walkthrough: 120 geologically
 // coherent samples covering every branch of the sample vocabularies, with a
 // location wherever the domain allows one. Authored without id/igsn/published;
 // those are injected by position in the map below (see seed-demo.ts). English
@@ -101,7 +101,7 @@ const geologicalAge = (
     geologicalUnit: unit,
   }) as const;
 
-// 70 complete, publishable rows. Each carries a leaf type, a leaf material,
+// 90 complete, publishable rows. Each carries a leaf type, a leaf material,
 // texture/facies where the material calls for it, a location (unless the
 // material forbids/exempts it), a collection date and availability.
 const PUBLISHED: DemoRow[] = [
@@ -1090,6 +1090,299 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2025-02-15"),
+    availability: "exists",
+  },
+  // Wider world spread: published, located rows in regions the map is otherwise
+  // sparse in (East Asia, SE Asia, Oceania, North Pacific, high northern
+  // latitudes), so bbox/map search has results outside Europe and the Atlantic.
+  {
+    name: "Sanbagawa Blueschist",
+    nature: "thin_section",
+    type: "individual_sample",
+    material: "rock.metamorphic.strongly_metamorphosed.glaucophanite",
+    metamorphicFacies: "blueschist",
+    collectionMethod: "manual",
+    location: {
+      position: point(133.5, 33.8),
+      region: { kind: "continent", country: "JP" },
+    },
+    description: on("2025-04-25"),
+    availability: "exists",
+  },
+  {
+    name: "Otago Schist",
+    nature: "hand_sample",
+    type: "individual_sample",
+    material: "rock.metamorphic.strongly_metamorphosed.mica_schist",
+    metamorphicFacies: "greenschist",
+    collectionMethod: "manual",
+    location: {
+      position: point(169.7, -45.3),
+      region: { kind: "continent", country: "NZ" },
+    },
+    description: on("2024-11-08"),
+    availability: "exists",
+  },
+  {
+    name: "Kilauea Basalt",
+    nature: "hand_sample",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.mafic.basalt",
+    texture: "vesicular",
+    collectionMethod: "manual",
+    location: {
+      position: point(-155.29, 19.42, elev(1200, 1200, "m", "msl")),
+      region: { kind: "continent", country: "US" },
+    },
+    description: on("2025-05-30"),
+    availability: "exists",
+  },
+  {
+    name: "Acasta Gneiss",
+    nature: "thin_section",
+    type: "core.piece",
+    material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+    metamorphicFacies: "amphibolite",
+    collectionMethod: "manual",
+    location: {
+      position: point(-115.5, 65.2),
+      region: { kind: "continent", country: "CA" },
+    },
+    description: on("2024-07-22"),
+    availability: "exists",
+  },
+  {
+    name: "Dabie Shan Eclogite",
+    nature: "thin_section",
+    type: "core.piece",
+    material: "rock.metamorphic.strongly_metamorphosed.eclogite",
+    metamorphicFacies: "eclogite",
+    collectionMethod: "manual",
+    location: {
+      position: point(114.0, 30.8),
+      region: { kind: "continent", country: "CN" },
+    },
+    description: on("2025-03-14"),
+    availability: "exists",
+  },
+  {
+    name: "Toba Rhyolitic Tuff",
+    nature: "rock_chips",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.felsic.rhyolite",
+    texture: "glassy",
+    collectionMethod: "manual",
+    location: {
+      position: point(98.9, 2.6),
+      region: { kind: "continent", country: "ID" },
+    },
+    description: on("2024-10-09"),
+    availability: "exists",
+  },
+  {
+    name: "Krafla Basalt",
+    nature: "hand_sample",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.mafic.basalt",
+    texture: "aphanitic",
+    collectionMethod: "manual",
+    location: {
+      position: point(-16.78, 65.72),
+      region: { kind: "continent", country: "IS" },
+    },
+    description: on("2025-06-28"),
+    availability: "exists",
+  },
+  {
+    name: "Siberian Traps Basalt",
+    nature: "hand_sample",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.mafic.basalt",
+    texture: "vesicular",
+    collectionMethod: "manual",
+    location: {
+      position: point(88.2, 69.3),
+      region: { kind: "continent", country: "RU" },
+    },
+    description: on("2024-08-30"),
+    availability: "exists",
+  },
+  // Tight cluster in the Chaîne des Puys volcanic province (Auvergne, France),
+  // all within ~0.1 deg, so a small drawn box or a zoomed-in map returns several
+  // samples at once, exercising location search at close range.
+  {
+    name: "Puy de Dôme Trachyte",
+    nature: "hand_sample",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.intermediate.trachyte",
+    texture: "porphyritic",
+    collectionMethod: "manual",
+    location: {
+      position: point(2.964, 45.772, elev(1465, 1465, "m", "msl")),
+      region: { kind: "continent", country: "FR" },
+      localityName: "Puy de Dôme",
+    },
+    description: on("2025-06-18"),
+    availability: "exists",
+  },
+  {
+    name: "Puy de Côme Basalt",
+    nature: "rock_chips",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.mafic.basalt",
+    texture: "vesicular",
+    collectionMethod: "manual",
+    location: {
+      position: point(2.94, 45.81, elev(1250, 1250, "m", "msl")),
+      region: { kind: "continent", country: "FR" },
+      localityName: "Puy de Côme",
+    },
+    description: on("2025-06-19"),
+    availability: "exists",
+  },
+  {
+    name: "Puy Pariou Basalt",
+    nature: "thin_section",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.mafic.basalt",
+    texture: "aphanitic",
+    collectionMethod: "manual",
+    location: {
+      position: point(2.966, 45.798, elev(1210, 1210, "m", "msl")),
+      region: { kind: "continent", country: "FR" },
+      localityName: "Puy Pariou",
+    },
+    description: on("2025-06-20"),
+    availability: "exists",
+  },
+  {
+    name: "Puy de la Vache Scoria",
+    nature: "hand_sample",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.mafic.basalt",
+    texture: "vesicular",
+    collectionMethod: "manual",
+    location: {
+      position: point(2.98, 45.7, elev(1160, 1160, "m", "msl")),
+      region: { kind: "continent", country: "FR" },
+      localityName: "Puy de la Vache",
+    },
+    description: on("2025-06-21"),
+    availability: "exists",
+  },
+  {
+    name: "Puy Chopine Domite",
+    nature: "thin_section",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.intermediate.trachyte",
+    texture: "porphyritic",
+    collectionMethod: "manual",
+    location: {
+      position: point(2.97, 45.83, elev(1180, 1180, "m", "msl")),
+      region: { kind: "continent", country: "FR" },
+      localityName: "Puy Chopine",
+    },
+    description: on("2025-06-22"),
+    availability: "exists",
+  },
+  // Further world spread across still-sparse regions: the East African Rift,
+  // Greenland, the Himalaya, Patagonia, Central America, Korea, the SW Pacific.
+  {
+    name: "Afar Rift Basalt",
+    nature: "hand_sample",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.mafic.basalt",
+    texture: "vesicular",
+    collectionMethod: "manual",
+    location: {
+      position: point(40.6, 11.8),
+      region: { kind: "continent", country: "ET" },
+    },
+    description: on("2025-02-04"),
+    availability: "exists",
+  },
+  {
+    name: "Isua Amphibolite",
+    nature: "thin_section",
+    type: "core.piece",
+    material: "rock.metamorphic.strongly_metamorphosed.amphibolite",
+    metamorphicFacies: "amphibolite",
+    collectionMethod: "manual",
+    location: {
+      position: point(-50.0, 65.1),
+      region: { kind: "continent", country: "GL" },
+    },
+    description: on("2024-07-14"),
+    availability: "exists",
+  },
+  {
+    name: "Himalayan Gneiss",
+    nature: "thin_section",
+    type: "individual_sample",
+    material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+    metamorphicFacies: "amphibolite",
+    collectionMethod: "manual",
+    location: {
+      position: point(86.9, 28.0, elev(5200, 5200, "m", "msl")),
+      region: { kind: "continent", country: "NP" },
+    },
+    description: on("2024-09-25"),
+    availability: "exists",
+  },
+  {
+    name: "Patagonian Plateau Basalt",
+    nature: "rock_chips",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.mafic.basalt",
+    texture: "aphanitic",
+    collectionMethod: "manual",
+    location: {
+      position: point(-70.0, -46.5),
+      region: { kind: "continent", country: "AR" },
+    },
+    description: on("2025-01-12"),
+    availability: "exists",
+  },
+  {
+    name: "Popocatépetl Andesite",
+    nature: "thin_section",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.intermediate.andesite",
+    texture: "microlitic",
+    collectionMethod: "manual",
+    location: {
+      position: point(-98.62, 19.02, elev(4000, 4000, "m", "msl")),
+      region: { kind: "continent", country: "MX" },
+    },
+    description: on("2025-05-08"),
+    availability: "exists",
+  },
+  {
+    name: "Jeju Island Basalt",
+    nature: "hand_sample",
+    type: "individual_sample",
+    material: "rock.igneous.volcanic.mafic.basalt",
+    texture: "vesicular",
+    collectionMethod: "manual",
+    location: {
+      position: point(126.5, 33.4),
+      region: { kind: "continent", country: "KR" },
+    },
+    description: on("2024-10-27"),
+    availability: "exists",
+  },
+  {
+    name: "Papuan Ophiolite Peridotite",
+    nature: "hand_sample",
+    type: "individual_sample",
+    material: "rock.igneous.plutonic.ultramafic.peridotite",
+    texture: "phaneritic",
+    collectionMethod: "manual",
+    location: {
+      position: point(147.7, -9.4),
+      region: { kind: "continent", country: "PG" },
+    },
+    description: on("2025-03-19"),
     availability: "exists",
   },
 ];
