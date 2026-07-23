@@ -1,3 +1,5 @@
+import type { NumericUnit } from "@projet-igsn/domain/sample/age/numeric-unit";
+
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
@@ -15,6 +17,14 @@ const emptyAge = {
   geologicalAgeMax: null,
   geologicalUnit: null,
 } as const;
+
+// A numeric age range; the stratigraphic bounds stay empty. Defaults to Ma.
+const numericAge = (min: number, max: number, unit: NumericUnit = "ma") => ({
+  ...emptyAge,
+  numericAgeMin: min,
+  numericAgeMax: max,
+  numericAgeUnit: unit,
+});
 
 describe("listSamples", () => {
   pgTest("should list samples most-recently-modified first", async ({ db }) => {
@@ -102,46 +112,182 @@ describe("listSamples", () => {
   });
 
   pgTest(
-    "should filter by numeric age range across mixed units",
+    "should filter a hierarchy facet at or under the picked node",
     async ({ db }) => {
-      // Arrange: 500 ka == 0.5 Ma (in range), 5 Ma (out of range).
+      // Arrange
       await insertSample(db, {
-        name: "Five hundred ka",
+        name: "Cored section",
         nature: "rock_powder",
-        type: null,
+        type: "core.section",
         collectionMethod: null,
-        age: {
-          ...emptyAge,
-          numericAgeMin: 500,
-          numericAgeMax: 500,
-          numericAgeUnit: "ka",
-        },
       });
       await insertSample(db, {
-        name: "Five Ma",
+        name: "Dredged",
         nature: "rock_powder",
-        type: null,
+        type: "dredge",
         collectionMethod: null,
-        age: {
-          ...emptyAge,
-          numericAgeMin: 5,
-          numericAgeMax: 5,
-          numericAgeUnit: "ma",
-        },
       });
-      // Act: query in Ma, so the ka sample must be converted to match.
+      // Act: picking the "core" ancestor matches its descendant section.
       const { data, total } = await listSamples(db, {
         page: 1,
         perPage: 10,
-        ageMin: 0.4,
-        ageMax: 0.6,
+        type: "core",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Cored section"]);
+    },
+  );
+
+  pgTest("should filter an enum facet by equality", async ({ db }) => {
+    // Arrange
+    await insertSample(db, {
+      name: "Powdered",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+    });
+    await insertSample(db, {
+      name: "Sectioned",
+      nature: "thin_section",
+      type: null,
+      collectionMethod: null,
+    });
+    // Act
+    const { data, total } = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      nature: "thin_section",
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.name)).toEqual(["Sectioned"]);
+  });
+
+  pgTest(
+    "should filter a text facet case- and accent-insensitively",
+    async ({ db }) => {
+      // Arrange
+      await insertSample(db, {
+        name: "By Curie",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        scientificContext: {
+          provenanceStatus: "recent_collection",
+          collectorName: "Marie Curié",
+        },
+      });
+      await insertSample(db, {
+        name: "By Darwin",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        scientificContext: {
+          provenanceStatus: "recent_collection",
+          collectorName: "Charles Darwin",
+        },
+      });
+      // Act
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        collectorName: "curie",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["By Curie"]);
+    },
+  );
+
+  pgTest("should filter an age range by numeric overlap", async ({ db }) => {
+    // Arrange
+    await insertSample(db, {
+      name: "Young",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      age: numericAge(10, 20),
+    });
+    await insertSample(db, {
+      name: "Old",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      age: numericAge(100, 200),
+    });
+    // Act: [15, 50] overlaps [10, 20] only.
+    const { data, total } = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      ageMin: 15,
+      ageMax: 50,
+      ageUnit: "ma",
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.name)).toEqual(["Young"]);
+  });
+
+  pgTest(
+    "should overlap ages across units by normalising to annum",
+    async ({ db }) => {
+      // Arrange: 4-5 Ga stored in Ga, a young 5-15 ka sample stored in ka.
+      await insertSample(db, {
+        name: "Ancient",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: numericAge(4, 5, "ga"),
+      });
+      await insertSample(db, {
+        name: "Recent",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: numericAge(5, 15, "ka"),
+      });
+      // Act: query [1000, 6000] Ma == [1, 6] Ga overlaps "Ancient" only.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 1000,
+        ageMax: 6000,
         ageUnit: "ma",
       });
       // Assert
       expect(total).toBe(1);
-      expect(data).toMatchObject([{ name: "Five hundred ka" }]);
+      expect(data.map((s) => s.name)).toEqual(["Ancient"]);
     },
   );
+
+  pgTest("should default the query unit to Ma", async ({ db }) => {
+    // Arrange: a 5-15 Ma sample and a 5-15 ka sample (a thousand times younger).
+    await insertSample(db, {
+      name: "Mega",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      age: numericAge(5, 15, "ma"),
+    });
+    await insertSample(db, {
+      name: "Kilo",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      age: numericAge(5, 15, "ka"),
+    });
+    // Act: no unit, so [4, 6] is read as Ma and overlaps only the Ma sample.
+    const { data, total } = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      ageMin: 4,
+      ageMax: 6,
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.name)).toEqual(["Mega"]);
+  });
 
   pgTest(
     "should place same-value annum ages on the before-present axis by their years unit",
@@ -247,6 +393,34 @@ describe("listSamples", () => {
       expect(data).toEqual([]);
     },
   );
+
+  pgTest("should combine facets and the count", async ({ db }) => {
+    // Arrange
+    await insertSample(db, {
+      name: "Match",
+      nature: "rock_powder",
+      type: "core.section",
+      collectionMethod: null,
+      specificName: "Basalt 42",
+    });
+    await insertSample(db, {
+      name: "Wrong nature",
+      nature: "thin_section",
+      type: "core.section",
+      collectionMethod: null,
+      specificName: "Basalt 42",
+    });
+    // Act
+    const { data, total } = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      type: "core",
+      nature: "rock_powder",
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.name)).toEqual(["Match"]);
+  });
 
   pgTest("should paginate with limit and offset", async ({ db }) => {
     // Arrange

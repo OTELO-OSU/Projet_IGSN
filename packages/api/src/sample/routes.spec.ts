@@ -115,6 +115,29 @@ describe("public sample routes", () => {
     });
   });
 
+  pgTest(
+    "should filter published samples by a hierarchy facet",
+    async ({ db }) => {
+      // Arrange: material is sediment.exogenous_detritic.clay, so it is under
+      // "sediment" but not under "rock".
+      const client = testClient(createApp(db));
+      const draft = await createSample(client, "Clay sample");
+      await publishSample(client, draft.id);
+      // Act / Assert: the ancestor "sediment" matches, "rock" does not.
+      const match = await client.samples.$get({
+        query: { page: "1", perPage: "10", material: "sediment" },
+      });
+      expect(await match.json()).toMatchObject({
+        data: [{ name: "Clay sample" }],
+        meta: { total: 1 },
+      });
+      const miss = await client.samples.$get({
+        query: { page: "1", perPage: "10", material: "rock" },
+      });
+      expect(await miss.json()).toMatchObject({ data: [], meta: { total: 0 } });
+    },
+  );
+
   pgTest("should filter published samples by igsn", async ({ db }) => {
     // Arrange
     const client = testClient(createApp(db));

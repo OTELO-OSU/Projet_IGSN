@@ -180,8 +180,8 @@ services:
       DATABASE_NAME: igsn
       DATABASE_USER: igsn
       DATABASE_PASSWORD: igsn
-      # Uploaded sample attachments (ADR 0017); bind-mounted to
-      # packages/api/attachments so the blobs are inspectable from the host.
+      # Uploaded sample attachments (ADR 0017); a named volume so blobs
+      # survive restarts without cluttering the host working tree.
       ATTACHMENTS_DIR: /data/attachments
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3002/"]
@@ -197,7 +197,7 @@ services:
     volumes:
       - ./packages/api/src:/app/packages/api/src:ro
       - ./packages/domain/src:/app/packages/domain/src:ro
-      - ./packages/api/attachments:/data/attachments
+      - attachments:/data/attachments
     develop:
       watch:
         - action: sync
@@ -220,3 +220,4 @@ services:
 
 volumes:
   pgdata:
+  attachments:

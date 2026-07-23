@@ -75,4 +75,38 @@ describe("listSamplesQuerySchema", () => {
       expect(listSamplesQuerySchema.parse({ search }).search).toBeUndefined();
     },
   );
+
+  it("should pass through valid facet filters", () => {
+    expect(
+      listSamplesQuerySchema.parse({
+        type: "core.section",
+        material: "rock.igneous.plutonic",
+        nature: "rock_powder",
+        specificName: "Basalt",
+        collectorName: "Marie Curie",
+        ageMin: "10",
+        ageMax: "100",
+        ageUnit: "ma",
+      }),
+    ).toEqual({
+      page: 1,
+      perPage: DEFAULT_PAGE_SIZE,
+      type: "core.section",
+      material: "rock.igneous.plutonic",
+      nature: "rock_powder",
+      collectorName: "Marie Curie",
+      ageMin: 10,
+      ageMax: 100,
+      ageUnit: "ma",
+    });
+  });
+
+  it("should drop invalid facet values instead of rejecting", () => {
+    const result = listSamplesQuerySchema.parse({
+      type: "not.a.type",
+      nature: "not_a_nature",
+      ageUnit: "century",
+    });
+    expect(result).toEqual({ page: 1, perPage: DEFAULT_PAGE_SIZE });
+  });
 });

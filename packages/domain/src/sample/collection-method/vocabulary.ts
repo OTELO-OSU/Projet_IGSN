@@ -15,6 +15,7 @@ import { type TreeNode } from "../path/tree-node.ts";
 const collectionMethodTree = {
   coring: {
     optional: true,
+    searchable: true,
     choices: [
       "coring",
       "box_corer",
@@ -70,14 +71,27 @@ const collectionMethodTree = {
   },
   dredging: {
     optional: true,
+    searchable: true,
     choices: ["dredging", "chain_bag", "chain_bag_dredge"],
   },
   "dredging.dredging": { label: "dredging" },
   grab: {
     optional: true,
+    searchable: true,
     choices: ["grab", "hov", "rov"],
   },
   "grab.grab": { label: "grab" },
+  // The remaining roots are plain-leaf collection methods; an entry exists only
+  // to flag them as searchable facet options (see sample/search/facets.ts).
+  blasting: { searchable: true },
+  camera_sled_camera_tow: { searchable: true },
+  experimental_apparatus: { searchable: true },
+  manual: { searchable: true },
+  probe: { searchable: true },
+  sediment_trap: { searchable: true },
+  spatial_mission: { searchable: true },
+  suspended_sediment: { searchable: true },
+  unknown: { searchable: true },
 } satisfies Record<string, TreeNode>;
 
 export type CollectionMethodSegment = keyof typeof collectionMethodTree;

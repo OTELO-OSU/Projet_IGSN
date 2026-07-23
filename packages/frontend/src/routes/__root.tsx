@@ -59,7 +59,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 function RootLayout() {
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="bg-background/80 sticky top-0 z-40 flex items-center gap-3 border-b px-6 py-4 backdrop-blur">
+      <header className="bg-background/80 sticky top-0 z-40 flex h-24 items-center gap-3 border-b px-4 backdrop-blur">
         <Link
           to="/"
           aria-label={m.app_title()}
@@ -75,7 +75,7 @@ function RootLayout() {
         </Link>
       </header>
 
-      <main className="w-full flex-1">
+      <main className="w-full flex-1 flex-col">
         <Outlet />
       </main>
 
