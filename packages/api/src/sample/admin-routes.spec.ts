@@ -275,6 +275,11 @@ describe("admin sample routes", () => {
           collectionDate: { start: "2026-01-01", end: "2026-01-01" },
         },
         availability: "exists" as const,
+        scientificContext: {
+          provenanceStatus: "historical_specimen" as const,
+          collectionCurator: "Georges Cuvier",
+          collectionOrigin: "scientific_expedition" as const,
+        },
       };
       const created = await client.admin.samples.$post(
         { json: publishable },
@@ -353,6 +358,11 @@ describe("admin sample routes", () => {
             collectionDate: { start: "2026-01-01", end: "2026-01-01" },
           },
           availability: "exists",
+          scientificContext: {
+            provenanceStatus: "historical_specimen",
+            collectionCurator: "Georges Cuvier",
+            collectionOrigin: "scientific_expedition",
+          },
         },
       },
       { headers: authHeader },
@@ -436,6 +446,11 @@ describe("admin sample routes", () => {
             collectionDate: { start: "2026-01-01", end: "2026-01-01" },
           },
           availability: "exists",
+          scientificContext: {
+            provenanceStatus: "historical_specimen",
+            collectionCurator: "Georges Cuvier",
+            collectionOrigin: "scientific_expedition",
+          },
         },
       },
       { headers: authHeader },

@@ -11,6 +11,11 @@ const publishable = {
   location: { position: { type: "point" as const, longitude: 0, latitude: 0 } },
   description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
   availability: "exists" as const,
+  scientificContext: {
+    provenanceStatus: "historical_specimen" as const,
+    collectionCurator: "Georges Cuvier",
+    collectionOrigin: "scientific_expedition" as const,
+  },
 };
 
 describe("publishedSampleSchema", () => {

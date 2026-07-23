@@ -1,6 +1,7 @@
 import type { Selectable } from "kysely";
 
 import { type Sample, sampleSchema } from "@projet-igsn/domain/sample/sample";
+import { scientificContextSchema } from "@projet-igsn/domain/sample/scientific-context/model";
 
 import type { DB } from "../../db.ts";
 
@@ -22,10 +23,17 @@ function measurement(value: number | null, unit: string | null) {
 // round-trips to the same minimal shape the client sent; null when every part
 // is absent.
 function prune(parts: Record<string, unknown>) {
-  const kept = Object.fromEntries(
+  const kept = omitNull(parts);
+  return Object.keys(kept).length > 0 ? kept : null;
+}
+
+// Keeps only the non-null entries; unlike prune it never collapses to null, so
+// a discriminated shape can keep a mandatory field (the provenance status)
+// alongside its optional siblings.
+function omitNull(parts: Record<string, unknown>) {
+  return Object.fromEntries(
     Object.entries(parts).filter(([, part]) => part !== null),
   );
-  return Object.keys(kept).length > 0 ? kept : null;
 }
 
 // Flat description columns -> nested domain description (ADR 0015); a sample
@@ -100,6 +108,44 @@ function toSecurity(row: Selectable<DB["sample"]>) {
   });
 }
 
+// Flat scientific-context columns -> nested domain scientific context (ADR 0014
+// storage pattern). `sc_provenance_status` is the discriminant; only its
+// branch's columns are read, and `sc_collector_name` is shared by both. A row
+// with no status carries `scientificContext: null`.
+function toScientificContext(row: Selectable<DB["sample"]>) {
+  if (row.sc_provenance_status === "recent_collection") {
+    return scientificContextSchema.parse({
+      provenanceStatus: "recent_collection",
+      ...omitNull({
+        funderOrganization: row.sc_funder_organization,
+        researchProgramName: row.sc_research_program_name,
+        researchProgramChief: row.sc_research_program_chief,
+        researchProgramChiefOrcid: row.sc_research_program_chief_orcid,
+        researchStructure: row.sc_research_structure,
+        collectorName: row.sc_collector_name,
+        collectorOrcid: row.sc_collector_orcid,
+        researchCampaign: row.sc_research_campaign,
+        funding: row.sc_funding,
+        researchProgramDescription: row.sc_research_program_description,
+        fieldName: row.sc_field_name,
+        missionDescription: row.sc_mission_description,
+      }),
+    });
+  }
+  if (row.sc_provenance_status === "historical_specimen") {
+    return scientificContextSchema.parse({
+      provenanceStatus: "historical_specimen",
+      ...omitNull({
+        collectionCurator: row.sc_collection_curator,
+        collectionOrigin: row.sc_collection_origin,
+        collectorName: row.sc_collector_name,
+        collectionContextDescription: row.sc_collection_context_description,
+      }),
+    });
+  }
+  return null;
+}
+
 // DB row (snake_case) -> domain Sample (camelCase), validated at the boundary.
 // Location is flat on the row (see to-location.ts). Age is flat too: all-null
 // age columns -> null age. sampleSchema.parse validates the codes at the boundary.
@@ -144,6 +190,7 @@ export function toSample(
     location: toLocation(row),
     description: toDescription(row),
     condition: toCondition(row),
+    scientificContext: toScientificContext(row),
     age,
     links: links.map((link) => ({
       id: link.id,
