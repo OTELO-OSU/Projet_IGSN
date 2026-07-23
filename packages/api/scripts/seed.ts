@@ -41,6 +41,9 @@ export async function seed(
             ({
               material,
               collectionMethod,
+              collectionMethodDescription,
+              specificName,
+              metamorphicFacies,
               location,
               description,
               scientificContext,
@@ -49,6 +52,10 @@ export async function seed(
               ...rest,
               material: material ?? null,
               collection_method: collectionMethod ?? null,
+              collection_method_description:
+                collectionMethodDescription ?? null,
+              specific_name: specificName ?? null,
+              metamorphic_facies: metamorphicFacies ?? null,
               ...locationColumns(location),
               ...descriptionColumns(description),
               ...scientificContextColumns(scientificContext),
@@ -62,14 +69,18 @@ export async function seed(
 
 // created_at/updated_at are database defaults, so they are omitted; the rest
 // are optional because a draft seed row may not be classified or published.
-const seedSampleSchema = sampleSchema
+export const seedSampleSchema = sampleSchema
   .pick({
     id: true,
     name: true,
     nature: true,
     type: true,
     material: true,
+    texture: true,
+    metamorphicFacies: true,
     collectionMethod: true,
+    collectionMethodDescription: true,
+    specificName: true,
     location: true,
     description: true,
     availability: true,
@@ -80,7 +91,11 @@ const seedSampleSchema = sampleSchema
   .partial({
     type: true,
     material: true,
+    texture: true,
+    metamorphicFacies: true,
     collectionMethod: true,
+    collectionMethodDescription: true,
+    specificName: true,
     location: true,
     description: true,
     availability: true,
@@ -89,7 +104,7 @@ const seedSampleSchema = sampleSchema
     published: true,
   });
 
-type SeedSample = z.infer<typeof seedSampleSchema>;
+export type SeedSample = z.infer<typeof seedSampleSchema>;
 
 // A seed row must hold the bar the API enforces on the same data: the create
 // schema for a draft, the published schema (publish blockers raised as
