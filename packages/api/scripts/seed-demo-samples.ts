@@ -1175,6 +1175,24 @@ const DRAFTS: DemoRow[] = [
 const demoId = (index: number): string =>
   `019f5b01-0000-7000-8000-${index.toString(16).padStart(12, "0")}`;
 
+// Publish requires a scientific context; published demo rows alternate the two
+// provenance branches so the walkthrough shows both. ROR ids from ORGANIZATIONS
+// (same as SEED_SAMPLES).
+const RECENT_CONTEXT: SeedSample["scientificContext"] = {
+  provenanceStatus: "recent_collection",
+  funderOrganization: "02feahw73",
+  researchProgramName: "Solid Earth Demo Survey",
+  researchProgramChief: "Jean Dupont",
+  researchStructure: ["02rx3b187"],
+  collectorName: "Claire Martin",
+};
+
+const HISTORICAL_CONTEXT: SeedSample["scientificContext"] = {
+  provenanceStatus: "historical_specimen",
+  collectionCurator: "Paul Bernard",
+  collectionOrigin: "scientific_expedition",
+};
+
 // The first PUBLISHED.length rows publish (igsn derived from the id as publish
 // does); the drafts follow with no igsn.
 export const DEMO_SAMPLES: SeedSample[] = [...PUBLISHED, ...DRAFTS].map(
@@ -1185,7 +1203,14 @@ export const DEMO_SAMPLES: SeedSample[] = [...PUBLISHED, ...DRAFTS].map(
       ...row,
       id,
       published,
-      ...(published ? { igsn: generateIgsnSuffix(id) } : {}),
+      ...(published
+        ? {
+            igsn: generateIgsnSuffix(id),
+            scientificContext:
+              row.scientificContext ??
+              (index % 2 === 0 ? RECENT_CONTEXT : HISTORICAL_CONTEXT),
+          }
+        : {}),
     };
   },
 );
