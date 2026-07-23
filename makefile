@@ -56,11 +56,17 @@ dev:
 		--build \
 		--attach admin --attach api --attach frontend
 
+compose-down:
+	docker compose -f docker-compose.dev.yml down -v
+
 db-migrate:								## Run migrations on the local dev Postgres (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml run --rm api pnpm -F @projet-igsn/api migrate
 
 db-seed:									## Seed the local dev Postgres with sample data (dev stack must be up, migrations applied)
 	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api seed
+
+db-seed-demo:								## Reset the dev Postgres to the 100-sample demo dataset (dev stack must be up, migrations applied)
+	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api seed:demo
 
 db-reset:								## Fully reset the dev Postgres database, then re-run migrations (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml exec -T postgres \

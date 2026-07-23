@@ -8,6 +8,7 @@
     "start": "node src/main.ts",
     "migrate": "node scripts/migrate.ts",
     "seed": "node scripts/seed.ts",
+    "seed:demo": "node scripts/seed-demo.ts",
     "seed:e2e": "node scripts/reset-and-seed.ts"
   },
   "dependencies": {

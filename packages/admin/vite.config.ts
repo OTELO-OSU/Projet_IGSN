@@ -15,12 +15,19 @@ export default defineConfig({
     },
   },
   resolve: { tsconfigPaths: true },
+  // These arrive through the linked design-system workspace package, which
+  // Vite's dep scanner does not crawl, so pre-bundle them at server start
+  // instead of lazily mid-request (a cold-start stall).
+  optimizeDeps: { include: ["radix-ui", "lucide-react", "cmdk", "sonner"] },
   plugins: [
     tailwindcss(),
     paraglideVitePlugin({
       project: path.resolve(__dirname, "project.inlang"),
       outdir: path.resolve(__dirname, "src/paraglide"),
-      outputStructure: "message-modules",
+      // locale-modules bundles ~1 file per locale; message-modules emits one
+      // per message (~1k here), which stalls the cold dev server (all module
+      // requests pending) until the transform cache warms. See paraglide docs.
+      outputStructure: "locale-modules",
       strategy: ["baseLocale"],
     }),
     tanstackRouter({ autoCodeSplitting: true }),

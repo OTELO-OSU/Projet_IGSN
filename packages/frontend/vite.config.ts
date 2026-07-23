@@ -18,6 +18,10 @@ const config = defineConfig({
     },
   },
   resolve: { tsconfigPaths: true },
+  // These arrive through the linked design-system workspace package, which
+  // Vite's dep scanner does not crawl, so pre-bundle them at server start
+  // instead of lazily mid-request (a cold-start stall).
+  optimizeDeps: { include: ["radix-ui", "lucide-react", "cmdk", "sonner"] },
   plugins: [
     devtools(),
     nitro(),
