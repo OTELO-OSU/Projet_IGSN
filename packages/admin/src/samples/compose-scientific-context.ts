@@ -3,26 +3,27 @@ import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-co
 import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
 // The scientific-context block as the form holds it: one flat set of fields
-// for both provenance branches, plain strings blank when empty. Keys match the
-// domain field names so a schema issue's path maps straight onto the draft
-// field (sample-draft-field-errors falls back to the joined path).
+// for both provenance branches, every field nullish when unset (see
+// compose-condition.ts). Keys match the domain field names so a schema issue's
+// path maps straight onto the draft field (sample-draft-field-errors falls
+// back to the joined path).
 export type ScientificContextDraft = {
   provenanceStatus: ProvenanceStatus | undefined;
-  funderOrganization: string | undefined;
-  researchProgramName: string;
-  researchProgramChief: string;
-  researchProgramChiefOrcid: string;
+  funderOrganization: string | null | undefined;
+  researchProgramName: string | null | undefined;
+  researchProgramChief: string | null | undefined;
+  researchProgramChiefOrcid: string | null | undefined;
   researchStructure: string[];
-  collectorName: string;
-  collectorOrcid: string;
-  researchCampaign: string;
-  funding: string;
-  researchProgramDescription: string;
-  fieldName: string;
-  missionDescription: string;
-  collectionCurator: string;
+  collectorName: string | null | undefined;
+  collectorOrcid: string | null | undefined;
+  researchCampaign: string | null | undefined;
+  funding: string | null | undefined;
+  researchProgramDescription: string | null | undefined;
+  fieldName: string | null | undefined;
+  missionDescription: string | null | undefined;
+  collectionCurator: string | null | undefined;
   collectionOrigin: CollectionOrigin | undefined;
-  collectionContextDescription: string;
+  collectionContextDescription: string | null | undefined;
 };
 
 // A scientific context as composed from the draft, before the domain schema
@@ -52,7 +53,7 @@ type ScientificContextCandidate =
       collectionContextDescription: string | undefined;
     };
 
-const text = (value: string) => value.trim() || undefined;
+const trim = (value: string | null | undefined) => value?.trim() || undefined;
 
 // Draft -> domain scientific context, or null when no provenance status is
 // chosen (the whole block is then omitted from the payload). Only the active
@@ -65,29 +66,29 @@ export function composeScientificContext(
     return {
       provenanceStatus: "recent_collection",
       funderOrganization: draft.funderOrganization || undefined,
-      researchProgramName: text(draft.researchProgramName),
-      researchProgramChief: text(draft.researchProgramChief),
-      researchProgramChiefOrcid: text(draft.researchProgramChiefOrcid),
+      researchProgramName: trim(draft.researchProgramName),
+      researchProgramChief: trim(draft.researchProgramChief),
+      researchProgramChiefOrcid: trim(draft.researchProgramChiefOrcid),
       researchStructure:
         draft.researchStructure.length > 0
           ? draft.researchStructure
           : undefined,
-      collectorName: text(draft.collectorName),
-      collectorOrcid: text(draft.collectorOrcid),
-      researchCampaign: text(draft.researchCampaign),
-      funding: text(draft.funding),
-      researchProgramDescription: text(draft.researchProgramDescription),
-      fieldName: text(draft.fieldName),
-      missionDescription: text(draft.missionDescription),
+      collectorName: trim(draft.collectorName),
+      collectorOrcid: trim(draft.collectorOrcid),
+      researchCampaign: trim(draft.researchCampaign),
+      funding: trim(draft.funding),
+      researchProgramDescription: trim(draft.researchProgramDescription),
+      fieldName: trim(draft.fieldName),
+      missionDescription: trim(draft.missionDescription),
     };
   }
   if (draft.provenanceStatus === "historical_specimen") {
     return {
       provenanceStatus: "historical_specimen",
-      collectionCurator: text(draft.collectionCurator),
+      collectionCurator: trim(draft.collectionCurator),
       collectionOrigin: draft.collectionOrigin,
-      collectorName: text(draft.collectorName),
-      collectionContextDescription: text(draft.collectionContextDescription),
+      collectorName: trim(draft.collectorName),
+      collectionContextDescription: trim(draft.collectionContextDescription),
     };
   }
   return null;
@@ -104,20 +105,21 @@ export function toScientificContextDraft(
   return {
     provenanceStatus: value?.provenanceStatus,
     funderOrganization: recent?.funderOrganization ?? undefined,
-    researchProgramName: recent?.researchProgramName ?? "",
-    researchProgramChief: recent?.researchProgramChief ?? "",
-    researchProgramChiefOrcid: recent?.researchProgramChiefOrcid ?? "",
+    researchProgramName: recent?.researchProgramName ?? undefined,
+    researchProgramChief: recent?.researchProgramChief ?? undefined,
+    researchProgramChiefOrcid: recent?.researchProgramChiefOrcid ?? undefined,
     researchStructure: recent?.researchStructure ?? [],
-    collectorName: recent?.collectorName ?? historical?.collectorName ?? "",
-    collectorOrcid: recent?.collectorOrcid ?? "",
-    researchCampaign: recent?.researchCampaign ?? "",
-    funding: recent?.funding ?? "",
-    researchProgramDescription: recent?.researchProgramDescription ?? "",
-    fieldName: recent?.fieldName ?? "",
-    missionDescription: recent?.missionDescription ?? "",
-    collectionCurator: historical?.collectionCurator ?? "",
+    collectorName:
+      recent?.collectorName ?? historical?.collectorName ?? undefined,
+    collectorOrcid: recent?.collectorOrcid ?? undefined,
+    researchCampaign: recent?.researchCampaign ?? undefined,
+    funding: recent?.funding ?? undefined,
+    researchProgramDescription: recent?.researchProgramDescription ?? undefined,
+    fieldName: recent?.fieldName ?? undefined,
+    missionDescription: recent?.missionDescription ?? undefined,
+    collectionCurator: historical?.collectionCurator ?? undefined,
     collectionOrigin: historical?.collectionOrigin ?? undefined,
     collectionContextDescription:
-      historical?.collectionContextDescription ?? "",
+      historical?.collectionContextDescription ?? undefined,
   };
 }
