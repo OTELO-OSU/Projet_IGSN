@@ -1,5 +1,7 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
+import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
+
 type EconomicInterestInput = Pick<
   CreateSample,
   | "economicInterest"
@@ -21,10 +23,8 @@ type EconomicInterestInput = Pick<
 // the free-text detail.
 export function economicInterestColumns(input: EconomicInterestInput) {
   const path = input.economicInterest ?? null;
-  const enabled = path === "yes" || (path?.startsWith("yes.") ?? false);
-  const hasElements =
-    path === "yes.mineral_and_ore" ||
-    (path?.startsWith("yes.mineral_and_ore.") ?? false);
+  const enabled = isPathAtOrUnder(path, "yes");
+  const hasElements = isPathAtOrUnder(path, "yes.mineral_and_ore");
   const elements = input.economicInterestElements;
   return {
     economic_interest: path,

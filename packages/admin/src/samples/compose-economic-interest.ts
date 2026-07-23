@@ -2,6 +2,7 @@ import {
   composeHierarchyValue,
   toHierarchyPath,
 } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 
 // The Economic interest section's flat form draft. The answer is a hierarchy
@@ -25,14 +26,6 @@ type EconomicInterestValue = Pick<
   | "economicDepositDescription"
 >;
 
-// A `yes` answer (bare or refined) is the only one that carries detail; the
-// chemical elements need a mineral_and_ore resource on top of that.
-const isYes = (path: string | null): boolean =>
-  path === "yes" || (path?.startsWith("yes.") ?? false);
-const isMineralOre = (path: string | null): boolean =>
-  path === "yes.mineral_and_ore" ||
-  (path?.startsWith("yes.mineral_and_ore.") ?? false);
-
 type EconomicInterestComposed = {
   economicInterest: string | null;
   economicInterestElements: string[];
@@ -50,11 +43,16 @@ export function composeEconomicInterest(
   draft: EconomicInterestDraft,
 ): EconomicInterestComposed {
   const economicInterest = composeHierarchyValue(draft.economicInterestPath);
+  // A `yes` answer (bare or refined) is the only one that carries detail; the
+  // chemical elements need a mineral_and_ore resource on top of that.
   const detail = (value: string | null | undefined): string | null =>
-    isYes(economicInterest) ? value?.trim() || null : null;
+    isPathAtOrUnder(economicInterest, "yes") ? value?.trim() || null : null;
   return {
     economicInterest,
-    economicInterestElements: isMineralOre(economicInterest)
+    economicInterestElements: isPathAtOrUnder(
+      economicInterest,
+      "yes.mineral_and_ore",
+    )
       ? draft.economicInterestElements
       : [],
     economicResourceTypePrecision: detail(draft.economicResourceTypePrecision),

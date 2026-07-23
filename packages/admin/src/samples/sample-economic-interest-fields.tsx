@@ -5,6 +5,7 @@ import {
 } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { ECONOMIC_INTEREST_HIERARCHY } from "@projet-igsn/domain/sample/economic-interest/vocabulary";
 import { ELEMENTS } from "@projet-igsn/domain/sample/element/vocabulary";
+import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 
 import { m } from "#/paraglide/messages.js";
 import { type EconomicInterestDraft } from "#/samples/compose-economic-interest.ts";
@@ -48,10 +49,8 @@ export function SampleEconomicInterestFields() {
         }
       >
         {(path) => {
-          const yes = path === "yes" || (path?.startsWith("yes.") ?? false);
-          const mineralOre =
-            path === "yes.mineral_and_ore" ||
-            (path?.startsWith("yes.mineral_and_ore.") ?? false);
+          const yes = isPathAtOrUnder(path, "yes");
+          const mineralOre = isPathAtOrUnder(path, "yes.mineral_and_ore");
           return (
             <>
               {mineralOre ? (
