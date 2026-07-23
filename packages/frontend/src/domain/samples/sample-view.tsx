@@ -18,6 +18,7 @@ import {
   textureLabel,
   typeLabel,
 } from "#/domain/samples/sample-labels.ts";
+import { ScientificContextView } from "#/domain/samples/scientific-context-view.tsx";
 import { SecurityView } from "#/domain/samples/security-view.tsx";
 import { m } from "#/paraglide/messages.js";
 
@@ -33,6 +34,7 @@ type SampleViewProps = {
   collectionMethodDescription: Sample["collectionMethodDescription"];
   description: Sample["description"];
   condition: Sample["condition"];
+  scientificContext: Sample["scientificContext"];
   location: Sample["location"];
   security: Sample["security"];
   availability: Sample["availability"];
@@ -116,6 +118,7 @@ export function SampleView({
   collectionMethodDescription,
   description,
   condition,
+  scientificContext,
   location,
   security,
   availability,
@@ -193,6 +196,11 @@ export function SampleView({
       id: "condition",
       title: m.sample_section_condition(),
       content: <ConditionView condition={condition} />,
+    },
+    scientificContext && {
+      id: "scientific-context",
+      title: m.sample_section_scientific_context(),
+      content: <ScientificContextView scientificContext={scientificContext} />,
     },
     hasAge(age)
       ? {

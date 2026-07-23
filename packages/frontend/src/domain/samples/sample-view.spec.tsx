@@ -20,6 +20,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
       />,
@@ -50,6 +51,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
         links={[
@@ -91,6 +93,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
       />,
@@ -121,6 +124,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
       />,
@@ -146,6 +150,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
       />,
@@ -179,6 +184,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
       />,
@@ -211,6 +217,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
       />,
@@ -236,6 +243,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
       />,
@@ -263,6 +271,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
       />,
@@ -296,6 +305,7 @@ describe("SampleView", () => {
         collectionMethodDescription="Cored at low tide from the reef flat"
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         security={null}
         availability={null}
@@ -326,6 +336,7 @@ describe("SampleView", () => {
         collectionMethodDescription={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         security={null}
         availability="no_longer_exists"
@@ -366,6 +377,7 @@ describe("SampleView", () => {
     collectionMethodDescription: null,
     description: null,
     condition: null,
+    scientificContext: null,
     location: null,
     security: null,
     availability: null,
@@ -483,6 +495,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
       />,
@@ -528,6 +541,7 @@ describe("SampleView", () => {
           mass: { value: 1.4, unit: "kg" },
         }}
         condition={null}
+        scientificContext={null}
         location={null}
         age={null}
       />,
@@ -560,6 +574,7 @@ describe("SampleView", () => {
             measurement: { value: -18, unit: "celsius" },
           },
         }}
+        scientificContext={null}
         location={null}
         security={null}
         availability={null}
@@ -598,6 +613,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={{
           position: {
             type: "point",
@@ -647,6 +663,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={{
           position: {
             type: "area",
@@ -707,6 +724,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={{ region: { kind: "continent", country: "FR" } }}
         age={null}
       />,
@@ -733,6 +751,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={{ region: { kind: "ocean", oceanSea: "pacific_ocean" } }}
         age={null}
       />,
@@ -766,6 +785,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={{ region }}
         age={null}
       />,
@@ -792,6 +812,7 @@ describe("SampleView", () => {
         publicationYear={null}
         description={null}
         condition={null}
+        scientificContext={null}
         location={{
           localityName: "Reef flat",
           localityDescription: "Southern reef flat, Tahiti",
