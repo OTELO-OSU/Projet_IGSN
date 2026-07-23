@@ -30,6 +30,7 @@ type SampleViewProps = {
   material: Sample["material"];
   texture: Sample["texture"];
   metamorphicFacies: Sample["metamorphicFacies"];
+  specificName: Sample["specificName"];
   collectionMethod: Sample["collectionMethod"];
   collectionMethodDescription: Sample["collectionMethodDescription"];
   description: Sample["description"];
@@ -114,6 +115,7 @@ export function SampleView({
   material,
   texture,
   metamorphicFacies,
+  specificName,
   collectionMethod,
   collectionMethodDescription,
   description,
@@ -160,6 +162,10 @@ export function SampleView({
             value={
               metamorphicFacies && metamorphicFaciesLabel(metamorphicFacies)
             }
+          />
+          <FieldRow
+            label={m.sample_field_specific_name()}
+            value={specificName}
           />
           <BreadcrumbFieldRow
             id="sample-field-collection-method"
@@ -240,7 +246,7 @@ export function SampleView({
             never sticks); it then follows the scroll alongside the sections. */}
         <nav
           aria-label={m.sample_section_sample()}
-          className="sticky top-6 w-40 shrink-0 self-start"
+          className="sticky top-28 w-40 shrink-0 self-start"
         >
           <ul className="grid gap-2">
             {sections.map(({ id, title }) => (

@@ -13,6 +13,9 @@ export type HierarchyNodeDef = {
   // A label code naming the level this node opens for its children (translated
   // like `label`). Absent: the level is labelled by the parent's picked value.
   childLabel?: string;
+  // Offered as a public search-facet option (mirrors domain TreeNode). Unused by
+  // the form widget; the facet sidebar filters levels by it.
+  searchable?: boolean;
 };
 
 // A hierarchical vocabulary as one self-describing bundle: its entry segments
@@ -39,6 +42,12 @@ function resolveNode(
     if (node) return node;
   }
   return undefined;
+}
+
+// Whether a path's node is flagged as a searchable facet option (default
+// false). Used by the facet sidebar to offer only flagged nodes at each level.
+export function isPathSearchable(hierarchy: Hierarchy, path: string): boolean {
+  return resolveNode(hierarchy, path)?.searchable === true;
 }
 
 const identity = (code: string) => code;

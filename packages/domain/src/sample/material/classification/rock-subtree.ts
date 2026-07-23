@@ -6,6 +6,7 @@ import { type TreeNode } from "../../path/tree-node.ts";
 // childless leaves labelled by their own code (see tree-node.ts).
 export const rockTree = {
   igneous: {
+    searchable: true,
     choices: ["plutonic", "volcanic"],
   },
   metamorphic: { choices: ["weakly_metamorphosed", "strongly_metamorphosed"] },
@@ -39,52 +40,66 @@ export const rockTree = {
   // `carbonatite` and `hyperalkaline_rocks` are shared leaves of both `exotic`
   // branches (path is identity). Every level is mandatory down to a rock leaf
   // (the default: nothing is marked `optional: true`).
+  // plutonic/volcanic and the chemistry level below them are searchable facet
+  // options (the "igneous rock + chemistry" case); deeper rock leaves are not.
   plutonic: {
+    searchable: true,
     choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
   },
   volcanic: {
+    searchable: true,
     choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
   },
 
   "plutonic.felsic": {
     label: "felsic",
+    searchable: true,
     choices: ["granite", "granodiorite", "tonalite", "trondhjemite"],
   },
   "plutonic.intermediate": {
     label: "intermediate",
+    searchable: true,
     choices: ["syenite", "monzonite", "diorite"],
   },
   "plutonic.mafic": {
     label: "mafic",
+    searchable: true,
     choices: ["gabbro", "norite", "anorthosite", "troctolite"],
   },
   "plutonic.ultramafic": {
     label: "ultramafic",
+    searchable: true,
     choices: ["peridotite", "pyroxenite", "hornblendite"],
   },
   "plutonic.exotic": {
     label: "exotic",
+    searchable: true,
     choices: ["carbonatite", "hyperalkaline_rocks"],
   },
 
   "volcanic.felsic": {
     label: "felsic",
+    searchable: true,
     choices: ["rhyolite", "dacite"],
   },
   "volcanic.intermediate": {
     label: "intermediate",
+    searchable: true,
     choices: ["trachyte", "latite", "andesite", "phonolite"],
   },
   "volcanic.mafic": {
     label: "mafic",
+    searchable: true,
     choices: ["basalt", "basanite", "tephrite"],
   },
   "volcanic.ultramafic": {
     label: "ultramafic",
+    searchable: true,
     choices: ["komatiite", "picrite"],
   },
   "volcanic.exotic": {
     label: "exotic",
+    searchable: true,
     choices: [
       "carbonatite",
       "foidite",

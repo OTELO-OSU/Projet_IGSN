@@ -15,6 +15,7 @@ import { type TreeNode } from "../path/tree-node.ts";
 // resolution) instead of cycling on bare `core`.
 const typeTree = {
   core: {
+    searchable: true,
     choices: [
       "core",
       "half_round",
@@ -36,8 +37,32 @@ const typeTree = {
       "outcrop_preserved_stratigraphy",
     ],
   },
-  // Childless override terminating core.core.
-  "core.core": { label: "core" },
+  // Childless override terminating core.core (also a searchable facet option).
+  "core.core": { label: "core", searchable: true },
+  // The other three roots are plain leaves; an entry exists only to flag them as
+  // searchable facet options (like Core, per sample/search/facets.ts).
+  dredge: { searchable: true },
+  serie_of_sample: { searchable: true },
+  inapplicable: { searchable: true },
+  // Core's children as searchable facet options (individual_sample is also a
+  // root, so its one entry covers both occurrences).
+  individual_sample: { searchable: true },
+  half_round: { searchable: true },
+  piece: { searchable: true },
+  quarter_round: { searchable: true },
+  section: { searchable: true },
+  section_half: { searchable: true },
+  sub_piece: { searchable: true },
+  whole_round: { searchable: true },
+  cuttings: { searchable: true },
+  individual_sample_in_core: { searchable: true },
+  sample_from_a_cut: { searchable: true },
+  catcher: { searchable: true },
+  slab: { searchable: true },
+  casq_section: { searchable: true },
+  casq_section_large_lu_gutter: { searchable: true },
+  casq_section_narrow_nu_gutter: { searchable: true },
+  outcrop_preserved_stratigraphy: { searchable: true },
 } satisfies Record<string, TreeNode>;
 
 // Every tree key, including dotted path-section overrides like `core.core`.
@@ -63,9 +88,12 @@ export const SAMPLE_TYPE_ROOTS = [
 export const SAMPLE_TYPES = expandPaths(SAMPLE_TYPE_TREE, SAMPLE_TYPE_ROOTS);
 
 // The vocabulary as one self-describing bundle for HierarchySelectField.
+// `searchable` opts the whole vocabulary into the public search facets (default
+// false; see sample/search/facets.ts).
 export const SAMPLE_TYPE_HIERARCHY = {
   roots: SAMPLE_TYPE_ROOTS,
   nodes: SAMPLE_TYPE_TREE,
+  searchable: true,
 };
 
 // A validated dot-joined path. Not a literal union: the valid set is derived

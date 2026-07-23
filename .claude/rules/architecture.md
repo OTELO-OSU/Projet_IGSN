@@ -24,6 +24,10 @@ page. Sorting one page client-side lies about the dataset. Declare the
 sort/filter params in the list query schema in `domain`, pass them through the
 repository, and keep them in the URL app-side (see the URL-as-state rule).
 
+Public sample-list filters are driven by the `SAMPLE_FACETS` registry
+(`domain/sample/search/facets.ts`) as single source of truth. To add or extend
+one, see the `add-search-facet` skill.
+
 ## Publish constraints
 
 The reasons a sample cannot be published live in ONE place:

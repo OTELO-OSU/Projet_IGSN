@@ -13,6 +13,7 @@ describe("SampleView", () => {
         material="rock.igneous"
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
         security={null}
@@ -44,6 +45,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -86,6 +88,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -117,6 +120,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -143,6 +147,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -177,6 +182,7 @@ describe("SampleView", () => {
         material="rock.igneous"
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -210,6 +216,7 @@ describe("SampleView", () => {
         material="rock.igneous.plutonic.felsic.granite"
         texture="phaneritic"
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -236,6 +243,7 @@ describe("SampleView", () => {
         material="rock.metamorphic.strongly_metamorphosed.gneiss"
         texture={null}
         metamorphicFacies="amphibolite"
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -254,6 +262,35 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
+  it("should show the specific name", async () => {
+    const screen = await render(
+      <SampleView
+        name="Brittany Granite"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        specificName="BRT-GRN-2025-07"
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        security={null}
+        availability={null}
+        publicationYear={null}
+        description={null}
+        condition={null}
+        scientificContext={null}
+        location={null}
+        age={null}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("BRT-GRN-2025-07"))
+      .toBeInTheDocument();
+  });
+
   it("should show the collection method hierarchy as a breadcrumb labelled by its field", async () => {
     const screen = await render(
       <SampleView
@@ -264,6 +301,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription={null}
         security={null}
@@ -301,6 +339,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod="coring.gravity_corer"
         collectionMethodDescription="Cored at low tide from the reef flat"
         description={null}
@@ -332,6 +371,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
@@ -373,6 +413,7 @@ describe("SampleView", () => {
     material: null,
     texture: null,
     metamorphicFacies: null,
+    specificName: null,
     collectionMethod: null,
     collectionMethodDescription: null,
     description: null,
@@ -488,6 +529,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -531,6 +573,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -564,6 +607,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         description={null}
@@ -606,6 +650,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -656,6 +701,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -717,6 +763,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -744,6 +791,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -778,6 +826,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}
@@ -805,6 +854,7 @@ describe("SampleView", () => {
         material={null}
         texture={null}
         metamorphicFacies={null}
+        specificName={null}
         collectionMethod={null}
         collectionMethodDescription={null}
         security={null}

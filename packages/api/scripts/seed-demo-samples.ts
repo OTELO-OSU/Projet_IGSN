@@ -1,3 +1,4 @@
+import type { GeologicalAge } from "@projet-igsn/domain/sample/age/geological-age";
 import type { Location } from "@projet-igsn/domain/sample/location/model";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
@@ -49,6 +50,57 @@ const on = (start: string, end: string = start) => ({
   collectionDate: { start, end },
 });
 
+// A numeric age range in whole units (Ma by default); stratigraphic bounds stay
+// empty. Not annum, so no calendar reference is needed to publish.
+const numericAge = (
+  min: number,
+  max: number,
+  unit: "ka" | "ma" | "ga" = "ma",
+) =>
+  ({
+    numericAgeMin: min,
+    numericAgeMax: max,
+    numericAgeUnit: unit,
+    numericAgeYearsUnit: null,
+    geologicalAgeMin: null,
+    geologicalAgeMax: null,
+    geologicalUnit: null,
+  }) as const;
+
+// A numeric age in annum (unit "a") counted from a calendar reference; the
+// years unit is only meaningful with annum, so this helper pairs them.
+const annumAge = (
+  min: number,
+  max: number,
+  yearsUnit: "ce" | "bce" | "bp" | "cal_bp",
+) =>
+  ({
+    numericAgeMin: min,
+    numericAgeMax: max,
+    numericAgeUnit: "a",
+    numericAgeYearsUnit: yearsUnit,
+    geologicalAgeMin: null,
+    geologicalAgeMax: null,
+    geologicalUnit: null,
+  }) as const;
+
+// A stratigraphic age: an ICS rank range (youngest..oldest, see GEOLOGICAL_AGES)
+// plus an optional free-text lithostratigraphic unit. No numeric block.
+const geologicalAge = (
+  min: GeologicalAge,
+  max: GeologicalAge,
+  unit: string | null = null,
+) =>
+  ({
+    numericAgeMin: null,
+    numericAgeMax: null,
+    numericAgeUnit: null,
+    numericAgeYearsUnit: null,
+    geologicalAgeMin: min,
+    geologicalAgeMax: max,
+    geologicalUnit: unit,
+  }) as const;
+
 // 70 complete, publishable rows. Each carries a leaf type, a leaf material,
 // texture/facies where the material calls for it, a location (unless the
 // material forbids/exempts it), a collection date and availability.
@@ -61,12 +113,14 @@ const PUBLISHED: DemoRow[] = [
     material: "rock.igneous.plutonic.felsic.granite",
     texture: "phaneritic",
     collectionMethod: "blasting",
+    specificName: "BRT-GRN-2025-07",
     location: {
       position: point(-3.5, 48.2),
       region: { kind: "continent", country: "FR" },
       localityName: "Ploumanac'h quarry",
     },
     description: on("2025-05-12"),
+    age: numericAge(295, 305),
     availability: "exists",
   },
   {
@@ -76,6 +130,7 @@ const PUBLISHED: DemoRow[] = [
     material: "rock.igneous.plutonic.felsic.granodiorite",
     texture: "porphyritic",
     collectionMethod: "manual",
+    specificName: "COR-GD-2025-03",
     location: {
       position: point(9.1, 42.15, elev(800, 800, "m", "msl")),
       region: { kind: "continent", country: "FR" },
@@ -104,6 +159,7 @@ const PUBLISHED: DemoRow[] = [
     material: "rock.igneous.plutonic.mafic.gabbro",
     texture: "cumulate",
     collectionMethod: "blasting",
+    specificName: "BV-MAG-88",
     location: {
       position: point(29.5, -25.0),
       region: { kind: "continent", country: "ZA" },
@@ -162,6 +218,7 @@ const PUBLISHED: DemoRow[] = [
     material: "rock.igneous.volcanic.mafic.basalt",
     texture: "vesicular",
     collectionMethod: "manual",
+    specificName: "MC-BAS-2025-19",
     location: {
       position: point(2.96, 45.77, elev(1050, 1050, "m", "msl")),
       region: { kind: "continent", country: "FR" },
@@ -642,6 +699,7 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
     },
     description: on("2025-01-19"),
+    age: annumAge(12000, 25000, "bp"),
     availability: "exists",
   },
   {
@@ -655,6 +713,7 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "IT" },
     },
     description: on("2024-09-09"),
+    age: annumAge(79, 79, "ce"),
     availability: "exists",
   },
   {
@@ -696,6 +755,7 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "IE" },
     },
     description: on("2025-03-17"),
+    age: annumAge(2000, 8000, "cal_bp"),
     availability: "exists",
   },
   {
@@ -710,6 +770,7 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2024-08-12"),
+    age: annumAge(1000, 3000, "bce"),
     availability: "exists",
   },
   // Mineral (leaf root).
@@ -764,6 +825,7 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
     },
     description: on("2025-05-18"),
+    age: geologicalAge(10, 12, "Terres Noires Formation"),
     availability: "exists",
   },
   {
@@ -777,6 +839,7 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "CZ" },
     },
     description: on("2024-09-19"),
+    age: geologicalAge(31, 34),
     availability: "exists",
   },
   {
@@ -790,6 +853,7 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "GB" },
     },
     description: on("2025-01-27"),
+    age: geologicalAge(8, 10),
     availability: "exists",
   },
   // Synthetic (leaf root): location forbidden (ADR 0014).
@@ -893,6 +957,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "spatial_mission",
     specificName: "Apollo 15 / 15555",
     description: on("2024-05-01"),
+    age: numericAge(3, 4, "ga"),
     availability: "exists",
   },
   {
@@ -913,6 +978,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "spatial_mission",
     specificName: "Hayabusa2 / C0002",
     description: on("2025-01-05"),
+    age: numericAge(4, 5, "ga"),
     availability: "exists",
   },
   {
@@ -965,6 +1031,7 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2025-03-28"),
+    age: numericAge(500, 1500, "ka"),
     availability: "exists",
   },
   {
