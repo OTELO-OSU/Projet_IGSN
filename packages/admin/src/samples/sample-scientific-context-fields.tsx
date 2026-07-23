@@ -1,0 +1,249 @@
+import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
+import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
+import { ORGANIZATIONS } from "@projet-igsn/domain/sample/scientific-context/organization";
+import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
+
+import { m } from "#/paraglide/messages.js";
+import { type ScientificContextDraft } from "#/samples/compose-scientific-context.ts";
+import {
+  collectionOriginLabel,
+  provenanceStatusLabel,
+} from "#/samples/sample-labels.ts";
+
+// Organization names are proper nouns (reference data, not vocabulary), so the
+// label comes from the list itself, not the i18n catalog. Shared by the funder
+// combobox and the research-structure multi-select.
+const organizationItems = ORGANIZATIONS.map((organization) => ({
+  value: organization.ror,
+  label: organization.acronym
+    ? `${organization.name} (${organization.acronym})`
+    : organization.name,
+}));
+
+const provenanceStatusItems = toComboboxItems(
+  PROVENANCE_STATUSES,
+  provenanceStatusLabel,
+);
+const collectionOriginItems = toComboboxItems(
+  COLLECTION_ORIGINS,
+  collectionOriginLabel,
+);
+
+// The Scientific context tab. The provenance status is an exclusive choice
+// switching between the recent-collection and historical-specimen field sets,
+// so only the active branch renders (forms.md). The branches are disjoint
+// datasets, so switching the status drops the other branch's values outright
+// (unlike location's point/area toggle, which keeps them); only the collector
+// name, which belongs to both branches, survives the switch. Render inside a
+// `form.AppForm`.
+export function SampleScientificContextFields() {
+  const form = useTypedAppFormContext({
+    defaultValues: {} as { scientificContext: ScientificContextDraft },
+  });
+  return (
+    <div className="grid gap-4">
+      <form.AppField
+        name="scientificContext.provenanceStatus"
+        listeners={{
+          onChange: () => {
+            form.setFieldValue(
+              "scientificContext.funderOrganization",
+              undefined,
+            );
+            form.setFieldValue("scientificContext.researchProgramName", "");
+            form.setFieldValue("scientificContext.researchProgramChief", "");
+            form.setFieldValue(
+              "scientificContext.researchProgramChiefOrcid",
+              "",
+            );
+            form.setFieldValue("scientificContext.researchStructure", []);
+            form.setFieldValue("scientificContext.collectorOrcid", "");
+            form.setFieldValue("scientificContext.researchCampaign", "");
+            form.setFieldValue("scientificContext.funding", "");
+            form.setFieldValue(
+              "scientificContext.researchProgramDescription",
+              "",
+            );
+            form.setFieldValue("scientificContext.fieldName", "");
+            form.setFieldValue("scientificContext.missionDescription", "");
+            form.setFieldValue("scientificContext.collectionCurator", "");
+            form.setFieldValue("scientificContext.collectionOrigin", undefined);
+            form.setFieldValue(
+              "scientificContext.collectionContextDescription",
+              "",
+            );
+          },
+        }}
+      >
+        {(field) => (
+          <field.ComboboxField
+            label={m.field_provenance_status()}
+            requiredToPublish
+            items={provenanceStatusItems}
+            placeholder={m.provenance_status_placeholder()}
+            searchPlaceholder={m.provenance_status_search_placeholder()}
+            emptyText={m.provenance_status_empty()}
+          />
+        )}
+      </form.AppField>
+
+      <form.Subscribe
+        selector={(state) => state.values.scientificContext.provenanceStatus}
+      >
+        {(provenanceStatus) => {
+          if (provenanceStatus === "recent_collection") {
+            return (
+              <>
+                <form.AppField name="scientificContext.funderOrganization">
+                  {(field) => (
+                    <field.ComboboxField
+                      label={m.field_funder_organization()}
+                      requiredToPublish
+                      items={organizationItems}
+                      placeholder={m.organization_placeholder()}
+                      searchPlaceholder={m.organization_search_placeholder()}
+                      emptyText={m.organization_empty()}
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.researchProgramName">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_research_program_name()}
+                      requiredToPublish
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.researchProgramChief">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_research_program_chief()}
+                      requiredToPublish
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.researchProgramChiefOrcid">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_research_program_chief_orcid()}
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.researchStructure">
+                  {(field) => (
+                    <field.MultiComboboxField
+                      label={m.field_research_structure()}
+                      requiredToPublish
+                      items={organizationItems}
+                      placeholder={m.organization_placeholder()}
+                      searchPlaceholder={m.organization_search_placeholder()}
+                      emptyText={m.organization_empty()}
+                      removeLabel={(label) =>
+                        m.research_structure_remove({ label })
+                      }
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.collectorName">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_collector_name()}
+                      requiredToPublish
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.collectorOrcid">
+                  {(field) => (
+                    <field.TextField label={m.field_collector_orcid()} />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.researchCampaign">
+                  {(field) => (
+                    <field.TextField label={m.field_research_campaign()} />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.funding">
+                  {(field) => <field.TextField label={m.field_funding()} />}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.researchProgramDescription">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_research_program_description()}
+                      multiline
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.fieldName">
+                  {(field) => <field.TextField label={m.field_field_name()} />}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.missionDescription">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_mission_description()}
+                      multiline
+                    />
+                  )}
+                </form.AppField>
+              </>
+            );
+          }
+          if (provenanceStatus === "historical_specimen") {
+            return (
+              <>
+                <form.AppField name="scientificContext.collectionCurator">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_collection_curator()}
+                      requiredToPublish
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.collectionOrigin">
+                  {(field) => (
+                    <field.ComboboxField
+                      label={m.field_collection_origin()}
+                      requiredToPublish
+                      items={collectionOriginItems}
+                      placeholder={m.collection_origin_placeholder()}
+                      searchPlaceholder={m.collection_origin_search_placeholder()}
+                      emptyText={m.collection_origin_empty()}
+                    />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.collectorName">
+                  {(field) => (
+                    <field.TextField label={m.field_collector_name()} />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.collectionContextDescription">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_collection_context_description()}
+                      multiline
+                    />
+                  )}
+                </form.AppField>
+              </>
+            );
+          }
+          return null;
+        }}
+      </form.Subscribe>
+    </div>
+  );
+}

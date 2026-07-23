@@ -11,6 +11,14 @@ const noop = () => {};
 const createAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Create", onSubmit }) as const;
 
+// A complete scientific context (historical branch: the fewest mandatory
+// fields), for the fixtures that must be publishable.
+const publishableScientificContext = {
+  provenanceStatus: "historical_specimen",
+  collectionCurator: "Georges Cuvier",
+  collectionOrigin: "scientific_expedition",
+} as const;
+
 describe("SampleForm", () => {
   it("should reject a blank name and not submit", async () => {
     const onSubmit = vi.fn();
@@ -1046,6 +1054,7 @@ describe("SampleForm", () => {
             collectionDate: { start: "2026-01-01", end: "2026-01-01" },
           },
           availability: "exists",
+          scientificContext: publishableScientificContext,
         }}
         secondaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
         primaryAction={{ kind: "publish", label: "Save & Publish", onPublish }}
@@ -1069,6 +1078,7 @@ describe("SampleForm", () => {
           collectionDate: { start: "2026-01-01", end: "2026-01-01" },
         },
         availability: "exists",
+        scientificContext: publishableScientificContext,
       }),
     );
     expect(onSubmit).not.toHaveBeenCalled();
@@ -1206,6 +1216,7 @@ describe("SampleForm", () => {
               collectionDate: { start: "2026-01-01", end: "2026-01-01" },
             },
             availability: "exists",
+            scientificContext: publishableScientificContext,
           }}
           secondaryAction={{
             kind: "submit",
@@ -1244,6 +1255,7 @@ describe("SampleForm", () => {
             description: {
               collectionDate: { start: "2026-01-01", end: "2026-01-01" },
             },
+            scientificContext: publishableScientificContext,
           }}
           primaryAction={{
             kind: "publish",
@@ -1887,14 +1899,36 @@ describe("SampleForm", () => {
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/set the sample location/i);
 
-    // Fix the date and the location: the button enables and the save goes
-    // through.
+    // Fix the date and the location; the provenance status still blocks.
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-01");
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude *").fill("3");
     await screen.getByLabelText("Latitude *").fill("45");
+
+    await expect.element(save).toBeDisabled();
+    save.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/set the provenance status/i);
+
+    // Fix the scientific context: the button enables and the save goes
+    // through.
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
+    await screen
+      .getByRole("combobox", { name: "Provenance status *", exact: true })
+      .click();
+    await screen
+      .getByRole("option", { name: "Collection / historical specimen" })
+      .click();
+    await screen
+      .getByLabelText("Name of the collection curator *")
+      .fill("Georges Cuvier");
+    await screen
+      .getByRole("combobox", { name: "Collection origin *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Scientific expedition" }).click();
 
     await expect.element(save).toBeEnabled();
     await save.click();
@@ -1913,6 +1947,11 @@ describe("SampleForm", () => {
           collectionDate: { start: "2026-01-01", end: "2026-01-01" },
         },
         availability: "exists",
+        scientificContext: {
+          provenanceStatus: "historical_specimen",
+          collectionCurator: "Georges Cuvier",
+          collectionOrigin: "scientific_expedition",
+        },
       }),
     );
   });

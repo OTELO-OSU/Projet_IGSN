@@ -18,7 +18,14 @@ const base: Sample = {
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
   description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
   condition: null,
-  scientificContext: null,
+  scientificContext: {
+    provenanceStatus: "recent_collection",
+    funderOrganization: "02feahw73",
+    researchProgramName: "Deep Biosphere Survey",
+    researchProgramChief: "Marie Curie",
+    researchStructure: ["04kdfz702"],
+    collectorName: "Pierre Curie",
+  },
   age: null,
   links: [],
   attachments: [],
@@ -350,4 +357,61 @@ describe("samplePublishBlockers", () => {
       ]);
     },
   );
+
+  it("should report scientific_context_missing when there is no context", () => {
+    expect(samplePublishBlockers({ ...base, scientificContext: null })).toEqual(
+      ["scientific_context_missing"],
+    );
+  });
+
+  it("should report each missing mandatory field of the recent-collection branch", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        scientificContext: { provenanceStatus: "recent_collection" },
+      }),
+    ).toEqual([
+      "funder_organization_missing",
+      "research_program_name_missing",
+      "research_program_chief_missing",
+      "research_structure_missing",
+      "collector_name_missing",
+    ]);
+  });
+
+  it("should report only the still-missing recent-collection fields", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        scientificContext: {
+          provenanceStatus: "recent_collection",
+          funderOrganization: "02feahw73",
+          researchProgramName: "Deep Biosphere Survey",
+          researchProgramChief: "Marie Curie",
+        },
+      }),
+    ).toEqual(["research_structure_missing", "collector_name_missing"]);
+  });
+
+  it("should report the missing mandatory fields of the historical-specimen branch", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        scientificContext: { provenanceStatus: "historical_specimen" },
+      }),
+    ).toEqual(["collection_curator_missing", "collection_origin_missing"]);
+  });
+
+  it("should report no blocker for a complete historical-specimen context", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        scientificContext: {
+          provenanceStatus: "historical_specimen",
+          collectionCurator: "Georges Cuvier",
+          collectionOrigin: "scientific_expedition",
+        },
+      }),
+    ).toEqual([]);
+  });
 });

@@ -17,6 +17,8 @@ import { materialLabelKey } from "./material/label.ts";
 import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
 import { type Nature } from "./nature.ts";
 import { vocabularyLabel } from "./path/vocabulary-label.ts";
+import { type CollectionOrigin } from "./scientific-context/collection-origin.ts";
+import { type ProvenanceStatus } from "./scientific-context/provenance-status.ts";
 import { type Texture } from "./texture/vocabulary.ts";
 import { sampleTypeLabelKey } from "./type/label.ts";
 
@@ -45,6 +47,10 @@ type _yearsUnitKeys = AssertKeys<`age_years_${YearsUnit}`>;
 type _geologicalAgeKeys = AssertKeys<`age_${GeologicalAge}`>;
 type _availabilityKeys = AssertKeys<`availability_${Availability}`>;
 type _elementKeys = AssertKeys<`element_${Element}`>;
+type _provenanceStatusKeys =
+  AssertKeys<`provenance_status_${ProvenanceStatus}`>;
+type _collectionOriginKeys =
+  AssertKeys<`collection_origin_${CollectionOrigin}`>;
 
 // A message catalog: the app's compiled paraglide `m`, keyed by the catalog's
 // own message keys (minus the `$`-prefixed metadata entries, e.g. `$schema`,
@@ -75,6 +81,8 @@ export type SampleLabels = {
   yearsUnitLabel: (unit: YearsUnit) => string;
   geologicalAgeLabel: (age: GeologicalAge) => string;
   availabilityLabel: (availability: Availability) => string;
+  provenanceStatusLabel: (status: ProvenanceStatus) => string;
+  collectionOriginLabel: (origin: CollectionOrigin) => string;
 };
 
 // The sample label resolvers, bound to one app's message catalog. Paraglide
@@ -107,6 +115,14 @@ export function createSampleLabels(m: Messages): SampleLabels {
     geologicalAgeLabel: vocabularyLabel((age) => `age_${age}`, m),
     availabilityLabel: vocabularyLabel(
       (availability) => `availability_${availability}`,
+      m,
+    ),
+    provenanceStatusLabel: vocabularyLabel(
+      (status) => `provenance_status_${status}`,
+      m,
+    ),
+    collectionOriginLabel: vocabularyLabel(
+      (origin) => `collection_origin_${origin}`,
       m,
     ),
   };
