@@ -13,7 +13,7 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     .addColumn("sc_research_program_name", sql`text`)
     .addColumn("sc_research_program_chief", sql`text`)
     .addColumn("sc_research_program_chief_orcid", sql`text`)
-    .addColumn("sc_research_structure", sql`text[]`)
+    .addColumn("sc_research_structure", sql`text`)
     .addColumn("sc_collector_name", sql`text`)
     .addColumn("sc_collector_orcid", sql`text`)
     .addColumn("sc_research_campaign", sql`text`)
