@@ -32,10 +32,9 @@ const collectionOriginItems = toComboboxItems(
 
 // The Scientific context tab. The provenance status is an exclusive choice
 // switching between the recent-collection and historical-specimen field sets,
-// so only the active branch renders (forms.md). The branches are disjoint
-// datasets, so switching the status drops the other branch's values outright
-// (unlike location's point/area toggle, which keeps them); only the collector
-// name, which belongs to both branches, survives the switch. Render inside a
+// so only the active branch renders (forms.md). The hidden branch keeps its
+// values while editing, so switching back restores them; compose drops them
+// on save and the post-save reset clears them (ADR 0015). Render inside a
 // `form.AppForm`.
 export function SampleScientificContextFields() {
   const form = useTypedAppFormContext({
@@ -43,39 +42,7 @@ export function SampleScientificContextFields() {
   });
   return (
     <div className="grid gap-4">
-      <form.AppField
-        name="scientificContext.provenanceStatus"
-        listeners={{
-          onChange: () => {
-            form.setFieldValue(
-              "scientificContext.funderOrganization",
-              undefined,
-            );
-            form.setFieldValue("scientificContext.researchProgramName", "");
-            form.setFieldValue("scientificContext.researchProgramChief", "");
-            form.setFieldValue(
-              "scientificContext.researchProgramChiefOrcid",
-              "",
-            );
-            form.setFieldValue("scientificContext.researchStructure", []);
-            form.setFieldValue("scientificContext.collectorOrcid", "");
-            form.setFieldValue("scientificContext.researchCampaign", "");
-            form.setFieldValue("scientificContext.funding", "");
-            form.setFieldValue(
-              "scientificContext.researchProgramDescription",
-              "",
-            );
-            form.setFieldValue("scientificContext.fieldName", "");
-            form.setFieldValue("scientificContext.missionDescription", "");
-            form.setFieldValue("scientificContext.collectionCurator", "");
-            form.setFieldValue("scientificContext.collectionOrigin", undefined);
-            form.setFieldValue(
-              "scientificContext.collectionContextDescription",
-              "",
-            );
-          },
-        }}
-      >
+      <form.AppField name="scientificContext.provenanceStatus">
         {(field) => (
           <field.ComboboxField
             label={m.field_provenance_status()}

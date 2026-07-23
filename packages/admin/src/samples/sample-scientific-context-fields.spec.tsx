@@ -150,12 +150,13 @@ describe("SampleScientificContextFields", () => {
     expect(onSubmit.mock.calls[0]![0]).not.toHaveProperty("scientificContext");
   });
 
-  it("should drop the other branch's values when the provenance status switches", async () => {
+  it("should keep the hidden branch's values while editing and omit them from the payload", async () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
-    // Enter recent-collection values, then switch branch: the disjoint fields
-    // are dropped outright, only the shared collector name survives.
+    // Enter recent-collection values, then switch branch: the other branch's
+    // fields hide but keep their values (ADR 0015), so switching back
+    // restores them.
     await pickProvenance(screen, "Recent collection");
     await screen
       .getByLabelText("Name of the research programme *")
@@ -169,11 +170,11 @@ describe("SampleScientificContextFields", () => {
       .element(screen.getByLabelText("Collector name"))
       .toHaveValue("Pierre Curie");
 
-    // Switching back finds the recent branch blank again.
+    // Switching back restores the recent branch as entered.
     await pickProvenance(screen, "Recent collection");
     await expect
       .element(screen.getByLabelText("Name of the research programme *"))
-      .toHaveValue("");
+      .toHaveValue("Deep Biosphere Survey");
 
     // And the submitted payload only ever carries the active branch.
     await pickProvenance(screen, "Collection / historical specimen");

@@ -56,8 +56,8 @@ const text = (value: string) => value.trim() || undefined;
 
 // Draft -> domain scientific context, or null when no provenance status is
 // chosen (the whole block is then omitted from the payload). Only the active
-// branch's fields are emitted; the status field's listener already clears the
-// other branch on switch, so this is the payload-side half of that rule.
+// branch's fields are emitted: the hidden branch keeps its values in the form
+// while editing, and this exclusion drops them on save (ADR 0015).
 export function composeScientificContext(
   draft: ScientificContextDraft,
 ): ScientificContextCandidate | null {
