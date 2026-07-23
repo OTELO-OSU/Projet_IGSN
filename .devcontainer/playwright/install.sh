@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
 
 if [ -z "$PLAYWRIGHT_BROWSERS_PATH" ]; then
   echo "PLAYWRIGHT_BROWSERS_PATH environment variable is not set. Please set it to the desired Playwright folder path."

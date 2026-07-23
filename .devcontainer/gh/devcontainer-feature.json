@@ -1,0 +1,16 @@
+{
+  "id": "gh",
+  "version": "1.0.0",
+  "name": "GitHub CLI",
+  "dependsOn": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "installsAfter": ["ghcr.io/devcontainers/features/common-utils:1"],
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "${devcontainerId}-gh-config",
+      "target": "/home/node/.config/gh"
+    }
+  ]
+}
