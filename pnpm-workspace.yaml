@@ -9,6 +9,7 @@ catalog:
   "@hono/node-server": ^2.0.5
   "@inlang/paraglide-js": ^2.20.2
   "@kysely-vitest/postgres": ^0.4.2
+  "@playwright/mcp": ^0.0.78
   "@playwright/test": ^1.61.1
   "@rolldown/plugin-babel": ^0.2.3
   "@tailwindcss/typography": ^0.5.20

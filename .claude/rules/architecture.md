@@ -83,9 +83,15 @@ in the hook file so route loaders can prefetch; the hook wraps it for components
 
 ## Decision records (ADR)
 
-Every architecture decision MUST be recorded as an ADR. ADRs live in
-`docs/adr/`, are markdown, and are named `XXXX-kebab-title.md` where `XXXX` is
-a zero-padded incrementing number (`0001-`, `0002-`...). One decision per file.
+Record an ADR only for a decision that is costly to reverse and constrains
+future work: a new cross-package boundary, a persistence or auth model, a
+public contract, a tradeoff where the rejected option was reasonable. Skip it
+for routine choices that follow existing patterns, are local to one file, or are
+cheap to change later. When in doubt, no ADR; a rule or code comment is enough.
+
+ADRs live in `docs/adr/`, are markdown, and are named `XXXX-kebab-title.md`
+where `XXXX` is a zero-padded incrementing number (`0001-`, `0002-`...). One
+decision per file.
 
 ## Zod naming
 
