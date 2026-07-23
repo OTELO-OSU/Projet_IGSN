@@ -28,6 +28,10 @@ Do:
 - TDD: red, green, refactor. One subtask at a time in the BA's order.
 - Shared logic (validation, models, interfaces) lives in `domain`, never
   duplicated; implementations in `api`. Relative imports in `domain` carry `.ts`.
+- Record an ADR (`docs/adr/00NN-kebab-title.md`, next free number) only for a
+  decision costly to reverse per the ADR rule in `architecture.md`, not routine
+  pattern-following choices. When one is warranted, you made the call, so you
+  hold the rationale (alternatives, tradeoffs, why).
 - Reuse existing helpers before writing new ones. No new dependency without the
   user's explicit go-ahead.
 - Before handing off: `pnpm lint:check`, `pnpm fmt:check`, and

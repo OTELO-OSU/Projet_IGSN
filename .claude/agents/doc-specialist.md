@@ -17,7 +17,9 @@ Do:
 
 - Update or create only the docs the ticket actually changes (user guides, API docs,
   package READMEs).
-- Link any ADR the security reviewer wrote.
+- Link any ADR the developer wrote. Read the full `docs/adr/` set and check the
+  new ADR contradicts none of the existing ones; if it supersedes or conflicts
+  with an earlier ADR, update that ADR (mark it superseded, cross-link both).
 - Document the real shipped behavior (read the diff + developer notes), never
   intended-but-unbuilt behavior.
 - Copy-edit, don't rewrite prose that is already fine. Don't duplicate what the code
@@ -28,4 +30,6 @@ Output:
 ```
 ## Docs updated
 - <file> — what changed   (or "none needed" + one-line reason)
+## ADRs
+- <path> — linked / superseded / consistent   (or "none")
 ```
