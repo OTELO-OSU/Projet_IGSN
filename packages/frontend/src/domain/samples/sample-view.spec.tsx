@@ -33,6 +33,77 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
+  it("should show the Links section when the sample has links", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        security={null}
+        availability={null}
+        publicationYear={null}
+        description={null}
+        condition={null}
+        location={null}
+        age={null}
+        links={[
+          {
+            id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+            url: "https://doi.org/10.1594/IEDA.100252",
+            description: null,
+          },
+        ]}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Links" }))
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("link", {
+          name: "https://doi.org/10.1594/IEDA.100252",
+        }),
+      )
+      .toBeVisible();
+  });
+
+  it("should hide the Links section when the sample has none", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        security={null}
+        availability={null}
+        publicationYear={null}
+        description={null}
+        condition={null}
+        location={null}
+        age={null}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 1, name: "Basalt 42" }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("heading", { level: 2, name: "Links" }).query(),
+    ).toBeNull();
+  });
+
   it("should show the translated nature", async () => {
     const screen = await render(
       <SampleView

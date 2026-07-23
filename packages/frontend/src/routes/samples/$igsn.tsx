@@ -49,6 +49,8 @@ function SampleDetail() {
       availability={sample.availability}
       publicationYear={sample.publicationYear}
       age={sample.age}
+      links={sample.links}
+      attachments={sample.attachments}
     />
   );
 }
