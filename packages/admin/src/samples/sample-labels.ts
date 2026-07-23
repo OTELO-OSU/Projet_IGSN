@@ -11,6 +11,8 @@ export const {
   materialPathLabel,
   typeLabel,
   collectionMethodLabel,
+  economicInterestLabel,
+  elementLabel,
   textureLabel,
   metamorphicFaciesLabel,
   natureLabel,

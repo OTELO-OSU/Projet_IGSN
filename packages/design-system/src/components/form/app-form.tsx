@@ -4,6 +4,7 @@ import { CheckboxGroupField } from "./checkbox-group-field.tsx";
 import { ComboboxField } from "./combobox-field.tsx";
 import { DateField } from "./date-field.tsx";
 import { fieldContext, formContext } from "./form-hook-contexts.tsx";
+import { MultiComboboxField } from "./multi-combobox-field.tsx";
 import { NumberField } from "./number-field.tsx";
 import { SubmitButton } from "./submit-button.tsx";
 import { TextField } from "./text-field.tsx";
@@ -17,6 +18,7 @@ export const { useAppForm, useTypedAppFormContext } = createFormHook({
     TextField,
     NumberField,
     ComboboxField,
+    MultiComboboxField,
     DateField,
     CheckboxGroupField,
   },

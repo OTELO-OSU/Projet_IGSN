@@ -1,6 +1,7 @@
 import {
   canStopAtPath,
   composeHierarchyValue,
+  hierarchyChildLabel,
   hierarchyChildren,
   hierarchyLevelItems,
   hierarchyPathLabel,
@@ -18,7 +19,7 @@ import {
 const hierarchy: Hierarchy = {
   roots: ["rock", "water"],
   nodes: {
-    rock: { choices: ["igneous", "sedimentary"] },
+    rock: { choices: ["igneous", "sedimentary"], childLabel: "rock_kind" },
     sedimentary: { optional: true, choices: ["sand"] },
     water: { optional: true, choices: ["water", "sea"] },
     "water.water": { label: "water_only" },
@@ -85,6 +86,18 @@ describe("hierarchyPathLabel", () => {
   });
 });
 
+describe("hierarchyChildLabel", () => {
+  it("should translate a node's childLabel code when it declares one", () => {
+    expect(hierarchyChildLabel(hierarchy, "rock", translate)).toBe("ROCK_KIND");
+  });
+
+  it("should fall back to the path label when the node has no childLabel", () => {
+    expect(hierarchyChildLabel(hierarchy, "rock.sedimentary", translate)).toBe(
+      "SEDIMENTARY",
+    );
+  });
+});
+
 describe("hierarchyLevelItems", () => {
   it("should list only the roots at the top level (no parent)", () => {
     expect(hierarchyLevelItems(hierarchy, null, translate)).toEqual([
@@ -93,25 +106,24 @@ describe("hierarchyLevelItems", () => {
     ]);
   });
 
-  it("should prepend the parent-itself option when stopping at the parent is allowed", () => {
+  it("should list only the children, never a synthetic parent-itself stop option", () => {
+    // Stopping at the optional `sedimentary` is done by leaving this level
+    // blank, so the level offers its children alone and never echoes the parent.
     expect(
       hierarchyLevelItems(hierarchy, "rock.sedimentary", translate),
-    ).toEqual([
-      { value: "rock.sedimentary", label: "SEDIMENTARY" },
-      { value: "rock.sedimentary.sand", label: "SAND" },
-    ]);
+    ).toEqual([{ value: "rock.sedimentary.sand", label: "SAND" }]);
   });
 
-  it("should omit the parent-itself option when stopping at the parent is not allowed", () => {
+  it("should list the children of a must-refine parent", () => {
     expect(hierarchyLevelItems(hierarchy, "rock", translate)).toEqual([
       { value: "rock.igneous", label: "IGNEOUS" },
       { value: "rock.sedimentary", label: "SEDIMENTARY" },
     ]);
   });
 
-  it("should not synthesize the parent-itself option when a self-child models it", () => {
-    // The vocabulary already offers `water.water` as the "stop here" value, so
-    // the synthetic `water` option would render the same label twice.
+  it("should render an explicit self-child stop value like any other child", () => {
+    // The vocabulary models "stop here" as the `water.water` self-child, so it
+    // renders on its own (relabelled by its dotted override), no synthetic echo.
     expect(hierarchyLevelItems(hierarchy, "water", translate)).toEqual([
       { value: "water.water", label: "WATER_ONLY" },
       { value: "water.sea", label: "SEA" },

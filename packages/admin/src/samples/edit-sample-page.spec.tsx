@@ -37,6 +37,7 @@ function fakeApi(
   texture: string | null = null,
   availability: "exists" | "no_longer_exists" = "exists",
   security: Record<string, unknown> | null = null,
+  economic: Record<string, unknown> | null = null,
 ) {
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -55,6 +56,12 @@ function fakeApi(
     security,
     availability,
     publicationYear: published ? 2026 : null,
+    economicInterest: null,
+    economicInterestElements: [],
+    economicResourceTypePrecision: null,
+    economicDepositName: null,
+    economicDepositDescription: null,
+    ...economic,
     igsn: published ? IGSN : null,
     published,
     createdAt: "2026-06-01T00:00:00.000Z",
@@ -99,6 +106,7 @@ async function renderEditPage(
   texture: string | null = null,
   availability: "exists" | "no_longer_exists" = "exists",
   security: Record<string, unknown> | null = null,
+  economic: Record<string, unknown> | null = null,
 ) {
   const { id, calls } = fakeApi(
     published,
@@ -108,6 +116,7 @@ async function renderEditPage(
     texture,
     availability,
     security,
+    economic,
   );
   const queryClient = new QueryClient();
   const router = createRouter({
@@ -216,6 +225,26 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByLabelText("Radioactivity explanation"))
       .toHaveValue("3.2 kBq alpha");
+  });
+
+  it("should prefill the economic interest and deposit name from the saved sample", async () => {
+    const { screen } = await renderEditPage(
+      false,
+      "fossil",
+      false,
+      null,
+      null,
+      "exists",
+      null,
+      { economicInterest: "yes", economicDepositName: "Grande Mine" },
+    );
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Economic interest" }))
+      .toHaveTextContent("Yes");
+    await expect
+      .element(screen.getByLabelText("Deposit name"))
+      .toHaveValue("Grande Mine");
   });
 
   it("should not show an IGSN on a draft", async () => {

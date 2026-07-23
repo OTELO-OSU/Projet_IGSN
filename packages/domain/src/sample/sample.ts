@@ -8,6 +8,8 @@ import { availabilitySchema } from "./availability/availability.ts";
 import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
 import { conditionSchema } from "./condition/model.ts";
 import { descriptionSchema } from "./description/model.ts";
+import { economicInterestSchema } from "./economic-interest/vocabulary.ts";
+import { elementSchema } from "./element/vocabulary.ts";
 import { createSampleLinkSchema, sampleLinkSchema } from "./link/model.ts";
 import { locationRequirement } from "./location/location-requirement.ts";
 import { locationSchema } from "./location/model.ts";
@@ -63,6 +65,16 @@ export const sampleSchema = z.object({
   availability: availabilitySchema.nullable(),
   // Year of first publication; auto-set at publish, null on an unpublished draft.
   publicationYear: z.number().int().positive().nullable(),
+  // Economic interest as a dot-path rooted at the yes/no/unknown answer
+  // (resource type / deposit / uranium sub-type follow under `yes`); null until set.
+  economicInterest: economicInterestSchema.nullable(),
+  // Chemical elements of interest; only meaningful for a mineral_and_ore sample,
+  // empty otherwise.
+  economicInterestElements: z.array(elementSchema).default([]),
+  // Free-text economic detail; null when not provided.
+  economicResourceTypePrecision: nameSchema.nullable(),
+  economicDepositName: nameSchema.nullable(),
+  economicDepositDescription: nameSchema.nullable(),
   // Null until the sample is published.
   igsn: igsnSuffixSchema.nullable(),
   published: z.boolean(),
@@ -109,6 +121,13 @@ export const createSampleSchema = z
     // Optional on a draft (null); required only at publish (see
     // sample-publish-blockers).
     availability: availabilitySchema.nullish(),
+    // Economic interest; all optional at creation and publication (no publish
+    // blocker). Detail columns are kept only under a `yes` path (see the API columns).
+    economicInterest: economicInterestSchema.nullish(),
+    economicInterestElements: z.array(elementSchema).optional(),
+    economicResourceTypePrecision: nameSchema.nullish(),
+    economicDepositName: nameSchema.nullish(),
+    economicDepositDescription: nameSchema.nullish(),
   })
   .superRefine((value, ctx) => {
     // A texture must match the selected material's branch. This guards the
