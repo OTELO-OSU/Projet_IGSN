@@ -49,7 +49,9 @@ export function SampleEconomicInterestFields() {
       >
         {(path) => {
           const yes = path === "yes" || (path?.startsWith("yes.") ?? false);
-          const mineralOre = path?.startsWith("yes.mineral_and_ore") ?? false;
+          const mineralOre =
+            path === "yes.mineral_and_ore" ||
+            (path?.startsWith("yes.mineral_and_ore.") ?? false);
           return (
             <>
               {mineralOre ? (

@@ -30,7 +30,8 @@ type EconomicInterestValue = Pick<
 const isYes = (path: string | null): boolean =>
   path === "yes" || (path?.startsWith("yes.") ?? false);
 const isMineralOre = (path: string | null): boolean =>
-  path?.startsWith("yes.mineral_and_ore") ?? false;
+  path === "yes.mineral_and_ore" ||
+  (path?.startsWith("yes.mineral_and_ore.") ?? false);
 
 type EconomicInterestComposed = {
   economicInterest: string | null;

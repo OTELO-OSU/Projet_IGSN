@@ -22,7 +22,9 @@ type EconomicInterestInput = Pick<
 export function economicInterestColumns(input: EconomicInterestInput) {
   const path = input.economicInterest ?? null;
   const enabled = path === "yes" || (path?.startsWith("yes.") ?? false);
-  const hasElements = path?.startsWith("yes.mineral_and_ore") ?? false;
+  const hasElements =
+    path === "yes.mineral_and_ore" ||
+    (path?.startsWith("yes.mineral_and_ore.") ?? false);
   const elements = input.economicInterestElements;
   return {
     economic_interest: path,

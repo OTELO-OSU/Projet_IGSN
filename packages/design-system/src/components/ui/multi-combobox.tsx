@@ -85,7 +85,7 @@ export function MultiCombobox({
             aria-label={removeLabel(item.label)}
             disabled={disabled}
             onClick={() => toggle(item.value)}
-            className="rounded-full hover:bg-black/10 disabled:pointer-events-none"
+            className="hover:bg-foreground/10 rounded-full disabled:pointer-events-none"
           >
             <XIcon className="size-3" />
           </button>
@@ -123,7 +123,6 @@ export function MultiCombobox({
                   <CommandItem
                     key={item.value}
                     value={item.value}
-                    keywords={[item.label]}
                     onSelect={() => toggle(item.value)}
                   >
                     {item.label}
