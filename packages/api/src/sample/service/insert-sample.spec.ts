@@ -99,8 +99,8 @@ describe("insertSample", () => {
         numericAgeMax: 12000,
         numericAgeUnit: "a",
         numericAgeYearsUnit: "bp",
-        geologicalAgeMin: "ics8",
-        geologicalAgeMax: "ics12",
+        geologicalAgeMin: 8,
+        geologicalAgeMax: 12,
         geologicalUnit: "Green Sandstone Fm",
       },
     });
@@ -111,8 +111,8 @@ describe("insertSample", () => {
       numericAgeMax: 12000,
       numericAgeUnit: "a",
       numericAgeYearsUnit: "bp",
-      geologicalAgeMin: "ics8",
-      geologicalAgeMax: "ics12",
+      geologicalAgeMin: 8,
+      geologicalAgeMax: 12,
       geologicalUnit: "Green Sandstone Fm",
     });
     expect(created.age?.numericAgeMin).toBe(12000);

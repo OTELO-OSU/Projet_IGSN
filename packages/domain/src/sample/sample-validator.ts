@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { numericUnitSchema } from "./age/numeric-unit.ts";
 import { sampleSchema } from "./sample.ts";
 
 export const PAGE_SIZES = [10, 25, 50];
@@ -22,6 +23,11 @@ export const listSamplesQuerySchema = z.object({
   order: z.enum(["asc", "desc"]).optional().catch(undefined),
   // Blank or non-string search degrades to "no filter", like page/perPage.
   search: z.string().trim().min(1).optional().catch(undefined),
+  // Numeric age range filter: bounds in `ageUnit` (defaults to Ma in the query
+  // if omitted). Matches samples whose numeric age range overlaps [ageMin, ageMax].
+  ageMin: z.coerce.number().optional().catch(undefined),
+  ageMax: z.coerce.number().optional().catch(undefined),
+  ageUnit: numericUnitSchema.optional().catch(undefined),
 });
 
 export type ListSamplesQuery = z.infer<typeof listSamplesQuerySchema>;

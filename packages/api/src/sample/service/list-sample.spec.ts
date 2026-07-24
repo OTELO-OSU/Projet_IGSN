@@ -5,6 +5,17 @@ import { insertSample } from "./insert-sample.ts";
 import { listSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
+// All-null age, so a fixture spreads it and overrides only the bounds it needs.
+const emptyAge = {
+  numericAgeMin: null,
+  numericAgeMax: null,
+  numericAgeUnit: null,
+  numericAgeYearsUnit: null,
+  geologicalAgeMin: null,
+  geologicalAgeMax: null,
+  geologicalUnit: null,
+} as const;
+
 describe("listSamples", () => {
   pgTest("should list samples most-recently-modified first", async ({ db }) => {
     // Arrange
@@ -89,6 +100,153 @@ describe("listSamples", () => {
       "Draft sample",
     ]);
   });
+
+  pgTest(
+    "should filter by numeric age range across mixed units",
+    async ({ db }) => {
+      // Arrange: 500 ka == 0.5 Ma (in range), 5 Ma (out of range).
+      await insertSample(db, {
+        name: "Five hundred ka",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 500,
+          numericAgeMax: 500,
+          numericAgeUnit: "ka",
+        },
+      });
+      await insertSample(db, {
+        name: "Five Ma",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 5,
+          numericAgeMax: 5,
+          numericAgeUnit: "ma",
+        },
+      });
+      // Act: query in Ma, so the ka sample must be converted to match.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0.4,
+        ageMax: 0.6,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data).toMatchObject([{ name: "Five hundred ka" }]);
+    },
+  );
+
+  pgTest(
+    "should place same-value annum ages on the before-present axis by their years unit",
+    async ({ db }) => {
+      // Arrange: four samples all worth 500 a, differing only by calendar
+      // reference. On the before-present axis (present = 1950): 500 BCE = 2449,
+      // 500 CE = 1450, 500 BP = 500, 500 cal BP = 500. Same raw value, four
+      // different points in time.
+      const eras = [
+        ["Five hundred BCE", "bce"],
+        ["Five hundred CE", "ce"],
+        ["Five hundred BP", "bp"],
+        ["Five hundred cal BP", "cal_bp"],
+      ] as const;
+      for (const [name, yearsUnit] of eras) {
+        await insertSample(db, {
+          name,
+          nature: "rock_powder",
+          type: null,
+          collectionMethod: null,
+          age: {
+            ...emptyAge,
+            numericAgeMin: 500,
+            numericAgeMax: 500,
+            numericAgeUnit: "a",
+            numericAgeYearsUnit: yearsUnit,
+          },
+        });
+      }
+      // Act: a small before-present range around 500 must match only the two
+      // whose reference already is before-present, not the CE/BCE ones.
+      const nearPresent = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 400,
+        ageMax: 600,
+        ageUnit: "a",
+      });
+      // Assert
+      expect(nearPresent.data.map((sample) => sample.name).sort()).toEqual([
+        "Five hundred BP",
+        "Five hundred cal BP",
+      ]);
+
+      // The BCE offset counts from present with no year zero (500 BCE = 2449 BP).
+      const bce = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 2440,
+        ageMax: 2460,
+        ageUnit: "a",
+      });
+      expect(bce.data.map((sample) => sample.name)).toEqual([
+        "Five hundred BCE",
+      ]);
+    },
+  );
+
+  pgTest(
+    "should match a single-bound draft age within the range",
+    async ({ db }) => {
+      // Arrange: a draft with only a minimum numeric bound (100 ka).
+      await insertSample(db, {
+        name: "Open-ended draft",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: { ...emptyAge, numericAgeMin: 100, numericAgeUnit: "ka" },
+      });
+      // Act
+      const { data } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0.05,
+        ageMax: 0.2,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(data).toMatchObject([{ name: "Open-ended draft" }]);
+    },
+  );
+
+  pgTest(
+    "should exclude samples with no age from a range filter",
+    async ({ db }) => {
+      // Arrange: a sample with no age recorded.
+      await insertSample(db, {
+        name: "Ageless",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      // Act
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0,
+        ageMax: 1000,
+        ageUnit: "ga",
+      });
+      // Assert
+      expect(total).toBe(0);
+      expect(data).toEqual([]);
+    },
+  );
 
   pgTest("should paginate with limit and offset", async ({ db }) => {
     // Arrange

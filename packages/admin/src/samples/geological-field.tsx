@@ -1,4 +1,4 @@
-import { geologicalAgeSchema } from "@projet-igsn/domain/sample/age/geological-age";
+import { GEOLOGICAL_AGES } from "@projet-igsn/domain/sample/age/geological-age";
 
 import type { AgeFormValues } from "#/samples/age-form.ts";
 
@@ -6,8 +6,10 @@ import { m } from "#/paraglide/messages.js";
 import { geologicalAgeLabel } from "#/samples/sample-labels.ts";
 import { useAgeForm } from "#/samples/use-age-form.ts";
 
-const geologicalAgeItems = geologicalAgeSchema.options.map((age) => ({
-  value: age,
+// The combobox is string-keyed; the domain value is the rank integer, so the
+// item value is its string form (parsed back in toAgeInput).
+const geologicalAgeItems = GEOLOGICAL_AGES.map((age) => ({
+  value: age.toString(),
   label: geologicalAgeLabel(age),
 }));
 

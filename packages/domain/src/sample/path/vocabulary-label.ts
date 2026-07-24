@@ -5,12 +5,12 @@
 // `messages` is intentionally the loose `Record<string, ...>`, not `Messages`:
 // tree label keys are computed from runtime string paths, so they must be
 // looked up by `string`, which the key-narrowed `Messages` type forbids.
-export function vocabularyLabel(
-  labelKey: (path: string) => string,
+export function vocabularyLabel<T = string>(
+  labelKey: (value: T) => string,
   messages: Record<string, (() => string) | undefined>,
-): (path: string) => string {
-  return (path) => {
-    const key = labelKey(path);
+): (value: T) => string {
+  return (value) => {
+    const key = labelKey(value);
     return messages[key]?.() ?? key;
   };
 }

@@ -426,8 +426,8 @@ describe("SampleView", () => {
         {...baseProps}
         age={{
           ...emptyAge,
-          geologicalAgeMin: "ics8",
-          geologicalAgeMax: "ics8",
+          geologicalAgeMin: 8,
+          geologicalAgeMax: 8,
         }}
       />,
     );

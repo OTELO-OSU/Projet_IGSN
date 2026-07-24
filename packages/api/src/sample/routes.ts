@@ -23,11 +23,15 @@ export function createSampleRoutes(
 ) {
   return new Hono()
     .get("/", validateListQuery, async (c) => {
-      const { page, perPage, search } = c.req.valid("query");
+      const { page, perPage, search, ageMin, ageMax, ageUnit } =
+        c.req.valid("query");
       const { data, total } = await repository.listPublished({
         page,
         perPage,
         search,
+        ageMin,
+        ageMax,
+        ageUnit,
       });
       const body: ListSamplesResponse = { data, meta: { total } };
       return c.json(body);

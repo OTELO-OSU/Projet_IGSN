@@ -2,7 +2,8 @@ import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 // Domain age -> the sample table's flat age columns. A null age clears every
 // column (so the stored age mirrors exactly what was submitted). Shared by
-// insert and update so the mapping never drifts.
+// insert and update so the mapping never drifts. Geological bounds are their
+// rank integer already (see geological-age.ts), stored directly.
 export function toAgeColumns(age: CreateSample["age"]) {
   return {
     numeric_age_min: age?.numericAgeMin ?? null,

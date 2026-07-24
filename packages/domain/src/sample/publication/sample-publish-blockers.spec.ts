@@ -238,8 +238,8 @@ describe("samplePublishBlockers", () => {
         ...base,
         age: {
           ...emptyAge,
-          geologicalAgeMin: "ics8",
-          geologicalAgeMax: "ics8",
+          geologicalAgeMin: 8,
+          geologicalAgeMax: 8,
         },
       }),
     ).toEqual([]);
@@ -258,7 +258,7 @@ describe("samplePublishBlockers", () => {
     expect(
       samplePublishBlockers({
         ...base,
-        age: { ...emptyAge, geologicalAgeMax: "ics12" },
+        age: { ...emptyAge, geologicalAgeMax: 12 },
       }),
     ).toEqual(["geological_age_range_incomplete"]);
   });
@@ -272,8 +272,8 @@ describe("samplePublishBlockers", () => {
           numericAgeMin: 100,
           numericAgeMax: 140,
           numericAgeUnit: "ma",
-          geologicalAgeMin: "ics8",
-          geologicalAgeMax: "ics12",
+          geologicalAgeMin: 8,
+          geologicalAgeMax: 12,
         },
       }),
     ).toEqual([]);
