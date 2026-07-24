@@ -7,6 +7,7 @@ import {
   isKnownMaterialPath,
   mapAge,
   mapCollectionMethod,
+  mapCountry,
   mapElevation,
   mapMaterial,
   mapResourceType,
@@ -114,6 +115,26 @@ describe("isKnownMaterialPath", () => {
   });
 });
 
+describe("mapCountry", () => {
+  it.each([
+    ["France", "FR"], // ICU label matches directly
+    ["Reunion", "RE"], // accent folded from ICU "Réunion"
+    ["Deutschland", "DE"], // endonym alias
+    ["Italia", "IT"], // endonym alias
+    ["Slovenija", "SI"], // endonym alias
+    ["Swaziland", "SZ"], // former name of Eswatini
+    ["Turkey", "TR"], // ICU label is "Türkiye"
+    ["Congo, The Democratic Republic Of The", "CD"],
+    ["Saint Vincent And The Grenadines", "VC"],
+  ] as const)("should map %s to %s", (name, code) => {
+    expect(mapCountry(name)).toBe(code);
+  });
+
+  it("should return null for an unknown country", () => {
+    expect(mapCountry("Neverland")).toBe(null);
+  });
+});
+
 describe("mapCollectionMethod", () => {
   it("should slug a legacy method path", () => {
     expect(mapCollectionMethod("Coring>GravityCorer>Giant")).toBe(
@@ -130,6 +151,8 @@ describe("mapResourceType", () => {
   it.each([
     ["Thin section", { type: null, nature: "thin_section" }],
     ["Rock powder", { type: null, nature: "rock_powder" }],
+    ["Hand sample", { type: null, nature: "hand_sample" }],
+    ["Residue", { type: null, nature: "residue" }],
     ["Core section", { type: "core.section", nature: "inapplicable" }],
     ["Core whole round", { type: "core.whole_round", nature: "inapplicable" }],
     ["Dredge", { type: "dredge", nature: "inapplicable" }],

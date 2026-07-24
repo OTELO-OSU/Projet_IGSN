@@ -9,6 +9,7 @@ import {
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
 import { navigationTypeSchema } from "@projet-igsn/domain/sample/location/navigation-type";
 import { MATERIAL_PATHS } from "@projet-igsn/domain/sample/material/classification";
+import { NATURES } from "@projet-igsn/domain/sample/nature";
 import { SAMPLE_TYPES } from "@projet-igsn/domain/sample/type/vocabulary";
 
 // One joined row of the legacy igsn_resource, with its lookups resolved to
@@ -164,36 +165,32 @@ export function mapCollectionMethod(
   return longestValidPrefix(slugPath(collectionMethod), COLLECTION_METHOD_SET);
 }
 
-// Legacy resourceType is one flat label that in the new model is either a
-// `nature` (a physical form) or a `type` (a sampling taxonomy path).
-const NATURE_BY_RESOURCE_TYPE: Record<string, CreateSample["nature"]> = {
-  "thin section": "thin_section",
-  "thick section": "thick_section",
-  "polished section": "polished_section",
-  "rock powder": "rock_powder",
-};
-
+// Flat legacy `type` labels that nest under `core` in the new tree but arrive
+// without the prefix, so slugging them yields a bare segment the tree lacks.
 const TYPE_SPECIALS: Record<string, string> = {
   cuttings: "core.cuttings",
   individual_sample_in_core: "core.individual_sample_in_core",
 };
 
+// Legacy resourceType is one flat label that in the new model is either a
+// `nature` (a physical form) or a `type` (a sampling taxonomy path). Its slug
+// already equals the target code, so a nature is just "this slug is a NATURES
+// member"; anything else is looked up in the type tree.
 export function mapResourceType(resourceType: string | null): {
   type: string | null;
   nature: CreateSample["nature"];
 } {
-  const normalized = resourceType?.trim().toLowerCase() ?? "";
-  const nature = NATURE_BY_RESOURCE_TYPE[normalized] ?? "inapplicable";
-  let type: string | null = null;
-  if (resourceType) {
-    const slug = slugSegment(resourceType);
-    // "core X" is a two-level path (core.X); everything else is one segment.
-    const candidate = slug.startsWith("core_") ? `core.${slug.slice(5)}` : slug;
-    type =
-      longestValidPrefix(candidate, SAMPLE_TYPE_SET) ??
-      TYPE_SPECIALS[slug] ??
-      null;
-  }
+  if (!resourceType) return { type: null, nature: "inapplicable" };
+  const slug = slugSegment(resourceType);
+  const nature = NATURES.includes(slug as CreateSample["nature"])
+    ? (slug as CreateSample["nature"])
+    : "inapplicable";
+  // "core X" is a two-level path (core.X); everything else is one segment.
+  const candidate = slug.startsWith("core_") ? `core.${slug.slice(5)}` : slug;
+  const type =
+    longestValidPrefix(candidate, SAMPLE_TYPE_SET) ??
+    TYPE_SPECIALS[slug] ??
+    null;
   return { type, nature };
 }
 
@@ -328,15 +325,37 @@ export function mapPosition(row: LegacyRow): Position | null {
   };
 }
 
+// Fold accents (é -> e) before stripping punctuation, so a legacy "Reunion"
+// matches the ICU label "Réunion" (and any other accented country name).
 const normalizeCountry = (name: string): string =>
   name
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
     .toLowerCase()
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "");
 
-const COUNTRY_CODE_BY_NAME = new Map(
-  COUNTRIES.map((code) => [normalizeCountry(countryLabel(code, "en")), code]),
-);
+// Legacy names ICU's English label does not match: endonyms (Deutschland),
+// a former name (Swaziland -> Eswatini), or a different phrasing (Congo DRC,
+// St. Vincent). Each code already exists in COUNTRIES; only the label differs.
+const COUNTRY_ALIASES: Record<string, Country> = {
+  "Congo, The Democratic Republic Of The": "CD",
+  Deutschland: "DE",
+  Italia: "IT",
+  Slovenija: "SI",
+  Swaziland: "SZ",
+  Turkey: "TR",
+  "Saint Vincent And The Grenadines": "VC",
+};
+
+const COUNTRY_CODE_BY_NAME = new Map<string, Country>([
+  ...COUNTRIES.map(
+    (code) => [normalizeCountry(countryLabel(code, "en")), code] as const,
+  ),
+  ...Object.entries(COUNTRY_ALIASES).map(
+    ([name, code]) => [normalizeCountry(name), code] as const,
+  ),
+]);
 
 export function mapCountry(country: string | null): Country | null {
   if (!country) return null;
