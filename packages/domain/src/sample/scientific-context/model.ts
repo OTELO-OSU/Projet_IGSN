@@ -17,21 +17,35 @@ const freeText = z.string().trim().min(1);
 
 // Recorded before the 2020s, filled when declaring a sample: an active research
 // programme, its funder, chief and collector (organizations referenced by ROR).
-const recentCollectionSchema = z.object({
-  provenanceStatus: z.literal("recent_collection"),
-  funderOrganization: organizationRorSchema.nullish(),
-  researchProgramName: freeText.nullish(),
-  researchProgramChief: freeText.nullish(),
-  researchProgramChiefOrcid: freeText.nullish(),
-  researchStructure: organizationRorSchema.nullish(),
-  collectorName: freeText.nullish(),
-  collectorOrcid: freeText.nullish(),
-  researchCampaign: freeText.nullish(),
-  funding: freeText.nullish(),
-  researchProgramDescription: freeText.nullish(),
-  fieldName: freeText.nullish(),
-  missionDescription: freeText.nullish(),
-});
+const recentCollectionSchema = z
+  .object({
+    provenanceStatus: z.literal("recent_collection"),
+    funderOrganization: organizationRorSchema.nullish(),
+    researchProgramName: freeText.nullish(),
+    researchProgramChief: freeText.nullish(),
+    researchProgramChiefOrcid: freeText.nullish(),
+    // Multi-select: the chief may belong to several structures. "Not filled"
+    // is null/absent, never [] (same rule as condition.storageConditions).
+    researchStructure: z.array(organizationRorSchema).min(1).nullish(),
+    collectorName: freeText.nullish(),
+    collectorOrcid: freeText.nullish(),
+    researchCampaign: freeText.nullish(),
+    funding: freeText.nullish(),
+    researchProgramDescription: freeText.nullish(),
+    fieldName: freeText.nullish(),
+    missionDescription: freeText.nullish(),
+  })
+  .superRefine((context, ctx) => {
+    const structures = context.researchStructure;
+    if (structures != null && new Set(structures).size !== structures.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["researchStructure"],
+        message: "research structures must be unique",
+        params: { code: "research_structure_duplicate" },
+      });
+    }
+  });
 
 // A pre-existing collection or historical specimen: a curator and how the
 // collection was assembled, rather than an active programme.

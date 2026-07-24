@@ -686,5 +686,13 @@
   "element_nh": "Nihonium",
   "element_fl": "Flerovium",
   "element_mc": "Moscovium",
-  "element_lv": "Livermorium"
+  "element_lv": "Livermorium",
+  "provenance_status_recent_collection": "Recent collection",
+  "provenance_status_historical_specimen": "Collection / historical specimen",
+  "collection_origin_scientific_expedition": "Scientific expedition",
+  "collection_origin_purchase": "Purchase",
+  "collection_origin_constitution": "Constitution",
+  "collection_origin_inheritance": "Inheritance",
+  "collection_origin_unknown_origin": "Unknown origin",
+  "collection_origin_other": "Other"
 }

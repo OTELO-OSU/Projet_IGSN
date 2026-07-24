@@ -43,6 +43,7 @@ describe("DEMO_SAMPLES", () => {
           description: sample.description ?? null,
           age: null,
           availability: sample.availability ?? null,
+          scientificContext: sample.scientificContext ?? null,
         }),
       ).toEqual([]);
     }

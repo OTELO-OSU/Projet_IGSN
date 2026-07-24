@@ -64,6 +64,7 @@ function EditSamplePage() {
           description: query.data.description,
           condition: query.data.condition,
           security: query.data.security,
+          scientificContext: query.data.scientificContext,
           availability: query.data.availability,
           age: query.data.age,
           links: query.data.links,

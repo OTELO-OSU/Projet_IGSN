@@ -198,7 +198,7 @@ export const SEED_SAMPLES: SeedSample[] = [
       funderOrganization: "02feahw73",
       researchProgramName: "Chaîne des Puys Survey",
       researchProgramChief: "Jean Dupont",
-      researchStructure: "02rx3b187",
+      researchStructure: ["02rx3b187"],
       collectorName: "Claire Martin",
     },
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69"),

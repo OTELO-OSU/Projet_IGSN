@@ -36,6 +36,11 @@ import {
   toLocationDraft,
 } from "#/samples/compose-location.ts";
 import {
+  composeScientificContext,
+  type ScientificContextDraft,
+  toScientificContextDraft,
+} from "#/samples/compose-scientific-context.ts";
+import {
   composeSecurity,
   type SecurityDraft,
   toSecurityDraft,
@@ -62,6 +67,7 @@ export type SampleDraft = {
   description: DescriptionDraft;
   condition: ConditionDraft;
   security: SecurityDraft;
+  scientificContext: ScientificContextDraft;
   availability: CreateSample["availability"] | undefined;
   age: AgeFormValues;
   links: LinkDraft[];
@@ -85,6 +91,7 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   description: toDescriptionDraft(value?.description),
   condition: toConditionDraft(value?.condition),
   security: toSecurityDraft(value?.security),
+  scientificContext: toScientificContextDraft(value?.scientificContext),
   // Defaults to "exists" per the declaration flow; still required to publish.
   availability: value?.availability ?? "exists",
   age: ageFormValues(value?.age),
@@ -114,6 +121,7 @@ const composeCreateSample = (draft: SampleDraft) => {
   // Assemble the age block; omit it entirely when empty (like texture).
   const age = toAgeInput(draft.age);
   const security = composeSecurity(draft.security);
+  const scientificContext = composeScientificContext(draft.scientificContext);
   const links = composeLinks(draft.links);
   const economic = composeEconomicInterest(draft);
   return {
@@ -148,6 +156,9 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(condition ? { condition } : {}),
     // Same contract for the security columns.
     ...(security ? { security } : {}),
+    // Omitted until a provenance status is chosen; the inactive branch's
+    // leftovers are already dropped by composeScientificContext.
+    ...(scientificContext ? { scientificContext } : {}),
     // Required only at publish; omit on a draft that has not answered it yet.
     ...(draft.availability ? { availability: draft.availability } : {}),
     ...(age ? { age } : {}),

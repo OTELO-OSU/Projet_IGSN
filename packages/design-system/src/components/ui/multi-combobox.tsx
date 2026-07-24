@@ -14,7 +14,12 @@ import {
   CommandItem,
   CommandList,
 } from "./command.tsx";
-import { Popover, PopoverContent, PopoverTrigger } from "./popover.tsx";
+import {
+  Popover,
+  PopoverAnchor,
+  PopoverContent,
+  PopoverTrigger,
+} from "./popover.tsx";
 
 // How many unselected options to show before the user narrows with a query.
 // A flat list of ~100 (the elements) is unusable at once; typing filters the
@@ -71,68 +76,72 @@ export function MultiCombobox({
     );
 
   return (
-    <div
-      className={cn(
-        "flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-transparent px-2 py-1",
-        disabled && "opacity-50",
-      )}
-    >
-      {selected.map((item) => (
-        <Badge key={item.value} variant="secondary" className="gap-1 pr-1">
-          {item.label}
-          <button
-            type="button"
-            aria-label={removeLabel(item.label)}
-            disabled={disabled}
-            onClick={() => toggle(item.value)}
-            className="hover:bg-foreground/10 rounded-full disabled:pointer-events-none"
-          >
-            <XIcon className="size-3" />
-          </button>
-        </Badge>
-      ))}
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            id={id}
-            type="button"
-            variant="ghost"
-            role="combobox"
-            aria-expanded={open}
-            disabled={disabled}
-            onBlur={onBlur}
-            className="text-muted-foreground h-7 flex-1 justify-between px-1 font-normal hover:bg-transparent"
-            {...aria}
-          >
-            {placeholder}
-            <ChevronsUpDownIcon className="opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-          {/* Manual filtering: cmdk's own would defeat the unsearched cap. */}
-          <Command shouldFilter={false}>
-            <CommandInput
-              placeholder={searchPlaceholder}
-              value={search}
-              onValueChange={setSearch}
-            />
-            <CommandList>
-              <CommandEmpty>{emptyText}</CommandEmpty>
-              <CommandGroup>
-                {visible.map((item) => (
-                  <CommandItem
-                    key={item.value}
-                    value={item.value}
-                    onSelect={() => toggle(item.value)}
-                  >
-                    {item.label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-    </div>
+    <Popover open={open} onOpenChange={setOpen}>
+      {/* The whole field anchors the dropdown, so it opens field-wide instead
+          of matching the (chip-squeezed) trigger button. */}
+      <PopoverAnchor asChild>
+        <div
+          className={cn(
+            "flex min-h-9 w-full flex-wrap items-center gap-1 rounded-md border border-input bg-transparent px-2 py-1",
+            disabled && "opacity-50",
+          )}
+        >
+          {selected.map((item) => (
+            <Badge key={item.value} variant="secondary" className="gap-1 pr-1">
+              {item.label}
+              <button
+                type="button"
+                aria-label={removeLabel(item.label)}
+                disabled={disabled}
+                onClick={() => toggle(item.value)}
+                className="hover:bg-foreground/10 rounded-full disabled:pointer-events-none"
+              >
+                <XIcon className="size-3" />
+              </button>
+            </Badge>
+          ))}
+          <PopoverTrigger asChild>
+            <Button
+              id={id}
+              type="button"
+              variant="ghost"
+              role="combobox"
+              aria-expanded={open}
+              disabled={disabled}
+              onBlur={onBlur}
+              className="text-muted-foreground h-7 flex-1 justify-between px-1 font-normal hover:bg-transparent"
+              {...aria}
+            >
+              {placeholder}
+              <ChevronsUpDownIcon className="opacity-50" />
+            </Button>
+          </PopoverTrigger>
+        </div>
+      </PopoverAnchor>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+        {/* Manual filtering: cmdk's own would defeat the unsearched cap. */}
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={search}
+            onValueChange={setSearch}
+          />
+          <CommandList>
+            <CommandEmpty>{emptyText}</CommandEmpty>
+            <CommandGroup>
+              {visible.map((item) => (
+                <CommandItem
+                  key={item.value}
+                  value={item.value}
+                  onSelect={() => toggle(item.value)}
+                >
+                  {item.label}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }

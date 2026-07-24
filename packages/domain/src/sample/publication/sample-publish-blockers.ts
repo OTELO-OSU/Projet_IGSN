@@ -26,6 +26,14 @@ export const publishBlockerSchema = z.enum([
   "geological_age_range_incomplete",
   "elevation_incomplete",
   "availability_missing",
+  "scientific_context_missing",
+  "funder_organization_missing",
+  "research_program_name_missing",
+  "research_program_chief_missing",
+  "research_structure_missing",
+  "collector_name_missing",
+  "collection_curator_missing",
+  "collection_origin_missing",
 ]);
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
@@ -46,6 +54,7 @@ export function samplePublishBlockers(
     | "description"
     | "age"
     | "availability"
+    | "scientificContext"
   >,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
@@ -151,6 +160,30 @@ export function samplePublishBlockers(
   // declared before publishing, so a reader always knows if the sample survives.
   if (sample.availability == null) {
     blockers.push("availability_missing");
+  }
+
+  // Scientific context: a published sample must declare its provenance status,
+  // then the mandatory fields of the branch that status selects. Optional on a
+  // draft. The schema forbids an empty researchStructure array, so null checks
+  // cover "not filled" for the multi-select too.
+  const context = sample.scientificContext;
+  if (context == null) {
+    blockers.push("scientific_context_missing");
+  } else if (context.provenanceStatus === "recent_collection") {
+    if (context.funderOrganization == null)
+      blockers.push("funder_organization_missing");
+    if (context.researchProgramName == null)
+      blockers.push("research_program_name_missing");
+    if (context.researchProgramChief == null)
+      blockers.push("research_program_chief_missing");
+    if (context.researchStructure == null)
+      blockers.push("research_structure_missing");
+    if (context.collectorName == null) blockers.push("collector_name_missing");
+  } else {
+    if (context.collectionCurator == null)
+      blockers.push("collection_curator_missing");
+    if (context.collectionOrigin == null)
+      blockers.push("collection_origin_missing");
   }
 
   return blockers;

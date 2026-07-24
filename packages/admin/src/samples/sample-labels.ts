@@ -26,4 +26,6 @@ export const {
   numericUnitLabel,
   yearsUnitLabel,
   geologicalAgeLabel,
+  provenanceStatusLabel,
+  collectionOriginLabel,
 } = createSampleLabels(m as unknown as Messages);

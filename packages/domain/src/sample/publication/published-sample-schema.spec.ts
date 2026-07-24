@@ -37,6 +37,36 @@ describe("publishedSampleSchema", () => {
       { ...publishable, location: null },
       "location",
     ],
+    [
+      "scientific_context_missing",
+      { ...publishable, scientificContext: null },
+      "scientificContext.provenanceStatus",
+    ],
+    [
+      "collection_origin_missing",
+      {
+        ...publishable,
+        scientificContext: {
+          provenanceStatus: "historical_specimen" as const,
+          collectionCurator: "Georges Cuvier",
+        },
+      },
+      "scientificContext.collectionOrigin",
+    ],
+    [
+      "research_structure_missing",
+      {
+        ...publishable,
+        scientificContext: {
+          provenanceStatus: "recent_collection" as const,
+          funderOrganization: "02feahw73",
+          researchProgramName: "Deep Biosphere Survey",
+          researchProgramChief: "Marie Curie",
+          collectorName: "Pierre Curie",
+        },
+      },
+      "scientificContext.researchStructure",
+    ],
   ])(
     "should reject an update that raises %s, pinned on its field",
     (blocker, payload, path) => {

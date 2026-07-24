@@ -109,7 +109,9 @@ type SampleTable = {
   sc_research_program_name: string | null;
   sc_research_program_chief: string | null;
   sc_research_program_chief_orcid: string | null;
-  sc_research_structure: string | null;
+  // Multi-select (the chief may belong to several structures); null when not
+  // filled, never empty, like storage_conditions.
+  sc_research_structure: string[] | null;
   sc_collector_name: string | null;
   sc_collector_orcid: string | null;
   sc_research_campaign: string | null;

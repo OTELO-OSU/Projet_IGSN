@@ -22,7 +22,7 @@ describe("sample scientific context persistence", () => {
         researchProgramName: "Deep Biosphere Survey",
         researchProgramChief: "Marie Curie",
         researchProgramChiefOrcid: "0000-0002-1825-0097",
-        researchStructure: "04kdfz702",
+        researchStructure: ["04kdfz702", "02feahw73"],
         collectorName: "Pierre Curie",
         collectorOrcid: "0000-0001-2345-6789",
         researchCampaign: "MD 209 / 2021",

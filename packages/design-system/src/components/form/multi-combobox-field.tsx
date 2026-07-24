@@ -1,5 +1,6 @@
 import type { ComboboxItem } from "../ui/combobox.tsx";
 
+import { withRequired } from "../../lib/with-required.ts";
 import { Label } from "../ui/label.tsx";
 import { MultiCombobox } from "../ui/multi-combobox.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
@@ -13,18 +14,22 @@ type MultiComboboxFieldProps = {
   emptyText: string;
   removeLabel: (label: string) => string;
   disabled?: boolean;
+  requiredToPublish?: boolean;
 };
 
 // A multi-select autocomplete with chips, bound to a string-array field.
 export function MultiComboboxField({
   label,
+  requiredToPublish = false,
   ...combobox
 }: MultiComboboxFieldProps) {
   const field = useFieldContext<string[]>();
   const { error, errorId, ariaProps } = useFieldError({ waitForTouch: true });
   return (
     <div className="grid gap-2">
-      <Label htmlFor={field.name}>{label}</Label>
+      <Label htmlFor={field.name}>
+        {withRequired(label, requiredToPublish)}
+      </Label>
       <MultiCombobox
         id={field.name}
         values={field.state.value ?? []}

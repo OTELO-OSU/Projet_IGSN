@@ -54,6 +54,13 @@ function fakeApi(
     description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
     condition: null,
     security,
+    // Complete (historical branch) so Save & Publish starts enabled, like the
+    // leaf type/material above.
+    scientificContext: {
+      provenanceStatus: "historical_specimen",
+      collectionCurator: "Georges Cuvier",
+      collectionOrigin: "scientific_expedition",
+    },
     availability,
     publicationYear: published ? 2026 : null,
     economicInterest: null,

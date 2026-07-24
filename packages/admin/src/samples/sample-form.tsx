@@ -29,6 +29,7 @@ import { toAgeInput } from "#/samples/age-form.ts";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
+import { composeScientificContext } from "#/samples/compose-scientific-context.ts";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
@@ -46,6 +47,7 @@ import {
 import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest-fields.tsx";
 import { availabilityLabel, natureLabel } from "#/samples/sample-labels.ts";
 import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
+import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
@@ -186,6 +188,9 @@ export function SampleForm({
         description: state.values.description,
         availability: state.values.availability,
         age: toAgeInput(state.values.age),
+        scientificContext: composeScientificContext(
+          state.values.scientificContext,
+        ),
       })}
     >
       {({
@@ -197,6 +202,7 @@ export function SampleForm({
         description,
         availability,
         age,
+        scientificContext,
       }) => {
         // Form state holds looser select strings; the runtime values match
         // the domain, so cast to the fields samplePublishBlockers reads.
@@ -208,6 +214,7 @@ export function SampleForm({
           description: composeDescription(description),
           age,
           availability: availability ?? null,
+          scientificContext,
         } as Pick<
           Sample,
           | "type"
@@ -217,6 +224,7 @@ export function SampleForm({
           | "description"
           | "age"
           | "availability"
+          | "scientificContext"
         >).map(publishBlockerLabel);
         const button = renderButton(
           isPending || !canSubmit || reasons.length > 0,
@@ -302,6 +310,9 @@ export function SampleForm({
           <TabsTrigger value="type">{m.tab_sample_type()}</TabsTrigger>
           <TabsTrigger value="physical-description">
             {m.tab_physical_description()}
+          </TabsTrigger>
+          <TabsTrigger value="scientific-context">
+            {m.tab_scientific_context()}
           </TabsTrigger>
           {sampleId ? (
             <TabsTrigger value="links">{m.tab_links()}</TabsTrigger>
@@ -415,6 +426,12 @@ export function SampleForm({
               <SampleEconomicInterestFields />
             </form.AppForm>
           </FormSection>
+        </TabsContent>
+
+        <TabsContent value="scientific-context" className="grid gap-4">
+          <form.AppForm>
+            <SampleScientificContextFields />
+          </form.AppForm>
         </TabsContent>
 
         {sampleId ? (

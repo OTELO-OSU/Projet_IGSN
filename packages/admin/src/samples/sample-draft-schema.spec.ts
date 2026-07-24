@@ -6,6 +6,7 @@ import { toConditionDraft } from "./compose-condition.ts";
 import { toDescriptionDraft } from "./compose-description.ts";
 import { toEconomicInterestDraft } from "./compose-economic-interest.ts";
 import { toLocationDraft } from "./compose-location.ts";
+import { toScientificContextDraft } from "./compose-scientific-context.ts";
 import { toSecurityDraft } from "./compose-security.ts";
 import {
   type SampleDraft,
@@ -27,6 +28,7 @@ const draft: SampleDraft = {
   description: toDescriptionDraft(null),
   condition: toConditionDraft(null),
   security: toSecurityDraft(null),
+  scientificContext: toScientificContextDraft(null),
   availability: "exists",
   age: EMPTY_AGE_FORM_VALUES,
   links: [],

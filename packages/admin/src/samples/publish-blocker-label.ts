@@ -21,6 +21,16 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
     m.publish_blocked_geological_age_range_incomplete,
   elevation_incomplete: m.publish_blocked_elevation_incomplete,
   availability_missing: m.publish_blocked_availability_missing,
+  scientific_context_missing: m.publish_blocked_scientific_context_missing,
+  funder_organization_missing: m.publish_blocked_funder_organization_missing,
+  research_program_name_missing:
+    m.publish_blocked_research_program_name_missing,
+  research_program_chief_missing:
+    m.publish_blocked_research_program_chief_missing,
+  research_structure_missing: m.publish_blocked_research_structure_missing,
+  collector_name_missing: m.publish_blocked_collector_name_missing,
+  collection_curator_missing: m.publish_blocked_collection_curator_missing,
+  collection_origin_missing: m.publish_blocked_collection_origin_missing,
 };
 
 export function publishBlockerLabel(blocker: PublishBlocker): string {
