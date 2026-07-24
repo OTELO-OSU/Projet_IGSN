@@ -53,12 +53,12 @@ type ScientificContextCandidate =
       collectionContextDescription: string | undefined;
     };
 
-const trim = (value: string | null | undefined) => value?.trim() || undefined;
-
 // Draft -> domain scientific context, or null when no provenance status is
 // chosen (the whole block is then omitted from the payload). Only the active
 // branch's fields are emitted: the hidden branch keeps its values in the form
-// while editing, and this exclusion drops them on save (ADR 0015).
+// while editing, and this exclusion drops them on save (ADR 0015). Empty
+// fields drop to undefined so a blank draft field is absent, not an invalid
+// ""; trimming and non-empty validation are the domain schema's job (freeText).
 export function composeScientificContext(
   draft: ScientificContextDraft,
 ): ScientificContextCandidate | null {
@@ -66,29 +66,30 @@ export function composeScientificContext(
     return {
       provenanceStatus: "recent_collection",
       funderOrganization: draft.funderOrganization || undefined,
-      researchProgramName: trim(draft.researchProgramName),
-      researchProgramChief: trim(draft.researchProgramChief),
-      researchProgramChiefOrcid: trim(draft.researchProgramChiefOrcid),
+      researchProgramName: draft.researchProgramName || undefined,
+      researchProgramChief: draft.researchProgramChief || undefined,
+      researchProgramChiefOrcid: draft.researchProgramChiefOrcid || undefined,
       researchStructure:
         draft.researchStructure.length > 0
           ? draft.researchStructure
           : undefined,
-      collectorName: trim(draft.collectorName),
-      collectorOrcid: trim(draft.collectorOrcid),
-      researchCampaign: trim(draft.researchCampaign),
-      funding: trim(draft.funding),
-      researchProgramDescription: trim(draft.researchProgramDescription),
-      fieldName: trim(draft.fieldName),
-      missionDescription: trim(draft.missionDescription),
+      collectorName: draft.collectorName || undefined,
+      collectorOrcid: draft.collectorOrcid || undefined,
+      researchCampaign: draft.researchCampaign || undefined,
+      funding: draft.funding || undefined,
+      researchProgramDescription: draft.researchProgramDescription || undefined,
+      fieldName: draft.fieldName || undefined,
+      missionDescription: draft.missionDescription || undefined,
     };
   }
   if (draft.provenanceStatus === "historical_specimen") {
     return {
       provenanceStatus: "historical_specimen",
-      collectionCurator: trim(draft.collectionCurator),
+      collectionCurator: draft.collectionCurator || undefined,
       collectionOrigin: draft.collectionOrigin,
-      collectorName: trim(draft.collectorName),
-      collectionContextDescription: trim(draft.collectionContextDescription),
+      collectorName: draft.collectorName || undefined,
+      collectionContextDescription:
+        draft.collectionContextDescription || undefined,
     };
   }
   return null;

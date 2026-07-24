@@ -46,6 +46,18 @@ describe("scientificContextSchema", () => {
     expect(scientificContextSchema.safeParse(input).success).toBe(true);
   });
 
+  it("should trim free-text fields", () => {
+    expect(
+      scientificContextSchema.parse({
+        provenanceStatus: "recent_collection",
+        researchProgramName: "  Deep Biosphere Survey  ",
+      }),
+    ).toEqual({
+      provenanceStatus: "recent_collection",
+      researchProgramName: "Deep Biosphere Survey",
+    });
+  });
+
   it.each([
     { case: "missing provenance status", input: { collectorName: "X" } },
     { case: "unknown provenance status", input: { provenanceStatus: "other" } },
