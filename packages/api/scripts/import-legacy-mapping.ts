@@ -472,6 +472,88 @@ export function mapScientificContext(row: LegacyRow): ScientificContext | null {
   };
 }
 
+// Every field a legacy row feeds through one of our enums / controlled lists.
+// A value that does not normalize into the enum must not be stored (it would
+// defeat the enum), and we will not silently publish a sample that lost it, so
+// the sample is skipped whole and the offending value logged for review.
+export type SkipField =
+  | "material"
+  | "collection_method"
+  | "resource_type"
+  | "country"
+  | "navigation_type"
+  | "size_unit"
+  | "elevation_unit"
+  | "bathy_unit"
+  | "age_unit";
+
+export type SkipIssue = { field: SkipField; value: string };
+
+// Every controlled value in the row that cannot be placed in its enum, so a
+// caller can skip the sample and log each offending value. Empty = importable.
+// Reuses the same normalizers/maps as the mapping, so it never drifts from what
+// the import would actually store. Units are flagged only when their paired
+// measurement is present (a stray unit with no value carries nothing to lose).
+export function unmappableValues(row: LegacyRow): SkipIssue[] {
+  const issues: SkipIssue[] = [];
+  const norm = (value: string) => value.trim().toLowerCase();
+
+  if (!isKnownMaterialPath(row.classification, row.material)) {
+    issues.push({
+      field: "material",
+      value: row.classification ?? row.material ?? "(none)",
+    });
+  }
+  if (row.collection_method && !mapCollectionMethod(row.collection_method)) {
+    issues.push({ field: "collection_method", value: row.collection_method });
+  }
+  const { type, nature } = mapResourceType(row.resource_type);
+  if (row.resource_type && !type && nature === "inapplicable") {
+    issues.push({ field: "resource_type", value: row.resource_type });
+  }
+  if (row.country && !mapCountry(row.country)) {
+    issues.push({ field: "country", value: row.country });
+  }
+  if (
+    row.navigation_type &&
+    !navigationTypeSchema.safeParse(row.navigation_type).success
+  ) {
+    issues.push({ field: "navigation_type", value: row.navigation_type });
+  }
+  if (
+    row.size?.trim() &&
+    row.size_unit &&
+    !SIZE_UNIT_BY_LEGACY[norm(row.size_unit)]
+  ) {
+    issues.push({ field: "size_unit", value: row.size_unit });
+  }
+  if (
+    row.elevation?.trim() &&
+    row.elevation_unit &&
+    !ELEVATION_UNIT_BY_LEGACY[norm(row.elevation_unit)]
+  ) {
+    issues.push({ field: "elevation_unit", value: row.elevation_unit });
+  }
+  if (
+    row.bathy?.trim() &&
+    row.bathy_unit &&
+    !ELEVATION_UNIT_BY_LEGACY[norm(row.bathy_unit)]
+  ) {
+    issues.push({ field: "bathy_unit", value: row.bathy_unit });
+  }
+  const ageMin = row.age_min != null ? Number.parseFloat(row.age_min) : NaN;
+  const ageMax = row.age_max != null ? Number.parseFloat(row.age_max) : NaN;
+  const hasNumericAge = Number.isFinite(ageMin) || Number.isFinite(ageMax);
+  if (
+    hasNumericAge &&
+    row.age_unit &&
+    !AGE_UNIT_BY_LEGACY[norm(row.age_unit)]
+  ) {
+    issues.push({ field: "age_unit", value: row.age_unit });
+  }
+  return issues;
+}
+
 // A legacy row -> the new create payload. Every field is best-effort: an
 // unmappable vocabulary value or missing part is simply left off, so the sample
 // still imports (validated by createSampleSchema in import-legacy.ts).

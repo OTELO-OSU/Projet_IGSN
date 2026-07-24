@@ -33,9 +33,12 @@ natively-minted one. No separate `legacy_igsn` column.
 
 **Validation is lax on read, strict on mint.** `igsnSchema`
 (`domain/igsn/model.ts`) accepts either a minted 26-char suffix or a legacy
-identifier, and is used where a stored IGSN is read or looked up (`sampleSchema`,
-the `GET /samples/:igsn` param). Minting a new IGSN is unchanged and still emits
-the strict format (`generateIgsnSuffix`), so `igsnSuffixSchema` stays strict.
+identifier (`CNRS`/`TOAE` + a 10-digit number), and is used where a stored IGSN
+is read or looked up (`sampleSchema`, the `GET /samples/:igsn` param). The import
+validates each identifier with the same schema before storing it, so a stored
+IGSN is always one the read path can look up. Minting a new IGSN is unchanged and
+still emits the strict format (`generateIgsnSuffix`), so `igsnSuffixSchema` stays
+strict.
 
 **Publish completeness is bypassed on import.** Rows are inserted as `published`
 with their IGSN directly, validated only for data validity (`createSampleSchema`),
@@ -73,9 +76,22 @@ after) and upserts on `igsn`, so a rerun updates in place, preserving the row's
 | geological age columns                                 | `age.*` (numeric range + unit, lithostratigraphic unit)                                      |
 
 Vocabulary values are slugged (CamelCase/`>` -> snake_case/`.`) and kept only if
-the resulting path exists in the domain tree, taking the longest valid prefix;
-unmappable values are dropped and tallied. `nature` (required, with no legacy
-source) defaults to `inapplicable`.
+the resulting path exists in the domain tree, taking the longest valid prefix.
+`nature` (required, with no legacy source) defaults to `inapplicable`, so a
+resource type that maps to neither a known type path nor a physical-form nature
+counts as unplaceable.
+
+**A value that does not fit its enum skips the whole sample.** Every field the
+import feeds through one of our enums / controlled lists (material,
+collection method, resource type, country, navigation type, and the size /
+elevation / age units) either normalizes into that enum or the sample is skipped:
+we never store a value outside the enum (it would defeat the enum) and never
+publish a sample that silently lost it. `unmappableValues` (in
+`import-legacy-mapping.ts`) returns every offending value in a row; the import
+prints each skip (IGSN, reason, offending value) to stdout, which
+`make db-import-legacy` tees to `import-legacy.log`, so the gaps to close before
+a re-import are visible. Skipped rows come back on a re-import once the mapping
+supports the value (upsert on `igsn`, so no duplicates).
 
 **The material path must match the start of a supported path.** A sample is
 imported only when its slugged material path is a valid node in the new tree,
@@ -110,9 +126,18 @@ codes, old users/auth, and sub-sample parent links.
 
 - Private rows (`isPublic = false`, ~2,620): would otherwise be published.
 - Sub-samples (`parentIgsn_id` set, ~7,717): no hierarchy in the new schema.
+  Every skip below is printed to stdout (IGSN, reason, offending value) and tee'd
+  to `import-legacy.log` by `make db-import-legacy`:
+
 - Rows with an empty identifier (~6): nothing to store as the IGSN.
+- Rows whose identifier is not a well-formed IGSN (`CNRS`/`TOAE` + 10 digits):
+  an unexpected identifier surfaces instead of becoming an unreachable published
+  sample.
 - Rows without a fully-known material (~7,700): see "A fully-known material".
-- Rows that fail `createSampleSchema` on parse: logged and counted at runtime.
+- Rows carrying a value that does not fit an enum (collection method, resource
+  type, country, navigation type, a size / elevation / age unit): see "A value
+  that does not fit its enum".
+- Rows that fail `createSampleSchema` on parse.
 
 ## Consequences
 

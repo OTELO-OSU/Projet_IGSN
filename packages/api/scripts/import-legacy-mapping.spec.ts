@@ -12,6 +12,7 @@ import {
   mapResourceType,
   mapSize,
   toCreateSample,
+  unmappableValues,
 } from "./import-legacy-mapping.ts";
 
 // A legacy row with everything empty; tests override only the fields they cover.
@@ -245,5 +246,87 @@ describe("toCreateSample", () => {
       success: true,
       data: { nature: "inapplicable" },
     });
+  });
+});
+
+describe("unmappableValues", () => {
+  // A row whose every controlled value normalizes cleanly, so nothing is flagged.
+  const goodRow = (overrides: Partial<LegacyRow> = {}) =>
+    legacyRow({ classification: "Igneous>Plutonic>Felsic", ...overrides });
+
+  it("should flag nothing when every controlled value maps", () => {
+    expect(unmappableValues(goodRow())).toEqual([]);
+  });
+
+  it.each([
+    {
+      case: "an unplaceable material classification",
+      overrides: { classification: "Xenolithic>Igneous", material: "Rock" },
+      expected: { field: "material", value: "Xenolithic>Igneous" },
+    },
+    {
+      case: "no material at all",
+      overrides: { classification: null, material: null },
+      expected: { field: "material", value: "(none)" },
+    },
+    {
+      case: "an unknown collection method",
+      overrides: { collection_method: "Totally Unknown Method" },
+      expected: { field: "collection_method", value: "Totally Unknown Method" },
+    },
+    {
+      case: "a resource type that is neither a type nor a nature",
+      overrides: { resource_type: "Grab" },
+      expected: { field: "resource_type", value: "Grab" },
+    },
+    {
+      case: "an unknown country",
+      overrides: { country: "Neverland" },
+      expected: { field: "country", value: "Neverland" },
+    },
+    {
+      case: "an unknown navigation type",
+      overrides: { navigation_type: "not-a-code" },
+      expected: { field: "navigation_type", value: "not-a-code" },
+    },
+    {
+      case: "an unknown size unit paired with a size",
+      overrides: { size: "10", size_unit: "furlong" },
+      expected: { field: "size_unit", value: "furlong" },
+    },
+    {
+      case: "an unknown elevation unit paired with an elevation",
+      overrides: { elevation: "5", elevation_unit: "Outcrop" },
+      expected: { field: "elevation_unit", value: "Outcrop" },
+    },
+    {
+      case: "an unknown age unit paired with a numeric age",
+      overrides: { age_min: "5", age_unit: "eons" },
+      expected: { field: "age_unit", value: "eons" },
+    },
+  ] as const)("should flag $case", ({ overrides, expected }) => {
+    expect(unmappableValues(goodRow(overrides))).toEqual([expected]);
+  });
+
+  it("should not flag a physical-form resource type that maps to a nature", () => {
+    // "Thin section" is a nature, not a type path, so it is fully mapped.
+    expect(
+      unmappableValues(goodRow({ resource_type: "Thin section" })),
+    ).toEqual([]);
+  });
+
+  it("should not flag a stray unit with no measurement to lose", () => {
+    expect(unmappableValues(goodRow({ size_unit: "furlong" }))).toEqual([]);
+  });
+
+  it("should collect every offending value in one row", () => {
+    expect(
+      unmappableValues(
+        goodRow({ collection_method: "Nope", country: "Neverland" }),
+      ),
+    ).toEqual([
+      { field: "collection_method", value: "Nope" },
+      { field: "country", value: "Neverland" },
+    ]);
   });
 });

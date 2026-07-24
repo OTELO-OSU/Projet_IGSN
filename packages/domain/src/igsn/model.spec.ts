@@ -59,9 +59,11 @@ describe("igsnSchema", () => {
 
   it.each([
     "",
-    "abc", // shorter than 4
+    "abc", // neither a minted suffix nor a legacy identifier
     "CNRS-000012260", // hyphen
     "CNRS 0000012260", // space
+    "CNRS000001226", // only 9 digits
+    "ABCD0000000001", // right shape, wrong prefix
   ])("should reject the invalid IGSN %s", (input) => {
     // Arrange / Act
     const result = igsnSchema.safeParse(input);

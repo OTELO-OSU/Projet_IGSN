@@ -1,3 +1,4 @@
+import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import { fileURLToPath } from "node:url";
 import postgres from "postgres";
@@ -15,11 +16,8 @@ import { toAgeColumns } from "../src/sample/service/to-age-columns.ts";
 import { locationColumns } from "../src/sample/service/to-location.ts";
 import {
   type LegacyRow,
-  isKnownMaterialPath,
-  mapCollectionMethod,
-  mapCountry,
-  mapResourceType,
   toCreateSample,
+  unmappableValues,
 } from "./import-legacy-mapping.ts";
 
 // The old igsn_resource joined to its lookups and its 1:1 geological child, with
@@ -98,11 +96,12 @@ function createLegacyDb() {
 function toSampleRow(
   row: LegacyRow,
   create: ReturnType<typeof createSampleSchema.parse>,
+  igsn: string,
 ) {
   const publishedAt = row.publish_date ?? row.last_modified;
   return {
     id: uuidv7(),
-    igsn: row.igsn.trim(),
+    igsn,
     name: create.name,
     nature: create.nature,
     type: create.type ?? null,
@@ -134,16 +133,10 @@ async function main() {
   // (id) and the original creation time, so a rerun updates in place.
   const preserved = new Set(["id", "igsn", "created_at"]);
 
-  const summary = {
-    read: 0,
-    imported: 0,
-    skippedUnknownMaterial: 0,
-    skippedInvalid: 0,
-    collectionMethodDropped: 0,
-    typeUnmapped: 0,
-    countryDropped: 0,
-  };
-  const sampleErrors: string[] = [];
+  const summary = { read: 0, imported: 0 };
+  // One row per skipped sample and reason (a sample may fail several fields),
+  // written to a CSV so the dropped values are easy to review and map later.
+  const skipped: { igsn: string; reason: string; value: string }[] = [];
 
   try {
     const rows = (await legacy.unsafe(LEGACY_QUERY)) as unknown as LegacyRow[];
@@ -177,34 +170,42 @@ async function main() {
     };
 
     for (const row of rows) {
-      // Import only when the material path matches the start of a complete path
-      // the tree supports (incomplete is fine). An unsupported path, or an absent
-      // material, is skipped whole; it comes in on a re-import once supported.
-      if (!isKnownMaterialPath(row.classification, row.material)) {
-        summary.skippedUnknownMaterial += 1;
+      // The identifier becomes the sample's IGSN and its lookup key, so it must
+      // be a real IGSN (the read path parses it with the same schema). A row that
+      // is not is skipped rather than stored as an unreachable published sample.
+      const igsn = igsnSchema.safeParse(row.igsn);
+      if (!igsn.success) {
+        skipped.push({
+          igsn: row.igsn,
+          reason: "invalid_igsn",
+          value: row.igsn,
+        });
         continue;
       }
-      // Count vocabulary values the new tree could not place, for transparency.
-      if (
-        row.collection_method &&
-        !mapCollectionMethod(row.collection_method)
-      ) {
-        summary.collectionMethodDropped += 1;
-      }
-      if (row.resource_type && !mapResourceType(row.resource_type).type) {
-        summary.typeUnmapped += 1;
-      }
-      if (row.country && !mapCountry(row.country)) summary.countryDropped += 1;
-
-      const parsed = createSampleSchema.safeParse(toCreateSample(row));
-      if (!parsed.success) {
-        summary.skippedInvalid += 1;
-        if (sampleErrors.length < 10) {
-          sampleErrors.push(`${row.igsn}: ${parsed.error.issues[0]?.message}`);
+      // Any controlled value that does not normalize into its enum skips the
+      // whole sample (never stored outside the enum, never silently dropped);
+      // it comes in on a re-import once the mapping supports the value.
+      const issues = unmappableValues(row);
+      if (issues.length > 0) {
+        for (const issue of issues) {
+          skipped.push({
+            igsn: igsn.data,
+            reason: issue.field,
+            value: issue.value,
+          });
         }
         continue;
       }
-      batch.push(toSampleRow(row, parsed.data));
+      const parsed = createSampleSchema.safeParse(toCreateSample(row));
+      if (!parsed.success) {
+        skipped.push({
+          igsn: igsn.data,
+          reason: "invalid_schema",
+          value: parsed.error.issues[0]?.message ?? "",
+        });
+        continue;
+      }
+      batch.push(toSampleRow(row, parsed.data, igsn.data));
       if (batch.length >= BATCH_SIZE) await flush();
     }
     await flush();
@@ -213,10 +214,20 @@ async function main() {
     await db.destroy();
   }
 
-  console.info("Legacy import complete:", summary);
-  if (sampleErrors.length > 0) {
-    console.info("First skipped rows:", sampleErrors);
+  // Every skip on stdout (igsn, reason, offending value); `make
+  // db-import-legacy` tees this to a file for review.
+  for (const { igsn, reason, value } of skipped) {
+    console.info(`skipped\t${igsn}\t${reason}\t${value}`);
   }
+
+  const byReason: Record<string, number> = {};
+  for (const { reason } of skipped)
+    byReason[reason] = (byReason[reason] ?? 0) + 1;
+  console.info("Legacy import complete:", {
+    ...summary,
+    skipped: summary.read - summary.imported,
+  });
+  console.info("Skips by reason:", byReason);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

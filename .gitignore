@@ -47,3 +47,5 @@ infra/preprod/certs/
 
 # Legacy IGSN dump, imported via `make db-import-legacy` (never committed)
 bdd-igsn.sql
+# Legacy import output, tee'd by `make db-import-legacy` (skipped rows, summary)
+import-legacy.log
