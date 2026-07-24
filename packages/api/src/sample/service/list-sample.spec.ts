@@ -144,6 +144,63 @@ describe("listSamples", () => {
   );
 
   pgTest(
+    "should place same-value annum ages on the before-present axis by their years unit",
+    async ({ db }) => {
+      // Arrange: four samples all worth 500 a, differing only by calendar
+      // reference. On the before-present axis (present = 1950): 500 BCE = 2449,
+      // 500 CE = 1450, 500 BP = 500, 500 cal BP = 500. Same raw value, four
+      // different points in time.
+      const eras = [
+        ["Five hundred BCE", "bce"],
+        ["Five hundred CE", "ce"],
+        ["Five hundred BP", "bp"],
+        ["Five hundred cal BP", "cal_bp"],
+      ] as const;
+      for (const [name, yearsUnit] of eras) {
+        await insertSample(db, {
+          name,
+          nature: "rock_powder",
+          type: null,
+          collectionMethod: null,
+          age: {
+            ...emptyAge,
+            numericAgeMin: 500,
+            numericAgeMax: 500,
+            numericAgeUnit: "a",
+            numericAgeYearsUnit: yearsUnit,
+          },
+        });
+      }
+      // Act: a small before-present range around 500 must match only the two
+      // whose reference already is before-present, not the CE/BCE ones.
+      const nearPresent = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 400,
+        ageMax: 600,
+        ageUnit: "a",
+      });
+      // Assert
+      expect(nearPresent.data.map((sample) => sample.name).sort()).toEqual([
+        "Five hundred BP",
+        "Five hundred cal BP",
+      ]);
+
+      // The BCE offset counts from present with no year zero (500 BCE = 2449 BP).
+      const bce = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 2440,
+        ageMax: 2460,
+        ageUnit: "a",
+      });
+      expect(bce.data.map((sample) => sample.name)).toEqual([
+        "Five hundred BCE",
+      ]);
+    },
+  );
+
+  pgTest(
     "should match a single-bound draft age within the range",
     async ({ db }) => {
       // Arrange: a draft with only a minimum numeric bound (100 ka).
