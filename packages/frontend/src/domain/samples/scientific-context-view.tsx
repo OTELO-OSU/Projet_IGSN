@@ -1,5 +1,6 @@
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 
+import { ExternalLink } from "@projet-igsn/design-system/components/ui/external-link";
 import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
 
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
@@ -22,28 +23,16 @@ type HistoricalSpecimen = Extract<
 // and the org name are reference data, so the name comes from the domain list.
 function OrgLink({ ror }: { ror: string }) {
   return (
-    <a
-      href={`https://ror.org/${ror}`}
-      target="_blank"
-      rel="noreferrer"
-      className="text-sky-800 underline"
-    >
+    <ExternalLink href={`https://ror.org/${ror}`}>
       {organizationLabel(ror)}
-    </a>
+    </ExternalLink>
   );
 }
 
 // An ORCID iD linked to its orcid.org record.
 function OrcidLink({ orcid }: { orcid: string }) {
   return (
-    <a
-      href={`https://orcid.org/${orcid}`}
-      target="_blank"
-      rel="noreferrer"
-      className="text-sky-800 underline"
-    >
-      {orcid}
-    </a>
+    <ExternalLink href={`https://orcid.org/${orcid}`}>{orcid}</ExternalLink>
   );
 }
 
