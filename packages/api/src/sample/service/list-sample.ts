@@ -26,6 +26,17 @@ function matchesSearch(search: string) {
   )`;
 }
 
+// Rows whose generated geom intersects the drawn box, bound as parameters.
+// ponytail: ST_MakeEnvelope does not wrap the antimeridian; a box crossing
+// longitude 180 (west > east) is out of v1 scope and rejected by the domain
+// schema, so it never reaches here. Split it client-side if it ever matters.
+function withinBbox(bbox: NonNullable<ListSamplesParams["bbox"]>) {
+  return sql<boolean>`ST_Intersects(
+    geom,
+    ST_MakeEnvelope(${bbox.west}, ${bbox.south}, ${bbox.east}, ${bbox.north}, 4326)::geography
+  )`;
+}
+
 // The numeric age filter compares against the generated annum columns
 // (numeric_age_*_a). A sample's age range overlaps the query range when its
 // oldest bound is at least the query's youngest and its youngest bound is at
@@ -35,7 +46,7 @@ function applyFilters<O>(
   qb: SelectQueryBuilder<DB, "sample", O>,
   params: ListSamplesParams,
 ) {
-  const { search } = params;
+  const { search, bbox } = params;
   const unit = params.ageUnit ?? "ma";
   const ageMinA =
     params.ageMin != null ? numericAgeToAnnum(params.ageMin, unit) : null;
@@ -44,6 +55,7 @@ function applyFilters<O>(
 
   return qb
     .$if(search !== undefined, (q) => q.where(matchesSearch(search!)))
+    .$if(bbox !== undefined, (q) => q.where(withinBbox(bbox!)))
     .$if(ageMinA != null, (q) =>
       q.where(
         sql<boolean>`GREATEST(numeric_age_min_a, numeric_age_max_a) >= ${ageMinA}`,

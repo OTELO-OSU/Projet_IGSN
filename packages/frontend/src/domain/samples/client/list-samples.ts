@@ -8,17 +8,20 @@ export type ListSamplesParams = {
   page: number;
   perPage: number;
   search?: string;
+  // "west,south,east,north" degrees; the domain schema parses/validates it.
+  bbox?: string;
 };
 export type ListSamplesResult = { data: Sample[]; total: number };
 
 export async function listSamples(
-  { page, perPage, search }: ListSamplesParams,
+  { page, perPage, search, bbox }: ListSamplesParams,
   fetchFn: typeof fetch = fetch,
 ): Promise<ListSamplesResult> {
   const url = new URL("samples", baseApiUrl);
   url.searchParams.set("page", String(page));
   url.searchParams.set("perPage", String(perPage));
   if (search) url.searchParams.set("search", search);
+  if (bbox) url.searchParams.set("bbox", bbox);
 
   const res = await fetchFn(url);
   if (!res.ok) {

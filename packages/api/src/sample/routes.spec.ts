@@ -1,4 +1,7 @@
-import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
+import {
+  listSamplesResponseSchema,
+  sampleResponseSchema,
+} from "@projet-igsn/domain/sample/sample-validator";
 import { testClient } from "hono/testing";
 import { describe, expect } from "vitest";
 
@@ -14,6 +17,10 @@ async function createSample(
   client: Client,
   name: string,
   specificName = `${name} 001`,
+  position: { longitude: number; latitude: number } = {
+    longitude: 0,
+    latitude: 0,
+  },
 ) {
   const created = await client.admin.samples.$post(
     // A leaf type, leaf material, a location, a collection date, a specific
@@ -26,7 +33,7 @@ async function createSample(
         type: "individual_sample",
         material: "sediment.exogenous_detritic.clay",
         specificName,
-        location: { position: { type: "point", longitude: 0, latitude: 0 } },
+        location: { position: { type: "point", ...position } },
         description: {
           collectionDate: { start: "2026-01-01", end: "2026-01-01" },
         },
@@ -183,6 +190,53 @@ describe("public sample routes", () => {
       });
       // Assert
       expect(await res.json()).toMatchObject({ data: [], meta: { total: 0 } });
+    },
+  );
+
+  pgTest(
+    "should filter published samples by a bounding box",
+    async ({ db }) => {
+      // Arrange: one published sample inside the box, one outside.
+      const app = createApp(db);
+      const client = testClient(app);
+      const inside = await createSample(client, "Inside", "Inside 001", {
+        longitude: 5,
+        latitude: 45,
+      });
+      await publishSample(client, inside.id);
+      const outside = await createSample(client, "Outside", "Outside 001", {
+        longitude: 100,
+        latitude: 45,
+      });
+      await publishSample(client, outside.id);
+      // Act: raw request, bbox is a URL string the domain schema parses.
+      const res = await app.request(
+        "/samples?page=1&perPage=10&bbox=-10,40,10,50",
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      const body = listSamplesResponseSchema.parse(await res.json());
+      expect(body.meta.total).toBe(1);
+      expect(body.data.map((s) => s.name)).toEqual(["Inside"]);
+    },
+  );
+
+  pgTest(
+    "should ignore a malformed bbox and still return 200",
+    async ({ db }) => {
+      // Arrange
+      const app = createApp(db);
+      const client = testClient(app);
+      const draft = await createSample(client, "Grès de Fontainebleau");
+      await publishSample(client, draft.id);
+      // Act: an out-of-range bbox degrades to no filter (resilient schema).
+      const res = await app.request(
+        "/samples?page=1&perPage=10&bbox=-10,200,10,50",
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      const body = listSamplesResponseSchema.parse(await res.json());
+      expect(body.meta.total).toBe(1);
     },
   );
 

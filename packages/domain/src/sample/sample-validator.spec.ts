@@ -75,4 +75,46 @@ describe("listSamplesQuerySchema", () => {
       expect(listSamplesQuerySchema.parse({ search }).search).toBeUndefined();
     },
   );
+
+  it("should parse a valid bbox string into degrees", () => {
+    expect(listSamplesQuerySchema.parse({ bbox: "-10,40,10,50" }).bbox).toEqual(
+      {
+        west: -10,
+        south: 40,
+        east: 10,
+        north: 50,
+      },
+    );
+  });
+
+  it("should leave bbox undefined when absent", () => {
+    expect(listSamplesQuerySchema.parse({}).bbox).toBeUndefined();
+  });
+
+  it.each([
+    ["a latitude out of range", "-10,200,10,50"],
+    ["a longitude out of range", "-200,40,10,50"],
+    ["north below south", "-10,50,10,40"],
+    ["east below west (antimeridian)", "10,40,-10,50"],
+    ["too few parts", "-10,40,10"],
+    ["a non-numeric part", "-10,40,x,50"],
+    ["an empty string", ""],
+  ])("should drop an invalid bbox: %s", (_reason, bbox) => {
+    expect(listSamplesQuerySchema.parse({ bbox }).bbox).toBeUndefined();
+  });
+
+  it("should keep page/perPage/search alongside a bbox", () => {
+    expect(
+      listSamplesQuerySchema.parse({
+        page: "2",
+        search: " gres ",
+        bbox: "-10,40,10,50",
+      }),
+    ).toEqual({
+      page: 2,
+      perPage: DEFAULT_PAGE_SIZE,
+      search: "gres",
+      bbox: { west: -10, south: 40, east: 10, north: 50 },
+    });
+  });
 });

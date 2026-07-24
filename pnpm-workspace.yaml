@@ -27,6 +27,7 @@ catalog:
   "@tanstack/router-cli": ^1.167.17
   "@tanstack/router-plugin": ^1.168.18
   "@types/babel__core": ^7.20.5
+  "@types/leaflet": ^1.9.20
   "@types/node": ^24.13.1
   "@types/react": ^19.2.14
   "@types/react-dom": ^19.2.3
@@ -40,6 +41,7 @@ catalog:
   husky: ^9.1.7
   kysely: ^0.29.4
   kysely-postgres-js: ^3.0.0
+  leaflet: ^1.9.4
   lucide-react: ^1.21.0
   nitro: 3.0.260610-beta
   oidc-client-ts: ^3.5.0
@@ -52,6 +54,7 @@ catalog:
   rate-limiter-flexible: ^11.2.0
   react: ^19.2.7
   react-dom: ^19.2.7
+  react-leaflet: ^5.0.0
   shadcn: ^4.12.0
   react-oidc-context: ^3.3.1
   tailwind-merge: ^3.6.0

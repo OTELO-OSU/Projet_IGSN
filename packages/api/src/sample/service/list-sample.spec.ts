@@ -248,6 +248,110 @@ describe("listSamples", () => {
     },
   );
 
+  pgTest("should filter samples by a bounding box", async ({ db }) => {
+    // Arrange: one point inside the box, one point outside it.
+    const inside = await insertSample(db, {
+      name: "Inside",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      location: { position: { type: "point", longitude: 5, latitude: 45 } },
+    });
+    await insertSample(db, {
+      name: "Outside",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      location: { position: { type: "point", longitude: 100, latitude: 45 } },
+    });
+    // Act
+    const { data, total } = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      bbox: { west: -10, south: 40, east: 10, north: 50 },
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.id)).toEqual([inside.id]);
+  });
+
+  pgTest("should intersect an area straddling the box edge", async ({ db }) => {
+    // Arrange: an area sample that spans the box's east edge (8..12, box east 10).
+    const overlap = await insertSample(db, {
+      name: "Overlap",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      location: {
+        position: {
+          type: "area",
+          westLongitude: 8,
+          eastLongitude: 12,
+          southLatitude: 45,
+          northLatitude: 47,
+        },
+      },
+    });
+    // Act
+    const { data } = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      bbox: { west: -10, south: 40, east: 10, north: 50 },
+    });
+    // Assert: intersection, not containment.
+    expect(data.map((s) => s.id)).toEqual([overlap.id]);
+  });
+
+  pgTest(
+    "should exclude a null-geom sample when a bbox is set",
+    async ({ db }) => {
+      // Arrange: no location -> geom is null.
+      await insertSample(db, {
+        name: "No location",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      // Act
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        bbox: { west: -10, south: 40, east: 10, north: 50 },
+      });
+      // Assert
+      expect(total).toBe(0);
+      expect(data).toEqual([]);
+    },
+  );
+
+  pgTest("should compose bbox and search with AND", async ({ db }) => {
+    // Arrange: two points inside the box, only one matches the search.
+    const match = await insertSample(db, {
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      location: { position: { type: "point", longitude: 5, latitude: 45 } },
+    });
+    await insertSample(db, {
+      name: "Basalte",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      location: { position: { type: "point", longitude: 6, latitude: 46 } },
+    });
+    // Act
+    const { data, total } = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      search: "gres",
+      bbox: { west: -10, south: 40, east: 10, north: 50 },
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.id)).toEqual([match.id]);
+  });
+
   pgTest("should paginate with limit and offset", async ({ db }) => {
     // Arrange
     for (const name of ["Un", "Deux", "Trois"]) {
