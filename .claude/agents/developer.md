@@ -2,6 +2,8 @@
 name: developer
 description: Use to implement a feature ticket in the IGSN monorepo with TDD and the smallest correct diff, following the project skills and layering rules. Works only inside the ticket worktree.
 tools: Read, Write, Edit, Bash, Glob, Grep, Skill, LSP, mcp__playwright
+model: opus
+effort: high
 ---
 
 # Developer

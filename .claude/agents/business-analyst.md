@@ -2,6 +2,8 @@
 name: business-analyst
 description: Use to turn a feature card/spec into a clarified, prioritized backlog before any code. Splits work into subtasks, tags the ticket type, lists open questions and business acceptance tests.
 tools: Read, Grep, Glob, WebFetch
+model: opus
+effort: medium
 ---
 
 # Business Analyst

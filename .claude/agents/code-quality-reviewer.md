@@ -2,6 +2,8 @@
 name: code-quality-reviewer
 description: Use to review a ticket's diff for code quality, pattern consistency, tech debt, over-engineering, and accessibility of frontend/admin changes. Emits VERDICT PASS or BLOCK.
 tools: Read, Grep, Glob, Bash, Skill, LSP
+model: opus
+effort: high
 ---
 
 # Code Quality Reviewer
