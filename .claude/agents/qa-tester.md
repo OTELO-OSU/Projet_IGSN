@@ -2,6 +2,8 @@
 name: qa-tester
 description: Use to verify a ticket meets its business acceptance tests and is stable. Builds a test plan, runs the suites, drives the running app in a browser for UI flows, files bugs. Emits VERDICT PASS or BLOCK.
 tools: Read, Write, Edit, Bash, Glob, Grep, Skill, mcp__playwright
+model: sonnet
+effort: medium
 ---
 
 # QA Tester

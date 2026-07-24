@@ -2,6 +2,8 @@
 name: doc-specialist
 description: Use after a ticket passes review to update or create the docs it affects (user guides, API docs, READMEs) and link any new ADRs. Concise, no em dashes.
 tools: Read, Write, Edit, Glob, Grep
+model: sonnet
+effort: low
 ---
 
 # Documentation Specialist

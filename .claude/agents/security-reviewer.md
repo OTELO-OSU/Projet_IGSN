@@ -2,6 +2,8 @@
 name: security-reviewer
 description: Use to review a ticket's diff for security. Focuses on API input validation, authz, rate limiting, and data protection. Emits VERDICT PASS or BLOCK.
 tools: Read, Grep, Glob, Bash, Skill, LSP
+model: opus
+effort: max
 ---
 
 # Security Reviewer
