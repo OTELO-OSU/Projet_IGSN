@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { igsnSuffixSchema } from "../igsn/model.ts";
+import { igsnSchema } from "../igsn/model.ts";
 import { ageSchema } from "./age/model.ts";
 import { updateSampleAttachmentSchema } from "./attachment/attachment-validator.ts";
 import { sampleAttachmentSchema } from "./attachment/model.ts";
@@ -80,8 +80,9 @@ export const sampleSchema = z.object({
   economicResourceTypePrecision: nameSchema.nullable(),
   economicDepositName: nameSchema.nullable(),
   economicDepositDescription: nameSchema.nullable(),
-  // Null until the sample is published.
-  igsn: igsnSuffixSchema.nullable(),
+  // Null until the sample is published. Lax schema: accepts both minted
+  // suffixes and legacy IGSNs imported from the old registry.
+  igsn: igsnSchema.nullable(),
   published: z.boolean(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),

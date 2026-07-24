@@ -1,5 +1,5 @@
 import { generateIgsnSuffix } from "./generate-igsn-suffix.ts";
-import { igsnSuffixSchema } from "./model.ts";
+import { igsnSchema, igsnSuffixSchema } from "./model.ts";
 
 describe("igsnSuffixSchema", () => {
   it.each([
@@ -40,5 +40,39 @@ describe("igsnSuffixSchema", () => {
     const result = igsnSuffixSchema.safeParse(suffix);
     // Assert
     expect(result.success).toBe(true);
+  });
+});
+
+describe("igsnSchema", () => {
+  it.each([
+    "01K072TVWVFK5A1RRZ5MY4PPK9", // a suffix we minted
+    "CNRS0000012260", // legacy identifier
+    "TOAE0000000002", // legacy identifier (O is not Crockford base32)
+    "  CNRS0000012260  ",
+    "cnrs0000012260",
+  ])("should accept the stored IGSN %s", (input) => {
+    // Arrange / Act
+    const result = igsnSchema.safeParse(input);
+    // Assert
+    expect(result.success).toBe(true);
+  });
+
+  it.each([
+    "",
+    "abc", // shorter than 4
+    "CNRS-000012260", // hyphen
+    "CNRS 0000012260", // space
+  ])("should reject the invalid IGSN %s", (input) => {
+    // Arrange / Act
+    const result = igsnSchema.safeParse(input);
+    // Assert
+    expect(result.success).toBe(false);
+  });
+
+  it("should normalize a legacy IGSN to uppercase", () => {
+    // Arrange / Act
+    const result = igsnSchema.parse("  cnrs0000012260  ");
+    // Assert
+    expect(result).toBe("CNRS0000012260");
   });
 });

@@ -44,3 +44,6 @@ infra/preprod/certs/
 ## Local development container configuration files
 .devcontainer.json
 .devcontainer-lock.json
+
+# Legacy IGSN dump, imported via `make db-import-legacy` (never committed)
+bdd-igsn.sql
