@@ -98,9 +98,7 @@ describe("GeologicalAgeFormSection", () => {
 
   it("should clear the fixed age when switching to range and back", async () => {
     await render(
-      <Harness
-        values={{ geologicalAgeMin: "ics1", geologicalAgeMax: "ics1" }}
-      />,
+      <Harness values={{ geologicalAgeMin: "1", geologicalAgeMax: "1" }} />,
     );
     const combobox = page.getByRole("combobox", {
       name: "Geological age time scale",
@@ -117,7 +115,7 @@ describe("GeologicalAgeFormSection", () => {
   });
 
   it("should mark the other bound required once one range bound has a value", async () => {
-    await render(<Harness values={{ geologicalAgeMin: "ics1" }} />);
+    await render(<Harness values={{ geologicalAgeMin: "1" }} />);
 
     await expect
       .element(
@@ -134,7 +132,7 @@ describe("GeologicalAgeFormSection", () => {
   });
 
   it("should start enabled in range mode when a range value is prefilled", async () => {
-    await render(<Harness values={{ geologicalAgeMin: "ics1" }} />);
+    await render(<Harness values={{ geologicalAgeMin: "1" }} />);
 
     await expect.element(toggle()).toBeChecked();
     await expect

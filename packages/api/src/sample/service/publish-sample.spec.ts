@@ -51,8 +51,8 @@ describe("publishSample", () => {
         numericAgeMax: 120,
         numericAgeUnit: "ma",
         numericAgeYearsUnit: null,
-        geologicalAgeMin: "ics8",
-        geologicalAgeMax: "ics8",
+        geologicalAgeMin: 8,
+        geologicalAgeMax: 8,
         geologicalUnit: null,
       },
     });
@@ -63,7 +63,7 @@ describe("publishSample", () => {
       numericAgeMin: 120,
       numericAgeMax: 120,
       numericAgeUnit: "ma",
-      geologicalAgeMin: "ics8",
+      geologicalAgeMin: 8,
     });
   });
 

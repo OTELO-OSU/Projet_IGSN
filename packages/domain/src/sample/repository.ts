@@ -1,3 +1,4 @@
+import type { NumericUnit } from "./age/numeric-unit.ts";
 import type { CreateSample, Sample } from "./sample.ts";
 
 export type ListSamplesParams = {
@@ -6,6 +7,9 @@ export type ListSamplesParams = {
   sort?: "status";
   order?: "asc" | "desc";
   search?: string;
+  ageMin?: number;
+  ageMax?: number;
+  ageUnit?: NumericUnit;
 };
 
 export type ListSamplesResult = {

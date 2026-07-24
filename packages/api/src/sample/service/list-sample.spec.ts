@@ -5,6 +5,17 @@ import { insertSample } from "./insert-sample.ts";
 import { listSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
+// All-null age, so a fixture spreads it and overrides only the bounds it needs.
+const emptyAge = {
+  numericAgeMin: null,
+  numericAgeMax: null,
+  numericAgeUnit: null,
+  numericAgeYearsUnit: null,
+  geologicalAgeMin: null,
+  geologicalAgeMax: null,
+  geologicalUnit: null,
+} as const;
+
 describe("listSamples", () => {
   pgTest("should list samples most-recently-modified first", async ({ db }) => {
     // Arrange
@@ -89,6 +100,96 @@ describe("listSamples", () => {
       "Draft sample",
     ]);
   });
+
+  pgTest(
+    "should filter by numeric age range across mixed units",
+    async ({ db }) => {
+      // Arrange: 500 ka == 0.5 Ma (in range), 5 Ma (out of range).
+      await insertSample(db, {
+        name: "Five hundred ka",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 500,
+          numericAgeMax: 500,
+          numericAgeUnit: "ka",
+        },
+      });
+      await insertSample(db, {
+        name: "Five Ma",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 5,
+          numericAgeMax: 5,
+          numericAgeUnit: "ma",
+        },
+      });
+      // Act: query in Ma, so the ka sample must be converted to match.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0.4,
+        ageMax: 0.6,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data).toMatchObject([{ name: "Five hundred ka" }]);
+    },
+  );
+
+  pgTest(
+    "should match a single-bound draft age within the range",
+    async ({ db }) => {
+      // Arrange: a draft with only a minimum numeric bound (100 ka).
+      await insertSample(db, {
+        name: "Open-ended draft",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: { ...emptyAge, numericAgeMin: 100, numericAgeUnit: "ka" },
+      });
+      // Act
+      const { data } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0.05,
+        ageMax: 0.2,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(data).toMatchObject([{ name: "Open-ended draft" }]);
+    },
+  );
+
+  pgTest(
+    "should exclude samples with no age from a range filter",
+    async ({ db }) => {
+      // Arrange: a sample with no age recorded.
+      await insertSample(db, {
+        name: "Ageless",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      // Act
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0,
+        ageMax: 1000,
+        ageUnit: "ga",
+      });
+      // Assert
+      expect(total).toBe(0);
+      expect(data).toEqual([]);
+    },
+  );
 
   pgTest("should paginate with limit and offset", async ({ db }) => {
     // Arrange

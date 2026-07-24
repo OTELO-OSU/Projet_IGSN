@@ -46,24 +46,24 @@ describe("ageSchema", () => {
   it.each([
     { numericAgeMin: 100 },
     { numericAgeMax: 140 },
-    { geologicalAgeMin: "ics8" },
-    { geologicalAgeMax: "ics12" },
+    { geologicalAgeMin: 8 },
+    { geologicalAgeMax: 12 },
   ])("should accept a half-entered range #%#", (input) => {
     expect(ageSchema.safeParse(input)).toMatchObject({ success: true });
   });
 
   it("should accept a single geological age stored in both bounds", () => {
     const result = ageSchema.safeParse({
-      geologicalAgeMin: "ics8",
-      geologicalAgeMax: "ics8",
+      geologicalAgeMin: 8,
+      geologicalAgeMax: 8,
     });
     expect(result).toMatchObject({ success: true });
   });
 
   it("should accept a geological age range", () => {
     const result = ageSchema.safeParse({
-      geologicalAgeMin: "ics8",
-      geologicalAgeMax: "ics12",
+      geologicalAgeMin: 8,
+      geologicalAgeMax: 12,
     });
     expect(result).toMatchObject({ success: true });
   });
@@ -91,8 +91,8 @@ describe("ageSchema", () => {
     },
     // unknown numeric unit
     { numericAgeMin: 1, numericAgeMax: 1, numericAgeUnit: "my" },
-    // unknown geological code
-    { geologicalAgeMin: "ics50" },
+    // out-of-scale geological rank
+    { geologicalAgeMin: 50 },
     // blank geological unit
     { geologicalUnit: "   " },
     // unknown field (strict)

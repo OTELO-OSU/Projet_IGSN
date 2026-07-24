@@ -41,15 +41,15 @@ describe("toAgeInput", () => {
     expect(result).toMatchObject({ numericAgeMin: 5, numericAgeUnit: null });
   });
 
-  it("should keep a geological-only age", () => {
+  it("should parse the string-keyed geological bounds back to their rank", () => {
     const result = toAgeInput({
       ...EMPTY_AGE_FORM_VALUES,
-      geologicalAgeMin: "ics8",
-      geologicalAgeMax: "ics8",
+      geologicalAgeMin: "8",
+      geologicalAgeMax: "8",
     });
     expect(result).toMatchObject({
-      geologicalAgeMin: "ics8",
-      geologicalAgeMax: "ics8",
+      geologicalAgeMin: 8,
+      geologicalAgeMax: 8,
       numericAgeMin: null,
     });
   });
@@ -66,6 +66,20 @@ describe("toAgeInput", () => {
 describe("ageFormValues", () => {
   it("should return empty values for a null age", () => {
     expect(ageFormValues(null)).toEqual(EMPTY_AGE_FORM_VALUES);
+  });
+
+  it("should stringify the geological rank bounds for the string-keyed combobox", () => {
+    expect(
+      ageFormValues({
+        numericAgeMin: null,
+        numericAgeMax: null,
+        numericAgeUnit: null,
+        numericAgeYearsUnit: null,
+        geologicalAgeMin: 8,
+        geologicalAgeMax: 12,
+        geologicalUnit: null,
+      }),
+    ).toMatchObject({ geologicalAgeMin: "8", geologicalAgeMax: "12" });
   });
 
   it("should round-trip a numeric range through toAgeInput", () => {

@@ -26,13 +26,17 @@ export function createSampleAdminRoutes(
 ) {
   return new Hono()
     .get("/", validateListQuery, async (c) => {
-      const { page, perPage, sort, order, search } = c.req.valid("query");
+      const { page, perPage, sort, order, search, ageMin, ageMax, ageUnit } =
+        c.req.valid("query");
       const { data, total } = await repository.list({
         page,
         perPage,
         sort,
         order,
         search,
+        ageMin,
+        ageMax,
+        ageUnit,
       });
       const body: ListSamplesResponse = { data, meta: { total } };
       return c.json(body);

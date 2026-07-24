@@ -62,6 +62,8 @@ const row = {
   numeric_age_max: null,
   numeric_age_unit: null,
   numeric_age_years_unit: null,
+  numeric_age_min_a: null,
+  numeric_age_max_a: null,
   geological_age_min: null,
   geological_age_max: null,
   geological_unit: null,
@@ -106,8 +108,9 @@ const ageRow = {
   numeric_age_max: 12000,
   numeric_age_unit: "a",
   numeric_age_years_unit: "bp",
-  geological_age_min: "ics8",
-  geological_age_max: "ics12",
+  // Stored as ranks; toSample maps them back to ics codes.
+  geological_age_min: 8,
+  geological_age_max: 12,
   geological_unit: "Green Sandstone Fm",
 };
 
@@ -223,16 +226,14 @@ describe("toSample", () => {
       numericAgeMax: 12000,
       numericAgeUnit: "a",
       numericAgeYearsUnit: "bp",
-      geologicalAgeMin: "ics8",
-      geologicalAgeMax: "ics12",
+      geologicalAgeMin: 8,
+      geologicalAgeMax: 12,
       geologicalUnit: "Green Sandstone Fm",
     });
   });
 
-  it("should throw when the age carries an unknown geological code", () => {
-    expect(() =>
-      toSample({ ...ageRow, geological_age_min: "ics99" }),
-    ).toThrow();
+  it("should throw when the age carries an out-of-scale geological rank", () => {
+    expect(() => toSample({ ...ageRow, geological_age_min: 99 })).toThrow();
   });
 
   it("should throw when the nature is not a known value", () => {

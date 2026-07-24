@@ -44,7 +44,7 @@ type _lightKeys = AssertKeys<`light_${Light}`>;
 type _pressureTypeKeys = AssertKeys<`pressure_${PressureType}`>;
 type _numericUnitKeys = AssertKeys<`age_unit_${NumericUnit}`>;
 type _yearsUnitKeys = AssertKeys<`age_years_${YearsUnit}`>;
-type _geologicalAgeKeys = AssertKeys<`age_${GeologicalAge}`>;
+type _geologicalAgeKeys = AssertKeys<`age_ics_${GeologicalAge}`>;
 type _availabilityKeys = AssertKeys<`availability_${Availability}`>;
 type _elementKeys = AssertKeys<`element_${Element}`>;
 type _provenanceStatusKeys =
@@ -112,7 +112,10 @@ export function createSampleLabels(m: Messages): SampleLabels {
     pressureTypeLabel: vocabularyLabel((type) => `pressure_${type}`, m),
     numericUnitLabel: vocabularyLabel((unit) => `age_unit_${unit}`, m),
     yearsUnitLabel: vocabularyLabel((unit) => `age_years_${unit}`, m),
-    geologicalAgeLabel: vocabularyLabel((age) => `age_${age}`, m),
+    geologicalAgeLabel: vocabularyLabel<GeologicalAge>(
+      (age) => `age_ics_${age}`,
+      m,
+    ),
     availabilityLabel: vocabularyLabel(
       (availability) => `availability_${availability}`,
       m,
