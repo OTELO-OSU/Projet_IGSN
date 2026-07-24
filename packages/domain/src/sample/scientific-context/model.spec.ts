@@ -82,6 +82,20 @@ describe("scientificContextSchema", () => {
       },
     },
     {
+      case: "malformed research programme chief ORCID",
+      input: {
+        provenanceStatus: "recent_collection",
+        researchProgramChiefOrcid: "0000-0002-1825",
+      },
+    },
+    {
+      case: "malformed collector ORCID",
+      input: {
+        provenanceStatus: "recent_collection",
+        collectorOrcid: "not-an-orcid",
+      },
+    },
+    {
       case: "unknown collection origin",
       input: {
         provenanceStatus: "historical_specimen",
