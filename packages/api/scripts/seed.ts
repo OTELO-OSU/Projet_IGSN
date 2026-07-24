@@ -14,6 +14,7 @@ import type { DB } from "../src/db.ts";
 import { createDb } from "../src/db.ts";
 import { descriptionColumns } from "../src/sample/service/description-columns.ts";
 import { scientificContextColumns } from "../src/sample/service/scientific-context-columns.ts";
+import { toAgeColumns } from "../src/sample/service/to-age-columns.ts";
 import { locationColumns } from "../src/sample/service/to-location.ts";
 
 // Inserts the given samples (with their fixed ids) and returns the columns the
@@ -47,6 +48,7 @@ export async function seed(
               location,
               description,
               scientificContext,
+              age,
               ...rest
             }) => ({
               ...rest,
@@ -56,6 +58,7 @@ export async function seed(
                 collectionMethodDescription ?? null,
               specific_name: specificName ?? null,
               metamorphic_facies: metamorphicFacies ?? null,
+              ...toAgeColumns(age),
               ...locationColumns(location),
               ...descriptionColumns(description),
               ...scientificContextColumns(scientificContext),
@@ -85,6 +88,7 @@ export const seedSampleSchema = sampleSchema
     description: true,
     availability: true,
     scientificContext: true,
+    age: true,
     igsn: true,
     published: true,
   })
@@ -100,6 +104,7 @@ export const seedSampleSchema = sampleSchema
     description: true,
     availability: true,
     scientificContext: true,
+    age: true,
     igsn: true,
     published: true,
   });
@@ -191,6 +196,17 @@ export const SEED_SAMPLES: SeedSample[] = [
     },
     description: {
       collectionDate: { start: "2025-06-15", end: "2025-06-15" },
+    },
+    // A numeric age so the age-range facet E2E has one published sample to
+    // match; Granite 7 has none, so any age bound narrows to this one.
+    age: {
+      numericAgeMin: 2,
+      numericAgeMax: 6,
+      numericAgeUnit: "ma",
+      numericAgeYearsUnit: null,
+      geologicalAgeMin: null,
+      geologicalAgeMax: null,
+      geologicalUnit: null,
     },
     availability: "exists",
     scientificContext: {

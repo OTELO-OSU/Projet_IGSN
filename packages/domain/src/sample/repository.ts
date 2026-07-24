@@ -1,16 +1,10 @@
-import type { NumericUnit } from "./age/numeric-unit.ts";
+import type { ListSamplesQuery } from "./sample-validator.ts";
 import type { CreateSample, Sample } from "./sample.ts";
 
-export type ListSamplesParams = {
-  page: number;
-  perPage: number;
-  sort?: "status";
-  order?: "asc" | "desc";
-  search?: string;
-  ageMin?: number;
-  ageMax?: number;
-  ageUnit?: NumericUnit;
-};
+// The validated list query is the repository's param shape: page/perPage/sort/
+// order/search and every facet param (see sample/search/facets.ts). Reusing the
+// inferred type keeps the repository in lockstep with the query schema.
+export type ListSamplesParams = ListSamplesQuery;
 
 export type ListSamplesResult = {
   data: Sample[];

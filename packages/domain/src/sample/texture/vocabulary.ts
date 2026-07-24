@@ -6,7 +6,7 @@ import { z } from "zod";
 // the branch, and `porphyritic` is shared by both. See the igneous screenshot.
 //
 // The stored value is any of the union (porphyritic listed once).
-const TEXTURES = [
+export const TEXTURES = [
   "phaneritic",
   "porphyritic",
   "pegmatitic",
