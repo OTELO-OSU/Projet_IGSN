@@ -2,6 +2,7 @@ import { useTypedAppFormContext } from "@projet-igsn/design-system/components/fo
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 import { ORGANIZATIONS } from "@projet-igsn/domain/sample/scientific-context/organization";
+import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
 import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
 import { m } from "#/paraglide/messages.js";
@@ -12,13 +13,11 @@ import {
 } from "#/samples/sample-labels.ts";
 
 // Organization names are proper nouns (reference data, not vocabulary), so the
-// label comes from the list itself, not the i18n catalog. Shared by the funder
-// combobox and the research-structure multi-select.
+// label comes from the domain list via organizationLabel, not the i18n catalog.
+// Shared by the funder combobox and the research-structure multi-select.
 const organizationItems = ORGANIZATIONS.map((organization) => ({
   value: organization.ror,
-  label: organization.acronym
-    ? `${organization.name} (${organization.acronym})`
-    : organization.name,
+  label: organizationLabel(organization.ror),
 }));
 
 const provenanceStatusItems = toComboboxItems(

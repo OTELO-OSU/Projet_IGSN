@@ -2,6 +2,7 @@ import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/mod
 import type { SampleLink } from "@projet-igsn/domain/sample/link/model";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { ExternalLink } from "@projet-igsn/design-system/components/ui/external-link";
 import { Download } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
@@ -34,14 +35,9 @@ export function LinksView({ igsn, links, attachments }: LinksViewProps) {
           <ul className="divide-y">
             {links.map((link) => (
               <li key={link.id} className="grid gap-1 px-4 py-3">
-                <a
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium break-all text-sky-800 underline"
-                >
+                <ExternalLink href={link.url} className="font-medium break-all">
                   {link.url}
-                </a>
+                </ExternalLink>
                 {link.description ? (
                   // Block paragraph, line breaks preserved: descriptions are
                   // entered in a textarea and can run long.

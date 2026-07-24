@@ -44,6 +44,7 @@ function SampleDetail() {
       collectionMethodDescription={sample.collectionMethodDescription}
       description={sample.description}
       condition={sample.condition}
+      scientificContext={sample.scientificContext}
       location={sample.location}
       security={sample.security}
       availability={sample.availability}

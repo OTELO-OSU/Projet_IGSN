@@ -15,6 +15,15 @@ import { organizationRorSchema } from "./organization.ts";
 // must not run the other way.
 const freeText = z.string().trim().min(1);
 
+// An ORCID iD: four groups of four digits, the last digit possibly the checksum
+// letter X (https://info.orcid.org/ufaqs/what-is-an-orcid-id). We check the
+// shape, not the mod-11-2 checksum: enough to keep the ror.org/orcid.org links
+// well-formed without hand-rolling the checksum.
+const orcid = z
+  .string()
+  .trim()
+  .regex(/^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/, { message: "invalid ORCID iD" });
+
 // Recorded before the 2020s, filled when declaring a sample: an active research
 // programme, its funder, chief and collector (organizations referenced by ROR).
 const recentCollectionSchema = z
@@ -23,12 +32,12 @@ const recentCollectionSchema = z
     funderOrganization: organizationRorSchema.nullish(),
     researchProgramName: freeText.nullish(),
     researchProgramChief: freeText.nullish(),
-    researchProgramChiefOrcid: freeText.nullish(),
+    researchProgramChiefOrcid: orcid.nullish(),
     // Multi-select: the chief may belong to several structures. "Not filled"
     // is null/absent, never [] (same rule as condition.storageConditions).
     researchStructure: z.array(organizationRorSchema).min(1).nullish(),
     collectorName: freeText.nullish(),
-    collectorOrcid: freeText.nullish(),
+    collectorOrcid: orcid.nullish(),
     researchCampaign: freeText.nullish(),
     funding: freeText.nullish(),
     researchProgramDescription: freeText.nullish(),
