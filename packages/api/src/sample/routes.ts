@@ -23,8 +23,8 @@ export function createSampleRoutes(
 ) {
   return new Hono()
     .get("/", validateListQuery, async (c) => {
-      // Forward pagination, search and every facet filter; the published list
-      // is not user-sortable, so sort/order are dropped.
+      // Forward pagination, search, the bbox and every facet filter; the
+      // published list is not user-sortable, so sort/order are dropped.
       const { sort: _sort, order: _order, ...query } = c.req.valid("query");
       const { data, total } = await repository.listPublished(query);
       const body: ListSamplesResponse = { data, meta: { total } };

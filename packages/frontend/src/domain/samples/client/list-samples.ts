@@ -13,17 +13,20 @@ export type ListSamplesParams = {
   perPage: number;
   search?: string;
   filters?: SampleFilters;
+  // "west,south,east,north" degrees; the domain schema parses/validates it.
+  bbox?: string;
 };
 export type ListSamplesResult = { data: Sample[]; total: number };
 
 export async function listSamples(
-  { page, perPage, search, filters }: ListSamplesParams,
+  { page, perPage, search, filters, bbox }: ListSamplesParams,
   fetchFn: typeof fetch = fetch,
 ): Promise<ListSamplesResult> {
   const url = new URL("samples", baseApiUrl);
   url.searchParams.set("page", String(page));
   url.searchParams.set("perPage", String(perPage));
   if (search) url.searchParams.set("search", search);
+  if (bbox) url.searchParams.set("bbox", bbox);
   for (const [key, value] of Object.entries(filters ?? {})) {
     if (value !== undefined && value !== "") {
       url.searchParams.set(key, String(value));

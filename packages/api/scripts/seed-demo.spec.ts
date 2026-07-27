@@ -11,9 +11,9 @@ const PUBLISHED = DEMO_SAMPLES.filter((s) => s.published);
 const DRAFTS = DEMO_SAMPLES.filter((s) => !s.published);
 
 describe("DEMO_SAMPLES", () => {
-  it("should hold exactly 100 rows split 70 published / 30 draft", () => {
-    expect(DEMO_SAMPLES).toHaveLength(100);
-    expect(PUBLISHED).toHaveLength(70);
+  it("should hold exactly 120 rows split 90 published / 30 draft", () => {
+    expect(DEMO_SAMPLES).toHaveLength(120);
+    expect(PUBLISHED).toHaveLength(90);
     expect(DRAFTS).toHaveLength(30);
   });
 

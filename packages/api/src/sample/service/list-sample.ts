@@ -52,6 +52,19 @@ function matchesSearch(search: string): Expression<SqlBool> {
   )`;
 }
 
+// Rows whose generated geom intersects the drawn box, bound as parameters.
+// ponytail: ST_MakeEnvelope does not wrap the antimeridian; a box crossing
+// longitude 180 (west > east) is out of v1 scope and rejected by the domain
+// schema, so it never reaches here. Split it client-side if it ever matters.
+function withinBbox(
+  bbox: NonNullable<ListSamplesParams["bbox"]>,
+): Expression<SqlBool> {
+  return sql<SqlBool>`ST_Intersects(
+    geom,
+    ST_MakeEnvelope(${bbox.west}, ${bbox.south}, ${bbox.east}, ${bbox.north}, 4326)::geography
+  )`;
+}
+
 // The numeric age range overlap (query bounds in `ageUnit`, defaulting to Ma).
 // Both sides compare in canonical annum: the query bounds via numericAgeToAnnum,
 // the stored bounds via the generated numeric_age_*_a columns. GREATEST/LEAST
@@ -102,10 +115,11 @@ function facetFilter(
 function buildSampleFilters(params: ListSamplesParams): Expression<SqlBool>[] {
   // Facet params are validated by the query schema; read them by the registry's
   // (string) keys, which the typed ListSamplesParams cannot be indexed by.
-  const facetValues = params as Record<string, string | number | undefined>;
+  const facetValues: Record<string, unknown> = params;
 
   return [
     ...(params.search !== undefined ? [matchesSearch(params.search)] : []),
+    ...(params.bbox !== undefined ? [withinBbox(params.bbox)] : []),
     ...SAMPLE_FACETS.flatMap((facet) => {
       const value = facetValues[facet.key];
       if (typeof value !== "string") return [];
