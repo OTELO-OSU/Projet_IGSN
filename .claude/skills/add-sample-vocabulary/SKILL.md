@@ -5,6 +5,9 @@ description: Use when adding or extending a hierarchical dot-path vocabulary for
 
 # Add a node to a sample vocabulary tree
 
+The human walkthrough for changing the form (including this recipe) is
+[docs/updating-the-sample-form.md](../../../docs/updating-the-sample-form.md).
+
 `packages/domain/src/sample/` holds three hierarchical vocabularies: material
 (`material/classification.ts`), `type` (`type/vocabulary.ts`), and
 `collectionMethod` (`collection-method/vocabulary.ts`). Each is a dot-joined path
@@ -123,7 +126,7 @@ expect(sampleTypeSchema.safeParse("core.core").success).toBe(true);
    // classification.ts: const materialTree = { rock: {...}, ...rockTree } satisfies ...
    ```
 
-3. **Label.** Add the English message to `packages/design-system/messages/en.json`.
+3. **Label.** Add the English message to `packages/domain/messages/en.json`.
    Nothing to wire: both apps resolve all three vocabularies through
    `vocabulary-label.ts` (domain-owned key mapping, dynamic paraglide lookup
    with raw-key fallback). The lookup is NOT compile-enforced, but

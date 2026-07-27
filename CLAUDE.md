@@ -46,6 +46,10 @@ and native features before dependencies, shortest correct diff, keep code minima
 Use Context7 to read a package's docs before using or configuring it, rather
 than relying on memory.
 
+To change the sample declaration form (add a selector value, a characteristic,
+or a display condition), use the `add-sample-vocabulary` skill for vocabulary
+values and the `add-domain-entity` / `add-admin-component` skills for fields.
+
 ## Commands
 
 pnpm monorepo (packages in `packages/`). Prefer `pnpm <script>` so you can append
