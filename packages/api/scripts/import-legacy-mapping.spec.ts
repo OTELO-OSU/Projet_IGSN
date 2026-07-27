@@ -178,21 +178,24 @@ describe("extractCollector", () => {
 });
 
 describe("mapSize", () => {
-  it("should read a single length", () => {
+  it("should fill all three dimensions from a single number", () => {
+    const m = { value: 424, unit: "cm" };
     expect(mapSize("424.0", "centimeter")).toEqual({
-      length: { value: 424, unit: "cm" },
+      length: m,
+      width: m,
+      thickness: m,
     });
   });
 
-  it("should split an AxBxC triple into dimensions", () => {
-    expect(mapSize("9x5x6", "cm")).toEqual({
-      length: { value: 9, unit: "cm" },
-      width: { value: 5, unit: "cm" },
-      thickness: { value: 6, unit: "cm" },
-    });
+  it("should return nothing for an AxBxC triple (rejected, not guessed)", () => {
+    expect(mapSize("9x5x6", "cm")).toEqual({});
   });
 
-  it("should drop a non-numeric size", () => {
+  it("should treat a lone slash as no value", () => {
+    expect(mapSize("/", "cm")).toEqual({});
+  });
+
+  it("should return nothing for a non-numeric size", () => {
     expect(mapSize("n/a", "cm")).toEqual({});
   });
 });
@@ -313,7 +316,12 @@ describe("unmappableValues", () => {
       expected: { field: "navigation_type", value: "not-a-code" },
     },
     {
-      case: "an unknown size unit paired with a size",
+      case: "a size that is not a single number",
+      overrides: { size: "9x5x6", size_unit: "cm" },
+      expected: { field: "size", value: "9x5x6" },
+    },
+    {
+      case: "an unknown size unit paired with a single number",
       overrides: { size: "10", size_unit: "furlong" },
       expected: { field: "size_unit", value: "furlong" },
     },
@@ -340,6 +348,15 @@ describe("unmappableValues", () => {
 
   it("should not flag a stray unit with no measurement to lose", () => {
     expect(unmappableValues(goodRow({ size_unit: "furlong" }))).toEqual([]);
+  });
+
+  it("should not flag a single-number size or a lone slash", () => {
+    expect(unmappableValues(goodRow({ size: "10", size_unit: "cm" }))).toEqual(
+      [],
+    );
+    expect(unmappableValues(goodRow({ size: "/", size_unit: "cm" }))).toEqual(
+      [],
+    );
   });
 
   it("should collect every offending value in one row", () => {

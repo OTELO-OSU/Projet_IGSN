@@ -52,28 +52,28 @@ after) and upserts on `igsn`, so a rerun updates in place, preserving the row's
 
 ### Field mapping (legacy -> new)
 
-| legacy                                                 | new                                                                                          |
-| ------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
-| `name`                                                 | `name`                                                                                       |
-| `resourceIdentifier`                                   | `igsn` (+ `published`)                                                                       |
-| `latitude`/`longitude` (+`End`)                        | `location.position` (point, or area when the `*End` corner differs)                          |
-| `elevation`/`elevationEnd`/`elevationUnit`             | `location.position.elevation` (positive, above datum)                                        |
-| `bathy`/`bathyUnit`                                    | `location.position.elevation` (negative, `datum: msl`); used when land elevation is absent   |
-| `country`                                              | `location.region` continent, name -> ISO2                                                    |
-| `navigationType`                                       | `location.navigationType` (kept only if it matches a SESAR code)                             |
-| `localityDescription`/`location`/`locationDescription` | `location.localityName` / `localityDescription`                                              |
-| `collectionStartDate`/`collectionEndDate`              | `description.collectionDate`                                                                 |
-| `size`/`sizeUnit`                                      | `description.length` (+`width`/`thickness` for an `AxBxC` value)                             |
-| `resourceComment`                                      | `description.openDescription`                                                                |
-| `classification`                                       | `material` ltree (slugged, rock families prefixed `rock.`, kept to its longest valid prefix) |
-| `material`                                             | `material` root, only when there is no `classification`                                      |
-| `collectionMethod`                                     | `collection_method` ltree (slugged)                                                          |
-| `collectionMethodDesc`                                 | `collection_method_description`                                                              |
-| `resourceType`                                         | `type` ltree, or `nature` for the physical-form values                                       |
-| `otherNames`                                           | `specific_name`                                                                              |
-| `collector` (+inline ORCID)                            | `scientificContext.collectorName` / `collectorOrcid`                                         |
-| `cruiseFieldPrgm` / `fieldName` / `purpose`            | `scientificContext.researchCampaign` / `fieldName` / `missionDescription`                    |
-| geological age columns                                 | `age.*` (numeric range + unit, lithostratigraphic unit)                                      |
+| legacy                                                 | new                                                                                                                                 |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `name`                                                 | `name`                                                                                                                              |
+| `resourceIdentifier`                                   | `igsn` (+ `published`)                                                                                                              |
+| `latitude`/`longitude` (+`End`)                        | `location.position` (point, or area when the `*End` corner differs)                                                                 |
+| `elevation`/`elevationEnd`/`elevationUnit`             | `location.position.elevation` (positive, above datum)                                                                               |
+| `bathy`/`bathyUnit`                                    | `location.position.elevation` (negative, `datum: msl`); used when land elevation is absent                                          |
+| `country`                                              | `location.region` continent, name -> ISO2                                                                                           |
+| `navigationType`                                       | `location.navigationType` (kept only if it matches a SESAR code)                                                                    |
+| `localityDescription`/`location`/`locationDescription` | `location.localityName` / `localityDescription`                                                                                     |
+| `collectionStartDate`/`collectionEndDate`              | `description.collectionDate`                                                                                                        |
+| `size`/`sizeUnit`                                      | a single number fills `length`/`width`/`thickness`; `/` is no value; anything else skips the row (we do not guess an `AxBxC` order) |
+| `resourceComment`                                      | `description.openDescription`                                                                                                       |
+| `classification`                                       | `material` ltree (slugged, rock families prefixed `rock.`, kept to its longest valid prefix)                                        |
+| `material`                                             | `material` root, only when there is no `classification`                                                                             |
+| `collectionMethod`                                     | `collection_method` ltree (slugged)                                                                                                 |
+| `collectionMethodDesc`                                 | `collection_method_description`                                                                                                     |
+| `resourceType`                                         | `type` ltree, or `nature` for the physical-form values                                                                              |
+| `otherNames`                                           | `specific_name`                                                                                                                     |
+| `collector` (+inline ORCID)                            | `scientificContext.collectorName` / `collectorOrcid`                                                                                |
+| `cruiseFieldPrgm` / `fieldName` / `purpose`            | `scientificContext.researchCampaign` / `fieldName` / `missionDescription`                                                           |
+| geological age columns                                 | `age.*` (numeric range + unit, lithostratigraphic unit)                                                                             |
 
 Vocabulary values are slugged (CamelCase/`>` -> snake_case/`.`) and kept only if
 the resulting path exists in the domain tree, taking the longest valid prefix.
@@ -81,12 +81,14 @@ the resulting path exists in the domain tree, taking the longest valid prefix.
 resource type that maps to neither a known type path nor a physical-form nature
 counts as unplaceable.
 
-**A value that does not fit its enum skips the whole sample.** Every field the
-import feeds through one of our enums / controlled lists (material,
-collection method, resource type, country, navigation type, and the size /
-elevation / age units) either normalizes into that enum or the sample is skipped:
-we never store a value outside the enum (it would defeat the enum) and never
-publish a sample that silently lost it. `unmappableValues` (in
+**A value we cannot place skips the whole sample.** Every field the import feeds
+through one of our enums / controlled lists (material, collection method,
+resource type, country, navigation type, and the size / elevation / age units)
+either normalizes into that enum or the sample is skipped: we never store a value
+outside the enum (it would defeat the enum) and never publish a sample that
+silently lost it. The `size` value follows the same rule: a single number fills
+all three dimensions, `/` is no value, and anything we cannot read as a single
+number (an `AxBxC` triple) skips rather than being guessed. `unmappableValues` (in
 `import-legacy-mapping.ts`) returns every offending value in a row; the import
 prints each skip (IGSN, reason, offending value) to stdout, which
 `make db-import-legacy` tees to `import-legacy.log`, so the gaps to close before
