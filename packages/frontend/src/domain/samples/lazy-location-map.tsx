@@ -1,29 +1,45 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 
-// Leaflet touches `window` at module scope, so the map module must never be in
-// the server import graph. Lazy + a client-only mount gate keeps the whole
-// module (and its CSS) off the SSR path; callers server-render everything else.
-// Both search entry points (the landing and /search) render the map through
-// here, so the SSR footgun lives in one guarded place.
+import { m } from "#/paraglide/messages.js";
+
+// Leaflet touches `window` at module scope, so it must stay off the SSR path.
 const SearchLocationMap = lazy(() =>
   import("#/domain/samples/search-location-map.tsx").then((module) => ({
     default: module.SearchLocationMap,
   })),
 );
 
+const HINT_ID = "search-map-hint";
+
 type LazyLocationMapProps = {
-  onSearch: (bbox: string) => void;
-  initialBbox?: string;
+  value?: string;
+  onChange: (bbox: string) => void;
   compact?: boolean;
 };
 
-export function LazyLocationMap(props: LazyLocationMapProps) {
+// Reserves the height server-side, so the map does not push the results down.
+export function LazyLocationMap({ compact, ...props }: LazyLocationMapProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  if (!mounted) return null;
+
   return (
-    <Suspense fallback={null}>
-      <SearchLocationMap {...props} />
-    </Suspense>
+    <div>
+      <p id={HINT_ID} className="mb-2 text-sky-100">
+        {m.search_map_hint()}
+      </p>
+      {/* react-leaflet's MapContainer does not forward role/aria-*. */}
+      <div
+        role="group"
+        aria-label={m.search_map_label()}
+        aria-describedby={HINT_ID}
+        className={compact ? "h-48" : "h-80"}
+      >
+        {mounted ? (
+          <Suspense fallback={null}>
+            <SearchLocationMap {...props} compact={compact} />
+          </Suspense>
+        ) : null}
+      </div>
+    </div>
   );
 }

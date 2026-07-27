@@ -9,17 +9,19 @@ import {
   formatBbox,
 } from "./search-location-map.tsx";
 
-// Resolves with the Leaflet map once the container is ready, so a test can fire
-// synthetic Leaflet mouse events (latlng supplied directly, no pixel math).
+// Hands the map out so a test can fire Leaflet events by latlng, no pixel math.
 function CaptureMap({ onMap }: { onMap: (map: L.Map) => void }) {
   const map = useMap();
   onMap(map);
   return null;
 }
 
+// Leaflet draws a Rectangle as an SVG path in the overlay pane.
+const rectanglePaths = () =>
+  document.querySelectorAll(".leaflet-overlay-pane path");
+
 describe("formatBbox", () => {
   it("should normalize two corners to west,south,east,north", () => {
-    // Corners given north-east then south-west; output keeps west <= east.
     expect(formatBbox(L.latLng(50, 10), L.latLng(40, -10))).toBe(
       "-10,40,10,50",
     );
@@ -32,8 +34,7 @@ describe("formatBbox", () => {
   });
 
   it.each([
-    // Releasing off the container extrapolates past the world; the schema
-    // would reject the result and silently disable Search.
+    // A release off the container: Leaflet extrapolates past the world.
     [L.latLng(40, 185), L.latLng(50, 220), "180,40,180,50"],
     [L.latLng(-95, -190), L.latLng(50, 10), "-180,-90,10,50"],
   ])("should clamp %o / %o to the world", (a, b, expected) => {
@@ -82,9 +83,6 @@ describe("RectangleDrawer", () => {
   });
 
   it("should end the drag when the button is released off the map surface", async () => {
-    // Releasing over a control (zoom +/-, attribution) or off the map never
-    // fires the map's mouseup, which would leave the box tracking the cursor.
-    // A document-level mouseup ends the drag wherever the release lands.
     const { onSelect, map } = await renderDrawer();
 
     map.fire("mousedown", {
@@ -100,8 +98,7 @@ describe("RectangleDrawer", () => {
   });
 
   it("should ignore a shift+click with no drag", async () => {
-    // A zero-area box passes the schema, so an accidental click would replace
-    // a good selection with one that matches nothing.
+    // A zero-area box passes the schema and would match nothing.
     const { onSelect, map } = await renderDrawer("-10,40,10,50");
 
     map.fire("mousedown", {
@@ -127,83 +124,32 @@ describe("RectangleDrawer", () => {
 });
 
 describe("SearchLocationMap", () => {
-  it("should disable Search until a box is selected", async () => {
-    const screen = await render(<SearchLocationMap onSearch={vi.fn()} />);
+  it("should render no standalone Search button (a shared button owns submit)", async () => {
+    const screen = await render(<SearchLocationMap onChange={vi.fn()} />);
 
-    await expect
-      .element(screen.getByRole("button", { name: "Search" }))
-      .toBeDisabled();
+    await vi.waitFor(() =>
+      expect(document.querySelector(".leaflet-container")).not.toBeNull(),
+    );
+    expect(screen.getByRole("button", { name: "Search" }).query()).toBeNull();
   });
 
   it("should show the OSM attribution", async () => {
-    const screen = await render(<SearchLocationMap onSearch={vi.fn()} />);
+    const screen = await render(<SearchLocationMap onChange={vi.fn()} />);
 
     await expect
       .element(screen.getByRole("link", { name: /OpenStreetMap/ }))
       .toBeInTheDocument();
   });
 
-  it("should stay usable in compact mode with a selected box", async () => {
-    // Compact mode (banner shrunk) recenters on the box via fitBounds; assert
-    // the wiring stays usable, not Leaflet's internal viewport.
-    const screen = await render(
-      <SearchLocationMap
-        onSearch={vi.fn()}
-        initialBbox="-10,40,10,50"
-        compact
-      />,
-    );
+  it("should render the rectangle for a passed value (rehydration)", async () => {
+    await render(<SearchLocationMap onChange={vi.fn()} value="-10,40,10,50" />);
 
-    await expect
-      .element(screen.getByRole("button", { name: "Search" }))
-      .toBeEnabled();
+    await vi.waitFor(() => expect(rectanglePaths().length).toBeGreaterThan(0));
   });
 
-  it("should search the selected box on click", async () => {
-    const onSearch = vi.fn();
-    const screen = await render(
-      <SearchLocationMap onSearch={onSearch} initialBbox="-10,40,10,50" />,
-    );
+  it("should render no rectangle for an absent value and not throw", async () => {
+    await render(<SearchLocationMap onChange={vi.fn()} />);
 
-    const button = screen.getByRole("button", { name: "Search" });
-    await expect.element(button).toBeEnabled();
-    await button.click();
-
-    expect(onSearch).toHaveBeenCalledWith("-10,40,10,50");
-  });
-
-  it("should give the map region an accessible name", async () => {
-    const screen = await render(<SearchLocationMap onSearch={vi.fn()} />);
-
-    await expect
-      .element(screen.getByRole("group", { name: "Search area map" }))
-      .toBeInTheDocument();
-  });
-
-  it("should follow initialBbox when it changes under a mounted map", async () => {
-    // Back/forward between two searched boxes swaps the prop without
-    // remounting; Search must act on the box the results reflect.
-    const onSearch = vi.fn();
-    const screen = await render(
-      <SearchLocationMap onSearch={onSearch} initialBbox="-10,40,10,50" />,
-    );
-    await screen.rerender(
-      <SearchLocationMap onSearch={onSearch} initialBbox="0,0,5,5" />,
-    );
-
-    await screen.getByRole("button", { name: "Search" }).click();
-
-    expect(onSearch).toHaveBeenCalledWith("0,0,5,5");
-  });
-
-  it("should keep Search disabled for an antimeridian box (west > east)", async () => {
-    const screen = await render(
-      // west 10 > east -10 is out of v1 scope; the schema rejects it.
-      <SearchLocationMap onSearch={vi.fn()} initialBbox="10,40,-10,50" />,
-    );
-
-    await expect
-      .element(screen.getByRole("button", { name: "Search" }))
-      .toBeDisabled();
+    expect(rectanglePaths().length).toBe(0);
   });
 });

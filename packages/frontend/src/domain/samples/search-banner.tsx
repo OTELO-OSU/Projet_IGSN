@@ -1,25 +1,12 @@
 import type { ReactNode } from "react";
 
-import {
-  type SearchEngine,
-  SearchEngineTabs,
-} from "#/domain/samples/search-engine-tabs.tsx";
 import { m } from "#/paraglide/messages.js";
 
-// Hero banner over the search input/map. Once a location search is active it
-// shrinks (smaller title and padding) so the results get the space; the shrink
-// is driven from URL state, so it survives a refresh. The engine tabs stay
-// visible even when shrunk, so a location search can always be switched back to
-// text.
 export function SearchBanner({
   shrunk,
-  engine,
-  onEngineChange,
   children,
 }: {
   shrunk: boolean;
-  engine: SearchEngine;
-  onEngineChange: (engine: SearchEngine) => void;
   children: ReactNode;
 }) {
   return (
@@ -38,12 +25,7 @@ export function SearchBanner({
         >
           {m.search_results_title()}
         </h1>
-        <div className="text-foreground mt-6 text-left">
-          <div className="flex justify-center">
-            <SearchEngineTabs engine={engine} onEngineChange={onEngineChange} />
-          </div>
-          <div className="mt-4">{children}</div>
-        </div>
+        <div className="text-foreground mt-6 text-left">{children}</div>
       </div>
     </div>
   );
