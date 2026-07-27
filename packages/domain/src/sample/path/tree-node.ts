@@ -17,4 +17,9 @@ export type TreeNode = {
   // "resource_type" for the level under "yes"), translated like `label`.
   // Absent: the level is labelled by the parent's picked value.
   childLabel?: string;
+  // Offered as a public search-facet option (default absent = false). There is
+  // no inheritance: each node a facet should expose is flagged on its own (see
+  // sample/search/facets.ts). A node needs an entry only when it carries
+  // choices, optionality, a context override, or this flag.
+  searchable?: boolean;
 };

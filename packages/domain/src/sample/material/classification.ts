@@ -19,6 +19,7 @@ import { sedimentTree } from "./classification/sediment-subtree.ts";
 // own code (see tree-node.ts).
 const materialTree = {
   rock: {
+    searchable: true,
     choices: [
       "igneous",
       "metamorphic",
@@ -28,6 +29,7 @@ const materialTree = {
     ],
   },
   sediment: {
+    searchable: true,
     choices: [
       "exogenous_detritic",
       "volcano_detritic",
@@ -36,8 +38,14 @@ const materialTree = {
     ],
   },
   extraterrestrial_rock: {
+    searchable: true,
     choices: ["returned_samples", "meteorites", "micrometeorites"],
   },
+  // Plain-leaf roots; an entry exists only to flag them as searchable facet
+  // options (see sample/search/facets.ts).
+  mineral: { searchable: true },
+  fossil: { searchable: true },
+  synthetic_rock_mineral: { searchable: true },
 
   ...rockTree,
   ...metamorphicTree,
@@ -65,9 +73,13 @@ export const MATERIAL_ROOTS = [
 export const MATERIAL_PATHS = expandPaths(MATERIAL_TREE, MATERIAL_ROOTS);
 
 // The vocabulary as one self-describing bundle for HierarchySelectField.
+// `searchable` opts the whole vocabulary into the public search facets (default
+// false; see sample/search/facets.ts). Its igneous branch carries the chemistry
+// sub-classification, so searching material covers igneous rock too.
 export const MATERIAL_HIERARCHY = {
   roots: MATERIAL_ROOTS,
   nodes: MATERIAL_TREE,
+  searchable: true,
 };
 
 // A validated dot-joined path. Not a literal union: the valid set is derived

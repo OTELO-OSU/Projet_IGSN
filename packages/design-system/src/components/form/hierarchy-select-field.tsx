@@ -1,5 +1,6 @@
 import { withRequired } from "../../lib/with-required.ts";
 import { useTypedAppFormContext } from "./app-form.tsx";
+import { HierarchyCascade } from "./hierarchy-cascade.tsx";
 
 // Structural mirror of the domain vocabulary trees (design-system MUST NOT
 // import domain). A node's label code defaults to its own segment; `label`
@@ -13,6 +14,9 @@ export type HierarchyNodeDef = {
   // A label code naming the level this node opens for its children (translated
   // like `label`). Absent: the level is labelled by the parent's picked value.
   childLabel?: string;
+  // Offered as a public search-facet option (mirrors domain TreeNode). Unused by
+  // the form widget; the facet sidebar filters levels by it.
+  searchable?: boolean;
 };
 
 // A hierarchical vocabulary as one self-describing bundle: its entry segments
@@ -39,6 +43,12 @@ function resolveNode(
     if (node) return node;
   }
   return undefined;
+}
+
+// Whether a path's node is flagged as a searchable facet option (default
+// false). Used by the facet sidebar to offer only flagged nodes at each level.
+export function isPathSearchable(hierarchy: Hierarchy, path: string): boolean {
+  return resolveNode(hierarchy, path)?.searchable === true;
 }
 
 const identity = (code: string) => code;
@@ -158,98 +168,69 @@ type HierarchySelectFieldProps = {
   onChange?: () => void;
 };
 
-type HierarchyLevelProps = Omit<
-  HierarchySelectFieldProps,
-  "rootLabel" | "requiredToPublish"
-> & {
-  depth: number;
-  // The selected path whose children this level offers; null at the root.
-  parent: string | null;
-  label: string;
-};
-
-function HierarchyLevel({
+// A cascade of autocompletes over a hierarchical controlled vocabulary: one
+// select per level, each labelled by the value picked above it, walking the tree
+// recursively as deep as the taxonomy goes. Render inside a `form.AppForm`.
+//
+// The recursion is owned by the headless `HierarchyCascade`; this wrapper only
+// binds each level to the form. The field stays a `string[]` (one full path per
+// level, names `name[depth]`); the deepest picked value drives the walk, and the
+// bound `ComboboxField` self-writes its level while its listener truncates the
+// now-invalid deeper levels.
+export function HierarchySelectField({
   name,
   hierarchy,
   translate = identity,
+  rootLabel,
+  requiredToPublish = false,
   placeholder,
   searchPlaceholder,
   emptyText,
   onChange,
-  depth,
-  parent,
-  label,
-}: HierarchyLevelProps) {
+}: HierarchySelectFieldProps) {
   const form = useTypedAppFormContext({
     defaultValues: {} as Record<string, string[]>,
   });
-  const children = hierarchyChildren(hierarchy, parent);
-  if (children.length === 0) return null; // Leaf: nothing left to refine.
-
-  const items = hierarchyLevelItems(hierarchy, parent, translate);
 
   return (
-    <>
-      <form.AppField
-        name={`${name}[${depth}]`}
-        listeners={{
-          // A new choice at this level invalidates every deeper level.
-          onChange: () => {
-            form.setFieldValue(name, (path) => path.slice(0, depth + 1));
-            onChange?.();
-          },
-        }}
-      >
-        {(field) => (
-          <field.ComboboxField
-            label={levelLabel(hierarchy, label, parent)}
-            items={items}
-            placeholder={placeholder}
-            searchPlaceholder={searchPlaceholder}
-            emptyText={emptyText}
-          />
-        )}
-      </form.AppField>
-
-      <form.Subscribe selector={(state) => state.values[name]?.[depth]}>
-        {(selected) => {
-          const child =
-            selected && children.includes(selected) ? selected : null;
-          // The parent-itself option is not a child, so it stops the recursion.
-          return child ? (
-            <HierarchyLevel
-              name={name}
-              hierarchy={hierarchy}
-              translate={translate}
-              placeholder={placeholder}
-              searchPlaceholder={searchPlaceholder}
-              emptyText={emptyText}
-              onChange={onChange}
-              depth={depth + 1}
-              parent={child}
-              label={hierarchyChildLabel(hierarchy, child, translate)}
-            />
-          ) : null;
-        }}
-      </form.Subscribe>
-    </>
-  );
-}
-
-// A cascade of autocompletes over a hierarchical controlled vocabulary: one
-// select per level, each labelled by the value picked above it, walking the tree
-// recursively as deep as the taxonomy goes. Render inside a `form.AppForm`.
-export function HierarchySelectField({
-  rootLabel,
-  requiredToPublish = false,
-  ...rest
-}: HierarchySelectFieldProps) {
-  return (
-    <HierarchyLevel
-      {...rest}
-      depth={0}
-      parent={null}
-      label={withRequired(rootLabel, requiredToPublish)}
-    />
+    <form.Subscribe
+      selector={(state) =>
+        composeHierarchyValue(state.values[name] ?? []) ?? undefined
+      }
+    >
+      {(value) => (
+        <HierarchyCascade
+          hierarchy={hierarchy}
+          translate={translate}
+          value={value}
+          rootLabel={withRequired(rootLabel, requiredToPublish)}
+          itemsAt={(parent) =>
+            hierarchyLevelItems(hierarchy, parent, translate)
+          }
+          renderLevel={({ parent, depth, label, items }) => (
+            <form.AppField
+              name={`${name}[${depth}]`}
+              listeners={{
+                // A new choice at this level invalidates every deeper level.
+                onChange: () => {
+                  form.setFieldValue(name, (path) => path.slice(0, depth + 1));
+                  onChange?.();
+                },
+              }}
+            >
+              {(field) => (
+                <field.ComboboxField
+                  label={levelLabel(hierarchy, label, parent)}
+                  items={items}
+                  placeholder={placeholder}
+                  searchPlaceholder={searchPlaceholder}
+                  emptyText={emptyText}
+                />
+              )}
+            </form.AppField>
+          )}
+        />
+      )}
+    </form.Subscribe>
   );
 }
