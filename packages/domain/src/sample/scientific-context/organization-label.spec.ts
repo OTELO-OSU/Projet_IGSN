@@ -1,14 +1,27 @@
 import { organizationLabel } from "./organization-label.ts";
+import { ORGANIZATIONS } from "./organization.ts";
+
+// The cases are picked from the list rather than naming a ROR id, because the
+// list is refreshed from ROR and any name pinned here would drift. What this
+// spec owns is the label composition, not the reference data.
+const withAcronym = ORGANIZATIONS.find(
+  (organization) => organization.acronym !== null,
+);
+const withoutAcronym = ORGANIZATIONS.find(
+  (organization) => organization.acronym === null,
+);
 
 describe("organizationLabel", () => {
   it("should render name with acronym when the ROR is known and has one", () => {
-    expect(organizationLabel("03fd77x13")).toBe(
-      "Institut national de physique nucléaire et de physique des particules (CNRS - IN2P3)",
+    expect(withAcronym).toBeDefined();
+    expect(organizationLabel(withAcronym!.ror)).toBe(
+      `${withAcronym!.name} (${withAcronym!.acronym})`,
     );
   });
 
   it("should render the bare name when the known organization has no acronym", () => {
-    expect(organizationLabel("043htjv09")).toBe("CY Cergy Paris Université");
+    expect(withoutAcronym).toBeDefined();
+    expect(organizationLabel(withoutAcronym!.ror)).toBe(withoutAcronym!.name);
   });
 
   it("should fall back to the raw ROR when the organization is unknown", () => {

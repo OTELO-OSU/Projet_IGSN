@@ -1,0 +1,123 @@
+name: "Sync organizations"
+
+# Refreshes packages/domain/src/sample/scientific-context/organization.ts from
+# ROR (see that file's header for what is stored and why). This workflow is
+# only the trigger and the PR mechanics; the merge policy lives in
+# packages/domain/scripts/merge-ror-organization.ts.
+#
+# The opened PR is the approval gate: nothing here merges by itself, and the
+# sync never adds or removes a row, only updates name/acronym/status in place.
+# Repo one-time setup:
+# - optional secret ROR_CLIENT_ID exempts these requests from ROR rate
+#   limiting (https://ror.readme.io/v2/docs/rest-api); works without it too.
+# - Settings -> Actions -> General -> "Allow GitHub Actions to create and
+#   approve pull requests" must be enabled, or `gh pr create` below 403s.
+# Cadence: repo variable ORGANIZATION_SYNC_INTERVAL_MONTHS (default 12, so
+# January only; 3 for quarterly, 1 for monthly). See the `due` job.
+#
+# The list drifted since its original CSV import, so the first sync PR this
+# workflow opens is large (roughly half the rows): review it as a real diff,
+# not a rubber stamp.
+on:
+  schedule:
+    # GitHub requires a literal cron, so it cannot read the interval variable.
+    # It fires monthly and the `due` job applies ORGANIZATION_SYNC_INTERVAL_MONTHS.
+    - cron: "0 3 1 * *"
+  workflow_dispatch:
+
+jobs:
+  due:
+    runs-on: ubuntu-latest
+    permissions: {}
+
+    outputs:
+      due: ${{ steps.interval.outputs.due }}
+
+    steps:
+      - name: Check the sync interval
+        id: interval
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INTERVAL: ${{ vars.ORGANIZATION_SYNC_INTERVAL_MONTHS || 12 }}
+        run: |
+          if [ "$EVENT_NAME" != "schedule" ]; then
+            echo "due=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Bash evaluates a variable's value as an expression inside $(( )), so
+          # anything but a positive integer is rejected before the arithmetic.
+          case "$INTERVAL" in '' | *[!0-9]* | 0) INTERVAL=12 ;; esac
+          # All digits by now, but a leading zero would read as octal: 06 aborts
+          # the step and 012 would silently mean 10 months.
+          INTERVAL=$((10#$INTERVAL))
+          month=$(date -u +%-m)
+          if [ $(( (month - 1) % INTERVAL )) -eq 0 ]; then
+            echo "due=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "due=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  sync:
+    needs: due
+    if: needs.due.outputs.due == 'true'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Sync organizations from ROR
+        env:
+          ROR_CLIENT_ID: ${{ secrets.ROR_CLIENT_ID }}
+        run: node packages/domain/scripts/sync-organizations.ts > "$RUNNER_TEMP/report.md"
+
+      - name: Format the generated file
+        run: pnpm fmt:apply packages/domain/src/sample/scientific-context/organization.ts
+
+      - name: Open the pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          path=packages/domain/src/sample/scientific-context/organization.ts
+          if git diff --quiet -- "$path"; then
+            echo "ROR agrees with the stored list, nothing to propose."
+            exit 0
+          fi
+          # One dated branch and PR per run, so a run never touches an earlier
+          # one: no approval carried over to unreviewed data, no hand fix
+          # overwritten, no ambiguity with an already merged sync PR. Nothing
+          # here rewrites history, so a second run on the same day is rejected
+          # on the push and the day's open proposal stands untouched.
+          date=$(date -u +%F)
+          branch="chore/sync-organizations-$date"
+          title="chore(domain): sync organizations from ROR ($date)"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$branch"
+          git commit -m "$title" -- "$path"
+          git push origin "$branch"
+          gh pr create --base main --head "$branch" \
+            --title "$title" --body-file "$RUNNER_TEMP/report.md"
+
+      # A PR opened with GITHUB_TOKEN does not trigger check.yml, so the sync
+      # runs its own check. Last on purpose: a failure turns the job red but
+      # leaves the PR up for a human to fix. No spec pins an organization name,
+      # so this fails on a broken emit, not on a rename.
+      - name: Run the domain tests
+        run: pnpm test --project @projet-igsn/domain
