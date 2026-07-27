@@ -3,6 +3,8 @@ import type {
   ListSamplesResult,
 } from "@projet-igsn/domain/sample/repository";
 
+import { GEOLOGICAL_AGES } from "@projet-igsn/domain/sample/age/geological-age";
+import { geologicalAgeBoundsMa } from "@projet-igsn/domain/sample/age/geological-age-bounds";
 import { numericAgeToAnnum } from "@projet-igsn/domain/sample/age/numeric-age-to-annum";
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { type Expression, sql, type SqlBool } from "kysely";
@@ -67,22 +69,52 @@ function withinBbox(
   )`;
 }
 
-// The numeric age range overlap (query bounds in `ageUnit`, defaulting to Ma).
-// Both sides compare in canonical annum: the query bounds via numericAgeToAnnum,
-// the stored bounds via the generated numeric_age_*_a columns. GREATEST/LEAST
-// pick the sample's oldest/youngest and ignore a null bound (a single-bound
-// draft); a row with no age (both columns null) never matches.
-function numericAgeFilters(params: ListSamplesParams): Expression<SqlBool>[] {
+// SQL that maps a stratigraphic rank expression to one edge of its annum
+// interval, as a CASE over the domain boundary table (the single source of the
+// ICS numbers). edge 0 = young bound, 1 = old bound. Rank keys are the
+// allow-listed 1..49 and the boundary values are fixed domain constants, all
+// bound as parameters.
+function geologicalAnnum(rankExpr: Expression<number>, edge: 0 | 1) {
+  const whens = GEOLOGICAL_AGES.map(
+    (rank) =>
+      sql`WHEN ${rank} THEN ${numericAgeToAnnum(geologicalAgeBoundsMa(rank)[edge], "ma")}`,
+  );
+  // Cast so the bound numeric literals are double precision (else Postgres
+  // infers them as text and COALESCE with the numeric columns fails).
+  return sql`(CASE ${rankExpr} ${sql.join(whens, sql` `)} END)::double precision`;
+}
+
+// The age range overlap (query bounds in `ageUnit`, defaulting to Ma). Both
+// sides compare in canonical annum: the query bounds via numericAgeToAnnum, the
+// sample's effective interval numeric-if-present-else-geological. GREATEST/LEAST
+// over the numeric_age_*_a columns are null only when BOTH are null, so COALESCE
+// falls to the geological interval exactly when the sample has no numeric age
+// (numeric precedence). The geological young/old edges come from LEAST/GREATEST
+// over the two rank columns, so a reversed or single-bound rank range still
+// derives young/old by rank order; both rank columns null makes the CASE null,
+// so a row with no age at all never matches. Inclusive overlap: a bound exactly
+// on a stage edge matches both neighbours.
+function ageFilters(params: ListSamplesParams): Expression<SqlBool>[] {
   const unit = params.ageUnit ?? "ma";
+  const geoYoung = geologicalAnnum(
+    sql`LEAST(geological_age_min, geological_age_max)`,
+    0,
+  );
+  const geoOld = geologicalAnnum(
+    sql`GREATEST(geological_age_min, geological_age_max)`,
+    1,
+  );
+  const overlapOld = sql`COALESCE(GREATEST(numeric_age_min_a, numeric_age_max_a), ${geoOld})`;
+  const overlapYoung = sql`COALESCE(LEAST(numeric_age_min_a, numeric_age_max_a), ${geoYoung})`;
   return [
     ...(params.ageMin != null
       ? [
-          sql<SqlBool>`GREATEST(numeric_age_min_a, numeric_age_max_a) >= ${numericAgeToAnnum(params.ageMin, unit)}`,
+          sql<SqlBool>`${overlapOld} >= ${numericAgeToAnnum(params.ageMin, unit)}`,
         ]
       : []),
     ...(params.ageMax != null
       ? [
-          sql<SqlBool>`LEAST(numeric_age_min_a, numeric_age_max_a) <= ${numericAgeToAnnum(params.ageMax, unit)}`,
+          sql<SqlBool>`${overlapYoung} <= ${numericAgeToAnnum(params.ageMax, unit)}`,
         ]
       : []),
   ];
@@ -111,7 +143,7 @@ function facetFilter(
     case "text":
       return ilikeUnaccent(column, value);
     // The age range is a numericRange facet for the sidebar UI, but its filter
-    // lives in numericAgeFilters (annum columns), not the generic column map.
+    // lives in ageFilters (annum columns), not the generic column map.
     case "numericRange":
       return undefined;
   }
@@ -131,7 +163,7 @@ function buildSampleFilters(params: ListSamplesParams): Expression<SqlBool>[] {
       const filter = facetFilter(facet, value);
       return filter ? [filter] : [];
     }),
-    ...numericAgeFilters(params),
+    ...ageFilters(params),
   ];
 }
 
