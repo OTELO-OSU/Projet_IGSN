@@ -121,9 +121,14 @@ in without duplicates.
 ### Dropped fields (no target in the new schema)
 
 `currentArchive` / `originalArchive` and their contacts, `collectorDetail`
-(email), `coredresource` depth, `physiographicFeature`, `platform*`,
-`landingPage`, `relatedresource` (not DOI links), the legacy geological-age stage
-codes, old users/auth, and sub-sample parent links.
+(email), `physiographicFeature_id` / `physiographicFeatureName`,
+`collectionDatePrecision` / `collectionTime` / `collectionTimeEnd` (the new
+collection date is date-only), `platform*` and `launch*`, `landingPage`,
+`prefix_id` (already inside `resourceIdentifier`), and the
+`relatedresource` / `relationtype` (not DOI links), `coredresource` (interval
+depths), `personne`, `alternateidentifier`, `logdate` and `geologicalage`
+stage-code tables, plus old users/auth and sub-sample parent links.
+`docs/legacy-import-mapping.xlsx` lists them column by column with the reason.
 
 ### Ignored samples (not imported)
 
