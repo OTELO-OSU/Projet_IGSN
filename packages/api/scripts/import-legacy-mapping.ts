@@ -194,23 +194,63 @@ export function mapResourceType(resourceType: string | null): {
   return { type, nature };
 }
 
-// Pull an ORCID iD out of a free-text collector field like
-// "Jostein Bakke (ORCID:0000-0001-6114-0400)" and return the name without it.
-const ORCID_PATTERN = /(\d{4}-\d{4}-\d{4}-\d{3}[\dx])/i;
+const ORCID_RE = /^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/;
 
-export function extractCollector(collector: string | null): {
-  name: string | null;
-  orcid: string | null;
-} {
-  if (!collector) return { name: null, orcid: null };
-  const match = collector.match(ORCID_PATTERN);
-  const orcid = match?.[1]?.toUpperCase() ?? null;
-  const name = clean(
-    collector
-      .replace(/\(?\s*orcid\s*:?\s*\d{4}-\d{4}-\d{4}-\d{3}[\dx]\s*\)?/i, "")
-      .replace(/\(\s*\)\s*$/, ""),
+// One person or organization name: letters (any script, with diacritics),
+// spaces, hyphens, apostrophes and dots (initials). No commas, digits, or an
+// "et al." placeholder, so an open-ended list is not a name.
+const NAME_RE = /^\p{L}[\p{L} .'’-]*$/u;
+const isName = (token: string): boolean =>
+  NAME_RE.test(token) && !/\bet\s*\.?\s*al\b/i.test(token);
+
+// One collector: a plain name, or the "Surname, Firstname" form (exactly one
+// comma; the surname before it is a single token). A multi-word part before the
+// comma means several people ("BRIOT Danielle, CANTAGREL Jean-Marie"), not one
+// name, so it is not a segment.
+const isNameSegment = (segment: string): boolean => {
+  if (isName(segment)) return true;
+  const [surname, firstname, ...rest] = segment.split(",");
+  return (
+    rest.length === 0 &&
+    firstname !== undefined &&
+    isName(surname!.trim()) &&
+    !/\s/.test(surname!.trim()) &&
+    isName(firstname.trim())
   );
-  return { name, orcid };
+};
+
+export type ParsedCollector =
+  | { name: string | null; orcid: string | null }
+  | { invalid: string };
+
+// A legacy `collector` is a name ("Firstname Last" or "Surname, Firstname"), an
+// organization, several such names separated by `;`, any of these optionally
+// trailed by "(ORCID: ....)", or empty. Anything else (an open-ended "et al."
+// list, a segment with more than one comma, a malformed ORCID, stray
+// punctuation) we cannot read with confidence, so it is returned invalid for the
+// import to skip and log rather than mangle into a name.
+export function parseCollector(collector: string | null): ParsedCollector {
+  const raw = collector?.trim() ?? "";
+  if (raw === "") return { name: null, orcid: null };
+
+  const orcidForm = raw.match(/^(.*?)\s*\(\s*orcid:?\s*([^)]*)\)\s*$/i);
+  if (orcidForm) {
+    const name = orcidForm[1]!.trim();
+    const orcid = orcidForm[2]!.trim().toUpperCase();
+    return isNameSegment(name) && ORCID_RE.test(orcid)
+      ? { name, orcid }
+      : { invalid: raw };
+  }
+  // Any other parenthesis is a shape we do not recognize.
+  if (raw.includes("(") || raw.includes(")")) return { invalid: raw };
+
+  const names = raw
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return names.length > 0 && names.every(isNameSegment)
+    ? { name: names.join("; "), orcid: null }
+    : { invalid: raw };
 }
 
 const SIZE_UNIT_BY_LEGACY: Record<string, "mm" | "cm" | "dm" | "m"> = {
@@ -474,9 +514,11 @@ export function mapAge(row: LegacyRow): CreateSample["age"] | null {
 }
 
 export function mapScientificContext(row: LegacyRow): ScientificContext | null {
-  const { name: collectorName, orcid: collectorOrcid } = extractCollector(
-    row.collector,
-  );
+  // An unreadable collector skips the row (see unmappableValues), so here it
+  // simply carries no collector.
+  const collector = parseCollector(row.collector);
+  const collectorName = "invalid" in collector ? null : collector.name;
+  const collectorOrcid = "invalid" in collector ? null : collector.orcid;
   const researchCampaign = clean(row.cruise_field_prgm);
   const fieldName = clean(row.field_name);
   const missionDescription = clean(row.purpose);
@@ -509,6 +551,7 @@ export type SkipField =
   | "resource_type"
   | "country"
   | "navigation_type"
+  | "collector"
   | "size"
   | "size_unit"
   | "elevation_unit"
@@ -547,6 +590,10 @@ export function unmappableValues(row: LegacyRow): SkipIssue[] {
     !navigationTypeSchema.safeParse(row.navigation_type).success
   ) {
     issues.push({ field: "navigation_type", value: row.navigation_type });
+  }
+  const collector = parseCollector(row.collector);
+  if ("invalid" in collector) {
+    issues.push({ field: "collector", value: collector.invalid });
   }
   // A size we cannot read as a single number is rejected (we will not guess the
   // dimensions of an "AxBxC" triple); a single number needs a usable unit.

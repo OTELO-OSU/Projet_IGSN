@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   type LegacyRow,
-  extractCollector,
   isKnownMaterialPath,
   mapAge,
   mapCollectionMethod,
@@ -12,6 +11,7 @@ import {
   mapMaterial,
   mapResourceType,
   mapSize,
+  parseCollector,
   toCreateSample,
   unmappableValues,
 } from "./import-legacy-mapping.ts";
@@ -162,18 +162,61 @@ describe("mapResourceType", () => {
   });
 });
 
-describe("extractCollector", () => {
-  it("should split a name and its inline ORCID", () => {
-    expect(
-      extractCollector("Jostein Bakke (ORCID:0000-0001-6114-0400)"),
-    ).toEqual({ name: "Jostein Bakke", orcid: "0000-0001-6114-0400" });
+describe("parseCollector", () => {
+  it.each([
+    {
+      case: "a name with an inline ORCID",
+      input: "Jostein Bakke (ORCID:0000-0001-6114-0400)",
+      expected: { name: "Jostein Bakke", orcid: "0000-0001-6114-0400" },
+    },
+    {
+      case: "a bare name",
+      input: "Frederique Eynaud",
+      expected: { name: "Frederique Eynaud", orcid: null },
+    },
+    {
+      case: "an organization",
+      input: "INSTITUT DE PHYSIQUE DU GLOBE DE PARIS",
+      expected: { name: "INSTITUT DE PHYSIQUE DU GLOBE DE PARIS", orcid: null },
+    },
+    {
+      case: "several names separated by semicolons",
+      input: "NICOLAS Adolphe; BOUDIER Françoise",
+      expected: { name: "NICOLAS Adolphe; BOUDIER Françoise", orcid: null },
+    },
+    {
+      case: "a surname-comma-firstname",
+      input: "BOIVIN, Pierre",
+      expected: { name: "BOIVIN, Pierre", orcid: null },
+    },
+    {
+      case: "several surname-comma-firstname names",
+      input: "Andreani, M.; Escartin, J.",
+      expected: { name: "Andreani, M.; Escartin, J.", orcid: null },
+    },
+    {
+      case: "an empty value",
+      input: "",
+      expected: { name: null, orcid: null },
+    },
+  ])("should accept $case", ({ input, expected }) => {
+    expect(parseCollector(input)).toEqual(expected);
   });
 
-  it("should return a bare name with no ORCID", () => {
-    expect(extractCollector("Frederique Eynaud")).toEqual({
-      name: "Frederique Eynaud",
-      orcid: null,
-    });
+  it("should accept a null collector as empty", () => {
+    expect(parseCollector(null)).toEqual({ name: null, orcid: null });
+  });
+
+  it.each([
+    { case: "an open-ended list", input: "FEST, Helena et al." },
+    { case: "a segment with more than one comma", input: "Staudacher, JS, DC" },
+    {
+      case: "a comma-separated pair of full names",
+      input: "BRIOT Danielle, CANTAGREL Jean-Marie",
+    },
+    { case: "a malformed ORCID", input: "Cecile Grobois (ORCID:)" },
+  ])("should reject $case", ({ input }) => {
+    expect(parseCollector(input)).toEqual({ invalid: input });
   });
 });
 
@@ -314,6 +357,11 @@ describe("unmappableValues", () => {
       case: "an unknown navigation type",
       overrides: { navigation_type: "not-a-code" },
       expected: { field: "navigation_type", value: "not-a-code" },
+    },
+    {
+      case: "a collector we cannot parse",
+      overrides: { collector: "FEST, Helena et al." },
+      expected: { field: "collector", value: "FEST, Helena et al." },
     },
     {
       case: "a size that is not a single number",
