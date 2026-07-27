@@ -1,5 +1,6 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
+import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
@@ -43,6 +44,19 @@ const pickProvenance = async (
   await screen.getByRole("option", { name: option }).click();
 };
 
+// Searches and picks by the label the combobox actually renders, derived from
+// the ROR id. The list is refreshed from ROR, so a name typed in here would
+// drift; the id is the stable code and the sync never rewrites one. Assumes the
+// organization combobox is already open.
+const pickOrganization = async (
+  screen: Awaited<ReturnType<typeof renderScientificContextSection>>,
+  ror: string,
+) => {
+  const label = organizationLabel(ror);
+  await screen.getByPlaceholder("Search organizations...").fill(label);
+  await screen.getByRole("option", { name: label }).click();
+};
+
 describe("SampleScientificContextFields", () => {
   it("should show no branch field until a provenance status is chosen", async () => {
     const screen = await renderScientificContextSection();
@@ -66,12 +80,7 @@ describe("SampleScientificContextFields", () => {
     await screen
       .getByRole("combobox", { name: "Funder organization *" })
       .click();
-    await screen.getByPlaceholder("Search organizations...").fill("CNRS");
-    await screen
-      .getByRole("option", {
-        name: "Centre National de la Recherche Scientifique (CNRS)",
-      })
-      .click();
+    await pickOrganization(screen, "02feahw73");
     await screen
       .getByLabelText("Name of the research programme *")
       .fill("Deep Biosphere Survey");
@@ -81,18 +90,8 @@ describe("SampleScientificContextFields", () => {
         name: "Research structure of the programme chief *",
       })
       .click();
-    await screen.getByPlaceholder("Search organizations...").fill("INSU");
-    await screen
-      .getByRole("option", {
-        name: "Institut national des sciences de l'Univers (CNRS - INSU)",
-      })
-      .click();
-    await screen.getByPlaceholder("Search organizations...").fill("BRGM");
-    await screen
-      .getByRole("option", {
-        name: "Bureau de Recherches Géologiques et Minières (BRGM)",
-      })
-      .click();
+    await pickOrganization(screen, "04kdfz702");
+    await pickOrganization(screen, "05hnb7x64");
     await screen.getByLabelText("Collector name *").fill("Pierre Curie");
     await screen.getByRole("button", { name: "Create" }).click();
 

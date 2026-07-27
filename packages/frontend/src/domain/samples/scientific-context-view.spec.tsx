@@ -1,3 +1,4 @@
+import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
 import { render } from "vitest-browser-react";
 
 import { ScientificContextView } from "./scientific-context-view.tsx";
@@ -31,21 +32,15 @@ describe("ScientificContextView", () => {
       .element(screen.getByText("Recent collection"))
       .toBeInTheDocument();
 
-    // Organizations resolve their ROR to a name and link to ror.org.
-    const funder = screen.getByRole("link", {
-      name: /Institut national de physique nucléaire/,
-    });
-    await expect
-      .element(funder)
-      .toHaveAttribute("href", "https://ror.org/03fd77x13");
-    await expect
-      .element(screen.getByRole("link", { name: "CY Cergy Paris Université" }))
-      .toHaveAttribute("href", "https://ror.org/043htjv09");
-    await expect
-      .element(
-        screen.getByRole("link", { name: "Institut de Physique (CNRS - INP)" }),
-      )
-      .toHaveAttribute("href", "https://ror.org/00z54nq84");
+    // Organizations resolve their ROR to a name and link to ror.org. The names
+    // come from organizationLabel, not from literals: the list is refreshed from
+    // ROR, so a pinned name would drift. The ROR ids stay pinned, they are the
+    // stable code and the sync never rewrites one.
+    for (const ror of ["03fd77x13", "043htjv09", "00z54nq84"]) {
+      await expect
+        .element(screen.getByRole("link", { name: organizationLabel(ror) }))
+        .toHaveAttribute("href", `https://ror.org/${ror}`);
+    }
 
     // ORCID iDs link to orcid.org.
     await expect
