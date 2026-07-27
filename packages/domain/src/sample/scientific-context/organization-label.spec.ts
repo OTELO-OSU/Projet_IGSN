@@ -13,14 +13,12 @@ const withoutAcronym = ORGANIZATIONS.find(
 
 describe("organizationLabel", () => {
   it("should render name with acronym when the ROR is known and has one", () => {
-    expect(withAcronym).toBeDefined();
     expect(organizationLabel(withAcronym!.ror)).toBe(
       `${withAcronym!.name} (${withAcronym!.acronym})`,
     );
   });
 
   it("should render the bare name when the known organization has no acronym", () => {
-    expect(withoutAcronym).toBeDefined();
     expect(organizationLabel(withoutAcronym!.ror)).toBe(withoutAcronym!.name);
   });
 

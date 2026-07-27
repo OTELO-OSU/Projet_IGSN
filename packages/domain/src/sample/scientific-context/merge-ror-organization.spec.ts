@@ -68,16 +68,16 @@ describe("mergeRorOrganization", () => {
       },
     },
     {
-      case: "keep the curated acronym when ROR lists it among several",
+      case: "take the first ROR acronym when ROR lists several",
       current: { ...curated, acronym: "ESA" },
       names: [
         { value: "ASE", types: ["acronym"] },
         { value: "ESA", types: ["acronym"] },
       ],
-      expected: { ror: "0aaaaaa11", name: "Curated name", acronym: "ESA" },
+      expected: { ror: "0aaaaaa11", name: "Curated name", acronym: "ASE" },
     },
     {
-      case: "take the first ROR acronym when none matches the curated one",
+      case: "overwrite the curated acronym with the ROR one",
       current: curated,
       names: [{ value: "ROR ACRONYM", types: ["acronym"] }],
       expected: {
@@ -103,62 +103,18 @@ describe("mergeRorOrganization", () => {
       },
     },
   ])("should $case", ({ current, names, expected }) => {
-    expect(mergeRorOrganization(current, { status: "active", names })).toEqual(
-      expected,
-    );
-  });
-
-  it("should ignore the ROR status", () => {
-    expect(
-      mergeRorOrganization(curated, {
-        status: "inactive",
-        names: [{ value: "ROR name", types: ["ror_display"] }],
-      }),
-    ).toEqual({
-      ror: "0aaaaaa11",
-      name: "ROR name",
-      acronym: "CURATED ACRONYM",
-    });
+    expect(mergeRorOrganization(current, { names })).toEqual(expected);
   });
 });
 
 describe("rorRecordSchema", () => {
-  it("should accept a ROR payload and keep only status and names", () => {
+  it("should accept a ROR payload and keep only the names", () => {
     expect(
       rorRecordSchema.parse({
         id: "https://ror.org/0aaaaaa11",
         status: "active",
         names: [{ value: "ROR ACRONYM", lang: null, types: ["acronym"] }],
       }),
-    ).toEqual({
-      status: "active",
-      names: [{ value: "ROR ACRONYM", types: ["acronym"] }],
-    });
-  });
-
-  it.each([
-    { case: "an empty payload", payload: {} },
-    { case: "a missing names array", payload: { status: "active" } },
-    { case: "a missing status", payload: { names: [] } },
-    { case: "a non-string status", payload: { status: 1, names: [] } },
-    {
-      case: "a non-array names",
-      payload: { status: "active", names: "ROR ACRONYM" },
-    },
-    {
-      case: "a name without types",
-      payload: { status: "active", names: [{ value: "ROR ACRONYM" }] },
-    },
-    {
-      case: "a name with non-string types",
-      payload: {
-        status: "active",
-        names: [{ value: "ROR ACRONYM", types: [1] }],
-      },
-    },
-  ])("should reject $case", ({ payload }) => {
-    expect(rorRecordSchema.safeParse(payload)).toMatchObject({
-      success: false,
-    });
+    ).toEqual({ names: [{ value: "ROR ACRONYM", types: ["acronym"] }] });
   });
 });

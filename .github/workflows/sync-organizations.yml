@@ -3,7 +3,7 @@ name: "Sync organizations"
 # Refreshes packages/domain/src/sample/scientific-context/organization.ts from
 # ROR (see that file's header for what is stored and why). This workflow is
 # only the trigger and the PR mechanics; the merge policy lives in
-# packages/domain/scripts/merge-ror-organization.ts.
+# packages/domain/src/sample/scientific-context/merge-ror-organization.ts.
 #
 # The opened PR is the approval gate: nothing here merges by itself, and the
 # sync never adds or removes a row, only updates name/acronym/status in place.
@@ -85,7 +85,7 @@ jobs:
       - name: Sync organizations from ROR
         env:
           ROR_CLIENT_ID: ${{ secrets.ROR_CLIENT_ID }}
-        run: node packages/domain/scripts/sync-organizations.ts > "$RUNNER_TEMP/report.md"
+        run: node packages/domain/scripts/sync-organizations.ts
 
       - name: Format the generated file
         run: pnpm fmt:apply packages/domain/src/sample/scientific-context/organization.ts
@@ -112,8 +112,8 @@ jobs:
           git checkout -b "$branch"
           git commit -m "$title" -- "$path"
           git push origin "$branch"
-          gh pr create --base main --head "$branch" \
-            --title "$title" --body-file "$RUNNER_TEMP/report.md"
+          gh pr create --base main --head "$branch" --title "$title" \
+            --body "Refreshed from the ROR API. The diff is the whole proposal: every changed name or acronym is a row below. A row ROR could not be reached for is left untouched and named in the run log."
 
       # A PR opened with GITHUB_TOKEN does not trigger check.yml, so the sync
       # runs its own check. Last on purpose: a failure turns the job red but
