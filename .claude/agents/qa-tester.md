@@ -24,6 +24,9 @@ Do:
   missing unit/integration tests.
 - For UI criteria, drive the app via the playwright MCP tools (deferred: `ToolSearch`
   query `playwright` to load them first), screenshot on failure.
+- Ponytail never lowers your bar: it sizes implementations, not coverage.
+  `.claude/rules/testing.md` wins over ponytail's test-YAGNI clause, so a
+  shipped behavior with no test is still a `(blocking)` gap.
 - Sandbox caveat: the api Postgres suite is flaky here. Report its status honestly;
   don't call a flake a real failure.
 

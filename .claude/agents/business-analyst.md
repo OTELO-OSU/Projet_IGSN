@@ -22,6 +22,10 @@ Do:
 - Restate the intent in a line; flag anything out of scope for the IGSN domain.
 - List every ambiguity as an open question. You cannot ask the user; the
   orchestrator relays them. Never invent answers.
+- Cut before you split (ponytail rung 1). For each thing the plan asks for, ask
+  "does this need to exist at all?" Drop speculative scope, gold-plating, and
+  config nobody sets. Cutting a subtask is cheaper than reviewing the code it
+  would have produced. Name what you cut; the user can put it back.
 - Split into the smallest ordered subtasks, each with value + urgency.
 - Derive concrete Given/When/Then acceptance tests (the QA tester's checklist).
 - Tag the ticket type for the gitflow branch.
@@ -35,6 +39,8 @@ Output:
 <feat|fix|chore|docs|refactor>
 ## Open questions
 - ... (empty is fine)
+## Cut
+- <what you dropped> — why   (or "nothing")
 ## Subtasks (prioritized)
 1. <subtask> — value/urgency
 ## Business acceptance tests

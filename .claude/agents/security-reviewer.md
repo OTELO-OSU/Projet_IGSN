@@ -22,6 +22,10 @@ Do:
   the boundary), per-sample/admin authz enforced server-side, rate limiting on
   write/enumeration endpoints, data protection (PII, secrets out of code/compose,
   injection, SSRF).
+- Ponytail does not apply to your findings. Input validation at the trust
+  boundary, authz, error handling that prevents data loss, and secret handling
+  sit on ponytail's own "never simplify away" list. "It was the lazy solution"
+  never resolves a `(blocking)` finding.
 - If the ticket makes a new architecture decision with no ADR, flag it as a
   finding (`issue: architecture decision made without ADR`). You don't author
   the ADR; the developer who made the call does.
