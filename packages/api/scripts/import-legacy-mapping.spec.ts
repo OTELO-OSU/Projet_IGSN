@@ -230,17 +230,27 @@ describe("mapSize", () => {
     });
   });
 
-  it("should return nothing for an AxBxC triple (rejected, not guessed)", () => {
-    expect(mapSize("9x5x6", "cm")).toEqual({});
-  });
+  it.each(["1x2x3", "1X2X3", " 1 x 2 x 3 ", "1.0x2x3"])(
+    "should read %s as length x width x thickness",
+    (size) => {
+      expect(mapSize(size, "cm")).toEqual({
+        length: { value: 1, unit: "cm" },
+        width: { value: 2, unit: "cm" },
+        thickness: { value: 3, unit: "cm" },
+      });
+    },
+  );
 
   it("should treat a lone slash as no value", () => {
     expect(mapSize("/", "cm")).toEqual({});
   });
 
-  it("should return nothing for a non-numeric size", () => {
-    expect(mapSize("n/a", "cm")).toEqual({});
-  });
+  it.each(["n/a", "9x5", "1x2x3x4", "9x5x6cm", "0x2x3"])(
+    "should return nothing for %s",
+    (size) => {
+      expect(mapSize(size, "cm")).toEqual({});
+    },
+  );
 });
 
 describe("mapElevation", () => {
@@ -364,9 +374,14 @@ describe("unmappableValues", () => {
       expected: { field: "collector", value: "FEST, Helena et al." },
     },
     {
-      case: "a size that is not a single number",
-      overrides: { size: "9x5x6", size_unit: "cm" },
-      expected: { field: "size", value: "9x5x6" },
+      case: "a size that is neither a single number nor a triple",
+      overrides: { size: "9x5", size_unit: "cm" },
+      expected: { field: "size", value: "9x5" },
+    },
+    {
+      case: "an unknown size unit paired with a dimension triple",
+      overrides: { size: "1x2x3", size_unit: "furlong" },
+      expected: { field: "size_unit", value: "furlong" },
     },
     {
       case: "an unknown size unit paired with a single number",

@@ -265,21 +265,41 @@ const SIZE_UNIT_BY_LEGACY: Record<string, "mm" | "cm" | "dm" | "m"> = {
   meters: "m",
 };
 
-// Legacy `size` is one positive number, `/` (no value), or something we cannot
-// read as a single measurement (an "AxBxC" triple, free text). We don't know
-// which dimension a bare number is, nor the order of a triple, so a single
-// number fills all three dimensions, `/` is no size, and anything else is
-// rejected for review (see unmappableValues) rather than guessed.
+// Legacy `size` is an "AxBxC" triple in length x width x thickness order, one
+// positive number, `/` (no value), or something we cannot read as a measurement
+// (free text, a two-value pair). We don't know which dimension a bare number is,
+// so it fills all three; anything else is rejected for review (see
+// unmappableValues) rather than guessed.
 type ParsedSize =
   | { kind: "none" }
-  | { kind: "single"; value: number }
+  | { kind: "dimensions"; length: number; width: number; thickness: number }
   | { kind: "invalid"; raw: string };
+
+const positiveNumber = (part: string): number => {
+  const value = Number(part.trim());
+  return Number.isFinite(value) && value > 0 ? value : NaN;
+};
 
 function parseSize(size: string | null): ParsedSize {
   const raw = size?.trim() ?? "";
   if (raw === "" || raw === "/") return { kind: "none" };
-  const value = Number(raw);
-  if (Number.isFinite(value) && value > 0) return { kind: "single", value };
+  const parts = raw.split(/x/i).map(positiveNumber);
+  const [first, second, third] = parts;
+  if (parts.some(Number.isNaN)) return { kind: "invalid", raw };
+  if (parts.length === 1)
+    return {
+      kind: "dimensions",
+      length: first!,
+      width: first!,
+      thickness: first!,
+    };
+  if (parts.length === 3)
+    return {
+      kind: "dimensions",
+      length: first!,
+      width: second!,
+      thickness: third!,
+    };
   return { kind: "invalid", raw };
 }
 
@@ -292,9 +312,12 @@ export function mapSize(
 > {
   const unit = SIZE_UNIT_BY_LEGACY[sizeUnit?.trim().toLowerCase() ?? ""];
   const parsed = parseSize(size);
-  if (parsed.kind !== "single" || !unit) return {};
-  const measurement = { value: parsed.value, unit };
-  return { length: measurement, width: measurement, thickness: measurement };
+  if (parsed.kind !== "dimensions" || !unit) return {};
+  return {
+    length: { value: parsed.length, unit },
+    width: { value: parsed.width, unit },
+    thickness: { value: parsed.thickness, unit },
+  };
 }
 
 const ELEVATION_UNIT_BY_LEGACY: Record<string, "m" | "km"> = {
@@ -595,13 +618,13 @@ export function unmappableValues(row: LegacyRow): SkipIssue[] {
   if ("invalid" in collector) {
     issues.push({ field: "collector", value: collector.invalid });
   }
-  // A size we cannot read as a single number is rejected (we will not guess the
-  // dimensions of an "AxBxC" triple); a single number needs a usable unit.
+  // A size we can read as neither a single number nor an "AxBxC" triple is
+  // rejected; a readable size needs a usable unit.
   const size = parseSize(row.size);
   if (size.kind === "invalid") {
     issues.push({ field: "size", value: size.raw });
   } else if (
-    size.kind === "single" &&
+    size.kind === "dimensions" &&
     row.size_unit &&
     !SIZE_UNIT_BY_LEGACY[norm(row.size_unit)]
   ) {

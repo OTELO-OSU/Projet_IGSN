@@ -63,7 +63,7 @@ after) and upserts on `igsn`, so a rerun updates in place, preserving the row's
 | `navigationType`                                       | `location.navigationType` (kept only if it matches a SESAR code)                                                                                                                     |
 | `localityDescription`/`location`/`locationDescription` | `location.localityName` / `localityDescription`                                                                                                                                      |
 | `collectionStartDate`/`collectionEndDate`              | `description.collectionDate`                                                                                                                                                         |
-| `size`/`sizeUnit`                                      | a single number fills `length`/`width`/`thickness`; `/` is no value; anything else skips the row (we do not guess an `AxBxC` order)                                                  |
+| `size`/`sizeUnit`                                      | an `AxBxC` triple maps to `length`/`width`/`thickness` in that order; a single number fills all three; `/` is no value; anything else skips the row                                  |
 | `resourceComment`                                      | `description.openDescription`                                                                                                                                                        |
 | `classification`                                       | `material` ltree (slugged, rock families prefixed `rock.`, kept to its longest valid prefix)                                                                                         |
 | `material`                                             | `material` root, only when there is no `classification`                                                                                                                              |
@@ -86,9 +86,10 @@ through one of our enums / controlled lists (material, collection method,
 resource type, country, navigation type, and the size / elevation / age units)
 either normalizes into that enum or the sample is skipped: we never store a value
 outside the enum (it would defeat the enum) and never publish a sample that
-silently lost it. The `size` value follows the same rule: a single number fills
-all three dimensions, `/` is no value, and anything we cannot read as a single
-number (an `AxBxC` triple) skips rather than being guessed. `unmappableValues` (in
+silently lost it. The `size` value follows the same rule: an `AxBxC` triple maps
+to length/width/thickness in that order, a single number fills all three
+dimensions (the source does not say which one it is), `/` is no value, and
+anything else (a two-value pair, free text) skips. `unmappableValues` (in
 `import-legacy-mapping.ts`) returns every offending value in a row; the import
 prints each skip (IGSN, reason, offending value) to stdout, which
 `make db-import-legacy` tees to `import-legacy.log`, so the gaps to close before
