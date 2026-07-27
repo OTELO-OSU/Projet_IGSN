@@ -25,7 +25,9 @@ manages the team; teammates cannot spawn their own.
   Comments (`<label> [decoration]: subject`); a `(blocking)` finding forces `BLOCK`.
   Relay findings to the user in that same format.
 - **Never `git push`. Never commit to `main`.** There is no hook backstop for
-  this: all work stays on the ticket branch by discipline alone.
+  this, it holds by discipline alone. At the end the lead fast-forwards the
+  ticket branch into its source branch locally (step 8). That local merge is the
+  only branch movement allowed: it never targets `main` and never pushes.
 
 ## Planning (during plan mode)
 
@@ -51,7 +53,9 @@ doc-specialist run only after plan mode is exited with an accepted plan.
    approval message gives you the absolute paths. Rename the branch to the ticket
    branch (`git -C <_source> branch -m "$TYPE/$SLUG"`, `$TYPE` from the BA). Every
    teammate works in this worktree; put its path in each spawn prompt. Do not
-   create or remove the worktree yourself; the hooks own its lifecycle.
+   create or remove the worktree yourself; the hooks own its lifecycle. Record the
+   branch the worktree was created from as `$SOURCE` (the main checkout still has
+   it checked out); step 8 fast-forwards it onto the ticket commit.
 
 2. **Split the plan into tasks.** Write one spec file per task to
    `/tmp/_agents/<session-id>/tasks/TASK-XXX.md` (`TASK-001`, `TASK-002`, ...), each
@@ -91,8 +95,19 @@ doc-specialist run only after plan mode is exited with an accepted plan.
    - Sandbox caveat: if the api Postgres suite is flaky here, report its status to
      the user and let them decide on the commit rather than blocking forever.
 
-8. **Summary.** Report: what shipped, tests added, ADRs written, docs updated, the
-   worktree path and branch name, and any follow-ups. Leave the committed branch
-   for the user to review and merge; do not push or merge. The session worktree and
-   its `tasks/` dir are removed automatically when the session ends; the branch and
-   its commit persist in the repo.
+8. **Merge to source.** Once the commit gate is green, fast-forward the source
+   branch onto the ticket commit automatically, without asking: the user reviews
+   the change on the source branch from GitHub, which is easier than reading it in
+   the IDE worktree. From the main checkout (already on `$SOURCE`) run
+   `git merge --ff-only "$TYPE/$SLUG"`. It fast-forwards because the ticket branch
+   was cut from `$SOURCE` and only the ticket's one commit sits on top. Guardrails:
+   never merge into `main` (if `$SOURCE` is `main`, skip the merge and surface it);
+   never `git push` (the user pushes when ready). If the fast-forward is refused
+   (the source branch moved), do not force it: report the divergence and let the
+   user rebase.
+
+9. **Summary.** Report: what shipped, tests added, ADRs written, docs updated, the
+   `$SOURCE` branch it merged into, the worktree path and ticket branch name, and
+   any follow-ups (including the reminder to `git push`). The session worktree and
+   its `tasks/` dir are removed automatically when the session ends; the ticket
+   branch, its commit, and the fast-forwarded source branch persist in the repo.
