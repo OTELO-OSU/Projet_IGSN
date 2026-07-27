@@ -15,6 +15,10 @@ describe("location search messages", () => {
       m.search_location_empty_hint,
       "No published samples in the selected area.",
     ],
+    [
+      m.search_location_hint,
+      "Draw an area on the map above to search for samples.",
+    ],
   ])("should resolve to its English text", (message, expected) => {
     expect(message()).toBe(expected);
   });

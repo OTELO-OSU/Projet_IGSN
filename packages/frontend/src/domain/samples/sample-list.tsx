@@ -96,7 +96,7 @@ export function SampleList({
                 {name}
               </h2>
               <p
-                className="text-muted-foreground mt-1 font-mono text-sm"
+                className="text-muted-foreground mt-1 font-mono text-sm break-all"
                 data-highlight
               >
                 {igsn}

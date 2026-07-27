@@ -51,11 +51,18 @@ export function sampleListPage(page: Page) {
       // Wait for the client bundle to hydrate before typing, else the submit
       // fires before React attaches its onSubmit handler.
       await page.waitForLoadState("networkidle");
-      await page.getByRole("searchbox").fill(query);
+      // Named: the facet sidebar holds searchboxes of its own.
+      const field = page.getByRole("searchbox", { name: "Search samples" });
+      await field.fill(query);
       // Search only runs on submit, not while typing.
-      await page.getByRole("searchbox").press("Enter");
+      await field.press("Enter");
       await page.waitForURL(/[?&]q=/);
     },
+    // The facet sidebar, an aside labelled "Filters".
+    expectFacetsVisible: () =>
+      expect(
+        page.getByRole("complementary", { name: "Filters" }),
+      ).toBeVisible(),
     // With no query the page invites a search instead of listing samples.
     expectSearchInvite: () =>
       expect(page.getByText(/type a query/i)).toBeVisible(),

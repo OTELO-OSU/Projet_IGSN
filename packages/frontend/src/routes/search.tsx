@@ -2,7 +2,10 @@ import { SearchField } from "@projet-igsn/design-system/components/ui/search-fie
 import { facetParamKeys } from "@projet-igsn/domain/sample/search/facets";
 import { createFileRoute } from "@tanstack/react-router";
 
-import type { SampleFilters } from "#/domain/samples/client/list-samples.ts";
+import type {
+  ListSamplesParams,
+  SampleFilters,
+} from "#/domain/samples/client/list-samples.ts";
 import type { SearchParams } from "#/domain/samples/search-params.ts";
 
 import {
@@ -14,13 +17,11 @@ import { SampleFacets } from "#/domain/samples/sample-facets.tsx";
 import { SearchBanner } from "#/domain/samples/search-banner.tsx";
 import {
   PER_PAGE,
-  hasActiveFilters,
   isLocationSearchActive,
   locationSearch,
   nextEngineSearch,
   searchParamsSchema,
   searchQueryParams,
-  toFilters,
 } from "#/domain/samples/search-params.ts";
 import { SearchResultsView } from "#/domain/samples/search-results-view.tsx";
 import { m } from "#/paraglide/messages.js";
@@ -42,6 +43,9 @@ function SearchPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const shrunk = isLocationSearchActive(search);
+  // Undefined means there is nothing to search yet (empty text with no facet, or
+  // location without a box), so no results block and no query.
+  const params = searchQueryParams(search);
 
   return (
     <div>
@@ -70,60 +74,68 @@ function SearchPage() {
           <LazyLocationMap
             initialBbox={search.bbox}
             compact={shrunk}
-            onSearch={(bbox) => navigate({ search: locationSearch(bbox) })}
+            onSearch={(bbox) =>
+              navigate({ search: locationSearch(bbox, search) })
+            }
           />
         )}
       </SearchBanner>
 
       <div className="relative mx-auto w-full max-w-6xl px-6 py-8">
-        {search.engine === "text" ? (
-          hasActiveFilters(search) ? (
-            <div className="relative grid gap-8 md:grid-cols-[24rem_1fr]">
-              <SampleFacets
-                values={search as SampleFilters}
-                onChange={(key, value) =>
-                  navigate({
-                    resetScroll: false,
-                    search: (prev) => ({ ...prev, [key]: value, page: 1 }),
-                  })
-                }
-                onClearAll={() =>
-                  navigate({
-                    resetScroll: false,
-                    search: (prev) => {
-                      const next = { ...prev } as Record<string, unknown>;
-                      for (const key of FACET_KEYS) delete next[key];
-                      next.page = 1;
-                      return next as SearchParams;
-                    },
-                  })
-                }
-              />
-              <TextResults search={search} />
-            </div>
+        {/* The sidebar is always up, on both engines: facets refine a box search
+            the same way they refine a text one. Gating it on active filters made
+            "Clear all filters" hide the only way back to them. */}
+        <div className="relative grid gap-8 md:grid-cols-[24rem_1fr]">
+          <SampleFacets
+            values={search as SampleFilters}
+            onChange={(key, value) =>
+              navigate({
+                resetScroll: false,
+                search: (prev) => ({ ...prev, [key]: value, page: 1 }),
+              })
+            }
+            onClearAll={() =>
+              navigate({
+                resetScroll: false,
+                search: (prev) => {
+                  const next = { ...prev } as Record<string, unknown>;
+                  for (const key of FACET_KEYS) delete next[key];
+                  next.page = 1;
+                  return next as SearchParams;
+                },
+              })
+            }
+          />
+          {/* Nothing to search (including right after an engine switch, which
+              drops the other engine's param): ask for a search in the results
+              column rather than leaving it blank or showing stale results. */}
+          {params ? (
+            <Results search={search} params={params} />
           ) : (
             <p className="text-muted-foreground text-center">
-              {m.search_empty_hint()}
+              {search.engine === "text"
+                ? m.search_empty_hint()
+                : m.search_location_hint()}
             </p>
-          )
-        ) : shrunk ? (
-          <LocationResults bbox={search.bbox!} page={search.page} />
-        ) : null}
+          )}
+        </div>
       </div>
     </div>
   );
 }
 
-// Rendered only when a query or a facet is set, so the list query never runs on
-// an empty search.
-function TextResults({ search }: { search: SearchParams }) {
+// Rendered only with a runnable query (`params`), so the list never runs on an
+// empty search. Both engines share it: they differ only in the copy shown when
+// nothing matches.
+function Results({
+  search,
+  params,
+}: {
+  search: SearchParams;
+  params: ListSamplesParams;
+}) {
   const navigate = Route.useNavigate();
-  const { data } = useListSamples({
-    page: search.page,
-    perPage: PER_PAGE,
-    search: search.q,
-    filters: toFilters(search),
-  });
+  const { data } = useListSamples(params);
   const pageCount = Math.max(1, Math.ceil(data.total / PER_PAGE));
 
   return (
@@ -133,28 +145,13 @@ function TextResults({ search }: { search: SearchParams }) {
       query={search.q}
       page={search.page}
       pageCount={pageCount}
+      emptyMessage={
+        search.engine === "location"
+          ? m.search_location_empty_hint()
+          : undefined
+      }
       onPageChange={(next) =>
         navigate({ search: (prev) => ({ ...prev, page: next }) })
-      }
-    />
-  );
-}
-
-// Rendered only when a valid box is active, so the list query always has a box.
-function LocationResults({ bbox, page }: { bbox: string; page: number }) {
-  const navigate = Route.useNavigate();
-  const { data } = useListSamples({ page, perPage: PER_PAGE, bbox });
-  const pageCount = Math.max(1, Math.ceil(data.total / PER_PAGE));
-
-  return (
-    <SearchResultsView
-      samples={data.data}
-      total={data.total}
-      page={page}
-      pageCount={pageCount}
-      emptyMessage={m.search_location_empty_hint()}
-      onPageChange={(next) =>
-        navigate({ search: { engine: "location", bbox, page: next } })
       }
     />
   );

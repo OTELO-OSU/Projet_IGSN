@@ -87,13 +87,11 @@ export const SAMPLE_TYPE_ROOTS = [
 
 export const SAMPLE_TYPES = expandPaths(SAMPLE_TYPE_TREE, SAMPLE_TYPE_ROOTS);
 
-// The vocabulary as one self-describing bundle for HierarchySelectField.
-// `searchable` opts the whole vocabulary into the public search facets (default
-// false; see sample/search/facets.ts).
+// The vocabulary as one self-describing bundle for HierarchySelectField and for
+// the type search facet (see sample/search/facets.ts).
 export const SAMPLE_TYPE_HIERARCHY = {
   roots: SAMPLE_TYPE_ROOTS,
   nodes: SAMPLE_TYPE_TREE,
-  searchable: true,
 };
 
 // A validated dot-joined path. Not a literal union: the valid set is derived

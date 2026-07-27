@@ -22,13 +22,14 @@ The form has no schema of its own. The write contract is `createSampleSchema` ([
 
 Material, type, and collection method are dot-path vocabulary trees. Adding a value is pure data: you edit a lookup table, with no database migration and no UI change.
 
-Each tree is a record of nodes keyed by their `lower_snake_case` code. A node holds three optional fields:
+Each tree is a record of nodes keyed by their `lower_snake_case` code. A node holds only optional fields:
 
 ```ts
 type TreeNode = {
   label?: string; // usually omitted: the code is its own label key
   choices?: readonly string[]; // the child codes, when it has children
   optional?: boolean; // true if stopping here is a valid, publishable choice
+  searchable?: boolean; // true to offer it as a public search filter option
 };
 ```
 
@@ -97,6 +98,15 @@ meta_igneous_rock: {
 So a path like `rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite` walks all the way to the same `granite` leaf as the plain igneous path, reusing `plutonic.felsic`'s children with zero duplication. All subtrees spread into one flat record ([classification.ts](../packages/domain/src/sample/material/classification.ts)), so each code is defined once and every graft points at that single definition. If a grafted branch must behave differently under its new parent, do not touch the shared code: add a dotted key scoped to the full branch path (`meta_igneous_rock.plutonic.felsic`), which the longest-suffix match picks up only in that context.
 
 **`optional: true`** marks a node where stopping is a complete, publishable answer on its own. Without it, a node that has children must be refined deeper before the sample can be published. Leaves are always valid stops.
+
+**`searchable: true`** offers the node as an option in the public search filter for that tree (the sidebar cascade on the sample list). It changes nothing in the declaration form: a value is always selectable there, searchable or not. There is no inheritance, so flag every node the filter should offer, at each level; a node without the flag stays absent from the filter even if its parent carries it. A plain leaf that would otherwise need no entry gets one just for the flag:
+
+```ts
+// packages/domain/src/sample/material/classification.ts
+mineral: { searchable: true },
+```
+
+Keep the filter shallower than the form: flag the levels a reader would browse by, not every leaf. The filter matches at-or-under the picked node, so picking `rock` returns every sample below it, and a deep leaf rarely earns its own row. Background: the facet registry ([facets.ts](../packages/domain/src/sample/search/facets.ts)) reads these flags; a hierarchy with no searchable root fails its spec.
 
 ### 2. Add its label
 

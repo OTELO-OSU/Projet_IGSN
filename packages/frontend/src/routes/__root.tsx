@@ -75,7 +75,7 @@ function RootLayout() {
         </Link>
       </header>
 
-      <main className="w-full flex-1 flex-col">
+      <main className="w-full flex-1">
         <Outlet />
       </main>
 

@@ -14,8 +14,10 @@ import { withSampleChildren } from "./with-sample-children.ts";
 
 // Each facet key maps to the sample column(s) it filters. The mapping is an
 // allow-list (facet keys are fixed, never user input), so column names are safe
-// to embed as identifiers; values are always bound parameters.
-const FACET_COLUMN: Record<string, string> = {
+// to embed as identifiers; values are always bound parameters. Every facet but
+// the numeric range needs an entry; facet-column.spec guards the drift, since
+// SAMPLE_FACETS is typed with a widened `key: string` and cannot guard it here.
+export const FACET_COLUMN: Record<string, string> = {
   type: "type",
   material: "material",
   collectionMethod: "collection_method",
@@ -96,7 +98,10 @@ function facetFilter(
   facet: (typeof SAMPLE_FACETS)[number],
   value: string,
 ): Expression<SqlBool> | undefined {
-  const column = FACET_COLUMN[facet.key]!;
+  // A facet added to the registry without a column here filters nothing rather
+  // than breaking every /samples request; the spec catches it before that ships.
+  const column = FACET_COLUMN[facet.key];
+  if (!column) return undefined;
   switch (facet.kind) {
     // Value is validated against the vocabulary, so the ltree cast is safe.
     case "hierarchy":
