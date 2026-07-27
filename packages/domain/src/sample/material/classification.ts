@@ -72,14 +72,13 @@ export const MATERIAL_ROOTS = [
 
 export const MATERIAL_PATHS = expandPaths(MATERIAL_TREE, MATERIAL_ROOTS);
 
-// The vocabulary as one self-describing bundle for HierarchySelectField.
-// `searchable` opts the whole vocabulary into the public search facets (default
-// false; see sample/search/facets.ts). Its igneous branch carries the chemistry
-// sub-classification, so searching material covers igneous rock too.
+// The vocabulary as one self-describing bundle for HierarchySelectField and for
+// the material search facet (see sample/search/facets.ts). Its igneous branch
+// carries the chemistry sub-classification, so searching material covers
+// igneous rock too.
 export const MATERIAL_HIERARCHY = {
   roots: MATERIAL_ROOTS,
   nodes: MATERIAL_TREE,
-  searchable: true,
 };
 
 // A validated dot-joined path. Not a literal union: the valid set is derived

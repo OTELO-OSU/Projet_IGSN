@@ -126,7 +126,7 @@ export function SampleFacets({
   return (
     <aside
       aria-label={m.facets_title()}
-      className="sticky top-24 z-0 h-[calc(100vh-96px)] space-y-6 self-start overflow-y-auto py-6 pr-6"
+      className="space-y-6 py-6 md:sticky md:top-24 md:z-0 md:h-[calc(100vh-96px)] md:self-start md:overflow-y-auto md:pr-6"
     >
       <Button
         type="button"

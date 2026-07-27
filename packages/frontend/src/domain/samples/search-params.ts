@@ -54,7 +54,12 @@ export function searchQueryParams(
     if (!params.bbox || !bboxSchema.safeParse(params.bbox).success) {
       return undefined;
     }
-    return { page: params.page, perPage: PER_PAGE, bbox: params.bbox };
+    return {
+      page: params.page,
+      perPage: PER_PAGE,
+      bbox: params.bbox,
+      filters: toFilters(params),
+    };
   }
   if (!hasActiveFilters(params)) return undefined;
   return {
@@ -65,21 +70,28 @@ export function searchQueryParams(
   };
 }
 
-// Switching engine resets to page 1 and drops the other engine's param, so a
-// shared URL never carries a stale filter for the hidden engine.
+// Switching engine resets to page 1 and drops the other engine's own param (`q`
+// or `bbox`), so a shared URL never searches on a term the hidden engine set.
+// Facets survive the round trip: a mistaken tab click must not silently discard
+// the sidebar the reader just filled in.
 export function nextEngineSearch(
   params: SearchParams,
   engine: SearchEngine,
 ): SearchParams {
-  if (engine === "location") {
-    return { engine, bbox: params.bbox, page: 1 };
-  }
-  return { engine, q: params.q, page: 1 };
+  return engine === "location"
+    ? { ...params, engine, q: undefined, page: 1 }
+    : { ...params, engine, bbox: undefined, page: 1 };
 }
 
-// The URL state for a location search on the drawn box, always page 1.
-export function locationSearch(bbox: string): SearchParams {
-  return { engine: "location", bbox, page: 1 };
+// The URL state for a location search on the drawn box, always page 1. Facets
+// carry over from `params` (the sidebar refines a box search too); the text
+// query does not, it belongs to the other engine. Called without params from the
+// landing page, where there is nothing to carry.
+export function locationSearch(
+  bbox: string,
+  params?: SearchParams,
+): SearchParams {
+  return { ...params, engine: "location", bbox, q: undefined, page: 1 };
 }
 
 // A location search has run once the location engine holds a valid box; the

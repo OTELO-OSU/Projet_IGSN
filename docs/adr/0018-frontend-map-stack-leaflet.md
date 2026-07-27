@@ -1,4 +1,4 @@
-# 0017. Frontend map stack: Leaflet + OSM tiles for location search
+# 0018. Frontend map stack: Leaflet + OSM tiles for location search
 
 Date: 2026-07-22
 

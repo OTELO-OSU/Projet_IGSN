@@ -15,16 +15,29 @@ import { m } from "#/paraglide/messages.js";
 
 const HINT_ID = "search-map-hint";
 
+// The whole world, once: the map cannot pan past it, so a drawn corner is
+// always a real place. Leaflet's own lat/lng are unbounded (it happily reports
+// lng 220 on a wrapped world), which the domain schema rejects.
+const WORLD_BOUNDS: LatLngBoundsExpression = [
+  [-90, -180],
+  [90, 180],
+];
+
+// A click with no drag would still produce a schema-valid zero-area box.
+const MIN_DRAG_PX = 5;
+
 const round6 = (value: number) => Math.round(value * 1e6) / 1e6;
+const clamp = (value: number, limit: number) =>
+  round6(Math.max(-limit, Math.min(limit, value)));
 
 // Two dragged corners -> "west,south,east,north". min/max keeps west <= east
-// (v1 constraint: no antimeridian crossing), matching the domain schema.
+// (v1 constraint: no antimeridian crossing), matching the domain schema. The
+// clamp catches a release outside the container, which Leaflet extrapolates
+// past ±180/±90.
 export function formatBbox(a: LatLng, b: LatLng): string {
-  const west = round6(Math.min(a.lng, b.lng));
-  const east = round6(Math.max(a.lng, b.lng));
-  const south = round6(Math.min(a.lat, b.lat));
-  const north = round6(Math.max(a.lat, b.lat));
-  return `${west},${south},${east},${north}`;
+  const lngs = [clamp(a.lng, 180), clamp(b.lng, 180)];
+  const lats = [clamp(a.lat, 90), clamp(b.lat, 90)];
+  return `${Math.min(...lngs)},${Math.min(...lats)},${Math.max(...lngs)},${Math.max(...lats)}`;
 }
 
 // "w,s,e,n" -> Leaflet bounds for rendering, or null when absent/malformed.
@@ -79,6 +92,11 @@ export function RectangleDrawer({
     startRef.current = null;
     setDraft(null);
     map.dragging.enable();
+    // A stray shift-click is not a selection: it would replace a good box with
+    // a zero-area one that passes the schema and matches nothing.
+    const from = map.latLngToContainerPoint(start);
+    const to = map.latLngToContainerPoint(corner);
+    if (from.distanceTo(to) < MIN_DRAG_PX) return;
     onSelect(formatBbox(start, corner));
   }
 
@@ -127,6 +145,14 @@ export function SearchLocationMap({
   // Selection is the single "w,s,e,n" source of truth, fed by the drawer's
   // onSelect, and gates the Search button via bboxSchema.
   const [selection, setSelection] = useState(initialBbox ?? "");
+  // The map stays mounted across navigations, so browser back/forward between
+  // two searched boxes changes the prop under it; resync or the drawn box and
+  // the Search button keep the box the results no longer reflect.
+  const [lastInitialBbox, setLastInitialBbox] = useState(initialBbox);
+  if (initialBbox !== lastInitialBbox) {
+    setLastInitialBbox(initialBbox);
+    setSelection(initialBbox ?? "");
+  }
   const valid = bboxSchema.safeParse(selection).success;
 
   return (
@@ -144,12 +170,16 @@ export function SearchLocationMap({
         <MapContainer
           center={[20, 0]}
           zoom={2}
+          minZoom={2}
           boxZoom={false}
+          maxBounds={WORLD_BOUNDS}
+          maxBoundsViscosity={1}
           className={`${compact ? "h-48" : "h-80"} w-full rounded-md select-none`}
         >
           {/* ponytail: OSM public tiles are a known ceiling (self-host/provider
               if traffic grows). Attribution is required by the OSM usage policy. */}
           <TileLayer
+            noWrap
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           />

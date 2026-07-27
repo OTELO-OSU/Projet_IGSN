@@ -17,6 +17,7 @@
   "search_map_label": "Search area map",
   "search_map_hint": "Hold Shift and drag on the map to draw an area, then search it.",
   "search_location_empty_hint": "No published samples in the selected area.",
+  "search_location_hint": "Draw an area on the map above to search for samples.",
   "sample_section_sample": "Sample",
   "sample_field_nature": "Nature",
   "sample_field_type": "Type",

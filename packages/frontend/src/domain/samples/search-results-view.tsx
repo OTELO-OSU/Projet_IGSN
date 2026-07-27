@@ -30,7 +30,7 @@ export function SearchResultsView({
   }
 
   return (
-    <>
+    <div className="flex flex-col gap-1">
       <p className="text-muted-foreground mb-6">
         {m.search_results_count({ count: total })}
       </p>
@@ -60,6 +60,6 @@ export function SearchResultsView({
           </Button>
         </nav>
       ) : null}
-    </>
+    </div>
   );
 }

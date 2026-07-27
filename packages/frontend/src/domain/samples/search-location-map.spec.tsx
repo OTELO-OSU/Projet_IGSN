@@ -30,6 +30,15 @@ describe("formatBbox", () => {
       "2.345679,1.234568,4,3",
     );
   });
+
+  it.each([
+    // Releasing off the container extrapolates past the world; the schema
+    // would reject the result and silently disable Search.
+    [L.latLng(40, 185), L.latLng(50, 220), "180,40,180,50"],
+    [L.latLng(-95, -190), L.latLng(50, 10), "-180,-90,10,50"],
+  ])("should clamp %o / %o to the world", (a, b, expected) => {
+    expect(formatBbox(a, b)).toBe(expected);
+  });
 });
 
 describe("RectangleDrawer", () => {
@@ -88,6 +97,20 @@ describe("RectangleDrawer", () => {
 
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(map.dragging.enabled()).toBe(true);
+  });
+
+  it("should ignore a shift+click with no drag", async () => {
+    // A zero-area box passes the schema, so an accidental click would replace
+    // a good selection with one that matches nothing.
+    const { onSelect, map } = await renderDrawer("-10,40,10,50");
+
+    map.fire("mousedown", {
+      latlng: L.latLng(40, -10),
+      originalEvent: { shiftKey: true },
+    });
+    map.fire("mouseup", { latlng: L.latLng(40, -10) });
+
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it("should not draw on a plain drag (no shift)", async () => {
@@ -155,6 +178,22 @@ describe("SearchLocationMap", () => {
     await expect
       .element(screen.getByRole("group", { name: "Search area map" }))
       .toBeInTheDocument();
+  });
+
+  it("should follow initialBbox when it changes under a mounted map", async () => {
+    // Back/forward between two searched boxes swaps the prop without
+    // remounting; Search must act on the box the results reflect.
+    const onSearch = vi.fn();
+    const screen = await render(
+      <SearchLocationMap onSearch={onSearch} initialBbox="-10,40,10,50" />,
+    );
+    await screen.rerender(
+      <SearchLocationMap onSearch={onSearch} initialBbox="0,0,5,5" />,
+    );
+
+    await screen.getByRole("button", { name: "Search" }).click();
+
+    expect(onSearch).toHaveBeenCalledWith("0,0,5,5");
   });
 
   it("should keep Search disabled for an antimeridian box (west > east)", async () => {

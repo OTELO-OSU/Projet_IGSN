@@ -32,7 +32,23 @@ describe("searchQueryParams", () => {
         bbox: "-10,40,10,50",
         page: 1,
       }),
-    ).toEqual({ page: 1, perPage: 50, bbox: "-10,40,10,50" });
+    ).toEqual({ page: 1, perPage: 50, bbox: "-10,40,10,50", filters: {} });
+  });
+
+  it("should filter a location search by the active facets", () => {
+    expect(
+      searchQueryParams({
+        engine: "location",
+        bbox: "-10,40,10,50",
+        nature: "rock_powder",
+        page: 1,
+      }),
+    ).toEqual({
+      page: 1,
+      perPage: 50,
+      bbox: "-10,40,10,50",
+      filters: { nature: "rock_powder" },
+    });
   });
 
   it("should not prefetch when the location box is absent", () => {
@@ -82,6 +98,26 @@ describe("nextEngineSearch", () => {
       ),
     ).toEqual({ engine: "text", page: 1 });
   });
+
+  it("should keep the facets across a round trip through the other engine", () => {
+    // A mistaken tab click must not discard the sidebar the reader filled in.
+    const filtered = {
+      engine: "text" as const,
+      nature: "hand_sample" as const,
+      page: 3,
+    };
+
+    const roundTrip = nextEngineSearch(
+      nextEngineSearch(filtered, "location"),
+      "text",
+    );
+
+    expect(roundTrip).toEqual({
+      engine: "text",
+      nature: "hand_sample",
+      page: 1,
+    });
+  });
 });
 
 describe("locationSearch", () => {
@@ -89,6 +125,22 @@ describe("locationSearch", () => {
     expect(locationSearch("-10,40,10,50")).toEqual({
       engine: "location",
       bbox: "-10,40,10,50",
+      page: 1,
+    });
+  });
+
+  it("should keep the facets and drop the text query", () => {
+    expect(
+      locationSearch("-10,40,10,50", {
+        engine: "location",
+        q: "granite",
+        nature: "rock_powder",
+        page: 4,
+      }),
+    ).toEqual({
+      engine: "location",
+      bbox: "-10,40,10,50",
+      nature: "rock_powder",
       page: 1,
     });
   });
