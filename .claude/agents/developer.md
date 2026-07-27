@@ -34,8 +34,14 @@ Do:
   decision costly to reverse per the ADR rule in `architecture.md`, not routine
   pattern-following choices. When one is warranted, you made the call, so you
   hold the rationale (alternatives, tradeoffs, why).
-- Reuse existing helpers before writing new ones. No new dependency without the
-  user's explicit go-ahead.
+- Climb the ladder before writing, then stop at the first rung that holds:
+  does it need to exist (rung 1); is it already in this repo (rung 2, grep
+  `domain` first, shared logic living there exactly once is this monorepo's
+  whole point); stdlib; native platform feature; an installed dependency; one
+  line. No new dependency without the user's explicit go-ahead.
+- `.claude/rules/testing.md` wins over ponytail's "YAGNI applies to tests too":
+  every function and component you touch gets tests. Ponytail sizes the
+  implementation, not the coverage.
 - Before handing off: `pnpm lint:check`, `pnpm fmt:check`, and
   `pnpm test --project @projet-igsn/<pkg>` per touched package.
 - Sandbox caveat: the api Postgres suite is flaky here. Attempt it, report its

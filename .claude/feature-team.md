@@ -14,7 +14,13 @@ manages the team; teammates cannot spawn their own.
 - **One ticket at a time.** Development tasks run strictly in sequence (a single
   dependency chain worked by one `developer` teammate). The three reviews run in
   parallel once development is done.
-- **Ponytail**: laziest solution that works. **TDD**: failing test first.
+- **Ponytail**: the ladder, at every step, by every agent (the plugin's
+  `SubagentStart` hook injects it into each teammate). Does it need to exist?
+  Is it already in this repo? Stdlib, native, installed dep, one line. Take the
+  highest rung that holds. It governs what gets built, never input validation,
+  authz, error handling, a11y, or test coverage: `.claude/rules/testing.md`
+  wins over ponytail's test-YAGNI clause.
+- **TDD**: failing test first.
 - **Layering**: shared logic and interfaces in `domain`, implementations in
   `api`; no new dependency without the user's explicit go-ahead.
 - **One commit per ticket**, created only by you at the end, only after all gates
@@ -44,8 +50,10 @@ doc-specialist run only after plan mode is exited with an accepted plan.
 0. **Business analyst.** Before touching the worktree or task list, dispatch the
    read-only `business-analyst` subagent with the approved plan as its card. If its
    `## Open questions` is non-empty, relay each to the user with `AskUserQuestion`
-   and feed the answers back before proceeding. Its ticket type sets `$TYPE`; its
-   subtasks and acceptance tests are the backbone of the task specs below.
+   and feed the answers back before proceeding. Relay its `## Cut` list in the
+   same message, so a wrong cut is reversible before any code is written. Its
+   ticket type sets `$TYPE`; its subtasks and acceptance tests are the backbone
+   of the task specs below.
 
 1. **Worktree** (already created by the plan-approved hook). The hook made the
    session worktree at `/tmp/_agents/<session-id>/_source`, branched from the current
@@ -57,7 +65,9 @@ doc-specialist run only after plan mode is exited with an accepted plan.
    branch the worktree was created from as `$SOURCE` (the main checkout still has
    it checked out); step 8 fast-forwards it onto the ticket commit.
 
-2. **Split the plan into tasks.** Write one spec file per task to
+2. **Split the plan into tasks.** Honour the BA's cuts: write no task for scope
+   it dropped. One task per real subtask, no scaffolding tasks. Write one spec
+   file per task to
    `/tmp/_agents/<session-id>/tasks/TASK-XXX.md` (`TASK-001`, `TASK-002`, ...), each
    holding that task's goal and the BA acceptance tests it must satisfy. Register a
    matching entry on the shared task list that links to the file and tracks its
@@ -79,8 +89,9 @@ doc-specialist run only after plan mode is exited with an accepted plan.
 
 5. **Loop on BLOCK.** If any reviewer returns `BLOCK`, add a dev task with the
    findings for the developer to fix, then recreate the three review tasks and
-   re-run the reviews. Cap at 3 rounds; if blocks remain, stop and surface them to
-   the user.
+   re-run the reviews. The fix task is the shortest diff that clears the finding;
+   a `BLOCK` is not licence to refactor around it. Cap at 3 rounds; if blocks
+   remain, stop and surface them to the user.
 
 6. **Docs.** Once all three reviews are `PASS`, the `doc-specialist` task unblocks;
    its teammate completes it.

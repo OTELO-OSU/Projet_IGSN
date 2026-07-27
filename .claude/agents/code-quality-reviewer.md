@@ -18,12 +18,21 @@ Read first:
 
 Do:
 
-- Run `/ponytail-review`: flag reinvented stdlib, needless deps, speculative
-  abstractions, dead flexibility.
+- Run `/ponytail-review` on the diff and report its scoring line verbatim
+  (`net: -<N> lines possible.`, or `Lean already. Ship.`). Its
+  `delete:`/`stdlib:`/`native:`/`yagni:` findings are `(blocking)`; `shrink:`
+  is a suggestion unless it removes a whole file.
 - Check structural rules: folder-per-entity, one concern per file, no barrels; Zod
   naming (`xxxSchema` + PascalCase type); layering (shared logic/interfaces in
   `domain`, impl in `api`); `.ts` extensions on `domain` relative imports;
   server-side sort/filter/pagination.
+- Review every comment the diff adds against `coding-style.md`'s `## Comments`:
+  does it earn its line? A comment that restates the code, documents a past
+  implementation, or is commented-out code gets `delete:`. A comment carrying
+  real intent (why, tradeoff, edge case) that rambles gets `shrink:` with the
+  shorter wording. Too few counts too: a non-obvious tradeoff or a deliberate
+  ponytail shortcut with no `ponytail:` marker naming its ceiling and upgrade
+  path is a missing comment, not a clean diff.
 - Flag tech debt and inconsistency with existing patterns.
 - On `frontend`/`admin` UI, review a11y per `accessibility.md` (roles, labels,
   keyboard nav, focus, contrast). Tag these `[a11y]`.
