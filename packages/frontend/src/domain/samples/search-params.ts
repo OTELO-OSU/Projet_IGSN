@@ -3,6 +3,7 @@ import {
   activeFacetKeys,
   facetQueryFields,
 } from "@projet-igsn/domain/sample/search/facets";
+import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
 import { z } from "zod";
 
 import type {
@@ -18,7 +19,14 @@ export const PER_PAGE = 50;
 // A param is present iff its engine is open, so "?q=" means open and unfilled.
 // bbox ("west,south,east,north") stays raw; the domain schema validates it.
 export const searchParamsSchema = z.object({
-  q: z.string().trim().optional().catch(undefined),
+  // Same cap as listSamplesQuerySchema, and truncated the same way, so the URL,
+  // the request and the highlighting all carry the same query.
+  q: z
+    .string()
+    .trim()
+    .transform((value) => value.slice(0, MAX_SEARCH_LENGTH))
+    .optional()
+    .catch(undefined),
   bbox: z.string().optional().catch(undefined),
   engine: searchEngineSchema.optional().catch(undefined),
   page: z.coerce.number().int().min(1).default(1).catch(1),

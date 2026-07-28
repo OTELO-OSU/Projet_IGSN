@@ -67,6 +67,8 @@ services:
       # runs, and one created by another stack running as root gives the
       # `node`-user api EACCES on seeded (fixed-id) samples.
       ATTACHMENTS_DIR: /data/attachments
+      # Pinned so the search assertions do not depend on the host shell.
+      SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
     volumes:
       - attachments:/data/attachments
     depends_on:

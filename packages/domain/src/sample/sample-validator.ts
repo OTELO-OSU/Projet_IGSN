@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { sampleSchema } from "./sample.ts";
 import { facetQueryFields } from "./search/facets.ts";
+import { MAX_SEARCH_LENGTH } from "./search/search-tokens.ts";
 
 export const PAGE_SIZES = [10, 25, 50];
 export const DEFAULT_PAGE_SIZE = 25;
@@ -51,8 +52,16 @@ export const listSamplesQuerySchema = z.object({
   // Optional, not defaulted: a default would make the key required in typed
   // clients. Consumers treat an absent order as asc.
   order: z.enum(["asc", "desc"]).optional().catch(undefined),
-  // Blank or non-string search degrades to "no filter", like page/perPage.
-  search: z.string().trim().min(1).optional().catch(undefined),
+  // `*` expands to `\S*` in a server-side regex, so an unbounded query
+  // backtracks per row. Truncated, not rejected: dropping it means no filter.
+  // Kept when it trims to nothing: a search of blanks or bare wildcards matches
+  // no sample, where an absent param lists them all.
+  search: z
+    .string()
+    .trim()
+    .transform((value) => value.slice(0, MAX_SEARCH_LENGTH))
+    .optional()
+    .catch(undefined),
   // Per-facet filters (type, material, nature, numeric age range...), one param
   // each (three for a range), built from the facet registry so the schema and
   // the facet set cannot drift. Every one is optional and degrades to no filter.

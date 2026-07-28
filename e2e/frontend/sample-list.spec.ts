@@ -8,7 +8,6 @@ test.describe("sample list", () => {
     const list = sampleListPage(page);
     await list.goto();
 
-    // Empty query performs no search: the reader is prompted to type one.
     await list.expectSearchInvite();
   });
 
@@ -26,5 +25,37 @@ test.describe("sample list", () => {
     await list.search(target.name);
 
     await list.expectSampleLink(target.name, target.igsn);
+  });
+
+  test("a reader can search words that are not next to each other", async ({
+    page,
+    samples,
+  }) => {
+    // Not contiguous in that order, so a single-substring search would miss it.
+    const target = samples.find((sample) => sample.name === "Basalt 42");
+    if (!target?.igsn) {
+      throw new Error("seed must include the published Basalt 42 sample");
+    }
+
+    const list = sampleListPage(page);
+    await list.goto();
+    await list.search("42 basalt");
+
+    await list.expectSampleLink(target.name, target.igsn);
+  });
+
+  test("a reader can search with a wildcard", async ({ page, samples }) => {
+    const target = samples.find((sample) => sample.name === "Basalt 42");
+    if (!target?.igsn) {
+      throw new Error("seed must include the published Basalt 42 sample");
+    }
+
+    const list = sampleListPage(page);
+    await list.goto();
+    await list.search("bas*");
+
+    await list.expectSampleLink(target.name, target.igsn);
+    // "Granite 7" is the other published sample; it has no word starting "bas".
+    await list.expectSampleAbsent("Granite 7");
   });
 });

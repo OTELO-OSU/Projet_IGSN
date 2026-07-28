@@ -76,6 +76,8 @@ services:
       # Uploaded sample attachments (ADR 0017); a named volume so blobs
       # survive image redeploys. A Ceph mount will take over this path.
       ATTACHMENTS_DIR: /data/attachments
+      # Retunable per deployment without editing this file; see the env example.
+      SAMPLE_SEARCH_FUZZY_THRESHOLD: "${SAMPLE_SEARCH_FUZZY_THRESHOLD:-0.8}"
     healthcheck: *healthcheck
     volumes:
       - attachments:/data/attachments

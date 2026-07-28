@@ -26,7 +26,9 @@ repository, and keep them in the URL app-side (see the URL-as-state rule).
 
 Public sample-list filters are driven by the `SAMPLE_FACETS` registry
 (`domain/sample/search/facets.ts`) as single source of truth. To add or extend
-one, see the `add-search-facet` skill.
+one, see the `add-search-facet` skill. The free-text global search box is a
+separate mechanism (`domain/sample/search/search-tokens.ts`), not a facet; see
+ADR 0018 for its query grammar.
 
 ## Publish constraints
 
