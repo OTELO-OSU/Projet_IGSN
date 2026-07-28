@@ -8,9 +8,9 @@ import { createUserRepository } from "../user/repository.ts";
 import { type AuthenticatedEnv, currentUser } from "./current-user.ts";
 
 // Drives the middleware through a real Hono app and the real repository. The
-// two-line stand-in for requireAuth sets the verified claims exactly as
-// test/setup.ts does, but per test: mounting createApp instead would inherit
-// that suite-wide stub, whose claims always carry an email.
+// stand-in for requireAuth sets the verified claims exactly as test/setup.ts
+// does, but per test: mounting createApp instead would inherit that suite-wide
+// stub, whose claims always carry an email.
 function appWithClaims(
   db: Parameters<typeof createUserRepository>[0],
   claims: KeycloakClaims,
