@@ -1,7 +1,7 @@
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
-import { getSample } from "./get-sample.ts";
+import { readSample } from "../../tests/read-sample.ts";
 import { insertSample } from "./insert-sample.ts";
 import { updateSample } from "./update-sample.ts";
 
@@ -24,7 +24,7 @@ describe("sample security persistence", () => {
     };
     const created = await insertSample(db, { ...base, security });
     expect(created.security).toEqual(security);
-    expect(await getSample(db, created.id)).toEqual(created);
+    expect(await readSample(db, created.id)).toEqual(created);
   });
 
   pgTest(
@@ -37,7 +37,7 @@ describe("sample security persistence", () => {
       };
       const created = await insertSample(db, { ...base, security });
       expect(created.security).toEqual(security);
-      expect(await getSample(db, created.id)).toEqual(created);
+      expect(await readSample(db, created.id)).toEqual(created);
     },
   );
 
@@ -46,7 +46,7 @@ describe("sample security persistence", () => {
     async ({ db }) => {
       const created = await insertSample(db, base);
       expect(created.security).toBeNull();
-      expect(await getSample(db, created.id)).toEqual(created);
+      expect(await readSample(db, created.id)).toEqual(created);
     },
   );
 
@@ -60,6 +60,6 @@ describe("sample security persistence", () => {
       security: null,
     });
     expect(updated?.security).toBeNull();
-    expect(await getSample(db, created.id)).toEqual(updated);
+    expect(await readSample(db, created.id)).toEqual(updated);
   });
 });

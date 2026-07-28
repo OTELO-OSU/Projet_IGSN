@@ -9,7 +9,7 @@ import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-s
 import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import { Hono } from "hono";
 
-import type { AuthenticatedEnv } from "../auth/current-user.ts";
+import type { OwnedSampleEnv } from "./require-sample-owner.ts";
 
 import { attachmentDownload } from "./attachment-download.ts";
 import { requireSampleOwner } from "./require-sample-owner.ts";
@@ -30,11 +30,13 @@ export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
 ) {
-  // Guards every route naming a sample id. Registered before them below, since
-  // Hono runs handlers in registration order.
+  // Guards every route naming a sample id and hands it the sample it fetched:
+  // present means the caller owns it (200), absent means no such sample (404),
+  // and someone else's never reaches the route (403). Registered before those
+  // routes below, since Hono runs handlers in registration order.
   const ownedSample = requireSampleOwner(repository);
 
-  return new Hono<AuthenticatedEnv>()
+  return new Hono<OwnedSampleEnv>()
     .get("/", validateListQuery, async (c) => {
       const { page, perPage, sort, order, search, ageMin, ageMax, ageUnit } =
         c.req.valid("query");
@@ -56,8 +58,8 @@ export function createSampleAdminRoutes(
     })
     .use("/:id", ownedSample)
     .use("/:id/*", ownedSample)
-    .get("/:id", validateIdParam, async (c) => {
-      const sample = await repository.get(c.req.valid("param").id);
+    .get("/:id", validateIdParam, (c) => {
+      const sample = c.get("sample");
       if (!sample) {
         return c.json({ error: "Sample not found" }, 404);
       }
@@ -74,7 +76,7 @@ export function createSampleAdminRoutes(
     })
     .put("/:id", validateIdParam, validateCreateSampleBody, async (c) => {
       const id = c.req.valid("param").id;
-      const current = await repository.get(id);
+      const current = c.get("sample");
       if (!current) {
         return c.json({ error: "Not found" }, 404);
       }
@@ -105,15 +107,16 @@ export function createSampleAdminRoutes(
     })
     .post("/:id/publish", validateIdParam, async (c) => {
       const id = c.req.valid("param").id;
-      const sample = await repository.get(id);
+      const sample = c.get("sample");
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
       // A sample must be classified down to a publishable leaf material before
-      // it can be published (see samplePublishBlockers). ponytail: get and
-      // publish are separate transactions, so a concurrent change to material in
-      // between is not guarded at the DB level (no CHECK on material); acceptable
-      // for an admin-only action. Wrap get+publish in one txn if that race matters.
+      // it can be published (see samplePublishBlockers). ponytail: the guard's
+      // read and publish are separate transactions, so a concurrent change to
+      // material in between is not guarded at the DB level (no CHECK on
+      // material); acceptable for an admin-only action. Read and publish in one
+      // txn if that race matters.
       if (!isSamplePublishable(sample)) {
         return c.json({ error: "Sample is not ready to publish" }, 409);
       }

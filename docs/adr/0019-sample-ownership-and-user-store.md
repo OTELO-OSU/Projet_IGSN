@@ -35,9 +35,11 @@ scoped to the caller in SQL (an `exists` on `user_sample`, in the page _and_
 count queries), and `requireSampleOwner` guards every admin route naming a
 sample id, reads and writes alike.
 
-**404 and 403 stay distinct.** `getSampleAccess` answers `missing`, `forbidden`
-or `owner` in one left join, so an unknown id still gets 404 and another
-researcher's sample gets 403. A sample nobody owns is forbidden to everyone.
+**One read decides 200, 403 and 404.** `getSample` returns the row plus whether
+the caller owns it (a left join on `user_sample`, no second query), and the guard
+hands the sample it fetched to the route: no row is the route's own 404, an
+unowned row is 403, and a guarded route never reads the sample again. A sample
+nobody owns is forbidden to everyone.
 
 Public routes are untouched: the frontend keeps serving published samples to
 anonymous readers.

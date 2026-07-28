@@ -5,7 +5,6 @@ import type { DB } from "../db.ts";
 
 import { withTransaction } from "../transaction.ts";
 import { getPublishedSampleByIgsn } from "./service/get-published-sample-by-igsn.ts";
-import { getSampleAccess } from "./service/get-sample-access.ts";
 import { getSample } from "./service/get-sample.ts";
 import { insertSampleOwner } from "./service/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
@@ -21,11 +20,10 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
       withTransaction(db, (trx) =>
         listSamples(trx, params, { publishedOnly: true }),
       ),
-    get: (id) => withTransaction(db, (trx) => getSample(trx, id)),
+    get: (id, ownerId) =>
+      withTransaction(db, (trx) => getSample(trx, id, ownerId)),
     getPublishedByIgsn: (igsn) =>
       withTransaction(db, (trx) => getPublishedSampleByIgsn(trx, igsn)),
-    getSampleAccess: (id, userId) =>
-      withTransaction(db, (trx) => getSampleAccess(trx, id, userId)),
     // Sample and owner in one transaction: an unowned sample would be
     // unreachable for everyone, including its creator.
     create: (input, ownerId) =>

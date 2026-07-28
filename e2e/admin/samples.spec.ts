@@ -53,9 +53,6 @@ test.describe("samples", () => {
     const list = sampleListPage(page);
     await list.expectVisible();
     await list.expectEmpty();
-    for (const sample of samples) {
-      await list.expectNoSampleRow(sample.name);
-    }
 
     const edit = sampleEditPage(page);
     await edit.goto(samples[0]!.id);

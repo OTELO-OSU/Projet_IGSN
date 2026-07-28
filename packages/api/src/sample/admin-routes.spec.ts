@@ -6,6 +6,7 @@ import { testClient } from "hono/testing";
 import { describe, expect } from "vitest";
 
 import { createApp } from "../app.ts";
+import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { insertSampleOwner } from "./service/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
@@ -551,6 +552,15 @@ describe("admin sample routes", () => {
       },
     );
 
+    // The owner guard skips a malformed id rather than querying it, so the
+    // validator is what answers here, not a 403 or a failed uuid cast.
+    pgTest("should reject a malformed sample id with 400", async ({ db }) => {
+      const res = await createApp(db).request("/admin/samples/not-a-uuid", {
+        headers: authHeader,
+      });
+      expect(res.status).toBe(400);
+    });
+
     pgTest("should reject unknown fields with 400", async ({ db }) => {
       const res = await postSample(createApp(db), {
         name: "Grès",
@@ -746,16 +756,7 @@ describe("admin sample routes", () => {
     async function insertOtherResearcherSample(
       db: Parameters<typeof createApp>[0],
     ) {
-      const other = await db
-        .insertInto("user")
-        .values({
-          id: "01890a5d-ac96-774b-bcce-b302099a8058",
-          email: "other@univ-lorraine.fr",
-          name: "Durand",
-          firstname: "Pierre",
-        })
-        .returning("id")
-        .executeTakeFirstOrThrow();
+      const other = await insertUser(db, "other@univ-lorraine.fr");
       const sample = await insertSample(db, {
         name: "Granite de Pierre",
         nature: "rock_powder",

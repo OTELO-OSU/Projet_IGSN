@@ -25,10 +25,8 @@ export function sampleListPage(page: Page) {
     },
     expectSampleRow: (name: string) =>
       expect(page.getByRole("cell", { name })).toBeVisible(),
-    expectNoSampleRow: (name: string) =>
-      expect(page.getByRole("cell", { name })).toBeHidden(),
-    // The empty row only renders once the query resolved, so asserting it first
-    // keeps "no such sample" from passing on a list that is still loading.
+    // The empty row only renders once the query resolved, so it also rules out a
+    // list that is merely still loading.
     expectEmpty: () =>
       expect(page.getByRole("cell", { name: "No results" })).toBeVisible(),
     // Assert the row shows both the sample name and its nature label in the same

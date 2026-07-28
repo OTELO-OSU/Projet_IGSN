@@ -7,8 +7,8 @@ import { describe, expect } from "vitest";
 import type { DB } from "../db.ts";
 
 import { pgTest } from "../tests/pg-test.ts";
+import { readSample } from "../tests/read-sample.ts";
 import { createSampleAttachmentRepository } from "./attachment-repository.ts";
-import { getSample } from "./service/get-sample.ts";
 import { insertSample } from "./service/insert-sample.ts";
 
 const content = new TextEncoder().encode("col1,col2\n1,2\n");
@@ -56,7 +56,7 @@ describe("sampleAttachmentRepository", () => {
     const { repository, sample } = await arrange(db);
     const created = await repository.create(sample.id, input, content);
     // Act / Assert
-    expect((await getSample(db, sample.id))?.attachments).toEqual([created]);
+    expect((await readSample(db, sample.id))?.attachments).toEqual([created]);
   });
 
   pgTest("should return null for an unknown sample", async ({ db }) => {
@@ -114,7 +114,7 @@ describe("sampleAttachmentRepository", () => {
         { id: kept!.id, description: "Calibrated measurements" },
       ]);
       // Assert
-      expect((await getSample(db, sample.id))?.attachments).toEqual([
+      expect((await readSample(db, sample.id))?.attachments).toEqual([
         { ...kept, description: "Calibrated measurements" },
       ]);
       expect(await readdir(join(dir, sample.id))).not.toContain(
@@ -131,7 +131,7 @@ describe("sampleAttachmentRepository", () => {
       // Act
       await repository.reconcile(sample.id, []);
       // Assert
-      expect((await getSample(db, sample.id))?.attachments).toEqual([]);
+      expect((await readSample(db, sample.id))?.attachments).toEqual([]);
       expect(await readdir(join(dir, sample.id))).not.toContain(
         `${created!.id}-measurements.csv`,
       );
@@ -155,8 +155,8 @@ describe("sampleAttachmentRepository", () => {
         { id: created!.id, description: "hijack" },
       ]);
       // Assert
-      expect((await getSample(db, sample.id))?.attachments).toEqual([created]);
-      expect((await getSample(db, other.id))?.attachments).toEqual([]);
+      expect((await readSample(db, sample.id))?.attachments).toEqual([created]);
+      expect((await readSample(db, other.id))?.attachments).toEqual([]);
       expect(otherCreated).not.toBeNull();
     },
   );

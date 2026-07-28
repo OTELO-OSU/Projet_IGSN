@@ -6,19 +6,12 @@ import { describe, expect, vi } from "vitest";
 import type { DB } from "../../db.ts";
 import type { Transactional } from "../../transaction.ts";
 
+import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { insertSampleOwner } from "./insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
 import { listSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
-
-function insertUser(db: Parameters<typeof listSamples>[0], email: string) {
-  return db
-    .insertInto("user")
-    .values({ id: crypto.randomUUID(), email, name: null, firstname: null })
-    .returning("id")
-    .executeTakeFirstOrThrow();
-}
 
 // All-null age, so a fixture spreads it and overrides only the bounds it needs.
 const emptyAge = {
