@@ -20,7 +20,23 @@ describe("materialChildren", () => {
       "rock.metamorphic",
       "rock.sedimentary",
       "rock.hydrothermal",
+      "rock.xenolithic_rock",
       "rock.unknown",
+    ]);
+  });
+
+  it("should reuse the igneous and metamorphic subtrees under xenolithic_rock", () => {
+    expect(materialChildren("rock.xenolithic_rock")).toEqual([
+      "rock.xenolithic_rock.igneous",
+      "rock.xenolithic_rock.metamorphic",
+    ]);
+    expect(materialChildren("rock.xenolithic_rock.igneous")).toEqual([
+      "rock.xenolithic_rock.igneous.plutonic",
+      "rock.xenolithic_rock.igneous.volcanic",
+    ]);
+    expect(materialChildren("rock.xenolithic_rock.metamorphic")).toEqual([
+      "rock.xenolithic_rock.metamorphic.weakly_metamorphosed",
+      "rock.xenolithic_rock.metamorphic.strongly_metamorphosed",
     ]);
   });
 

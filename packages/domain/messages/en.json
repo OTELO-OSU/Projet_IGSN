@@ -36,6 +36,7 @@
   "type_serie_of_sample": "Series of samples",
   "type_inapplicable": "Inapplicable",
   "material_rock": "Rock",
+  "material_xenolithic_rock": "Xenolithic rock",
   "material_igneous": "Igneous",
   "material_plutonic": "Plutonic",
   "material_volcanic": "Volcanic",
