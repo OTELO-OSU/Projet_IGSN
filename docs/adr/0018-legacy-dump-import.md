@@ -104,11 +104,19 @@ finer type. A source that is genuinely coarse (a bare `Metamorphic` ->
 `rock.metamorphic`, or `Igneous>Plutonic`) imports, since its path is a valid
 prefix. Everything else is skipped:
 
+A legacy metamorphic or sedimentary leaf whose node sits elsewhere in the new
+tree (`Metamorphic>Gneiss` -> `rock.metamorphic.strongly_metamorphosed.gneiss`)
+or is spelled differently (`Sedimentary>Siliciclastic` ->
+`...siliciclastic_sedimentary_rock`) is remapped by hand: `MATERIAL_SPECIALS`
+in the import script keys each rooted slug to the path the geologist's mapping
+instructions assign it (mirrored on the "Material remaps" tab of
+`docs/legacy-import-mapping.xlsx`). Everything else is skipped:
+
 - an unplaceable classification (a root the tree lacks: `Xenolithic`, `Ore`);
-- a classification whose segment sequence the tree does not support, because the
-  leaf sits elsewhere (`Metamorphic>Gneiss` -> `rock.metamorphic.gneiss`, but
-  `gneiss` is not a direct child of `metamorphic`), or the term is spelled
-  differently (`Sedimentary>Siliciclastic`), or is absent;
+- a classification whose segment sequence the tree does not support and that
+  `MATERIAL_SPECIALS` does not remap, including the values the expert table
+  leaves marked "record to review" (`Metamorphic>MechanicallyBroken`,
+  `Meta-Carbonate`, `Meta-Ultramafic`);
 - a `material_id` with no matching root (`Soil`, `Ice`, `Biology`, `Liquid`,
   `Air`, `Other`), or no material signal at all.
 
@@ -141,7 +149,8 @@ stage-code tables, plus old users/auth and sub-sample parent links.
 - Rows whose identifier is not a well-formed IGSN (`CNRS`/`TOAE` + 10 digits):
   an unexpected identifier surfaces instead of becoming an unreachable published
   sample.
-- Rows without a fully-known material (~7,700): see "A fully-known material".
+- Rows without a fully-known material: see "The material path must match the
+  start of a supported path".
 - Rows carrying a value that does not fit an enum (collection method, resource
   type, country, navigation type, a size / elevation / age unit): see "A value
   that does not fit its enum".

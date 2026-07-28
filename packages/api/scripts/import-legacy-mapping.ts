@@ -107,12 +107,45 @@ const MATERIAL_ROOT_BY_LEGACY: Record<string, string> = {
   mineral: "mineral",
 };
 
+// Legacy metamorphic/sedimentary leaves whose node in the new tree carries a
+// different code or sits deeper (a grade or sub-family level the legacy path
+// lacks), keyed by the rooted slug. Targets follow the domain expert's mapping
+// table; the legacy values it leaves undecided (MechanicallyBroken,
+// Meta-Carbonate, Meta-Ultramafic: "record to review") are absent here on
+// purpose, so those rows keep skipping until reviewed.
+const MATERIAL_SPECIALS: Record<string, string> = {
+  "rock.metamorphic.calc_silicate":
+    "rock.metamorphic.strongly_metamorphosed.calc_silicate_rock",
+  "rock.metamorphic.gneiss": "rock.metamorphic.strongly_metamorphosed.gneiss",
+  "rock.metamorphic.granofels":
+    "rock.metamorphic.strongly_metamorphosed.granofels",
+  "rock.metamorphic.granulite":
+    "rock.metamorphic.strongly_metamorphosed.granulite",
+  "rock.metamorphic.schist": "rock.metamorphic.strongly_metamorphosed.schist",
+  "rock.metamorphic.slate": "rock.metamorphic.strongly_metamorphosed.slate",
+  "rock.sedimentary.carbonate":
+    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock",
+  "rock.sedimentary.conglomerate_and_or_breccia":
+    "rock.sedimentary.clastic_sedimentary_rock.paraconglomerate",
+  "rock.sedimentary.ironstone":
+    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.ironstone",
+  "rock.sedimentary.mixed_carb_siliciclastic":
+    "rock.sedimentary.hybrid_sedimentary_rock",
+  "rock.sedimentary.siliceous_biogenic":
+    "rock.sedimentary.hybrid_sedimentary_rock",
+  "rock.sedimentary.siliciclastic":
+    "rock.sedimentary.clastic_sedimentary_rock.siliciclastic_sedimentary_rock",
+  "rock.sedimentary.volcaniclastic": "rock.sedimentary.volcaniclastic_rock",
+};
+
 // The legacy classification path slugged and rooted under `rock` for the rock
-// families, e.g. `Igneous>Volcanic>Mafic` -> `rock.igneous.volcanic.mafic`.
+// families, e.g. `Igneous>Volcanic>Mafic` -> `rock.igneous.volcanic.mafic`,
+// then remapped when the legacy leaf sits elsewhere in the new tree.
 function classificationCandidate(classification: string): string {
   const path = slugPath(classification);
   const root = path.split(".")[0] ?? "";
-  return ROCK_FAMILIES.has(root) ? `rock.${path}` : path;
+  const rooted = ROCK_FAMILIES.has(root) ? `rock.${path}` : path;
+  return MATERIAL_SPECIALS[rooted] ?? rooted;
 }
 
 export function mapMaterial(
@@ -137,14 +170,13 @@ export function mapMaterial(
 }
 
 // A sample imports only when its material path matches the start of a complete
-// path the tree supports: the slugged classification must be a valid node (a
-// prefix of some complete leaf), incomplete or not, or a coarse material_id root.
-// A path whose segment sequence the tree does not support is skipped: an
-// unplaceable root (`Xenolithic`, `Ore`), or a leaf that is not a direct child at
-// that position (`Metamorphic>Gneiss` -> `rock.metamorphic.gneiss`, since `gneiss`
-// sits deeper), an unknown `material_id` (`Soil`), or no material at all. Skipped
-// rows come in on a re-import once the tree or this script's mapping supports the
-// path.
+// path the tree supports: the slugged classification (after MATERIAL_SPECIALS)
+// must be a valid node (a prefix of some complete leaf), incomplete or not, or a
+// coarse material_id root. A path whose segment sequence the tree does not
+// support is skipped: an unplaceable root (`Xenolithic`, `Ore`), a leaf with no
+// node and no MATERIAL_SPECIALS entry, an unknown `material_id` (`Soil`), or no
+// material at all. Skipped rows come in on a re-import once the tree or this
+// script's mapping supports the path.
 export function isKnownMaterialPath(
   classification: string | null,
   material: string | null,

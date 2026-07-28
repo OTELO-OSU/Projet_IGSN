@@ -75,8 +75,55 @@ describe("mapMaterial", () => {
   });
 
   it("should keep the longest valid prefix when only the family is known", () => {
-    // The new tree lacks a `gneiss` node under `metamorphic`, so it truncates.
-    expect(mapMaterial("Metamorphic>Gneiss", "Rock")).toBe("rock.metamorphic");
+    // The new tree lacks a `granoblastite` node under `metamorphic`, so it truncates.
+    expect(mapMaterial("Metamorphic>Granoblastite", "Rock")).toBe(
+      "rock.metamorphic",
+    );
+  });
+
+  it.each([
+    [
+      "Metamorphic>Calc-Silicate",
+      "rock.metamorphic.strongly_metamorphosed.calc_silicate_rock",
+    ],
+    ["Metamorphic>Gneiss", "rock.metamorphic.strongly_metamorphosed.gneiss"],
+    [
+      "Metamorphic>Granulite",
+      "rock.metamorphic.strongly_metamorphosed.granulite",
+    ],
+    ["Metamorphic>Schist", "rock.metamorphic.strongly_metamorphosed.schist"],
+    ["Metamorphic>Slate", "rock.metamorphic.strongly_metamorphosed.slate"],
+    [
+      "Metamorphic>Granofels",
+      "rock.metamorphic.strongly_metamorphosed.granofels",
+    ],
+    [
+      "Sedimentary>Carbonate",
+      "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock",
+    ],
+    [
+      "Sedimentary>ConglomerateAndOrBreccia",
+      "rock.sedimentary.clastic_sedimentary_rock.paraconglomerate",
+    ],
+    [
+      "Sedimentary>Ironstone",
+      "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.ironstone",
+    ],
+    [
+      "Sedimentary>MixedCarb-Siliciclastic",
+      "rock.sedimentary.hybrid_sedimentary_rock",
+    ],
+    [
+      "Sedimentary>SiliceousBiogenic",
+      "rock.sedimentary.hybrid_sedimentary_rock",
+    ],
+    [
+      "Sedimentary>Siliciclastic",
+      "rock.sedimentary.clastic_sedimentary_rock.siliciclastic_sedimentary_rock",
+    ],
+    ["Sedimentary>Volcaniclastic", "rock.sedimentary.volcaniclastic_rock"],
+  ] as const)("should map the legacy leaf %s to %s", (legacy, path) => {
+    expect(mapMaterial(legacy, "Rock")).toBe(path);
   });
 
   it("should fall back to the material root when classification is absent", () => {
@@ -98,13 +145,18 @@ describe("isKnownMaterialPath", () => {
     ["Igneous>Plutonic>Felsic", "Rock"], // whole path is a supported node
     ["Igneous>Plutonic", "Rock"], // incomplete but a valid prefix of complete paths
     ["Metamorphic", "Rock"], // genuinely coarse at the source
+    ["Metamorphic>Gneiss", "Rock"], // legacy leaf remapped to its node in the new tree
+    ["Sedimentary>Siliciclastic", "Rock"], // legacy leaf remapped to its node in the new tree
     [null, "Rock"], // coarse root, source knew only "Rock"
   ] as const)("should import %s / %s", (classification, material) => {
     expect(isKnownMaterialPath(classification, material)).toBe(true);
   });
 
   it.each([
-    ["Metamorphic>Gneiss", "Rock"], // rock.metamorphic.gneiss is not a supported path
+    ["Metamorphic>Granoblastite", "Rock"], // rock.metamorphic.granoblastite is not a supported path
+    ["Metamorphic>MechanicallyBroken", "Rock"], // record to review, deliberately unmapped
+    ["Metamorphic>Meta-Carbonate", "Rock"], // record to review, deliberately unmapped
+    ["Metamorphic>Meta-Ultramafic", "Rock"], // record to review, deliberately unmapped
     ["Igneous>Volcanic>NotAThing", "Rock"], // fabricated leaf
     ["Xenolithic>Igneous>Plutonic>Ultramafic", "Rock"], // unplaceable root
     ["Ore>Sulfide", "Rock"],
