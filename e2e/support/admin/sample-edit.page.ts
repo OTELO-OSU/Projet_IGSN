@@ -6,7 +6,6 @@ export function sampleEditPage(page: Page) {
   return {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
-    // Deep link, the way a shared URL reaches a sample the reader may not own.
     goto: (sampleId: string) => page.goto(`${adminUrl}/samples/${sampleId}`),
     expectForbidden: () =>
       expect(

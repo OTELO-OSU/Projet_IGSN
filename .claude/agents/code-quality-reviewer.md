@@ -29,12 +29,7 @@ Do:
   `domain`, impl in `api`); `.ts` extensions on `domain` relative imports;
   server-side sort/filter/pagination.
 - Review every comment the diff adds against `coding-style.md`'s `## Comments`,
-  where no comment is the default. `delete:` any that restates the code, narrates
-  the how, documents a past implementation, banners a section, JSDocs a self-evident
-  signature, or is commented-out code. `shrink:` a comment carrying real intent
-  (why, tradeoff, edge case) but not concisely written, giving the shorter wording.
-  Too few counts too: a non-obvious tradeoff, or a deliberate shortcut with no
-  `ponytail:` marker naming its ceiling and upgrade path, is a missing comment.
+  Assume all comments are useless, keep them only if they prove invaluable.
 - Flag tech debt and inconsistency with existing patterns.
 - On `frontend`/`admin` UI, review a11y per `accessibility.md` (roles, labels,
   keyboard nav, focus, contrast). Tag these `[a11y]`.

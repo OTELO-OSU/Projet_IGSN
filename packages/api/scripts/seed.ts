@@ -24,7 +24,6 @@ type SeedUser = {
   firstname: string;
 };
 
-// Who a seed row can belong to: the `owner` key each SEED_SAMPLES entry names.
 export const researcherKeySchema = z.enum([
   "marie",
   "jean",
@@ -130,8 +129,6 @@ export async function seed(
   const created = await db
     .insertInto("sample")
     // collectionMethod is camelCase in the domain; the column is snake_case.
-    // `owner` is seed metadata, not a sample column, so it is stripped here
-    // and lands in user_sample below.
     .values(
       parsed.map(
         ({
@@ -220,8 +217,7 @@ export const seedSampleSchema = sampleSchema
     igsn: true,
     published: true,
   })
-  // The researcher the sample belongs to, by MOCK_RESEARCHERS key. Seed
-  // metadata (a user_sample row), not a sample column.
+  // Seed metadata (a user_sample row), not a sample column.
   .extend({ owner: researcherKeySchema });
 
 export type SeedSample = z.infer<typeof seedSampleSchema>;

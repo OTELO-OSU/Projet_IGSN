@@ -50,8 +50,6 @@ test.describe("samples", () => {
     await list.expectSampleRow(name);
   });
 
-  // Samples are declared per researcher (ADR 0019) and the seed gives luc
-  // none, so he must see no sample at all, by list or by URL.
   test("a researcher sees no sample declared by someone else", async ({
     page,
     samples,

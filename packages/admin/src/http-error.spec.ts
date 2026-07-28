@@ -1,7 +1,6 @@
 import { HttpError, shouldRetry } from "./http-error.ts";
 
 describe("shouldRetry", () => {
-  // 403 is another researcher's sample, the failure the page renders directly.
   it.each([400, 403, 404, 409])("should not retry a %i", (status) => {
     expect(shouldRetry(0, new HttpError(status, "rejected"))).toBe(false);
   });

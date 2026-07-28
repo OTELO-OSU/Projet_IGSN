@@ -25,7 +25,6 @@ export async function getSample(
     .where("sample.id", "=", id)
     .executeTakeFirst();
   if (!row) return null;
-  // The joined column stays out of the sample row it is read from.
   const { user_id, ...sampleRow } = row;
   const [sample] = await withSampleChildren(db, [sampleRow]);
   return { sample: sample!, owned: user_id !== null };

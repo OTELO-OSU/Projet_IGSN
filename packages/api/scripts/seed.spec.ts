@@ -45,8 +45,6 @@ describe("parseSeedSample", () => {
     ).toThrow();
   });
 
-  // Ownership rides the seed row; a typo'd key would seed a sample nobody can
-  // reach in the admin.
   it("should reject an unknown owner", () => {
     expect(() =>
       parseSeedSample({

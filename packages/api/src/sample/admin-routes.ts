@@ -67,7 +67,6 @@ export function createSampleAdminRoutes(
       return c.json(body);
     })
     .post("/", validateCreateSampleBody, async (c) => {
-      // The creator owns the sample.
       const sample = await repository.create(
         c.req.valid("json"),
         c.get("user").id,

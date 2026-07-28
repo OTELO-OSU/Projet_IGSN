@@ -1,5 +1,3 @@
-// An api failure carrying its status, so the shared retry policy can tell a
-// client error apart from a server or network one.
 export class HttpError extends Error {
   constructor(
     readonly status: number,

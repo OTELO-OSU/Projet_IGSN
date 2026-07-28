@@ -35,7 +35,6 @@ describe("listSamplesByOwner", () => {
     );
     // Assert
     expect(data).toMatchObject([{ name: "Grès de Fontainebleau" }]);
-    // The total counts the filtered set, not every sample in the table.
     expect(total).toBe(1);
   });
 
@@ -58,8 +57,6 @@ describe("listSamplesByOwner", () => {
     expect(result).toEqual({ data: [], total: 0 });
   });
 
-  // A sample nobody owns is nobody's, matching getSampleAccess: a row predating
-  // ownership must not surface in someone's list just because it is unclaimed.
   pgTest("should list nothing for a sample with no owner", async ({ db }) => {
     // Arrange
     const user = await insertUser(db, "user@univ-lorraine.fr");

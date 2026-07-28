@@ -29,9 +29,8 @@ function withinBbox(
   )`;
 }
 
-// Rows the user owns. A scope predicate joins the filter array, so it applies to
-// the count query too: a total that counted other people's samples would lie
-// about the dataset.
+// A scope predicate joins the filter array, so it applies to the count query
+// too: a total that counted other people's samples would lie about the dataset.
 function ownedBy(ownerId: string): Expression<SqlBool> {
   return sql<SqlBool>`exists (
     select 1 from user_sample
@@ -40,7 +39,6 @@ function ownedBy(ownerId: string): Expression<SqlBool> {
   )`;
 }
 
-// Rows an anonymous reader may see.
 function isPublished(): Expression<SqlBool> {
   return sql<SqlBool>`published = true`;
 }
@@ -95,8 +93,8 @@ async function listSamplesWhere(
   });
 }
 
-// The admin list: only what this researcher declared. `ownerId` is a required
-// positional argument, so a direct call that omits it does not compile. The
+// `ownerId` is a required positional argument, so a direct call that omits it
+// does not compile. The
 // repository wiring can still satisfy `SampleRepository.list` while ignoring
 // its `ownerId` (structural typing); the admin-routes authorization spec is
 // what catches that.
@@ -108,7 +106,6 @@ export function listSamplesByOwner(
   return listSamplesWhere(db, params, [ownedBy(ownerId)]);
 }
 
-// The public list, served to anonymous readers: published samples only.
 export function listPublishedSamples(
   db: Transactional<DB>,
   params: ListSamplesParams,

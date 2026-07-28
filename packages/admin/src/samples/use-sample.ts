@@ -5,9 +5,8 @@ import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-// The sample exists but belongs to another researcher, so the page shows an
-// access error instead of the generic load failure. Never mapped to 401, which
-// the api client would turn into a token renewal then a sign-in redirect.
+// Never mapped to 401, which the api client would turn into a token renewal
+// then a sign-in redirect.
 export class ForbiddenError extends HttpError {
   constructor() {
     super(403, "Sample owned by another researcher");

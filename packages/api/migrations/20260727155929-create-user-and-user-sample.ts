@@ -1,11 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// The local user store and the sample owners (ADR 0019). A user is provisioned
-// from the verified token, keyed by email; name/firstname are nullable because
-// the IdP may release neither. user_sample is the many-to-many: one sample can
-// have several users and one user several samples. No role column yet, so a row
-// means "owner".
-//
 // "user" is a reserved word in Postgres. Kysely quotes every identifier, so the
 // builder is fine; hand-written sql fragments must spell it "user".
 export async function up(db: Kysely<unknown>): Promise<void> {

@@ -4,8 +4,6 @@ import type { MiddlewareHandler } from "hono";
 
 import type { KeycloakClaims } from "./middleware.ts";
 
-// Every authenticated route runs with both the verified claims and the local
-// user they resolve to.
 export type AuthenticatedEnv = {
   Variables: { jwtPayload: KeycloakClaims; user: User };
 };

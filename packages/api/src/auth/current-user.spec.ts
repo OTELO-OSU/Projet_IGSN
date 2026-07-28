@@ -41,7 +41,6 @@ describe("currentUser", () => {
       expect(await res.json()).toEqual({
         id: expect.any(String),
         email: "jean.martin@univ-lorraine.fr",
-        // The IdP's given_name/family_name land as firstname/name.
         firstname: "Jean",
         name: "Martin",
       });
