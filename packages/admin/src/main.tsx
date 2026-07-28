@@ -6,10 +6,13 @@ import { AuthProvider } from "react-oidc-context";
 
 import "./styles.css";
 import { onSigninCallback, userManager } from "./auth/oidc-config.ts";
+import { shouldRetry } from "./http-error.ts";
 import { watchIdleRenew } from "./idle-renew.ts";
 import { routeTree } from "./routeTree.gen.ts";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: shouldRetry } },
+});
 const router = createRouter({ routeTree, context: { queryClient } });
 
 declare module "@tanstack/react-router" {

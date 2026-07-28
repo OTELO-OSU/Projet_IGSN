@@ -2,6 +2,7 @@ import { listSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-val
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
+import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 export function useSamples(params: {
@@ -27,7 +28,10 @@ export function useSamples(params: {
 
       const res = await apiFetch(url);
       if (!res.ok) {
-        throw new Error(`Failed to load samples (${res.status})`);
+        throw new HttpError(
+          res.status,
+          `Failed to load samples (${res.status})`,
+        );
       }
       const { data, meta } = listSamplesResponseSchema.parse(await res.json());
       return { data, total: meta.total };

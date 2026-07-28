@@ -2,22 +2,29 @@ import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validato
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
+import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 // The sample exists but belongs to another researcher, so the page shows an
 // access error instead of the generic load failure. Never mapped to 401, which
 // the api client would turn into a token renewal then a sign-in redirect.
-export class ForbiddenError extends Error {}
+export class ForbiddenError extends HttpError {
+  constructor() {
+    super(403, "Sample owned by another researcher");
+  }
+}
 
 export async function parseSampleResponse(res: Response) {
+  // A 404 resolves rather than throws: "no such sample" is an answer the page
+  // renders, not a failure, so it is never retried either.
   if (res.status === 404) {
     return null;
   }
   if (res.status === 403) {
-    throw new ForbiddenError("Sample owned by another researcher");
+    throw new ForbiddenError();
   }
   if (!res.ok) {
-    throw new Error(`Failed to load sample (${res.status})`);
+    throw new HttpError(res.status, `Failed to load sample (${res.status})`);
   }
   return sampleResponseSchema.parse(await res.json()).data;
 }
