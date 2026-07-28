@@ -1,7 +1,7 @@
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
-import { getSample } from "./get-sample.ts";
+import { readSample } from "../../tests/read-sample.ts";
 import { insertSample } from "./insert-sample.ts";
 import { updateSample } from "./update-sample.ts";
 
@@ -33,7 +33,7 @@ describe("sample scientific context persistence", () => {
       };
       const created = await insertSample(db, { ...base, scientificContext });
       expect(created.scientificContext).toEqual(scientificContext);
-      expect(await getSample(db, created.id)).toEqual(created);
+      expect(await readSample(db, created.id)).toEqual(created);
     },
   );
 
@@ -49,7 +49,7 @@ describe("sample scientific context persistence", () => {
       };
       const created = await insertSample(db, { ...base, scientificContext });
       expect(created.scientificContext).toEqual(scientificContext);
-      expect(await getSample(db, created.id)).toEqual(created);
+      expect(await readSample(db, created.id)).toEqual(created);
     },
   );
 
@@ -61,7 +61,7 @@ describe("sample scientific context persistence", () => {
       };
       const created = await insertSample(db, { ...base, scientificContext });
       expect(created.scientificContext).toEqual(scientificContext);
-      expect(await getSample(db, created.id)).toEqual(created);
+      expect(await readSample(db, created.id)).toEqual(created);
     },
   );
 
@@ -70,7 +70,7 @@ describe("sample scientific context persistence", () => {
     async ({ db }) => {
       const created = await insertSample(db, base);
       expect(created.scientificContext).toBeNull();
-      expect(await getSample(db, created.id)).toEqual(created);
+      expect(await readSample(db, created.id)).toEqual(created);
     },
   );
 
@@ -96,7 +96,7 @@ describe("sample scientific context persistence", () => {
       provenanceStatus: "historical_specimen",
       collectionCurator: "Georges Cuvier",
     });
-    expect(await getSample(db, created.id)).toEqual(updated);
+    expect(await readSample(db, created.id)).toEqual(updated);
   });
 
   pgTest("should clear a context on update to null", async ({ db }) => {
@@ -112,6 +112,6 @@ describe("sample scientific context persistence", () => {
       scientificContext: null,
     });
     expect(updated?.scientificContext).toBeNull();
-    expect(await getSample(db, created.id)).toEqual(updated);
+    expect(await readSample(db, created.id)).toEqual(updated);
   });
 });

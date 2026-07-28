@@ -23,7 +23,6 @@ type SampleTable = {
   // Collection-method taxonomy path (e.g. "coring.gravity_corer"); null until
   // recorded. Stored as ltree, read/written as text.
   collection_method: string | null;
-  // Free-text detail on the collection method; null when not provided.
   collection_method_description: string | null;
   // Precise designation; null on a draft, required to publish (domain rule).
   specific_name: string | null;
@@ -140,7 +139,6 @@ type SampleTable = {
   economic_interest: string | null;
   // Chemical-element codes (text[]); null when unset, never empty.
   economic_interest_elements: string[] | null;
-  // Free-text economic detail; null when not provided.
   economic_resource_type_precision: string | null;
   economic_deposit_name: string | null;
   economic_deposit_description: string | null;
@@ -169,10 +167,28 @@ type SampleAttachmentTable = {
   description: string | null;
 };
 
+// A researcher, provisioned from the verified token and keyed by email (ADR
+// 0019). Ids are app-generated UUIDv7.
+type UserTable = {
+  id: string;
+  email: string;
+  name: string | null;
+  firstname: string | null;
+  created_at: Generated<Date>;
+};
+
+// Sample owners, many-to-many. A row means "owner"; roles come later.
+type UserSampleTable = {
+  user_id: string;
+  sample_id: string;
+};
+
 export type DB = {
   sample: SampleTable;
   sample_link: SampleLinkTable;
   sample_attachment: SampleAttachmentTable;
+  user: UserTable;
+  user_sample: UserSampleTable;
 };
 
 const dbConfigSchema = z.object({

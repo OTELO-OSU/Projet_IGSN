@@ -20,10 +20,15 @@ export const requireAuth = jwk({
 });
 
 // The Keycloak claims the api actually reads off a verified token.
+// given_name/family_name come from the default `profile` scope, filled by the
+// IdP attribute mappers (see keycloak/realm-igsn.json); currentUser stores them
+// as the local user's firstname/name.
 export type KeycloakClaims = {
   sub: string;
   preferred_username?: string;
   name?: string;
+  given_name?: string;
+  family_name?: string;
   email?: string;
   realm_access?: { roles?: string[] };
 };

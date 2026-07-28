@@ -1,9 +1,16 @@
 import { expect, type Page } from "@playwright/test";
 
+import { adminUrl } from "../urls";
+
 export function sampleEditPage(page: Page) {
   return {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
+    goto: (sampleId: string) => page.goto(`${adminUrl}/samples/${sampleId}`),
+    expectForbidden: () =>
+      expect(
+        page.getByText("You do not have access to this sample."),
+      ).toBeVisible(),
     expectName: (name: string) =>
       expect(page.getByLabel(/name/i)).toHaveValue(name),
     goToList: () => page.getByRole("link", { name: "IGSN Admin" }).click(),
@@ -39,8 +46,6 @@ export function sampleEditPage(page: Page) {
       ).toBeHidden();
     },
 
-    // A draft saves freely; a published sample saves through the stricter
-    // "Publish updates" action. Both toast the same success.
     saveDraft: async () => {
       await page.getByRole("button", { name: "Save as draft" }).click();
       await expect(page.getByText("Sample saved")).toBeVisible();

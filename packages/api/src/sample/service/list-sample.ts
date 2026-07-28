@@ -29,10 +29,27 @@ function withinBbox(
   )`;
 }
 
-export async function listSamples(
+// A scope predicate joins the filter array, so it applies to the count query
+// too: a total that counted other people's samples would lie about the dataset.
+function ownedBy(ownerId: string): Expression<SqlBool> {
+  return sql<SqlBool>`exists (
+    select 1 from user_sample
+     where user_sample.sample_id = sample.id
+       and user_sample.user_id = ${ownerId}
+  )`;
+}
+
+function isPublished(): Expression<SqlBool> {
+  return sql<SqlBool>`published = true`;
+}
+
+// Who the list is for is a separate argument from `params` (the validated query),
+// and every entry point below names it: the caller's identity and the visibility
+// rule come from the server, never from the query string.
+async function listSamplesWhere(
   db: Transactional<DB>,
   params: ListSamplesParams,
-  publishedOnly = false,
+  scope: Expression<SqlBool>[],
 ): Promise<ListSamplesResult> {
   const { page, perPage, search, sort, order = "asc" } = params;
 
@@ -45,12 +62,12 @@ export async function listSamples(
       ...(search === undefined ? [] : searchFilters(search)),
       ...(params.bbox === undefined ? [] : [withinBbox(params.bbox)]),
       ...facetFilters(params),
+      ...scope,
     ];
     // Shared by the page and the count, so a filter can never reach one only.
     const matching = () =>
       trx
         .selectFrom("sample")
-        .$if(publishedOnly, (qb) => qb.where("published", "=", true))
         .$if(filters.length > 0, (qb) => qb.where((eb) => eb.and(filters)));
 
     const relevance = search === undefined ? undefined : relevanceScore(search);
@@ -74,4 +91,24 @@ export async function listSamples(
       total: Number(count),
     };
   });
+}
+
+// `ownerId` is a required positional argument, so a direct call that omits it
+// does not compile. The
+// repository wiring can still satisfy `SampleRepository.list` while ignoring
+// its `ownerId` (structural typing); the admin-routes authorization spec is
+// what catches that.
+export function listSamplesByOwner(
+  db: Transactional<DB>,
+  params: ListSamplesParams,
+  ownerId: string,
+): Promise<ListSamplesResult> {
+  return listSamplesWhere(db, params, [ownedBy(ownerId)]);
+}
+
+export function listPublishedSamples(
+  db: Transactional<DB>,
+  params: ListSamplesParams,
+): Promise<ListSamplesResult> {
+  return listSamplesWhere(db, params, [isPublished()]);
 }

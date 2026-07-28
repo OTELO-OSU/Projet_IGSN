@@ -25,6 +25,14 @@ export function sampleListPage(page: Page) {
     },
     expectSampleRow: (name: string) =>
       expect(page.getByRole("cell", { name })).toBeVisible(),
+    // Passes on a not-yet-loaded list too, so assert a visible row (or the
+    // empty state) first to prove the list resolved.
+    expectNoSampleRow: (name: string) =>
+      expect(page.getByRole("cell", { name })).toBeHidden(),
+    // The empty row only renders once the query resolved, so it also rules out a
+    // list that is merely still loading.
+    expectEmpty: () =>
+      expect(page.getByRole("cell", { name: "No results" })).toBeVisible(),
     // Assert the row shows both the sample name and its nature label in the same
     // row, so a mismatched nature can't pass unnoticed.
     expectSampleRowWithNature: async (name: string, nature: string) => {

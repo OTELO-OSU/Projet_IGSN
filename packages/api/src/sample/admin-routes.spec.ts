@@ -6,7 +6,10 @@ import { testClient } from "hono/testing";
 import { describe, expect } from "vitest";
 
 import { createApp } from "../app.ts";
+import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
+import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
+import { insertSample } from "./service/insert-sample.ts";
 
 // requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization
 // header, so these tests just send (or omit) it.
@@ -549,6 +552,15 @@ describe("admin sample routes", () => {
       },
     );
 
+    // The owner guard skips a malformed id rather than querying it, so the
+    // validator is what answers here, not a 403 or a failed uuid cast.
+    pgTest("should reject a malformed sample id with 400", async ({ db }) => {
+      const res = await createApp(db).request("/admin/samples/not-a-uuid", {
+        headers: authHeader,
+      });
+      expect(res.status).toBe(400);
+    });
+
     pgTest("should reject unknown fields with 400", async ({ db }) => {
       const res = await postSample(createApp(db), {
         name: "Grès",
@@ -735,5 +747,159 @@ describe("admin sample routes", () => {
         expect(res.status).toBe(401);
       },
     );
+  });
+
+  // A user only reaches their own samples (ADR 0019). The test client always
+  // authenticates as the single researcher test/setup.ts provisions, so another
+  // researcher's sample is inserted directly.
+  describe("authorization", () => {
+    async function insertOtherResearcherSample(
+      db: Parameters<typeof createApp>[0],
+    ) {
+      const other = await insertUser(db, "other@univ-lorraine.fr");
+      const sample = await insertSample(db, {
+        name: "Granite de Pierre",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      await insertSampleOwner(db, sample.id, other.id);
+      return sample;
+    }
+
+    pgTest("should list only the caller's samples", async ({ db }) => {
+      // Arrange
+      const client = testClient(createApp(db));
+      await client.admin.samples.$post(
+        {
+          json: {
+            name: "Basalte du Massif Central",
+            nature: "thin_section",
+            type: null,
+            collectionMethod: null,
+          },
+        },
+        { headers: authHeader },
+      );
+      await insertOtherResearcherSample(db);
+      // Act
+      const res = await client.admin.samples.$get(
+        { query: { page: "1", perPage: "10" } },
+        { headers: authHeader },
+      );
+      // Assert
+      const { data, meta } = listSamplesResponseSchema.parse(await res.json());
+      expect(data.map((sample) => sample.name)).toEqual([
+        "Basalte du Massif Central",
+      ]);
+      expect(meta.total).toBe(1);
+    });
+
+    pgTest(
+      "should answer 403 when getting another researcher's sample",
+      async ({ db }) => {
+        // Arrange
+        const sample = await insertOtherResearcherSample(db);
+        // Act
+        const res = await testClient(createApp(db)).admin.samples[":id"].$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(403);
+      },
+    );
+
+    pgTest(
+      "should answer 403 when updating another researcher's sample",
+      async ({ db }) => {
+        // Arrange
+        const sample = await insertOtherResearcherSample(db);
+        // Act
+        const res = await testClient(createApp(db)).admin.samples[":id"].$put(
+          {
+            param: { id: sample.id },
+            json: {
+              name: "Stolen granite",
+              nature: "rock_powder",
+              type: null,
+              collectionMethod: null,
+            },
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(403);
+      },
+    );
+
+    pgTest(
+      "should answer 403 when publishing another researcher's sample",
+      async ({ db }) => {
+        // Arrange
+        const sample = await insertOtherResearcherSample(db);
+        // Act
+        const res = await testClient(createApp(db)).admin.samples[
+          ":id"
+        ].publish.$post({ param: { id: sample.id } }, { headers: authHeader });
+        // Assert
+        expect(res.status).toBe(403);
+      },
+    );
+
+    pgTest(
+      "should answer 403 when uploading to another researcher's sample",
+      async ({ db }) => {
+        // Arrange
+        const sample = await insertOtherResearcherSample(db);
+        // Act
+        const res = await testClient(createApp(db)).admin.samples[
+          ":id"
+        ].attachments.$post(
+          {
+            param: { id: sample.id },
+            form: {
+              file: new File(["1,2\n"], "data.csv", { type: "text/csv" }),
+            },
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(403);
+      },
+    );
+
+    pgTest(
+      "should answer 403 when downloading from another researcher's sample",
+      async ({ db }) => {
+        // Arrange
+        const sample = await insertOtherResearcherSample(db);
+        // Act
+        const res = await createApp(db).request(
+          `/admin/samples/${sample.id}/attachments/01890a5d-ac96-774b-bcce-b302099a8059`,
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(403);
+      },
+    );
+
+    // Existence is still reported apart from ownership: an unknown id 404s.
+    pgTest("should answer 403 for a sample nobody owns", async ({ db }) => {
+      // Arrange
+      const sample = await insertSample(db, {
+        name: "Orphan granite",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      // Act
+      const res = await testClient(createApp(db)).admin.samples[":id"].$get(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(403);
+    });
   });
 });

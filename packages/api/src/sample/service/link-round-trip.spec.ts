@@ -1,9 +1,9 @@
 import { describe, expect } from "vitest";
 
+import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
-import { getSample } from "./get-sample.ts";
+import { readSample } from "../../tests/read-sample.ts";
 import { insertSample } from "./insert-sample.ts";
-import { listSamples } from "./list-sample.ts";
 import { updateSample } from "./update-sample.ts";
 
 const base = {
@@ -23,7 +23,7 @@ describe("sample links persistence", () => {
     ];
     const created = await insertSample(db, { ...base, links });
     expect(created.links).toMatchObject(links);
-    expect(await getSample(db, created.id)).toEqual(created);
+    expect(await readSample(db, created.id)).toEqual(created);
   });
 
   pgTest("should create a sample without links", async ({ db }) => {
@@ -60,7 +60,7 @@ describe("sample links persistence", () => {
       });
       const updated = await updateSample(db, created.id, base);
       expect(updated?.links).toEqual([]);
-      expect((await getSample(db, created.id))?.links).toEqual([]);
+      expect((await readSample(db, created.id))?.links).toEqual([]);
     },
   );
 
@@ -73,7 +73,7 @@ describe("sample links persistence", () => {
       ],
     });
     const second = await insertSample(db, { ...base, name: "Second" });
-    const { data } = await listSamples(db, { page: 1, perPage: 10 });
+    const { data } = await listAsOwner(db, { page: 1, perPage: 10 });
     const byId = new Map(data.map((sample) => [sample.id, sample]));
     expect(byId.get(first.id)?.links).toMatchObject([
       { url: "https://doi.org/10.1594/IEDA.100252" },

@@ -5,14 +5,22 @@ import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { test } from "../support/db";
 
 test.describe("samples", () => {
-  test("a researcher browses the samples list", async ({ page, samples }) => {
+  test("a researcher browses the samples they declared", async ({
+    page,
+    samples,
+  }) => {
     await signInAsResearcher(page, RESEARCHERS.jean);
 
     const list = sampleListPage(page);
     await list.expectVisible();
     await list.expectColumns();
-    for (const sample of samples) {
+    // Jean's rows first: once they are visible the list has resolved, so the
+    // absence assertions below cannot pass on a still-loading table.
+    for (const sample of samples.filter((s) => s.owner === "jean")) {
       await list.expectSampleRowWithNature(sample.name, sample.nature);
+    }
+    for (const sample of samples.filter((s) => s.owner !== "jean")) {
+      await list.expectNoSampleRow(sample.name);
     }
   });
 
@@ -30,16 +38,28 @@ test.describe("samples", () => {
     await create.selectNature("Thin section");
     await create.submit();
 
-    // Creating opens the new sample for further editing.
     const edit = sampleEditPage(page);
     await edit.expectVisible();
     await edit.expectName(name);
 
-    // Back on the list, the new sample tops the table (ordered by last
-    // modified).
     await edit.goToList();
     await list.expectVisible();
     await list.expectSampleRow(name);
+  });
+
+  test("a researcher sees no sample declared by someone else", async ({
+    page,
+    samples,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.luc);
+
+    const list = sampleListPage(page);
+    await list.expectVisible();
+    await list.expectEmpty();
+
+    const edit = sampleEditPage(page);
+    await edit.goto(samples[0]!.id);
+    await edit.expectForbidden();
   });
 
   test("the create form rejects a sample without a name", async ({ page }) => {

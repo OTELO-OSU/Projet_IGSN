@@ -21,6 +21,9 @@ export const RESEARCHERS = {
     username: "camille.petit",
     email: "camille.petit@univ-lorraine.fr",
   },
+  // Owns nothing: every seed row names another researcher as its owner, so luc
+  // sees the registry as a researcher who has declared nothing.
+  luc: { username: "luc.moreau", email: "luc.moreau@univ-lorraine.fr" },
 } satisfies Record<string, Researcher>;
 
 // Shared entry point for the sample journeys: a researcher signs in through their

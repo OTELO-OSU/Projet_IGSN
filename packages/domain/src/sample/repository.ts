@@ -12,12 +12,19 @@ export type ListSamplesResult = {
   total: number;
 };
 
+// `ownerId` is a separate argument, never part of ListSamplesParams (the
+// validated query): the caller's id comes from the token, never from the client.
 export type SampleRepository = {
-  list(params: ListSamplesParams): Promise<ListSamplesResult>;
+  list(params: ListSamplesParams, ownerId: string): Promise<ListSamplesResult>;
   listPublished(params: ListSamplesParams): Promise<ListSamplesResult>;
-  get(id: string): Promise<Sample | null>;
+  // Reading a sample is relative to who reads it: no row at all (the api answers
+  // 404) or the row plus whether this user owns it (403 when they do not).
+  get(
+    id: string,
+    ownerId: string,
+  ): Promise<{ sample: Sample; owned: boolean } | null>;
   getPublishedByIgsn(igsn: string): Promise<Sample | null>;
-  create(input: CreateSample): Promise<Sample>;
+  create(input: CreateSample, ownerId: string): Promise<Sample>;
   update(id: string, input: CreateSample): Promise<Sample | null>;
   publish(id: string): Promise<Sample | null>;
 };

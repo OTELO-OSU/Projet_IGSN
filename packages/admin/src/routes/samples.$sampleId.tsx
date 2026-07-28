@@ -5,7 +5,7 @@ import { m } from "#/paraglide/messages.js";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
-import { useSample } from "#/samples/use-sample.ts";
+import { ForbiddenError, useSample } from "#/samples/use-sample.ts";
 import { useUpdateSample } from "#/samples/use-update-sample.ts";
 
 export const Route = createFileRoute("/samples/$sampleId")({
@@ -26,7 +26,13 @@ function EditSamplePage() {
     return <p>{m.samples_loading()}</p>;
   }
   if (query.isError) {
-    return <p role="alert">{m.samples_error()}</p>;
+    return (
+      <p role="alert">
+        {query.error instanceof ForbiddenError
+          ? m.sample_forbidden()
+          : m.samples_error()}
+      </p>
+    );
   }
   if (!query.data) {
     return <p role="alert">{m.sample_not_found()}</p>;
@@ -98,7 +104,6 @@ function EditSamplePage() {
             : {
                 kind: "publish",
                 label: m.action_save_publish(),
-                // Draft: save the edits, publish, then return to the list.
                 onPublish: (value) =>
                   updateSample.mutate(value, {
                     onSuccess: () =>

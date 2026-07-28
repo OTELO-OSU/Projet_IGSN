@@ -6,6 +6,7 @@ const draft = {
   id: "00000000-0000-7000-8000-00000000000f",
   name: "Drift probe",
   nature: "hand_sample",
+  owner: "jean",
 } as const;
 
 describe("parseSeedSample", () => {
@@ -41,6 +42,16 @@ describe("parseSeedSample", () => {
   it("should reject an out-of-vocabulary material", () => {
     expect(() =>
       parseSeedSample({ ...draft, material: "rock.made_up" }),
+    ).toThrow();
+  });
+
+  it("should reject an unknown owner", () => {
+    expect(() =>
+      parseSeedSample({
+        ...draft,
+        // @ts-expect-error the invalid owner is the case under test
+        owner: "nobody",
+      }),
     ).toThrow();
   });
 });

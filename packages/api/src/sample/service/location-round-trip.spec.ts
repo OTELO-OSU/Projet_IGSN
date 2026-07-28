@@ -1,10 +1,10 @@
 import { sql } from "kysely";
 import { describe, expect } from "vitest";
 
+import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
-import { getSample } from "./get-sample.ts";
+import { readSample } from "../../tests/read-sample.ts";
 import { insertSample } from "./insert-sample.ts";
-import { listSamples } from "./list-sample.ts";
 import { updateSample } from "./update-sample.ts";
 
 const base = {
@@ -25,7 +25,7 @@ describe("sample location persistence", () => {
     expect(created.location).toEqual({
       position: { type: "point", longitude: 2.35, latitude: 48.85 },
     });
-    expect(await getSample(db, created.id)).toEqual(created);
+    expect(await readSample(db, created.id)).toEqual(created);
   });
 
   pgTest(
@@ -46,7 +46,7 @@ describe("sample location persistence", () => {
       };
       const created = await insertSample(db, { ...base, location });
       expect(created.location).toEqual(location);
-      expect(await getSample(db, created.id)).toEqual(created);
+      expect(await readSample(db, created.id)).toEqual(created);
     },
   );
 
@@ -67,7 +67,7 @@ describe("sample location persistence", () => {
       };
       const created = await insertSample(db, { ...base, location });
       expect(created.location).toMatchObject(location);
-      expect(await getSample(db, created.id)).toEqual(created);
+      expect(await readSample(db, created.id)).toEqual(created);
     },
   );
 
@@ -96,7 +96,7 @@ describe("sample location persistence", () => {
         localityName: "Test locality",
       };
       const created = await insertSample(db, { ...base, location });
-      expect((await getSample(db, created.id))?.location).toMatchObject(
+      expect((await readSample(db, created.id))?.location).toMatchObject(
         location,
       );
     },
@@ -110,7 +110,7 @@ describe("sample location persistence", () => {
         localityDescription: "No coords",
       },
     });
-    const found = await getSample(db, created.id);
+    const found = await readSample(db, created.id);
     expect(found?.location).toMatchObject({
       localityName: "Named place",
       localityDescription: "No coords",
@@ -154,7 +154,7 @@ describe("sample location persistence", () => {
       location: null,
     });
     expect(updated?.location).toBeNull();
-    expect((await getSample(db, created.id))?.location).toBeNull();
+    expect((await readSample(db, created.id))?.location).toBeNull();
   });
 
   pgTest("should return the location in a list", async ({ db }) => {
@@ -162,7 +162,7 @@ describe("sample location persistence", () => {
       ...base,
       location: { position: { type: "point", longitude: 3, latitude: 50 } },
     });
-    const { data } = await listSamples(db, { page: 1, perPage: 10 });
+    const { data } = await listAsOwner(db, { page: 1, perPage: 10 });
     expect(data.find((s) => s.id === created.id)?.location?.position).toEqual({
       type: "point",
       longitude: 3,

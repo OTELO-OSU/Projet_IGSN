@@ -9,7 +9,10 @@ import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-s
 import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import { Hono } from "hono";
 
+import type { OwnedSampleEnv } from "./require-sample-owner.ts";
+
 import { attachmentDownload } from "./attachment-download.ts";
+import { requireSampleOwner } from "./require-sample-owner.ts";
 import {
   validateAttachmentParams,
   validateAttachmentUpload,
@@ -19,30 +22,44 @@ import {
 } from "./validator.ts";
 
 // Full sample CRUD for the admin app. Authentication is enforced once by the
-// requireAuth guard on the /admin mount (see app.ts), so no per-route guard here.
+// requireAuth guard on the /admin mount (see app.ts), which also resolves the
+// caller with currentUser, so no per-route authentication guard here.
+// Authorization is per sample: a user only reaches their own (ADR 0019), through
+// the owner-scoped list and the requireSampleOwner guard below.
 export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
 ) {
-  return new Hono()
+  // Guards every route naming a sample id and hands it the sample it fetched:
+  // present means the caller owns it (200), absent means no such sample (404),
+  // and someone else's never reaches the route (403). Registered before those
+  // routes below, since Hono runs handlers in registration order.
+  const ownedSample = requireSampleOwner(repository);
+
+  return new Hono<OwnedSampleEnv>()
     .get("/", validateListQuery, async (c) => {
       const { page, perPage, sort, order, search, ageMin, ageMax, ageUnit } =
         c.req.valid("query");
-      const { data, total } = await repository.list({
-        page,
-        perPage,
-        sort,
-        order,
-        search,
-        ageMin,
-        ageMax,
-        ageUnit,
-      });
+      const { data, total } = await repository.list(
+        {
+          page,
+          perPage,
+          sort,
+          order,
+          search,
+          ageMin,
+          ageMax,
+          ageUnit,
+        },
+        c.get("user").id,
+      );
       const body: ListSamplesResponse = { data, meta: { total } };
       return c.json(body);
     })
-    .get("/:id", validateIdParam, async (c) => {
-      const sample = await repository.get(c.req.valid("param").id);
+    .use("/:id", ownedSample)
+    .use("/:id/*", ownedSample)
+    .get("/:id", validateIdParam, (c) => {
+      const sample = c.get("sample");
       if (!sample) {
         return c.json({ error: "Sample not found" }, 404);
       }
@@ -50,12 +67,15 @@ export function createSampleAdminRoutes(
       return c.json(body);
     })
     .post("/", validateCreateSampleBody, async (c) => {
-      const sample = await repository.create(c.req.valid("json"));
+      const sample = await repository.create(
+        c.req.valid("json"),
+        c.get("user").id,
+      );
       return c.json({ data: sample }, 201);
     })
     .put("/:id", validateIdParam, validateCreateSampleBody, async (c) => {
       const id = c.req.valid("param").id;
-      const current = await repository.get(id);
+      const current = c.get("sample");
       if (!current) {
         return c.json({ error: "Not found" }, 404);
       }
@@ -86,15 +106,16 @@ export function createSampleAdminRoutes(
     })
     .post("/:id/publish", validateIdParam, async (c) => {
       const id = c.req.valid("param").id;
-      const sample = await repository.get(id);
+      const sample = c.get("sample");
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
       // A sample must be classified down to a publishable leaf material before
-      // it can be published (see samplePublishBlockers). ponytail: get and
-      // publish are separate transactions, so a concurrent change to material in
-      // between is not guarded at the DB level (no CHECK on material); acceptable
-      // for an admin-only action. Wrap get+publish in one txn if that race matters.
+      // it can be published (see samplePublishBlockers). ponytail: the guard's
+      // read and publish are separate transactions, so a concurrent change to
+      // material in between is not guarded at the DB level (no CHECK on
+      // material); acceptable for an admin-only action. Read and publish in one
+      // txn if that race matters.
       if (!isSamplePublishable(sample)) {
         return c.json({ error: "Sample is not ready to publish" }, 409);
       }

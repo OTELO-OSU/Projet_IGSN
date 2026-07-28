@@ -1,7 +1,7 @@
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
-import { getSample } from "./get-sample.ts";
+import { readSample } from "../../tests/read-sample.ts";
 import { insertSample } from "./insert-sample.ts";
 import { updateSample } from "./update-sample.ts";
 
@@ -29,7 +29,7 @@ describe("sample economic interest persistence", () => {
       economicDepositName: "Cigar Lake",
       economicDepositDescription: "Unconformity-related uranium deposit",
     });
-    expect(await getSample(db, created.id)).toEqual(created);
+    expect(await readSample(db, created.id)).toEqual(created);
   });
 
   pgTest(
@@ -43,7 +43,7 @@ describe("sample economic interest persistence", () => {
         economicDepositName: null,
         economicDepositDescription: null,
       });
-      expect(await getSample(db, created.id)).toEqual(created);
+      expect(await readSample(db, created.id)).toEqual(created);
     },
   );
 
@@ -101,6 +101,6 @@ describe("sample economic interest persistence", () => {
       economicInterestElements: [],
       economicDepositName: null,
     });
-    expect(await getSample(db, created.id)).toEqual(updated);
+    expect(await readSample(db, created.id)).toEqual(updated);
   });
 });

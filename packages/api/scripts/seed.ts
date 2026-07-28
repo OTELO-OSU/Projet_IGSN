@@ -1,5 +1,4 @@
 import type { Kysely, Selectable } from "kysely";
-import type { z } from "zod";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
@@ -8,6 +7,7 @@ import {
   sampleSchema,
 } from "@projet-igsn/domain/sample/sample";
 import { fileURLToPath } from "node:url";
+import { z } from "zod";
 
 import type { DB } from "../src/db.ts";
 
@@ -17,57 +17,165 @@ import { scientificContextColumns } from "../src/sample/service/scientific-conte
 import { toAgeColumns } from "../src/sample/service/to-age-columns.ts";
 import { locationColumns } from "../src/sample/service/to-location.ts";
 
-// Inserts the given samples (with their fixed ids) and returns the columns the
-// E2E fixture reads (see e2e/support/db.ts). Shared by the dev seed below and
-// the E2E reset-and-seed script. Inserts directly rather than via the
-// repository, whose `create` generates a fresh uuid and would discard these
-// static ids.
+type SeedUser = {
+  id: string;
+  email: string;
+  name: string;
+  firstname: string;
+};
+
+export const researcherKeySchema = z.enum([
+  "marie",
+  "jean",
+  "sophie",
+  "pierre",
+  "camille",
+  "luc",
+]);
+export type ResearcherKey = z.infer<typeof researcherKeySchema>;
+
+// The mock SAML researchers (saml-idp/authsources.php), so seeded samples have
+// owners and show up in the admin list. Ids are static v7-shaped uuids like the
+// sample ids; the api adopts these rows by email when the real account signs in
+// (see src/user/repository.ts), which is what keeps the ownership. All six get
+// a user row, but luc owns no sample anywhere: he is the researcher who signs
+// in to an empty registry (see e2e/admin/samples.spec.ts).
+export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
+  marie: {
+    id: "01980e2d-6f9b-7000-8000-000000000001",
+    email: "marie.dupont@univ-lorraine.fr",
+    name: "Dupont",
+    firstname: "Marie",
+  },
+  jean: {
+    id: "01980e2d-6f9b-7000-8000-000000000002",
+    email: "jean.martin@univ-lorraine.fr",
+    name: "Martin",
+    firstname: "Jean",
+  },
+  sophie: {
+    id: "01980e2d-6f9b-7000-8000-000000000003",
+    email: "sophie.bernard@univ-lorraine.fr",
+    name: "Bernard",
+    firstname: "Sophie",
+  },
+  pierre: {
+    id: "01980e2d-6f9b-7000-8000-000000000004",
+    email: "pierre.durand@univ-lorraine.fr",
+    name: "Durand",
+    firstname: "Pierre",
+  },
+  camille: {
+    id: "01980e2d-6f9b-7000-8000-000000000005",
+    email: "camille.petit@univ-lorraine.fr",
+    name: "Petit",
+    firstname: "Camille",
+  },
+  luc: {
+    id: "01980e2d-6f9b-7000-8000-000000000006",
+    email: "luc.moreau@univ-lorraine.fr",
+    name: "Moreau",
+    firstname: "Luc",
+  },
+};
+
+// Upserts the six mock researchers by email (a row may already exist from a
+// real sign-in, with another id) and returns each researcher's database id.
+async function seedOwners(
+  db: Kysely<DB>,
+): Promise<Record<ResearcherKey, string>> {
+  const owners = Object.values(MOCK_RESEARCHERS);
+  await db
+    .insertInto("user")
+    .values(owners)
+    .onConflict((oc) => oc.column("email").doNothing())
+    .execute();
+  const rows = await db
+    .selectFrom("user")
+    .select(["id", "email"])
+    .where(
+      "email",
+      "in",
+      owners.map((owner) => owner.email),
+    )
+    .execute();
+  const idByEmail = new Map(rows.map((row) => [row.email, row.id]));
+  return Object.fromEntries(
+    researcherKeySchema.options.map((key) => {
+      const id = idByEmail.get(MOCK_RESEARCHERS[key].email);
+      if (!id) throw new Error(`owner ${key} missing after upsert`);
+      return [key, id];
+    }),
+  ) as Record<ResearcherKey, string>;
+}
+
+// Inserts the given samples (with their fixed ids), assigns each to the
+// researcher its `owner` key names, and returns the columns the E2E fixture
+// reads (see e2e/support/db.ts), owner included so specs can group by
+// researcher. Shared by the dev seed below and the E2E reset-and-seed script.
+// Inserts directly rather than via the repository, whose `create` generates a
+// fresh uuid and would discard these static ids.
 export async function seed(
   db: Kysely<DB>,
   samples: SeedSample[],
 ): Promise<
-  Pick<
+  (Pick<
     Selectable<DB["sample"]>,
     "id" | "name" | "nature" | "igsn" | "published"
-  >[]
+  > & { owner: ResearcherKey })[]
 > {
-  return (
-    db
-      .insertInto("sample")
-      // collectionMethod is camelCase in the domain; the column is snake_case.
-      .values(
-        samples
-          .map(parseSeedSample)
-          .map(
-            ({
-              material,
-              collectionMethod,
-              collectionMethodDescription,
-              specificName,
-              metamorphicFacies,
-              location,
-              description,
-              scientificContext,
-              age,
-              ...rest
-            }) => ({
-              ...rest,
-              material: material ?? null,
-              collection_method: collectionMethod ?? null,
-              collection_method_description:
-                collectionMethodDescription ?? null,
-              specific_name: specificName ?? null,
-              metamorphic_facies: metamorphicFacies ?? null,
-              ...toAgeColumns(age),
-              ...locationColumns(location),
-              ...descriptionColumns(description),
-              ...scientificContextColumns(scientificContext),
-            }),
-          ),
-      )
-      .returning(["id", "name", "nature", "igsn", "published"])
-      .execute()
-  );
+  const ownerIds = await seedOwners(db);
+  const parsed = samples.map(parseSeedSample);
+  const created = await db
+    .insertInto("sample")
+    .values(
+      parsed.map(
+        ({
+          owner: _owner,
+          material,
+          collectionMethod,
+          collectionMethodDescription,
+          specificName,
+          metamorphicFacies,
+          location,
+          description,
+          scientificContext,
+          age,
+          ...rest
+        }) => ({
+          ...rest,
+          material: material ?? null,
+          collection_method: collectionMethod ?? null,
+          collection_method_description: collectionMethodDescription ?? null,
+          specific_name: specificName ?? null,
+          metamorphic_facies: metamorphicFacies ?? null,
+          ...toAgeColumns(age),
+          ...locationColumns(location),
+          ...descriptionColumns(description),
+          ...scientificContextColumns(scientificContext),
+        }),
+      ),
+    )
+    .returning(["id", "name", "nature", "igsn", "published"])
+    .execute();
+
+  await db
+    .insertInto("user_sample")
+    .values(
+      parsed.map((row) => ({
+        sample_id: row.id,
+        user_id: ownerIds[row.owner],
+      })),
+    )
+    .execute();
+
+  // Matched by id, not by array position: RETURNING order is not guaranteed.
+  const ownerById = new Map(parsed.map((row) => [row.id, row.owner]));
+  return created.map((sample) => {
+    const owner = ownerById.get(sample.id);
+    if (!owner) throw new Error(`created sample ${sample.id} has no seed row`);
+    return { ...sample, owner };
+  });
 }
 
 // created_at/updated_at are database defaults, so they are omitted; the rest
@@ -107,7 +215,9 @@ export const seedSampleSchema = sampleSchema
     age: true,
     igsn: true,
     published: true,
-  });
+  })
+  // Seed metadata (a user_sample row), not a sample column.
+  .extend({ owner: researcherKeySchema });
 
 export type SeedSample = z.infer<typeof seedSampleSchema>;
 
@@ -118,7 +228,7 @@ export type SeedSample = z.infer<typeof seedSampleSchema>;
 // run.
 export function parseSeedSample(sample: SeedSample): SeedSample {
   const parsed = seedSampleSchema.parse(sample);
-  const { id: _id, igsn: _igsn, published, ...create } = parsed;
+  const { id: _id, igsn: _igsn, owner: _owner, published, ...create } = parsed;
   const result = (
     published ? publishedSampleSchema : createSampleSchema
   ).safeParse(create);
@@ -142,6 +252,7 @@ export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "00000000-0000-7000-8000-000000000001",
     name: "Fontainebleau Sandstone",
+    owner: "marie",
     nature: "rock_powder",
     type: "dredge",
     material: "rock.sedimentary",
@@ -150,6 +261,7 @@ export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "00000000-0000-7000-8000-000000000002",
     name: "Massif Central Basalt",
+    owner: "jean",
     nature: "hand_sample",
     type: "core.section",
     material: "rock.igneous",
@@ -158,6 +270,7 @@ export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "00000000-0000-7000-8000-000000000003",
     name: "Brittany Granite",
+    owner: "sophie",
     nature: "thin_section",
     type: "core.piece",
     material: "rock.igneous",
@@ -166,6 +279,7 @@ export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "00000000-0000-7000-8000-000000000004",
     name: "Jura Limestone",
+    owner: "pierre",
     nature: "rock_chips",
     type: "dredge",
     material: "rock.sedimentary",
@@ -174,6 +288,7 @@ export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "00000000-0000-7000-8000-000000000005",
     name: "Ardennes Schist",
+    owner: "camille",
     nature: "polished_section",
     type: "core.piece",
     material: "rock.metamorphic",
@@ -187,6 +302,7 @@ export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69",
     name: "Basalt 42",
+    owner: "jean",
     nature: "hand_sample",
     type: "core.half_round",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -223,6 +339,7 @@ export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "01890a5d-ac96-774b-bcce-b302099a8057",
     name: "Granite 7",
+    owner: "pierre",
     nature: "thin_section",
     type: "core.piece",
     material: "rock.igneous.plutonic.felsic.granite",

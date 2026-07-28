@@ -12,8 +12,10 @@ test.describe("sample links", () => {
     page,
     samples,
   }) => {
-    const draft = samples.find((sample) => !sample.published);
-    if (!draft) throw new Error("seed must include a draft sample");
+    const draft = samples.find(
+      (sample) => !sample.published && sample.owner === "pierre",
+    );
+    if (!draft) throw new Error("seed must include a draft sample for pierre");
 
     await signInAsResearcher(page, RESEARCHERS.pierre);
     const list = sampleListPage(page);
@@ -23,8 +25,6 @@ test.describe("sample links", () => {
     await edit.expectVisible();
     await edit.openLinksTab();
 
-    // The DOI link and the files ride the same save: files are staged on
-    // pick and only upload with the sample document.
     await edit.addLink(
       1,
       "https://doi.org/10.1594/IEDA.100252",
@@ -41,7 +41,6 @@ test.describe("sample links", () => {
     await edit.saveDraft();
     await edit.confirmUploads();
 
-    // Everything survives a full reload: link and files come back from the API.
     await page.reload();
     await edit.openLinksTab();
     await edit.expectLink(
