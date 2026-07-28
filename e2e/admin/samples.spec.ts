@@ -5,14 +5,22 @@ import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { test } from "../support/db";
 
 test.describe("samples", () => {
-  test("a researcher browses the samples list", async ({ page, samples }) => {
+  test("a researcher browses the samples they declared", async ({
+    page,
+    samples,
+  }) => {
     await signInAsResearcher(page, RESEARCHERS.jean);
 
     const list = sampleListPage(page);
     await list.expectVisible();
     await list.expectColumns();
-    for (const sample of samples) {
+    // Jean's rows first: once they are visible the list has resolved, so the
+    // absence assertions below cannot pass on a still-loading table.
+    for (const sample of samples.filter((s) => s.owner === "jean")) {
       await list.expectSampleRowWithNature(sample.name, sample.nature);
+    }
+    for (const sample of samples.filter((s) => s.owner !== "jean")) {
+      await list.expectNoSampleRow(sample.name);
     }
   });
 
@@ -42,8 +50,8 @@ test.describe("samples", () => {
     await list.expectSampleRow(name);
   });
 
-  // Samples are declared per researcher (ADR 0019): the seeded ones belong to
-  // jean, so luc must see none of them, by list or by URL.
+  // Samples are declared per researcher (ADR 0019) and the seed gives luc
+  // none, so he must see no sample at all, by list or by URL.
   test("a researcher sees no sample declared by someone else", async ({
     page,
     samples,

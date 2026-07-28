@@ -11,7 +11,7 @@ import type { SeedSample } from "./seed.ts";
 // those are injected by position in the map below (see seed-demo.ts). English
 // only (i18n testing rule). Kept separate from SEED_SAMPLES, which the E2E
 // suite asserts on.
-type DemoRow = Omit<SeedSample, "id" | "igsn" | "published">;
+type DemoRow = Omit<SeedSample, "id" | "igsn" | "published" | "owner">;
 
 type Position = NonNullable<Location["position"]>;
 type Elevation = NonNullable<Position["elevation"]>;
@@ -1553,6 +1553,10 @@ const HISTORICAL_CONTEXT: SeedSample["scientificContext"] = {
   collectionOrigin: "scientific_expedition",
 };
 
+// Demo owners rotate over the researchers, luc excepted: he owns nothing on any
+// dataset, so signing in as him always shows the empty registry.
+const DEMO_OWNERS = ["marie", "jean", "sophie", "pierre", "camille"] as const;
+
 // The first PUBLISHED.length rows publish (igsn derived from the id as publish
 // does); the drafts follow with no igsn.
 export const DEMO_SAMPLES: SeedSample[] = [...PUBLISHED, ...DRAFTS].map(
@@ -1562,6 +1566,7 @@ export const DEMO_SAMPLES: SeedSample[] = [...PUBLISHED, ...DRAFTS].map(
     return {
       ...row,
       id,
+      owner: DEMO_OWNERS[index % DEMO_OWNERS.length]!,
       published,
       ...(published
         ? {

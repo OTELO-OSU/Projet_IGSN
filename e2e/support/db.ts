@@ -7,6 +7,9 @@ export type SeededSample = {
   nature: string;
   igsn: string | null;
   published: boolean;
+  // The RESEARCHERS key of the sample's owner; specs group by it to assert
+  // per-researcher visibility.
+  owner: string;
 };
 
 function resetAndSeed(): SeededSample[] {
