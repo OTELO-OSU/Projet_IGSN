@@ -48,15 +48,18 @@ export function sampleListPage(page: Page) {
     clearAllFilters: () =>
       page.getByRole("button", { name: /clear all filters/i }).click(),
     search: async (query: string) => {
-      // Wait for the client bundle to hydrate before typing, else the submit
-      // fires before React attaches its onSubmit handler.
       await page.waitForLoadState("networkidle");
-      // Named: the facet sidebar holds searchboxes of its own.
-      const field = page.getByRole("searchbox", { name: "Search samples" });
-      await field.fill(query);
-      // Search only runs on submit, not while typing.
-      await field.press("Enter");
-      await page.waitForURL(/[?&]q=/);
+      // networkidle does not mean hydrated: a `fill` before React attaches its
+      // listeners never reaches component state, so the submit finds nothing.
+      await expect(async () => {
+        const searchbox = page.getByRole("searchbox", {
+          name: "Search samples",
+        });
+        await searchbox.clear();
+        await searchbox.pressSequentially(query);
+        await searchbox.press("Enter");
+        await page.waitForURL(/[?&]q=/, { timeout: 2_000 });
+      }).toPass({ timeout: 20_000 });
     },
     // The facet sidebar, an aside labelled "Filters".
     expectFacetsVisible: () =>
