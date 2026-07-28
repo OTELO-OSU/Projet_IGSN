@@ -44,6 +44,7 @@ export const metamorphicTree = {
       "felsic_granulite",
       "glaucophanite",
       "gneiss",
+      "granofels",
       "granulite",
       "greenschist",
       "hornblendite",
