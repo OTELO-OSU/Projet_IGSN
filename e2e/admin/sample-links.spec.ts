@@ -12,8 +12,10 @@ test.describe("sample links", () => {
     page,
     samples,
   }) => {
-    const draft = samples.find((sample) => !sample.published);
-    if (!draft) throw new Error("seed must include a draft sample");
+    const draft = samples.find(
+      (sample) => !sample.published && sample.owner === "pierre",
+    );
+    if (!draft) throw new Error("seed must include a draft sample for pierre");
 
     await signInAsResearcher(page, RESEARCHERS.pierre);
     const list = sampleListPage(page);
