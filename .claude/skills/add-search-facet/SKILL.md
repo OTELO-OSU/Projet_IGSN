@@ -21,9 +21,10 @@ Follow TDD (spec first).
 - `enum`: a flat controlled vocabulary (nature, texture). Matches by equality.
 - `text`: a free-text scientific-context field. Matches by unaccent ILIKE.
 - `numericRange`: the age range. Not a generic column filter; it compares
-  against dedicated comparable columns via its own builder
-  (`numericAgeFilters`), and contributes three params (`<key>Min`, `<key>Max`,
-  `<key>Unit`).
+  against dedicated comparable columns (`age_min_a`, `age_max_a`, generated
+  from the numeric age with a fallback on the geological interval) via its
+  own builder (`ageFilters`), and contributes three params (`<key>Min`,
+  `<key>Max`, `<key>Unit`).
 
 ## Steps
 

@@ -672,6 +672,95 @@ describe("listSamples", () => {
     },
   );
 
+  pgTest(
+    "should match the youngest rank at the present-day edge",
+    async ({ db }) => {
+      // Arrange: rank 1 (Holocene) spans [0, 0.0117] Ma, the first entry of the
+      // ICS boundary table.
+      await insertSample(db, {
+        name: "Holocene",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(1, 1),
+      });
+      // Act: a point query exactly on its young edge, the present.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0,
+        ageMax: 0,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Holocene"]);
+    },
+  );
+
+  pgTest("should match the oldest rank at its old edge", async ({ db }) => {
+    // Arrange: rank 49 (Hadean) spans [4031, 4567] Ma, the last entry of the ICS
+    // boundary table.
+    await insertSample(db, {
+      name: "Hadean",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      age: geologicalAge(49, 49),
+    });
+    // Act: a point query exactly on its old edge, the age of the Earth.
+    const { data, total } = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      ageMin: 4567,
+      ageMax: 4567,
+      ageUnit: "ma",
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.name)).toEqual(["Hadean"]);
+  });
+
+  pgTest("should match a mid-range rank at its point edges", async ({ db }) => {
+    // Arrange: rank 25 spans [423.0, 427.4] Ma, an entry in the middle of the
+    // ICS boundary table untouched by any other test in this file, spot-
+    // checking the array away from its ends.
+    await insertSample(db, {
+      name: "Mid-range",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      age: geologicalAge(25, 25),
+    });
+    // Act + Assert: a point query exactly on each edge matches.
+    const young = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      ageMin: 423.0,
+      ageMax: 423.0,
+      ageUnit: "ma",
+    });
+    expect(young.total).toBe(1);
+    const old = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      ageMin: 427.4,
+      ageMax: 427.4,
+      ageUnit: "ma",
+    });
+    expect(old.total).toBe(1);
+    // A query just past either edge misses: proves the value isn't off by a
+    // neighbouring array entry.
+    const miss = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      ageMin: 427.5,
+      ageMax: 427.5,
+      ageUnit: "ma",
+    });
+    expect(miss.total).toBe(0);
+  });
+
   pgTest("should combine facets and the count", async ({ db }) => {
     // Arrange
     await insertSample(db, {
