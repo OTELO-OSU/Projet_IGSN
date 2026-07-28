@@ -53,10 +53,11 @@ type SampleTable = {
   numeric_age_max: number | null;
   numeric_age_unit: string | null;
   numeric_age_years_unit: string | null;
-  // Generated STORED: the numeric bounds in canonical annum (never inserted,
-  // like `geom`). See the add-numeric-age-annum-columns migration.
-  numeric_age_min_a: Generated<number | null>;
-  numeric_age_max_a: Generated<number | null>;
+  // Generated STORED, never inserted (like `geom`): the comparable age interval
+  // in annum, from the numeric age or the geological rank. See the
+  // age-annum-columns migration.
+  annum_min: Generated<number | null>;
+  annum_max: Generated<number | null>;
   // Geological bounds are stored as their rank (1-based integer), not the ics
   // code, so a range filter compares them directly. api maps code <-> rank at
   // the boundary. See the geological-age-as-rank migration.

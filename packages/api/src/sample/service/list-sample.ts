@@ -67,23 +67,16 @@ function withinBbox(
   )`;
 }
 
-// The numeric age range overlap (query bounds in `ageUnit`, defaulting to Ma).
-// Both sides compare in canonical annum: the query bounds via numericAgeToAnnum,
-// the stored bounds via the generated numeric_age_*_a columns. GREATEST/LEAST
-// pick the sample's oldest/youngest and ignore a null bound (a single-bound
-// draft); a row with no age (both columns null) never matches.
-function numericAgeFilters(params: ListSamplesParams): Expression<SqlBool>[] {
+// The bounds cross because this is an overlap, not a containment: "at least X
+// old" bites on the sample's oldest edge, "at most Y old" on its youngest.
+function ageFilters(params: ListSamplesParams): Expression<SqlBool>[] {
   const unit = params.ageUnit ?? "ma";
   return [
     ...(params.ageMin != null
-      ? [
-          sql<SqlBool>`GREATEST(numeric_age_min_a, numeric_age_max_a) >= ${numericAgeToAnnum(params.ageMin, unit)}`,
-        ]
+      ? [sql<SqlBool>`annum_max >= ${numericAgeToAnnum(params.ageMin, unit)}`]
       : []),
     ...(params.ageMax != null
-      ? [
-          sql<SqlBool>`LEAST(numeric_age_min_a, numeric_age_max_a) <= ${numericAgeToAnnum(params.ageMax, unit)}`,
-        ]
+      ? [sql<SqlBool>`annum_min <= ${numericAgeToAnnum(params.ageMax, unit)}`]
       : []),
   ];
 }
@@ -111,7 +104,7 @@ function facetFilter(
     case "text":
       return ilikeUnaccent(column, value);
     // The age range is a numericRange facet for the sidebar UI, but its filter
-    // lives in numericAgeFilters (annum columns), not the generic column map.
+    // lives in ageFilters, not the generic column map.
     case "numericRange":
       return undefined;
   }
@@ -131,7 +124,7 @@ function buildSampleFilters(params: ListSamplesParams): Expression<SqlBool>[] {
       const filter = facetFilter(facet, value);
       return filter ? [filter] : [];
     }),
-    ...numericAgeFilters(params),
+    ...ageFilters(params),
   ];
 }
 

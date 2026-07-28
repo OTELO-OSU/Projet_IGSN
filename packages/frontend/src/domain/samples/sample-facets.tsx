@@ -110,7 +110,6 @@ export function SampleFacets({
         return (
           <RangeFacet
             key={`${facet.key}-${resetNonce}`}
-            label={label}
             unitItems={toComboboxItems(facet.units, numericUnitLabel)}
             min={values[`${facet.key}Min`] as number | undefined}
             max={values[`${facet.key}Max`] as number | undefined}
@@ -227,7 +226,6 @@ function TextFacet({
 }
 
 function RangeFacet({
-  label,
   unitItems,
   min,
   max,
@@ -236,7 +234,6 @@ function RangeFacet({
   onChangeMax,
   onChangeUnit,
 }: {
-  label: string;
   unitItems: { value: string; label: string }[];
   min: number | undefined;
   max: number | undefined;
@@ -253,27 +250,26 @@ function RangeFacet({
     raw.trim() === "" ? undefined : Number(raw);
 
   return (
-    <fieldset className="space-y-2">
-      <legend className="text-sm font-medium">{label}</legend>
-      <div className="flex gap-2">
-        <div className="flex-1 space-y-1">
-          <Label htmlFor={minId}>{m.facet_age_min()}</Label>
-          <Input
-            id={minId}
-            type="number"
-            defaultValue={min ?? ""}
-            onBlur={(event) => onChangeMin(toBound(event.target.value))}
-          />
-        </div>
-        <div className="flex-1 space-y-1">
-          <Label htmlFor={maxId}>{m.facet_age_max()}</Label>
-          <Input
-            id={maxId}
-            type="number"
-            defaultValue={max ?? ""}
-            onBlur={(event) => onChangeMax(toBound(event.target.value))}
-          />
-        </div>
+    // No fieldset/legend: the section heading already names this group, so a
+    // legend would just repeat "Age" over the bounds it labels.
+    <div className="flex flex-col gap-2">
+      <div className="space-y-1">
+        <Label htmlFor={minId}>{m.facet_age_min()}</Label>
+        <Input
+          id={minId}
+          type="number"
+          defaultValue={min ?? ""}
+          onBlur={(event) => onChangeMin(toBound(event.target.value))}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label htmlFor={maxId}>{m.facet_age_max()}</Label>
+        <Input
+          id={maxId}
+          type="number"
+          defaultValue={max ?? ""}
+          onBlur={(event) => onChangeMax(toBound(event.target.value))}
+        />
       </div>
       <div className="space-y-1">
         <Label htmlFor={unitId}>{m.facet_age_unit()}</Label>
@@ -290,6 +286,6 @@ function RangeFacet({
           emptyText={m.facet_empty()}
         />
       </div>
-    </fieldset>
+    </div>
   );
 }

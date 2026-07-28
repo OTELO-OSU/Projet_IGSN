@@ -1,3 +1,4 @@
+import type { GeologicalAge } from "@projet-igsn/domain/sample/age/geological-age";
 import type { NumericUnit } from "@projet-igsn/domain/sample/age/numeric-unit";
 
 import { describe, expect } from "vitest";
@@ -24,6 +25,14 @@ const numericAge = (min: number, max: number, unit: NumericUnit = "ma") => ({
   numericAgeMin: min,
   numericAgeMax: max,
   numericAgeUnit: unit,
+});
+
+// A geological (ICS rank) age range, no numeric bounds. Ranks 1..49; rank 4 is
+// Miocene [5.333, 23.03] Ma, rank 8 Cretaceous Upper [66, 100.5] Ma.
+const geologicalAge = (min: GeologicalAge, max: GeologicalAge) => ({
+  ...emptyAge,
+  geologicalAgeMin: min,
+  geologicalAgeMax: max,
 });
 
 describe("listSamples", () => {
@@ -393,6 +402,364 @@ describe("listSamples", () => {
       expect(data).toEqual([]);
     },
   );
+
+  pgTest(
+    "should match a geological-only sample by overlapping range",
+    async ({ db }) => {
+      // Arrange: a sample with only a Miocene (rank 4 = [5.333, 23.03] Ma) age.
+      await insertSample(db, {
+        name: "Miocene",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(4, 4),
+      });
+      // Act: [0, 100] Ma overlaps the Miocene interval.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0,
+        ageMax: 100,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Miocene"]);
+    },
+  );
+
+  pgTest(
+    "should exclude a geological-only sample outside the range",
+    async ({ db }) => {
+      // Arrange: same Miocene sample.
+      await insertSample(db, {
+        name: "Miocene",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(4, 4),
+      });
+      // Act: [200, 300] Ma is older than the whole Miocene interval.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 200,
+        ageMax: 300,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(0);
+      expect(data).toEqual([]);
+    },
+  );
+
+  pgTest(
+    "should let numeric age win over an in-range geological age",
+    async ({ db }) => {
+      // Arrange: numeric 100-200 Ma (outside the query) but a Miocene geological
+      // age (5.333-23.03 Ma, inside the query). Numeric precedence excludes it.
+      await insertSample(db, {
+        name: "Numeric wins",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 100,
+          numericAgeMax: 200,
+          numericAgeUnit: "ma",
+          geologicalAgeMin: 4,
+          geologicalAgeMax: 4,
+        },
+      });
+      // Act
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0,
+        ageMax: 50,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(0);
+      expect(data).toEqual([]);
+    },
+  );
+
+  pgTest(
+    "should match on numeric age and ignore an out-of-range geological age",
+    async ({ db }) => {
+      // Arrange: numeric 5-15 Ma (inside the query) but a Hadean geological age
+      // (rank 49, 4031-4567 Ma, far outside). Numeric present, so it matches.
+      await insertSample(db, {
+        name: "Numeric in range",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: {
+          ...emptyAge,
+          numericAgeMin: 5,
+          numericAgeMax: 15,
+          numericAgeUnit: "ma",
+          geologicalAgeMin: 49,
+          geologicalAgeMax: 49,
+        },
+      });
+      // Act
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0,
+        ageMax: 50,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Numeric in range"]);
+    },
+  );
+
+  pgTest(
+    "should match a geological range regardless of rank column order",
+    async ({ db }) => {
+      // Arrange: min/max hold the ranks reversed (older rank in min). Young/old
+      // is derived by rank order, so the interval is [rank 4 young, rank 8 old]
+      // = [5.333, 100.5] Ma either way.
+      await insertSample(db, {
+        name: "Reversed",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(8, 4),
+      });
+      // Act: a range inside the interval overlaps it.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 30,
+        ageMax: 40,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Reversed"]);
+    },
+  );
+
+  pgTest(
+    "should apply an open upper bound to a geological-only sample",
+    async ({ db }) => {
+      // Arrange: a young Miocene sample [5.333, 23.03] and an old Cretaceous
+      // Upper sample [66, 100.5].
+      await insertSample(db, {
+        name: "Miocene",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(4, 4),
+      });
+      await insertSample(db, {
+        name: "Cretaceous",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(8, 8),
+      });
+      // Act: ageMin only keeps samples reaching back at least 70 Ma.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 70,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Cretaceous"]);
+    },
+  );
+
+  pgTest(
+    "should apply an open lower bound to a geological-only sample",
+    async ({ db }) => {
+      // Arrange: same two samples.
+      await insertSample(db, {
+        name: "Miocene",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(4, 4),
+      });
+      await insertSample(db, {
+        name: "Cretaceous",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(8, 8),
+      });
+      // Act: ageMax only keeps samples reaching up to at most 50 Ma.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMax: 50,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Miocene"]);
+    },
+  );
+
+  pgTest(
+    "should match both stages adjacent to a query bound on their shared edge",
+    async ({ db }) => {
+      // Arrange: 23.03 Ma is the shared boundary between rank 4 (its old edge)
+      // and rank 5 (its young edge). Inclusive overlap must match both.
+      await insertSample(db, {
+        name: "Below edge",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(4, 4),
+      });
+      await insertSample(db, {
+        name: "Above edge",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(5, 5),
+      });
+      // Act: a point query exactly on the shared edge.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 23.03,
+        ageMax: 23.03,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(2);
+      expect(data.map((s) => s.name).sort()).toEqual([
+        "Above edge",
+        "Below edge",
+      ]);
+    },
+  );
+
+  pgTest(
+    "should match a single-bound geological range by its one rank",
+    async ({ db }) => {
+      // Arrange: only geologicalAgeMin set (rank 8 = Cretaceous Upper). LEAST/
+      // GREATEST skip the null max, so the interval is [66, 100.5] Ma from that
+      // one rank.
+      await insertSample(db, {
+        name: "Half-entered",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: { ...emptyAge, geologicalAgeMin: 8 },
+      });
+      // Act: [0, 100] Ma overlaps the derived interval.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0,
+        ageMax: 100,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Half-entered"]);
+    },
+  );
+
+  pgTest(
+    "should match the youngest rank at the present-day edge",
+    async ({ db }) => {
+      // Arrange: rank 1 (Holocene) spans [0, 0.0117] Ma, the first entry of the
+      // ICS boundary table.
+      await insertSample(db, {
+        name: "Holocene",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        age: geologicalAge(1, 1),
+      });
+      // Act: a point query exactly on its young edge, the present.
+      const { data, total } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0,
+        ageMax: 0,
+        ageUnit: "ma",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Holocene"]);
+    },
+  );
+
+  pgTest("should match the oldest rank at its old edge", async ({ db }) => {
+    // Arrange: rank 49 (Hadean) spans [4031, 4567] Ma, the last entry of the ICS
+    // boundary table.
+    await insertSample(db, {
+      name: "Hadean",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      age: geologicalAge(49, 49),
+    });
+    // Act: a point query exactly on its old edge, the age of the Earth.
+    const { data, total } = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      ageMin: 4567,
+      ageMax: 4567,
+      ageUnit: "ma",
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.name)).toEqual(["Hadean"]);
+  });
+
+  pgTest("should match a mid-range rank at its point edges", async ({ db }) => {
+    // Arrange: rank 25 spans [423.0, 427.4] Ma, an entry in the middle of the
+    // ICS boundary table untouched by any other test in this file, spot-
+    // checking the array away from its ends.
+    await insertSample(db, {
+      name: "Mid-range",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      age: geologicalAge(25, 25),
+    });
+    // Act + Assert: a point query exactly on each edge matches.
+    const young = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      ageMin: 423.0,
+      ageMax: 423.0,
+      ageUnit: "ma",
+    });
+    expect(young.total).toBe(1);
+    const old = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      ageMin: 427.4,
+      ageMax: 427.4,
+      ageUnit: "ma",
+    });
+    expect(old.total).toBe(1);
+    // A query just past either edge misses: proves the value isn't off by a
+    // neighbouring array entry.
+    const miss = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      ageMin: 427.5,
+      ageMax: 427.5,
+      ageUnit: "ma",
+    });
+    expect(miss.total).toBe(0);
+  });
 
   pgTest("should combine facets and the count", async ({ db }) => {
     // Arrange
