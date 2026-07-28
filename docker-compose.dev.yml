@@ -195,9 +195,12 @@ services:
       postgres:
         condition: service_healthy
     # Same bind-mount rationale as frontend (ADR 0013). Read-only: the api
-    # generates nothing into src, so it keeps running as root safely.
+    # generates nothing into src, so it keeps running as root safely. scripts
+    # is mounted too so `make db-seed*` always runs the checked-out seed, even
+    # when the stack was started without watch or from a stale image.
     volumes:
       - ./packages/api/src:/app/packages/api/src:ro
+      - ./packages/api/scripts:/app/packages/api/scripts:ro
       - ./packages/domain/src:/app/packages/domain/src:ro
       - attachments:/data/attachments
     develop:
@@ -208,6 +211,7 @@ services:
           ignore:
             - node_modules/
             - src/
+            - scripts/
         - action: sync
           path: ./packages/domain
           target: /app/packages/domain
