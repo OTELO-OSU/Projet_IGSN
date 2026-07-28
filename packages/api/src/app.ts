@@ -33,9 +33,6 @@ export function createApp(
   );
   const userRepository = createUserRepository(database);
 
-  // Every route under /admin requires a valid user token; the guard runs once
-  // here rather than per admin route. currentUser then resolves the verified
-  // claims to the local user the routes authorize against.
   const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
     .use("*", currentUser(userRepository))

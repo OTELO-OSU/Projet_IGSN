@@ -46,8 +46,6 @@ export function sampleEditPage(page: Page) {
       ).toBeHidden();
     },
 
-    // A draft saves freely; a published sample saves through the stricter
-    // "Publish updates" action. Both toast the same success.
     saveDraft: async () => {
       await page.getByRole("button", { name: "Save as draft" }).click();
       await expect(page.getByText("Sample saved")).toBeVisible();

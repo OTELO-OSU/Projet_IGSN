@@ -23,7 +23,6 @@ type SampleTable = {
   // Collection-method taxonomy path (e.g. "coring.gravity_corer"); null until
   // recorded. Stored as ltree, read/written as text.
   collection_method: string | null;
-  // Free-text detail on the collection method; null when not provided.
   collection_method_description: string | null;
   // Precise designation; null on a draft, required to publish (domain rule).
   specific_name: string | null;
@@ -140,7 +139,6 @@ type SampleTable = {
   economic_interest: string | null;
   // Chemical-element codes (text[]); null when unset, never empty.
   economic_interest_elements: string[] | null;
-  // Free-text economic detail; null when not provided.
   economic_resource_type_precision: string | null;
   economic_deposit_name: string | null;
   economic_deposit_description: string | null;

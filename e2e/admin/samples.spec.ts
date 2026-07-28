@@ -38,13 +38,10 @@ test.describe("samples", () => {
     await create.selectNature("Thin section");
     await create.submit();
 
-    // Creating opens the new sample for further editing.
     const edit = sampleEditPage(page);
     await edit.expectVisible();
     await edit.expectName(name);
 
-    // Back on the list, the new sample tops the table (ordered by last
-    // modified).
     await edit.goToList();
     await list.expectVisible();
     await list.expectSampleRow(name);

@@ -104,7 +104,6 @@ function EditSamplePage() {
             : {
                 kind: "publish",
                 label: m.action_save_publish(),
-                // Draft: save the edits, publish, then return to the list.
                 onPublish: (value) =>
                   updateSample.mutate(value, {
                     onSuccess: () =>

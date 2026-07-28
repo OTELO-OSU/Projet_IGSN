@@ -14,7 +14,6 @@ export function useSamples(params: {
 }) {
   const apiFetch = useApiClient();
   return useQuery({
-    // params carries search, so the query refetches when the search changes.
     queryKey: ["samples", params],
     queryFn: async () => {
       const url = new URL("admin/samples", API_URL);

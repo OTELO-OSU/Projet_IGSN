@@ -128,7 +128,6 @@ export async function seed(
   const parsed = samples.map(parseSeedSample);
   const created = await db
     .insertInto("sample")
-    // collectionMethod is camelCase in the domain; the column is snake_case.
     .values(
       parsed.map(
         ({

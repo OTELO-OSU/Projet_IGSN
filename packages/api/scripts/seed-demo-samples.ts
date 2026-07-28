@@ -46,7 +46,6 @@ const elev = (
   datum: Elevation["datum"],
 ): Elevation => ({ min, max, unit, datum });
 
-// Collection period; a single day is the degenerate range start === end.
 const on = (start: string, end: string = start) => ({
   collectionDate: { start, end },
 });
@@ -529,7 +528,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2025-02-18"),
     availability: "exists",
   },
-  // Sedimentary rock.
   {
     name: "Fontainebleau Sandstone",
     owner: "sophie",
@@ -636,7 +634,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2025-02-09"),
     availability: "exists",
   },
-  // Hydrothermal rock (seafloor vents).
   {
     name: "TAG Sulfide Chimney",
     owner: "camille",
@@ -683,7 +680,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2025-04-27"),
     availability: "exists",
   },
-  // Sediment (root).
   {
     name: "Pacific Abyssal Clay",
     owner: "sophie",
