@@ -8,18 +8,19 @@ import { getPublishedSampleByIgsn } from "./service/get-published-sample-by-igsn
 import { getSample } from "./service/get-sample.ts";
 import { insertSampleOwner } from "./service/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
-import { listSamples } from "./service/list-sample.ts";
+import {
+  listPublishedSamples,
+  listSamplesByOwner,
+} from "./service/list-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import { updateSample } from "./service/update-sample.ts";
 
 export function createSampleRepository(db: Kysely<DB>): SampleRepository {
   return {
     list: (params, ownerId) =>
-      withTransaction(db, (trx) => listSamples(trx, params, { ownerId })),
+      withTransaction(db, (trx) => listSamplesByOwner(trx, params, ownerId)),
     listPublished: (params) =>
-      withTransaction(db, (trx) =>
-        listSamples(trx, params, { publishedOnly: true }),
-      ),
+      withTransaction(db, (trx) => listPublishedSamples(trx, params)),
     get: (id, ownerId) =>
       withTransaction(db, (trx) => getSample(trx, id, ownerId)),
     getPublishedByIgsn: (igsn) =>

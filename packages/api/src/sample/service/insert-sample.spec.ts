@@ -1,8 +1,8 @@
 import { describe, expect } from "vitest";
 
+import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { insertSample } from "./insert-sample.ts";
-import { listSamples } from "./list-sample.ts";
 
 describe("insertSample", () => {
   pgTest("should round-trip a full ltree material path", async ({ db }) => {
@@ -83,7 +83,10 @@ describe("insertSample", () => {
     });
     expect(created.createdAt).toBeInstanceOf(Date);
 
-    const { data, total } = await listSamples(db, { page: 1, perPage: 10 });
+    const { data, total } = await listAsOwner(db, {
+      page: 1,
+      perPage: 10,
+    });
     expect(total).toBe(1);
     expect(data[0]).toMatchObject({ name: "Basalte du Massif Central" });
   });
@@ -105,7 +108,7 @@ describe("insertSample", () => {
       },
     });
     // Assert: read back through the list path.
-    const { data } = await listSamples(db, { page: 1, perPage: 10 });
+    const { data } = await listAsOwner(db, { page: 1, perPage: 10 });
     expect(data[0]?.age).toEqual({
       numericAgeMin: 12000,
       numericAgeMax: 12000,

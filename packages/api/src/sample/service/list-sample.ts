@@ -16,13 +16,6 @@ import {
 } from "./search-filter.ts";
 import { withSampleChildren } from "./with-sample-children.ts";
 
-// The public list shows published samples only; the admin list shows the
-// caller's own. Neither comes from the query string.
-type ListSamplesOptions = {
-  publishedOnly?: boolean;
-  ownerId?: string;
-};
-
 // Rows whose generated geom intersects the drawn box, bound as parameters.
 // ponytail: ST_MakeEnvelope does not wrap the antimeridian; a box crossing
 // longitude 180 (west > east) is out of v1 scope and rejected by the domain
@@ -36,9 +29,9 @@ function withinBbox(
   )`;
 }
 
-// Rows the user owns. An admin list is scoped to its caller, so the predicate
-// joins the filter array and applies to the count query too: a total that
-// counted other people's samples would lie about the dataset.
+// Rows the user owns. A scope predicate joins the filter array, so it applies to
+// the count query too: a total that counted other people's samples would lie
+// about the dataset.
 function ownedBy(ownerId: string): Expression<SqlBool> {
   return sql<SqlBool>`exists (
     select 1 from user_sample
@@ -47,10 +40,18 @@ function ownedBy(ownerId: string): Expression<SqlBool> {
   )`;
 }
 
-export async function listSamples(
+// Rows an anonymous reader may see.
+function isPublished(): Expression<SqlBool> {
+  return sql<SqlBool>`published = true`;
+}
+
+// Who the list is for is a separate argument from `params` (the validated query),
+// and every entry point below names it: the caller's identity and the visibility
+// rule come from the server, never from the query string.
+async function listSamplesWhere(
   db: Transactional<DB>,
   params: ListSamplesParams,
-  { publishedOnly = false, ownerId }: ListSamplesOptions = {},
+  scope: Expression<SqlBool>[],
 ): Promise<ListSamplesResult> {
   const { page, perPage, search, sort, order = "asc" } = params;
 
@@ -63,13 +64,12 @@ export async function listSamples(
       ...(search === undefined ? [] : searchFilters(search)),
       ...(params.bbox === undefined ? [] : [withinBbox(params.bbox)]),
       ...facetFilters(params),
-      ...(ownerId === undefined ? [] : [ownedBy(ownerId)]),
+      ...scope,
     ];
     // Shared by the page and the count, so a filter can never reach one only.
     const matching = () =>
       trx
         .selectFrom("sample")
-        .$if(publishedOnly, (qb) => qb.where("published", "=", true))
         .$if(filters.length > 0, (qb) => qb.where((eb) => eb.and(filters)));
 
     const relevance = search === undefined ? undefined : relevanceScore(search);
@@ -93,4 +93,25 @@ export async function listSamples(
       total: Number(count),
     };
   });
+}
+
+// The admin list: only what this researcher declared. `ownerId` is a required
+// positional argument, so a direct call that omits it does not compile. The
+// repository wiring can still satisfy `SampleRepository.list` while ignoring
+// its `ownerId` (structural typing); the admin-routes authorization spec is
+// what catches that.
+export function listSamplesByOwner(
+  db: Transactional<DB>,
+  params: ListSamplesParams,
+  ownerId: string,
+): Promise<ListSamplesResult> {
+  return listSamplesWhere(db, params, [ownedBy(ownerId)]);
+}
+
+// The public list, served to anonymous readers: published samples only.
+export function listPublishedSamples(
+  db: Transactional<DB>,
+  params: ListSamplesParams,
+): Promise<ListSamplesResult> {
+  return listSamplesWhere(db, params, [isPublished()]);
 }

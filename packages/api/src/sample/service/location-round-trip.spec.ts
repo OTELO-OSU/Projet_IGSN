@@ -1,10 +1,10 @@
 import { sql } from "kysely";
 import { describe, expect } from "vitest";
 
+import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { readSample } from "../../tests/read-sample.ts";
 import { insertSample } from "./insert-sample.ts";
-import { listSamples } from "./list-sample.ts";
 import { updateSample } from "./update-sample.ts";
 
 const base = {
@@ -162,7 +162,7 @@ describe("sample location persistence", () => {
       ...base,
       location: { position: { type: "point", longitude: 3, latitude: 50 } },
     });
-    const { data } = await listSamples(db, { page: 1, perPage: 10 });
+    const { data } = await listAsOwner(db, { page: 1, perPage: 10 });
     expect(data.find((s) => s.id === created.id)?.location?.position).toEqual({
       type: "point",
       longitude: 3,

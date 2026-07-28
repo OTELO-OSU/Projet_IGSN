@@ -6,11 +6,9 @@ import { describe, expect, vi } from "vitest";
 import type { DB } from "../../db.ts";
 import type { Transactional } from "../../transaction.ts";
 
-import { insertUser } from "../../tests/insert-user.ts";
+import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
-import { insertSampleOwner } from "./insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
-import { listSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
 // All-null age, so a fixture spreads it and overrides only the bounds it needs.
@@ -47,58 +45,11 @@ const backdate = (db: Transactional<DB>, id: string) =>
     .where("id", "=", id)
     .execute();
 
+// The query logic every scope shares: sorting, filtering, facets, pagination.
+// Exercised through listAsOwner (no unscoped export exists); the scope
+// predicates themselves have their own specs (list-samples-by-owner.spec.ts,
+// and routes.spec.ts for the published one).
 describe("listSamples", () => {
-  describe("owner", () => {
-    pgTest("should list only the owner's samples", async ({ db }) => {
-      // Arrange
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
-      const other = await insertUser(db, "other@univ-lorraine.fr");
-      const owned = await insertSample(db, {
-        name: "Grès de Fontainebleau",
-        nature: "rock_powder",
-        type: null,
-        collectionMethod: null,
-      });
-      const foreign = await insertSample(db, {
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: null,
-        collectionMethod: null,
-      });
-      await insertSampleOwner(db, owned.id, owner.id);
-      await insertSampleOwner(db, foreign.id, other.id);
-      // Act
-      const { data, total } = await listSamples(
-        db,
-        { page: 1, perPage: 10 },
-        { ownerId: owner.id },
-      );
-      // Assert
-      expect(data).toMatchObject([{ name: "Grès de Fontainebleau" }]);
-      // The total counts the filtered set, not every sample in the table.
-      expect(total).toBe(1);
-    });
-
-    pgTest("should list nothing for an owner of nothing", async ({ db }) => {
-      // Arrange
-      const user = await insertUser(db, "newcomer@univ-lorraine.fr");
-      await insertSample(db, {
-        name: "Grès de Fontainebleau",
-        nature: "rock_powder",
-        type: null,
-        collectionMethod: null,
-      });
-      // Act
-      const result = await listSamples(
-        db,
-        { page: 1, perPage: 10 },
-        { ownerId: user.id },
-      );
-      // Assert
-      expect(result).toEqual({ data: [], total: 0 });
-    });
-  });
-
   pgTest("should list samples most-recently-modified first", async ({ db }) => {
     // Arrange
     const older = await insertSample(db, {
@@ -126,7 +77,7 @@ describe("listSamples", () => {
       .where("id", "=", newer.id)
       .execute();
     // Act
-    const { data } = await listSamples(db, { page: 1, perPage: 10 });
+    const { data } = await listAsOwner(db, { page: 1, perPage: 10 });
     // Assert
     expect(data).toMatchObject([
       { name: "Basalte du Massif Central", nature: "thin_section" },
@@ -159,8 +110,8 @@ describe("listSamples", () => {
       .where("id", "=", draft.id)
       .execute();
 
-    // Act / Assert
-    const asc = await listSamples(db, {
+    // Act / Assert: asc puts drafts first, desc puts published first.
+    const asc = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       sort: "status",
@@ -171,7 +122,7 @@ describe("listSamples", () => {
       "Published sample",
     ]);
 
-    const desc = await listSamples(db, {
+    const desc = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       sort: "status",
@@ -199,8 +150,8 @@ describe("listSamples", () => {
         type: "dredge",
         collectionMethod: null,
       });
-      // Act
-      const { data, total } = await listSamples(db, {
+      // Act: picking the "core" ancestor matches its descendant section.
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         type: "core",
@@ -226,7 +177,7 @@ describe("listSamples", () => {
       collectionMethod: null,
     });
     // Act
-    const { data, total } = await listSamples(db, {
+    const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       nature: "thin_section",
@@ -261,7 +212,7 @@ describe("listSamples", () => {
         },
       });
       // Act
-      const { data, total } = await listSamples(db, {
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         collectorName: "curie",
@@ -288,8 +239,8 @@ describe("listSamples", () => {
       collectionMethod: null,
       age: numericAge(100, 200),
     });
-    // Act
-    const { data, total } = await listSamples(db, {
+    // Act: [15, 50] overlaps [10, 20] only.
+    const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       ageMin: 15,
@@ -320,7 +271,7 @@ describe("listSamples", () => {
         age: numericAge(5, 15, "ka"),
       });
       // Act: query [1000, 6000] Ma == [1, 6] Ga overlaps "Ancient" only.
-      const { data, total } = await listSamples(db, {
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 1000,
@@ -350,7 +301,7 @@ describe("listSamples", () => {
       age: numericAge(5, 15, "ka"),
     });
     // Act: no unit, so [4, 6] is read as Ma and overlaps only the Ma sample.
-    const { data, total } = await listSamples(db, {
+    const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       ageMin: 4,
@@ -389,8 +340,9 @@ describe("listSamples", () => {
           },
         });
       }
-      // Act
-      const nearPresent = await listSamples(db, {
+      // Act: a small before-present range around 500 must match only the two
+      // whose reference already is before-present, not the CE/BCE ones.
+      const nearPresent = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 400,
@@ -404,7 +356,7 @@ describe("listSamples", () => {
       ]);
 
       // The BCE offset counts from present with no year zero (500 BCE = 2449 BP).
-      const bce = await listSamples(db, {
+      const bce = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 2440,
@@ -429,7 +381,7 @@ describe("listSamples", () => {
         age: { ...emptyAge, numericAgeMin: 100, numericAgeUnit: "ka" },
       });
       // Act
-      const { data } = await listSamples(db, {
+      const { data } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 0.05,
@@ -452,7 +404,7 @@ describe("listSamples", () => {
         collectionMethod: null,
       });
       // Act
-      const { data, total } = await listSamples(db, {
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 0,
@@ -476,8 +428,8 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(4, 4),
       });
-      // Act
-      const { data, total } = await listSamples(db, {
+      // Act: [0, 100] Ma overlaps the Miocene interval.
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 0,
@@ -502,7 +454,7 @@ describe("listSamples", () => {
         age: geologicalAge(4, 4),
       });
       // Act: [200, 300] Ma is older than the whole Miocene interval.
-      const { data, total } = await listSamples(db, {
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 200,
@@ -535,7 +487,7 @@ describe("listSamples", () => {
         },
       });
       // Act
-      const { data, total } = await listSamples(db, {
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 0,
@@ -568,7 +520,7 @@ describe("listSamples", () => {
         },
       });
       // Act
-      const { data, total } = await listSamples(db, {
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 0,
@@ -594,8 +546,8 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(8, 4),
       });
-      // Act
-      const { data, total } = await listSamples(db, {
+      // Act: a range inside the interval overlaps it.
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 30,
@@ -627,8 +579,8 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(8, 8),
       });
-      // Act
-      const { data, total } = await listSamples(db, {
+      // Act: ageMin only keeps samples reaching back at least 70 Ma.
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 70,
@@ -658,8 +610,8 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(8, 8),
       });
-      // Act
-      const { data, total } = await listSamples(db, {
+      // Act: ageMax only keeps samples reaching up to at most 50 Ma.
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMax: 50,
@@ -690,8 +642,8 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(5, 5),
       });
-      // Act
-      const { data, total } = await listSamples(db, {
+      // Act: a point query exactly on the shared edge.
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 23.03,
@@ -720,8 +672,8 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: { ...emptyAge, geologicalAgeMin: 8 },
       });
-      // Act
-      const { data, total } = await listSamples(db, {
+      // Act: [0, 100] Ma overlaps the derived interval.
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 0,
@@ -746,8 +698,8 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(1, 1),
       });
-      // Act
-      const { data, total } = await listSamples(db, {
+      // Act: a point query exactly on its young edge, the present.
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         ageMin: 0,
@@ -770,8 +722,8 @@ describe("listSamples", () => {
       collectionMethod: null,
       age: geologicalAge(49, 49),
     });
-    // Act
-    const { data, total } = await listSamples(db, {
+    // Act: a point query exactly on its old edge, the age of the Earth.
+    const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       ageMin: 4567,
@@ -794,8 +746,8 @@ describe("listSamples", () => {
       collectionMethod: null,
       age: geologicalAge(25, 25),
     });
-    // Act + Assert
-    const young = await listSamples(db, {
+    // Act + Assert: a point query exactly on each edge matches.
+    const young = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       ageMin: 423.0,
@@ -803,7 +755,7 @@ describe("listSamples", () => {
       ageUnit: "ma",
     });
     expect(young.total).toBe(1);
-    const old = await listSamples(db, {
+    const old = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       ageMin: 427.4,
@@ -813,7 +765,7 @@ describe("listSamples", () => {
     expect(old.total).toBe(1);
     // A query just past either edge misses: proves the value isn't off by a
     // neighbouring array entry.
-    const miss = await listSamples(db, {
+    const miss = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       ageMin: 427.5,
@@ -840,7 +792,7 @@ describe("listSamples", () => {
       specificName: "Basalt 42",
     });
     // Act
-    const { data, total } = await listSamples(db, {
+    const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       type: "core",
@@ -868,7 +820,7 @@ describe("listSamples", () => {
       location: { position: { type: "point", longitude: 100, latitude: 45 } },
     });
     // Act
-    const { data, total } = await listSamples(db, {
+    const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       bbox: { west: -10, south: 40, east: 10, north: 50 },
@@ -896,7 +848,7 @@ describe("listSamples", () => {
       },
     });
     // Act
-    const { data } = await listSamples(db, {
+    const { data } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       bbox: { west: -10, south: 40, east: 10, north: 50 },
@@ -916,7 +868,7 @@ describe("listSamples", () => {
         collectionMethod: null,
       });
       // Act
-      const { data, total } = await listSamples(db, {
+      const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         bbox: { west: -10, south: 40, east: 10, north: 50 },
@@ -944,7 +896,7 @@ describe("listSamples", () => {
       location: { position: { type: "point", longitude: 6, latitude: 46 } },
     });
     // Act
-    const { data, total } = await listSamples(db, {
+    const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       search: "gres",
@@ -972,7 +924,7 @@ describe("listSamples", () => {
     });
     await backdate(db, exact.id);
     // Act
-    const { data } = await listSamples(db, {
+    const { data } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
       search: "basalt",
@@ -1003,7 +955,7 @@ describe("listSamples", () => {
       });
       await backdate(db, older.id);
       // Act
-      const { data } = await listSamples(db, {
+      const { data } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         search: "basalt",
@@ -1028,8 +980,8 @@ describe("listSamples", () => {
     }
     // Act
     const search = "basalt";
-    const page1 = await listSamples(db, { page: 1, perPage: 2, search });
-    const page2 = await listSamples(db, { page: 2, perPage: 2, search });
+    const page1 = await listAsOwner(db, { page: 1, perPage: 2, search });
+    const page2 = await listAsOwner(db, { page: 2, perPage: 2, search });
     // Assert
     expect(page1.total).toBe(3);
     const names = [...page1.data, ...page2.data].map((sample) => sample.name);
@@ -1054,7 +1006,7 @@ describe("listSamples", () => {
     pgTest("should tolerate the plural at the default", async ({ db }) => {
       await seedAchondrite(db);
 
-      const { data } = await listSamples(db, {
+      const { data } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         search: "achondrites",
@@ -1068,8 +1020,8 @@ describe("listSamples", () => {
       // The threshold is read at import, so an override needs a fresh module.
       process.env.SAMPLE_SEARCH_FUZZY_THRESHOLD = "0.9";
       vi.resetModules();
-      const { listSamples: listWithOverride } =
-        await import("./list-sample.ts");
+      const { listAsOwner: listWithOverride } =
+        await import("../../tests/list-as-owner.ts");
 
       const { data } = await listWithOverride(db, {
         page: 1,
@@ -1084,7 +1036,7 @@ describe("listSamples", () => {
       // Without the "*" this row matches fuzzily.
       await seedAchondrite(db);
 
-      const { data } = await listSamples(db, {
+      const { data } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
         search: "achondrites*",
@@ -1105,8 +1057,8 @@ describe("listSamples", () => {
       });
     }
     // Act
-    const page1 = await listSamples(db, { page: 1, perPage: 2 });
-    const page2 = await listSamples(db, { page: 2, perPage: 2 });
+    const page1 = await listAsOwner(db, { page: 1, perPage: 2 });
+    const page2 = await listAsOwner(db, { page: 2, perPage: 2 });
     // Assert
     expect(page1.total).toBe(3);
     expect(page1.data).toHaveLength(2);
