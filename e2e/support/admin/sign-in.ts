@@ -21,6 +21,9 @@ export const RESEARCHERS = {
     username: "camille.petit",
     email: "camille.petit@univ-lorraine.fr",
   },
+  // Owns nothing: the E2E seed assigns its samples to jean and pierre, so luc
+  // sees the registry as a researcher who has declared nothing.
+  luc: { username: "luc.moreau", email: "luc.moreau@univ-lorraine.fr" },
 } satisfies Record<string, Researcher>;
 
 // Shared entry point for the sample journeys: a researcher signs in through their

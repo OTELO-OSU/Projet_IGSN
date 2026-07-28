@@ -16,6 +16,13 @@ import {
 } from "./search-filter.ts";
 import { withSampleChildren } from "./with-sample-children.ts";
 
+// The public list shows published samples only; the admin list shows the
+// caller's own. Neither comes from the query string.
+type ListSamplesOptions = {
+  publishedOnly?: boolean;
+  ownerId?: string;
+};
+
 // Rows whose generated geom intersects the drawn box, bound as parameters.
 // ponytail: ST_MakeEnvelope does not wrap the antimeridian; a box crossing
 // longitude 180 (west > east) is out of v1 scope and rejected by the domain
@@ -29,10 +36,21 @@ function withinBbox(
   )`;
 }
 
+// Rows the user owns. An admin list is scoped to its caller, so the predicate
+// joins the filter array and applies to the count query too: a total that
+// counted other people's samples would lie about the dataset.
+function ownedBy(ownerId: string): Expression<SqlBool> {
+  return sql<SqlBool>`exists (
+    select 1 from user_sample
+     where user_sample.sample_id = sample.id
+       and user_sample.user_id = ${ownerId}
+  )`;
+}
+
 export async function listSamples(
   db: Transactional<DB>,
   params: ListSamplesParams,
-  publishedOnly = false,
+  { publishedOnly = false, ownerId }: ListSamplesOptions = {},
 ): Promise<ListSamplesResult> {
   const { page, perPage, search, sort, order = "asc" } = params;
 
@@ -45,6 +63,7 @@ export async function listSamples(
       ...(search === undefined ? [] : searchFilters(search)),
       ...(params.bbox === undefined ? [] : [withinBbox(params.bbox)]),
       ...facetFilters(params),
+      ...(ownerId === undefined ? [] : [ownedBy(ownerId)]),
     ];
     // Shared by the page and the count, so a filter can never reach one only.
     const matching = () =>

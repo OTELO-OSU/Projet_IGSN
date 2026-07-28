@@ -7,10 +7,20 @@ import type { DB } from "../../db.ts";
 import type { Transactional } from "../../transaction.ts";
 
 import { pgTest } from "../../tests/pg-test.ts";
+import { insertSampleOwner } from "./insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
 import { listSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
+function insertUser(db: Parameters<typeof listSamples>[0], email: string) {
+  return db
+    .insertInto("user")
+    .values({ id: crypto.randomUUID(), email, name: null, firstname: null })
+    .returning("id")
+    .executeTakeFirstOrThrow();
+}
+
+// All-null age, so a fixture spreads it and overrides only the bounds it needs.
 const emptyAge = {
   numericAgeMin: null,
   numericAgeMax: null,
@@ -45,6 +55,57 @@ const backdate = (db: Transactional<DB>, id: string) =>
     .execute();
 
 describe("listSamples", () => {
+  describe("owner", () => {
+    pgTest("should list only the owner's samples", async ({ db }) => {
+      // Arrange
+      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const other = await insertUser(db, "other@univ-lorraine.fr");
+      const owned = await insertSample(db, {
+        name: "Grès de Fontainebleau",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      const foreign = await insertSample(db, {
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: null,
+        collectionMethod: null,
+      });
+      await insertSampleOwner(db, owned.id, owner.id);
+      await insertSampleOwner(db, foreign.id, other.id);
+      // Act
+      const { data, total } = await listSamples(
+        db,
+        { page: 1, perPage: 10 },
+        { ownerId: owner.id },
+      );
+      // Assert
+      expect(data).toMatchObject([{ name: "Grès de Fontainebleau" }]);
+      // The total counts the filtered set, not every sample in the table.
+      expect(total).toBe(1);
+    });
+
+    pgTest("should list nothing for an owner of nothing", async ({ db }) => {
+      // Arrange
+      const user = await insertUser(db, "newcomer@univ-lorraine.fr");
+      await insertSample(db, {
+        name: "Grès de Fontainebleau",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      // Act
+      const result = await listSamples(
+        db,
+        { page: 1, perPage: 10 },
+        { ownerId: user.id },
+      );
+      // Assert
+      expect(result).toEqual({ data: [], total: 0 });
+    });
+  });
+
   pgTest("should list samples most-recently-modified first", async ({ db }) => {
     // Arrange
     const older = await insertSample(db, {

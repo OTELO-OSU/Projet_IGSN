@@ -46,6 +46,15 @@ can link to an existing institution account.
 | Sophie Bernard | `sophie.bernard`         | `0000-0002-1825-0097` |
 | Pierre Durand  | `pierre.durand`          | —                     |
 | Camille Petit  | `camille.petit`          | —                     |
+| Luc Moreau     | `luc.moreau`             | —                     |
+
+The dev seed (`make db-seed` / `make db-seed-demo`) makes all six of them owners
+of every seeded sample, so the admin list is populated whoever you sign in as.
+The api provisions a local user from the token on first sign-in and matches it by
+email, which is how it adopts the seeded owner and keeps its samples (ADR 0019).
+The E2E seed assigns them to Jean Martin and Pierre Durand only, the two whose
+specs browse them, so the other researchers start with an empty registry and
+ownership isolation is testable.
 
 - **SAML** users are defined in [`saml-idp/authsources.php`](../saml-idp/authsources.php).
   They release a French researcher profile (eduPersonPrincipalName, email, name), so

@@ -1,9 +1,17 @@
 import { expect, type Page } from "@playwright/test";
 
+import { adminUrl } from "../urls";
+
 export function sampleEditPage(page: Page) {
   return {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
+    // Deep link, the way a shared URL reaches a sample the reader may not own.
+    goto: (sampleId: string) => page.goto(`${adminUrl}/samples/${sampleId}`),
+    expectForbidden: () =>
+      expect(
+        page.getByText("You do not have access to this sample."),
+      ).toBeVisible(),
     expectName: (name: string) =>
       expect(page.getByLabel(/name/i)).toHaveValue(name),
     goToList: () => page.getByRole("link", { name: "IGSN Admin" }).click(),

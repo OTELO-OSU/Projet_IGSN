@@ -17,57 +17,140 @@ import { scientificContextColumns } from "../src/sample/service/scientific-conte
 import { toAgeColumns } from "../src/sample/service/to-age-columns.ts";
 import { locationColumns } from "../src/sample/service/to-location.ts";
 
-// Inserts the given samples (with their fixed ids) and returns the columns the
-// E2E fixture reads (see e2e/support/db.ts). Shared by the dev seed below and
-// the E2E reset-and-seed script. Inserts directly rather than via the
-// repository, whose `create` generates a fresh uuid and would discard these
-// static ids.
+export type SeedUser = {
+  id: string;
+  email: string;
+  name: string;
+  firstname: string;
+};
+
+// The mock SAML researchers (saml-idp/authsources.php), so seeded samples have
+// owners and show up in the admin list. Ids are static v7-shaped uuids like the
+// sample ids; the api adopts these rows by email when the real account signs in
+// (see src/user/repository.ts), which is what keeps the ownership.
+export const MOCK_RESEARCHERS = {
+  marie: {
+    id: "01980e2d-6f9b-7000-8000-000000000001",
+    email: "marie.dupont@univ-lorraine.fr",
+    name: "Dupont",
+    firstname: "Marie",
+  },
+  jean: {
+    id: "01980e2d-6f9b-7000-8000-000000000002",
+    email: "jean.martin@univ-lorraine.fr",
+    name: "Martin",
+    firstname: "Jean",
+  },
+  sophie: {
+    id: "01980e2d-6f9b-7000-8000-000000000003",
+    email: "sophie.bernard@univ-lorraine.fr",
+    name: "Bernard",
+    firstname: "Sophie",
+  },
+  pierre: {
+    id: "01980e2d-6f9b-7000-8000-000000000004",
+    email: "pierre.durand@univ-lorraine.fr",
+    name: "Durand",
+    firstname: "Pierre",
+  },
+  camille: {
+    id: "01980e2d-6f9b-7000-8000-000000000005",
+    email: "camille.petit@univ-lorraine.fr",
+    name: "Petit",
+    firstname: "Camille",
+  },
+  luc: {
+    id: "01980e2d-6f9b-7000-8000-000000000006",
+    email: "luc.moreau@univ-lorraine.fr",
+    name: "Moreau",
+    firstname: "Luc",
+  },
+} satisfies Record<string, SeedUser>;
+
+// Upserts the owners by email (their row may already exist from a real sign-in,
+// with another id) and returns the ids to assign samples to.
+async function seedOwners(
+  db: Kysely<DB>,
+  owners: SeedUser[],
+): Promise<string[]> {
+  await db
+    .insertInto("user")
+    .values(owners)
+    .onConflict((oc) => oc.column("email").doNothing())
+    .execute();
+  const rows = await db
+    .selectFrom("user")
+    .select("id")
+    .where(
+      "email",
+      "in",
+      owners.map((owner) => owner.email),
+    )
+    .execute();
+  return rows.map((row) => row.id);
+}
+
+// Inserts the given samples (with their fixed ids), assigns every owner to all
+// of them, and returns the columns the E2E fixture reads (see e2e/support/db.ts).
+// Shared by the dev seed below and the E2E reset-and-seed script. Inserts
+// directly rather than via the repository, whose `create` generates a fresh uuid
+// and would discard these static ids.
 export async function seed(
   db: Kysely<DB>,
   samples: SeedSample[],
+  owners: SeedUser[] = Object.values(MOCK_RESEARCHERS),
 ): Promise<
   Pick<
     Selectable<DB["sample"]>,
     "id" | "name" | "nature" | "igsn" | "published"
   >[]
 > {
-  return (
-    db
-      .insertInto("sample")
-      // collectionMethod is camelCase in the domain; the column is snake_case.
-      .values(
-        samples
-          .map(parseSeedSample)
-          .map(
-            ({
-              material,
-              collectionMethod,
-              collectionMethodDescription,
-              specificName,
-              metamorphicFacies,
-              location,
-              description,
-              scientificContext,
-              age,
-              ...rest
-            }) => ({
-              ...rest,
-              material: material ?? null,
-              collection_method: collectionMethod ?? null,
-              collection_method_description:
-                collectionMethodDescription ?? null,
-              specific_name: specificName ?? null,
-              metamorphic_facies: metamorphicFacies ?? null,
-              ...toAgeColumns(age),
-              ...locationColumns(location),
-              ...descriptionColumns(description),
-              ...scientificContextColumns(scientificContext),
-            }),
-          ),
-      )
-      .returning(["id", "name", "nature", "igsn", "published"])
-      .execute()
-  );
+  const ownerIds = await seedOwners(db, owners);
+  const created = await db
+    .insertInto("sample")
+    // collectionMethod is camelCase in the domain; the column is snake_case.
+    .values(
+      samples
+        .map(parseSeedSample)
+        .map(
+          ({
+            material,
+            collectionMethod,
+            collectionMethodDescription,
+            specificName,
+            metamorphicFacies,
+            location,
+            description,
+            scientificContext,
+            age,
+            ...rest
+          }) => ({
+            ...rest,
+            material: material ?? null,
+            collection_method: collectionMethod ?? null,
+            collection_method_description: collectionMethodDescription ?? null,
+            specific_name: specificName ?? null,
+            metamorphic_facies: metamorphicFacies ?? null,
+            ...toAgeColumns(age),
+            ...locationColumns(location),
+            ...descriptionColumns(description),
+            ...scientificContextColumns(scientificContext),
+          }),
+        ),
+    )
+    .returning(["id", "name", "nature", "igsn", "published"])
+    .execute();
+
+  await db
+    .insertInto("user_sample")
+    .values(
+      ownerIds.flatMap((userId) =>
+        created.map((sample) => ({ user_id: userId, sample_id: sample.id })),
+      ),
+    )
+    .execute();
+
+  return created;
 }
 
 // created_at/updated_at are database defaults, so they are omitted; the rest

@@ -9,7 +9,10 @@ import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-s
 import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import { Hono } from "hono";
 
+import type { AuthenticatedEnv } from "../auth/current-user.ts";
+
 import { attachmentDownload } from "./attachment-download.ts";
+import { requireSampleOwner } from "./require-sample-owner.ts";
 import {
   validateAttachmentParams,
   validateAttachmentUpload,
@@ -19,28 +22,40 @@ import {
 } from "./validator.ts";
 
 // Full sample CRUD for the admin app. Authentication is enforced once by the
-// requireAuth guard on the /admin mount (see app.ts), so no per-route guard here.
+// requireAuth guard on the /admin mount (see app.ts), which also resolves the
+// caller with currentUser, so no per-route authentication guard here.
+// Authorization is per sample: a user only reaches their own (ADR 0019), through
+// the owner-scoped list and the requireSampleOwner guard below.
 export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
 ) {
-  return new Hono()
+  // Guards every route naming a sample id. Registered before them below, since
+  // Hono runs handlers in registration order.
+  const ownedSample = requireSampleOwner(repository);
+
+  return new Hono<AuthenticatedEnv>()
     .get("/", validateListQuery, async (c) => {
       const { page, perPage, sort, order, search, ageMin, ageMax, ageUnit } =
         c.req.valid("query");
-      const { data, total } = await repository.list({
-        page,
-        perPage,
-        sort,
-        order,
-        search,
-        ageMin,
-        ageMax,
-        ageUnit,
-      });
+      const { data, total } = await repository.list(
+        {
+          page,
+          perPage,
+          sort,
+          order,
+          search,
+          ageMin,
+          ageMax,
+          ageUnit,
+        },
+        c.get("user").id,
+      );
       const body: ListSamplesResponse = { data, meta: { total } };
       return c.json(body);
     })
+    .use("/:id", ownedSample)
+    .use("/:id/*", ownedSample)
     .get("/:id", validateIdParam, async (c) => {
       const sample = await repository.get(c.req.valid("param").id);
       if (!sample) {
@@ -50,7 +65,11 @@ export function createSampleAdminRoutes(
       return c.json(body);
     })
     .post("/", validateCreateSampleBody, async (c) => {
-      const sample = await repository.create(c.req.valid("json"));
+      // The creator owns the sample.
+      const sample = await repository.create(
+        c.req.valid("json"),
+        c.get("user").id,
+      );
       return c.json({ data: sample }, 201);
     })
     .put("/:id", validateIdParam, validateCreateSampleBody, async (c) => {

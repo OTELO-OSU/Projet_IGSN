@@ -6,11 +6,13 @@ import { HTTPException } from "hono/http-exception";
 
 import type { DB } from "./db.ts";
 
-import { type KeycloakClaims, requireAuth } from "./auth/middleware.ts";
+import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
+import { requireAuth } from "./auth/middleware.ts";
 import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
 import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
+import { createUserRepository } from "./user/repository.ts";
 
 export function createApp(
   database: Kysely<DB>,
@@ -29,11 +31,14 @@ export function createApp(
     database,
     attachmentsDir,
   );
+  const userRepository = createUserRepository(database);
 
   // Every route under /admin requires a valid user token; the guard runs once
-  // here rather than per admin route.
-  const adminRoutes = new Hono<{ Variables: { jwtPayload: KeycloakClaims } }>()
+  // here rather than per admin route. currentUser then resolves the verified
+  // claims to the local user the routes authorize against.
+  const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
+    .use("*", currentUser(userRepository))
     .get("/me", (c) => {
       const claims = c.get("jwtPayload");
       return c.json({
@@ -49,7 +54,7 @@ export function createApp(
     );
 
   return (
-    new Hono<{ Variables: { jwtPayload: KeycloakClaims } }>()
+    new Hono<AuthenticatedEnv>()
       .use(
         "*",
         cors({

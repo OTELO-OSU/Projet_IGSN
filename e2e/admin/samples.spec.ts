@@ -42,6 +42,26 @@ test.describe("samples", () => {
     await list.expectSampleRow(name);
   });
 
+  // Samples are declared per researcher (ADR 0019): the seeded ones belong to
+  // jean, so luc must see none of them, by list or by URL.
+  test("a researcher sees no sample declared by someone else", async ({
+    page,
+    samples,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.luc);
+
+    const list = sampleListPage(page);
+    await list.expectVisible();
+    await list.expectEmpty();
+    for (const sample of samples) {
+      await list.expectNoSampleRow(sample.name);
+    }
+
+    const edit = sampleEditPage(page);
+    await edit.goto(samples[0]!.id);
+    await edit.expectForbidden();
+  });
+
   test("the create form rejects a sample without a name", async ({ page }) => {
     await signInAsResearcher(page, RESEARCHERS.camille);
 

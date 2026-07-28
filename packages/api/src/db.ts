@@ -169,10 +169,28 @@ type SampleAttachmentTable = {
   description: string | null;
 };
 
+// A researcher, provisioned from the verified token and keyed by email (ADR
+// 0019). Ids are app-generated UUIDv7.
+type UserTable = {
+  id: string;
+  email: string;
+  name: string | null;
+  firstname: string | null;
+  created_at: Generated<Date>;
+};
+
+// Sample owners, many-to-many. A row means "owner"; roles come later.
+type UserSampleTable = {
+  user_id: string;
+  sample_id: string;
+};
+
 export type DB = {
   sample: SampleTable;
   sample_link: SampleLinkTable;
   sample_attachment: SampleAttachmentTable;
+  user: UserTable;
+  user_sample: UserSampleTable;
 };
 
 const dbConfigSchema = z.object({
