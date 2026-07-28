@@ -67,20 +67,16 @@ function withinBbox(
   )`;
 }
 
-// The age range overlap, against the sample's generated annum interval
-// (age_min_a = youngest edge, age_max_a = oldest). Query bounds are in
-// `ageUnit`, defaulting to Ma, converted to the same canonical annum. The bounds
-// cross because it is an overlap, not a containment: "at least X old" bites on
-// the sample's oldest edge, "at most Y old" on its youngest. Inclusive, so a
-// bound exactly on a stage edge matches both neighbours.
+// The bounds cross because this is an overlap, not a containment: "at least X
+// old" bites on the sample's oldest edge, "at most Y old" on its youngest.
 function ageFilters(params: ListSamplesParams): Expression<SqlBool>[] {
   const unit = params.ageUnit ?? "ma";
   return [
     ...(params.ageMin != null
-      ? [sql<SqlBool>`age_max_a >= ${numericAgeToAnnum(params.ageMin, unit)}`]
+      ? [sql<SqlBool>`annum_max >= ${numericAgeToAnnum(params.ageMin, unit)}`]
       : []),
     ...(params.ageMax != null
-      ? [sql<SqlBool>`age_min_a <= ${numericAgeToAnnum(params.ageMax, unit)}`]
+      ? [sql<SqlBool>`annum_min <= ${numericAgeToAnnum(params.ageMax, unit)}`]
       : []),
   ];
 }

@@ -26,13 +26,15 @@ Do:
   naming (`xxxSchema` + PascalCase type); layering (shared logic/interfaces in
   `domain`, impl in `api`); `.ts` extensions on `domain` relative imports;
   server-side sort/filter/pagination.
-- Review every comment the diff adds against `coding-style.md`'s `## Comments`:
-  does it earn its line? A comment that restates the code, documents a past
-  implementation, or is commented-out code gets `delete:`. A comment carrying
-  real intent (why, tradeoff, edge case) that rambles gets `shrink:` with the
-  shorter wording. Too few counts too: a non-obvious tradeoff or a deliberate
-  ponytail shortcut with no `ponytail:` marker naming its ceiling and upgrade
-  path is a missing comment, not a clean diff.
+- Review every comment the diff adds against `coding-style.md`'s `## Comments`,
+  where no comment is the default. Each one must justify existing: `delete:` any
+  comment that restates the code, narrates the how, documents a past
+  implementation, banners a section, JSDocs a self-evident signature, or is
+  commented-out code. A comment carrying real intent (why, tradeoff, edge case)
+  that is not written concisely for a human gets `shrink:` with the shorter
+  wording. Too few counts too: a non-obvious tradeoff or a deliberate ponytail
+  shortcut with no `ponytail:` marker naming its ceiling and upgrade path is a
+  missing comment, not a clean diff.
 - Flag tech debt and inconsistency with existing patterns.
 - On `frontend`/`admin` UI, review a11y per `accessibility.md` (roles, labels,
   keyboard nav, focus, contrast). Tag these `[a11y]`.

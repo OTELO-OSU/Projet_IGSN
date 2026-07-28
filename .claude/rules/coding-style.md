@@ -143,8 +143,20 @@ messages. Server-side: log detailed context.
 
 ## Comments
 
-Add a comment only when the code is hard to understand on its own: explain the
-why (intent, trade-off, edge case) of the current code, not the what. Never
-document past implementations or how the code used to work. Don't restate what
-the code already says or leave commented-out code behind. Prefer a clear name
-over a comment that explains an unclear one.
+No comment is the rule. A comment is the exception, for code a reader cannot follow on its own.
+
+When you do write one:
+
+- Write it for a human, not as narration: one or two lines, no paragraphs.
+- Carry information the code cannot: intent, trade-off, non-obvious edge case, why the obvious approach fails. Never the what or the how.
+- Prefer a clear name or a smaller function over a comment that explains an unclear one.
+
+Never: restating the code, past implementations or how it used to work, commented-out code, section banners, JSDoc on self-evident signatures.
+
+    // Wrong
+    // loop over the samples and keep the published ones
+    const published = samples.filter((s) => s.publishedAt !== null)
+
+    // Correct
+    // age_min_a is generated, so a NULL means the sample has no age at all
+    .where('age_min_a', 'is not', null)

@@ -53,12 +53,11 @@ type SampleTable = {
   numeric_age_max: number | null;
   numeric_age_unit: string | null;
   numeric_age_years_unit: string | null;
-  // Generated STORED: the comparable age interval in canonical annum, from the
-  // numeric age with a fallback on the geological rank interval (never inserted,
-  // like `geom`). `min` is the youngest edge, `max` the oldest. See the
+  // Generated STORED, never inserted (like `geom`): the comparable age interval
+  // in annum, from the numeric age or the geological rank. See the
   // age-annum-columns migration.
-  age_min_a: Generated<number | null>;
-  age_max_a: Generated<number | null>;
+  annum_min: Generated<number | null>;
+  annum_max: Generated<number | null>;
   // Geological bounds are stored as their rank (1-based integer), not the ics
   // code, so a range filter compares them directly. api maps code <-> rank at
   // the boundary. See the geological-age-as-rank migration.
