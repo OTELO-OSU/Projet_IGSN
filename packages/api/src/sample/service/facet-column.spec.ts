@@ -1,7 +1,7 @@
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { describe, expect, it } from "vitest";
 
-import { FACET_COLUMN } from "./list-sample.ts";
+import { FACET_COLUMN } from "./facet-filter.ts";
 
 // SAMPLE_FACETS is typed `readonly SampleFacet[]`, so its keys are widened to
 // `string` and the column map cannot be a compile-time exhaustive Record. This

@@ -1,14 +1,16 @@
 import type { GeologicalAge } from "@projet-igsn/domain/sample/age/geological-age";
 import type { NumericUnit } from "@projet-igsn/domain/sample/age/numeric-unit";
 
-import { describe, expect } from "vitest";
+import { describe, expect, vi } from "vitest";
+
+import type { DB } from "../../db.ts";
+import type { Transactional } from "../../transaction.ts";
 
 import { pgTest } from "../../tests/pg-test.ts";
 import { insertSample } from "./insert-sample.ts";
 import { listSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
-// All-null age, so a fixture spreads it and overrides only the bounds it needs.
 const emptyAge = {
   numericAgeMin: null,
   numericAgeMax: null,
@@ -19,7 +21,6 @@ const emptyAge = {
   geologicalUnit: null,
 } as const;
 
-// A numeric age range; the stratigraphic bounds stay empty. Defaults to Ma.
 const numericAge = (min: number, max: number, unit: NumericUnit = "ma") => ({
   ...emptyAge,
   numericAgeMin: min,
@@ -34,6 +35,14 @@ const geologicalAge = (min: GeologicalAge, max: GeologicalAge) => ({
   geologicalAgeMin: min,
   geologicalAgeMax: max,
 });
+
+// now() is the transaction timestamp, identical for every insert.
+const backdate = (db: Transactional<DB>, id: string) =>
+  db
+    .updateTable("sample")
+    .set({ updated_at: new Date("2026-01-01T00:00:00.000Z") })
+    .where("id", "=", id)
+    .execute();
 
 describe("listSamples", () => {
   pgTest("should list samples most-recently-modified first", async ({ db }) => {
@@ -72,7 +81,7 @@ describe("listSamples", () => {
   });
 
   pgTest("should sort by status through IGSN presence", async ({ db }) => {
-    // Arrange: one draft (no IGSN) and one published sample.
+    // Arrange
     const draft = await insertSample(db, {
       name: "Draft sample",
       nature: "rock_powder",
@@ -96,7 +105,7 @@ describe("listSamples", () => {
       .where("id", "=", draft.id)
       .execute();
 
-    // Act / Assert: asc puts drafts first, desc puts published first.
+    // Act / Assert
     const asc = await listSamples(db, {
       page: 1,
       perPage: 10,
@@ -136,7 +145,7 @@ describe("listSamples", () => {
         type: "dredge",
         collectionMethod: null,
       });
-      // Act: picking the "core" ancestor matches its descendant section.
+      // Act
       const { data, total } = await listSamples(db, {
         page: 1,
         perPage: 10,
@@ -225,7 +234,7 @@ describe("listSamples", () => {
       collectionMethod: null,
       age: numericAge(100, 200),
     });
-    // Act: [15, 50] overlaps [10, 20] only.
+    // Act
     const { data, total } = await listSamples(db, {
       page: 1,
       perPage: 10,
@@ -241,7 +250,7 @@ describe("listSamples", () => {
   pgTest(
     "should overlap ages across units by normalising to annum",
     async ({ db }) => {
-      // Arrange: 4-5 Ga stored in Ga, a young 5-15 ka sample stored in ka.
+      // Arrange
       await insertSample(db, {
         name: "Ancient",
         nature: "rock_powder",
@@ -271,7 +280,7 @@ describe("listSamples", () => {
   );
 
   pgTest("should default the query unit to Ma", async ({ db }) => {
-    // Arrange: a 5-15 Ma sample and a 5-15 ka sample (a thousand times younger).
+    // Arrange
     await insertSample(db, {
       name: "Mega",
       nature: "rock_powder",
@@ -326,8 +335,7 @@ describe("listSamples", () => {
           },
         });
       }
-      // Act: a small before-present range around 500 must match only the two
-      // whose reference already is before-present, not the CE/BCE ones.
+      // Act
       const nearPresent = await listSamples(db, {
         page: 1,
         perPage: 10,
@@ -358,7 +366,7 @@ describe("listSamples", () => {
   pgTest(
     "should match a single-bound draft age within the range",
     async ({ db }) => {
-      // Arrange: a draft with only a minimum numeric bound (100 ka).
+      // Arrange
       await insertSample(db, {
         name: "Open-ended draft",
         nature: "rock_powder",
@@ -382,7 +390,7 @@ describe("listSamples", () => {
   pgTest(
     "should exclude samples with no age from a range filter",
     async ({ db }) => {
-      // Arrange: a sample with no age recorded.
+      // Arrange
       await insertSample(db, {
         name: "Ageless",
         nature: "rock_powder",
@@ -414,7 +422,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(4, 4),
       });
-      // Act: [0, 100] Ma overlaps the Miocene interval.
+      // Act
       const { data, total } = await listSamples(db, {
         page: 1,
         perPage: 10,
@@ -431,7 +439,7 @@ describe("listSamples", () => {
   pgTest(
     "should exclude a geological-only sample outside the range",
     async ({ db }) => {
-      // Arrange: same Miocene sample.
+      // Arrange
       await insertSample(db, {
         name: "Miocene",
         nature: "rock_powder",
@@ -532,7 +540,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(8, 4),
       });
-      // Act: a range inside the interval overlaps it.
+      // Act
       const { data, total } = await listSamples(db, {
         page: 1,
         perPage: 10,
@@ -565,7 +573,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(8, 8),
       });
-      // Act: ageMin only keeps samples reaching back at least 70 Ma.
+      // Act
       const { data, total } = await listSamples(db, {
         page: 1,
         perPage: 10,
@@ -581,7 +589,7 @@ describe("listSamples", () => {
   pgTest(
     "should apply an open lower bound to a geological-only sample",
     async ({ db }) => {
-      // Arrange: same two samples.
+      // Arrange
       await insertSample(db, {
         name: "Miocene",
         nature: "rock_powder",
@@ -596,7 +604,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(8, 8),
       });
-      // Act: ageMax only keeps samples reaching up to at most 50 Ma.
+      // Act
       const { data, total } = await listSamples(db, {
         page: 1,
         perPage: 10,
@@ -628,7 +636,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(5, 5),
       });
-      // Act: a point query exactly on the shared edge.
+      // Act
       const { data, total } = await listSamples(db, {
         page: 1,
         perPage: 10,
@@ -658,7 +666,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: { ...emptyAge, geologicalAgeMin: 8 },
       });
-      // Act: [0, 100] Ma overlaps the derived interval.
+      // Act
       const { data, total } = await listSamples(db, {
         page: 1,
         perPage: 10,
@@ -684,7 +692,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(1, 1),
       });
-      // Act: a point query exactly on its young edge, the present.
+      // Act
       const { data, total } = await listSamples(db, {
         page: 1,
         perPage: 10,
@@ -708,7 +716,7 @@ describe("listSamples", () => {
       collectionMethod: null,
       age: geologicalAge(49, 49),
     });
-    // Act: a point query exactly on its old edge, the age of the Earth.
+    // Act
     const { data, total } = await listSamples(db, {
       page: 1,
       perPage: 10,
@@ -732,7 +740,7 @@ describe("listSamples", () => {
       collectionMethod: null,
       age: geologicalAge(25, 25),
     });
-    // Act + Assert: a point query exactly on each edge matches.
+    // Act + Assert
     const young = await listSamples(db, {
       page: 1,
       perPage: 10,
@@ -790,7 +798,7 @@ describe("listSamples", () => {
   });
 
   pgTest("should filter samples by a bounding box", async ({ db }) => {
-    // Arrange: one point inside the box, one point outside it.
+    // Arrange
     const inside = await insertSample(db, {
       name: "Inside",
       nature: "rock_powder",
@@ -817,7 +825,7 @@ describe("listSamples", () => {
   });
 
   pgTest("should intersect an area straddling the box edge", async ({ db }) => {
-    // Arrange: an area sample that spans the box's east edge (8..12, box east 10).
+    // Arrange
     const overlap = await insertSample(db, {
       name: "Overlap",
       nature: "rock_powder",
@@ -866,7 +874,7 @@ describe("listSamples", () => {
   );
 
   pgTest("should compose bbox and search with AND", async ({ db }) => {
-    // Arrange: two points inside the box, only one matches the search.
+    // Arrange
     const match = await insertSample(db, {
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
@@ -891,6 +899,145 @@ describe("listSamples", () => {
     // Assert
     expect(total).toBe(1);
     expect(data.map((s) => s.id)).toEqual([match.id]);
+  });
+
+  pgTest("should order a search by relevance first", async ({ db }) => {
+    // Arrange: the exact match is the stale row, so the updated_at tiebreak
+    // alone would put the partial match first.
+    const exact = await insertSample(db, {
+      name: "Basalt",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+    });
+    await insertSample(db, {
+      name: "Basaltic Breccia",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+    });
+    await backdate(db, exact.id);
+    // Act
+    const { data } = await listSamples(db, {
+      page: 1,
+      perPage: 10,
+      search: "basalt",
+    });
+    // Assert
+    expect(data.map((sample) => sample.name)).toEqual([
+      "Basalt",
+      "Basaltic Breccia",
+    ]);
+  });
+
+  pgTest(
+    "should break an equal-relevance search tie by recency",
+    async ({ db }) => {
+      // Arrange: both score 1, and backdating the row that id-sorts first
+      // makes recency and id disagree.
+      await insertSample(db, {
+        name: "Basalt Core",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      const older = await insertSample(db, {
+        name: "Basalt Powder",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      await backdate(db, older.id);
+      // Act
+      const { data } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        search: "basalt",
+      });
+      // Assert
+      expect(data.map((sample) => sample.name)).toEqual([
+        "Basalt Core",
+        "Basalt Powder",
+      ]);
+    },
+  );
+
+  pgTest("should paginate a search without gap or repeat", async ({ db }) => {
+    // Arrange
+    for (const name of ["Basalt One", "Basalt Two", "Basalt Three"]) {
+      await insertSample(db, {
+        name,
+        nature: "hand_sample",
+        type: null,
+        collectionMethod: null,
+      });
+    }
+    // Act
+    const search = "basalt";
+    const page1 = await listSamples(db, { page: 1, perPage: 2, search });
+    const page2 = await listSamples(db, { page: 2, perPage: 2, search });
+    // Assert
+    expect(page1.total).toBe(3);
+    const names = [...page1.data, ...page2.data].map((sample) => sample.name);
+    expect(names.toSorted()).toEqual([
+      "Basalt One",
+      "Basalt Three",
+      "Basalt Two",
+    ]);
+  });
+
+  describe("fuzzy threshold", () => {
+    // The plural is not a substring of the name, so only the fuzzy arm can match
+    // it. It scores 0.833: above the 0.8 default, below a 0.9 override.
+    const seedAchondrite = (db: Transactional<DB>) =>
+      insertSample(db, {
+        name: "Stony Achondrite",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+
+    pgTest("should tolerate the plural at the default", async ({ db }) => {
+      await seedAchondrite(db);
+
+      const { data } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        search: "achondrites",
+      });
+
+      expect(data.map((sample) => sample.name)).toEqual(["Stony Achondrite"]);
+    });
+
+    pgTest("should honour a stricter override", async ({ db }) => {
+      await seedAchondrite(db);
+      // The threshold is read at import, so an override needs a fresh module.
+      process.env.SAMPLE_SEARCH_FUZZY_THRESHOLD = "0.9";
+      vi.resetModules();
+      const { listSamples: listWithOverride } =
+        await import("./list-sample.ts");
+
+      const { data } = await listWithOverride(db, {
+        page: 1,
+        perPage: 10,
+        search: "achondrites",
+      });
+
+      expect(data).toEqual([]);
+    });
+
+    pgTest("should not tolerate a typo in a wildcard token", async ({ db }) => {
+      // Without the "*" this row matches fuzzily.
+      await seedAchondrite(db);
+
+      const { data } = await listSamples(db, {
+        page: 1,
+        perPage: 10,
+        search: "achondrites*",
+      });
+
+      expect(data).toEqual([]);
+    });
   });
 
   pgTest("should paginate with limit and offset", async ({ db }) => {

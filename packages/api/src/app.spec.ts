@@ -24,6 +24,22 @@ describe("app", () => {
     });
   });
 
+  describe("error handling", () => {
+    pgTest("should answer an unexpected failure as JSON", async ({ db }) => {
+      const app = createApp(db);
+      vi.spyOn(db, "selectFrom").mockImplementation(() => {
+        throw new Error("connection terminated: password=hunter2");
+      });
+      vi.spyOn(console, "error").mockImplementation(() => {});
+
+      const res = await app.request("/samples?page=1&perPage=10");
+
+      expect(res.status).toBe(500);
+      expect(res.headers.get("content-type")).toContain("application/json");
+      expect(await res.json()).toEqual({ error: "Internal server error" });
+    });
+  });
+
   describe("CORS", () => {
     const allowedOrigin = "http://localhost:3001";
 

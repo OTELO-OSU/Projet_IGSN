@@ -69,12 +69,29 @@ describe("listSamplesQuerySchema", () => {
     );
   });
 
-  it.each(["", "   ", 42])(
-    "should drop a blank or non-string search %j",
+  it.each(["", "   "])(
+    "should keep the blank search %j, which matches no sample",
     (search) => {
-      expect(listSamplesQuerySchema.parse({ search }).search).toBeUndefined();
+      expect(listSamplesQuerySchema.parse({ search }).search).toBe("");
     },
   );
+
+  it("should drop a non-string search", () => {
+    expect(listSamplesQuerySchema.parse({ search: 42 }).search).toBeUndefined();
+  });
+
+  it("should accept a search of exactly 200 characters", () => {
+    const search = "a".repeat(200);
+
+    expect(listSamplesQuerySchema.parse({ search }).search).toBe(search);
+  });
+
+  it("should truncate a search longer than 200 characters", () => {
+    // Dropping it would degrade to "no filter": every published sample.
+    expect(
+      listSamplesQuerySchema.parse({ search: "a".repeat(201) }).search,
+    ).toBe("a".repeat(200));
+  });
 
   it("should pass through valid facet filters", () => {
     expect(

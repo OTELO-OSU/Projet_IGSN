@@ -2,6 +2,7 @@ import type { Kysely } from "kysely";
 
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { HTTPException } from "hono/http-exception";
 
 import type { DB } from "./db.ts";
 
@@ -47,19 +48,29 @@ export function createApp(
       createSampleAdminRoutes(sampleRepository, sampleAttachmentRepository),
     );
 
-  return new Hono<{ Variables: { jwtPayload: KeycloakClaims } }>()
-    .use(
-      "*",
-      cors({
-        origin: (origin) => (corsOrigins.includes(origin) ? origin : null),
-        credentials: true,
-        allowHeaders: ["Authorization", "Content-Type"],
-      }),
-    )
-    .get("/", (c) => c.json({ message: "OK" }))
-    .route(
-      "/samples",
-      createSampleRoutes(sampleRepository, sampleAttachmentRepository),
-    )
-    .route("/admin", adminRoutes);
+  return (
+    new Hono<{ Variables: { jwtPayload: KeycloakClaims } }>()
+      .use(
+        "*",
+        cors({
+          origin: (origin) => (corsOrigins.includes(origin) ? origin : null),
+          credentials: true,
+          allowHeaders: ["Authorization", "Content-Type"],
+        }),
+      )
+      // The cause is logged, never serialised: a driver message can carry SQL
+      // or a connection string. An HTTPException (the auth guard's 401 and its
+      // headers) already carries its own response.
+      .onError((error, c) => {
+        if (error instanceof HTTPException) return error.getResponse();
+        console.error("unhandled api error", error);
+        return c.json({ error: "Internal server error" }, 500);
+      })
+      .get("/", (c) => c.json({ message: "OK" }))
+      .route(
+        "/samples",
+        createSampleRoutes(sampleRepository, sampleAttachmentRepository),
+      )
+      .route("/admin", adminRoutes)
+  );
 }

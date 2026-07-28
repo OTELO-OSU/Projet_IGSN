@@ -18,6 +18,7 @@ import {
   addEngineLabel,
   engineLabel,
 } from "#/domain/samples/search-engine-tabs.tsx";
+import { SearchHelp } from "#/domain/samples/search-help.tsx";
 import { SearchTextInput } from "#/domain/samples/search-text-input.tsx";
 import { m } from "#/paraglide/messages.js";
 
@@ -128,6 +129,7 @@ export function SearchCompose({
                 />
               )}
             </div>
+            {engine === "text" ? <SearchHelp /> : null}
             {index > 0 ? (
               // The bare ✕ does not say what it drops, so show its name too.
               <TooltipProvider>
