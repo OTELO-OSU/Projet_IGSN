@@ -2,8 +2,8 @@ import { describe, expect } from "vitest";
 
 import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
+import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { getSample } from "./get-sample.ts";
-import { insertSampleOwner } from "./insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
 
 const draft = {

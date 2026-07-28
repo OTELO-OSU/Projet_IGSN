@@ -8,7 +8,7 @@ import { describe, expect } from "vitest";
 import { createApp } from "../app.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
-import { insertSampleOwner } from "./service/insert-sample-owner.ts";
+import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
 
 // requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization

@@ -4,9 +4,9 @@ import type { Kysely } from "kysely";
 import type { DB } from "../db.ts";
 
 import { withTransaction } from "../transaction.ts";
+import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { getPublishedSampleByIgsn } from "./service/get-published-sample-by-igsn.ts";
 import { getSample } from "./service/get-sample.ts";
-import { insertSampleOwner } from "./service/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import {
   listPublishedSamples,

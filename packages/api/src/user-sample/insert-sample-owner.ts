@@ -1,6 +1,6 @@
-import type { DB } from "../../db.ts";
+import type { DB } from "../db.ts";
 
-import { type Transactional } from "../../transaction.ts";
+import { type Transactional } from "../transaction.ts";
 
 export async function insertSampleOwner(
   db: Transactional<DB>,
