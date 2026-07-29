@@ -23,6 +23,7 @@ export const rockTree = {
   // `carbonate` is an inner node in the sediment subtree; here it is a plain
   // leaf, so a dotted override stops the walk (longest-suffix match).
   "hydrothermal.carbonate": { label: "carbonate" },
+  xenolithic_rock: { choices: ["igneous", "metamorphic"] },
   sedimentary: {
     choices: [
       "microbialite",

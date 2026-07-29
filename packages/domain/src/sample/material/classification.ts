@@ -25,6 +25,7 @@ const materialTree = {
       "metamorphic",
       "sedimentary",
       "hydrothermal",
+      "xenolithic_rock",
       "unknown",
     ],
   },

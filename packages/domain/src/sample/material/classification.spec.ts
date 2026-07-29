@@ -38,6 +38,10 @@ describe("materialPathSchema", () => {
     "rock.hydrothermal.breccia",
     "rock.hydrothermal.carbonate",
     "rock.hydrothermal.sulfide",
+    "rock.xenolithic_rock",
+    "rock.xenolithic_rock.igneous.plutonic.felsic.granite",
+    "rock.xenolithic_rock.metamorphic.strongly_metamorphosed.gneiss",
+    "rock.xenolithic_rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.volcanic.mafic.basalt",
   ])("should accept the known path %s", (path) => {
     expect(materialPathSchema.parse(path)).toBe(path);
   });
@@ -65,6 +69,8 @@ describe("materialPathSchema", () => {
     // hydrothermal.carbonate is a dotted-override leaf: the sediment carbonate
     // node's children must not expand under it.
     "rock.hydrothermal.carbonate.grain_supported",
+    "rock.xenolithic_rock.sedimentary",
+    "rock.xenolithic_rock.xenolithic_rock",
   ])("should reject the unknown or malformed path %s", (path) => {
     expect(materialPathSchema.safeParse(path).success).toBe(false);
   });
