@@ -30,7 +30,6 @@ if [ -e "$src" ]; then
 
   if [ -n "$tree" ] && [ -n "$wip" ] && git -C "$tree" merge --no-edit "$wip" >/dev/null 2>&1; then
     git -C "$cwd" worktree remove --force "$src" >/dev/null 2>&1 || true
-    git -C "$cwd" worktree prune >/dev/null 2>&1 || true
     rm -rf "$dir"
   else
     # No source branch, conflict, or nothing to merge: abort and keep the
@@ -38,6 +37,13 @@ if [ -e "$src" ]; then
     [ -n "$tree" ] && git -C "$tree" merge --abort >/dev/null 2>&1 || true
   fi
 else
-  git -C "$cwd" worktree prune >/dev/null 2>&1 || true
+  # Drop only this session's admin entry. A blanket `git worktree prune` would
+  # also drop live sessions': parallel devcontainers share this .git but each has
+  # its own /tmp volume, so their worktree paths look missing from here.
+  # --path-format=absolute: from the main tree this prints a bare ".git", which
+  # would resolve against the hook's cwd instead of the repo.
+  common=$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir)
+  grep -lx "$src/.git" "$common/worktrees"/*/gitdir 2>/dev/null \
+    | xargs -r dirname | xargs -r rm -rf
   rm -rf "$dir"
 fi

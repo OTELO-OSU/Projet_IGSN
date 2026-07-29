@@ -1,0 +1,76 @@
+// Config to pick when opening a git worktree under worktrees/<name> (created by
+// `make create-worktree`), instead of the repo root. Same container as
+// ../devcontainer.json, one difference: what gets mounted.
+//
+// A worktree's .git is a *file* holding the absolute path of the main repo's
+// .git/worktrees/<name>. Mounting only the worktree folder leaves that path
+// missing, so the folder is not a repository inside the container. So mount the
+// repo root instead, at its own path, and open the worktree inside it. Paths
+// then match inside and out, which also stops a prune in the container from
+// deleting worktrees it thinks are gone.
+{
+  "name": "Projet IGSN (worktree)",
+  "build": {
+    "dockerfile": "../Dockerfile"
+  },
+  // ../.. is the repo root: <repo>/worktrees/<name> up two levels.
+  "workspaceMount": "source=${localWorkspaceFolder}/../..,target=${localWorkspaceFolder}/../..,type=bind,consistency=cached",
+  "workspaceFolder": "${localWorkspaceFolder}",
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "node",
+  // The pnpm feature's store volume is pinned to /workspaces/projet-igsn, which
+  // this config does not use. Left alone, pnpm picks the project filesystem's
+  // mount point (the repo root) and hits its root-owned .pnpm-store. Name the
+  // store instead: worktrees/ is writable, on the same filesystem as
+  // node_modules so pnpm can still hardlink, and shared by every worktree.
+  "containerEnv": {
+    "PNPM_CONFIG_STORE_DIR": "${localWorkspaceFolder}/../.pnpm-store"
+  },
+  "remoteEnv": {
+    "SSH_AUTH_SOCK": "",
+    "GPG_AGENT_INFO": "",
+    "BROWSER": "",
+    "VSCODE_IPC_HOOK_CLI": null,
+    "VSCODE_GIT_IPC_HANDLE": null,
+    "GIT_ASKPASS": null,
+    "VSCODE_GIT_ASKPASS_MAIN": null,
+    "VSCODE_GIT_ASKPASS_NODE": null,
+    "VSCODE_GIT_ASKPASS_EXTRA_ARGS": null,
+    "REMOTE_CONTAINERS_IPC": null,
+    "REMOTE_CONTAINERS_SOCKETS": null,
+    "REMOTE_CONTAINERS_DISPLAY_SOCK": null,
+    "WAYLAND_DISPLAY": null
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils": {
+      "installZsh": true,
+      "installOhMyZsh": true,
+      "installOhMyZshConfig": true,
+      "configureZshAsDefaultShell": true
+    },
+    "ghcr.io/devcontainers/features/desktop-lite:1": {},
+    "ghcr.io/devcontainers/features/docker-in-docker:3": {
+      "moby": false
+    },
+    "../gh": {},
+    "../claude-code": {},
+    "../playwright": {},
+    "../pnpm": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["oxc.oxc-vscode"],
+      "settings": {
+        "dev.containers.dockerCredentialHelper": false,
+        "dev.containers.copyGitConfig": false
+      }
+    }
+  },
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "${devcontainerId}-tmp",
+      "target": "/tmp"
+    }
+  ]
+}
