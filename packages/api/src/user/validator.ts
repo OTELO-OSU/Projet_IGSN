@@ -1,4 +1,5 @@
 import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
+import { orcidSchema } from "@projet-igsn/domain/user/orcid";
 import { validator } from "hono/validator";
 import { z } from "zod";
 
@@ -11,6 +12,17 @@ export const validateSearchUsersQuery = validator("query", (value, c) => {
   const parsed = searchUsersQuerySchema.safeParse(value);
   if (!parsed.success) {
     return c.json({ error: "Invalid query parameters" }, 400);
+  }
+  return parsed.data;
+});
+
+// null clears the orcid; strict() rejects any other field (mass assignment).
+const setOrcidSchema = z.object({ orcid: orcidSchema.nullable() }).strict();
+
+export const validateSetOrcidBody = validator("json", (value, c) => {
+  const parsed = setOrcidSchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid ORCID" }, 400);
   }
   return parsed.data;
 });

@@ -117,6 +117,7 @@ describe("requireAuth", () => {
         username: "marie",
         name: "Marie Dupont",
         email: "marie.dupont@univ-lorraine.fr",
+        orcid: null,
       });
     },
   );

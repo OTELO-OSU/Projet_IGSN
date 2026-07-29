@@ -1,5 +1,6 @@
 import { describe, expect } from "vitest";
 
+import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { createUserRepository } from "./repository.ts";
 
@@ -14,7 +15,7 @@ describe("createUserRepository", () => {
     // Act
     const user = await createUserRepository(db).upsert(claims);
     // Assert
-    expect(user).toEqual({ id: expect.any(String), ...claims });
+    expect(user).toEqual({ id: expect.any(String), ...claims, orcid: null });
   });
 
   pgTest("should store absent name parts as null", async ({ db }) => {
@@ -30,6 +31,7 @@ describe("createUserRepository", () => {
       email: "no.name@univ-lorraine.fr",
       name: null,
       firstname: null,
+      orcid: null,
     });
   });
 
@@ -58,7 +60,71 @@ describe("createUserRepository", () => {
     // Act
     const user = await createUserRepository(db).upsert(claims);
     // Assert
-    expect(user).toEqual(seeded);
+    expect(user).toEqual({ ...seeded, orcid: null });
+  });
+
+  pgTest("should keep the stored orcid on the next sight", async ({ db }) => {
+    // Arrange
+    const repository = createUserRepository(db);
+    const first = await repository.upsert(claims);
+    await repository.setOrcid(first.id, "0000-0002-1825-0097");
+    // Act
+    const again = await repository.upsert(claims);
+    // Assert
+    expect(again).toEqual({ ...first, orcid: "0000-0002-1825-0097" });
+  });
+
+  pgTest("should set and return the user's orcid", async ({ db }) => {
+    // Arrange
+    const repository = createUserRepository(db);
+    const user = await repository.upsert(claims);
+    // Act
+    const updated = await repository.setOrcid(user.id, "0000-0002-1825-0097");
+    // Assert
+    expect(updated).toEqual({ ...user, orcid: "0000-0002-1825-0097" });
+  });
+
+  pgTest("should clear the orcid with null", async ({ db }) => {
+    // Arrange
+    const repository = createUserRepository(db);
+    const user = await repository.upsert(claims);
+    await repository.setOrcid(user.id, "0000-0002-1825-0097");
+    // Act
+    const cleared = await repository.setOrcid(user.id, null);
+    // Assert
+    expect(cleared).toEqual({ ...user, orcid: null });
+  });
+
+  pgTest(
+    "should refuse an orcid already held by another user",
+    async ({ db }) => {
+      // Arrange
+      const repository = createUserRepository(db);
+      const holder = await insertUser(db, "holder@univ-lorraine.fr", {
+        orcid: "0000-0002-1825-0097",
+      });
+      const user = await repository.upsert(claims);
+      // Act
+      const refused = await repository.setOrcid(user.id, "0000-0002-1825-0097");
+      // Assert
+      expect(refused).toBeNull();
+      expect(await repository.findByOrcid("0000-0002-1825-0097")).toEqual(
+        expect.objectContaining({ id: holder.id }),
+      );
+    },
+  );
+
+  pgTest("should find a user by orcid", async ({ db }) => {
+    // Arrange
+    const repository = createUserRepository(db);
+    const user = await repository.upsert(claims);
+    await repository.setOrcid(user.id, "0000-0002-1825-0097");
+    // Act / Assert
+    expect(await repository.findByOrcid("0000-0002-1825-0097")).toEqual({
+      ...user,
+      orcid: "0000-0002-1825-0097",
+    });
+    expect(await repository.findByOrcid("0000-0001-5109-3700")).toBeUndefined();
   });
 
   describe("search", () => {
@@ -92,6 +158,7 @@ describe("createUserRepository", () => {
           email: "marie.curie@univ-lorraine.fr",
           name: "Curie",
           firstname: "Marie",
+          orcid: null,
         },
       ]);
     });

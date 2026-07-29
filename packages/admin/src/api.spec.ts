@@ -34,11 +34,14 @@ const authHeaderOf = (call: unknown[]) =>
 
 describe("fetchMe", () => {
   it("should return the verified identity", async () => {
-    fetchMock.mockResolvedValue(ok({ sub: "s", name: "Marie Dupont" }));
+    fetchMock.mockResolvedValue(
+      ok({ sub: "s", name: "Marie Dupont", orcid: null }),
+    );
 
     await expect(fetchMe("tok")).resolves.toEqual({
       sub: "s",
       name: "Marie Dupont",
+      orcid: null,
     });
     const call = fetchMock.mock.calls.at(-1)!;
     expect(call[0]).toBe("http://localhost:3002/admin/me");
@@ -48,12 +51,15 @@ describe("fetchMe", () => {
   it("should renew the session once and retry when the api answers 401", async () => {
     fetchMock
       .mockResolvedValueOnce(new Response(null, { status: 401 }))
-      .mockResolvedValueOnce(ok({ sub: "s", name: "Marie Dupont" }));
+      .mockResolvedValueOnce(
+        ok({ sub: "s", name: "Marie Dupont", orcid: null }),
+      );
     signinSilent.mockResolvedValue({ access_token: "fresh" });
 
     await expect(fetchMe("stale")).resolves.toEqual({
       sub: "s",
       name: "Marie Dupont",
+      orcid: null,
     });
 
     expect(signinSilent).toHaveBeenCalledTimes(1);

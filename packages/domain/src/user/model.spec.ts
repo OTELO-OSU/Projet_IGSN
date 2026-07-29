@@ -5,6 +5,7 @@ const user = {
   email: "marie.curie@univ-lorraine.fr",
   name: "Curie",
   firstname: "Marie",
+  orcid: null,
 };
 
 describe("userSchema", () => {

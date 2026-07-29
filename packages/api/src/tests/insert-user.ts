@@ -7,10 +7,17 @@ import { type Transactional } from "../transaction.ts";
 export function insertUser(
   db: Transactional<DB>,
   email: string,
+  { orcid = null }: { orcid?: string | null } = {},
 ): Promise<{ id: string }> {
   return db
     .insertInto("user")
-    .values({ id: crypto.randomUUID(), email, name: null, firstname: null })
+    .values({
+      id: crypto.randomUUID(),
+      email,
+      name: null,
+      firstname: null,
+      orcid,
+    })
     .returning("id")
     .executeTakeFirstOrThrow();
 }

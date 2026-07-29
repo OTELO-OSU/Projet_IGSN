@@ -15,6 +15,7 @@ import { createSampleAttachmentRepository } from "./sample/attachment-repository
 import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
+import { createMeRoutes } from "./user/me-routes.ts";
 import { createUserRepository } from "./user/repository.ts";
 import { createUserAdminRoutes } from "./user/routes.ts";
 
@@ -57,15 +58,7 @@ export function createApp(
     // currentUser, so a refused request costs no user upsert.
     .use("*", rateLimit(rateLimitConfig, "user"))
     .use("*", currentUser(userRepository))
-    .get("/me", (c) => {
-      const claims = c.get("jwtPayload");
-      return c.json({
-        sub: claims.sub,
-        username: claims.preferred_username,
-        name: claims.name,
-        email: claims.email,
-      });
-    })
+    .route("/me", createMeRoutes(userRepository))
     .route(
       "/samples",
       createSampleAdminRoutes(

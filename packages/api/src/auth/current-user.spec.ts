@@ -43,6 +43,7 @@ describe("currentUser", () => {
         email: "jean.martin@univ-lorraine.fr",
         firstname: "Jean",
         name: "Martin",
+        orcid: null,
       });
     },
   );
@@ -61,6 +62,7 @@ describe("currentUser", () => {
       email: "jean.martin@univ-lorraine.fr",
       firstname: null,
       name: null,
+      orcid: null,
     });
   });
 
@@ -80,6 +82,82 @@ describe("currentUser", () => {
       await expect(
         db.selectFrom("user").selectAll().execute(),
       ).resolves.toEqual([]);
+    },
+  );
+
+  // ORCID logins resolve strictly by the stored orcid column (ADR 0020):
+  // Keycloak brokers the ORCID account with username = ORCID iD.
+  const orcidClaims: KeycloakClaims = {
+    sub: "f:orcid:0000-0002-1825-0097",
+    preferred_username: "0000-0002-1825-0097",
+    identity_provider: "orcid",
+  };
+
+  pgTest("should resolve an ORCID login to the linked user", async ({ db }) => {
+    // Arrange
+    const repository = createUserRepository(db);
+    const linked = await repository.upsert({
+      email: "jean.martin@univ-lorraine.fr",
+      name: "Martin",
+      firstname: "Jean",
+    });
+    await repository.setOrcid(linked.id, "0000-0002-1825-0097");
+    // Act
+    const res = await appWithClaims(db, orcidClaims).request("/probe");
+    // Assert
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({
+      ...linked,
+      orcid: "0000-0002-1825-0097",
+    });
+  });
+
+  pgTest(
+    "should answer 403 and provision nothing for an unlinked ORCID login",
+    async ({ db }) => {
+      // Act
+      const res = await appWithClaims(db, orcidClaims).request("/probe");
+      // Assert
+      expect(res.status).toBe(403);
+      expect(await res.json()).toEqual({ error: "Forbidden" });
+      await expect(
+        db.selectFrom("user").selectAll().execute(),
+      ).resolves.toEqual([]);
+    },
+  );
+
+  // The first-broker-login profile step makes the user type an email, so an
+  // ORCID token can carry one. It must never reach the email upsert: a typed
+  // email matching an existing account would hand that account over.
+  pgTest(
+    "should refuse an unlinked ORCID login even when its token carries an email",
+    async ({ db }) => {
+      // Arrange
+      await createUserRepository(db).upsert({
+        email: "jean.martin@univ-lorraine.fr",
+        name: "Martin",
+        firstname: "Jean",
+      });
+      const withEmail: KeycloakClaims = { ...orcidClaims, email: claims.email };
+      // Act
+      const res = await appWithClaims(db, withEmail).request("/probe");
+      // Assert
+      expect(res.status).toBe(403);
+    },
+  );
+
+  pgTest(
+    "should refuse an ORCID login without a username claim",
+    async ({ db }) => {
+      // Arrange
+      const withoutUsername: KeycloakClaims = {
+        sub: orcidClaims.sub,
+        identity_provider: "orcid",
+      };
+      // Act
+      const res = await appWithClaims(db, withoutUsername).request("/probe");
+      // Assert
+      expect(res.status).toBe(403);
     },
   );
 });

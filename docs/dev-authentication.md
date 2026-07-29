@@ -48,6 +48,10 @@ can link to an existing institution account.
 | Camille Petit  | `camille.petit`          | —                     |
 | Luc Moreau     | `luc.moreau`             | —                     |
 
+An ORCID sign-in only reaches the app once an account declared that ORCID iD:
+sign in through the institution first and set it on the Settings page, then the
+ORCID login resolves to the same account (ADR 0020).
+
 Every seed (`make db-seed`, `make db-seed-demo`, the E2E reset) gives each
 sample exactly one owner: the researcher its `owner` key names in the seed data
 (round-robin for the demo set). Sign in as any researcher to see their own

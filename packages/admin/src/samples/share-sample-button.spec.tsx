@@ -39,12 +39,14 @@ const curie: User = {
   email: "marie.curie@univ-lorraine.fr",
   name: "Curie",
   firstname: "Marie",
+  orcid: null,
 };
 const dupont: User = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3402",
   email: "pierre.dupont@univ-lorraine.fr",
   name: "Dupont",
   firstname: "Pierre",
+  orcid: null,
 };
 
 function fakeApi({

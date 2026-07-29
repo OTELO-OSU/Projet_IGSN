@@ -15,7 +15,7 @@ export function searchUsers(
 ): Promise<User[]> {
   const others = db
     .selectFrom("user")
-    .select(["id", "email", "name", "firstname"])
+    .select(["id", "email", "name", "firstname", "orcid"])
     .where("id", "!=", callerId);
   if (query === undefined) {
     return others.orderBy("email").limit(BROWSE_LIMIT).execute();
