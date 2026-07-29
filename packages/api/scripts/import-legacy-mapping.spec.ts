@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   type LegacyRow,
+  droppedDoiLinks,
   isKnownMaterialPath,
   mapAge,
   mapCollectionMethod,
   mapCountry,
+  mapDoiLink,
   mapElevation,
   mapMaterial,
   mapResourceType,
@@ -61,6 +63,7 @@ function legacyRow(overrides: Partial<LegacyRow> = {}): LegacyRow {
     owner_email: null,
     owner_first_name: null,
     owner_last_name: null,
+    doi_related_resources: [],
     ...overrides,
   };
 }
@@ -375,6 +378,48 @@ describe("mapAge", () => {
   });
 });
 
+describe("mapDoiLink", () => {
+  it("should map a known citation to its verified DOI, keeping the citation as description", () => {
+    const citation =
+      "James, D.E., Boyd, F.R., Schutt, R., Bell, D.R., Carlson, R.W., (2004). Xenoltih constraints on seismic velocities.";
+    expect(mapDoiLink(citation)).toEqual({
+      url: "https://doi.org/10.1029/2003GC000551",
+      description: citation,
+    });
+  });
+
+  it("should map a bare DOI url with no description", () => {
+    expect(mapDoiLink("https://doi.org/10.17600/18002387")).toEqual({
+      url: "https://doi.org/10.17600/18002387",
+      description: null,
+    });
+  });
+
+  it("should override a fabricated per-sample DOI with the group's verified one", () => {
+    const citation =
+      "Boudier,F., Baronnet,A., Mainprice,D., Serpentine Mineral Replacements of Natural Olivine, Journal of Petrology, doi: 10.1093/petrology/egp107";
+    expect(mapDoiLink(citation)).toEqual({
+      url: "https://doi.org/10.1093/petrology/egp049",
+      description: citation,
+    });
+  });
+
+  it("should return null for a citation outside the reviewed groups", () => {
+    expect(mapDoiLink("Smith, J. (1999). Some unreviewed paper.")).toBeNull();
+  });
+});
+
+describe("droppedDoiLinks", () => {
+  it("should return only the citations outside the reviewed groups", () => {
+    expect(
+      droppedDoiLinks([
+        "https://doi.org/10.17600/18002387",
+        "Smith, J. (1999). Some unreviewed paper.",
+      ]),
+    ).toEqual(["Smith, J. (1999). Some unreviewed paper."]);
+  });
+});
+
 describe("toCreateSample", () => {
   it("should produce a valid create payload for a realistic row", () => {
     const row = legacyRow({
@@ -400,6 +445,38 @@ describe("toCreateSample", () => {
     expect(result).toMatchObject({
       success: true,
       data: { nature: "inapplicable" },
+    });
+  });
+
+  it("should keep the sample, without links, when its only citation is unreviewed", () => {
+    const row = legacyRow({
+      doi_related_resources: ["Smith, J. (1999). Some unreviewed paper."],
+    });
+    const result = createSampleSchema.safeParse(toCreateSample(row));
+    expect(result.success).toBe(true);
+    expect(result.data?.links).toBeUndefined();
+  });
+
+  it("should carry the DOI links, deduplicated by url", () => {
+    const row = legacyRow({
+      doi_related_resources: [
+        "https://doi.org/10.17600/18002387",
+        "https://doi.org/10.17600/18002387",
+        "James, D.E., Boyd, F.R., Schutt, R., Bell, D.R., Carlson, R.W., (2004). Xenoltih constraints on seismic velocities.",
+      ],
+    });
+    const result = createSampleSchema.safeParse(toCreateSample(row));
+    expect(result).toMatchObject({
+      success: true,
+      data: {
+        links: [
+          { url: "https://doi.org/10.17600/18002387", description: null },
+          {
+            url: "https://doi.org/10.1029/2003GC000551",
+            description: expect.stringContaining("James, D.E."),
+          },
+        ],
+      },
     });
   });
 });
@@ -476,6 +553,17 @@ describe("unmappableValues", () => {
     },
   ] as const)("should flag $case", ({ overrides, expected }) => {
     expect(unmappableValues(goodRow(overrides))).toEqual([expected]);
+  });
+
+  it("should not flag a DOI related resource outside the reviewed groups", () => {
+    // The link is dropped and logged (see droppedDoiLinks), never the sample.
+    expect(
+      unmappableValues(
+        goodRow({
+          doi_related_resources: ["Smith, J. (1999). Some unreviewed paper."],
+        }),
+      ),
+    ).toEqual([]);
   });
 
   it("should not flag a physical-form resource type that maps to a nature", () => {

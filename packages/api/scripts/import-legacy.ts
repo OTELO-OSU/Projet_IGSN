@@ -10,6 +10,7 @@ import { createDb } from "../src/db.ts";
 import { conditionColumns } from "../src/sample/service/condition-columns.ts";
 import { descriptionColumns } from "../src/sample/service/description-columns.ts";
 import { economicInterestColumns } from "../src/sample/service/economic-interest-columns.ts";
+import { replaceSampleLinks } from "../src/sample/service/replace-sample-links.ts";
 import { scientificContextColumns } from "../src/sample/service/scientific-context-columns.ts";
 import { securityColumns } from "../src/sample/service/security-columns.ts";
 import { toAgeColumns } from "../src/sample/service/to-age-columns.ts";
@@ -17,6 +18,7 @@ import { locationColumns } from "../src/sample/service/to-location.ts";
 import {
   type LegacyOwner,
   type LegacyRow,
+  droppedDoiLinks,
   toCreateSample,
   toOwner,
   unmappableValues,
@@ -66,7 +68,13 @@ const LEGACY_QUERY = `
     ga.nom AS geological_age,
     au.email AS owner_email,
     au.first_name AS owner_first_name,
-    au.last_name AS owner_last_name
+    au.last_name AS owner_last_name,
+    (
+      SELECT coalesce(array_agg(rr.nom ORDER BY rr.id), '{}')
+      FROM igsn_relatedresource rr
+      JOIN igsn_identifiertype it ON it.id = rr."identifierType_id"
+      WHERE rr.resource_id = r.id AND it.nom = 'DOI'
+    ) AS doi_related_resources
   FROM igsn_resource r
   LEFT JOIN igsn_personnehasresource phr ON phr.resource_id = r.id
   LEFT JOIN igsn_personne p ON p.id = phr.user_id
@@ -141,10 +149,13 @@ async function main() {
   // (id) and the original creation time, so a rerun updates in place.
   const preserved = new Set(["id", "igsn", "created_at"]);
 
-  const summary = { read: 0, imported: 0, users: 0, linked: 0 };
+  const summary = { read: 0, imported: 0, users: 0, linked: 0, links: 0 };
   // One row per skipped sample and reason (a sample may fail several fields),
   // written to a CSV so the dropped values are easy to review and map later.
   const skipped: { igsn: string; reason: string; value: string }[] = [];
+  // DOI citations outside the reviewed groups: the sample imports without the
+  // link, and the citation is logged so it can be mapped on a later run.
+  const droppedLinks: { igsn: string; value: string }[] = [];
 
   try {
     const rows = (await legacy.unsafe(LEGACY_QUERY)) as unknown as LegacyRow[];
@@ -155,6 +166,10 @@ async function main() {
     // the fresh uuid), which the owner links must point at.
     const sampleIdByIgsn = new Map<string, string>();
     const ownerByIgsn = new Map<string, LegacyOwner>();
+    const linksByIgsn = new Map<
+      string,
+      NonNullable<ReturnType<typeof createSampleSchema.parse>["links"]>
+    >();
     const flush = async () => {
       if (batch.length === 0) return;
       const rowsToInsert = batch;
@@ -221,10 +236,24 @@ async function main() {
       }
       const owner = toOwner(row);
       if (owner) ownerByIgsn.set(igsn.data, owner);
+      if (parsed.data.links?.length)
+        linksByIgsn.set(igsn.data, parsed.data.links);
+      for (const value of droppedDoiLinks(row.doi_related_resources)) {
+        droppedLinks.push({ igsn: igsn.data, value });
+      }
       batch.push(toSampleRow(row, parsed.data, igsn.data));
       if (batch.length >= BATCH_SIZE) await flush();
     }
     await flush();
+
+    // DOI links live in sample_link, keyed by the stored sample id, so they
+    // insert after the upsert; replaceSampleLinks keeps a rerun idempotent.
+    for (const [igsn, links] of linksByIgsn) {
+      const sampleId = sampleIdByIgsn.get(igsn);
+      if (!sampleId) continue;
+      await replaceSampleLinks(db, sampleId, links);
+      summary.links += links.length;
+    }
 
     // Owners exist only through their samples: upsert each distinct email as a
     // user, then link it to the samples it owned in the legacy base.
@@ -273,6 +302,9 @@ async function main() {
   for (const { igsn, reason, value } of skipped) {
     console.info(`skipped\t${igsn}\t${reason}\t${value}`);
   }
+  for (const { igsn, value } of droppedLinks) {
+    console.info(`dropped_link\t${igsn}\t${value}`);
+  }
 
   const byReason: Record<string, number> = {};
   for (const { reason } of skipped)
@@ -280,6 +312,7 @@ async function main() {
   console.info("Legacy import complete:", {
     ...summary,
     skipped: summary.read - summary.imported,
+    droppedLinks: droppedLinks.length,
   });
   console.info("Skips by reason:", byReason);
 }

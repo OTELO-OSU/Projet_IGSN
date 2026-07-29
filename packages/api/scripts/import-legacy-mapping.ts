@@ -1,3 +1,4 @@
+import type { CreateSampleLink } from "@projet-igsn/domain/sample/link/model";
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 
@@ -56,6 +57,7 @@ export type LegacyRow = {
   owner_email: string | null;
   owner_first_name: string | null;
   owner_last_name: string | null;
+  doi_related_resources: string[];
 };
 
 const MATERIAL_PATH_SET = new Set(MATERIAL_PATHS);
@@ -235,6 +237,58 @@ export function mapResourceType(resourceType: string | null): {
     TYPE_SPECIALS[slug] ??
     null;
   return { type, nature };
+}
+
+// The legacy DOI-typed related resources are 19 citation groups, not usable
+// verbatim: most rows carry the full citation instead of a DOI, five groups
+// increment the DOI by one per sample (only the first resolves), one truncates
+// it, and the Cabanes 1988 run points at unrelated articles. So no extraction:
+// each group's prefix maps to its DOI, hand-verified against doi.org and
+// Crossref on 2026-07-29. A citation outside these groups drops the link, not
+// the sample, and is logged for review (see droppedDoiLinks); Dantas 2007, a
+// thesis with no DOI, is absent on purpose until the geologists decide.
+const DOI_URL_BY_CITATION_PREFIX: [string, string][] = [
+  ["Alard, O., Lorand, J.P., Reisberg", "10.1093/petrology/egr038"],
+  ["Baptiste, V., Tommasi,A. (2014)", "10.5194/se-5-1-2014"],
+  [
+    "Baptiste, V., Tommasi, A., Demouchy, S. (2012)",
+    "10.1016/j.lithos.2012.05.001",
+  ],
+  [
+    "Baptiste. V.. Tommasi. A.. Demouchy. S. (2012)",
+    "10.1016/j.lithos.2012.05.001",
+  ],
+  ["Boudier,F., Baronnet,A., Mainprice,D.", "10.1093/petrology/egp049"],
+  ["Cabanes,N., Mercier J.-C.C. (1988)", "10.3406/bulmi.1988.8071"],
+  ["Cabannes, N., Mercier, J.-C.C. (1988)", "10.1007/BF00379746"],
+  ["Chardelin, M., Tommasi, A., Padron-Navarta", "10.1093/petrology/egae081"],
+  ["Demouchy, S., Tommasi, A. 2021", "10.1016/j.epsl.2021.117159"],
+  ["Demouchy, S., Tommasi, A., Ionov", "10.1029/2018GC007931"],
+  ["https://doi.org/10.17600/18002387", "10.17600/18002387"],
+  ["James, D.E., Boyd, F.R., Schutt", "10.1029/2003GC000551"],
+  ["James. D.E.. Boyd. F.R.. Schutt", "10.1029/2003GC000551"],
+  ["Nicolas, A., Boudier, F., & Montigny", "10.1029/JB092iB01p00461"],
+  [
+    "Soustelle, V., Tommasi, A., Demouchy, S., Franz",
+    "10.1016/j.tecto.2013.09.024",
+  ],
+  ["Tommasi, A & Mameri, L. (2020)", "10.5281/zenodo.3754078"],
+  ["Tommasi, A., Mameri, L., & Godard", "10.1029/2020GC009138"],
+  ["Zaffarana, C., Tommasi, A., Vauchez", "10.1016/j.tecto.2014.02.017"],
+];
+
+export function mapDoiLink(value: string): CreateSampleLink | null {
+  const citation = value.trim();
+  const entry = DOI_URL_BY_CITATION_PREFIX.find(([prefix]) =>
+    citation.startsWith(prefix),
+  );
+  if (!entry) return null;
+  const url = `https://doi.org/${entry[1]}`;
+  return { url, description: citation === url ? null : citation };
+}
+
+export function droppedDoiLinks(values: string[]): string[] {
+  return values.filter((value) => !mapDoiLink(value));
 }
 
 const ORCID_RE = /^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/;
@@ -688,8 +742,20 @@ export function unmappableValues(row: LegacyRow): SkipIssue[] {
 // A legacy row -> the new create payload. Every field is best-effort: an
 // unmappable vocabulary value or missing part is simply left off, so the sample
 // still imports (validated by createSampleSchema in import-legacy.ts).
+// Several legacy rows can cite the same paper on one sample, so links dedupe
+// by url, first citation wins.
+function mapDoiLinks(values: string[]): CreateSampleLink[] {
+  const byUrl = new Map<string, CreateSampleLink>();
+  for (const value of values) {
+    const link = mapDoiLink(value);
+    if (link && !byUrl.has(link.url)) byUrl.set(link.url, link);
+  }
+  return [...byUrl.values()];
+}
+
 export function toCreateSample(row: LegacyRow): CreateSample {
   const { type, nature } = mapResourceType(row.resource_type);
+  const links = mapDoiLinks(row.doi_related_resources);
   return {
     name: row.name.trim(),
     nature,
@@ -702,6 +768,7 @@ export function toCreateSample(row: LegacyRow): CreateSample {
     description: mapDescription(row),
     scientificContext: mapScientificContext(row),
     age: mapAge(row),
+    ...(links.length > 0 ? { links } : {}),
   };
 }
 
