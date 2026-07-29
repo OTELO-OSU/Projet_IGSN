@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "react-oidc-context";
 
 import { fetchMe } from "./api.ts";
-import { shouldRetry } from "./http-error.ts";
 
 // The signed-in user's identity and stored ORCID, shared by the header, the
 // settings page, and the ORCID access gate (one ["me"] query for all three).
@@ -15,7 +14,5 @@ export function useGetMe() {
       return fetchMe(token);
     },
     enabled: Boolean(token),
-    // A 403 (unlinked ORCID login) is a verdict, not a blip: no retry.
-    retry: shouldRetry,
   });
 }
