@@ -17,6 +17,19 @@ install:								## Install dependencies
 	@pnpm install
 	@pnpm exec playwright install
 
+# Worktrees always land in worktrees/, because .devcontainer/worktree derives the
+# repo root from that fixed depth (../..) to keep git working in the container.
+WT = worktrees/$(subst /,-,$(BRANCH))
+create-worktree:							## Create worktrees/<branch> for BRANCH=<name>, branching if it is new
+	@test -n "$(BRANCH)" || { echo "usage: make create-worktree BRANCH=feat/my-thing"; exit 1; }
+	@if git show-ref --verify --quiet refs/heads/$(BRANCH); then \
+		git worktree add $(WT) $(BRANCH); \
+	else \
+		git worktree add $(WT) -b $(BRANCH); \
+	fi
+	@$(MAKE) -C $(WT) install
+	@printf '\nnow run: code %s   (Reopen in Container, pick "Projet IGSN (worktree)")\n' $(WT)
+
 lint: generate
 	@pnpm lint:apply
 	@pnpm fmt:apply
