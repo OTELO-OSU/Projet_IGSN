@@ -15,7 +15,7 @@ samples are browsable alongside newly-declared ones.
 
 The two schemas differ sharply. The old side is one wide `igsn_resource` table
 plus many lookup tables; the new side is `sample` with vocabularies stored as
-domain codes/ltree paths validated by Zod, no users, no sub-sample hierarchy.
+domain codes/ltree paths validated by Zod, no sub-sample hierarchy.
 Two facts force decisions that constrain the code:
 
 - The new `igsn` column normally holds a 26-char Crockford base32 suffix derived
@@ -49,6 +49,15 @@ fields; a row missing them is still a real published sample.
 throwaway `legacy_import` database (loaded by `make db-import-legacy`, dropped
 after) and upserts on `igsn`, so a rerun updates in place, preserving the row's
 `id` and `created_at`.
+
+**Legacy owners become users.** Each imported sample keeps its owner, reached
+through `igsn_personnehasresource` -> `igsn_personne` -> `auth_user` (exactly
+one owner per sample in the dump). The owner's `email`, `first_name` and
+`last_name` land in `user` (upserted by email) with a `user_sample` link; blank
+names become null. An account owning no imported sample is not created, and
+credentials, username and Django flags are dropped (authentication moved to
+Keycloak). The owner is not the collector; `collector` stays a free-text field
+on the sample.
 
 ### Field mapping (legacy -> new)
 
@@ -134,8 +143,9 @@ in without duplicates.
 collection date is date-only), `platform*` and `launch*`, `landingPage`,
 `prefix_id` (already inside `resourceIdentifier`), and the
 `relatedresource` / `relationtype` (not DOI links), `coredresource` (interval
-depths), `personne`, `alternateidentifier`, `logdate` and `geologicalage`
-stage-code tables, plus old users/auth and sub-sample parent links.
+depths), `alternateidentifier`, `logdate` and `geologicalage` stage-code
+tables, the auth tables beyond the owner's email and names (authentication
+moved to Keycloak), and sub-sample parent links.
 `docs/legacy-import-mapping.xlsx` lists them column by column with the reason.
 
 ### Ignored samples (not imported)

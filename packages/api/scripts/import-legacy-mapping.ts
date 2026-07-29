@@ -53,6 +53,9 @@ export type LegacyRow = {
   age_unit: string | null;
   geological_unit: string | null;
   geological_age: string | null;
+  owner_email: string | null;
+  owner_first_name: string | null;
+  owner_last_name: string | null;
 };
 
 const MATERIAL_PATH_SET = new Set(MATERIAL_PATHS);
@@ -706,5 +709,22 @@ export function toCreateSample(row: LegacyRow): CreateSample {
     description: mapDescription(row),
     scientificContext: mapScientificContext(row),
     age: mapAge(row),
+  };
+}
+
+export type LegacyOwner = {
+  email: string;
+  firstname: string | null;
+  name: string | null;
+};
+
+// The legacy owner account, or null when the row carries none.
+export function toOwner(row: LegacyRow): LegacyOwner | null {
+  const email = clean(row.owner_email);
+  if (!email) return null;
+  return {
+    email,
+    firstname: clean(row.owner_first_name),
+    name: clean(row.owner_last_name),
   };
 }

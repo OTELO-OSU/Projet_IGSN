@@ -15,8 +15,10 @@ import { securityColumns } from "../src/sample/service/security-columns.ts";
 import { toAgeColumns } from "../src/sample/service/to-age-columns.ts";
 import { locationColumns } from "../src/sample/service/to-location.ts";
 import {
+  type LegacyOwner,
   type LegacyRow,
   toCreateSample,
+  toOwner,
   unmappableValues,
 } from "./import-legacy-mapping.ts";
 
@@ -61,8 +63,14 @@ const LEGACY_QUERY = `
     g."ageMax" AS age_max,
     g."ageUnit" AS age_unit,
     g."geologicalUnit" AS geological_unit,
-    ga.nom AS geological_age
+    ga.nom AS geological_age,
+    au.email AS owner_email,
+    au.first_name AS owner_first_name,
+    au.last_name AS owner_last_name
   FROM igsn_resource r
+  LEFT JOIN igsn_personnehasresource phr ON phr.resource_id = r.id
+  LEFT JOIN igsn_personne p ON p.id = phr.user_id
+  LEFT JOIN auth_user au ON au.id = p.user_id
   LEFT JOIN igsn_material m ON m.id = r.material_id
   LEFT JOIN igsn_classification c ON c.id = r.classification_id
   LEFT JOIN igsn_collectionmethod cm ON cm.id = r."collectionMethod_id"
@@ -133,7 +141,7 @@ async function main() {
   // (id) and the original creation time, so a rerun updates in place.
   const preserved = new Set(["id", "igsn", "created_at"]);
 
-  const summary = { read: 0, imported: 0 };
+  const summary = { read: 0, imported: 0, users: 0, linked: 0 };
   // One row per skipped sample and reason (a sample may fail several fields),
   // written to a CSV so the dropped values are easy to review and map later.
   const skipped: { igsn: string; reason: string; value: string }[] = [];
@@ -143,13 +151,17 @@ async function main() {
     summary.read = rows.length;
 
     let batch: ReturnType<typeof toSampleRow>[] = [];
+    // The upsert returns the stored id (the old one on a rerun conflict, not
+    // the fresh uuid), which the owner links must point at.
+    const sampleIdByIgsn = new Map<string, string>();
+    const ownerByIgsn = new Map<string, LegacyOwner>();
     const flush = async () => {
       if (batch.length === 0) return;
       const rowsToInsert = batch;
       const updatable = (
         Object.keys(rowsToInsert[0]!) as (keyof DB["sample"])[]
       ).filter((column) => !preserved.has(column));
-      await db
+      const stored = await db
         .insertInto("sample")
         .values(rowsToInsert)
         .onConflict((oc) =>
@@ -164,7 +176,9 @@ async function main() {
               ),
             ),
         )
+        .returning(["id", "igsn"])
         .execute();
+      for (const { id, igsn } of stored) if (igsn) sampleIdByIgsn.set(igsn, id);
       summary.imported += rowsToInsert.length;
       batch = [];
     };
@@ -205,10 +219,50 @@ async function main() {
         });
         continue;
       }
+      const owner = toOwner(row);
+      if (owner) ownerByIgsn.set(igsn.data, owner);
       batch.push(toSampleRow(row, parsed.data, igsn.data));
       if (batch.length >= BATCH_SIZE) await flush();
     }
     await flush();
+
+    // Owners exist only through their samples: upsert each distinct email as a
+    // user, then link it to the samples it owned in the legacy base.
+    const owners = new Map(
+      [...ownerByIgsn.values()].map((owner) => [owner.email, owner]),
+    );
+    if (owners.size > 0) {
+      const users = await db
+        .insertInto("user")
+        .values(
+          [...owners.values()].map((owner) => ({ id: uuidv7(), ...owner })),
+        )
+        .onConflict((oc) =>
+          oc.column("email").doUpdateSet((eb) => ({
+            name: eb.ref("excluded.name"),
+            firstname: eb.ref("excluded.firstname"),
+          })),
+        )
+        .returning(["id", "email"])
+        .execute();
+      summary.users = users.length;
+      const userIdByEmail = new Map(users.map((u) => [u.email, u.id]));
+      const links = [...ownerByIgsn.entries()].flatMap(([igsn, owner]) => {
+        const sampleId = sampleIdByIgsn.get(igsn);
+        const userId = userIdByEmail.get(owner.email);
+        return sampleId && userId
+          ? [{ user_id: userId, sample_id: sampleId }]
+          : [];
+      });
+      for (let i = 0; i < links.length; i += BATCH_SIZE) {
+        await db
+          .insertInto("user_sample")
+          .values(links.slice(i, i + BATCH_SIZE))
+          .onConflict((oc) => oc.columns(["user_id", "sample_id"]).doNothing())
+          .execute();
+      }
+      summary.linked = links.length;
+    }
   } finally {
     await legacy.end();
     await db.destroy();

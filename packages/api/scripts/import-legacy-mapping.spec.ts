@@ -13,6 +13,7 @@ import {
   mapSize,
   parseCollector,
   toCreateSample,
+  toOwner,
   unmappableValues,
 } from "./import-legacy-mapping.ts";
 
@@ -57,6 +58,9 @@ function legacyRow(overrides: Partial<LegacyRow> = {}): LegacyRow {
     age_unit: null,
     geological_unit: null,
     geological_age: null,
+    owner_email: null,
+    owner_first_name: null,
+    owner_last_name: null,
     ...overrides,
   };
 }
@@ -484,4 +488,37 @@ describe("unmappableValues", () => {
       { field: "country", value: "Neverland" },
     ]);
   });
+});
+
+describe("toOwner", () => {
+  it("should map the owner email and names", () => {
+    expect(
+      toOwner(
+        legacyRow({
+          owner_email: "jane.doe@cnrs.fr",
+          owner_first_name: "Jane",
+          owner_last_name: "Doe",
+        }),
+      ),
+    ).toEqual({ email: "jane.doe@cnrs.fr", firstname: "Jane", name: "Doe" });
+  });
+
+  it("should null blank names", () => {
+    expect(
+      toOwner(
+        legacyRow({
+          owner_email: "lab@cnrs.fr",
+          owner_first_name: "",
+          owner_last_name: " ",
+        }),
+      ),
+    ).toEqual({ email: "lab@cnrs.fr", firstname: null, name: null });
+  });
+
+  it.each([null, "", "  "])(
+    "should return null when the email is %j",
+    (email) => {
+      expect(toOwner(legacyRow({ owner_email: email }))).toBeNull();
+    },
+  );
 });
