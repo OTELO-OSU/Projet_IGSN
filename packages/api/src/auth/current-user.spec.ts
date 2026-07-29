@@ -126,9 +126,9 @@ describe("currentUser", () => {
     },
   );
 
-  // The first-broker-login profile step makes the user type an email, so an
-  // ORCID token can carry one. It must never reach the email upsert: a typed
-  // email matching an existing account would hand that account over.
+  // An ORCID token carrying an email (broker config drift, a future flow) must
+  // never reach the email upsert: a user-controlled email matching an existing
+  // account would hand that account over.
   pgTest(
     "should refuse an unlinked ORCID login even when its token carries an email",
     async ({ db }) => {

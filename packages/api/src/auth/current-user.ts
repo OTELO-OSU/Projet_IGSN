@@ -18,8 +18,8 @@ export function currentUser(
   return async (c, next) => {
     const claims = c.get("jwtPayload");
     // ORCID logins resolve strictly by the stored orcid (Keycloak brokers the
-    // account with username = ORCID iD) and never reach the email upsert: the
-    // profile step lets the user type any email, so upserting by it would hand
+    // account with username = ORCID iD) and never reach the email upsert: a
+    // broker-supplied email is user-controlled, so upserting by it would hand
     // over the matching account (ADR 0020). Unlinked ORCIDs get no account.
     if (claims.identity_provider === "orcid") {
       const user = claims.preferred_username

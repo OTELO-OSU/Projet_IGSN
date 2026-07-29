@@ -33,7 +33,9 @@
           "value": "${KEYCLOAK_PASSWORD:password}",
           "temporary": false
         }
-      ]
+      ],
+      "email": "sophie.bernard@example.org",
+      "emailVerified": true
     },
     {
       "username": "0000-0001-5109-3700",
@@ -46,7 +48,9 @@
           "value": "${KEYCLOAK_PASSWORD:password}",
           "temporary": false
         }
-      ]
+      ],
+      "email": "marie.dupont@example.org",
+      "emailVerified": true
     },
     {
       "username": "0000-0002-1694-2333",
@@ -59,7 +63,9 @@
           "value": "${KEYCLOAK_PASSWORD:password}",
           "temporary": false
         }
-      ]
+      ],
+      "email": "jean.martin@example.org",
+      "emailVerified": true
     }
   ]
 }

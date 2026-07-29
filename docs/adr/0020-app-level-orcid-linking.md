@@ -23,9 +23,12 @@ The link is a nullable, unique `orcid` column on the `user` table.
 - An ORCID sign-in resolves strictly by this column: `currentUser` looks up the
   token's `preferred_username` (Keycloak brokers ORCID accounts with the iD as
   username) and refuses the request when no user declared it. This branch runs
-  BEFORE the email upsert: the first-broker-login profile step lets the user
-  type any email, so upserting by it would hand over the matching account.
-  ORCID logins never provision or refresh a local user.
+  BEFORE the email upsert: a broker-supplied email is user-controlled, so
+  upserting by it would hand over the matching account. ORCID logins never
+  provision or refresh a local user.
+- The `orcid` broker uses a dedicated first-broker-login flow with no
+  review-profile step: the Keycloak shell account is created silently, without
+  an email, because nothing in the app reads it.
 - The unique constraint is the single arbiter of "one ORCID, one account";
   `setOrcid` maps a taken iD to a 409.
 

@@ -51,9 +51,6 @@ test.describe("authentication", () => {
     await admin.signInWithOrcid();
 
     await orcidLoginPage(page).login("0000-0002-1825-0097", "password");
-    await keycloakProfilePage(page).completeIfShown(
-      "sophie.bernard@univ-lorraine.fr",
-    );
 
     await admin.expectNoAccess();
 
@@ -65,12 +62,9 @@ test.describe("authentication", () => {
   });
 
   // The full link-then-login journey: declare the ORCID iD in Settings while
-  // signed in through the institution, then sign in with ORCID alone. Marie,
-  // not Sophie: Keycloak persists across tests, and the denied-access test
-  // above already claims sophie's email for an ORCID-brokered account, which
-  // would push her institution first-broker-login onto the duplicate-email
-  // conflict page. The ORCID shell account gets a unique email for the same
-  // reason; the app never reads it (login resolves by the orcid column).
+  // signed in through the institution, then sign in with ORCID alone. The
+  // ORCID first-broker-login asks nothing (no review-profile step); the api
+  // resolves the session by the declared orcid column alone.
   test("a researcher links their ORCID and signs in with it", async ({
     page,
   }) => {
@@ -90,9 +84,6 @@ test.describe("authentication", () => {
     await admin.signOut();
     await admin.signInWithOrcid();
     await orcidLoginPage(page).login("0000-0001-5109-3700", "password");
-    await keycloakProfilePage(page).completeIfShown(
-      "marie.dupont.orcid@univ-lorraine.fr",
-    );
 
     await admin.expectSignedIn();
     await admin.expectUserName("Marie Dupont");
