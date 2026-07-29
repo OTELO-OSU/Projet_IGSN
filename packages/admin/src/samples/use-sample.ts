@@ -23,7 +23,7 @@ export async function parseSampleResponse(res: Response) {
     throw new ForbiddenError();
   }
   if (!res.ok) {
-    throw new HttpError(res.status, `Failed to load sample (${res.status})`);
+    throw HttpError.fromResponse(res, `Failed to load sample (${res.status})`);
   }
   return sampleResponseSchema.parse(await res.json()).data;
 }

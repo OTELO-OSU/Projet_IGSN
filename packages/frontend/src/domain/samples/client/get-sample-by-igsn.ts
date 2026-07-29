@@ -2,11 +2,11 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 
-import { baseApiUrl } from "#/api.ts";
+import { apiFetch, baseApiUrl } from "#/api.ts";
 
 export async function getSampleByIgsn(
   igsn: string,
-  fetchFn: typeof fetch = fetch,
+  fetchFn: typeof fetch = apiFetch,
 ): Promise<Sample | null> {
   const res = await fetchFn(new URL(`samples/${igsn}`, baseApiUrl));
   if (res.status === 404) {

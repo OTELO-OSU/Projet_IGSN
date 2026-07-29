@@ -85,7 +85,6 @@ describe("SampleAttachments", () => {
 
     await expect.element(screen.getByText("a.csv")).toBeVisible();
     await expect.element(screen.getByText("b.csv")).toBeVisible();
-    // Staged files carry a badge telling them apart from saved attachments.
     expect(screen.getByText("New").all()).toHaveLength(2);
     expect(FakeXhr.instances).toHaveLength(0);
   });
@@ -150,10 +149,8 @@ describe("SampleAttachments", () => {
     expect(FakeXhr.instances[0]!.url).toContain(
       `admin/samples/${SAMPLE_ID}/attachments`,
     );
-    // No way to dismiss the dialog while uploads are running.
     expect(screen.getByRole("button", { name: "Confirm" }).query()).toBeNull();
 
-    // The dialog stays open on the recap until the user confirms it.
     FakeXhr.instances.forEach((xhr) => xhr.finish());
     await expect.element(dialog).toHaveTextContent("Uploaded");
     await screen.getByRole("button", { name: "Confirm" }).click();
@@ -167,7 +164,6 @@ describe("SampleAttachments", () => {
     await screen.getByLabelText("Browse files").upload([file("a.csv")]);
     await screen.getByLabelText("Description of a.csv").fill("Raw data");
 
-    // Edited locally, nothing sent yet.
     expect(FakeXhr.instances).toHaveLength(0);
 
     await screen.getByRole("button", { name: "Save" }).click();
@@ -201,7 +197,6 @@ describe("SampleAttachments", () => {
     FakeXhr.instances[0]!.finish();
     FakeXhr.instances[1]!.finish(500);
 
-    // The dialog stays open with the recap until the user closes it.
     const dialog = screen.getByRole("dialog");
     await expect.element(dialog).toHaveTextContent("a.csv");
     await expect.element(dialog).toHaveTextContent("Uploaded");
@@ -209,14 +204,189 @@ describe("SampleAttachments", () => {
     await expect.element(dialog).toHaveTextContent("Could not upload.");
     await screen.getByRole("button", { name: "Confirm" }).click();
 
-    // The uploaded file left the staging list; the failed one stays, flagged.
     expect(screen.getByText("a.csv").query()).toBeNull();
     await expect.element(screen.getByText("b.csv")).toBeVisible();
     await expect.element(screen.getByText("Could not upload.")).toBeVisible();
 
-    // Saving again retries only the failed file.
     await screen.getByRole("button", { name: "Save" }).click();
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(3));
+  });
+
+  // The api caps attachment uploads per user (RATE_LIMIT_ADMIN_ATTACHMENT_CREATE),
+  // so a legitimate multi-file drop can overflow the budget. The overflow waits
+  // out the server's Retry-After instead of being reported as a failure.
+  describe("when the upload budget refuses a file", () => {
+    beforeEach(() => {
+      // setTimeout only: faking Date, performance and rAF as well would trip
+      // React and the Radix dialog.
+      vi.useFakeTimers({ toFake: ["setTimeout"] });
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("should hold the file until Retry-After elapses, then upload it", async () => {
+      const screen = await renderAttachments([]);
+
+      await screen
+        .getByLabelText("Browse files")
+        .upload([file("a.csv"), file("b.csv")]);
+      await screen.getByRole("button", { name: "Save" }).click();
+      await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(2));
+
+      FakeXhr.instances[0]!.finish();
+      // The api's real window, far from the 1s fallback retryAfterMs uses when
+      // the header is unreadable: a client that cannot see it retries early and
+      // fails the wait assertion below.
+      FakeXhr.instances[1]!.finish(429, JSON.stringify({ error: "Too many" }), {
+        "Retry-After": "60",
+      });
+
+      await vi.waitFor(() =>
+        expect(
+          screen.getByText("Waiting for the upload limit").query(),
+        ).not.toBeNull(),
+      );
+      await vi.advanceTimersByTimeAsync(30_000);
+      expect(FakeXhr.instances).toHaveLength(2);
+
+      await vi.advanceTimersByTimeAsync(30_000);
+      await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(3));
+      FakeXhr.instances[2]!.finish();
+
+      await vi.waitFor(() =>
+        expect(screen.getByText("Uploaded").all()).toHaveLength(2),
+      );
+      expect(screen.getByText("Could not upload.").query()).toBeNull();
+      expect(
+        screen.getByText("Upload limit reached. Try again shortly.").query(),
+      ).toBeNull();
+    });
+
+    // The dialog cannot be dismissed and shows no footer while a file waits, so
+    // without an announcement a screen-reader user cannot tell waiting from hung.
+    it("should announce the wait, keeping a busy indicator", async () => {
+      const screen = await renderAttachments([]);
+
+      await screen.getByLabelText("Browse files").upload([file("a.csv")]);
+      await screen.getByRole("button", { name: "Save" }).click();
+      await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+      FakeXhr.instances[0]!.finish(429, undefined, { "Retry-After": "60" });
+
+      const list = screen.getByRole("dialog").getByRole("list");
+      await expect.element(list).toHaveAttribute("aria-live", "polite");
+      await expect
+        .element(list)
+        .toHaveTextContent("Waiting for the upload limit");
+      // Sighted users keep a busy affordance: an indeterminate bar, carrying no
+      // value and no role of its own since the announced label says it all.
+      expect(
+        list.element().querySelector("progress:not([value])"),
+      ).not.toBeNull();
+    });
+
+    // What a cross-origin browser sees if the api ever stops exposing the
+    // header: the client must still pace itself rather than hammer the api.
+    it("should wait a second when Retry-After is unreadable", async () => {
+      const screen = await renderAttachments([]);
+
+      await screen.getByLabelText("Browse files").upload([file("a.csv")]);
+      await screen.getByRole("button", { name: "Save" }).click();
+      await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+      FakeXhr.instances[0]!.finish(429);
+
+      await vi.advanceTimersByTimeAsync(500);
+      expect(FakeXhr.instances).toHaveLength(1);
+
+      await vi.advanceTimersByTimeAsync(500);
+      await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(2));
+    });
+
+    it("should report a rate-limited upload once the retries run out", async () => {
+      const screen = await renderAttachments([]);
+
+      await screen.getByLabelText("Browse files").upload([file("a.csv")]);
+      await screen.getByRole("button", { name: "Save" }).click();
+
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(attempt));
+        // Lowercase, as a real response carries it, and clear of the 1s
+        // fallback: a case-sensitive lookup would miss the header, fall back,
+        // and have retried by the check below.
+        FakeXhr.instances[attempt - 1]!.finish(429, undefined, {
+          "retry-after": "5",
+        });
+        await vi.advanceTimersByTimeAsync(2000);
+        expect(FakeXhr.instances).toHaveLength(attempt);
+
+        await vi.advanceTimersByTimeAsync(3000);
+      }
+
+      await vi.waitFor(() =>
+        expect(
+          screen.getByText("Upload limit reached. Try again shortly.").query(),
+        ).not.toBeNull(),
+      );
+      expect(FakeXhr.instances).toHaveLength(3);
+    });
+
+    // Retry-After may also be an HTTP date (RFC 9110): Cloudflare or Caddy can
+    // refuse before the api does. Read as unparseable, the client would wake a
+    // second later and burn its retries against a window still closed.
+    it("should honour an HTTP-date Retry-After", async () => {
+      const screen = await renderAttachments([]);
+
+      await screen.getByLabelText("Browse files").upload([file("a.csv")]);
+      await screen.getByRole("button", { name: "Save" }).click();
+      await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+      FakeXhr.instances[0]!.finish(429, undefined, {
+        "Retry-After": new Date(Date.now() + 5000).toUTCString(),
+      });
+
+      // Whole-second precision, so the real delay is just under five seconds.
+      await vi.advanceTimersByTimeAsync(3500);
+      expect(FakeXhr.instances).toHaveLength(1);
+
+      await vi.advanceTimersByTimeAsync(2000);
+      await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(2));
+    });
+
+    // The dialog has no close button while a file is queued, so a window wider
+    // than the queue budget must not be waited out at all.
+    it("should give up at once when the wait outlasts the queue budget", async () => {
+      const screen = await renderAttachments([]);
+
+      await screen.getByLabelText("Browse files").upload([file("a.csv")]);
+      await screen.getByRole("button", { name: "Save" }).click();
+      await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+      FakeXhr.instances[0]!.finish(429, undefined, { "Retry-After": "600" });
+
+      await expect
+        .element(screen.getByText("Upload limit reached. Try again shortly."))
+        .toBeVisible();
+      // Settled, so the recap is dismissable instead of locked for ten minutes.
+      await expect
+        .element(screen.getByRole("button", { name: "Confirm" }))
+        .toBeVisible();
+      expect(FakeXhr.instances).toHaveLength(1);
+    });
+
+    it("should add no delay to a drop that fits in the budget", async () => {
+      const onCommit = vi.fn();
+      const screen = await renderAttachments([], onCommit);
+
+      await screen
+        .getByLabelText("Browse files")
+        .upload([file("a.csv"), file("b.csv")]);
+      await screen.getByRole("button", { name: "Save" }).click();
+      await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(2));
+      FakeXhr.instances.forEach((xhr) => xhr.finish());
+
+      // No timer is ever advanced: the happy path must not wait on one.
+      await vi.waitFor(() => expect(onCommit).toHaveBeenCalled());
+      expect(onCommit.mock.calls[0]![0]).toHaveLength(2);
+    });
   });
 
   it("should list the saved attachments", async () => {
@@ -263,7 +433,6 @@ describe("SampleAttachments", () => {
       .getByRole("button", { name: "Delete measurements.csv" })
       .click();
 
-    // Marked, flagged, but nothing sent and nothing committed yet.
     await expect
       .element(screen.getByText("Will be deleted on save."))
       .toBeVisible();

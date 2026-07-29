@@ -327,6 +327,8 @@
   "attachment_uploading": "Uploading {name}",
   "attachment_uploaded": "Uploaded",
   "attachment_upload_failed": "Could not upload.",
+  "attachment_upload_queued": "Waiting for the upload limit",
+  "attachment_upload_rate_limited": "Upload limit reached. Try again shortly.",
   "attachment_upload_dialog_title": "Uploading files",
   "attachment_upload_dialog_description": "Files are uploaded before the sample is saved.",
   "attachment_too_large": "{name} exceeds the 100 MB limit.",

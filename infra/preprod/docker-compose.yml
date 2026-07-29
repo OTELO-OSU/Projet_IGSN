@@ -73,6 +73,10 @@ services:
       # fetched over the compose network from the keycloak service directly.
       OIDC_ISSUER: "https://igsn-auth.${DOMAIN}/realms/igsn"
       OIDC_JWKS_URI: "http://keycloak:8080/realms/igsn/protocol/openid-connect/certs"
+      # Key the per-IP rate limit on the X-Real-IP Caddy sets from
+      # Cf-Connecting-IP. Only safe because nothing but Caddy can reach this
+      # service: no port is published.
+      TRUST_PROXY_HEADERS: "true"
       # Uploaded sample attachments (ADR 0017); a named volume so blobs
       # survive image redeploys. A Ceph mount will take over this path.
       ATTACHMENTS_DIR: /data/attachments
@@ -146,7 +150,12 @@ services:
     restart: unless-stopped
     environment:
       PORT: "8080"
-      API_URL: "https://igsn-api.${DOMAIN}"
+      # Compose network, not the public URL: hairpinning out through Cloudflare
+      # and back in through Caddy would overwrite the visitor X-Real-IP this
+      # container forwards with the host's own address, and the per-IP rate limit
+      # would bill every reader to one bucket. Safe because nothing renders
+      # API_URL into HTML (links-view.tsx uses VITE_API_URL for browser hrefs).
+      API_URL: http://api:8080
     healthcheck: *healthcheck
 
   # Edge: terminates TLS with the Cloudflare Origin CA cert (mounted from the
