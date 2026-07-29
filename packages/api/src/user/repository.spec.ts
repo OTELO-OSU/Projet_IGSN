@@ -100,9 +100,11 @@ describe("createUserRepository", () => {
     async ({ db }) => {
       // Arrange
       const repository = createUserRepository(db);
-      const holder = await insertUser(db, "holder@univ-lorraine.fr", {
-        orcid: "0000-0002-1825-0097",
-      });
+      const holder = await insertUser(
+        db,
+        "holder@univ-lorraine.fr",
+        "0000-0002-1825-0097",
+      );
       const user = await repository.upsert(claims);
       // Act
       const refused = await repository.setOrcid(user.id, "0000-0002-1825-0097");

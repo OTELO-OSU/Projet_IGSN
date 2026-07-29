@@ -1,14 +1,10 @@
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
-import { orcidSchema } from "@projet-igsn/domain/user/orcid";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { z } from "zod";
 
 import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
-
-const setOrcidResponseSchema = z.object({ orcid: orcidSchema.nullable() });
 
 export function useSetOrcid() {
   const apiFetch = useApiClient();
@@ -23,7 +19,6 @@ export function useSetOrcid() {
       if (!res.ok) {
         throw new HttpError(res.status, `Failed to set ORCID (${res.status})`);
       }
-      return setOrcidResponseSchema.parse(await res.json()).orcid;
     },
     onSuccess: () => {
       toast.success(m.settings_orcid_saved());

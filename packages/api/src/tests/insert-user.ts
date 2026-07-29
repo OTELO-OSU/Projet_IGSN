@@ -7,7 +7,7 @@ import { type Transactional } from "../transaction.ts";
 export function insertUser(
   db: Transactional<DB>,
   email: string,
-  { orcid = null }: { orcid?: string | null } = {},
+  orcid: string | null = null,
 ): Promise<{ id: string }> {
   return db
     .insertInto("user")

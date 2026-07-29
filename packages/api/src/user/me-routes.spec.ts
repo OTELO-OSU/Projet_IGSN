@@ -59,9 +59,7 @@ describe("me routes", () => {
     "should answer 409 when another user holds the orcid",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "holder@univ-lorraine.fr", {
-        orcid: "0000-0002-1825-0097",
-      });
+      await insertUser(db, "holder@univ-lorraine.fr", "0000-0002-1825-0097");
       // Act
       const res = await testClient(createApp(db)).admin.me.orcid.$put(
         { json: { orcid: "0000-0002-1825-0097" } },
