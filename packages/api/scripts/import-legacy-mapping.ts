@@ -144,9 +144,17 @@ const MATERIAL_SPECIALS: Record<string, string> = {
 // The legacy classification path slugged and rooted under `rock` for the rock
 // families, e.g. `Igneous>Volcanic>Mafic` -> `rock.igneous.volcanic.mafic`,
 // then remapped when the legacy leaf sits elsewhere in the new tree.
+// The legacy `Xenolithic` root mirrors the igneous and metamorphic families, so
+// it roots at `rock.xenolithic_rock` and its inner family path goes through the
+// same MATERIAL_SPECIALS remaps before being re-prefixed.
 function classificationCandidate(classification: string): string {
   const path = slugPath(classification);
-  const root = path.split(".")[0] ?? "";
+  const [root = "", ...rest] = path.split(".");
+  if (root === "xenolithic") {
+    const inner = ["rock", ...rest].join(".");
+    const remapped = MATERIAL_SPECIALS[inner] ?? inner;
+    return ["rock.xenolithic_rock", ...remapped.split(".").slice(1)].join(".");
+  }
   const rooted = ROCK_FAMILIES.has(root) ? `rock.${path}` : path;
   return MATERIAL_SPECIALS[rooted] ?? rooted;
 }
@@ -288,26 +296,21 @@ export function parseCollector(collector: string | null): ParsedCollector {
     : { invalid: raw };
 }
 
-const SIZE_UNIT_BY_LEGACY: Record<string, "mm" | "cm" | "dm" | "m"> = {
-  mm: "mm",
-  millimeter: "mm",
+// The dump only ever carries these three spellings (checked in the data).
+const SIZE_UNIT_BY_LEGACY: Record<string, "cm" | "m"> = {
   cm: "cm",
   centimeter: "cm",
-  centimeters: "cm",
-  dm: "dm",
-  m: "m",
   meter: "m",
-  meters: "m",
 };
 
-// Legacy `size` is an "AxBxC" triple in length x width x thickness order, one
-// positive number, `/` (no value), or something we cannot read as a measurement
-// (free text, a two-value pair). We don't know which dimension a bare number is,
-// so it fills all three; anything else is rejected for review (see
-// unmappableValues) rather than guessed.
+// Legacy `size` is one to three positive numbers separated by `x`, `/` (no
+// value), or something we cannot read as a measurement (free text, four
+// numbers). The numbers are length, then width, then thickness, in that
+// order. Anything else is rejected for review (see unmappableValues) rather
+// than guessed.
 type ParsedSize =
   | { kind: "none" }
-  | { kind: "dimensions"; length: number; width: number; thickness: number }
+  | { kind: "numbers"; values: number[] }
   | { kind: "invalid"; raw: string };
 
 const positiveNumber = (part: string): number => {
@@ -318,24 +321,10 @@ const positiveNumber = (part: string): number => {
 function parseSize(size: string | null): ParsedSize {
   const raw = size?.trim() ?? "";
   if (raw === "" || raw === "/") return { kind: "none" };
-  const parts = raw.split(/x/i).map(positiveNumber);
-  const [first, second, third] = parts;
-  if (parts.some(Number.isNaN)) return { kind: "invalid", raw };
-  if (parts.length === 1)
-    return {
-      kind: "dimensions",
-      length: first!,
-      width: first!,
-      thickness: first!,
-    };
-  if (parts.length === 3)
-    return {
-      kind: "dimensions",
-      length: first!,
-      width: second!,
-      thickness: third!,
-    };
-  return { kind: "invalid", raw };
+  const values = raw.split(/x/i).map(positiveNumber);
+  if (values.some(Number.isNaN) || values.length > 3)
+    return { kind: "invalid", raw };
+  return { kind: "numbers", values };
 }
 
 export function mapSize(
@@ -345,13 +334,17 @@ export function mapSize(
   NonNullable<CreateSample["description"]>,
   "length" | "width" | "thickness"
 > {
-  const unit = SIZE_UNIT_BY_LEGACY[sizeUnit?.trim().toLowerCase() ?? ""];
   const parsed = parseSize(size);
-  if (parsed.kind !== "dimensions" || !unit) return {};
+  if (parsed.kind !== "numbers") return {};
+  const unit = SIZE_UNIT_BY_LEGACY[sizeUnit?.trim().toLowerCase() ?? ""];
+  if (!unit) return {};
+  const [length, width, thickness] = parsed.values;
   return {
-    length: { value: parsed.length, unit },
-    width: { value: parsed.width, unit },
-    thickness: { value: parsed.thickness, unit },
+    length: { value: length!, unit },
+    ...(width !== undefined ? { width: { value: width, unit } } : {}),
+    ...(thickness !== undefined
+      ? { thickness: { value: thickness, unit } }
+      : {}),
   };
 }
 
@@ -653,13 +646,13 @@ export function unmappableValues(row: LegacyRow): SkipIssue[] {
   if ("invalid" in collector) {
     issues.push({ field: "collector", value: collector.invalid });
   }
-  // A size we can read as neither a single number nor an "AxBxC" triple is
-  // rejected; a readable size needs a usable unit.
+  // A size we can read as neither one, two nor three numbers is rejected; a
+  // readable size needs a usable unit.
   const size = parseSize(row.size);
   if (size.kind === "invalid") {
     issues.push({ field: "size", value: size.raw });
   } else if (
-    size.kind === "dimensions" &&
+    size.kind === "numbers" &&
     row.size_unit &&
     !SIZE_UNIT_BY_LEGACY[norm(row.size_unit)]
   ) {

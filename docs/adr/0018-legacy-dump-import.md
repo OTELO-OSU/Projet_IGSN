@@ -72,7 +72,7 @@ on the sample.
 | `navigationType`                                       | `location.navigationType` (kept only if it matches a SESAR code)                                                                                                                     |
 | `localityDescription`/`location`/`locationDescription` | `location.localityName` / `localityDescription`                                                                                                                                      |
 | `collectionStartDate`/`collectionEndDate`              | `description.collectionDate`                                                                                                                                                         |
-| `size`/`sizeUnit`                                      | an `AxBxC` triple maps to `length`/`width`/`thickness` in that order; a single number fills all three; `/` is no value; anything else skips the row                                  |
+| `size`/`sizeUnit`                                      | one to three numbers map to `length`, then `width`, then `thickness`; the dump only carries `cm` / `centimeter` / `meter` as units; `/` is no value; anything else skips the row     |
 | `resourceComment`                                      | `description.openDescription`                                                                                                                                                        |
 | `classification`                                       | `material` ltree (slugged, rock families prefixed `rock.`, kept to its longest valid prefix)                                                                                         |
 | `material`                                             | `material` root, only when there is no `classification`                                                                                                                              |
@@ -95,10 +95,12 @@ through one of our enums / controlled lists (material, collection method,
 resource type, country, navigation type, and the size / elevation / age units)
 either normalizes into that enum or the sample is skipped: we never store a value
 outside the enum (it would defeat the enum) and never publish a sample that
-silently lost it. The `size` value follows the same rule: an `AxBxC` triple maps
-to length/width/thickness in that order, a single number fills all three
-dimensions (the source does not say which one it is), `/` is no value, and
-anything else (a two-value pair, free text) skips. `unmappableValues` (in
+silently lost it. The `size` value follows the same rule: one to three
+`x`-separated numbers map to length, then width, then thickness, in that
+order; `/` is no value; anything else (four numbers, free text) skips. The
+unit map covers exactly the spellings the dump carries (`cm`, `centimeter`,
+`meter`); any other unit paired with a readable size skips.
+`unmappableValues` (in
 `import-legacy-mapping.ts`) returns every offending value in a row; the import
 prints each skip (IGSN, reason, offending value) to stdout, which
 `make db-import-legacy` tees to `import-legacy.log`, so the gaps to close before
@@ -119,9 +121,14 @@ or is spelled differently (`Sedimentary>Siliciclastic` ->
 `...siliciclastic_sedimentary_rock`) is remapped by hand: `MATERIAL_SPECIALS`
 in the import script keys each rooted slug to the path the geologist's mapping
 instructions assign it (mirrored on the "Material remaps" tab of
-`docs/legacy-import-mapping.xlsx`). Everything else is skipped:
+`docs/legacy-import-mapping.xlsx`). The `Xenolithic` root mirrors the igneous
+and metamorphic families and roots at `rock.xenolithic_rock`, its inner family
+path going through the same remaps
+(`Xenolithic>Metamorphic>Gneiss` ->
+`rock.xenolithic_rock.metamorphic.strongly_metamorphosed.gneiss`). Everything
+else is skipped:
 
-- an unplaceable classification (a root the tree lacks: `Xenolithic`, `Ore`);
+- an unplaceable classification (a root the tree lacks: `Ore`);
 - a classification whose segment sequence the tree does not support and that
   `MATERIAL_SPECIALS` does not remap, including the values the expert table
   leaves marked "record to review" (`Metamorphic>MechanicallyBroken`,

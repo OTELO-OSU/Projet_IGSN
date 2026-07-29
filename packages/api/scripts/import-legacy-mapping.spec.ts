@@ -130,16 +130,30 @@ describe("mapMaterial", () => {
     expect(mapMaterial(legacy, "Rock")).toBe(path);
   });
 
+  it.each([
+    ["Xenolithic", "rock.xenolithic_rock"],
+    [
+      "Xenolithic>Igneous>Plutonic>Ultramafic",
+      "rock.xenolithic_rock.igneous.plutonic.ultramafic",
+    ],
+    [
+      "Xenolithic>Metamorphic>Gneiss",
+      "rock.xenolithic_rock.metamorphic.strongly_metamorphosed.gneiss",
+    ],
+  ] as const)(
+    "should root the xenolithic classification %s at %s",
+    (legacy, path) => {
+      expect(mapMaterial(legacy, "Rock")).toBe(path);
+    },
+  );
+
   it("should fall back to the material root when classification is absent", () => {
     expect(mapMaterial(null, "Sediment")).toBe("sediment");
   });
 
   it("should drop a classification the new tree cannot place, not coarsen it to the material root", () => {
-    // Xenolithic has no branch in the new tree; dropping is more honest than
+    // Ore has no branch in the new tree; dropping is more honest than
     // asserting a bare "rock" from the material_id.
-    expect(mapMaterial("Xenolithic>Igneous>Plutonic>Ultramafic", "Rock")).toBe(
-      null,
-    );
     expect(mapMaterial("Ore>Oxide", "Ice")).toBe(null);
   });
 });
@@ -151,6 +165,8 @@ describe("isKnownMaterialPath", () => {
     ["Metamorphic", "Rock"], // genuinely coarse at the source
     ["Metamorphic>Gneiss", "Rock"], // legacy leaf remapped to its node in the new tree
     ["Sedimentary>Siliciclastic", "Rock"], // legacy leaf remapped to its node in the new tree
+    ["Xenolithic>Igneous>Plutonic>Ultramafic", "Rock"], // rooted under rock.xenolithic_rock
+    ["Xenolithic>Metamorphic>Gneiss", "Rock"], // xenolithic + remapped metamorphic leaf
     [null, "Rock"], // coarse root, source knew only "Rock"
   ] as const)("should import %s / %s", (classification, material) => {
     expect(isKnownMaterialPath(classification, material)).toBe(true);
@@ -162,7 +178,7 @@ describe("isKnownMaterialPath", () => {
     ["Metamorphic>Meta-Carbonate", "Rock"], // record to review, deliberately unmapped
     ["Metamorphic>Meta-Ultramafic", "Rock"], // record to review, deliberately unmapped
     ["Igneous>Volcanic>NotAThing", "Rock"], // fabricated leaf
-    ["Xenolithic>Igneous>Plutonic>Ultramafic", "Rock"], // unplaceable root
+    ["Xenolithic>Metamorphic>Metasomatic", "Rock"], // leaf with no node and no remap
     ["Ore>Sulfide", "Rock"],
     [null, "Soil"], // material_id the new roots lack
     [null, null], // no material signal at all
@@ -277,12 +293,16 @@ describe("parseCollector", () => {
 });
 
 describe("mapSize", () => {
-  it("should fill all three dimensions from a single number", () => {
-    const m = { value: 424, unit: "cm" };
+  it("should read a single number with a length unit as the length alone", () => {
     expect(mapSize("424.0", "centimeter")).toEqual({
-      length: m,
-      width: m,
-      thickness: m,
+      length: { value: 424, unit: "cm" },
+    });
+  });
+
+  it("should read a pair as length x width", () => {
+    expect(mapSize("9x5", "cm")).toEqual({
+      length: { value: 9, unit: "cm" },
+      width: { value: 5, unit: "cm" },
     });
   });
 
@@ -301,7 +321,7 @@ describe("mapSize", () => {
     expect(mapSize("/", "cm")).toEqual({});
   });
 
-  it.each(["n/a", "9x5", "1x2x3x4", "9x5x6cm", "0x2x3"])(
+  it.each(["n/a", "1x2x3x4", "9x5x6cm", "0x2x3"])(
     "should return nothing for %s",
     (size) => {
       expect(mapSize(size, "cm")).toEqual({});
@@ -396,8 +416,8 @@ describe("unmappableValues", () => {
   it.each([
     {
       case: "an unplaceable material classification",
-      overrides: { classification: "Xenolithic>Igneous", material: "Rock" },
-      expected: { field: "material", value: "Xenolithic>Igneous" },
+      overrides: { classification: "Ore>Oxide", material: "Rock" },
+      expected: { field: "material", value: "Ore>Oxide" },
     },
     {
       case: "no material at all",
@@ -430,9 +450,9 @@ describe("unmappableValues", () => {
       expected: { field: "collector", value: "FEST, Helena et al." },
     },
     {
-      case: "a size that is neither a single number nor a triple",
-      overrides: { size: "9x5", size_unit: "cm" },
-      expected: { field: "size", value: "9x5" },
+      case: "a size that is not one, two or three numbers",
+      overrides: { size: "1x2x3x4", size_unit: "cm" },
+      expected: { field: "size", value: "1x2x3x4" },
     },
     {
       case: "an unknown size unit paired with a dimension triple",
