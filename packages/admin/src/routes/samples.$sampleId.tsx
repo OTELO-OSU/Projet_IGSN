@@ -20,7 +20,10 @@ function EditSamplePage() {
   const publishSample = usePublishSample(sampleId);
   // Lives here, not in the (unmounting) Links tab, so staged files survive
   // tab switches; the form uploads them on submit.
-  const attachmentChanges = useAttachmentChanges(sampleId);
+  const attachmentChanges = useAttachmentChanges(
+    sampleId,
+    query.data?.attachments.length ?? 0,
+  );
 
   if (query.isPending) {
     return <p>{m.samples_loading()}</p>;

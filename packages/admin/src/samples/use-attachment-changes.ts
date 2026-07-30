@@ -13,6 +13,7 @@ import { z } from "zod";
 
 import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
+import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
 type StagedAttachment = {
   key: string;
@@ -66,10 +67,16 @@ function xhrUpload(
   });
 }
 
-// Stages attachment changes locally so cancelling the form leaves the server
-// untouched. `commit` uploads the staged files, then returns every attachment
-// to keep; the API deletes whatever the returned payload omits.
-export function useAttachmentChanges(sampleId: string) {
+// Stages every attachment change locally (files to upload with their
+// description, saved attachments to delete, edited descriptions) so
+// cancelling the form leaves the server untouched. `commit` (called on form
+// submit, before the sample save) uploads the staged files in parallel behind
+// a progress dialog whose recap stays until the user closes it, then returns
+// the attachments payload for the sample update: every attachment to keep,
+// with its description. The API deletes whatever is not listed. A failed
+// upload stays staged, flagged for a retry on the next submit, and never
+// blocks saving the rest.
+export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const token = useAuth().user?.access_token;
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<StagedAttachment[]>([]);
@@ -85,9 +92,21 @@ export function useAttachmentChanges(sampleId: string) {
       if (!isValid) toast.error(m.attachment_too_large({ name: file.name }));
       return isValid;
     });
+    // What the sample would end up carrying bounds the pick: a staged deletion
+    // frees a slot, a staged file takes one. The api refuses past the limit
+    // anyway; this is the funnel that tells the user before they submit.
+    const remaining = Math.max(
+      UPLOAD_LIMIT - (savedCount - deletions.length) - pending.length,
+      0,
+    );
+    if (accepted.length > remaining) {
+      toast.error(m.attachment_limit_reached({ limit: UPLOAD_LIMIT }));
+    }
     setPending((current) => [
       ...current,
-      ...accepted.map((file) => ({ key: crypto.randomUUID(), file })),
+      ...accepted
+        .slice(0, remaining)
+        .map((file) => ({ key: crypto.randomUUID(), file })),
     ]);
   };
 
@@ -104,8 +123,15 @@ export function useAttachmentChanges(sampleId: string) {
   const markDelete = (attachmentId: string) =>
     setDeletions((current) => [...current, attachmentId]);
 
-  const restore = (attachmentId: string) =>
+  // Restoring takes the slot the deletion freed, so it is refused when a
+  // staged file already took it: the sample would go back over the limit.
+  const restore = (attachmentId: string) => {
+    if (savedCount - deletions.length + pending.length >= UPLOAD_LIMIT) {
+      toast.error(m.attachment_limit_reached({ limit: UPLOAD_LIMIT }));
+      return;
+    }
     setDeletions((current) => current.filter((id) => id !== attachmentId));
+  };
 
   const setDescription = (attachmentId: string, description: string) =>
     setDescriptions((current) => ({ ...current, [attachmentId]: description }));

@@ -14,6 +14,7 @@ import { m } from "#/paraglide/messages.js";
 import { AttachmentDropZone } from "#/samples/attachment-drop-zone.tsx";
 import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { useDownloadAttachment } from "#/samples/use-download-attachment.ts";
+import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
 type SampleAttachmentsProps = {
   sampleId: string;
@@ -171,10 +172,15 @@ export function SampleAttachments({
   changes,
 }: SampleAttachmentsProps) {
   const { pending, addFiles, removeFile, setPendingDescription } = changes;
+  // What the sample will carry once saved, which is what the limit applies to.
+  const count = attachments.length - changes.deletions.length + pending.length;
 
   return (
     <FormSection title={m.section_attachments()}>
       <AttachmentDropZone onFiles={addFiles} />
+      <p className="text-muted-foreground text-sm">
+        {m.attachment_count({ count, limit: UPLOAD_LIMIT })}
+      </p>
       {pending.length > 0 ? (
         <ul className="grid gap-2">
           {pending.map((staged) => (
