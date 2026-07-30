@@ -122,6 +122,12 @@ services:
     container_name: admin
     ports:
       - "3001:3001"
+    environment:
+      # The dev Vite server exposes these to import.meta.env. Defaults target the
+      # local mock realm; set OIDC_* in .env to point at GaiaData instead
+      # (see .env.example).
+      VITE_OIDC_AUTHORITY: ${OIDC_ISSUER:-http://localhost:8080/realms/igsn}
+      VITE_OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3001/"]
       interval: 10s
@@ -172,8 +178,9 @@ services:
     environment:
       # Token issuer is the browser-facing Keycloak URL; the api fetches JWKS on
       # its own network, so the fetch URL points at the keycloak service directly.
-      OIDC_ISSUER: http://localhost:8080/realms/igsn
-      OIDC_JWKS_URI: http://keycloak:8080/realms/igsn/protocol/openid-connect/certs
+      # Set both in .env to point at GaiaData instead (see .env.example).
+      OIDC_ISSUER: ${OIDC_ISSUER:-http://localhost:8080/realms/igsn}
+      OIDC_JWKS_URI: ${OIDC_JWKS_URI:-http://keycloak:8080/realms/igsn/protocol/openid-connect/certs}
       CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
