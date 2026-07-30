@@ -155,10 +155,12 @@ export function SampleForm({
       const parsed = sampleDraftSchema.safeParse(value);
       // Unreachable: the onSubmit validator gates. Kept as a typed narrow.
       if (!parsed.success) return;
-      // Staged attachment changes only reach the server on submit: files
-      // upload first (with their description), then the sample payload lists
-      // every attachment to keep and the API deletes the rest. A failed
-      // upload stays staged for a retry and never blocks saving the rest.
+      // Staged attachment changes only reach the server on submit: commit()
+      // deletes the marked files first (freeing slots for a swap at the
+      // limit), then uploads the staged ones, then the sample payload lists
+      // every attachment to keep and the API's PUT reconciles the rest. A
+      // failed upload stays staged for a retry and never blocks saving the
+      // rest.
       const committed = attachmentChanges
         ? await attachmentChanges.commit(attachments)
         : undefined;
