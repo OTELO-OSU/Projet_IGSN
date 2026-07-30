@@ -1,3 +1,6 @@
+import { every } from "hono/combine";
+import { createMiddleware } from "hono/factory";
+import { HTTPException } from "hono/http-exception";
 import { jwk } from "hono/jwk";
 
 // Verify the Keycloak access token against the realm JWKS: signature, issuer, and
@@ -7,18 +10,33 @@ import { jwk } from "hono/jwk";
 const issuer = process.env.OIDC_ISSUER ?? "http://localhost:8080/realms/igsn";
 const jwksUri =
   process.env.OIDC_JWKS_URI ?? `${issuer}/protocol/openid-connect/certs`;
-// GaiaData provisions no dedicated audience yet, so the ADR 0006 mandatory aud
-// check (REQ-TOKEN-03/04) is opt-in via OIDC_AUDIENCE until they add an
-// audience scope; hono skips the check when aud is undefined.
+// GaiaData exposes no audience scope yet, so the ADR 0006 aud check is opt-in
+// via OIDC_AUDIENCE (hono skips it when undefined); azp + typ below stand in.
 const audience = process.env.OIDC_AUDIENCE;
+const clientId = process.env.OIDC_CLIENT_ID ?? "igsn-admin";
 
 // Populates c.get("jwtPayload") with the verified claims; 401s otherwise.
 // alg is pinned to RS256 (Keycloak's default) to rule out algorithm confusion.
-export const requireAuth = jwk({
-  jwks_uri: jwksUri,
-  alg: ["RS256"],
-  verification: { iss: issuer, aud: audience },
-});
+export const requireAuth = every(
+  jwk({
+    jwks_uri: jwksUri,
+    alg: ["RS256"],
+    verification: { iss: issuer, aud: audience },
+  }),
+  // The issuer realm is shared with other service providers, so a valid
+  // signature alone proves nothing about who the token was minted for: azp is
+  // the client it was issued to, and typ tells an access token (Bearer) from an
+  // id_token (ID) replayed as a bearer.
+  createMiddleware<{ Variables: { jwtPayload: KeycloakClaims } }>(
+    async (c, next) => {
+      const claims = c.get("jwtPayload");
+      if (claims.azp !== clientId || claims.typ !== "Bearer") {
+        throw new HTTPException(401, { message: "Unauthorized" });
+      }
+      await next();
+    },
+  ),
+);
 
 // The Keycloak claims the api actually reads off a verified token.
 // given_name/family_name come from the default `profile` scope, filled by the
@@ -26,6 +44,8 @@ export const requireAuth = jwk({
 // as the local user's firstname/name.
 export type KeycloakClaims = {
   sub: string;
+  azp?: string;
+  typ?: string;
   preferred_username?: string;
   name?: string;
   given_name?: string;

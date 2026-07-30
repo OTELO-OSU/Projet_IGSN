@@ -1,10 +1,9 @@
-import type { Kysely } from "kysely";
 import type { webcrypto } from "node:crypto";
 
 import { testClient } from "hono/testing";
 import { afterEach, beforeAll, beforeEach, describe, expect, vi } from "vitest";
 
-import type { DB } from "../db.ts";
+import type { createApp } from "../app.ts";
 
 import { pgTest } from "../tests/pg-test.ts";
 
@@ -15,6 +14,7 @@ vi.unmock("./middleware.ts");
 const KID = "test-key";
 const ISSUER = "http://localhost:8080/realms/igsn";
 const AUDIENCE = "igsn-api";
+const CLIENT_ID = "igsn-admin";
 
 const b64url = (data: string | Uint8Array): string =>
   Buffer.from(data).toString("base64url");
@@ -74,9 +74,12 @@ async function mint(
 
 const nowSeconds = () => Math.floor(Date.now() / 1000);
 
-// GaiaData tokens carry no aud claim, so the valid token has none either.
+// GaiaData tokens carry no aud claim, so the valid token has none either; azp
+// and typ are what Keycloak stamps on an access token issued to our client.
 const validClaims = () => ({
   iss: ISSUER,
+  azp: CLIENT_ID,
+  typ: "Bearer",
   exp: nowSeconds() + 300,
   sub: "user-1",
   preferred_username: "marie",
@@ -84,10 +87,15 @@ const validClaims = () => ({
   email: "marie.dupont@univ-lorraine.fr",
 });
 
-// The middleware reads OIDC_AUDIENCE once, when it is imported, so each
-// audience configuration needs its own module graph.
-const getMe = async (db: Kysely<DB>, token: string, audience?: string) => {
+// The middleware reads its env once, when it is imported, so each audience
+// configuration needs its own module graph.
+const getMe = async (
+  db: Parameters<typeof createApp>[0],
+  token: string,
+  audience?: string,
+) => {
   vi.stubEnv("OIDC_AUDIENCE", audience);
+  vi.stubEnv("OIDC_CLIENT_ID", CLIENT_ID);
   vi.resetModules();
   const { createApp } = await import("../app.ts");
 
@@ -146,6 +154,21 @@ describe("requireAuth", () => {
       expect(res.status).toBe(401);
     },
   );
+
+  pgTest("should reject a token issued to another client", async ({ db }) => {
+    const res = await getMe(
+      db,
+      await mint({ ...validClaims(), azp: "another-client" }),
+    );
+
+    expect(res.status).toBe(401);
+  });
+
+  pgTest("should reject an ID token replayed as a bearer", async ({ db }) => {
+    const res = await getMe(db, await mint({ ...validClaims(), typ: "ID" }));
+
+    expect(res.status).toBe(401);
+  });
 
   pgTest("should reject a token with the wrong issuer", async ({ db }) => {
     const res = await getMe(
