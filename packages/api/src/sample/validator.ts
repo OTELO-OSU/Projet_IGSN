@@ -1,4 +1,4 @@
-import { igsnSuffixSchema } from "@projet-igsn/domain/igsn/model";
+import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { uploadSampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
@@ -7,7 +7,7 @@ import { z } from "zod";
 
 const idParamSchema = z.object({ id: z.uuid() });
 
-const igsnParamSchema = z.object({ igsn: igsnSuffixSchema });
+const igsnParamSchema = z.object({ igsn: igsnSchema });
 
 const attachmentParamsSchema = idParamSchema.extend({
   attachmentId: z.uuid(),

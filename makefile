@@ -73,6 +73,20 @@ db-reset:								## Fully reset the dev Postgres database, then re-run migration
 		psql -U igsn -d igsn -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 	@docker compose -f docker-compose.dev.yml run --rm api pnpm -F @projet-igsn/api migrate
 
+DUMP ?= bdd-igsn.sql
+IMPORT_LOG ?= import-legacy.log
+db-import-legacy:							## Import the legacy pg_dump ($(DUMP)) into the new schema; skips go to $(IMPORT_LOG)
+	@docker compose -f docker-compose.dev.yml exec -T postgres \
+		psql -U igsn -d igsn -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS legacy_import" -c "CREATE DATABASE legacy_import"
+	@docker compose -f docker-compose.dev.yml exec -T postgres \
+		psql -U igsn -d legacy_import -c "CREATE ROLE karim" -c "CREATE ROLE userdbigsn" || true
+	@docker compose -f docker-compose.dev.yml exec -T postgres \
+		psql -U igsn -d legacy_import -q < $(DUMP)
+	@docker compose -f docker-compose.dev.yml exec -T -e LEGACY_DATABASE_NAME=legacy_import api \
+		pnpm -F @projet-igsn/api import:legacy 2>&1 | tee $(IMPORT_LOG)
+	@docker compose -f docker-compose.dev.yml exec -T postgres \
+		psql -U igsn -d igsn -c "DROP DATABASE IF EXISTS legacy_import"
+
 material-tree:							## Dump the full material tree, indented by depth
 	@pnpm -F @projet-igsn/domain material-tree
 

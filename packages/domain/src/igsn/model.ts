@@ -13,3 +13,20 @@ export const igsnSuffixSchema = z
   .toUpperCase();
 
 export type IgsnSuffix = z.infer<typeof igsnSuffixSchema>;
+
+// Legacy IGSNs imported from the old registry predate our format: a fixed
+// `CNRS`/`TOAE` prefix followed by a 10-digit number (e.g. CNRS0000012260,
+// TOAE0000000002). They are already published, so already valid.
+const legacyIgsnSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^(?:CNRS|TOAE)\d{10}$/);
+
+// A stored/looked-up IGSN is either one we minted (strict suffix) or a legacy
+// identifier. Minting a new IGSN stays strict (igsnSuffixSchema); this laxer
+// schema is only for reading and lookup, so legacy samples are treated no
+// differently from natively-minted ones.
+export const igsnSchema = z.union([igsnSuffixSchema, legacyIgsnSchema]);
+
+export type Igsn = z.infer<typeof igsnSchema>;

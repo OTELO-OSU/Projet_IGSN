@@ -33,6 +33,7 @@ describe("materialPathSchema", () => {
     "extraterrestrial_rock.meteorites.achondrites.iron_meteorite.iab.main_group",
     "extraterrestrial_rock.meteorites.achondrites.stony_iron_meteorite.pallasite.eagle_station_group",
     "rock.metamorphic.strongly_metamorphosed.gneiss",
+    "rock.metamorphic.strongly_metamorphosed.granofels",
     "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.volcanic.mafic.basalt",
     "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.microbialite",
     "rock.hydrothermal.breccia",
