@@ -138,6 +138,9 @@ export function createSampleAdminRoutes(
           },
           new Uint8Array(await file.arrayBuffer()),
         );
+        if (created === "limit_reached") {
+          return c.json({ error: "Attachment limit reached" }, 409);
+        }
         if (!created) {
           return c.json({ error: "Sample not found" }, 404);
         }

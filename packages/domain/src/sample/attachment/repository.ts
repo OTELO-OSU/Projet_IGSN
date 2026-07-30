@@ -11,11 +11,13 @@ export type CreateSampleAttachment = {
 // reconcile drops both for unlisted attachments. Methods return null when the
 // sample or the attachment does not exist.
 export type SampleAttachmentRepository = {
+  // "limit_reached": the sample already holds the deployment's upload limit,
+  // so nothing was persisted.
   create(
     sampleId: string,
     input: CreateSampleAttachment,
     content: Uint8Array,
-  ): Promise<SampleAttachment | null>;
+  ): Promise<SampleAttachment | "limit_reached" | null>;
   // Reconciles the sample's attachments against the given list (the sample
   // update payload): a listed attachment gets its description updated, an
   // unlisted one is removed with its content. Unknown ids are ignored.

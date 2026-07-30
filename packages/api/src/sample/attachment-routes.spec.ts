@@ -1,3 +1,4 @@
+import { DEFAULT_UPLOAD_LIMIT } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { testClient } from "hono/testing";
 import { join } from "node:path";
@@ -154,6 +155,31 @@ describe("admin attachment routes", () => {
       expect(await res.json()).toMatchObject({
         data: { mediaType: "application/octet-stream" },
       });
+    },
+  );
+
+  pgTest(
+    "should accept uploads up to the limit and refuse the next one",
+    async ({ db }) => {
+      // Arrange
+      const client = createTestApp(db);
+      const sample = await createSample(client);
+      for (let i = 1; i < DEFAULT_UPLOAD_LIMIT; i++) {
+        expect((await uploadAttachment(client, sample.id)).status).toBe(201);
+      }
+      // Act: the last allowed upload, then one too many.
+      const last = await uploadAttachment(client, sample.id);
+      const refused = await uploadAttachment(client, sample.id);
+      // Assert
+      expect(last.status).toBe(201);
+      expect(refused.status).toBe(409);
+      const read = await client.admin.samples[":id"].$get(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+      expect(
+        sampleResponseSchema.parse(await read.json()).data.attachments,
+      ).toHaveLength(DEFAULT_UPLOAD_LIMIT);
     },
   );
 
