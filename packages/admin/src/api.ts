@@ -12,6 +12,8 @@ export type Me = {
 export async function fetchMe(token: string): Promise<Me> {
   const apiFetch = withSessionRenewal(withAuthToken(fetch, token));
   const res = await apiFetch(`${API_URL}/admin/me`);
-  if (!res.ok) throw new HttpError(res.status, `API responded ${res.status}`);
+  if (!res.ok) {
+    throw HttpError.fromResponse(res, `API responded ${res.status}`);
+  }
   return res.json() as Promise<Me>;
 }

@@ -180,6 +180,8 @@ services:
       DATABASE_NAME: igsn
       DATABASE_USER: igsn
       DATABASE_PASSWORD: igsn
+      # Lets a curl pick its own X-Real-IP to exercise the rate limit by hand.
+      TRUST_PROXY_HEADERS: "true"
       # Uploaded sample attachments (ADR 0017); a named volume so blobs
       # survive restarts without cluttering the host working tree.
       ATTACHMENTS_DIR: /data/attachments

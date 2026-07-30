@@ -51,6 +51,6 @@ per product decision.
 
 ## Follow-ups
 
-- Rate limiting on the public `GET /samples` list route: a pre-existing gap
-  flagged by security review, unrelated to the map choice. Noted, not addressed
-  here.
+- Rate limiting on the public `GET /samples` list route, flagged by security
+  review as a pre-existing gap unrelated to the map choice: closed, see
+  [ADR 0020](0020-api-rate-limiting.md).

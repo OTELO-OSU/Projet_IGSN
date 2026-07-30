@@ -1,5 +1,6 @@
 import handler from "@tanstack/react-start/server-entry";
 
+import { runWithClientIp } from "./client-ip.ts";
 import { paraglideMiddleware } from "./paraglide/server.js";
 
 // paraglideMiddleware resolves the locale (url > cookie > Accept-Language >
@@ -8,6 +9,10 @@ import { paraglideMiddleware } from "./paraglide/server.js";
 // the router `rewrite`, and delocalizing twice causes a redirect loop.
 export default {
   fetch(req: Request): Promise<Response> {
-    return paraglideMiddleware(req, () => handler.fetch(req));
+    // Hold the visitor address for the whole render so api calls made server-side
+    // carry it (X-Real-IP), instead of all sharing this container's own budget.
+    return runWithClientIp(req.headers.get("x-real-ip") ?? undefined, () =>
+      paraglideMiddleware(req, () => handler.fetch(req)),
+    );
   },
 };

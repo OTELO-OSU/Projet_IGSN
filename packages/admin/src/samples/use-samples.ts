@@ -27,8 +27,8 @@ export function useSamples(params: {
 
       const res = await apiFetch(url);
       if (!res.ok) {
-        throw new HttpError(
-          res.status,
+        throw HttpError.fromResponse(
+          res,
           `Failed to load samples (${res.status})`,
         );
       }

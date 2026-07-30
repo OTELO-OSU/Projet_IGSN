@@ -2,7 +2,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { listSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 
-import { baseApiUrl } from "#/api.ts";
+import { apiFetch, baseApiUrl } from "#/api.ts";
 
 // Facet filters are passed opaquely: the key is the API query param (from the
 // facet registry), the value its selection. Undefined/empty entries are skipped.
@@ -20,7 +20,7 @@ export type ListSamplesResult = { data: Sample[]; total: number };
 
 export async function listSamples(
   { page, perPage, search, filters, bbox }: ListSamplesParams,
-  fetchFn: typeof fetch = fetch,
+  fetchFn: typeof fetch = apiFetch,
 ): Promise<ListSamplesResult> {
   const url = new URL("samples", baseApiUrl);
   url.searchParams.set("page", String(page));

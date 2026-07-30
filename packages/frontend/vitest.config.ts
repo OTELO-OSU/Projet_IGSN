@@ -2,7 +2,7 @@ import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import react from "@vitejs/plugin-react";
 import { playwright } from "@vitest/browser-playwright";
 import path from "node:path";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 import { paraglideOptions } from "./src/i18n/paraglide";
 
@@ -35,6 +35,9 @@ export default defineConfig({
     },
     globals: true,
     include: ["src/**/*.spec.{ts,tsx}"],
+    // The SSR specs need AsyncLocalStorage, which no browser has; they run in
+    // the frontend-node project instead (vitest.node.config.ts).
+    exclude: [...configDefaults.exclude, "src/**/*.node.spec.ts"],
     maxWorkers: 2,
     maxConcurrency: 2,
     testTimeout: 5000,

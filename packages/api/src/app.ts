@@ -8,6 +8,8 @@ import type { DB } from "./db.ts";
 
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
+import { loadRateLimitConfig } from "./rate-limit/config.ts";
+import { rateLimit } from "./rate-limit/middleware.ts";
 import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
 import { createSampleRepository } from "./sample/repository.ts";
@@ -26,6 +28,8 @@ export function createApp(
     .map((o) => o.trim())
     .filter(Boolean);
 
+  const rateLimitConfig = loadRateLimitConfig();
+
   const sampleRepository = createSampleRepository(database);
   const sampleAttachmentRepository = createSampleAttachmentRepository(
     database,
@@ -33,8 +37,22 @@ export function createApp(
   );
   const userRepository = createUserRepository(database);
 
+  // IP limiter wraps only the public sample routes, so the healthcheck (GET /)
+  // and the separately user-limited /admin mount are never touched by it. It sits
+  // under the global cors below, so a 429 still carries the allow-origin header the
+  // admin SPA needs to read it, and cors answers a preflight before it runs.
+  const publicSampleRoutes = new Hono()
+    .use("*", rateLimit(rateLimitConfig, "ip"))
+    .route(
+      "/",
+      createSampleRoutes(sampleRepository, sampleAttachmentRepository),
+    );
+
   const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
+    // After requireAuth, so the budget is keyed by the verified sub, and before
+    // currentUser, so a refused request costs no user upsert.
+    .use("*", rateLimit(rateLimitConfig, "user"))
     .use("*", currentUser(userRepository))
     .get("/me", (c) => {
       const claims = c.get("jwtPayload");
@@ -58,6 +76,14 @@ export function createApp(
           origin: (origin) => (corsOrigins.includes(origin) ? origin : null),
           credentials: true,
           allowHeaders: ["Authorization", "Content-Type"],
+          // None of these are CORS-safelisted, so without this the admin SPA
+          // cannot read how long a 429 asks it to wait, nor what budget it hit.
+          exposeHeaders: [
+            "Retry-After",
+            "RateLimit-Limit",
+            "RateLimit-Remaining",
+            "RateLimit-Reset",
+          ],
         }),
       )
       // The cause is logged, never serialised: a driver message can carry SQL
@@ -69,10 +95,7 @@ export function createApp(
         return c.json({ error: "Internal server error" }, 500);
       })
       .get("/", (c) => c.json({ message: "OK" }))
-      .route(
-        "/samples",
-        createSampleRoutes(sampleRepository, sampleAttachmentRepository),
-      )
+      .route("/samples", publicSampleRoutes)
       .route("/admin", adminRoutes)
   );
 }

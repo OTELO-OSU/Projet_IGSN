@@ -66,15 +66,9 @@ function xhrUpload(
   });
 }
 
-// Stages every attachment change locally (files to upload with their
-// description, saved attachments to delete, edited descriptions) so
-// cancelling the form leaves the server untouched. `commit` (called on form
-// submit, before the sample save) uploads the staged files in parallel behind
-// a progress dialog whose recap stays until the user closes it, then returns
-// the attachments payload for the sample update: every attachment to keep,
-// with its description. The API deletes whatever is not listed. A failed
-// upload stays staged, flagged for a retry on the next submit, and never
-// blocks saving the rest.
+// Stages attachment changes locally so cancelling the form leaves the server
+// untouched. `commit` uploads the staged files, then returns every attachment
+// to keep; the API deletes whatever the returned payload omits.
 export function useAttachmentChanges(sampleId: string) {
   const token = useAuth().user?.access_token;
   const queryClient = useQueryClient();
@@ -85,9 +79,7 @@ export function useAttachmentChanges(sampleId: string) {
   const [isDialogOpen, setDialogOpen] = useState(false);
 
   const addFiles = (files: File[]) => {
-    // The shared domain schema fronts the API's own check; any file type
-    // passes, only the size cap can reject. Checked at pick time so the
-    // user hears about it before submitting.
+    // Pre-check size at pick time for UX; the API revalidates.
     const accepted = files.filter((file) => {
       const isValid = uploadSampleAttachmentSchema.safeParse({ file }).success;
       if (!isValid) toast.error(m.attachment_too_large({ name: file.name }));
@@ -99,11 +91,9 @@ export function useAttachmentChanges(sampleId: string) {
     ]);
   };
 
-  // Unstaging a not-yet-uploaded file is purely local; no API call.
   const removeFile = (key: string) =>
     setPending((current) => current.filter((staged) => staged.key !== key));
 
-  // A staged file's description uploads with it, in the same request.
   const setPendingDescription = (key: string, description: string) =>
     setPending((current) =>
       current.map((staged) =>
@@ -162,16 +152,13 @@ export function useAttachmentChanges(sampleId: string) {
     );
     const uploaded = results.filter((result) => result !== null);
     if (uploaded.length > 0) {
-      // Keeps the uploads visible even if the sample save then fails.
+      // Keep the uploads visible even if the sample save then fails.
       await queryClient.invalidateQueries({ queryKey: ["samples"] });
     }
-    // The dialog never closes itself: the user confirms the recap.
+    // The dialog stays open: the user confirms the recap.
     return uploaded;
   };
 
-  // Uploads the staged files, then returns the attachments payload for the
-  // sample update: the saved attachments not marked for deletion (with any
-  // edited description) plus the freshly uploaded ones.
   const commit = async (
     saved: SampleAttachment[],
   ): Promise<UpdateSampleAttachment[]> => {
