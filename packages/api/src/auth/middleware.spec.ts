@@ -87,7 +87,7 @@ const validClaims = () => ({
   email: "marie.dupont@univ-lorraine.fr",
 });
 
-// The middleware reads its env once, when it is imported, so each audience
+// The middleware reads its env once, when it is imported, so each auth
 // configuration needs its own module graph.
 const getMe = async (
   db: Parameters<typeof createApp>[0],
@@ -95,6 +95,7 @@ const getMe = async (
   audience?: string,
 ) => {
   vi.stubEnv("OIDC_AUDIENCE", audience);
+  vi.stubEnv("OIDC_ISSUER", ISSUER);
   vi.stubEnv("OIDC_CLIENT_ID", CLIENT_ID);
   vi.resetModules();
   const { createApp } = await import("../app.ts");
@@ -160,6 +161,14 @@ describe("requireAuth", () => {
       db,
       await mint({ ...validClaims(), azp: "another-client" }),
     );
+
+    expect(res.status).toBe(401);
+  });
+
+  pgTest("should reject a token carrying no azp or typ", async ({ db }) => {
+    const { azp: _azp, typ: _typ, ...claims } = validClaims();
+
+    const res = await getMe(db, await mint(claims));
 
     expect(res.status).toBe(401);
   });
