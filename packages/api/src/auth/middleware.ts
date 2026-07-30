@@ -23,10 +23,8 @@ export const requireAuth = every(
     alg: ["RS256"],
     verification: { iss: issuer, aud: audience },
   }),
-  // The issuer realm is shared with other service providers, so a valid
-  // signature alone proves nothing about who the token was minted for: azp is
-  // the client it was issued to, and typ tells an access token (Bearer) from an
-  // id_token (ID) replayed as a bearer.
+  // Shared realm: a valid signature says nothing about who the token was minted
+  // for. azp is the issuing client, typ an access token vs an id_token replayed.
   createMiddleware<{ Variables: { jwtPayload: KeycloakClaims } }>(
     async (c, next) => {
       const claims = c.get("jwtPayload");

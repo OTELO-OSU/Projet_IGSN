@@ -29,8 +29,8 @@ arms duplicate renew timers, fatal once refresh tokens are single-use.
 
 ## Decision
 
-**The api validates the full mandatory claim set.** `aud` joins signature,
-`exp`, `iss` in the `jwk` middleware. The expected audience comes from
+**The api validates the full mandatory claim set** (amended below)**.** `aud`
+joins signature, `exp`, `iss` in the `jwk` middleware. The expected audience comes from
 `OIDC_AUDIENCE` (default `igsn-api`); the realm carries an `igsn-api`
 audience client scope, default on `igsn-admin`. GaiaData's per-environment
 audience value is deploy config ([REQ-TOKEN-03/04](#gt-sso-requirements)).
@@ -122,9 +122,10 @@ replayed as a bearer, authenticate here and auto-provision an account. Two
 claim checks carry the audience's job instead: `azp` must equal
 `OIDC_CLIENT_ID` (the client the token was issued to) and `typ` must be
 `Bearer` (Keycloak marks id_tokens `ID`). Weaker than a dedicated audience: it
-trusts Keycloak's non-standard `typ` claim and only fails closed as long as
-GaiaData keeps stamping `azp`, so confirm both on a real GaiaData token at the
-first deploy. Signature, `iss` and the RS256 pinning stay mandatory; `exp` is
+trusts Keycloak's non-standard `typ` claim and only keeps working as long as
+GaiaData keeps stamping both, so confirm them on a real GaiaData token at the
+first deploy (if either disappears, every request 401s: a lockout, not a
+bypass). Signature, `iss` and the RS256 pinning stay mandatory; `exp` is
 enforced whenever the claim is present, which Keycloak always emits.
 
 This is a knowing deviation from [REQ-TOKEN-03/04](#gt-sso-requirements). When
