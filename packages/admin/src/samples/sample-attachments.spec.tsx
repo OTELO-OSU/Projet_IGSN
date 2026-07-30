@@ -265,24 +265,32 @@ describe("SampleAttachments", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("should omit a marked attachment from the committed payload without any direct call", async () => {
+  it("should omit a marked attachment from the committed payload, deleting it on save only", async () => {
     const onCommit = vi.fn();
-    const fetchSpy = vi.spyOn(window, "fetch");
+    const fetchSpy = vi
+      .spyOn(window, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
     const screen = await renderAttachments([attachment], onCommit);
 
     await screen
       .getByRole("button", { name: "Delete measurements.csv" })
       .click();
 
-    // Marked, flagged, but nothing sent and nothing committed yet.
+    // Marked, flagged, but nothing sent and nothing committed yet: cancelling
+    // now would leave the server untouched.
     await expect
       .element(screen.getByText("Will be deleted on save."))
       .toBeVisible();
+    expect(fetchSpy).not.toHaveBeenCalled();
 
     await screen.getByRole("button", { name: "Save" }).click();
 
+    // The save deletes it for real, and the payload no longer lists it.
     await vi.waitFor(() => expect(onCommit).toHaveBeenCalledWith([]));
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(calledUrl(fetchSpy.mock.calls[0]![0])).toContain(
+      `admin/samples/${SAMPLE_ID}/attachments/${attachment.id}`,
+    );
+    expect(fetchSpy.mock.calls[0]![1]?.method).toBe("DELETE");
   });
 
   it("should keep a marked attachment restored before the save", async () => {
@@ -355,6 +363,37 @@ describe("SampleAttachments", () => {
     await expect.element(screen.getByText("a.csv")).toBeVisible();
     expect(screen.getByText("b.csv").query()).toBeNull();
     expect(screen.getByText("c.csv").query()).toBeNull();
+  });
+
+  it("should swap a file in one save when the sample is full", async () => {
+    const onCommit = vi.fn();
+    const fetchSpy = vi
+      .spyOn(window, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    const saved = savedAttachments(DEFAULT_UPLOAD_LIMIT);
+    const screen = await renderAttachments(saved, onCommit);
+
+    await screen.getByRole("button", { name: "Delete saved-0.csv" }).click();
+    await screen.getByLabelText("Browse files").upload([file("new.csv")]);
+    // exact: the "saved-N.csv" row buttons also contain "save".
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    // The staged deletion frees its slot on the server BEFORE the upload
+    // starts, so the api still has room and does not refuse the new file.
+    await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+    expect(calledUrl(fetchSpy.mock.calls[0]![0])).toContain(
+      `admin/samples/${SAMPLE_ID}/attachments/${saved[0]!.id}`,
+    );
+    expect(fetchSpy.mock.calls[0]![1]?.method).toBe("DELETE");
+
+    FakeXhr.instances[0]!.finish();
+
+    // One save, and the sample keeps 5 files: the 4 survivors plus the new one.
+    await vi.waitFor(() => expect(onCommit).toHaveBeenCalled());
+    expect(onCommit.mock.calls[0]![0]).toHaveLength(DEFAULT_UPLOAD_LIMIT);
+    await expect
+      .element(screen.getByText("Could not upload."))
+      .not.toBeInTheDocument();
   });
 
   it("should free a slot when a saved attachment is marked for deletion", async () => {

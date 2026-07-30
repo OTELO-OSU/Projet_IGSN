@@ -14,6 +14,7 @@ import { z } from "zod";
 import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
+import { useApiClient } from "#/use-api-client.ts";
 
 type StagedAttachment = {
   key: string;
@@ -70,7 +71,8 @@ function xhrUpload(
 // Stages every attachment change locally (files to upload with their
 // description, saved attachments to delete, edited descriptions) so
 // cancelling the form leaves the server untouched. `commit` (called on form
-// submit, before the sample save) uploads the staged files in parallel behind
+// submit, before the sample save) deletes the marked files, then uploads the
+// staged ones (that order frees a slot for a swap at the limit) in parallel behind
 // a progress dialog whose recap stays until the user closes it, then returns
 // the attachments payload for the sample update: every attachment to keep,
 // with its description. The API deletes whatever is not listed. A failed
@@ -78,6 +80,7 @@ function xhrUpload(
 // blocks saving the rest.
 export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const token = useAuth().user?.access_token;
+  const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<StagedAttachment[]>([]);
   const [deletions, setDeletions] = useState<string[]>([]);
@@ -185,9 +188,28 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
     return uploaded;
   };
 
+  // Deletes the files marked for deletion, uploads the staged ones, then
+  // returns the attachments payload for the sample update: the saved
+  // attachments not marked for deletion (with any edited description) plus the
+  // freshly uploaded ones.
   const commit = async (
     saved: SampleAttachment[],
   ): Promise<UpdateSampleAttachment[]> => {
+    // Deletions land first, or the slots they free are still taken when the
+    // uploads reach the api and a swap at the limit is refused. The sample
+    // update's reconcile stays the source of truth for what remains, so a
+    // failed delete (or one already gone) is harmless and must not block the
+    // save.
+    await Promise.all(
+      deletions.map((id) =>
+        apiFetch(
+          new URL(`admin/samples/${sampleId}/attachments/${id}`, API_URL),
+          {
+            method: "DELETE",
+          },
+        ).catch(() => null),
+      ),
+    );
     const uploaded = await uploadPending();
     return [
       ...saved

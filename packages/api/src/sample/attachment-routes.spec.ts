@@ -234,6 +234,98 @@ describe("admin attachment routes", () => {
     expect(new Uint8Array(await res.arrayBuffer())).toEqual(csv);
   });
 
+  pgTest("should delete an attachment and free its slot", async ({ db }) => {
+    // Arrange: a full sample, so the freed slot is what lets the next upload in.
+    const client = createTestApp(db);
+    const sample = await createSample(client);
+    const first = await uploadAttachment(client, sample.id);
+    const { data } = (await first.json()) as { data: { id: string } };
+    for (let i = 1; i < DEFAULT_UPLOAD_LIMIT; i++) {
+      await uploadAttachment(client, sample.id);
+    }
+    // Act
+    const res = await client.admin.samples[":id"].attachments[
+      ":attachmentId"
+    ].$delete(
+      { param: { id: sample.id, attachmentId: data.id } },
+      { headers: authHeader },
+    );
+    // Assert: gone, content included, and the sample takes a file again.
+    expect(res.status).toBe(204);
+    const read = await client.admin.samples[":id"].$get(
+      { param: { id: sample.id } },
+      { headers: authHeader },
+    );
+    const { attachments } = sampleResponseSchema.parse(await read.json()).data;
+    expect(attachments).toHaveLength(DEFAULT_UPLOAD_LIMIT - 1);
+    expect(attachments.map(({ id }) => id)).not.toContain(data.id);
+    const download = await client.admin.samples[":id"].attachments[
+      ":attachmentId"
+    ].$get(
+      { param: { id: sample.id, attachmentId: data.id } },
+      { headers: authHeader },
+    );
+    expect(download.status).toBe(404);
+    expect((await uploadAttachment(client, sample.id)).status).toBe(201);
+  });
+
+  pgTest("should 404 the deletion of an unknown attachment", async ({ db }) => {
+    const client = createTestApp(db);
+    const sample = await createSample(client);
+    const res = await client.admin.samples[":id"].attachments[
+      ":attachmentId"
+    ].$delete(
+      {
+        param: {
+          id: sample.id,
+          attachmentId: "00000000-0000-7000-8000-000000000000",
+        },
+      },
+      { headers: authHeader },
+    );
+    expect(res.status).toBe(404);
+  });
+
+  pgTest("should 404 a deletion on an unknown sample", async ({ db }) => {
+    const client = createTestApp(db);
+    const res = await client.admin.samples[":id"].attachments[
+      ":attachmentId"
+    ].$delete(
+      {
+        param: {
+          id: "00000000-0000-7000-8000-000000000000",
+          attachmentId: "00000000-0000-7000-8000-000000000001",
+        },
+      },
+      { headers: authHeader },
+    );
+    expect(res.status).toBe(404);
+  });
+
+  pgTest("should reject an unauthenticated deletion", async ({ db }) => {
+    const client = createTestApp(db);
+    const sample = await createSample(client);
+    const uploaded = await uploadAttachment(client, sample.id);
+    const { data } = (await uploaded.json()) as { data: { id: string } };
+    const res = await client.admin.samples[":id"].attachments[
+      ":attachmentId"
+    ].$delete({ param: { id: sample.id, attachmentId: data.id } });
+    expect(res.status).toBe(401);
+  });
+
+  pgTest("should 400 a malformed attachment id on delete", async ({ db }) => {
+    const client = createTestApp(db);
+    const sample = await createSample(client);
+    const res = await createTestApp(db).admin.samples[":id"].attachments[
+      ":attachmentId"
+      // Cast: the typed client rightly forbids this id; the server must too.
+    ].$delete(
+      { param: { id: sample.id, attachmentId: "not-a-uuid" } },
+      { headers: authHeader },
+    );
+    expect(res.status).toBe(400);
+  });
+
   pgTest(
     "should reconcile attachments through the sample update",
     async ({ db }) => {

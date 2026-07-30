@@ -25,6 +25,10 @@ export type SampleAttachmentRepository = {
     sampleId: string,
     attachments: UpdateSampleAttachment[],
   ): Promise<void>;
+  // Drops one attachment (row + content), false when the sample does not hold
+  // it. Lets a caller free a slot before uploading its replacement, which the
+  // wholesale reconcile of a sample update cannot do on its own.
+  remove(sampleId: string, attachmentId: string): Promise<boolean>;
   getContent(
     sampleId: string,
     attachmentId: string,

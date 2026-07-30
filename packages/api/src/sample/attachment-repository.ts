@@ -119,6 +119,21 @@ export function createSampleAttachmentRepository(
         );
       }),
 
+    remove: (sampleId: string, attachmentId: string) =>
+      withTransaction(db, async (trx) => {
+        // Blob removal inside the transaction, like reconcile: a failed rm
+        // rolls the row deletion back.
+        const row = await trx
+          .deleteFrom("sample_attachment")
+          .where("id", "=", attachmentId)
+          .where("sample_id", "=", sampleId)
+          .returningAll()
+          .executeTakeFirst();
+        if (!row) return false;
+        await rm(pathFor(sampleId, row.id, row.name), { force: true });
+        return true;
+      }),
+
     getContent: (sampleId: string, attachmentId: string) =>
       withTransaction(db, async (trx) => {
         const row = await trx

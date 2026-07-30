@@ -884,6 +884,21 @@ describe("admin sample routes", () => {
       },
     );
 
+    pgTest(
+      "should answer 403 when deleting another researcher's attachment",
+      async ({ db }) => {
+        // Arrange
+        const sample = await insertOtherResearcherSample(db);
+        // Act
+        const res = await createApp(db).request(
+          `/admin/samples/${sample.id}/attachments/01890a5d-ac96-774b-bcce-b302099a8059`,
+          { method: "DELETE", headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(403);
+      },
+    );
+
     // Existence is still reported apart from ownership: an unknown id 404s.
     pgTest("should answer 403 for a sample nobody owns", async ({ db }) => {
       // Arrange

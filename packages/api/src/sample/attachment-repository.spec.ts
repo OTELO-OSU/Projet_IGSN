@@ -128,6 +128,29 @@ describe("sampleAttachmentRepository", () => {
     },
   );
 
+  pgTest("should remove one attachment with its blob", async ({ db }) => {
+    const { repository, sample } = await arrange(db);
+    const created = stored(await repository.create(sample.id, input, content));
+    // Act
+    expect(await repository.remove(sample.id, created.id)).toBe(true);
+    // Assert
+    expect((await readSample(db, sample.id))?.attachments).toEqual([]);
+    expect(await readdir(join(dir, sample.id))).not.toContain(
+      `${created.id}-measurements.csv`,
+    );
+  });
+
+  pgTest("should report an unknown removal as false", async ({ db }) => {
+    const { repository, sample } = await arrange(db);
+    // Act / Assert: another sample's (here: no) attachment is not ours to drop.
+    expect(
+      await repository.remove(
+        sample.id,
+        "00000000-0000-7000-8000-000000000000",
+      ),
+    ).toBe(false);
+  });
+
   pgTest(
     "should reconcile: update listed descriptions, remove unlisted rows and blobs",
     async ({ db }) => {
