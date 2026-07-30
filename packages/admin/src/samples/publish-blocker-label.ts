@@ -1,6 +1,7 @@
 import type { PublishBlocker } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
 import { m } from "#/paraglide/messages.js";
+import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
 // Typed map from publish-blocker code to its translation (i18n rule, ADR 0005):
 // adding a PublishBlocker without its message fails to compile here, so the
@@ -31,6 +32,8 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   collector_name_missing: m.publish_blocked_collector_name_missing,
   collection_curator_missing: m.publish_blocked_collection_curator_missing,
   collection_origin_missing: m.publish_blocked_collection_origin_missing,
+  attachment_limit_exceeded: () =>
+    m.publish_blocked_attachment_limit_exceeded({ limit: UPLOAD_LIMIT }),
 };
 
 export function publishBlockerLabel(blocker: PublishBlocker): string {

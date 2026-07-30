@@ -52,6 +52,7 @@ import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
 import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
+import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
 const natureItems = toComboboxItems(natureSchema.options, natureLabel);
 const availabilityItems = toComboboxItems(
@@ -171,6 +172,15 @@ export function SampleForm({
     },
   });
 
+  // What the sample would carry once saved: the saved files not marked for
+  // deletion plus the staged ones, which is what the publish limit applies to.
+  const keptAttachments = [
+    ...attachments.filter(
+      (attachment) => !attachmentChanges?.deletions.includes(attachment.id),
+    ),
+    ...(attachmentChanges?.pending ?? []),
+  ];
+
   // Gate a button on canSubmit (an invalid form would silently do nothing)
   // and on the publish blockers, which the tooltip lists so the disabled
   // button explains itself. Used by Save & Publish and, for a published
@@ -206,26 +216,34 @@ export function SampleForm({
       }) => {
         // Form state holds looser select strings; the runtime values match
         // the domain, so cast to the fields samplePublishBlockers reads.
-        const reasons = samplePublishBlockers({
-          type: composeHierarchyValue(typePath),
-          material: composeHierarchyValue(materialPath),
-          metamorphicFacies: metamorphicFacies || null,
-          location: composeLocation(location),
-          description: composeDescription(description),
-          age,
-          availability: availability ?? null,
-          scientificContext,
-        } as Pick<
-          Sample,
-          | "type"
-          | "material"
-          | "metamorphicFacies"
-          | "location"
-          | "description"
-          | "age"
-          | "availability"
-          | "scientificContext"
-        >).map(publishBlockerLabel);
+        // Attachments live outside the form state: only their count matters,
+        // and it is what the sample would carry once saved.
+        const reasons = samplePublishBlockers(
+          {
+            ...({
+              type: composeHierarchyValue(typePath),
+              material: composeHierarchyValue(materialPath),
+              metamorphicFacies: metamorphicFacies || null,
+              location: composeLocation(location),
+              description: composeDescription(description),
+              age,
+              availability: availability ?? null,
+              scientificContext,
+            } as Pick<
+              Sample,
+              | "type"
+              | "material"
+              | "metamorphicFacies"
+              | "location"
+              | "description"
+              | "age"
+              | "availability"
+              | "scientificContext"
+            >),
+            attachments: keptAttachments,
+          },
+          UPLOAD_LIMIT,
+        ).map(publishBlockerLabel);
         const button = renderButton(
           isPending || !canSubmit || reasons.length > 0,
         );
