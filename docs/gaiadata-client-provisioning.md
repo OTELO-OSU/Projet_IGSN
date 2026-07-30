@@ -7,12 +7,15 @@ held, not committed, same scheme as preprod's `DOMAIN`).
 
 ## Environments
 
-Production only. Local dev and preprod run their own throwaway Keycloak
-(`igsn-auth.<preprod-domain>`, imported from `keycloak/*.json`) and never
-touch GaiaData.
+A test environment exists: issuer `https://sso-test.earth-data.fr/realms/gaia-data`,
+public client `formaterre-igsn`, PKCE S256 required. Default scopes are
+`affiliations` and `identity_provider`; `roles` is optional and has no roles
+defined yet. No dedicated audience scope ships yet, so the api skips `aud`
+validation until one does.
 
-Question to GaiaData: is there an INT environment? If yes, we onboard a
-rehearsal build first, same shape as below with their `-int` naming.
+Preprod now authenticates against this test SSO. Dev switches to it via
+`.env` (see [dev-authentication.md](dev-authentication.md)); e2e stays on the
+mock realm.
 
 ## Client
 
