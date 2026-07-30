@@ -5,6 +5,8 @@ import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-valida
 import { validator } from "hono/validator";
 import { z } from "zod";
 
+import { uploadLimit } from "./upload-limit.ts";
+
 const idParamSchema = z.object({ id: z.uuid() });
 
 const igsnParamSchema = z.object({ igsn: igsnSchema });
@@ -49,6 +51,13 @@ export const validateCreateSampleBody = validator("json", (value, c) => {
   const parsed = createSampleSchema.safeParse(value);
   if (!parsed.success) {
     return c.json({ error: "Invalid sample" }, 400);
+  }
+  // The payload lists the attachments to keep and `reconcile` only keeps or
+  // drops rows, so its length bounds the sample's resulting count: capping it
+  // here blocks saving an over-limit sample, draft or published. The limit is
+  // per deployment, so publishedSampleSchema (static) cannot own this check.
+  if ((parsed.data.attachments?.length ?? 0) > uploadLimit) {
+    return c.json({ error: "Too many attachments" }, 400);
   }
   return parsed.data;
 });

@@ -13,6 +13,7 @@ import type { OwnedSampleEnv } from "./require-sample-owner.ts";
 
 import { attachmentDownload } from "./attachment-download.ts";
 import { requireSampleOwner } from "./require-sample-owner.ts";
+import { uploadLimit } from "./upload-limit.ts";
 import {
   validateAttachmentParams,
   validateAttachmentUpload,
@@ -116,7 +117,7 @@ export function createSampleAdminRoutes(
       // material in between is not guarded at the DB level (no CHECK on
       // material); acceptable for an admin-only action. Read and publish in one
       // txn if that race matters.
-      if (!isSamplePublishable(sample)) {
+      if (!isSamplePublishable(sample, uploadLimit)) {
         return c.json({ error: "Sample is not ready to publish" }, 409);
       }
       const published = await repository.publish(id);
