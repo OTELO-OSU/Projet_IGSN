@@ -1,9 +1,11 @@
+import type { Kysely } from "kysely";
 import type { webcrypto } from "node:crypto";
 
 import { testClient } from "hono/testing";
 import { afterEach, beforeAll, beforeEach, describe, expect, vi } from "vitest";
 
-import { createApp } from "../app.ts";
+import type { DB } from "../db.ts";
+
 import { pgTest } from "../tests/pg-test.ts";
 
 // test/setup.ts stubs requireAuth suite-wide; this spec verifies the real
@@ -51,6 +53,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 // The header always claims KID so a token minted with another key exercises
@@ -71,9 +74,9 @@ async function mint(
 
 const nowSeconds = () => Math.floor(Date.now() / 1000);
 
+// GaiaData tokens carry no aud claim, so the valid token has none either.
 const validClaims = () => ({
   iss: ISSUER,
-  aud: AUDIENCE,
   exp: nowSeconds() + 300,
   sub: "user-1",
   preferred_username: "marie",
@@ -81,10 +84,17 @@ const validClaims = () => ({
   email: "marie.dupont@univ-lorraine.fr",
 });
 
-const getMe = async (db: Parameters<typeof createApp>[0], token: string) =>
-  testClient(createApp(db)).admin.me.$get(undefined, {
+// The middleware reads OIDC_AUDIENCE once, when it is imported, so each
+// audience configuration needs its own module graph.
+const getMe = async (db: Kysely<DB>, token: string, audience?: string) => {
+  vi.stubEnv("OIDC_AUDIENCE", audience);
+  vi.resetModules();
+  const { createApp } = await import("../app.ts");
+
+  return testClient(createApp(db)).admin.me.$get(undefined, {
     headers: { Authorization: `Bearer ${token}` },
   });
+};
 
 describe("requireAuth", () => {
   pgTest(
@@ -102,14 +112,40 @@ describe("requireAuth", () => {
     },
   );
 
-  pgTest("should reject a token with the wrong audience", async ({ db }) => {
-    const res = await getMe(
-      db,
-      await mint({ ...validClaims(), aud: "someone-else" }),
-    );
+  pgTest(
+    "should accept a matching audience when OIDC_AUDIENCE is set",
+    async ({ db }) => {
+      const res = await getMe(
+        db,
+        await mint({ ...validClaims(), aud: AUDIENCE }),
+        AUDIENCE,
+      );
 
-    expect(res.status).toBe(401);
-  });
+      expect(res.status).toBe(200);
+    },
+  );
+
+  pgTest(
+    "should reject a token with the wrong audience when OIDC_AUDIENCE is set",
+    async ({ db }) => {
+      const res = await getMe(
+        db,
+        await mint({ ...validClaims(), aud: "someone-else" }),
+        AUDIENCE,
+      );
+
+      expect(res.status).toBe(401);
+    },
+  );
+
+  pgTest(
+    "should reject a token without audience when OIDC_AUDIENCE is set",
+    async ({ db }) => {
+      const res = await getMe(db, await mint(validClaims()), AUDIENCE);
+
+      expect(res.status).toBe(401);
+    },
+  );
 
   pgTest("should reject a token with the wrong issuer", async ({ db }) => {
     const res = await getMe(

@@ -34,6 +34,7 @@ arms duplicate renew timers, fatal once refresh tokens are single-use.
 `OIDC_AUDIENCE` (default `igsn-api`); the realm carries an `igsn-api`
 audience client scope, default on `igsn-admin`. GaiaData's per-environment
 audience value is deploy config ([REQ-TOKEN-03/04](#gt-sso-requirements)).
+Amended 2026-07-30, see [Amendment](#amendment-2026-07-30-audience-validation-is-opt-in).
 
 **The local realm mirrors prod token policy.** `accessTokenLifespan: 300`,
 `ssoSessionIdleTimeout: 1800`, `revokeRefreshToken: true`,
@@ -107,6 +108,19 @@ origin + `/` and deep links ride the oidc `state`.
 - Nothing waits on GaiaData except deploy values and rollout decisions.
 
 Supersedes `SPEC.md`, the working audit document, removed with this change.
+
+## Amendment 2026-07-30: audience validation is opt-in
+
+The GaiaData test realm (`https://sso-test.earth-data.fr/realms/gaia-data`,
+client `formaterre-igsn`) exposes no dedicated audience scope, so its access
+tokens carry no `aud` claim we can require. `aud` validation therefore becomes
+opt-in: the api checks it only when `OIDC_AUDIENCE` is set, and the mock realm
+drops its `igsn-api` audience mapper so dev matches GaiaData. Signature, `exp`,
+`iss` and the RS256 pinning stay mandatory.
+
+This is a knowing deviation from [REQ-TOKEN-03/04](#gt-sso-requirements). When
+GaiaData ships an audience scope for the client, set `OIDC_AUDIENCE` per
+environment and restore the mock realm mapper; no code change needed.
 
 ## GT-SSO requirements
 
