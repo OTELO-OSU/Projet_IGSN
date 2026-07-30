@@ -210,6 +210,11 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
         ).catch(() => null),
       ),
     );
+    // Consumed: the rows are gone and the payload below (built from the local
+    // `deletions`, not the state) already excludes them. Keeping the ids would
+    // discount slots that are free once the page refetches, and re-delete them
+    // on every later save.
+    setDeletions([]);
     const uploaded = await uploadPending();
     return [
       ...saved

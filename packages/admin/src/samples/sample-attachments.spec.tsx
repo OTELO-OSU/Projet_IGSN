@@ -4,6 +4,7 @@ import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/mod
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import { DEFAULT_UPLOAD_LIMIT } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
@@ -37,21 +38,27 @@ type HarnessProps = {
 
 // The staging state lives in the hook (owned by the edit page); the Save
 // button stands in for the form submit, which uploads the staged files and
-// sends the committed payload with the sample update.
+// sends the committed payload with the sample update. Saving then narrows the
+// saved attachments to the ones the payload kept, standing in for the refetch
+// the page runs after a save (the edit page does not remount).
 function Harness({ attachments, onCommit }: HarnessProps) {
-  const changes = useAttachmentChanges(SAMPLE_ID, attachments.length);
+  const [saved, setSaved] = useState(attachments);
+  const changes = useAttachmentChanges(SAMPLE_ID, saved.length);
   return (
     <>
       <SampleAttachments
         sampleId={SAMPLE_ID}
-        attachments={attachments}
+        attachments={saved}
         changes={changes}
       />
       <SampleAttachmentUploadDialog changes={changes} />
       <button
         type="button"
         onClick={async () => {
-          const payload = await changes.commit(attachments);
+          const payload = await changes.commit(saved);
+          setSaved((current) =>
+            current.filter((a) => payload.some(({ id }) => id === a.id)),
+          );
           onCommit?.(payload);
         }}
       >
@@ -394,6 +401,34 @@ describe("SampleAttachments", () => {
     await expect
       .element(screen.getByText("Could not upload."))
       .not.toBeInTheDocument();
+  });
+
+  it("should forget a deletion the save already performed", async () => {
+    const fetchSpy = vi
+      .spyOn(window, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    const screen = await renderAttachments(
+      savedAttachments(DEFAULT_UPLOAD_LIMIT),
+    );
+
+    await screen.getByRole("button", { name: "Delete saved-0.csv" }).click();
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    // The file is gone server-side, so the sample truly holds 4: counting the
+    // consumed deletion again would discount a slot that is already free.
+    await expect.element(screen.getByText("4 of 5 files")).toBeVisible();
+
+    // That one free slot takes one file, not two.
+    await screen
+      .getByLabelText("Browse files")
+      .upload([file("new.csv"), file("extra.csv")]);
+    await expect.element(screen.getByText("new.csv")).toBeVisible();
+    expect(screen.getByText("extra.csv").query()).toBeNull();
+
+    // And the next save no longer re-deletes what is already gone.
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+    await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
   it("should free a slot when a saved attachment is marked for deletion", async () => {
