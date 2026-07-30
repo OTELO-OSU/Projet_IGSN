@@ -7,9 +7,10 @@ import { jwk } from "hono/jwk";
 const issuer = process.env.OIDC_ISSUER ?? "http://localhost:8080/realms/igsn";
 const jwksUri =
   process.env.OIDC_JWKS_URI ?? `${issuer}/protocol/openid-connect/certs`;
-// Dedicated audience per SP and environment (GaiaData REQ-TOKEN-03/04); the
-// local realm injects it via the igsn-api audience mapper on igsn-admin.
-const audience = process.env.OIDC_AUDIENCE ?? "igsn-api";
+// GaiaData provisions no dedicated audience yet, so the ADR 0006 mandatory aud
+// check (REQ-TOKEN-03/04) is opt-in via OIDC_AUDIENCE until they add an
+// audience scope; hono skips the check when aud is undefined.
+const audience = process.env.OIDC_AUDIENCE;
 
 // Populates c.get("jwtPayload") with the verified claims; 401s otherwise.
 // alg is pinned to RS256 (Keycloak's default) to rule out algorithm confusion.
