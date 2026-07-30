@@ -34,7 +34,6 @@ arms duplicate renew timers, fatal once refresh tokens are single-use.
 `OIDC_AUDIENCE` (default `igsn-api`); the realm carries an `igsn-api`
 audience client scope, default on `igsn-admin`. GaiaData's per-environment
 audience value is deploy config ([REQ-TOKEN-03/04](#gt-sso-requirements)).
-Amended 2026-07-30, see [Amendment](#amendment-2026-07-30-audience-validation-is-opt-in).
 
 **The local realm mirrors prod token policy.** `accessTokenLifespan: 300`,
 `ssoSessionIdleTimeout: 1800`, `revokeRefreshToken: true`,
@@ -109,18 +108,29 @@ origin + `/` and deep links ride the oidc `state`.
 
 Supersedes `SPEC.md`, the working audit document, removed with this change.
 
-## Amendment 2026-07-30: audience validation is opt-in
+## Amendment 2026-07-30: audience validation is opt-in, azp and typ stand in
 
 The GaiaData test realm (`https://sso-test.earth-data.fr/realms/gaia-data`,
 client `formaterre-igsn`) exposes no dedicated audience scope, so its access
 tokens carry no `aud` claim we can require. `aud` validation therefore becomes
 opt-in: the api checks it only when `OIDC_AUDIENCE` is set, and the mock realm
-drops its `igsn-api` audience mapper so dev matches GaiaData. Signature, `exp`,
-`iss` and the RS256 pinning stay mandatory.
+drops its `igsn-api` audience mapper so dev matches GaiaData.
+
+Residual risk: that realm is shared with other service providers, so signature
+plus `iss` alone would let any of their tokens, or any client's id_token
+replayed as a bearer, authenticate here and auto-provision an account. Two
+claim checks carry the audience's job instead: `azp` must equal
+`OIDC_CLIENT_ID` (the client the token was issued to) and `typ` must be
+`Bearer` (Keycloak marks id_tokens `ID`). Weaker than a dedicated audience: it
+trusts Keycloak's non-standard `typ` claim and only fails closed as long as
+GaiaData keeps stamping `azp`, so confirm both on a real GaiaData token at the
+first deploy. Signature, `iss` and the RS256 pinning stay mandatory; `exp` is
+enforced whenever the claim is present, which Keycloak always emits.
 
 This is a knowing deviation from [REQ-TOKEN-03/04](#gt-sso-requirements). When
 GaiaData ships an audience scope for the client, set `OIDC_AUDIENCE` per
-environment and restore the mock realm mapper; no code change needed.
+environment and restore the mock realm mapper; the `azp`/`typ` check can then
+go, no other code change needed.
 
 ## GT-SSO requirements
 

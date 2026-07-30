@@ -72,6 +72,9 @@ services:
       # GaiaData test SSO. Public issuer, reachable from here as-is, so the api
       # derives the JWKS URL from it and no OIDC_JWKS_URI override is needed.
       OIDC_ISSUER: "https://sso-test.earth-data.fr/realms/gaia-data"
+      # The realm is shared with other service providers, so the api accepts
+      # tokens issued to this client only (azp); admin bakes the same value.
+      OIDC_CLIENT_ID: "formaterre-igsn"
       # Key the per-IP rate limit on the X-Real-IP Caddy sets from
       # Cf-Connecting-IP. Only safe because nothing but Caddy can reach this
       # service: no port is published.
