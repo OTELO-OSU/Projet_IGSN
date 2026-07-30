@@ -25,7 +25,8 @@ source "$(dirname "$0")/common.sh"
 docker build --platform linux/amd64 -f packages/api/Dockerfile -t igsn-api:preprod .
 docker build --platform linux/amd64 -f packages/admin/Dockerfile \
 	--build-arg VITE_API_URL="https://igsn-api.$DOMAIN" \
-	--build-arg VITE_OIDC_AUTHORITY="https://igsn-auth.$DOMAIN/realms/igsn" \
+	--build-arg VITE_OIDC_AUTHORITY="https://sso-test.earth-data.fr/realms/gaia-data" \
+	--build-arg VITE_OIDC_CLIENT_ID="formaterre-igsn" \
 	--build-arg VITE_FRONTEND_URL="https://igsn.$DOMAIN" \
 	-t igsn-admin:preprod .
 docker build --platform linux/amd64 -f packages/frontend/Dockerfile \

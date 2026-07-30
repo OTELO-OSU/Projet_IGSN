@@ -69,10 +69,9 @@ services:
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      # Issuer is the browser-facing Keycloak URL (baked into tokens); JWKS is
-      # fetched over the compose network from the keycloak service directly.
-      OIDC_ISSUER: "https://igsn-auth.${DOMAIN}/realms/igsn"
-      OIDC_JWKS_URI: "http://keycloak:8080/realms/igsn/protocol/openid-connect/certs"
+      # GaiaData test SSO. Public issuer, reachable from here as-is, so the api
+      # derives the JWKS URL from it and no OIDC_JWKS_URI override is needed.
+      OIDC_ISSUER: "https://sso-test.earth-data.fr/realms/gaia-data"
       # Key the per-IP rate limit on the X-Real-IP Caddy sets from
       # Cf-Connecting-IP. Only safe because nothing but Caddy can reach this
       # service: no port is published.
@@ -95,6 +94,8 @@ services:
   # https URLs behind Caddy. See docs/adr/0003-preprod-auth-stack.md.
   # ponytail: H2 in-memory, so brokered users vanish on container recreate and
   # re-provision on next login. Switch to `start` + Postgres if durable state matters.
+  # Unused by the apps while GaiaData is the SSO: kept as the rollback path, to
+  # remove with saml-idp once GaiaData login is proven.
   keycloak:
     image: quay.io/keycloak/keycloak:26.6
     restart: unless-stopped
