@@ -189,8 +189,7 @@ services:
       # Minimum word_similarity for the search's typo tolerance (ADR 0018).
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
       # How many files a sample may carry; the admin bundle must agree
-      # (VITE_UPLOAD_LIMIT). Dev's admin service sets none, so it falls back
-      # to the same default (5).
+      # (VITE_UPLOAD_LIMIT).
       UPLOAD_LIMIT: "5"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3002/"]
