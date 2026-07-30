@@ -368,7 +368,9 @@ type ParsedSize =
   | { kind: "invalid"; raw: string };
 
 const positiveNumber = (part: string): number => {
-  const value = Number(part.trim());
+  // French decimal comma ("0,5"); replacing only the first keeps a
+  // double-comma part ("2,1,2") unreadable, as it should be.
+  const value = Number(part.trim().replace(",", "."));
   return Number.isFinite(value) && value > 0 ? value : NaN;
 };
 

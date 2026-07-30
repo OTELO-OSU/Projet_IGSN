@@ -320,11 +320,22 @@ describe("mapSize", () => {
     },
   );
 
+  it.each(["8X2X0,5", "8x2x0.5", " 8 x 2 x 0,5 "])(
+    "should read the comma in %s as a decimal separator",
+    (size) => {
+      expect(mapSize(size, "cm")).toEqual({
+        length: { value: 8, unit: "cm" },
+        width: { value: 2, unit: "cm" },
+        thickness: { value: 0.5, unit: "cm" },
+      });
+    },
+  );
+
   it("should treat a lone slash as no value", () => {
     expect(mapSize("/", "cm")).toEqual({});
   });
 
-  it.each(["n/a", "1x2x3x4", "9x5x6cm", "0x2x3"])(
+  it.each(["n/a", "1x2x3x4", "9x5x6cm", "0x2x3", "4,5x2,1,2", "2,5x2,0,5"])(
     "should return nothing for %s",
     (size) => {
       expect(mapSize(size, "cm")).toEqual({});
