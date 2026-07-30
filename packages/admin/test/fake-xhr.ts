@@ -24,23 +24,12 @@ export class FakeXhr {
     this.body = body;
     FakeXhr.instances.push(this);
   }
-  headers: Record<string, string> = {};
-  // Through Headers, so the double case-folds exactly like the real method
-  // instead of imitating it.
-  getResponseHeader(name: string) {
-    return new Headers(this.headers).get(name);
-  }
   // On success the upload hook parses the created attachment from the
   // response, so a finished upload needs a valid body; the default builds one
   // from the sent form data.
-  finish(
-    status = 201,
-    responseText?: string,
-    headers: Record<string, string> = {},
-  ) {
+  finish(status = 201, responseText?: string) {
     this.upload.onprogress?.({ lengthComputable: true, loaded: 1, total: 2 });
     this.status = status;
-    this.headers = headers;
     const file = this.body?.get("file") as File | null;
     this.responseText =
       responseText ??

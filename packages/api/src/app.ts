@@ -37,6 +37,17 @@ export function createApp(
   );
   const userRepository = createUserRepository(database);
 
+  // IP limiter wraps only the public sample routes, so the healthcheck (GET /)
+  // and the separately user-limited /admin mount are never touched by it. It sits
+  // under the global cors below, so a 429 still carries the allow-origin header the
+  // admin SPA needs to read it, and cors answers a preflight before it runs.
+  const publicSampleRoutes = new Hono()
+    .use("*", rateLimit(rateLimitConfig, "ip"))
+    .route(
+      "/",
+      createSampleRoutes(sampleRepository, sampleAttachmentRepository),
+    );
+
   const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
     // After requireAuth, so the budget is keyed by the verified sub, and before
@@ -75,9 +86,6 @@ export function createApp(
           ],
         }),
       )
-      // After cors, so a 429 still carries the allow-origin header the admin SPA
-      // needs to read it, and so cors answers a preflight before the limiter runs.
-      .use("*", rateLimit(rateLimitConfig, "ip"))
       // The cause is logged, never serialised: a driver message can carry SQL
       // or a connection string. An HTTPException (the auth guard's 401 and its
       // headers) already carries its own response.
@@ -87,10 +95,7 @@ export function createApp(
         return c.json({ error: "Internal server error" }, 500);
       })
       .get("/", (c) => c.json({ message: "OK" }))
-      .route(
-        "/samples",
-        createSampleRoutes(sampleRepository, sampleAttachmentRepository),
-      )
+      .route("/samples", publicSampleRoutes)
       .route("/admin", adminRoutes)
   );
 }

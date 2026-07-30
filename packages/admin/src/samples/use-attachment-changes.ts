@@ -5,16 +5,14 @@ import {
   type UpdateSampleAttachment,
   uploadSampleAttachmentSchema,
 } from "@projet-igsn/domain/sample/attachment/attachment-validator";
+import { sampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/model";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuth } from "react-oidc-context";
+import { z } from "zod";
 
 import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
-import {
-  type UploadBatchItem,
-  uploadAttachment,
-} from "#/samples/upload-attachment.ts";
 
 type StagedAttachment = {
   key: string;
@@ -22,41 +20,55 @@ type StagedAttachment = {
   description?: string;
   error?: boolean;
 };
+type UploadBatchItem = {
+  key: string;
+  name: string;
+  progress: number;
+  status: "uploading" | "uploaded" | "failed";
+};
 
-// Every saved attachment to keep, with its edited description. The API deletes
-// whatever the payload does not list.
-function keptAttachments(
-  saved: SampleAttachment[],
-  deletions: string[],
-  descriptions: Record<string, string>,
-): UpdateSampleAttachment[] {
-  return saved
-    .filter((attachment) => !deletions.includes(attachment.id))
-    .map((attachment) => ({
-      id: attachment.id,
-      description:
-        (descriptions[attachment.id] ?? attachment.description ?? "").trim() ||
-        null,
-    }));
-}
+const uploadResponseSchema = z.object({ data: sampleAttachmentSchema });
 
-// The shared domain schema fronts the API's own check; any file type passes,
-// only the size cap can reject. Checked at pick time so the user hears about it
-// before submitting.
-function acceptFiles(files: File[]): File[] {
-  return files.filter((file) => {
-    const isValid = uploadSampleAttachmentSchema.safeParse({ file }).success;
-    if (!isValid) toast.error(m.attachment_too_large({ name: file.name }));
-    return isValid;
+// XHR instead of the shared fetch client: fetch cannot report request-body
+// progress, and a 100 MB video deserves a real progress bar. ponytail: no
+// silent-renewal retry on 401 here; the upload just fails in the recap.
+function xhrUpload(
+  url: string,
+  token: string | undefined,
+  file: File,
+  description: string | undefined,
+  onProgress: (percent: number) => void,
+): Promise<SampleAttachment> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", url);
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable) {
+        onProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    };
+    xhr.onload = () => {
+      try {
+        if (xhr.status < 200 || xhr.status >= 300) {
+          throw new Error(`Upload failed (${xhr.status})`);
+        }
+        resolve(uploadResponseSchema.parse(JSON.parse(xhr.responseText)).data);
+      } catch (error: unknown) {
+        reject(error instanceof Error ? error : new Error("Upload failed"));
+      }
+    };
+    xhr.onerror = () => reject(new Error("Upload failed"));
+    const body = new FormData();
+    body.append("file", file);
+    if (description) body.append("description", description);
+    xhr.send(body);
   });
 }
 
-// Stages every attachment change locally (files to upload with their
-// description, saved attachments to delete, edited descriptions) so cancelling
-// the form leaves the server untouched. `commit` (called on form submit, before
-// the sample save) uploads the staged files in parallel behind a progress
-// dialog whose recap stays until the user closes it, then returns the
-// attachments payload for the sample update.
+// Stages attachment changes locally so cancelling the form leaves the server
+// untouched. `commit` uploads the staged files, then returns every attachment
+// to keep; the API deletes whatever the returned payload omits.
 export function useAttachmentChanges(sampleId: string) {
   const token = useAuth().user?.access_token;
   const queryClient = useQueryClient();
@@ -66,11 +78,18 @@ export function useAttachmentChanges(sampleId: string) {
   const [batch, setBatch] = useState<UploadBatchItem[]>([]);
   const [isDialogOpen, setDialogOpen] = useState(false);
 
-  const addFiles = (files: File[]) =>
+  const addFiles = (files: File[]) => {
+    // Pre-check size at pick time for UX; the API revalidates.
+    const accepted = files.filter((file) => {
+      const isValid = uploadSampleAttachmentSchema.safeParse({ file }).success;
+      if (!isValid) toast.error(m.attachment_too_large({ name: file.name }));
+      return isValid;
+    });
     setPending((current) => [
       ...current,
-      ...acceptFiles(files).map((file) => ({ key: crypto.randomUUID(), file })),
+      ...accepted.map((file) => ({ key: crypto.randomUUID(), file })),
     ]);
+  };
 
   const removeFile = (key: string) =>
     setPending((current) => current.filter((staged) => staged.key !== key));
@@ -96,38 +115,10 @@ export function useAttachmentChanges(sampleId: string) {
       current.map((item) => (item.key === key ? { ...item, ...patch } : item)),
     );
 
-  const uploadStaged = async ({
-    key,
-    file,
-    description,
-  }: StagedAttachment): Promise<UpdateSampleAttachment | null> => {
-    const created = await uploadAttachment(
-      {
-        url: new URL(`admin/samples/${sampleId}/attachments`, API_URL).href,
-        token,
-        file,
-        description: description?.trim() || undefined,
-      },
-      (patch) => setBatchItem(key, patch),
-    );
-    // A file that did not make it stays staged, flagged for a retry on the next
-    // submit, and never blocks saving the rest.
-    if (created === null) {
-      setPending((current) =>
-        current.map((staged) =>
-          staged.key === key ? { ...staged, error: true } : staged,
-        ),
-      );
-      return null;
-    }
-    setPending((current) => current.filter((staged) => staged.key !== key));
-    return { id: created.id, description: created.description };
-  };
-
   const uploadPending = async (): Promise<UpdateSampleAttachment[]> => {
     const staged = pending;
     if (staged.length === 0) return [];
-    setPending((current) => current.map((item) => ({ ...item, error: false })));
+    setPending((current) => current.map((s) => ({ ...s, error: false })));
     setBatch(
       staged.map(({ key, file }) => ({
         key,
@@ -137,17 +128,34 @@ export function useAttachmentChanges(sampleId: string) {
       })),
     );
     setDialogOpen(true);
-    // ponytail: a drop far above the budget still converges over several
-    // windows, and a very large one exhausts the retries. Per-file queueing with
-    // a real scheduler is the upgrade path if researchers routinely drop
-    // hundreds of files.
-    const results = await Promise.all(staged.map(uploadStaged));
+    const results = await Promise.all(
+      staged.map(async ({ key, file, description }) => {
+        try {
+          const created = await xhrUpload(
+            new URL(`admin/samples/${sampleId}/attachments`, API_URL).href,
+            token,
+            file,
+            description?.trim() || undefined,
+            (progress) => setBatchItem(key, { progress }),
+          );
+          setBatchItem(key, { status: "uploaded" });
+          setPending((current) => current.filter((s) => s.key !== key));
+          return { id: created.id, description: created.description };
+        } catch {
+          setBatchItem(key, { status: "failed" });
+          setPending((current) =>
+            current.map((s) => (s.key === key ? { ...s, error: true } : s)),
+          );
+          return null;
+        }
+      }),
+    );
     const uploaded = results.filter((result) => result !== null);
     if (uploaded.length > 0) {
-      // Keeps the uploads visible even if the sample save then fails.
+      // Keep the uploads visible even if the sample save then fails.
       await queryClient.invalidateQueries({ queryKey: ["samples"] });
     }
-    // The dialog never closes itself: the user confirms the recap.
+    // The dialog stays open: the user confirms the recap.
     return uploaded;
   };
 
@@ -155,7 +163,20 @@ export function useAttachmentChanges(sampleId: string) {
     saved: SampleAttachment[],
   ): Promise<UpdateSampleAttachment[]> => {
     const uploaded = await uploadPending();
-    return [...keptAttachments(saved, deletions, descriptions), ...uploaded];
+    return [
+      ...saved
+        .filter((attachment) => !deletions.includes(attachment.id))
+        .map((attachment) => ({
+          id: attachment.id,
+          description:
+            (
+              descriptions[attachment.id] ??
+              attachment.description ??
+              ""
+            ).trim() || null,
+        })),
+      ...uploaded,
+    ];
   };
 
   return {

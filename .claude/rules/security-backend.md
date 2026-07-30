@@ -49,14 +49,14 @@ state-changing requests using cookie-based auth.
 
 ## Rate limiting
 
-Rate-limit all endpoints, with stricter limits on auth and submission routes.
-Use `rate-limiter-flexible`. Key the limiter by:
+Rate-limit all endpoints. Use `rate-limiter-flexible`. Key the limiter by:
 
-- **Public endpoints**: client IP address.
-- **User JWT**: user id from the JWT claims.
-- **Application JWT**: application id from the JWT claims.
+- **Public routes**: client IP address.
+- **Authenticated routes**: user id (`sub`) from the JWT claims.
 
-Take the key from the JWT claims, never from the client.
+Take the key from the trust boundary, never from the client: an IP is only
+read from a header a reverse proxy we control sets, and the `sub` is only
+read after the JWT is verified.
 
 ## Secrets
 

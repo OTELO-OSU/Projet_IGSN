@@ -27,13 +27,12 @@ be a sibling `infra/prod/`.
   (`trusted_proxies static 0.0.0.0/0`); this is only sound because `ec2.tf`
   restricts 80/443 to Cloudflare's fetched ranges, so no other peer can reach
   it.
-- **Rate limiting** runs in the api, keyed on the visitor IP for public reads
-  and on the authenticated user for admin routes. It depends on Caddy
-  forwarding the real client IP: `TRUST_PROXY_HEADERS=true` on the api
-  (`docker-compose.yml`) is required, not optional, or every visitor is billed
-  to Caddy's own container address. Per-route budgets are tunable with
-  `RATE_LIMIT_<KEY>_POINTS` / `RATE_LIMIT_<KEY>_DURATION`, or the whole thing
-  can be disabled with `RATE_LIMIT_ENABLED=false` (see
+- **Rate limiting** runs in the api as two fixed tiers: the visitor IP for
+  public reads (50/60s), the authenticated user's JWT `sub` for admin routes
+  (100/60s). It depends on Caddy forwarding the real client IP:
+  `TRUST_PROXY_HEADERS=true` on the api (`docker-compose.yml`) is required,
+  not optional, or every visitor is billed to Caddy's own container address.
+  The whole thing can be disabled with `RATE_LIMIT_ENABLED=false` (see
   [docker-compose.env.example](../infra/preprod/docker-compose.env.example)).
   An empty value counts as unset; a malformed one fails the api at boot,
   naming the variable. See [ADR 0020](adr/0020-api-rate-limiting.md).

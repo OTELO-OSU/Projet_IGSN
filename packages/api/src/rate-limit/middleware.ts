@@ -2,12 +2,10 @@ import type { Context, MiddlewareHandler } from "hono";
 
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { createMiddleware } from "hono/factory";
-import { matchedRoutes } from "hono/route";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 import type { KeycloakClaims } from "../auth/middleware.ts";
-import type { RateLimitConfig } from "./config.ts";
-import type { RateLimitScope } from "./route-budgets.ts";
+import type { RateLimitConfig, RateLimitScope } from "./config.ts";
 
 type RateLimitEnv = { Variables: { jwtPayload: KeycloakClaims } };
 
@@ -32,32 +30,20 @@ function requestKey(
 }
 
 export function rateLimit(
-  { trustProxyHeaders, routes }: RateLimitConfig,
+  config: RateLimitConfig,
   scope: RateLimitScope,
 ): MiddlewareHandler<RateLimitEnv> {
+  if (!config.enabled) {
+    return createMiddleware<RateLimitEnv>((_c, next) => next());
+  }
+
   // ponytail: in-process counters, one replica only; RateLimiterRedis when the
   // api scales out.
-  const limiters = new Map(
-    routes
-      .filter((route) => route.scope === scope)
-      .map(({ method, path, points, duration }) => [
-        `${method} ${path}`,
-        new RateLimiterMemory({ points, duration }),
-      ]),
-  );
+  const limiter = new RateLimiterMemory(config[scope]);
 
   return createMiddleware<RateLimitEnv>(async (c, next) => {
-    // ponytail: `.at(-1)` is the last matching handler in registration order,
-    // which is the real route handler only while every `.use()` is registered
-    // before the routes it covers, as app.ts does. c.req.routePath cannot be
-    // used here: inside a `.use("*")` it resolves to the middleware's own path.
-    const matched = matchedRoutes(c).at(-1);
-    const limiter =
-      matched && limiters.get(`${matched.method} ${matched.path}`);
-    if (!limiter) return next();
-
     try {
-      await limiter.consume(requestKey(c, scope, trustProxyHeaders));
+      await limiter.consume(requestKey(c, scope, config.trustProxyHeaders));
     } catch (rejected) {
       // consume() rejects with a RateLimiterRes, which is not an Error, so
       // anything else is a real failure and must not read as a 429.
