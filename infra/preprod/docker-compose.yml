@@ -82,6 +82,9 @@ services:
       ATTACHMENTS_DIR: /data/attachments
       # Retunable per deployment without editing this file; see the env example.
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "${SAMPLE_SEARCH_FUZZY_THRESHOLD:-0.8}"
+      # Same host var drives the admin bundle (deploy.sh passes it as
+      # VITE_UPLOAD_LIMIT), so both sides enforce one limit.
+      UPLOAD_LIMIT: "${UPLOAD_LIMIT:-5}"
     healthcheck: *healthcheck
     volumes:
       - attachments:/data/attachments

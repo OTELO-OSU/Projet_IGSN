@@ -51,6 +51,9 @@ ARG VITE_OIDC_CLIENT_ID=igsn-admin
 ENV VITE_OIDC_CLIENT_ID=$VITE_OIDC_CLIENT_ID
 ARG VITE_FRONTEND_URL=http://localhost:3000
 ENV VITE_FRONTEND_URL=$VITE_FRONTEND_URL
+# Must match the api's UPLOAD_LIMIT, or the UI promises what the api refuses.
+ARG VITE_UPLOAD_LIMIT=5
+ENV VITE_UPLOAD_LIMIT=$VITE_UPLOAD_LIMIT
 
 RUN pnpm -F @projet-igsn/admin build
 
