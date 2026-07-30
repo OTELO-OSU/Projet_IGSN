@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { Sample } from "../sample.ts";
 
+import { DEFAULT_UPLOAD_LIMIT } from "../attachment/attachment-validator.ts";
 import { locationRequirement } from "../location/location-requirement.ts";
 import { MATERIAL_PATHS } from "../material/classification.ts";
 import { isMaterialComplete } from "../material/is-complete.ts";
@@ -34,6 +35,7 @@ export const publishBlockerSchema = z.enum([
   "collector_name_missing",
   "collection_curator_missing",
   "collection_origin_missing",
+  "attachment_limit_exceeded",
 ]);
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
@@ -55,7 +57,12 @@ export function samplePublishBlockers(
     | "age"
     | "availability"
     | "scientificContext"
-  >,
+  > & {
+    // Only the length is read, so a saved `Sample["attachments"]` and the
+    // admin's staged files both fit. Omitted means "unknown", never blocking.
+    attachments?: readonly unknown[];
+  },
+  uploadLimit: number = DEFAULT_UPLOAD_LIMIT,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
 
@@ -184,6 +191,12 @@ export function samplePublishBlockers(
       blockers.push("collection_curator_missing");
     if (context.collectionOrigin == null)
       blockers.push("collection_origin_missing");
+  }
+
+  // A sample carrying more attachments than the deployment allows cannot be
+  // published until files are removed: no grandfathering for legacy samples.
+  if (sample.attachments != null && sample.attachments.length > uploadLimit) {
+    blockers.push("attachment_limit_exceeded");
   }
 
   return blockers;

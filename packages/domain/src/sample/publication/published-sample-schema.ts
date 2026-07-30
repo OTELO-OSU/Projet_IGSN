@@ -31,6 +31,7 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   collector_name_missing: ["scientificContext", "collectorName"],
   collection_curator_missing: ["scientificContext", "collectionCurator"],
   collection_origin_missing: ["scientificContext", "collectionOrigin"],
+  attachment_limit_exceeded: ["attachments"],
 };
 
 // The shape of a sample that is, or is becoming, published: the create shape,
@@ -40,6 +41,9 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
 // for updates to a published sample; only drafts keep createSampleSchema.
 export const publishedSampleSchema = createSampleSchema.superRefine(
   (value, ctx) => {
+    // `attachments` is deliberately left out: this schema is static and cannot
+    // know the deployment's upload limit, so the api PUT validator enforces the
+    // count with the configured value instead.
     const blockers = samplePublishBlockers({
       type: value.type ?? null,
       material: value.material ?? null,

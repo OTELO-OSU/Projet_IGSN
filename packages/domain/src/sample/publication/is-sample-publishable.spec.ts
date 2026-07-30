@@ -85,6 +85,19 @@ describe("isSamplePublishable", () => {
     ).toBe(true);
   });
 
+  it("should reject a sample holding more attachments than the given limit", () => {
+    expect(
+      isSamplePublishable(
+        {
+          ...draft,
+          material: "rock.igneous.plutonic.felsic.granite",
+          attachments: Array(4).fill({}) as Sample["attachments"],
+        },
+        3,
+      ),
+    ).toBe(false);
+  });
+
   it("should accept a leaf material under an in-scope type", () => {
     expect(
       isSamplePublishable({
