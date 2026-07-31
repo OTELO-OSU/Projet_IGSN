@@ -13,8 +13,8 @@ Follow TDD (testing rule).
 
 ## Workflow
 
-1. **Clarify behaviour.** If the component's behaviour is not obvious, use the
-   `superpowers:brainstorming` skill first. Otherwise continue.
+1. **Clarify behaviour.** If the component's behaviour is not obvious, ask the
+   user before writing code. Otherwise continue.
 
 2. **Test first (browser mode).** Create `src/<area>/<Component>.spec.tsx`. Render
    with `vitest-browser-react` and query by accessible role/label (testing rule).

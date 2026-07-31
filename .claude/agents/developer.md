@@ -23,7 +23,7 @@ Read first:
 - The skill for the layer you touch, and follow it: `add-domain-entity`,
   `add-api-endpoint`, `add-admin-component`, `add-shadcn-component`,
   `add-sample-vocabulary`; `kysely-vitest-postgres` for api tests.
-- `superpowers:test-driven-development`, `ponytail:ponytail`.
+- `ponytail:ponytail`.
 - `.claude/rules/{architecture,coding-style,conventions-backend,react-frontend,forms,i18n}.md`.
 
 Do:
