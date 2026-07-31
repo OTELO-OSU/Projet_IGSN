@@ -327,8 +327,9 @@ describe("SampleAttachments", () => {
     await expect.element(screen.getByText("5 of 5 files")).toBeVisible();
   });
 
-  it("should stage a file past the limit and count it over the cap", async () => {
-    // Staging is never refused; the form disables saving until the count fits.
+  it("should stage a file past the limit and turn the count red", async () => {
+    // Staging is never refused; the count marks the error and the form's
+    // save noops until the count fits.
     const screen = await renderAttachments(
       savedAttachments(DEFAULT_UPLOAD_LIMIT),
     );
@@ -336,7 +337,9 @@ describe("SampleAttachments", () => {
     await screen.getByLabelText("Browse files").upload([file("extra.csv")]);
 
     await expect.element(screen.getByText("extra.csv")).toBeVisible();
-    await expect.element(screen.getByText("6 of 5 files")).toBeVisible();
+    await expect
+      .element(screen.getByText("6 of 5 files"))
+      .toHaveClass("text-destructive");
   });
 
   it("should swap a file in one save when the sample is full", async () => {

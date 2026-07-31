@@ -176,7 +176,14 @@ export function SampleAttachments({
   return (
     <FormSection title={m.section_attachments()}>
       <AttachmentDropZone onFiles={addFiles} />
-      <p className="text-muted-foreground text-sm">
+      <p
+        className={cn(
+          "text-sm",
+          changes.keptCount > UPLOAD_LIMIT
+            ? "text-destructive"
+            : "text-muted-foreground",
+        )}
+      >
         {m.attachment_count({ count: changes.keptCount, limit: UPLOAD_LIMIT })}
       </p>
       {pending.length > 0 ? (

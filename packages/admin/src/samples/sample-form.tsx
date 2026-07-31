@@ -155,6 +155,12 @@ export function SampleForm({
       const parsed = sampleDraftSchema.safeParse(value);
       // Unreachable: the onSubmit validator gates. Kept as a typed narrow.
       if (!parsed.success) return;
+      // Attachments live outside the form state, so their limit cannot pin a
+      // field error: the save noops like any invalid field and the red file
+      // count says why. The api refuses the payload anyway.
+      if ((attachmentChanges?.keptCount ?? attachments.length) > UPLOAD_LIMIT) {
+        return;
+      }
       // Staged attachment changes only reach the server on submit: commit()
       // deletes the marked files first (freeing slots for a swap at the
       // limit), then uploads the staged ones, then the sample payload lists
@@ -298,14 +304,11 @@ export function SampleForm({
       </form.AppForm>
     );
     // A published sample's save must keep it publishable, so it gates on the
-    // blockers like the first publish. A draft saves freely, except over the
-    // attachment limit: the api refuses that payload, and the file count next
-    // to the drop zone says why.
-    const isOverLimit =
-      (attachmentChanges?.keptCount ?? attachments.length) > UPLOAD_LIMIT;
+    // blockers like the first publish; a draft saves freely (over the
+    // attachment limit the submit noops, see onSubmit).
     return published
       ? renderPublishGated(submitButton)
-      : submitButton((isPending ?? false) || isOverLimit);
+      : submitButton(isPending ?? false);
   };
 
   return (

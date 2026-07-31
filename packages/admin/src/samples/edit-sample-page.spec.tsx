@@ -311,7 +311,7 @@ describe("EditSamplePage", () => {
   it("should refuse publishing a sample carrying more files than the limit", async () => {
     // A legacy sample above the cap: nothing was grandfathered, so it must
     // shed a file before it can be published again.
-    const { screen } = await renderEditPage(
+    const { screen, calls } = await renderEditPage(
       false,
       "fossil",
       false,
@@ -325,20 +325,26 @@ describe("EditSamplePage", () => {
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     const save = screen.getByRole("button", { name: "Save as draft" });
 
-    // The api refuses saving an over-limit sample, so the draft save is
-    // disabled too, not just the publish.
     await expect.element(publish).toBeDisabled();
-    await expect.element(save).toBeDisabled();
     publish.element().parentElement?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/at most 5 attached files/i);
 
+    // The draft save stays live but noops, like any invalid field: the red
+    // file count carries the error.
+    await save.click();
+
     // Marking one file for deletion brings the sample back under the limit.
     await screen.getByRole("tab", { name: "Links" }).click();
     await screen.getByRole("button", { name: "Delete legacy-0.csv" }).click();
     await expect.element(publish).toBeEnabled();
-    await expect.element(save).toBeEnabled();
+
+    // The noop sent nothing; back under the limit the same button saves.
+    await save.click();
+    await vi.waitFor(() =>
+      expect(calls).toEqual(["PUT Basalte du Massif Central"]),
+    );
   });
 
   it("should not mention the attachment limit on a sample at the limit", async () => {
