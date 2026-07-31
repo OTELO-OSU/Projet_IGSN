@@ -16,16 +16,11 @@ const typeItems = LOCATION_TYPES.map((value) => ({
   label: locationTypeLabel(value),
 }));
 
-// A position (type + coordinates) is required to publish unless the material
-// exempts it (returned samples) or forbids it (synthetic); the "*" mirrors the
-// location_position_missing publish blocker, so it does not block a draft save.
 const isPositionRequired = (materialPath: string[]): boolean =>
   locationRequirement(composeHierarchyValue(materialPath)) === "required";
 
-// The Location tab. Every part is optional and independent (ADR 0014): the
-// geometry toggle governs only the coordinate block, while region, navigation
-// type and locality stand alone. Render inside a `form.AppForm`. The form store
-// holds the flat `location.*` draft; `composeLocation` maps it back on submit.
+// Every part is optional and independent (ADR 0014). Render inside a
+// `form.AppForm`.
 export function LocationFields() {
   const form = useLocationForm();
   return (

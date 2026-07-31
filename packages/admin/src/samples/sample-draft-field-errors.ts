@@ -4,34 +4,25 @@ import { m } from "#/paraglide/messages.js";
 import { type LocationDraft } from "#/samples/compose-location.ts";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 
-// Measurement leaves (description.length.value...) map back to the flat
-// value/unit draft fields (description.lengthValue...).
 const MEASUREMENT_PATH =
   /^description\.(length|width|thickness|mass|volume)\.(value|unit)$/;
 
-// Condition readings nest value/unit under their category
-// (condition.temperature.measurement.value -> condition.temperatureValue).
 const READING_PATH =
   /^condition\.(temperature|pressure)\.measurement\.(value|unit)$/;
 
-// Link rows are an array: the domain path (links.0.url) maps to the form's
-// indexed field name (links[0].url).
 const LINK_PATH = /^links\.(\d+)\.(url|description)$/;
 
-// Domain value -> the hierarchy draft field holding its per-level walk. Every
-// HierarchySelectField in the form needs an entry here: the widget registers
-// one field per level (`name[depth]`), never the bare name, so an issue on the
-// domain value pins on the next level to refine (the combobox after the
-// deepest pick, the one the user must act on) or it would render nowhere.
+// Every HierarchySelectField in the form needs an entry here: the widget
+// registers one field per level (`name[depth]`), never the bare name, so an
+// issue on the domain value pins on the next level to refine (the combobox
+// after the deepest pick, the one the user must act on) or it would render
+// nowhere.
 const HIERARCHY_PATHS = {
   type: "typePath",
   material: "materialPath",
   collectionMethod: "collectionMethodPath",
 } as const;
 
-// The draft fields the mapping reads: the location mode (elevation pinning)
-// and the hierarchy paths, whose depth decides which level combobox an issue
-// pins on.
 type DraftContext = {
   typePath: string[];
   materialPath: string[];
@@ -39,13 +30,10 @@ type DraftContext = {
   location: Pick<LocationDraft, "type">;
 };
 
-// Maps a domain-schema issue path (composed CreateSample shape) back to the
-// flat draft field that produced the value. Elevation min/max both come from
-// the single value input when the geometry is a point (degenerate range); the
-// collection date always maps to its range bounds (in single mode the visible
-// input is the start field, mirrored into the end). A hierarchy issue pins on
-// the next level to refine (the combobox after the deepest pick), the one the
-// user must act on; an error on the bare path name would render nowhere.
+// Elevation min/max both come from the single value input when the geometry is
+// a point (degenerate range); the collection date always maps to its range
+// bounds (in single mode the visible input is the start field, mirrored into
+// the end).
 const draftFieldName = (path: string, draft: DraftContext): string => {
   const locationType = draft.location.type;
   if (path.startsWith("location.position.elevation.min"))
@@ -101,13 +89,9 @@ type DraftIssue = {
   params?: unknown;
 };
 
-// Translates a schema issue into readable copy: domain custom issues carry a
-// machine code in params (see descriptionSchema), measurement issues resolve
-// from their path and zod code, anything else falls back to a generic message.
+// Domain custom issues carry a machine code in params (see descriptionSchema).
 function issueMessage(path: string, issue: DraftIssue): string {
   const reason = (issue.params as { code?: string } | undefined)?.code;
-  // A publish-blocker issue (publishedSampleSchema) reuses the tooltip
-  // translations, so the field explains itself the same way the button does.
   const blocker = publishBlockerSchema.safeParse(reason);
   if (blocker.success) {
     return publishBlockerLabel(blocker.data);
@@ -137,10 +121,8 @@ function issueMessage(path: string, issue: DraftIssue): string {
   return m.field_invalid();
 }
 
-// Turns domain-schema issues into the `fields` error map a TanStack form-level
-// validator returns, pinning each error on its input, translated by
-// issueMessage. Fields with a dedicated live validator (name, elevation
-// integer...) show their specific message first.
+// Fields with a dedicated live validator (name, elevation integer...) show
+// their specific message first.
 export function sampleDraftFieldErrors(
   issues: ReadonlyArray<DraftIssue>,
   draft: DraftContext,

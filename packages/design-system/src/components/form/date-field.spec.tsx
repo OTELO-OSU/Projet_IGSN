@@ -4,7 +4,7 @@ import { page } from "vitest/browser";
 
 import { useAppForm } from "./app-form.tsx";
 
-function Harness({ label }: { label: string }) {
+function Harness({ label, disabled }: { label: string; disabled?: boolean }) {
   const form = useAppForm({
     defaultValues: { collected: null as string | null | undefined },
   });
@@ -17,7 +17,7 @@ function Harness({ label }: { label: string }) {
             value === "2026-01-01" ? { message: "Too early" } : undefined,
         }}
       >
-        {(field) => <field.DateField label={label} />}
+        {(field) => <field.DateField label={label} disabled={disabled} />}
       </form.AppField>
     </form>
   );
@@ -62,5 +62,11 @@ describe("DateField", () => {
       .element(page.getByRole("alert"))
       .toHaveTextContent("Too early");
     await expect.element(input).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("should render a non-interactive input when disabled", async () => {
+    await render(<Harness label="Collection date" disabled />);
+
+    await expect.element(page.getByLabelText("Collection date")).toBeDisabled();
   });
 });

@@ -40,6 +40,28 @@ add a publish constraint, add a code to `publishBlockerSchema` and push it in
 exhaustive `Record<PublishBlocker, () => string>`, so it fails to compile until
 the new reason is translated and thus shown in the tooltip.
 
+What a published sample may still change (as opposed to whether it can publish)
+is stated in ONE place too: the lock maps at the top of
+`published-field-lock.ts`. Each entry is one frozen field: the key is what
+`mergePublishedEdit` takes from storage, the value the form field names that edit
+it (several when the form splits a field, a position into coordinates). A field
+with an entry is frozen, one without is editable, so freezing a new field is one
+entry, read by both the merge and the admin form. Only a leaf whose lock depends
+on a frozen sibling is hand-written in the merge helpers. Add no parallel
+classification record and no second list of field names; see ADR 0021.
+
+The admin form never restates that rule: it consumes the maps' flattened form
+names (`FROZEN_FORM_FIELDS`, `FROZEN_FORM_FIELDS_BY_PROVENANCE`) through
+`publishedSampleFrozenField`
+(`admin/src/samples/published-sample-frozen-field.ts`), which adds only the
+hierarchy-level suffix stripping, and `SampleForm` feeds it to the form kit's
+`FieldDisabledProvider`. No control decides for itself that publication
+freezes it: a kit field control resolves it through `useFieldDisabled`, where its
+own `disabled` means "waiting on a sibling" only, and a control with no field
+context (the collection-date mode switch) asks `useIsFieldDisabled()` for the
+field it follows. Freeze a new control by listing its field name in
+`publishedSampleFrozenField`, never with a published flag of its own.
+
 ## File layout
 
 One folder per entity, one concern per file, kebab-case folder. No barrel/index.

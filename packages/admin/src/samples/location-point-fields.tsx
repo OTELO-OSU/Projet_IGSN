@@ -2,7 +2,6 @@ import { m } from "#/paraglide/messages.js";
 import { elevationIntegerError } from "#/samples/elevation-integer-error.ts";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 
-// Point coordinates: longitude, latitude and a single elevation value.
 export function LocationPointFields({ required }: { required: boolean }) {
   const form = useLocationForm();
   return (
@@ -23,7 +22,6 @@ export function LocationPointFields({ required }: { required: boolean }) {
           />
         )}
       </form.AppField>
-      {/* Alone on its row, so it spans both columns. */}
       <div className="sm:col-span-2">
         <form.AppField
           name="location.elevationValue"

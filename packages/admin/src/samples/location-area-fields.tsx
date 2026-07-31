@@ -9,9 +9,9 @@ const boundFields = [
   ["location.northLatitude", m.field_north_latitude],
 ] as const;
 
-// An area elevation is a range. Setting one bound marks the other required to
-// publish, but a half-range still saves as a draft: completeness gates publish,
-// not the draft, so there is no draft validator for the missing bound.
+// Setting one bound marks the other required to publish, but a half-range still
+// saves as a draft: completeness gates publish, not the draft, so there is no
+// draft validator for the missing bound.
 const rangeFields = [
   {
     key: "elevationMin",
@@ -25,7 +25,6 @@ const rangeFields = [
   },
 ] as const;
 
-// Area coordinates: the four bounds and the elevation range.
 export function LocationAreaFields({ required }: { required: boolean }) {
   const form = useLocationForm();
   return (

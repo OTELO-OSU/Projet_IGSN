@@ -2,10 +2,10 @@ import { withRequired } from "../../lib/with-required.ts";
 import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
 import { Textarea } from "../ui/textarea.tsx";
+import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
-// Blank or partial numeric input reads as undefined, never NaN.
 const toNumber = (text: string): number | undefined => {
   const value = Number(text);
   return text === "" || Number.isNaN(value) ? undefined : value;
@@ -30,6 +30,7 @@ export function TextField({
 }) {
   const field = useFieldContext<string | number | null | undefined>();
   const { error, errorId, ariaProps } = useFieldError();
+  const isDisabled = useFieldDisabled(disabled);
   const Control = multiline ? Textarea : Input;
   return (
     <div className="grid gap-2">
@@ -44,7 +45,7 @@ export function TextField({
         // convert. A number feeds React's number-input path unstringified,
         // which keeps intermediate text like "3." while typing.
         value={field.state.value ?? ""}
-        disabled={disabled}
+        disabled={isDisabled}
         onBlur={field.handleBlur}
         onChange={(event) =>
           field.handleChange(

@@ -1,8 +1,8 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
-import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { ReactNode } from "react";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
+import { FieldDisabledProvider } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
@@ -20,7 +20,10 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { availabilitySchema } from "@projet-igsn/domain/sample/availability/availability";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
-import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import {
+  type PublishableFields,
+  samplePublishBlockers,
+} from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { m } from "#/paraglide/messages.js";
@@ -35,6 +38,7 @@ import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
+import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
 import { SampleAttachments } from "#/samples/sample-attachments.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
@@ -60,9 +64,9 @@ const availabilityItems = toComboboxItems(
   availabilityLabel,
 );
 
-// Draft -> domain-schema issues -> per-field translated errors. A published
-// sample validates against the publishable shape, a draft against the create
-// shape (same split as the API's PUT).
+// A published sample validates against the publishable shape, a draft against
+// the create shape: a published sample must stay publishable, so its blockers
+// are field errors too.
 const validateDraft =
   (schema: typeof sampleDraftSchema) =>
   ({ value }: { value: SampleDraft }) => {
@@ -72,8 +76,6 @@ const validateDraft =
       : { fields: sampleDraftFieldErrors(parsed.error.issues, value) };
   };
 
-// A footer button. `submit` saves; `publish` saves then publishes (with
-// confirmation + a blocker tooltip); `link` navigates (e.g. the public page).
 export type SampleFormAction =
   | { kind: "submit"; label: string; onSubmit: (value: CreateSample) => void }
   | { kind: "publish"; label: string; onPublish: (value: CreateSample) => void }
@@ -83,17 +85,15 @@ type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
   defaultValues?: CreateSample;
-  // A published sample's edits must keep it publishable (stricter schema).
+  // Freezes the IGSN-identity and partial-frozen fields (ADR 0021), and gates
+  // the save on the publishable bar (stricter schema).
   published?: boolean;
-  // Rendered accented; `secondaryAction`, when set, sits before it as outline.
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
-  // The Links tab (DOI links + file attachments) shows only for a saved
-  // sample: uploads need a sample id, so creation (no id yet) hides it.
+  // Uploads need a sample id, so creation (no id yet) hides the Links tab.
   sampleId?: string;
   attachments?: SampleAttachment[];
-  // Staged attachment changes (uploads, deletions, description edits);
-  // applied only when the form submits, so cancelling leaves the server
+  // Applied only when the form submits, so cancelling leaves the server
   // untouched.
   attachmentChanges?: SampleAttachmentChanges;
 };
@@ -112,8 +112,15 @@ export function SampleForm({
   const validate = validateDraft(
     published ? publishedSampleSchema : sampleDraftSchema,
   );
+  // Which fields the publication freezes, from the stored provenance status:
+  // it is itself frozen, so reading the live form value would buy nothing.
+  const isFieldFrozen = published
+    ? publishedSampleFrozenField(
+        defaultValues?.scientificContext?.provenanceStatus ?? null,
+      )
+    : () => false;
   // Enter submits natively through the lone submit-kind button; route it to
-  // that action (prefer primary). Publish and link never fire on Enter.
+  // that action (prefer primary).
   const defaultSubmit =
     primaryAction.kind === "submit"
       ? primaryAction.onSubmit
@@ -123,15 +130,11 @@ export function SampleForm({
 
   const form = useAppForm({
     defaultValues: toSampleDraft(defaultValues),
-    // The clicked button passes its callback as meta; Enter uses defaultSubmit.
     onSubmitMeta: { onValid: defaultSubmit } as {
       onValid: ((value: CreateSample) => void) | undefined;
     },
-    // The domain schema (the one the API enforces) is the single source of
-    // validation: it runs live on every change and gates every submit, its
-    // issues translated and pinned on the offending fields. The live pass
-    // only flags touched fields, so typing in one input never lights up the
-    // rest of the form; submit flags everything.
+    // The live pass only flags touched fields, so typing in one input never
+    // lights up the rest of the form; submit flags everything.
     validators: {
       onChange: (context) => {
         const result = validate(context);
@@ -161,6 +164,8 @@ export function SampleForm({
       if ((attachmentChanges?.keptCount ?? attachments.length) > UPLOAD_LIMIT) {
         return;
       }
+      // A failed upload stays staged for a retry and never blocks saving the
+      // rest.
       const committed = attachmentChanges
         ? await attachmentChanges.commit(attachments)
         : undefined;
@@ -174,10 +179,6 @@ export function SampleForm({
     },
   });
 
-  // Gate a button on canSubmit (an invalid form would silently do nothing)
-  // and on the publish blockers, which the tooltip lists so the disabled
-  // button explains itself. Used by Save & Publish and, for a published
-  // sample, by the plain save: both must hold the publishable bar.
   const renderPublishGated = (
     renderButton: (disabled: boolean) => ReactNode,
   ) => (
@@ -224,17 +225,7 @@ export function SampleForm({
             attachments: {
               length: attachmentChanges?.keptCount ?? attachments.length,
             },
-          } as Pick<
-            Sample,
-            | "type"
-            | "material"
-            | "metamorphicFacies"
-            | "location"
-            | "description"
-            | "age"
-            | "availability"
-            | "scientificContext"
-          > & { attachments: { length: number } },
+          } as PublishableFields & { attachments: { length: number } },
           UPLOAD_LIMIT,
         ).map(publishBlockerLabel);
         const button = renderButton(
@@ -306,175 +297,175 @@ export function SampleForm({
   };
 
   return (
-    <form
-      noValidate
-      onSubmit={(event) => {
-        event.preventDefault();
-        void form.handleSubmit();
-      }}
-      className="flex flex-col gap-6"
-    >
-      <Tabs defaultValue="classification">
-        <TabsList>
-          <TabsTrigger value="classification">
-            {m.tab_sample_classification()}
-          </TabsTrigger>
-          <TabsTrigger value="type">{m.tab_sample_type()}</TabsTrigger>
-          <TabsTrigger value="physical-description">
-            {m.tab_physical_description()}
-          </TabsTrigger>
-          <TabsTrigger value="scientific-context">
-            {m.tab_scientific_context()}
-          </TabsTrigger>
-          {sampleId ? (
-            <TabsTrigger value="links">{m.tab_links()}</TabsTrigger>
-          ) : null}
-        </TabsList>
+    <FieldDisabledProvider value={isFieldFrozen}>
+      <form
+        noValidate
+        onSubmit={(event) => {
+          event.preventDefault();
+          void form.handleSubmit();
+        }}
+        className="flex flex-col gap-6"
+      >
+        <Tabs defaultValue="classification">
+          <TabsList>
+            <TabsTrigger value="classification">
+              {m.tab_sample_classification()}
+            </TabsTrigger>
+            <TabsTrigger value="type">{m.tab_sample_type()}</TabsTrigger>
+            <TabsTrigger value="physical-description">
+              {m.tab_physical_description()}
+            </TabsTrigger>
+            <TabsTrigger value="scientific-context">
+              {m.tab_scientific_context()}
+            </TabsTrigger>
+            {sampleId ? (
+              <TabsTrigger value="links">{m.tab_links()}</TabsTrigger>
+            ) : null}
+          </TabsList>
 
-        {/* Values live in the form store, not the field components, so a field
-            unmounting when its tab hides never drops what the user entered. */}
-        <TabsContent value="classification" className="grid gap-4">
-          <form.AppField
-            name="name"
-            validators={{
-              onChange: ({ value }) =>
-                value?.trim()
-                  ? undefined
-                  : { message: m.field_name_required() },
-            }}
-          >
-            {(field) => (
-              <field.TextField label={m.field_name()} requiredToPublish />
-            )}
-          </form.AppField>
+          <TabsContent value="classification" className="grid gap-4">
+            <form.AppField
+              name="name"
+              validators={{
+                onChange: ({ value }) =>
+                  value?.trim()
+                    ? undefined
+                    : { message: m.field_name_required() },
+              }}
+            >
+              {(field) => (
+                <field.TextField label={m.field_name()} requiredToPublish />
+              )}
+            </form.AppField>
 
-          <form.AppForm>
-            <SampleTypeFields />
-          </form.AppForm>
-
-          <form.AppField
-            name="nature"
-            validators={{
-              onChange: ({ value }) =>
-                value ? undefined : { message: m.field_nature_required() },
-            }}
-          >
-            {(field) => (
-              <field.ComboboxField
-                label={m.field_nature()}
-                requiredToPublish
-                items={natureItems}
-                placeholder={m.nature_placeholder()}
-                searchPlaceholder={m.nature_search_placeholder()}
-                emptyText={m.nature_empty()}
-              />
-            )}
-          </form.AppField>
-
-          <form.AppForm>
-            <CollectionMethodField />
-          </form.AppForm>
-
-          <form.AppField name="collectionMethodDescription">
-            {(field) => (
-              <field.TextField
-                label={m.field_collection_method_description()}
-                multiline
-              />
-            )}
-          </form.AppField>
-        </TabsContent>
-
-        <TabsContent value="type" className="grid gap-4">
-          <FormSection title={m.section_material()}>
             <form.AppForm>
-              <MaterialField />
+              <SampleTypeFields />
             </form.AppForm>
-            <form.AppForm>
-              <TextureField />
-            </form.AppForm>
-            <form.AppForm>
-              <MetamorphicFaciesField />
-            </form.AppForm>
-          </FormSection>
 
-          <form.AppField name="specificName">
-            {(field) => <field.TextField label={m.field_specific_name()} />}
-          </form.AppField>
-        </TabsContent>
-
-        <TabsContent value="physical-description" className="grid gap-6">
-          <form.AppForm>
-            <PhysicalDescriptionFields />
-          </form.AppForm>
-
-          <FormSection title={m.section_availability()}>
-            <form.AppField name="availability">
+            <form.AppField
+              name="nature"
+              validators={{
+                onChange: ({ value }) =>
+                  value ? undefined : { message: m.field_nature_required() },
+              }}
+            >
               {(field) => (
                 <field.ComboboxField
-                  label={m.field_availability()}
+                  label={m.field_nature()}
                   requiredToPublish
-                  items={availabilityItems}
-                  placeholder={m.availability_placeholder()}
-                  searchPlaceholder={m.availability_search_placeholder()}
-                  emptyText={m.availability_empty()}
+                  items={natureItems}
+                  placeholder={m.nature_placeholder()}
+                  searchPlaceholder={m.nature_search_placeholder()}
+                  emptyText={m.nature_empty()}
                 />
               )}
             </form.AppField>
-          </FormSection>
 
-          <form.AppForm>
-            <AgeFields />
-          </form.AppForm>
-
-          <FormSection title={m.section_security()}>
             <form.AppForm>
-              <SampleSecurityFields />
+              <CollectionMethodField />
             </form.AppForm>
-          </FormSection>
 
-          <FormSection title={m.section_economic_interest()}>
-            <form.AppForm>
-              <SampleEconomicInterestFields />
-            </form.AppForm>
-          </FormSection>
-        </TabsContent>
-
-        <TabsContent value="scientific-context" className="grid gap-4">
-          <form.AppForm>
-            <SampleScientificContextFields />
-          </form.AppForm>
-        </TabsContent>
-
-        {sampleId ? (
-          <TabsContent value="links" className="grid gap-6">
-            <form.AppForm>
-              <SampleLinksFields />
-            </form.AppForm>
-            {attachmentChanges ? (
-              <SampleAttachments
-                sampleId={sampleId}
-                attachments={attachments}
-                changes={attachmentChanges}
-              />
-            ) : null}
+            <form.AppField name="collectionMethodDescription">
+              {(field) => (
+                <field.TextField
+                  label={m.field_collection_method_description()}
+                  multiline
+                />
+              )}
+            </form.AppField>
           </TabsContent>
-        ) : null}
-      </Tabs>
 
-      {/* Outside the Tabs: the upload progress dialog must show on submit
+          <TabsContent value="type" className="grid gap-4">
+            <FormSection title={m.section_material()}>
+              <form.AppForm>
+                <MaterialField />
+              </form.AppForm>
+              <form.AppForm>
+                <TextureField />
+              </form.AppForm>
+              <form.AppForm>
+                <MetamorphicFaciesField />
+              </form.AppForm>
+            </FormSection>
+
+            <form.AppField name="specificName">
+              {(field) => <field.TextField label={m.field_specific_name()} />}
+            </form.AppField>
+          </TabsContent>
+
+          <TabsContent value="physical-description" className="grid gap-6">
+            <form.AppForm>
+              <PhysicalDescriptionFields />
+            </form.AppForm>
+
+            <FormSection title={m.section_availability()}>
+              <form.AppField name="availability">
+                {(field) => (
+                  <field.ComboboxField
+                    label={m.field_availability()}
+                    requiredToPublish
+                    items={availabilityItems}
+                    placeholder={m.availability_placeholder()}
+                    searchPlaceholder={m.availability_search_placeholder()}
+                    emptyText={m.availability_empty()}
+                  />
+                )}
+              </form.AppField>
+            </FormSection>
+
+            <form.AppForm>
+              <AgeFields />
+            </form.AppForm>
+
+            <FormSection title={m.section_security()}>
+              <form.AppForm>
+                <SampleSecurityFields />
+              </form.AppForm>
+            </FormSection>
+
+            <FormSection title={m.section_economic_interest()}>
+              <form.AppForm>
+                <SampleEconomicInterestFields />
+              </form.AppForm>
+            </FormSection>
+          </TabsContent>
+
+          <TabsContent value="scientific-context" className="grid gap-4">
+            <form.AppForm>
+              <SampleScientificContextFields />
+            </form.AppForm>
+          </TabsContent>
+
+          {sampleId ? (
+            <TabsContent value="links" className="grid gap-6">
+              <form.AppForm>
+                <SampleLinksFields />
+              </form.AppForm>
+              {attachmentChanges ? (
+                <SampleAttachments
+                  sampleId={sampleId}
+                  attachments={attachments}
+                  changes={attachmentChanges}
+                />
+              ) : null}
+            </TabsContent>
+          ) : null}
+        </Tabs>
+
+        {/* Outside the Tabs: the upload progress dialog must show on submit
           whatever tab is active. */}
-      {attachmentChanges ? (
-        <SampleAttachmentUploadDialog changes={attachmentChanges} />
-      ) : null}
+        {attachmentChanges ? (
+          <SampleAttachmentUploadDialog changes={attachmentChanges} />
+        ) : null}
 
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" onClick={onCancel}>
-          {m.action_cancel()}
-        </Button>
-        {secondaryAction ? renderAction(secondaryAction, "outline") : null}
-        {renderAction(primaryAction)}
-      </div>
-    </form>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            {m.action_cancel()}
+          </Button>
+          {secondaryAction ? renderAction(secondaryAction, "outline") : null}
+          {renderAction(primaryAction)}
+        </div>
+      </form>
+    </FieldDisabledProvider>
   );
 }

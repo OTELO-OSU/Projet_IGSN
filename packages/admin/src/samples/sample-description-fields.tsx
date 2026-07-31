@@ -8,12 +8,7 @@ const orientedItems = [
   { value: "no", label: m.oriented_no() },
 ];
 
-// The Description tab (ADR 0015). Every part is optional and independent; the
-// collection date group (with its single/range mode) lives in
-// CollectionDatesField, the measurement pairs in MeasurementFields, and the
-// orientation explanation is disabled until the sample is oriented. Render inside a
-// `form.AppForm`. The form store holds the flat `description.*` draft;
-// `composeDescription` maps it back on submit.
+// The Description tab (ADR 0015). Render inside a `form.AppForm`.
 export function SampleDescriptionFields() {
   const form = useDescriptionForm();
   return (
