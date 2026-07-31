@@ -12,6 +12,17 @@
     "allow": []
   },
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PROJECT_DIR}/.claude/hooks/flag-added-comments.py"
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "matcher": "logout|prompt_input_exit|bypass_permissions_disabled|other",
@@ -76,8 +87,7 @@
   },
   "enabledPlugins": {
     "ponytail@ponytail": true,
-    "typescript-lsp@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "typescript-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "claude-plugins-official": {

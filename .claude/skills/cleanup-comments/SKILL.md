@@ -5,32 +5,29 @@ description: Use when asked to clean up, strip, prune, or review comments on a b
 
 # Cleanup comments
 
-Every comment is guilty until proven valuable. A comment earns its place only by
-passing one of the proofs below. If you cannot name the proof, delete it.
+Every comment is guilty until proven valuable. Name the proof or delete it.
 
-Scope: every comment in every file the branch touches, pre-existing ones
-included. Not the whole repo.
+Scope: every comment in every file the branch touches, pre-existing included.
+Not the whole repo.
 
 ## Workflow
 
-### 1. List the files
+1. List the files: `git diff --name-only --diff-filter=d origin/main...HEAD`
+   (`git fetch origin main` first if stale).
+2. Read each file whole, not the diff: a comment's value depends on the code
+   around it. Verdict every comment, including untouched ones.
+3. Verdict (below), then edit. Comments only, never the code.
+4. Run the gate (below) and report.
 
-```sh
-git diff --name-only --diff-filter=d origin/main...HEAD
-```
+## Verdict
 
-Fetch first if `origin/main` is stale (`git fetch origin main`).
+What does a reader lose if this is gone? "Nothing" deletes it. "A fact not in
+the code" keeps it.
 
-### 2. Read each file whole
-
-Read the full file, not the diff. A comment's value depends on the code around
-it, and the diff hides that. Verdict every comment in the file, including ones
-the branch did not touch.
-
-### 3. Apply the test to each comment
-
-Ask: what does a reader lose if this comment is gone? If the answer is
-"nothing", delete it. If it is "a fact not in the code", keep it.
+**The unit is the sentence, not the block.** Prose blocks rarely pass whole: one
+sentence carries the proof, the rest frame it or restate the code below. Verdict
+each sentence, delete the failures even when a neighbour survives. Keeping one
+sentence out of four is the normal outcome, not a compromise.
 
 **Keep only with a named proof:**
 
@@ -50,48 +47,42 @@ Ask: what does a reader lose if this comment is gone? If the answer is
 
 - Restates the code: `// increment the counter`, `// import React`
 - Section banner: `// ---- helpers ----`, `// Types`
-- Narrates the change or the session: `// added filter`, `// was useMemo, now derived`, `// as requested`
+- Narrates the change or session: `// added filter`, `// was useMemo, now derived`
 - Commented-out code, including "kept just in case"
-- Dead or unowned TODO/FIXME with no ticket and no context
+- TODO/FIXME with no ticket and no context
 - JSDoc that only re-types the signature (`@param id the id`)
-- Test comments that repeat the test name (`// it should return null`)
+- Test comments repeating the test name (`// it should return null`)
 - Obvious-schema comments: `// zod schema for a sample`
 - `any` explanations that excuse rather than inform
+- Duplicate: the fact already lives on the type, the callee, or another file.
+  Keep it where it is enforced, delete the copy.
+- Over budget: more than two lines survived, so framing is still in there.
 
 Ambiguity resolves to deletion. "Might help someone later" is not a proof.
 
-### 4. Delete
+Never author new comment text: no new claims, no rephrasing what you keep.
+Dropping sentences and re-wrapping the survivors is deletion, and expected. The
+surviving words must be the original words.
 
-Edit the files. Delete the whole comment and its blank line if it leaves one.
-Never rewrite a comment to make it defensible, that is authoring new comments,
-not cleaning up. Never touch the code itself: this pass changes comments only.
-
-### 5. Verification gate
-
-Run, in order, and paste the outcome:
+## Verification gate
 
 ```sh
 pnpm fmt:apply
 pnpm lint:check
 pnpm test --project @projet-igsn/<project>   # each project whose files changed
+git diff -U0 | grep -E '^[+-][^+-]' | grep -vE '^[+-]\s*(//|\*|/\*)'   # must be empty
 ```
 
-Then confirm the code-only invariant:
-
-```sh
-git diff -U0 origin/main...HEAD -- <touched files>
-```
-
-Every line this pass added or removed must be a comment line or a blank line.
-A non-comment line in your own delta means you edited code: revert it.
+The last one guards the comment-only invariant on THIS pass's delta; a hit means
+you edited code, so revert it. Do not use `origin/main...HEAD` there: it shows
+what the branch did and hides your delta once committed.
 
 Done when lint is clean, the touched projects' tests pass, and the delta is
-comments only. If a suite was already failing on `origin/main`, say so instead
-of claiming a pass.
+comments only. Say so if a suite was already failing on `origin/main`.
 
 ## Report
 
-One line per deletion, grouped by file, plus the kept comments and their proof:
+One line per deletion, grouped by file, plus the keeps and their proof:
 
 ```text
 packages/domain/sample/model.ts
@@ -105,6 +96,11 @@ packages/domain/sample/model.ts
 - "I'll reword it instead of deleting it" -> delete it
 - "It documents the obvious, but harmlessly" -> harm is upkeep, delete it
 - "It explains what the next line does" -> the next line does that
-- "The diff only added this one, so the rest is out of scope" -> scope is every comment in every touched file
-- "Deleting a `biome-ignore` cleans up the file" -> that is a directive, keep it
+- "The block carries a proof, so it stays whole" -> verdict each sentence
+- "Trimming a paragraph is rewriting" -> only new words are authoring
+- "It is pre-existing, someone chose it" -> the proof is its only standing, not its age
+- "A thin report is honest here" -> almost no deletions means you verdicted blocks, not sentences
+- "Better to leave it than lose context" -> ambiguity resolves to deletion
+- "The diff only added this one, the rest is out of scope" -> every comment in every touched file
+- "Deleting a `biome-ignore` cleans up the file" -> directive, keep it
 - "Tests still pass, so the code edit is fine" -> this pass edits comments only

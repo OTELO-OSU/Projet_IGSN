@@ -1,15 +1,16 @@
 ---
 name: authoring-skills
-description: Use when creating, editing, or reviewing an agent skill (SKILL.md), or when asked how to write, structure, or trim a skill. Extends superpowers:writing-skills with a loading-budget model and house style.
+description: Use when creating, editing, or reviewing an agent skill (SKILL.md), or when asked how to write, structure, or trim a skill. Covers frontmatter, a loading-budget model, and house style.
 ---
 
 # Authoring Skills
 
-**REQUIRED BACKGROUND:** Use superpowers:writing-skills first. It owns the TDD
-cycle, frontmatter and `description` rules, naming, anti-rationalization tables,
-and flowcharts. This skill does not repeat them. It adds three things that skill
-covers thinly: how to budget content across loading levels, what a skill body
-should be, and house style.
+## Frontmatter
+
+Two keys, both required. `name` is the kebab-case folder name. `description`
+states when to trigger, starting with "Use when", naming the concrete situation
+and the symptoms an agent would see. It is the only thing always in context, so
+a vague description means the skill never fires.
 
 ## A skill is a workflow, not an essay
 
@@ -55,8 +56,9 @@ what they hold and link them, or the agent never finds them.
   explanation is longer than the step, delete the explanation.
 - One runnable, commented example beats many. Do not reimplement it per language.
 
-## Checklist (in addition to superpowers:writing-skills)
+## Checklist
 
+- [ ] `description` starts with "Use when" and names the triggering situation
 - [ ] Body is a workflow ending in a verification gate, not background prose
 - [ ] Each piece sits at its cheapest loading level; heavy reference and code linked at Level 3
 - [ ] No em dashes, no filler
