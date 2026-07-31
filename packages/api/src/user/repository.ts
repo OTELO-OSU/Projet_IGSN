@@ -6,6 +6,7 @@ import { v7 as uuidv7 } from "uuid";
 import type { DB } from "../db.ts";
 
 import { withTransaction } from "../transaction.ts";
+import { searchUsers } from "./search-users.ts";
 
 // Provisions the caller from their verified token on every authenticated
 // request: email is the identity key, so this also adopts a row seeded for that
@@ -25,5 +26,6 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .returning(["id", "email", "name", "firstname"])
           .executeTakeFirstOrThrow(),
       ),
+    search: (query) => withTransaction(db, (trx) => searchUsers(trx, query)),
   };
 }

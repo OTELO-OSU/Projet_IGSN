@@ -6,4 +6,5 @@ export type UpsertUser = Omit<User, "id">;
 
 export type UserRepository = {
   upsert(input: UpsertUser): Promise<User>;
+  search(query: string): Promise<User[]>;
 };

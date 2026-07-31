@@ -60,4 +60,115 @@ describe("createUserRepository", () => {
     // Assert
     expect(user).toEqual(seeded);
   });
+
+  describe("search", () => {
+    async function insertResearchers(
+      db: Parameters<typeof createUserRepository>[0],
+    ) {
+      const repository = createUserRepository(db);
+      await repository.upsert({
+        email: "marie.curie@univ-lorraine.fr",
+        name: "Curie",
+        firstname: "Marie",
+      });
+      await repository.upsert({
+        email: "pierre.dupont@univ-lorraine.fr",
+        name: "Dupont",
+        firstname: "Pierre",
+      });
+      return repository;
+    }
+
+    pgTest("should find a researcher by family name", async ({ db }) => {
+      const repository = await insertResearchers(db);
+
+      const found = await repository.search("cur");
+
+      expect(found).toEqual([
+        {
+          id: expect.any(String),
+          email: "marie.curie@univ-lorraine.fr",
+          name: "Curie",
+          firstname: "Marie",
+        },
+      ]);
+    });
+
+    pgTest("should find a researcher by email", async ({ db }) => {
+      const repository = await insertResearchers(db);
+
+      const found = await repository.search("pierre.dupont@univ");
+
+      expect(found.map((user) => user.name)).toEqual(["Dupont"]);
+    });
+
+    pgTest("should ignore case", async ({ db }) => {
+      const repository = await insertResearchers(db);
+
+      const found = await repository.search("CURIE");
+
+      expect(found.map((user) => user.name)).toEqual(["Curie"]);
+    });
+
+    pgTest("should not match a firstname alone", async ({ db }) => {
+      const repository = createUserRepository(db);
+      await repository.upsert({
+        email: "geologue@univ-lorraine.fr",
+        name: "Blanchard",
+        firstname: "Solene",
+      });
+
+      expect(await repository.search("Solene")).toEqual([]);
+    });
+
+    pgTest(
+      "should return an empty list when nothing matches",
+      async ({ db }) => {
+        const repository = await insertResearchers(db);
+
+        expect(await repository.search("zzz")).toEqual([]);
+      },
+    );
+
+    pgTest("should order results by name", async ({ db }) => {
+      const repository = createUserRepository(db);
+      for (const name of ["Zeller", "Aubry", "Marchand"]) {
+        await repository.upsert({
+          email: `${name.toLowerCase()}@univ-lorraine.fr`,
+          name,
+          firstname: null,
+        });
+      }
+
+      const found = await repository.search("univ-lorraine");
+
+      expect(found.map((user) => user.name)).toEqual([
+        "Aubry",
+        "Marchand",
+        "Zeller",
+      ]);
+    });
+
+    pgTest("should return at most ten researchers", async ({ db }) => {
+      const repository = createUserRepository(db);
+      for (let index = 0; index < 12; index += 1) {
+        await repository.upsert({
+          email: `geologue${index}@univ-lorraine.fr`,
+          name: `Geologue${index}`,
+          firstname: null,
+        });
+      }
+
+      const found = await repository.search("geologue");
+
+      expect(found).toHaveLength(10);
+    });
+
+    pgTest("should treat wildcards as literal characters", async ({ db }) => {
+      const repository = await insertResearchers(db);
+
+      expect(await repository.search("%")).toEqual([]);
+      expect(await repository.search("_urie")).toEqual([]);
+    });
+  });
 });

@@ -16,6 +16,7 @@ import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createUserRepository } from "./user/repository.ts";
+import { createUserAdminRoutes } from "./user/routes.ts";
 
 export function createApp(
   database: Kysely<DB>,
@@ -72,7 +73,8 @@ export function createApp(
         sampleAttachmentRepository,
         userSampleRepository,
       ),
-    );
+    )
+    .route("/users", createUserAdminRoutes(userRepository));
 
   return (
     new Hono<AuthenticatedEnv>()
