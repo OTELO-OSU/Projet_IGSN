@@ -13,8 +13,10 @@
 **/__screenshots__
 **/.vitest-attachments
 
-# Uploaded sample attachment blobs (dev/test/e2e debug output, ADR 0017)
+# Uploaded sample attachment blobs (dev/test/e2e debug output, ADR 0017).
+# The api writes them under its cwd, which is the repo root for `pnpm test`.
 packages/api/attachments
+/attachments
 
 # Environment files
 **/*.local
