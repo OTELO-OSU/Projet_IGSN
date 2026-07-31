@@ -117,10 +117,10 @@ export function SampleForm({
   const isFieldFrozen = published
     ? publishedSampleFrozenField(
         defaultValues?.scientificContext?.provenanceStatus ?? null,
+        defaultValues?.material ?? null,
       )
     : () => false;
-  // Enter submits natively through the lone submit-kind button; route it to
-  // that action (prefer primary).
+  // Enter submits natively through the lone submit-kind button.
   const defaultSubmit =
     primaryAction.kind === "submit"
       ? primaryAction.onSubmit

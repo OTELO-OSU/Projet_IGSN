@@ -5,12 +5,13 @@ import type { ScientificContext } from "../scientific-context/model.ts";
 import type { ProvenanceStatus } from "../scientific-context/provenance-status.ts";
 
 import { locationRequirement } from "../location/location-requirement.ts";
+import { isPathAtOrUnder } from "../path/is-at-or-under.ts";
+import { frozenMaterialPrefix } from "./frozen-material-prefix.ts";
 
 const LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   name: ["name"],
   nature: ["nature"],
   type: ["typePath"],
-  material: ["materialPath"],
 } as const;
 const LOCKED_LOCATION_FIELDS_TO_FORM_FIELDS = {
   position: [
@@ -86,11 +87,12 @@ function freezeLocked<T extends object, K extends keyof T & string>(
 function mergeLocation(
   current: Sample,
   incoming: CreateSample["location"],
+  material: Sample["material"],
 ): Location | null {
-  // The frozen material also decides whether a location may exist at all: a
+  // The merged material also decides whether a location may exist at all: a
   // synthetic sample derives it from the structure ROR (ADR 0014), so its
   // editable leaves must not bring one back.
-  if (locationRequirement(current.material) === "forbidden") return null;
+  if (locationRequirement(material) === "forbidden") return null;
   const payload: Location = { ...incoming };
   const merged = freezeLocked(
     payload,
@@ -116,6 +118,17 @@ function mergeLocation(
     return null;
   }
   return { ...merged, position, navigationType };
+}
+
+// The coarse classification is the frozen citable identity, deeper levels stay
+// refinable (ADR 0022).
+function mergeMaterial(
+  current: Sample["material"],
+  incoming: CreateSample["material"],
+): Sample["material"] {
+  const frozen = frozenMaterialPrefix(current);
+  if (frozen == null || incoming == null) return current;
+  return isPathAtOrUnder(incoming, frozen) ? incoming : current;
 }
 
 function mergeDescription(
@@ -163,14 +176,13 @@ function mergeScientificContext(
 
 // texture and facies are editable, but only valid for their material's branch
 // (createSampleSchema refines them against it) and nothing re-validates the
-// merge output. A payload carrying another material plus that material's pair
-// would store a combination the schema rejects, so the pair is only taken when
-// the payload agrees on the frozen material.
+// merge output.
 function mergeMaterialDependent(
   current: Sample,
   incoming: CreateSample,
+  material: Sample["material"],
 ): CreateSample {
-  if (incoming.material === current.material) return incoming;
+  if (incoming.material === material) return incoming;
   return {
     ...incoming,
     texture: current.texture,
@@ -185,15 +197,17 @@ export function mergePublishedEdit(
   current: Sample,
   incoming: CreateSample,
 ): CreateSample {
+  const material = mergeMaterial(current.material, incoming.material);
   return {
     // The conditional take feeds the lock lists rather than following them, so
     // listing one of its fields would win instead of being silently defeated.
     ...freezeLocked(
-      mergeMaterialDependent(current, incoming),
+      mergeMaterialDependent(current, incoming, material),
       current,
       LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS,
     ),
-    location: mergeLocation(current, incoming.location),
+    material,
+    location: mergeLocation(current, incoming.location, material),
     description: mergeDescription(current.description, incoming.description),
     scientificContext: mergeScientificContext(
       current.scientificContext,

@@ -28,6 +28,12 @@ context override do. Navigated by the generic helpers in `path/`:
 `pathSegment`, `pathChildren`, `isPathLeaf`, `isPathComplete(paths, path, isOptional)`
 (the `isOptional` callback is each vocabulary's completeness policy).
 
+`TreeNode` also carries `editableChildren?: boolean`: marks the node's children
+(and everything deeper) as still choosable after publication (ADR
+[0022](../../../docs/adr/0022-editable-material-levels-after-publication.md)).
+Material only: `type` is wholly frozen and `collectionMethod` is wholly
+editable at the field level, so neither needs it.
+
 Adding a node is **pure data**: no migration, no UI change. Follow TDD (spec first).
 
 ## How the three differ

@@ -1877,7 +1877,7 @@ describe("SampleForm", () => {
         expect.objectContaining({
           name: "Basalte du Massif Central",
           type: "dredge",
-          material: "fossil",
+          material: "rock.igneous.plutonic.felsic.granite",
           availability: "exists",
         }),
       ),
@@ -1943,7 +1943,7 @@ const publishedFixture: CreateSample = {
   name: "Basalte du Massif Central",
   nature: "thin_section",
   type: "dredge",
-  material: "fossil",
+  material: "rock.igneous.plutonic.felsic.granite",
   collectionMethod: null,
   collectionMethodDescription: null,
   specificName: "MC-2026-007",
@@ -2025,6 +2025,123 @@ describe("SampleForm post-publication field lock", () => {
       .toBeDisabled();
   });
 
+  it.each([
+    {
+      name: "locks the material levels down to the frozen prefix and opens the rest",
+      published: true,
+      material: "rock.igneous.plutonic.felsic.granite",
+      disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
+      enabled: ["Felsic *"],
+    },
+    {
+      name: "opens the next level of a published sample stopped at an unlocked node",
+      published: true,
+      material: "sediment.exogenous_detritic",
+      disabled: ["Material *", "Sediment *"],
+      enabled: ["Exogenous detritic *"],
+    },
+    {
+      name: "locks every material level when nothing in the path unlocks",
+      published: true,
+      material: "rock.igneous.plutonic",
+      disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
+      enabled: [],
+    },
+    {
+      name: "keeps every material level editable on a draft",
+      published: false,
+      material: "rock.igneous.plutonic.felsic.granite",
+      disabled: [],
+      enabled: ["Material *", "Rock *", "Igneous *", "Plutonic *", "Felsic *"],
+    },
+  ])("$name", async ({ published, material, disabled, enabled }) => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published={published}
+          defaultValues={{ ...publishedFixture, material }}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    for (const level of disabled) {
+      await expect
+        .element(screen.getByRole("combobox", { name: level, exact: true }))
+        .toBeDisabled();
+    }
+    for (const level of enabled) {
+      await expect
+        .element(screen.getByRole("combobox", { name: level, exact: true }))
+        .toBeEnabled();
+    }
+  });
+
+  it("saves a material refined at the open level of a published sample", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={publishedFixture}
+          primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen
+      .getByRole("combobox", { name: "Felsic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Granodiorite" }).click();
+
+    const save = screen.getByRole("button", { name: "Publish updates" });
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          material: "rock.igneous.plutonic.felsic.granodiorite",
+        }),
+      ),
+    );
+  });
+
+  it("gates the save when the open material level is cleared", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={publishedFixture}
+          primaryAction={{
+            kind: "submit",
+            label: "Publish updates",
+            onSubmit: noop,
+          }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    // Re-picking the selected option deselects it, leaving an incomplete path.
+    await screen
+      .getByRole("combobox", { name: "Felsic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Granite" }).click();
+
+    const save = screen.getByRole("button", { name: "Publish updates" });
+    await expect.element(save).toBeDisabled();
+    save.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/classify the material down to a specific type/i);
+  });
+
   it("freezes the collection date and location coordinates on a published sample", async () => {
     const screen = await render(
       <TooltipProvider>
@@ -2096,7 +2213,7 @@ describe("SampleForm post-publication field lock", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "dredge",
-          material: "fossil",
+          material: "rock.igneous.plutonic.felsic.granite",
         }),
       ),
     );

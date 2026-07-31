@@ -2,7 +2,7 @@ import { type TreeNode } from "../../path/tree-node.ts";
 
 // Metamorphic branch (screenshot): metamorphic -> weakly / strongly
 // metamorphosed (the `metamorphic` node with these choices lives in
-// rock-subtree.ts). Spread into the material tree in classification.ts.
+// rock-subtree.ts).
 // Metamorphic facies is NOT here: it is a separate required sample field, not a
 // material-tree branch (see metamorphic-facies/vocabulary).
 //
@@ -11,8 +11,9 @@ import { type TreeNode } from "../../path/tree-node.ts";
 // identity (ADR 0010) and resolvePathNode matches by longest suffix, so the
 // existing `plutonic.*`/`volcanic.*` and sedimentary overrides still apply under
 // this branch. `hornblendite` and `pyroxenite` are igneous leaves reused as
-// generic terms the same way (defined in rock-subtree.ts, referenced here). Every
-// level is mandatory (default) down to a leaf.
+// generic terms the same way (defined in rock-subtree.ts, referenced here).
+// `weakly_metamorphosed` stays frozen at its own level, but the subtrees it
+// reuses bring their own `editableChildren` deeper down.
 export const metamorphicTree = {
   weakly_metamorphosed: {
     choices: ["meta_igneous_rock", "meta_sedimentary_rock"],
@@ -31,6 +32,7 @@ export const metamorphicTree = {
   },
 
   strongly_metamorphosed: {
+    editableChildren: true,
     choices: [
       "amphibolite",
       "anthracite_coal",

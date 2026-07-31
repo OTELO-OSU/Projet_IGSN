@@ -19,7 +19,10 @@ export type TreeNode = {
   childLabel?: string;
   // Offered as a public search-facet option (default absent = false). There is
   // no inheritance: each node a facet should expose is flagged on its own (see
-  // sample/search/facets.ts). A node needs an entry only when it carries
-  // choices, optionality, a context override, or this flag.
+  // sample/search/facets.ts).
   searchable?: boolean;
+  // Children of this node may still be chosen after publication (ADR 0022);
+  // every deeper level is editable too. Absent: the level is frozen once
+  // published.
+  editableChildren?: boolean;
 };
