@@ -30,6 +30,15 @@ manage the team; teammates cannot spawn their own.
   to the user in that format.
 - **Never `git push`. Never commit to `main`.** No hook backstops this. The only
   branch movement allowed is step 8's local fast-forward of `$SOURCE`.
+- **Unexpected complication.** When any teammate hits something the plan did not
+  foresee (an unplanned edge case, a broken assumption, a hidden constraint),
+  pause that task; do not let the developer improvise scope. Dispatch the
+  read-only `business-analyst` in triage mode with the complication and the
+  current plan; it returns impact, a recommendation (avoid via another path,
+  handle now, or postpone) and a plan update. Relay the recommendation and any
+  open questions to the user with `AskUserQuestion` and get confirmation before
+  changing tasks. A postponed complication becomes a follow-up in the step 9
+  summary, not silent scope.
 
 ## Planning
 
