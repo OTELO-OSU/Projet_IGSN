@@ -1,5 +1,6 @@
 import { m } from "#/paraglide/messages.js";
 import { CollectionDatesField } from "#/samples/collection-dates-field.tsx";
+import { isOrientedYes } from "#/samples/compose-description.ts";
 import { MeasurementFields } from "#/samples/measurement-fields.tsx";
 import { useDescriptionForm } from "#/samples/use-description-form.ts";
 
@@ -28,19 +29,20 @@ export function SampleDescriptionFields() {
       </form.AppField>
 
       <form.Subscribe
-        selector={(state) => state.values.description.oriented === "yes"}
+        selector={(state) => isOrientedYes(state.values.description.oriented)}
       >
-        {(oriented) => (
-          <form.AppField name="description.orientationExplanation">
-            {(field) => (
-              <field.TextField
-                label={m.field_orientation_explanation()}
-                multiline
-                disabled={!oriented}
-              />
-            )}
-          </form.AppField>
-        )}
+        {(oriented) =>
+          oriented ? (
+            <form.AppField name="description.orientationExplanation">
+              {(field) => (
+                <field.TextField
+                  label={m.field_orientation_explanation()}
+                  multiline
+                />
+              )}
+            </form.AppField>
+          ) : null
+        }
       </form.Subscribe>
 
       <MeasurementFields />

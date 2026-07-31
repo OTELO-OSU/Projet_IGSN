@@ -211,14 +211,14 @@ describe("SampleDescriptionFields", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("should disable the unit until its value is set, then mark it required", async () => {
+  it("should show the unit only once its value is set, marked required", async () => {
     const screen = await renderDescriptionTab();
 
     await expect
       .element(
         screen.getByRole("combobox", { name: "Volume unit", exact: true }),
       )
-      .toBeDisabled();
+      .not.toBeInTheDocument();
 
     await screen.getByLabelText("Volume", { exact: true }).fill("250");
 
@@ -226,7 +226,28 @@ describe("SampleDescriptionFields", () => {
       .element(
         screen.getByRole("combobox", { name: "Volume unit *", exact: true }),
       )
-      .toBeEnabled();
+      .toBeVisible();
+  });
+
+  it("should hide the unit again when its value is cleared, keeping the selection", async () => {
+    const screen = await renderDescriptionTab();
+
+    await screen.getByLabelText("Volume", { exact: true }).fill("250");
+    await screen.getByRole("combobox", { name: "Volume unit *" }).click();
+    await screen.getByRole("option", { name: "cm³" }).click();
+    await screen.getByLabelText("Volume", { exact: true }).fill("");
+
+    // By label, so the assertion holds whether or not the required marker is on.
+    await expect
+      .element(screen.getByLabelText("Volume unit"))
+      .not.toBeInTheDocument();
+    await expect.element(screen.getByRole("alert")).not.toBeInTheDocument();
+
+    // ADR 0015 rule 1: the selection is still there when the value comes back.
+    await screen.getByLabelText("Volume", { exact: true }).fill("250");
+    await expect
+      .element(screen.getByRole("combobox", { name: "Volume unit *" }))
+      .toHaveTextContent("cm³");
   });
 
   it("should reject a non positive measurement value", async () => {
@@ -242,24 +263,80 @@ describe("SampleDescriptionFields", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("should disable the orientation explanation until the sample is oriented", async () => {
+  it("should show the orientation explanation only for an oriented sample", async () => {
     const screen = await renderDescriptionTab();
 
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
 
     await screen.getByRole("combobox", { name: "Oriented sample" }).click();
     await screen.getByRole("option", { name: "Yes" }).click();
-    await expect
-      .element(screen.getByLabelText("Orientation explanation"))
-      .toBeEnabled();
+    await screen
+      .getByLabelText("Orientation explanation")
+      .fill("Marked north face");
 
     await screen.getByRole("combobox", { name: "Oriented sample" }).click();
     await screen.getByRole("option", { name: "No" }).click();
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
+
+    // ADR 0015 rule 1: the text is still there when the answer comes back.
+    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
+    await screen.getByRole("option", { name: "Yes" }).click();
+    await expect
+      .element(screen.getByLabelText("Orientation explanation"))
+      .toHaveValue("Marked north face");
+  });
+
+  it("should clear an error left on a field whose condition stops holding", async () => {
+    // The form-level validator rebuilds the whole field-error map on every run,
+    // so an error on a field that no longer renders clears itself and cannot
+    // block the save from a control the user can no longer reach.
+    const onSubmit = vi.fn();
+    const screen = await renderDescriptionTab(onSubmit);
+
+    await screen.getByLabelText("Volume", { exact: true }).fill("250");
+    await screen.getByRole("button", { name: "Create" }).click();
+    expect(onSubmit).not.toHaveBeenCalled();
+    await expect
+      .element(screen.getByText("Select a unit for the entered value."))
+      .toBeVisible();
+
+    await screen.getByLabelText("Volume", { exact: true }).fill("");
+
+    await expect.element(screen.getByRole("alert")).not.toBeInTheDocument();
+    await screen.getByRole("button", { name: "Create" }).click();
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+  });
+
+  it("should not bring back a hidden value the save dropped", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderDescriptionTab(onSubmit);
+
+    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
+    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen
+      .getByLabelText("Orientation explanation")
+      .fill("Marked north face");
+    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
+    await screen.getByRole("option", { name: "No" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    // ADR 0015 rule 2: the hidden explanation is not part of the save.
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ description: { oriented: false } }),
+      ),
+    );
+
+    // Rule 3: the form resets on what was saved, so the leftover is gone.
+    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
+    await screen.getByRole("option", { name: "Yes" }).click();
+    await expect
+      .element(screen.getByLabelText("Orientation explanation"))
+      .toHaveValue("");
   });
 
   it("should block submit with an error on the unit when a value has no unit", async () => {
@@ -288,7 +365,7 @@ describe("SampleDescriptionFields", () => {
     );
   });
 
-  it("should block submit with an error on the value when clearing it leaves its unit behind", async () => {
+  it("should submit no measurement at all when clearing a value leaves its unit behind", async () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
@@ -298,10 +375,8 @@ describe("SampleDescriptionFields", () => {
     await screen.getByLabelText("Length", { exact: true }).fill("");
     await screen.getByRole("button", { name: "Create" }).click();
 
-    expect(onSubmit).not.toHaveBeenCalled();
-    await expect
-      .element(screen.getByText("Enter a value for the selected unit."))
-      .toBeVisible();
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.lastCall?.[0]).not.toHaveProperty("description");
   });
 
   it("should submit a full description", async () => {

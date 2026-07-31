@@ -222,15 +222,17 @@ One thing the map cannot do for you: **nothing forces the decision.** Forget you
 
 The control itself needs nothing beyond that entry: `SampleForm` turns the maps' form names into a predicate ([published-sample-frozen-field.ts](../packages/admin/src/samples/published-sample-frozen-field.ts)) and hands it to the form kit, which disables the field by name. That's true for the kit's own field controls; a control that sits outside a field context (no `field.` wrapper) must ask for itself with `useIsFieldDisabled()`, the way the collection-date mode switch asks it by the date field's name to follow the field it drives. No badge or marker is shown next to a frozen field.
 
+This is now the only use of `disabled` in the sample form: a field waiting on a sibling is hidden instead, never disabled (see "Add/remove a display condition" above).
+
 Background: ADR [0021](adr/0021-post-publish-field-mutability.md).
 
 ## Add/remove a display condition
 
 Background: ADR [0015](adr/0015-form-hidden-value-lifecycle.md) / [0016](adr/0016-undetermined-location-requirement.md).
 
-Rule of thumb: **hide** a field only when it belongs to the other branch of an exclusive choice. A field that is simply not relevant yet stays visible but disabled, so the form shows every question upfront and none appears by surprise.
+Rule of thumb: **hide** a field whenever it is not yet relevant, whether it belongs to the other branch of an exclusive choice or is simply waiting on a sibling value (a unit without its value). Nothing in the sample form is visible-but-disabled: `disabled` is reserved for a field frozen by publication (step 5 above).
 
-To hide, wrap the field in `form.Subscribe` and return `null` for the branch where it does not apply. This is exactly how the texture selector only appears for igneous materials:
+To hide, wrap the field in `form.Subscribe` and return `null` when it does not apply. This is exactly how the texture selector only appears for igneous materials:
 
 ```tsx
 // packages/admin/src/samples/texture-field.tsx
@@ -245,8 +247,8 @@ To hide, wrap the field in `form.Subscribe` and return `null` for the branch whe
 
 Two things that must go with any hide:
 
-- **A matching exclusion in `composeCreateSample`.** A hidden field keeps its value in the form store (so switching back restores it), but on save the compose step must drop it. Miss this and a hidden value reaches validation and fails silently: the save errors with no message the user can see or fix.
-- **Toggle the required marker with `withRequired`** if the field is a conditional publish requirement, so the trailing `*` appears exactly when the requirement holds.
+- **A matching exclusion in `composeCreateSample`, on the same condition.** A hidden field keeps its value in the form store (so switching back restores it), but on save the compose step must drop it. Read the display condition and the compose exclusion off one shared helper, not two expressions that happen to agree: a coincidental pairing drifts the moment either side changes on its own. Miss the exclusion entirely and a hidden value reaches validation and fails silently: the save errors with no message the user can see or fix.
+- **Toggle the required marker with `withRequired`** if the field is a conditional publish requirement, so the trailing `*` appears exactly when the requirement holds. A field only ever rendered while its requirement holds can pass a bare `requiredToPublish` instead: there is no moment it is shown and not required, so nothing needs toggling.
 
 A requirement driven by another field (for example `locationRequirement(material)`) lives in `domain`, so the form and the publish tooltip always agree.
 

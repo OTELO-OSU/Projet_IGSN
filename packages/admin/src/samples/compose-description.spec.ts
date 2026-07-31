@@ -88,10 +88,8 @@ describe("composeDescription", () => {
     });
   });
 
-  it("should keep a unit missing its value for the schema to reject", () => {
-    expect(composeDescription(draft({ massUnit: "kg" }))).toEqual({
-      mass: { unit: "kg" },
-    });
+  it("should drop a unit left behind by a cleared value", () => {
+    expect(composeDescription(draft({ massUnit: "kg" }))).toBeNull();
   });
 });
 

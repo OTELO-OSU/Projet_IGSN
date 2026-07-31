@@ -97,36 +97,54 @@ describe("SampleConditionFields", () => {
     );
   });
 
-  it("should disable the reading inputs until their category is chosen", async () => {
+  it("should show the reading inputs only once their category is chosen", async () => {
     const screen = await renderConditionTab();
 
     await expect
       .element(screen.getByLabelText("Temperature value"))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
     await expect
       .element(screen.getByLabelText("Relative humidity in %"))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
     await expect
       .element(screen.getByLabelText("Pressure value"))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
 
+    // One control at a time: the category reveals the value, the value the unit.
     await screen
       .getByRole("combobox", { name: "Temperature", exact: true })
       .click();
     await screen.getByRole("option", { name: "Ambient" }).click();
     await expect
       .element(screen.getByLabelText("Temperature value"))
-      .toBeEnabled();
+      .toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Temperature unit"))
+      .not.toBeInTheDocument();
+
+    await screen.getByLabelText("Temperature value").fill("21");
+    await expect
+      .element(screen.getByLabelText("Temperature unit"))
+      .toBeVisible();
+
+    // The humidity percentage hangs off its type the same way.
+    await screen.getByRole("combobox", { name: "Relative humidity" }).click();
+    await screen
+      .getByRole("option", { name: "Controlled (e.g. 40% ± 5%)" })
+      .click();
+    await expect
+      .element(screen.getByLabelText("Relative humidity in %"))
+      .toBeVisible();
   });
 
-  it("should disable the unit until its value is set, then mark it required", async () => {
+  it("should show the unit only once its value is set, marked required", async () => {
     const screen = await renderConditionTab();
 
     await expect
       .element(
         screen.getByRole("combobox", { name: "Pressure unit", exact: true }),
       )
-      .toBeDisabled();
+      .not.toBeInTheDocument();
 
     await screen
       .getByRole("combobox", { name: "Pressure", exact: true })
@@ -140,7 +158,14 @@ describe("SampleConditionFields", () => {
       .element(
         screen.getByRole("combobox", { name: "Pressure unit *", exact: true }),
       )
-      .toBeEnabled();
+      .toBeVisible();
+
+    await screen.getByLabelText("Pressure value").fill("");
+
+    // By label, so the assertion holds whether or not the required marker is on.
+    await expect
+      .element(screen.getByLabelText("Pressure unit"))
+      .not.toBeInTheDocument();
   });
 
   it("should block submit with an error on the unit when a value has no unit", async () => {
@@ -215,17 +240,29 @@ describe("SampleConditionFields", () => {
       .click();
     await expect
       .element(screen.getByRole("checkbox", { name: "Temperature controlled" }))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
 
+    // Unchecking it lists the controlled conditions again, unchecked.
     await screen
       .getByRole("checkbox", { name: "No specific condition" })
       .click();
+    await expect
+      .element(screen.getByRole("checkbox", { name: "Temperature controlled" }))
+      .not.toBeChecked();
+
     await screen
       .getByRole("checkbox", { name: "Temperature controlled" })
       .click();
     await expect
       .element(screen.getByRole("checkbox", { name: "No specific condition" }))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
+
+    await screen
+      .getByRole("checkbox", { name: "Temperature controlled" })
+      .click();
+    await expect
+      .element(screen.getByRole("checkbox", { name: "No specific condition" }))
+      .not.toBeChecked();
   });
 
   it("should prefill the tab when editing a sample with a condition", async () => {

@@ -54,17 +54,21 @@ type ConditionCandidate = {
   specificConditions: string | undefined;
 };
 
+export const hasReadingType = <T extends string>(
+  type: T | null | undefined,
+): type is T => type != null;
+
 export function composeCondition(
   draft: ConditionDraft,
 ): ConditionCandidate | null {
-  // A reading's inputs are disabled while its category is unset, so a value
-  // lingering after clearing the category is an uneditable leftover, not
+  // A reading's inputs are not rendered while its category is unset, so a value
+  // lingering after clearing the category is an unreachable leftover, not
   // entered data: the whole reading is dropped (ADR 0015).
   const condition = {
     packaging: draft.packaging ?? undefined,
     storageConditions:
       draft.storageConditions.length > 0 ? draft.storageConditions : undefined,
-    temperature: draft.temperatureType
+    temperature: hasReadingType(draft.temperatureType)
       ? {
           type: draft.temperatureType,
           measurement: composeMeasurement(
@@ -73,11 +77,11 @@ export function composeCondition(
           ),
         }
       : undefined,
-    humidity: draft.humidityType
+    humidity: hasReadingType(draft.humidityType)
       ? { type: draft.humidityType, percentage: draft.humidityPercentage }
       : undefined,
     light: draft.light ?? undefined,
-    pressure: draft.pressureType
+    pressure: hasReadingType(draft.pressureType)
       ? {
           type: draft.pressureType,
           measurement: composeMeasurement(

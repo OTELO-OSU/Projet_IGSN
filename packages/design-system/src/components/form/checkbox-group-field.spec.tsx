@@ -3,26 +3,25 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
 import { useAppForm } from "./app-form.tsx";
+import { FieldDisabledProvider } from "./field-disabled-context.tsx";
 
 const items = [
   { value: "temperature_controlled", label: "Temperature controlled" },
   { value: "light_controlled", label: "Light controlled" },
-  {
-    value: "no_specific_condition",
-    label: "No specific condition",
-    disabled: true,
-  },
+  { value: "no_specific_condition", label: "No specific condition" },
 ];
 
 function Harness({
   onSubmit = () => {},
   maxOne = false,
+  defaults = [],
 }: {
   onSubmit?: (value: string[]) => void;
   maxOne?: boolean;
+  defaults?: string[];
 }) {
   const form = useAppForm({
-    defaultValues: { conditions: [] as string[] },
+    defaultValues: { conditions: defaults },
     onSubmit: ({ value }) => onSubmit(value.conditions),
   });
   return (
@@ -92,11 +91,27 @@ describe("CheckboxGroupField", () => {
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledWith([]));
   });
 
-  it("should keep a disabled item unreachable", async () => {
-    await render(<Harness />);
+  it("should keep a checked value whose item is not listed", async () => {
+    const onSubmit = vi.fn();
+    await render(<Harness onSubmit={onSubmit} defaults={["frozen"]} />);
+
+    await page.getByRole("checkbox", { name: "Light controlled" }).click();
+    await page.getByRole("button", { name: "Save" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(["light_controlled", "frozen"]),
+    );
+  });
+
+  it("should disable every checkbox when the form marks the field disabled", async () => {
+    await render(
+      <FieldDisabledProvider value={() => true}>
+        <Harness />
+      </FieldDisabledProvider>,
+    );
 
     await expect
-      .element(page.getByRole("checkbox", { name: "No specific condition" }))
+      .element(page.getByRole("checkbox", { name: "Light controlled" }))
       .toBeDisabled();
   });
 

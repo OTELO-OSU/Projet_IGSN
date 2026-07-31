@@ -61,8 +61,9 @@ enforced only at publish via `samplePublishBlockers`, never in the draft schema.
 The domain schema (`createSampleSchema`) keeps only data-validity invariants
 (value types, `min <= max`, whole numbers) and never requires a field just
 because a sibling is present. The form still marks fields with a `*` and
-disables controls until they are reachable, but that is a publish hint, not a
-draft error: a researcher can record a partial value and complete it later.
+hides controls until they apply (see forms.md, dependent fields), but that is
+a publish hint, not a draft error: a researcher can record a partial value and
+complete it later.
 
 ## Extract hooks
 

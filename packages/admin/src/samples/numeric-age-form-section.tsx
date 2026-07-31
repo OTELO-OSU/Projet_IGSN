@@ -7,6 +7,7 @@ import type { AgeFormValues } from "#/samples/age-form.ts";
 import type { AgeMode } from "#/samples/age-mode-radio.tsx";
 
 import { m } from "#/paraglide/messages.js";
+import { hasNumericAgeValue, numericAgeUnitOf } from "#/samples/age-form.ts";
 import { AgeModeRadio } from "#/samples/age-mode-radio.tsx";
 import { NumericValueField } from "#/samples/numeric-value-field.tsx";
 import { numericUnitLabel, yearsUnitLabel } from "#/samples/sample-labels.ts";
@@ -113,65 +114,48 @@ export function NumericAgeFormSection() {
               </div>
             )}
 
-            <form.AppField
-              name="age.numericAgeUnit"
-              listeners={{
-                // The reference is only meaningful for annum; clear it when the
-                // unit changes to anything else.
-                onChange: ({ value }) => {
-                  if (value !== numericUnitSchema.enum.a)
-                    form.setFieldValue("age.numericAgeYearsUnit", undefined);
-                },
-              }}
+            <form.Subscribe
+              selector={(state) => hasNumericAgeValue(state.values.age)}
             >
-              {(field) => (
-                // A numeric value must state its unit before publish, so the unit
-                // is required once a value is entered (publish blocker
-                // numeric_age_unit_missing); disabled until then.
-                <form.Subscribe
-                  selector={(state) =>
-                    state.values.age.numericAgeMin != null ||
-                    state.values.age.numericAgeMax != null
-                  }
-                >
-                  {(required) => (
-                    <field.ComboboxField
-                      label={m.field_numeric_unit()}
-                      requiredToPublish={required}
-                      items={numericUnitItems}
-                      placeholder={m.age_unit_placeholder()}
-                      searchPlaceholder={m.age_unit_search_placeholder()}
-                      emptyText={m.age_unit_empty()}
-                      disabled={!required}
-                    />
-                  )}
-                </form.Subscribe>
-              )}
-            </form.AppField>
-            <form.AppField name="age.numericAgeYearsUnit">
-              {(field) => (
-                // A reference is required (and only meaningful) once the unit is
-                // annum (publish blocker numeric_age_reference_missing);
-                // disabled otherwise.
-                <form.Subscribe
-                  selector={(state) =>
-                    state.values.age.numericAgeUnit === numericUnitSchema.enum.a
-                  }
-                >
-                  {(required) => (
-                    <field.ComboboxField
-                      label={m.field_numeric_years_unit()}
-                      requiredToPublish={required}
-                      items={yearsUnitItems}
-                      placeholder={m.age_years_placeholder()}
-                      searchPlaceholder={m.age_years_search_placeholder()}
-                      emptyText={m.age_years_empty()}
-                      disabled={!required}
-                    />
-                  )}
-                </form.Subscribe>
-              )}
-            </form.AppField>
+              {(hasValue) =>
+                hasValue ? (
+                  <form.AppField name="age.numericAgeUnit">
+                    {(field) => (
+                      <field.ComboboxField
+                        label={m.field_numeric_unit()}
+                        requiredToPublish
+                        items={numericUnitItems}
+                        placeholder={m.age_unit_placeholder()}
+                        searchPlaceholder={m.age_unit_search_placeholder()}
+                        emptyText={m.age_unit_empty()}
+                      />
+                    )}
+                  </form.AppField>
+                ) : null
+              }
+            </form.Subscribe>
+            <form.Subscribe
+              selector={(state) =>
+                numericAgeUnitOf(state.values.age) === numericUnitSchema.enum.a
+              }
+            >
+              {(isAnnum) =>
+                isAnnum ? (
+                  <form.AppField name="age.numericAgeYearsUnit">
+                    {(field) => (
+                      <field.ComboboxField
+                        label={m.field_numeric_years_unit()}
+                        requiredToPublish
+                        items={yearsUnitItems}
+                        placeholder={m.age_years_placeholder()}
+                        searchPlaceholder={m.age_years_search_placeholder()}
+                        emptyText={m.age_years_empty()}
+                      />
+                    )}
+                  </form.AppField>
+                ) : null
+              }
+            </form.Subscribe>
           </div>
         </>
       ) : null}

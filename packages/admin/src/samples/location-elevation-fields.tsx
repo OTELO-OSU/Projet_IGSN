@@ -3,20 +3,9 @@ import { ELEVATION_UNITS } from "@projet-igsn/domain/sample/location/elevation-u
 import { VERTICAL_DATUMS } from "@projet-igsn/domain/sample/location/vertical-datum";
 
 import { m } from "#/paraglide/messages.js";
-import { type LocationDraft } from "#/samples/compose-location.ts";
+import { isElevationEntered } from "#/samples/compose-location.ts";
 import { verticalDatumLabel } from "#/samples/location-label.ts";
 import { useLocationForm } from "#/samples/use-location-form.ts";
-
-// An elevation value is meaningless without its unit and datum, so both are
-// required as soon as a value is entered, even in a draft (ADR 0014). Scoped to
-// the visible value field so a stale value from the other geometry never counts.
-const isElevationEntered = (location: LocationDraft): boolean =>
-  location.type === "point"
-    ? location.elevationValue !== undefined
-    : location.type === "area"
-      ? location.elevationMin !== undefined ||
-        location.elevationMax !== undefined
-      : false;
 
 const metaFields = [
   {
@@ -38,22 +27,14 @@ const metaFields = [
   },
 ];
 
-// Elevation unit and vertical datum, shown once a geometry is chosen and
-// enabled (and marked required to publish) once an elevation value is entered.
-// A missing unit/datum only blocks publish, not a draft, so there is no draft
-// validator; a unit/datum left behind by an emptied elevation is harmless: the
-// fields disable and composeLocation drops them without a value.
 export function LocationElevationFields() {
   const form = useLocationForm();
   return (
     <form.Subscribe
-      selector={(state) => ({
-        show: Boolean(state.values.location.type),
-        required: isElevationEntered(state.values.location),
-      })}
+      selector={(state) => isElevationEntered(state.values.location)}
     >
-      {({ show, required }) =>
-        show ? (
+      {(entered) =>
+        entered ? (
           <div className="grid gap-4 sm:grid-cols-2">
             {metaFields.map(
               ({
@@ -68,12 +49,11 @@ export function LocationElevationFields() {
                   {(field) => (
                     <field.ComboboxField
                       label={label()}
-                      requiredToPublish={required}
+                      requiredToPublish
                       items={items}
                       placeholder={placeholder()}
                       searchPlaceholder={searchPlaceholder()}
                       emptyText={emptyText()}
-                      disabled={!required}
                     />
                   )}
                 </form.AppField>

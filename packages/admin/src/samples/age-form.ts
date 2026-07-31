@@ -1,5 +1,7 @@
 import type { Age } from "@projet-igsn/domain/sample/age/model";
 
+import { numericUnitSchema } from "@projet-igsn/domain/sample/age/numeric-unit";
+
 // The Age block held in the form store, mirroring the domain `Age` shape so the
 // fields cast their own values (NumberField stores numbers, ComboboxField/
 // TextField store undefined when cleared). Nullish is tolerated everywhere so
@@ -40,6 +42,16 @@ export function ageFormValues(age: Age | null | undefined): AgeFormValues {
   };
 }
 
+// The unit is only rendered once a bound holds a value, and the years reference
+// only once that unit is annum. The form gates and toAgeInput read these two
+// predicates, so a field is hidden and excluded on the very same condition and
+// the two cannot drift apart (ADR 0015 rule 2).
+export const hasNumericAgeValue = (values: AgeFormValues): boolean =>
+  values.numericAgeMin != null || values.numericAgeMax != null;
+
+export const numericAgeUnitOf = (values: AgeFormValues): string | null =>
+  hasNumericAgeValue(values) ? (values.numericAgeUnit ?? null) : null;
+
 // Form values -> domain age input, or null when the whole block is empty (so an
 // untouched Age tab stores no age). Fields hold numbers/strings/undefined;
 // normalize nullish to null, parse the string-keyed geological bounds back to
@@ -47,11 +59,15 @@ export function ageFormValues(age: Age | null | undefined): AgeFormValues {
 // free-text fields). The result is validated by createSampleSchema before it
 // leaves the form.
 export function toAgeInput(values: AgeFormValues): Age | null {
+  const numericAgeUnit = numericAgeUnitOf(values);
   const age = {
     numericAgeMin: values.numericAgeMin ?? null,
     numericAgeMax: values.numericAgeMax ?? null,
-    numericAgeUnit: values.numericAgeUnit ?? null,
-    numericAgeYearsUnit: values.numericAgeYearsUnit ?? null,
+    numericAgeUnit,
+    numericAgeYearsUnit:
+      numericAgeUnit === numericUnitSchema.enum.a
+        ? (values.numericAgeYearsUnit ?? null)
+        : null,
     geologicalAgeMin: values.geologicalAgeMin
       ? Number(values.geologicalAgeMin)
       : null,

@@ -86,7 +86,7 @@ describe("NumericAgeFormSection", () => {
       .toHaveValue(null);
   });
 
-  it("should clear the unit when its value is emptied", async () => {
+  it("should hide the unit when its value is emptied, keeping the selection", async () => {
     await render(<Harness />);
 
     await toggle().click();
@@ -97,7 +97,35 @@ describe("NumericAgeFormSection", () => {
 
     await expect
       .element(page.getByRole("combobox", { name: "Units" }))
-      .toHaveTextContent("Select a unit");
+      .not.toBeInTheDocument();
+
+    // ADR 0015 rule 1: the selection is still there when the value comes back;
+    // toAgeInput drops it from a save made without a value.
+    await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
+    await expect
+      .element(page.getByRole("combobox", { name: "Units *" }))
+      .toHaveTextContent("Ma");
+  });
+
+  it("should hide the reference too when the value its unit hangs on is emptied", async () => {
+    await render(<Harness />);
+
+    await toggle().click();
+    await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
+    await page.getByRole("combobox", { name: "Units *" }).click();
+    await page.getByRole("option", { name: "a (years)" }).click();
+    await page.getByRole("combobox", { name: "Reference *" }).click();
+    await page.getByRole("option", { name: "BP", exact: true }).click();
+    await page.getByRole("spinbutton", { name: "Numeric age" }).fill("");
+
+    await expect
+      .element(page.getByRole("combobox", { name: "Units" }))
+      .not.toBeInTheDocument();
+    // The reference hangs on the unit, which hangs on the value: toAgeInput
+    // drops both without a value, so both must leave the form too.
+    await expect
+      .element(page.getByRole("combobox", { name: "Reference" }))
+      .not.toBeInTheDocument();
   });
 
   it("should start enabled in fixed mode when a fixed value is prefilled", async () => {

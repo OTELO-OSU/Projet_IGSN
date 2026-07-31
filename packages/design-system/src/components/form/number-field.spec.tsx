@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
-import { page } from "vitest/browser";
+import { page, userEvent } from "vitest/browser";
 
 import { useAppForm } from "./app-form.tsx";
 
@@ -45,6 +45,18 @@ describe("NumberField", () => {
     await expect.element(input).toHaveValue(-12.5);
     await expect.element(input).toHaveAttribute("type", "number");
     expect(values.at(-1)).toBe(-12.5);
+  });
+
+  it("should keep the stored number while the typed text is incomplete", async () => {
+    const values: Array<number | undefined> = [];
+    await render(<Harness label="Longitude" onValue={(v) => values.push(v)} />);
+
+    const input = page.getByLabelText("Longitude");
+    await userEvent.type(input, "3.");
+    expect(values.at(-1)).toBe(3);
+
+    await userEvent.type(input, "5");
+    expect(values.at(-1)).toBe(3.5);
   });
 
   it("should store undefined when cleared", async () => {

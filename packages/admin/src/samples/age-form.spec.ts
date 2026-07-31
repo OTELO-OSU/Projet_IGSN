@@ -41,6 +41,32 @@ describe("toAgeInput", () => {
     expect(result).toMatchObject({ numericAgeMin: 5, numericAgeUnit: null });
   });
 
+  it("should drop a unit left behind by cleared bounds", () => {
+    // The unit is not rendered without a value, so a leftover would fail the
+    // domain's numeric_unit_without_value on an invisible field (ADR 0015).
+    expect(
+      toAgeInput({
+        ...EMPTY_AGE_FORM_VALUES,
+        numericAgeUnit: "a",
+        numericAgeYearsUnit: "bp",
+      }),
+    ).toBeNull();
+  });
+
+  it("should drop a years reference left behind by a unit off annum", () => {
+    const result = toAgeInput({
+      ...EMPTY_AGE_FORM_VALUES,
+      numericAgeMin: 120,
+      numericAgeMax: 120,
+      numericAgeUnit: "ma",
+      numericAgeYearsUnit: "bp",
+    });
+    expect(result).toMatchObject({
+      numericAgeUnit: "ma",
+      numericAgeYearsUnit: null,
+    });
+  });
+
   it("should parse the string-keyed geological bounds back to their rank", () => {
     const result = toAgeInput({
       ...EMPTY_AGE_FORM_VALUES,

@@ -135,9 +135,7 @@ describe("composeLocation", () => {
     });
   });
 
-  it("should exclude a unit and datum left behind by an emptied elevation", () => {
-    // Those fields are disabled without a value, so a schema error on them
-    // could never be fixed; a lingering selection is not entered data.
+  it("should keep a unit and datum entered without bounds", () => {
     expect(
       composeLocation(
         draft({
@@ -148,7 +146,14 @@ describe("composeLocation", () => {
           elevationDatum: "msl",
         }),
       ),
-    ).toEqual({ position: { type: "point", longitude: 0, latitude: 0 } });
+    ).toEqual({
+      position: {
+        type: "point",
+        longitude: 0,
+        latitude: 0,
+        elevation: { unit: "m", datum: "msl" },
+      },
+    });
   });
 });
 

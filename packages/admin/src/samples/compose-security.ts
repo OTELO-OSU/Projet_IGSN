@@ -33,10 +33,14 @@ type SecurityCandidate = {
   chemicalRiskExplanation: string | undefined;
 };
 
+export const isHazardDeclared = (
+  answer: "yes" | "no" | null | undefined,
+): boolean => answer === "yes";
+
 const toBoolean = (
   answer: "yes" | "no" | null | undefined,
 ): boolean | undefined =>
-  answer === "yes" ? true : answer === "no" ? false : undefined;
+  isHazardDeclared(answer) ? true : answer === "no" ? false : undefined;
 
 export function composeSecurity(
   draft: SecurityDraft,
@@ -47,8 +51,9 @@ export function composeSecurity(
     security[flag] = answered;
     // The explanation field is hidden unless the flag is yes, so a value
     // lingering after switching away is an unreachable leftover, not data.
-    security[explanation] =
-      answered === true ? draft[explanation]?.trim() || undefined : undefined;
+    security[explanation] = isHazardDeclared(draft[flag])
+      ? draft[explanation]?.trim() || undefined
+      : undefined;
   }
   // All parts unset means no security at all; undefined values are dropped by
   // JSON on the wire, so the stored shape stays minimal.
