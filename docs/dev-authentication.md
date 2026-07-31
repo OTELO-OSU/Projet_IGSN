@@ -74,8 +74,9 @@ the seeded owner and keeps its samples (ADR 0019).
 To log in against the real GaiaData test SSO instead of the mock realm,
 uncomment the GaiaData block in `.env` (see `.env.example`) and restart the
 stack. Test accounts are GaiaData self-registered accounts; the mock users
-above do not exist there. `http://localhost:3001/` is already registered as
-redirect URI and web origin on the `formaterre-igsn` client.
+above do not exist there. `http://localhost:3001/auth/callback` is already
+registered as redirect URI, and `http://localhost:3001` as web origin, on the
+`formaterre-igsn` client.
 
 The mock realm no longer injects an `igsn-api` audience, for parity with
 GaiaData (which has none yet). `aud` validation is opt-in via `OIDC_AUDIENCE`
