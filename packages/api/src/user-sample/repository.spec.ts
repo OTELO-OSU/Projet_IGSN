@@ -26,7 +26,19 @@ describe("userSampleRepository", () => {
       .selectAll()
       .where("sample_id", "=", sample.id)
       .execute();
-    expect(rows).toEqual([{ sample_id: sample.id, user_id: owner.id }]);
+    expect(rows).toEqual([
+      { sample_id: sample.id, user_id: owner.id, role: "owner" },
+    ]);
+  });
+
+  pgTest("should reject a second owner on the same sample", async ({ db }) => {
+    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+    const other = await insertUser(db, "other@univ-lorraine.fr");
+    const sample = await insertSample(db, draft);
+    const repository = createUserSampleRepository(db);
+    await repository.addOwner(sample.id, owner.id);
+
+    await expect(repository.addOwner(sample.id, other.id)).rejects.toThrow();
   });
 
   pgTest("should reject linking the same owner twice", async ({ db }) => {

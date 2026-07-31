@@ -11,10 +11,12 @@ import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
+import { publishSample } from "./service/publish-sample.ts";
 
 // requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization
 // header, so these tests just send (or omit) it.
 const authHeader = { Authorization: "Bearer test-token" };
+const authenticatedCallerEmail = "test-token@example.com";
 
 // Invalid payloads are sent through the raw request (the typed RPC client would
 // reject them at compile time).
@@ -1263,5 +1265,209 @@ describe("admin sample routes", () => {
       // Assert
       expect(res.status).toBe(403);
     });
+  });
+
+  describe("contributor authorization", () => {
+    const draft = {
+      name: "Basalte partagé",
+      nature: "thin_section" as const,
+      type: null,
+      collectionMethod: null,
+    };
+
+    async function insertContributor(
+      db: Parameters<typeof createApp>[0],
+      sampleId: string,
+      userId: string,
+    ) {
+      await db
+        .insertInto("user_sample")
+        .values({ sample_id: sampleId, user_id: userId, role: "contributor" })
+        .execute();
+    }
+
+    async function shareWithCaller(
+      db: Parameters<typeof createApp>[0],
+      { published }: { published: boolean } = { published: false },
+    ) {
+      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const caller = await insertUser(db, authenticatedCallerEmail);
+      const sample = await insertSample(db, draft);
+      await insertSampleOwner(db, sample.id, owner.id);
+      await insertContributor(db, sample.id, caller.id);
+      if (published) {
+        await publishSample(db, sample.id);
+      }
+      return sample;
+    }
+
+    pgTest(
+      "should record the author of a new sample as its owner",
+      async ({ db }) => {
+        const client = testClient(createApp(db));
+
+        const created = await client.admin.samples.$post(
+          { json: draft },
+          { headers: authHeader },
+        );
+
+        const { data } = sampleResponseSchema.parse(await created.json());
+        const rows = await db
+          .selectFrom("user_sample")
+          .select("role")
+          .where("sample_id", "=", data.id)
+          .execute();
+        expect(rows).toEqual([{ role: "owner" }]);
+      },
+    );
+
+    pgTest(
+      "should let a contributor read and update a draft sample",
+      async ({ db }) => {
+        const client = testClient(createApp(db));
+        const sample = await shareWithCaller(db);
+
+        const read = await client.admin.samples[":id"].$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+        const saved = await client.admin.samples[":id"].$put(
+          {
+            param: { id: sample.id },
+            json: { ...draft, name: "Basalte relu" },
+          },
+          { headers: authHeader },
+        );
+
+        expect(read.status).toBe(200);
+        expect(saved.status).toBe(200);
+        expect(await saved.json()).toMatchObject({
+          data: { id: sample.id, name: "Basalte relu" },
+        });
+      },
+    );
+
+    pgTest("should answer 403 when a contributor publishes", async ({ db }) => {
+      const client = testClient(createApp(db));
+      const sample = await shareWithCaller(db);
+
+      const res = await client.admin.samples[":id"].publish.$post(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(403);
+      const kept = await client.admin.samples[":id"].$get(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+      expect(await kept.json()).toMatchObject({
+        data: { published: false, igsn: null },
+      });
+    });
+
+    pgTest(
+      "should answer 403 when a contributor updates a published sample",
+      async ({ db }) => {
+        const client = testClient(createApp(db));
+        const sample = await shareWithCaller(db, { published: true });
+
+        const res = await client.admin.samples[":id"].$put(
+          {
+            param: { id: sample.id },
+            json: { ...draft, name: "Basalte détourné" },
+          },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(403);
+        const kept = await client.admin.samples[":id"].$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+        expect(await kept.json()).toMatchObject({
+          data: { name: "Basalte partagé", published: true },
+        });
+      },
+    );
+
+    pgTest(
+      "should answer 403 when a contributor uploads to a published sample",
+      async ({ db }) => {
+        const client = testClient(createApp(db));
+        const sample = await shareWithCaller(db, { published: true });
+
+        const res = await client.admin.samples[":id"].attachments.$post(
+          {
+            param: { id: sample.id },
+            form: {
+              file: new File(["1,2\n"], "data.csv", { type: "text/csv" }),
+            },
+          },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(403);
+      },
+    );
+
+    pgTest(
+      "should answer 403 when a contributor deletes an attachment of a published sample",
+      async ({ db }) => {
+        const sample = await shareWithCaller(db, { published: true });
+
+        const res = await createApp(db).request(
+          `/admin/samples/${sample.id}/attachments/01890a5d-ac96-774b-bcce-b302099a8059`,
+          { method: "DELETE", headers: authHeader },
+        );
+
+        expect(res.status).toBe(403);
+      },
+    );
+
+    pgTest(
+      "should let a contributor upload an attachment to a draft sample",
+      async ({ db }) => {
+        const client = testClient(createApp(db));
+        const sample = await shareWithCaller(db);
+
+        const res = await client.admin.samples[":id"].attachments.$post(
+          {
+            param: { id: sample.id },
+            form: {
+              file: new File(["1,2\n"], "data.csv", { type: "text/csv" }),
+            },
+          },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(201);
+      },
+    );
+
+    pgTest(
+      "should let a contributor delete an attachment of a draft sample",
+      async ({ db }) => {
+        const client = testClient(createApp(db));
+        const sample = await shareWithCaller(db);
+        const uploaded = await client.admin.samples[":id"].attachments.$post(
+          {
+            param: { id: sample.id },
+            form: {
+              file: new File(["1,2\n"], "data.csv", { type: "text/csv" }),
+            },
+          },
+          { headers: authHeader },
+        );
+        const { data } = (await uploaded.json()) as { data: { id: string } };
+
+        const res = await createApp(db).request(
+          `/admin/samples/${sample.id}/attachments/${data.id}`,
+          { method: "DELETE", headers: authHeader },
+        );
+
+        expect(res.status).toBe(204);
+      },
+    );
   });
 });

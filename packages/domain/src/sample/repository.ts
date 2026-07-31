@@ -1,3 +1,4 @@
+import type { UserSampleRole } from "../user-sample/model.ts";
 import type { ListSamplesQuery } from "./sample-validator.ts";
 import type { CreateSample, Sample } from "./sample.ts";
 
@@ -22,7 +23,7 @@ export type SampleRepository = {
   get(
     id: string,
     ownerId: string,
-  ): Promise<{ sample: Sample; owned: boolean } | null>;
+  ): Promise<{ sample: Sample; role: UserSampleRole | null } | null>;
   getPublishedByIgsn(igsn: string): Promise<Sample | null>;
   create(input: CreateSample, ownerId: string): Promise<Sample>;
   update(id: string, input: CreateSample): Promise<Sample | null>;

@@ -1,4 +1,5 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 
 import type { DB } from "../../db.ts";
 
@@ -12,7 +13,7 @@ export async function getSample(
   db: Transactional<DB>,
   id: string,
   ownerId: string,
-): Promise<{ sample: Sample; owned: boolean } | null> {
+): Promise<{ sample: Sample; role: UserSampleRole | null } | null> {
   const row = await db
     .selectFrom("sample")
     .leftJoin("user_sample", (join) =>
@@ -21,11 +22,11 @@ export async function getSample(
         .on("user_sample.user_id", "=", ownerId),
     )
     .selectAll("sample")
-    .select("user_sample.user_id")
+    .select("user_sample.role")
     .where("sample.id", "=", id)
     .executeTakeFirst();
   if (!row) return null;
-  const { user_id, ...sampleRow } = row;
+  const { role, ...sampleRow } = row;
   const [sample] = await withSampleChildren(db, [sampleRow]);
-  return { sample: sample!, owned: user_id !== null };
+  return { sample: sample!, role };
 }

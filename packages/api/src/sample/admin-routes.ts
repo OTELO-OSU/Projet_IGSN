@@ -11,12 +11,13 @@ import {
   samplePublishBlockers,
   toPublishableFields,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { Hono } from "hono";
 
-import type { OwnedSampleEnv } from "./require-sample-owner.ts";
+import type { SampleAccessEnv } from "./require-sample-access.ts";
 
 import { attachmentDownload } from "./attachment-download.ts";
-import { requireSampleOwner } from "./require-sample-owner.ts";
+import { requireSampleAccess } from "./require-sample-access.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
   validateAttachmentParams,
@@ -39,10 +40,10 @@ export function createSampleAdminRoutes(
   // present means the caller owns it (200), absent means no such sample (404),
   // and someone else's never reaches the route (403). Registered before those
   // routes below, since Hono runs handlers in registration order.
-  const ownedSample = requireSampleOwner(repository);
+  const accessibleSample = requireSampleAccess(repository);
 
   return (
-    new Hono<OwnedSampleEnv>()
+    new Hono<SampleAccessEnv>()
       .get("/", validateListQuery, async (c) => {
         const { page, perPage, sort, order, search, ageMin, ageMax, ageUnit } =
           c.req.valid("query");
@@ -62,8 +63,8 @@ export function createSampleAdminRoutes(
         const body: ListSamplesResponse = { data, meta: { total } };
         return c.json(body);
       })
-      .use("/:id", ownedSample)
-      .use("/:id/*", ownedSample)
+      .use("/:id", accessibleSample)
+      .use("/:id/*", accessibleSample)
       .get("/:id", validateIdParam, (c) => {
         const sample = c.get("sample");
         if (!sample) {
@@ -84,6 +85,9 @@ export function createSampleAdminRoutes(
         const current = c.get("sample");
         if (!current) {
           return c.json({ error: "Not found" }, 404);
+        }
+        if (!canUpdateSample(c.get("role"), current)) {
+          return c.json({ error: "Forbidden" }, 403);
         }
         const toPersist = current.published
           ? mergePublishedEdit(current, c.req.valid("json"))
@@ -119,6 +123,9 @@ export function createSampleAdminRoutes(
         if (!sample) {
           return c.json({ error: "Not found" }, 404);
         }
+        if (c.get("role") !== "owner") {
+          return c.json({ error: "Forbidden" }, 403);
+        }
         // A sample must be classified down to a publishable leaf material before
         // it can be published (see samplePublishBlockers). ponytail: the guard's
         // read and publish are separate transactions, so a concurrent change to
@@ -136,6 +143,10 @@ export function createSampleAdminRoutes(
         validateIdParam,
         validateAttachmentUpload,
         async (c) => {
+          const sample = c.get("sample");
+          if (sample && !canUpdateSample(c.get("role"), sample)) {
+            return c.json({ error: "Forbidden" }, 403);
+          }
           const { file, description } = c.req.valid("form");
           const created = await attachmentsRepository.create(
             c.req.valid("param").id,
@@ -178,6 +189,10 @@ export function createSampleAdminRoutes(
         "/:id/attachments/:attachmentId",
         validateAttachmentParams,
         async (c) => {
+          const sample = c.get("sample");
+          if (sample && !canUpdateSample(c.get("role"), sample)) {
+            return c.json({ error: "Forbidden" }, 403);
+          }
           const { id, attachmentId } = c.req.valid("param");
           const removed = await attachmentsRepository.remove(id, attachmentId);
           if (!removed) {
