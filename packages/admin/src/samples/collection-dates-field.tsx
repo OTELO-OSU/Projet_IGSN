@@ -1,3 +1,4 @@
+import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
@@ -6,14 +7,14 @@ import { useState } from "react";
 import { m } from "#/paraglide/messages.js";
 import { useDescriptionForm } from "#/samples/use-description-form.ts";
 
-// The collection date group (required to publish, hence the "*" markers). The
-// form store only ever holds the canonical range; the single-date/range mode
-// is component state, an implementation detail never submitted. On mount it
-// derives from the stored value (start === end, or nothing yet, reads as a
-// single date). In single mode the one input mirrors into both ends of the
-// degenerate range (ADR 0015); in range mode entering the same date on both
-// ends is rejected here, since that is what single mode is for.
+// In single mode the one input mirrors into both ends of the degenerate range
+// (ADR 0015); in range mode entering the same date on both ends is rejected
+// here, since that is what single mode is for.
 export function CollectionDatesField() {
+  // The mode switch follows the dates it drives: toggling it writes
+  // collectionDateEnd, which would show an edit that the API's merge then drops.
+  // It is not a form field, so it asks the resolver by name itself.
+  const isDateDisabled = useIsFieldDisabled("description.collectionDateStart");
   const form = useDescriptionForm();
   const [isRange, setIsRange] = useState(() => {
     const { collectionDateStart, collectionDateEnd } =
@@ -44,8 +45,7 @@ export function CollectionDatesField() {
   // Equal bounds are valid domain data (the degenerate single date), so this
   // is UI steering toward single mode, not schema validation; every other
   // date rule (future, ordering) comes from the domain schema via the form's
-  // live validator. Runs on both fields (each listens to its sibling), so the
-  // advice reads on both.
+  // live validator.
   const identicalRange = () => {
     const start = form.getFieldValue("description.collectionDateStart");
     const end = form.getFieldValue("description.collectionDateEnd");
@@ -74,6 +74,7 @@ export function CollectionDatesField() {
             id="collection-date-mode"
             checked={isRange}
             onCheckedChange={toggleRange}
+            disabled={isDateDisabled}
           />
           <Label htmlFor="collection-date-mode">
             {m.collection_date_mode_range()}

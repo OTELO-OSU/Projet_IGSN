@@ -10,9 +10,8 @@ import { faciesFor } from "../metamorphic-facies/vocabulary.ts";
 import { isSampleTypeComplete } from "../type/is-complete.ts";
 import { SAMPLE_TYPES } from "../type/vocabulary.ts";
 
-// Reasons a sample cannot be published yet, as codes. Callers map this enum
-// exhaustively (e.g. the admin publish tooltip), so a new code fails to compile
-// until it is handled and translated.
+// Callers map this enum exhaustively (e.g. the admin publish tooltip), so a new
+// code fails to compile until it is handled and translated.
 export const publishBlockerSchema = z.enum([
   "type_missing",
   "type_incomplete",
@@ -40,24 +39,41 @@ export const publishBlockerSchema = z.enum([
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
 
-// Single source of truth for publishability: an empty result means publishable.
-// Type and material are independent dimensions, so both are reported; within
-// each only the first blocker (a value must be set before it is worth refining).
+export type PublishableFields = Pick<
+  Sample,
+  | "type"
+  | "material"
+  | "metamorphicFacies"
+  | "location"
+  | "description"
+  | "age"
+  | "availability"
+  | "scientificContext"
+>;
+
+// A create payload holds `undefined` for an absent field, a stored sample holds
+// `null`, and samplePublishBlockers distinguishes the two (a missing type reads
+// as `type_missing`, an unrecognized one as `type_incomplete`).
+export function toPublishableFields(
+  sample: Partial<PublishableFields>,
+): PublishableFields {
+  return {
+    type: sample.type ?? null,
+    material: sample.material ?? null,
+    metamorphicFacies: sample.metamorphicFacies ?? null,
+    location: sample.location ?? null,
+    description: sample.description ?? null,
+    age: sample.age ?? null,
+    availability: sample.availability ?? null,
+    scientificContext: sample.scientificContext ?? null,
+  };
+}
+
 // A value outside the vocabulary is treated as incomplete, never as publishable:
 // the type is only nominally validated (`SampleType`/`MaterialPath` are `string`),
 // so a malformed value must gate publication rather than slip through.
 export function samplePublishBlockers(
-  sample: Pick<
-    Sample,
-    | "type"
-    | "material"
-    | "metamorphicFacies"
-    | "location"
-    | "description"
-    | "age"
-    | "availability"
-    | "scientificContext"
-  > & {
+  sample: PublishableFields & {
     // Only the length is read, so the api's saved `Sample["attachments"]` and
     // the admin's post-save count both fit. Omitted means "unknown", never
     // blocking.
@@ -86,9 +102,6 @@ export function samplePublishBlockers(
     blockers.push("material_incomplete");
   }
 
-  // A metamorphic sample must declare its facies (a separate required field). A
-  // null or out-of-vocabulary value blocks: metamorphicFacies is only nominally
-  // validated here, so a malformed value must gate publication, not slip through.
   const facies = faciesFor(sample.material);
   if (
     facies.length > 0 &&
@@ -98,10 +111,8 @@ export function samplePublishBlockers(
     blockers.push("metamorphic_facies_missing");
   }
 
-  // A location (a point or area position) is required to publish unless the
-  // material forbids it (synthetic) or exempts it (returned samples). Evaluated
-  // only once the material is a complete path, so an incomplete material (which
-  // already blocks) does not also raise this (ADR 0014).
+  // Evaluated only once the material is a complete path, so an incomplete
+  // material (which already blocks) does not also raise this (ADR 0014).
   if (
     materialComplete &&
     locationRequirement(sample.material) === "required" &&
@@ -110,15 +121,11 @@ export function samplePublishBlockers(
     blockers.push("location_position_missing");
   }
 
-  // The collection date (a range; a single date is start === end) is required
-  // to publish, like material/type it stays optional on a draft (ADR 0015).
   if (sample.description?.collectionDate == null) {
     blockers.push("collection_date_missing");
   }
 
-  // Age is optional, but a recorded numeric value must state its (shared) unit
-  // before the sample is published (a draft may omit it). Stratigraphic ages
-  // carry no unit.
+  // Stratigraphic ages carry no unit.
   const age = sample.age;
   const hasNumericValue =
     age != null && (age.numericAgeMin != null || age.numericAgeMax != null);
@@ -127,8 +134,7 @@ export function samplePublishBlockers(
   }
 
   // An age in annum is a point on a calendar, so it needs a reference (CE/BCE/
-  // BP/cal BP) before publishing; other units are magnitudes and carry none. A
-  // draft may still omit it, so this gates publication rather than the schema.
+  // BP/cal BP) before publishing; other units are magnitudes and carry none.
   if (
     hasNumericValue &&
     age.numericAgeUnit === "a" &&
@@ -137,9 +143,6 @@ export function samplePublishBlockers(
     blockers.push("numeric_age_reference_missing");
   }
 
-  // A half-entered range (one bound only) is a valid draft but cannot publish:
-  // a range needs both bounds. Checked here rather than in ageSchema so editing
-  // and saving a draft mid-range is not blocked (matches the unit rule above).
   if (age != null) {
     if ((age.numericAgeMin != null) !== (age.numericAgeMax != null)) {
       blockers.push("numeric_age_range_incomplete");
@@ -149,10 +152,6 @@ export function samplePublishBlockers(
     }
   }
 
-  // Elevation is optional, but once any part is recorded it must be complete to
-  // publish (both bounds, a unit and a datum), like the age ranges above. A
-  // draft may hold a partial elevation; this gates publication, not the schema
-  // (ADR 0014).
   const elevation = sample.location?.position?.elevation;
   if (
     elevation != null &&
@@ -164,16 +163,12 @@ export function samplePublishBlockers(
     blockers.push("elevation_incomplete");
   }
 
-  // Availability (exists / no longer exists) is optional on a draft but must be
-  // declared before publishing, so a reader always knows if the sample survives.
   if (sample.availability == null) {
     blockers.push("availability_missing");
   }
 
-  // Scientific context: a published sample must declare its provenance status,
-  // then the mandatory fields of the branch that status selects. Optional on a
-  // draft. The schema forbids an empty researchStructure array, so null checks
-  // cover "not filled" for the multi-select too.
+  // The schema forbids an empty researchStructure array, so null checks cover
+  // "not filled" for the multi-select too.
   const context = sample.scientificContext;
   if (context == null) {
     blockers.push("scientific_context_missing");

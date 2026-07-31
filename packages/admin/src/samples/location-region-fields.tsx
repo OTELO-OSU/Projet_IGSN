@@ -14,7 +14,6 @@ const regionKindItems = toComboboxItems(
 const countryItems = toComboboxItems(COUNTRIES, countryName);
 const oceanSeaItems = toComboboxItems(OCEAN_SEAS, oceanSeaName);
 
-// Region: a continent/ocean toggle, then the matching country or ocean/sea list.
 export function LocationRegionFields() {
   const form = useLocationForm();
   return (

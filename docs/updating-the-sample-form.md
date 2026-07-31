@@ -186,6 +186,44 @@ Add the field's label and any error strings to the language files. No user-facin
 
 Only if the sample cannot be published without this field. Add a code to `publishBlockerSchema`, push it in `samplePublishBlockers`, and translate the admin label map. The label map is exhaustive, so it fails to compile (and thus reminds you to translate) until you add the entry.
 
+### 5. Publish: decide if it can still change after publishing
+
+Publishing mints the IGSN and makes the sample a citable record, so part of it freezes. Ask one question about your new field: **would changing it after publication change what the record says it is?**
+
+- **Yes, it identifies the sample** (its name, nature, type, material): freeze it.
+- **No, it is a detail that keeps improving** (a note, a size, a link, a hazard): leave it editable, so a researcher can correct or enrich it later.
+
+Everything is editable by default. To freeze a field, add one entry to the matching map at the top of [published-field-lock.ts](../packages/domain/src/sample/publication/published-field-lock.ts). The key is the field name, the value the form field names that edit it (several when the form splits it, a position into coordinates):
+
+```ts
+const LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS = {
+  name: ["name"],
+  nature: ["nature"],
+  type: ["typePath"],
+  material: ["materialPath"],
+} as const;
+const LOCKED_DESCRIPTION_FIELDS_TO_FORM_FIELDS = {
+  collectionDate: [
+    "description.collectionDateStart",
+    "description.collectionDateEnd",
+  ],
+} as const;
+```
+
+That entry is the only place to edit: the merge reads its key, the admin form reads its values.
+
+Read it as: **having an entry means it can no longer change.** `mergePublishedEdit` takes every listed field from the stored sample and everything else from the form's payload, so a frozen change is dropped rather than saved. That merge is the real guard (a crafted request cannot get past it); the form disabling inputs is only UX.
+
+One field of your own object, not the whole object? Its map is the one for that object: `description.collectionDate` goes in `LOCKED_DESCRIPTION_FIELDS_TO_FORM_FIELDS`, not in the sample map. The scientific context has one map per provenance branch.
+
+**Freezes only under a condition?** A map cannot say "frozen unless...", so those few cases are written by hand in the merge helper below the maps (elevation stays editable inside a frozen position, for instance). Follow the nearest existing case and add a spec for yours.
+
+One thing the map cannot do for you: **nothing forces the decision.** Forget your new field and it is silently editable. Say in the PR which side you chose, and cover it with a test in [published-field-lock.spec.ts](../packages/domain/src/sample/publication/published-field-lock.spec.ts).
+
+The control itself needs nothing beyond that entry: `SampleForm` turns the maps' form names into a predicate ([published-sample-frozen-field.ts](../packages/admin/src/samples/published-sample-frozen-field.ts)) and hands it to the form kit, which disables the field by name. That's true for the kit's own field controls; a control that sits outside a field context (no `field.` wrapper) must ask for itself with `useIsFieldDisabled()`, the way the collection-date mode switch asks it by the date field's name to follow the field it drives. No badge or marker is shown next to a frozen field.
+
+Background: ADR [0021](adr/0021-post-publish-field-mutability.md).
+
 ## Add/remove a display condition
 
 Background: ADR [0015](adr/0015-form-hidden-value-lifecycle.md) / [0016](adr/0016-undetermined-location-requirement.md).

@@ -3,16 +3,11 @@ import { useTypedAppFormContext } from "./app-form.tsx";
 import { HierarchyCascade } from "./hierarchy-cascade.tsx";
 
 // Structural mirror of the domain vocabulary trees (design-system MUST NOT
-// import domain). A node's label code defaults to its own segment; `label`
-// overrides it. The widget renders the code through its `translate` prop. A
-// node with children must be refined unless marked `optional: true` (the only
-// valid non-leaf stop); `choices` lists the child segment codes.
+// import domain).
 export type HierarchyNodeDef = {
   label?: string;
   optional?: boolean;
   choices?: readonly string[];
-  // A label code naming the level this node opens for its children (translated
-  // like `label`). Absent: the level is labelled by the parent's picked value.
   childLabel?: string;
   // Offered as a public search-facet option (mirrors domain TreeNode). Unused by
   // the form widget; the facet sidebar filters levels by it.
@@ -21,18 +16,14 @@ export type HierarchyNodeDef = {
 
 // A hierarchical vocabulary as one self-describing bundle: its entry segments
 // and its segment-keyed nodes, where a dotted key overrides the bare segment in
-// that context (the full path is the identity, ADR 0010). A segment with no
-// entry is a childless leaf labelled by its own code, so only nodes carrying
-// choices, optionality, or a context override need one.
+// that context (the full path is the identity, ADR 0010).
 export type Hierarchy = {
   roots: readonly string[];
   nodes: Record<string, HierarchyNodeDef | undefined>;
 };
 
-// Resolve the node defining `path` by its longest matching suffix: for `a.b.c`
-// the keys `a.b.c`, `b.c`, `c` are tried in order. Same convention as domain's
-// resolvePathNode, deliberately reimplemented (no domain import here). Trees
-// are proven acyclic upstream (domain expandPaths throws on cycles at import).
+// Trees are proven acyclic upstream (domain expandPaths throws on cycles at
+// import).
 function resolveNode(
   hierarchy: Hierarchy,
   path: string,
@@ -45,17 +36,12 @@ function resolveNode(
   return undefined;
 }
 
-// Whether a path's node is flagged as a searchable facet option (default
-// false). Used by the facet sidebar to offer only flagged nodes at each level.
 export function isPathSearchable(hierarchy: Hierarchy, path: string): boolean {
   return resolveNode(hierarchy, path)?.searchable === true;
 }
 
 const identity = (code: string) => code;
 
-// The label of a path: its node's label code run through the caller's
-// translation. Defaults to the path's own segment; a node's `label` (e.g. on a
-// dotted override key) relabels its occurrence.
 export function hierarchyPathLabel(
   hierarchy: Hierarchy,
   path: string,
@@ -66,9 +52,6 @@ export function hierarchyPathLabel(
   );
 }
 
-// The label of the level a node opens for its children. A node can name the
-// choice with its own `childLabel` code (e.g. "Resource type" under "Yes");
-// absent, it falls back to the node's path label (the value picked above).
 export function hierarchyChildLabel(
   hierarchy: Hierarchy,
   parent: string,
@@ -80,8 +63,6 @@ export function hierarchyChildLabel(
   );
 }
 
-// The paths offered under `parent`: the roots at the top level (null parent),
-// then the parent node's choices composed onto its path.
 export function hierarchyChildren(
   hierarchy: Hierarchy,
   parent: string | null,
@@ -91,20 +72,15 @@ export function hierarchyChildren(
   return choices.map((segment) => `${parent}.${segment}`);
 }
 
-// A path is a valid stop when it has nothing left to refine (leaf) or its node
-// is marked optional. Exported so consumers can prove the widget's stop options
-// match their own completeness policy.
 export function canStopAtPath(hierarchy: Hierarchy, path: string): boolean {
   const node = resolveNode(hierarchy, path);
   return !node?.choices?.length || node.optional === true;
 }
 
-// The options offered at a level: just the children. When stopping at an
-// optional parent is allowed, the user stops by leaving the level blank
-// (composeHierarchyValue keeps the ancestor), so there is no synthetic
-// "stop here" option echoing the parent inside its own refinement select. A
-// vocabulary that wants an explicit stop *item* models it as a real self-child
-// (e.g. `coring.coring`), which is a child and renders here on its own.
+// When stopping at an optional parent is allowed, the user stops by leaving the
+// level blank (composeHierarchyValue keeps the ancestor), so there is no
+// synthetic "stop here" option echoing the parent inside its own refinement
+// select.
 export function hierarchyLevelItems(
   hierarchy: Hierarchy,
   parent: string | null,
@@ -116,9 +92,6 @@ export function hierarchyLevelItems(
   }));
 }
 
-// A nested level is required (must be refined) when its parent is not a valid
-// stopping point, so it carries the ` *` marker. The root level owns its marker
-// via the caller's rootLabel (parent is null).
 export function levelLabel(
   hierarchy: Hierarchy,
   label: string,
@@ -130,15 +103,10 @@ export function levelLabel(
   );
 }
 
-// The field holds one value per level (the full path picked at that level); the
-// chosen value is the deepest one. Picking a level's own option keeps the parent
-// path, so it composes to that ancestor.
 export function composeHierarchyValue(path: string[]): string | null {
   return path.filter(Boolean).at(-1) ?? null;
 }
 
-// Split a stored path into the per-level selections that prefill the walk:
-// "a.b.c" -> ["a", "a.b", "a.b.c"].
 export function toHierarchyPath(value: string | null): string[] {
   if (!value) return [];
   const segments = value.split(".");
@@ -149,12 +117,9 @@ type HierarchySelectFieldProps = {
   // Form field holding the per-level path (a string[]); must exist in the
   // parent form's defaultValues.
   name: string;
-  // The vocabulary tree; choices, labels, and stop-ability all derive from it.
   hierarchy: Hierarchy;
   // Translates a node's label code; owned by the calling package (i18n rule).
-  // Defaults to rendering the raw code.
   translate?: (code: string) => string;
-  // Label of the first level; deeper levels are labelled by their parent's value.
   rootLabel: string;
   // Marks the root label with the trailing "*" publish marker; deeper levels
   // derive their own from the tree's stop rules.
@@ -163,20 +128,11 @@ type HierarchySelectFieldProps = {
   searchPlaceholder: string;
   emptyText: string;
   // Fired whenever any level's selection changes, after the deeper levels are
-  // truncated. Lets a caller reset a dependent field (e.g. a texture that only
-  // applies to some branches) when the chosen path changes.
+  // truncated.
   onChange?: () => void;
 };
 
-// A cascade of autocompletes over a hierarchical controlled vocabulary: one
-// select per level, each labelled by the value picked above it, walking the tree
-// recursively as deep as the taxonomy goes. Render inside a `form.AppForm`.
-//
-// The recursion is owned by the headless `HierarchyCascade`; this wrapper only
-// binds each level to the form. The field stays a `string[]` (one full path per
-// level, names `name[depth]`); the deepest picked value drives the walk, and the
-// bound `ComboboxField` self-writes its level while its listener truncates the
-// now-invalid deeper levels.
+// Render inside a `form.AppForm`.
 export function HierarchySelectField({
   name,
   hierarchy,
@@ -211,7 +167,6 @@ export function HierarchySelectField({
             <form.AppField
               name={`${name}[${depth}]`}
               listeners={{
-                // A new choice at this level invalidates every deeper level.
                 onChange: () => {
                   form.setFieldValue(name, (path) => path.slice(0, depth + 1));
                   onChange?.();

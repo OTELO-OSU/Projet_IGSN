@@ -49,3 +49,4 @@ infra/preprod/certs/
 bdd-igsn.sql
 # Legacy import output, tee'd by `make db-import-legacy` (skipped rows, summary)
 import-legacy.log
+.playwright-mcp

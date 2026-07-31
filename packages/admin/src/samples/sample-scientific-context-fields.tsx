@@ -14,7 +14,6 @@ import {
 
 // Organization names are proper nouns (reference data, not vocabulary), so the
 // label comes from the domain list via organizationLabel, not the i18n catalog.
-// Shared by the funder combobox and the research-structure multi-select.
 const organizationItems = ORGANIZATIONS.map((organization) => ({
   value: organization.ror,
   label: organizationLabel(organization.ror),
@@ -29,12 +28,7 @@ const collectionOriginItems = toComboboxItems(
   collectionOriginLabel,
 );
 
-// The Scientific context tab. The provenance status is an exclusive choice
-// switching between the recent-collection and historical-specimen field sets,
-// so only the active branch renders (forms.md). The hidden branch keeps its
-// values while editing, so switching back restores them; compose drops them
-// on save and the post-save reset clears them (ADR 0015). Render inside a
-// `form.AppForm`.
+// Render inside a `form.AppForm`.
 export function SampleScientificContextFields() {
   const form = useTypedAppFormContext({
     defaultValues: {} as { scientificContext: ScientificContextDraft },

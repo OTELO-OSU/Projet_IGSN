@@ -46,13 +46,10 @@ import {
   toSecurityDraft,
 } from "#/samples/compose-security.ts";
 
-// A DOI link row as the form holds it: plain strings, blank when empty. The
-// key only gives the row a stable React identity across removals; the compose
-// step never reads it.
+// The key only gives the row a stable React identity across removals; the
+// compose step never reads it.
 export type LinkDraft = { key: string; url: string; description: string };
 
-// The sample form's flat draft, as held by the form store. Age nests under its
-// own key (like location), so the form's `age.*` paths mirror the domain shape.
 export type SampleDraft = {
   name: string | undefined;
   nature: CreateSample["nature"] | undefined;
@@ -73,10 +70,6 @@ export type SampleDraft = {
   links: LinkDraft[];
 } & EconomicInterestDraft;
 
-// A saved (or default) sample, spread into the flat draft the form store
-// holds. Used for the initial values and to reset the form after a save, so
-// leftovers the save dropped (a hidden geometry's coordinates, the other
-// region kind's leaf) disappear.
 export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   name: value?.name,
   nature: value?.nature,
@@ -103,9 +96,8 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   ...toEconomicInterestDraft(value),
 });
 
-// A fully blank row is an abandoned "Add a link" click: drop it. A row with
-// any content is kept as-is, so a description without its url still raises
-// the schema error on the row's url field.
+// A row with any content is kept as-is, so a description without its url still
+// raises the schema error on the row's url field.
 const composeLinks = (links: LinkDraft[]) =>
   links
     .filter((link) => link.url.trim() || link.description.trim())
@@ -118,7 +110,6 @@ const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
   const description = composeDescription(draft.description);
   const condition = composeCondition(draft.condition);
-  // Assemble the age block; omit it entirely when empty (like texture).
   const age = toAgeInput(draft.age);
   const security = composeSecurity(draft.security);
   const scientificContext = composeScientificContext(draft.scientificContext);
@@ -129,9 +120,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     nature: draft.nature,
     type: composeHierarchyValue(draft.typePath),
     material,
-    // Optional and only valid for an igneous branch; omit when unset.
     ...(draft.texture ? { texture: draft.texture } : {}),
-    // Optional and only valid for a metamorphic material; omit when unset.
     ...(draft.metamorphicFacies
       ? { metamorphicFacies: draft.metamorphicFacies }
       : {}),
@@ -152,38 +141,23 @@ const composeCreateSample = (draft: SampleDraft) => {
     // Omitted when the whole section is empty: the API clears the description
     // columns for an absent description just like for a null one.
     ...(description ? { description } : {}),
-    // Same contract for the condition columns.
     ...(condition ? { condition } : {}),
-    // Same contract for the security columns.
     ...(security ? { security } : {}),
-    // Omitted until a provenance status is chosen; the inactive branch's
-    // leftovers are already dropped by composeScientificContext.
     ...(scientificContext ? { scientificContext } : {}),
-    // Required only at publish; omit on a draft that has not answered it yet.
     ...(draft.availability ? { availability: draft.availability } : {}),
     ...(age ? { age } : {}),
     // Omitted when empty: the API replaces links wholesale, and an absent key
     // clears them just like an empty array.
     ...(links.length > 0 ? { links } : {}),
-    // The Economic interest section is omitted when no answer is given (like
-    // the description/condition/security sections); the API reads an absent
-    // field as null. Once answered, the whole block is emitted, with the detail
-    // the answer hides already dropped by composeEconomicInterest.
     ...(economic.economicInterest !== null ? economic : {}),
   };
 };
 
-// The domain schema the API enforces, applied to the form draft: preprocess
-// composes the flat draft into the domain shape first, so the form and the
-// API share a single source of truth for validation.
 export const sampleDraftSchema = z.preprocess(
   (draft) => composeCreateSample(draft as SampleDraft),
   createSampleSchema,
 );
 
-// The same draft, validated against the domain's published-sample schema
-// (publish blockers become field issues): one bar for a sample that is, or is
-// becoming, published, like the API's PUT does for a published sample.
 export const publishedSampleSchema = z.preprocess(
   (draft) => composeCreateSample(draft as SampleDraft),
   domainPublishedSampleSchema,

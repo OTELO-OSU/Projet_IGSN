@@ -182,8 +182,6 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Core" }).click();
-    // Leave the sub-type unset: "core" is a valid, if unrefined, draft. It only
-    // blocks publication, not saving.
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -303,7 +301,6 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample type" }).click();
 
-    // Texture is hidden until a plutonic/volcanic branch is chosen.
     await expect
       .element(screen.getByRole("combobox", { name: "Texture" }))
       .not.toBeInTheDocument();
@@ -370,8 +367,6 @@ describe("SampleForm", () => {
       .click();
     await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
 
-    // Pick a plutonic texture, then refine the branch deeper: it must survive
-    // because it is still valid for the (still plutonic) refined path.
     await screen.getByRole("combobox", { name: "Texture" }).click();
     await screen.getByRole("option", { name: "Phaneritic" }).click();
 
@@ -428,7 +423,6 @@ describe("SampleForm", () => {
       .click();
     await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
 
-    // Pick a plutonic texture, then switch the branch: it must be dropped.
     await screen.getByRole("combobox", { name: "Texture" }).click();
     await screen.getByRole("option", { name: "Phaneritic" }).click();
     await expect
@@ -558,7 +552,6 @@ describe("SampleForm", () => {
       .click();
     await screen.getByRole("option", { name: "Granite", exact: true }).click();
 
-    // Marked required: a metamorphic sample cannot publish without a facies.
     await screen
       .getByRole("combobox", { name: "Metamorphic facies *", exact: true })
       .click();
@@ -603,8 +596,6 @@ describe("SampleForm", () => {
       .getByRole("option", { name: "Metamorphic", exact: true })
       .click();
 
-    // Pick a facies, then switch the rock away from metamorphic: it must be
-    // dropped and the facies field hidden.
     await screen
       .getByRole("combobox", { name: "Metamorphic facies *" })
       .click();
@@ -804,7 +795,6 @@ describe("SampleForm", () => {
     await screen.getByLabelText("Numeric age", { exact: true }).fill("12000");
     await screen.getByRole("combobox", { name: "Units" }).click();
     await screen.getByRole("option", { name: "a (years)" }).click();
-    // The reference picker enables only once the unit is annum.
     await screen.getByRole("combobox", { name: "Reference" }).click();
     await screen.getByRole("option", { name: "BP", exact: true }).click();
     await screen.getByRole("button", { name: "Create" }).click();
@@ -841,7 +831,6 @@ describe("SampleForm", () => {
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
-    // No value yet: the unit (and so the reference) are disabled.
     await expect
       .element(screen.getByRole("combobox", { name: "Units" }))
       .toBeDisabled();
@@ -849,7 +838,6 @@ describe("SampleForm", () => {
       .element(screen.getByRole("combobox", { name: "Reference" }))
       .toBeDisabled();
 
-    // A value enables the unit; the reference stays disabled until unit is annum.
     await screen.getByLabelText("Numeric age", { exact: true }).fill("120");
     await expect
       .element(screen.getByRole("combobox", { name: "Units *" }))
@@ -912,8 +900,6 @@ describe("SampleForm", () => {
   });
 
   it("should save a half-entered numeric range as a draft without erroring", async () => {
-    // Range completeness is a publish blocker, not a live draft error: filling
-    // one bound must not error mid-entry and must still save as a draft.
     const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
@@ -965,8 +951,6 @@ describe("SampleForm", () => {
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
     await screen.getByLabelText("Numeric age", { exact: true }).fill("120");
-    // Pick annum, choose a reference, then move the unit off annum: the (now
-    // disabled) reference must be cleared, not left to fail validation unseen.
     await screen.getByRole("combobox", { name: "Units" }).click();
     await screen.getByRole("option", { name: "a (years)" }).click();
     await screen.getByRole("combobox", { name: "Reference" }).click();
@@ -1039,8 +1023,6 @@ describe("SampleForm", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        // A leaf type, a leaf material, a location (a point position) and a
-        // collection date are required to publish, so Save & Publish is enabled.
         defaultValues={{
           name: "Basalte du Massif Central",
           nature: "thin_section",
@@ -1332,8 +1314,6 @@ describe("SampleForm", () => {
   });
 
   it("should hide the Location section until the material determines its requirement", async () => {
-    // With no material, the form cannot know whether a location is required,
-    // optional or forbidden, so it does not ask yet.
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
@@ -1453,8 +1433,6 @@ describe("SampleForm", () => {
       .element(screen.getByLabelText("Bathymetry"))
       .toHaveValue(-1200);
 
-    // Entering a value marks unit and datum with a "*", but that is only a
-    // publish hint: a draft saves with the elevation and no unit or datum.
     await expect.element(screen.getByLabelText("Unit *")).toBeVisible();
     await expect
       .element(screen.getByLabelText("Vertical datum *"))
@@ -1551,7 +1529,6 @@ describe("SampleForm", () => {
     expect(onSubmit).not.toHaveBeenCalled();
     await expect.element(screen.getByText("Invalid value.")).toBeVisible();
 
-    // Fixing the value clears the error and the sample submits.
     await screen.getByLabelText("Longitude *").fill("20");
     await expect
       .element(screen.getByText("Invalid value."))
@@ -1588,7 +1565,6 @@ describe("SampleForm", () => {
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
-    // Longitude without latitude: the draft used to save without the point.
     await screen.getByLabelText("Longitude *").fill("3");
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -1621,7 +1597,6 @@ describe("SampleForm", () => {
       .element(screen.getByText("Enter a whole number for the elevation."))
       .toBeVisible();
 
-    // A whole number clears the error.
     await screen.getByLabelText("Elevation").fill("12");
     await expect
       .element(screen.getByText("Enter a whole number for the elevation."))
@@ -1679,14 +1654,11 @@ describe("SampleForm", () => {
     await screen.getByLabelText("South latitude *").fill("44");
     await screen.getByLabelText("North latitude *").fill("46");
 
-    // Neither bound is marked required until one is entered.
     await expect
       .element(screen.getByLabelText("Maximum elevation"))
       .toBeVisible();
     await screen.getByLabelText("Minimum elevation").fill("-200");
 
-    // Setting min marks max with a "*" (a publish hint), but the half-range
-    // still saves as a draft: completeness gates publish, not the draft.
     await expect
       .element(screen.getByLabelText("Maximum elevation *"))
       .toBeVisible();
@@ -1756,12 +1728,10 @@ describe("SampleForm", () => {
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
 
-    // No value yet: unit and datum are disabled.
     await expect
       .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
       .toBeDisabled();
 
-    // A value enables them; select both.
     await screen.getByLabelText("Elevation").fill("100");
     await screen.getByRole("combobox", { name: "Unit *" }).click();
     await screen.getByRole("option", { name: "m", exact: true }).click();
@@ -1797,8 +1767,6 @@ describe("SampleForm", () => {
       />,
     );
 
-    // Enter a point, then switch to an area: the point values linger (handy
-    // while editing) but only the area is part of the submitted location.
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
@@ -1828,7 +1796,6 @@ describe("SampleForm", () => {
       ),
     );
 
-    // After the save the unsaved point leftovers are gone.
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
     await expect
@@ -1837,29 +1804,64 @@ describe("SampleForm", () => {
     await expect.element(screen.getByLabelText("Latitude *")).toHaveValue(null);
   });
 
-  it("should gate Publish updates on the blockers until the published sample is publishable again", async () => {
-    // A published sample that predates the publish constraints (seeded
-    // directly): its save must behave like the first publish, a disabled
-    // button whose tooltip lists every blocker, until they are all fixed.
+  it("should gate a published sample's save when an editable required field is cleared", async () => {
+    // A published sample's frozen fields cannot be edited, so the save can only
+    // be made unpublishable through an EDITABLE required field.
     const onSubmit = vi.fn();
     const screen = await render(
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
           published
-          defaultValues={{
-            name: "Granite 7",
-            nature: "thin_section",
-            type: "core.piece",
-            material: "rock.igneous",
-            collectionMethod: "coring.camera_mounted",
-            collectionMethodDescription: null,
-            specificName: null,
-            location: null,
-            description: null,
-            condition: null,
-            availability: "exists",
-          }}
+          defaultValues={publishedFixture}
+          primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
+        />
+      </TooltipProvider>,
+    );
+
+    const save = screen.getByRole("button", { name: "Publish updates" });
+    await expect.element(save).toBeEnabled();
+
+    // Clear availability (re-picking the selected option deselects it).
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("combobox", { name: /availability/i }).click();
+    await screen.getByRole("option", { name: "Exists", exact: true }).click();
+
+    await expect.element(save).toBeDisabled();
+    save.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/whether the sample still exists/i);
+
+    await screen.getByRole("combobox", { name: /availability/i }).click();
+    await screen.getByRole("option", { name: "Exists", exact: true }).click();
+
+    await expect.element(save).toBeEnabled();
+    await save.click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Basalte du Massif Central",
+          type: "dredge",
+          material: "fossil",
+          availability: "exists",
+        }),
+      ),
+    );
+  });
+
+  it("blocks saving a published sample that no longer holds the publishable bar", async () => {
+    // A published sample must stay publishable, so a blocker gates the save
+    // whatever field raises it, here an incomplete material ("rock", an
+    // internal node) on a sample published before the constraint existed.
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={{ ...publishedFixture, material: "rock" }}
           primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
         />
       </TooltipProvider>,
@@ -1870,90 +1872,8 @@ describe("SampleForm", () => {
     save.element().parentElement?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(
-        /classify the material down to a specific type before publishing/i,
-      );
-    await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/set the collection date before publishing/i);
-
-    // Fix the material; the location requirement only activates once the
-    // material is a complete path, so the tooltip reveals it live.
-    await screen.getByRole("tab", { name: "Sample type" }).click();
-    await screen
-      .getByRole("combobox", { name: "Igneous *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
-    await screen
-      .getByRole("combobox", { name: "Plutonic *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Felsic", exact: true }).click();
-    await screen
-      .getByRole("combobox", { name: "Felsic *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Granite", exact: true }).click();
-
-    await expect.element(save).toBeDisabled();
-    save.element().parentElement?.focus();
-    await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/set the sample location/i);
-
-    // Fix the date and the location; the provenance status still blocks.
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-01");
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
-    await screen.getByLabelText("Longitude *").fill("3");
-    await screen.getByLabelText("Latitude *").fill("45");
-
-    await expect.element(save).toBeDisabled();
-    save.element().parentElement?.focus();
-    await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/set the provenance status/i);
-
-    // Fix the scientific context: the button enables and the save goes
-    // through.
-    await screen.getByRole("tab", { name: "Scientific context" }).click();
-    await screen
-      .getByRole("combobox", { name: "Provenance status *", exact: true })
-      .click();
-    await screen
-      .getByRole("option", { name: "Collection / historical specimen" })
-      .click();
-    await screen
-      .getByLabelText("Name of the collection curator *")
-      .fill("Georges Cuvier");
-    await screen
-      .getByRole("combobox", { name: "Collection origin *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Scientific expedition" }).click();
-
-    await expect.element(save).toBeEnabled();
-    await save.click();
-
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        name: "Granite 7",
-        nature: "thin_section",
-        type: "core.piece",
-        material: "rock.igneous.plutonic.felsic.granite",
-        collectionMethod: "coring.camera_mounted",
-        collectionMethodDescription: null,
-        specificName: null,
-        location: { position: { type: "point", longitude: 3, latitude: 45 } },
-        description: {
-          collectionDate: { start: "2026-01-01", end: "2026-01-01" },
-        },
-        availability: "exists",
-        scientificContext: {
-          provenanceStatus: "historical_specimen",
-          collectionCurator: "Georges Cuvier",
-          collectionOrigin: "scientific_expedition",
-        },
-      }),
-    );
+      .toHaveTextContent(/classify the material down to a specific type/i);
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("should show navigation type only after a geometry is chosen", async () => {
@@ -1983,5 +1903,338 @@ describe("SampleForm", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Navigation type" }))
       .toBeVisible();
+  });
+});
+
+const publishedFixture: CreateSample = {
+  name: "Basalte du Massif Central",
+  nature: "thin_section",
+  type: "dredge",
+  material: "fossil",
+  collectionMethod: null,
+  collectionMethodDescription: null,
+  specificName: "MC-2026-007",
+  location: { position: { type: "point", longitude: 3, latitude: 45 } },
+  description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
+  availability: "exists",
+  scientificContext: publishableScientificContext,
+};
+
+// The recent-collection branch freezes other leaves than the historical one, and
+// carries a region the historical fixture has no reason to hold.
+const publishedRecentFixture: CreateSample = {
+  ...publishedFixture,
+  location: {
+    position: {
+      type: "point",
+      longitude: 3,
+      latitude: 45,
+      elevation: { min: 800, max: 800, unit: "m", datum: "msl" },
+    },
+    region: { kind: "continent", country: "FR" },
+    localityName: "Massif Central",
+  },
+  scientificContext: {
+    provenanceStatus: "recent_collection",
+    funderOrganization: "03fd77x13",
+    researchProgramName: "GEOSAMPLE",
+    researchProgramChief: "Marie Tharp",
+    researchProgramChiefOrcid: "0000-0002-1825-0097",
+    researchStructure: ["02cte4b68"],
+    collectorName: "Alfred Wegener",
+  },
+};
+
+describe("SampleForm post-publication field lock", () => {
+  it("disables the identity fields on a published sample", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={publishedFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Nature" }))
+      .toBeDisabled();
+  });
+
+  it("keeps editable fields interactive on a published sample", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={publishedFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Collection Method" }))
+      .toBeEnabled();
+
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await expect.element(screen.getByLabelText("Specific Name")).toBeEnabled();
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Material *", exact: true }),
+      )
+      .toBeDisabled();
+  });
+
+  it("freezes the collection date and location coordinates on a published sample", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={publishedFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await expect
+      .element(screen.getByLabelText("Date *", { exact: true }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("switch", { name: "Date range" }))
+      .toBeDisabled();
+    await expect.element(screen.getByLabelText(/longitude/i)).toBeDisabled();
+    await expect.element(screen.getByLabelText(/latitude/i)).toBeDisabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: /availability/i }))
+      .toBeEnabled();
+  });
+
+  it("freezes the provenance status and branch identity fields on a published sample", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={publishedFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Provenance status *" }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByLabelText(/name of the collection curator/i))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Collection origin *" }))
+      .toBeDisabled();
+  });
+
+  it("submits the frozen field values unchanged from a published sample", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={publishedFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+        }),
+      ),
+    );
+  });
+
+  it("disables nothing on a draft", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          defaultValues={publishedFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
+      .toBeEnabled();
+  });
+
+  it("keeps the texture editable on a published igneous sample", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={{
+            ...publishedFixture,
+            material: "rock.igneous.plutonic",
+            texture: "phaneritic",
+          }}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Texture" }))
+      .toBeEnabled();
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Material *", exact: true }),
+      )
+      .toBeDisabled();
+  });
+
+  it("keeps the metamorphic facies editable on a published metamorphic sample", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={{
+            ...publishedFixture,
+            material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+            metamorphicFacies: "eclogite",
+          }}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Metamorphic facies *" }))
+      .toBeEnabled();
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Material *", exact: true }),
+      )
+      .toBeDisabled();
+  });
+
+  it("freezes the recent-collection branch fields on a published sample", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={publishedRecentFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Provenance status *" }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Funder organization *" }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByLabelText("Name of the research programme *"))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByLabelText("Research programme chief *"))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByLabelText("Research programme chief ORCID"))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByLabelText("Collector name *"))
+      .toBeDisabled();
+    await expect
+      .element(
+        screen.getByRole("combobox", {
+          name: "Research structure of the programme chief *",
+        }),
+      )
+      .toBeEnabled();
+    await expect
+      .element(screen.getByLabelText("Collector ORCID"))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByLabelText("Research campaign"))
+      .toBeEnabled();
+  });
+
+  it("freezes the region but not the locality or elevation on a published sample", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={publishedRecentFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Collection Method" }))
+      .toBeEnabled();
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Region kind" }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Country" }))
+      .toBeDisabled();
+    await expect.element(screen.getByLabelText("Locality name")).toBeEnabled();
+    await expect.element(screen.getByLabelText("Elevation")).toBeEnabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: /availability/i }))
+      .toBeEnabled();
+  });
+
+  it("keeps the collector name editable on a published historical specimen", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          defaultValues={publishedFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
+    await expect.element(screen.getByLabelText("Collector name")).toBeEnabled();
+    await expect
+      .element(screen.getByLabelText(/name of the collection curator/i))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Collection origin *" }))
+      .toBeDisabled();
   });
 });

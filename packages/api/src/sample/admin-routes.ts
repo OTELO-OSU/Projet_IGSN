@@ -6,7 +6,11 @@ import type {
 } from "@projet-igsn/domain/sample/sample-validator";
 
 import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-sample-publishable";
-import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
+import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
+import {
+  samplePublishBlockers,
+  toPublishableFields,
+} from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { Hono } from "hono";
 
 import type { OwnedSampleEnv } from "./require-sample-owner.ts";
@@ -81,26 +85,29 @@ export function createSampleAdminRoutes(
         if (!current) {
           return c.json({ error: "Not found" }, 404);
         }
-        // A published sample must stay publishable: reject an update that strips
-        // a publish requirement (e.g. clears the collection date). Drafts keep
-        // the looser create schema. Same get/write race note as publish below.
-        if (
-          current.published &&
-          !publishedSampleSchema.safeParse(c.req.valid("json")).success
-        ) {
-          return c.json(
-            { error: "Update would make the published sample unpublishable" },
-            409,
-          );
+        const toPersist = current.published
+          ? mergePublishedEdit(current, c.req.valid("json"))
+          : c.req.valid("json");
+        // A published sample must stay publishable, but only against blockers it
+        // did not already have: reject an edit that INTRODUCES a new publish
+        // blocker, while still letting an already-broken sample be edited on its
+        // editable fields. The attachment count is capped by the body validator,
+        // so both sides ignore it. Same get/write race note as publish below.
+        if (current.published) {
+          const existing = samplePublishBlockers(toPublishableFields(current));
+          const after = samplePublishBlockers(toPublishableFields(toPersist));
+          if (after.some((blocker) => !existing.includes(blocker))) {
+            return c.json(
+              { error: "Update would make the published sample unpublishable" },
+              409,
+            );
+          }
         }
         // Attachment metadata rides the sample payload, reconciled wholesale
         // like links; the content itself was uploaded beforehand through the
         // attachment routes, so an unlisted attachment is deleted here.
-        await attachmentsRepository.reconcile(
-          id,
-          c.req.valid("json").attachments ?? [],
-        );
-        const sample = await repository.update(id, c.req.valid("json"));
+        await attachmentsRepository.reconcile(id, toPersist.attachments ?? []);
+        const sample = await repository.update(id, toPersist);
         if (!sample) {
           return c.json({ error: "Not found" }, 404);
         }

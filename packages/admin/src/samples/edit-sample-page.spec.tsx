@@ -69,8 +69,6 @@ function fakeApi(
     description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
     condition: null,
     security,
-    // Complete (historical branch) so Save & Publish starts enabled, like the
-    // leaf type/material above.
     scientificContext: {
       provenanceStatus: "historical_specimen",
       collectionCurator: "Georges Cuvier",
@@ -174,8 +172,6 @@ describe("EditSamplePage", () => {
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
 
-    // The disabled button is not focusable; its tooltip trigger (the wrapping
-    // span) reveals the reason on focus, the way a keyboard user would find it.
     publish.element().parentElement?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
@@ -290,18 +286,28 @@ describe("EditSamplePage", () => {
     const { screen, calls } = await renderEditPage(true);
     const save = screen.getByRole("button", { name: "Publish updates" });
 
-    // Clearing the collection date strips a publish requirement: the button
-    // disables and its tooltip explains, like the first publish.
+    // The fixture is published with "Exists", so re-selecting that option clears
+    // the combobox (see Combobox), stripping the requirement: the button
+    // disables and its tooltip explains, like publish.
     await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByLabelText("Date *", { exact: true }).fill("");
+    const availability = screen.getByRole("combobox", {
+      name: /availability/i,
+    });
+    await availability.click();
+    await screen.getByRole("option", { name: "Exists", exact: true }).click();
+    await expect.element(availability).not.toHaveTextContent("Exists");
     await expect.element(save).toBeDisabled();
     save.element().parentElement?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent("Set the collection date before publishing.");
+      .toHaveTextContent(
+        "State whether the sample still exists before publishing.",
+      );
     expect(calls).toEqual([]);
 
-    await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-02");
+    await availability.click();
+    await screen.getByRole("option", { name: "Exists", exact: true }).click();
+    await expect.element(availability).toHaveTextContent("Exists");
     await expect.element(save).toBeEnabled();
     await save.click();
     await vi.waitFor(() => expect(calls.length).toBeGreaterThan(0));
@@ -402,7 +408,6 @@ describe("EditSamplePage", () => {
 
     await screen.getByRole("button", { name: "Confirm" }).click();
 
-    // Publishing navigates back to the samples list.
     await expect
       .element(screen.getByRole("heading", { name: "Samples" }))
       .toBeVisible();
