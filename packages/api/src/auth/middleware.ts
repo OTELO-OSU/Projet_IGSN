@@ -15,7 +15,6 @@ const jwksUri =
 const audience = process.env.OIDC_AUDIENCE;
 const clientId = process.env.OIDC_CLIENT_ID ?? "igsn-admin";
 
-// Populates c.get("jwtPayload") with the verified claims; 401s otherwise.
 // alg is pinned to RS256 (Keycloak's default) to rule out algorithm confusion.
 export const requireAuth = every(
   jwk({
@@ -40,7 +39,6 @@ export const requireAuth = every(
   ),
 );
 
-// The Keycloak claims the api actually reads off a verified token.
 // given_name/family_name come from the default `profile` scope, filled by the
 // IdP attribute mappers (see keycloak/realm-igsn.json); currentUser stores them
 // as the local user's firstname/name.

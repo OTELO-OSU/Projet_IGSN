@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 # Deploy the IGSN stack to the preprod EC2 host from your laptop.
 #
-# Builds the three images and ships them + docker-compose.yml over SSH.
-# :22 is opened for your current IP and revoked on exit. Your SSH key must
-# already be installed on the host (run `make preprod-ssh-send-key` once).
-# Migrations gate the api. The env file (docker-compose.env) is NOT shipped:
-# copy it yourself.
-#
 # Prereqs: docker, aws CLI, ssh/scp, an SSH key at ~/.ssh/id_ed25519.pub (or set
 # SSH_PUBLIC_KEY) installed via `make preprod-ssh-send-key`, AWS creds allowing
 # ec2:{Authorize,Revoke}SecurityGroupIngress, plus read of the tofu state.
@@ -42,7 +36,7 @@ trap ssh_close EXIT
 ssh $SSH_OPTS "$SSH_USER@$HOST" \
 	'cloud-init status --wait >/dev/null 2>&1 || true; until docker compose version >/dev/null 2>&1; do sleep 5; done'
 
-# 3. Ship images. docker load reads the gzipped stream directly.
+# 3. docker load reads the gzipped stream directly.
 docker save igsn-api:preprod igsn-admin:preprod igsn-frontend:preprod \
 	| gzip | ssh $SSH_OPTS "$SSH_USER@$HOST" 'docker load'
 
@@ -51,9 +45,8 @@ docker save igsn-api:preprod igsn-admin:preprod igsn-frontend:preprod \
 scp $SSH_OPTS infra/preprod/docker-compose.yml infra/preprod/Caddyfile "$SSH_USER@$HOST:~/"
 scp -r $SSH_OPTS keycloak saml-idp "$SSH_USER@$HOST:~/"
 
-# 5. Roll out. `up -d` blocks on migrate (service_completed_successfully) and
-# aborts if migrations fail before starting the api. Reads env from the
-# docker-compose.env you copied to the host.
+# 5. `up -d` blocks on migrate (service_completed_successfully) and aborts if
+# migrations fail before starting the api.
 #
 # Then force-recreate the app services (so they always run the images we just
 # `docker load`ed) plus caddy (so it always picks up the freshly shipped

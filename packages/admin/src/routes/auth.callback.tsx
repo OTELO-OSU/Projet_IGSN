@@ -10,7 +10,6 @@ export const Route = createFileRoute("/auth/callback")({
 // beforeLoad or router redirect would race the library and strip them first;
 // a replaceState in onSigninCallback would leave the router matching a path
 // it never observed changing.
-// Side effect: landing here after logout shows the login gate at this path.
 function AuthCallbackPage() {
   return <Navigate to="/" replace />;
 }

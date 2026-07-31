@@ -5,9 +5,6 @@
 #
 # Not meant to `up` locally: it needs the loaded igsn-*:preprod images and DNS
 # for $DOMAIN.
-#
-# Only Caddy publishes ports (80/443); the apps and Postgres are reachable only
-# over the compose network, per the service-exposure rule.
 
 # Shared HTTP healthcheck: every app listens on :8080 and returns 2xx on /.
 x-healthcheck: &healthcheck
@@ -43,7 +40,6 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
-  # One-off: apply migrations, then exit. The api waits for success.
   migrate:
     image: igsn-api:preprod
     command: ["node", "scripts/migrate.ts"]
@@ -69,8 +65,8 @@ services:
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      # GaiaData test SSO. Public issuer, reachable from here as-is, so the api
-      # derives the JWKS URL from it and no OIDC_JWKS_URI override is needed.
+      # Public issuer, reachable from here as-is, so the api derives the JWKS
+      # URL from it and no OIDC_JWKS_URI override is needed.
       OIDC_ISSUER: "https://sso-test.earth-data.fr/realms/gaia-data"
       # The realm is shared with other service providers, so the api accepts
       # tokens issued to this client only (azp); admin bakes the same value.
@@ -80,9 +76,8 @@ services:
       # service: no port is published.
       TRUST_PROXY_HEADERS: "true"
       # Uploaded sample attachments (ADR 0017); a named volume so blobs
-      # survive image redeploys. A Ceph mount will take over this path.
+      # survive image redeploys.
       ATTACHMENTS_DIR: /data/attachments
-      # Retunable per deployment without editing this file; see the env example.
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "${SAMPLE_SEARCH_FUZZY_THRESHOLD:-0.8}"
     healthcheck: *healthcheck
     volumes:
@@ -93,8 +88,7 @@ services:
 
   # Same throwaway Keycloak as dev (start-dev, realm imported from keycloak/*.json)
   # plus the mock SAML IdP, so preprod exercises the real broker flow without
-  # wiring true RENATER. KC_HOSTNAME + proxy headers make Keycloak emit its public
-  # https URLs behind Caddy. See docs/adr/0003-preprod-auth-stack.md.
+  # wiring true RENATER. See docs/adr/0003-preprod-auth-stack.md.
   # ponytail: H2 in-memory, so brokered users vanish on container recreate and
   # re-provision on next login. Switch to `start` + Postgres if durable state matters.
   # Unused by the apps while GaiaData is the SSO: kept as the rollback path, to
@@ -118,9 +112,9 @@ services:
       SHIBBOLETH_SSO_URL: "https://igsn-idp.${DOMAIN}/simplesaml/saml2/idp/SSOService.php"
       SHIBBOLETH_SLO_URL: "https://igsn-idp.${DOMAIN}/simplesaml/saml2/idp/SingleLogoutService.php"
       ORCID_LOGOUT_URL: "https://igsn-auth.${DOMAIN}/realms/mock-orcid/protocol/openid-connect/logout"
-      # ORCID brokers to the mock-orcid realm in this same Keycloak. Browser-facing
-      # URLs (authorization, broker redirect, issuer) are public; backend calls
-      # keycloak reaches over localhost, the same public/internal split as the api.
+      # Browser-facing URLs (authorization, broker redirect, issuer) are public;
+      # backend calls keycloak reaches over localhost, the same public/internal
+      # split as the api.
       ORCID_BROKER_REDIRECT_URI: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/orcid/endpoint"
       ORCID_AUTHORIZATION_URL: "https://igsn-auth.${DOMAIN}/realms/mock-orcid/protocol/openid-connect/auth"
       ORCID_TOKEN_URL: "http://localhost:8080/realms/mock-orcid/protocol/openid-connect/token"
@@ -162,9 +156,6 @@ services:
       API_URL: http://api:8080
     healthcheck: *healthcheck
 
-  # Edge: terminates TLS with the Cloudflare Origin CA cert (mounted from the
-  # host ~/certs), reverse-proxies to the apps, and sets the required security
-  # headers for every response.
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
