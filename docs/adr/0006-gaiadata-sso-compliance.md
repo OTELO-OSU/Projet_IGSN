@@ -90,7 +90,7 @@ defect. Future user data is domain modeling keyed by `sub`
 is the request we send; the answers land in env (`VITE_OIDC_AUTHORITY`,
 `VITE_OIDC_CLIENT_ID`, `OIDC_ISSUER`, `OIDC_AUDIENCE`) and in rollout
 planning. Redirect URIs are exact, no wildcard: the SPA always returns to
-origin + `/` and deep links ride the oidc `state`.
+origin + `/auth/callback` and deep links ride the oidc `state`.
 
 ## Consequences
 
