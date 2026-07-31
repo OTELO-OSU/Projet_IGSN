@@ -28,7 +28,11 @@ export const requireAuth = every(
   createMiddleware<{ Variables: { jwtPayload: KeycloakClaims } }>(
     async (c, next) => {
       const claims = c.get("jwtPayload");
-      if (claims.azp !== clientId || claims.typ !== "Bearer") {
+      if (
+        claims.azp !== clientId ||
+        claims.typ !== "Bearer" ||
+        typeof claims.exp !== "number"
+      ) {
         throw new HTTPException(401, { message: "Unauthorized" });
       }
       await next();
@@ -44,6 +48,7 @@ export type KeycloakClaims = {
   sub: string;
   azp?: string;
   typ?: string;
+  exp?: number;
   preferred_username?: string;
   name?: string;
   given_name?: string;

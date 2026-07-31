@@ -125,8 +125,9 @@ claim checks carry the audience's job instead: `azp` must equal
 trusts Keycloak's non-standard `typ` claim and only keeps working as long as
 GaiaData keeps stamping both, so confirm them on a real GaiaData token at the
 first deploy (if either disappears, every request 401s: a lockout, not a
-bypass). Signature, `iss` and the RS256 pinning stay mandatory; `exp` is
-enforced whenever the claim is present, which Keycloak always emits.
+bypass). Signature, `iss` and the RS256 pinning stay mandatory; `exp` too: the
+`jwk` middleware only checks it when the claim is present, so the same claim
+check also rejects a token carrying none.
 
 This is a knowing deviation from [REQ-TOKEN-03/04](#gt-sso-requirements). When
 GaiaData ships an audience scope for the client, set `OIDC_AUDIENCE` per

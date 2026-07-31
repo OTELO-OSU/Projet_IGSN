@@ -179,6 +179,14 @@ describe("requireAuth", () => {
     expect(res.status).toBe(401);
   });
 
+  pgTest("should reject a token carrying no exp", async ({ db }) => {
+    const { exp: _exp, ...claims } = validClaims();
+
+    const res = await getMe(db, await mint(claims));
+
+    expect(res.status).toBe(401);
+  });
+
   pgTest("should reject a token with the wrong issuer", async ({ db }) => {
     const res = await getMe(
       db,
