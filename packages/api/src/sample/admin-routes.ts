@@ -4,6 +4,8 @@ import type {
   ListSamplesResponse,
   SampleResponse,
 } from "@projet-igsn/domain/sample/sample-validator";
+import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
+import type { ListUsersResponse } from "@projet-igsn/domain/user/user-validator";
 
 import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-sample-publishable";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
@@ -16,10 +18,12 @@ import { Hono } from "hono";
 
 import type { SampleAccessEnv } from "./require-sample-access.ts";
 
+import { requireActiveSession } from "../auth/active-session.ts";
 import { attachmentDownload } from "./attachment-download.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
+  validateAddContributorBody,
   validateAttachmentParams,
   validateAttachmentUpload,
   validateCreateSampleBody,
@@ -35,6 +39,7 @@ import {
 export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
+  userSampleRepository: UserSampleRepository,
 ) {
   // Guards every route naming a sample id and hands it the sample it fetched:
   // present means the caller owns it (200), absent means no such sample (404),
@@ -80,6 +85,42 @@ export function createSampleAdminRoutes(
         );
         return c.json({ data: sample }, 201);
       })
+      .get("/:id/contributors", validateIdParam, async (c) => {
+        if (!c.get("sample")) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (c.get("role") !== "owner") {
+          return c.json({ error: "Forbidden" }, 403);
+        }
+        const body: ListUsersResponse = {
+          data: await userSampleRepository.listContributors(
+            c.req.valid("param").id,
+          ),
+        };
+        return c.json(body);
+      })
+      .post(
+        "/:id/contributors",
+        requireActiveSession,
+        validateIdParam,
+        validateAddContributorBody,
+        async (c) => {
+          if (!c.get("sample")) {
+            return c.json({ error: "Not found" }, 404);
+          }
+          if (c.get("role") !== "owner") {
+            return c.json({ error: "Forbidden" }, 403);
+          }
+          const added = await userSampleRepository.addContributor(
+            c.req.valid("param").id,
+            c.req.valid("json").userId,
+          );
+          if (added === "unknown_user") {
+            return c.json({ error: "User not found" }, 404);
+          }
+          return c.body(null, 204);
+        },
+      )
       .put("/:id", validateIdParam, validateCreateSampleBody, async (c) => {
         const id = c.req.valid("param").id;
         const current = c.get("sample");

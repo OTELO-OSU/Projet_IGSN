@@ -2,6 +2,7 @@ import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { uploadSampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
+import { addContributorBodySchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import { validator } from "hono/validator";
 import { z } from "zod";
 
@@ -58,6 +59,14 @@ export const validateCreateSampleBody = validator("json", (value, c) => {
   // per deployment, so publishedSampleSchema (static) cannot own this check.
   if ((parsed.data.attachments?.length ?? 0) > uploadLimit) {
     return c.json({ error: "Too many attachments" }, 400);
+  }
+  return parsed.data;
+});
+
+export const validateAddContributorBody = validator("json", (value, c) => {
+  const parsed = addContributorBodySchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid contributor" }, 400);
   }
   return parsed.data;
 });

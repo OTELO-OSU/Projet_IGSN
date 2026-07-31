@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { testClient } from "hono/testing";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.unmock("./active-session.ts");
+
 import { requireActiveSession } from "./active-session.ts";
 
 const app = () =>

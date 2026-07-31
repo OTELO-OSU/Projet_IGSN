@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { describe, expect } from "vitest";
 
 import { createApp } from "../app.ts";
+import { requireActiveSession } from "../auth/active-session.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
@@ -1467,6 +1468,267 @@ describe("admin sample routes", () => {
         );
 
         expect(res.status).toBe(204);
+      },
+    );
+  });
+
+  describe("contributor endpoints", () => {
+    const draft = {
+      name: "Basalte à partager",
+      nature: "thin_section" as const,
+      type: null,
+      collectionMethod: null,
+    };
+    const colleagueHeader = { Authorization: "Bearer colleague" };
+
+    async function arrangeOwnedSample(db: Parameters<typeof createApp>[0]) {
+      const app = createApp(db);
+      const owner = await insertUser(db, authenticatedCallerEmail);
+      const colleague = await insertUser(db, "colleague@example.com");
+      const created = await testClient(app).admin.samples.$post(
+        { json: draft },
+        { headers: authHeader },
+      );
+      const { data } = sampleResponseSchema.parse(await created.json());
+      return { app, sample: data, owner, colleague };
+    }
+
+    pgTest(
+      "should list a sample's contributors for its owner",
+      async ({ db }) => {
+        const { app, sample, colleague } = await arrangeOwnedSample(db);
+        const client = testClient(app);
+        await client.admin.samples[":id"].contributors.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        const res = await client.admin.samples[":id"].contributors.$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({
+          data: [
+            {
+              id: colleague.id,
+              email: "colleague@example.com",
+              name: null,
+              firstname: null,
+            },
+          ],
+        });
+      },
+    );
+
+    pgTest(
+      "should give an added contributor access to the sample",
+      async ({ db }) => {
+        const { app, sample, colleague } = await arrangeOwnedSample(db);
+        const client = testClient(app);
+
+        const added = await client.admin.samples[":id"].contributors.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        expect(added.status).toBe(204);
+        const read = await client.admin.samples[":id"].$get(
+          { param: { id: sample.id } },
+          { headers: colleagueHeader },
+        );
+        expect(read.status).toBe(200);
+      },
+    );
+
+    pgTest(
+      "should stay unchanged when the same contributor is added twice",
+      async ({ db }) => {
+        const { app, sample, colleague } = await arrangeOwnedSample(db);
+        const client = testClient(app);
+        await client.admin.samples[":id"].contributors.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        const again = await client.admin.samples[":id"].contributors.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        expect(again.status).toBe(204);
+        const res = await client.admin.samples[":id"].contributors.$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+        expect(await res.json()).toMatchObject({
+          data: [{ id: colleague.id }],
+        });
+      },
+    );
+
+    pgTest(
+      "should keep the owner sole owner when they add themselves",
+      async ({ db }) => {
+        const { app, sample, owner } = await arrangeOwnedSample(db);
+        const client = testClient(app);
+
+        const res = await client.admin.samples[":id"].contributors.$post(
+          { param: { id: sample.id }, json: { userId: owner.id } },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(204);
+        const listed = await client.admin.samples[":id"].contributors.$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+        expect(await listed.json()).toEqual({ data: [] });
+        const rows = await db
+          .selectFrom("user_sample")
+          .selectAll()
+          .where("sample_id", "=", sample.id)
+          .execute();
+        expect(rows).toEqual([
+          { sample_id: sample.id, user_id: owner.id, role: "owner" },
+        ]);
+      },
+    );
+
+    pgTest("should answer 404 for an unknown user id", async ({ db }) => {
+      const { app, sample } = await arrangeOwnedSample(db);
+
+      const res = await testClient(app).admin.samples[":id"].contributors.$post(
+        {
+          param: { id: sample.id },
+          json: { userId: "01890a5d-ac96-774b-bcce-b302099a8057" },
+        },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(404);
+    });
+
+    pgTest(
+      "should answer 403 when a contributor lists contributors",
+      async ({ db }) => {
+        const { app, sample, colleague } = await arrangeOwnedSample(db);
+        const client = testClient(app);
+        await client.admin.samples[":id"].contributors.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        const res = await client.admin.samples[":id"].contributors.$get(
+          { param: { id: sample.id } },
+          { headers: colleagueHeader },
+        );
+
+        expect(res.status).toBe(403);
+      },
+    );
+
+    pgTest(
+      "should answer 403 when a contributor adds a contributor",
+      async ({ db }) => {
+        const { app, sample, colleague } = await arrangeOwnedSample(db);
+        const client = testClient(app);
+        await client.admin.samples[":id"].contributors.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id } },
+          { headers: authHeader },
+        );
+        const stranger = await insertUser(db, "stranger@univ-lorraine.fr");
+
+        const res = await client.admin.samples[":id"].contributors.$post(
+          { param: { id: sample.id }, json: { userId: stranger.id } },
+          { headers: colleagueHeader },
+        );
+
+        expect(res.status).toBe(403);
+      },
+    );
+
+    pgTest(
+      "should answer 403 when an unrelated researcher lists contributors",
+      async ({ db }) => {
+        const { app, sample } = await arrangeOwnedSample(db);
+
+        const res = await testClient(app).admin.samples[
+          ":id"
+        ].contributors.$get(
+          { param: { id: sample.id } },
+          { headers: colleagueHeader },
+        );
+
+        expect(res.status).toBe(403);
+      },
+    );
+
+    pgTest(
+      "should answer 401 when the session is no longer active",
+      async ({ db }) => {
+        const { app, sample, colleague } = await arrangeOwnedSample(db);
+        vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
+          c.json({ error: "Unauthorized" }, 401),
+        );
+
+        const res = await testClient(app).admin.samples[
+          ":id"
+        ].contributors.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(401);
+      },
+    );
+
+    pgTest("should reject a malformed user id with 400", async ({ db }) => {
+      const { app, sample } = await arrangeOwnedSample(db);
+
+      const res = await app.request(
+        `/admin/samples/${sample.id}/contributors`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json", ...authHeader },
+          body: JSON.stringify({ userId: "not-a-uuid" }),
+        },
+      );
+
+      expect(res.status).toBe(400);
+    });
+
+    pgTest("should reject an unknown body field with 400", async ({ db }) => {
+      const { app, sample, colleague } = await arrangeOwnedSample(db);
+
+      const res = await app.request(
+        `/admin/samples/${sample.id}/contributors`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json", ...authHeader },
+          body: JSON.stringify({ userId: colleague.id, role: "owner" }),
+        },
+      );
+
+      expect(res.status).toBe(400);
+    });
+
+    pgTest(
+      "should reject an unauthenticated contributor add with 401",
+      async ({ db }) => {
+        const { app, sample, colleague } = await arrangeOwnedSample(db);
+
+        const res = await app.request(
+          `/admin/samples/${sample.id}/contributors`,
+          {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ userId: colleague.id }),
+          },
+        );
+
+        expect(res.status).toBe(401);
       },
     );
   });

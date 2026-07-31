@@ -14,6 +14,7 @@ import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
 import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
+import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createUserRepository } from "./user/repository.ts";
 
 export function createApp(
@@ -36,6 +37,7 @@ export function createApp(
     attachmentsDir,
   );
   const userRepository = createUserRepository(database);
+  const userSampleRepository = createUserSampleRepository(database);
 
   // IP limiter wraps only the public sample routes, so the healthcheck (GET /)
   // and the separately user-limited /admin mount are never touched by it. It sits
@@ -65,7 +67,11 @@ export function createApp(
     })
     .route(
       "/samples",
-      createSampleAdminRoutes(sampleRepository, sampleAttachmentRepository),
+      createSampleAdminRoutes(
+        sampleRepository,
+        sampleAttachmentRepository,
+        userSampleRepository,
+      ),
     );
 
   return (
