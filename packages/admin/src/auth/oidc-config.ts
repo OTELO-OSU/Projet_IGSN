@@ -13,8 +13,11 @@ export const userManager = new UserManager({
   client_id: import.meta.env.VITE_OIDC_CLIENT_ID ?? "igsn-admin",
   // profile/email so the access token carries name + email for the api to read.
   scope: "openid profile email",
-  redirect_uri: window.location.origin + "/",
-  post_logout_redirect_uri: window.location.origin + "/",
+  // The one path registered on the GaiaData client, post-logout included:
+  // Keycloak defaults its post-logout URIs to the redirect URIs.
+  // routes/auth.callback.tsx sends the user home from there.
+  redirect_uri: window.location.origin + "/auth/callback",
+  post_logout_redirect_uri: window.location.origin + "/auth/callback",
   // RFC 7009 revocation on logout (GT-SSO REQ-TOKEN-05). Access token only:
   // revoking the refresh token makes Keycloak drop the session before the
   // end_session redirect arrives, which skips the brokered IdP logout and
