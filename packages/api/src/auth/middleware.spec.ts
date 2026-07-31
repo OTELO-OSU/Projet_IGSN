@@ -3,7 +3,8 @@ import type { webcrypto } from "node:crypto";
 import { testClient } from "hono/testing";
 import { afterEach, beforeAll, beforeEach, describe, expect, vi } from "vitest";
 
-import { createApp } from "../app.ts";
+import type { createApp } from "../app.ts";
+
 import { pgTest } from "../tests/pg-test.ts";
 
 // test/setup.ts stubs requireAuth suite-wide; this spec verifies the real
@@ -13,6 +14,7 @@ vi.unmock("./middleware.ts");
 const KID = "test-key";
 const ISSUER = "http://localhost:8080/realms/igsn";
 const AUDIENCE = "igsn-api";
+const CLIENT_ID = "igsn-admin";
 
 const b64url = (data: string | Uint8Array): string =>
   Buffer.from(data).toString("base64url");
@@ -51,6 +53,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 // The header always claims KID so a token minted with another key exercises
@@ -71,9 +74,12 @@ async function mint(
 
 const nowSeconds = () => Math.floor(Date.now() / 1000);
 
+// GaiaData tokens carry no aud claim, so the valid token has none either; azp
+// and typ are what Keycloak stamps on an access token issued to our client.
 const validClaims = () => ({
   iss: ISSUER,
-  aud: AUDIENCE,
+  azp: CLIENT_ID,
+  typ: "Bearer",
   exp: nowSeconds() + 300,
   sub: "user-1",
   preferred_username: "marie",
@@ -81,10 +87,23 @@ const validClaims = () => ({
   email: "marie.dupont@univ-lorraine.fr",
 });
 
-const getMe = async (db: Parameters<typeof createApp>[0], token: string) =>
-  testClient(createApp(db)).admin.me.$get(undefined, {
+// The middleware reads its env once, when it is imported, so each auth
+// configuration needs its own module graph.
+const getMe = async (
+  db: Parameters<typeof createApp>[0],
+  token: string,
+  audience?: string,
+) => {
+  vi.stubEnv("OIDC_AUDIENCE", audience);
+  vi.stubEnv("OIDC_ISSUER", ISSUER);
+  vi.stubEnv("OIDC_CLIENT_ID", CLIENT_ID);
+  vi.resetModules();
+  const { createApp } = await import("../app.ts");
+
+  return testClient(createApp(db)).admin.me.$get(undefined, {
     headers: { Authorization: `Bearer ${token}` },
   });
+};
 
 describe("requireAuth", () => {
   pgTest(
@@ -102,11 +121,68 @@ describe("requireAuth", () => {
     },
   );
 
-  pgTest("should reject a token with the wrong audience", async ({ db }) => {
+  pgTest(
+    "should accept a matching audience when OIDC_AUDIENCE is set",
+    async ({ db }) => {
+      const res = await getMe(
+        db,
+        await mint({ ...validClaims(), aud: AUDIENCE }),
+        AUDIENCE,
+      );
+
+      expect(res.status).toBe(200);
+    },
+  );
+
+  pgTest(
+    "should reject a token with the wrong audience when OIDC_AUDIENCE is set",
+    async ({ db }) => {
+      const res = await getMe(
+        db,
+        await mint({ ...validClaims(), aud: "someone-else" }),
+        AUDIENCE,
+      );
+
+      expect(res.status).toBe(401);
+    },
+  );
+
+  pgTest(
+    "should reject a token without audience when OIDC_AUDIENCE is set",
+    async ({ db }) => {
+      const res = await getMe(db, await mint(validClaims()), AUDIENCE);
+
+      expect(res.status).toBe(401);
+    },
+  );
+
+  pgTest("should reject a token issued to another client", async ({ db }) => {
     const res = await getMe(
       db,
-      await mint({ ...validClaims(), aud: "someone-else" }),
+      await mint({ ...validClaims(), azp: "another-client" }),
     );
+
+    expect(res.status).toBe(401);
+  });
+
+  pgTest("should reject a token carrying no azp or typ", async ({ db }) => {
+    const { azp: _azp, typ: _typ, ...claims } = validClaims();
+
+    const res = await getMe(db, await mint(claims));
+
+    expect(res.status).toBe(401);
+  });
+
+  pgTest("should reject an ID token replayed as a bearer", async ({ db }) => {
+    const res = await getMe(db, await mint({ ...validClaims(), typ: "ID" }));
+
+    expect(res.status).toBe(401);
+  });
+
+  pgTest("should reject a token carrying no exp", async ({ db }) => {
+    const { exp: _exp, ...claims } = validClaims();
+
+    const res = await getMe(db, await mint(claims));
 
     expect(res.status).toBe(401);
   });

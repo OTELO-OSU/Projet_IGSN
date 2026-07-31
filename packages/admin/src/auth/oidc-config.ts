@@ -1,8 +1,5 @@
 import { UserManager } from "oidc-client-ts";
 
-// Defaults target the local dev Keycloak (see docs/dev-authentication.md).
-// Override per environment with VITE_OIDC_AUTHORITY / VITE_OIDC_CLIENT_ID.
-//
 // One module-scope instance, passed to AuthProvider: the UserManager
 // constructor starts silent renew, and building it per mount arms duplicate
 // renew timers under StrictMode; with single-use refresh tokens the duplicate
@@ -13,8 +10,10 @@ export const userManager = new UserManager({
   client_id: import.meta.env.VITE_OIDC_CLIENT_ID ?? "igsn-admin",
   // profile/email so the access token carries name + email for the api to read.
   scope: "openid profile email",
-  redirect_uri: window.location.origin + "/",
-  post_logout_redirect_uri: window.location.origin + "/",
+  // The one path registered on the GaiaData client, post-logout included:
+  // Keycloak defaults its post-logout URIs to the redirect URIs.
+  redirect_uri: window.location.origin + "/auth/callback",
+  post_logout_redirect_uri: window.location.origin + "/auth/callback",
   // RFC 7009 revocation on logout (GT-SSO REQ-TOKEN-05). Access token only:
   // revoking the refresh token makes Keycloak drop the session before the
   // end_session redirect arrives, which skips the brokered IdP logout and
@@ -23,7 +22,6 @@ export const userManager = new UserManager({
   revokeTokenTypes: ["access_token"],
 });
 
-// Strip ?code&state from the URL after Keycloak redirects back.
 export const onSigninCallback = (): void => {
   window.history.replaceState({}, document.title, window.location.pathname);
 };

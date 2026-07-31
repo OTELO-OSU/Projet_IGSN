@@ -29,8 +29,8 @@ arms duplicate renew timers, fatal once refresh tokens are single-use.
 
 ## Decision
 
-**The api validates the full mandatory claim set.** `aud` joins signature,
-`exp`, `iss` in the `jwk` middleware. The expected audience comes from
+**The api validates the full mandatory claim set** (amended below)**.** `aud`
+joins signature, `exp`, `iss` in the `jwk` middleware. The expected audience comes from
 `OIDC_AUDIENCE` (default `igsn-api`); the realm carries an `igsn-api`
 audience client scope, default on `igsn-admin`. GaiaData's per-environment
 audience value is deploy config ([REQ-TOKEN-03/04](#gt-sso-requirements)).
@@ -90,7 +90,7 @@ defect. Future user data is domain modeling keyed by `sub`
 is the request we send; the answers land in env (`VITE_OIDC_AUTHORITY`,
 `VITE_OIDC_CLIENT_ID`, `OIDC_ISSUER`, `OIDC_AUDIENCE`) and in rollout
 planning. Redirect URIs are exact, no wildcard: the SPA always returns to
-origin + `/` and deep links ride the oidc `state`.
+origin + `/auth/callback` and deep links ride the oidc `state`.
 
 ## Consequences
 
@@ -107,6 +107,32 @@ origin + `/` and deep links ride the oidc `state`.
 - Nothing waits on GaiaData except deploy values and rollout decisions.
 
 Supersedes `SPEC.md`, the working audit document, removed with this change.
+
+## Amendment 2026-07-30: audience validation is opt-in, azp and typ stand in
+
+The GaiaData test realm (`https://sso-test.earth-data.fr/realms/gaia-data`,
+client `formaterre-igsn`) exposes no dedicated audience scope, so its access
+tokens carry no `aud` claim we can require. `aud` validation therefore becomes
+opt-in: the api checks it only when `OIDC_AUDIENCE` is set, and the mock realm
+drops its `igsn-api` audience mapper so dev matches GaiaData.
+
+Residual risk: that realm is shared with other service providers, so signature
+plus `iss` alone would let any of their tokens, or any client's id_token
+replayed as a bearer, authenticate here and auto-provision an account. Two
+claim checks carry the audience's job instead: `azp` must equal
+`OIDC_CLIENT_ID` (the client the token was issued to) and `typ` must be
+`Bearer` (Keycloak marks id_tokens `ID`). Weaker than a dedicated audience: it
+trusts Keycloak's non-standard `typ` claim and only keeps working as long as
+GaiaData keeps stamping both, so confirm them on a real GaiaData token at the
+first deploy (if either disappears, every request 401s: a lockout, not a
+bypass). Signature, `iss` and the RS256 pinning stay mandatory; `exp` too: the
+`jwk` middleware only checks it when the claim is present, so the same claim
+check also rejects a token carrying none.
+
+This is a knowing deviation from [REQ-TOKEN-03/04](#gt-sso-requirements). When
+GaiaData ships an audience scope for the client, set `OIDC_AUDIENCE` per
+environment and restore the mock realm mapper; the `azp`/`typ` check can then
+go, no other code change needed.
 
 ## GT-SSO requirements
 

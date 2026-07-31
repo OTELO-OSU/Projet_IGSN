@@ -69,6 +69,19 @@ the seeded owner and keeps its samples (ADR 0019).
   `http://localhost:8080/realms/igsn/broker/orcid/endpoint` and set the `ORCID_*` vars in
   `.env` — the same vars a prod deployment sets.
 
+## Switching to the GaiaData SSO
+
+To log in against the real GaiaData test SSO instead of the mock realm,
+uncomment the GaiaData block in `.env` (see `.env.example`) and restart the
+stack. Test accounts are GaiaData self-registered accounts; the mock users
+above do not exist there. `http://localhost:3001/auth/callback` is already
+registered as redirect URI, and `http://localhost:3001` as web origin, on the
+`formaterre-igsn` client.
+
+The mock realm no longer injects an `igsn-api` audience, for parity with
+GaiaData (which has none yet). `aud` validation is opt-in via `OIDC_AUDIENCE`
+(ADR 0006 amendment): unset, the api skips it.
+
 > Keycloak imports a realm only when it has no existing copy (`IGNORE_EXISTING`). After
 > editing [`keycloak/realm-igsn.json`](../keycloak/realm-igsn.json) or the mock-orcid
 > realm, run `docker compose -f docker-compose.dev.yml down` before `make dev`/`make auth`

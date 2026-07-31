@@ -7,12 +7,15 @@ held, not committed, same scheme as preprod's `DOMAIN`).
 
 ## Environments
 
-Production only. Local dev and preprod run their own throwaway Keycloak
-(`igsn-auth.<preprod-domain>`, imported from `keycloak/*.json`) and never
-touch GaiaData.
+A test environment exists: issuer `https://sso-test.earth-data.fr/realms/gaia-data`,
+public client `formaterre-igsn`, PKCE S256 required. Default scopes are
+`affiliations` and `identity_provider`; `roles` is optional and has no roles
+defined yet. No dedicated audience scope ships yet, so the api skips `aud`
+validation until one does.
 
-Question to GaiaData: is there an INT environment? If yes, we onboard a
-rehearsal build first, same shape as below with their `-int` naming.
+Preprod now authenticates against this test SSO. Dev switches to it via
+`.env` (see [dev-authentication.md](dev-authentication.md)); e2e stays on the
+mock realm.
 
 ## Client
 
@@ -23,14 +26,14 @@ rehearsal build first, same shape as below with their `-int` naming.
 | Protocol / type           | OpenID Connect, public (no client_secret)                                                                   |
 | Flows                     | Standard flow only; implicit OFF, direct access grants OFF, service accounts OFF, device OFF                |
 | PKCE                      | required, `pkce.code.challenge.method: S256`                                                                |
-| Redirect URIs             | `https://igsn-admin.<prod-domain>/` (exact, no wildcard)                                                    |
-| Post-logout redirect URIs | `https://igsn-admin.<prod-domain>/`                                                                         |
+| Redirect URIs             | `https://igsn-admin.<prod-domain>/auth/callback` (exact, no wildcard)                                       |
+| Post-logout redirect URIs | `https://igsn-admin.<prod-domain>/auth/callback`                                                            |
 | Web origins               | `https://igsn-admin.<prod-domain>`                                                                          |
 | Scopes                    | `openid profile email`; no `offline_access`                                                                 |
 | Refresh tokens            | issued to this public client, their rotation policy (doc SPA line: 5 min access, 30 min single-use refresh) |
 
-The SPA always returns to origin + `/` (`redirect_uri` derives from
-`window.location.origin`), so exact URIs suffice: stricter than the
+The SPA always returns to origin + `/auth/callback` (`redirect_uri` derives
+from `window.location.origin`), so exact URIs suffice: stricter than the
 suffix-wildcard
 [REQ-PARAM-02](adr/0006-gaiadata-sso-compliance.md#gt-sso-requirements)
 allows. Deep links ride the oidc `state`, not the redirect URI.

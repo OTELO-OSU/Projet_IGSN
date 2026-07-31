@@ -6,7 +6,6 @@ services:
       POSTGRES_USER: igsn
       POSTGRES_PASSWORD: igsn
       POSTGRES_DB: igsn
-    # No HTTP endpoint, so this one keeps pg_isready rather than curl.
     healthcheck:
       # -h localhost forces a TCP check: the postgis image runs its init behind a
       # socket-only server, so a socket pg_isready reports ready while TCP 5432 is
@@ -24,15 +23,13 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       # One shared password var for Keycloak admin, the SAML users, and the
-      # mock-orcid user; `password` in dev. Preprod sets a strong value in its
-      # host env file. The bare KEYCLOAK_PASSWORD is what the realm import
-      # substitutes into the mock-orcid user's password.
+      # mock-orcid user; `password` in dev. The bare KEYCLOAK_PASSWORD is what
+      # the realm import substitutes into the mock-orcid user's password.
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
       KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
       KC_HEALTH_ENABLED: "true"
     # The "orcid" broker defaults to the local mock-orcid realm, so dev needs no
-    # credentials. To point it at real ORCID instead, set the ORCID_* vars in
-    # .env (see .env.example); anything unset falls back to the mock.
+    # credentials.
     env_file:
       - path: .env
         required: false
@@ -41,8 +38,8 @@ services:
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
 
-  # Fake Shibboleth (SAML) IdP for local dev/test. In prod this is replaced by
-  # the real RENATER/eduGAIN IdP — only the metadata/SSO URL changes.
+  # In prod this is replaced by the real RENATER/eduGAIN IdP — only the
+  # metadata/SSO URL changes.
   saml-idp:
     image: kenchan0130/simplesamlphp
     container_name: saml-idp
@@ -80,8 +77,7 @@ services:
       start_period: 40s
     # Hot source is bind-mounted, not compose-watch synced: sync can silently
     # drop events on bulk changes (git checkout, rebase) and leave the container
-    # serving a stale mixed tree; a mount cannot go stale (ADR 0013). Watch only
-    # covers the cold files (configs) and the restart/rebuild triggers.
+    # serving a stale mixed tree; a mount cannot go stale (ADR 0013).
     volumes:
       - ./packages/frontend/src:/app/packages/frontend/src
       - ./packages/frontend/messages:/app/packages/frontend/messages
@@ -122,6 +118,9 @@ services:
     container_name: admin
     ports:
       - "3001:3001"
+    environment:
+      VITE_OIDC_AUTHORITY: ${OIDC_ISSUER:-http://localhost:8080/realms/igsn}
+      VITE_OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3001/"]
       interval: 10s
@@ -172,8 +171,10 @@ services:
     environment:
       # Token issuer is the browser-facing Keycloak URL; the api fetches JWKS on
       # its own network, so the fetch URL points at the keycloak service directly.
-      OIDC_ISSUER: http://localhost:8080/realms/igsn
-      OIDC_JWKS_URI: http://keycloak:8080/realms/igsn/protocol/openid-connect/certs
+      OIDC_ISSUER: ${OIDC_ISSUER:-http://localhost:8080/realms/igsn}
+      OIDC_JWKS_URI: ${OIDC_JWKS_URI:-http://keycloak:8080/realms/igsn/protocol/openid-connect/certs}
+      # The only client whose tokens the api accepts (azp), same var as admin.
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
       CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
