@@ -95,7 +95,7 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
     // The shared domain schema fronts the API's own check; any file type
     // passes, only the size cap can reject. Checked at pick time so the
     // user hears about it before submitting. Staging past the upload limit is
-    // allowed; the form disables saving until the count fits.
+    // allowed; the form's save noops until the count fits.
     const accepted = files.filter((file) => {
       const isValid = uploadSampleAttachmentSchema.safeParse({ file }).success;
       if (!isValid) toast.error(m.attachment_too_large({ name: file.name }));
@@ -175,10 +175,6 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
     return uploaded;
   };
 
-  // Deletes the files marked for deletion, uploads the staged ones, then
-  // returns the attachments payload for the sample update: the saved
-  // attachments not marked for deletion (with any edited description) plus the
-  // freshly uploaded ones.
   const commit = async (
     saved: SampleAttachment[],
   ): Promise<UpdateSampleAttachment[]> => {

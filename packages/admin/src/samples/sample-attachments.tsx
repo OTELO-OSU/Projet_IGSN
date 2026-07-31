@@ -51,11 +51,9 @@ type AttachmentRowLayoutProps = {
   name: string;
   // Rendered inside the name cell so staged and saved rows keep one layout.
   badge?: ReactNode;
-  // Destructive note before the actions (marked for deletion, upload failed).
   status?: string;
   actions: ReactNode;
   isStruck?: boolean;
-  // null hides the description block (a row marked for deletion).
   description: {
     id: string;
     value: string;
@@ -63,7 +61,6 @@ type AttachmentRowLayoutProps = {
   } | null;
 };
 
-// One attachment row, staged or saved: truncated name, actions, description.
 function AttachmentRowLayout({
   name,
   badge,

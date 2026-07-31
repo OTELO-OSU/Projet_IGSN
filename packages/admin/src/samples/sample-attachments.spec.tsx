@@ -69,7 +69,6 @@ function Harness({ attachments, onCommit }: HarnessProps) {
   );
 }
 
-// Saved attachments, as many as asked: the limit cases need a full sample.
 const savedAttachments = (count: number) =>
   Array.from({ length: count }, (_, i) => ({
     ...attachment,
@@ -292,7 +291,6 @@ describe("SampleAttachments", () => {
 
     await screen.getByRole("button", { name: "Save" }).click();
 
-    // The save deletes it for real, and the payload no longer lists it.
     await vi.waitFor(() => expect(onCommit).toHaveBeenCalledWith([]));
     expect(calledUrl(fetchSpy.mock.calls[0]![0])).toContain(
       `admin/samples/${SAMPLE_ID}/attachments/${attachment.id}`,

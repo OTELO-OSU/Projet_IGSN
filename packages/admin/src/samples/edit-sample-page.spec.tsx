@@ -301,7 +301,6 @@ describe("EditSamplePage", () => {
       .toHaveTextContent("Set the collection date before publishing.");
     expect(calls).toEqual([]);
 
-    // Restoring the date lets the update through.
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-02");
     await expect.element(save).toBeEnabled();
     await save.click();
@@ -335,7 +334,6 @@ describe("EditSamplePage", () => {
     // file count carries the error.
     await save.click();
 
-    // Marking one file for deletion brings the sample back under the limit.
     await screen.getByRole("tab", { name: "Links" }).click();
     await screen.getByRole("button", { name: "Delete legacy-0.csv" }).click();
     await expect.element(publish).toBeEnabled();
@@ -408,7 +406,6 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("heading", { name: "Samples" }))
       .toBeVisible();
-    // The edited name was saved before publishing.
     expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH"]);
   });
 
