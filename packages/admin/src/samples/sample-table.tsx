@@ -1,4 +1,4 @@
-import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import {
@@ -21,9 +21,10 @@ import {
 } from "@tanstack/react-table";
 
 import { m } from "#/paraglide/messages.js";
+import { ownerInitials } from "#/samples/owner-initials.ts";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
 
-const columns: ColumnDef<Sample>[] = [
+const columns: ColumnDef<AdminSampleListItem>[] = [
   {
     accessorKey: "igsn",
     header: () => m.column_igsn(),
@@ -90,6 +91,18 @@ const columns: ColumnDef<Sample>[] = [
         : "",
   },
   {
+    id: "owner",
+    header: () => m.column_owner(),
+    cell: ({ row }) => {
+      const { name, firstname } = row.original.owner;
+      return (
+        <span title={[firstname, name].filter(Boolean).join(" ")}>
+          {ownerInitials(row.original.owner)}
+        </span>
+      );
+    },
+  },
+  {
     accessorKey: "updatedAt",
     header: () => m.column_last_modified(),
     cell: ({ row }) => formatDate(row.original.updatedAt),
@@ -97,7 +110,7 @@ const columns: ColumnDef<Sample>[] = [
 ];
 
 type SampleTableProps = {
-  samples: Sample[];
+  samples: AdminSampleListItem[];
   // Sorting is controlled: the route owns it (URL state) and the API applies
   // it, since sorting only the current page client-side would be wrong.
   sorting: SortingState;

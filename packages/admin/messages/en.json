@@ -29,6 +29,7 @@
   "column_name": "Name",
   "column_nature": "Nature",
   "column_last_modified": "Last modified",
+  "column_owner": "Owner",
   "create_sample_title": "Create sample",
   "create_sample_error": "Could not create the sample. Please try again.",
   "create_sample_success": "Sample created",

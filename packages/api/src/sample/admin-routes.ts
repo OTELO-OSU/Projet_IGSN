@@ -1,8 +1,8 @@
 import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
-  ListSamplesResponse,
-  SampleResponse,
+  AdminListSamplesResponse,
+  AdminSampleResponse,
 } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 import type { ListUsersResponse } from "@projet-igsn/domain/user/user-validator";
@@ -65,7 +65,7 @@ export function createSampleAdminRoutes(
           },
           c.get("user").id,
         );
-        const body: ListSamplesResponse = { data, meta: { total } };
+        const body: AdminListSamplesResponse = { data, meta: { total } };
         return c.json(body);
       })
       .use("/:id", accessibleSample)
@@ -75,7 +75,10 @@ export function createSampleAdminRoutes(
         if (!sample) {
           return c.json({ error: "Sample not found" }, 404);
         }
-        const body: SampleResponse = { data: sample };
+        const body: AdminSampleResponse = {
+          data: sample,
+          role: c.get("role")!,
+        };
         return c.json(body);
       })
       .post("/", validateCreateSampleBody, async (c) => {

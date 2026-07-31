@@ -1,4 +1,5 @@
 import type {
+  AdminListSamplesResult,
   ListSamplesParams,
   ListSamplesResult,
 } from "@projet-igsn/domain/sample/repository";
@@ -15,6 +16,7 @@ import {
   searchFilters,
 } from "./search-filter.ts";
 import { withSampleChildren } from "./with-sample-children.ts";
+import { withSampleOwners } from "./with-sample-owners.ts";
 
 // Rows whose generated geom intersects the drawn box, bound as parameters.
 // ponytail: ST_MakeEnvelope does not wrap the antimeridian; a box crossing
@@ -98,12 +100,15 @@ async function listSamplesWhere(
 // repository wiring can still satisfy `SampleRepository.list` while ignoring
 // its `ownerId` (structural typing); the admin-routes authorization spec is
 // what catches that.
-export function listSamplesByOwner(
+export async function listSamplesByOwner(
   db: Transactional<DB>,
   params: ListSamplesParams,
   ownerId: string,
-): Promise<ListSamplesResult> {
-  return listSamplesWhere(db, params, [ownedBy(ownerId)]);
+): Promise<AdminListSamplesResult> {
+  const { data, total } = await listSamplesWhere(db, params, [
+    ownedBy(ownerId),
+  ]);
+  return { data: await withSampleOwners(db, data), total };
 }
 
 export function listPublishedSamples(

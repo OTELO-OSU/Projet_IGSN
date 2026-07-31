@@ -1,4 +1,6 @@
 import {
+  adminListSamplesResponseSchema,
+  adminSampleResponseSchema,
   listSamplesResponseSchema,
   sampleResponseSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
@@ -1468,6 +1470,119 @@ describe("admin sample routes", () => {
         );
 
         expect(res.status).toBe(204);
+      },
+    );
+  });
+
+  describe("owner and role in responses", () => {
+    const draft = {
+      name: "Basalte du Massif Central",
+      nature: "thin_section" as const,
+      type: null,
+      collectionMethod: null,
+    };
+
+    pgTest("should carry the owner of each listed sample", async ({ db }) => {
+      const client = testClient(createApp(db));
+      await client.admin.samples.$post(
+        { json: draft },
+        { headers: authHeader },
+      );
+
+      const res = await client.admin.samples.$get(
+        { query: { page: "1", perPage: "10" } },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(200);
+      const body = adminListSamplesResponseSchema.parse(await res.json());
+      expect(body.data).toEqual([
+        expect.objectContaining({
+          name: "Basalte du Massif Central",
+          owner: { name: "User", firstname: "Test" },
+        }),
+      ]);
+    });
+
+    pgTest(
+      "should list a shared sample once, with its owner",
+      async ({ db }) => {
+        const owner = await insertUser(db, "owner@univ-lorraine.fr");
+        await db
+          .updateTable("user")
+          .set({ name: "Curie", firstname: "Marie" })
+          .where("id", "=", owner.id)
+          .execute();
+        const caller = await insertUser(db, authenticatedCallerEmail);
+        const sample = await insertSample(db, draft);
+        await insertSampleOwner(db, sample.id, owner.id);
+        await db
+          .insertInto("user_sample")
+          .values({
+            sample_id: sample.id,
+            user_id: caller.id,
+            role: "contributor",
+          })
+          .execute();
+
+        const res = await testClient(createApp(db)).admin.samples.$get(
+          { query: { page: "1", perPage: "10" } },
+          { headers: authHeader },
+        );
+
+        const body = adminListSamplesResponseSchema.parse(await res.json());
+        expect(body.meta.total).toBe(1);
+        expect(body.data).toEqual([
+          expect.objectContaining({
+            id: sample.id,
+            owner: { name: "Curie", firstname: "Marie" },
+          }),
+        ]);
+      },
+    );
+
+    pgTest("should carry the owner role of the caller", async ({ db }) => {
+      const client = testClient(createApp(db));
+      const created = await client.admin.samples.$post(
+        { json: draft },
+        { headers: authHeader },
+      );
+      const { data } = sampleResponseSchema.parse(await created.json());
+
+      const res = await client.admin.samples[":id"].$get(
+        { param: { id: data.id } },
+        { headers: authHeader },
+      );
+
+      expect(adminSampleResponseSchema.parse(await res.json()).role).toBe(
+        "owner",
+      );
+    });
+
+    pgTest(
+      "should carry the contributor role of the caller",
+      async ({ db }) => {
+        const owner = await insertUser(db, "owner@univ-lorraine.fr");
+        const caller = await insertUser(db, authenticatedCallerEmail);
+        const sample = await insertSample(db, draft);
+        await insertSampleOwner(db, sample.id, owner.id);
+        await db
+          .insertInto("user_sample")
+          .values({
+            sample_id: sample.id,
+            user_id: caller.id,
+            role: "contributor",
+          })
+          .execute();
+
+        const res = await testClient(createApp(db)).admin.samples[":id"].$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+
+        expect(adminSampleResponseSchema.parse(await res.json()).role).toBe(
+          "contributor",
+        );
       },
     );
   });

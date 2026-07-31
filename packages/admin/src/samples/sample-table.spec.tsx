@@ -1,4 +1,4 @@
-import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 
 import {
   RouterProvider,
@@ -14,7 +14,8 @@ import { render } from "vitest-browser-react";
 
 import { SampleTable } from "./sample-table.tsx";
 
-const sample: Sample = {
+const sample: AdminSampleListItem = {
+  owner: { name: "Curie", firstname: "Marie" },
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Basalte du Massif Central",
   nature: "thin_section",
@@ -51,7 +52,7 @@ const samples = [sample];
 // with a stub edit page to observe navigation. Sorting is controlled by the
 // caller (URL state in the app); the harness holds it in local state so
 // header toggles behave as in the real page.
-function renderTable(data: Sample[], onSortingChange = vi.fn()) {
+function renderTable(data: AdminSampleListItem[], onSortingChange = vi.fn()) {
   function Harness() {
     const [sorting, setSorting] = useState<SortingState>([]);
     return (
@@ -149,6 +150,23 @@ describe("SampleTable", () => {
     await expect.element(screen.getByText("Thin section")).toBeInTheDocument();
     await expect.element(screen.getByText("GravityCorer")).toBeInTheDocument();
     await expect.element(screen.getByText("2026-07-01")).toBeInTheDocument();
+  });
+
+  it("should render the owner initials with the full name as title", async () => {
+    const screen = await renderTable(samples);
+    await expect
+      .element(screen.getByTitle("Marie Curie"))
+      .toHaveTextContent("MC");
+  });
+
+  it("should render an empty owner cell for a nameless owner", async () => {
+    const screen = await renderTable([
+      { ...sample, owner: { name: null, firstname: null } },
+    ]);
+    await expect
+      .element(screen.getByText("Basalte du Massif Central"))
+      .toBeInTheDocument();
+    expect(screen.getByTitle("Marie Curie").elements()).toHaveLength(0);
   });
 
   it("should show an empty state when there are no samples", async () => {

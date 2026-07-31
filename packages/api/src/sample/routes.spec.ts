@@ -462,4 +462,22 @@ describe("public sample routes", () => {
     // Assert
     expect(res.status).toBe(400);
   });
+
+  pgTest("should expose no owner on the public reads", async ({ db }) => {
+    const client = testClient(createApp(db));
+    const published = await createPublishedSample(client, "Basalte public");
+
+    const list = await client.samples.$get({
+      query: { page: "1", perPage: "10" },
+    });
+    const one = await client.samples[":igsn"].$get({
+      param: { igsn: published.igsn! },
+    });
+
+    const listBody = (await list.json()) as { data: Record<string, unknown>[] };
+    const oneBody = (await one.json()) as { data: Record<string, unknown> };
+    expect(listBody.data[0]).not.toHaveProperty("owner");
+    expect(oneBody.data).not.toHaveProperty("owner");
+    expect(JSON.stringify(oneBody)).not.toContain("@example.com");
+  });
 });

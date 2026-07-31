@@ -1,5 +1,8 @@
 import type { UserSampleRole } from "../user-sample/model.ts";
-import type { ListSamplesQuery } from "./sample-validator.ts";
+import type {
+  AdminSampleListItem,
+  ListSamplesQuery,
+} from "./sample-validator.ts";
 import type { CreateSample, Sample } from "./sample.ts";
 
 // The validated list query is the repository's param shape: page/perPage/sort/
@@ -13,10 +16,18 @@ export type ListSamplesResult = {
   total: number;
 };
 
+export type AdminListSamplesResult = {
+  data: AdminSampleListItem[];
+  total: number;
+};
+
 // `ownerId` is a separate argument, never part of ListSamplesParams (the
 // validated query): the caller's id comes from the token, never from the client.
 export type SampleRepository = {
-  list(params: ListSamplesParams, ownerId: string): Promise<ListSamplesResult>;
+  list(
+    params: ListSamplesParams,
+    ownerId: string,
+  ): Promise<AdminListSamplesResult>;
   listPublished(params: ListSamplesParams): Promise<ListSamplesResult>;
   // Reading a sample is relative to who reads it: no row at all (the api answers
   // 404) or the row plus whether this user owns it (403 when they do not).
