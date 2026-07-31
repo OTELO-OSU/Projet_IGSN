@@ -4,14 +4,15 @@ You are the team lead running the IGSN feature team on ONE ticket via Claude Cod
 agent teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` in `.claude/settings.json`).
 Paste the card/spec below this prompt, then drive the pipeline. Roles live in
 `.claude/agents/`: `business-analyst` runs as a read-only subagent (step 0);
-`developer`, `security-reviewer`, `qa-tester`, `code-quality-reviewer` and
-`doc-specialist` are teammates you spawn against the shared task list. Only you
+`developer`, `security-reviewer`, `qa-tester`, `code-quality-reviewer`,
+`refactorer-reviewer` and `doc-specialist` are teammates you spawn against the
+shared task list. Only you
 manage the team; teammates cannot spawn their own.
 
 ## Standing rules (every step, every agent)
 
 - **One ticket at a time.** Dev tasks run strictly in sequence, a single chain
-  worked by one `developer`. The three reviews run in parallel once dev is done.
+  worked by one `developer`. The four reviews run in parallel once dev is done.
 - **Ponytail**: the ladder, by every agent (the plugin's `SubagentStart` hook
   injects it into teammates). It governs what gets built, never input validation,
   authz, error handling, a11y, or test coverage: `.claude/rules/testing.md` wins
@@ -60,26 +61,27 @@ writes and approves the plan first, and no teammate is spawned before that.
    and the BA acceptance tests it must satisfy, and register a matching task-list
    entry linking to it. Dev tasks chain in order, each depending on the previous, so
    one starts only once its predecessor completes. Then one `security-reviewer`, one
-   `qa-tester` and one `code-quality-reviewer` task, each depending only on the last
-   dev task so they unblock together, plus a final `doc-specialist` task depending on
-   all three.
+   `qa-tester`, one `code-quality-reviewer` and one `refactorer-reviewer` task, each
+   depending only on the last dev task so they unblock together, plus a final
+   `doc-specialist` task depending on all four.
 
 3. **Developer.** Spawn one `developer` teammate into the worktree. It self-claims
    the first task, reads its spec, implements it (TDD), commits it and marks it
    complete, then claims the next unblocked task. When the last dev task completes,
-   the three review tasks unblock at once.
+   the four review tasks unblock at once.
 
-4. **Reviews, in parallel.** Spawn `security-reviewer`, `qa-tester` and
-   `code-quality-reviewer`; each claims its task and works concurrently. Give each
+4. **Reviews, in parallel.** Spawn `security-reviewer`, `qa-tester`,
+   `code-quality-reviewer` and `refactorer-reviewer`; each claims its task and works
+   concurrently. Give each
    `$SOURCE` in its spawn prompt: the ticket diff is `git diff $SOURCE`, since the
    work is already committed. Each returns `VERDICT: PASS|BLOCK` on its first line.
 
 5. **Loop on BLOCK.** On any `BLOCK`, add a dev task carrying the findings, then
-   recreate the three review tasks and re-run them. The fix is the shortest diff that
+   recreate the four review tasks and re-run them. The fix is the shortest diff that
    clears the finding, landing as its own commit on top; a `BLOCK` is not licence to
    refactor around it. Cap at 3 rounds; if blocks remain, stop and surface them.
 
-6. **Docs.** Once all three reviews are `PASS` the `doc-specialist` task unblocks. It
+6. **Docs.** Once all four reviews are `PASS` the `doc-specialist` task unblocks. It
    has no `Bash`, so commit its changeset yourself (`docs: <summary>`).
 
 7. **Commit gate.** In the worktree run `pnpm lint:check`, `pnpm fmt:check`,
