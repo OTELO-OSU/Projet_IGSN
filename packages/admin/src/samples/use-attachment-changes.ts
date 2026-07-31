@@ -13,6 +13,7 @@ import { z } from "zod";
 
 import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
+import { useApiClient } from "#/use-api-client.ts";
 
 type StagedAttachment = {
   key: string;
@@ -66,11 +67,19 @@ function xhrUpload(
   });
 }
 
-// Stages attachment changes locally so cancelling the form leaves the server
-// untouched. `commit` uploads the staged files, then returns every attachment
-// to keep; the API deletes whatever the returned payload omits.
-export function useAttachmentChanges(sampleId: string) {
+// Stages every attachment change locally (files to upload with their
+// description, saved attachments to delete, edited descriptions) so
+// cancelling the form leaves the server untouched. `commit` (called on form
+// submit, before the sample save) deletes the marked files, then uploads the
+// staged ones (that order frees a slot for a swap at the limit) in parallel behind
+// a progress dialog whose recap stays until the user closes it, then returns
+// the attachments payload for the sample update: every attachment to keep,
+// with its description. The API deletes whatever is not listed. A failed
+// upload stays staged, flagged for a retry on the next submit, and never
+// blocks saving the rest.
+export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const token = useAuth().user?.access_token;
+  const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<StagedAttachment[]>([]);
   const [deletions, setDeletions] = useState<string[]>([]);
@@ -78,8 +87,15 @@ export function useAttachmentChanges(sampleId: string) {
   const [batch, setBatch] = useState<UploadBatchItem[]>([]);
   const [isDialogOpen, setDialogOpen] = useState(false);
 
+  // What the sample would carry once saved: a staged deletion frees a slot, a
+  // staged file takes one. This is the count the upload limit applies to.
+  const keptCount = savedCount - deletions.length + pending.length;
+
   const addFiles = (files: File[]) => {
-    // Pre-check size at pick time for UX; the API revalidates.
+    // The shared domain schema fronts the API's own check; any file type
+    // passes, only the size cap can reject. Checked at pick time so the
+    // user hears about it before submitting. Staging past the upload limit is
+    // allowed; the form's save noops until the count fits.
     const accepted = files.filter((file) => {
       const isValid = uploadSampleAttachmentSchema.safeParse({ file }).success;
       if (!isValid) toast.error(m.attachment_too_large({ name: file.name }));
@@ -162,6 +178,26 @@ export function useAttachmentChanges(sampleId: string) {
   const commit = async (
     saved: SampleAttachment[],
   ): Promise<UpdateSampleAttachment[]> => {
+    // Deletions land first, or the slots they free are still taken when the
+    // uploads reach the api and a swap at the limit is refused. The sample
+    // update's reconcile stays the source of truth for what remains, so a
+    // failed delete (or one already gone) is harmless and must not block the
+    // save.
+    await Promise.all(
+      deletions.map((id) =>
+        apiFetch(
+          new URL(`admin/samples/${sampleId}/attachments/${id}`, API_URL),
+          {
+            method: "DELETE",
+          },
+        ).catch(() => null),
+      ),
+    );
+    // Consumed: the rows are gone and the payload below (built from the local
+    // `deletions`, not the state) already excludes them. Keeping the ids would
+    // discount slots that are free once the page refetches, and re-delete them
+    // on every later save.
+    setDeletions([]);
     const uploaded = await uploadPending();
     return [
       ...saved
@@ -181,6 +217,7 @@ export function useAttachmentChanges(sampleId: string) {
 
   return {
     pending,
+    keptCount,
     addFiles,
     removeFile,
     setPendingDescription,

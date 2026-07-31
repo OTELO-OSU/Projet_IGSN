@@ -14,6 +14,7 @@ import { m } from "#/paraglide/messages.js";
 import { AttachmentDropZone } from "#/samples/attachment-drop-zone.tsx";
 import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { useDownloadAttachment } from "#/samples/use-download-attachment.ts";
+import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
 type SampleAttachmentsProps = {
   sampleId: string;
@@ -50,11 +51,9 @@ type AttachmentRowLayoutProps = {
   name: string;
   // Rendered inside the name cell so staged and saved rows keep one layout.
   badge?: ReactNode;
-  // Destructive note before the actions (marked for deletion, upload failed).
   status?: string;
   actions: ReactNode;
   isStruck?: boolean;
-  // null hides the description block (a row marked for deletion).
   description: {
     id: string;
     value: string;
@@ -62,7 +61,6 @@ type AttachmentRowLayoutProps = {
   } | null;
 };
 
-// One attachment row, staged or saved: truncated name, actions, description.
 function AttachmentRowLayout({
   name,
   badge,
@@ -175,6 +173,16 @@ export function SampleAttachments({
   return (
     <FormSection title={m.section_attachments()}>
       <AttachmentDropZone onFiles={addFiles} />
+      <p
+        className={cn(
+          "text-sm",
+          changes.keptCount > UPLOAD_LIMIT
+            ? "text-destructive"
+            : "text-muted-foreground",
+        )}
+      >
+        {m.attachment_count({ count: changes.keptCount, limit: UPLOAD_LIMIT })}
+      </p>
       {pending.length > 0 ? (
         <ul className="grid gap-2">
           {pending.map((staged) => (

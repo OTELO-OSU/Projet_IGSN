@@ -1,7 +1,10 @@
 import type { UpdateSampleAttachment } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 
+import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
+import { DEFAULT_UPLOAD_LIMIT } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useState } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
@@ -35,29 +38,43 @@ type HarnessProps = {
 
 // The staging state lives in the hook (owned by the edit page); the Save
 // button stands in for the form submit, which uploads the staged files and
-// sends the committed payload with the sample update.
+// sends the committed payload with the sample update. Saving then narrows the
+// saved attachments to the ones the payload kept, standing in for the refetch
+// the page runs after a save (the edit page does not remount).
 function Harness({ attachments, onCommit }: HarnessProps) {
-  const changes = useAttachmentChanges(SAMPLE_ID);
+  const [saved, setSaved] = useState(attachments);
+  const changes = useAttachmentChanges(SAMPLE_ID, saved.length);
   return (
     <>
       <SampleAttachments
         sampleId={SAMPLE_ID}
-        attachments={attachments}
+        attachments={saved}
         changes={changes}
       />
       <SampleAttachmentUploadDialog changes={changes} />
       <button
         type="button"
         onClick={async () => {
-          const payload = await changes.commit(attachments);
+          const payload = await changes.commit(saved);
+          setSaved((current) =>
+            current.filter((a) => payload.some(({ id }) => id === a.id)),
+          );
           onCommit?.(payload);
         }}
       >
         Save
       </button>
+      <Toaster />
     </>
   );
 }
+
+const savedAttachments = (count: number) =>
+  Array.from({ length: count }, (_, i) => ({
+    ...attachment,
+    id: `3f2504e0-4f89-41d3-9a0c-03050000000${i}`,
+    name: `saved-${i}.csv`,
+  }));
 
 function renderAttachments(
   attachments = [attachment],
@@ -254,24 +271,31 @@ describe("SampleAttachments", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  it("should omit a marked attachment from the committed payload without any direct call", async () => {
+  it("should omit a marked attachment from the committed payload, deleting it on save only", async () => {
     const onCommit = vi.fn();
-    const fetchSpy = vi.spyOn(window, "fetch");
+    const fetchSpy = vi
+      .spyOn(window, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
     const screen = await renderAttachments([attachment], onCommit);
 
     await screen
       .getByRole("button", { name: "Delete measurements.csv" })
       .click();
 
-    // Marked, flagged, but nothing sent and nothing committed yet.
+    // Marked, flagged, but nothing sent and nothing committed yet: cancelling
+    // now would leave the server untouched.
     await expect
       .element(screen.getByText("Will be deleted on save."))
       .toBeVisible();
+    expect(fetchSpy).not.toHaveBeenCalled();
 
     await screen.getByRole("button", { name: "Save" }).click();
 
     await vi.waitFor(() => expect(onCommit).toHaveBeenCalledWith([]));
-    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(calledUrl(fetchSpy.mock.calls[0]![0])).toContain(
+      `admin/samples/${SAMPLE_ID}/attachments/${attachment.id}`,
+    );
+    expect(fetchSpy.mock.calls[0]![1]?.method).toBe("DELETE");
   });
 
   it("should keep a marked attachment restored before the save", async () => {
@@ -291,6 +315,82 @@ describe("SampleAttachments", () => {
         { id: attachment.id, description: "Raw measurements" },
       ]),
     );
+  });
+
+  it("should show the attachment count against the limit", async () => {
+    const screen = await renderAttachments(
+      savedAttachments(DEFAULT_UPLOAD_LIMIT),
+    );
+
+    await expect.element(screen.getByText("5 of 5 files")).toBeVisible();
+  });
+
+  it("should stage a file past the limit and turn the count red", async () => {
+    // Staging is never refused; the count marks the error and the form's
+    // save noops until the count fits.
+    const screen = await renderAttachments(
+      savedAttachments(DEFAULT_UPLOAD_LIMIT),
+    );
+
+    await screen.getByLabelText("Browse files").upload([file("extra.csv")]);
+
+    await expect.element(screen.getByText("extra.csv")).toBeVisible();
+    await expect
+      .element(screen.getByText("6 of 5 files"))
+      .toHaveClass("text-destructive");
+  });
+
+  it("should swap a file in one save when the sample is full", async () => {
+    const onCommit = vi.fn();
+    const fetchSpy = vi
+      .spyOn(window, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    const saved = savedAttachments(DEFAULT_UPLOAD_LIMIT);
+    const screen = await renderAttachments(saved, onCommit);
+
+    await screen.getByRole("button", { name: "Delete saved-0.csv" }).click();
+    await screen.getByLabelText("Browse files").upload([file("new.csv")]);
+    // exact: the "saved-N.csv" row buttons also contain "save".
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    // The staged deletion frees its slot on the server BEFORE the upload
+    // starts, so the api still has room and does not refuse the new file.
+    await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+    expect(calledUrl(fetchSpy.mock.calls[0]![0])).toContain(
+      `admin/samples/${SAMPLE_ID}/attachments/${saved[0]!.id}`,
+    );
+    expect(fetchSpy.mock.calls[0]![1]?.method).toBe("DELETE");
+
+    FakeXhr.instances[0]!.finish();
+
+    // One save, and the sample keeps 5 files: the 4 survivors plus the new one.
+    await vi.waitFor(() => expect(onCommit).toHaveBeenCalled());
+    expect(onCommit.mock.calls[0]![0]).toHaveLength(DEFAULT_UPLOAD_LIMIT);
+    await expect
+      .element(screen.getByText("Could not upload."))
+      .not.toBeInTheDocument();
+  });
+
+  it("should forget a deletion the save already performed", async () => {
+    const fetchSpy = vi
+      .spyOn(window, "fetch")
+      .mockResolvedValue(new Response(null, { status: 204 }));
+    const screen = await renderAttachments(
+      savedAttachments(DEFAULT_UPLOAD_LIMIT),
+    );
+
+    await screen.getByRole("button", { name: "Delete saved-0.csv" }).click();
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    // The file is gone server-side, so the sample truly holds 4: counting the
+    // consumed deletion again would discount a slot that is already free.
+    await expect.element(screen.getByText("4 of 5 files")).toBeVisible();
+
+    // And the next save no longer re-deletes what is already gone.
+    await screen.getByLabelText("Browse files").upload([file("new.csv")]);
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+    await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
   it("should download the attachment through the authed client", async () => {

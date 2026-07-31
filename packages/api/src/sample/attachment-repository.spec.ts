@@ -1,5 +1,7 @@
+import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 import type { Kysely } from "kysely";
 
+import { DEFAULT_UPLOAD_LIMIT } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect } from "vitest";
@@ -33,6 +35,14 @@ async function arrange(db: Kysely<DB>) {
   return { repository, sample };
 }
 
+// create also answers "limit_reached"/null; these cases stay under the cap.
+function stored(created: SampleAttachment | "limit_reached" | null) {
+  if (created === null || created === "limit_reached") {
+    throw new Error(`unexpected create result: ${created}`);
+  }
+  return created;
+}
+
 describe("sampleAttachmentRepository", () => {
   pgTest(
     "should store an attachment and read its content back",
@@ -46,7 +56,7 @@ describe("sampleAttachmentRepository", () => {
         mediaType: "text/csv",
         description: "Raw XRF measurements",
       });
-      const found = await repository.getContent(sample.id, created!.id);
+      const found = await repository.getContent(sample.id, stored(created).id);
       expect(found?.attachment).toEqual(created);
       expect(new Uint8Array(found!.content)).toEqual(content);
     },
@@ -72,6 +82,25 @@ describe("sampleAttachmentRepository", () => {
   });
 
   pgTest(
+    "should return limit_reached once the sample holds the upload limit",
+    async ({ db }) => {
+      const { repository, sample } = await arrange(db);
+      for (let i = 0; i < DEFAULT_UPLOAD_LIMIT; i++) {
+        expect(
+          stored(await repository.create(sample.id, input, content)),
+        ).toBeTruthy();
+      }
+      // Act / Assert
+      expect(await repository.create(sample.id, input, content)).toBe(
+        "limit_reached",
+      );
+      expect((await readSample(db, sample.id))?.attachments).toHaveLength(
+        DEFAULT_UPLOAD_LIMIT,
+      );
+    },
+  );
+
+  pgTest(
     "should store the blob under a readable debug name",
     async ({ db }) => {
       const { repository, sample } = await arrange(db);
@@ -79,7 +108,7 @@ describe("sampleAttachmentRepository", () => {
       const created = await repository.create(sample.id, input, content);
       // Assert: blobs are grouped in a per-sample folder.
       expect(await readdir(join(dir, sample.id))).toContain(
-        `${created!.id}-measurements.csv`,
+        `${stored(created).id}-measurements.csv`,
       );
     },
   );
@@ -92,18 +121,41 @@ describe("sampleAttachmentRepository", () => {
       const first = await repository.create(sample.id, input, content);
       const second = await repository.create(sample.id, input, content);
       // Assert: the uuid prefix keeps the blobs apart on disk.
-      expect(second!.id).not.toBe(first!.id);
+      expect(stored(second).id).not.toBe(stored(first).id);
       const files = await readdir(join(dir, sample.id));
-      expect(files).toContain(`${first!.id}-measurements.csv`);
-      expect(files).toContain(`${second!.id}-measurements.csv`);
+      expect(files).toContain(`${stored(first).id}-measurements.csv`);
+      expect(files).toContain(`${stored(second).id}-measurements.csv`);
     },
   );
+
+  pgTest("should remove one attachment with its blob", async ({ db }) => {
+    const { repository, sample } = await arrange(db);
+    const created = stored(await repository.create(sample.id, input, content));
+    // Act
+    expect(await repository.remove(sample.id, created.id)).toBe(true);
+    // Assert
+    expect((await readSample(db, sample.id))?.attachments).toEqual([]);
+    expect(await readdir(join(dir, sample.id))).not.toContain(
+      `${created.id}-measurements.csv`,
+    );
+  });
+
+  pgTest("should report an unknown removal as false", async ({ db }) => {
+    const { repository, sample } = await arrange(db);
+    // Act / Assert: another sample's (here: no) attachment is not ours to drop.
+    expect(
+      await repository.remove(
+        sample.id,
+        "00000000-0000-7000-8000-000000000000",
+      ),
+    ).toBe(false);
+  });
 
   pgTest(
     "should reconcile: update listed descriptions, remove unlisted rows and blobs",
     async ({ db }) => {
       const { repository, sample } = await arrange(db);
-      const kept = await repository.create(sample.id, input, content);
+      const kept = stored(await repository.create(sample.id, input, content));
       const dropped = await repository.create(
         sample.id,
         { ...input, name: "photo.jpg", mediaType: "image/jpeg" },
@@ -111,14 +163,14 @@ describe("sampleAttachmentRepository", () => {
       );
       // Act
       await repository.reconcile(sample.id, [
-        { id: kept!.id, description: "Calibrated measurements" },
+        { id: kept.id, description: "Calibrated measurements" },
       ]);
       // Assert
       expect((await readSample(db, sample.id))?.attachments).toEqual([
         { ...kept, description: "Calibrated measurements" },
       ]);
       expect(await readdir(join(dir, sample.id))).not.toContain(
-        `${dropped!.id}-photo.jpg`,
+        `${stored(dropped).id}-photo.jpg`,
       );
     },
   );
@@ -133,7 +185,7 @@ describe("sampleAttachmentRepository", () => {
       // Assert
       expect((await readSample(db, sample.id))?.attachments).toEqual([]);
       expect(await readdir(join(dir, sample.id))).not.toContain(
-        `${created!.id}-measurements.csv`,
+        `${stored(created).id}-measurements.csv`,
       );
     },
   );
@@ -152,7 +204,7 @@ describe("sampleAttachmentRepository", () => {
       // Act: reconciling `other` with the foreign id neither hijacks it nor
       // keeps it; the foreign attachment simply is not other's to keep.
       await repository.reconcile(other.id, [
-        { id: created!.id, description: "hijack" },
+        { id: stored(created).id, description: "hijack" },
       ]);
       // Assert
       expect((await readSample(db, sample.id))?.attachments).toEqual([created]);

@@ -4,6 +4,11 @@ import { z } from "zod";
 // means streaming the multipart body instead.
 export const ATTACHMENT_MAX_BYTES = 100 * 1024 * 1024;
 
+// How many attachments a sample may carry. Overridable per deployment through
+// `UPLOAD_LIMIT` (api) / `VITE_UPLOAD_LIMIT` (admin); `domain` has no I/O, so
+// it only owns the fallback both sides share.
+export const DEFAULT_UPLOAD_LIMIT = 5;
+
 // Upload input, shared by the api multipart validation and the admin form.
 // Any file type is accepted (documents, scans, photos, video...); downloads
 // are always attachment + nosniff, so nothing executes in the browser.

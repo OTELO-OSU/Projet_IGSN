@@ -97,6 +97,7 @@
   "publish_blocked_collector_name_missing": "Set the collector name before publishing.",
   "publish_blocked_collection_curator_missing": "Set the collection curator before publishing.",
   "publish_blocked_collection_origin_missing": "Set the collection origin before publishing.",
+  "publish_blocked_attachment_limit_exceeded": "Keep at most {limit} attached files before publishing.",
   "tab_scientific_context": "Scientific context",
   "field_provenance_status": "Provenance status",
   "provenance_status_placeholder": "Select a provenance status",
@@ -330,5 +331,6 @@
   "attachment_upload_dialog_title": "Uploading files",
   "attachment_upload_dialog_description": "Files are uploaded before the sample is saved.",
   "attachment_too_large": "{name} exceeds the 100 MB limit.",
+  "attachment_count": "{count} of {limit} files",
   "attachment_download_error": "Failed to download the file."
 }

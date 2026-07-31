@@ -72,6 +72,8 @@ services:
       ATTACHMENTS_DIR: /data/attachments
       # Pinned so the search assertions do not depend on the host shell.
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
+      # Same, for the attachment cap the admin bundle bakes in.
+      UPLOAD_LIMIT: "5"
     volumes:
       - attachments:/data/attachments
     depends_on:

@@ -15,6 +15,7 @@ import { v7 as uuidv7 } from "uuid";
 import type { DB } from "../db.ts";
 
 import { withTransaction } from "../transaction.ts";
+import { uploadLimit } from "./upload-limit.ts";
 
 function toAttachment(
   row: Selectable<DB["sample_attachment"]>,
@@ -57,6 +58,15 @@ export function createSampleAttachmentRepository(
           .where("id", "=", sampleId)
           .executeTakeFirst();
         if (!sample) return null;
+        // ponytail: counted without locking the sample, so two parallel uploads
+        // can both pass at the cap; the product owner ruled that race a
+        // non-issue. Lock the sample row if concurrent editing ever returns.
+        const { count } = await trx
+          .selectFrom("sample_attachment")
+          .select((eb) => eb.fn.countAll<number>().as("count"))
+          .where("sample_id", "=", sampleId)
+          .executeTakeFirstOrThrow();
+        if (Number(count) >= uploadLimit) return "limit_reached";
         const row = await trx
           .insertInto("sample_attachment")
           .values({
@@ -107,6 +117,21 @@ export function createSampleAttachmentRepository(
             }
           }),
         );
+      }),
+
+    remove: (sampleId: string, attachmentId: string) =>
+      withTransaction(db, async (trx) => {
+        // Blob removal inside the transaction, like reconcile: a failed rm
+        // rolls the row deletion back.
+        const row = await trx
+          .deleteFrom("sample_attachment")
+          .where("id", "=", attachmentId)
+          .where("sample_id", "=", sampleId)
+          .returningAll()
+          .executeTakeFirst();
+        if (!row) return false;
+        await rm(pathFor(sampleId, row.id, row.name), { force: true });
+        return true;
       }),
 
     getContent: (sampleId: string, attachmentId: string) =>

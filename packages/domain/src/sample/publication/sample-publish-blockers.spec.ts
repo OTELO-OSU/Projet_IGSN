@@ -414,4 +414,30 @@ describe("samplePublishBlockers", () => {
       }),
     ).toEqual([]);
   });
+
+  it("should report attachment_limit_exceeded above the default limit", () => {
+    expect(
+      samplePublishBlockers({ ...base, attachments: Array(6).fill({}) }),
+    ).toEqual(["attachment_limit_exceeded"]);
+  });
+
+  it("should report no blocker at the default limit", () => {
+    expect(
+      samplePublishBlockers({ ...base, attachments: Array(5).fill({}) }),
+    ).toEqual([]);
+  });
+
+  it("should honour an explicit upload limit", () => {
+    expect(
+      samplePublishBlockers({ ...base, attachments: Array(4).fill({}) }, 3),
+    ).toEqual(["attachment_limit_exceeded"]);
+    expect(
+      samplePublishBlockers({ ...base, attachments: Array(3).fill({}) }, 3),
+    ).toEqual([]);
+  });
+
+  it("should never report attachment_limit_exceeded when attachments are omitted", () => {
+    const { attachments: _attachments, ...withoutAttachments } = base;
+    expect(samplePublishBlockers(withoutAttachments, 1)).toEqual([]);
+  });
 });

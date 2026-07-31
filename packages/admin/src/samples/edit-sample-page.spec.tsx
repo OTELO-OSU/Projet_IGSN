@@ -1,3 +1,5 @@
+import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
@@ -24,6 +26,17 @@ vi.mock("react-oidc-context", () => ({
 
 const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
 
+// One file over the default limit of 5, like a sample imported before the cap.
+const overLimitAttachments: SampleAttachment[] = Array.from(
+  { length: 6 },
+  (_, i) => ({
+    id: `3f2504e0-4f89-41d3-9a0c-03050000000${i}`,
+    name: `legacy-${i}.csv`,
+    mediaType: "text/csv",
+    description: null,
+  }),
+);
+
 // In-memory API: GET returns the current sample, PUT saves it, POST /publish
 // publishes it. Records write calls so tests can assert the save-then-publish
 // order. Lets the page run its real save/refetch cycle without a backend.
@@ -38,9 +51,11 @@ function fakeApi(
   availability: "exists" | "no_longer_exists" = "exists",
   security: Record<string, unknown> | null = null,
   economic: Record<string, unknown> | null = null,
+  attachments: SampleAttachment[] = [],
 ) {
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+    attachments,
     name: "Basalte du Massif Central",
     nature: "thin_section",
     type: "dredge",
@@ -114,6 +129,7 @@ async function renderEditPage(
   availability: "exists" | "no_longer_exists" = "exists",
   security: Record<string, unknown> | null = null,
   economic: Record<string, unknown> | null = null,
+  attachments: SampleAttachment[] = [],
 ) {
   const { id, calls } = fakeApi(
     published,
@@ -124,6 +140,7 @@ async function renderEditPage(
     availability,
     security,
     economic,
+    attachments,
   );
   const queryClient = new QueryClient();
   const router = createRouter({
@@ -284,11 +301,66 @@ describe("EditSamplePage", () => {
       .toHaveTextContent("Set the collection date before publishing.");
     expect(calls).toEqual([]);
 
-    // Restoring the date lets the update through.
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-02");
     await expect.element(save).toBeEnabled();
     await save.click();
     await vi.waitFor(() => expect(calls.length).toBeGreaterThan(0));
+  });
+
+  it("should refuse publishing a sample carrying more files than the limit", async () => {
+    // A legacy sample above the cap: nothing was grandfathered, so it must
+    // shed a file before it can be published again.
+    const { screen, calls } = await renderEditPage(
+      false,
+      "fossil",
+      false,
+      null,
+      null,
+      "exists",
+      null,
+      null,
+      overLimitAttachments,
+    );
+    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    const save = screen.getByRole("button", { name: "Save as draft" });
+
+    await expect.element(publish).toBeDisabled();
+    publish.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/at most 5 attached files/i);
+
+    // The draft save stays live but noops, like any invalid field: the red
+    // file count carries the error.
+    await save.click();
+
+    await screen.getByRole("tab", { name: "Links" }).click();
+    await screen.getByRole("button", { name: "Delete legacy-0.csv" }).click();
+    await expect.element(publish).toBeEnabled();
+
+    // The noop sent nothing; back under the limit the same button saves.
+    await save.click();
+    await vi.waitFor(() =>
+      expect(calls).toEqual(["PUT Basalte du Massif Central"]),
+    );
+  });
+
+  it("should not mention the attachment limit on a sample at the limit", async () => {
+    const { screen } = await renderEditPage(
+      false,
+      "fossil",
+      false,
+      null,
+      null,
+      "exists",
+      null,
+      null,
+      overLimitAttachments.slice(1),
+    );
+
+    await expect
+      .element(screen.getByRole("button", { name: "Save & Publish" }))
+      .toBeEnabled();
   });
 
   it("should offer only Publish updates on an already published sample", async () => {
@@ -334,7 +406,6 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("heading", { name: "Samples" }))
       .toBeVisible();
-    // The edited name was saved before publishing.
     expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH"]);
   });
 
