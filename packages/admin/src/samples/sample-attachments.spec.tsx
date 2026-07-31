@@ -327,49 +327,16 @@ describe("SampleAttachments", () => {
     await expect.element(screen.getByText("5 of 5 files")).toBeVisible();
   });
 
-  it("should refuse a file picked when the sample is already full", async () => {
+  it("should stage a file past the limit and count it over the cap", async () => {
+    // Staging is never refused; the form disables saving until the count fits.
     const screen = await renderAttachments(
       savedAttachments(DEFAULT_UPLOAD_LIMIT),
     );
 
     await screen.getByLabelText("Browse files").upload([file("extra.csv")]);
 
-    expect(screen.getByText("extra.csv").query()).toBeNull();
-    await expect
-      .element(screen.getByRole("region", { name: /notifications/i }))
-      .toHaveTextContent("You cannot attach more than 5 files");
-  });
-
-  it("should warn once when several files are picked on a full sample", async () => {
-    const screen = await renderAttachments(
-      savedAttachments(DEFAULT_UPLOAD_LIMIT),
-    );
-
-    await screen
-      .getByLabelText("Browse files")
-      .upload([file("a.csv"), file("b.csv"), file("c.csv")]);
-
-    expect(screen.getByText("a.csv").query()).toBeNull();
-    await expect
-      .element(screen.getByRole("region", { name: /notifications/i }))
-      .toHaveTextContent("You cannot attach more than 5 files");
-    expect(
-      screen.getByText(/cannot attach more than 5 files/).all(),
-    ).toHaveLength(1);
-  });
-
-  it("should stage only the files that fit under the limit", async () => {
-    const screen = await renderAttachments(
-      savedAttachments(DEFAULT_UPLOAD_LIMIT - 1),
-    );
-
-    await screen
-      .getByLabelText("Browse files")
-      .upload([file("a.csv"), file("b.csv"), file("c.csv")]);
-
-    await expect.element(screen.getByText("a.csv")).toBeVisible();
-    expect(screen.getByText("b.csv").query()).toBeNull();
-    expect(screen.getByText("c.csv").query()).toBeNull();
+    await expect.element(screen.getByText("extra.csv")).toBeVisible();
+    await expect.element(screen.getByText("6 of 5 files")).toBeVisible();
   });
 
   it("should swap a file in one save when the sample is full", async () => {
@@ -418,46 +385,11 @@ describe("SampleAttachments", () => {
     // consumed deletion again would discount a slot that is already free.
     await expect.element(screen.getByText("4 of 5 files")).toBeVisible();
 
-    // That one free slot takes one file, not two.
-    await screen
-      .getByLabelText("Browse files")
-      .upload([file("new.csv"), file("extra.csv")]);
-    await expect.element(screen.getByText("new.csv")).toBeVisible();
-    expect(screen.getByText("extra.csv").query()).toBeNull();
-
     // And the next save no longer re-deletes what is already gone.
+    await screen.getByLabelText("Browse files").upload([file("new.csv")]);
     await screen.getByRole("button", { name: "Save", exact: true }).click();
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-  });
-
-  it("should free a slot when a saved attachment is marked for deletion", async () => {
-    const screen = await renderAttachments(
-      savedAttachments(DEFAULT_UPLOAD_LIMIT),
-    );
-
-    await screen.getByRole("button", { name: "Delete saved-0.csv" }).click();
-    await screen.getByLabelText("Browse files").upload([file("extra.csv")]);
-
-    await expect.element(screen.getByText("extra.csv")).toBeVisible();
-  });
-
-  it("should refuse restoring an attachment whose freed slot is taken", async () => {
-    const screen = await renderAttachments(
-      savedAttachments(DEFAULT_UPLOAD_LIMIT),
-    );
-
-    await screen.getByRole("button", { name: "Delete saved-0.csv" }).click();
-    await screen.getByLabelText("Browse files").upload([file("extra.csv")]);
-    await screen.getByRole("button", { name: "Restore saved-0.csv" }).click();
-
-    // Still marked for deletion, and the user is told why.
-    await expect
-      .element(screen.getByText("Will be deleted on save."))
-      .toBeVisible();
-    await expect
-      .element(screen.getByRole("region", { name: /notifications/i }))
-      .toHaveTextContent("You cannot attach more than 5 files");
   });
 
   it("should download the attachment through the authed client", async () => {

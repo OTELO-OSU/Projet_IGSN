@@ -13,7 +13,6 @@ import { z } from "zod";
 
 import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
-import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 type StagedAttachment = {
@@ -88,28 +87,23 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const [batch, setBatch] = useState<UploadBatchItem[]>([]);
   const [isDialogOpen, setDialogOpen] = useState(false);
 
+  // What the sample would carry once saved: a staged deletion frees a slot, a
+  // staged file takes one. This is the count the upload limit applies to.
+  const keptCount = savedCount - deletions.length + pending.length;
+
   const addFiles = (files: File[]) => {
-    // Pre-check size at pick time for UX; the API revalidates.
+    // The shared domain schema fronts the API's own check; any file type
+    // passes, only the size cap can reject. Checked at pick time so the
+    // user hears about it before submitting. Staging past the upload limit is
+    // allowed; the form disables saving until the count fits.
     const accepted = files.filter((file) => {
       const isValid = uploadSampleAttachmentSchema.safeParse({ file }).success;
       if (!isValid) toast.error(m.attachment_too_large({ name: file.name }));
       return isValid;
     });
-    // What the sample would end up carrying bounds the pick: a staged deletion
-    // frees a slot, a staged file takes one. The api refuses past the limit
-    // anyway; this is the funnel that tells the user before they submit.
-    const remaining = Math.max(
-      UPLOAD_LIMIT - (savedCount - deletions.length) - pending.length,
-      0,
-    );
-    if (accepted.length > remaining) {
-      toast.error(m.attachment_limit_reached({ limit: UPLOAD_LIMIT }));
-    }
     setPending((current) => [
       ...current,
-      ...accepted
-        .slice(0, remaining)
-        .map((file) => ({ key: crypto.randomUUID(), file })),
+      ...accepted.map((file) => ({ key: crypto.randomUUID(), file })),
     ]);
   };
 
@@ -126,15 +120,8 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const markDelete = (attachmentId: string) =>
     setDeletions((current) => [...current, attachmentId]);
 
-  // Restoring takes the slot the deletion freed, so it is refused when a
-  // staged file already took it: the sample would go back over the limit.
-  const restore = (attachmentId: string) => {
-    if (savedCount - deletions.length + pending.length >= UPLOAD_LIMIT) {
-      toast.error(m.attachment_limit_reached({ limit: UPLOAD_LIMIT }));
-      return;
-    }
+  const restore = (attachmentId: string) =>
     setDeletions((current) => current.filter((id) => id !== attachmentId));
-  };
 
   const setDescription = (attachmentId: string, description: string) =>
     setDescriptions((current) => ({ ...current, [attachmentId]: description }));
@@ -234,6 +221,7 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
 
   return {
     pending,
+    keptCount,
     addFiles,
     removeFile,
     setPendingDescription,

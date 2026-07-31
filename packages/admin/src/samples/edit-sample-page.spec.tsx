@@ -323,8 +323,12 @@ describe("EditSamplePage", () => {
       overLimitAttachments,
     );
     const publish = screen.getByRole("button", { name: "Save & Publish" });
+    const save = screen.getByRole("button", { name: "Save as draft" });
 
+    // The api refuses saving an over-limit sample, so the draft save is
+    // disabled too, not just the publish.
     await expect.element(publish).toBeDisabled();
+    await expect.element(save).toBeDisabled();
     publish.element().parentElement?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
@@ -334,6 +338,7 @@ describe("EditSamplePage", () => {
     await screen.getByRole("tab", { name: "Links" }).click();
     await screen.getByRole("button", { name: "Delete legacy-0.csv" }).click();
     await expect.element(publish).toBeEnabled();
+    await expect.element(save).toBeEnabled();
   });
 
   it("should not mention the attachment limit on a sample at the limit", async () => {

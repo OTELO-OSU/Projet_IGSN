@@ -174,15 +174,6 @@ export function SampleForm({
     },
   });
 
-  // What the sample would carry once saved: the saved files not marked for
-  // deletion plus the staged ones, which is what the publish limit applies to.
-  const keptAttachments = [
-    ...attachments.filter(
-      (attachment) => !attachmentChanges?.deletions.includes(attachment.id),
-    ),
-    ...(attachmentChanges?.pending ?? []),
-  ];
-
   // Gate a button on canSubmit (an invalid form would silently do nothing)
   // and on the publish blockers, which the tooltip lists so the disabled
   // button explains itself. Used by Save & Publish and, for a published
@@ -218,32 +209,32 @@ export function SampleForm({
       }) => {
         // Form state holds looser select strings; the runtime values match
         // the domain, so cast to the fields samplePublishBlockers reads.
-        // Attachments live outside the form state: only their count matters,
-        // and it is what the sample would carry once saved.
+        // Attachments live outside the form state: only the count the save
+        // would keep matters.
         const reasons = samplePublishBlockers(
           {
-            ...({
-              type: composeHierarchyValue(typePath),
-              material: composeHierarchyValue(materialPath),
-              metamorphicFacies: metamorphicFacies || null,
-              location: composeLocation(location),
-              description: composeDescription(description),
-              age,
-              availability: availability ?? null,
-              scientificContext,
-            } as Pick<
-              Sample,
-              | "type"
-              | "material"
-              | "metamorphicFacies"
-              | "location"
-              | "description"
-              | "age"
-              | "availability"
-              | "scientificContext"
-            >),
-            attachments: keptAttachments,
-          },
+            type: composeHierarchyValue(typePath),
+            material: composeHierarchyValue(materialPath),
+            metamorphicFacies: metamorphicFacies || null,
+            location: composeLocation(location),
+            description: composeDescription(description),
+            age,
+            availability: availability ?? null,
+            scientificContext,
+            attachments: {
+              length: attachmentChanges?.keptCount ?? attachments.length,
+            },
+          } as Pick<
+            Sample,
+            | "type"
+            | "material"
+            | "metamorphicFacies"
+            | "location"
+            | "description"
+            | "age"
+            | "availability"
+            | "scientificContext"
+          > & { attachments: { length: number } },
           UPLOAD_LIMIT,
         ).map(publishBlockerLabel);
         const button = renderButton(
@@ -307,10 +298,14 @@ export function SampleForm({
       </form.AppForm>
     );
     // A published sample's save must keep it publishable, so it gates on the
-    // blockers like the first publish; a draft saves freely.
+    // blockers like the first publish. A draft saves freely, except over the
+    // attachment limit: the api refuses that payload, and the file count next
+    // to the drop zone says why.
+    const isOverLimit =
+      (attachmentChanges?.keptCount ?? attachments.length) > UPLOAD_LIMIT;
     return published
       ? renderPublishGated(submitButton)
-      : submitButton(isPending ?? false);
+      : submitButton((isPending ?? false) || isOverLimit);
   };
 
   return (

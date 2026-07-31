@@ -331,7 +331,6 @@
   "attachment_upload_dialog_title": "Uploading files",
   "attachment_upload_dialog_description": "Files are uploaded before the sample is saved.",
   "attachment_too_large": "{name} exceeds the 100 MB limit.",
-  "attachment_limit_reached": "You cannot attach more than {limit} files. Remove one before adding another.",
   "attachment_count": "{count} of {limit} files",
   "attachment_download_error": "Failed to download the file."
 }

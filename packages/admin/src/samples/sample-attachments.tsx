@@ -172,14 +172,12 @@ export function SampleAttachments({
   changes,
 }: SampleAttachmentsProps) {
   const { pending, addFiles, removeFile, setPendingDescription } = changes;
-  // What the sample will carry once saved, which is what the limit applies to.
-  const count = attachments.length - changes.deletions.length + pending.length;
 
   return (
     <FormSection title={m.section_attachments()}>
       <AttachmentDropZone onFiles={addFiles} />
       <p className="text-muted-foreground text-sm">
-        {m.attachment_count({ count, limit: UPLOAD_LIMIT })}
+        {m.attachment_count({ count: changes.keptCount, limit: UPLOAD_LIMIT })}
       </p>
       {pending.length > 0 ? (
         <ul className="grid gap-2">

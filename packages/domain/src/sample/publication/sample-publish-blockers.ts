@@ -58,9 +58,10 @@ export function samplePublishBlockers(
     | "availability"
     | "scientificContext"
   > & {
-    // Only the length is read, so a saved `Sample["attachments"]` and the
-    // admin's staged files both fit. Omitted means "unknown", never blocking.
-    attachments?: readonly unknown[];
+    // Only the length is read, so the api's saved `Sample["attachments"]` and
+    // the admin's post-save count both fit. Omitted means "unknown", never
+    // blocking.
+    attachments?: { readonly length: number };
   },
   uploadLimit: number = DEFAULT_UPLOAD_LIMIT,
 ): PublishBlocker[] {
