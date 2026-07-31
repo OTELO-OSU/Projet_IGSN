@@ -26,14 +26,14 @@ mock realm.
 | Protocol / type           | OpenID Connect, public (no client_secret)                                                                   |
 | Flows                     | Standard flow only; implicit OFF, direct access grants OFF, service accounts OFF, device OFF                |
 | PKCE                      | required, `pkce.code.challenge.method: S256`                                                                |
-| Redirect URIs             | `https://igsn-admin.<prod-domain>/` (exact, no wildcard)                                                    |
-| Post-logout redirect URIs | `https://igsn-admin.<prod-domain>/`                                                                         |
+| Redirect URIs             | `https://igsn-admin.<prod-domain>/auth/callback` (exact, no wildcard)                                       |
+| Post-logout redirect URIs | `https://igsn-admin.<prod-domain>/auth/callback`                                                            |
 | Web origins               | `https://igsn-admin.<prod-domain>`                                                                          |
 | Scopes                    | `openid profile email`; no `offline_access`                                                                 |
 | Refresh tokens            | issued to this public client, their rotation policy (doc SPA line: 5 min access, 30 min single-use refresh) |
 
-The SPA always returns to origin + `/` (`redirect_uri` derives from
-`window.location.origin`), so exact URIs suffice: stricter than the
+The SPA always returns to origin + `/auth/callback` (`redirect_uri` derives
+from `window.location.origin`), so exact URIs suffice: stricter than the
 suffix-wildcard
 [REQ-PARAM-02](adr/0006-gaiadata-sso-compliance.md#gt-sso-requirements)
 allows. Deep links ride the oidc `state`, not the redirect URI.
