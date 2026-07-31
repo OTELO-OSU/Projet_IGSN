@@ -11,21 +11,43 @@ import {
 } from "@projet-igsn/design-system/components/ui/dialog";
 
 import { m } from "#/paraglide/messages.js";
+import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
 
 type PublishSampleButtonProps = {
   label: string;
   disabled?: boolean;
   onPublish: () => void;
+  sampleId?: string;
 };
 
 // Publishing assigns a permanent IGSN and cannot be undone, hence the
 // confirmation dialog. type="button" so opening the dialog never submits the
 // surrounding form as a draft.
 export function PublishSampleButton({
+  sampleId,
+  ...props
+}: PublishSampleButtonProps) {
+  return sampleId === undefined ? (
+    <PublishDialog {...props} />
+  ) : (
+    <OwnerPublishButton {...props} sampleId={sampleId} />
+  );
+}
+
+function OwnerPublishButton({
+  sampleId,
+  ...props
+}: PublishSampleButtonProps & { sampleId: string }) {
+  return useUserRoleOnSample(sampleId) === "contributor" ? null : (
+    <PublishDialog {...props} />
+  );
+}
+
+function PublishDialog({
   label,
   disabled,
   onPublish,
-}: PublishSampleButtonProps) {
+}: Omit<PublishSampleButtonProps, "sampleId">) {
   return (
     <Dialog>
       <DialogTrigger asChild>

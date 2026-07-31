@@ -58,7 +58,7 @@ function fakeApi(failWrites = false) {
         headers: { "content-type": "application/json" },
       });
     }
-    return new Response(JSON.stringify({ data: sample }), {
+    return new Response(JSON.stringify({ data: sample, role: "owner" }), {
       status: 200,
       headers: { "content-type": "application/json" },
     });

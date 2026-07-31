@@ -53,6 +53,7 @@ import { availabilityLabel, natureLabel } from "#/samples/sample-labels.ts";
 import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
 import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
+import { SampleSubmitButton } from "#/samples/sample-submit-button.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
 import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
@@ -270,6 +271,7 @@ export function SampleForm({
         <PublishSampleButton
           label={action.label}
           disabled={disabled}
+          sampleId={sampleId}
           onPublish={() =>
             void form.handleSubmit({ onValid: action.onPublish })
           }
@@ -281,10 +283,12 @@ export function SampleForm({
     // No caller needs two; add explicit per-button meta if that ever changes.
     const submitButton = (disabled: boolean) => (
       <form.AppForm>
-        <form.SubmitButton
+        <SampleSubmitButton
           label={action.label}
           variant={variant}
           disabled={disabled}
+          sampleId={sampleId}
+          published={published}
         />
       </form.AppForm>
     );

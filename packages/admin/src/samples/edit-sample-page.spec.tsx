@@ -1,4 +1,5 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -52,6 +53,7 @@ function fakeApi(
   security: Record<string, unknown> | null = null,
   economic: Record<string, unknown> | null = null,
   attachments: SampleAttachment[] = [],
+  role: UserSampleRole = "owner",
 ) {
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -108,8 +110,11 @@ function fakeApi(
       calls.push("PUBLISH");
     }
     const body = url.includes("samples?")
-      ? { data: [sample], meta: { total: 1 } }
-      : { data: sample };
+      ? {
+          data: [{ ...sample, owner: { name: "Dupont", firstname: "Marie" } }],
+          meta: { total: 1 },
+        }
+      : { data: sample, role };
     return new Response(JSON.stringify(body), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -128,6 +133,7 @@ async function renderEditPage(
   security: Record<string, unknown> | null = null,
   economic: Record<string, unknown> | null = null,
   attachments: SampleAttachment[] = [],
+  role: UserSampleRole = "owner",
 ) {
   const { id, calls } = fakeApi(
     published,
@@ -139,6 +145,7 @@ async function renderEditPage(
     security,
     economic,
     attachments,
+    role,
   );
   const queryClient = new QueryClient();
   const router = createRouter({
@@ -156,7 +163,51 @@ async function renderEditPage(
   return { screen, calls };
 }
 
+const renderEditPageAsContributor = (published: boolean) =>
+  renderEditPage(
+    published,
+    "fossil",
+    false,
+    null,
+    null,
+    "exists",
+    null,
+    null,
+    [],
+    "contributor",
+  );
+
 describe("EditSamplePage", () => {
+  it("should not offer Save & Publish to a contributor on a draft", async () => {
+    const { screen } = await renderEditPageAsContributor(false);
+
+    await expect
+      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Save & Publish" }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should disable saving for a contributor on a published sample and explain why", async () => {
+    const { screen } = await renderEditPageAsContributor(true);
+    const save = screen.getByRole("button", { name: "Publish updates" });
+    await expect.element(save).toBeDisabled();
+
+    save.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/only the owner can update a published sample/i);
+  });
+
+  it("should let the owner save a published sample", async () => {
+    const { screen } = await renderEditPage(true);
+
+    await expect
+      .element(screen.getByRole("button", { name: "Publish updates" }))
+      .toBeEnabled();
+  });
+
   it("should offer Save as draft and Save & Publish on a draft", async () => {
     const { screen } = await renderEditPage();
     await expect
