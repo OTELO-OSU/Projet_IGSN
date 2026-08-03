@@ -88,13 +88,19 @@ values.
 by anyone who reaches `/admin`, not just sample owners, since the guard
 lives on the sample route, not the user directory. The PO accepted this as
 a known, bounded risk: it is a directory lookup restricted to people who
-already cleared the OIDC login, not an open enumeration endpoint. Mitigations
-in place: a 2-character minimum and `MAX_SEARCH_LENGTH` ceiling on the query
+already cleared the OIDC login, not an open enumeration endpoint. The query
+term is optional: with no term the endpoint browses the first 20 users
+ordered by email (`BROWSE_LIMIT`), so the share dialog can list colleagues
+before any typing; the caller is always excluded from the results.
+Mitigations in place: a 2-character minimum and `MAX_SEARCH_LENGTH` ceiling
+on a provided term
 (`packages/api/src/user/validator.ts`, `packages/domain/src/sample/search/search-tokens.ts`),
-a hard cap of 10 results per query (`SEARCH_LIMIT`,
-`packages/api/src/user/search-users.ts`), and the existing per-user rate
-limit on the whole `/admin` mount (100 requests/60s, ADR 0020) rather than a
-search-specific one.
+a hard cap of 10 results per filtered query (`SEARCH_LIMIT`,
+`packages/api/src/user/search-users.ts`) and 20 per browse, and the existing
+per-user rate limit on the whole `/admin` mount (100 requests/60s, ADR 0020)
+rather than a search-specific one. The browse branch widens nothing: a
+2-character substring already reached every row within the rate budget; it
+only lowers the cost of the first 20.
 
 ## Consequences
 
