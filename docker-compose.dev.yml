@@ -28,6 +28,13 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
       KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
       KC_HEALTH_ENABLED: "true"
+      # Pin the frontend URL so the realm issuer is the same string whichever
+      # host a request arrives on: start-dev otherwise derives it from the
+      # request, and the api's backchannel userinfo call (Host keycloak:8080)
+      # then rejects a token issued to localhost:8080. The backchannel stays
+      # dynamic so that in-network call keeps resolving.
+      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
     # The "orcid" broker defaults to the local mock-orcid realm, so dev needs no
     # credentials.
     env_file:
