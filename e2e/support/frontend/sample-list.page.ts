@@ -4,41 +4,44 @@ import { frontendUrl } from "../urls";
 
 export function sampleListPage(page: Page) {
   return {
-    goto: () => page.goto(`${frontendUrl}/search`),
-    // Open the results page pre-filtered, exercising the "restore facets from
-    // the URL" path (a shared/bookmarked search).
+    // A query is composed on the landing page: /search only holds results.
+    goto: () => page.goto(frontendUrl),
+    gotoEmptySearch: () => page.goto(`${frontendUrl}/search`),
     gotoWithSearch: async (query: string) => {
       await page.goto(`${frontendUrl}/search?${query}`);
       await page.waitForLoadState("networkidle");
     },
-    // The "{count} results" line above the list.
     expectResultCount: (count: number) =>
-      expect(page.getByText(`${count} results`)).toBeVisible(),
+      expect(
+        page.getByText(count === 1 ? "1 result" : `${count} results`, {
+          exact: true,
+        }),
+      ).toBeVisible(),
+    expectPageSize: (size: number) =>
+      expect(
+        page.getByRole("combobox", { name: "Results per page" }),
+      ).toHaveText(String(size)),
+    expectNoResults: () =>
+      expect(page.getByText("No samples match your search.")).toBeVisible(),
     expectSampleAbsent: (name: string) =>
       expect(page.getByRole("link", { name })).toHaveCount(0),
-    // Pick a value in an enum facet (e.g. Nature): open its combobox, choose the
-    // option, and wait for the URL param to appear.
     pickFacet: async (facet: string, option: string, param: string) => {
       await page.getByRole("combobox", { name: facet }).click();
       await page.getByRole("option", { name: option }).click();
       await page.waitForURL(new RegExp(`[?&]${param}=`));
     },
-    // Choose an option in one level of a hierarchy facet's cascade (the combobox
-    // is labelled by the level, e.g. "Igneous"). No URL wait: the param may
-    // already be present from a shallower value, so the caller asserts on the
-    // narrowed results instead.
+    // No URL wait: the param may already be present from a shallower value, so
+    // the caller asserts on the narrowed results instead.
     chooseFacetOption: async (level: string, option: string) => {
       await page.getByRole("combobox", { name: level }).click();
       await page.getByRole("option", { name: option }).click();
     },
-    // Type into a text facet (e.g. Collector), commit, and wait for its param.
     fillTextFacet: async (facet: string, value: string, param: string) => {
       const field = page.getByRole("searchbox", { name: facet });
       await field.fill(value);
       await field.press("Enter");
       await page.waitForURL(new RegExp(`[?&]${param}=`));
     },
-    // Set the lower bound of the age range facet; it commits on blur.
     fillAgeMin: async (value: string) => {
       const field = page.getByRole("spinbutton", { name: "Min" });
       await field.fill(value);
@@ -61,17 +64,14 @@ export function sampleListPage(page: Page) {
         await page.waitForURL(/[?&]q=/, { timeout: 2_000 });
       }).toPass({ timeout: 20_000 });
     },
-    // The facet sidebar, an aside labelled "Filters".
     expectFacetsVisible: () =>
       expect(
         page.getByRole("complementary", { name: "Filters" }),
       ).toBeVisible(),
-    // With no query the page invites a search instead of listing samples.
-    expectSearchInvite: () =>
-      expect(page.getByText(/type a query/i)).toBeVisible(),
-    // Each sample is a link to its detail page, addressed by IGSN; assert both
-    // the name and that it points at the right sample so a wrong href can't pass
-    // unnoticed.
+    expectLanding: () =>
+      expect(
+        page.getByRole("heading", { name: "Search a sample" }),
+      ).toBeVisible(),
     expectSampleLink: (name: string, igsn: string) =>
       expect(page.getByRole("link", { name })).toHaveAttribute(
         "href",

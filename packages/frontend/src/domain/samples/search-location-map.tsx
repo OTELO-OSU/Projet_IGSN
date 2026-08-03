@@ -23,8 +23,6 @@ const round6 = (value: number) => Math.round(value * 1e6) / 1e6;
 const clamp = (value: number, limit: number) =>
   round6(Math.max(-limit, Math.min(limit, value)));
 
-// min/max keeps west <= east, as the domain schema wants (v1 crosses no
-// antimeridian); the clamp catches a release outside the container.
 export function formatBbox(a: LatLng, b: LatLng): string {
   const lngs = [clamp(a.lng, 180), clamp(b.lng, 180)];
   const lats = [clamp(a.lat, 90), clamp(b.lat, 90)];
@@ -42,7 +40,6 @@ function toBounds(bbox: string | undefined): LatLngBoundsExpression | null {
   ];
 }
 
-// The live draft wins over the saved box, so only one rectangle ever shows.
 export function RectangleDrawer({
   bbox,
   onSelect,
@@ -99,6 +96,14 @@ export function RectangleDrawer({
   return bounds ? <Rectangle bounds={bounds} /> : null;
 }
 
+export function InvalidateOnResize({ compact }: { compact: boolean }) {
+  const map = useMap();
+  useEffect(() => {
+    map.invalidateSize();
+  }, [compact, map]);
+  return null;
+}
+
 function FitSelection({ bbox }: { bbox: string | undefined }) {
   const map = useMap();
   useEffect(() => {
@@ -137,6 +142,7 @@ export function SearchLocationMap({
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
       <RectangleDrawer bbox={value} onSelect={onChange} />
+      <InvalidateOnResize compact={compact} />
       {compact ? <FitSelection bbox={value} /> : null}
     </MapContainer>
   );

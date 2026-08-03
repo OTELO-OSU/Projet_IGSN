@@ -18,4 +18,45 @@ describe("LazyLocationMap", () => {
       { timeout: 15_000 },
     );
   });
+
+  it("should enlarge the collapsed map and shrink it back", async () => {
+    const screen = await render(
+      <LazyLocationMap collapsible onChange={vi.fn()} />,
+    );
+
+    await screen.getByRole("button", { name: "Enlarge map" }).click();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Shrink map" }))
+      .toBeInTheDocument();
+
+    await screen.getByRole("button", { name: "Shrink map" }).click();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Enlarge map" }))
+      .toBeInTheDocument();
+  });
+
+  it("should name the size toggle in a tooltip on hover", async () => {
+    const screen = await render(
+      <LazyLocationMap collapsible onChange={vi.fn()} />,
+    );
+
+    await screen.getByRole("button", { name: "Enlarge map" }).hover();
+
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Enlarge map");
+  });
+
+  it("should render no size toggle when the map cannot collapse", async () => {
+    const screen = await render(<LazyLocationMap onChange={vi.fn()} />);
+
+    expect(
+      screen.getByRole("button", { name: "Enlarge map" }).query(),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Shrink map" }).query(),
+    ).toBeNull();
+  });
 });

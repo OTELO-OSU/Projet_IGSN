@@ -30,6 +30,14 @@ one, see the `add-search-facet` skill. The free-text global search box is a
 separate mechanism (`domain/sample/search/search-tokens.ts`), not a facet; see
 ADR 0018 for its query grammar.
 
+A list-schema field that falls back to a default, like `perPage` via
+`pageSizeSchema` (`domain/sample/sample-validator.ts`), needs both
+`.default(fallback)` and `.catch(fallback)`, not `.catch` alone: `.default`
+makes the key optional in the schema's input type, `.catch` degrades an
+invalid value to the fallback at runtime. Drop `.default` and the key becomes
+required in the input type, so a caller that reuses the schema directly as
+`validateSearch` (`admin`'s sample list route) fails to compile.
+
 ## Publish constraints
 
 The reasons a sample cannot be published live in ONE place:

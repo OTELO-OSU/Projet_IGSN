@@ -1,7 +1,5 @@
 import { m } from "#/paraglide/messages.js";
 
-// The location UI copy must resolve from the catalog: a missing key renders its
-// raw name, so assert each message returns its localized English text.
 describe("location search messages", () => {
   it.each([
     [m.search_engine_text, "Text"],
@@ -14,10 +12,6 @@ describe("location search messages", () => {
     [
       m.search_location_empty_hint,
       "No published samples in the selected area.",
-    ],
-    [
-      m.search_location_hint,
-      "Draw an area on the map above to search for samples.",
     ],
   ])("should resolve to its English text", (message, expected) => {
     expect(message()).toBe(expected);

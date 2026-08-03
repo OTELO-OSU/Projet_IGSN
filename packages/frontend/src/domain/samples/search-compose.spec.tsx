@@ -269,6 +269,86 @@ describe("SearchCompose", () => {
     expect(onSearch).toHaveBeenCalledWith({ q: "", page: 1 });
   });
 
+  it("should drop the tabs and the add button once the engines are fixed", async () => {
+    const screen = await render(
+      <SearchCompose
+        initialActive={["text"]}
+        initialDrafts={{ q: "granite", bbox: undefined }}
+        onSearch={vi.fn()}
+        shrunk
+        fixedEngines
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("searchbox", { name: "Search samples" }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Search", exact: true }))
+      .toBeInTheDocument();
+    expect(screen.getByRole("tab").query()).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Add location" }).query(),
+    ).toBeNull();
+  });
+
+  it("should keep both fixed engines without a remove control", async () => {
+    const screen = await render(
+      <SearchCompose
+        initialActive={["text", "location"]}
+        initialDrafts={{ q: "granite", bbox: "-10,40,10,50" }}
+        onSearch={vi.fn()}
+        shrunk
+        fixedEngines
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("searchbox", { name: "Search samples" }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("group", { name: "Search area map" }))
+      .toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Remove Location" }).query(),
+    ).toBeNull();
+  });
+
+  it("should let the reader enlarge the results banner map", async () => {
+    const screen = await render(
+      <SearchCompose
+        initialActive={["location"]}
+        initialDrafts={{ q: undefined, bbox: "-10,40,10,50" }}
+        onSearch={vi.fn()}
+        shrunk
+        fixedEngines
+      />,
+    );
+
+    await screen.getByRole("button", { name: "Enlarge map" }).click();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Shrink map" }))
+      .toBeInTheDocument();
+  });
+
+  it("should offer no map size toggle before a search has run", async () => {
+    const screen = await render(
+      <SearchCompose
+        initialActive={["location"]}
+        initialDrafts={noSeed}
+        onSearch={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByRole("button", { name: "Enlarge map" }).query(),
+    ).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Shrink map" }).query(),
+    ).toBeNull();
+  });
+
   it("should collapse to the picked primary and discard the other draft on tab switch", async () => {
     const onSearch = vi.fn();
     const screen = await render(

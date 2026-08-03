@@ -4,11 +4,10 @@ import { sampleSchema } from "./sample.ts";
 import { facetQueryFields } from "./search/facets.ts";
 import { MAX_SEARCH_LENGTH } from "./search/search-tokens.ts";
 
-export const PAGE_SIZES = [10, 25, 50];
+export const PAGE_SIZES = [10, 25, 50] as const;
 export const DEFAULT_PAGE_SIZE = 25;
 
-// A geographic bounding box parsed from the URL param "west,south,east,north"
-// (degrees). ponytail: v1 ceiling is west <= east; a dateline-wrapping box
+// ponytail: v1 ceiling is west <= east; a dateline-wrapping box
 // (west > east) is rejected here. Supporting it later means splitting the
 // envelope into an OR of two boxes at longitude 180, deferred.
 export const bboxSchema = z.string().transform((value, ctx) => {
@@ -37,38 +36,33 @@ export const bboxSchema = z.string().transform((value, ctx) => {
 
 export type Bbox = z.infer<typeof bboxSchema>;
 
+export const pageSizeSchema = (fallback: (typeof PAGE_SIZES)[number]) =>
+  z.coerce
+    .number()
+    .default(fallback)
+    .catch(fallback)
+    .transform((size): number =>
+      PAGE_SIZES.some((allowed) => allowed === size) ? size : fallback,
+    );
+
 export const listSamplesQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1).catch(1),
-  perPage: z.coerce
-    .number()
-    .default(DEFAULT_PAGE_SIZE)
-    .catch(DEFAULT_PAGE_SIZE)
-    .transform((size): number =>
-      PAGE_SIZES.includes(size) ? size : DEFAULT_PAGE_SIZE,
-    ),
-  // Sorting is applied server-side (the list is paginated). "status" orders by
-  // IGSN presence: a sample is published exactly when it has an IGSN.
+  perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
+  // "status" orders by IGSN presence: a sample is published exactly when it has
+  // an IGSN.
   sort: z.enum(["status"]).optional().catch(undefined),
   // Optional, not defaulted: a default would make the key required in typed
-  // clients. Consumers treat an absent order as asc.
+  // clients.
   order: z.enum(["asc", "desc"]).optional().catch(undefined),
-  // `*` expands to `\S*` in a server-side regex, so an unbounded query
-  // backtracks per row. Truncated, not rejected: dropping it means no filter.
-  // Kept when it trims to nothing: a search of blanks or bare wildcards matches
-  // no sample, where an absent param lists them all.
+  // Kept when it trims to nothing: a search of blanks or bare wildcards
+  // matches no sample, where an absent param lists them all.
   search: z
     .string()
     .trim()
     .transform((value) => value.slice(0, MAX_SEARCH_LENGTH))
     .optional()
     .catch(undefined),
-  // Per-facet filters (type, material, nature, numeric age range...), one param
-  // each (three for a range), built from the facet registry so the schema and
-  // the facet set cannot drift. Every one is optional and degrades to no filter.
-  // The numeric age params (ageMin/ageMax/ageUnit, unit defaulting to Ma in the
-  // query builder) come from the `age` facet.
   ...facetQueryFields(),
-  // Malformed or out-of-range boxes degrade to "no filter", like search.
   bbox: bboxSchema.optional().catch(undefined),
 });
 

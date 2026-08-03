@@ -26,11 +26,13 @@ type Drafts = { q?: string; bbox?: string };
 
 // `active[0]` is the primary engine, the one the tabs point at.
 export function SearchCompose({
+  fixedEngines = false,
   initialActive,
   initialDrafts,
   onSearch,
   shrunk = false,
 }: {
+  fixedEngines?: boolean;
   initialActive: SearchEngine[];
   initialDrafts: Drafts;
   onSearch: (params: SearchParams) => void;
@@ -39,7 +41,6 @@ export function SearchCompose({
   const [active, setActive] = useState(initialActive);
   const [drafts, setDrafts] = useState<Drafts>(initialDrafts);
 
-  // Product decision: switching the primary drops the other engines.
   function selectPrimary(engine: SearchEngine) {
     setActive([engine]);
     setDrafts(engine === "location" ? { bbox: drafts.bbox } : { q: drafts.q });
@@ -58,8 +59,6 @@ export function SearchCompose({
     );
   }
 
-  // Param presence is what tells the URL an engine is open, so an unfilled one
-  // still writes its param.
   function submit(event: React.FormEvent) {
     event.preventDefault();
     const params: SearchParams = { page: 1 };
@@ -78,7 +77,9 @@ export function SearchCompose({
   // A map row is too tall to hold the button inline, so it falls below instead.
   const actions = (
     <div className="flex items-center gap-2">
-      {ENGINES.filter((engine) => !active.includes(engine)).map((engine) => (
+      {ENGINES.filter(
+        (engine) => !fixedEngines && !active.includes(engine),
+      ).map((engine) => (
         <Button
           key={engine}
           type="button"
@@ -98,10 +99,15 @@ export function SearchCompose({
 
   return (
     <form role="search" onSubmit={submit}>
-      <div className="flex justify-center">
-        {/* active is never empty: seeded with >=1, remove only drops non-primary. */}
-        <SearchEngineTabs engine={active[0]!} onEngineChange={selectPrimary} />
-      </div>
+      {fixedEngines ? null : (
+        <div className="flex justify-center">
+          {/* active is never empty: seeded with >=1, remove only drops non-primary. */}
+          <SearchEngineTabs
+            engine={active[0]!}
+            onEngineChange={selectPrimary}
+          />
+        </div>
+      )}
 
       <div className="mt-4 flex flex-col gap-4">
         {active.map((engine, index) => (
@@ -125,13 +131,12 @@ export function SearchCompose({
                 <LazyLocationMap
                   value={drafts.bbox}
                   onChange={(bbox) => setDrafts({ ...drafts, bbox })}
-                  compact={shrunk}
+                  collapsible={shrunk}
                 />
               )}
             </div>
             {engine === "text" ? <SearchHelp /> : null}
-            {index > 0 ? (
-              // The bare ✕ does not say what it drops, so show its name too.
+            {index > 0 && !fixedEngines ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
