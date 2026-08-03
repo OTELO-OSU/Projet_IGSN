@@ -24,8 +24,6 @@ export function publishedSampleFrozenField(
   return (name) => {
     const [, hierarchy, depth] = HIERARCHY_LEVEL.exec(name) ?? [];
     if (hierarchy == null || depth == null) return frozen.has(name);
-    // A hierarchy frozen whole wins over its per-level depth; a hierarchy in
-    // neither freezes no level.
     return frozen.has(hierarchy) || Number(depth) < (depths[hierarchy] ?? 0);
   };
 }

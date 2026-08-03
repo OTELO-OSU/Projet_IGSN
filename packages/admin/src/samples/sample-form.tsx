@@ -164,8 +164,6 @@ export function SampleForm({
       if ((attachmentChanges?.keptCount ?? attachments.length) > UPLOAD_LIMIT) {
         return;
       }
-      // A failed upload stays staged for a retry and never blocks saving the
-      // rest.
       const committed = attachmentChanges
         ? await attachmentChanges.commit(attachments)
         : undefined;

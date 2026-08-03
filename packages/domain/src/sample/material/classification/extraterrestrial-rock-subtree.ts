@@ -1,7 +1,7 @@
 import { type TreeNode } from "../../path/tree-node.ts";
 
 // Descendants of the `extraterrestrial_rock` root (screenshot "Extraterrestrial
-// rocks classification"). Spread into the material tree in classification.ts.
+// rocks classification").
 // Every parent is mandatory (the default: no node is marked `optional: true`).
 // Nothing here may change once published (ADR 0022), which is the default, so no
 // node carries `frozenWhenPublished: false` and childless leaves need no entry

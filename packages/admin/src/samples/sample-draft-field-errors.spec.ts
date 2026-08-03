@@ -2,8 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { sampleDraftFieldErrors } from "./sample-draft-field-errors.ts";
 
-// The draft context the mapping reads: the location mode and the hierarchy
-// paths (a hierarchy issue pins on the next level's combobox).
 const draft = (over?: {
   typePath?: (string | undefined)[];
   materialPath?: (string | undefined)[];
@@ -53,8 +51,6 @@ describe("sampleDraftFieldErrors", () => {
   });
 
   it("should pin a hierarchy issue on the next level to refine", () => {
-    // material "rock.igneous" walks two levels, so the error belongs to the
-    // third combobox, the one the user must pick to complete the path.
     expect(
       sampleDraftFieldErrors(
         [

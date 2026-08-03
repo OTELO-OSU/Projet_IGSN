@@ -3,9 +3,6 @@ import { editableLeaves } from "./editable-leaves.ts";
 
 // Descendants of the `rock` root (MINDAT): igneous, metamorphic, the sedimentary
 // subtree, hydrothermal, unknown.
-// A node with no `frozenWhenPublished: false` freezes once published (ADR 0022),
-// so the frozen levels and their childless leaves need no entry at all: only
-// choices, labels, the search facet flag and the first editable level do.
 export const rockTree = {
   igneous: {
     searchable: true,
@@ -151,9 +148,9 @@ export const rockTree = {
     "lamprophyre",
   ),
 
-  // Sedimentary-rock subtree. The freeze stops below these two types: their
-  // children are the first editable level and carry the mark, so nothing deeper
-  // needs one. `other` recurs across those children and is listed once.
+  // The freeze stops below these two types: their children are the first
+  // editable level and carry the mark, so nothing deeper needs one. `other`
+  // recurs across those children and is listed once.
   clastic_sedimentary_rock: {
     choices: [
       "rudite",
