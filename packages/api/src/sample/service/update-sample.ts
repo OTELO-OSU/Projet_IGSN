@@ -8,12 +8,12 @@ import { type Transactional } from "../../transaction.ts";
 import { conditionColumns } from "./condition-columns.ts";
 import { descriptionColumns } from "./description-columns.ts";
 import { economicInterestColumns } from "./economic-interest-columns.ts";
+import { getSampleById } from "./get-sample-by-id.ts";
 import { replaceSampleLinks } from "./replace-sample-links.ts";
 import { scientificContextColumns } from "./scientific-context-columns.ts";
 import { securityColumns } from "./security-columns.ts";
 import { toAgeColumns } from "./to-age-columns.ts";
 import { locationColumns } from "./to-location.ts";
-import { withSampleChildren } from "./with-sample-children.ts";
 
 export async function updateSample(
   db: Transactional<DB>,
@@ -44,11 +44,10 @@ export async function updateSample(
       updated_at: sql`now()`,
     })
     .where("id", "=", id)
-    .returningAll()
+    .returning("id")
     .executeTakeFirst();
   if (!row) return null;
   // PUT semantics, like every other field: absent links clear the links.
   await replaceSampleLinks(db, id, input.links ?? []);
-  const [sample] = await withSampleChildren(db, [row]);
-  return sample!;
+  return getSampleById(db, id);
 }

@@ -6,17 +6,15 @@ import { type Transactional } from "../../transaction.ts";
 import { sampleChildrenSelect } from "./sample-children-select.ts";
 import { toSample } from "./to-sample.ts";
 
-export async function getPublishedSampleByIgsn(
+export async function getSampleById(
   db: Transactional<DB>,
-  igsn: string,
-): Promise<Sample | null> {
+  id: string,
+): Promise<Sample> {
   const row = await db
     .selectFrom("sample")
     .selectAll()
     .select(sampleChildrenSelect)
-    .where("igsn", "=", igsn)
-    .where("published", "=", true)
-    .executeTakeFirst();
-  if (!row) return null;
+    .where("id", "=", id)
+    .executeTakeFirstOrThrow();
   return toSample(row, row.links, row.attachments);
 }

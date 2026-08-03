@@ -8,12 +8,12 @@ import { type Transactional } from "../../transaction.ts";
 import { conditionColumns } from "./condition-columns.ts";
 import { descriptionColumns } from "./description-columns.ts";
 import { economicInterestColumns } from "./economic-interest-columns.ts";
+import { getSampleById } from "./get-sample-by-id.ts";
 import { replaceSampleLinks } from "./replace-sample-links.ts";
 import { scientificContextColumns } from "./scientific-context-columns.ts";
 import { securityColumns } from "./security-columns.ts";
 import { toAgeColumns } from "./to-age-columns.ts";
 import { locationColumns } from "./to-location.ts";
-import { withSampleChildren } from "./with-sample-children.ts";
 
 export async function insertSample(
   db: Transactional<DB>,
@@ -41,9 +41,8 @@ export async function insertSample(
       ...securityColumns(input.security),
       ...economicInterestColumns(input),
     })
-    .returningAll()
+    .returning("id")
     .executeTakeFirstOrThrow();
   await replaceSampleLinks(db, row.id, input.links ?? []);
-  const [sample] = await withSampleChildren(db, [row]);
-  return sample!;
+  return getSampleById(db, row.id);
 }

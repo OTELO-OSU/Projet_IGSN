@@ -11,12 +11,13 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import { facetFilters } from "./facet-filter.ts";
+import { sampleChildrenSelect } from "./sample-children-select.ts";
 import {
   applyFuzzyThreshold,
   relevanceScore,
   searchFilters,
 } from "./search-filter.ts";
-import { withSampleChildren } from "./with-sample-children.ts";
+import { toSample } from "./to-sample.ts";
 
 // Rows whose generated geom intersects the drawn box, bound as parameters.
 // ponytail: ST_MakeEnvelope does not wrap the antimeridian; a box crossing
@@ -76,6 +77,7 @@ async function listSamplesWhere(
     const relevance = search === undefined ? undefined : relevanceScore(search);
     const rows = await matching()
       .selectAll()
+      .select(sampleChildrenSelect)
       .$if(withOwner, (qb) =>
         qb.select((eb) =>
           jsonObjectFrom(
@@ -103,7 +105,7 @@ async function listSamplesWhere(
       .executeTakeFirstOrThrow();
 
     return {
-      data: await withSampleChildren(trx, rows),
+      data: rows.map((row) => toSample(row, row.links, row.attachments)),
       owners: new Map(rows.map((row) => [row.id, row.owner])),
       total: Number(count),
     };

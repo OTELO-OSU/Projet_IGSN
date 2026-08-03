@@ -4,7 +4,8 @@ import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { withSampleChildren } from "./with-sample-children.ts";
+import { sampleChildrenSelect } from "./sample-children-select.ts";
+import { toSample } from "./to-sample.ts";
 
 // Reads a sample and, in the same query, this user's role on it: the api answers
 // 404 on no row and 403 on a row they hold no role on (ADR 0019).
@@ -22,10 +23,9 @@ export async function getSample(
     )
     .selectAll("sample")
     .select("user_sample.role")
+    .select(sampleChildrenSelect)
     .where("sample.id", "=", id)
     .executeTakeFirst();
   if (!row) return null;
-  const { role, ...sampleRow } = row;
-  const [sample] = await withSampleChildren(db, [sampleRow]);
-  return { sample: sample!, role };
+  return { sample: toSample(row, row.links, row.attachments), role: row.role };
 }
