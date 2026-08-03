@@ -65,6 +65,17 @@ export const FROZEN_FORM_FIELDS_BY_PROVENANCE: Record<
   ).flat(),
 };
 
+// The depth down to which each per-level hierarchy form field is frozen, for the
+// admin form kit (which knows the `name[index]` format but not what a level
+// means). Infinity: no material, or a wholly frozen one, so every level locks.
+export function frozenHierarchyDepths(
+  material: Sample["material"],
+): Record<string, number> {
+  return {
+    materialPath: frozenMaterialPrefix(material)?.split(".").length ?? Infinity,
+  };
+}
+
 type RecentCollection = Extract<
   ScientificContext,
   { provenanceStatus: "recent_collection" }

@@ -1,13 +1,14 @@
 import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
-import { frozenMaterialPrefix } from "@projet-igsn/domain/sample/publication/frozen-material-prefix";
 import {
   FROZEN_FORM_FIELDS,
   FROZEN_FORM_FIELDS_BY_PROVENANCE,
+  frozenHierarchyDepths,
 } from "@projet-igsn/domain/sample/publication/published-field-lock";
 
-const HIERARCHY_LEVEL = /\[\d+\]$/;
-const MATERIAL_LEVEL = /^materialPath\[(\d+)\]$/;
+// A hierarchy field registers one control per level, `name[depth]` (see the form
+// kit's HierarchySelectField).
+const HIERARCHY_LEVEL = /^(.+)\[(\d+)\]$/;
 
 export function publishedSampleFrozenField(
   provenanceStatus: ProvenanceStatus | null,
@@ -19,11 +20,12 @@ export function publishedSampleFrozenField(
       ? FROZEN_FORM_FIELDS_BY_PROVENANCE[provenanceStatus]
       : []),
   ]);
-  const frozenMaterialDepth =
-    frozenMaterialPrefix(storedMaterial)?.split(".").length ?? Infinity;
+  const depths = frozenHierarchyDepths(storedMaterial);
   return (name) => {
-    const level = MATERIAL_LEVEL.exec(name);
-    if (level) return Number(level[1]) < frozenMaterialDepth;
-    return frozen.has(name.replace(HIERARCHY_LEVEL, ""));
+    const [, hierarchy, depth] = HIERARCHY_LEVEL.exec(name) ?? [];
+    if (hierarchy == null || depth == null) return frozen.has(name);
+    // A hierarchy frozen whole wins over its per-level depth; a hierarchy in
+    // neither freezes no level.
+    return frozen.has(hierarchy) || Number(depth) < (depths[hierarchy] ?? 0);
   };
 }
