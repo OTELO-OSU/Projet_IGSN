@@ -19,7 +19,12 @@ vi.mock("react-oidc-context", () => ({
     isAuthenticated: true,
     user: {
       access_token: "tok",
-      profile: { name: "Marie Dupont", email: OWNER_EMAIL },
+      profile: {
+        name: "Marie Dupont",
+        given_name: "Marie",
+        family_name: "Dupont",
+        email: OWNER_EMAIL,
+      },
     },
   }),
 }));
@@ -169,7 +174,9 @@ describe("ShareSampleButton", () => {
     await expect
       .element(screen.getByRole("heading", { name: "Owner" }))
       .toBeVisible();
-    await expect.element(screen.getByText(OWNER_EMAIL)).toBeVisible();
+    await expect
+      .element(screen.getByText(`Marie Dupont ${OWNER_EMAIL}`))
+      .toBeVisible();
   });
 
   it("should list the current collaborators under their own label", async () => {

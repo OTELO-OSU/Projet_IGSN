@@ -10,8 +10,8 @@ export function shareSamplePage(page: Page) {
     close: () => dialog.getByRole("button", { name: "Close" }).click(),
     openPicker: () =>
       dialog.getByRole("combobox", { name: "Search a colleague" }).click(),
-    expectOwner: (email: string) =>
-      expect(dialog.getByText(email)).toBeVisible(),
+    expectOwner: (name: string, email: string) =>
+      expect(dialog.getByText(`${name} ${email}`)).toBeVisible(),
     expectNoCollaborator: () =>
       expect(dialog.getByText("No collaborator yet")).toBeVisible(),
     // The directory loads with the dialog, so it is there as the popover opens.

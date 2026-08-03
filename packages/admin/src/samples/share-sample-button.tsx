@@ -36,7 +36,7 @@ import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
 
 const DEBOUNCE_MS = 300;
 
-const fullName = ({ firstname, name }: User) =>
+const fullName = ({ firstname, name }: Pick<User, "firstname" | "name">) =>
   [firstname, name].filter(Boolean).join(" ");
 
 export function ShareSampleButton({ sampleId }: { sampleId: string }) {
@@ -57,7 +57,7 @@ function ShareSampleDialog({ sampleId }: { sampleId: string }) {
   // ponytail: only the owner opens this dialog (the button and both endpoints
   // are owner-gated), so the signed-in identity IS the owner. Read the owner
   // off the sample response the day a contributor gets to see this list.
-  const ownerEmail = useAuth().user?.profile.email;
+  const ownerProfile = useAuth().user?.profile;
 
   const resetSearch = () => {
     clearTimeout(timer.current);
@@ -94,7 +94,13 @@ function ShareSampleDialog({ sampleId }: { sampleId: string }) {
         </DialogHeader>
         <section className="grid gap-1">
           <h3 className="text-sm font-medium">{m.share_owner_label()}</h3>
-          <p className="text-muted-foreground text-sm">{ownerEmail}</p>
+          <p className="text-sm">
+            {fullName({
+              firstname: ownerProfile?.given_name ?? null,
+              name: ownerProfile?.family_name ?? null,
+            })}{" "}
+            <span className="text-muted-foreground">{ownerProfile?.email}</span>
+          </p>
         </section>
         <section className="grid gap-1">
           <h3 className="text-sm font-medium">

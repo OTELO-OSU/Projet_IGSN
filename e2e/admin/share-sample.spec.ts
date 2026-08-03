@@ -24,7 +24,7 @@ test.describe("share a sample", () => {
 
     const share = shareSamplePage(page);
     await share.open();
-    await share.expectOwner(RESEARCHERS.camille.email);
+    await share.expectOwner("Camille Petit", RESEARCHERS.camille.email);
     await share.expectNoCollaborator();
 
     await share.openPicker();
