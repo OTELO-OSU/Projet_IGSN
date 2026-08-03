@@ -209,14 +209,8 @@ export function mergePublishedEdit(
   incoming: CreateSample,
 ): CreateSample {
   const material = mergeMaterial(current.material, incoming.material);
-  return {
-    // The conditional take feeds the lock lists rather than following them, so
-    // listing one of its fields would win instead of being silently defeated.
-    ...freezeLocked(
-      mergeMaterialDependent(current, incoming, material),
-      current,
-      LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS,
-    ),
+  const merged: CreateSample = {
+    ...mergeMaterialDependent(current, incoming, material),
     material,
     location: mergeLocation(current, incoming.location, material),
     description: mergeDescription(current.description, incoming.description),
@@ -225,4 +219,6 @@ export function mergePublishedEdit(
       incoming.scientificContext,
     ),
   };
+  // freezeLocked runs on the fully merged candidate, so a lock entry always wins.
+  return freezeLocked(merged, current, LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS);
 }
