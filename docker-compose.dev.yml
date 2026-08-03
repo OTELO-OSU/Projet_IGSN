@@ -57,6 +57,16 @@ services:
     volumes:
       - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
 
+  # Catch-all SMTP sink so dev mail never leaves the machine: it accepts every
+  # recipient and shows the message in its web UI (http://localhost:1080)
+  # instead of delivering it. SMTP 1025 stays compose-internal, nothing on the
+  # host needs to reach it.
+  maildev:
+    image: maildev/maildev:2.2.1
+    container_name: maildev
+    ports:
+      - "1080:1080"
+
   frontend:
     build:
       context: .
@@ -192,6 +202,12 @@ services:
       # (VITE_UPLOAD_LIMIT). Dev's admin service sets none, so it falls back
       # to the same default (5).
       UPLOAD_LIMIT: "5"
+      # Where a future sender will post mail; no code reads these yet. No
+      # SMTP_USER/SMTP_PASSWORD, unlike preprod: maildev takes anonymous SMTP,
+      # and inventing dev credentials would only be parity theatre.
+      SMTP_HOST: maildev
+      SMTP_PORT: "1025"
+      SMTP_FROM: postmaster@igsn.localhost
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3002/"]
       interval: 10s

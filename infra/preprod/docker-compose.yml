@@ -82,6 +82,18 @@ services:
       # Same host var drives the admin bundle (deploy.sh passes it as
       # VITE_UPLOAD_LIMIT), so both sides enforce one limit.
       UPLOAD_LIMIT: "${UPLOAD_LIMIT:-5}"
+      # Outbound mail via a transactional-mail provider's SMTP endpoint; no code
+      # reads these yet, they are the target for future senders. All four come
+      # from the host docker-compose.env like the Postgres password; see
+      # docs/preprod-setup.md for the provider setup (DKIM/SPF DNS records).
+      SMTP_HOST: ${SMTP_HOST}
+      # STARTTLS. EC2 blocks outbound 25 by default; 587 is open.
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      # The sender address; the provider must be authorized for its domain (the
+      # DKIM/SPF records above) or it rejects or spam-folders every send.
+      SMTP_FROM: "postmaster@igsn.${DOMAIN}"
     healthcheck: *healthcheck
     volumes:
       - attachments:/data/attachments

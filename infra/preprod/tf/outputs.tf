@@ -1,4 +1,4 @@
-# All consumed by infra/preprod/scripts/common.sh via `tofu output -raw <name>`.
+# Read with `tofu output -raw <name>` by infra/preprod/scripts/common.sh.
 
 output "aws_region" {
   value = var.aws_region

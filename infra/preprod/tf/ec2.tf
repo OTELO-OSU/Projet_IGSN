@@ -95,6 +95,13 @@ resource "aws_instance" "this" {
     encrypted   = true
   }
 
+  # The SSM "latest AL2023" parameter changes every few weeks; without this,
+  # every new AMI forces a replacement of the (stateful) host. New instances
+  # still pick up the latest AMI; the running one patches itself via dnf.
+  lifecycle {
+    ignore_changes = [ami]
+  }
+
   tags = { Name = local.prefix }
 }
 

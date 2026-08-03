@@ -67,3 +67,4 @@ files or args (`pnpm test path/to/file`, `pnpm lint:check --quiet`). The
 - `admin`: http://localhost:3001
 - `api`: http://localhost:3002
 - `frontend`: http://localhost:3000
+- `maildev` (mail sink UI): http://localhost:1080
