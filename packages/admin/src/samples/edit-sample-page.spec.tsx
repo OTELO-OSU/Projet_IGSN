@@ -200,6 +200,25 @@ describe("EditSamplePage", () => {
       .toHaveTextContent(/only the owner can update a published sample/i);
   });
 
+  it("should offer Share to the owner next to the title", async () => {
+    const { screen } = await renderEditPage();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Share" }))
+      .toBeVisible();
+  });
+
+  it("should not offer Share to a contributor", async () => {
+    const { screen } = await renderEditPageAsContributor(false);
+
+    await expect
+      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Share" }).elements(),
+    ).toHaveLength(0);
+  });
+
   it("should let the owner save a published sample", async () => {
     const { screen } = await renderEditPage(true);
 
