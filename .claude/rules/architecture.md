@@ -52,15 +52,17 @@ classification record and no second list of field names; see ADR 0021.
 
 `material` is the one field with no entry, because which of its levels lock
 depends on the stored path. That lock lives on the tree node
-(`TreeNode.frozenWhenPublished`, absent means editable), and
-`frozenMaterialPrefix` derives the prefix a published sample must keep, read by
-both `mergeMaterial` and the admin form; see ADR 0022.
+(`TreeNode.frozenWhenPublished`; absent means frozen, a level opens only with
+an explicit `false`), and `frozenMaterialPrefix` derives the prefix a
+published sample must keep, read by both `mergeMaterial` and the admin form;
+see ADR 0022.
 
 The admin form never restates that rule: it consumes the maps' flattened form
 names (`FROZEN_FORM_FIELDS`, `FROZEN_FORM_FIELDS_BY_PROVENANCE`) through
 `publishedSampleFrozenField`
 (`admin/src/samples/published-sample-frozen-field.ts`), which adds only the
-hierarchy-level suffix stripping and the frozen material depth, and `SampleForm`
+hierarchy-level suffix stripping and the frozen depths from
+`frozenHierarchyDepths`, and `SampleForm`
 feeds it to the form kit's
 `FieldDisabledProvider`. No control decides for itself that publication
 freezes it: a kit field control resolves it through `useFieldDisabled`, and a

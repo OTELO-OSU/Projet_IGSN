@@ -244,22 +244,23 @@ Background: ADR [0021](adr/0021-post-publish-field-mutability.md).
 
 ### Hierarchy fields: freeze per node, not per field
 
-A dot-path hierarchy like `material` cannot use the map: how deep it freezes depends on which branch the sample sits in (a sediment unlocks at level 2, an igneous rock at level 4). So `material` has no map entry. Instead, editability is declared in the vocabulary tree itself: mark every node that must freeze with `frozenWhenPublished: true`. A node with no mark stays editable after publication, so a frozen root and every frozen level below it each need the flag explicitly:
+A dot-path hierarchy like `material` cannot use the map: how deep it freezes depends on which branch the sample sits in (a sediment unlocks at level 2, an igneous rock at level 4). So `material` has no map entry. Instead, editability is declared in the vocabulary tree itself: a node with no mark is frozen once published, so mark `frozenWhenPublished: false` only on the frontier, the first level under a frozen head that may still change; every level below the frontier is never consulted:
 
 ```ts
 // packages/domain/src/sample/material/classification.ts
 sediment: {
-  frozenWhenPublished: true,
+  // no flag: frozen by default, same as every other root
   choices: ["exogenous_detritic", "volcano_detritic", "biogenic", "physico_chemical"],
 },
 
 // packages/domain/src/sample/material/classification/sediment-subtree.ts
 exogenous_detritic: {
-  frozenWhenPublished: true, // sediment freezes down to this, its second level
+  // no flag: sediment freezes down to this, its second level
   choices: ["gravel", "sand", "silt", "clay", "heterogeneous"],
 },
 gravel: {
-  choices: ["boulder", "cobble", "pebble", "granule"], // no flag: grain size stays refinable after publication
+  frozenWhenPublished: false, // grain size stays refinable after publication
+  choices: ["boulder", "cobble", "pebble", "granule"],
 },
 ```
 
