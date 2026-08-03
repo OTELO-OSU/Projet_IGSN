@@ -38,5 +38,10 @@ be a sibling `infra/prod/`.
   [docker-compose.env.example](../infra/preprod/docker-compose.env.example)).
   An empty value counts as unset; a malformed one fails the api at boot,
   naming the variable. See [ADR 0020](adr/0020-api-rate-limiting.md).
+- **Outbound mail** goes through a transactional-mail provider's SMTP
+  endpoint, not AWS (the org blocks creating the IAM user/role SES auth
+  requires). The api talks STARTTLS on 587 with the `SMTP_*` values from the
+  host env file; the sending domain is verified in the provider's dashboard
+  (DKIM/SPF records in Cloudflare). See [preprod-setup.md](preprod-setup.md).
 - **Images** are built on your laptop and shipped over SSH
   (`docker save | gzip | ssh 'docker load'`). No registry.

@@ -3,7 +3,8 @@
 # migration that gates the api the same way CD does.
 #
 # Ports are shifted off the dev ports so this can run alongside `make dev`:
-#   frontend 4000, admin 4001, api 4002, keycloak 18080, saml-idp 18081
+#   frontend 4000, admin 4001, api 4002, keycloak 18080, saml-idp 18081,
+#   maildev 11080
 # Keycloak listens on 18080 inside the container too (KC_HTTP_PORT) so its
 # issued URLs are identical for the browser and for its own broker calls.
 services:
@@ -74,6 +75,11 @@ services:
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
       # Same, for the attachment cap the admin bundle bakes in.
       UPLOAD_LIMIT: "5"
+      # Same names as dev; no code reads them yet. No SMTP_USER/SMTP_PASSWORD,
+      # unlike preprod: maildev takes anonymous SMTP.
+      SMTP_HOST: maildev
+      SMTP_PORT: "1025"
+      SMTP_FROM: postmaster@igsn.localhost
     volumes:
       - attachments:/data/attachments
     depends_on:
@@ -153,6 +159,13 @@ services:
       SIMPLESAMLPHP_IDP_BASE_URL: http://localhost:18081/simplesaml/
     volumes:
       - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
+
+  # Same catch-all SMTP sink as dev, so a run never sends real mail. Only its
+  # web UI is published, port-shifted off dev's 1080; SMTP 1025 stays internal.
+  maildev:
+    image: maildev/maildev:2.2.1
+    ports:
+      - "11080:1080"
 
 volumes:
   pgdata:
