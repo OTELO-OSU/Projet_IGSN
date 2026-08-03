@@ -2,14 +2,19 @@ import { expect, type Page } from "@playwright/test";
 
 export function shareSamplePage(page: Page) {
   const dialog = page.getByRole("dialog", { name: "Share this sample" });
+  // The suggestions render in a popover, portaled outside the dialog.
   const colleague = (name: string) =>
-    dialog.getByRole("option").filter({ hasText: name });
+    page.getByRole("option").filter({ hasText: name });
   return {
     open: () => page.getByRole("button", { name: "Share" }).click(),
     close: () => dialog.getByRole("button", { name: "Close" }).click(),
+    openPicker: () =>
+      dialog.getByRole("combobox", { name: "Search a colleague" }).click(),
+    expectOwner: (email: string) =>
+      expect(dialog.getByText(email)).toBeVisible(),
     expectNoCollaborator: () =>
       expect(dialog.getByText("No collaborator yet")).toBeVisible(),
-    // The directory loads with the dialog, before anything is typed.
+    // The directory loads with the dialog, so it is there as the popover opens.
     expectColleagueOffered: (name: string) =>
       expect(colleague(name)).toBeVisible(),
     pickColleague: (name: string) => colleague(name).click(),

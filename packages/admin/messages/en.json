@@ -103,6 +103,8 @@
   "action_share": "Share",
   "share_dialog_title": "Share this sample",
   "share_dialog_description": "Collaborators you add can edit this sample while it is a draft.",
+  "share_owner_label": "Owner",
+  "share_collaborators_label": "Collaborators",
   "share_contributors_empty": "No collaborator yet",
   "share_search_label": "Search a colleague",
   "share_search_placeholder": "Search by name or email",

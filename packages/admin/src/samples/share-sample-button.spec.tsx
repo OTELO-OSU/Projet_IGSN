@@ -5,14 +5,22 @@ import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
+import { userEvent } from "vitest/browser";
 
 import { ShareSampleButton } from "./share-sample-button.tsx";
+
+const { OWNER_EMAIL } = vi.hoisted(() => ({
+  OWNER_EMAIL: "marie.dupont@univ-lorraine.fr",
+}));
 
 vi.mock("react-oidc-context", () => ({
   useAuth: () => ({
     isLoading: false,
     isAuthenticated: true,
-    user: { access_token: "tok", profile: { name: "Marie Dupont" } },
+    user: {
+      access_token: "tok",
+      profile: { name: "Marie Dupont", email: OWNER_EMAIL },
+    },
   }),
 }));
 
@@ -139,39 +147,70 @@ async function renderShareButton(options?: Parameters<typeof fakeApi>[0]) {
 type Screen = Awaited<ReturnType<typeof render>>;
 
 const searchField = (screen: Screen) =>
-  screen.getByRole("combobox", { name: "Search a colleague" });
+  screen.getByRole("combobox", { name: "Search by name or email" });
 
 const collaborators = (screen: Screen) =>
   screen.getByRole("dialog").getByRole("listitem");
 
+const openDialog = (screen: Screen) =>
+  screen.getByRole("button", { name: "Share" }).click();
+
+const openPicker = async (screen: Screen) => {
+  await openDialog(screen);
+  await screen.getByRole("combobox", { name: "Search a colleague" }).click();
+};
+
 describe("ShareSampleButton", () => {
-  it("should list the current collaborators when the owner opens it", async () => {
+  it("should show the sample owner first", async () => {
+    const { screen } = await renderShareButton();
+
+    await openDialog(screen);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Owner" }))
+      .toBeVisible();
+    await expect.element(screen.getByText(OWNER_EMAIL)).toBeVisible();
+  });
+
+  it("should list the current collaborators under their own label", async () => {
     const { screen } = await renderShareButton({ contributors: [curie] });
 
-    await screen.getByRole("button", { name: "Share" }).click();
+    await openDialog(screen);
 
     await expect
       .element(screen.getByRole("dialog"))
       .toHaveTextContent("Share this sample");
     await expect
-      .element(screen.getByText("marie.curie@univ-lorraine.fr"))
+      .element(screen.getByRole("heading", { name: "Collaborators" }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("listbox", { name: "Matching colleagues" }))
-      .toBeInTheDocument();
+      .element(screen.getByText("marie.curie@univ-lorraine.fr"))
+      .toBeVisible();
   });
 
   it("should show an empty state when nobody collaborates yet", async () => {
     const { screen } = await renderShareButton();
 
-    await screen.getByRole("button", { name: "Share" }).click();
+    await openDialog(screen);
 
     await expect.element(screen.getByText("No collaborator yet")).toBeVisible();
   });
 
+  it("should offer no suggestion until the autocomplete is opened", async () => {
+    const { screen } = await renderShareButton({ directory: [dupont] });
+
+    await openDialog(screen);
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Search a colleague" }))
+      .toBeVisible();
+    expect(screen.getByRole("option").elements()).toEqual([]);
+    expect(screen.getByRole("listbox").elements()).toEqual([]);
+  });
+
   it("should add the picked colleague to the collaborator list", async () => {
     const { screen } = await renderShareButton({ directory: [dupont] });
-    await screen.getByRole("button", { name: "Share" }).click();
+    await openPicker(screen);
 
     await searchField(screen).fill("dup");
     await screen.getByRole("option", { name: /Dupont/ }).click();
@@ -187,7 +226,7 @@ describe("ShareSampleButton", () => {
       contributors: [dupont],
       directory: [dupont],
     });
-    await screen.getByRole("button", { name: "Share" }).click();
+    await openPicker(screen);
 
     await searchField(screen).fill("dup");
     await screen.getByRole("option", { name: /Dupont/ }).click();
@@ -204,12 +243,12 @@ describe("ShareSampleButton", () => {
     ).toBeNull();
   });
 
-  it("should list the colleagues on open, before anything is typed", async () => {
+  it("should list the colleagues on opening the autocomplete, before anything is typed", async () => {
     const { screen, filteredSearches } = await renderShareButton({
       directory: [dupont, curie],
     });
 
-    await screen.getByRole("button", { name: "Share" }).click();
+    await openPicker(screen);
 
     await expect
       .element(screen.getByRole("option", { name: /Dupont/ }))
@@ -217,6 +256,9 @@ describe("ShareSampleButton", () => {
     await expect
       .element(screen.getByRole("option", { name: /Curie/ }))
       .toBeVisible();
+    await expect
+      .element(screen.getByRole("listbox", { name: "Matching colleagues" }))
+      .toBeInTheDocument();
     expect(filteredSearches()).toEqual([]);
   });
 
@@ -224,7 +266,7 @@ describe("ShareSampleButton", () => {
     const { screen, filteredSearches } = await renderShareButton({
       directory: [dupont],
     });
-    await screen.getByRole("button", { name: "Share" }).click();
+    await openPicker(screen);
 
     await searchField(screen).fill("d");
 
@@ -237,7 +279,7 @@ describe("ShareSampleButton", () => {
 
   it("should say so when no colleague matches a typed term", async () => {
     const { screen } = await renderShareButton({ directory: [dupont] });
-    await screen.getByRole("button", { name: "Share" }).click();
+    await openPicker(screen);
 
     await searchField(screen).fill("zzz");
 
@@ -248,7 +290,7 @@ describe("ShareSampleButton", () => {
     const { screen, filteredSearches } = await renderShareButton({
       directory: [dupont],
     });
-    await screen.getByRole("button", { name: "Share" }).click();
+    await openPicker(screen);
     const field = searchField(screen);
 
     await field.fill("du");
@@ -259,6 +301,25 @@ describe("ShareSampleButton", () => {
       expect(filteredSearches().at(-1)).toContain("search=dupo"),
     );
     expect(filteredSearches()).toHaveLength(1);
+  });
+
+  it("should let a keyboard user open the autocomplete and add a colleague", async () => {
+    const { screen } = await renderShareButton({ directory: [dupont] });
+    await openDialog(screen);
+
+    screen
+      .getByRole("combobox", { name: "Search a colleague" })
+      .element()
+      .focus();
+    await userEvent.keyboard("{Enter}");
+    await expect
+      .element(screen.getByRole("option", { name: /Dupont/ }))
+      .toBeVisible();
+    await userEvent.keyboard("{Enter}");
+
+    await expect
+      .element(collaborators(screen))
+      .toHaveTextContent("Pierre Dupont");
   });
 
   it("should render nothing for a contributor", async () => {
