@@ -5,6 +5,7 @@ import type {
 } from "@projet-igsn/domain/sample/repository";
 
 import { type Expression, sql, type SqlBool } from "kysely";
+import { jsonObjectFrom } from "kysely/helpers/postgres";
 
 import type { DB } from "../../db.ts";
 
@@ -16,7 +17,6 @@ import {
   searchFilters,
 } from "./search-filter.ts";
 import { withSampleChildren } from "./with-sample-children.ts";
-import { withSampleOwners } from "./with-sample-owners.ts";
 
 // Rows whose generated geom intersects the drawn box, bound as parameters.
 // ponytail: ST_MakeEnvelope does not wrap the antimeridian; a box crossing
@@ -52,7 +52,8 @@ async function listSamplesWhere(
   db: Transactional<DB>,
   params: ListSamplesParams,
   scope: Expression<SqlBool>[],
-): Promise<ListSamplesResult> {
+  withOwner = false,
+) {
   const { page, perPage, search, sort, order = "asc" } = params;
 
   // A transaction of its own if the caller has none: the fuzzy threshold is set
@@ -75,6 +76,19 @@ async function listSamplesWhere(
     const relevance = search === undefined ? undefined : relevanceScore(search);
     const rows = await matching()
       .selectAll()
+      .$if(withOwner, (qb) =>
+        qb.select((eb) =>
+          jsonObjectFrom(
+            eb
+              .selectFrom("user_sample")
+              .innerJoin("user", "user.id", "user_sample.user_id")
+              .select(["user.name", "user.firstname"])
+              .whereRef("user_sample.sample_id", "=", "sample.id")
+              .where("user_sample.role", "=", "owner")
+              .limit(1),
+          ).as("owner"),
+        ),
+      )
       // Status is IGSN presence; last-modified stays as the tiebreak.
       .$if(sort === "status", (qb) => qb.orderBy(sql`igsn is not null`, order))
       .$call((qb) => (relevance ? qb.orderBy(relevance, "desc") : qb))
@@ -90,6 +104,7 @@ async function listSamplesWhere(
 
     return {
       data: await withSampleChildren(trx, rows),
+      owners: new Map(rows.map((row) => [row.id, row.owner])),
       total: Number(count),
     };
   });
@@ -105,15 +120,30 @@ export async function listSamplesAssignedTo(
   params: ListSamplesParams,
   userId: string,
 ): Promise<AdminListSamplesResult> {
-  const { data, total } = await listSamplesWhere(db, params, [
-    assignedTo(userId),
-  ]);
-  return { data: await withSampleOwners(db, data), total };
+  const { data, owners, total } = await listSamplesWhere(
+    db,
+    params,
+    [assignedTo(userId)],
+    true,
+  );
+  return {
+    data: data.map((sample) => {
+      const owner = owners.get(sample.id);
+      if (!owner) {
+        throw new Error(
+          `Sample ${sample.id} has no owner: user_sample invariant broken`,
+        );
+      }
+      return { ...sample, owner };
+    }),
+    total,
+  };
 }
 
-export function listPublishedSamples(
+export async function listPublishedSamples(
   db: Transactional<DB>,
   params: ListSamplesParams,
 ): Promise<ListSamplesResult> {
-  return listSamplesWhere(db, params, [isPublished()]);
+  const { data, total } = await listSamplesWhere(db, params, [isPublished()]);
+  return { data, total };
 }
