@@ -19,6 +19,7 @@ import { sedimentTree } from "./classification/sediment-subtree.ts";
 // own code (see tree-node.ts).
 const materialTree = {
   rock: {
+    frozenWhenPublished: true,
     searchable: true,
     choices: [
       "igneous",
@@ -30,6 +31,7 @@ const materialTree = {
     ],
   },
   sediment: {
+    frozenWhenPublished: true,
     searchable: true,
     choices: [
       "exogenous_detritic",
@@ -39,14 +41,15 @@ const materialTree = {
     ],
   },
   extraterrestrial_rock: {
+    frozenWhenPublished: true,
     searchable: true,
     choices: ["returned_samples", "meteorites", "micrometeorites"],
   },
-  // Plain-leaf roots; an entry exists only to flag them as searchable facet
-  // options (see sample/search/facets.ts).
-  mineral: { searchable: true },
-  fossil: { searchable: true },
-  synthetic_rock_mineral: { searchable: true },
+  // Plain-leaf roots; their entry only carries the publication freeze and the
+  // searchable facet flag (see sample/search/facets.ts).
+  mineral: { frozenWhenPublished: true, searchable: true },
+  fossil: { frozenWhenPublished: true, searchable: true },
+  synthetic_rock_mineral: { frozenWhenPublished: true, searchable: true },
 
   ...rockTree,
   ...metamorphicTree,

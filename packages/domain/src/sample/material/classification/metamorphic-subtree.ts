@@ -12,16 +12,19 @@ import { type TreeNode } from "../../path/tree-node.ts";
 // existing `plutonic.*`/`volcanic.*` and sedimentary overrides still apply under
 // this branch. `hornblendite` and `pyroxenite` are igneous leaves reused as
 // generic terms the same way (defined in rock-subtree.ts, referenced here).
-// `weakly_metamorphosed` stays frozen at its own level, but the subtrees it
-// reuses bring their own `editableChildren` deeper down.
+// The reused subtrees keep their own freeze marks, so a weakly metamorphosed
+// plutonic rock unlocks below the chemistry level, like an igneous one.
 export const metamorphicTree = {
   weakly_metamorphosed: {
+    frozenWhenPublished: true,
     choices: ["meta_igneous_rock", "meta_sedimentary_rock"],
   },
   meta_igneous_rock: {
+    frozenWhenPublished: true,
     choices: ["plutonic", "volcanic"],
   },
   meta_sedimentary_rock: {
+    frozenWhenPublished: true,
     choices: [
       "microbialite",
       "clastic_sedimentary_rock",
@@ -32,7 +35,7 @@ export const metamorphicTree = {
   },
 
   strongly_metamorphosed: {
-    editableChildren: true,
+    frozenWhenPublished: true,
     choices: [
       "amphibolite",
       "anthracite_coal",

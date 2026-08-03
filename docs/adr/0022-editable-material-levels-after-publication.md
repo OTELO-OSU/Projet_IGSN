@@ -17,19 +17,29 @@ The unlock depth varies by branch (sediment at level 2, sedimentary rock at
 
 ## Decision
 
-Editability is declared per node, not per field. `TreeNode` gains an
-`editableChildren?: boolean` flag: when set, that node's children may still
-be chosen after publication. `material` leaves the lock maps of
+Editability is declared per node, not per field. `TreeNode` gains a
+`frozenWhenPublished?: boolean` flag on the node itself: when true, that
+node's own value can no longer change once published; absent (the default)
+means editable. The flag is fail-open, so every level that must stay frozen,
+roots included, needs the mark explicitly. `material` leaves the lock maps of
 `published-field-lock.ts` and gains a merge helper, since which levels lock
 depends on the stored path.
 
-`frozenMaterialPrefix` walks a stored path and returns the shallowest
-ancestor carrying the flag, the prefix a published sample must keep (`null`
-means fully frozen). `mergeMaterial` accepts an incoming path only at-or-under
-that prefix; anything else keeps the stored value. The admin form freezes the
-matching cascade levels through the same prefix via
+`frozenMaterialPrefix` walks a stored path and returns its contiguous frozen
+head, the prefix a published sample must keep (`null` means the whole path is
+frozen with nothing left to refine). A path frozen all the way to a leaf whose
+children are editable is still returned as its own prefix, so it can be
+completed rather than stuck incomplete. `mergeMaterial` accepts an incoming
+path only at-or-under that prefix; anything else keeps the stored value. The
+admin form freezes the matching cascade levels through the same prefix via
 `publishedSampleFrozenField`, so the form-level resolver stays the only place
 that decides a control is frozen (ADR 0021).
+
+A spec (`frozen-material-prefix.spec.ts`) guards the invariants the walk
+depends on: the frozen nodes of every path form a contiguous head (no
+editable level sits above a frozen one), every root is frozen, and a
+fully-frozen path's children are uniformly frozen or uniformly editable
+(never a mix of both).
 
 **Rejected: an allowlist of full dot-paths.** A second list to keep in sync
 with the tree, silently diverging the moment a node is added, moved, or
@@ -44,6 +54,9 @@ reused under another parent.
   The IGSN and frozen prefix never change, so citations still resolve.
 - ADR 0021's blocker-delta guard already rejects a refinement that introduces
   a new publish blocker with a 409.
-- The nodes marked `editableChildren: true` are not pinned by a spec (cut as
-  lockstep duplication with the tree); an accidental mark is caught by
-  review only.
+- The flag is fail-open: a node with no mark is editable after publication.
+  The guard spec catches a frozen level appearing below an editable one and
+  an unfrozen root, but not a forgotten mark on a new frozen leaf whose
+  ancestors are already frozen and uniform: that leaf still satisfies every
+  invariant on its own and silently unlocks after publish. Review is the
+  backstop for that case.

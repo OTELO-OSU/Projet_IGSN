@@ -28,11 +28,14 @@ context override do. Navigated by the generic helpers in `path/`:
 `pathSegment`, `pathChildren`, `isPathLeaf`, `isPathComplete(paths, path, isOptional)`
 (the `isOptional` callback is each vocabulary's completeness policy).
 
-`TreeNode` also carries `editableChildren?: boolean`: marks the node's children
-(and everything deeper) as still choosable after publication (ADR
+`TreeNode` also carries `frozenWhenPublished?: boolean`: marks the node's OWN
+value as no longer changeable after publication (ADR
 [0022](../../../docs/adr/0022-editable-material-levels-after-publication.md)).
-Material only: `type` is wholly frozen and `collectionMethod` is wholly
-editable at the field level, so neither needs it.
+Absent means editable, so a new frozen node must be marked explicitly, roots
+included; forgetting the mark on a leaf below an already-frozen, uniform
+branch is not caught by the guard spec. Material only: `type` is wholly frozen
+and `collectionMethod` is wholly editable at the field level, so neither needs
+it.
 
 Adding a node is **pure data**: no migration, no UI change. Follow TDD (spec first).
 

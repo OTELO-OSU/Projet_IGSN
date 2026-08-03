@@ -244,17 +244,26 @@ Background: ADR [0021](adr/0021-post-publish-field-mutability.md).
 
 ### Hierarchy fields: freeze per node, not per field
 
-A dot-path hierarchy like `material` cannot use the map: how deep it freezes depends on which branch the sample sits in (a sediment unlocks at level 2, an igneous rock at level 4). So `material` has no map entry. Instead, editability is declared in the vocabulary tree itself: mark a node with `editableChildren: true` and everything below it stays choosable after publication.
+A dot-path hierarchy like `material` cannot use the map: how deep it freezes depends on which branch the sample sits in (a sediment unlocks at level 2, an igneous rock at level 4). So `material` has no map entry. Instead, editability is declared in the vocabulary tree itself: mark every node that must freeze with `frozenWhenPublished: true`. A node with no mark stays editable after publication, so a frozen root and every frozen level below it each need the flag explicitly:
 
 ```ts
+// packages/domain/src/sample/material/classification.ts
+sediment: {
+  frozenWhenPublished: true,
+  choices: ["exogenous_detritic", "volcano_detritic", "biogenic", "physico_chemical"],
+},
+
 // packages/domain/src/sample/material/classification/sediment-subtree.ts
 exogenous_detritic: {
-  editableChildren: true, // grain size stays refinable after publication
+  frozenWhenPublished: true, // sediment freezes down to this, its second level
   choices: ["gravel", "sand", "silt", "clay", "heterogeneous"],
+},
+gravel: {
+  choices: ["boulder", "cobble", "pebble", "granule"], // no flag: grain size stays refinable after publication
 },
 ```
 
-Everything else derives from that flag. `frozenMaterialPrefix` walks the stored path and returns the shallowest flagged ancestor, the part of the path the sample must keep:
+Everything else derives from that flag. `frozenMaterialPrefix` walks the stored path and returns its frozen head, the part of the path the sample must keep:
 
 ```ts
 frozenMaterialPrefix("rock.igneous.plutonic.felsic.granite");

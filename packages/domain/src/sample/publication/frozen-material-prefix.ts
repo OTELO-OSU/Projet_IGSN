@@ -1,19 +1,23 @@
-import { MATERIAL_TREE } from "../material/classification.ts";
+import { MATERIAL_PATHS, MATERIAL_TREE } from "../material/classification.ts";
+import { pathChildren } from "../path/children.ts";
 import { resolvePathNode } from "../path/resolve-node.ts";
 
-// The material prefix a published sample must keep: the shallowest ancestor
-// whose children are still editable (`editableChildren`, ADR 0022). The full
-// path counts as its own prefix, so a sample published on a partial path can
-// still be completed. Returns null when nothing in the path unlocks, i.e. the
-// whole material is frozen.
+const isFrozen = (path: string) =>
+  resolvePathNode(MATERIAL_TREE, path)?.node.frozenWhenPublished === true;
+
+// The material prefix a published sample must keep: its head of levels marked
+// `frozenWhenPublished` (ADR 0022). A wholly frozen path is its own prefix when
+// it can still be refined, so a sample published on a partial path can be
+// completed. Returns null when nothing may change, including the guarded-away
+// case of an editable root, where freezing the whole path is the safe read.
 export function frozenMaterialPrefix(material: string | null): string | null {
   if (material == null) return null;
   const segments = material.split(".");
-  for (let depth = 1; depth <= segments.length; depth++) {
-    const prefix = segments.slice(0, depth).join(".");
-    if (resolvePathNode(MATERIAL_TREE, prefix)?.node.editableChildren) {
-      return prefix;
-    }
-  }
-  return null;
+  const firstEditable = segments.findIndex(
+    (_, depth) => !isFrozen(segments.slice(0, depth + 1).join(".")),
+  );
+  if (firstEditable === 0) return null;
+  if (firstEditable > 0) return segments.slice(0, firstEditable).join(".");
+  const children = pathChildren(MATERIAL_PATHS, material);
+  return children.length > 0 && !children.some(isFrozen) ? material : null;
 }

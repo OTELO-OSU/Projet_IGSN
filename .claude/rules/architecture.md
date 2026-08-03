@@ -52,9 +52,9 @@ classification record and no second list of field names; see ADR 0021.
 
 `material` is the one field with no entry, because which of its levels lock
 depends on the stored path. That lock lives on the tree node
-(`TreeNode.editableChildren`), and `frozenMaterialPrefix` derives the prefix a
-published sample must keep, read by both `mergeMaterial` and the admin form; see
-ADR 0022.
+(`TreeNode.frozenWhenPublished`, absent means editable), and
+`frozenMaterialPrefix` derives the prefix a published sample must keep, read by
+both `mergeMaterial` and the admin form; see ADR 0022.
 
 The admin form never restates that rule: it consumes the maps' flattened form
 names (`FROZEN_FORM_FIELDS`, `FROZEN_FORM_FIELDS_BY_PROVENANCE`) through

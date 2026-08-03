@@ -21,8 +21,8 @@ export type TreeNode = {
   // no inheritance: each node a facet should expose is flagged on its own (see
   // sample/search/facets.ts).
   searchable?: boolean;
-  // Children of this node may still be chosen after publication (ADR 0022);
-  // every deeper level is editable too. Absent: the level is frozen once
-  // published.
-  editableChildren?: boolean;
+  // This node's value can no longer change once the sample is published (ADR
+  // 0022). Absent: the level stays editable. The frozen nodes of a path form a
+  // contiguous head, guarded by frozen-material-prefix.spec.ts.
+  frozenWhenPublished?: boolean;
 };
