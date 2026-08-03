@@ -5,7 +5,7 @@ import type {
 
 import type { DB } from "../db.ts";
 
-import { listSamplesByOwner } from "../sample/service/list-sample.ts";
+import { listSamplesAssignedTo } from "../sample/service/list-sample.ts";
 import { type Transactional } from "../transaction.ts";
 import { insertUser } from "./insert-user.ts";
 
@@ -36,5 +36,5 @@ export async function listAsOwner(
       )
       .execute();
   }
-  return listSamplesByOwner(db, params, owner.id);
+  return listSamplesAssignedTo(db, params, owner.id);
 }

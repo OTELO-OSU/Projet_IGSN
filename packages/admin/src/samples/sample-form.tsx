@@ -36,7 +36,6 @@ import { composeScientificContext } from "#/samples/compose-scientific-context.t
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
-import { PublishActionGate } from "#/samples/publish-action-gate.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
@@ -58,6 +57,7 @@ import { SampleSubmitButton } from "#/samples/sample-submit-button.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
 import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
+import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
 const natureItems = toComboboxItems(natureSchema.options, natureLabel);
@@ -111,6 +111,7 @@ export function SampleForm({
   attachments = [],
   attachmentChanges,
 }: SampleFormProps) {
+  const roleOnSample = useUserRoleOnSample(sampleId);
   const validate = validateDraft(
     published ? publishedSampleSchema : sampleDraftSchema,
   );
@@ -267,20 +268,19 @@ export function SampleForm({
       );
     }
     if (action.kind === "publish") {
+      if (roleOnSample === "contributor") {
+        return null;
+      }
       // Save & Publish saves first, so unsaved edits are not a blocker here.
-      return (
-        <PublishActionGate sampleId={sampleId}>
-          {renderPublishGated((disabled) => (
-            <PublishSampleButton
-              label={action.label}
-              disabled={disabled}
-              onPublish={() =>
-                void form.handleSubmit({ onValid: action.onPublish })
-              }
-            />
-          ))}
-        </PublishActionGate>
-      );
+      return renderPublishGated((disabled) => (
+        <PublishSampleButton
+          label={action.label}
+          disabled={disabled}
+          onPublish={() =>
+            void form.handleSubmit({ onValid: action.onPublish })
+          }
+        />
+      ));
     }
     // ponytail: a native submit button routes through the form's default meta
     // (defaultSubmit), so only one submit-kind action is supported at a time.

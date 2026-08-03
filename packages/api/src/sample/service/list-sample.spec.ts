@@ -47,7 +47,7 @@ const backdate = (db: Transactional<DB>, id: string) =>
 
 // The query logic every scope shares: sorting, filtering, facets, pagination.
 // Exercised through listAsOwner (no unscoped export exists); the scope
-// predicates themselves have their own specs (list-samples-by-owner.spec.ts,
+// predicates themselves have their own specs (list-samples-assigned-to.spec.ts,
 // and routes.spec.ts for the published one).
 describe("listSamples", () => {
   pgTest("should list samples most-recently-modified first", async ({ db }) => {

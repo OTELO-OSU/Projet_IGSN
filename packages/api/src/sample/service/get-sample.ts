@@ -11,14 +11,14 @@ import { withSampleChildren } from "./with-sample-children.ts";
 export async function getSample(
   db: Transactional<DB>,
   id: string,
-  ownerId: string,
+  userId: string,
 ): Promise<{ sample: Sample; role: UserSampleRole | null } | null> {
   const row = await db
     .selectFrom("sample")
     .leftJoin("user_sample", (join) =>
       join
         .onRef("user_sample.sample_id", "=", "sample.id")
-        .on("user_sample.user_id", "=", ownerId),
+        .on("user_sample.user_id", "=", userId),
     )
     .selectAll("sample")
     .select("user_sample.role")

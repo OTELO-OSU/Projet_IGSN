@@ -21,19 +21,19 @@ export type AdminListSamplesResult = {
   total: number;
 };
 
-// `ownerId` is a separate argument, never part of ListSamplesParams (the
+// `userId` is a separate argument, never part of ListSamplesParams (the
 // validated query): the caller's id comes from the token, never from the client.
 export type SampleRepository = {
   list(
     params: ListSamplesParams,
-    ownerId: string,
+    userId: string,
   ): Promise<AdminListSamplesResult>;
   listPublished(params: ListSamplesParams): Promise<ListSamplesResult>;
   // Reading a sample is relative to who reads it: no row at all (the api answers
   // 404) or the row plus this user's role on it (403 when they hold none).
   get(
     id: string,
-    ownerId: string,
+    userId: string,
   ): Promise<{ sample: Sample; role: UserSampleRole | null } | null>;
   getPublishedByIgsn(igsn: string): Promise<Sample | null>;
   create(input: CreateSample, ownerId: string): Promise<Sample>;

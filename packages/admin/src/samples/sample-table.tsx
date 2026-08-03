@@ -21,7 +21,6 @@ import {
 } from "@tanstack/react-table";
 
 import { m } from "#/paraglide/messages.js";
-import { ownerInitials } from "#/samples/owner-initials.ts";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
 
 const columns: ColumnDef<AdminSampleListItem>[] = [
@@ -96,9 +95,12 @@ const columns: ColumnDef<AdminSampleListItem>[] = [
     cell: ({ row }) => {
       const { name, firstname } = row.original.owner;
       const fullName = [firstname, name].filter(Boolean).join(" ");
+      const initials = [firstname, name]
+        .map((part) => part?.trim().charAt(0).toUpperCase() ?? "")
+        .join("");
       return (
         <span title={fullName}>
-          <span aria-hidden>{ownerInitials(row.original.owner)}</span>
+          <span aria-hidden>{initials}</span>
           <span className="sr-only">{fullName}</span>
         </span>
       );

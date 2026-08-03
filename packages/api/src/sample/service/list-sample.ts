@@ -33,11 +33,11 @@ function withinBbox(
 
 // A scope predicate joins the filter array, so it applies to the count query
 // too: a total that counted other people's samples would lie about the dataset.
-function ownedBy(ownerId: string): Expression<SqlBool> {
+function assignedTo(userId: string): Expression<SqlBool> {
   return sql<SqlBool>`exists (
     select 1 from user_sample
      where user_sample.sample_id = sample.id
-       and user_sample.user_id = ${ownerId}
+       and user_sample.user_id = ${userId}
   )`;
 }
 
@@ -95,18 +95,18 @@ async function listSamplesWhere(
   });
 }
 
-// `ownerId` is a required positional argument, so a direct call that omits it
+// `userId` is a required positional argument, so a direct call that omits it
 // does not compile. The
 // repository wiring can still satisfy `SampleRepository.list` while ignoring
-// its `ownerId` (structural typing); the admin-routes authorization spec is
+// its `userId` (structural typing); the admin-routes authorization spec is
 // what catches that.
-export async function listSamplesByOwner(
+export async function listSamplesAssignedTo(
   db: Transactional<DB>,
   params: ListSamplesParams,
-  ownerId: string,
+  userId: string,
 ): Promise<AdminListSamplesResult> {
   const { data, total } = await listSamplesWhere(db, params, [
-    ownedBy(ownerId),
+    assignedTo(userId),
   ]);
   return { data: await withSampleOwners(db, data), total };
 }

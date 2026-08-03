@@ -5,10 +5,6 @@ import { vi } from "vitest";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
-vi.mock("react-oidc-context", () => ({
-  useAuth: () => ({ user: { access_token: "tok" } }),
-}));
-
 const noop = () => {};
 
 const createAction = (onSubmit: (value: CreateSample) => void) =>

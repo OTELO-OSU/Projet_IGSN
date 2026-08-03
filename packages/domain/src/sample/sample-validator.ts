@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { userSampleRoleSchema } from "../user-sample/model.ts";
+import { userSchema } from "../user/model.ts";
 import { sampleSchema } from "./sample.ts";
 import { facetQueryFields } from "./search/facets.ts";
 import { MAX_SEARCH_LENGTH } from "./search/search-tokens.ts";
@@ -87,10 +88,7 @@ export const sampleResponseSchema = z.object({ data: sampleSchema });
 export type SampleResponse = z.infer<typeof sampleResponseSchema>;
 
 export const adminSampleListItemSchema = sampleSchema.extend({
-  owner: z.object({
-    name: z.string().nullable(),
-    firstname: z.string().nullable(),
-  }),
+  owner: userSchema.pick({ name: true, firstname: true }),
 });
 
 export type AdminSampleListItem = z.infer<typeof adminSampleListItemSchema>;

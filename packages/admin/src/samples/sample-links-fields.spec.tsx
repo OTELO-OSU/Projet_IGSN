@@ -5,10 +5,6 @@ import { vi } from "vitest";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
-vi.mock("react-oidc-context", () => ({
-  useAuth: () => ({ user: { access_token: "tok" } }),
-}));
-
 const SAMPLE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 
 const noop = () => {};
