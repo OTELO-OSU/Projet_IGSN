@@ -34,17 +34,19 @@ import {
 // Full sample CRUD for the admin app. Authentication is enforced once by the
 // requireAuth guard on the /admin mount (see app.ts), which also resolves the
 // caller with currentUser, so no per-route authentication guard here.
-// Authorization is per sample: a user only reaches their own (ADR 0019), through
-// the owner-scoped list and the requireSampleOwner guard below.
+// Authorization is per sample and role-based: a user only reaches a sample they
+// own or contribute to (ADR 0019), through the owner-scoped list and the
+// requireSampleAccess guard below.
 export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
   userSampleRepository: UserSampleRepository,
 ) {
-  // Guards every route naming a sample id and hands it the sample it fetched:
-  // present means the caller owns it (200), absent means no such sample (404),
-  // and someone else's never reaches the route (403). Registered before those
-  // routes below, since Hono runs handlers in registration order.
+  // Guards every route naming a sample id and hands it the sample it fetched
+  // plus the caller's role on it: present means they have a role (200), absent
+  // means no such sample (404), and a sample they have no role on never reaches
+  // the route (403). Registered before those routes below, since Hono runs
+  // handlers in registration order.
   const accessibleSample = requireSampleAccess(repository);
 
   return (

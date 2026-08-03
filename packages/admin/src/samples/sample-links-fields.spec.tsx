@@ -1,10 +1,8 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
-import type { ReactElement } from "react";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { vi } from "vitest";
-import { render } from "vitest-browser-react";
 
+import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
 vi.mock("react-oidc-context", () => ({
@@ -18,11 +16,6 @@ const noop = () => {};
 const saveAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Save", onSubmit }) as const;
 
-const renderForm = (ui: ReactElement) =>
-  render(
-    <QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>,
-  );
-
 const defaultValues: CreateSample = {
   name: "Basalte du Massif Central",
   nature: "thin_section",
@@ -35,7 +28,7 @@ const defaultValues: CreateSample = {
 };
 
 const renderEditForm = (onSubmit: (value: CreateSample) => void) =>
-  renderForm(
+  render(
     <SampleForm
       onCancel={noop}
       defaultValues={defaultValues}
@@ -129,7 +122,7 @@ describe("SampleForm links tab", () => {
   });
 
   it("should prefill saved links", async () => {
-    const screen = await renderForm(
+    const screen = await render(
       <SampleForm
         onCancel={noop}
         defaultValues={{

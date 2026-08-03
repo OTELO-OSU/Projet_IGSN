@@ -147,6 +147,9 @@ describe("ShareSampleButton", () => {
     await expect
       .element(screen.getByText("marie.curie@univ-lorraine.fr"))
       .toBeVisible();
+    await expect
+      .element(screen.getByRole("listbox", { name: "Matching colleagues" }))
+      .toBeInTheDocument();
   });
 
   it("should show an empty state when nobody collaborates yet", async () => {

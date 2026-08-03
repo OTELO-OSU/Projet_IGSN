@@ -1,3 +1,4 @@
+import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
 import { listUsersResponseSchema } from "@projet-igsn/domain/user/user-validator";
 import { testClient } from "hono/testing";
 import { describe, expect } from "vitest";
@@ -84,6 +85,18 @@ describe("admin user routes", () => {
       const res = await createApp(db).request(`/admin/users?search=${search}`, {
         headers: authHeader,
       });
+
+      expect(res.status).toBe(400);
+    },
+  );
+
+  pgTest(
+    "should reject a search term past the length ceiling with 400",
+    async ({ db }) => {
+      const res = await createApp(db).request(
+        `/admin/users?search=${"a".repeat(MAX_SEARCH_LENGTH + 1)}`,
+        { headers: authHeader },
+      );
 
       expect(res.status).toBe(400);
     },

@@ -159,6 +159,13 @@ describe("SampleTable", () => {
       .toHaveTextContent("MC");
   });
 
+  it("should announce the owner full name, not the initials", async () => {
+    const screen = await renderTable(samples);
+    await expect
+      .element(screen.getByRole("cell", { name: "Marie Curie", exact: true }))
+      .toBeInTheDocument();
+  });
+
   it("should render an empty owner cell for a nameless owner", async () => {
     const screen = await renderTable([
       { ...sample, owner: { name: null, firstname: null } },

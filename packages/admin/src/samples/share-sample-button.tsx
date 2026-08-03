@@ -96,7 +96,7 @@ function ShareSampleDialog({ sampleId }: { sampleId: string }) {
             value={term}
             onValueChange={onType}
           />
-          <CommandList>
+          <CommandList label={m.share_suggestions_label()}>
             {term !== "" && !found.isFetching ? (
               <CommandEmpty>{m.share_search_no_results()}</CommandEmpty>
             ) : null}

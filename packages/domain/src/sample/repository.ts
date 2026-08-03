@@ -30,7 +30,7 @@ export type SampleRepository = {
   ): Promise<AdminListSamplesResult>;
   listPublished(params: ListSamplesParams): Promise<ListSamplesResult>;
   // Reading a sample is relative to who reads it: no row at all (the api answers
-  // 404) or the row plus whether this user owns it (403 when they do not).
+  // 404) or the row plus this user's role on it (403 when they hold none).
   get(
     id: string,
     ownerId: string,

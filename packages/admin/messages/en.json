@@ -107,6 +107,7 @@
   "share_search_label": "Search a colleague",
   "share_search_placeholder": "Search by name or email",
   "share_search_no_results": "No colleague found",
+  "share_suggestions_label": "Matching colleagues",
   "share_contributor_added": "Collaborator added",
   "share_contributor_error": "Could not add the collaborator. Please try again.",
   "tab_scientific_context": "Scientific context",

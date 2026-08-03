@@ -29,8 +29,13 @@ export async function withSampleOwners(
       { name, firstname },
     ]),
   );
-  return samples.map((sample) => ({
-    ...sample,
-    owner: ownerBySampleId.get(sample.id) ?? { name: null, firstname: null },
-  }));
+  return samples.map((sample) => {
+    const owner = ownerBySampleId.get(sample.id);
+    if (!owner) {
+      throw new Error(
+        `Sample ${sample.id} has no owner: user_sample invariant broken`,
+      );
+    }
+    return { ...sample, owner };
+  });
 }

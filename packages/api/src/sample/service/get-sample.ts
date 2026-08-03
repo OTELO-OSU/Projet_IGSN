@@ -6,9 +6,8 @@ import type { DB } from "../../db.ts";
 import { type Transactional } from "../../transaction.ts";
 import { withSampleChildren } from "./with-sample-children.ts";
 
-// Reads a sample and, in the same query, whether this user owns it: the api
-// answers 404 on no row and 403 on a row that is someone else's (ADR 0019).
-// A sample nobody owns is owned by nobody, so it is forbidden to everyone.
+// Reads a sample and, in the same query, this user's role on it: the api answers
+// 404 on no row and 403 on a row they hold no role on (ADR 0019).
 export async function getSample(
   db: Transactional<DB>,
   id: string,

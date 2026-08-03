@@ -2,9 +2,13 @@ import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
 import { vi } from "vitest";
-import { render } from "vitest-browser-react";
 
+import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
+
+vi.mock("react-oidc-context", () => ({
+  useAuth: () => ({ user: { access_token: "tok" } }),
+}));
 
 const noop = () => {};
 

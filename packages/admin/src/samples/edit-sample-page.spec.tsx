@@ -189,6 +189,29 @@ describe("EditSamplePage", () => {
     ).toHaveLength(0);
   });
 
+  it("should leave no focusable publish tooltip behind for a contributor on a blocked draft", async () => {
+    const { screen } = await renderEditPage(
+      false,
+      null,
+      false,
+      null,
+      null,
+      "exists",
+      null,
+      null,
+      [],
+      "contributor",
+    );
+
+    await expect
+      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Save & Publish" }).elements(),
+    ).toHaveLength(0);
+    expect(document.querySelectorAll('span[tabindex="0"]')).toHaveLength(0);
+  });
+
   it("should disable saving for a contributor on a published sample and explain why", async () => {
     const { screen } = await renderEditPageAsContributor(true);
     const save = screen.getByRole("button", { name: "Publish updates" });

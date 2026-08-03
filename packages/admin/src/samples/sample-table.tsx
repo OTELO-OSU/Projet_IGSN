@@ -95,9 +95,11 @@ const columns: ColumnDef<AdminSampleListItem>[] = [
     header: () => m.column_owner(),
     cell: ({ row }) => {
       const { name, firstname } = row.original.owner;
+      const fullName = [firstname, name].filter(Boolean).join(" ");
       return (
-        <span title={[firstname, name].filter(Boolean).join(" ")}>
-          {ownerInitials(row.original.owner)}
+        <span title={fullName}>
+          <span aria-hidden>{ownerInitials(row.original.owner)}</span>
+          <span className="sr-only">{fullName}</span>
         </span>
       );
     },

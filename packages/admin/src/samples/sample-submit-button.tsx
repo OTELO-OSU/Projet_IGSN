@@ -21,38 +21,22 @@ type SampleSubmitButtonProps = {
 };
 
 export function SampleSubmitButton({
-  sampleId,
-  ...props
-}: SampleSubmitButtonProps) {
-  return sampleId === undefined ? (
-    <FormSubmitButton {...props} />
-  ) : (
-    <RoleGatedSubmitButton {...props} sampleId={sampleId} />
-  );
-}
-
-function FormSubmitButton({
   label,
   disabled,
   variant,
-}: Omit<SampleSubmitButtonProps, "sampleId" | "published">) {
-  const form = useTypedAppFormContext({ defaultValues: {} });
-  return (
-    <form.SubmitButton label={label} variant={variant} disabled={disabled} />
-  );
-}
-
-function RoleGatedSubmitButton({
   sampleId,
   published,
-  disabled,
-  ...props
-}: SampleSubmitButtonProps & { sampleId: string }) {
+}: SampleSubmitButtonProps) {
+  const form = useTypedAppFormContext({ defaultValues: {} });
   const roleOnSample = useUserRoleOnSample(sampleId);
   const isBlocked =
     roleOnSample !== null && !canUpdateSample(roleOnSample, { published });
   const button = (
-    <FormSubmitButton {...props} disabled={disabled || isBlocked} />
+    <form.SubmitButton
+      label={label}
+      variant={variant}
+      disabled={disabled || isBlocked}
+    />
   );
   if (!isBlocked) {
     return button;

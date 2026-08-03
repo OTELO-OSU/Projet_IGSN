@@ -62,19 +62,8 @@ describe("getSample", () => {
     },
   );
 
-  // Safe default: a sample nobody owns (a row predating ownership) is nobody's.
-  pgTest("should return a sample with no owner as roleless", async ({ db }) => {
-    // Arrange
-    const user = await insertUser(db, "user@univ-lorraine.fr");
-    const created = await insertSample(db, draft);
-    // Act
-    const found = await getSample(db, created.id, user.id);
-    // Assert
-    expect(found).toEqual({ sample: created, role: null });
-  });
-
-  // Distinct from an unowned sample, so the route keeps answering 404 on an
-  // unknown id and 403 on someone else's.
+  // Distinct from a sample the caller holds no role on, so the route keeps
+  // answering 404 on an unknown id and 403 on someone else's.
   pgTest(
     "should return null when the sample does not exist",
     async ({ db }) => {

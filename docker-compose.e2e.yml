@@ -55,10 +55,12 @@ services:
       DATABASE_NAME: igsn
       DATABASE_USER: igsn
       DATABASE_PASSWORD: igsn
-      # Token issuer is the browser-facing Keycloak URL; JWKS is fetched over the
-      # compose network from the keycloak service (same 18080 port, see below).
+      # Token issuer is the browser-facing Keycloak URL; JWKS and userinfo are
+      # fetched over the compose network from the keycloak service (same 18080
+      # port, see below).
       OIDC_ISSUER: http://localhost:18080/realms/igsn
       OIDC_JWKS_URI: http://keycloak:18080/realms/igsn/protocol/openid-connect/certs
+      OIDC_USERINFO_URI: http://keycloak:18080/realms/igsn/protocol/openid-connect/userinfo
       # The only client whose tokens the api accepts (azp); pinned to the SPA's.
       OIDC_CLIENT_ID: igsn-admin
       CORS_ORIGINS: http://localhost:4001,http://localhost:4000

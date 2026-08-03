@@ -1,8 +1,9 @@
+import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
 import { validator } from "hono/validator";
 import { z } from "zod";
 
 const searchUsersQuerySchema = z.strictObject({
-  search: z.string().trim().min(2),
+  search: z.string().trim().min(2).max(MAX_SEARCH_LENGTH),
 });
 
 export const validateSearchUsersQuery = validator("query", (value, c) => {
