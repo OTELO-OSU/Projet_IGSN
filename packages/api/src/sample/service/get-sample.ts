@@ -4,7 +4,8 @@ import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { sampleChildrenSelect } from "./sample-children-select.ts";
+import { sampleAttachments } from "./sample-attachments.ts";
+import { sampleLinks } from "./sample-links.ts";
 import { toSample } from "./to-sample.ts";
 
 // Reads a sample and, in the same query, this user's role on it: the api answers
@@ -23,7 +24,8 @@ export async function getSample(
     )
     .selectAll("sample")
     .select("user_sample.role")
-    .select(sampleChildrenSelect)
+    .select(sampleLinks)
+    .select(sampleAttachments)
     .where("sample.id", "=", id)
     .executeTakeFirst();
   if (!row) return null;

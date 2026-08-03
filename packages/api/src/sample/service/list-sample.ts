@@ -11,7 +11,8 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import { facetFilters } from "./facet-filter.ts";
-import { sampleChildrenSelect } from "./sample-children-select.ts";
+import { sampleAttachments } from "./sample-attachments.ts";
+import { sampleLinks } from "./sample-links.ts";
 import {
   applyFuzzyThreshold,
   relevanceScore,
@@ -77,7 +78,8 @@ async function listSamplesWhere(
     const relevance = search === undefined ? undefined : relevanceScore(search);
     const rows = await matching()
       .selectAll()
-      .select(sampleChildrenSelect)
+      .select(sampleLinks)
+      .select(sampleAttachments)
       .$if(withOwner, (qb) =>
         qb.select((eb) =>
           jsonObjectFrom(

@@ -3,7 +3,8 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { sampleChildrenSelect } from "./sample-children-select.ts";
+import { sampleAttachments } from "./sample-attachments.ts";
+import { sampleLinks } from "./sample-links.ts";
 import { toSample } from "./to-sample.ts";
 
 export async function getPublishedSampleByIgsn(
@@ -13,7 +14,8 @@ export async function getPublishedSampleByIgsn(
   const row = await db
     .selectFrom("sample")
     .selectAll()
-    .select(sampleChildrenSelect)
+    .select(sampleLinks)
+    .select(sampleAttachments)
     .where("igsn", "=", igsn)
     .where("published", "=", true)
     .executeTakeFirst();
