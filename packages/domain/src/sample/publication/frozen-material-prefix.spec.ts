@@ -9,8 +9,9 @@ import { pathChildren } from "../path/children.ts";
 import { resolvePathNode } from "../path/resolve-node.ts";
 import { frozenMaterialPrefix } from "./frozen-material-prefix.ts";
 
-const isFrozen = (path: string) =>
-  resolvePathNode(MATERIAL_TREE, path)?.node.frozenWhenPublished === true;
+const isEditable = (path: string) =>
+  resolvePathNode(MATERIAL_TREE, path)?.node.frozenWhenPublished === false;
+const isFrozen = (path: string) => !isEditable(path);
 
 const prefixesOf = (path: string) => {
   const segments = path.split(".");
@@ -71,20 +72,17 @@ describe("frozenMaterialPrefix", () => {
   it("returns null for a sample with no material", () => {
     expect(frozenMaterialPrefix(null)).toBeNull();
   });
+
+  it("freezes a path whose deepest segment is not in the tree", () => {
+    expect(
+      frozenMaterialPrefix("rock.igneous.plutonic.felsic.unlisted"),
+    ).toBeNull();
+  });
 });
 
 describe("frozenWhenPublished marks in the material tree", () => {
-  it("freezes a contiguous head of every path", () => {
-    const withAFrozenLevelBelowAnEditableOne = MATERIAL_PATHS.filter((path) => {
-      const frozen = prefixesOf(path).map(isFrozen);
-      const firstEditable = frozen.indexOf(false);
-      return firstEditable !== -1 && frozen.slice(firstEditable).includes(true);
-    });
-    expect(withAFrozenLevelBelowAnEditableOne).toEqual([]);
-  });
-
-  it("freezes every root", () => {
-    expect(MATERIAL_ROOTS.filter((root) => !isFrozen(root))).toEqual([]);
+  it("marks no root editable, so a published sample cannot change what it is", () => {
+    expect(MATERIAL_ROOTS.filter(isEditable)).toEqual([]);
   });
 
   it("gives a wholly frozen path uniformly frozen or uniformly editable children", () => {
