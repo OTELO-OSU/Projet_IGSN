@@ -26,6 +26,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .returning(["id", "email", "name", "firstname"])
           .executeTakeFirstOrThrow(),
       ),
-    search: (query) => withTransaction(db, (trx) => searchUsers(trx, query)),
+    search: (query, callerId) =>
+      withTransaction(db, (trx) => searchUsers(trx, query, callerId)),
   };
 }

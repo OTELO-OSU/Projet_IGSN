@@ -116,6 +116,8 @@ async function renderShareButton(options?: Parameters<typeof fakeApi>[0]) {
   );
   const userSearches = () =>
     calls.filter((call) => call.includes("admin/users"));
+  const filteredSearches = () =>
+    userSearches().filter((call) => call.includes("search="));
   const contributorPosts = () =>
     calls.filter((call) => call.startsWith("POST"));
   const roleLoaded = () =>
@@ -124,7 +126,14 @@ async function renderShareButton(options?: Parameters<typeof fakeApi>[0]) {
         "success",
       ),
     );
-  return { screen, calls, userSearches, contributorPosts, roleLoaded };
+  return {
+    screen,
+    calls,
+    userSearches,
+    filteredSearches,
+    contributorPosts,
+    roleLoaded,
+  };
 }
 
 type Screen = Awaited<ReturnType<typeof render>>;
@@ -195,20 +204,48 @@ describe("ShareSampleButton", () => {
     ).toBeNull();
   });
 
-  it("should not search for a term shorter than two characters", async () => {
-    const { screen, userSearches } = await renderShareButton({
+  it("should list the colleagues on open, before anything is typed", async () => {
+    const { screen, filteredSearches } = await renderShareButton({
+      directory: [dupont, curie],
+    });
+
+    await screen.getByRole("button", { name: "Share" }).click();
+
+    await expect
+      .element(screen.getByRole("option", { name: /Dupont/ }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("option", { name: /Curie/ }))
+      .toBeVisible();
+    expect(filteredSearches()).toEqual([]);
+  });
+
+  it("should not filter on a term shorter than two characters", async () => {
+    const { screen, filteredSearches } = await renderShareButton({
       directory: [dupont],
     });
     await screen.getByRole("button", { name: "Share" }).click();
 
     await searchField(screen).fill("d");
 
+    await expect
+      .element(screen.getByRole("option", { name: /Dupont/ }))
+      .toBeVisible();
+    expect(screen.getByText("No colleague found").query()).toBeNull();
+    expect(filteredSearches()).toEqual([]);
+  });
+
+  it("should say so when no colleague matches a typed term", async () => {
+    const { screen } = await renderShareButton({ directory: [dupont] });
+    await screen.getByRole("button", { name: "Share" }).click();
+
+    await searchField(screen).fill("zzz");
+
     await expect.element(screen.getByText("No colleague found")).toBeVisible();
-    expect(userSearches()).toEqual([]);
   });
 
   it("should debounce the search instead of querying on each keystroke", async () => {
-    const { screen, userSearches } = await renderShareButton({
+    const { screen, filteredSearches } = await renderShareButton({
       directory: [dupont],
     });
     await screen.getByRole("button", { name: "Share" }).click();
@@ -219,9 +256,9 @@ describe("ShareSampleButton", () => {
     await field.fill("dupo");
 
     await vi.waitFor(() =>
-      expect(userSearches().at(-1)).toContain("search=dupo"),
+      expect(filteredSearches().at(-1)).toContain("search=dupo"),
     );
-    expect(userSearches()).toHaveLength(1);
+    expect(filteredSearches()).toHaveLength(1);
   });
 
   it("should render nothing for a contributor", async () => {

@@ -21,7 +21,10 @@ import { useRef, useState } from "react";
 import { m } from "#/paraglide/messages.js";
 import { useAddContributor } from "#/samples/use-add-contributor.ts";
 import { useContributors } from "#/samples/use-contributors.ts";
-import { useSearchUsers } from "#/samples/use-search-users.ts";
+import {
+  MIN_SEARCH_LENGTH,
+  useSearchUsers,
+} from "#/samples/use-search-users.ts";
 import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
 
 const DEBOUNCE_MS = 300;
@@ -41,7 +44,7 @@ function ShareSampleDialog({ sampleId }: { sampleId: string }) {
   const [search, setSearch] = useState("");
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const contributors = useContributors(sampleId, isOpen);
-  const found = useSearchUsers(search);
+  const found = useSearchUsers(search, isOpen);
   const addContributor = useAddContributor(sampleId);
 
   const onType = (value: string) => {
@@ -97,7 +100,7 @@ function ShareSampleDialog({ sampleId }: { sampleId: string }) {
             onValueChange={onType}
           />
           <CommandList label={m.share_suggestions_label()}>
-            {term !== "" && !found.isFetching ? (
+            {search.length >= MIN_SEARCH_LENGTH && !found.isFetching ? (
               <CommandEmpty>{m.share_search_no_results()}</CommandEmpty>
             ) : null}
             {(found.data ?? []).map((user) => (

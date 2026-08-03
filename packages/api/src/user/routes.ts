@@ -13,7 +13,10 @@ export function createUserAdminRoutes(userRepository: UserRepository) {
     validateSearchUsersQuery,
     async (c) => {
       const body: ListUsersResponse = {
-        data: await userRepository.search(c.req.valid("query").search),
+        data: await userRepository.search(
+          c.req.valid("query").search,
+          c.get("user").id,
+        ),
       };
       return c.json(body);
     },

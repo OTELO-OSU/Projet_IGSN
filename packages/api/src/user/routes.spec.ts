@@ -102,13 +102,59 @@ describe("admin user routes", () => {
     },
   );
 
-  pgTest("should reject a missing search term with 400", async ({ db }) => {
-    const res = await createApp(db).request("/admin/users", {
-      headers: authHeader,
-    });
+  pgTest("should exclude the caller from the results", async ({ db }) => {
+    await insertResearcher(db, "User", "another.user@univ-lorraine.fr");
 
-    expect(res.status).toBe(400);
+    const res = await testClient(createApp(db)).admin.users.$get(
+      { query: { search: "user" } },
+      { headers: authHeader },
+    );
+
+    const body = listUsersResponseSchema.parse(await res.json());
+    expect(body.data.map((user) => user.email)).toEqual([
+      "another.user@univ-lorraine.fr",
+    ]);
   });
+
+  pgTest(
+    "should list the users by email, caller excluded, with no search term",
+    async ({ db }) => {
+      await insertResearcher(db, "Zeller", "zeller@univ-lorraine.fr");
+      await insertResearcher(db, "Aubry", "aubry@univ-lorraine.fr");
+
+      const res = await createApp(db).request("/admin/users", {
+        headers: authHeader,
+      });
+
+      expect(res.status).toBe(200);
+      const body = listUsersResponseSchema.parse(await res.json());
+      expect(body.data.map((user) => user.email)).toEqual([
+        "aubry@univ-lorraine.fr",
+        "zeller@univ-lorraine.fr",
+      ]);
+    },
+  );
+
+  pgTest(
+    "should return at most twenty users with no search term",
+    async ({ db }) => {
+      for (let index = 0; index < 21; index += 1) {
+        await insertResearcher(
+          db,
+          `Geologue${index}`,
+          `geologue${String(index).padStart(2, "0")}@univ-lorraine.fr`,
+        );
+      }
+
+      const res = await createApp(db).request("/admin/users", {
+        headers: authHeader,
+      });
+
+      const body = listUsersResponseSchema.parse(await res.json());
+      expect(body.data).toHaveLength(20);
+      expect(body.data.at(-1)?.email).toBe("geologue19@univ-lorraine.fr");
+    },
+  );
 
   pgTest("should reject an unauthenticated search with 401", async ({ db }) => {
     const res = await createApp(db).request("/admin/users?search=curie");
