@@ -63,17 +63,30 @@ describe("SampleEconomicInterestFields", () => {
     );
   });
 
-  it("should disable the deposit fields until the answer is yes", async () => {
+  it("should show the deposit fields only once the answer is yes", async () => {
     const screen = await renderEconomicSection();
 
-    await expect.element(screen.getByLabelText("Deposit name")).toBeDisabled();
+    await expect
+      .element(screen.getByLabelText("Resource type details"))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByLabelText("Deposit name"))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByLabelText("Deposit description"))
+      .not.toBeInTheDocument();
 
     await screen.getByRole("combobox", { name: "Economic interest" }).click();
     await screen.getByRole("option", { name: "Yes" }).click();
 
+    await expect.element(screen.getByLabelText("Deposit name")).toBeVisible();
+
+    await screen.getByRole("combobox", { name: "Economic interest" }).click();
+    await screen.getByRole("option", { name: "No", exact: true }).click();
+
     await expect
       .element(screen.getByLabelText("Deposit name"))
-      .not.toBeDisabled();
+      .not.toBeInTheDocument();
   });
 
   it("should reveal the chemical elements only for a mineral_and_ore resource", async () => {

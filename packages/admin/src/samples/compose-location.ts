@@ -35,7 +35,7 @@ export type LocationDraft = {
 // Location shape with possibly missing leaf values. Compose does not decide
 // completeness; the schema (via sampleDraftSchema) rejects partial data on the
 // offending field. Compose only excludes values hidden behind the UI state,
-// since a schema error on a hidden or disabled field could never be fixed.
+// since a schema error on a field that is not rendered could never be fixed.
 type ElevationCandidate = {
   min: number | undefined;
   max: number | undefined;
@@ -69,15 +69,24 @@ type LocationCandidate = {
   localityDescription: string | undefined;
 };
 
-// Elevation flows through once a value is entered. A unit or datum left behind
-// by an emptied value is excluded: those fields are disabled without a value,
-// so a lingering selection is a UI leftover, not entered data.
+export const isElevationEntered = (location: LocationDraft): boolean => {
+  const hasMeta =
+    location.elevationUnit != null || location.elevationDatum != null;
+  return location.type === "point"
+    ? location.elevationValue !== undefined || hasMeta
+    : location.type === "area"
+      ? location.elevationMin !== undefined ||
+        location.elevationMax !== undefined ||
+        hasMeta
+      : false;
+};
+
 function composeElevation(
   min: number | undefined,
   max: number | undefined,
   draft: LocationDraft,
 ): ElevationCandidate | undefined {
-  if (min === undefined && max === undefined) return undefined;
+  if (!isElevationEntered(draft)) return undefined;
   return {
     min,
     max,

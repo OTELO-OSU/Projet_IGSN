@@ -15,9 +15,8 @@ type NumericValueFieldProps = {
 };
 
 // One numeric age value input. The shared unit/reference live in the section;
-// this only edits a number. When the numeric block is emptied it clears the
-// shared unit/reference so a stale unit never fails validation on a control the
-// user can no longer reach.
+// this only edits a number. A unit left behind by an emptied value is kept in
+// the store (ADR 0015 rule 1) and dropped by toAgeInput on submit.
 export function NumericValueField({
   name,
   label,
@@ -31,11 +30,6 @@ export function NumericValueField({
       listeners={{
         onChange: ({ value }) => {
           if (mirrorName) form.setFieldValue(`age.${mirrorName}`, value);
-          const { numericAgeMin, numericAgeMax } = form.state.values.age;
-          if (numericAgeMin == null && numericAgeMax == null) {
-            form.setFieldValue("age.numericAgeUnit", undefined);
-            form.setFieldValue("age.numericAgeYearsUnit", undefined);
-          }
         },
       }}
     >

@@ -27,14 +27,10 @@ and drops it when it stops (`withRequired`).
 ## Dependent fields
 
 Is a field meaningless until a sibling is filled (a unit without its value)?
-Disable it until the sibling is set, mark it required once enabled, and have
-the schema reject its value while the sibling is missing.
-
-Hide a field only when it belongs to the other branch of an exclusive choice
-(the range bounds in single-date mode, the other location modes). A dependent
-field outside a branch is always rendered, disabled until it applies: the form
-announces upfront every question it may ask, so no surprise field appears
-mid-entry.
+Hide it until the sibling is set, mark it required once shown, and have the
+schema reject its value while the sibling is missing. Gate the render and the
+compose exclusion on the exact same expression, a shared helper both call,
+not two expressions that happen to agree.
 
 ## Hidden values (ADR 0015)
 
@@ -52,6 +48,6 @@ hidden by another value) follow three rules:
    fields are unaffected.
 
 Every rule that hides a field needs its matching exclusion in the compose
-step; a hidden field without one turns save into a silent noop. A disabled
-field's value follows the same three rules while its condition does not hold:
-the user cannot edit it, so it cannot be submitted or raise an error either.
+step; a hidden field without one turns save into a silent noop. `disabled`
+now marks a field frozen by publication, and nothing else; its value is
+submitted unchanged.

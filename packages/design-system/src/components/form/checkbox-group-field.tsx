@@ -1,18 +1,18 @@
 import { Checkbox } from "../ui/checkbox.tsx";
 import { Label } from "../ui/label.tsx";
+import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 type CheckboxGroupItem = {
   value: string;
   label: string;
-  disabled?: boolean;
 };
 
 // A checkbox multi-select bound to a string-array field. The stored array
 // follows the items order, so a selection reads back deterministically.
-// Per-item `disabled` lets callers express dependencies between choices (e.g.
-// an exclusive "none" entry) without the group knowing the rule.
+// Callers express dependencies between choices (e.g. an exclusive "none"
+// entry) by leaving the contradicting values out of `items`.
 export function CheckboxGroupField({
   label,
   items,
@@ -24,13 +24,17 @@ export function CheckboxGroupField({
   // The group splits the aria wiring: the description sits on the fieldset,
   // the invalid flag on each checkbox.
   const { error, errorId } = useFieldError();
+  const isDisabled = useFieldDisabled();
   const checked = field.state.value ?? [];
   const toggle = (value: string, on: boolean) =>
     field.handleChange(
       on
-        ? items
-            .map((item) => item.value)
-            .filter((v) => v === value || checked.includes(v))
+        ? [
+            ...items
+              .map((item) => item.value)
+              .filter((v) => v === value || checked.includes(v)),
+            ...checked.filter((v) => !items.some((item) => item.value === v)),
+          ]
         : checked.filter((v) => v !== value),
     );
   return (
@@ -44,7 +48,7 @@ export function CheckboxGroupField({
           <Checkbox
             id={`${field.name}-${item.value}`}
             checked={checked.includes(item.value)}
-            disabled={item.disabled}
+            disabled={isDisabled}
             onBlur={field.handleBlur}
             onCheckedChange={(state) => toggle(item.value, state === true)}
             aria-invalid={error ? true : undefined}

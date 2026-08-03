@@ -60,7 +60,6 @@ describe("sampleDraftFieldErrors", () => {
         [
           {
             path: ["material"],
-            code: "custom",
             params: { code: "material_incomplete" },
           },
         ],
@@ -121,13 +120,30 @@ describe("sampleDraftFieldErrors", () => {
     });
   });
 
+  it("should not claim a positive bound on a reading value that has none", () => {
+    expect(
+      sampleDraftFieldErrors(
+        [
+          {
+            path: ["condition", "temperature", "measurement", "value"],
+            code: "invalid_type",
+          },
+        ],
+        draft(),
+      ),
+    ).toEqual({
+      "condition.temperatureValue": {
+        message: "Enter a value for the selected unit.",
+      },
+    });
+  });
+
   it("should translate a future collection date", () => {
     expect(
       sampleDraftFieldErrors(
         [
           {
             path: ["description", "collectionDate", "end"],
-            code: "custom",
             params: { code: "collection_date_future" },
           },
         ],
@@ -146,7 +162,6 @@ describe("sampleDraftFieldErrors", () => {
         [
           {
             path: ["description", "collectionDate", "start"],
-            code: "custom",
             params: { code: "collection_date_order" },
           },
         ],

@@ -16,7 +16,11 @@ import {
 } from "@projet-igsn/domain/sample/condition/temperature-unit";
 
 import { m } from "#/paraglide/messages.js";
-import { type ConditionDraft } from "#/samples/compose-condition.ts";
+import {
+  type ConditionDraft,
+  hasReadingType,
+} from "#/samples/compose-condition.ts";
+import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import {
   humidityTypeLabel,
   lightLabel,
@@ -31,7 +35,7 @@ const lightItems = toComboboxItems(LIGHTS, lightLabel);
 const humidityTypeItems = toComboboxItems(HUMIDITY_TYPES, humidityTypeLabel);
 
 // Temperature and pressure share the reading-row shape: a category, then a
-// value whose unit becomes required once it is entered (see MeasurementFields).
+// value whose unit only appears once it is entered (see MeasurementFields).
 const readings = [
   {
     key: "temperature" as const,
@@ -64,25 +68,25 @@ const readings = [
 ];
 
 // "No specific condition" contradicts every controlled condition, so whichever
-// side is checked disables the other (dependent-fields rule: the invalid mix
-// cannot be expressed, matching the schema's exclusivity refinement).
+// side is checked drops the other from the list (dependent-fields rule: the
+// invalid mix cannot be expressed, matching the schema's exclusivity
+// refinement). A checked value whose item is filtered out survives `toggle`
+// untouched, so a stored contradictory mix is displayed empty but never
+// silently rewritten.
 const storageConditionItems = (selected: readonly string[]) => {
   const none = selected.includes("no_specific_condition");
   const controlled = selected.some(
     (value) => value !== "no_specific_condition",
   );
-  return STORAGE_CONDITIONS.map((value) => ({
-    value,
-    label: storageConditionLabel(value),
-    disabled: value === "no_specific_condition" ? controlled : none,
-  }));
+  return STORAGE_CONDITIONS.filter((value) =>
+    value === "no_specific_condition" ? !controlled : !none,
+  ).map((value) => ({ value, label: storageConditionLabel(value) }));
 };
 
-// The Condition tab. Every part is optional and independent; a numeric
-// reading is disabled until its category is chosen, and its unit until the
-// value is entered (then required). Render inside a `form.AppForm`. The form
-// store holds the flat `condition.*` draft; `composeCondition` maps it back
-// on submit.
+// The Condition tab. Every part is optional and independent; a reading's unit
+// only appears once its value is entered (and is then required to publish).
+// Render inside a `form.AppForm`. The form store holds the flat `condition.*`
+// draft; `composeCondition` maps it back on submit.
 export function SampleConditionFields() {
   // The sample form, typed down to what this tab reads: the flat
   // `condition.*` draft (same seam as use-description-form.ts, inlined while
@@ -127,37 +131,47 @@ export function SampleConditionFields() {
             )}
           </form.AppField>
           <form.Subscribe
-            selector={(state) => ({
-              hasType: !!state.values.condition[`${reading.key}Type`],
-              hasValue:
-                state.values.condition[`${reading.key}Value`] !== undefined,
-            })}
+            selector={(state) =>
+              hasReadingType(state.values.condition[`${reading.key}Type`])
+            }
           >
-            {({ hasType, hasValue }) => (
-              <>
-                <form.AppField name={`condition.${reading.key}Value`}>
-                  {(field) => (
-                    <field.NumberField
-                      label={reading.valueLabel()}
-                      disabled={!hasType}
-                    />
-                  )}
-                </form.AppField>
-                <form.AppField name={`condition.${reading.key}Unit`}>
-                  {(field) => (
-                    <field.ComboboxField
-                      label={reading.unitLabel()}
-                      requiredToPublish={hasValue}
-                      items={reading.unitItems}
-                      placeholder={m.unit_placeholder()}
-                      searchPlaceholder={m.unit_search_placeholder()}
-                      emptyText={m.unit_empty()}
-                      disabled={!hasValue}
-                    />
-                  )}
-                </form.AppField>
-              </>
-            )}
+            {(hasType) =>
+              hasType ? (
+                <>
+                  <form.AppField name={`condition.${reading.key}Value`}>
+                    {(field) => (
+                      <field.NumberField label={reading.valueLabel()} />
+                    )}
+                  </form.AppField>
+                  {/* Nested, so a value left behind by a cleared category takes
+                      its unit with it: the whole reading is dropped on submit. */}
+                  <form.Subscribe
+                    selector={(state) =>
+                      hasMeasurementValue(
+                        state.values.condition[`${reading.key}Value`],
+                      )
+                    }
+                  >
+                    {(hasValue) =>
+                      hasValue ? (
+                        <form.AppField name={`condition.${reading.key}Unit`}>
+                          {(field) => (
+                            <field.ComboboxField
+                              label={reading.unitLabel()}
+                              requiredToPublish
+                              items={reading.unitItems}
+                              placeholder={m.unit_placeholder()}
+                              searchPlaceholder={m.unit_search_placeholder()}
+                              emptyText={m.unit_empty()}
+                            />
+                          )}
+                        </form.AppField>
+                      ) : null
+                    }
+                  </form.Subscribe>
+                </>
+              ) : null
+            }
           </form.Subscribe>
         </div>
       ))}
@@ -175,18 +189,19 @@ export function SampleConditionFields() {
           )}
         </form.AppField>
         <form.Subscribe
-          selector={(state) => !!state.values.condition.humidityType}
+          selector={(state) =>
+            hasReadingType(state.values.condition.humidityType)
+          }
         >
-          {(hasType) => (
-            <form.AppField name="condition.humidityPercentage">
-              {(field) => (
-                <field.NumberField
-                  label={m.field_humidity_percentage()}
-                  disabled={!hasType}
-                />
-              )}
-            </form.AppField>
-          )}
+          {(hasType) =>
+            hasType ? (
+              <form.AppField name="condition.humidityPercentage">
+                {(field) => (
+                  <field.NumberField label={m.field_humidity_percentage()} />
+                )}
+              </form.AppField>
+            ) : null
+          }
         </form.Subscribe>
       </div>
 

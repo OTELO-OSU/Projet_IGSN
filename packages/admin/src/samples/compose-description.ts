@@ -59,25 +59,27 @@ function composeCollectionDate(draft: DescriptionDraft) {
     : { start: draft.collectionDateStart, end: draft.collectionDateEnd };
 }
 
+export const isOrientedYes = (
+  oriented: DescriptionDraft["oriented"],
+): boolean => oriented === "yes";
+
 export function composeDescription(
   draft: DescriptionDraft,
 ): DescriptionCandidate | null {
-  const oriented =
-    draft.oriented === "yes"
-      ? true
-      : draft.oriented === "no"
-        ? false
-        : undefined;
+  const oriented = isOrientedYes(draft.oriented)
+    ? true
+    : draft.oriented === "no"
+      ? false
+      : undefined;
   const description = {
     collectionDate: composeCollectionDate(draft),
     oriented,
-    // The explanation field is disabled unless oriented is yes, so a value
-    // lingering after switching away is an uneditable leftover, not entered
+    // The explanation field is not rendered unless oriented is yes, so a value
+    // lingering after switching away is an unreachable leftover, not entered
     // data.
-    orientationExplanation:
-      oriented === true
-        ? draft.orientationExplanation?.trim() || undefined
-        : undefined,
+    orientationExplanation: isOrientedYes(draft.oriented)
+      ? draft.orientationExplanation?.trim() || undefined
+      : undefined,
     openDescription: draft.openDescription?.trim() || undefined,
     length: composeMeasurement(draft.lengthValue, draft.lengthUnit),
     width: composeMeasurement(draft.widthValue, draft.widthUnit),

@@ -59,19 +59,26 @@ describe("SampleSecurityFields", () => {
     );
   });
 
-  it("should disable the explanation until the hazard is answered yes", async () => {
+  it("should show the explanation only once the hazard is answered yes", async () => {
     const screen = await renderSecuritySection();
 
     await expect
       .element(screen.getByLabelText("Asbestos explanation"))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
 
     await screen.getByRole("combobox", { name: "Asbestos-rich" }).click();
     await screen.getByRole("option", { name: "Yes" }).click();
 
     await expect
       .element(screen.getByLabelText("Asbestos explanation"))
-      .not.toBeDisabled();
+      .toBeVisible();
+
+    await screen.getByRole("combobox", { name: "Asbestos-rich" }).click();
+    await screen.getByRole("option", { name: "No" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Asbestos explanation"))
+      .not.toBeInTheDocument();
   });
 
   it("should drop an explanation left behind when the hazard is answered no", async () => {

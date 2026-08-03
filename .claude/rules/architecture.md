@@ -56,11 +56,12 @@ names (`FROZEN_FORM_FIELDS`, `FROZEN_FORM_FIELDS_BY_PROVENANCE`) through
 (`admin/src/samples/published-sample-frozen-field.ts`), which adds only the
 hierarchy-level suffix stripping, and `SampleForm` feeds it to the form kit's
 `FieldDisabledProvider`. No control decides for itself that publication
-freezes it: a kit field control resolves it through `useFieldDisabled`, where its
-own `disabled` means "waiting on a sibling" only, and a control with no field
-context (the collection-date mode switch) asks `useIsFieldDisabled()` for the
-field it follows. Freeze a new control by listing its field name in
-`publishedSampleFrozenField`, never with a published flag of its own.
+freezes it: a kit field control resolves it through `useFieldDisabled`, and a
+control with no field context (the collection-date mode switch) asks
+`useIsFieldDisabled()` for the field it follows. Freeze a new control by listing
+its field name in `publishedSampleFrozenField`, never with a published flag of
+its own. In the sample form `disabled` means frozen by publication and nothing
+else; a field waiting on a sibling is not rendered (see forms.md).
 
 ## File layout
 

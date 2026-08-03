@@ -23,8 +23,8 @@ const elementItems = ELEMENTS.map((value) => ({
 // The Economic interest section. The answer is a yes/no/unknown hierarchy (a
 // resource classification refines it under `yes`); the free-text detail applies
 // to any `yes` answer and the chemical elements only to a mineral_and_ore
-// resource, so each stays disabled/hidden until it applies (dependent-fields
-// rule). Render inside a `form.AppForm`. The form store holds the flat
+// resource, so neither is rendered until it applies (dependent-fields rule).
+// Render inside a `form.AppForm`. The form store holds the flat
 // economic-interest draft, so a value hidden by the current answer survives a
 // switch back (ADR 0015); composeEconomicInterest drops it on submit.
 export function SampleEconomicInterestFields() {
@@ -70,33 +70,34 @@ export function SampleEconomicInterestFields() {
                 </form.AppField>
               ) : null}
 
-              <form.AppField name="economicResourceTypePrecision">
-                {(field) => (
-                  <field.TextField
-                    label={m.field_economic_resource_type_precision()}
-                    disabled={!yes}
-                  />
-                )}
-              </form.AppField>
+              {yes ? (
+                <>
+                  <form.AppField name="economicResourceTypePrecision">
+                    {(field) => (
+                      <field.TextField
+                        label={m.field_economic_resource_type_precision()}
+                      />
+                    )}
+                  </form.AppField>
 
-              <form.AppField name="economicDepositName">
-                {(field) => (
-                  <field.TextField
-                    label={m.field_economic_deposit_name()}
-                    disabled={!yes}
-                  />
-                )}
-              </form.AppField>
+                  <form.AppField name="economicDepositName">
+                    {(field) => (
+                      <field.TextField
+                        label={m.field_economic_deposit_name()}
+                      />
+                    )}
+                  </form.AppField>
 
-              <form.AppField name="economicDepositDescription">
-                {(field) => (
-                  <field.TextField
-                    label={m.field_economic_deposit_description()}
-                    multiline
-                    disabled={!yes}
-                  />
-                )}
-              </form.AppField>
+                  <form.AppField name="economicDepositDescription">
+                    {(field) => (
+                      <field.TextField
+                        label={m.field_economic_deposit_description()}
+                        multiline
+                      />
+                    )}
+                  </form.AppField>
+                </>
+              ) : null}
             </>
           );
         }}

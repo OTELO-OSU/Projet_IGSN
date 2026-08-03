@@ -7,6 +7,7 @@ import {
 } from "@projet-igsn/domain/sample/description/volume-unit";
 
 import { m } from "#/paraglide/messages.js";
+import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import { useDescriptionForm } from "#/samples/use-description-form.ts";
 
 // Size and mass units are language-neutral symbols (their own label); volume
@@ -51,10 +52,10 @@ const measurements = [
   },
 ];
 
-// The measurement rows, one value + unit pair each. The unit is disabled and
-// unmarked until its value is entered, then enabled and required (mirroring
-// the location elevation unit); the domain schema, run live by the form,
-// requires each half once the other is set and rejects non-positive values.
+// The measurement rows, one value + unit pair each. The unit only exists once
+// its value is entered, and is then required to publish (mirroring the location
+// elevation unit); the domain schema, run live by the form, requires the unit
+// once the value is set and rejects non-positive values.
 export function MeasurementFields() {
   const form = useDescriptionForm();
   return (
@@ -66,24 +67,25 @@ export function MeasurementFields() {
           </form.AppField>
           <form.Subscribe
             selector={(state) =>
-              state.values.description[`${key}Value`] !== undefined
+              hasMeasurementValue(state.values.description[`${key}Value`])
             }
           >
-            {(required) => (
-              <form.AppField name={`description.${key}Unit`}>
-                {(field) => (
-                  <field.ComboboxField
-                    label={unitLabel()}
-                    requiredToPublish={required}
-                    items={items}
-                    placeholder={m.unit_placeholder()}
-                    searchPlaceholder={m.unit_search_placeholder()}
-                    emptyText={m.unit_empty()}
-                    disabled={!required}
-                  />
-                )}
-              </form.AppField>
-            )}
+            {(hasValue) =>
+              hasValue ? (
+                <form.AppField name={`description.${key}Unit`}>
+                  {(field) => (
+                    <field.ComboboxField
+                      label={unitLabel()}
+                      requiredToPublish
+                      items={items}
+                      placeholder={m.unit_placeholder()}
+                      searchPlaceholder={m.unit_search_placeholder()}
+                      emptyText={m.unit_empty()}
+                    />
+                  )}
+                </form.AppField>
+              ) : null
+            }
           </form.Subscribe>
         </div>
       ))}

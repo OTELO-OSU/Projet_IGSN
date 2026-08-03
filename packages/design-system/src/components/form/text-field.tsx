@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import { withRequired } from "../../lib/with-required.ts";
 import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
@@ -31,6 +33,7 @@ export function TextField({
   const field = useFieldContext<string | number | null | undefined>();
   const { error, errorId, ariaProps } = useFieldError();
   const isDisabled = useFieldDisabled(disabled);
+  const [isBadInput, setIsBadInput] = useState(false);
   const Control = multiline ? Textarea : Input;
   return (
     <div className="grid gap-2">
@@ -44,14 +47,22 @@ export function TextField({
         // A nullish stored value reads as an empty input, so callers never
         // convert. A number feeds React's number-input path unstringified,
         // which keeps intermediate text like "3." while typing.
-        value={field.state.value ?? ""}
+        value={isBadInput ? "" : (field.state.value ?? "")}
         disabled={isDisabled}
-        onBlur={field.handleBlur}
-        onChange={(event) =>
+        onBlur={() => {
+          setIsBadInput(false);
+          field.handleBlur();
+        }}
+        onChange={(event) => {
+          if (number && event.target.validity.badInput) {
+            setIsBadInput(true);
+            return;
+          }
+          setIsBadInput(false);
           field.handleChange(
             number ? toNumber(event.target.value) : event.target.value,
-          )
-        }
+          );
+        }}
         {...ariaProps}
       />
       <FieldError error={error} errorId={errorId} />

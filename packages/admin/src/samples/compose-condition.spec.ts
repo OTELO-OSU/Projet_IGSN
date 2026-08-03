@@ -54,9 +54,15 @@ describe("composeCondition", () => {
     });
   });
 
+  it("should drop a reading unit left behind by a cleared value", () => {
+    expect(
+      composeCondition(draft({ pressureType: "vacuum", pressureUnit: "bar" })),
+    ).toEqual({ pressure: { type: "vacuum", measurement: undefined } });
+  });
+
   it("should drop a reading left behind an unset category", () => {
-    // The value and unit inputs are disabled while their category is unset,
-    // so leftovers are uneditable and must not be submitted (ADR 0015).
+    // The value and unit inputs are not rendered while their category is unset,
+    // so leftovers are unreachable and must not be submitted (ADR 0015).
     expect(
       composeCondition(
         draft({ temperatureValue: -18, temperatureUnit: "celsius" }),

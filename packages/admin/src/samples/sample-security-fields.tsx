@@ -1,7 +1,10 @@
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 
 import { m } from "#/paraglide/messages.js";
-import { type SecurityDraft } from "#/samples/compose-security.ts";
+import {
+  isHazardDeclared,
+  type SecurityDraft,
+} from "#/samples/compose-security.ts";
 
 const yesNoItems = [
   { value: "yes", label: m.hazard_yes() },
@@ -32,9 +35,9 @@ const hazards = [
 ] as const;
 
 // The Security section. Every hazard is optional and independent; its
-// explanation is disabled until the hazard is answered yes. Render inside a
+// explanation only exists once the hazard is answered yes. Render inside a
 // `form.AppForm`. The form store holds the flat `security.*` draft (so a value
-// typed then disabled is kept while editing); `composeSecurity` drops any
+// typed then hidden is kept while editing); `composeSecurity` drops any
 // explanation whose flag is not yes on submit.
 export function SampleSecurityFields() {
   const form = useTypedAppFormContext({
@@ -56,19 +59,22 @@ export function SampleSecurityFields() {
             )}
           </form.AppField>
           <form.Subscribe
-            selector={(state) => state.values.security[hazard.flag] === "yes"}
+            selector={(state) =>
+              isHazardDeclared(state.values.security[hazard.flag])
+            }
           >
-            {(declared) => (
-              <form.AppField name={`security.${hazard.explanation}`}>
-                {(field) => (
-                  <field.TextField
-                    label={hazard.explanationLabel()}
-                    multiline
-                    disabled={!declared}
-                  />
-                )}
-              </form.AppField>
-            )}
+            {(declared) =>
+              declared ? (
+                <form.AppField name={`security.${hazard.explanation}`}>
+                  {(field) => (
+                    <field.TextField
+                      label={hazard.explanationLabel()}
+                      multiline
+                    />
+                  )}
+                </form.AppField>
+              ) : null
+            }
           </form.Subscribe>
         </div>
       ))}

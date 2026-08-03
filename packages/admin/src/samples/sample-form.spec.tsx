@@ -823,7 +823,35 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should disable the unit until a value is entered and the reference until the unit is annum", async () => {
+  it("should not keep a numeric age unit the mode switch left without a value", async () => {
+    // The unit is hidden without a value, and the domain rejects a unit that
+    // has none, so a leftover would block the save from an invisible field.
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: "Nature" }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("switch", { name: "Record a numeric age" }).click();
+
+    await screen.getByLabelText("Numeric age", { exact: true }).fill("12000");
+    await screen.getByRole("combobox", { name: "Units *" }).click();
+    await screen.getByRole("option", { name: "Ma", exact: true }).click();
+    // Switching mode clears the bounds, so the unit has nothing left to qualify.
+    await screen
+      .getByRole("radio", { name: "Range (min / max)" })
+      .first()
+      .click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.lastCall?.[0]).not.toHaveProperty("age");
+  });
+
+  it("should show the unit only once a value is entered and the reference only for annum", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
@@ -833,24 +861,24 @@ describe("SampleForm", () => {
 
     await expect
       .element(screen.getByRole("combobox", { name: "Units" }))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
     await expect
       .element(screen.getByRole("combobox", { name: "Reference" }))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
 
     await screen.getByLabelText("Numeric age", { exact: true }).fill("120");
     await expect
       .element(screen.getByRole("combobox", { name: "Units *" }))
-      .toBeEnabled();
+      .toBeVisible();
     await expect
       .element(screen.getByRole("combobox", { name: "Reference" }))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
 
     await screen.getByRole("combobox", { name: "Units *" }).click();
     await screen.getByRole("option", { name: "a (years)" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Reference *" }))
-      .toBeEnabled();
+      .toBeVisible();
   });
 
   it("should swap to min/max inputs when Range mode is selected", async () => {
@@ -938,7 +966,7 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should clear the reference when the unit leaves annum so the form can submit", async () => {
+  it("should drop the reference when the unit leaves annum so the form can submit", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
@@ -951,6 +979,9 @@ describe("SampleForm", () => {
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
     await screen.getByLabelText("Numeric age", { exact: true }).fill("120");
+    // Pick annum, choose a reference, then move the unit off annum: the (now
+    // unmounted) reference must not be saved, or it would fail validation on a
+    // field nobody can see.
     await screen.getByRole("combobox", { name: "Units" }).click();
     await screen.getByRole("option", { name: "a (years)" }).click();
     await screen.getByRole("combobox", { name: "Reference" }).click();
@@ -1708,7 +1739,7 @@ describe("SampleForm", () => {
       .not.toBeInTheDocument();
   });
 
-  it("should disable unit and datum until an elevation is set", async () => {
+  it("should show unit and datum only once an elevation part is entered", async () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -1730,7 +1761,7 @@ describe("SampleForm", () => {
 
     await expect
       .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
-      .toBeDisabled();
+      .not.toBeInTheDocument();
 
     await screen.getByLabelText("Elevation").fill("100");
     await screen.getByRole("combobox", { name: "Unit *" }).click();
@@ -1738,15 +1769,17 @@ describe("SampleForm", () => {
     await screen.getByRole("combobox", { name: "Vertical datum *" }).click();
     await screen.getByRole("option", { name: "Mean sea level" }).click();
 
-    // Clearing the value disables them again; the selection stays (harmless:
-    // composeLocation drops unit/datum without a value) and is restored if the
-    // user re-enters an elevation.
     await screen.getByLabelText("Elevation").fill("");
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
-      .toBeDisabled();
+      .element(screen.getByRole("combobox", { name: "Unit *", exact: true }))
+      .toHaveTextContent("m");
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
+      .element(screen.getByRole("combobox", { name: "Vertical datum *" }))
+      .toHaveTextContent("Mean sea level");
+
+    await screen.getByLabelText("Elevation").fill("100");
+    await expect
+      .element(screen.getByRole("combobox", { name: "Unit *", exact: true }))
       .toHaveTextContent("m");
   });
 
