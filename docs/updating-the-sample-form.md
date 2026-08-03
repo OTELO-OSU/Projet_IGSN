@@ -184,7 +184,23 @@ Add the field's label and any error strings to the language files. No user-facin
 
 ### 4. Publish: make it required, if it should be
 
-Only if the sample cannot be published without this field. Add a code to `publishBlockerSchema`, push it in `samplePublishBlockers`, and translate the admin label map. The label map is exhaustive, so it fails to compile (and thus reminds you to translate) until you add the entry.
+Only if the sample cannot be published without this field. Add a code to `publishBlockerSchema` and push it in `samplePublishBlockers` when the field is missing:
+
+```ts
+// packages/domain/src/sample/publication/sample-publish-blockers.ts
+export const publishBlockerSchema = z.enum([
+  "type_missing",
+  // ...
+  "grain_size_missing", // added
+]);
+
+// in samplePublishBlockers
+if (sample.grainSize === null) {
+  blockers.push("grain_size_missing");
+}
+```
+
+Then translate it in the admin label map (`publish-blocker-label.ts`). That map is an exhaustive `Record`, so the build fails until you add the entry: forgetting the translation is impossible.
 
 ### 5. Publish: decide if it can still change after publishing
 
@@ -225,6 +241,40 @@ The control itself needs nothing beyond that entry: `SampleForm` turns the maps'
 This is now the only use of `disabled` in the sample form: a field waiting on a sibling is hidden instead, never disabled (see "Add/remove a display condition" above).
 
 Background: ADR [0021](adr/0021-post-publish-field-mutability.md).
+
+### Hierarchy fields: freeze per node, not per field
+
+A dot-path hierarchy like `material` cannot use the map: how deep it freezes depends on which branch the sample sits in (a sediment unlocks at level 2, an igneous rock at level 4). So `material` has no map entry. Instead, editability is declared in the vocabulary tree itself: a node with no mark is frozen once published, so mark `frozenWhenPublished: false` only on the frontier, the first level under a frozen head that may still change; every level below the frontier is never consulted:
+
+```ts
+// packages/domain/src/sample/material/classification.ts
+sediment: {
+  // no flag: frozen by default, same as every other root
+  choices: ["exogenous_detritic", "volcano_detritic", "biogenic", "physico_chemical"],
+},
+
+// packages/domain/src/sample/material/classification/sediment-subtree.ts
+exogenous_detritic: {
+  // no flag: sediment freezes down to this, its second level
+  choices: ["gravel", "sand", "silt", "clay", "heterogeneous"],
+},
+gravel: {
+  frozenWhenPublished: false, // grain size stays refinable after publication
+  choices: ["boulder", "cobble", "pebble", "granule"],
+},
+```
+
+Everything else derives from that flag. `frozenMaterialPrefix` walks the stored path and returns its frozen head, the part of the path the sample must keep:
+
+```ts
+frozenMaterialPrefix("rock.igneous.plutonic.felsic.granite");
+// -> "rock.igneous.plutonic.felsic": granite may become granodiorite
+
+frozenMaterialPrefix("mineral");
+// -> null: nothing unlocks, the whole material is frozen
+```
+
+The merge accepts an incoming path only at or under that prefix (a sibling branch or another root keeps the stored value), and the form predicate disables exactly the cascade levels above it. Both read the same flag, so you never state the rule twice. Background: ADR [0022](adr/0022-editable-material-levels-after-publication.md).
 
 ## Add/remove a display condition
 

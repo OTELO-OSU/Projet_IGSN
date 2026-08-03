@@ -117,10 +117,10 @@ export function SampleForm({
   const isFieldFrozen = published
     ? publishedSampleFrozenField(
         defaultValues?.scientificContext?.provenanceStatus ?? null,
+        defaultValues?.material ?? null,
       )
     : () => false;
-  // Enter submits natively through the lone submit-kind button; route it to
-  // that action (prefer primary).
+  // Enter submits natively through the lone submit-kind button.
   const defaultSubmit =
     primaryAction.kind === "submit"
       ? primaryAction.onSubmit
@@ -164,8 +164,6 @@ export function SampleForm({
       if ((attachmentChanges?.keptCount ?? attachments.length) > UPLOAD_LIMIT) {
         return;
       }
-      // A failed upload stays staged for a retry and never blocks saving the
-      // rest.
       const committed = attachmentChanges
         ? await attachmentChanges.commit(attachments)
         : undefined;

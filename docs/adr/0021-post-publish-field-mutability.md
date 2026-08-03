@@ -19,6 +19,11 @@ where a crafted request cannot bypass it.
 type, material) is frozen. Everything else stays editable, including the
 material's dependent leaves (`texture`, `metamorphicFacies`).
 
+> Updated by ADR [0022](0022-editable-material-levels-after-publication.md):
+> `material` is no longer wholly frozen, only its coarse classification is. It
+> has no lock-map entry; `mergeMaterial` and the form resolver derive its frozen
+> levels from the stored path.
+
 **The rule lives in lock maps, nowhere else.**
 `domain/sample/publication/published-field-lock.ts` opens with one map of locked
 fields per merged shape. Each entry is a frozen field: the key is the field name
@@ -61,7 +66,7 @@ unsavable through the form; repairing it is an admin/API action.
 **Frozen inputs are disabled by a form-level resolver, no marker.** No control
 decides for itself that publication freezes it. `SampleForm` provides a
 `FieldDisabledProvider` (`design-system`) holding
-`publishedSampleFrozenField(provenanceStatus)`
+`publishedSampleFrozenField(provenanceStatus, storedMaterial)`
 (`admin/src/samples/published-sample-frozen-field.ts`), a predicate on the
 field name.
 `TextField`, `ComboboxField`, `MultiComboboxField` and `DateField` read it
@@ -106,7 +111,8 @@ it.
   developer can read and change in one place.
 - The form holds no copy of the rule: `publishedSampleFrozenField`
   (`admin/src/samples/published-sample-frozen-field.ts`) flattens the exported
-  form names and strips the hierarchy-level suffix, nothing else. A renamed form field is
+  form names, strips the hierarchy-level suffix, and resolves the frozen material
+  depth (ADR 0022), nothing else. A renamed form field is
   caught only by the `sample-form.spec.tsx` assertions. Being UX, a disagreement
   is a display bug, never a persistence one.
 - An already-broken published sample stays editable on its editable fields

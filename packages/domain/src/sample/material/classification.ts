@@ -11,12 +11,6 @@ import { sedimentTree } from "./classification/sediment-subtree.ts";
 // segment is defined once and may be reused under several parents (the path is
 // the identity, ADR 0010). Stored in the DB as a dot-joined ltree path of codes;
 // a sample's path may stop at any valid stop (see is-complete).
-//
-// The roots live here; the large subtrees are spread in from their own files
-// for readability (rock-subtree.ts, sediment-subtree.ts,
-// extraterrestrial-rock-subtree.ts). A segment with no entry (plain leaves like
-// `mineral`, `fossil`, `other`) defaults to a childless leaf labelled by its
-// own code (see tree-node.ts).
 const materialTree = {
   rock: {
     searchable: true,
@@ -42,8 +36,9 @@ const materialTree = {
     searchable: true,
     choices: ["returned_samples", "meteorites", "micrometeorites"],
   },
-  // Plain-leaf roots; an entry exists only to flag them as searchable facet
-  // options (see sample/search/facets.ts).
+  // Plain-leaf roots; their entry only carries the searchable facet flag (see
+  // sample/search/facets.ts). No root is editable after publication, the
+  // default, so none carries `frozenWhenPublished` (see tree-node.ts).
   mineral: { searchable: true },
   fossil: { searchable: true },
   synthetic_rock_mineral: { searchable: true },
@@ -59,9 +54,8 @@ export type MaterialSegment = keyof typeof materialTree;
 // Widen values to TreeNode for uniform reads, keeping the literal keys.
 export const MATERIAL_TREE: Record<MaterialSegment, TreeNode> = materialTree;
 
-// Entry points: the segments a classification can start from. A root without a
-// tree entry is a plain leaf; a typo here surfaces in the apps' label-coverage
-// specs (an untranslatable segment).
+// A root without a tree entry is a plain leaf; a typo here surfaces in the
+// apps' label-coverage specs (an untranslatable segment).
 export const MATERIAL_ROOTS = [
   "rock",
   "sediment",
@@ -73,10 +67,8 @@ export const MATERIAL_ROOTS = [
 
 export const MATERIAL_PATHS = expandPaths(MATERIAL_TREE, MATERIAL_ROOTS);
 
-// The vocabulary as one self-describing bundle for HierarchySelectField and for
-// the material search facet (see sample/search/facets.ts). Its igneous branch
-// carries the chemistry sub-classification, so searching material covers
-// igneous rock too.
+// Its igneous branch carries the chemistry sub-classification, so searching
+// material covers igneous rock too.
 export const MATERIAL_HIERARCHY = {
   roots: MATERIAL_ROOTS,
   nodes: MATERIAL_TREE,

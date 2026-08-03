@@ -5,7 +5,10 @@ import {
   createSampleSchema,
   type Sample,
 } from "../sample.ts";
-import { mergePublishedEdit } from "./published-field-lock.ts";
+import {
+  frozenHierarchyDepths,
+  mergePublishedEdit,
+} from "./published-field-lock.ts";
 
 const stored: Sample = {
   id: "11111111-1111-1111-1111-111111111111",
@@ -165,7 +168,6 @@ describe("mergePublishedEdit", () => {
     expect(merged.name).toBe("Stored name");
     expect(merged.nature).toBe("hand_sample");
     expect(merged.type).toBe("core");
-    expect(merged.material).toBe("rock.igneous.plutonic");
   });
 
   it("takes the texture and facies from a payload agreeing on the material", () => {
@@ -317,5 +319,109 @@ describe("mergePublishedEdit", () => {
       incoming({ links: [{ url: "https://doi.org/10.1234/x" }] }),
     );
     expect(merged.links).toEqual([{ url: "https://doi.org/10.1234/x" }]);
+  });
+
+  describe("material", () => {
+    it.each([
+      // deeper within the unlocked igneous chemistry level
+      [
+        "rock.igneous.plutonic.felsic.granite",
+        "rock.igneous.plutonic.felsic.granodiorite",
+      ],
+      // completing a path published incomplete at an unlocked node
+      [
+        "sediment.exogenous_detritic",
+        "sediment.exogenous_detritic.sand.medium_sand",
+      ],
+    ])("refines %s into %s", (current, next) => {
+      const merged = mergePublishedEdit(
+        { ...stored, material: current },
+        incoming({ material: next }),
+      );
+      expect(merged).toMatchObject({ material: next });
+    });
+
+    it.each([
+      // a sibling above the frozen prefix (plutonic is frozen)
+      [
+        "rock.igneous.plutonic.felsic.granite",
+        "rock.igneous.volcanic.felsic.rhyolite",
+      ],
+      [
+        "rock.igneous.plutonic.felsic.granite",
+        "rock.metamorphic.strongly_metamorphosed.gneiss",
+      ],
+      // a wholly frozen stored path: nothing below it unlocks
+      ["rock.igneous.plutonic", "rock.igneous.plutonic.felsic.granite"],
+      ["rock.igneous.plutonic.felsic.granite", null],
+    ])("keeps %s when the payload carries %s", (current, next) => {
+      const merged = mergePublishedEdit(
+        { ...stored, material: current },
+        incoming({ material: next }),
+      );
+      expect(merged).toMatchObject({ material: current });
+    });
+
+    it.each([
+      {
+        current: {
+          material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+          metamorphicFacies: "granulite",
+          texture: "cataclastic",
+        },
+        next: {
+          material: "rock.metamorphic.strongly_metamorphosed.schist",
+          metamorphicFacies: "granulite",
+          texture: "cataclastic",
+        },
+      },
+      {
+        current: {
+          material: "rock.igneous.plutonic.felsic.granite",
+          texture: "phaneritic",
+        },
+        next: {
+          material: "rock.igneous.plutonic.felsic.granodiorite",
+          texture: "cumulate",
+        },
+      },
+    ] as const)(
+      "takes the texture and facies sent alongside a material refined to $next.material",
+      ({ current, next }) => {
+        const merged = mergePublishedEdit(
+          { ...stored, ...current },
+          incoming(next),
+        );
+        expect(merged).toMatchObject(next);
+      },
+    );
+
+    it("keeps the stored texture when a rejected refinement leaves the material behind", () => {
+      const merged = mergePublishedEdit(
+        {
+          ...stored,
+          material: "rock.igneous.plutonic.felsic.granite",
+          texture: "phaneritic",
+        },
+        incoming({
+          material: "rock.igneous.volcanic.felsic.rhyolite",
+          texture: "glassy",
+        }),
+      );
+      expect(merged).toMatchObject({
+        material: "rock.igneous.plutonic.felsic.granite",
+        texture: "phaneritic",
+      });
+    });
+  });
+});
+
+describe("frozenHierarchyDepths", () => {
+  it.each([
+    ["rock.igneous.plutonic.felsic.granite", 4],
+    ["rock.igneous.plutonic", Infinity],
+    [null, Infinity],
+  ])("locks the levels of %s above depth %s", (material, depth) => {
+    expect(frozenHierarchyDepths(material)).toEqual({ materialPath: depth });
   });
 });

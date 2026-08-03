@@ -28,6 +28,16 @@ context override do. Navigated by the generic helpers in `path/`:
 `pathSegment`, `pathChildren`, `isPathLeaf`, `isPathComplete(paths, path, isOptional)`
 (the `isOptional` callback is each vocabulary's completeness policy).
 
+`TreeNode` also carries `frozenWhenPublished?: false` (ADR
+[0022](../../../docs/adr/0022-editable-material-levels-after-publication.md)).
+Absent means frozen: that node's own value can no longer change once
+published. Mark `false` only on the first editable level under a frozen head,
+the frontier; every level below the frontier is never consulted, so a new
+unmarked node under an editable one stays editable, and a new unmarked node
+anywhere else is frozen by default. Material only: `type` is wholly frozen
+and `collectionMethod` is wholly editable at the field level, so neither needs
+it.
+
 Adding a node is **pure data**: no migration, no UI change. Follow TDD (spec first).
 
 ## How the three differ

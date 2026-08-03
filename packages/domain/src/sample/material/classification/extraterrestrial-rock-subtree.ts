@@ -1,10 +1,11 @@
 import { type TreeNode } from "../../path/tree-node.ts";
 
 // Descendants of the `extraterrestrial_rock` root (screenshot "Extraterrestrial
-// rocks classification"). Spread into the material tree in classification.ts.
+// rocks classification").
 // Every parent is mandatory (the default: no node is marked `optional: true`).
-// Segments without an entry (micrometeorites, ungrouped, ryugu...) are
-// childless leaves labelled by their own code (see tree-node.ts).
+// Nothing here may change once published (ADR 0022), which is the default, so no
+// node carries `frozenWhenPublished: false` and childless leaves need no entry
+// at all.
 export const extraterrestrialRockTree = {
   returned_samples: {
     choices: ["lunar_sample", "asteroid", "other"],
@@ -34,6 +35,7 @@ export const extraterrestrialRockTree = {
       "ungrouped",
     ],
   },
+
   carbonaceous_chondrites: {
     choices: [
       "ci",
@@ -156,4 +158,17 @@ export const extraterrestrialRockTree = {
   pallasite: {
     choices: ["main_group", "eagle_station_group", "ungrouped"],
   },
+
+  // These codes name an editable level elsewhere in the tree (`basalt` is an
+  // igneous leaf, `other` a leaf of editable branches), so a dotted override
+  // keeps them frozen in this context (longest-suffix match).
+  "returned_samples.other": { label: "other" },
+  "asteroid.other": { label: "other" },
+  "martian_meteorite.other": { label: "other" },
+  "lunar_meteorite.anorthosite": { label: "anorthosite" },
+  "lunar_meteorite.basalt": { label: "basalt" },
+  "lunar_meteorite.gabbro": { label: "gabbro" },
+  "lunar_meteorite.norite": { label: "norite" },
+  "lunar_meteorite.troctolite": { label: "troctolite" },
+  "lunar_meteorite.other": { label: "other" },
 } satisfies Record<string, TreeNode>;

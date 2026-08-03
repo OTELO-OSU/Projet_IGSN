@@ -16,7 +16,8 @@ const LINK_PATH = /^links\.(\d+)\.(url|description)$/;
 // registers one field per level (`name[depth]`), never the bare name, so an
 // issue on the domain value pins on the next level to refine (the combobox
 // after the deepest pick, the one the user must act on) or it would render
-// nowhere.
+// nowhere. That level is the number of picks, not of slots: clearing a level
+// leaves an `undefined` slot in place (see combobox-field.tsx).
 const HIERARCHY_PATHS = {
   type: "typePath",
   material: "materialPath",
@@ -24,9 +25,9 @@ const HIERARCHY_PATHS = {
 } as const;
 
 type DraftContext = {
-  typePath: string[];
-  materialPath: string[];
-  collectionMethodPath: string[];
+  typePath: (string | undefined)[];
+  materialPath: (string | undefined)[];
+  collectionMethodPath: (string | undefined)[];
   location: Pick<LocationDraft, "type">;
 };
 
@@ -77,7 +78,8 @@ const draftFieldName = (path: string, draft: DraftContext): string => {
   if (path === "condition.humidity.percentage")
     return "condition.humidityPercentage";
   const hierarchy = HIERARCHY_PATHS[path as keyof typeof HIERARCHY_PATHS];
-  if (hierarchy) return `${hierarchy}[${draft[hierarchy].length}]`;
+  if (hierarchy)
+    return `${hierarchy}[${draft[hierarchy].filter(Boolean).length}]`;
   const link = LINK_PATH.exec(path);
   if (link) return `links[${link[1]}].${link[2]}`;
   return path;

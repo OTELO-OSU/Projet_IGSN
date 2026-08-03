@@ -1,15 +1,16 @@
 import { type TreeNode } from "../../path/tree-node.ts";
+import { editableLeaves } from "./editable-leaves.ts";
 
 // Descendants of the `rock` root (MINDAT): igneous, metamorphic, the sedimentary
-// subtree, hydrothermal, unknown. Spread into the material tree in
-// classification.ts. Segments without an entry (metamorphic, granite...) are
-// childless leaves labelled by their own code (see tree-node.ts).
+// subtree, hydrothermal, unknown.
 export const rockTree = {
   igneous: {
     searchable: true,
     choices: ["plutonic", "volcanic"],
   },
-  metamorphic: { choices: ["weakly_metamorphosed", "strongly_metamorphosed"] },
+  metamorphic: {
+    choices: ["weakly_metamorphosed", "strongly_metamorphosed"],
+  },
   hydrothermal: {
     choices: [
       "breccia",
@@ -21,9 +22,14 @@ export const rockTree = {
     ],
   },
   // `carbonate` is an inner node in the sediment subtree; here it is a plain
-  // leaf, so a dotted override stops the walk (longest-suffix match).
+  // leaf, so a dotted override stops the walk (longest-suffix match) and keeps
+  // it frozen where the bare segment is editable.
   "hydrothermal.carbonate": { label: "carbonate" },
-  xenolithic_rock: { choices: ["igneous", "metamorphic"] },
+
+  xenolithic_rock: {
+    choices: ["igneous", "metamorphic"],
+  },
+
   sedimentary: {
     choices: [
       "microbialite",
@@ -38,11 +44,6 @@ export const rockTree = {
   // (Niv.3, shared codes), then specific rocks (Niv.4). Each chemistry code
   // recurs under both branches with different children, so a dotted
   // `plutonic.*` / `volcanic.*` override carries that branch's choices.
-  // `carbonatite` and `hyperalkaline_rocks` are shared leaves of both `exotic`
-  // branches (path is identity). Every level is mandatory down to a rock leaf
-  // (the default: nothing is marked `optional: true`).
-  // plutonic/volcanic and the chemistry level below them are searchable facet
-  // options (the "igneous rock + chemistry" case); deeper rock leaves are not.
   plutonic: {
     searchable: true,
     choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
@@ -110,6 +111,46 @@ export const rockTree = {
     ],
   },
 
+  // The rock names (Niv.4) are the first editable level under the frozen
+  // chemistry, so each carries the mark; a code shared by two chemistry
+  // branches is listed once. `pyroxenite` and `hornblendite` are reused as
+  // strongly metamorphosed rocks (see metamorphic-subtree.ts).
+  ...editableLeaves(
+    "granite",
+    "granodiorite",
+    "tonalite",
+    "trondhjemite",
+    "syenite",
+    "monzonite",
+    "diorite",
+    "gabbro",
+    "norite",
+    "anorthosite",
+    "troctolite",
+    "peridotite",
+    "pyroxenite",
+    "hornblendite",
+    "carbonatite",
+    "hyperalkaline_rocks",
+    "rhyolite",
+    "dacite",
+    "trachyte",
+    "latite",
+    "andesite",
+    "phonolite",
+    "basalt",
+    "basanite",
+    "tephrite",
+    "komatiite",
+    "picrite",
+    "foidite",
+    "kimberlite",
+    "lamprophyre",
+  ),
+
+  // The freeze stops below these two types: their children are the first
+  // editable level and carry the mark, so nothing deeper needs one. `other`
+  // recurs across those children and is listed once.
   clastic_sedimentary_rock: {
     choices: [
       "rudite",
@@ -121,6 +162,15 @@ export const rockTree = {
       "other",
     ],
   },
+  ...editableLeaves(
+    "rudite",
+    "olistostrome",
+    "paraconglomerate",
+    "siliciclastic_sedimentary_rock",
+    "sandstone",
+    "mudstone",
+    "other",
+  ),
 
   biochemical_and_chemical_sedimentary_rock: {
     choices: [
@@ -142,8 +192,20 @@ export const rockTree = {
       "other",
     ],
   },
+  ...editableLeaves(
+    "concretion",
+    "coprolite",
+    "moronite",
+    "oolite",
+    "pisolite",
+    "grainstone",
+    "wackestone",
+    "packstone",
+    "boundstone",
+  ),
 
   carbonate_rock: {
+    frozenWhenPublished: false,
     choices: [
       "limestone",
       "dolostone",
@@ -159,6 +221,7 @@ export const rockTree = {
   },
 
   evaporite: {
+    frozenWhenPublished: false,
     choices: [
       "gypsum_stone",
       "anhydrite_stone",
@@ -179,6 +242,7 @@ export const rockTree = {
   },
 
   phosphorite: {
+    frozenWhenPublished: false,
     choices: [
       "guano",
       "phosphate_mudstone",
@@ -195,6 +259,7 @@ export const rockTree = {
   },
 
   ironstone: {
+    frozenWhenPublished: false,
     choices: [
       "goethite_stone",
       "hematite_stone",
@@ -216,10 +281,12 @@ export const rockTree = {
   },
 
   organic_rich_rock: {
+    frozenWhenPublished: false,
     choices: ["coal", "asphaltite", "sapropelite", "other"],
   },
 
   siliceous_rock: {
+    frozenWhenPublished: false,
     choices: [
       "diatomite",
       "radiolarite",

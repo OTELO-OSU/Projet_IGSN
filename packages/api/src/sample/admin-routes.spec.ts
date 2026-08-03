@@ -372,8 +372,8 @@ describe("admin sample routes", () => {
         // Arrange
         const client = testClient(createApp(db));
         const data = await createAndPublish(client);
-        // Act: try to change the frozen name (and material) while editing an
-        // editable field.
+        // Act: try to change the frozen name (and the material root, frozen
+        // even though deeper levels refine) while editing an editable field.
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
@@ -565,9 +565,10 @@ describe("admin sample routes", () => {
     pgTest(
       "lets an already-broken published sample be edited without re-blocking it",
       async ({ db }) => {
-        // Arrange: a published sample forced into a frozen-incomplete state
-        // (material is frozen; only reachable via DB tampering or a future
-        // publish constraint). It already fails publishability on a FROZEN leaf.
+        // Arrange: a published sample forced into a frozen-incomplete state (a
+        // null material has no editable prefix, so it stays wholly frozen; only
+        // reachable via DB tampering or a future publish constraint). It already
+        // fails publishability on a FROZEN leaf.
         const client = testClient(createApp(db));
         const data = await createAndPublish(client);
         await db
@@ -593,6 +594,100 @@ describe("admin sample routes", () => {
         expect(
           sampleResponseSchema.parse(await re.json()).data.availability,
         ).toBe("no_longer_exists");
+      },
+    );
+
+    // These assert the ltree column, since that is where a silent loss shows.
+    pgTest.for([
+      [
+        "persists a material refined below the frozen prefix",
+        "rock.igneous.plutonic.felsic.granodiorite",
+        "rock.igneous.plutonic.felsic.granodiorite",
+      ],
+      [
+        "keeps the stored material on a change above the frozen prefix",
+        "rock.igneous.volcanic.felsic.rhyolite",
+        "rock.igneous.plutonic.felsic.granite",
+      ],
+    ] as const)("%s", async ([, material, persisted], { db }) => {
+      const client = testClient(createApp(db));
+      const data = await createAndPublish(client, igneous);
+      const res = await client.admin.samples[":id"].$put(
+        {
+          param: { id: data.id },
+          json: { ...publishable, material },
+        },
+        { headers: authHeader },
+      );
+      expect(res.status).toBe(200);
+      const row = await db
+        .selectFrom("sample")
+        .select("material")
+        .where("id", "=", data.id)
+        .executeTakeFirstOrThrow();
+      expect(row.material).toBe(persisted);
+    });
+
+    pgTest(
+      "rejects with 409 a refinement rolled back to an incomplete path",
+      async ({ db }) => {
+        // Arrange
+        const client = testClient(createApp(db));
+        const data = await createAndPublish(client, igneous);
+        // Act: drop the rock leaf. The merge takes it (it is at the frozen
+        // prefix), so the edit introduces material_incomplete.
+        const res = await client.admin.samples[":id"].$put(
+          {
+            param: { id: data.id },
+            json: { ...publishable, material: "rock.igneous.plutonic.felsic" },
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(409);
+        const row = await db
+          .selectFrom("sample")
+          .select("material")
+          .where("id", "=", data.id)
+          .executeTakeFirstOrThrow();
+        expect(row.material).toBe("rock.igneous.plutonic.felsic.granite");
+      },
+    );
+
+    pgTest(
+      "lets a completed material clear the blocker it already had",
+      async ({ db }) => {
+        // Arrange: a published sample left incomplete at an unlocked node (only
+        // reachable via DB tampering), so material_incomplete pre-exists.
+        const client = testClient(createApp(db));
+        const data = await createAndPublish(client);
+        await db
+          .updateTable("sample")
+          .set({ material: "sediment.exogenous_detritic" })
+          .where("id", "=", data.id)
+          .execute();
+        // Act: complete the path. The delta guard must not block an edit that
+        // FIXES a blocker.
+        const res = await client.admin.samples[":id"].$put(
+          {
+            param: { id: data.id },
+            json: {
+              ...publishable,
+              material: "sediment.exogenous_detritic.sand.medium_sand",
+            },
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        const row = await db
+          .selectFrom("sample")
+          .select("material")
+          .where("id", "=", data.id)
+          .executeTakeFirstOrThrow();
+        expect(row.material).toBe(
+          "sediment.exogenous_detritic.sand.medium_sand",
+        );
       },
     );
 

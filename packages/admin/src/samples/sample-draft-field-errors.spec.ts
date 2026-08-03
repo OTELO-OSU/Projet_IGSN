@@ -2,12 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { sampleDraftFieldErrors } from "./sample-draft-field-errors.ts";
 
-// The draft context the mapping reads: the location mode and the hierarchy
-// paths (a hierarchy issue pins on the next level's combobox).
 const draft = (over?: {
-  typePath?: string[];
-  materialPath?: string[];
-  collectionMethodPath?: string[];
+  typePath?: (string | undefined)[];
+  materialPath?: (string | undefined)[];
+  collectionMethodPath?: (string | undefined)[];
   locationType?: "point" | "area" | null | undefined;
 }) => ({
   typePath: over?.typePath ?? [],
@@ -53,8 +51,6 @@ describe("sampleDraftFieldErrors", () => {
   });
 
   it("should pin a hierarchy issue on the next level to refine", () => {
-    // material "rock.igneous" walks two levels, so the error belongs to the
-    // third combobox, the one the user must pick to complete the path.
     expect(
       sampleDraftFieldErrors(
         [
@@ -64,6 +60,25 @@ describe("sampleDraftFieldErrors", () => {
           },
         ],
         draft({ materialPath: ["rock", "rock.igneous"] }),
+      ),
+    ).toEqual({
+      "materialPath[2]": {
+        message:
+          "Classify the material down to a specific type before publishing.",
+      },
+    });
+  });
+
+  it("should pin a hierarchy issue on a cleared level, not past it", () => {
+    expect(
+      sampleDraftFieldErrors(
+        [
+          {
+            path: ["material"],
+            params: { code: "material_incomplete" },
+          },
+        ],
+        draft({ materialPath: ["rock", "rock.igneous", undefined] }),
       ),
     ).toEqual({
       "materialPath[2]": {
