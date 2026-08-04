@@ -7,7 +7,7 @@ import { useApiClient } from "#/use-api-client.ts";
 
 export const MIN_SEARCH_LENGTH = 2;
 
-export function useSearchUsers(search: string, enabled: boolean) {
+export function useSearchUsers(search: string) {
   const apiFetch = useApiClient();
   const term = search.length >= MIN_SEARCH_LENGTH ? search : "";
   return useQuery({
@@ -26,6 +26,5 @@ export function useSearchUsers(search: string, enabled: boolean) {
       }
       return listUsersResponseSchema.parse(await res.json()).data;
     },
-    enabled,
   });
 }

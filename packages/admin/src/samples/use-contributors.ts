@@ -5,7 +5,7 @@ import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useContributors(sampleId: string, enabled: boolean) {
+export function useContributors(sampleId: string) {
   const apiFetch = useApiClient();
   return useQuery({
     queryKey: ["samples", sampleId, "contributors"],
@@ -21,6 +21,5 @@ export function useContributors(sampleId: string, enabled: boolean) {
       }
       return listUsersResponseSchema.parse(await res.json()).data;
     },
-    enabled,
   });
 }
