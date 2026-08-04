@@ -13,5 +13,5 @@
     ]
   },
   "sortTailwindcss": {},
-  "ignorePatterns": ["**/*.gen.ts"]
+  "ignorePatterns": ["**/*.gen.ts", "**/mockServiceWorker.js"]
 }

@@ -3,10 +3,13 @@ import type { User } from "@projet-igsn/domain/user/model";
 
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { userEvent } from "vitest/browser";
 
+import { fakeSample } from "../../test/fake-sample.ts";
+import { worker } from "../../test/msw.ts";
 import { ShareSampleButton } from "./share-sample-button.tsx";
 
 const { OWNER_EMAIL } = vi.hoisted(() => ({
@@ -29,39 +32,7 @@ vi.mock("react-oidc-context", () => ({
   }),
 }));
 
-const SAMPLE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
-
-const sample = {
-  id: SAMPLE_ID,
-  name: "Basalte du Massif Central",
-  nature: "thin_section",
-  type: null,
-  material: null,
-  texture: null,
-  metamorphicFacies: null,
-  collectionMethod: null,
-  collectionMethodDescription: null,
-  specificName: null,
-  location: null,
-  description: null,
-  condition: null,
-  security: null,
-  scientificContext: null,
-  availability: null,
-  age: null,
-  links: [],
-  attachments: [],
-  publicationYear: null,
-  economicInterest: null,
-  economicInterestElements: [],
-  economicResourceTypePrecision: null,
-  economicDepositName: null,
-  economicDepositDescription: null,
-  igsn: null,
-  published: false,
-  createdAt: "2026-06-01T00:00:00.000Z",
-  updatedAt: "2026-07-01T10:00:00.000Z",
-};
+const SAMPLE_ID = fakeSample.id;
 
 const curie: User = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3401",
@@ -76,12 +47,6 @@ const dupont: User = {
   firstname: "Pierre",
 };
 
-const json = (body: unknown) =>
-  new Response(JSON.stringify(body), {
-    status: 200,
-    headers: { "content-type": "application/json" },
-  });
-
 function fakeApi({
   role = "owner" as UserSampleRole,
   contributors = [] as User[],
@@ -89,38 +54,43 @@ function fakeApi({
 } = {}) {
   let listed = [...contributors];
   const calls: string[] = [];
-  vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
-    const url = input instanceof Request ? input.url : input.toString();
-    calls.push(`${init?.method ?? "GET"} ${url}`);
-    if (url.includes("/contributors")) {
-      if (init?.method === "POST" && typeof init.body === "string") {
-        const { userId } = JSON.parse(init.body) as { userId: string };
-        const picked = directory.find((user) => user.id === userId);
-        if (picked && !listed.some((user) => user.id === picked.id)) {
-          listed = [...listed, picked];
-        }
-        return new Response(null, { status: 204 });
+  worker.use(
+    http.get("*/samples/:id/contributors", ({ request }) => {
+      calls.push(`GET ${request.url}`);
+      return HttpResponse.json({ data: listed });
+    }),
+    http.post("*/samples/:id/contributors", async ({ request }) => {
+      calls.push(`POST ${request.url}`);
+      const { userId } = (await request.json()) as { userId: string };
+      const picked = directory.find((user) => user.id === userId);
+      if (picked && !listed.some((user) => user.id === picked.id)) {
+        listed = [...listed, picked];
       }
-      return json({ data: listed });
-    }
-    if (url.includes("admin/users")) {
+      return new HttpResponse(null, { status: 204 });
+    }),
+    http.get("*/admin/users", ({ request }) => {
+      calls.push(`GET ${request.url}`);
       const search = (
-        new URL(url).searchParams.get("search") ?? ""
+        new URL(request.url).searchParams.get("search") ?? ""
       ).toLowerCase();
-      return json({
+      return HttpResponse.json({
         data: directory.filter((user) =>
           user.name?.toLowerCase().includes(search),
         ),
       });
-    }
-    return json({ data: sample, role });
-  });
+    }),
+    http.get("*/samples/:id", () =>
+      HttpResponse.json({ data: fakeSample, role }),
+    ),
+  );
   return { calls };
 }
 
 async function renderShareButton(options?: Parameters<typeof fakeApi>[0]) {
   const { calls } = fakeApi(options);
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   const screen = await render(
     <QueryClientProvider client={queryClient}>
       <ShareSampleButton sampleId={SAMPLE_ID} />

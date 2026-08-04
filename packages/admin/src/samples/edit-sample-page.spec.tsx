@@ -7,11 +7,13 @@ import {
   createMemoryHistory,
   createRouter,
 } from "@tanstack/react-router";
+import { HttpResponse, http } from "msw";
 import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { FakeXhr } from "../../test/fake-xhr.ts";
+import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
 vi.mock("react-oidc-context", () => ({
@@ -90,36 +92,40 @@ function fakeApi(
     updatedAt: "2026-07-01T10:00:00.000Z",
   };
   const calls: string[] = [];
-  vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
-    const url = input instanceof Request ? input.url : input.toString();
-    if (
-      (fail === "save" && init?.method === "PUT") ||
-      (fail === "publish" && init?.method === "POST")
-    ) {
-      return new Response(null, { status: 500 });
-    }
-    if (init?.method === "PUT" && typeof init.body === "string") {
+  worker.use(
+    http.get("*/admin/me", () =>
+      HttpResponse.json({ sub: "user-1", name: "Marie Dupont" }),
+    ),
+    http.put("*/samples/:id", async ({ request }) => {
+      if (fail === "save") return new HttpResponse(null, { status: 500 });
       // The attachments payload carries {id, description} entries, not the
       // full attachments; drop them to keep the fake sample parseable.
-      const { attachments: _attachments, ...body } = JSON.parse(init.body);
+      const { attachments: _attachments, ...body } = (await request.json()) as {
+        attachments: unknown;
+        name: string;
+      };
       sample = { ...sample, ...body };
       calls.push(`PUT ${sample.name}`);
-    }
-    if (init?.method === "POST" && url.endsWith("/publish")) {
+      return HttpResponse.json({ data: sample, role });
+    }),
+    http.post("*/samples/:id/publish", () => {
+      if (fail === "publish") return new HttpResponse(null, { status: 500 });
       sample = { ...sample, published: true, igsn: IGSN };
       calls.push("PUBLISH");
-    }
-    const body = url.includes("samples?")
-      ? {
-          data: [{ ...sample, owner: { name: "Dupont", firstname: "Marie" } }],
-          meta: { total: 1 },
-        }
-      : { data: sample, role };
-    return new Response(JSON.stringify(body), {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
-  });
+      return HttpResponse.json({ data: sample, role });
+    }),
+    http.get("*/samples", () =>
+      HttpResponse.json({
+        data: [{ ...sample, owner: { name: "Dupont", firstname: "Marie" } }],
+        meta: { total: 1 },
+      }),
+    ),
+    http.get("*/samples/:id", () => HttpResponse.json({ data: sample, role })),
+    http.delete(
+      "*/samples/:id/attachments/:attachmentId",
+      () => new HttpResponse(null, { status: 204 }),
+    ),
+  );
   return { id: sample.id, calls };
 }
 
@@ -147,7 +153,9 @@ async function renderEditPage(
     attachments,
     role,
   );
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   const router = createRouter({
     routeTree,
     context: { queryClient },

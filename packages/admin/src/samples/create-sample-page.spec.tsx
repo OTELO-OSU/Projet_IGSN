@@ -4,10 +4,12 @@ import {
   createMemoryHistory,
   createRouter,
 } from "@tanstack/react-router";
+import { HttpResponse, http } from "msw";
 import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
+import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
 vi.mock("react-oidc-context", () => ({
@@ -25,11 +27,14 @@ vi.mock("react-oidc-context", () => ({
 // its real create-then-navigate cycle without a backend.
 function fakeApi(failWrites = false) {
   let sample: Record<string, unknown> | null = null;
-  vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
-    if (failWrites && init?.method === "POST") {
-      return new Response(null, { status: 500 });
-    }
-    if (init?.method === "POST" && typeof init.body === "string") {
+  worker.use(
+    http.get("*/admin/me", () =>
+      HttpResponse.json({ sub: "user-1", name: "Marie Dupont" }),
+    ),
+    http.post("*/samples", async ({ request }) => {
+      if (failWrites) {
+        return new HttpResponse(null, { status: 500 });
+      }
       sample = {
         id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
         // Persisted defaults (the texture, metamorphic_facies, description
@@ -47,27 +52,25 @@ function fakeApi(failWrites = false) {
         economicResourceTypePrecision: null,
         economicDepositName: null,
         economicDepositDescription: null,
-        ...JSON.parse(init.body),
+        ...((await request.json()) as Record<string, unknown>),
         igsn: null,
         published: false,
         createdAt: "2026-07-06T00:00:00.000Z",
         updatedAt: "2026-07-06T00:00:00.000Z",
       };
-      return new Response(JSON.stringify({ data: sample }), {
-        status: 201,
-        headers: { "content-type": "application/json" },
-      });
-    }
-    return new Response(JSON.stringify({ data: sample, role: "owner" }), {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
-  });
+      return HttpResponse.json({ data: sample }, { status: 201 });
+    }),
+    http.get("*/samples/:id", () =>
+      HttpResponse.json({ data: sample, role: "owner" }),
+    ),
+  );
 }
 
 async function renderCreatePage(failWrites = false) {
   fakeApi(failWrites);
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   const router = createRouter({
     routeTree,
     context: { queryClient },

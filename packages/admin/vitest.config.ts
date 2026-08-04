@@ -15,6 +15,8 @@ export default defineConfig({
     }),
   ],
   resolve: { tsconfigPaths: true },
+  // Serve the MSW worker script in tests only; the app build keeps public/.
+  publicDir: path.resolve(__dirname, "test/public"),
   test: {
     browser: {
       provider: playwright(),

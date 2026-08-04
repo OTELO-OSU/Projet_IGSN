@@ -1,11 +1,22 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
+import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 
+import { fakeSample } from "../../test/fake-sample.ts";
+import { worker } from "../../test/msw.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
-const SAMPLE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
+const SAMPLE_ID = fakeSample.id;
+
+beforeAll(() => {
+  worker.use(
+    http.get("*/samples/:id", () =>
+      HttpResponse.json({ data: fakeSample, role: "owner" }),
+    ),
+  );
+});
 
 const noop = () => {};
 
