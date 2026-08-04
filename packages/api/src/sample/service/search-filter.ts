@@ -8,11 +8,7 @@ import type { DB } from "../../db.ts";
 
 import { fuzzyThreshold } from "./fuzzy-threshold.ts";
 
-const SEARCHED_COLUMNS = ["name", "specific_name", "igsn"] as const;
-
-// Typo tolerance is off igsn on purpose: it is Crockford base32 of a UUIDv7, so
-// two samples minted in the same millisecond share ~10 leading characters.
-const FUZZY_COLUMNS = ["name", "specific_name"] as const;
+const SEARCHED_COLUMNS = ["name", "specific_name"] as const;
 
 // One edit drops a 4-letter token under any useful threshold anyway.
 const FUZZY_MIN_LENGTH = 5;
@@ -53,16 +49,21 @@ function isFuzzyToken(token: string): boolean {
   return token.length >= FUZZY_MIN_LENGTH && !token.includes("*");
 }
 
+function matchesIgsnExactly(token: string): Expression<SqlBool> {
+  return sql<SqlBool>`igsn = upper(${token})`;
+}
+
 function matchesToken(token: string): Expression<SqlBool> {
   const pattern = tokenPattern(token);
   const arms = [
+    matchesIgsnExactly(token),
     ...SEARCHED_COLUMNS.map(
       (column) => sql`${searchable(column)} ~* ${pattern}`,
     ),
     // `%>` rather than word_similarity() > threshold: only the operator form
     // is index-supported. Its threshold is the GUC set below.
     ...(isFuzzyToken(token)
-      ? FUZZY_COLUMNS.map(
+      ? SEARCHED_COLUMNS.map(
           (column) =>
             sql`${searchable(column)} %> immutable_unaccent(${token})`,
         )
@@ -99,7 +100,7 @@ export function relevanceScore(search: string): Expression<number> | undefined {
     .join(" ");
   if (!needle) return undefined;
   return sql<number>`GREATEST(${sql.join(
-    FUZZY_COLUMNS.map(
+    SEARCHED_COLUMNS.map(
       (column) =>
         sql`word_similarity(immutable_unaccent(${needle}), ${searchable(column)})`,
     ),

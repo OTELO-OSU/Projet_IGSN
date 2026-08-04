@@ -1,4 +1,25 @@
-import { matchRanges } from "./highlight-match.ts";
+import { exactRanges, matchRanges } from "./highlight-match.ts";
+
+describe("exactRanges", () => {
+  it("should cover the whole text when a token equals it", () => {
+    expect(
+      exactRanges("0123456789ABCDEFGHJKMNPQRS", "0123456789abcdefghjkmnpqrs"),
+    ).toEqual([[0, 26]]);
+  });
+
+  it("should cover the whole text when one token of several equals it", () => {
+    expect(exactRanges("CNRS0000012260", "basalt cnrs0000012260")).toEqual([
+      [0, 14],
+    ]);
+  });
+
+  it.each(["0123456789", "0123456789ABCDEFGHJKMNPQRS*", "*", ""])(
+    "should return no range for the partial query %j",
+    (query) => {
+      expect(exactRanges("0123456789ABCDEFGHJKMNPQRS", query)).toEqual([]);
+    },
+  );
+});
 
 describe("matchRanges", () => {
   it("should return the offsets of the matched run", () => {

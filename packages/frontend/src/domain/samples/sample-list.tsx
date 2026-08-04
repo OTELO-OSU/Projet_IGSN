@@ -7,7 +7,7 @@ import { oceanSeaName } from "@projet-igsn/domain/sample/location/ocean-sea-labe
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
-import { matchRanges } from "#/domain/samples/highlight-match.ts";
+import { exactRanges, matchRanges } from "#/domain/samples/highlight-match.ts";
 import { materialPathLabel } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
@@ -41,9 +41,12 @@ function elementRanges(element: Element, query: string): Range[] {
   if (node?.nodeType !== Node.TEXT_NODE) {
     return [];
   }
-  return matchRanges(node.textContent ?? "", query).map((match) =>
-    toRange(node, match),
-  );
+  const text = node.textContent ?? "";
+  const ranges =
+    element.getAttribute("data-highlight") === "exact"
+      ? exactRanges(text, query)
+      : matchRanges(text, query);
+  return ranges.map((match) => toRange(node, match));
 }
 
 const MATERIAL_BADGE_CLASS: Record<string, string> = {
@@ -108,7 +111,7 @@ export function SampleList({
               </h2>
               <p
                 className="text-muted-foreground mt-1 font-mono text-sm break-all"
-                data-highlight
+                data-highlight="exact"
               >
                 {igsn}
               </p>

@@ -58,6 +58,16 @@ describe("SearchHelp", () => {
       .toHaveTextContent(/\* replaces any part of a word/i);
   });
 
+  it("should state that an igsn matches only in full", async () => {
+    const screen = await render(<SearchHelp />);
+
+    await screen.getByRole("button", { name: TRIGGER }).click();
+
+    await expect
+      .element(screen.getByRole("dialog"))
+      .toHaveTextContent(/igsn only matches typed in full/i);
+  });
+
   it("should mention typo tolerance", async () => {
     const screen = await render(<SearchHelp />);
 

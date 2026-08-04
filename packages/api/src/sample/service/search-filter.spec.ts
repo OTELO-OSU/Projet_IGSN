@@ -26,4 +26,16 @@ describe("searchFilters", () => {
       expect(JSON.stringify(plan)).toContain("sample_name_trgm_idx");
     },
   );
+
+  pgTest("should reach the igsn index for the exact arm", async ({ db }) => {
+    await sql`set local enable_seqscan = off`.execute(db);
+
+    const plan = await db
+      .selectFrom("sample")
+      .select((eb) => eb.fn.countAll<number>().as("count"))
+      .where((eb) => eb.and(searchFilters("0123456789ABCDEFGHJKMNPQRS")))
+      .explain();
+
+    expect(JSON.stringify(plan)).toContain("sample_igsn_key");
+  });
 });

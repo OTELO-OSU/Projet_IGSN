@@ -46,6 +46,12 @@ function chainSegments(
   }, from);
 }
 
+export function exactRanges(text: string, query: string): Range[] {
+  return searchTokens(normalize(query)).includes(normalize(text))
+    ? [[0, text.length]]
+    : [];
+}
+
 // No RegExp: chained "\S*" backtrack, and the wildcard cap bounds the query, not
 // the text.
 function matchRun(
