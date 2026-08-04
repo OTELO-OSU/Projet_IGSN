@@ -1,31 +1,33 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { withSampleChildren } from "./with-sample-children.ts";
+import { sampleAttachments } from "./sample-attachments.ts";
+import { sampleLinks } from "./sample-links.ts";
+import { toSample } from "./to-sample.ts";
 
-// Reads a sample and, in the same query, whether this user owns it: the api
-// answers 404 on no row and 403 on a row that is someone else's (ADR 0019).
-// A sample nobody owns is owned by nobody, so it is forbidden to everyone.
+// Reads a sample and, in the same query, this user's role on it: the api answers
+// 404 on no row and 403 on a row they hold no role on (ADR 0019).
 export async function getSample(
   db: Transactional<DB>,
   id: string,
-  ownerId: string,
-): Promise<{ sample: Sample; owned: boolean } | null> {
+  userId: string,
+): Promise<{ sample: Sample; role: UserSampleRole | null } | null> {
   const row = await db
     .selectFrom("sample")
     .leftJoin("user_sample", (join) =>
       join
         .onRef("user_sample.sample_id", "=", "sample.id")
-        .on("user_sample.user_id", "=", ownerId),
+        .on("user_sample.user_id", "=", userId),
     )
     .selectAll("sample")
-    .select("user_sample.user_id")
+    .select("user_sample.role")
+    .select(sampleLinks)
+    .select(sampleAttachments)
     .where("sample.id", "=", id)
     .executeTakeFirst();
   if (!row) return null;
-  const { user_id, ...sampleRow } = row;
-  const [sample] = await withSampleChildren(db, [sampleRow]);
-  return { sample: sample!, owned: user_id !== null };
+  return { sample: toSample(row, row.links, row.attachments), role: row.role };
 }

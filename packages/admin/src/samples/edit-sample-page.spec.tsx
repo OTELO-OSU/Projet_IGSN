@@ -1,4 +1,5 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -6,11 +7,13 @@ import {
   createMemoryHistory,
   createRouter,
 } from "@tanstack/react-router";
+import { HttpResponse, http } from "msw";
 import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { FakeXhr } from "../../test/fake-xhr.ts";
+import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
 vi.mock("react-oidc-context", () => ({
@@ -37,9 +40,6 @@ const overLimitAttachments: SampleAttachment[] = Array.from(
   }),
 );
 
-// In-memory API: GET returns the current sample, PUT saves it, POST /publish
-// publishes it. Records write calls so tests can assert the save-then-publish
-// order. Lets the page run its real save/refetch cycle without a backend.
 // Default type and material are leaves so Save & Publish starts enabled (see
 // samplePublishBlockers).
 function fakeApi(
@@ -52,6 +52,7 @@ function fakeApi(
   security: Record<string, unknown> | null = null,
   economic: Record<string, unknown> | null = null,
   attachments: SampleAttachment[] = [],
+  role: UserSampleRole = "owner",
 ) {
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -88,33 +89,40 @@ function fakeApi(
     updatedAt: "2026-07-01T10:00:00.000Z",
   };
   const calls: string[] = [];
-  vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
-    const url = input instanceof Request ? input.url : input.toString();
-    if (
-      (fail === "save" && init?.method === "PUT") ||
-      (fail === "publish" && init?.method === "POST")
-    ) {
-      return new Response(null, { status: 500 });
-    }
-    if (init?.method === "PUT" && typeof init.body === "string") {
+  worker.use(
+    http.get("*/admin/me", () =>
+      HttpResponse.json({ sub: "user-1", name: "Marie Dupont" }),
+    ),
+    http.put("*/samples/:id", async ({ request }) => {
+      if (fail === "save") return new HttpResponse(null, { status: 500 });
       // The attachments payload carries {id, description} entries, not the
       // full attachments; drop them to keep the fake sample parseable.
-      const { attachments: _attachments, ...body } = JSON.parse(init.body);
+      const { attachments: _attachments, ...body } = (await request.json()) as {
+        attachments: unknown;
+        name: string;
+      };
       sample = { ...sample, ...body };
       calls.push(`PUT ${sample.name}`);
-    }
-    if (init?.method === "POST" && url.endsWith("/publish")) {
+      return HttpResponse.json({ data: sample, role });
+    }),
+    http.post("*/samples/:id/publish", () => {
+      if (fail === "publish") return new HttpResponse(null, { status: 500 });
       sample = { ...sample, published: true, igsn: IGSN };
       calls.push("PUBLISH");
-    }
-    const body = url.includes("samples?")
-      ? { data: [sample], meta: { total: 1 } }
-      : { data: sample };
-    return new Response(JSON.stringify(body), {
-      status: 200,
-      headers: { "content-type": "application/json" },
-    });
-  });
+      return HttpResponse.json({ data: sample, role });
+    }),
+    http.get("*/samples", () =>
+      HttpResponse.json({
+        data: [{ ...sample, owner: { name: "Dupont", firstname: "Marie" } }],
+        meta: { total: 1 },
+      }),
+    ),
+    http.get("*/samples/:id", () => HttpResponse.json({ data: sample, role })),
+    http.delete(
+      "*/samples/:id/attachments/:attachmentId",
+      () => new HttpResponse(null, { status: 204 }),
+    ),
+  );
   return { id: sample.id, calls };
 }
 
@@ -128,6 +136,7 @@ async function renderEditPage(
   security: Record<string, unknown> | null = null,
   economic: Record<string, unknown> | null = null,
   attachments: SampleAttachment[] = [],
+  role: UserSampleRole = "owner",
 ) {
   const { id, calls } = fakeApi(
     published,
@@ -139,8 +148,11 @@ async function renderEditPage(
     security,
     economic,
     attachments,
+    role,
   );
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   const router = createRouter({
     routeTree,
     context: { queryClient },
@@ -156,7 +168,93 @@ async function renderEditPage(
   return { screen, calls };
 }
 
+const renderEditPageAsContributor = (published: boolean) =>
+  renderEditPage(
+    published,
+    "fossil",
+    false,
+    null,
+    null,
+    "exists",
+    null,
+    null,
+    [],
+    "contributor",
+  );
+
 describe("EditSamplePage", () => {
+  it("should not offer Save & Publish to a contributor on a draft", async () => {
+    const { screen } = await renderEditPageAsContributor(false);
+
+    await expect
+      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Save & Publish" }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should leave no focusable publish tooltip behind for a contributor on a blocked draft", async () => {
+    const { screen } = await renderEditPage(
+      false,
+      null,
+      false,
+      null,
+      null,
+      "exists",
+      null,
+      null,
+      [],
+      "contributor",
+    );
+
+    await expect
+      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Save & Publish" }).elements(),
+    ).toHaveLength(0);
+    expect(document.querySelectorAll('span[tabindex="0"]')).toHaveLength(0);
+  });
+
+  it("should disable saving for a contributor on a published sample and explain why", async () => {
+    const { screen } = await renderEditPageAsContributor(true);
+    const save = screen.getByRole("button", { name: "Publish updates" });
+    await expect.element(save).toBeDisabled();
+
+    save.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/only the owner can update a published sample/i);
+  });
+
+  it("should offer Share to the owner next to the title", async () => {
+    const { screen } = await renderEditPage();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Share" }))
+      .toBeVisible();
+  });
+
+  it("should not offer Share to a contributor", async () => {
+    const { screen } = await renderEditPageAsContributor(false);
+
+    await expect
+      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Share" }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should let the owner save a published sample", async () => {
+    const { screen } = await renderEditPage(true);
+
+    await expect
+      .element(screen.getByRole("button", { name: "Publish updates" }))
+      .toBeEnabled();
+  });
+
   it("should offer Save as draft and Save & Publish on a draft", async () => {
     const { screen } = await renderEditPage();
     await expect

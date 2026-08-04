@@ -13,10 +13,6 @@ import { SampleAttachmentUploadDialog } from "./sample-attachment-upload-dialog.
 import { SampleAttachments } from "./sample-attachments.tsx";
 import { useAttachmentChanges } from "./use-attachment-changes.ts";
 
-vi.mock("react-oidc-context", () => ({
-  useAuth: () => ({ user: { access_token: "tok" } }),
-}));
-
 const SAMPLE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 
 const attachment = {

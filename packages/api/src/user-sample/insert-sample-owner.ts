@@ -9,6 +9,6 @@ export async function insertSampleOwner(
 ): Promise<void> {
   await db
     .insertInto("user_sample")
-    .values({ sample_id: sampleId, user_id: userId })
+    .values({ sample_id: sampleId, user_id: userId, role: "owner" })
     .execute();
 }

@@ -2,8 +2,6 @@ import { expect, type Page } from "@playwright/test";
 
 import { adminUrl } from "../urls";
 
-// The admin SPA: the login screen (provider buttons) and, once authenticated,
-// the header with the sign-out control.
 export function adminPage(page: Page) {
   return {
     goto: () => page.goto(`${adminUrl}/`),
@@ -23,6 +21,6 @@ export function adminPage(page: Page) {
     // The header name is filled from the api's protected /me route, so seeing it
     // proves the Keycloak token verified server-side, not just in the SPA.
     expectUserName: (name: string) =>
-      expect(page.getByText(name)).toBeVisible(),
+      expect(page.getByRole("banner").getByText(name)).toBeVisible(),
   };
 }

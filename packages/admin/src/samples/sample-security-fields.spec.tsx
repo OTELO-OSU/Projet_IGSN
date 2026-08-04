@@ -1,8 +1,8 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { vi } from "vitest";
-import { render } from "vitest-browser-react";
 
+import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
 const noop = () => {};
@@ -10,8 +10,6 @@ const noop = () => {};
 const createAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Create", onSubmit }) as const;
 
-// Renders the form with the required fields prefilled and opens the Physical
-// description tab, so each test only drives the security inputs.
 async function renderSecuritySection(
   onSubmit: (value: CreateSample) => void = noop,
   security?: CreateSample["security"],

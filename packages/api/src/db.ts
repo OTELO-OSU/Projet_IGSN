@@ -177,10 +177,10 @@ type UserTable = {
   created_at: Generated<Date>;
 };
 
-// Sample owners, many-to-many. A row means "owner"; roles come later.
 type UserSampleTable = {
   user_id: string;
   sample_id: string;
+  role: "owner" | "contributor";
 };
 
 export type DB = {

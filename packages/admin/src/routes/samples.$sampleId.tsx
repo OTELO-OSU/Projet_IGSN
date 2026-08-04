@@ -3,6 +3,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { SampleForm } from "#/samples/sample-form.tsx";
+import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
 import { ForbiddenError, useSample } from "#/samples/use-sample.ts";
@@ -46,16 +47,19 @@ function EditSamplePage() {
 
   return (
     <>
-      <div>
-        <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
-        {isPublished && query.data.igsn ? (
-          <p
-            aria-label={m.field_igsn()}
-            className="text-muted-foreground text-sm"
-          >
-            {query.data.igsn}
-          </p>
-        ) : null}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
+          {isPublished && query.data.igsn ? (
+            <p
+              aria-label={m.field_igsn()}
+              className="text-muted-foreground text-sm"
+            >
+              {query.data.igsn}
+            </p>
+          ) : null}
+        </div>
+        <ShareSampleButton sampleId={sampleId} />
       </div>
 
       <SampleForm

@@ -26,6 +26,17 @@ vi.mock("../src/auth/middleware.ts", () => ({
   },
 }));
 
+// Keycloak's userinfo endpoint is unreachable in tests, so the live-session
+// guard passes through; a spec needing a revoked session overrides it with
+// mockImplementationOnce. The real guard is covered by active-session.spec.ts.
+vi.mock("../src/auth/active-session.ts", () => ({
+  requireActiveSession: vi.fn(
+    async (_c: unknown, next: () => Promise<void>) => {
+      await next();
+    },
+  ),
+}));
+
 // Read once at import, so clear an ambient value from the developer's shell
 // before any test module loads, then again after a spec overrides it.
 // RATE_LIMIT_* goes by prefix: a shell carrying RATE_LIMIT_ENABLED=false (what

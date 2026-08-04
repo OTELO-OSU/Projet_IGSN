@@ -15,7 +15,7 @@ const draft = {
 
 describe("getSample", () => {
   pgTest(
-    "should return a persisted sample owned by its reader",
+    "should return a persisted sample with its reader's owner role",
     async ({ db }) => {
       // Arrange
       const owner = await insertUser(db, "owner@univ-lorraine.fr");
@@ -24,12 +24,31 @@ describe("getSample", () => {
       // Act
       const found = await getSample(db, created.id, owner.id);
       // Assert
-      expect(found).toEqual({ sample: created, owned: true });
+      expect(found).toEqual({ sample: created, role: "owner" });
     },
   );
 
+  pgTest("should return its reader's contributor role", async ({ db }) => {
+    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+    const contributor = await insertUser(db, "contributor@univ-lorraine.fr");
+    const created = await insertSample(db, draft);
+    await insertSampleOwner(db, created.id, owner.id);
+    await db
+      .insertInto("user_sample")
+      .values({
+        sample_id: created.id,
+        user_id: contributor.id,
+        role: "contributor",
+      })
+      .execute();
+
+    const found = await getSample(db, created.id, contributor.id);
+
+    expect(found).toEqual({ sample: created, role: "contributor" });
+  });
+
   pgTest(
-    "should return another researcher's sample as unowned",
+    "should return another researcher's sample with no role",
     async ({ db }) => {
       // Arrange
       const owner = await insertUser(db, "owner@univ-lorraine.fr");
@@ -39,23 +58,12 @@ describe("getSample", () => {
       // Act
       const found = await getSample(db, created.id, other.id);
       // Assert
-      expect(found).toEqual({ sample: created, owned: false });
+      expect(found).toEqual({ sample: created, role: null });
     },
   );
 
-  // Safe default: a sample nobody owns (a row predating ownership) is nobody's.
-  pgTest("should return a sample with no owner as unowned", async ({ db }) => {
-    // Arrange
-    const user = await insertUser(db, "user@univ-lorraine.fr");
-    const created = await insertSample(db, draft);
-    // Act
-    const found = await getSample(db, created.id, user.id);
-    // Assert
-    expect(found).toEqual({ sample: created, owned: false });
-  });
-
-  // Distinct from an unowned sample, so the route keeps answering 404 on an
-  // unknown id and 403 on someone else's.
+  // Distinct from a sample the caller holds no role on, so the route keeps
+  // answering 404 on an unknown id and 403 on someone else's.
   pgTest(
     "should return null when the sample does not exist",
     async ({ db }) => {

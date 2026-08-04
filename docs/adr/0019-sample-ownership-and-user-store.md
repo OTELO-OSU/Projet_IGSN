@@ -4,7 +4,8 @@ Date: 2026-07-27
 
 ## Status
 
-Accepted
+Accepted. The role column and the sharing/removal question flagged in
+Consequences below are addressed by ADR 0021 (per-sample contributor role).
 
 ## Context
 
@@ -62,4 +63,6 @@ anonymous readers.
   until assigned. Only demo data is affected; `make db-seed-demo` re-seeds it.
 - Adding, removing, or editing owners, other roles, and an admin override are all
   still to come. The join table shape does not have to change for them, only the
-  role column.
+  role column. **Update (ADR 0021):** the role column landed (`owner |
+contributor`), with sharing but not removal; editing owners and an admin
+  override are still open.

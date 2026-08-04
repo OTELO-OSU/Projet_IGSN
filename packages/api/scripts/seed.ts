@@ -165,6 +165,7 @@ export async function seed(
       parsed.map((row) => ({
         sample_id: row.id,
         user_id: ownerIds[row.owner],
+        role: "owner" as const,
       })),
     )
     .execute();

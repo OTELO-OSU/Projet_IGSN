@@ -6,7 +6,7 @@ import { sql } from "kysely";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { withSampleChildren } from "./with-sample-children.ts";
+import { getSampleById } from "./get-sample-by-id.ts";
 
 export async function publishSample(
   db: Transactional<DB>,
@@ -21,9 +21,8 @@ export async function publishSample(
       publication_year: sql`coalesce(publication_year, extract(year from now())::int)`,
     })
     .where("id", "=", id)
-    .returningAll()
+    .returning("id")
     .executeTakeFirst();
   if (!row) return null;
-  const [sample] = await withSampleChildren(db, [row]);
-  return sample!;
+  return getSampleById(db, id);
 }

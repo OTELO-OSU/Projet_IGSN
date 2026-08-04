@@ -1,9 +1,11 @@
 import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
-  ListSamplesResponse,
-  SampleResponse,
+  AdminListSamplesResponse,
+  AdminSampleResponse,
 } from "@projet-igsn/domain/sample/sample-validator";
+import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
+import type { ListUsersResponse } from "@projet-igsn/domain/user/user-validator";
 
 import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-sample-publishable";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
@@ -11,14 +13,17 @@ import {
   samplePublishBlockers,
   toPublishableFields,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { Hono } from "hono";
 
-import type { OwnedSampleEnv } from "./require-sample-owner.ts";
+import type { SampleAccessEnv } from "./require-sample-access.ts";
 
+import { requireActiveSession } from "../auth/active-session.ts";
 import { attachmentDownload } from "./attachment-download.ts";
-import { requireSampleOwner } from "./require-sample-owner.ts";
+import { requireSampleAccess } from "./require-sample-access.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
+  validateAddContributorBody,
   validateAttachmentParams,
   validateAttachmentUpload,
   validateCreateSampleBody,
@@ -29,20 +34,23 @@ import {
 // Full sample CRUD for the admin app. Authentication is enforced once by the
 // requireAuth guard on the /admin mount (see app.ts), which also resolves the
 // caller with currentUser, so no per-route authentication guard here.
-// Authorization is per sample: a user only reaches their own (ADR 0019), through
-// the owner-scoped list and the requireSampleOwner guard below.
+// Authorization is per sample and role-based: a user only reaches a sample they
+// own or contribute to (ADR 0019), through the owner-scoped list and the
+// requireSampleAccess guard below.
 export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
+  userSampleRepository: UserSampleRepository,
 ) {
-  // Guards every route naming a sample id and hands it the sample it fetched:
-  // present means the caller owns it (200), absent means no such sample (404),
-  // and someone else's never reaches the route (403). Registered before those
-  // routes below, since Hono runs handlers in registration order.
-  const ownedSample = requireSampleOwner(repository);
+  // Guards every route naming a sample id and hands it the sample it fetched
+  // plus the caller's role on it: present means they have a role (200), absent
+  // means no such sample (404), and a sample they have no role on never reaches
+  // the route (403). Registered before those routes below, since Hono runs
+  // handlers in registration order.
+  const accessibleSample = requireSampleAccess(repository);
 
   return (
-    new Hono<OwnedSampleEnv>()
+    new Hono<SampleAccessEnv>()
       .get("/", validateListQuery, async (c) => {
         const { page, perPage, sort, order, search, ageMin, ageMax, ageUnit } =
           c.req.valid("query");
@@ -59,17 +67,20 @@ export function createSampleAdminRoutes(
           },
           c.get("user").id,
         );
-        const body: ListSamplesResponse = { data, meta: { total } };
+        const body: AdminListSamplesResponse = { data, meta: { total } };
         return c.json(body);
       })
-      .use("/:id", ownedSample)
-      .use("/:id/*", ownedSample)
+      .use("/:id", accessibleSample)
+      .use("/:id/*", accessibleSample)
       .get("/:id", validateIdParam, (c) => {
         const sample = c.get("sample");
         if (!sample) {
           return c.json({ error: "Sample not found" }, 404);
         }
-        const body: SampleResponse = { data: sample };
+        const body: AdminSampleResponse = {
+          data: sample,
+          role: c.get("role")!,
+        };
         return c.json(body);
       })
       .post("/", validateCreateSampleBody, async (c) => {
@@ -79,11 +90,50 @@ export function createSampleAdminRoutes(
         );
         return c.json({ data: sample }, 201);
       })
+      .get("/:id/contributors", validateIdParam, async (c) => {
+        if (!c.get("sample")) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (c.get("role") !== "owner") {
+          return c.json({ error: "Forbidden" }, 403);
+        }
+        const body: ListUsersResponse = {
+          data: await userSampleRepository.listContributors(
+            c.req.valid("param").id,
+          ),
+        };
+        return c.json(body);
+      })
+      .post(
+        "/:id/contributors",
+        requireActiveSession,
+        validateIdParam,
+        validateAddContributorBody,
+        async (c) => {
+          if (!c.get("sample")) {
+            return c.json({ error: "Not found" }, 404);
+          }
+          if (c.get("role") !== "owner") {
+            return c.json({ error: "Forbidden" }, 403);
+          }
+          const added = await userSampleRepository.addContributor(
+            c.req.valid("param").id,
+            c.req.valid("json").userId,
+          );
+          if (added === "unknown_user") {
+            return c.json({ error: "User not found" }, 404);
+          }
+          return c.body(null, 204);
+        },
+      )
       .put("/:id", validateIdParam, validateCreateSampleBody, async (c) => {
         const id = c.req.valid("param").id;
         const current = c.get("sample");
         if (!current) {
           return c.json({ error: "Not found" }, 404);
+        }
+        if (!canUpdateSample(c.get("role"), current)) {
+          return c.json({ error: "Forbidden" }, 403);
         }
         const toPersist = current.published
           ? mergePublishedEdit(current, c.req.valid("json"))
@@ -119,6 +169,9 @@ export function createSampleAdminRoutes(
         if (!sample) {
           return c.json({ error: "Not found" }, 404);
         }
+        if (c.get("role") !== "owner") {
+          return c.json({ error: "Forbidden" }, 403);
+        }
         // A sample must be classified down to a publishable leaf material before
         // it can be published (see samplePublishBlockers). ponytail: the guard's
         // read and publish are separate transactions, so a concurrent change to
@@ -136,6 +189,10 @@ export function createSampleAdminRoutes(
         validateIdParam,
         validateAttachmentUpload,
         async (c) => {
+          const sample = c.get("sample");
+          if (sample && !canUpdateSample(c.get("role"), sample)) {
+            return c.json({ error: "Forbidden" }, 403);
+          }
           const { file, description } = c.req.valid("form");
           const created = await attachmentsRepository.create(
             c.req.valid("param").id,
@@ -178,6 +235,10 @@ export function createSampleAdminRoutes(
         "/:id/attachments/:attachmentId",
         validateAttachmentParams,
         async (c) => {
+          const sample = c.get("sample");
+          if (sample && !canUpdateSample(c.get("role"), sample)) {
+            return c.json({ error: "Forbidden" }, 403);
+          }
           const { id, attachmentId } = c.req.valid("param");
           const removed = await attachmentsRepository.remove(id, attachmentId);
           if (!removed) {

@@ -60,4 +60,174 @@ describe("createUserRepository", () => {
     // Assert
     expect(user).toEqual(seeded);
   });
+
+  describe("search", () => {
+    const CALLER_ID = "01890a5d-ac96-774b-bcce-b302099a80ff";
+
+    async function insertResearchers(
+      db: Parameters<typeof createUserRepository>[0],
+    ) {
+      const repository = createUserRepository(db);
+      await repository.upsert({
+        email: "marie.curie@univ-lorraine.fr",
+        name: "Curie",
+        firstname: "Marie",
+      });
+      await repository.upsert({
+        email: "pierre.dupont@univ-lorraine.fr",
+        name: "Dupont",
+        firstname: "Pierre",
+      });
+      return repository;
+    }
+
+    pgTest("should find a researcher by family name", async ({ db }) => {
+      const repository = await insertResearchers(db);
+
+      const found = await repository.search("cur", CALLER_ID);
+
+      expect(found).toEqual([
+        {
+          id: expect.any(String),
+          email: "marie.curie@univ-lorraine.fr",
+          name: "Curie",
+          firstname: "Marie",
+        },
+      ]);
+    });
+
+    pgTest("should find a researcher by email", async ({ db }) => {
+      const repository = await insertResearchers(db);
+
+      const found = await repository.search("pierre.dupont@univ", CALLER_ID);
+
+      expect(found.map((user) => user.name)).toEqual(["Dupont"]);
+    });
+
+    pgTest("should ignore case", async ({ db }) => {
+      const repository = await insertResearchers(db);
+
+      const found = await repository.search("CURIE", CALLER_ID);
+
+      expect(found.map((user) => user.name)).toEqual(["Curie"]);
+    });
+
+    pgTest("should not match a firstname alone", async ({ db }) => {
+      const repository = createUserRepository(db);
+      await repository.upsert({
+        email: "geologue@univ-lorraine.fr",
+        name: "Blanchard",
+        firstname: "Solene",
+      });
+
+      expect(await repository.search("Solene", CALLER_ID)).toEqual([]);
+    });
+
+    pgTest(
+      "should return an empty list when nothing matches",
+      async ({ db }) => {
+        const repository = await insertResearchers(db);
+
+        expect(await repository.search("zzz", CALLER_ID)).toEqual([]);
+      },
+    );
+
+    pgTest("should order results by name", async ({ db }) => {
+      const repository = createUserRepository(db);
+      for (const name of ["Zeller", "Aubry", "Marchand"]) {
+        await repository.upsert({
+          email: `${name.toLowerCase()}@univ-lorraine.fr`,
+          name,
+          firstname: null,
+        });
+      }
+
+      const found = await repository.search("univ-lorraine", CALLER_ID);
+
+      expect(found.map((user) => user.name)).toEqual([
+        "Aubry",
+        "Marchand",
+        "Zeller",
+      ]);
+    });
+
+    pgTest("should return at most ten researchers", async ({ db }) => {
+      const repository = createUserRepository(db);
+      for (let index = 0; index < 12; index += 1) {
+        await repository.upsert({
+          email: `geologue${index}@univ-lorraine.fr`,
+          name: `Geologue${index}`,
+          firstname: null,
+        });
+      }
+
+      const found = await repository.search("geologue", CALLER_ID);
+
+      expect(found).toHaveLength(10);
+    });
+
+    pgTest("should treat wildcards as literal characters", async ({ db }) => {
+      const repository = await insertResearchers(db);
+
+      expect(await repository.search("%", CALLER_ID)).toEqual([]);
+      expect(await repository.search("_urie", CALLER_ID)).toEqual([]);
+    });
+
+    pgTest("should never return the caller", async ({ db }) => {
+      const repository = await insertResearchers(db);
+      const caller = await repository.upsert({
+        email: "caller@univ-lorraine.fr",
+        name: "Caller",
+        firstname: null,
+      });
+
+      const found = await repository.search("caller", caller.id);
+
+      expect(found).toEqual([]);
+    });
+
+    describe("without a term", () => {
+      pgTest("should order every researcher by email", async ({ db }) => {
+        const repository = await insertResearchers(db);
+
+        const found = await repository.search(undefined, CALLER_ID);
+
+        expect(found.map((user) => user.email)).toEqual([
+          "marie.curie@univ-lorraine.fr",
+          "pierre.dupont@univ-lorraine.fr",
+        ]);
+      });
+
+      pgTest("should return at most twenty researchers", async ({ db }) => {
+        const repository = createUserRepository(db);
+        for (let index = 0; index < 21; index += 1) {
+          await repository.upsert({
+            email: `geologue${String(index).padStart(2, "0")}@univ-lorraine.fr`,
+            name: `Geologue${index}`,
+            firstname: null,
+          });
+        }
+
+        const found = await repository.search(undefined, CALLER_ID);
+
+        expect(found).toHaveLength(20);
+        expect(found.at(-1)?.email).toBe("geologue19@univ-lorraine.fr");
+      });
+
+      pgTest("should exclude the caller", async ({ db }) => {
+        const repository = await insertResearchers(db);
+        const caller = await repository.upsert({
+          email: "aaa.caller@univ-lorraine.fr",
+          name: "Caller",
+          firstname: null,
+        });
+
+        const found = await repository.search(undefined, caller.id);
+
+        expect(found.map((user) => user.email)).not.toContain(
+          "aaa.caller@univ-lorraine.fr",
+        );
+      });
+    });
+  });
 });

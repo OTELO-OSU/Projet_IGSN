@@ -1,4 +1,4 @@
-import { listSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
+import { adminListSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -32,7 +32,9 @@ export function useSamples(params: {
           `Failed to load samples (${res.status})`,
         );
       }
-      const { data, meta } = listSamplesResponseSchema.parse(await res.json());
+      const { data, meta } = adminListSamplesResponseSchema.parse(
+        await res.json(),
+      );
       return { data, total: meta.total };
     },
     // Keep the current page on screen while the next one loads so paging

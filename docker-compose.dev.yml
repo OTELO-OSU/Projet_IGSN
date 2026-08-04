@@ -28,6 +28,13 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
       KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
       KC_HEALTH_ENABLED: "true"
+      # Pin the frontend URL so the realm issuer is the same string whichever
+      # host a request arrives on: start-dev otherwise derives it from the
+      # request, and the api's backchannel userinfo call (Host keycloak:8080)
+      # then rejects a token issued to localhost:8080. The backchannel stays
+      # dynamic so that in-network call keeps resolving.
+      KC_HOSTNAME: http://localhost:8080
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
     # The "orcid" broker defaults to the local mock-orcid realm, so dev needs no
     # credentials.
     env_file:
@@ -179,10 +186,12 @@ services:
     ports:
       - "3002:3002"
     environment:
-      # Token issuer is the browser-facing Keycloak URL; the api fetches JWKS on
-      # its own network, so the fetch URL points at the keycloak service directly.
+      # Token issuer is the browser-facing Keycloak URL; the api fetches JWKS and
+      # userinfo on its own network, so those URLs point at the keycloak service
+      # directly (an issuer-derived URL is unreachable from this container).
       OIDC_ISSUER: ${OIDC_ISSUER:-http://localhost:8080/realms/igsn}
       OIDC_JWKS_URI: ${OIDC_JWKS_URI:-http://keycloak:8080/realms/igsn/protocol/openid-connect/certs}
+      OIDC_USERINFO_URI: ${OIDC_USERINFO_URI:-http://keycloak:8080/realms/igsn/protocol/openid-connect/userinfo}
       # The only client whose tokens the api accepts (azp), same var as admin.
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
       CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
@@ -199,8 +208,7 @@ services:
       # Minimum word_similarity for the search's typo tolerance (ADR 0018).
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
       # How many files a sample may carry; the admin bundle must agree
-      # (VITE_UPLOAD_LIMIT). Dev's admin service sets none, so it falls back
-      # to the same default (5).
+      # (VITE_UPLOAD_LIMIT).
       UPLOAD_LIMIT: "5"
       # Where a future sender will post mail; no code reads these yet. No
       # SMTP_USER/SMTP_PASSWORD, unlike preprod: maildev takes anonymous SMTP,

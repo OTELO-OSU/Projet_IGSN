@@ -34,3 +34,15 @@ the markup is inaccessible.
       await page.getByRole('button', { name: /declare/i }).click()
       await expect.element(page.getByRole('alert')).toHaveTextContent(/saved/i)
     })
+
+## Mock the network with MSW, not the hooks
+
+Component tests run against a real `QueryClient` (`retry: false`) and fake the
+API at the network level with the shared MSW worker (`admin/test/msw.ts`).
+Never mock react-query hooks or spy on `window.fetch`: the cache, refetch, and
+Zod-parse behavior is part of what the test covers.
+
+Each test registers the routes it needs with `worker.use(http.get(...))`;
+handlers are never reset (see `test/msw.ts`). An unhandled request logs an MSW
+warning in the test output: add the missing route in the spec, do not silence
+the warning.

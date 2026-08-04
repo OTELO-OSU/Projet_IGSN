@@ -1,5 +1,5 @@
-import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
-import { useQuery } from "@tanstack/react-query";
+import { adminSampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
@@ -25,16 +25,24 @@ export async function parseSampleResponse(res: Response) {
   if (!res.ok) {
     throw HttpError.fromResponse(res, `Failed to load sample (${res.status})`);
   }
-  return sampleResponseSchema.parse(await res.json()).data;
+  const { data, role } = adminSampleResponseSchema.parse(await res.json());
+  return { ...data, role };
 }
 
-export function useSample(id: string) {
-  const apiFetch = useApiClient();
-  return useQuery({
+export function sampleQueryOptions(
+  apiFetch: ReturnType<typeof useApiClient>,
+  id: string | undefined,
+) {
+  return queryOptions({
     queryKey: ["samples", id],
     queryFn: async () =>
       parseSampleResponse(
         await apiFetch(new URL(`admin/samples/${id}`, API_URL)),
       ),
+    enabled: id !== undefined,
   });
+}
+
+export function useSample(id: string) {
+  return useQuery(sampleQueryOptions(useApiClient(), id));
 }

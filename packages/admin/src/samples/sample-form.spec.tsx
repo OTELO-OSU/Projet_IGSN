@@ -2,8 +2,8 @@ import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import { vi } from "vitest";
-import { render } from "vitest-browser-react";
 
+import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
 const noop = () => {};

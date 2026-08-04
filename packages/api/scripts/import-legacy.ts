@@ -280,7 +280,7 @@ async function main() {
         const sampleId = sampleIdByIgsn.get(igsn);
         const userId = userIdByEmail.get(owner.email);
         return sampleId && userId
-          ? [{ user_id: userId, sample_id: sampleId }]
+          ? [{ user_id: userId, sample_id: sampleId, role: "owner" as const }]
           : [];
       });
       for (let i = 0; i < links.length; i += BATCH_SIZE) {

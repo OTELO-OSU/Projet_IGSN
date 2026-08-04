@@ -19,6 +19,15 @@ runtime magic or hidden migrations.
 - Keep the Kysely schema types in sync with the database.
 - Test real repositories against a real database, never a stubbed query builder.
 
+## One query over app-side assembly
+
+Don't do programmatically what Postgres does in a single query. Fetching rows
+only to join, merge, aggregate, or count them in JS adds round-trips and
+re-implements the database: use joins, aggregates, and the Kysely json helpers
+(`jsonObjectFrom`, `jsonArrayFrom`) so related data arrives with the main row
+(e.g. `sample/service/sample-links.ts`). A follow-up query is a last
+resort, for what SQL cannot express.
+
 ## Transactions
 
 - Every repository operation runs in a transaction via the `withTransaction`

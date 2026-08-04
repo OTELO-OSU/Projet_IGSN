@@ -4,11 +4,11 @@ import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
-import { listSamplesByOwner } from "./list-sample.ts";
+import { listSamplesAssignedTo } from "./list-sample.ts";
 
 // The scope the admin list runs under. Sorting, filtering, facets and pagination
 // are the same query for every scope and are covered in list-sample.spec.ts.
-describe("listSamplesByOwner", () => {
+describe("listSamplesAssignedTo", () => {
   pgTest("should list only the owner's samples", async ({ db }) => {
     // Arrange
     const owner = await insertUser(db, "owner@univ-lorraine.fr");
@@ -28,7 +28,7 @@ describe("listSamplesByOwner", () => {
     await insertSampleOwner(db, owned.id, owner.id);
     await insertSampleOwner(db, foreign.id, other.id);
     // Act
-    const { data, total } = await listSamplesByOwner(
+    const { data, total } = await listSamplesAssignedTo(
       db,
       { page: 1, perPage: 10 },
       owner.id,
@@ -48,7 +48,7 @@ describe("listSamplesByOwner", () => {
       collectionMethod: null,
     });
     // Act
-    const result = await listSamplesByOwner(
+    const result = await listSamplesAssignedTo(
       db,
       { page: 1, perPage: 10 },
       user.id,
@@ -67,7 +67,7 @@ describe("listSamplesByOwner", () => {
       collectionMethod: null,
     });
     // Act
-    const result = await listSamplesByOwner(
+    const result = await listSamplesAssignedTo(
       db,
       { page: 1, perPage: 10 },
       user.id,

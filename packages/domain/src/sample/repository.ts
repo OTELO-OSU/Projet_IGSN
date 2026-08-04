@@ -1,4 +1,8 @@
-import type { ListSamplesQuery } from "./sample-validator.ts";
+import type { UserSampleRole } from "../user-sample/model.ts";
+import type {
+  AdminSampleListItem,
+  ListSamplesQuery,
+} from "./sample-validator.ts";
 import type { CreateSample, Sample } from "./sample.ts";
 
 // The validated list query is the repository's param shape: page/perPage/sort/
@@ -12,17 +16,25 @@ export type ListSamplesResult = {
   total: number;
 };
 
-// `ownerId` is a separate argument, never part of ListSamplesParams (the
+export type AdminListSamplesResult = {
+  data: AdminSampleListItem[];
+  total: number;
+};
+
+// `userId` is a separate argument, never part of ListSamplesParams (the
 // validated query): the caller's id comes from the token, never from the client.
 export type SampleRepository = {
-  list(params: ListSamplesParams, ownerId: string): Promise<ListSamplesResult>;
+  list(
+    params: ListSamplesParams,
+    userId: string,
+  ): Promise<AdminListSamplesResult>;
   listPublished(params: ListSamplesParams): Promise<ListSamplesResult>;
   // Reading a sample is relative to who reads it: no row at all (the api answers
-  // 404) or the row plus whether this user owns it (403 when they do not).
+  // 404) or the row plus this user's role on it (403 when they hold none).
   get(
     id: string,
-    ownerId: string,
-  ): Promise<{ sample: Sample; owned: boolean } | null>;
+    userId: string,
+  ): Promise<{ sample: Sample; role: UserSampleRole | null } | null>;
   getPublishedByIgsn(igsn: string): Promise<Sample | null>;
   create(input: CreateSample, ownerId: string): Promise<Sample>;
   update(id: string, input: CreateSample): Promise<Sample | null>;

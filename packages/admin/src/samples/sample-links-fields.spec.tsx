@@ -1,27 +1,27 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
-import type { ReactElement } from "react";
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
-import { render } from "vitest-browser-react";
 
+import { fakeSample } from "../../test/fake-sample.ts";
+import { worker } from "../../test/msw.ts";
+import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
-vi.mock("react-oidc-context", () => ({
-  useAuth: () => ({ user: { access_token: "tok" } }),
-}));
+const SAMPLE_ID = fakeSample.id;
 
-const SAMPLE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
+beforeAll(() => {
+  worker.use(
+    http.get("*/samples/:id", () =>
+      HttpResponse.json({ data: fakeSample, role: "owner" }),
+    ),
+  );
+});
 
 const noop = () => {};
 
 const saveAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Save", onSubmit }) as const;
-
-const renderForm = (ui: ReactElement) =>
-  render(
-    <QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>,
-  );
 
 const defaultValues: CreateSample = {
   name: "Basalte du Massif Central",
@@ -35,7 +35,7 @@ const defaultValues: CreateSample = {
 };
 
 const renderEditForm = (onSubmit: (value: CreateSample) => void) =>
-  renderForm(
+  render(
     <SampleForm
       onCancel={noop}
       defaultValues={defaultValues}
@@ -129,7 +129,7 @@ describe("SampleForm links tab", () => {
   });
 
   it("should prefill saved links", async () => {
-    const screen = await renderForm(
+    const screen = await render(
       <SampleForm
         onCancel={noop}
         defaultValues={{

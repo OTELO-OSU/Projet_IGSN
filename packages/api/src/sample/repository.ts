@@ -10,19 +10,19 @@ import { getSample } from "./service/get-sample.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import {
   listPublishedSamples,
-  listSamplesByOwner,
+  listSamplesAssignedTo,
 } from "./service/list-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import { updateSample } from "./service/update-sample.ts";
 
 export function createSampleRepository(db: Kysely<DB>): SampleRepository {
   return {
-    list: (params, ownerId) =>
-      withTransaction(db, (trx) => listSamplesByOwner(trx, params, ownerId)),
+    list: (params, userId) =>
+      withTransaction(db, (trx) => listSamplesAssignedTo(trx, params, userId)),
     listPublished: (params) =>
       withTransaction(db, (trx) => listPublishedSamples(trx, params)),
-    get: (id, ownerId) =>
-      withTransaction(db, (trx) => getSample(trx, id, ownerId)),
+    get: (id, userId) =>
+      withTransaction(db, (trx) => getSample(trx, id, userId)),
     getPublishedByIgsn: (igsn) =>
       withTransaction(db, (trx) => getPublishedSampleByIgsn(trx, igsn)),
     // Sample and owner in one transaction: an unowned sample would be

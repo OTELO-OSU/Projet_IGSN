@@ -149,7 +149,7 @@ function toScientificContext(row: Selectable<DB["sample"]>) {
 // DB row (snake_case) -> domain Sample (camelCase), validated at the boundary.
 // Location is flat on the row (see to-location.ts). Age is flat too: all-null
 // age columns -> null age. sampleSchema.parse validates the codes at the boundary.
-// Links and attachments are child rows (see with-sample-children.ts); the
+// Links and attachments are child rows (see sample-links.ts and sample-attachments.ts); the
 // schema defaults them to [] when a caller has none to attach.
 export function toSample(
   row: Selectable<DB["sample"]>,

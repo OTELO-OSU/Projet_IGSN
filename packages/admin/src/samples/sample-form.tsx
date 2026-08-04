@@ -53,9 +53,11 @@ import { availabilityLabel, natureLabel } from "#/samples/sample-labels.ts";
 import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
 import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
+import { SampleSubmitButton } from "#/samples/sample-submit-button.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
 import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
+import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
 const natureItems = toComboboxItems(natureSchema.options, natureLabel);
@@ -109,6 +111,7 @@ export function SampleForm({
   attachments = [],
   attachmentChanges,
 }: SampleFormProps) {
+  const roleOnSample = useUserRoleOnSample(sampleId);
   const validate = validateDraft(
     published ? publishedSampleSchema : sampleDraftSchema,
   );
@@ -263,6 +266,9 @@ export function SampleForm({
       );
     }
     if (action.kind === "publish") {
+      if (roleOnSample === "contributor") {
+        return null;
+      }
       // Save & Publish saves first, so unsaved edits are not a blocker here.
       return renderPublishGated((disabled) => (
         <PublishSampleButton
@@ -279,10 +285,12 @@ export function SampleForm({
     // No caller needs two; add explicit per-button meta if that ever changes.
     const submitButton = (disabled: boolean) => (
       <form.AppForm>
-        <form.SubmitButton
+        <SampleSubmitButton
           label={action.label}
           variant={variant}
           disabled={disabled}
+          sampleId={sampleId}
+          published={published}
         />
       </form.AppForm>
     );
