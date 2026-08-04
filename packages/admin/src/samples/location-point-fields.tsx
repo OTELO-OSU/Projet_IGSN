@@ -1,5 +1,6 @@
 import { m } from "#/paraglide/messages.js";
 import { elevationIntegerError } from "#/samples/elevation-integer-error.ts";
+import { LocationElevationFields } from "#/samples/location-elevation-fields.tsx";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 
 export function LocationPointFields({ required }: { required: boolean }) {
@@ -22,7 +23,7 @@ export function LocationPointFields({ required }: { required: boolean }) {
           />
         )}
       </form.AppField>
-      <div className="sm:col-span-2">
+      <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
         <form.AppField
           name="location.elevationValue"
           validators={{
@@ -30,7 +31,6 @@ export function LocationPointFields({ required }: { required: boolean }) {
           }}
         >
           {(field) => (
-            // Signed value: bathymetry below the datum, elevation above.
             <field.NumberField
               label={
                 (field.state.value ?? 0) < 0
@@ -40,6 +40,7 @@ export function LocationPointFields({ required }: { required: boolean }) {
             />
           )}
         </form.AppField>
+        <LocationElevationFields />
       </div>
     </div>
   );

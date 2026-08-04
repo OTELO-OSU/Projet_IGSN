@@ -48,10 +48,8 @@ const sample: AdminSampleListItem = {
 };
 const samples = [sample];
 
-// The table links to the edit route, so render it inside a minimal router
-// with a stub edit page to observe navigation. Sorting is controlled by the
-// caller (URL state in the app); the harness holds it in local state so
-// header toggles behave as in the real page.
+// Sorting is controlled by the caller (URL state in the app); the harness
+// holds it in local state so header toggles behave as in the real page.
 function renderTable(data: AdminSampleListItem[], onSortingChange = vi.fn()) {
   function Harness() {
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -126,7 +124,6 @@ describe("SampleTable", () => {
   });
 
   it("should request an asc then desc status sort when the header is clicked", async () => {
-    // Sorting is manual: the table reports toggles, the API orders the rows.
     const onSortingChange = vi.fn();
     const screen = await renderTable(samples, onSortingChange);
 
@@ -186,6 +183,13 @@ describe("SampleTable", () => {
     await expect
       .element(screen.getByRole("link", { name: "Basalte du Massif Central" }))
       .toHaveAttribute("href", "/samples/3f2504e0-4f89-41d3-9a0c-0305e82c3301");
+  });
+
+  it("should render a row whose sample has no specific name", async () => {
+    const screen = await renderTable([{ ...sample, specificName: null }]);
+    await expect
+      .element(screen.getByRole("link", { name: "Basalte du Massif Central" }))
+      .toBeVisible();
   });
 
   it("should navigate to the edit page when the row is clicked", async () => {

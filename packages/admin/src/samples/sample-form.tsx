@@ -66,9 +66,6 @@ const availabilityItems = toComboboxItems(
   availabilityLabel,
 );
 
-// A published sample validates against the publishable shape, a draft against
-// the create shape: a published sample must stay publishable, so its blockers
-// are field errors too.
 const validateDraft =
   (schema: typeof sampleDraftSchema) =>
   ({ value }: { value: SampleDraft }) => {
@@ -123,7 +120,6 @@ export function SampleForm({
         defaultValues?.material ?? null,
       )
     : () => false;
-  // Enter submits natively through the lone submit-kind button.
   const defaultSubmit =
     primaryAction.kind === "submit"
       ? primaryAction.onSubmit
@@ -163,7 +159,7 @@ export function SampleForm({
       if (!parsed.success) return;
       // Attachments live outside the form state, so their limit cannot pin a
       // field error: the save noops like any invalid field and the red file
-      // count says why. The api refuses the payload anyway.
+      // count says why.
       if ((attachmentChanges?.keptCount ?? attachments.length) > UPLOAD_LIMIT) {
         return;
       }
@@ -211,8 +207,6 @@ export function SampleForm({
       }) => {
         // Form state holds looser select strings; the runtime values match
         // the domain, so cast to the fields samplePublishBlockers reads.
-        // Attachments live outside the form state: only the count the save
-        // would keep matters.
         const reasons = samplePublishBlockers(
           {
             type: composeHierarchyValue(typePath),
@@ -294,9 +288,6 @@ export function SampleForm({
         />
       </form.AppForm>
     );
-    // A published sample's save must keep it publishable, so it gates on the
-    // blockers like the first publish; a draft saves freely (over the
-    // attachment limit the submit noops, see onSubmit).
     return published
       ? renderPublishGated(submitButton)
       : submitButton(isPending ?? false);
@@ -330,55 +321,57 @@ export function SampleForm({
           </TabsList>
 
           <TabsContent value="classification" className="grid gap-4">
-            <form.AppField
-              name="name"
-              validators={{
-                onChange: ({ value }) =>
-                  value?.trim()
-                    ? undefined
-                    : { message: m.field_name_required() },
-              }}
-            >
-              {(field) => (
-                <field.TextField label={m.field_name()} requiredToPublish />
-              )}
-            </form.AppField>
+            <FormSection title={m.section_sample_classification()}>
+              <form.AppField
+                name="name"
+                validators={{
+                  onChange: ({ value }) =>
+                    value?.trim()
+                      ? undefined
+                      : { message: m.field_name_required() },
+                }}
+              >
+                {(field) => (
+                  <field.TextField label={m.field_name()} requiredToPublish />
+                )}
+              </form.AppField>
 
-            <form.AppForm>
-              <SampleTypeFields />
-            </form.AppForm>
+              <form.AppForm>
+                <SampleTypeFields />
+              </form.AppForm>
 
-            <form.AppField
-              name="nature"
-              validators={{
-                onChange: ({ value }) =>
-                  value ? undefined : { message: m.field_nature_required() },
-              }}
-            >
-              {(field) => (
-                <field.ComboboxField
-                  label={m.field_nature()}
-                  requiredToPublish
-                  items={natureItems}
-                  placeholder={m.nature_placeholder()}
-                  searchPlaceholder={m.nature_search_placeholder()}
-                  emptyText={m.nature_empty()}
-                />
-              )}
-            </form.AppField>
+              <form.AppField
+                name="nature"
+                validators={{
+                  onChange: ({ value }) =>
+                    value ? undefined : { message: m.field_nature_required() },
+                }}
+              >
+                {(field) => (
+                  <field.ComboboxField
+                    label={m.field_nature()}
+                    requiredToPublish
+                    items={natureItems}
+                    placeholder={m.nature_placeholder()}
+                    searchPlaceholder={m.nature_search_placeholder()}
+                    emptyText={m.nature_empty()}
+                  />
+                )}
+              </form.AppField>
 
-            <form.AppForm>
-              <CollectionMethodField />
-            </form.AppForm>
+              <form.AppForm>
+                <CollectionMethodField />
+              </form.AppForm>
 
-            <form.AppField name="collectionMethodDescription">
-              {(field) => (
-                <field.TextField
-                  label={m.field_collection_method_description()}
-                  multiline
-                />
-              )}
-            </form.AppField>
+              <form.AppField name="collectionMethodDescription">
+                {(field) => (
+                  <field.TextField
+                    label={m.field_collection_method_description()}
+                    multiline
+                  />
+                )}
+              </form.AppField>
+            </FormSection>
           </TabsContent>
 
           <TabsContent value="type" className="grid gap-4">
@@ -437,9 +430,11 @@ export function SampleForm({
           </TabsContent>
 
           <TabsContent value="scientific-context" className="grid gap-4">
-            <form.AppForm>
-              <SampleScientificContextFields />
-            </form.AppForm>
+            <FormSection title={m.section_scientific_context()}>
+              <form.AppForm>
+                <SampleScientificContextFields />
+              </form.AppForm>
+            </FormSection>
           </TabsContent>
 
           {sampleId ? (

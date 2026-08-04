@@ -27,6 +27,8 @@ const metaFields = [
   },
 ];
 
+// Emits its fields as bare grid items: the parent owns the grid, since a point
+// lays them out next to the elevation and an area on their own row.
 export function LocationElevationFields() {
   const form = useLocationForm();
   return (
@@ -34,9 +36,8 @@ export function LocationElevationFields() {
       selector={(state) => isElevationEntered(state.values.location)}
     >
       {(entered) =>
-        entered ? (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {metaFields.map(
+        entered
+          ? metaFields.map(
               ({
                 key,
                 items,
@@ -58,9 +59,8 @@ export function LocationElevationFields() {
                   )}
                 </form.AppField>
               ),
-            )}
-          </div>
-        ) : null
+            )
+          : null
       }
     </form.Subscribe>
   );

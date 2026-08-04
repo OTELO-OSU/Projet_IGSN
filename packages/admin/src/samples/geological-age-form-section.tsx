@@ -1,3 +1,4 @@
+import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { useState } from "react";
 
@@ -9,17 +10,14 @@ import { AgeModeRadio } from "#/samples/age-mode-radio.tsx";
 import { GeologicalField } from "#/samples/geological-field.tsx";
 import { useAgeForm } from "#/samples/use-age-form.ts";
 
-// Fixed and range share the min/max bounds. The free-text lithostratigraphic
-// unit is independent of the ICS time scale, so it lives outside the toggle.
 const BOUND_FIELDS: (keyof AgeFormValues)[] = [
   "geologicalAgeMin",
   "geologicalAgeMax",
 ];
 
-// Stratigraphic age form section: the enable toggle and mode radio gate the ICS
-// time scale (min/max bounds) only; disabling or switching clears the hidden
-// bounds so no stale value survives to submit. The lithostratigraphic unit is
-// always visible and untouched by the toggle. Render inside a `form.AppForm`.
+// Disabling or switching clears the hidden bounds so no stale value survives to
+// submit. The free-text lithostratigraphic unit is independent of the ICS time
+// scale, so it lives outside the toggle.
 export function GeologicalAgeFormSection() {
   const form = useAgeForm();
   const values = form.state.values.age;
@@ -27,12 +25,10 @@ export function GeologicalAgeFormSection() {
     for (const name of fields) form.setFieldValue(`age.${name}`, undefined);
   };
 
-  // Off by default; on when edit prefill carries a time-scale bound.
   const [enabled, setEnabled] = useState(() =>
     BOUND_FIELDS.some((name) => values[name]),
   );
-  // A non-range value stores min == max; a real or half-entered range is range
-  // mode.
+  // A non-range value stores min == max.
   const [mode, setMode] = useState<AgeMode>(() =>
     values.geologicalAgeMin &&
     values.geologicalAgeMin === values.geologicalAgeMax
@@ -52,16 +48,17 @@ export function GeologicalAgeFormSection() {
   };
 
   return (
-    <fieldset className="grid gap-4">
-      <legend className="mb-2 flex items-center gap-2 font-medium">
-        {m.section_stratigraphic_age()}
+    <FormSection
+      level={3}
+      title={m.section_stratigraphic_age()}
+      action={
         <Switch
           checked={enabled}
           onCheckedChange={toggleEnabled}
           aria-label={m.age_stratigraphic_toggle()}
         />
-      </legend>
-
+      }
+    >
       {enabled ? (
         <>
           <AgeModeRadio
@@ -97,6 +94,6 @@ export function GeologicalAgeFormSection() {
       <form.AppField name="age.geologicalUnit">
         {(field) => <field.TextField label={m.field_geological_unit()} />}
       </form.AppField>
-    </fieldset>
+    </FormSection>
   );
 }

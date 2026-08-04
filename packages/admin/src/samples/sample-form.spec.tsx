@@ -19,6 +19,38 @@ const publishableScientificContext = {
   collectionOrigin: "scientific_expedition",
 } as const;
 
+type Screen = Awaited<ReturnType<typeof render>>;
+
+async function renderPointLocation(): Promise<Screen> {
+  const screen = await render(
+    <SampleForm
+      onCancel={noop}
+      defaultValues={{
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: "dredge",
+        material: "fossil",
+        collectionMethod: null,
+        collectionMethodDescription: null,
+      }}
+      primaryAction={createAction(noop)}
+    />,
+  );
+
+  await screen.getByRole("tab", { name: "Physical description" }).click();
+  await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+  await screen.getByRole("option", { name: "Point" }).click();
+  return screen;
+}
+
+async function fillElevation(screen: Screen) {
+  await screen.getByLabelText("Elevation").fill("100");
+  await screen.getByRole("combobox", { name: "Unit *" }).click();
+  await screen.getByRole("option", { name: "m", exact: true }).click();
+  await screen.getByRole("combobox", { name: "Vertical datum *" }).click();
+  await screen.getByRole("option", { name: "Mean sea level" }).click();
+}
+
 describe("SampleForm", () => {
   it("should reject a blank name and not submit", async () => {
     const onSubmit = vi.fn();
@@ -792,7 +824,9 @@ describe("SampleForm", () => {
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
-    await screen.getByLabelText("Numeric age", { exact: true }).fill("12000");
+    await screen
+      .getByRole("spinbutton", { name: "Numeric age", exact: true })
+      .fill("12000");
     await screen.getByRole("combobox", { name: "Units" }).click();
     await screen.getByRole("option", { name: "a (years)" }).click();
     await screen.getByRole("combobox", { name: "Reference" }).click();
@@ -837,10 +871,11 @@ describe("SampleForm", () => {
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
-    await screen.getByLabelText("Numeric age", { exact: true }).fill("12000");
+    await screen
+      .getByRole("spinbutton", { name: "Numeric age", exact: true })
+      .fill("12000");
     await screen.getByRole("combobox", { name: "Units *" }).click();
     await screen.getByRole("option", { name: "Ma", exact: true }).click();
-    // Switching mode clears the bounds, so the unit has nothing left to qualify.
     await screen
       .getByRole("radio", { name: "Range (min / max)" })
       .first()
@@ -866,7 +901,9 @@ describe("SampleForm", () => {
       .element(screen.getByRole("combobox", { name: "Reference" }))
       .not.toBeInTheDocument();
 
-    await screen.getByLabelText("Numeric age", { exact: true }).fill("120");
+    await screen
+      .getByRole("spinbutton", { name: "Numeric age", exact: true })
+      .fill("120");
     await expect
       .element(screen.getByRole("combobox", { name: "Units *" }))
       .toBeVisible();
@@ -890,17 +927,20 @@ describe("SampleForm", () => {
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
     await expect
-      .element(screen.getByLabelText("Numeric age", { exact: true }))
+      .element(
+        screen.getByRole("spinbutton", { name: "Numeric age", exact: true }),
+      )
       .toBeInTheDocument();
 
-    // The numeric block's Range radio is the first "Range (min / max)" option.
     await screen
       .getByRole("radio", { name: "Range (min / max)" })
       .first()
       .click();
 
     await expect
-      .element(screen.getByLabelText("Numeric age", { exact: true }))
+      .element(
+        screen.getByRole("spinbutton", { name: "Numeric age", exact: true }),
+      )
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByLabelText("Numeric age minimum"))
@@ -917,13 +957,17 @@ describe("SampleForm", () => {
 
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
-      .element(screen.getByLabelText("Numeric age", { exact: true }))
+      .element(
+        screen.getByRole("spinbutton", { name: "Numeric age", exact: true }),
+      )
       .not.toBeInTheDocument();
 
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
     await expect
-      .element(screen.getByLabelText("Numeric age", { exact: true }))
+      .element(
+        screen.getByRole("spinbutton", { name: "Numeric age", exact: true }),
+      )
       .toBeInTheDocument();
   });
 
@@ -978,10 +1022,9 @@ describe("SampleForm", () => {
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
-    await screen.getByLabelText("Numeric age", { exact: true }).fill("120");
-    // Pick annum, choose a reference, then move the unit off annum: the (now
-    // unmounted) reference must not be saved, or it would fail validation on a
-    // field nobody can see.
+    await screen
+      .getByRole("spinbutton", { name: "Numeric age", exact: true })
+      .fill("120");
     await screen.getByRole("combobox", { name: "Units" }).click();
     await screen.getByRole("option", { name: "a (years)" }).click();
     await screen.getByRole("combobox", { name: "Reference" }).click();
@@ -1033,7 +1076,9 @@ describe("SampleForm", () => {
     await screen.getByRole("tab", { name: "Physical description" }).click();
 
     await expect
-      .element(screen.getByLabelText("Numeric age", { exact: true }))
+      .element(
+        screen.getByRole("spinbutton", { name: "Numeric age", exact: true }),
+      )
       .toHaveValue(120);
   });
 
@@ -1127,8 +1172,6 @@ describe("SampleForm", () => {
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
 
-    // The disabled button is not focusable; its tooltip trigger (the wrapping
-    // span) reveals the reason on focus, the way a keyboard user would find it.
     publish.element().parentElement?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
@@ -1344,6 +1387,43 @@ describe("SampleForm", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should head the classification and scientific context tabs with a section heading", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Sample classification" }))
+      .toBeVisible();
+
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
+    await expect
+      .element(screen.getByRole("heading", { name: "Scientific context" }))
+      .toBeVisible();
+  });
+
+  it("should nest the numeric and stratigraphic age headings under Age", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Age" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("heading", { level: 3, name: "Numeric age" }))
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("heading", {
+          level: 3,
+          name: "Stratigraphic time scale age",
+        }),
+      )
+      .toBeVisible();
+  });
+
   it("should hide the Location section until the material determines its requirement", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
@@ -1458,7 +1538,6 @@ describe("SampleForm", () => {
     await screen.getByRole("option", { name: "Point" }).click();
     await screen.getByLabelText("Longitude *").fill("3");
     await screen.getByLabelText("Latitude *").fill("45");
-    // The label reads "Elevation" until a negative value flips it to "Bathymetry".
     await screen.getByLabelText("Elevation").fill("-1200");
     await expect
       .element(screen.getByLabelText("Bathymetry"))
@@ -1740,34 +1819,13 @@ describe("SampleForm", () => {
   });
 
   it("should show unit and datum only once an elevation part is entered", async () => {
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(noop)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
+    const screen = await renderPointLocation();
 
     await expect
       .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
       .not.toBeInTheDocument();
 
-    await screen.getByLabelText("Elevation").fill("100");
-    await screen.getByRole("combobox", { name: "Unit *" }).click();
-    await screen.getByRole("option", { name: "m", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Vertical datum *" }).click();
-    await screen.getByRole("option", { name: "Mean sea level" }).click();
+    await fillElevation(screen);
 
     await screen.getByLabelText("Elevation").fill("");
     await expect
@@ -1781,6 +1839,24 @@ describe("SampleForm", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Unit *", exact: true }))
       .toHaveTextContent("m");
+  });
+
+  it("should keep the elevation unit and datum when the location type changes", async () => {
+    const screen = await renderPointLocation();
+    await fillElevation(screen);
+
+    for (const type of ["Area", "Point"]) {
+      await screen
+        .getByRole("combobox", { name: "Type *", exact: true })
+        .click();
+      await screen.getByRole("option", { name: type }).click();
+      await expect
+        .element(screen.getByRole("combobox", { name: "Unit *", exact: true }))
+        .toHaveTextContent("m");
+      await expect
+        .element(screen.getByRole("combobox", { name: "Vertical datum *" }))
+        .toHaveTextContent("Mean sea level");
+    }
   });
 
   it("should clear values the save dropped, keeping only what was submitted", async () => {
@@ -1855,7 +1931,6 @@ describe("SampleForm", () => {
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeEnabled();
 
-    // Clear availability (re-picking the selected option deselects it).
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: /availability/i }).click();
     await screen.getByRole("option", { name: "Exists", exact: true }).click();

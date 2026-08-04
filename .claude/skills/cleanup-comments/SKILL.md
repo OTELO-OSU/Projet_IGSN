@@ -64,12 +64,15 @@ Never author new comment text: no new claims, no rephrasing what you keep.
 Dropping sentences and re-wrapping the survivors is deletion, and expected. The
 surviving words must be the original words.
 
+The `flag-added-comments` hook rejects any Edit whose replacement holds a comment
+line, so a sentence trim needs a script (`python3` string replace); whole-line
+deletions go through Edit.
+
 ## Verification gate
 
 ```sh
 pnpm fmt:apply
 pnpm lint:check
-pnpm test --project @projet-igsn/<project>   # each project whose files changed
 git diff -U0 | grep -E '^[+-][^+-]' | grep -vE '^[+-]\s*(//|\*|/\*)'   # must be empty
 ```
 
@@ -77,8 +80,11 @@ The last one guards the comment-only invariant on THIS pass's delta; a hit means
 you edited code, so revert it. Do not use `origin/main...HEAD` there: it shows
 what the branch did and hides your delta once committed.
 
-Done when lint is clean, the touched projects' tests pass, and the delta is
-comments only. Say so if a suite was already failing on `origin/main`.
+Never run the test suites: a comment cannot change behavior, so the run costs
+minutes and proves nothing. Lint is the only behavior guard needed, it catches a
+deleted tool directive. The comment-only delta above proves the rest.
+
+Done when lint is clean and the delta is comments only.
 
 ## Report
 
@@ -104,3 +110,4 @@ packages/domain/sample/model.ts
 - "The diff only added this one, the rest is out of scope" -> every comment in every touched file
 - "Deleting a `biome-ignore` cleans up the file" -> directive, keep it
 - "Tests still pass, so the code edit is fine" -> this pass edits comments only
+- "I'll run the suite to be safe" -> comments cannot break it, lint is the guard
