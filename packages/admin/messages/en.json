@@ -106,6 +106,8 @@
   "share_owner_label": "Owner",
   "share_collaborators_label": "Collaborators",
   "share_contributors_empty": "No collaborator yet",
+  "share_contributors_loading": "Loading collaborators...",
+  "share_contributors_error": "Could not load the collaborators.",
   "share_search_label": "Search a colleague",
   "share_search_placeholder": "Search by name or email",
   "share_search_no_results": "No colleague found",

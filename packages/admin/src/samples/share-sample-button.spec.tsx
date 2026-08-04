@@ -3,7 +3,7 @@ import type { User } from "@projet-igsn/domain/user/model";
 
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { HttpResponse, http } from "msw";
+import { HttpResponse, delay, http } from "msw";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { userEvent } from "vitest/browser";
@@ -171,6 +171,33 @@ describe("ShareSampleButton", () => {
     await openDialog(screen);
 
     await expect.element(screen.getByText("No collaborator yet")).toBeVisible();
+  });
+
+  it("should show a loading state while the collaborators load", async () => {
+    const { screen } = await renderShareButton();
+    worker.use(http.get("*/samples/:id/contributors", () => delay("infinite")));
+
+    await openDialog(screen);
+
+    await expect
+      .element(screen.getByText("Loading collaborators..."))
+      .toBeVisible();
+  });
+
+  it("should say so when the collaborators fail to load", async () => {
+    const { screen } = await renderShareButton();
+    worker.use(
+      http.get(
+        "*/samples/:id/contributors",
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+
+    await openDialog(screen);
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent("Could not load the collaborators.");
   });
 
   it("should offer no suggestion until the autocomplete is opened", async () => {
