@@ -26,38 +26,33 @@ beforeEach(() => {
 });
 
 describe("AuthGate", () => {
-  it("shows an identity-provider button per broker when unauthenticated", async () => {
+  it("shows a single sign-in button when unauthenticated", async () => {
     const screen = await render(<AuthGate />);
     await expect
-      .element(
-        screen.getByRole("button", { name: "Sign in with your institution" }),
-      )
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("button", { name: "Sign in with ORCID" }))
+      .element(screen.getByRole("button", { name: "Sign in" }))
       .toBeEnabled();
   });
 
-  it("should start sign-in with a fresh nonce and the broker hint", async () => {
+  it("should start sign-in with a fresh nonce and no broker hint", async () => {
     const screen = await render(<AuthGate />);
 
-    await screen
-      .getByRole("button", { name: "Sign in with your institution" })
-      .click();
+    await screen.getByRole("button", { name: "Sign in" }).click();
 
     expect(auth.signinRedirect).toHaveBeenCalledWith({
       nonce: expect.any(String),
-      extraQueryParams: { kc_idp_hint: "shibboleth" },
     });
   });
 
-  it("routes a user signed in through ORCID to the ORCID access gate", async () => {
-    auth.isAuthenticated = true;
-    auth.user = { profile: { identity_provider: "orcid" } };
+  it.each(["orcid", "ORCID"])(
+    "routes a user signed in through ORCID to the ORCID access gate (identity_provider %s)",
+    async (alias) => {
+      auth.isAuthenticated = true;
+      auth.user = { profile: { identity_provider: alias } };
 
-    const screen = await render(<AuthGate />);
-    await expect
-      .element(screen.getByRole("alert"))
-      .toHaveTextContent(/orcid access gate/i);
-  });
+      const screen = await render(<AuthGate />);
+      await expect
+        .element(screen.getByRole("alert"))
+        .toHaveTextContent(/orcid access gate/i);
+    },
+  );
 });

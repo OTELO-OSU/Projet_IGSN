@@ -1,6 +1,7 @@
 import { type Page } from "@playwright/test";
 
 import { adminPage } from "./admin.page";
+import { keycloakLoginPage } from "./keycloak-login.page";
 import { keycloakProfilePage } from "./keycloak-profile.page";
 import { shibbolethLoginPage } from "./shibboleth-login.page";
 
@@ -31,7 +32,8 @@ export const RESEARCHERS = {
 export async function signInAsResearcher(page: Page, researcher: Researcher) {
   const admin = adminPage(page);
   await admin.goto();
-  await admin.signInWithInstitution();
+  await admin.signIn();
+  await keycloakLoginPage(page).chooseInstitution();
   await shibbolethLoginPage(page).login(researcher.username, "password");
   await keycloakProfilePage(page).completeIfShown(researcher.email);
   await admin.expectSignedIn();
