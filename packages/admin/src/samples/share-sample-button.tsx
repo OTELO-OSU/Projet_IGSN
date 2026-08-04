@@ -21,8 +21,9 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@projet-igsn/design-system/components/ui/popover";
+import { useDebouncedValue } from "@tanstack/react-pacer";
 import { ChevronsUpDownIcon } from "lucide-react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "react-oidc-context";
 
 import { m } from "#/paraglide/messages.js";
@@ -49,8 +50,7 @@ function ShareSampleDialog({ sampleId }: { sampleId: string }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [term, setTerm] = useState("");
-  const [search, setSearch] = useState("");
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [search] = useDebouncedValue(term, { wait: DEBOUNCE_MS });
   const contributors = useContributors(sampleId, isOpen);
   const found = useSearchUsers(search, isOpen);
   const addContributor = useAddContributor(sampleId);
@@ -59,17 +59,7 @@ function ShareSampleDialog({ sampleId }: { sampleId: string }) {
   // off the sample response the day a contributor gets to see this list.
   const ownerProfile = useAuth().user?.profile;
 
-  const resetSearch = () => {
-    clearTimeout(timer.current);
-    setTerm("");
-    setSearch("");
-  };
-
-  const onType = (value: string) => {
-    setTerm(value);
-    clearTimeout(timer.current);
-    timer.current = setTimeout(() => setSearch(value), DEBOUNCE_MS);
-  };
+  const resetSearch = () => setTerm("");
 
   return (
     <Dialog
@@ -148,7 +138,7 @@ function ShareSampleDialog({ sampleId }: { sampleId: string }) {
               <CommandInput
                 placeholder={m.share_search_placeholder()}
                 value={term}
-                onValueChange={onType}
+                onValueChange={setTerm}
               />
               <CommandList label={m.share_suggestions_label()}>
                 {search.length >= MIN_SEARCH_LENGTH && !found.isFetching ? (
