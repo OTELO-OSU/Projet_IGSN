@@ -27,7 +27,6 @@ infra/preprod/certs/
 
 **/.DS_Store
 
-# Claude
 .claude/settings.local.json
 
 # Playwright
@@ -36,7 +35,6 @@ infra/preprod/certs/
 **/.playwright
 **/.vitest-attachments
 
-# Dev Container
 .devcontainer/.mnt-*/*
 
 # Worktrees created by `make create-worktree`
@@ -44,7 +42,6 @@ infra/preprod/certs/
 !.devcontainer/.mnt-*/.gitkeep
 .pnpm-store
 .ms-playwright
-## Local development container configuration files
 .devcontainer.json
 .devcontainer-lock.json
 

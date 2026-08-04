@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # SessionEnd -> merge the session branch back into the source branch, then
-# remove the session worktree and its /tmp dir. On merge conflict, abort the
-# merge and leave the worktree + branch in place so the user can resolve it.
+# remove the session worktree and its /tmp dir.
 set -euo pipefail
 input=$(cat)
 sid=$(printf '%s' "$input" | jq -r '.session_id')

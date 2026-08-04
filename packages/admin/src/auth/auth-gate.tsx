@@ -12,8 +12,7 @@ import { OrcidAccessGate } from "./orcid-access-gate.tsx";
 // Login page + gate: sign-in redirects to Keycloak, whose own login page
 // offers the identity providers. The SSO owns that list (GaiaData's differs
 // from the mock realm's), so the app sends no kc_idp_hint. Accounts are
-// provisioned on first login (first-broker-login). Authenticated users see
-// the app (the routed children) behind this gate.
+// provisioned on first login (first-broker-login).
 export function AuthGate({ children }: { children?: ReactNode }) {
   const auth = useAuth();
   const signIn = () =>

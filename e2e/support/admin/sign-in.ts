@@ -27,8 +27,6 @@ export const RESEARCHERS = {
   luc: { username: "luc.moreau", email: "luc.moreau@univ-lorraine.fr" },
 } satisfies Record<string, Researcher>;
 
-// Shared entry point for the sample journeys: a researcher signs in through their
-// institution and lands in the app. See auth.spec.ts for the flow under test.
 export async function signInAsResearcher(page: Page, researcher: Researcher) {
   const admin = adminPage(page);
   await admin.goto();
