@@ -14,7 +14,6 @@ export function shareSamplePage(page: Page) {
       expect(dialog.getByText(`${name} ${email}`)).toBeVisible(),
     expectNoCollaborator: () =>
       expect(dialog.getByText("No collaborator yet")).toBeVisible(),
-    // The directory loads with the dialog, so it is there as the popover opens.
     expectColleagueOffered: (name: string) =>
       expect(colleague(name)).toBeVisible(),
     pickColleague: (name: string) => colleague(name).click(),

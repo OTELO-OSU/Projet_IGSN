@@ -8,7 +8,6 @@ import { describe, expect, vi } from "vitest";
 import { createApp } from "../app.ts";
 import { pgTest } from "../tests/pg-test.ts";
 
-// Seed samples via the authenticated admin routes so the public reads have data.
 const authHeader = { Authorization: "Bearer test-token" };
 
 type Client = ReturnType<typeof testClient<ReturnType<typeof createApp>>>;

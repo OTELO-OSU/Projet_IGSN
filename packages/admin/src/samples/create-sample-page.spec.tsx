@@ -23,8 +23,6 @@ vi.mock("react-oidc-context", () => ({
   }),
 }));
 
-// In-memory API: POST creates the sample, GET returns it. Lets the page run
-// its real create-then-navigate cycle without a backend.
 function fakeApi(failWrites = false) {
   let sample: Record<string, unknown> | null = null;
   worker.use(
@@ -139,7 +137,6 @@ describe("CreateSamplePage", () => {
       .click();
     await screen.getByRole("option", { name: "Gneiss", exact: true }).click();
 
-    // Leave the facies unset: it is optional and must not block creation.
     await screen.getByRole("button", { name: "Create" }).click();
 
     await expect

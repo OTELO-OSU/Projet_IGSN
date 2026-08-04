@@ -1,5 +1,5 @@
 // A minimal persisted sample, parseable by the domain schema, for specs that
-// only need the sample GET to succeed. Spread and override what a test needs.
+// only need the sample GET to succeed.
 export const fakeSample = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Basalte du Massif Central",

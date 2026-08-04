@@ -11,8 +11,6 @@ const noop = () => {};
 const createAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Create", onSubmit }) as const;
 
-// Renders the form with the required fields prefilled and opens the
-// Scientific context tab, so each test only drives its inputs.
 async function renderScientificContextSection(
   onSubmit: (value: CreateSample) => void = noop,
 ) {

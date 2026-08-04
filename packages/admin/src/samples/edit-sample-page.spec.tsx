@@ -40,9 +40,6 @@ const overLimitAttachments: SampleAttachment[] = Array.from(
   }),
 );
 
-// In-memory API: GET returns the current sample, PUT saves it, POST /publish
-// publishes it. Records write calls so tests can assert the save-then-publish
-// order. Lets the page run its real save/refetch cycle without a backend.
 // Default type and material are leaves so Save & Publish starts enabled (see
 // samplePublishBlockers).
 function fakeApi(

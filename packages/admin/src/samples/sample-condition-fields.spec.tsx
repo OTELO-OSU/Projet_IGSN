@@ -10,8 +10,6 @@ const noop = () => {};
 const createAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Create", onSubmit }) as const;
 
-// Renders the form with the required fields prefilled and opens the
-// Physical description tab, so each test only drives the condition inputs.
 async function renderConditionTab(
   onSubmit: (value: CreateSample) => void = noop,
   condition?: CreateSample["condition"],
