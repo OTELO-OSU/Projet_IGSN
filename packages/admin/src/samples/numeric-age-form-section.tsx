@@ -1,3 +1,4 @@
+import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { numericUnitSchema } from "@projet-igsn/domain/sample/age/numeric-unit";
 import { yearsUnitSchema } from "@projet-igsn/domain/sample/age/years-unit";
@@ -22,8 +23,6 @@ const yearsUnitItems = yearsUnitSchema.options.map((unit) => ({
   label: yearsUnitLabel(unit),
 }));
 
-// Fixed and range share the min/max value fields; the unit and reference are
-// shared across the whole numeric age.
 const VALUE_FIELDS: (keyof AgeFormValues)[] = [
   "numericAgeMin",
   "numericAgeMax",
@@ -34,11 +33,6 @@ const ALL_FIELDS: (keyof AgeFormValues)[] = [
   "numericAgeYearsUnit",
 ];
 
-// Numeric age form section: an enable toggle and a Fixed/Range radio, both
-// UI-only local state (not domain data). One shared unit and reference apply to
-// the whole numeric age. A fixed value is stored in both bounds (min == max);
-// switching mode or disabling the section clears the value fields. Render inside
-// a `form.AppForm`.
 export function NumericAgeFormSection() {
   const form = useAgeForm();
   const values = form.state.values.age;
@@ -46,12 +40,11 @@ export function NumericAgeFormSection() {
     for (const name of fields) form.setFieldValue(`age.${name}`, undefined);
   };
 
-  // Off by default; on when edit prefill carries a value for the block.
   const [enabled, setEnabled] = useState(() =>
     ALL_FIELDS.some((name) => values[name] != null),
   );
-  // A non-range value stores min == max; a real or half-entered range is range
-  // mode. Guard with `!= null` so a `0` bound is not misread as empty.
+  // A non-range value stores min == max. Guard with `!= null` so a `0` bound is
+  // not misread as empty.
   const [mode, setMode] = useState<AgeMode>(() =>
     values.numericAgeMin != null &&
     values.numericAgeMin === values.numericAgeMax
@@ -71,16 +64,17 @@ export function NumericAgeFormSection() {
   };
 
   return (
-    <fieldset className="grid gap-4">
-      <legend className="mb-2 flex items-center gap-2 font-medium">
-        {m.section_numeric_age()}
+    <FormSection
+      level={3}
+      title={m.section_numeric_age()}
+      action={
         <Switch
           checked={enabled}
           onCheckedChange={toggleEnabled}
           aria-label={m.age_numeric_toggle()}
         />
-      </legend>
-
+      }
+    >
       {enabled ? (
         <>
           <AgeModeRadio
@@ -92,7 +86,7 @@ export function NumericAgeFormSection() {
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {mode === "range" ? (
-              <div className="grid gap-4 sm:grid-cols-2 lg:col-span-2">
+              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
                 <NumericValueField
                   name="numericAgeMin"
                   label={m.field_numeric_age_min()}
@@ -105,7 +99,7 @@ export function NumericAgeFormSection() {
                 />
               </div>
             ) : (
-              <div className="lg:col-span-2">
+              <div className="sm:col-span-2">
                 <NumericValueField
                   name="numericAgeMin"
                   label={m.field_numeric_age()}
@@ -159,6 +153,6 @@ export function NumericAgeFormSection() {
           </div>
         </>
       ) : null}
-    </fieldset>
+    </FormSection>
   );
 }

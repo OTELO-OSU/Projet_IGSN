@@ -24,6 +24,8 @@ import { m } from "#/paraglide/messages.js";
 import { fullName } from "#/samples/full-name.ts";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
 
+const CAPPED_NAME_CLASS = "block max-w-48 wrap-break-word";
+
 const columns: ColumnDef<AdminSampleListItem>[] = [
   {
     accessorKey: "igsn",
@@ -34,8 +36,7 @@ const columns: ColumnDef<AdminSampleListItem>[] = [
     id: "status",
     // Derived, not stored: a sample is published exactly when it has an IGSN.
     // Sorting is manual (server-side, keyed on IGSN presence); the accessor
-    // never orders rows, it only marks the column sortable. First click sorts
-    // ascending, drafts first.
+    // never orders rows, it only marks the column sortable.
     accessorFn: (sample) => (sample.igsn ? 1 : 0),
     sortDescFirst: false,
     header: ({ column }) => (
@@ -66,7 +67,7 @@ const columns: ColumnDef<AdminSampleListItem>[] = [
       <Link
         to="/samples/$sampleId"
         params={{ sampleId: row.original.id }}
-        className="hover:underline"
+        className={`${CAPPED_NAME_CLASS} hover:underline`}
       >
         {row.original.name}
       </Link>
@@ -75,7 +76,10 @@ const columns: ColumnDef<AdminSampleListItem>[] = [
   {
     accessorKey: "specificName",
     header: () => m.column_specific_name(),
-    cell: ({ row }) => row.original.specificName,
+    cell: ({ row }) =>
+      row.original.specificName ? (
+        <span className={CAPPED_NAME_CLASS}>{row.original.specificName}</span>
+      ) : null,
   },
   {
     accessorKey: "nature",
@@ -116,8 +120,6 @@ const columns: ColumnDef<AdminSampleListItem>[] = [
 
 type SampleTableProps = {
   samples: AdminSampleListItem[];
-  // Sorting is controlled: the route owns it (URL state) and the API applies
-  // it, since sorting only the current page client-side would be wrong.
   sorting: SortingState;
   onSortingChange: OnChangeFn<SortingState>;
 };

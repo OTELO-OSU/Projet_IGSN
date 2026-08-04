@@ -1,5 +1,6 @@
 import { m } from "#/paraglide/messages.js";
 import { elevationIntegerError } from "#/samples/elevation-integer-error.ts";
+import { LocationElevationFields } from "#/samples/location-elevation-fields.tsx";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 
 const boundFields = [
@@ -9,9 +10,6 @@ const boundFields = [
   ["location.northLatitude", m.field_north_latitude],
 ] as const;
 
-// Setting one bound marks the other required to publish, but a half-range still
-// saves as a draft: completeness gates publish, not the draft, so there is no
-// draft validator for the missing bound.
 const rangeFields = [
   {
     key: "elevationMin",
@@ -61,6 +59,7 @@ export function LocationAreaFields({ required }: { required: boolean }) {
           ))
         }
       </form.Subscribe>
+      <LocationElevationFields />
     </div>
   );
 }

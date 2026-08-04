@@ -4,7 +4,6 @@ import { LOCATION_TYPES } from "@projet-igsn/domain/sample/location/location-typ
 
 import { m } from "#/paraglide/messages.js";
 import { LocationAreaFields } from "#/samples/location-area-fields.tsx";
-import { LocationElevationFields } from "#/samples/location-elevation-fields.tsx";
 import { locationTypeLabel } from "#/samples/location-label.ts";
 import { LocationNavigationTypeField } from "#/samples/location-navigation-type-field.tsx";
 import { LocationPointFields } from "#/samples/location-point-fields.tsx";
@@ -19,8 +18,7 @@ const typeItems = LOCATION_TYPES.map((value) => ({
 const isPositionRequired = (materialPath: string[]): boolean =>
   locationRequirement(composeHierarchyValue(materialPath)) === "required";
 
-// Every part is optional and independent (ADR 0014). Render inside a
-// `form.AppForm`.
+// Every part is optional and independent (ADR 0014).
 export function LocationFields() {
   const form = useLocationForm();
   return (
@@ -59,7 +57,6 @@ export function LocationFields() {
         }
       </form.Subscribe>
 
-      <LocationElevationFields />
       <LocationNavigationTypeField />
       <LocationRegionFields />
 
