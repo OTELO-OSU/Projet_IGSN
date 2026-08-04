@@ -48,6 +48,10 @@ can link to an existing institution account.
 | Camille Petit  | `camille.petit`          | —                     |
 | Luc Moreau     | `luc.moreau`             | —                     |
 
+An ORCID sign-in only reaches the app once an account declared that ORCID iD:
+sign in through the institution first and set it on the Settings page, then the
+ORCID login resolves to the same account (ADR 0020).
+
 Every seed (`make db-seed`, `make db-seed-demo`, the E2E reset) gives each
 sample exactly one owner: the researcher its `owner` key names in the seed data
 (round-robin for the demo set). Sign in as any researcher to see their own
@@ -64,8 +68,11 @@ the seeded owner and keeps its samples (ADR 0019).
   realm playing the OIDC provider, so no external account or approval is needed. The
   `orcid` broker's endpoints and credentials are env vars ([`.env.example`](../.env.example))
   that default to this mock; leave them unset for dev. Like real ORCID, the mock releases
-  no email, so first-broker-login prompts ORCID users for one. To test against **real
-  ORCID** (sandbox or prod), register an app with redirect URI
+  no email (its accounts carry a placeholder one only so their own realm asks nothing at
+  login; the `openid profile` broker scope never releases it). The `orcid` broker uses a
+  custom first-broker-login flow that creates the shell account silently, asking nothing,
+  since app access is decided by the api's orcid lookup alone (ADR 0020). To test against
+  **real ORCID** (sandbox or prod), register an app with redirect URI
   `http://localhost:8080/realms/igsn/broker/orcid/endpoint` and set the `ORCID_*` vars in
   `.env` — the same vars a prod deployment sets.
 

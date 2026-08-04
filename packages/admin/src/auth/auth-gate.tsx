@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { LogOut } from "lucide-react";
 import { useAuth } from "react-oidc-context";
 
 import { m } from "#/paraglide/messages.js";
 
 import { AppLayout } from "./app-layout.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
+import { OrcidAccessGate } from "./orcid-access-gate.tsx";
 
 // Login page + gate: unauthenticated users pick an identity provider, which
 // redirects through Keycloak (kc_idp_hint) straight to that IdP. Accounts are
@@ -52,18 +52,15 @@ export function AuthGate({ children }: { children?: ReactNode }) {
     );
   }
 
-  // ORCID is a link-then-login mechanism, not a cold-start path: an ORCID-only
-  // account has no app access until it is linked to an institution account (see
-  // docs/adr/0003-production-auth-keycloak.md). Keycloak sets the identity_provider
-  // claim on brokered logins; institution and local logins are not "orcid".
+  // ORCID is a link-then-login mechanism, not a cold-start path: an ORCID
+  // session reaches the app only when the api resolves its orcid to a linked
+  // account (ADR 0020). Keycloak sets the identity_provider claim on brokered
+  // logins; institution and local logins are not "orcid".
   if (auth.user?.profile.identity_provider === "orcid") {
     return (
-      <CenteredScreen isError message={m.auth_no_access()}>
-        <Button type="button" variant="outline" size="sm" onClick={signOut}>
-          <LogOut />
-          {m.action_sign_out()}
-        </Button>
-      </CenteredScreen>
+      <OrcidAccessGate onSignOut={signOut}>
+        <AppLayout onSignOut={signOut}>{children}</AppLayout>
+      </OrcidAccessGate>
     );
   }
 

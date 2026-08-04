@@ -12,6 +12,12 @@ const auth = {
 };
 vi.mock("react-oidc-context", () => ({ useAuth: () => auth }));
 
+// The gate behind an ORCID session; its own spec covers the linked/unlinked
+// split, here it only needs to be what an ORCID session renders.
+vi.mock("./orcid-access-gate.tsx", () => ({
+  OrcidAccessGate: () => <p role="alert">orcid access gate</p>,
+}));
+
 beforeEach(() => {
   auth.isLoading = false;
   auth.error = undefined;
@@ -45,16 +51,13 @@ describe("AuthGate", () => {
     });
   });
 
-  it("denies app access to a user signed in through ORCID", async () => {
+  it("routes a user signed in through ORCID to the ORCID access gate", async () => {
     auth.isAuthenticated = true;
     auth.user = { profile: { identity_provider: "orcid" } };
 
     const screen = await render(<AuthGate />);
     await expect
       .element(screen.getByRole("alert"))
-      .toHaveTextContent(/do not have access/i);
-    await expect
-      .element(screen.getByRole("button", { name: "Sign out" }))
-      .toBeInTheDocument();
+      .toHaveTextContent(/orcid access gate/i);
   });
 });

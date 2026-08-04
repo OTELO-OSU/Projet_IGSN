@@ -1726,6 +1726,7 @@ describe("admin sample routes", () => {
               email: "colleague@example.com",
               name: null,
               firstname: null,
+              orcid: null,
             },
           ],
         });

@@ -30,6 +30,7 @@ export function AppLayout({
             {m.app_title()}
           </Link>
           <div className="flex items-center gap-4">
+            <Link to="/settings">{m.nav_settings()}</Link>
             <UserName />
             <Button
               type="button"

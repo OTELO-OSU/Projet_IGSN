@@ -174,6 +174,8 @@ type UserTable = {
   email: string;
   name: string | null;
   firstname: string | null;
+  // Self-declared ORCID iD, unique: the lookup key for ORCID logins (ADR 0020).
+  orcid: string | null;
   created_at: Generated<Date>;
 };
 

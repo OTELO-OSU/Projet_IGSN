@@ -77,6 +77,7 @@ describe("userSampleRepository", () => {
         email: "contributor@univ-lorraine.fr",
         name: null,
         firstname: null,
+        orcid: null,
       },
     ]);
   });

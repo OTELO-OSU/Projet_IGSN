@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SamplesCreateRouteImport } from './routes/samples.create'
 import { Route as SamplesSampleIdRouteImport } from './routes/samples.$sampleId'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +43,14 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
@@ -50,18 +58,30 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth/callback' | '/samples/$sampleId' | '/samples/create'
+  fullPaths:
+    | '/'
+    | '/settings'
+    | '/auth/callback'
+    | '/samples/$sampleId'
+    | '/samples/create'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth/callback' | '/samples/$sampleId' | '/samples/create'
+  to:
+    | '/'
+    | '/settings'
+    | '/auth/callback'
+    | '/samples/$sampleId'
+    | '/samples/create'
   id:
     | '__root__'
     | '/'
+    | '/settings'
     | '/auth/callback'
     | '/samples/$sampleId'
     | '/samples/create'
@@ -69,6 +89,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SettingsRoute: typeof SettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   SamplesSampleIdRoute: typeof SamplesSampleIdRoute
   SamplesCreateRoute: typeof SamplesCreateRoute
@@ -76,6 +97,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -109,6 +137,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SettingsRoute: SettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   SamplesSampleIdRoute: SamplesSampleIdRoute,
   SamplesCreateRoute: SamplesCreateRoute,

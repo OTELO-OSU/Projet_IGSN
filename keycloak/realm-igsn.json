@@ -54,6 +54,24 @@
       "realmRoles": ["admin"]
     }
   ],
+  "authenticationFlows": [
+    {
+      "alias": "orcid first broker login",
+      "description": "Creates the ORCID shell account silently, no review-profile step: ORCID releases no email and the app never reads this account; access is decided by the api's orcid lookup (ADR 0020).",
+      "providerId": "basic-flow",
+      "topLevel": true,
+      "builtIn": false,
+      "authenticationExecutions": [
+        {
+          "authenticator": "idp-create-user-if-unique",
+          "requirement": "REQUIRED",
+          "priority": 10,
+          "authenticatorFlow": false,
+          "userSetupAllowed": false
+        }
+      ]
+    }
+  ],
   "identityProviders": [
     {
       "alias": "shibboleth",
@@ -80,7 +98,7 @@
       "displayName": "ORCID",
       "providerId": "oidc",
       "enabled": true,
-      "firstBrokerLoginFlowAlias": "first broker login",
+      "firstBrokerLoginFlowAlias": "orcid first broker login",
       "config": {
         "clientId": "${ORCID_CLIENT_ID:igsn-broker}",
         "clientSecret": "${ORCID_CLIENT_SECRET:mock-orcid-secret}",

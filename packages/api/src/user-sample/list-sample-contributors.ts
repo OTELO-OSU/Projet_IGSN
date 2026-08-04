@@ -11,7 +11,13 @@ export function listSampleContributors(
   return db
     .selectFrom("user_sample")
     .innerJoin("user", "user.id", "user_sample.user_id")
-    .select(["user.id", "user.email", "user.name", "user.firstname"])
+    .select([
+      "user.id",
+      "user.email",
+      "user.name",
+      "user.firstname",
+      "user.orcid",
+    ])
     .where("user_sample.sample_id", "=", sampleId)
     .where("user_sample.role", "=", "contributor")
     .orderBy("user.name")

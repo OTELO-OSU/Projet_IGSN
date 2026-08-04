@@ -4,7 +4,8 @@ import { render } from "vitest-browser-react";
 import { UserName } from "./user-name";
 
 vi.mock("./api", () => ({
-  fetchMe: () => Promise.resolve({ sub: "s", name: "Marie Dupont" }),
+  fetchMe: () =>
+    Promise.resolve({ sub: "s", name: "Marie Dupont", orcid: null }),
 }));
 
 describe("UserName", () => {
