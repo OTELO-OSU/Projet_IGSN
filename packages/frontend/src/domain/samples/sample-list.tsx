@@ -1,18 +1,34 @@
+import type { Location } from "@projet-igsn/domain/sample/location/model";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
+import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
+import { oceanSeaName } from "@projet-igsn/domain/sample/location/ocean-sea-label";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
 import { matchRanges } from "#/domain/samples/highlight-match.ts";
 import { materialPathLabel } from "#/domain/samples/sample-labels.ts";
+import { m } from "#/paraglide/messages.js";
+import { getLocale } from "#/paraglide/runtime.js";
 
-type SampleListItem = Pick<Sample, "igsn" | "name" | "material">;
+export type SampleListItem = Pick<
+  Sample,
+  "igsn" | "name" | "material" | "location" | "scientificContext"
+>;
+
+function locationText(location: Location | null): string {
+  const region = location?.region;
+  const regionName =
+    region?.kind === "continent"
+      ? region.country && countryLabel(region.country, getLocale())
+      : region?.oceanSea && oceanSeaName(region.oceanSea);
+  return [location?.localityName, regionName].filter(Boolean).join(", ");
+}
 
 // Registry name shared with the ::highlight() rule in styles.css.
 const SEARCH_HIGHLIGHT = "sample-search-match";
 
-// A DOM Range over the [start, end) slice of a text node.
 function toRange(node: Node, [start, end]: [number, number]): Range {
   const range = new Range();
   range.setStart(node, start);
@@ -20,7 +36,6 @@ function toRange(node: Node, [start, end]: [number, number]): Range {
   return range;
 }
 
-// Every match of `query` inside a [data-highlight] element's text node, as Ranges.
 function elementRanges(element: Element, query: string): Range[] {
   const node = element.firstChild;
   if (node?.nodeType !== Node.TEXT_NODE) {
@@ -31,8 +46,6 @@ function elementRanges(element: Element, query: string): Range[] {
   );
 }
 
-// Tint the material badge by its root so a category is recognisable at a glance.
-// The roots are the fixed MATERIAL_ROOTS set, so this map is exhaustive.
 const MATERIAL_BADGE_CLASS: Record<string, string> = {
   rock: "bg-amber-100 text-amber-900",
   sediment: "bg-sky-100 text-sky-900",
@@ -51,10 +64,6 @@ export function SampleList({
 }) {
   const listRef = useRef<HTMLUListElement>(null);
 
-  // Paint search matches with the CSS Custom Highlight API: build a Range over
-  // each [data-highlight] text node and register them, leaving the DOM text
-  // untouched (no <mark> wrappers). Syncing with CSS.highlights is an external
-  // system, so it belongs in an effect.
   useEffect(() => {
     const container = listRef.current;
     if (!container || !("highlights" in CSS)) {
@@ -78,13 +87,15 @@ export function SampleList({
 
   return (
     <ul ref={listRef} className="grid gap-4 sm:grid-cols-2">
-      {samples.map(({ igsn, name, material }) => {
+      {samples.map(({ igsn, name, material, location, scientificContext }) => {
         // The public list only carries published samples, which always have an
         // igsn; skip any that somehow don't rather than link to a broken page.
         if (igsn === null) {
           return null;
         }
         const root = material?.split(".")[0];
+        const place = locationText(location);
+        const collector = scientificContext?.collectorName;
         return (
           <li key={igsn}>
             <Link
@@ -101,6 +112,14 @@ export function SampleList({
               >
                 {igsn}
               </p>
+              {place ? (
+                <p className="text-muted-foreground mt-1 text-sm">{place}</p>
+              ) : null}
+              {collector ? (
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {m.sample_list_collector({ name: collector })}
+                </p>
+              ) : null}
               {root ? (
                 <Badge className={`mt-2 ${MATERIAL_BADGE_CLASS[root] ?? ""}`}>
                   {materialPathLabel(root)}

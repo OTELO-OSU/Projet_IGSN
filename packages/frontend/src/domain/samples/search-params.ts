@@ -1,4 +1,7 @@
-import { bboxSchema } from "@projet-igsn/domain/sample/sample-validator";
+import {
+  bboxSchema,
+  pageSizeSchema,
+} from "@projet-igsn/domain/sample/sample-validator";
 import {
   activeFacetKeys,
   facetQueryFields,
@@ -14,7 +17,7 @@ import type { SearchEngine } from "#/domain/samples/search-engine-tabs.tsx";
 
 import { searchEngineSchema } from "#/domain/samples/search-engine-tabs.tsx";
 
-export const PER_PAGE = 50;
+export const PER_PAGE = 10;
 
 // A param is present iff its engine is open, so "?q=" means open and unfilled.
 // bbox ("west,south,east,north") stays raw; the domain schema validates it.
@@ -30,6 +33,7 @@ export const searchParamsSchema = z.object({
   bbox: z.string().optional().catch(undefined),
   engine: searchEngineSchema.optional().catch(undefined),
   page: z.coerce.number().int().min(1).default(1).catch(1),
+  perPage: pageSizeSchema(PER_PAGE).optional(),
   ...facetQueryFields(),
 });
 
@@ -55,7 +59,13 @@ export function searchQueryParams(
   const bbox = hasValidBbox(params.bbox) ? params.bbox : undefined;
   const filters = toFilters(params);
   if (!search && !bbox && Object.keys(filters).length === 0) return undefined;
-  return { page: params.page, perPage: PER_PAGE, search, bbox, filters };
+  return {
+    page: params.page,
+    perPage: params.perPage ?? PER_PAGE,
+    search,
+    bbox,
+    filters,
+  };
 }
 
 // A malformed bbox is dropped, never handed to the map, which would draw it as a
@@ -80,8 +90,4 @@ export function composeSeedFromParams(params: SearchParams): {
       bbox: hasValidBbox(params.bbox) ? params.bbox : undefined,
     },
   };
-}
-
-export function isSearchActive(params: SearchParams): boolean {
-  return !!params.q || hasValidBbox(params.bbox);
 }

@@ -1,6 +1,6 @@
 import {
+  PER_PAGE,
   composeSeedFromParams,
-  isSearchActive,
   searchParamsSchema,
   searchQueryParams,
 } from "./search-params.ts";
@@ -36,6 +36,23 @@ describe("searchParamsSchema", () => {
     ).toMatchObject({ q: "granite", bbox: "-10,40,10,50" });
   });
 
+  it("should leave the page size unset when the URL carries none", () => {
+    expect(searchParamsSchema.parse({}).perPage).toBeUndefined();
+  });
+
+  it.each([10, 25, 50])("should keep the chosen page size %s", (perPage) => {
+    expect(searchParamsSchema.parse({ perPage: String(perPage) }).perPage).toBe(
+      perPage,
+    );
+  });
+
+  it.each(["0", "999", "abc"])(
+    "should snap the unsupported page size %s to the default",
+    (perPage) => {
+      expect(searchParamsSchema.parse({ perPage }).perPage).toBe(PER_PAGE);
+    },
+  );
+
   it("should keep an empty param, which means its engine is open and unfilled", () => {
     expect(searchParamsSchema.parse({ q: "", bbox: "" })).toMatchObject({
       q: "",
@@ -50,9 +67,19 @@ describe("searchQueryParams", () => {
       searchQueryParams({ q: "granite", bbox: "-10,40,10,50", page: 1 }),
     ).toEqual({
       page: 1,
-      perPage: 50,
+      perPage: PER_PAGE,
       search: "granite",
       bbox: "-10,40,10,50",
+      filters: {},
+    });
+  });
+
+  it("should send the chosen page size", () => {
+    expect(searchQueryParams({ q: "granite", page: 1, perPage: 25 })).toEqual({
+      page: 1,
+      perPage: 25,
+      search: "granite",
+      bbox: undefined,
       filters: {},
     });
   });
@@ -60,7 +87,7 @@ describe("searchQueryParams", () => {
   it("should send only search when there is no bbox", () => {
     expect(searchQueryParams({ q: "granite", page: 2 })).toEqual({
       page: 2,
-      perPage: 50,
+      perPage: PER_PAGE,
       search: "granite",
       filters: {},
     });
@@ -69,7 +96,7 @@ describe("searchQueryParams", () => {
   it("should send only bbox when there is a valid box and no query", () => {
     expect(searchQueryParams({ bbox: "-10,40,10,50", page: 1 })).toEqual({
       page: 1,
-      perPage: 50,
+      perPage: PER_PAGE,
       bbox: "-10,40,10,50",
       filters: {},
     });
@@ -78,7 +105,7 @@ describe("searchQueryParams", () => {
   it("should ignore a malformed bbox but still send the query", () => {
     expect(
       searchQueryParams({ q: "granite", bbox: "-10,200,10,50", page: 1 }),
-    ).toEqual({ page: 1, perPage: 50, search: "granite", filters: {} });
+    ).toEqual({ page: 1, perPage: PER_PAGE, search: "granite", filters: {} });
   });
 
   it("should send the active facets alongside the query and the box", () => {
@@ -91,7 +118,7 @@ describe("searchQueryParams", () => {
       }),
     ).toEqual({
       page: 1,
-      perPage: 50,
+      perPage: PER_PAGE,
       search: "granite",
       bbox: "-10,40,10,50",
       filters: { nature: "rock_powder" },
@@ -101,7 +128,7 @@ describe("searchQueryParams", () => {
   it("should search on a facet alone", () => {
     expect(searchQueryParams({ nature: "rock_powder", page: 1 })).toEqual({
       page: 1,
-      perPage: 50,
+      perPage: PER_PAGE,
       search: undefined,
       bbox: undefined,
       filters: { nature: "rock_powder" },
@@ -199,20 +226,4 @@ describe("composeSeedFromParams", () => {
       });
     },
   );
-});
-
-describe("isSearchActive", () => {
-  it("should be active with a query", () => {
-    expect(isSearchActive({ q: "granite", page: 1 })).toBe(true);
-  });
-
-  it("should be active with a valid box", () => {
-    expect(isSearchActive({ bbox: "-10,40,10,50", page: 1 })).toBe(true);
-  });
-
-  it("should not be active without a query or a valid box", () => {
-    expect(isSearchActive({ page: 1 })).toBe(false);
-    expect(isSearchActive({ bbox: "-10,200,10,50", page: 1 })).toBe(false);
-    expect(isSearchActive({ q: "", bbox: "", page: 1 })).toBe(false);
-  });
 });

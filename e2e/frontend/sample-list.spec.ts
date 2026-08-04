@@ -2,13 +2,13 @@ import { test } from "../support/db";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 
 test.describe("sample list", () => {
-  test("a reader is invited to search when no query is entered", async ({
+  test("a reader opening the results page without a query is sent home", async ({
     page,
   }) => {
     const list = sampleListPage(page);
-    await list.goto();
+    await list.gotoEmptySearch();
 
-    await list.expectSearchInvite();
+    await list.expectLanding();
   });
 
   test("a reader can search for a sample by name", async ({
@@ -31,7 +31,6 @@ test.describe("sample list", () => {
     page,
     samples,
   }) => {
-    // Not contiguous in that order, so a single-substring search would miss it.
     const target = samples.find((sample) => sample.name === "Basalt 42");
     if (!target?.igsn) {
       throw new Error("seed must include the published Basalt 42 sample");
@@ -42,6 +41,21 @@ test.describe("sample list", () => {
     await list.search("42 basalt");
 
     await list.expectSampleLink(target.name, target.igsn);
+  });
+
+  test("a shared URL restores the chosen page size", async ({ page }) => {
+    const list = sampleListPage(page);
+    await list.gotoWithSearch("q=basalt&perPage=10");
+
+    await list.expectPageSize(10);
+  });
+
+  test("a reader is told when nothing matches the query", async ({ page }) => {
+    const list = sampleListPage(page);
+    await list.goto();
+    await list.search("zzzznotasample");
+
+    await list.expectNoResults();
   });
 
   test("a reader can search with a wildcard", async ({ page, samples }) => {

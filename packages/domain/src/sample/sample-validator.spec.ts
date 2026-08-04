@@ -1,4 +1,25 @@
-import { DEFAULT_PAGE_SIZE, listSamplesQuerySchema } from "./sample-validator";
+import {
+  DEFAULT_PAGE_SIZE,
+  listSamplesQuerySchema,
+  pageSizeSchema,
+} from "./sample-validator";
+
+describe("pageSizeSchema", () => {
+  it("should default to the given fallback when absent", () => {
+    expect(pageSizeSchema(50).parse(undefined)).toBe(50);
+  });
+
+  it.each([10, 25, 50])("should accept preset %s", (size) => {
+    expect(pageSizeSchema(50).parse(size)).toBe(size);
+  });
+
+  it.each(["7", "999", "abc", 0, -5])(
+    "should fall back to the given default for off-preset %s",
+    (size) => {
+      expect(pageSizeSchema(50).parse(size)).toBe(50);
+    },
+  );
+});
 
 describe("listSamplesQuerySchema", () => {
   it("should default page and perPage when absent", () => {
@@ -87,7 +108,6 @@ describe("listSamplesQuerySchema", () => {
   });
 
   it("should truncate a search longer than 200 characters", () => {
-    // Dropping it would degrade to "no filter": every published sample.
     expect(
       listSamplesQuerySchema.parse({ search: "a".repeat(201) }).search,
     ).toBe("a".repeat(200));

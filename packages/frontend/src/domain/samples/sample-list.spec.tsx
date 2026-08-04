@@ -7,26 +7,38 @@ import {
 } from "@tanstack/react-router";
 import { render } from "vitest-browser-react";
 
+import type { SampleListItem } from "./sample-list.tsx";
+
 import { SampleList } from "./sample-list.tsx";
 
-const samples = [
-  {
+function sampleItem(overrides: Partial<SampleListItem> = {}): SampleListItem {
+  return {
     igsn: "0123456789ABCDEFGHJKMNPQRS",
     name: "Basalt 42",
     material: "rock.igneous",
-  },
-  { igsn: "TVWXYZ0123456789ABCDEFGHJK", name: "Granite 7", material: null },
+    location: null,
+    scientificContext: null,
+    ...overrides,
+  };
+}
+
+const samples = [
+  sampleItem(),
+  sampleItem({
+    igsn: "TVWXYZ0123456789ABCDEFGHJK",
+    name: "Granite 7",
+    material: null,
+  }),
 ];
 
 // SampleList navigates with the router <Link>, so it must render inside a
-// router. A minimal in-memory tree carrying the sample route is enough to build
-// the hrefs; locale prefixing is a router-level concern covered by the e2e.
-function renderSampleList() {
+// router.
+function renderSampleList(items: SampleListItem[] = samples) {
   const rootRoute = createRootRoute();
   const indexRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/",
-    component: () => <SampleList samples={samples} />,
+    component: () => <SampleList samples={items} />,
   });
   const sampleRoute = createRoute({
     getParentRoute: () => rootRoute,
@@ -65,10 +77,81 @@ describe("SampleList", () => {
   it("should show no material badge when the sample is unclassified", async () => {
     const screen = await renderSampleList();
 
-    // "Granite 7" has a null material, so no material badge renders for it.
     await expect
       .element(screen.getByRole("link", { name: /Granite 7/ }))
       .toBeInTheDocument();
     expect(screen.getByText("Sediment").query()).toBeNull();
+  });
+
+  it("should show the locality and the country name", async () => {
+    const screen = await renderSampleList([
+      sampleItem({
+        location: {
+          localityName: "Piton de la Fournaise",
+          region: { kind: "continent", country: "FR" },
+        },
+      }),
+    ]);
+
+    await expect
+      .element(
+        screen.getByText("Piton de la Fournaise, France", { exact: true }),
+      )
+      .toBeInTheDocument();
+  });
+
+  it("should show the ocean name of a sample collected at sea", async () => {
+    const screen = await renderSampleList([
+      sampleItem({
+        location: { region: { kind: "ocean", oceanSea: "atlantic_ocean" } },
+      }),
+    ]);
+
+    await expect
+      .element(screen.getByText("Atlantic Ocean", { exact: true }))
+      .toBeInTheDocument();
+  });
+
+  it.each([
+    ["a recent collection", "recent_collection"],
+    ["a historical specimen", "historical_specimen"],
+  ] as const)("should show the collector of %s", async (_case, status) => {
+    const screen = await renderSampleList([
+      sampleItem({
+        scientificContext: {
+          provenanceStatus: status,
+          collectorName: "Marie Curie",
+        },
+      }),
+    ]);
+
+    await expect
+      .element(screen.getByText("Collected by Marie Curie"))
+      .toBeInTheDocument();
+  });
+
+  it("should show the locality alone when the sample has no region", async () => {
+    const screen = await renderSampleList([
+      sampleItem({ location: { localityName: "Piton de la Fournaise" } }),
+    ]);
+
+    await expect
+      .element(screen.getByText("Piton de la Fournaise", { exact: true }))
+      .toBeInTheDocument();
+  });
+
+  it("should show nothing for a region without its leaf", async () => {
+    const screen = await renderSampleList([
+      sampleItem({ location: { region: { kind: "ocean" } } }),
+    ]);
+
+    expect(screen.getByText(/ocean/i).query()).toBeNull();
+  });
+
+  it("should show no location or collector line when the sample has neither", async () => {
+    const screen = await renderSampleList();
+
+    expect(screen.getByText(/Collected by/).query()).toBeNull();
+    expect(screen.getByText(",", { exact: true }).query()).toBeNull();
   });
 });

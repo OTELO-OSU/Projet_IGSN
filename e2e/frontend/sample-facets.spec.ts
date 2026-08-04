@@ -2,8 +2,6 @@ import { test } from "../support/db";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 import { natureLabel } from "../support/nature-label";
 
-// The two published seed samples, looked up by name so the IGSN comes from the
-// seed (derived from the id) rather than a hard-coded copy.
 function published(samples: { name: string; igsn: string | null }[]) {
   const igsnOf = (name: string) => {
     const igsn = samples.find((s) => s.name === name)?.igsn;
@@ -28,17 +26,15 @@ test.describe("search facets", () => {
     await list.expectSampleLink("Basalt 42", basalt);
     await list.expectSampleLink("Granite 7", granite);
 
-    // Narrowing by nature keeps only the hand sample (Basalt 42).
     await list.pickFacet("Nature", natureLabel("hand_sample"), "nature");
     await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);
     await list.expectSampleAbsent("Granite 7");
 
-    // Clearing every filter returns the search invite, with the facet sidebar
-    // still up so the reader can pick another one.
+    // Clearing every filter leaves nothing to search, so the reader is sent back
+    // to the landing page to compose another query.
     await list.clearAllFilters();
-    await list.expectSearchInvite();
-    await list.expectFacetsVisible();
+    await list.expectLanding();
   });
 
   test("a shared facet URL restores the filtered results", async ({
@@ -48,7 +44,6 @@ test.describe("search facets", () => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);
 
-    // Landing straight on a facet URL (a shared link) restores the filter.
     await list.gotoWithSearch("nature=hand_sample");
     await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);
@@ -62,12 +57,11 @@ test.describe("search facets", () => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);
 
-    // Both igneous samples show; the cascade then offers the igneous sub-levels.
     await list.gotoWithSearch("material=rock.igneous");
     await list.expectResultCount(2);
 
     // Choosing Volcanic under Igneous keeps only the basalt (Granite 7 is
-    // plutonic), proving the cascade combobox drives the filter, not just a URL.
+    // plutonic).
     await list.chooseFacetOption("Igneous", "Volcanic");
     await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);
@@ -81,13 +75,11 @@ test.describe("search facets", () => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);
 
-    // A box over France holds both published seed samples. The sidebar is up on
-    // the location engine too: a box search is refinable like a text one.
+    // A box over France holds both published seed samples.
     await list.gotoWithSearch("engine=location&bbox=-10,40,10,50");
     await list.expectFacetsVisible();
     await list.expectResultCount(2);
 
-    // Narrowing by nature keeps the box and drops the thin section.
     await list.pickFacet("Nature", natureLabel("hand_sample"), "nature");
     await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);

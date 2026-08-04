@@ -4,12 +4,12 @@ import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import {
+  InvalidateOnResize,
   RectangleDrawer,
   SearchLocationMap,
   formatBbox,
 } from "./search-location-map.tsx";
 
-// Hands the map out so a test can fire Leaflet events by latlng, no pixel math.
 function CaptureMap({ onMap }: { onMap: (map: L.Map) => void }) {
   const map = useMap();
   onMap(map);
@@ -98,7 +98,6 @@ describe("RectangleDrawer", () => {
   });
 
   it("should ignore a shift+click with no drag", async () => {
-    // A zero-area box passes the schema and would match nothing.
     const { onSelect, map } = await renderDrawer("-10,40,10,50");
 
     map.fire("mousedown", {
@@ -120,6 +119,33 @@ describe("RectangleDrawer", () => {
     map.fire("mouseup", { latlng: L.latLng(50, 10) });
 
     expect(onSelect).not.toHaveBeenCalled();
+  });
+});
+
+describe("InvalidateOnResize", () => {
+  it("should make the map read its new height after the size flips", async () => {
+    let resolveMap: (map: L.Map) => void;
+    const mapReady = new Promise<L.Map>((resolve) => {
+      resolveMap = resolve;
+    });
+    function Harness({ compact }: { compact: boolean }) {
+      return (
+        <div style={{ height: compact ? 200 : 400 }}>
+          <MapContainer center={[20, 0]} zoom={2} style={{ height: "100%" }}>
+            <CaptureMap onMap={(map) => resolveMap(map)} />
+            <InvalidateOnResize compact={compact} />
+          </MapContainer>
+        </div>
+      );
+    }
+
+    const screen = await render(<Harness compact />);
+    const map = await mapReady;
+    expect(map.getSize().y).toBe(200);
+
+    await screen.rerender(<Harness compact={false} />);
+
+    await vi.waitFor(() => expect(map.getSize().y).toBe(400));
   });
 });
 
