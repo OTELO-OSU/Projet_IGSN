@@ -17,7 +17,7 @@ install:								## Install dependencies
 	@pnpm install
 	@pnpm exec playwright install
 
-lint:
+lint: generate
 	@pnpm lint:apply
 	@pnpm fmt:apply
 
@@ -93,8 +93,8 @@ material-tree:							## Dump the full material tree, indented by depth
 material-tree-json:						## Dump the material vocabulary structure as JSON
 	@pnpm -F @projet-igsn/domain material-tree:json
 
-generate-routes:
-	@pnpm -F @projet-igsn/frontend generate-routes
+generate:								## Recompile the i18n catalogs and route trees, if their sources changed
+	@./scripts/generate-if-stale.sh
 
 preprod-deploy:							## Deploy to preprod over SSH (requires DOMAIN=...)
 	@DOMAIN=$(DOMAIN) ./infra/preprod/scripts/deploy.sh
