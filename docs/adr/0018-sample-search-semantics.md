@@ -17,7 +17,8 @@ grammar.
 ## Decision
 
 **Grammar.** The query splits on whitespace; every token must match (AND), and a
-token matches on `name`, `specific_name` or `igsn` (OR). `*` matches any run of
+token matches on `name`, `specific_name` or `igsn` (OR), `igsn` by whole-token
+equality only. `*` matches any run of
 non-space characters, so it never spans two words: `bas*der` does not match
 "Basalt powder". The starless side of a token anchors to a word boundary
 (`bas*` is "a word starting with bas"), while a wildcard-free `gres` stays a free
@@ -96,6 +97,11 @@ search and `AND`/`OR` operators are separate tickets.
 
 ## Consequences
 
-- `igsn` is matched by the substring/wildcard arm (only the fuzzy arm excludes
-  it), so a short token can coincidentally match part of an IGSN. Not fixed here.
+- `igsn` matches by equality only (`igsn = upper(token)`; `igsnSchema` stores it
+  uppercase), so wildcards, substrings and typo tolerance are `name` and
+  `specific_name` only. A partial identifier finds nothing: a prefix of a
+  Crockford base32 UUIDv7 is shared by every sample minted in the same
+  millisecond, so it identifies no sample. Equality rides the unique
+  constraint's index, so `igsn` carries no trigram index (migration
+  `20260804144413` dropped it); restoring a substring arm restores that index.
 - The search help popover ships English only; the app has no French catalog yet.

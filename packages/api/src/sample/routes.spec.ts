@@ -159,6 +159,22 @@ describe("public sample routes", () => {
     });
   });
 
+  pgTest("should not match a partial or wildcarded igsn", async ({ db }) => {
+    const client = testClient(createApp(db));
+    const published = await createPublishedSample(client, "Sandstone");
+    const igsn = published.igsn!;
+
+    const partial = await searchNames(client, igsn.slice(0, 10));
+    const wildcard = await searchNames(client, `${igsn.slice(0, 10)}*`);
+    const trailing = await searchNames(client, `${igsn}*`);
+
+    expect({ partial, wildcard, trailing }).toEqual({
+      partial: [],
+      wildcard: [],
+      trailing: [],
+    });
+  });
+
   pgTest.for(["granite", "granite core"])(
     "should return an empty list when %j matches nothing",
     async (search, { db }) => {

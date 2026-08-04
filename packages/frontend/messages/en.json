@@ -29,6 +29,7 @@
   "search_help_tokens": "Every word must be found, in any order.",
   "search_help_wildcard": "* replaces any part of a word: bas*, caro*te.",
   "search_help_fuzzy": "Small typos are tolerated.",
+  "search_help_igsn": "An IGSN only matches typed in full: no wildcard, no typo.",
   "sample_section_sample": "Sample",
   "sample_field_nature": "Nature",
   "sample_field_type": "Type",

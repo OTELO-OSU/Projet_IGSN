@@ -33,6 +33,7 @@ export function SearchHelp() {
           <li>{m.search_help_tokens()}</li>
           <li>{m.search_help_wildcard()}</li>
           <li>{m.search_help_fuzzy()}</li>
+          <li>{m.search_help_igsn()}</li>
         </ul>
       </PopoverContent>
     </Popover>
