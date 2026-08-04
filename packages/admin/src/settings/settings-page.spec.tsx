@@ -4,11 +4,13 @@ import {
   createMemoryHistory,
   createRouter,
 } from "@tanstack/react-router";
+import { HttpResponse, http } from "msw";
 import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
+import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
 vi.mock("react-oidc-context", () => ({
@@ -30,33 +32,31 @@ function fakeApi({
 }: { orcid?: string | null; conflict?: boolean } = {}) {
   const puts: unknown[] = [];
   let stored = orcid;
-  vi.spyOn(window, "fetch").mockImplementation(async (input, init) => {
-    if (init?.method === "PUT" && typeof init.body === "string") {
-      if (conflict) return new Response(null, { status: 409 });
-      const body = JSON.parse(init.body) as { orcid: string | null };
+  worker.use(
+    http.put("*/admin/me/orcid", async ({ request }) => {
+      if (conflict) return new HttpResponse(null, { status: 409 });
+      const body = (await request.json()) as { orcid: string | null };
       puts.push(body);
       stored = body.orcid;
-      return new Response(JSON.stringify({ orcid: stored }), {
-        status: 200,
-        headers: { "content-type": "application/json" },
-      });
-    }
-    return new Response(
-      JSON.stringify({
+      return new HttpResponse(null, { status: 204 });
+    }),
+    http.get("*/admin/me", () =>
+      HttpResponse.json({
         sub: "s",
         name: "Marie Dupont",
         email: "marie.dupont@univ-lorraine.fr",
         orcid: stored,
       }),
-      { status: 200, headers: { "content-type": "application/json" } },
-    );
-  });
+    ),
+  );
   return puts;
 }
 
 async function renderSettingsPage(api: Parameters<typeof fakeApi>[0] = {}) {
   const puts = fakeApi(api);
-  const queryClient = new QueryClient();
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   const router = createRouter({
     routeTree,
     context: { queryClient },
