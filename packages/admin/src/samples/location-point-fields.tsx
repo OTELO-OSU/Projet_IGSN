@@ -1,5 +1,4 @@
 import { m } from "#/paraglide/messages.js";
-import { elevationIntegerError } from "#/samples/elevation-integer-error.ts";
 import { LocationElevationFields } from "#/samples/location-elevation-fields.tsx";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 
@@ -24,12 +23,7 @@ export function LocationPointFields({ required }: { required: boolean }) {
         )}
       </form.AppField>
       <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
-        <form.AppField
-          name="location.elevationValue"
-          validators={{
-            onChange: ({ value }) => elevationIntegerError(value),
-          }}
-        >
+        <form.AppField name="location.elevationValue">
           {(field) => (
             <field.NumberField
               label={

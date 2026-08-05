@@ -53,6 +53,11 @@ function SampleDetail() {
       age={sample.age}
       links={sample.links}
       attachments={sample.attachments}
+      economicInterest={sample.economicInterest}
+      economicInterestElements={sample.economicInterestElements}
+      economicResourceTypePrecision={sample.economicResourceTypePrecision}
+      economicDepositName={sample.economicDepositName}
+      economicDepositDescription={sample.economicDepositDescription}
     />
   );
 }

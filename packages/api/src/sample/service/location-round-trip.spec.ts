@@ -29,7 +29,7 @@ describe("sample location persistence", () => {
   });
 
   pgTest(
-    "should round-trip a point elevation as a degenerate range",
+    "should round-trip a decimal point elevation as a degenerate range",
     async ({ db }) => {
       const location = {
         position: {
@@ -37,8 +37,8 @@ describe("sample location persistence", () => {
           longitude: 2.35,
           latitude: 48.85,
           elevation: {
-            min: -1200,
-            max: -1200,
+            min: -1200.5,
+            max: -1200.5,
             unit: "m" as const,
             datum: "msl" as const,
           },

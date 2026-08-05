@@ -70,8 +70,10 @@ function clean(value: string | null | undefined): string | null {
   return trimmed ? trimmed : null;
 }
 
-// A single legacy label segment -> a snake_case code: split camelCase, then
-// fold every run of non-alphanumerics to one underscore.
+function parseNumber(value: string | null | undefined): number {
+  return value != null ? Number.parseFloat(value) : NaN;
+}
+
 function slugSegment(label: string): string {
   return label
     .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
@@ -80,13 +82,10 @@ function slugSegment(label: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
-// A legacy `>`-separated label path -> a dot-joined code path.
 function slugPath(label: string): string {
   return label.split(">").map(slugSegment).filter(Boolean).join(".");
 }
 
-// The longest prefix of a dot path that is a valid vocabulary path, or null.
-// Keeps as much of a legacy path as the new tree recognizes, dropping the rest.
 function longestValidPrefix(path: string, valid: Set<string>): string | null {
   const segments = path.split(".");
   for (let length = segments.length; length > 0; length -= 1) {
@@ -112,12 +111,10 @@ const MATERIAL_ROOT_BY_LEGACY: Record<string, string> = {
   mineral: "mineral",
 };
 
-// Legacy metamorphic/sedimentary leaves whose node in the new tree carries a
-// different code or sits deeper (a grade or sub-family level the legacy path
-// lacks), keyed by the rooted slug. Targets follow the domain expert's mapping
-// table; the legacy values it leaves undecided (MechanicallyBroken,
-// Meta-Carbonate, Meta-Ultramafic: "record to review") are absent here on
-// purpose, so those rows keep skipping until reviewed.
+// Targets follow the domain expert's mapping table; the legacy values it leaves
+// undecided (MechanicallyBroken, Meta-Carbonate, Meta-Ultramafic: "record to
+// review") are absent here on purpose, so those rows keep skipping until
+// reviewed.
 const MATERIAL_SPECIALS: Record<string, string> = {
   "rock.metamorphic.calc_silicate":
     "rock.metamorphic.strongly_metamorphosed.calc_silicate_rock",
@@ -143,9 +140,6 @@ const MATERIAL_SPECIALS: Record<string, string> = {
   "rock.sedimentary.volcaniclastic": "rock.sedimentary.volcaniclastic_rock",
 };
 
-// The legacy classification path slugged and rooted under `rock` for the rock
-// families, e.g. `Igneous>Volcanic>Mafic` -> `rock.igneous.volcanic.mafic`,
-// then remapped when the legacy leaf sits elsewhere in the new tree.
 // The legacy `Xenolithic` root mirrors the igneous and metamorphic families, so
 // it roots at `rock.xenolithic_rock` and its inner family path goes through the
 // same MATERIAL_SPECIALS remaps before being re-prefixed.
@@ -165,31 +159,22 @@ export function mapMaterial(
   classification: string | null,
   material: string | null,
 ): string | null {
-  // A classification maps to its longest valid prefix (null if the new tree
-  // lacks that branch, e.g. Xenolithic/Ore). We never fall back to the coarse
-  // material_id root here: a bare "rock" would misrepresent a real classification.
+  // We never fall back to the coarse material_id root here: a bare "rock" would
+  // misrepresent a real classification.
   if (classification) {
     return longestValidPrefix(
       classificationCandidate(classification),
       MATERIAL_PATH_SET,
     );
   }
-  // No classification: the coarse material_id root is the only signal, faithful
-  // to a source that knew only "Rock"/"Sediment"/"Mineral".
   if (material) {
     return MATERIAL_ROOT_BY_LEGACY[material.trim().toLowerCase()] ?? null;
   }
   return null;
 }
 
-// A sample imports only when its material path matches the start of a complete
-// path the tree supports: the slugged classification (after MATERIAL_SPECIALS)
-// must be a valid node (a prefix of some complete leaf), incomplete or not, or a
-// coarse material_id root. A path whose segment sequence the tree does not
-// support is skipped: an unplaceable root (`Xenolithic`, `Ore`), a leaf with no
-// node and no MATERIAL_SPECIALS entry, an unknown `material_id` (`Soil`), or no
-// material at all. Skipped rows come in on a re-import once the tree or this
-// script's mapping supports the path.
+// Skipped rows come in on a re-import once the tree or this script's mapping
+// supports the path.
 export function isKnownMaterialPath(
   classification: string | null,
   material: string | null,
@@ -218,9 +203,7 @@ const TYPE_SPECIALS: Record<string, string> = {
 };
 
 // Legacy resourceType is one flat label that in the new model is either a
-// `nature` (a physical form) or a `type` (a sampling taxonomy path). Its slug
-// already equals the target code, so a nature is just "this slug is a NATURES
-// member"; anything else is looked up in the type tree.
+// `nature` (a physical form) or a `type` (a sampling taxonomy path).
 export function mapResourceType(resourceType: string | null): {
   type: string | null;
   nature: CreateSample["nature"];
@@ -230,7 +213,6 @@ export function mapResourceType(resourceType: string | null): {
   const nature = NATURES.includes(slug as CreateSample["nature"])
     ? (slug as CreateSample["nature"])
     : "inapplicable";
-  // "core X" is a two-level path (core.X); everything else is one segment.
   const candidate = slug.startsWith("core_") ? `core.${slug.slice(5)}` : slug;
   const type =
     longestValidPrefix(candidate, SAMPLE_TYPE_SET) ??
@@ -244,9 +226,8 @@ export function mapResourceType(resourceType: string | null): {
 // increment the DOI by one per sample (only the first resolves), one truncates
 // it, and the Cabanes 1988 run points at unrelated articles. So no extraction:
 // each group's prefix maps to its DOI, hand-verified against doi.org and
-// Crossref on 2026-07-29. A citation outside these groups drops the link, not
-// the sample, and is logged for review (see droppedDoiLinks); Dantas 2007, a
-// thesis with no DOI, is absent on purpose until the geologists decide.
+// Crossref on 2026-07-29. Dantas 2007, a thesis with no DOI, is absent on
+// purpose until the geologists decide.
 const DOI_URL_BY_CITATION_PREFIX: [string, string][] = [
   ["Alard, O., Lorand, J.P., Reisberg", "10.1093/petrology/egr038"],
   ["Baptiste, V., Tommasi,A. (2014)", "10.5194/se-5-1-2014"],
@@ -293,17 +274,12 @@ export function droppedDoiLinks(values: string[]): string[] {
 
 const ORCID_RE = /^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$/;
 
-// One person or organization name: letters (any script, with diacritics),
-// spaces, hyphens, apostrophes and dots (initials). No commas, digits, or an
-// "et al." placeholder, so an open-ended list is not a name.
 const NAME_RE = /^\p{L}[\p{L} .'’-]*$/u;
 const isName = (token: string): boolean =>
   NAME_RE.test(token) && !/\bet\s*\.?\s*al\b/i.test(token);
 
-// One collector: a plain name, or the "Surname, Firstname" form (exactly one
-// comma; the surname before it is a single token). A multi-word part before the
-// comma means several people ("BRIOT Danielle, CANTAGREL Jean-Marie"), not one
-// name, so it is not a segment.
+// A multi-word part before the comma means several people ("BRIOT Danielle,
+// CANTAGREL Jean-Marie"), not one name, so it is not a segment.
 const isNameSegment = (segment: string): boolean => {
   if (isName(segment)) return true;
   const [surname, firstname, ...rest] = segment.split(",");
@@ -320,12 +296,6 @@ export type ParsedCollector =
   | { name: string | null; orcid: string | null }
   | { invalid: string };
 
-// A legacy `collector` is a name ("Firstname Last" or "Surname, Firstname"), an
-// organization, several such names separated by `;`, any of these optionally
-// trailed by "(ORCID: ....)", or empty. Anything else (an open-ended "et al."
-// list, a segment with more than one comma, a malformed ORCID, stray
-// punctuation) we cannot read with confidence, so it is returned invalid for the
-// import to skip and log rather than mangle into a name.
 export function parseCollector(collector: string | null): ParsedCollector {
   const raw = collector?.trim() ?? "";
   if (raw === "") return { name: null, orcid: null };
@@ -338,7 +308,6 @@ export function parseCollector(collector: string | null): ParsedCollector {
       ? { name, orcid }
       : { invalid: raw };
   }
-  // Any other parenthesis is a shape we do not recognize.
   if (raw.includes("(") || raw.includes(")")) return { invalid: raw };
 
   const names = raw
@@ -357,11 +326,6 @@ const SIZE_UNIT_BY_LEGACY: Record<string, "cm" | "m"> = {
   meter: "m",
 };
 
-// Legacy `size` is one to three positive numbers separated by `x`, `/` (no
-// value), or something we cannot read as a measurement (free text, four
-// numbers). The numbers are length, then width, then thickness, in that
-// order. Anything else is rejected for review (see unmappableValues) rather
-// than guessed.
 type ParsedSize =
   | { kind: "none" }
   | { kind: "numbers"; values: number[] }
@@ -415,31 +379,28 @@ type Elevation = NonNullable<
   NonNullable<CreateSample["location"]>["position"]
 >["elevation"];
 
-// Signed elevation: land elevation is positive (above the datum), bathymetry is
-// negative (below). Prefer land elevation; fall back to bathymetry as -depth
-// with a mean-sea-level datum (ADR 0014).
+function elevationUnit(value: string | null): "m" | "km" | undefined {
+  return ELEVATION_UNIT_BY_LEGACY[value?.trim().toLowerCase() ?? ""];
+}
+
 export function mapElevation(row: LegacyRow): Elevation | null {
-  const landUnit =
-    ELEVATION_UNIT_BY_LEGACY[row.elevation_unit?.trim().toLowerCase() ?? ""];
-  const land = row.elevation != null ? Number.parseFloat(row.elevation) : NaN;
-  if (Number.isFinite(land) && landUnit) {
-    const end =
-      row.elevation_end != null ? Number.parseFloat(row.elevation_end) : NaN;
-    const min = Math.round(land);
-    const max = Number.isFinite(end) ? Math.round(end) : min;
+  const landUnit = elevationUnit(row.elevation_unit);
+  const land = parseNumber(row.elevation);
+  if (landUnit && Number.isFinite(land)) {
+    const landEnd = parseNumber(row.elevation_end);
+    const end = Number.isFinite(landEnd) ? landEnd : land;
     return {
-      min: Math.min(min, max),
-      max: Math.max(min, max),
+      min: Math.min(land, end),
+      max: Math.max(land, end),
       unit: landUnit,
       datum: null,
     };
   }
-  const bathyUnit =
-    ELEVATION_UNIT_BY_LEGACY[row.bathy_unit?.trim().toLowerCase() ?? ""];
-  const bathy = row.bathy != null ? Number.parseFloat(row.bathy) : NaN;
-  if (Number.isFinite(bathy) && bathyUnit) {
-    const depth = -Math.round(bathy);
-    return { min: depth, max: depth, unit: bathyUnit, datum: "msl" };
+  const bathyUnit = elevationUnit(row.bathy_unit);
+  const bathy = parseNumber(row.bathy);
+  if (bathyUnit && Number.isFinite(bathy)) {
+    // Bathymetry is a depth below sea level, so a negative elevation.
+    return { min: -bathy, max: -bathy, unit: bathyUnit, datum: "msl" };
   }
   return null;
 }
@@ -492,7 +453,7 @@ const normalizeCountry = (name: string): string =>
 
 // Legacy names ICU's English label does not match: endonyms (Deutschland),
 // a former name (Swaziland -> Eswatini), or a different phrasing (Congo DRC,
-// St. Vincent). Each code already exists in COUNTRIES; only the label differs.
+// St. Vincent).
 const COUNTRY_ALIASES: Record<string, Country> = {
   "Congo, The Democratic Republic Of The": "CD",
   Deutschland: "DE",
@@ -520,8 +481,6 @@ export function mapCountry(country: string | null): Country | null {
 export function mapLocation(row: LegacyRow): CreateSample["location"] | null {
   const position = mapPosition(row);
   const country = mapCountry(row.country);
-  // Navigation type only means anything with a position (ADR 0014), and only
-  // when it matches a SESAR code verbatim.
   const parsedNav =
     position && row.navigation_type
       ? navigationTypeSchema.safeParse(row.navigation_type)
@@ -588,8 +547,8 @@ const AGE_UNIT_BY_LEGACY: Record<string, NumericAge> = {
 };
 
 export function mapAge(row: LegacyRow): CreateSample["age"] | null {
-  const min = row.age_min != null ? Number.parseFloat(row.age_min) : NaN;
-  const max = row.age_max != null ? Number.parseFloat(row.age_max) : NaN;
+  const min = parseNumber(row.age_min);
+  const max = parseNumber(row.age_max);
   const hasNumeric = Number.isFinite(min) || Number.isFinite(max);
   const geologicalUnit = clean(row.geological_unit);
   if (!hasNumeric && !geologicalUnit) return null;
@@ -648,7 +607,6 @@ export function mapScientificContext(row: LegacyRow): ScientificContext | null {
   };
 }
 
-// Every field a legacy row feeds through one of our enums / controlled lists.
 // A value that does not normalize into the enum must not be stored (it would
 // defeat the enum), and we will not silently publish a sample that lost it, so
 // the sample is skipped whole and the offending value logged for review.
@@ -667,11 +625,8 @@ export type SkipField =
 
 export type SkipIssue = { field: SkipField; value: string };
 
-// Every controlled value in the row that cannot be placed in its enum, so a
-// caller can skip the sample and log each offending value. Empty = importable.
 // Reuses the same normalizers/maps as the mapping, so it never drifts from what
-// the import would actually store. Units are flagged only when their paired
-// measurement is present (a stray unit with no value carries nothing to lose).
+// the import would actually store.
 export function unmappableValues(row: LegacyRow): SkipIssue[] {
   const issues: SkipIssue[] = [];
   const norm = (value: string) => value.trim().toLowerCase();
@@ -702,8 +657,6 @@ export function unmappableValues(row: LegacyRow): SkipIssue[] {
   if ("invalid" in collector) {
     issues.push({ field: "collector", value: collector.invalid });
   }
-  // A size we can read as neither one, two nor three numbers is rejected; a
-  // readable size needs a usable unit.
   const size = parseSize(row.size);
   if (size.kind === "invalid") {
     issues.push({ field: "size", value: size.raw });
@@ -728,8 +681,8 @@ export function unmappableValues(row: LegacyRow): SkipIssue[] {
   ) {
     issues.push({ field: "bathy_unit", value: row.bathy_unit });
   }
-  const ageMin = row.age_min != null ? Number.parseFloat(row.age_min) : NaN;
-  const ageMax = row.age_max != null ? Number.parseFloat(row.age_max) : NaN;
+  const ageMin = parseNumber(row.age_min);
+  const ageMax = parseNumber(row.age_max);
   const hasNumericAge = Number.isFinite(ageMin) || Number.isFinite(ageMax);
   if (
     hasNumericAge &&
@@ -741,9 +694,6 @@ export function unmappableValues(row: LegacyRow): SkipIssue[] {
   return issues;
 }
 
-// A legacy row -> the new create payload. Every field is best-effort: an
-// unmappable vocabulary value or missing part is simply left off, so the sample
-// still imports (validated by createSampleSchema in import-legacy.ts).
 // Several legacy rows can cite the same paper on one sample, so links dedupe
 // by url, first citation wins.
 function mapDoiLinks(values: string[]): CreateSampleLink[] {
@@ -780,7 +730,6 @@ export type LegacyOwner = {
   name: string | null;
 };
 
-// The legacy owner account, or null when the row carries none.
 export function toOwner(row: LegacyRow): LegacyOwner | null {
   const email = clean(row.owner_email);
   if (!email) return null;

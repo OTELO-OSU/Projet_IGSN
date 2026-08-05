@@ -1,5 +1,4 @@
 import { m } from "#/paraglide/messages.js";
-import { elevationIntegerError } from "#/samples/elevation-integer-error.ts";
 import { LocationElevationFields } from "#/samples/location-elevation-fields.tsx";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 
@@ -42,13 +41,7 @@ export function LocationAreaFields({ required }: { required: boolean }) {
       >
         {(isSet) =>
           rangeFields.map(({ key, siblingKey, label }) => (
-            <form.AppField
-              key={key}
-              name={`location.${key}`}
-              validators={{
-                onChange: ({ value }) => elevationIntegerError(value),
-              }}
-            >
+            <form.AppField key={key} name={`location.${key}`}>
               {(field) => (
                 <field.NumberField
                   label={label()}

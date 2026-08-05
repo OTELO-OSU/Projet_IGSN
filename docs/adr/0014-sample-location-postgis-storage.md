@@ -76,10 +76,12 @@ location = {
 ```
 
 `position` is a `z.discriminatedUnion("type", ...)`, itself optional. Elevation
-attaches to the position as a signed integer range in whole units (positive
-elevation above the datum, negative bathymetry below), with a shared `unit` and
+attaches to the position as a signed range (positive elevation above the datum,
+negative bathymetry below), with a shared `unit` and
 `datum` required once present; a point is the degenerate range where
-`min === max`, and the form asks for a single value. Stored in two `integer`
+`min === max`, and the form asks for a single value. Amended 2026-08-05:
+decimals are accepted (readings are not always whole units), so the bounds are
+plain `z.number()` stored in two `double precision`
 columns (`elevation_min`/`elevation_max`): a native range type is unsound here
 because the unit varies per row. Cross-field coherence (`north >= south`,
 elevation `min <= max`) lives in a `superRefine` on `locationSchema`.

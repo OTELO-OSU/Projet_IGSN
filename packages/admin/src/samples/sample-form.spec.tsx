@@ -1682,7 +1682,8 @@ describe("SampleForm", () => {
     await expect.element(screen.getByText("Invalid value.")).toBeVisible();
   });
 
-  it("should reject a non-integer point elevation", async () => {
+  it("should accept a decimal point elevation", async () => {
+    const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -1694,49 +1695,32 @@ describe("SampleForm", () => {
           collectionMethod: null,
           collectionMethodDescription: null,
         }}
-        primaryAction={createAction(noop)}
+        primaryAction={createAction(onSubmit)}
       />,
     );
 
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
+    await screen.getByLabelText("Longitude *").fill("3");
+    await screen.getByLabelText("Latitude *").fill("45");
     await screen.getByLabelText("Elevation").fill("12.5");
+    await screen.getByRole("button", { name: "Create" }).click();
 
-    await expect
-      .element(screen.getByText("Enter a whole number for the elevation."))
-      .toBeVisible();
-
-    await screen.getByLabelText("Elevation").fill("12");
-    await expect
-      .element(screen.getByText("Enter a whole number for the elevation."))
-      .not.toBeInTheDocument();
-  });
-
-  it("should reject a non-integer area elevation bound", async () => {
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(noop)}
-      />,
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: {
+              type: "point",
+              longitude: 3,
+              latitude: 45,
+              elevation: { min: 12.5, max: 12.5 },
+            },
+          },
+        }),
+      ),
     );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Area" }).click();
-    await screen.getByLabelText("Minimum elevation").fill("-200.5");
-
-    await expect
-      .element(screen.getByText("Enter a whole number for the elevation."))
-      .toBeVisible();
   });
 
   it("should mark the other bound required but still save a half-range draft", async () => {

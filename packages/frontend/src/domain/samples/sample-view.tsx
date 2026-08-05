@@ -1,14 +1,13 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
-import { ChevronRightIcon } from "lucide-react";
-
 import { AgeView, hasAge } from "#/domain/samples/age-view.tsx";
+import { BreadcrumbFieldRow } from "#/domain/samples/breadcrumb-field-row.tsx";
 import { ConditionView } from "#/domain/samples/condition-view.tsx";
 import { DescriptionView } from "#/domain/samples/description-view.tsx";
+import { EconomicInterestView } from "#/domain/samples/economic-interest-view.tsx";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { LinksView } from "#/domain/samples/links-view.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
-import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
 import {
   availabilityLabel,
   collectionMethodLabel,
@@ -20,6 +19,7 @@ import {
 } from "#/domain/samples/sample-labels.ts";
 import { ScientificContextView } from "#/domain/samples/scientific-context-view.tsx";
 import { SecurityView } from "#/domain/samples/security-view.tsx";
+import { useActiveSection } from "#/domain/samples/use-active-section.ts";
 import { m } from "#/paraglide/messages.js";
 
 type SampleViewProps = {
@@ -44,68 +44,12 @@ type SampleViewProps = {
   // Defaulted so the many link-less renders (and tests) can omit them.
   links?: Sample["links"];
   attachments?: Sample["attachments"];
+  economicInterest?: Sample["economicInterest"];
+  economicInterestElements?: Sample["economicInterestElements"];
+  economicResourceTypePrecision?: Sample["economicResourceTypePrecision"];
+  economicDepositName?: Sample["economicDepositName"];
+  economicDepositDescription?: Sample["economicDepositDescription"];
 };
-
-// A dot-joined classification path rendered as a breadcrumb: each ancestor
-// label separated by a chevron. aria-labelledby names the list after its row
-// label ("Type"/"Material"), and the chevron carries a ">" label so the path
-// reads "Rock > Igneous" to assistive tech.
-type BreadcrumbProps = {
-  labelId: string;
-  segments: { path: string; label: string }[];
-};
-
-function ClassificationBreadcrumb({ labelId, segments }: BreadcrumbProps) {
-  return (
-    <ol
-      aria-labelledby={labelId}
-      className="flex flex-wrap items-center gap-1 font-medium"
-    >
-      {segments.map((segment, index) => (
-        <li key={segment.path} className="flex items-center gap-1">
-          {index > 0 ? (
-            <ChevronRightIcon
-              role="img"
-              aria-label=">"
-              className="text-muted-foreground size-4"
-            />
-          ) : null}
-          {segment.label}
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-type BreadcrumbFieldRowProps = {
-  id: string;
-  label: string;
-  path: string | null | undefined;
-  pathLabel: (path: string) => string;
-};
-
-// A classification row: the dt id lets the breadcrumb name itself after it.
-function BreadcrumbFieldRow({
-  id,
-  label,
-  path,
-  pathLabel,
-}: BreadcrumbFieldRowProps) {
-  return (
-    <FieldRow
-      id={id}
-      label={label}
-      value={
-        path && (
-          <ClassificationBreadcrumb
-            labelId={id}
-            segments={pathBreadcrumb(path, pathLabel)}
-          />
-        )
-      }
-    />
-  );
-}
 
 export function SampleView({
   name,
@@ -128,6 +72,11 @@ export function SampleView({
   age,
   links = [],
   attachments = [],
+  economicInterest = null,
+  economicInterestElements = [],
+  economicResourceTypePrecision = null,
+  economicDepositName = null,
+  economicDepositDescription = null,
 }: SampleViewProps) {
   // One entry per section actually present; drives the nav and the body, so a
   // section cannot appear in one without the other.
@@ -220,6 +169,19 @@ export function SampleView({
       title: m.sample_section_security(),
       content: <SecurityView security={security} />,
     },
+    economicInterest != null && {
+      id: "economic-interest",
+      title: m.sample_section_economic_interest(),
+      content: (
+        <EconomicInterestView
+          economicInterest={economicInterest}
+          economicInterestElements={economicInterestElements}
+          economicResourceTypePrecision={economicResourceTypePrecision}
+          economicDepositName={economicDepositName}
+          economicDepositDescription={economicDepositDescription}
+        />
+      ),
+    },
     // Attachment downloads resolve by IGSN, so the section needs one; a public
     // sample always has one, so the guard only narrows the type.
     igsn != null &&
@@ -231,6 +193,8 @@ export function SampleView({
         ),
       },
   ].filter((section) => section != null && section !== false);
+
+  const activeId = useActiveSection(sections.map(({ id }) => id));
 
   return (
     <div>
@@ -253,7 +217,12 @@ export function SampleView({
               <li key={id}>
                 <a
                   href={`#${id}`}
-                  className="border-l-2 border-sky-800 pl-3 font-medium text-sky-900"
+                  aria-current={id === activeId ? "location" : undefined}
+                  className={`border-l-2 pl-3 ${
+                    id === activeId
+                      ? "border-sky-800 font-medium text-sky-900"
+                      : "border-sky-200 text-sky-900/60"
+                  }`}
                 >
                   {title}
                 </a>
@@ -268,7 +237,7 @@ export function SampleView({
               key={id}
               id={id}
               aria-labelledby={`${id}-heading`}
-              className="mt-8 first:mt-0"
+              className="mt-8 scroll-mt-32 first:mt-0"
             >
               <h2
                 id={`${id}-heading`}

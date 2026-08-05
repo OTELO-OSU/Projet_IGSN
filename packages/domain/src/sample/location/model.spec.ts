@@ -43,7 +43,6 @@ describe("locationSchema", () => {
         },
       },
     ],
-    // Completeness (unit/datum, both bounds) gates publish, not the draft schema.
     [
       "an elevation missing its unit and datum",
       { position: { ...point, elevation: { min: 10, max: 10 } } },
@@ -52,7 +51,15 @@ describe("locationSchema", () => {
       "a half-entered elevation range (min only)",
       { position: { ...area, elevation: { min: 0 } } },
     ],
-    // west > east is a valid dateline-crossing area (geography handles it).
+    [
+      "a fractional elevation",
+      {
+        position: {
+          ...point,
+          elevation: { min: 10.5, max: 10.5, unit: "m", datum: "msl" },
+        },
+      },
+    ],
     [
       "a dateline-crossing area",
       {
@@ -89,15 +96,6 @@ describe("locationSchema", () => {
           westLongitude: 5,
           eastLongitude: 8,
           southLatitude: 44,
-        },
-      },
-    ],
-    [
-      "a fractional elevation",
-      {
-        position: {
-          ...point,
-          elevation: { min: 10.5, max: 10.5, unit: "m", datum: "msl" },
         },
       },
     ],
