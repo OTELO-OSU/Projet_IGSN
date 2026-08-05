@@ -5,10 +5,12 @@ export function NumberField({
   label,
   requiredToPublish,
   disabled,
+  hint,
 }: {
   label: string;
   requiredToPublish?: boolean;
   disabled?: boolean;
+  hint?: string;
 }) {
   return (
     <TextField
@@ -16,6 +18,7 @@ export function NumberField({
       label={label}
       requiredToPublish={requiredToPublish}
       disabled={disabled}
+      hint={hint}
     />
   );
 }

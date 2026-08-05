@@ -22,10 +22,13 @@ Use **Leaflet** (`leaflet ^1.9.4`) with **react-leaflet** (`^5.0.0`, the React
 from `tile.openstreetmap.org`. The OSM usage policy requires attribution, so the
 tile layer carries the standard OpenStreetMap attribution.
 
-Rectangle selection uses Shift+mousedown/drag/mouseup on the map (no draw
-plugin); a plain drag pans and scroll zooms, matching normal map controls. This
-is mouse-only with no keyboard path to a bbox, a known WCAG 2.1.1 gap accepted
-per product decision.
+Rectangle selection has two paths, neither pulling in a draw plugin: Shift+drag
+as an expert shortcut (documented in the draw button's tooltip rather than a
+hint above the map), or a "Draw an area" toggle that traces the rectangle over
+two plain clicks, keeping the map pannable in between and turning itself off
+once a box is committed. A plain drag pans and scroll zooms, in draw mode too,
+matching normal map controls. Both paths are mouse-only with no keyboard path
+to a bbox, a known WCAG 2.1.1 gap accepted per product decision.
 
 ## Alternatives considered
 

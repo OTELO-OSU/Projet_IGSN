@@ -2,10 +2,18 @@
 
 ## Status
 
-Accepted, amended: the separate 1:1 `location` table proved needless (the
-location is always read and written with its sample), so its columns now live
-on `sample`, `type` renamed `location_type`. The PostGIS, raw-coordinate, and
-generated `geom` decisions stand unchanged.
+Accepted, amended twice.
+
+1. The separate 1:1 `location` table proved needless (the location is always read
+   and written with its sample), so its columns now live on `sample`, `type`
+   renamed `location_type`.
+2. `geom` is now planar `geometry(Geometry, 4326)`, not `geography`: geodesic
+   edges silently dropped results from a wide search box and inverted the match
+   past 180° of width. The antimeridian split geography gave for free is now
+   explicit, in the generated column and in `withinBbox`. See the amended
+   decision below.
+
+The PostGIS and raw-coordinate decisions stand unchanged.
 
 ## Context
 
@@ -39,6 +47,11 @@ values faithfully. A generated, GiST-indexed column derives the search geometry
 from them, so the app never reads or writes it and search is a later additive
 `WHERE` clause:
 
+The block below is the shape as originally proposed, kept for the record. It has
+since drifted twice: `type` is now `location_type` on `sample` (amendment 1), and
+the column is planar `geometry` with a dateline split (amendment 2). The live
+definition is the latest migration in `packages/api/migrations/`.
+
 ```sql
 geom geography(Geometry, 4326) GENERATED ALWAYS AS (
   CASE type
@@ -51,12 +64,36 @@ geom geography(Geometry, 4326) GENERATED ALWAYS AS (
 -- CREATE INDEX location_geom_gist ON location USING gist (geom);
 ```
 
-**`geography`, not `geometry`.** Geography joins points along the shorter
-great-circle arc, so it handles antimeridian-crossing areas natively (its
-bounding box and GiST index are dateline-aware); even when `west > east`,
-`ST_MakeEnvelope(...)::geography` keeps the correct ≤180° interior with no
-split logic. The one geography constraint, a polygon may not span more than 180°
-of longitude, is unreachable by a real sample area.
+**`geometry` (planar), not `geography`** (amended; this reverses the original
+choice, recorded below).
+
+The original reasoning was that geography joins points along the shorter
+great-circle arc, so it handles antimeridian-crossing areas natively: even when
+`west > east`, `ST_MakeEnvelope(...)::geography` keeps the correct ≤180° interior
+with no split logic. That part is true, and measured to be true. What it missed is
+that the same great-circle edges are wrong for a _search_ box, because a drawn
+rectangle's edges are lines of constant latitude, not geodesics. A geodesic edge
+bows poleward, so a wide box silently excludes samples inside the rectangle the
+user drew. Measured with box `-100,40,10,60`: points in Spain (0,41), southern
+France (5,43), the mid-Atlantic (-45,45) and Kansas (-90,42) all failed to match.
+
+Worse, past 180° of width the match inverts. Box `-170,0,170,20` (340° wide)
+matched nothing inside it and only lon 179, which is outside it, because geography
+reads the polygon as the ≤180° complement. The original claim that the 180° limit
+"is unreachable by a real sample area" holds for a stored area but not for a drawn
+search box, which reaches it in one gesture.
+
+Planar geometry matches what the map draws: a Leaflet rectangle on Web Mercator is
+exactly a constant-latitude box. The price is the splitting the original decision
+named when it rejected `geometry`, and that price is now paid in both places:
+
+- the generated column splits a stored crossing area (`west > east`) into
+  `ST_Collect` of two envelopes either side of 180, giving a MultiPolygon, since
+  planar a single such envelope is its own complement;
+- `withinBbox` splits a crossing search box into an OR of two envelopes.
+
+A distance-in-metres query, if one is ever needed, casts `geom::geography` at the
+call site, exactly as cheap as the reverse cast was.
 
 **Domain model** (`domain/sample/location/`): `sample.location` is nullable;
 when present its parts are independent and optional. `type` (point vs area)
@@ -121,10 +158,19 @@ form (tab visibility), `createSampleSchema` (forbidden case), and
 - **Native `point`/`box`**: postgres.js 3.4.9 has no parser for the geometric
   types, so they round-trip as strings needing custom serde on every read/write;
   `box` also normalizes corners and cannot represent a dateline-crossing area.
-- **`geometry` (planar) instead of `geography`**: fast and richer in operators,
-  but the antimeridian needs manual splitting at 180° into a MultiPolygon on both
-  stored areas and the drawn box. Geography removes that for a negligible cost at
-  this scale.
+- **`geometry` (planar) instead of `geography`**: originally rejected because the
+  antimeridian needs manual splitting at 180° into a MultiPolygon on both stored
+  areas and the drawn box, which geography removes for a negligible cost at this
+  scale. **This is now the chosen option** (see the amended decision): the cost
+  assessment was right about the splitting but wrong about the cost, because
+  geodesic edges made wide search boxes drop results silently. The split is
+  implemented where predicted, in the generated column and in `withinBbox`.
+- **`geography` (geodesic)**: the original choice, rejected on measurement. Its
+  great-circle edges bow a wide envelope poleward, so box `-100,40,10,60` missed
+  points at (0,41), (5,43), (-45,45) and (-90,42); past 180° of width the match
+  inverts, with box `-170,0,170,20` matching only lon 179, outside it. Correct for
+  distance and for a dateline-crossing area, but wrong for the constant-latitude
+  rectangle a Mercator map draws, which is what a bbox search is.
 - **Storing only the geometry (no raw columns)**: would force `ST_X`/`ST_Y`/
   `ST_XMin...` extraction on every CRUD read and geometry serde on write, and
   lose the faithful dateline intent. Raw columns keep CRUD in plain numbers.
@@ -154,16 +200,20 @@ form (tab visibility), `createSampleSchema` (forbidden case), and
   write, delete the row when location is null). Spatial predicates use `sql`
   fragments.
 - The generated column relies on `ST_MakePoint`, `ST_SetSRID`, `ST_MakeEnvelope`
-  and the `::geography` cast all being `IMMUTABLE`. Validated by the first
-  integration test on the real PostGIS container; the fallback is a
-  `BEFORE INSERT/UPDATE` trigger.
+  and (since the planar amendment) `ST_Collect` all being `IMMUTABLE`. Validated by
+  the first integration test on the real PostGIS container; the fallback is a
+  `BEFORE INSERT/UPDATE` trigger. Note a generated column's type cannot be altered
+  in place: `ALTER COLUMN ... TYPE` refuses the cast, and `USING` is rejected
+  outright on a generated column, so changing it means `DROP` + re-`ADD`. That is
+  safe here only because `geom` is derived from the raw coordinate columns.
 - `Sample` stays one type carrying `location: Location | null` (the list joins
   the 1:1); split only if list performance ever demands it.
-- **Search** (later, additive, no migration): `listSamplesQuerySchema` gains an
-  optional bounding-box param; the repository adds
-  `geom && ST_MakeEnvelope(:w,:s,:e,:n,4326)::geography AND ST_Intersects(geom, ...)`;
-  the drawn box lives in the URL. A map-draw control is a further phase and pulls
-  in a map-library dependency decision.
+- **Search**: `listSamplesQuerySchema` carries an optional bounding-box param and
+  the drawn box lives in the URL. As shipped (planar amendment) the predicate is
+  `ST_Intersects(geom, ST_MakeEnvelope(:w,:s,:e,:n,4326))`, and for a box crossing
+  the antimeridian (`west > east`) an OR of two such envelopes split at 180. The OR
+  must carry its own parentheses: the filter list is joined with `AND`, so an
+  unparenthesised OR would escape the visibility scope.
 - **Admin**: a Location tab in the sample form, hidden when the material makes
   location forbidden; a `NumberField` is added to the design-system form kit for
   the coordinate inputs.

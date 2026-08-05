@@ -171,9 +171,8 @@ describe("sample location persistence", () => {
   });
 
   pgTest(
-    "should match the generated geography in a bounding-box search",
+    "should match the generated planar geometry in a bounding-box search",
     async ({ db }) => {
-      // Paris; the generated geom is a geography point (ADR 0014).
       const paris = await insertSample(db, {
         ...base,
         location: {
@@ -182,14 +181,47 @@ describe("sample location persistence", () => {
       });
       const inFrance = await sql<{ id: string }>`
         SELECT id FROM sample
-        WHERE ST_Intersects(geom, ST_MakeEnvelope(0, 43, 7, 50, 4326)::geography)
+        WHERE ST_Intersects(geom, ST_MakeEnvelope(0, 43, 7, 50, 4326))
       `.execute(db);
       const inJapan = await sql<{ id: string }>`
         SELECT id FROM sample
-        WHERE ST_Intersects(geom, ST_MakeEnvelope(135, 34, 140, 36, 4326)::geography)
+        WHERE ST_Intersects(geom, ST_MakeEnvelope(135, 34, 140, 36, 4326))
       `.execute(db);
       expect(inFrance.rows.map((r) => r.id)).toContain(paris.id);
       expect(inJapan.rows.map((r) => r.id)).not.toContain(paris.id);
+    },
+  );
+
+  pgTest(
+    "should split a dateline-crossing stored area into two halves in geom",
+    async ({ db }) => {
+      const pacific = await insertSample(db, {
+        ...base,
+        location: {
+          position: {
+            type: "area",
+            westLongitude: 170,
+            eastLongitude: -170,
+            southLatitude: 0,
+            northLatitude: 20,
+          },
+        },
+      });
+      const shape = await sql<{ type: string; parts: number }>`
+        SELECT GeometryType(geom) AS type, ST_NumGeometries(geom) AS parts
+        FROM sample WHERE id = ${pacific.id}
+      `.execute(db);
+      const nearDateline = await sql<{ id: string }>`
+        SELECT id FROM sample
+        WHERE ST_Intersects(geom, ST_MakeEnvelope(175, 5, 179, 15, 4326))
+      `.execute(db);
+      const overGreenwich = await sql<{ id: string }>`
+        SELECT id FROM sample
+        WHERE ST_Intersects(geom, ST_MakeEnvelope(-10, 5, 10, 15, 4326))
+      `.execute(db);
+      expect(shape.rows[0]).toEqual({ type: "MULTIPOLYGON", parts: 2 });
+      expect(nearDateline.rows.map((r) => r.id)).toContain(pacific.id);
+      expect(overGreenwich.rows.map((r) => r.id)).not.toContain(pacific.id);
     },
   );
 });

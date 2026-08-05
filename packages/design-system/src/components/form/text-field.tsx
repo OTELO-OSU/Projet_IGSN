@@ -13,8 +13,8 @@ const toNumber = (text: string): number | undefined => {
   return text === "" || Number.isNaN(value) ? undefined : value;
 };
 
-// The form kit's base text control. `number` turns it into a numeric input
-// owning the string/number conversion; plain text fields store the text itself.
+// `number` turns it into a numeric input owning the string/number conversion;
+// plain text fields store the text itself.
 export function TextField({
   label,
   multiline = false,
@@ -23,15 +23,18 @@ export function TextField({
   // Marks the label with a trailing "*"; never the native required attribute,
   // a draft must save without the value.
   requiredToPublish = false,
+  hint,
 }: {
   label: string;
   multiline?: boolean;
   number?: boolean;
   disabled?: boolean;
   requiredToPublish?: boolean;
+  hint?: string;
 }) {
   const field = useFieldContext<string | number | null | undefined>();
-  const { error, errorId, ariaProps } = useFieldError();
+  const hintId = hint ? `${field.name}-hint` : undefined;
+  const { error, errorId, ariaProps } = useFieldError({ hintId });
   const isDisabled = useFieldDisabled(disabled);
   const [isBadInput, setIsBadInput] = useState(false);
   const Control = multiline ? Textarea : Input;
@@ -40,13 +43,16 @@ export function TextField({
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
       </Label>
+      {hint ? (
+        <p id={hintId} className="text-muted-foreground text-sm">
+          {hint}
+        </p>
+      ) : null}
       <Control
         id={field.name}
-        // step="any" allows decimals.
         {...(number ? { type: "number", step: "any" } : {})}
-        // A nullish stored value reads as an empty input, so callers never
-        // convert. A number feeds React's number-input path unstringified,
-        // which keeps intermediate text like "3." while typing.
+        // A number feeds React's number-input path unstringified, which keeps
+        // intermediate text like "3." while typing.
         value={isBadInput ? "" : (field.state.value ?? "")}
         disabled={isDisabled}
         onBlur={() => {

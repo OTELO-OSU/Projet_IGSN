@@ -135,6 +135,59 @@ describe("sampleDraftFieldErrors", () => {
     });
   });
 
+  it("should translate an out-of-range coordinate on submit", () => {
+    expect(
+      sampleDraftFieldErrors(
+        [
+          { path: ["location", "position", "longitude"], code: "too_big" },
+          { path: ["location", "position", "latitude"], code: "too_small" },
+        ],
+        draft(),
+      ),
+    ).toEqual({
+      "location.longitude": {
+        message: "Longitude must be between -180 and 180.",
+      },
+      "location.latitude": { message: "Latitude must be between -90 and 90." },
+    });
+  });
+
+  it("should translate an out-of-range area bound on submit", () => {
+    expect(
+      sampleDraftFieldErrors(
+        [
+          { path: ["location", "position", "westLongitude"], code: "too_big" },
+          {
+            path: ["location", "position", "northLatitude"],
+            code: "too_small",
+          },
+        ],
+        draft({ locationType: "area" }),
+      ),
+    ).toEqual({
+      "location.westLongitude": {
+        message: "Longitude must be between -180 and 180.",
+      },
+      "location.northLatitude": {
+        message: "Latitude must be between -90 and 90.",
+      },
+    });
+  });
+
+  it("should keep the generic message on a missing coordinate", () => {
+    expect(
+      sampleDraftFieldErrors(
+        [
+          {
+            path: ["location", "position", "latitude"],
+            code: "invalid_type",
+          },
+        ],
+        draft(),
+      ),
+    ).toEqual({ "location.latitude": { message: "Invalid value." } });
+  });
+
   it("should not claim a positive bound on a reading value that has none", () => {
     expect(
       sampleDraftFieldErrors(

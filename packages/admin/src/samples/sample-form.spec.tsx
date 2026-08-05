@@ -1637,11 +1637,13 @@ describe("SampleForm", () => {
     await screen.getByRole("button", { name: "Create" }).click();
 
     expect(onSubmit).not.toHaveBeenCalled();
-    await expect.element(screen.getByText("Invalid value.")).toBeVisible();
+    await expect
+      .element(screen.getByText("Longitude must be between -180 and 180."))
+      .toBeVisible();
 
     await screen.getByLabelText("Longitude *").fill("20");
     await expect
-      .element(screen.getByText("Invalid value."))
+      .element(screen.getByText("Longitude must be between -180 and 180."))
       .not.toBeInTheDocument();
     await screen.getByRole("button", { name: "Create" }).click();
     await vi.waitFor(() =>
@@ -1654,6 +1656,125 @@ describe("SampleForm", () => {
       ),
     );
   });
+
+  it("should name the axis and its range on an out-of-range latitude", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    await screen.getByLabelText("Latitude *").fill("200");
+
+    await expect
+      .element(screen.getByText("Latitude must be between -90 and 90."))
+      .toBeVisible();
+    expect(screen.getByText("Invalid value.").elements()).toEqual([]);
+    expect(
+      screen.getByText("Longitude must be between -180 and 180.").elements(),
+    ).toEqual([]);
+  });
+
+  it("should accept the coordinate bounds and a decimal degree", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+        }}
+        primaryAction={createAction(onSubmit)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
+    await screen.getByRole("option", { name: "Point" }).click();
+    for (const [longitude, latitude] of [
+      ["-180", "-90"],
+      ["180", "90"],
+      ["-2.352222", "48.856614"],
+    ] as const) {
+      await screen.getByLabelText("Longitude *").fill(longitude);
+      await screen.getByLabelText("Latitude *").fill(latitude);
+      expect(
+        screen.getByText("Latitude must be between -90 and 90.").elements(),
+      ).toEqual([]);
+      expect(
+        screen.getByText("Longitude must be between -180 and 180.").elements(),
+      ).toEqual([]);
+    }
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: {
+              type: "point",
+              longitude: -2.352222,
+              latitude: 48.856614,
+            },
+          },
+        }),
+      ),
+    );
+  });
+
+  it.each([
+    ["Point", 1],
+    ["Area", 2],
+  ])(
+    "should hint the coordinate format on every %s coordinate input",
+    async (locationType, perAxis) => {
+      const screen = await render(
+        <SampleForm
+          onCancel={noop}
+          defaultValues={{
+            name: "Basalte du Massif Central",
+            nature: "thin_section",
+            type: "dredge",
+            material: "fossil",
+            collectionMethod: null,
+            collectionMethodDescription: null,
+          }}
+          primaryAction={createAction(noop)}
+        />,
+      );
+
+      await screen.getByRole("tab", { name: "Physical description" }).click();
+      await screen
+        .getByRole("combobox", { name: "Type *", exact: true })
+        .click();
+      await screen.getByRole("option", { name: locationType }).click();
+
+      await vi.waitFor(() => {
+        expect(
+          screen.getByText(/Decimal degrees, WGS 84.*west/).elements(),
+        ).toHaveLength(perAxis);
+        expect(
+          screen.getByText(/Decimal degrees, WGS 84.*south/).elements(),
+        ).toHaveLength(perAxis);
+      });
+    },
+  );
 
   it("should reject an incomplete point instead of silently dropping it", async () => {
     const onSubmit = vi.fn();
@@ -2222,6 +2343,9 @@ describe("SampleForm post-publication field lock", () => {
       .toBeDisabled();
     await expect.element(screen.getByLabelText(/longitude/i)).toBeDisabled();
     await expect.element(screen.getByLabelText(/latitude/i)).toBeDisabled();
+    await expect
+      .element(screen.getByText(/Decimal degrees, WGS 84.*west/))
+      .toBeVisible();
     await expect
       .element(screen.getByRole("combobox", { name: /availability/i }))
       .toBeEnabled();

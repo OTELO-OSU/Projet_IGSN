@@ -14,6 +14,11 @@ file_path = tool_input.get("file_path", "") or ""
 if "/src/" not in file_path:
     sys.exit(0)
 
+# Specs are exempt: testing.md mandates Arrange-Act-Assert markers, so flagging
+# a test's comments fights a project rule instead of catching slop.
+if re.search(r"\.spec\.tsx?$", file_path):
+    sys.exit(0)
+
 text = tool_input.get("new_string")
 if text is None:
     text = tool_input.get("content")

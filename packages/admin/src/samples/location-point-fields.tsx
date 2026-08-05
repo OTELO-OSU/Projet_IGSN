@@ -11,6 +11,7 @@ export function LocationPointFields({ required }: { required: boolean }) {
           <field.NumberField
             label={m.field_longitude()}
             requiredToPublish={required}
+            hint={m.field_longitude_hint()}
           />
         )}
       </form.AppField>
@@ -19,6 +20,7 @@ export function LocationPointFields({ required }: { required: boolean }) {
           <field.NumberField
             label={m.field_latitude()}
             requiredToPublish={required}
+            hint={m.field_latitude_hint()}
           />
         )}
       </form.AppField>

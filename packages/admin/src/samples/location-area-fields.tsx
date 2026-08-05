@@ -3,10 +3,10 @@ import { LocationElevationFields } from "#/samples/location-elevation-fields.tsx
 import { useLocationForm } from "#/samples/use-location-form.ts";
 
 const boundFields = [
-  ["location.westLongitude", m.field_west_longitude],
-  ["location.eastLongitude", m.field_east_longitude],
-  ["location.southLatitude", m.field_south_latitude],
-  ["location.northLatitude", m.field_north_latitude],
+  ["location.westLongitude", m.field_west_longitude, m.field_longitude_hint],
+  ["location.eastLongitude", m.field_east_longitude, m.field_longitude_hint],
+  ["location.southLatitude", m.field_south_latitude, m.field_latitude_hint],
+  ["location.northLatitude", m.field_north_latitude, m.field_latitude_hint],
 ] as const;
 
 const rangeFields = [
@@ -26,10 +26,14 @@ export function LocationAreaFields({ required }: { required: boolean }) {
   const form = useLocationForm();
   return (
     <div className="grid gap-4 sm:grid-cols-2">
-      {boundFields.map(([name, label]) => (
+      {boundFields.map(([name, label, hint]) => (
         <form.AppField key={name} name={name}>
           {(field) => (
-            <field.NumberField label={label()} requiredToPublish={required} />
+            <field.NumberField
+              label={label()}
+              requiredToPublish={required}
+              hint={hint()}
+            />
           )}
         </form.AppField>
       ))}

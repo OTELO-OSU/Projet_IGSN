@@ -9,11 +9,13 @@ function Harness({
   multiline,
   disabled,
   requiredToPublish,
+  hint,
 }: {
   label: string;
   multiline?: boolean;
   disabled?: boolean;
   requiredToPublish?: boolean;
+  hint?: string;
 }) {
   const form = useAppForm({ defaultValues: { name: "" } });
   return (
@@ -31,6 +33,7 @@ function Harness({
             multiline={multiline}
             disabled={disabled}
             requiredToPublish={requiredToPublish}
+            hint={hint}
           />
         )}
       </form.AppField>
@@ -98,5 +101,44 @@ describe("TextField", () => {
       .element(page.getByRole("alert"))
       .toHaveTextContent("Name is required");
     await expect.element(input).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("should show a hint and describe the input by it alone", async () => {
+    await render(<Harness label="Sample name" hint="Up to 200 characters." />);
+
+    await expect.element(page.getByText("Up to 200 characters.")).toBeVisible();
+    await expect
+      .element(page.getByLabelText("Sample name"))
+      .toHaveAttribute("aria-describedby", "name-hint");
+  });
+
+  it("should describe the input by the hint and the error once invalid", async () => {
+    await render(<Harness label="Sample name" hint="Up to 200 characters." />);
+
+    const input = page.getByLabelText("Sample name");
+    await input.fill("Basalt 42");
+    await input.fill("");
+
+    await expect
+      .element(input)
+      .toHaveAttribute("aria-describedby", "name-hint name-error");
+    await expect
+      .element(page.getByRole("alert"))
+      .toHaveTextContent("Name is required");
+  });
+
+  it("should render no hint element and describe by the error alone without a hint", async () => {
+    await render(<Harness label="Sample name" />);
+
+    const input = page.getByLabelText("Sample name");
+    expect(document.getElementById("name-hint")).toBeNull();
+    await expect.element(input).not.toHaveAttribute("aria-describedby");
+
+    await input.fill("Basalt 42");
+    await input.fill("");
+
+    await expect
+      .element(input)
+      .toHaveAttribute("aria-describedby", "name-error");
   });
 });
