@@ -15,9 +15,9 @@ import { createSampleAttachmentRepository } from "./sample/attachment-repository
 import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
-import { createMeRoutes } from "./user/me-routes.ts";
+import { createCurrentUserRoutes } from "./user/current-user-routes.ts";
 import { createUserRepository } from "./user/repository.ts";
-import { createUserAdminRoutes } from "./user/routes.ts";
+import { createUserRoutes, createUserSearchRoutes } from "./user/routes.ts";
 
 export function createApp(
   database: Kysely<DB>,
@@ -58,7 +58,7 @@ export function createApp(
     // currentUser, so a refused request costs no user upsert.
     .use("*", rateLimit(rateLimitConfig, "user"))
     .use("*", currentUser(userRepository))
-    .route("/me", createMeRoutes(userRepository))
+    .route("/currentUser", createCurrentUserRoutes(userRepository))
     .route(
       "/samples",
       createSampleAdminRoutes(
@@ -67,7 +67,10 @@ export function createApp(
         userSampleRepository,
       ),
     )
-    .route("/users", createUserAdminRoutes(userRepository));
+    // Registered first: the directory search is open to any authenticated user,
+    // where createUserRoutes is super-admin-only throughout.
+    .route("/users/search", createUserSearchRoutes(userRepository))
+    .route("/users", createUserRoutes(userRepository));
 
   return (
     new Hono<AuthenticatedEnv>()

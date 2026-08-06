@@ -1,13 +1,13 @@
-import type { User } from "@projet-igsn/domain/user/model";
+import type { SampleCollaborator } from "@projet-igsn/domain/user-sample/user-sample-validator";
 
 import type { DB } from "../db.ts";
 
 import { type Transactional } from "../transaction.ts";
 
-export function listSampleContributors(
+export function listSampleCollaborators(
   db: Transactional<DB>,
   sampleId: string,
-): Promise<User[]> {
+): Promise<SampleCollaborator[]> {
   return db
     .selectFrom("user_sample")
     .innerJoin("user", "user.id", "user_sample.user_id")
@@ -17,9 +17,9 @@ export function listSampleContributors(
       "user.name",
       "user.firstname",
       "user.orcid",
+      "user_sample.role",
     ])
     .where("user_sample.sample_id", "=", sampleId)
-    .where("user_sample.role", "=", "contributor")
     .orderBy("user.name")
     .execute();
 }

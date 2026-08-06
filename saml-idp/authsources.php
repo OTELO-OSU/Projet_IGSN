@@ -18,6 +18,11 @@ $users = array(
     'pierre.durand'  => array('Pierre',  'Durand',  'pdurand'),
     'camille.petit'  => array('Camille', 'Petit',   'cpetit'),
     'luc.moreau'     => array('Luc',     'Moreau',  'lmoreau'),
+    // One identity per moderation state (see packages/api/scripts/seed.ts):
+    // nadia is the super admin, theo is pending, chloe is rejected.
+    'nadia.leroy'    => array('Nadia',   'Leroy',   'nleroy'),
+    'theo.roux'      => array('Theo',    'Roux',    'troux'),
+    'chloe.girard'   => array('Chloe',   'Girard',  'cgirard'),
 );
 
 $exampleUserpass = array('exampleauth:UserPass');

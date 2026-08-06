@@ -15,7 +15,9 @@ native `--import-realm` — no manual setup.
 Edit the realm file and restart to change clients/users. Token policy mirrors
 production (5 min access tokens, single-use 30 min refresh tokens, no password
 grant; GT-SSO recommendations, see ADR 0006), so tests drive the real browser
-login.
+login. `KC_HOSTNAME` is pinned to `http://localhost:8080` so the issuer the
+browser sees matches what the api uses to call `/userinfo`
+(`requireActiveSession`, needed for accept/reject) — preprod already set this.
 
 ## Federated login (Shibboleth + ORCID)
 
@@ -68,6 +70,15 @@ samples; Luc Moreau owns none anywhere, so he always starts with an empty
 registry and ownership isolation stays testable. The api provisions a local user
 from the token on first sign-in and matches it by email, which is how it adopts
 the seeded owner and keeps its samples (ADR 0019).
+
+The six researchers above are all seeded `accepted`, so they can publish
+right away. Three more identities exercise moderation (ADR 0023):
+
+| Person       | Status                    | Notes                                                       |
+| ------------ | ------------------------- | ----------------------------------------------------------- |
+| Nadia Leroy  | `accepted`, `super_admin` | Owns no samples; sees every user's at `/users` and `/admin` |
+| Théo Roux    | `pending`                 | Owns drafts only; banner shown, publish disabled            |
+| Chloé Girard | `rejected`                | Locked out at sign-in; owns nothing                         |
 
 - **SAML** users are defined in [`saml-idp/authsources.php`](../saml-idp/authsources.php).
   They release a French researcher profile (eduPersonPrincipalName, email, name), so

@@ -440,4 +440,47 @@ describe("samplePublishBlockers", () => {
     const { attachments: _attachments, ...withoutAttachments } = base;
     expect(samplePublishBlockers(withoutAttachments, 1)).toEqual([]);
   });
+
+  it("should report user_not_verified for a pending or rejected publisher", () => {
+    expect(
+      samplePublishBlockers(base, undefined, {
+        status: "pending",
+        superAdmin: false,
+      }),
+    ).toEqual(["user_not_verified"]);
+    expect(
+      samplePublishBlockers(base, undefined, {
+        status: "rejected",
+        superAdmin: false,
+      }),
+    ).toEqual(["user_not_verified"]);
+  });
+
+  it("should report no blocker for an accepted publisher or a super admin", () => {
+    expect(
+      samplePublishBlockers(base, undefined, {
+        status: "accepted",
+        superAdmin: false,
+      }),
+    ).toEqual([]);
+    expect(
+      samplePublishBlockers(base, undefined, {
+        status: "pending",
+        superAdmin: true,
+      }),
+    ).toEqual([]);
+  });
+
+  it("should report the field blockers alongside user_not_verified", () => {
+    expect(
+      samplePublishBlockers({ ...base, availability: null }, undefined, {
+        status: "pending",
+        superAdmin: false,
+      }),
+    ).toEqual(["availability_missing", "user_not_verified"]);
+  });
+
+  it("should never report user_not_verified when no publisher is supplied", () => {
+    expect(samplePublishBlockers(base)).toEqual([]);
+  });
 });

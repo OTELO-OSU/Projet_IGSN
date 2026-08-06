@@ -1,3 +1,4 @@
+import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { Kysely, Selectable } from "kysely";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
@@ -23,6 +24,8 @@ type SeedUser = {
   name: string;
   firstname: string;
   orcid?: string;
+  status: UserStatus;
+  superAdmin: boolean;
 };
 
 export const researcherKeySchema = z.enum([
@@ -32,14 +35,18 @@ export const researcherKeySchema = z.enum([
   "pierre",
   "camille",
   "luc",
+  "nadia",
+  "theo",
+  "chloe",
 ]);
 export type ResearcherKey = z.infer<typeof researcherKeySchema>;
 
 // Ids are static v7-shaped uuids like the sample ids; the api adopts these rows
 // by email when the real account signs in (see src/user/repository.ts), which is
-// what keeps the ownership. All six get a user row, but luc owns no sample
-// anywhere: he is the researcher who signs in to an empty registry (see
-// e2e/admin/samples.spec.ts).
+// what keeps the ownership. The six researchers are accepted (they publish); luc
+// owns no sample anywhere: he is the researcher who signs in to an empty
+// registry (see e2e/admin/samples.spec.ts). The last three exist to sign in to
+// each moderation state: nadia moderates, theo waits, chloe is locked out.
 export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   marie: {
     id: "01980e2d-6f9b-7000-8000-000000000001",
@@ -47,49 +54,98 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     name: "Dupont",
     firstname: "Marie",
     orcid: "0000-0001-5109-3700",
+    status: "accepted",
+    superAdmin: false,
   },
   jean: {
     id: "01980e2d-6f9b-7000-8000-000000000002",
     email: "jean.martin@univ-lorraine.fr",
     name: "Martin",
     firstname: "Jean",
+    status: "accepted",
+    superAdmin: false,
   },
   sophie: {
     id: "01980e2d-6f9b-7000-8000-000000000003",
     email: "sophie.bernard@univ-lorraine.fr",
     name: "Bernard",
     firstname: "Sophie",
+    status: "accepted",
+    superAdmin: false,
   },
   pierre: {
     id: "01980e2d-6f9b-7000-8000-000000000004",
     email: "pierre.durand@univ-lorraine.fr",
     name: "Durand",
     firstname: "Pierre",
+    status: "accepted",
+    superAdmin: false,
   },
   camille: {
     id: "01980e2d-6f9b-7000-8000-000000000005",
     email: "camille.petit@univ-lorraine.fr",
     name: "Petit",
     firstname: "Camille",
+    status: "accepted",
+    superAdmin: false,
   },
   luc: {
     id: "01980e2d-6f9b-7000-8000-000000000006",
     email: "luc.moreau@univ-lorraine.fr",
     name: "Moreau",
     firstname: "Luc",
+    status: "accepted",
+    superAdmin: false,
+  },
+  nadia: {
+    id: "01980e2d-6f9b-7000-8000-000000000007",
+    email: "nadia.leroy@univ-lorraine.fr",
+    name: "Leroy",
+    firstname: "Nadia",
+    status: "accepted",
+    superAdmin: true,
+  },
+  theo: {
+    id: "01980e2d-6f9b-7000-8000-000000000008",
+    email: "theo.roux@univ-lorraine.fr",
+    name: "Roux",
+    firstname: "Theo",
+    status: "pending",
+    superAdmin: false,
+  },
+  chloe: {
+    id: "01980e2d-6f9b-7000-8000-000000000009",
+    email: "chloe.girard@univ-lorraine.fr",
+    name: "Girard",
+    firstname: "Chloe",
+    status: "rejected",
+    superAdmin: false,
   },
 };
 
-// Upserts the six mock researchers by email (a row may already exist from a
-// real sign-in, with another id) and returns each researcher's database id.
+// Upserts the mock researchers by email (a row may already exist from a real
+// sign-in, with another id) and returns each researcher's database id. Re-seeding
+// re-applies the moderation state, so a stale local row cannot keep rights the
+// fixture no longer grants; name and firstname stay untouched, so a real
+// sign-in's own profile keeps winning those.
 async function seedOwners(
   db: Kysely<DB>,
 ): Promise<Record<ResearcherKey, string>> {
   const owners = Object.values(MOCK_RESEARCHERS);
   await db
     .insertInto("user")
-    .values(owners)
-    .onConflict((oc) => oc.column("email").doNothing())
+    .values(
+      owners.map(({ superAdmin, ...owner }) => ({
+        ...owner,
+        super_admin: superAdmin,
+      })),
+    )
+    .onConflict((oc) =>
+      oc.column("email").doUpdateSet((eb) => ({
+        status: eb.ref("excluded.status"),
+        super_admin: eb.ref("excluded.super_admin"),
+      })),
+    )
     .execute();
   const rows = await db
     .selectFrom("user")
@@ -346,6 +402,23 @@ export const SEED_SAMPLES: SeedSample[] = [
     },
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),
     published: true,
+  },
+  // Drafts of the pending researcher: an unverified account declares samples
+  // but cannot publish them, so these two stay drafts.
+  {
+    id: "00000000-0000-7000-8000-000000000006",
+    name: "Awaiting validation basalt",
+    owner: "theo",
+    nature: "hand_sample",
+    material: "rock.igneous.volcanic",
+  },
+  {
+    id: "00000000-0000-7000-8000-000000000007",
+    name: "Awaiting validation sediment core",
+    owner: "theo",
+    nature: "sample_fragment",
+    material: "sediment",
+    type: "core",
   },
 ];
 

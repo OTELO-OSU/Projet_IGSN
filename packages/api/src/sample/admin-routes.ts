@@ -5,7 +5,7 @@ import type {
   AdminSampleResponse,
 } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
-import type { ListUsersResponse } from "@projet-igsn/domain/user/user-validator";
+import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
 
 import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-sample-publishable";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
@@ -54,6 +54,7 @@ export function createSampleAdminRoutes(
       .get("/", validateListQuery, async (c) => {
         const { page, perPage, sort, order, search, ageMin, ageMax, ageUnit } =
           c.req.valid("query");
+        const user = c.get("user");
         const { data, total } = await repository.list(
           {
             page,
@@ -65,7 +66,7 @@ export function createSampleAdminRoutes(
             ageMax,
             ageUnit,
           },
-          c.get("user").id,
+          user.superAdmin ? null : user.id,
         );
         const body: AdminListSamplesResponse = { data, meta: { total } };
         return c.json(body);
@@ -90,22 +91,22 @@ export function createSampleAdminRoutes(
         );
         return c.json({ data: sample }, 201);
       })
-      .get("/:id/contributors", validateIdParam, async (c) => {
+      .get("/:id/collaborators", validateIdParam, async (c) => {
         if (!c.get("sample")) {
           return c.json({ error: "Not found" }, 404);
         }
         if (c.get("role") !== "owner") {
           return c.json({ error: "Forbidden" }, 403);
         }
-        const body: ListUsersResponse = {
-          data: await userSampleRepository.listContributors(
+        const body: SampleCollaboratorsResponse = {
+          data: await userSampleRepository.listCollaborators(
             c.req.valid("param").id,
           ),
         };
         return c.json(body);
       })
       .post(
-        "/:id/contributors",
+        "/:id/collaborators",
         requireActiveSession,
         validateIdParam,
         validateAddContributorBody,
@@ -178,7 +179,7 @@ export function createSampleAdminRoutes(
         // material in between is not guarded at the DB level (no CHECK on
         // material); acceptable for an admin-only action. Read and publish in one
         // txn if that race matters.
-        if (!isSamplePublishable(sample, uploadLimit)) {
+        if (!isSamplePublishable(sample, uploadLimit, c.get("user"))) {
           return c.json({ error: "Sample is not ready to publish" }, 409);
         }
         const published = await repository.publish(id);

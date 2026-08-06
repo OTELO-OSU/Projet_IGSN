@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { parseSeedSample, SEED_SAMPLES } from "./seed.ts";
+import { pgTest } from "../src/tests/pg-test.ts";
+import {
+  MOCK_RESEARCHERS,
+  parseSeedSample,
+  seed,
+  SEED_SAMPLES,
+} from "./seed.ts";
 
 const draft = {
   id: "00000000-0000-7000-8000-00000000000f",
@@ -53,5 +59,93 @@ describe("parseSeedSample", () => {
         owner: "nobody",
       }),
     ).toThrow();
+  });
+});
+
+describe("SEED_SAMPLES ownership", () => {
+  // The api refuses to publish for an unverified account, so a seeded published
+  // row owned by one would be a state the app itself cannot produce.
+  it("should let only verified accounts own a published row", () => {
+    for (const sample of SEED_SAMPLES.filter((row) => row.published)) {
+      const owner = MOCK_RESEARCHERS[sample.owner];
+      expect(owner.superAdmin || owner.status === "accepted").toBe(true);
+    }
+  });
+
+  it("should give the pending researcher drafts only", () => {
+    const owned = SEED_SAMPLES.filter((sample) => sample.owner === "theo");
+    expect(owned.length).toBeGreaterThan(0);
+    expect(owned.every((sample) => !sample.published)).toBe(true);
+  });
+
+  it("should give the rejected researcher and the super admin nothing", () => {
+    expect(
+      SEED_SAMPLES.filter(
+        (sample) => sample.owner === "chloe" || sample.owner === "nadia",
+      ),
+    ).toEqual([]);
+  });
+});
+
+describe("seed", () => {
+  pgTest(
+    "should provision every identity's moderation state",
+    async ({ db }) => {
+      // Act
+      await seed(db, SEED_SAMPLES);
+      // Assert
+      const rows = await db
+        .selectFrom("user")
+        .select(["email", "status", "super_admin"])
+        .execute();
+      const byEmail = new Map(rows.map((row) => [row.email, row]));
+      expect(byEmail.get(MOCK_RESEARCHERS.marie.email)).toMatchObject({
+        status: "accepted",
+        super_admin: false,
+      });
+      expect(byEmail.get(MOCK_RESEARCHERS.nadia.email)).toMatchObject({
+        status: "accepted",
+        super_admin: true,
+      });
+      expect(byEmail.get(MOCK_RESEARCHERS.theo.email)).toMatchObject({
+        status: "pending",
+        super_admin: false,
+      });
+      expect(byEmail.get(MOCK_RESEARCHERS.chloe.email)).toMatchObject({
+        status: "rejected",
+        super_admin: false,
+      });
+    },
+  );
+
+  // Re-seeding an existing database enforces the fixture's roles, but leaves the
+  // profile a real sign-in wrote.
+  pgTest("should re-apply the roles of an existing row", async ({ db }) => {
+    // Arrange
+    await db
+      .insertInto("user")
+      .values({
+        id: crypto.randomUUID(),
+        email: MOCK_RESEARCHERS.nadia.email,
+        name: "Signed-in name",
+        firstname: "Signed-in firstname",
+        status: "pending",
+      })
+      .execute();
+    // Act
+    await seed(db, SEED_SAMPLES);
+    // Assert
+    await expect(
+      db
+        .selectFrom("user")
+        .select(["name", "firstname", "status", "super_admin"])
+        .where("email", "=", MOCK_RESEARCHERS.nadia.email)
+        .executeTakeFirstOrThrow(),
+    ).resolves.toEqual({
+      name: "Signed-in name",
+      firstname: "Signed-in firstname",
+      status: "accepted",
+      super_admin: true,
+    });
   });
 });

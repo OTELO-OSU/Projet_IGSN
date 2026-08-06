@@ -1,3 +1,4 @@
+import type { User } from "../../user/model.ts";
 import type { Sample } from "../sample.ts";
 
 import { samplePublishBlockers } from "./sample-publish-blockers.ts";
@@ -7,6 +8,7 @@ import { samplePublishBlockers } from "./sample-publish-blockers.ts";
 export function isSamplePublishable(
   sample: Sample,
   uploadLimit?: number,
+  publisher?: Pick<User, "status" | "superAdmin">,
 ): boolean {
-  return samplePublishBlockers(sample, uploadLimit).length === 0;
+  return samplePublishBlockers(sample, uploadLimit, publisher).length === 0;
 }

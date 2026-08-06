@@ -32,6 +32,9 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   collection_curator_missing: ["scientificContext", "collectionCurator"],
   collection_origin_missing: ["scientificContext", "collectionOrigin"],
   attachment_limit_exceeded: ["attachments"],
+  // No field carries the account status, and this schema never passes a
+  // publisher, so the blocker cannot be raised here: form-level path.
+  user_not_verified: [],
 };
 
 // The shape of a sample that is, or is becoming, published: the create shape,

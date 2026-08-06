@@ -29,6 +29,18 @@ vi.mock("react-oidc-context", () => ({
 
 const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
 
+// Publishing depends on it, so the page's publisher must be deterministic;
+// accepted unless a test says else.
+let callerStatus: "pending" | "accepted" = "accepted";
+let callerUnknown = false;
+let sampleFetched = false;
+
+beforeEach(() => {
+  callerStatus = "accepted";
+  callerUnknown = false;
+  sampleFetched = false;
+});
+
 // One file over the default limit of 5, like a sample imported before the cap.
 const overLimitAttachments: SampleAttachment[] = Array.from(
   { length: 6 },
@@ -40,7 +52,8 @@ const overLimitAttachments: SampleAttachment[] = Array.from(
   }),
 );
 
-// Default type and material are leaves so Save & Publish starts enabled (see
+// Lets the page run its real save/refetch cycle without a backend. Default
+// type and material are leaves so Save & Publish starts enabled (see
 // samplePublishBlockers).
 function fakeApi(
   published = false,
@@ -90,9 +103,16 @@ function fakeApi(
   };
   const calls: string[] = [];
   worker.use(
-    http.get("*/admin/me", () =>
-      HttpResponse.json({ sub: "user-1", name: "Marie Dupont" }),
-    ),
+    http.get("*/admin/currentUser", async () => {
+      if (callerUnknown) await new Promise(() => {});
+      return HttpResponse.json({
+        sub: "user-1",
+        name: "Marie Dupont",
+        orcid: null,
+        status: callerStatus,
+        superAdmin: false,
+      });
+    }),
     http.put("*/samples/:id", async ({ request }) => {
       if (fail === "save") return new HttpResponse(null, { status: 500 });
       // The attachments payload carries {id, description} entries, not the
@@ -111,13 +131,17 @@ function fakeApi(
       calls.push("PUBLISH");
       return HttpResponse.json({ data: sample, role });
     }),
-    http.get("*/samples", () =>
-      HttpResponse.json({
+    http.get("*/samples", () => {
+      sampleFetched = true;
+      return HttpResponse.json({
         data: [{ ...sample, owner: { name: "Dupont", firstname: "Marie" } }],
         meta: { total: 1 },
-      }),
-    ),
-    http.get("*/samples/:id", () => HttpResponse.json({ data: sample, role })),
+      });
+    }),
+    http.get("*/samples/:id", () => {
+      sampleFetched = true;
+      return HttpResponse.json({ data: sample, role });
+    }),
     http.delete(
       "*/samples/:id/attachments/:attachmentId",
       () => new HttpResponse(null, { status: 204 }),
@@ -274,6 +298,89 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/set the material before publishing/i);
+  });
+
+  it("should disable Save & Publish for a pending account, complete sample or not", async () => {
+    callerStatus = "pending";
+    const { screen } = await renderEditPage();
+    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    await expect.element(publish).toBeDisabled();
+
+    publish.element().parentElement?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/account is not yet validated/i);
+    await expect
+      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .toBeEnabled();
+  });
+
+  it("should list only the account reason for a pending account on a complete sample", async () => {
+    callerStatus = "pending";
+    const { screen } = await renderEditPage();
+    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    await expect.element(publish).toBeDisabled();
+
+    publish.element().parentElement?.focus();
+    const tooltip = screen.getByRole("tooltip");
+    await expect
+      .element(tooltip)
+      .toHaveTextContent(/account is not yet validated/i);
+    await expect.element(tooltip).not.toHaveTextContent(/before publishing/i);
+  });
+
+  it("should drop the material reason once a pending account completes the cascade", async () => {
+    callerStatus = "pending";
+    const { screen } = await renderEditPage(false, "rock.igneous.volcanic");
+    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen
+      .getByRole("combobox", { name: "Volcanic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Mafic", exact: true }).click();
+    await screen
+      .getByRole("combobox", { name: "Mafic *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Basalt", exact: true }).click();
+
+    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    await expect.element(publish).toBeDisabled();
+    publish.element().parentElement?.focus();
+    const tooltip = screen.getByRole("tooltip");
+    await expect
+      .element(tooltip)
+      .toHaveTextContent(/account is not yet validated/i);
+    await expect.element(tooltip).not.toHaveTextContent(/material/i);
+  });
+
+  it("should offer no publishing until the account is known", async () => {
+    callerUnknown = true;
+    const { screen } = await renderEditPage();
+    // The sample has arrived, so the form would already be up: what still holds
+    // the page back is the unanswered account.
+    await vi.waitFor(() => expect(sampleFetched).toBe(true));
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve)),
+    );
+    await expect.element(screen.getByText("Loading samples...")).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Save & Publish" }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should list the missing fields and the account reason together", async () => {
+    callerStatus = "pending";
+    const { screen } = await renderEditPage(false, null);
+    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    await expect.element(publish).toBeDisabled();
+
+    publish.element().parentElement?.focus();
+    const tooltip = screen.getByRole("tooltip");
+    await expect
+      .element(tooltip)
+      .toHaveTextContent(/set the material before publishing/i);
+    await expect
+      .element(tooltip)
+      .toHaveTextContent(/account is not yet validated/i);
   });
 
   it("should render the material cascade prefilled on the Sample type tab", async () => {

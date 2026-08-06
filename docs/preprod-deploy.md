@@ -72,3 +72,16 @@ All assume your key is installed (`make preprod-ssh-send-key`) and share
 The Postgres password lives in the host `docker-compose.env`, which you
 manage and copy yourself. To add another app secret, add it there and reference
 it in [docker-compose.yml](../infra/preprod/docker-compose.yml).
+
+### First super admin
+
+No endpoint or UI grants the `super_admin` flag (ADR 0023, by design). After
+the intended person has signed in at least once (so their `user` row exists),
+run once per environment:
+
+```
+UPDATE "user" SET status = 'accepted', super_admin = true WHERE email = '<email>';
+```
+
+Repeat for any additional super admin. This is a manual, per-environment step,
+not part of the deploy script.

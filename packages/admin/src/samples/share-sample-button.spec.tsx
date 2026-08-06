@@ -1,5 +1,5 @@
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
-import type { User } from "@projet-igsn/domain/user/model";
+import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -34,14 +34,14 @@ vi.mock("react-oidc-context", () => ({
 
 const SAMPLE_ID = fakeSample.id;
 
-const curie: User = {
+const curie: UserIdentity = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3401",
   email: "marie.curie@univ-lorraine.fr",
   name: "Curie",
   firstname: "Marie",
   orcid: null,
 };
-const dupont: User = {
+const dupont: UserIdentity = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3402",
   email: "pierre.dupont@univ-lorraine.fr",
   name: "Dupont",
@@ -49,19 +49,33 @@ const dupont: User = {
   orcid: null,
 };
 
+const OWNER_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3400";
+
 function fakeApi({
   role = "owner" as UserSampleRole,
-  contributors = [] as User[],
-  directory = [] as User[],
+  owner = {
+    name: "Dupont",
+    firstname: "Marie",
+    email: OWNER_EMAIL,
+  } as { name: string | null; firstname: string | null; email: string } | null,
+  contributors = [] as UserIdentity[],
+  directory = [] as UserIdentity[],
 } = {}) {
   let listed = [...contributors];
   const calls: string[] = [];
   worker.use(
-    http.get("*/samples/:id/contributors", ({ request }) => {
+    http.get("*/samples/:id/collaborators", ({ request }) => {
       calls.push(`GET ${request.url}`);
-      return HttpResponse.json({ data: listed });
+      return HttpResponse.json({
+        data: [
+          ...(owner
+            ? [{ id: OWNER_ID, orcid: null, ...owner, role: "owner" }]
+            : []),
+          ...listed.map((user) => ({ ...user, role: "contributor" })),
+        ],
+      });
     }),
-    http.post("*/samples/:id/contributors", async ({ request }) => {
+    http.post("*/samples/:id/collaborators", async ({ request }) => {
       calls.push(`POST ${request.url}`);
       const { userId } = (await request.json()) as { userId: string };
       const picked = directory.find((user) => user.id === userId);
@@ -70,7 +84,7 @@ function fakeApi({
       }
       return new HttpResponse(null, { status: 204 });
     }),
-    http.get("*/admin/users", ({ request }) => {
+    http.get("*/admin/users/search", ({ request }) => {
       calls.push(`GET ${request.url}`);
       const search = (
         new URL(request.url).searchParams.get("search") ?? ""
@@ -151,6 +165,49 @@ describe("ShareSampleButton", () => {
       .toBeVisible();
   });
 
+  it("should not load the collaborators before the dialog opens", async () => {
+    const { screen, calls, roleLoaded } = await renderShareButton();
+
+    await roleLoaded();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Share" }))
+      .toBeVisible();
+    expect(calls.filter((call) => call.includes("collaborators"))).toEqual([]);
+  });
+
+  it("should name the sample's owner, not the signed-in caller", async () => {
+    const { screen } = await renderShareButton({
+      owner: {
+        name: "Petit",
+        firstname: "Jean",
+        email: "jean.petit@univ-lorraine.fr",
+      },
+    });
+
+    await openDialog(screen);
+
+    await expect
+      .element(screen.getByText("Jean Petit jean.petit@univ-lorraine.fr"))
+      .toBeVisible();
+    expect(screen.getByText(`Marie Dupont ${OWNER_EMAIL}`).elements()).toEqual(
+      [],
+    );
+  });
+
+  it("should show no owner section on a sample nobody owns", async () => {
+    const { screen } = await renderShareButton({ owner: null });
+
+    await openDialog(screen);
+
+    await expect
+      .element(screen.getByRole("dialog"))
+      .toHaveTextContent("Share this sample");
+    expect(screen.getByRole("heading", { name: "Owner" }).elements()).toEqual(
+      [],
+    );
+  });
+
   it("should list the current collaborators under their own label", async () => {
     const { screen } = await renderShareButton({ contributors: [curie] });
 
@@ -177,7 +234,9 @@ describe("ShareSampleButton", () => {
 
   it("should show a loading state while the collaborators load", async () => {
     const { screen } = await renderShareButton();
-    worker.use(http.get("*/samples/:id/contributors", () => delay("infinite")));
+    worker.use(
+      http.get("*/samples/:id/collaborators", () => delay("infinite")),
+    );
 
     await openDialog(screen);
 
@@ -190,7 +249,7 @@ describe("ShareSampleButton", () => {
     const { screen } = await renderShareButton();
     worker.use(
       http.get(
-        "*/samples/:id/contributors",
+        "*/samples/:id/collaborators",
         () => new HttpResponse(null, { status: 500 }),
       ),
     );

@@ -5,7 +5,7 @@ import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 import { describe, expect, it } from "vitest";
 
 import { DEMO_SAMPLES } from "./seed-demo-samples.ts";
-import { parseSeedSample } from "./seed.ts";
+import { MOCK_RESEARCHERS, parseSeedSample } from "./seed.ts";
 
 const PUBLISHED = DEMO_SAMPLES.filter((s) => s.published);
 const DRAFTS = DEMO_SAMPLES.filter((s) => !s.published);
@@ -17,13 +17,26 @@ describe("DEMO_SAMPLES", () => {
     expect(DRAFTS).toHaveLength(30);
   });
 
+  // The api refuses to publish for an unverified account, so a published demo
+  // row owned by one would be a state the app itself cannot produce.
+  it("should let only verified accounts own a published row", () => {
+    for (const sample of PUBLISHED) {
+      const owner = MOCK_RESEARCHERS[sample.owner];
+      expect(owner.superAdmin || owner.status === "accepted").toBe(true);
+    }
+  });
+
+  it("should give the pending researcher a few drafts", () => {
+    const owned = DEMO_SAMPLES.filter((sample) => sample.owner === "theo");
+    expect(owned).toHaveLength(3);
+    expect(owned.every((sample) => !sample.published)).toBe(true);
+  });
+
   it("should give every row a unique id", () => {
     const ids = new Set(DEMO_SAMPLES.map((s) => s.id));
     expect(ids.size).toBe(DEMO_SAMPLES.length);
   });
 
-  // parseSeedSample runs each row through its schema (create for a draft,
-  // published for a published row); a bad row throws and fails the suite.
   it.each(DEMO_SAMPLES.map((s) => [s.name, s] as const))(
     "should accept row %s",
     (_, sample) => {

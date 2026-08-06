@@ -19,6 +19,10 @@ authorization rule. Keycloak knows the people but cannot hold registry data, and
 there is no user-management UI yet, so accounts can only appear from the tokens
 themselves.
 
+_(Status note: a user-management UI, moderation status, and a super-admin role
+landed in ADR 0023; the "no user-management UI yet" context above describes
+this ADR's original state, not the current one.)_
+
 ## Decision
 
 A `user` table (`id`, `email` unique, `name`, `firstname`) and a `user_sample`
@@ -33,7 +37,7 @@ claim is answered 403: it cannot own anything.
 
 **Ownership is enforced in two places, both server-side.** The admin list is
 scoped to the caller in SQL (an `exists` on `user_sample`, in the page _and_
-count queries), and `requireSampleOwner` guards every admin route naming a
+count queries), and `requireSampleAccess` guards every admin route naming a
 sample id, reads and writes alike.
 
 **One read decides 200, 403 and 404.** `getSample` returns the row plus whether
@@ -41,6 +45,10 @@ the caller owns it (a left join on `user_sample`, no second query), and the guar
 hands the sample it fetched to the route: no row is the route's own 404, an
 unowned row is 403, and a guarded route never reads the sample again. A sample
 nobody owns is forbidden to everyone.
+
+**Superseded in part by ADR 0023**: a super admin now reaches every sample
+regardless of `user_sample`, in both the list scope and `requireSampleAccess`.
+"A sample nobody owns is forbidden to everyone" no longer holds for that role.
 
 Public routes are untouched: the frontend keeps serving published samples to
 anonymous readers.
@@ -61,8 +69,7 @@ anonymous readers.
   user management.
 - Samples predating this change have no owner row and are unreachable in admin
   until assigned. Only demo data is affected; `make db-seed-demo` re-seeds it.
-- Adding, removing, or editing owners, other roles, and an admin override are all
-  still to come. The join table shape does not have to change for them, only the
-  role column. **Update (ADR 0021):** the role column landed (`owner |
-contributor`), with sharing but not removal; editing owners and an admin
-  override are still open.
+- Adding, removing, or editing owners is still to come. **Update (ADR 0021):**
+  the role column landed (`owner | contributor`), with sharing but not removal.
+  **Update (ADR 0023):** moderation status and super admin landed; the join
+  table shape did not need to change for either.

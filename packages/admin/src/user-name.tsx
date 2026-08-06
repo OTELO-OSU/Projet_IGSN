@@ -1,11 +1,9 @@
 import { m } from "#/paraglide/messages.js";
 
-import { useGetMe } from "./use-get-me.ts";
+import { useCurrentUser } from "./auth/use-current-user.ts";
 
-// Shows the signed-in user's name in the header, resolved from the api /me
-// endpoint with the Keycloak access token.
 export function UserName() {
-  const { data, isError } = useGetMe();
+  const { data, isError } = useCurrentUser();
 
   if (isError) return <p role="alert">{m.user_name_error()}</p>;
   if (!data) return null;

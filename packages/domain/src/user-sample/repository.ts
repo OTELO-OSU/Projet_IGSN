@@ -1,4 +1,4 @@
-import type { User } from "../user/model.ts";
+import type { SampleCollaborator } from "./user-sample-validator.ts";
 
 export type UserSampleRepository = {
   addOwner(sampleId: string, userId: string): Promise<void>;
@@ -6,5 +6,5 @@ export type UserSampleRepository = {
     sampleId: string,
     userId: string,
   ): Promise<"added" | "unknown_user">;
-  listContributors(sampleId: string): Promise<User[]>;
+  listCollaborators(sampleId: string): Promise<SampleCollaborator[]>;
 };

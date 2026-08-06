@@ -100,7 +100,7 @@ const getMe = async (
   vi.resetModules();
   const { createApp } = await import("../app.ts");
 
-  return testClient(createApp(db)).admin.me.$get(undefined, {
+  return testClient(createApp(db)).admin.currentUser.$get(undefined, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
@@ -118,6 +118,8 @@ describe("requireAuth", () => {
         name: "Marie Dupont",
         email: "marie.dupont@univ-lorraine.fr",
         orcid: null,
+        status: "pending",
+        superAdmin: false,
       });
     },
   );

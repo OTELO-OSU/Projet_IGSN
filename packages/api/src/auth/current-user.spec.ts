@@ -3,6 +3,7 @@ import { describe, expect } from "vitest";
 
 import type { KeycloakClaims } from "./middleware.ts";
 
+import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { createUserRepository } from "../user/repository.ts";
 import { type AuthenticatedEnv, currentUser } from "./current-user.ts";
@@ -43,6 +44,8 @@ describe("currentUser", () => {
         firstname: "Jean",
         name: "Martin",
         orcid: null,
+        status: "pending",
+        superAdmin: false,
       });
     },
   );
@@ -62,8 +65,59 @@ describe("currentUser", () => {
       firstname: null,
       name: null,
       orcid: null,
+      status: "pending",
+      superAdmin: false,
     });
   });
+
+  pgTest("should answer 403 to a rejected caller", async ({ db }) => {
+    // Arrange
+    await insertUser(db, claims.email!, { status: "rejected" });
+    // Act
+    const res = await appWithClaims(db, claims).request("/probe");
+    // Assert
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: "Forbidden" });
+  });
+
+  pgTest("should let a pending caller through", async ({ db }) => {
+    // Arrange
+    await insertUser(db, claims.email!, { status: "pending" });
+    // Act
+    const res = await appWithClaims(db, claims).request("/probe");
+    // Assert
+    expect(res.status).toBe(200);
+  });
+
+  pgTest(
+    "should let a rejected super admin through, since they moderate",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, claims.email!, {
+        status: "rejected",
+        superAdmin: true,
+      });
+      // Act
+      const res = await appWithClaims(db, claims).request("/probe");
+      // Assert
+      expect(res.status).toBe(200);
+    },
+  );
+
+  pgTest(
+    "should answer 403 and provision nothing on an email claim that is not an address",
+    async ({ db }) => {
+      // Arrange
+      const notAnAddress: KeycloakClaims = { sub: claims.sub, email: "nope" };
+      // Act
+      const res = await appWithClaims(db, notAnAddress).request("/probe");
+      // Assert
+      expect(res.status).toBe(403);
+      await expect(
+        db.selectFrom("user").selectAll().execute(),
+      ).resolves.toEqual([]);
+    },
+  );
 
   // No row is written either, or the next such token would adopt this empty
   // account.
@@ -88,6 +142,21 @@ describe("currentUser", () => {
     preferred_username: "0000-0002-1825-0097",
     identity_provider: "orcid",
   };
+
+  pgTest(
+    "should answer 403 to a rejected user signing in via ORCID",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "rejected@univ-lorraine.fr", {
+        orcid: "0000-0002-1825-0097",
+        status: "rejected",
+      });
+      // Act
+      const res = await appWithClaims(db, orcidClaims).request("/probe");
+      // Assert
+      expect(res.status).toBe(403);
+    },
+  );
 
   pgTest("should resolve an ORCID login to the linked user", async ({ db }) => {
     // Arrange

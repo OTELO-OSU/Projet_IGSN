@@ -3,9 +3,18 @@ import { render } from "vitest-browser-react";
 
 import { UserName } from "./user-name";
 
-vi.mock("./api", () => ({
-  fetchMe: () =>
-    Promise.resolve({ sub: "s", name: "Marie Dupont", orcid: null }),
+vi.mock("react-oidc-context", () => ({
+  useAuth: () => ({ user: { access_token: "tok" } }),
+}));
+vi.mock("./api.ts", () => ({
+  fetchCurrentUser: () =>
+    Promise.resolve({
+      sub: "s",
+      name: "Marie Dupont",
+      orcid: null,
+      status: "accepted",
+      superAdmin: false,
+    }),
 }));
 
 describe("UserName", () => {

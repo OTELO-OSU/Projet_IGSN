@@ -5,6 +5,7 @@ import { useAuth } from "react-oidc-context";
 
 import { m } from "#/paraglide/messages.js";
 
+import { AccountGate } from "./account-gate.tsx";
 import { AppLayout } from "./app-layout.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
 import { OrcidAccessGate } from "./orcid-access-gate.tsx";
@@ -39,16 +40,17 @@ export function AuthGate({ children }: { children?: ReactNode }) {
   // session reaches the app only when the api resolves its orcid to a linked
   // account (ADR 0020).
   const identityProvider = auth.user?.profile.identity_provider;
-  if (
+  const Gate =
     typeof identityProvider === "string" &&
     identityProvider.toLowerCase() === "orcid"
-  ) {
-    return (
-      <OrcidAccessGate onSignOut={signOut}>
-        <AppLayout onSignOut={signOut}>{children}</AppLayout>
-      </OrcidAccessGate>
-    );
-  }
+      ? OrcidAccessGate
+      : AccountGate;
 
-  return <AppLayout onSignOut={signOut}>{children}</AppLayout>;
+  // Inside the authenticated branch only: the gate reads the api identity, which
+  // an unauthenticated render has no token (and no QueryClient) for.
+  return (
+    <Gate onSignOut={signOut}>
+      <AppLayout onSignOut={signOut}>{children}</AppLayout>
+    </Gate>
+  );
 }

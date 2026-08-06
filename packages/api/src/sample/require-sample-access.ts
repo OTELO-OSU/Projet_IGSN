@@ -3,6 +3,7 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 import type { MiddlewareHandler } from "hono";
 
+import { canPublishSamples } from "@projet-igsn/domain/user/can-publish-samples";
 import { z } from "zod";
 
 import type { AuthenticatedEnv } from "../auth/current-user.ts";
@@ -29,12 +30,26 @@ export function requireSampleAccess(
     if (!id.success) {
       return next();
     }
-    const found = await repository.get(id.data, c.get("user").id);
-    if (found && found.role === null) {
+    const user = c.get("user");
+    const found = await repository.get(id.data, user.id);
+    // A super admin reaches every sample, so ownership only gates the others.
+    if (found && found.role === null && !user.superAdmin) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+    // Changing anything on a published sample (its fields or its publicly
+    // served attachments) is publishing again, so it needs the same right.
+    // Method-scoped: reading it stays open to its owner whatever their status.
+    if (
+      c.req.method !== "GET" &&
+      found?.sample.published &&
+      !canPublishSamples(user)
+    ) {
       return c.json({ error: "Forbidden" }, 403);
     }
     c.set("sample", found?.sample);
-    c.set("role", found?.role ?? null);
+    // A super admin acts on every sample with the owner's rights, whatever
+    // role the share table holds for them.
+    c.set("role", found && user.superAdmin ? "owner" : (found?.role ?? null));
     await next();
   };
 }

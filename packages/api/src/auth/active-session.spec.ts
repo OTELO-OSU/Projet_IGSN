@@ -40,24 +40,38 @@ describe("requireActiveSession", () => {
     });
   });
 
-  it("should return 401 when Keycloak reports the session revoked", async () => {
+  it("should return 401 without a trace when Keycloak reports the session revoked", async () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
+    const logged = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
 
     const res = await testClient(app()).critical.$post(undefined, {
       headers: { Authorization: "Bearer tok" },
     });
 
     expect(res.status).toBe(401);
+    expect(logged).not.toHaveBeenCalled();
+    logged.mockRestore();
   });
 
-  it("should return 401 when the userinfo endpoint is unreachable", async () => {
-    fetchMock.mockRejectedValue(new Error("network down"));
+  it("should return 401 and trace why when the userinfo endpoint is unreachable", async () => {
+    const error = new Error("network down");
+    fetchMock.mockRejectedValue(error);
+    const logged = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
 
     const res = await testClient(app()).critical.$post(undefined, {
       headers: { Authorization: "Bearer tok" },
     });
 
     expect(res.status).toBe(401);
+    expect(logged).toHaveBeenCalledWith("userinfo request failed", {
+      userinfoUri: USERINFO_URI,
+      error,
+    });
+    logged.mockRestore();
   });
 
   it("should return 401 without calling Keycloak when no token is presented", async () => {

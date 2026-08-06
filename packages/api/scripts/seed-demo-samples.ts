@@ -12,6 +12,8 @@ import type { SeedSample } from "./seed.ts";
 // only (i18n testing rule). Kept separate from SEED_SAMPLES, which the E2E
 // suite asserts on. Owners spread over the researchers, luc excepted: he owns
 // nothing on any dataset, so signing in as him always shows the empty registry.
+// A few drafts belong to the pending researcher (theo); nadia (super admin) and
+// chloe (rejected) own nothing.
 type DemoRow = Omit<SeedSample, "id" | "igsn" | "published">;
 
 type Position = NonNullable<Location["position"]>;
@@ -1518,15 +1520,17 @@ const DRAFTS: DemoRow[] = [
     nature: "multiple_sample",
     location: { region: { kind: "continent", country: "FR" } },
   },
+  // Drafts of the pending researcher: an unverified account can declare but not
+  // publish, so the demo shows that state too.
   {
     name: "Cave locality note",
-    owner: "jean",
+    owner: "theo",
     nature: "hand_sample",
     location: { localityName: "Vercors karst network" },
   },
   {
     name: "Point-only draft",
-    owner: "sophie",
+    owner: "theo",
     nature: "rock_powder",
     location: { position: point(3.0, 45.0) },
   },
@@ -1538,7 +1542,7 @@ const DRAFTS: DemoRow[] = [
   },
   {
     name: "Unclassified mineral",
-    owner: "camille",
+    owner: "theo",
     nature: "hand_sample",
     material: "mineral",
   },

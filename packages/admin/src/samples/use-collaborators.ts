@@ -1,25 +1,25 @@
-import { listUsersResponseSchema } from "@projet-igsn/domain/user/user-validator";
+import { sampleCollaboratorsResponseSchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useContributors(sampleId: string) {
+export function useCollaborators(sampleId: string) {
   const apiFetch = useApiClient();
   return useQuery({
-    queryKey: ["samples", sampleId, "contributors"],
+    queryKey: ["samples", sampleId, "collaborators"],
     queryFn: async () => {
       const res = await apiFetch(
-        new URL(`admin/samples/${sampleId}/contributors`, API_URL),
+        new URL(`admin/samples/${sampleId}/collaborators`, API_URL),
       );
       if (!res.ok) {
         throw HttpError.fromResponse(
           res,
-          `Failed to load contributors (${res.status})`,
+          `Failed to load collaborators (${res.status})`,
         );
       }
-      return listUsersResponseSchema.parse(await res.json()).data;
+      return sampleCollaboratorsResponseSchema.parse(await res.json()).data;
     },
   });
 }

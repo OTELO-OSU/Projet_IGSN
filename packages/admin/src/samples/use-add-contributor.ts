@@ -11,7 +11,7 @@ export function useAddContributor(sampleId: string) {
   return useMutation({
     mutationFn: async (userId: string) => {
       const res = await apiFetch(
-        new URL(`admin/samples/${sampleId}/contributors`, API_URL),
+        new URL(`admin/samples/${sampleId}/collaborators`, API_URL),
         {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -25,7 +25,7 @@ export function useAddContributor(sampleId: string) {
     onSuccess: () => {
       toast.success(m.share_contributor_added());
       return queryClient.invalidateQueries({
-        queryKey: ["samples", sampleId, "contributors"],
+        queryKey: ["samples", sampleId, "collaborators"],
       });
     },
     onError: () => toast.error(m.share_contributor_error()),

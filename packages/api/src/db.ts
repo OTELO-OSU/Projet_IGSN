@@ -176,6 +176,8 @@ type UserTable = {
   firstname: string | null;
   // Self-declared ORCID iD, unique: the lookup key for ORCID logins (ADR 0020).
   orcid: string | null;
+  status: Generated<string>;
+  super_admin: Generated<boolean>;
   created_at: Generated<Date>;
 };
 

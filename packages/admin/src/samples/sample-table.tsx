@@ -1,25 +1,17 @@
 import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@projet-igsn/design-system/components/ui/table";
 import { formatDate } from "@projet-igsn/design-system/lib/format-date";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
   type OnChangeFn,
   type SortingState,
-  flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 
+import { DataTable } from "#/data-table.tsx";
 import { m } from "#/paraglide/messages.js";
 import { fullName } from "#/samples/full-name.ts";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
@@ -140,52 +132,15 @@ export function SampleTable({
   });
 
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <TableHead key={header.id}>
-                {flexRender(
-                  header.column.columnDef.header,
-                  header.getContext(),
-                )}
-              </TableHead>
-            ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.length === 0 ? (
-          <TableRow>
-            <TableCell
-              colSpan={columns.length}
-              className="text-muted-foreground italic"
-            >
-              {m.samples_empty()}
-            </TableCell>
-          </TableRow>
-        ) : (
-          table.getRowModel().rows.map((row) => (
-            <TableRow
-              key={row.id}
-              className="cursor-pointer"
-              onClick={() =>
-                navigate({
-                  to: "/samples/$sampleId",
-                  params: { sampleId: row.original.id },
-                })
-              }
-            >
-              {row.getVisibleCells().map((cell) => (
-                <TableCell key={cell.id}>
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </TableCell>
-              ))}
-            </TableRow>
-          ))
-        )}
-      </TableBody>
-    </Table>
+    <DataTable
+      table={table}
+      emptyLabel={m.samples_empty()}
+      onRowClick={(sample) =>
+        void navigate({
+          to: "/samples/$sampleId",
+          params: { sampleId: sample.id },
+        })
+      }
+    />
   );
 }

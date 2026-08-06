@@ -191,6 +191,7 @@ services:
       # directly (an issuer-derived URL is unreachable from this container).
       OIDC_ISSUER: ${OIDC_ISSUER:-http://localhost:8080/realms/igsn}
       OIDC_JWKS_URI: ${OIDC_JWKS_URI:-http://keycloak:8080/realms/igsn/protocol/openid-connect/certs}
+      # Same reason for the live session check on rights-changing routes.
       OIDC_USERINFO_URI: ${OIDC_USERINFO_URI:-http://keycloak:8080/realms/igsn/protocol/openid-connect/userinfo}
       # The only client whose tokens the api accepts (azp), same var as admin.
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}

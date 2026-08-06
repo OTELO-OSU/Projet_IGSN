@@ -1,6 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { HttpResponse, http } from "msw";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { fetchMe } from "./api.ts";
+import { worker } from "../test/msw.ts";
+import { fetchCurrentUser } from "./api.ts";
 
 const { signinSilent, signinRedirect } = vi.hoisted(() => ({
   signinSilent: vi.fn(),
@@ -11,84 +13,92 @@ vi.mock("./auth/oidc-config.ts", () => ({
   userManager: { signinSilent, signinRedirect },
 }));
 
-const fetchMock = vi.fn();
-
 beforeEach(() => {
-  vi.stubGlobal("fetch", fetchMock);
-});
-
-afterEach(() => {
-  vi.unstubAllGlobals();
   vi.clearAllMocks();
 });
 
-const ok = (body: unknown) =>
-  new Response(JSON.stringify(body), { status: 200 });
-
-// The shared client attaches the token via a Headers object, so read it back
-// that way rather than asserting on a plain-object init.
-const authHeaderOf = (call: unknown[]) =>
-  new Headers((call[1] as RequestInit | undefined)?.headers).get(
-    "Authorization",
+function captureCurrentUser(
+  ...responses: ((request: Request) => Response | Promise<Response>)[]
+) {
+  const seen: { url: string; authorization: string | null }[] = [];
+  worker.use(
+    http.get("*/admin/currentUser", ({ request }) => {
+      seen.push({
+        url: request.url,
+        authorization: request.headers.get("Authorization"),
+      });
+      const respond = responses.length > 1 ? responses.shift()! : responses[0]!;
+      return respond(request);
+    }),
   );
+  return seen;
+}
 
-describe("fetchMe", () => {
+const identity = {
+  sub: "s",
+  name: "Marie Dupont",
+  orcid: null,
+  status: "accepted",
+  superAdmin: false,
+};
+
+const ok = (body: Parameters<typeof HttpResponse.json>[0]) =>
+  HttpResponse.json(body);
+const unauthorized = () => new HttpResponse(null, { status: 401 });
+
+describe("fetchCurrentUser", () => {
   it("should return the verified identity", async () => {
-    fetchMock.mockResolvedValue(
-      ok({ sub: "s", name: "Marie Dupont", orcid: null }),
-    );
+    const seen = captureCurrentUser(() => ok(identity));
 
-    await expect(fetchMe("tok")).resolves.toEqual({
-      sub: "s",
-      name: "Marie Dupont",
-      orcid: null,
-    });
-    const call = fetchMock.mock.calls.at(-1)!;
-    expect(call[0]).toBe("http://localhost:3002/admin/me");
-    expect(authHeaderOf(call)).toBe("Bearer tok");
+    await expect(fetchCurrentUser("tok")).resolves.toEqual(identity);
+    expect(seen).toEqual([
+      {
+        url: "http://localhost:3002/admin/currentUser",
+        authorization: "Bearer tok",
+      },
+    ]);
   });
 
   it("should renew the session once and retry when the api answers 401", async () => {
-    fetchMock
-      .mockResolvedValueOnce(new Response(null, { status: 401 }))
-      .mockResolvedValueOnce(
-        ok({ sub: "s", name: "Marie Dupont", orcid: null }),
-      );
+    const seen = captureCurrentUser(unauthorized, () => ok(identity));
     signinSilent.mockResolvedValue({ access_token: "fresh" });
 
-    await expect(fetchMe("stale")).resolves.toEqual({
-      sub: "s",
-      name: "Marie Dupont",
-      orcid: null,
-    });
+    await expect(fetchCurrentUser("stale")).resolves.toEqual(identity);
 
     expect(signinSilent).toHaveBeenCalledTimes(1);
-    const call = fetchMock.mock.calls.at(-1)!;
-    expect(call[0]).toBe("http://localhost:3002/admin/me");
-    expect(authHeaderOf(call)).toBe("Bearer fresh");
+    expect(seen).toEqual([
+      {
+        url: "http://localhost:3002/admin/currentUser",
+        authorization: "Bearer stale",
+      },
+      {
+        url: "http://localhost:3002/admin/currentUser",
+        authorization: "Bearer fresh",
+      },
+    ]);
   });
 
   it("should sign in interactively when the renewed token is still rejected", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
+    captureCurrentUser(unauthorized);
     signinSilent.mockResolvedValue({ access_token: "fresh" });
 
-    await expect(fetchMe("stale")).rejects.toThrow(/session expired/i);
+    await expect(fetchCurrentUser("stale")).rejects.toThrow(/session expired/i);
     expect(signinSilent).toHaveBeenCalledTimes(1);
     expect(signinRedirect).toHaveBeenCalledTimes(1);
   });
 
   it("should fall back to an interactive sign-in when the renewal fails", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
+    captureCurrentUser(unauthorized);
     signinSilent.mockRejectedValue(new Error("expired"));
 
-    await expect(fetchMe("stale")).rejects.toThrow(/session expired/i);
+    await expect(fetchCurrentUser("stale")).rejects.toThrow(/session expired/i);
     expect(signinRedirect).toHaveBeenCalledTimes(1);
   });
 
   it("should throw on a non-401 error without renewing", async () => {
-    fetchMock.mockResolvedValue(new Response(null, { status: 500 }));
+    captureCurrentUser(() => new HttpResponse(null, { status: 500 }));
 
-    await expect(fetchMe("tok")).rejects.toThrow("API responded 500");
+    await expect(fetchCurrentUser("tok")).rejects.toThrow("API responded 500");
     expect(signinSilent).not.toHaveBeenCalled();
   });
 });

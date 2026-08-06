@@ -16,7 +16,7 @@ the registry itself.
 The link is a nullable, unique `orcid` column on the `user` table.
 
 - A signed-in researcher declares their ORCID iD on the admin Settings page
-  (`PUT /admin/me/orcid`). Free text, validated by format only (`orcidSchema`);
+  (`PUT /admin/currentUser/orcid`). Free text, validated by format only (`orcidSchema`);
   ownership of the iD is NOT verified. Clearing it (null) removes the link.
 - Setting it is rights-granting (it creates a sign-in path), so the endpoint
   revalidates the session live (`requireActiveSession`, GaiaData REQ-CRIT-01).
