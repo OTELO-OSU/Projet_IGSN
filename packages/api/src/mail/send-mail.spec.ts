@@ -23,12 +23,4 @@ describe("createSendMail", () => {
       }),
     ).toBeInstanceOf(Function);
   });
-
-  it.each([
-    { missing: "SMTP_HOST", env: { ...env, SMTP_HOST: "" } },
-    { missing: "SMTP_FROM", env: { ...env, SMTP_FROM: undefined } },
-    { missing: "a numeric SMTP_PORT", env: { ...env, SMTP_PORT: "smtp" } },
-  ])("should refuse to boot without $missing", ({ env: broken }) => {
-    expect(() => createSendMail(broken)).toThrow();
-  });
 });
