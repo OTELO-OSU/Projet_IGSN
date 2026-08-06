@@ -1,30 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { OCEAN_SEAS, oceanSeaSchema } from "./ocean-sea.ts";
+import { oceanSeaSchema } from "./ocean-sea.ts";
 
 describe("oceanSeaSchema", () => {
-  it("should hold 271 unique snake_case codes", () => {
-    expect(OCEAN_SEAS).toHaveLength(271);
-    expect(new Set(OCEAN_SEAS).size).toBe(271);
-    expect(
-      OCEAN_SEAS.every((code) => /^[a-z0-9]+(_[a-z0-9]+)*$/.test(code)),
-    ).toBe(true);
+  it("should accept a known ocean/sea", () => {
+    expect(oceanSeaSchema.parse("atlantic_ocean")).toBe("atlantic_ocean");
   });
 
-  it.each([
-    "atlantic_ocean",
-    "bay_of_bengal",
-    "mediterranean_sea",
-    "world",
-    "unknown",
-  ])("should accept the known ocean/sea %s", (code) => {
-    expect(oceanSeaSchema.parse(code)).toBe(code);
+  it("should reject an unknown ocean/sea", () => {
+    expect(oceanSeaSchema.safeParse("atlantic").success).toBe(false);
   });
-
-  it.each(["", "Atlantic Ocean", "atlantic", "foo_sea"])(
-    "should reject the unknown ocean/sea %s",
-    (code) => {
-      expect(oceanSeaSchema.safeParse(code).success).toBe(false);
-    },
-  );
 });

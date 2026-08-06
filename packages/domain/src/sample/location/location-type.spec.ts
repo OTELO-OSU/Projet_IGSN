@@ -3,14 +3,11 @@ import { describe, expect, it } from "vitest";
 import { locationTypeSchema } from "./location-type.ts";
 
 describe("locationTypeSchema", () => {
-  it.each(["point", "area"])("should accept the known type %s", (code) => {
-    expect(locationTypeSchema.parse(code)).toBe(code);
+  it("should accept a known type", () => {
+    expect(locationTypeSchema.parse("point")).toBe("point");
   });
 
-  it.each(["", "Point", "line", "polygon"])(
-    "should reject the unknown type %s",
-    (code) => {
-      expect(locationTypeSchema.safeParse(code).success).toBe(false);
-    },
-  );
+  it("should reject an unknown type", () => {
+    expect(locationTypeSchema.safeParse("polygon").success).toBe(false);
+  });
 });

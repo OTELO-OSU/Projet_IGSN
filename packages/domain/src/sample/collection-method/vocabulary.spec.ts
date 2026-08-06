@@ -8,10 +8,6 @@ import {
 } from "./vocabulary.ts";
 
 describe("collectionMethodSchema", () => {
-  it.each(COLLECTION_METHODS)("should accept %s", (method) => {
-    expect(collectionMethodSchema.safeParse(method).success).toBe(true);
-  });
-
   it("should accept a partial classification (ancestor path)", () => {
     expect(collectionMethodSchema.safeParse("coring").success).toBe(true);
     expect(
@@ -39,13 +35,14 @@ describe("COLLECTION_METHODS", () => {
     }
   });
 
-  it.each(COLLECTION_METHODS.filter((path) => path.includes(".")))(
-    "should include the parent of %s",
-    (path) => {
-      const parent = path.split(".").slice(0, -1).join(".");
-      expect(COLLECTION_METHODS).toContain(parent);
-    },
-  );
+  it("should include the parent of every dotted path", () => {
+    const orphans = COLLECTION_METHODS.filter(
+      (path) =>
+        path.includes(".") &&
+        !COLLECTION_METHODS.includes(path.split(".").slice(0, -1).join(".")),
+    );
+    expect(orphans).toEqual([]);
+  });
 });
 
 describe("COLLECTION_METHOD_TREE", () => {

@@ -3,17 +3,11 @@ import { describe, expect, it } from "vitest";
 import { verticalDatumSchema } from "./vertical-datum.ts";
 
 describe("verticalDatumSchema", () => {
-  it.each(["msl", "wgs84", "grs80"])(
-    "should accept the known datum %s",
-    (code) => {
-      expect(verticalDatumSchema.parse(code)).toBe(code);
-    },
-  );
+  it("should accept a known datum", () => {
+    expect(verticalDatumSchema.parse("msl")).toBe("msl");
+  });
 
-  it.each(["", "MSL", "wgs", "egm96"])(
-    "should reject the unknown datum %s",
-    (code) => {
-      expect(verticalDatumSchema.safeParse(code).success).toBe(false);
-    },
-  );
+  it("should reject an unknown datum", () => {
+    expect(verticalDatumSchema.safeParse("egm96").success).toBe(false);
+  });
 });

@@ -84,13 +84,14 @@ describe("materialPathSchema", () => {
     }
   });
 
-  it.each(MATERIAL_PATHS.filter((path) => path.includes(".")))(
-    "should include the parent of %s",
-    (path) => {
-      const parent = path.split(".").slice(0, -1).join(".");
-      expect(MATERIAL_PATHS).toContain(parent);
-    },
-  );
+  it("should include the parent of every dotted path", () => {
+    const orphans = MATERIAL_PATHS.filter(
+      (path) =>
+        path.includes(".") &&
+        !MATERIAL_PATHS.includes(path.split(".").slice(0, -1).join(".")),
+    );
+    expect(orphans).toEqual([]);
+  });
 });
 
 describe("MATERIAL_TREE", () => {

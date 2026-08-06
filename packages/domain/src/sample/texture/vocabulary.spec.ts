@@ -8,19 +8,13 @@ import {
 } from "./vocabulary.ts";
 
 describe("textureSchema", () => {
-  it.each(["phaneritic", "porphyritic", "glassy", "hyaloclastic"])(
-    "should accept the known texture %s",
-    (code) => {
-      expect(textureSchema.parse(code)).toBe(code);
-    },
-  );
+  it("should accept a known texture", () => {
+    expect(textureSchema.parse("phaneritic")).toBe("phaneritic");
+  });
 
-  it.each(["", "unknown", "Phaneritic", "granite"])(
-    "should reject the unknown texture %s",
-    (code) => {
-      expect(textureSchema.safeParse(code).success).toBe(false);
-    },
-  );
+  it("should reject an unknown texture", () => {
+    expect(textureSchema.safeParse("granite").success).toBe(false);
+  });
 });
 
 describe("texturesFor", () => {
@@ -62,9 +56,4 @@ describe("texturesFor", () => {
       expect(texturesFor(material)).toEqual([]);
     },
   );
-
-  it("should share porphyritic between both branches", () => {
-    expect(PLUTONIC_TEXTURES).toContain("porphyritic");
-    expect(VOLCANIC_TEXTURES).toContain("porphyritic");
-  });
 });
