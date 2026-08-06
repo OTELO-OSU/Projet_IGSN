@@ -34,6 +34,7 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   collection_origin_missing: m.publish_blocked_collection_origin_missing,
   attachment_limit_exceeded: () =>
     m.publish_blocked_attachment_limit_exceeded({ limit: UPLOAD_LIMIT }),
+  user_not_verified: m.publish_blocked_user_not_verified,
 };
 
 export function publishBlockerLabel(blocker: PublishBlocker): string {

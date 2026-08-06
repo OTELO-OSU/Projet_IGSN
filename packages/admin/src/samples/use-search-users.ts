@@ -1,4 +1,4 @@
-import { listUsersResponseSchema } from "@projet-igsn/domain/user/user-validator";
+import { userIdentitiesResponseSchema } from "@projet-igsn/domain/user/user-validator";
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -13,7 +13,7 @@ export function useSearchUsers(search: string) {
   return useQuery({
     queryKey: ["users", term],
     queryFn: async () => {
-      const url = new URL("admin/users", API_URL);
+      const url = new URL("admin/users/search", API_URL);
       if (term !== "") {
         url.searchParams.set("search", term);
       }
@@ -24,7 +24,7 @@ export function useSearchUsers(search: string) {
           `Failed to search researchers (${res.status})`,
         );
       }
-      return listUsersResponseSchema.parse(await res.json()).data;
+      return userIdentitiesResponseSchema.parse(await res.json()).data;
     },
   });
 }

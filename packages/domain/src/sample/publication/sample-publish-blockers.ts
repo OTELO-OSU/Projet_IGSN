@@ -1,7 +1,9 @@
 import { z } from "zod";
 
+import type { User } from "../../user/model.ts";
 import type { Sample } from "../sample.ts";
 
+import { canPublishSamples } from "../../user/can-publish-samples.ts";
 import { DEFAULT_UPLOAD_LIMIT } from "../attachment/attachment-validator.ts";
 import { locationRequirement } from "../location/location-requirement.ts";
 import { MATERIAL_PATHS } from "../material/classification.ts";
@@ -35,6 +37,7 @@ export const publishBlockerSchema = z.enum([
   "collection_curator_missing",
   "collection_origin_missing",
   "attachment_limit_exceeded",
+  "user_not_verified",
 ]);
 
 export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
@@ -80,6 +83,9 @@ export function samplePublishBlockers(
     attachments?: { readonly length: number };
   },
   uploadLimit: number = DEFAULT_UPLOAD_LIMIT,
+  // Omitted means "unknown", never blocking, like attachments above: a caller
+  // with no publisher at hand gets the field blockers only.
+  publisher?: Pick<User, "status" | "superAdmin">,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
 
@@ -193,6 +199,12 @@ export function samplePublishBlockers(
   // published until files are removed: no grandfathering for legacy samples.
   if (sample.attachments != null && sample.attachments.length > uploadLimit) {
     blockers.push("attachment_limit_exceeded");
+  }
+
+  // Publishing is public: only a moderated-in account may do it, whatever the
+  // sample looks like.
+  if (publisher && !canPublishSamples(publisher)) {
+    blockers.push("user_not_verified");
   }
 
   return blockers;

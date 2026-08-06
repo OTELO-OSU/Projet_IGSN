@@ -57,6 +57,40 @@ describe("listSamplesAssignedTo", () => {
     expect(result).toEqual({ data: [], total: 0 });
   });
 
+  // A null owner is the unscoped list, which only a super admin gets (see the
+  // domain repository interface).
+  pgTest("should list every sample when unscoped", async ({ db }) => {
+    // Arrange
+    const marie = await insertUser(db, "marie@univ-lorraine.fr");
+    const other = await insertUser(db, "other@univ-lorraine.fr");
+    const owned = await insertSample(db, {
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+    });
+    await insertSampleOwner(db, owned.id, marie.id);
+    const foreign = await insertSample(db, {
+      name: "Basalte du Massif Central",
+      nature: "thin_section",
+      type: null,
+      collectionMethod: null,
+    });
+    await insertSampleOwner(db, foreign.id, other.id);
+    // Act
+    const { data, total } = await listSamplesAssignedTo(
+      db,
+      { page: 1, perPage: 10 },
+      null,
+    );
+    // Assert
+    expect(data.map((sample) => sample.name).sort()).toEqual([
+      "Basalte du Massif Central",
+      "Grès de Fontainebleau",
+    ]);
+    expect(total).toBe(2);
+  });
+
   pgTest("should list nothing for a sample with no owner", async ({ db }) => {
     // Arrange
     const user = await insertUser(db, "user@univ-lorraine.fr");

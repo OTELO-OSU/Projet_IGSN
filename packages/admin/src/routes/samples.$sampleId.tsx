@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
+import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { SampleForm } from "#/samples/sample-form.tsx";
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/samples/$sampleId")({
 
 function EditSamplePage() {
   const { sampleId } = Route.useParams();
+  const me = useCurrentUser();
   const navigate = useNavigate();
   const query = useSample(sampleId);
   const updateSample = useUpdateSample(sampleId);
@@ -26,7 +28,7 @@ function EditSamplePage() {
     query.data?.attachments.length ?? 0,
   );
 
-  if (query.isPending) {
+  if (query.isPending || me.isPending) {
     return <p>{m.samples_loading()}</p>;
   }
   if (query.isError) {
@@ -63,6 +65,7 @@ function EditSamplePage() {
       </div>
 
       <SampleForm
+        publisher={me.data}
         defaultValues={{
           name: query.data.name,
           nature: query.data.nature,

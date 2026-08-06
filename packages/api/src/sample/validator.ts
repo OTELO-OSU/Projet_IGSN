@@ -6,9 +6,8 @@ import { addContributorBodySchema } from "@projet-igsn/domain/user-sample/user-s
 import { validator } from "hono/validator";
 import { z } from "zod";
 
+import { idParamSchema, validateUuidIdParam } from "../uuid-param.ts";
 import { uploadLimit } from "./upload-limit.ts";
-
-const idParamSchema = z.object({ id: z.uuid() });
 
 const igsnParamSchema = z.object({ igsn: igsnSchema });
 
@@ -20,15 +19,7 @@ const igsnAttachmentParamsSchema = igsnParamSchema.extend({
   attachmentId: z.uuid(),
 });
 
-// A malformed uuid can match no sample, and unvalidated it would make the
-// uuid-typed query throw, so reject it up front rather than 500 later.
-export const validateIdParam = validator("param", (value, c) => {
-  const parsed = idParamSchema.safeParse(value);
-  if (!parsed.success) {
-    return c.json({ error: "Invalid sample id" }, 400);
-  }
-  return parsed.data;
-});
+export const validateIdParam = validateUuidIdParam("Invalid sample id");
 
 // A malformed IGSN can match no sample; reject it up front rather than 500 on
 // the query. Only published samples carry an IGSN, so this is the public lookup.

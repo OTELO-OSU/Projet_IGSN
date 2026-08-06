@@ -106,4 +106,23 @@ describe("isSamplePublishable", () => {
       }),
     ).toBe(true);
   });
+
+  it("should reject a publishable sample whose publisher is not verified", () => {
+    const publishable = {
+      ...draft,
+      material: "rock.igneous.plutonic.felsic.granite" as MaterialPath,
+    };
+    expect(
+      isSamplePublishable(publishable, undefined, {
+        status: "pending",
+        superAdmin: false,
+      }),
+    ).toBe(false);
+    expect(
+      isSamplePublishable(publishable, undefined, {
+        status: "accepted",
+        superAdmin: false,
+      }),
+    ).toBe(true);
+  });
 });

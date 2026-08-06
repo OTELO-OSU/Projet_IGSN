@@ -24,9 +24,11 @@ export type AdminListSamplesResult = {
 // `userId` is a separate argument, never part of ListSamplesParams (the
 // validated query): the caller's id comes from the token, never from the client.
 export type SampleRepository = {
+  // A null userId is the unscoped list (every sample, whoever owns it), which
+  // only a super admin is given.
   list(
     params: ListSamplesParams,
-    userId: string,
+    userId: string | null,
   ): Promise<AdminListSamplesResult>;
   listPublished(params: ListSamplesParams): Promise<ListSamplesResult>;
   // Reading a sample is relative to who reads it: no row at all (the api answers

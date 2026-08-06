@@ -122,12 +122,12 @@ async function listSamplesWhere(
 export async function listSamplesAssignedTo(
   db: Transactional<DB>,
   params: ListSamplesParams,
-  userId: string,
+  userId: string | null,
 ): Promise<AdminListSamplesResult> {
   const { data, owners, total } = await listSamplesWhere(
     db,
     params,
-    [assignedTo(userId)],
+    userId === null ? [] : [assignedTo(userId)],
     true,
   );
   return {

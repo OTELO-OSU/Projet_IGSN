@@ -24,7 +24,7 @@ vi.mock("react-oidc-context", () => ({
   }),
 }));
 
-// In-memory API: GET /admin/me serves the stored orcid, PUT updates it (or
+// In-memory API: GET /admin/currentUser serves the stored orcid, PUT updates it (or
 // answers 409). Lets the page run its real load-edit-save cycle backendless.
 function fakeApi({
   orcid = null,
@@ -33,19 +33,21 @@ function fakeApi({
   const puts: unknown[] = [];
   let stored = orcid;
   worker.use(
-    http.put("*/admin/me/orcid", async ({ request }) => {
+    http.put("*/admin/currentUser/orcid", async ({ request }) => {
       if (conflict) return new HttpResponse(null, { status: 409 });
       const body = (await request.json()) as { orcid: string | null };
       puts.push(body);
       stored = body.orcid;
       return new HttpResponse(null, { status: 204 });
     }),
-    http.get("*/admin/me", () =>
+    http.get("*/admin/currentUser", () =>
       HttpResponse.json({
         sub: "s",
         name: "Marie Dupont",
         email: "marie.dupont@univ-lorraine.fr",
         orcid: stored,
+        status: "accepted",
+        superAdmin: false,
       }),
     ),
   );

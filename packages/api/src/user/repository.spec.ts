@@ -15,7 +15,13 @@ describe("createUserRepository", () => {
     // Act
     const user = await createUserRepository(db).upsert(claims);
     // Assert
-    expect(user).toEqual({ id: expect.any(String), ...claims, orcid: null });
+    expect(user).toEqual({
+      id: expect.any(String),
+      ...claims,
+      orcid: null,
+      status: "pending",
+      superAdmin: false,
+    });
   });
 
   pgTest("should store absent name parts as null", async ({ db }) => {
@@ -32,6 +38,8 @@ describe("createUserRepository", () => {
       name: null,
       firstname: null,
       orcid: null,
+      status: "pending",
+      superAdmin: false,
     });
   });
 
@@ -60,7 +68,12 @@ describe("createUserRepository", () => {
     // Act
     const user = await createUserRepository(db).upsert(claims);
     // Assert
-    expect(user).toEqual({ ...seeded, orcid: null });
+    expect(user).toEqual({
+      ...seeded,
+      orcid: null,
+      status: "pending",
+      superAdmin: false,
+    });
   });
 
   pgTest("should keep the stored orcid on the next sight", async ({ db }) => {
@@ -100,11 +113,9 @@ describe("createUserRepository", () => {
     async ({ db }) => {
       // Arrange
       const repository = createUserRepository(db);
-      const holder = await insertUser(
-        db,
-        "holder@univ-lorraine.fr",
-        "0000-0002-1825-0097",
-      );
+      const holder = await insertUser(db, "holder@univ-lorraine.fr", {
+        orcid: "0000-0002-1825-0097",
+      });
       const user = await repository.upsert(claims);
       // Act
       const refused = await repository.setOrcid(user.id, "0000-0002-1825-0097");
@@ -127,6 +138,29 @@ describe("createUserRepository", () => {
       orcid: "0000-0002-1825-0097",
     });
     expect(await repository.findByOrcid("0000-0001-5109-3700")).toBeUndefined();
+  });
+
+  pgTest("should leave a moderated row's status untouched", async ({ db }) => {
+    // Arrange
+    await db
+      .insertInto("user")
+      .values({
+        id: "01890a5d-ac96-774b-bcce-b302099a8058",
+        ...claims,
+        status: "accepted",
+        super_admin: true,
+      })
+      .execute();
+    // Act
+    const user = await createUserRepository(db).upsert(claims);
+    // Assert
+    expect(user).toEqual({
+      id: "01890a5d-ac96-774b-bcce-b302099a8058",
+      ...claims,
+      orcid: null,
+      status: "accepted",
+      superAdmin: true,
+    });
   });
 
   describe("search", () => {
@@ -162,6 +196,24 @@ describe("createUserRepository", () => {
           firstname: "Marie",
           orcid: null,
         },
+      ]);
+    });
+
+    pgTest("should never list a super admin", async ({ db }) => {
+      const repository = await insertResearchers(db);
+      await insertUser(db, "admin.curie@univ-lorraine.fr", {
+        superAdmin: true,
+      });
+
+      const searched = await repository.search("curie", CALLER_ID);
+      const browsed = await repository.search(undefined, CALLER_ID);
+
+      expect(searched.map((user) => user.email)).toEqual([
+        "marie.curie@univ-lorraine.fr",
+      ]);
+      expect(browsed.map((user) => user.email)).toEqual([
+        "marie.curie@univ-lorraine.fr",
+        "pierre.dupont@univ-lorraine.fr",
       ]);
     });
 
@@ -298,5 +350,175 @@ describe("createUserRepository", () => {
         );
       });
     });
+  });
+
+  const insertUsers = (db: Parameters<typeof createUserRepository>[0]) =>
+    db
+      .insertInto("user")
+      .values([
+        {
+          id: "01890a5d-ac96-774b-bcce-b302099a8061",
+          email: "pending@univ-lorraine.fr",
+          name: "Pending",
+          firstname: "Paul",
+        },
+        {
+          id: "01890a5d-ac96-774b-bcce-b302099a8062",
+          email: "accepted@univ-lorraine.fr",
+          name: "Accepted",
+          firstname: "Anne",
+          status: "accepted",
+        },
+        {
+          id: "01890a5d-ac96-774b-bcce-b302099a8063",
+          email: "rejected@univ-lorraine.fr",
+          name: "Rejected",
+          firstname: "Remi",
+          status: "rejected",
+        },
+      ])
+      .execute();
+
+  pgTest("should list every user with a total", async ({ db }) => {
+    // Arrange
+    await insertUsers(db);
+    // Act
+    const { data, total } = await createUserRepository(db).list({
+      page: 1,
+      perPage: 25,
+      status: undefined,
+    });
+    // Assert
+    expect(total).toBe(3);
+    expect(data.map((user) => user.email)).toEqual([
+      "accepted@univ-lorraine.fr",
+      "pending@univ-lorraine.fr",
+      "rejected@univ-lorraine.fr",
+    ]);
+    expect(data[0]).toEqual({
+      id: "01890a5d-ac96-774b-bcce-b302099a8062",
+      email: "accepted@univ-lorraine.fr",
+      name: "Accepted",
+      firstname: "Anne",
+      orcid: null,
+      status: "accepted",
+      superAdmin: false,
+    });
+  });
+
+  pgTest("should filter on a status, total included", async ({ db }) => {
+    // Arrange
+    await insertUsers(db);
+    // Act
+    const { data, total } = await createUserRepository(db).list({
+      page: 1,
+      perPage: 25,
+      status: "pending",
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((user) => user.email)).toEqual([
+      "pending@univ-lorraine.fr",
+    ]);
+  });
+
+  pgTest("should paginate", async ({ db }) => {
+    // Arrange
+    await insertUsers(db);
+    // Act
+    const { data, total } = await createUserRepository(db).list({
+      page: 2,
+      perPage: 2,
+      status: undefined,
+    });
+    // Assert
+    expect(total).toBe(3);
+    expect(data.map((user) => user.email)).toEqual([
+      "rejected@univ-lorraine.fr",
+    ]);
+  });
+
+  pgTest("should read one user, or null when unknown", async ({ db }) => {
+    // Arrange
+    await insertUsers(db);
+    const repository = createUserRepository(db);
+    // Act
+    const found = await repository.get("01890a5d-ac96-774b-bcce-b302099a8061");
+    const missing = await repository.get(
+      "01890a5d-ac96-774b-bcce-b302099a8099",
+    );
+    // Assert
+    expect(found).toEqual({
+      id: "01890a5d-ac96-774b-bcce-b302099a8061",
+      email: "pending@univ-lorraine.fr",
+      name: "Pending",
+      firstname: "Paul",
+      orcid: null,
+      status: "pending",
+      superAdmin: false,
+    });
+    expect(missing).toBeNull();
+  });
+
+  pgTest("should set a status and return the new row", async ({ db }) => {
+    // Arrange
+    await insertUsers(db);
+    const repository = createUserRepository(db);
+    // Act
+    const accepted = await repository.setStatus(
+      "01890a5d-ac96-774b-bcce-b302099a8061",
+      "accepted",
+    );
+    const rejected = await repository.setStatus(
+      "01890a5d-ac96-774b-bcce-b302099a8062",
+      "rejected",
+    );
+    // Assert
+    expect(accepted).toEqual({
+      id: "01890a5d-ac96-774b-bcce-b302099a8061",
+      email: "pending@univ-lorraine.fr",
+      name: "Pending",
+      firstname: "Paul",
+      orcid: null,
+      status: "accepted",
+      superAdmin: false,
+    });
+    expect(rejected).toEqual({
+      id: "01890a5d-ac96-774b-bcce-b302099a8062",
+      email: "accepted@univ-lorraine.fr",
+      name: "Accepted",
+      firstname: "Anne",
+      orcid: null,
+      status: "rejected",
+      superAdmin: false,
+    });
+    await expect(
+      repository.get("01890a5d-ac96-774b-bcce-b302099a8061"),
+    ).resolves.toEqual(accepted);
+  });
+
+  pgTest("should refuse an unknown status at the database", async ({ db }) => {
+    await expect(
+      db
+        .insertInto("user")
+        .values({
+          id: "01890a5d-ac96-774b-bcce-b302099a8064",
+          email: "broken@univ-lorraine.fr",
+          name: null,
+          firstname: null,
+          status: "banned",
+        })
+        .execute(),
+    ).rejects.toThrow(/user_status_check/);
+  });
+
+  pgTest("should answer null when setting an unknown user", async ({ db }) => {
+    // Act
+    const updated = await createUserRepository(db).setStatus(
+      "01890a5d-ac96-774b-bcce-b302099a8099",
+      "accepted",
+    );
+    // Assert
+    expect(updated).toBeNull();
   });
 });

@@ -1,4 +1,5 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+import type { User } from "@projet-igsn/domain/user/model";
 import type { ReactNode } from "react";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
@@ -95,6 +96,9 @@ type SampleFormProps = {
   // Applied only when the form submits, so cancelling leaves the server
   // untouched.
   attachmentChanges?: SampleAttachmentChanges;
+  // Optional: omitted means unknown, so it never blocks, the same convention
+  // as attachments in samplePublishBlockers.
+  publisher?: Pick<User, "status" | "superAdmin">;
 };
 
 export function SampleForm({
@@ -107,6 +111,7 @@ export function SampleForm({
   sampleId,
   attachments = [],
   attachmentChanges,
+  publisher,
 }: SampleFormProps) {
   const roleOnSample = useUserRoleOnSample(sampleId);
   const validate = validateDraft(
@@ -222,6 +227,7 @@ export function SampleForm({
             },
           } as PublishableFields & { attachments: { length: number } },
           UPLOAD_LIMIT,
+          publisher,
         ).map(publishBlockerLabel);
         const button = renderButton(
           isPending || !canSubmit || reasons.length > 0,

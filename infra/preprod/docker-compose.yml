@@ -66,7 +66,8 @@ services:
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
       # Public issuer, reachable from here as-is, so the api derives the JWKS and
-      # userinfo URLs from it and neither override is needed.
+      # userinfo URLs from it: no OIDC_JWKS_URI / OIDC_USERINFO_URI override is
+      # needed (dev and e2e need them, their issuer is browser-facing only).
       OIDC_ISSUER: "https://sso-test.earth-data.fr/realms/gaia-data"
       # The realm is shared with other service providers, so the api accepts
       # tokens issued to this client only (azp); admin bakes the same value.
@@ -79,8 +80,9 @@ services:
       # survive image redeploys.
       ATTACHMENTS_DIR: /data/attachments
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "${SAMPLE_SEARCH_FUZZY_THRESHOLD:-0.8}"
-      # Same host var drives the admin bundle (deploy.sh passes it as
-      # VITE_UPLOAD_LIMIT), so both sides enforce one limit.
+      # The admin bundle bakes its own copy (VITE_UPLOAD_LIMIT) from the
+      # deploying shell, not from this host env file: export the same value
+      # there so the two agree (see docker-compose.env.example).
       UPLOAD_LIMIT: "${UPLOAD_LIMIT:-5}"
       # Outbound mail via a transactional-mail provider's SMTP endpoint; no code
       # reads these yet, they are the target for future senders. All four come

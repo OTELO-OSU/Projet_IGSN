@@ -7,6 +7,7 @@ import { describe, expect } from "vitest";
 
 import { createApp } from "../app.ts";
 import { pgTest } from "../tests/pg-test.ts";
+import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
 
 // requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization
 // header, so these tests just send (or omit) it.
@@ -42,7 +43,10 @@ async function insertLegacyAttachments(
 // The real dev folder (gitignored), so uploaded blobs stay inspectable.
 const attachmentsDir = join(import.meta.dirname, "..", "..", "attachments");
 
-function createTestApp(db: Parameters<typeof createApp>[0]) {
+// Publishing requires an accepted account (see samplePublishBlockers), so the
+// caller these specs upload and publish with is provisioned as one.
+async function createTestApp(db: Parameters<typeof createApp>[0]) {
+  await provisionUser(db, "test-token", { status: "accepted" });
   return testClient(createApp(db, { attachmentsDir }));
 }
 
@@ -94,7 +98,7 @@ describe("admin attachment routes", () => {
     "should upload an attachment and expose it on the sample",
     async ({ db }) => {
       // Arrange
-      const client = createTestApp(db);
+      const client = await createTestApp(db);
       const sample = await createSample(client);
       // Act
       const res = await uploadAttachment(client, sample.id, "Raw measurements");
@@ -117,7 +121,7 @@ describe("admin attachment routes", () => {
   );
 
   pgTest("should reject an unauthenticated upload", async ({ db }) => {
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments.$post({
       param: { id: sample.id },
@@ -127,7 +131,7 @@ describe("admin attachment routes", () => {
   });
 
   pgTest("should accept any file type", async ({ db }) => {
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments.$post(
       {
@@ -145,7 +149,7 @@ describe("admin attachment routes", () => {
   });
 
   pgTest("should reject a description without a file", async ({ db }) => {
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments.$post(
       // Cast: the typed client rightly forbids this payload; the server must too.
@@ -161,7 +165,7 @@ describe("admin attachment routes", () => {
   pgTest(
     "should default a missing file type to application/octet-stream",
     async ({ db }) => {
-      const client = createTestApp(db);
+      const client = await createTestApp(db);
       const sample = await createSample(client);
       const res = await client.admin.samples[":id"].attachments.$post(
         {
@@ -182,12 +186,12 @@ describe("admin attachment routes", () => {
     "should accept uploads up to the limit and refuse the next one",
     async ({ db }) => {
       // Arrange
-      const client = createTestApp(db);
+      const client = await createTestApp(db);
       const sample = await createSample(client);
       for (let i = 1; i < DEFAULT_UPLOAD_LIMIT; i++) {
         expect((await uploadAttachment(client, sample.id)).status).toBe(201);
       }
-      // Act: the last allowed upload, then one too many.
+      // Act
       const last = await uploadAttachment(client, sample.id);
       const refused = await uploadAttachment(client, sample.id);
       // Assert
@@ -204,7 +208,7 @@ describe("admin attachment routes", () => {
   );
 
   pgTest("should 404 an upload to an unknown sample", async ({ db }) => {
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const res = await uploadAttachment(
       client,
       "00000000-0000-7000-8000-000000000000",
@@ -214,7 +218,7 @@ describe("admin attachment routes", () => {
 
   pgTest("should download the attachment", async ({ db }) => {
     // Arrange
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const sample = await createSample(client);
     const uploaded = await uploadAttachment(client, sample.id);
     const { data } = (await uploaded.json()) as { data: { id: string } };
@@ -236,7 +240,7 @@ describe("admin attachment routes", () => {
 
   pgTest("should delete an attachment and free its slot", async ({ db }) => {
     // Arrange: a full sample, so the freed slot is what lets the next upload in.
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const sample = await createSample(client);
     const first = await uploadAttachment(client, sample.id);
     const { data } = (await first.json()) as { data: { id: string } };
@@ -270,7 +274,7 @@ describe("admin attachment routes", () => {
   });
 
   pgTest("should 404 the deletion of an unknown attachment", async ({ db }) => {
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments[
       ":attachmentId"
@@ -287,7 +291,7 @@ describe("admin attachment routes", () => {
   });
 
   pgTest("should 404 a deletion on an unknown sample", async ({ db }) => {
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const res = await client.admin.samples[":id"].attachments[
       ":attachmentId"
     ].$delete(
@@ -303,7 +307,7 @@ describe("admin attachment routes", () => {
   });
 
   pgTest("should reject an unauthenticated deletion", async ({ db }) => {
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const sample = await createSample(client);
     const uploaded = await uploadAttachment(client, sample.id);
     const { data } = (await uploaded.json()) as { data: { id: string } };
@@ -314,9 +318,9 @@ describe("admin attachment routes", () => {
   });
 
   pgTest("should 400 a malformed attachment id on delete", async ({ db }) => {
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const sample = await createSample(client);
-    const res = await createTestApp(db).admin.samples[":id"].attachments[
+    const res = await client.admin.samples[":id"].attachments[
       ":attachmentId"
       // Cast: the typed client rightly forbids this id; the server must too.
     ].$delete(
@@ -330,12 +334,12 @@ describe("admin attachment routes", () => {
     "should reconcile attachments through the sample update",
     async ({ db }) => {
       // Arrange
-      const client = createTestApp(db);
+      const client = await createTestApp(db);
       const sample = await createSample(client);
       const keptRes = await uploadAttachment(client, sample.id, "Raw");
       const kept = ((await keptRes.json()) as { data: { id: string } }).data;
       await uploadAttachment(client, sample.id, "To drop");
-      // Act: list only one attachment, with a new description.
+      // Act
       const res = await client.admin.samples[":id"].$put(
         {
           param: { id: sample.id },
@@ -346,8 +350,7 @@ describe("admin attachment routes", () => {
         },
         { headers: authHeader },
       );
-      // Assert: the listed one keeps its file with the new description, the
-      // unlisted one is gone.
+      // Assert
       expect(res.status).toBe(200);
       expect(
         sampleResponseSchema.parse(await res.json()).data.attachments,
@@ -359,7 +362,7 @@ describe("admin attachment routes", () => {
     "should remove every attachment when the sample update omits them",
     async ({ db }) => {
       // Arrange: PUT semantics, like links.
-      const client = createTestApp(db);
+      const client = await createTestApp(db);
       const sample = await createSample(client);
       await uploadAttachment(client, sample.id, "Raw");
       // Act
@@ -376,12 +379,107 @@ describe("admin attachment routes", () => {
   );
 });
 
+describe("publishing rights on a published sample's attachments", () => {
+  const publishedSampleWithFile = async (client: Client) => {
+    const sample = await createSample(client);
+    const uploaded = await uploadAttachment(client, sample.id);
+    const { data } = (await uploaded.json()) as { data: { id: string } };
+    await client.admin.samples[":id"].publish.$post(
+      { param: { id: sample.id } },
+      { headers: authHeader },
+    );
+    return { sampleId: sample.id, attachmentId: data.id };
+  };
+
+  const demote = (db: Db) =>
+    db
+      .updateTable("user")
+      .set({ status: "pending" })
+      .where("email", "=", tokenEmail("test-token"))
+      .execute();
+
+  pgTest("should refuse an upload from an unverified owner", async ({ db }) => {
+    // Arrange
+    const client = await createTestApp(db);
+    const { sampleId } = await publishedSampleWithFile(client);
+    await demote(db);
+    // Act
+    const res = await uploadAttachment(client, sampleId);
+    // Assert
+    expect(res.status).toBe(403);
+  });
+
+  pgTest(
+    "should refuse a deletion from an unverified owner",
+    async ({ db }) => {
+      // Arrange
+      const client = await createTestApp(db);
+      const { sampleId, attachmentId } = await publishedSampleWithFile(client);
+      await demote(db);
+      // Act
+      const res = await client.admin.samples[":id"].attachments[
+        ":attachmentId"
+      ].$delete(
+        { param: { id: sampleId, attachmentId } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(403);
+      const read = await client.admin.samples[":id"].$get(
+        { param: { id: sampleId } },
+        { headers: authHeader },
+      );
+      expect(
+        sampleResponseSchema.parse(await read.json()).data.attachments,
+      ).toHaveLength(1);
+    },
+  );
+
+  pgTest("should still let an unverified owner read it", async ({ db }) => {
+    // Arrange
+    const client = await createTestApp(db);
+    const { sampleId, attachmentId } = await publishedSampleWithFile(client);
+    await demote(db);
+    // Act
+    const sample = await client.admin.samples[":id"].$get(
+      { param: { id: sampleId } },
+      { headers: authHeader },
+    );
+    const download = await client.admin.samples[":id"].attachments[
+      ":attachmentId"
+    ].$get({ param: { id: sampleId, attachmentId } }, { headers: authHeader });
+    // Assert
+    expect([sample.status, download.status]).toEqual([200, 200]);
+  });
+
+  pgTest("should still let them change a draft's files", async ({ db }) => {
+    // Arrange
+    const client = await createTestApp(db);
+    const draft = await createSample(client);
+    await demote(db);
+    // Act
+    const res = await uploadAttachment(client, draft.id);
+    // Assert
+    expect(res.status).toBe(201);
+  });
+
+  pgTest("should let an accepted owner change them", async ({ db }) => {
+    // Arrange
+    const client = await createTestApp(db);
+    const { sampleId } = await publishedSampleWithFile(client);
+    // Act
+    const res = await uploadAttachment(client, sampleId);
+    // Assert
+    expect(res.status).toBe(201);
+  });
+});
+
 describe("upload limit on save and publish", () => {
   pgTest(
     "should refuse a save keeping more attachments than the limit",
     async ({ db }) => {
-      // Arrange: a legacy sample already above the limit.
-      const client = createTestApp(db);
+      // Arrange
+      const client = await createTestApp(db);
       const sample = await createSample(client);
       const attachments = await insertLegacyAttachments(
         db,
@@ -409,21 +507,20 @@ describe("upload limit on save and publish", () => {
     "should refuse publishing a sample above the limit until it is reduced",
     async ({ db }) => {
       // Arrange
-      const client = createTestApp(db);
+      const client = await createTestApp(db);
       const sample = await createSample(client);
       const attachments = await insertLegacyAttachments(
         db,
         sample.id,
         DEFAULT_UPLOAD_LIMIT + 1,
       );
-      // Act / Assert: over the limit, publication is blocked.
+      // Act / Assert
       const blocked = await client.admin.samples[":id"].publish.$post(
         { param: { id: sample.id } },
         { headers: authHeader },
       );
       expect(blocked.status).toBe(409);
-      // Act / Assert: dropping one file makes the save pass and publication
-      // possible again.
+      // Act / Assert
       const saved = await client.admin.samples[":id"].$put(
         {
           param: { id: sample.id },
@@ -459,7 +556,7 @@ describe("public attachment download", () => {
 
   pgTest("should download a published sample's attachment", async ({ db }) => {
     // Arrange
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const { igsn, attachmentId } = await publishWithAttachment(client);
     // Act: no auth header, the route is public.
     const res = await client.samples[":igsn"].attachments[":attachmentId"].$get(
@@ -471,7 +568,7 @@ describe("public attachment download", () => {
   });
 
   pgTest("should 404 an unknown attachment id", async ({ db }) => {
-    const client = createTestApp(db);
+    const client = await createTestApp(db);
     const { igsn } = await publishWithAttachment(client);
     const res = await client.samples[":igsn"].attachments[":attachmentId"].$get(
       {
@@ -486,7 +583,7 @@ describe("public attachment download", () => {
     async ({ db }) => {
       // Arrange: an attachment on a draft, plus a published sample whose IGSN
       // the request borrows; neither pairing may resolve.
-      const client = createTestApp(db);
+      const client = await createTestApp(db);
       const draft = await createSample(client);
       const uploaded = await uploadAttachment(client, draft.id);
       const { data } = (await uploaded.json()) as { data: { id: string } };

@@ -6,7 +6,10 @@ import {
   AUTHENTICATED_USER_BUDGET,
   PUBLIC_IP_BUDGET,
 } from "./rate-limit/config.ts";
+import { insertSample } from "./sample/service/insert-sample.ts";
+import { insertUser } from "./tests/insert-user.ts";
 import { pgTest } from "./tests/pg-test.ts";
+import { insertSampleOwner } from "./user-sample/insert-sample-owner.ts";
 
 describe("app", () => {
   describe("GET /", () => {
@@ -19,12 +22,100 @@ describe("app", () => {
     });
   });
 
-  describe("GET /admin/me", () => {
+  describe("GET /admin/currentUser", () => {
+    const authHeader = { Authorization: "Bearer test-token" };
+    const callerEmail = "test-token@example.com";
+
     pgTest("rejects a request with no bearer token", async ({ db }) => {
       const client = testClient(createApp(db));
 
-      const res = await client.admin.me.$get();
+      const res = await client.admin.currentUser.$get();
       expect(res.status).toBe(401);
+    });
+
+    pgTest.for([
+      { seeded: { status: "accepted" } as const, superAdmin: false },
+      {
+        seeded: { status: "accepted", superAdmin: true } as const,
+        superAdmin: true,
+      },
+    ])(
+      "should report the caller's moderation state ($seeded.status, super admin $superAdmin)",
+      async ({ seeded, superAdmin }, { db }) => {
+        // Arrange
+        await insertUser(db, callerEmail, seeded);
+        // Act
+        const res = await testClient(createApp(db)).admin.currentUser.$get(
+          undefined,
+          { headers: authHeader },
+        );
+        // Assert
+        expect(await res.json()).toEqual({
+          sub: "test-token",
+          email: callerEmail,
+          orcid: null,
+          status: seeded.status,
+          superAdmin,
+        });
+      },
+    );
+  });
+
+  // The lockout sits in currentUser, which wraps the whole /admin mount, so one
+  // check covers every authenticated route, read or write.
+  describe("a rejected caller", () => {
+    const authHeader = { Authorization: "Bearer test-token" };
+    const rejectedEmail = "test-token@example.com";
+
+    pgTest("should be refused on a read and on a write", async ({ db }) => {
+      // Arrange
+      await insertUser(db, rejectedEmail, { status: "rejected" });
+      const app = createApp(db);
+      // Act
+      const read = await app.request("/admin/samples?page=1&perPage=10", {
+        headers: authHeader,
+      });
+      const write = await app.request("/admin/samples", {
+        method: "POST",
+        headers: { "content-type": "application/json", ...authHeader },
+        body: JSON.stringify({
+          name: "Basalte",
+          nature: "thin_section",
+          type: null,
+          collectionMethod: null,
+        }),
+      });
+      // Assert
+      expect([read.status, write.status]).toEqual([403, 403]);
+      await expect(
+        db.selectFrom("sample").selectAll().execute(),
+      ).resolves.toEqual([]);
+    });
+
+    pgTest("should keep the samples they already own", async ({ db }) => {
+      // Arrange
+      const owner = await insertUser(db, rejectedEmail);
+      const sample = await insertSample(db, {
+        name: "Granite",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      await insertSampleOwner(db, sample.id, owner.id);
+      await db
+        .updateTable("user")
+        .set({ status: "rejected" })
+        .where("id", "=", owner.id)
+        .execute();
+      // Act
+      const res = await createApp(db).request("/admin/samples", {
+        headers: authHeader,
+      });
+      // Assert
+      expect(res.status).toBe(403);
+      await expect(
+        db.selectFrom("sample").select("name").execute(),
+      ).resolves.toEqual([{ name: "Granite" }]);
     });
   });
 
@@ -135,7 +226,6 @@ describe("app", () => {
       delete process.env.CORS_ORIGINS;
     });
 
-    // Spend a tier's whole budget, asserting none of it is refused yet.
     const spend = async (
       fire: () => Response | Promise<Response>,
       times: number,
@@ -160,7 +250,7 @@ describe("app", () => {
       async ({ db }) => {
         const app = createApp(db);
         const from = (token: string) =>
-          app.request("/admin/me", {
+          app.request("/admin/currentUser", {
             headers: { Authorization: `Bearer ${token}` },
           });
 
@@ -170,8 +260,6 @@ describe("app", () => {
       },
     );
 
-    // None of the rate-limit headers are CORS-safelisted, so without this the
-    // admin SPA reads null and paces its retries on a guess.
     pgTest("should let a browser read the 429 headers", async ({ db }) => {
       const app = createApp(db);
       const from = () =>
@@ -233,8 +321,6 @@ describe("app", () => {
       },
     );
 
-    // The healthcheck sits outside the public sample mount, so the IP limiter
-    // never touches it however hard the container polls.
     pgTest("should never limit the healthcheck", async ({ db }) => {
       const app = createApp(db);
 

@@ -1,13 +1,11 @@
 import type { ReactNode } from "react";
 
-import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { LogOut } from "lucide-react";
-
 import { m } from "#/paraglide/messages.js";
 
 import { HttpError } from "../http-error.ts";
-import { useGetMe } from "../use-get-me.ts";
 import { CenteredScreen } from "./centered-screen.tsx";
+import { SignOutButton } from "./sign-out-button.tsx";
+import { useCurrentUser } from "./use-current-user.ts";
 
 // An ORCID session has app access only if the api resolves its orcid to a
 // linked account (ADR 0020): a 403 means "link it first", anything else is a
@@ -19,7 +17,7 @@ export function OrcidAccessGate({
   onSignOut: () => void;
   children?: ReactNode;
 }) {
-  const { data, error } = useGetMe();
+  const { data, error } = useCurrentUser();
 
   if (error) {
     const isNotLinked = error instanceof HttpError && error.status === 403;
@@ -28,10 +26,7 @@ export function OrcidAccessGate({
         isError
         message={isNotLinked ? m.auth_no_access() : m.user_name_error()}
       >
-        <Button type="button" variant="outline" size="sm" onClick={onSignOut}>
-          <LogOut />
-          {m.action_sign_out()}
-        </Button>
+        <SignOutButton onSignOut={onSignOut} />
       </CenteredScreen>
     );
   }

@@ -1,3 +1,5 @@
+import type { UserStatus } from "@projet-igsn/domain/user/model";
+
 import type { DB } from "../db.ts";
 
 import { type Transactional } from "../transaction.ts";
@@ -7,16 +9,23 @@ import { type Transactional } from "../transaction.ts";
 export function insertUser(
   db: Transactional<DB>,
   email: string,
-  orcid: string | null = null,
+  overrides: {
+    name?: string | null;
+    orcid?: string | null;
+    status?: UserStatus;
+    superAdmin?: boolean;
+  } = {},
 ): Promise<{ id: string }> {
   return db
     .insertInto("user")
     .values({
       id: crypto.randomUUID(),
       email,
-      name: null,
+      name: overrides.name ?? null,
       firstname: null,
-      orcid,
+      orcid: overrides.orcid,
+      status: overrides.status,
+      super_admin: overrides.superAdmin,
     })
     .returning("id")
     .executeTakeFirstOrThrow();

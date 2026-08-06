@@ -1,8 +1,9 @@
-import type { User } from "@projet-igsn/domain/user/model";
+import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
 import type { DB } from "../db.ts";
 
 import { type Transactional } from "../transaction.ts";
+import { collaboratableUsers } from "./collaboratable-users.ts";
 
 const SEARCH_LIMIT = 10;
 // The share dialog opens on this list, before anything is typed.
@@ -12,9 +13,8 @@ export function searchUsers(
   db: Transactional<DB>,
   query: string | undefined,
   callerId: string,
-): Promise<User[]> {
-  const others = db
-    .selectFrom("user")
+): Promise<UserIdentity[]> {
+  const others = collaboratableUsers(db)
     .select(["id", "email", "name", "firstname", "orcid"])
     .where("id", "!=", callerId);
   if (query === undefined) {

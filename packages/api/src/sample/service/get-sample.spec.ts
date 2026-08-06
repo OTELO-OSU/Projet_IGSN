@@ -62,6 +62,16 @@ describe("getSample", () => {
     },
   );
 
+  pgTest("should return no role on an orphan sample", async ({ db }) => {
+    // Arrange
+    const user = await insertUser(db, "user@univ-lorraine.fr");
+    const created = await insertSample(db, draft);
+    // Act
+    const found = await getSample(db, created.id, user.id);
+    // Assert
+    expect(found).toEqual({ sample: created, role: null });
+  });
+
   // Distinct from a sample the caller holds no role on, so the route keeps
   // answering 404 on an unknown id and 403 on someone else's.
   pgTest(

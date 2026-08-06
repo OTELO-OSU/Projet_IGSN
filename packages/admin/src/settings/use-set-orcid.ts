@@ -11,7 +11,7 @@ export function useSetOrcid() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (orcid: string | null) => {
-      const res = await apiFetch(new URL("admin/me/orcid", API_URL), {
+      const res = await apiFetch(new URL("admin/currentUser/orcid", API_URL), {
         method: "PUT",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ orcid }),
@@ -22,7 +22,7 @@ export function useSetOrcid() {
     },
     onSuccess: () => {
       toast.success(m.settings_orcid_saved());
-      return queryClient.invalidateQueries({ queryKey: ["me"] });
+      return queryClient.invalidateQueries({ queryKey: ["currentUser"] });
     },
     onError: (error) =>
       toast.error(

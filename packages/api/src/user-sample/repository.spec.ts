@@ -13,6 +13,25 @@ const draft = {
 };
 
 describe("userSampleRepository", () => {
+  pgTest("should refuse a super admin as contributor", async ({ db }) => {
+    // Arrange
+    const admin = await insertUser(db, "admin@univ-lorraine.fr", {
+      superAdmin: true,
+    });
+    const sample = await insertSample(db, draft);
+    const repository = createUserSampleRepository(db);
+    // Act
+    const result = await repository.addContributor(sample.id, admin.id);
+    // Assert
+    expect(result).toBe("unknown_user");
+    const rows = await db
+      .selectFrom("user_sample")
+      .selectAll()
+      .where("sample_id", "=", sample.id)
+      .execute();
+    expect(rows).toEqual([]);
+  });
+
   pgTest("should link a user to a sample as owner", async ({ db }) => {
     // Arrange
     const owner = await insertUser(db, "owner@univ-lorraine.fr");
@@ -62,8 +81,12 @@ describe("userSampleRepository", () => {
   });
 
   pgTest("should add a contributor to a sample", async ({ db }) => {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
-    const contributor = await insertUser(db, "contributor@univ-lorraine.fr");
+    const owner = await insertUser(db, "owner@univ-lorraine.fr", {
+      name: "Durand",
+    });
+    const contributor = await insertUser(db, "contributor@univ-lorraine.fr", {
+      name: "Curie",
+    });
     const sample = await insertSample(db, draft);
     const repository = createUserSampleRepository(db);
     await repository.addOwner(sample.id, owner.id);
@@ -71,13 +94,22 @@ describe("userSampleRepository", () => {
     const result = await repository.addContributor(sample.id, contributor.id);
 
     expect(result).toBe("added");
-    expect(await repository.listContributors(sample.id)).toEqual([
+    expect(await repository.listCollaborators(sample.id)).toEqual([
       {
         id: contributor.id,
         email: "contributor@univ-lorraine.fr",
-        name: null,
+        name: "Curie",
         firstname: null,
         orcid: null,
+        role: "contributor",
+      },
+      {
+        id: owner.id,
+        email: "owner@univ-lorraine.fr",
+        name: "Durand",
+        firstname: null,
+        orcid: null,
+        role: "owner",
       },
     ]);
   });
@@ -93,7 +125,7 @@ describe("userSampleRepository", () => {
     const result = await repository.addContributor(sample.id, contributor.id);
 
     expect(result).toBe("added");
-    expect(await repository.listContributors(sample.id)).toHaveLength(1);
+    expect(await repository.listCollaborators(sample.id)).toHaveLength(2);
   });
 
   pgTest(
@@ -107,7 +139,16 @@ describe("userSampleRepository", () => {
       const result = await repository.addContributor(sample.id, owner.id);
 
       expect(result).toBe("added");
-      expect(await repository.listContributors(sample.id)).toEqual([]);
+      expect(await repository.listCollaborators(sample.id)).toEqual([
+        {
+          id: owner.id,
+          email: "owner@univ-lorraine.fr",
+          name: null,
+          firstname: null,
+          orcid: null,
+          role: "owner",
+        },
+      ]);
       const rows = await db
         .selectFrom("user_sample")
         .selectAll()
@@ -131,35 +172,44 @@ describe("userSampleRepository", () => {
     );
 
     expect(result).toBe("unknown_user");
-    expect(await repository.listContributors(sample.id)).toEqual([]);
+    expect(await repository.listCollaborators(sample.id)).toEqual([
+      {
+        id: owner.id,
+        email: "owner@univ-lorraine.fr",
+        name: null,
+        firstname: null,
+        orcid: null,
+        role: "owner",
+      },
+    ]);
   });
 
-  pgTest("should list contributors ordered by name", async ({ db }) => {
-    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+  pgTest("should list collaborators ordered by name", async ({ db }) => {
+    const owner = await insertUser(db, "owner@univ-lorraine.fr", {
+      name: "Moreau",
+    });
     const sample = await insertSample(db, draft);
     const repository = createUserSampleRepository(db);
     await repository.addOwner(sample.id, owner.id);
-    const zoe = await insertUser(db, "zoe@univ-lorraine.fr");
-    const alice = await insertUser(db, "alice@univ-lorraine.fr");
-    await db
-      .updateTable("user")
-      .set({ name: "Zeller" })
-      .where("id", "=", zoe.id)
-      .execute();
-    await db
-      .updateTable("user")
-      .set({ name: "Aubry" })
-      .where("id", "=", alice.id)
-      .execute();
+    const zoe = await insertUser(db, "zoe@univ-lorraine.fr", {
+      name: "Zeller",
+    });
+    const alice = await insertUser(db, "alice@univ-lorraine.fr", {
+      name: "Aubry",
+    });
     await repository.addContributor(sample.id, zoe.id);
     await repository.addContributor(sample.id, alice.id);
 
-    const contributors = await repository.listContributors(sample.id);
+    const collaborators = await repository.listCollaborators(sample.id);
 
-    expect(contributors.map((user) => user.name)).toEqual(["Aubry", "Zeller"]);
+    expect(collaborators.map((user) => [user.name, user.role])).toEqual([
+      ["Aubry", "contributor"],
+      ["Moreau", "owner"],
+      ["Zeller", "contributor"],
+    ]);
   });
 
-  pgTest("should not list a contributor of another sample", async ({ db }) => {
+  pgTest("should not list a collaborator of another sample", async ({ db }) => {
     const owner = await insertUser(db, "owner@univ-lorraine.fr");
     const contributor = await insertUser(db, "contributor@univ-lorraine.fr");
     const sample = await insertSample(db, draft);
@@ -169,6 +219,15 @@ describe("userSampleRepository", () => {
     await repository.addOwner(other.id, owner.id);
     await repository.addContributor(other.id, contributor.id);
 
-    expect(await repository.listContributors(sample.id)).toEqual([]);
+    expect(await repository.listCollaborators(sample.id)).toEqual([
+      {
+        id: owner.id,
+        email: "owner@univ-lorraine.fr",
+        name: null,
+        firstname: null,
+        orcid: null,
+        role: "owner",
+      },
+    ]);
   });
 });

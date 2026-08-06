@@ -8,16 +8,21 @@ import { pgTest } from "../tests/pg-test.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
 
-describe("me routes", () => {
+describe("currentUser routes", () => {
   pgTest("should return the caller's claims and orcid", async ({ db }) => {
     // Act
-    const res = await testClient(createApp(db)).admin.me.$get(undefined, {
-      headers: authHeader,
-    });
+    const res = await testClient(createApp(db)).admin.currentUser.$get(
+      undefined,
+      {
+        headers: authHeader,
+      },
+    );
     // Assert
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       sub: "test-token",
+      status: "pending",
+      superAdmin: false,
       email: "test-token@example.com",
       orcid: null,
     });
@@ -27,26 +32,28 @@ describe("me routes", () => {
     // Arrange
     const client = testClient(createApp(db));
     // Act
-    const res = await client.admin.me.orcid.$put(
+    const res = await client.admin.currentUser.orcid.$put(
       { json: { orcid: "0000-0002-1825-0097" } },
       { headers: authHeader },
     );
     // Assert
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ orcid: "0000-0002-1825-0097" });
-    const me = await client.admin.me.$get(undefined, { headers: authHeader });
+    const me = await client.admin.currentUser.$get(undefined, {
+      headers: authHeader,
+    });
     expect(await me.json()).toMatchObject({ orcid: "0000-0002-1825-0097" });
   });
 
   pgTest("should clear the caller's orcid with null", async ({ db }) => {
     // Arrange
     const client = testClient(createApp(db));
-    await client.admin.me.orcid.$put(
+    await client.admin.currentUser.orcid.$put(
       { json: { orcid: "0000-0002-1825-0097" } },
       { headers: authHeader },
     );
     // Act
-    const res = await client.admin.me.orcid.$put(
+    const res = await client.admin.currentUser.orcid.$put(
       { json: { orcid: null } },
       { headers: authHeader },
     );
@@ -59,9 +66,11 @@ describe("me routes", () => {
     "should answer 409 when another user holds the orcid",
     async ({ db }) => {
       // Arrange
-      await insertUser(db, "holder@univ-lorraine.fr", "0000-0002-1825-0097");
+      await insertUser(db, "holder@univ-lorraine.fr", {
+        orcid: "0000-0002-1825-0097",
+      });
       // Act
-      const res = await testClient(createApp(db)).admin.me.orcid.$put(
+      const res = await testClient(createApp(db)).admin.currentUser.orcid.$put(
         { json: { orcid: "0000-0002-1825-0097" } },
         { headers: authHeader },
       );
@@ -84,7 +93,7 @@ describe("me routes", () => {
     },
   ])("should answer 400 on $case", async ({ body }, { db }) => {
     // Act
-    const res = await createApp(db).request("/admin/me/orcid", {
+    const res = await createApp(db).request("/admin/currentUser/orcid", {
       method: "PUT",
       headers: { "content-type": "application/json", ...authHeader },
       body: JSON.stringify(body),
@@ -102,7 +111,7 @@ describe("me routes", () => {
         c.json({ error: "Unauthorized" }, 401),
       );
       // Act
-      const res = await testClient(createApp(db)).admin.me.orcid.$put(
+      const res = await testClient(createApp(db)).admin.currentUser.orcid.$put(
         { json: { orcid: "0000-0002-1825-0097" } },
         { headers: authHeader },
       );

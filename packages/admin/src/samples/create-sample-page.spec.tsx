@@ -26,8 +26,13 @@ vi.mock("react-oidc-context", () => ({
 function fakeApi(failWrites = false) {
   let sample: Record<string, unknown> | null = null;
   worker.use(
-    http.get("*/admin/me", () =>
-      HttpResponse.json({ sub: "user-1", name: "Marie Dupont" }),
+    http.get("*/admin/currentUser", () =>
+      HttpResponse.json({
+        sub: "user-1",
+        name: "Marie Dupont",
+        status: "accepted",
+        superAdmin: false,
+      }),
     ),
     http.post("*/samples", async ({ request }) => {
       if (failWrites) {
@@ -35,9 +40,6 @@ function fakeApi(failWrites = false) {
       }
       sample = {
         id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
-        // Persisted defaults (the texture, metamorphic_facies, description
-        // and condition columns are nullable), overridable by the submitted
-        // body below.
         texture: null,
         metamorphicFacies: null,
         description: null,

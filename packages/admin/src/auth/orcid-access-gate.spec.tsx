@@ -7,7 +7,7 @@ const me = {
   data: undefined as { orcid: string | null } | undefined,
   error: null as Error | null,
 };
-vi.mock("../use-get-me.ts", () => ({ useGetMe: () => me }));
+vi.mock("./use-current-user.ts", () => ({ useCurrentUser: () => me }));
 
 beforeEach(() => {
   me.data = undefined;
