@@ -199,9 +199,10 @@ describe("createUserRepository", () => {
       ]);
     });
 
-    pgTest("should never list a super admin", async ({ db }) => {
+    pgTest("should list a super admin", async ({ db }) => {
       const repository = await insertResearchers(db);
       await insertUser(db, "admin.curie@univ-lorraine.fr", {
+        name: "Admin",
         superAdmin: true,
       });
 
@@ -209,9 +210,11 @@ describe("createUserRepository", () => {
       const browsed = await repository.search(undefined, CALLER_ID);
 
       expect(searched.map((user) => user.email)).toEqual([
+        "admin.curie@univ-lorraine.fr",
         "marie.curie@univ-lorraine.fr",
       ]);
       expect(browsed.map((user) => user.email)).toEqual([
+        "admin.curie@univ-lorraine.fr",
         "marie.curie@univ-lorraine.fr",
         "pierre.dupont@univ-lorraine.fr",
       ]);

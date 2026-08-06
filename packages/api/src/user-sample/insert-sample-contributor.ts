@@ -1,14 +1,14 @@
 import type { DB } from "../db.ts";
 
 import { type Transactional } from "../transaction.ts";
-import { collaboratableUsers } from "../user/collaboratable-users.ts";
 
 export async function insertSampleContributor(
   db: Transactional<DB>,
   sampleId: string,
   userId: string,
 ): Promise<"added" | "unknown_user"> {
-  const user = await collaboratableUsers(db)
+  const user = await db
+    .selectFrom("user")
     .select("id")
     .where("id", "=", userId)
     .executeTakeFirst();

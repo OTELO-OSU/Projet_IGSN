@@ -2044,9 +2044,10 @@ describe("admin sample routes", () => {
       },
     );
 
-    pgTest("should answer 404 when adding a super admin", async ({ db }) => {
+    pgTest("should add a super admin as contributor", async ({ db }) => {
       const { app, sample, owner } = await arrangeOwnedSample(db);
       const admin = await insertUser(db, "admin@univ-lorraine.fr", {
+        name: "Admin",
         superAdmin: true,
       });
       const client = testClient(app);
@@ -2056,13 +2057,21 @@ describe("admin sample routes", () => {
         { headers: authHeader },
       );
 
-      expect(res.status).toBe(404);
+      expect(res.status).toBe(204);
       const listed = await client.admin.samples[":id"].collaborators.$get(
         { param: { id: sample.id } },
         { headers: authHeader },
       );
       expect(await listed.json()).toEqual({
         data: [
+          {
+            id: admin.id,
+            email: "admin@univ-lorraine.fr",
+            name: "Admin",
+            firstname: null,
+            orcid: null,
+            role: "contributor",
+          },
           {
             id: owner.id,
             email: authenticatedCallerEmail,
