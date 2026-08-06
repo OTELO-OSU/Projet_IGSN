@@ -72,6 +72,7 @@ catalog:
   vitest-browser-react: ^2.2.0
   zod: ^4.4.3
   sonner: ^2.0.7
+  croner: ^10.0.1
 
 catalogMode: strict
 

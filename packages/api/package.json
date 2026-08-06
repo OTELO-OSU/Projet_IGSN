@@ -15,6 +15,7 @@
   "dependencies": {
     "@hono/node-server": "catalog:",
     "@projet-igsn/domain": "workspace:*",
+    "croner": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
     "kysely-postgres-js": "catalog:",

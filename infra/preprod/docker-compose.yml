@@ -85,10 +85,9 @@ services:
       # there so the two agree (see docker-compose.env.example).
       UPLOAD_LIMIT: "${UPLOAD_LIMIT:-5}"
       # Outbound mail via a transactional-mail provider's SMTP endpoint, read at
-      # boot. The 24h pending-accounts digest restarts its clock with the
-      # process, so a daily redeploy postpones it. All four values come from the
-      # host docker-compose.env like the Postgres password; see
-      # docs/preprod-setup.md for the provider setup (DKIM/SPF DNS records).
+      # boot. All four values come from the host docker-compose.env like the
+      # Postgres password; see docs/preprod-setup.md for the provider setup
+      # (DKIM/SPF DNS records).
       SMTP_HOST: ${SMTP_HOST}
       # STARTTLS. EC2 blocks outbound 25 by default; 587 is open.
       SMTP_PORT: "${SMTP_PORT:-587}"
