@@ -9,6 +9,7 @@ import { getPublishedSampleByIgsn } from "./service/get-published-sample-by-igsn
 import { getSample } from "./service/get-sample.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import {
+  listAllSamples,
   listPublishedSamples,
   listSamplesAssignedTo,
 } from "./service/list-sample.ts";
@@ -17,8 +18,10 @@ import { updateSample } from "./service/update-sample.ts";
 
 export function createSampleRepository(db: Kysely<DB>): SampleRepository {
   return {
-    list: (params, userId) =>
+    listAssignedTo: (params, userId) =>
       withTransaction(db, (trx) => listSamplesAssignedTo(trx, params, userId)),
+    listAllAsSuperAdmin: (params) =>
+      withTransaction(db, (trx) => listAllSamples(trx, params)),
     listPublished: (params) =>
       withTransaction(db, (trx) => listPublishedSamples(trx, params)),
     get: (id, userId) =>
