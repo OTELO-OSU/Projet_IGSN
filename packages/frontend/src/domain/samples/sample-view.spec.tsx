@@ -35,6 +35,38 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
+  it("should mark only the section being read as the current nav link", async () => {
+    const screen = await render(
+      <SampleView
+        name="Basalt 42"
+        igsn="0123456789ABCDEFGHJKMNPQRS"
+        nature="rock_powder"
+        type={null}
+        material={null}
+        texture={null}
+        metamorphicFacies={null}
+        specificName={null}
+        collectionMethod={null}
+        collectionMethodDescription={null}
+        security={null}
+        availability={null}
+        publicationYear={null}
+        description={{ mass: { value: 1.4, unit: "kg" } }}
+        condition={null}
+        scientificContext={null}
+        location={null}
+        age={null}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("link", { name: "Sample" }))
+      .toHaveAttribute("aria-current", "location");
+    await expect
+      .element(screen.getByRole("link", { name: "Description" }))
+      .not.toHaveAttribute("aria-current");
+  });
+
   it("should show the Links section when the sample has links", async () => {
     const screen = await render(
       <SampleView
@@ -166,7 +198,6 @@ describe("SampleView", () => {
       .element(type.getByText("Core", { exact: true }))
       .toBeInTheDocument();
     await expect.element(type.getByText("Core Half round")).toBeInTheDocument();
-    // The chevron separator reads as ">" to assistive tech.
     await expect
       .element(type.getByRole("img", { name: ">" }))
       .toBeInTheDocument();
@@ -499,6 +530,31 @@ describe("SampleView", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should show the economic interest as its own section", async () => {
+    const screen = await render(
+      <SampleView
+        {...baseProps}
+        economicInterest="yes.mineral_and_ore"
+        economicDepositName="Chuquicamata"
+      />,
+    );
+
+    await expect
+      .element(
+        screen.getByRole("heading", { level: 2, name: "Economic interest" }),
+      )
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("Chuquicamata")).toBeInTheDocument();
+  });
+
+  it("should omit the Economic interest section when unanswered", async () => {
+    const screen = await render(<SampleView {...baseProps} />);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Economic interest" }))
+      .not.toBeInTheDocument();
+  });
+
   it("should show the security as its own section with its hazards", async () => {
     const screen = await render(
       <SampleView
@@ -630,7 +686,6 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByRole("heading", { level: 2, name: "Condition" }))
       .toBeInTheDocument();
-    // A condition alone does not open the description section.
     await expect
       .element(screen.getByRole("heading", { name: "Description" }))
       .not.toBeInTheDocument();

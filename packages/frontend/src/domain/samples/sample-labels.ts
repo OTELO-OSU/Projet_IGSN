@@ -5,8 +5,6 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 
-// The domain resolvers bound to this app's paraglide catalog. The resolving
-// logic lives in domain; only this `m` binding is per app.
 export const {
   materialPathLabel,
   typeLabel,
@@ -21,6 +19,8 @@ export const {
   lightLabel,
   pressureTypeLabel,
   availabilityLabel,
+  economicInterestLabel,
+  elementLabel,
   numericUnitLabel,
   yearsUnitLabel,
   geologicalAgeLabel,

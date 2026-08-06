@@ -19,7 +19,6 @@ import {
   unmappableValues,
 } from "./import-legacy-mapping.ts";
 
-// A legacy row with everything empty; tests override only the fields they cover.
 function legacyRow(overrides: Partial<LegacyRow> = {}): LegacyRow {
   return {
     name: "Sample",
@@ -82,7 +81,6 @@ describe("mapMaterial", () => {
   });
 
   it("should keep the longest valid prefix when only the family is known", () => {
-    // The new tree lacks a `granoblastite` node under `metamorphic`, so it truncates.
     expect(mapMaterial("Metamorphic>Granoblastite", "Rock")).toBe(
       "rock.metamorphic",
     );
@@ -366,6 +364,31 @@ describe("mapElevation", () => {
     );
   });
 
+  it("should keep decimal precision", () => {
+    expect(
+      mapElevation(
+        legacyRow({
+          elevation: "1200.5",
+          elevation_end: "1300.25",
+          elevation_unit: "m",
+        }),
+      ),
+    ).toEqual({
+      min: 1200.5,
+      max: 1300.25,
+      unit: "m",
+      datum: null,
+    });
+    expect(
+      mapElevation(legacyRow({ bathy: "1200.5", bathy_unit: "m" })),
+    ).toEqual({
+      min: -1200.5,
+      max: -1200.5,
+      unit: "m",
+      datum: "msl",
+    });
+  });
+
   it("should drop an unknown elevation unit", () => {
     expect(
       mapElevation(legacyRow({ elevation: "5", elevation_unit: "Outcrop" })),
@@ -493,7 +516,6 @@ describe("toCreateSample", () => {
 });
 
 describe("unmappableValues", () => {
-  // A row whose every controlled value normalizes cleanly, so nothing is flagged.
   const goodRow = (overrides: Partial<LegacyRow> = {}) =>
     legacyRow({ classification: "Igneous>Plutonic>Felsic", ...overrides });
 
@@ -578,7 +600,6 @@ describe("unmappableValues", () => {
   });
 
   it("should not flag a physical-form resource type that maps to a nature", () => {
-    // "Thin section" is a nature, not a type path, so it is fully mapped.
     expect(
       unmappableValues(goodRow({ resource_type: "Thin section" })),
     ).toEqual([]);
