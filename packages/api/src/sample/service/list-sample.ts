@@ -116,32 +116,36 @@ async function listSamplesWhere(
   });
 }
 
-// The repository wiring can still satisfy `SampleRepository.list` while
-// ignoring its `userId` (structural typing); the admin-routes authorization
-// spec is what catches that.
-export async function listSamplesAssignedTo(
+async function listWithOwners(
   db: Transactional<DB>,
   params: ListSamplesParams,
-  userId: string | null,
+  scope: Expression<SqlBool>[],
 ): Promise<AdminListSamplesResult> {
   const { data, owners, total } = await listSamplesWhere(
     db,
     params,
-    userId === null ? [] : [assignedTo(userId)],
+    scope,
     true,
   );
   return {
-    data: data.map((sample) => {
-      const owner = owners.get(sample.id);
-      if (!owner) {
-        throw new Error(
-          `Sample ${sample.id} has no owner: user_sample invariant broken`,
-        );
-      }
-      return { ...sample, owner };
-    }),
+    data: data.map((sample) => ({ ...sample, owner: owners.get(sample.id)! })),
     total,
   };
+}
+
+export function listSamplesAssignedTo(
+  db: Transactional<DB>,
+  params: ListSamplesParams,
+  userId: string,
+): Promise<AdminListSamplesResult> {
+  return listWithOwners(db, params, [assignedTo(userId)]);
+}
+
+export function listAllSamples(
+  db: Transactional<DB>,
+  params: ListSamplesParams,
+): Promise<AdminListSamplesResult> {
+  return listWithOwners(db, params, []);
 }
 
 export async function listPublishedSamples(

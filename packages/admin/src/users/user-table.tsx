@@ -1,5 +1,6 @@
 import type { User } from "@projet-igsn/domain/user/model";
 
+import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
@@ -7,7 +8,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import { DataTable } from "#/data-table.tsx";
 import { m } from "#/paraglide/messages.js";
 
 import { userStatusLabel } from "./user-status-label.ts";

@@ -13,7 +13,7 @@ const draft = {
 };
 
 describe("userSampleRepository", () => {
-  pgTest("should refuse a super admin as contributor", async ({ db }) => {
+  pgTest("should add a super admin as contributor", async ({ db }) => {
     // Arrange
     const admin = await insertUser(db, "admin@univ-lorraine.fr", {
       superAdmin: true,
@@ -23,13 +23,15 @@ describe("userSampleRepository", () => {
     // Act
     const result = await repository.addContributor(sample.id, admin.id);
     // Assert
-    expect(result).toBe("unknown_user");
+    expect(result).toBe("added");
     const rows = await db
       .selectFrom("user_sample")
       .selectAll()
       .where("sample_id", "=", sample.id)
       .execute();
-    expect(rows).toEqual([]);
+    expect(rows).toEqual([
+      { sample_id: sample.id, user_id: admin.id, role: "contributor" },
+    ]);
   });
 
   pgTest("should link a user to a sample as owner", async ({ db }) => {

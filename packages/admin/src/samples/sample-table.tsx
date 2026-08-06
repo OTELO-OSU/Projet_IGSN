@@ -1,6 +1,7 @@
 import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
+import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import { formatDate } from "@projet-igsn/design-system/lib/format-date";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -11,7 +12,6 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
-import { DataTable } from "#/data-table.tsx";
 import { m } from "#/paraglide/messages.js";
 import { fullName } from "#/samples/full-name.ts";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";

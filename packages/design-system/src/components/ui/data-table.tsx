@@ -1,5 +1,7 @@
 import type { Table as TableInstance } from "@tanstack/react-table";
 
+import { flexRender } from "@tanstack/react-table";
+
 import {
   Table,
   TableBody,
@@ -7,8 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@projet-igsn/design-system/components/ui/table";
-import { flexRender } from "@tanstack/react-table";
+} from "./table.tsx";
 
 type DataTableProps<T> = {
   table: TableInstance<T>;

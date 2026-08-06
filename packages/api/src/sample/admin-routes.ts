@@ -55,19 +55,19 @@ export function createSampleAdminRoutes(
         const { page, perPage, sort, order, search, ageMin, ageMax, ageUnit } =
           c.req.valid("query");
         const user = c.get("user");
-        const { data, total } = await repository.list(
-          {
-            page,
-            perPage,
-            sort,
-            order,
-            search,
-            ageMin,
-            ageMax,
-            ageUnit,
-          },
-          user.superAdmin ? null : user.id,
-        );
+        const query = {
+          page,
+          perPage,
+          sort,
+          order,
+          search,
+          ageMin,
+          ageMax,
+          ageUnit,
+        };
+        const { data, total } = user.superAdmin
+          ? await repository.listAllAsSuperAdmin(query)
+          : await repository.listAssignedTo(query, user.id);
         const body: AdminListSamplesResponse = { data, meta: { total } };
         return c.json(body);
       })
