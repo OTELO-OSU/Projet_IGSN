@@ -8,109 +8,45 @@ paths:
 
 ## E2E before ending a session
 
-A session that changed app code (`admin`, `frontend`, `api`, or what they
-consume from `domain`/`design-system`) does not end on unit tests alone: run
-`make test-e2e` (it starts its own throwaway stack) and report the verdict.
-Skip it only for changes with no runtime surface (docs, rules, specs alone).
-
-## Tests are mandatory
-
-Every function and component MUST have tests. Untested code does not ship.
-
-Test what a function does, not how it does it. Assert on behavior and outputs,
-never on internal implementation.
-
-## FIRST
-
-Good tests are:
-
-- Fast: run quickly so the suite stays cheap to run often.
-- Independent: one test never affects another (see Isolation below).
-- Repeatable: same result on every run, regardless of outside factors (date,
-  network, order).
-- Self-validating: a failure makes the reason obvious, no manual inspection.
-- Timely: write the test alongside or before the code (TDD).
-
-## Use TDD
-
-Write tests first. Follow red-green-refactor: failing test, minimum code to
-pass, then refactor.
-
-## Structure: AAA
-
-Use Arrange-Act-Assert:
-
-    test('calculates similarity correctly', () => {
-      // Arrange
-      const input = buildInput()
-      // Act
-      const result = compute(input)
-      // Assert
-      expect(result).toBe(expected)
-    })
+- Changed app code (`admin`, `frontend`, `api`, or what they consume from `domain`/`design-system`)? Run `make test-e2e` and report the verdict.
+- Skip only for changes with no runtime surface.
 
 ## What to test
 
-Test domain and business rules only. Do not test styling or attributes unless
-they are bound to a domain rule.
+- Every behavior a user or a cross-file caller depends on: untested behavior does not ship.
+- The unit is the behavior, not the function, so a private helper is covered through its caller.
+- Take cases from the spec (the ticket's acceptance tests, the domain rules, `CLAUDE.md`), never from reading the implementation, which freezes its bugs as rules.
+- Assert behavior and outputs, never internals.
+- Test domain rules only, not styling or attributes, unless a rule binds them.
+- Cover the happy path and the errors the spec says it must reject.
 
-Cover both success and failure cases for each behavior: the happy path and the
-errors, rejections, and edge cases it must guard against. A test for success
-alone lets failures regress unnoticed.
+## How many tests
 
-Use the BOUNDARY heuristic to hunt edge cases:
+Coverage is a floor on the rules, not a licence to enumerate.
 
-- Boundary values (first/last, min/max)
-- Out-of-range values
-- Unexpected inputs
-- Null or missing values
-- Duplicate or repeated data
-- Alternative states
-- Race conditions or repeated actions
-- Yield or failure conditions
+- One test per domain rule, not per input, branch, line, or function.
+- One happy path, unless the spec states a different rule for the second.
+- Only the failures the spec names.
+- Cases differing only by input or output collapse into one `it.each`.
+- One whole-value `toEqual` over several partial tests.
+- Name the rule a test guards, in one line, before writing it; if you cannot, don't write it.
+- A spec file much longer than its module is enumeration, not coverage.
 
-## Assert on whole values
+Never test what the compiler proves (types, exhaustive switches, required props), third-party behavior (Zod rejecting a wrong type, Kysely building SQL), constants, re-exports, label maps, schema-declared mappings, or a helper a caller covers.
 
-Assert the full result with `toEqual` (or `toMatchObject` for a subset), not a
-handful of individual fields. Checking only `success` or one property lets the
-rest regress and hides bugs the assertion never looked at. A single whole-object
-assertion also merges what would otherwise be several partial tests into one.
+The one exception is the tree-vocabulary label-coverage spec `i18n.md` mandates, a build gate on a runtime path no reviewer cuts.
 
-    // Prefer
-    expect(result).toEqual({ name: "Grès", nature: "rock_powder" })
-    // Over
-    expect(result.success).toBe(true)
-    expect(result.name).toBe("Grès")
+BOUNDARY finds candidates (boundary and out-of-range values, unexpected input, null, duplicates, alternative states, races, failure conditions), but keep only those the spec rules on; an edge case the spec is silent on is a question for the ticket.
 
-## Naming: `it("should ...")`
+## How to write them
 
-Describe the behavior under test:
-
-- it("should return an empty array when no items match the query")
-- it("should throw when a required field is missing")
-
-Avoid vague names: it("should work"), test1, testFoo.
-
-## Prefer `it.each`
-
-Use `it.each` wherever cases vary only by input/output, within a single
-validation context. Do not merge success and failure cases into one `it.each`:
-keep one block for the cases that pass and another for the cases that fail.
-
-    it.each(['IGSN123', 'IGSN000'])('should accept %s', (input) => {
-      expect(isValidIgsn(input)).toBe(true)
-    })
-
-    it.each(['', 'nope'])('should reject %s', (input) => {
-      expect(isValidIgsn(input)).toBe(false)
-    })
-
-## Failing tests
-
-Only update a test if the domain rule changed. Otherwise the test caught a
-regression: fix the code, not the test.
-
-## Isolation
-
-Each test is independent: no shared mutable state, no dependence on execution
-order. Reset mocks and fixtures in beforeEach, not globally.
+- Red, green, refactor.
+- Arrange-Act-Assert, one behavior per test.
+- Keep tests fast and repeatable whatever the date, network, or order.
+- No shared mutable state (reset mocks in `beforeEach`).
+- A failure names its own reason.
+- Name the test after the behavior: `it("should return an empty array when no items match")`, never `it("should work")`.
+- Assert whole values with `toEqual` (`toMatchObject` for a subset), since asserting one field lets the rest regress.
+- Use `it.each` for cases varying only by input, with passing and failing cases in separate blocks.
+- Only update a test to make it pass if the domain rule changed; otherwise it caught a regression, so fix the code.
+- Pruning tests that duplicate existing coverage is a separate pass, see the `cleanup-tests` skill.

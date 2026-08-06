@@ -21,8 +21,11 @@ The link is a nullable, unique `orcid` column on the `user` table.
 - Setting it is rights-granting (it creates a sign-in path), so the endpoint
   revalidates the session live (`requireActiveSession`, GaiaData REQ-CRIT-01).
 - An ORCID sign-in resolves strictly by this column: `currentUser` looks up the
-  token's `preferred_username` (Keycloak brokers ORCID accounts with the iD as
-  username) and refuses the request when no user declared it. This branch runs
+  token's `identity_provider_identity` (the session note holding the iD the
+  broker authenticated, mapped as a claim on `igsn-admin`) and refuses the
+  request when no user declared it. `preferred_username` is the Keycloak shell
+  account's own name, which production ORCID does not fill with the iD.
+  This branch runs
   BEFORE the email upsert: a broker-supplied email is user-controlled, so
   upserting by it would hand over the matching account. ORCID logins never
   provision or refresh a local user.

@@ -2,139 +2,92 @@
 
 ## Package layering
 
-- `domain`: shared business logic and the contracts. Anything used by more than
-  one package (IGSN validation, domain models, service/repository interfaces)
-  MUST live here. No I/O, no DB, no HTTP.
-- `api`: implements the services/repositories declared in `domain`, mapping them
-  to the database. Holds the trust boundary and the wiring, not the contracts.
-- `admin` / `frontend`: consume `domain` types and schemas; call `api` for CRUD.
-
-Two hard rules:
-
-- If logic is shared by `frontend`/`admin` and/or `api`, it MUST live in
-  `domain` (e.g. IGSN validation).
-- A service or repository signature/interface MUST live in `domain`; only its
-  implementation lives in `api`.
+- `domain`: shared business logic and contracts (IGSN validation, domain models, service/repository interfaces), with no I/O, no DB, no HTTP.
+- `api`: implements the services/repositories declared in `domain`, holding the trust boundary and the wiring, not the contracts.
+- `admin` / `frontend`: consume `domain` types and schemas and call `api` for CRUD.
+- Logic shared by `frontend`/`admin` and/or `api` MUST live in `domain`.
+- A service or repository signature MUST live in `domain`; only its implementation lives in `api`.
 
 ## Server-side sorting and filtering
 
-Lists are paginated server-side, so sorting and filtering MUST be too, in the
-Postgres query (Kysely `orderBy`/`where`), never in the client or on a fetched
-page. Sorting one page client-side lies about the dataset. Declare the
-sort/filter params in the list query schema in `domain`, pass them through the
-repository, and keep them in the URL app-side (see the URL-as-state rule).
-
-Public sample-list filters are driven by the `SAMPLE_FACETS` registry
-(`domain/sample/search/facets.ts`) as single source of truth. To add or extend
-one, see the `add-search-facet` skill. The free-text global search box is a
-separate mechanism (`domain/sample/search/search-tokens.ts`), not a facet; see
-ADR 0018 for its query grammar.
+- Lists are paginated server-side, so sorting and filtering MUST happen in the Postgres query (Kysely `orderBy`/`where`), never in the client or on a fetched page.
+- Declare the sort/filter params in the list query schema in `domain`, pass them through the repository, and keep them in the URL app-side.
+- Public sample-list filters are driven by the `SAMPLE_FACETS` registry (`domain/sample/search/facets.ts`) as single source of truth; to add or extend one, see the `add-search-facet` skill.
+- The free-text global search box is a separate mechanism (`domain/sample/search/search-tokens.ts`), not a facet; see ADR 0018.
 
 ## Publish constraints
 
-The reasons a sample cannot be published live in ONE place:
-`domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`).
-`isSamplePublishable` and the admin publish tooltip both derive from it. When you
-add a publish constraint, add a code to `publishBlockerSchema` and push it in
-`samplePublishBlockers`; the admin label map (`publish-blocker-label.ts`) is an
-exhaustive `Record<PublishBlocker, () => string>`, so it fails to compile until
-the new reason is translated and thus shown in the tooltip.
+Why a sample cannot be published lives in ONE place, `domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`).
 
-What a published sample may still change (as opposed to whether it can publish)
-is stated in ONE place too: the lock maps at the top of
-`published-field-lock.ts`. Each entry is one frozen field: the key is what
-`mergePublishedEdit` takes from storage, the value the form field names that edit
-it (several when the form splits a field, a position into coordinates). A field
-with an entry is frozen, one without is editable, so freezing a new field is one
-entry, read by both the merge and the admin form. Only a leaf whose lock depends
-on a frozen sibling is hand-written in the merge helpers. Add no parallel
-classification record and no second list of field names; see ADR 0021.
+- `isSamplePublishable` and the admin publish tooltip both derive from it.
+- Add a constraint by adding a code to `publishBlockerSchema` and pushing it in `samplePublishBlockers`.
+- The admin label map (`publish-blocker-label.ts`) is an exhaustive `Record<PublishBlocker, () => string>`, so it fails to compile until the new reason is translated.
 
-`material` is the one field with no entry, because which of its levels lock
-depends on the stored path. That lock lives on the tree node
-(`TreeNode.frozenWhenPublished`; absent means frozen, a level opens only with
-an explicit `false`), and `frozenMaterialPrefix` derives the prefix a
-published sample must keep, read by both `mergeMaterial` and the admin form;
-see ADR 0022.
+What a published sample may still change lives in ONE place too, the lock maps at the top of `published-field-lock.ts`.
 
-The admin form never restates that rule: it consumes the maps' flattened form
-names (`FROZEN_FORM_FIELDS`, `FROZEN_FORM_FIELDS_BY_PROVENANCE`) through
-`publishedSampleFrozenField`
-(`admin/src/samples/published-sample-frozen-field.ts`), which adds only the
-hierarchy-level suffix stripping and the frozen depths from
-`frozenHierarchyDepths`, and `SampleForm`
-feeds it to the form kit's
-`FieldDisabledProvider`. No control decides for itself that publication
-freezes it: a kit field control resolves it through `useFieldDisabled`, and a
-control with no field context (the collection-date mode switch) asks
-`useIsFieldDisabled()` for the field it follows. Freeze a new control by listing
-its field name in `publishedSampleFrozenField`, never with a published flag of
-its own. In the sample form `disabled` means frozen by publication and nothing
-else; a field waiting on a sibling is not rendered (see forms.md).
+- Each entry is one frozen field: the key is what `mergePublishedEdit` takes from storage, the value the form field names that edit it.
+- A field with an entry is frozen and one without is editable, so freezing a new field is one entry.
+- Only a leaf whose lock depends on a frozen sibling is hand-written in the merge helpers.
+- Add no parallel classification record and no second list of field names; see ADR 0021.
+
+`material` is the one field with no entry, because which of its levels lock depends on the stored path.
+
+- That lock lives on the tree node (`TreeNode.frozenWhenPublished`; absent means frozen, a level opens only with an explicit `false`).
+- `frozenMaterialPrefix` derives the prefix a published sample must keep, read by both `mergeMaterial` and the admin form; see ADR 0022.
+
+The admin form never restates that rule.
+
+- It consumes the maps' flattened form names (`FROZEN_FORM_FIELDS`, `FROZEN_FORM_FIELDS_BY_PROVENANCE`) through `publishedSampleFrozenField` (`admin/src/samples/published-sample-frozen-field.ts`), which adds only the hierarchy-level suffix stripping and the frozen depths from `frozenHierarchyDepths`.
+- `SampleForm` feeds it to the form kit's `FieldDisabledProvider`.
+- No control decides for itself that publication freezes it: a kit field control resolves it through `useFieldDisabled`, and a control with no field context (the collection-date mode switch) asks `useIsFieldDisabled()` for the field it follows.
+- Freeze a new control by listing its field name in `publishedSampleFrozenField`, never with a published flag of its own.
+- In the sample form `disabled` means frozen by publication and nothing else; a field waiting on a sibling is not rendered (see forms.md).
 
 ## File layout
 
-One folder per entity, one concern per file, kebab-case folder. No barrel/index.
+One folder per entity, one concern per file, kebab-case folder, no barrel/index.
 
 `domain` (callers import the subpath, `@projet-igsn/domain/<entity>/model`):
 
 - `<entity>/model.ts`: domain model (Zod schema + inferred type).
 - `<entity>/repository.ts`: repository / service interface that `api` implements.
-- `<entity>/<model>-validator.ts`: request validators shared by more than one
-  package (e.g. `sample-validator.ts` holds `createSampleSchema`). `model.ts`
-  owns the persisted entity; input-shape validators live here.
-- `<entity>/<function>.ts`: shared logic that is neither a model nor a
-  repository, one function per file (e.g. `igsn/generate-igsn-suffix.ts` holds
-  `generateIgsnSuffix`).
-
-Relative imports inside `domain` MUST carry the explicit `.ts` extension
-(`./model.ts`), since `api` resolves this source under `nodenext` and Node's
-ESM runtime requires it.
+- `<entity>/<model>-validator.ts`: request validators shared by more than one package (e.g. `sample-validator.ts` holds `createSampleSchema`).
+- `<entity>/<function>.ts`: one shared function per file that is neither a model nor a repository (e.g. `igsn/generate-igsn-suffix.ts`).
+- Relative imports inside `domain` MUST carry the explicit `.ts` extension, since `api` resolves this source under `nodenext`.
 
 `api` mirrors the same folder-per-entity shape:
 
 - `<entity>/repository.ts`: implements the domain interface, persistence only.
 - `<entity>/routes.ts`: Hono sub-app mounted in `app.ts`.
-- `<entity>/validator.ts`: request validators used only by `api`. Anything a
-  second package needs belongs in `domain/<entity>/<model>-validator.ts`.
+- `<entity>/validator.ts`: request validators used only by `api`, anything a second package needs going to `domain/<entity>/<model>-validator.ts`.
 
-`frontend` / `admin` keep entity code under `src/domain/<entity>/`, one concern
-per file (data fetch, react-query hook, presentational component). Routes stay in
-`src/routes/`; they wire data to the entity's components, holding no business
-logic themselves.
+`frontend` / `admin` keep entity code under `src/domain/<entity>/`, one concern per file, with routes in `src/routes/` wiring data to components and holding no business logic:
 
-Under `src/domain/<entity>/`, group by concern in subfolders:
+- `client/`: one API fetch helper per operation (the `fetch` call + response Zod parse).
+- `hook/`: one react-query file per operation, holding that operation's `queryOptions` factory and its hook.
+- Presentational components stay at the entity root (`sample-list.tsx`, `sample-view.tsx`).
 
-- `client/`: one API fetch helper per operation (the `fetch` call + response
-  Zod parse).
-- `hook/`: one react-query file per operation, holding that operation's
-  `queryOptions` factory and its hook.
-- Presentational components stay at the entity root (`sample-list.tsx`,
-  `sample-view.tsx`).
+API client naming:
 
-API client naming: the fetch function is `getXxxByYyy` / `listXxx`, its
-react-query hook is `useGetXxxByYyy` / `useListXxx`, and both files share the
-kebab-case fetch-function name (`client/get-sample-by-id.ts`,
-`hook/get-sample-by-id.ts`). One operation per hook file, never a combined
-`sample-query.ts`. Keep the `queryOptions` factory (`getXxxByYyyQueryOptions`)
-in the hook file so route loaders can prefetch; the hook wraps it for components.
+- The fetch function is `getXxxByYyy` / `listXxx`, its react-query hook `useGetXxxByYyy` / `useListXxx`.
+- Both files share the kebab-case fetch-function name (`client/get-sample-by-id.ts`, `hook/get-sample-by-id.ts`).
+- One operation per hook file, never a combined `sample-query.ts`.
+- Keep the `queryOptions` factory (`getXxxByYyyQueryOptions`) in the hook file so route loaders can prefetch.
 
 ## Decision records (ADR)
 
-Record an ADR only for a decision that is costly to reverse and constrains
-future work: a new cross-package boundary, a persistence or auth model, a
-public contract, a tradeoff where the rejected option was reasonable. Skip it
-for routine choices that follow existing patterns, are local to one file, or are
-cheap to change later. When in doubt, no ADR; a rule or code comment is enough.
+Record an ADR only for a decision costly to reverse that constrains future work: a new cross-package boundary, a persistence or auth model, a public contract, or a tradeoff where the rejected option was reasonable.
 
-ADRs live in `docs/adr/`, are markdown, and are named `XXXX-kebab-title.md`
-where `XXXX` is a zero-padded incrementing number (`0001-`, `0002-`...). One
-decision per file.
+- Skip it for routine choices that follow existing patterns, are local to one file, or are cheap to change later.
+- When in doubt, no ADR: a rule or code comment is enough.
+- ADRs live in `docs/adr/`, are markdown, and are named `XXXX-kebab-title.md` with a zero-padded incrementing number.
+- One decision per file.
 
 ## Zod naming
 
-Name schemas `xxxSchema` (camelCase + `Schema`). Infer the type under the
-PascalCase domain name:
+Name schemas `xxxSchema` (camelCase + `Schema`) and infer the type under the PascalCase domain name:
 
-    export const igsnSchema = z.string()/* ... */
-    export type Igsn = z.infer<typeof igsnSchema>
+```ts
+export const igsnSchema = z.string(); /* ... */
+export type Igsn = z.infer<typeof igsnSchema>;
+```

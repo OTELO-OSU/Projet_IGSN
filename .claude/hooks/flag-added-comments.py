@@ -14,8 +14,8 @@ file_path = tool_input.get("file_path", "") or ""
 if "/src/" not in file_path:
     sys.exit(0)
 
-# Specs are exempt: testing.md mandates Arrange-Act-Assert markers, so flagging
-# a test's comments fights a project rule instead of catching slop.
+# Specs are exempt: the code-quality-reviewer judges test comments against
+# testing.md, and flagging every AAA marker here drowns that signal.
 if re.search(r"\.spec\.tsx?$", file_path):
     sys.exit(0)
 
@@ -29,6 +29,9 @@ flagged = []
 for line in text.splitlines():
     s = line.strip()
     if not s:
+        continue
+    # ponytail: marks a deliberate shortcut and its ceiling, which the code cannot carry
+    if "ponytail:" in s:
         continue
     if s.startswith(("//", "/*", "*/", "{/*")) or s.startswith("* "):
         flagged.append(s)

@@ -1,29 +1,30 @@
 ---
 name: add-domain-entity
-description: Use when adding or extending a domain entity, repository/service interface, or shared domain helper in packages/domain, the source of truth shared by api and admin. Enforces flat -model.ts/-repository.ts/-helper.ts layout, schema-as-single-source-of-truth, and TDD.
+description: Use when adding or extending a domain entity, repository/service interface, or shared domain function in packages/domain, the source of truth shared by api and admin. Enforces the folder-per-entity model.ts/repository.ts layout, schema-as-single-source-of-truth, and TDD.
 ---
 
 # Add a domain entity
 
 `@projet-igsn/domain` is the single source of truth for the domain: **shared
 business logic, Zod-schema models, and the service/repository interfaces** that
-`api` implements (architecture rule). Flat files under `src/`, no sub-folders.
-Both `api` and `admin` import from here. No I/O, no DB, no HTTP lives here.
+`api` implements (architecture rule). One folder per entity under `src/`, one
+concern per file. Both `api` and `admin` import from here. No I/O, no DB, no HTTP.
 
 Follow TDD (testing rule).
 
 ## Layout
 
 ```
-packages/domain/src/<entity>/model.ts        # schema + z.infer type
-packages/domain/src/<entity>/model.spec.ts   # domain rules
-packages/domain/src/<entity>/repository.ts   # repository/service interface (api implements it)
-packages/domain/src/<entity>/helper.ts       # shared logic that is neither model nor repository
+packages/domain/src/<entity>/model.ts             # schema + z.infer type
+packages/domain/src/<entity>/model.spec.ts        # domain rules
+packages/domain/src/<entity>/repository.ts        # repository/service interface (api implements it)
+packages/domain/src/<entity>/<model>-validator.ts # request validators shared by more than one package
+packages/domain/src/<entity>/<function>.ts        # one shared function per file, named after it
 ```
 
-One folder per entity, kebab-case (`igsn/helper.ts`, `sub-sample/model.ts`). No
-barrel/index: the package exposes every file directly via its `./*` export, so
-callers import the subpath: `import { igsnSchema } from "@projet-igsn/domain/igsn/model"`.
+- One folder per entity, kebab-case, a sub-entity nesting as its own folder (`sample/age/model.ts`).
+- Shared logic that is neither a model nor a repository is one function per file named after it (`igsn/generate-igsn-suffix.ts`), never a catch-all `helper.ts`.
+- No barrel/index: callers import the subpath directly (`import { igsnSchema } from "@projet-igsn/domain/igsn/model"`).
 
 ## Workflow
 

@@ -137,10 +137,13 @@ describe("currentUser", () => {
     },
   );
 
+  // preferred_username is the Keycloak shell account's own name, which real
+  // ORCID does not fill with the iD: only identity_provider_identity carries it.
   const orcidClaims: KeycloakClaims = {
     sub: "f:orcid:0000-0002-1825-0097",
-    preferred_username: "0000-0002-1825-0097",
+    preferred_username: "e7c3a1f0-shell",
     identity_provider: "orcid",
+    identity_provider_identity: "0000-0002-1825-0097",
   };
 
   pgTest(
@@ -213,15 +216,16 @@ describe("currentUser", () => {
   );
 
   pgTest(
-    "should refuse an ORCID login without a username claim",
+    "should refuse an ORCID login without an identity_provider_identity claim",
     async ({ db }) => {
       // Arrange
-      const withoutUsername: KeycloakClaims = {
+      const withoutIdentity: KeycloakClaims = {
         sub: orcidClaims.sub,
+        preferred_username: orcidClaims.preferred_username,
         identity_provider: "orcid",
       };
       // Act
-      const res = await appWithClaims(db, withoutUsername).request("/probe");
+      const res = await appWithClaims(db, withoutIdentity).request("/probe");
       // Assert
       expect(res.status).toBe(403);
     },

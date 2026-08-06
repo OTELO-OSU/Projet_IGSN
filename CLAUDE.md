@@ -2,65 +2,48 @@
 
 ## Domain
 
-A registry assigning unique **IGSN** identifiers to **geological samples**
-(physical samples of the solid Earth, extraterestrial samples...), making them discoverable and reusable by
-researchers worldwide, including from campaigns that can no longer be run.
-
-**In scope:** physical samples of the solid Earth, future samples.
-**Out of scope:** other domains (fauna, flora, archaeology...), past samples.
-
-- **IGSN** (International Generic Sample Number): standardized international code
-  that uniquely and durably identifies a sample.
-- **Sub-sample**: part of a sample transformed for analysis (broken, powdered,
-  cut into thin sections...), itself re-transformable (1 to 3 levels typical, up
-  to ~10). Part of the original is always preserved.
+- A registry assigning unique **IGSN** identifiers to **geological samples**, making them discoverable and reusable worldwide.
+- **IGSN** (International Generic Sample Number): standardized code uniquely and durably identifying a sample.
+- In scope: future physical samples of the solid Earth, extraterrestrial ones included.
+- Out of scope: other domains (fauna, flora, archaeology...), past samples.
+- **Sub-sample**: part of a sample transformed for analysis (broken, powdered, cut into thin sections...), itself re-transformable (1 to 3 levels typical, up to ~10).
+- Part of the original is always preserved.
 
 ## Personas
 
 - **Reader** (unauthenticated): browses, filters, and searches published samples.
-- **Authenticated user**: declares samples, with a per-sample role:
-  - _Contributor_: enters sample info during declaration; invites others.
-  - _Editor_: validates declarations and edits info after validation.
+- **Contributor**: enters sample info during declaration, and invites others.
+- **Editor**: validates declarations and edits info after validation.
+- Contributor and Editor are per-sample roles of an authenticated user.
 - **Admin**: moderates users and declared information.
-
-Primary persona is the researcher: tool-fatigued and change-averse, so the
-product must be easy to adopt.
+- Target the researcher: tool-fatigued and change-averse, so adoption must be easy.
 
 ## Packages
 
-- `domain`: shared business logic and contracts (domain models, IGSN validation,
-  service/repository interfaces). No I/O; consumed by all other packages.
-- `design-system`: shared UI (shadcn/ui components, styles, shadcn config).
-  shadcn components MUST be added here, never in an app. Consumed by `frontend`
-  and `admin`.
-- `frontend`: public app for unauthenticated readers (browse/search).
-- `admin`: app for authenticated users (Contributor/Editor) and admins.
-- `api`: backend API holding all business domain logic; `frontend` and `admin`
-  use it for CRUD.
+- `domain`: shared business logic and contracts (models, IGSN validation, service/repository interfaces), with no I/O.
+- `design-system`: shared UI for `frontend` and `admin` (shadcn/ui components, styles, shadcn config).
+- Add shadcn components to `design-system`, never to an app.
+- `frontend`: public app for unauthenticated readers.
+- `admin`: app for Contributors, Editors, and admins.
+- `api`: backend holding the trust boundary and every implementation, called by `frontend` and `admin` for CRUD.
 
 ## Practices
 
-Use the `ponytail` skill: prefer the laziest solution that works (YAGNI, stdlib
-and native features before dependencies, shortest correct diff, keep code minimal).
-
-Use Context7 to read a package's docs before using or configuring it, rather
-than relying on memory.
-
-To change the sample declaration form (add a selector value, a characteristic,
-or a display condition), use the `add-sample-vocabulary` skill for vocabulary
-values and the `add-domain-entity` / `add-admin-component` skills for fields.
+- Use the `ponytail` skill: the laziest solution that works (YAGNI, stdlib and native before dependencies, shortest correct diff).
+- Read a package's docs with Context7 before using or configuring it, never from memory.
+- Add a sample vocabulary value with the `add-sample-vocabulary` skill.
+- Add a sample form field with the `add-domain-entity` then `add-admin-component` skills.
 
 ## Commands
 
-pnpm monorepo (packages in `packages/`). Prefer `pnpm <script>` so you can append
-files or args (`pnpm test path/to/file`, `pnpm lint:check --quiet`). The
-`makefile` wraps common ones (`make install`, `make dev`, `make lint`, `make test`).
-
-- `pnpm test`: run tests headless (`pnpm test:browser` interactive, `pnpm test:watch` watch)
-- `pnpm test --project @projet-igsn/<project>`: run a single project's tests
-- `pnpm lint:apply` / `pnpm lint:check`: lint with/without writing fixes
-- `pnpm fmt:apply` / `pnpm fmt:check`: format with/without writing fixes
-- `make dev`: run the stack via `docker-compose.dev.yml` (watch + build)
+- pnpm monorepo, packages in `packages/`, wrapped by the `makefile` (`make install`, `make dev`, `make lint`, `make test`).
+- Prefer `pnpm <script>`, so you can append files or args (`pnpm test path/to/file`, `pnpm lint:check --quiet`).
+- `pnpm test`: tests headless (`test:browser` interactive, `test:watch` watch).
+- `pnpm test --project @projet-igsn/<project>`: one project's tests.
+- `pnpm lint:apply` / `lint:check`: lint with/without writing fixes.
+- `pnpm fmt:apply` / `fmt:check`: format with/without writing fixes.
+- `make dev`: run the stack via `docker-compose.dev.yml` (watch + build).
+- `make test-e2e`: throwaway prod stack + Playwright e2e, torn down after.
 
 ## Services (dev)
 

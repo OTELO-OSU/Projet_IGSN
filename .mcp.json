@@ -1,9 +1,5 @@
 {
   "mcpServers": {
-    "test-warden": {
-      "command": "npx",
-      "args": ["-y", "test-warden"]
-    },
     "playwright": {
       "command": "pnpm",
       "args": ["dlx", "@playwright/mcp@catalog:"]
