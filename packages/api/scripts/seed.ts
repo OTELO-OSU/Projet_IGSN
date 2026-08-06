@@ -22,6 +22,7 @@ type SeedUser = {
   email: string;
   name: string;
   firstname: string;
+  orcid?: string;
 };
 
 export const researcherKeySchema = z.enum([
@@ -46,6 +47,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     email: "marie.dupont@univ-lorraine.fr",
     name: "Dupont",
     firstname: "Marie",
+    orcid: "0000-0001-5109-3700",
   },
   jean: {
     id: "01980e2d-6f9b-7000-8000-000000000002",
