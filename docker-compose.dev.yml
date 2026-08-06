@@ -211,9 +211,9 @@ services:
       # How many files a sample may carry; the admin bundle must agree
       # (VITE_UPLOAD_LIMIT).
       UPLOAD_LIMIT: "5"
-      # Where a future sender will post mail; no code reads these yet. No
-      # SMTP_USER/SMTP_PASSWORD, unlike preprod: maildev takes anonymous SMTP,
-      # and inventing dev credentials would only be parity theatre.
+      # Where the api posts mail, read at boot. No SMTP_USER/SMTP_PASSWORD,
+      # unlike preprod: maildev takes anonymous SMTP, and inventing dev
+      # credentials would only be parity theatre.
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost

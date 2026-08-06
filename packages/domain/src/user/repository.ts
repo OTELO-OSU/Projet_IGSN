@@ -12,6 +12,10 @@ import type {
 // part of the input either.
 export type UpsertUser = Omit<User, "id" | "orcid" | "status" | "superAdmin">;
 
+export type PendingUser = Pick<User, "email" | "name" | "firstname"> & {
+  createdAt: Date;
+};
+
 export type UserRepository = {
   upsert(input: UpsertUser): Promise<User>;
   // No query browses everyone. `callerId` comes from the token, never from
@@ -25,6 +29,8 @@ export type UserRepository = {
   // paginated server-side.
   list(query: ListUsersQuery): Promise<{ data: User[]; total: number }>;
   get(id: string): Promise<User | null>;
+  listPending(): Promise<PendingUser[]>;
+  listSuperAdminEmails(): Promise<string[]>;
   setStatus(id: string, status: UserDecision): Promise<User | null>;
 };
 

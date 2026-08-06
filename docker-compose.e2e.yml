@@ -77,8 +77,8 @@ services:
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
       # Same, for the attachment cap the admin bundle bakes in.
       UPLOAD_LIMIT: "5"
-      # Same names as dev; no code reads them yet. No SMTP_USER/SMTP_PASSWORD,
-      # unlike preprod: maildev takes anonymous SMTP.
+      # Same names as dev, read at boot by the mail sender. No
+      # SMTP_USER/SMTP_PASSWORD, unlike preprod: maildev takes anonymous SMTP.
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost
