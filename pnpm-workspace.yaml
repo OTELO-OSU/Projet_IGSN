@@ -73,6 +73,8 @@ catalog:
   zod: ^4.4.3
   sonner: ^2.0.7
   croner: ^10.0.1
+  mjml: 5.4.0
+  "@types/mjml": ^5.0.0
 
 catalogMode: strict
 
@@ -86,3 +88,6 @@ trustPolicy: no-downgrade
 
 trustPolicyExclude:
   - semver@6.3.1
+  - mjml@5.4.0
+  - mjml-cli@5.4.0
+  - chokidar@4.0.3

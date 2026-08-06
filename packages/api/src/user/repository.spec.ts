@@ -575,6 +575,10 @@ describe("createUserRepository", () => {
   });
 
   pgTest("should list the super admins' emails", async ({ db }) => {
+    await insertUser(db, "zoe@univ-lorraine.fr", {
+      status: "accepted",
+      superAdmin: true,
+    });
     await insertUser(db, "admin@univ-lorraine.fr", {
       status: "accepted",
       superAdmin: true,
@@ -583,6 +587,6 @@ describe("createUserRepository", () => {
 
     const emails = await createUserRepository(db).listSuperAdminEmails();
 
-    expect(emails).toEqual(["admin@univ-lorraine.fr"]);
+    expect(emails).toEqual(["admin@univ-lorraine.fr", "zoe@univ-lorraine.fr"]);
   });
 });

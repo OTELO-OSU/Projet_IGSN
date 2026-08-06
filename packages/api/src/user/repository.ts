@@ -83,6 +83,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .select(["email", "name", "firstname", "created_at as createdAt"])
           .where("status", "=", "pending")
           .orderBy("created_at", "asc")
+          .orderBy("email", "asc")
           .execute(),
       ),
     listSuperAdminEmails: () =>
@@ -91,6 +92,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .selectFrom("user")
           .select("email")
           .where("super_admin", "=", true)
+          .orderBy("email", "asc")
           .execute();
         return rows.map(({ email }) => email);
       }),

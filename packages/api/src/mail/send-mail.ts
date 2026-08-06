@@ -1,7 +1,12 @@
 import nodemailer from "nodemailer";
 import { z } from "zod";
 
-export type Mail = { to: string[]; subject: string; text: string };
+export type Mail = {
+  to: string[];
+  subject: string;
+  text: string;
+  html: string;
+};
 
 export type SendMail = (mail: Mail) => Promise<void>;
 
@@ -30,7 +35,7 @@ export function createSendMail(env: NodeJS.ProcessEnv = process.env): SendMail {
       ? { user: config.user, pass: config.password }
       : undefined,
   });
-  return async ({ to, subject, text }) => {
-    await transport.sendMail({ from: config.from, to, subject, text });
+  return async ({ to, subject, text, html }) => {
+    await transport.sendMail({ from: config.from, to, subject, text, html });
   };
 }

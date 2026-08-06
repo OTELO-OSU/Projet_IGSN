@@ -7,6 +7,8 @@ import { sendPendingUsersDigest } from "./send-pending-users-digest.ts";
 
 const now = new Date("2026-08-06T12:00:00Z");
 
+const USERS_URL = "http://localhost:3001/users";
+
 describe("sendPendingUsersDigest", () => {
   pgTest(
     "should mail every super admin the accounts waiting, longest first",
@@ -31,7 +33,12 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
 
-      await sendPendingUsersDigest(createUserRepository(db), sendMail, now);
+      await sendPendingUsersDigest(
+        createUserRepository(db),
+        sendMail,
+        USERS_URL,
+        now,
+      );
 
       expect(sendMail).toHaveBeenCalledWith({
         to: ["admin@univ-lorraine.fr", "boss@univ-lorraine.fr"],
@@ -40,7 +47,12 @@ describe("sendPendingUsersDigest", () => {
 
 - Jean Martin (jean.martin@univ-lorraine.fr), waiting for 30 days
 - Marie Dupont (marie.dupont@univ-lorraine.fr), waiting for 1 day
+
+Moderate these accounts: http://localhost:3001/users
 `,
+        html: expect.stringContaining(
+          "<td>jean.martin@univ-lorraine.fr</td>",
+        ) as string,
       });
     },
   );
@@ -53,7 +65,12 @@ describe("sendPendingUsersDigest", () => {
     await insertUser(db, "researcher@univ-lorraine.fr", { status: "accepted" });
     const sendMail = vi.fn().mockResolvedValue(undefined);
 
-    await sendPendingUsersDigest(createUserRepository(db), sendMail, now);
+    await sendPendingUsersDigest(
+      createUserRepository(db),
+      sendMail,
+      USERS_URL,
+      now,
+    );
 
     expect(sendMail).not.toHaveBeenCalled();
   });
@@ -64,7 +81,12 @@ describe("sendPendingUsersDigest", () => {
       await insertUser(db, "jean.martin@univ-lorraine.fr");
       const sendMail = vi.fn().mockResolvedValue(undefined);
 
-      await sendPendingUsersDigest(createUserRepository(db), sendMail, now);
+      await sendPendingUsersDigest(
+        createUserRepository(db),
+        sendMail,
+        USERS_URL,
+        now,
+      );
 
       expect(sendMail).not.toHaveBeenCalled();
     },
@@ -82,7 +104,12 @@ describe("sendPendingUsersDigest", () => {
       const sendMail = vi.fn().mockRejectedValue(new Error("SMTP down"));
 
       await expect(
-        sendPendingUsersDigest(createUserRepository(db), sendMail, now),
+        sendPendingUsersDigest(
+          createUserRepository(db),
+          sendMail,
+          USERS_URL,
+          now,
+        ),
       ).resolves.toBeUndefined();
 
       expect(logged).toHaveBeenCalled();

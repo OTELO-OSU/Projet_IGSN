@@ -7,6 +7,7 @@ import { pendingUsersDigest } from "./pending-users-digest.ts";
 export async function sendPendingUsersDigest(
   userRepository: UserRepository,
   sendMail: SendMail,
+  usersUrl: string,
   now: Date = new Date(),
 ): Promise<void> {
   const pending = await userRepository.listPending();
@@ -15,9 +16,11 @@ export async function sendPendingUsersDigest(
   const recipients = await userRepository.listSuperAdminEmails();
   if (recipients.length === 0) return;
 
-  const { subject, text } = pendingUsersDigest(pending, now);
   try {
-    await sendMail({ to: recipients, subject, text });
+    await sendMail({
+      to: recipients,
+      ...(await pendingUsersDigest(pending, usersUrl, now)),
+    });
   } catch (error: unknown) {
     console.error("Could not mail the pending accounts digest", error);
   }

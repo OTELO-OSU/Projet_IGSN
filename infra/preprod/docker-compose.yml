@@ -60,6 +60,8 @@ services:
     environment:
       PORT: "8080"
       CORS_ORIGINS: "https://igsn-admin.${DOMAIN},https://igsn.${DOMAIN}"
+      # Where the digest mail sends a super admin to moderate; read at boot.
+      ADMIN_URL: "https://igsn-admin.${DOMAIN}"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       DATABASE_NAME: ${DATABASE_NAME}

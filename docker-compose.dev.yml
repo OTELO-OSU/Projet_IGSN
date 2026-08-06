@@ -196,6 +196,8 @@ services:
       # The only client whose tokens the api accepts (azp), same var as admin.
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
       CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
+      # Where the digest mail sends a super admin to moderate; read at boot.
+      ADMIN_URL: "http://localhost:3001"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       DATABASE_NAME: igsn
