@@ -15,6 +15,7 @@
   "dependencies": {
     "@projet-igsn/domain": "workspace:*",
     "@tanstack/react-form": "catalog:",
+    "@tanstack/react-table": "catalog:",
     "class-variance-authority": "catalog:",
     "clsx": "catalog:",
     "cmdk": "catalog:",
