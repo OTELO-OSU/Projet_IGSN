@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SessionEnd -> merge the session branch back into the source branch, then
-# remove the session worktree and its /tmp dir.
+# remove the session worktree and its /tmp dir. On merge conflict, abort the
+# merge and leave the worktree + branch in place so the user can resolve it.
 set -euo pipefail
 input=$(cat)
 sid=$(printf '%s' "$input" | jq -r '.session_id')
@@ -16,9 +17,11 @@ if [ -e "$src" ]; then
   srcbranch=""
   [ -f "$dir/_source_branch" ] && srcbranch=$(cat "$dir/_source_branch")
 
+  # Merge in whichever tree holds the source branch: cwd if it's still on it
+  # (the idle main tree), otherwise check it out in this doomed worktree.
   tree=""
   if [ -z "$srcbranch" ]; then
-    tree=""
+    tree="" # no recorded source branch: nothing safe to merge into
   elif [ "$(git -C "$cwd" branch --show-current)" = "$srcbranch" ]; then
     tree="$cwd"
   elif [ -n "$srcbranch" ] && git -C "$src" checkout "$srcbranch" >/dev/null 2>&1; then
@@ -27,6 +30,7 @@ if [ -e "$src" ]; then
 
   if [ -n "$tree" ] && [ -n "$wip" ] && git -C "$tree" merge --no-edit "$wip" >/dev/null 2>&1; then
     git -C "$cwd" worktree remove --force "$src" >/dev/null 2>&1 || true
+    git -C "$cwd" worktree prune >/dev/null 2>&1 || true
     rm -rf "$dir"
   else
     # No source branch, conflict, or nothing to merge: abort and keep the
@@ -34,13 +38,6 @@ if [ -e "$src" ]; then
     [ -n "$tree" ] && git -C "$tree" merge --abort >/dev/null 2>&1 || true
   fi
 else
-  # Drop only this session's admin entry. A blanket `git worktree prune` would
-  # also drop live sessions': parallel devcontainers share this .git but each has
-  # its own /tmp volume, so their worktree paths look missing from here.
-  # --path-format=absolute: from the main tree this prints a bare ".git", which
-  # would resolve against the hook's cwd instead of the repo.
-  common=$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir)
-  grep -lx "$src/.git" "$common/worktrees"/*/gitdir 2>/dev/null \
-    | xargs -r dirname | xargs -r rm -rf
+  git -C "$cwd" worktree prune >/dev/null 2>&1 || true
   rm -rf "$dir"
 fi

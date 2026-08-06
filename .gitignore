@@ -33,8 +33,6 @@ infra/preprod/certs/
 **/.vitest-attachments
 
 .devcontainer/.mnt-*/*
-
-/worktrees
 !.devcontainer/.mnt-*/.gitkeep
 .pnpm-store
 .ms-playwright

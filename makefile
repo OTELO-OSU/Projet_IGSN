@@ -1,7 +1,8 @@
 default: help
 
 # The e2e stack: prod-built apps + auth stack on shifted ports (own compose
-# project so it runs beside `make dev`).
+# project so it runs beside `make dev`). Bring it up, wait until it answers, and
+# tear it down (incl. the throwaway pg volume) when the calling recipe exits.
 E2E_COMPOSE = docker compose -p igsn-e2e -f docker-compose.e2e.yml
 E2E_URL = ADMIN_URL=http://localhost:4001 FRONTEND_URL=http://localhost:4000
 E2E_UP = trap '$(E2E_COMPOSE) down -v' EXIT; \
@@ -15,19 +16,6 @@ help:									## Show this help
 install:								## Install dependencies
 	@pnpm install
 	@pnpm exec playwright install
-
-# Worktrees always land in worktrees/, because .devcontainer/worktree derives the
-# repo root from that fixed depth (../..) to keep git working in the container.
-WT = worktrees/$(subst /,-,$(BRANCH))
-create-worktree:							## Create worktrees/<branch> for BRANCH=<name>, branching if it is new
-	@test -n "$(BRANCH)" || { echo "usage: make create-worktree BRANCH=feat/my-thing"; exit 1; }
-	@if git show-ref --verify --quiet refs/heads/$(BRANCH); then \
-		git worktree add $(WT) $(BRANCH); \
-	else \
-		git worktree add $(WT) -b $(BRANCH); \
-	fi
-	@$(MAKE) -C $(WT) install
-	@printf '\nnow run: code %s   (Reopen in Container, pick "Projet IGSN (worktree)")\n' $(WT)
 
 lint: generate
 	@pnpm lint:apply
