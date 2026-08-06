@@ -10,8 +10,7 @@ export type AuthenticatedEnv = {
 
 // Resolves the caller to their local user row, creating it on first sight: there
 // is no user-management UI, so the token is the only source of accounts (ADR
-// 0019). Runs right after requireAuth, so the claims are already verified.
-// Email is the identity key; a token without one cannot own anything.
+// 0019).
 export function currentUser(
   users: UserRepository,
 ): MiddlewareHandler<AuthenticatedEnv> {
@@ -20,8 +19,8 @@ export function currentUser(
     // ORCID logins resolve strictly by the stored orcid (Keycloak brokers the
     // account with username = ORCID iD) and never reach the email upsert: a
     // broker-supplied email is user-controlled, so upserting by it would hand
-    // over the matching account (ADR 0020). Unlinked ORCIDs get no account.
-    if (claims.identity_provider === "orcid") {
+    // over the matching account (ADR 0020).
+    if (claims.identity_provider?.toLowerCase() === "orcid") {
       const user = claims.preferred_username
         ? await users.findByOrcid(claims.preferred_username)
         : undefined;

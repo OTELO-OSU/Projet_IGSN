@@ -19,13 +19,22 @@ login.
 
 ## Federated login (Shibboleth + ORCID)
 
-Users don't self-register. They sign in through one of two brokered identity providers,
-and Keycloak provisions the account on first login (first-broker-login):
+Users don't self-register. The app has a single sign-in button that lands on
+Keycloak's login page, where the user picks a brokered identity provider (the
+SSO owns that list, so the app sends no `kc_idp_hint`; the real GaiaData SSO
+offers different providers than the mock realm). Keycloak provisions the
+account on first login (first-broker-login):
 
 | Provider    | Keycloak broker | Dev IdP                                | Prod IdP                     |
 | ----------- | --------------- | -------------------------------------- | ---------------------------- |
 | Institution | SAML            | SimpleSAMLphp at http://localhost:8081 | RENATER / eduGAIN Shibboleth |
 | ORCID       | OIDC            | Mock `mock-orcid` Keycloak realm       | ORCID production             |
+
+The broker alias reaches the app in the `identity_provider` claim, and its case
+differs per environment (`orcid` on the mock realm, `ORCID` on GaiaData), so the
+admin gate and the api both match it case-insensitively. The api's match is what
+keeps an ORCID session off the email upsert (ADR 0020), so a case-sensitive
+comparison there would hand over the account matching the token's email.
 
 Both dev IdPs are faked locally, so dev and CI need no external accounts. The app only
 ever talks to Keycloak, never to RENATER/ORCID directly, so the same build runs in every

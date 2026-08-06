@@ -75,7 +75,7 @@
   "identityProviders": [
     {
       "alias": "shibboleth",
-      "displayName": "Institution (Shibboleth)",
+      "displayName": "eduGAIN",
       "providerId": "saml",
       "enabled": true,
       "trustEmail": true,

@@ -3,6 +3,15 @@
   "enabled": true,
   "sslRequired": "none",
   "displayName": "Mock ORCID (dev only)",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["en"],
+  "defaultLocale": "en",
+  "localizationTexts": {
+    "en": {
+      "usernameOrEmail": "ORCID iD",
+      "username": "ORCID iD"
+    }
+  },
   "clients": [
     {
       "clientId": "igsn-broker",

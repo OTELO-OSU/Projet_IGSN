@@ -1,11 +1,11 @@
 import { type Page } from "@playwright/test";
 
 import { adminPage } from "./admin.page";
+import { keycloakLoginPage } from "./keycloak-login.page";
 import { keycloakProfilePage } from "./keycloak-profile.page";
 import { shibbolethLoginPage } from "./shibboleth-login.page";
 
-// A SAML researcher from the mock IdP (see saml-idp/authsources.php). Login and
-// email are firstname.lastname@univ-lorraine.fr.
+// A SAML researcher from the mock IdP (see saml-idp/authsources.php).
 export type Researcher = { username: string; email: string };
 
 // Each parallel test signs in as a distinct researcher: concurrent
@@ -21,17 +21,14 @@ export const RESEARCHERS = {
     username: "camille.petit",
     email: "camille.petit@univ-lorraine.fr",
   },
-  // Owns nothing: every seed row names another researcher as its owner, so luc
-  // sees the registry as a researcher who has declared nothing.
   luc: { username: "luc.moreau", email: "luc.moreau@univ-lorraine.fr" },
 } satisfies Record<string, Researcher>;
 
-// Shared entry point for the sample journeys: a researcher signs in through their
-// institution and lands in the app. See auth.spec.ts for the flow under test.
 export async function signInAsResearcher(page: Page, researcher: Researcher) {
   const admin = adminPage(page);
   await admin.goto();
-  await admin.signInWithInstitution();
+  await admin.signIn();
+  await keycloakLoginPage(page).chooseInstitution();
   await shibbolethLoginPage(page).login(researcher.username, "password");
   await keycloakProfilePage(page).completeIfShown(researcher.email);
   await admin.expectSignedIn();

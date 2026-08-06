@@ -22,6 +22,7 @@ type SeedUser = {
   email: string;
   name: string;
   firstname: string;
+  orcid?: string;
 };
 
 export const researcherKeySchema = z.enum([
@@ -34,18 +35,18 @@ export const researcherKeySchema = z.enum([
 ]);
 export type ResearcherKey = z.infer<typeof researcherKeySchema>;
 
-// The mock SAML researchers (saml-idp/authsources.php), so seeded samples have
-// owners and show up in the admin list. Ids are static v7-shaped uuids like the
-// sample ids; the api adopts these rows by email when the real account signs in
-// (see src/user/repository.ts), which is what keeps the ownership. All six get
-// a user row, but luc owns no sample anywhere: he is the researcher who signs
-// in to an empty registry (see e2e/admin/samples.spec.ts).
+// Ids are static v7-shaped uuids like the sample ids; the api adopts these rows
+// by email when the real account signs in (see src/user/repository.ts), which is
+// what keeps the ownership. All six get a user row, but luc owns no sample
+// anywhere: he is the researcher who signs in to an empty registry (see
+// e2e/admin/samples.spec.ts).
 export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   marie: {
     id: "01980e2d-6f9b-7000-8000-000000000001",
     email: "marie.dupont@univ-lorraine.fr",
     name: "Dupont",
     firstname: "Marie",
+    orcid: "0000-0001-5109-3700",
   },
   jean: {
     id: "01980e2d-6f9b-7000-8000-000000000002",
@@ -109,10 +110,6 @@ async function seedOwners(
   ) as Record<ResearcherKey, string>;
 }
 
-// Inserts the given samples (with their fixed ids), assigns each to the
-// researcher its `owner` key names, and returns the columns the E2E fixture
-// reads (see e2e/support/db.ts), owner included so specs can group by
-// researcher. Shared by the dev seed below and the E2E reset-and-seed script.
 // Inserts directly rather than via the repository, whose `create` generates a
 // fresh uuid and would discard these static ids.
 export async function seed(
@@ -225,8 +222,6 @@ export type SeedSample = z.infer<typeof seedSampleSchema>;
 // A seed row must hold the bar the API enforces on the same data: the create
 // schema for a draft, the published schema (publish blockers raised as
 // issues) for a published row, since seeding bypasses the publish flow.
-// Exported so seed.spec.ts fails the suite on drift, not just the next seed
-// run.
 export function parseSeedSample(sample: SeedSample): SeedSample {
   const parsed = seedSampleSchema.parse(sample);
   const { id: _id, igsn: _igsn, owner: _owner, published, ...create } = parsed;
@@ -242,13 +237,9 @@ export function parseSeedSample(sample: SeedSample): SeedSample {
 }
 
 // Shared seed data, reused by the E2E reset (see scripts/reset-and-seed.ts), so
-// kept English per the i18n testing rule. Ids are static (not generated) so
-// tests and future features can reference a seed row by a known id; they stay
-// sorted like the app's uuidv7 keys. Only the published rows below are visible
-// on the public frontend; the frontend detail E2E asserts the first published
-// row's nature (`hand_sample`). Run this script directly
-// (`pnpm -F @projet-igsn/api seed`) to populate the local dev database;
-// importing this module does not seed.
+// kept English per the i18n testing rule. Only the published rows below are
+// visible on the public frontend; the frontend detail E2E asserts the first
+// published row's nature (`hand_sample`).
 export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "00000000-0000-7000-8000-000000000001",
@@ -295,11 +286,6 @@ export const SEED_SAMPLES: SeedSample[] = [
     material: "rock.metamorphic",
     collectionMethod: null,
   },
-  // Published, so they show in the public frontend. Ids reused from the tests;
-  // the igsn is derived from the id, matching how publish generates it. A
-  // published row must satisfy every publish blocker (leaf material, location
-  // position, collection date...); seed() enforces it, since inserting
-  // directly bypasses the publish boundary.
   {
     id: "01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69",
     name: "Basalt 42",
