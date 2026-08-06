@@ -32,7 +32,9 @@ account on first login (first-broker-login):
 
 The broker alias reaches the app in the `identity_provider` claim, and its case
 differs per environment (`orcid` on the mock realm, `ORCID` on GaiaData), so the
-admin gate matches it case-insensitively.
+admin gate and the api both match it case-insensitively. The api's match is what
+keeps an ORCID session off the email upsert (ADR 0020), so a case-sensitive
+comparison there would hand over the account matching the token's email.
 
 Both dev IdPs are faked locally, so dev and CI need no external accounts. The app only
 ever talks to Keycloak, never to RENATER/ORCID directly, so the same build runs in every

@@ -21,7 +21,7 @@ export function currentUser(
     // account with username = ORCID iD) and never reach the email upsert: a
     // broker-supplied email is user-controlled, so upserting by it would hand
     // over the matching account (ADR 0020). Unlinked ORCIDs get no account.
-    if (claims.identity_provider === "orcid") {
+    if (claims.identity_provider?.toLowerCase() === "orcid") {
       const user = claims.preferred_username
         ? await users.findByOrcid(claims.preferred_username)
         : undefined;

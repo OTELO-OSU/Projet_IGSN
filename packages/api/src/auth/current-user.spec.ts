@@ -129,16 +129,20 @@ describe("currentUser", () => {
   // An ORCID token carrying an email (broker config drift, a future flow) must
   // never reach the email upsert: a user-controlled email matching an existing
   // account would hand that account over.
-  pgTest(
-    "should refuse an unlinked ORCID login even when its token carries an email",
-    async ({ db }) => {
+  pgTest.for(["orcid", "ORCID"])(
+    "should refuse an unlinked %j login even when its token carries an email",
+    async (identityProvider, { db }) => {
       // Arrange
       await createUserRepository(db).upsert({
         email: "jean.martin@univ-lorraine.fr",
         name: "Martin",
         firstname: "Jean",
       });
-      const withEmail: KeycloakClaims = { ...orcidClaims, email: claims.email };
+      const withEmail: KeycloakClaims = {
+        ...orcidClaims,
+        identity_provider: identityProvider,
+        email: claims.email,
+      };
       // Act
       const res = await appWithClaims(db, withEmail).request("/probe");
       // Assert
