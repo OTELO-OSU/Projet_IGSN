@@ -1,7 +1,10 @@
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { uploadSampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
-import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
+import {
+  listSamplesQuerySchema,
+  updateSampleBodySchema,
+} from "@projet-igsn/domain/sample/sample-validator";
 import { addContributorBodySchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import { validator } from "hono/validator";
 import { z } from "zod";
@@ -22,7 +25,7 @@ const igsnAttachmentParamsSchema = igsnParamSchema.extend({
 export const validateIdParam = validateUuidIdParam("Invalid sample id");
 
 // A malformed IGSN can match no sample; reject it up front rather than 500 on
-// the query. Only published samples carry an IGSN, so this is the public lookup.
+// the query.
 export const validateIgsnParam = validator("param", (value, c) => {
   const parsed = igsnParamSchema.safeParse(value);
   if (!parsed.success) {
@@ -39,20 +42,30 @@ export const validateListQuery = validator("query", (value, c) => {
   return parsed.data;
 });
 
-export const validateCreateSampleBody = validator("json", (value, c) => {
-  const parsed = createSampleSchema.safeParse(value);
-  if (!parsed.success) {
-    return c.json({ error: "Invalid sample" }, 400);
-  }
-  // The payload lists the attachments to keep and `reconcile` only keeps or
-  // drops rows, so its length bounds the sample's resulting count: capping it
-  // here blocks saving an over-limit sample, draft or published. The limit is
-  // per deployment, so publishedSampleSchema (static) cannot own this check.
-  if ((parsed.data.attachments?.length ?? 0) > uploadLimit) {
-    return c.json({ error: "Too many attachments" }, 400);
-  }
-  return parsed.data;
-});
+function sampleBodyValidator<
+  S extends typeof createSampleSchema | typeof updateSampleBodySchema,
+>(schema: S) {
+  return validator("json", (value, c) => {
+    const parsed = schema.safeParse(value);
+    if (!parsed.success) {
+      return c.json({ error: "Invalid sample" }, 400);
+    }
+    // The payload lists the attachments to keep and `reconcile` only keeps or
+    // drops rows, so its length bounds the sample's resulting count: capping it
+    // here blocks saving an over-limit sample, draft or published. The limit is
+    // per deployment, so publishedSampleSchema (static) cannot own this check.
+    if ((parsed.data.attachments?.length ?? 0) > uploadLimit) {
+      return c.json({ error: "Too many attachments" }, 400);
+    }
+    return parsed.data as z.infer<S>;
+  });
+}
+
+export const validateCreateSampleBody = sampleBodyValidator(createSampleSchema);
+
+export const validateUpdateSampleBody = sampleBodyValidator(
+  updateSampleBodySchema,
+);
 
 export const validateAddContributorBody = validator("json", (value, c) => {
   const parsed = addContributorBodySchema.safeParse(value);

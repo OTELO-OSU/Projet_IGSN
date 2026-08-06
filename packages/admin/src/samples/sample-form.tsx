@@ -99,6 +99,7 @@ type SampleFormProps = {
   // Optional: omitted means unknown, so it never blocks, the same convention
   // as attachments in samplePublishBlockers.
   publisher?: Pick<User, "status" | "superAdmin">;
+  readOnlyReason?: string;
 };
 
 export function SampleForm({
@@ -112,6 +113,7 @@ export function SampleForm({
   attachments = [],
   attachmentChanges,
   publisher,
+  readOnlyReason,
 }: SampleFormProps) {
   const roleOnSample = useUserRoleOnSample(sampleId);
   const validate = validateDraft(
@@ -119,12 +121,15 @@ export function SampleForm({
   );
   // Which fields the publication freezes, from the stored provenance status:
   // it is itself frozen, so reading the live form value would buy nothing.
-  const isFieldFrozen = published
-    ? publishedSampleFrozenField(
-        defaultValues?.scientificContext?.provenanceStatus ?? null,
-        defaultValues?.material ?? null,
-      )
-    : () => false;
+  const isReadOnly = readOnlyReason !== undefined;
+  const isFieldFrozen = isReadOnly
+    ? () => true
+    : published
+      ? publishedSampleFrozenField(
+          defaultValues?.scientificContext?.provenanceStatus ?? null,
+          defaultValues?.material ?? null,
+        )
+      : () => false;
   const defaultSubmit =
     primaryAction.kind === "submit"
       ? primaryAction.onSubmit
@@ -230,7 +235,7 @@ export function SampleForm({
           publisher,
         ).map(publishBlockerLabel);
         const button = renderButton(
-          isPending || !canSubmit || reasons.length > 0,
+          isReadOnly || isPending || !canSubmit || reasons.length > 0,
         );
         return reasons.length > 0 ? (
           <Tooltip>
@@ -291,12 +296,13 @@ export function SampleForm({
           disabled={disabled}
           sampleId={sampleId}
           published={published}
+          blockedReason={readOnlyReason}
         />
       </form.AppForm>
     );
     return published
       ? renderPublishGated(submitButton)
-      : submitButton(isPending ?? false);
+      : submitButton(isReadOnly || (isPending ?? false));
   };
 
   return (

@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 # SessionEnd -> merge the session branch back into the source branch, then
-# remove the session worktree and its /tmp dir. On merge conflict, abort the
-# merge and leave the worktree + branch in place so the user can resolve it.
+# remove the session worktree and its /tmp dir.
 set -euo pipefail
 input=$(cat)
 sid=$(printf '%s' "$input" | jq -r '.session_id')
@@ -17,8 +16,6 @@ if [ -e "$src" ]; then
   srcbranch=""
   [ -f "$dir/_source_branch" ] && srcbranch=$(cat "$dir/_source_branch")
 
-  # Merge in whichever tree holds the source branch: cwd if it's still on it
-  # (the idle main tree), otherwise check it out in this doomed worktree.
   tree=""
   if [ -z "$srcbranch" ]; then
     tree="" # no recorded source branch: nothing safe to merge into

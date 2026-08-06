@@ -2,6 +2,7 @@ import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/mod
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
@@ -19,9 +20,6 @@ import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 type SampleAttachmentsProps = {
   sampleId: string;
   attachments: SampleAttachment[];
-  // Owned by the page (via useAttachmentChanges), not this component: the tab
-  // content unmounts when hidden, and staged changes must survive tab
-  // switches. Everything staged here only reaches the server on form submit.
   changes: SampleAttachmentChanges;
 };
 
@@ -49,7 +47,6 @@ function RowAction({ icon: Icon, label, onClick, disabled }: RowActionProps) {
 
 type AttachmentRowLayoutProps = {
   name: string;
-  // Rendered inside the name cell so staged and saved rows keep one layout.
   badge?: ReactNode;
   status?: string;
   actions: ReactNode;
@@ -69,6 +66,9 @@ function AttachmentRowLayout({
   isStruck,
   description,
 }: AttachmentRowLayoutProps) {
+  // The description is persisted with the sample, so a read-only page must not
+  // take an edit the disabled submit would silently drop.
+  const isDisabled = useIsFieldDisabled("links");
   return (
     <li className="grid gap-2">
       <div className="flex items-center gap-2">
@@ -93,6 +93,7 @@ function AttachmentRowLayout({
           <Textarea
             id={description.id}
             value={description.value}
+            disabled={isDisabled}
             aria-label={m.attachment_description({ name })}
             onChange={(event) => description.onChange(event.target.value)}
           />
@@ -108,12 +109,12 @@ type AttachmentRowProps = {
   changes: SampleAttachmentChanges;
 };
 
-// One saved attachment: name, editable description, download, delete. Edits
-// and deletion are staged in `changes` (applied on submit), so delete is a
-// reversible mark with a restore button, not an immediate call.
 function AttachmentRow({ sampleId, attachment, changes }: AttachmentRowProps) {
   const download = useDownloadAttachment(sampleId);
   const isMarkedForDeletion = changes.deletions.includes(attachment.id);
+  // Attachments are no form field, so they follow the links field's rule: a
+  // read-only page still downloads, it just changes nothing.
+  const isDisabled = useIsFieldDisabled("links");
 
   return (
     <AttachmentRowLayout
@@ -127,6 +128,7 @@ function AttachmentRow({ sampleId, attachment, changes }: AttachmentRowProps) {
           <RowAction
             icon={Undo2}
             label={m.action_restore_attachment({ name: attachment.name })}
+            disabled={isDisabled}
             onClick={() => changes.restore(attachment.id)}
           />
         ) : (
@@ -139,6 +141,7 @@ function AttachmentRow({ sampleId, attachment, changes }: AttachmentRowProps) {
             <RowAction
               icon={Trash2}
               label={m.action_delete_attachment({ name: attachment.name })}
+              disabled={isDisabled}
               onClick={() => changes.markDelete(attachment.id)}
             />
           </>
@@ -160,19 +163,19 @@ function AttachmentRow({ sampleId, attachment, changes }: AttachmentRowProps) {
   );
 }
 
-// The attached-files section of the Links tab: a multi-file drop zone, the
-// staged files awaiting the form submit (upload progress shows in
-// SampleAttachmentUploadDialog), then the saved attachments.
 export function SampleAttachments({
   sampleId,
   attachments,
   changes,
 }: SampleAttachmentsProps) {
   const { pending, addFiles, removeFile, setPendingDescription } = changes;
+  const isDisabled = useIsFieldDisabled("links");
 
   return (
     <FormSection title={m.section_attachments()}>
-      <AttachmentDropZone onFiles={addFiles} />
+      {/* Hidden, not disabled: the zone is a div with onDrop, which neither
+          `disabled` nor a fieldset can stop. */}
+      {isDisabled ? null : <AttachmentDropZone onFiles={addFiles} />}
       <p
         className={cn(
           "text-sm",
@@ -211,6 +214,7 @@ export function SampleAttachments({
                     label={m.action_remove_attachment({
                       name: staged.file.name,
                     })}
+                    disabled={isDisabled}
                     onClick={() => removeFile(staged.key)}
                   />
                 </>

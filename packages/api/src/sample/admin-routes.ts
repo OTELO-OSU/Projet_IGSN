@@ -1,4 +1,8 @@
 import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
+import type {
+  SampleEditLockResponse,
+  SampleLocked,
+} from "@projet-igsn/domain/sample/edit-lock";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   AdminListSamplesResponse,
@@ -20,6 +24,7 @@ import type { SampleAccessEnv } from "./require-sample-access.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { attachmentDownload } from "./attachment-download.ts";
+import { requireEditLock } from "./require-edit-lock.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
@@ -29,25 +34,22 @@ import {
   validateCreateSampleBody,
   validateIdParam,
   validateListQuery,
+  validateUpdateSampleBody,
 } from "./validator.ts";
 
-// Full sample CRUD for the admin app. Authentication is enforced once by the
-// requireAuth guard on the /admin mount (see app.ts), which also resolves the
-// caller with currentUser, so no per-route authentication guard here.
-// Authorization is per sample and role-based: a user only reaches a sample they
-// own or contribute to (ADR 0019), through the owner-scoped list and the
-// requireSampleAccess guard below.
+// Authentication is enforced once by the requireAuth guard on the /admin mount
+// (see app.ts), so no per-route authentication guard here.
 export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
   userSampleRepository: UserSampleRepository,
 ) {
-  // Guards every route naming a sample id and hands it the sample it fetched
-  // plus the caller's role on it: present means they have a role (200), absent
-  // means no such sample (404), and a sample they have no role on never reaches
-  // the route (403). Registered before those routes below, since Hono runs
-  // handlers in registration order.
+  // Registered before those routes below, since Hono runs handlers in
+  // registration order.
   const accessibleSample = requireSampleAccess(repository);
+  // Mounted on the writes only, never on the /lock routes below: claiming or
+  // releasing a lock must work whoever holds it.
+  const unlockedSample = requireEditLock(repository);
 
   return (
     new Hono<SampleAccessEnv>()
@@ -127,44 +129,114 @@ export function createSampleAdminRoutes(
           return c.body(null, 204);
         },
       )
-      .put("/:id", validateIdParam, validateCreateSampleBody, async (c) => {
-        const id = c.req.valid("param").id;
-        const current = c.get("sample");
-        if (!current) {
-          return c.json({ error: "Not found" }, 404);
-        }
-        if (!canUpdateSample(c.get("role"), current)) {
-          return c.json({ error: "Forbidden" }, 403);
-        }
-        const toPersist = current.published
-          ? mergePublishedEdit(current, c.req.valid("json"))
-          : c.req.valid("json");
-        // A published sample must stay publishable, but only against blockers it
-        // did not already have: reject an edit that INTRODUCES a new publish
-        // blocker, while still letting an already-broken sample be edited on its
-        // editable fields. The attachment count is capped by the body validator,
-        // so both sides ignore it. Same get/write race note as publish below.
-        if (current.published) {
-          const existing = samplePublishBlockers(toPublishableFields(current));
-          const after = samplePublishBlockers(toPublishableFields(toPersist));
-          if (after.some((blocker) => !existing.includes(blocker))) {
-            return c.json(
-              { error: "Update would make the published sample unpublishable" },
-              409,
-            );
-          }
-        }
-        // Attachment metadata rides the sample payload, reconciled wholesale
-        // like links; the content itself was uploaded beforehand through the
-        // attachment routes, so an unlisted attachment is deleted here.
-        await attachmentsRepository.reconcile(id, toPersist.attachments ?? []);
-        const sample = await repository.update(id, toPersist);
+      // The edit page calls it on open and on a timer, so it must be
+      // idempotent.
+      .put("/:id/lock", validateIdParam, async (c) => {
+        const sample = c.get("sample");
         if (!sample) {
           return c.json({ error: "Not found" }, 404);
         }
-        return c.json({ data: sample });
+        if (!canUpdateSample(c.get("role"), sample)) {
+          return c.json({ error: "Forbidden" }, 403);
+        }
+        const user = c.get("user");
+        const lock = await repository.acquireEditLock(
+          c.req.valid("param").id,
+          user.id,
+        );
+        if (!lock) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (lock.userId !== user.id) {
+          const locked: SampleLocked = {
+            error: "Sample is being edited by another collaborator",
+            reason: "locked",
+            lock,
+          };
+          return c.json(locked, 409);
+        }
+        const body: SampleEditLockResponse = { lock };
+        return c.json(body);
       })
-      .post("/:id/publish", validateIdParam, async (c) => {
+      .delete("/:id/lock", validateIdParam, async (c) => {
+        const sample = c.get("sample");
+        if (!sample) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (!canUpdateSample(c.get("role"), sample)) {
+          return c.json({ error: "Forbidden" }, 403);
+        }
+        await repository.releaseEditLock(
+          c.req.valid("param").id,
+          c.get("user").id,
+        );
+        return c.body(null, 204);
+      })
+      .put(
+        "/:id",
+        validateIdParam,
+        unlockedSample,
+        validateUpdateSampleBody,
+        async (c) => {
+          const id = c.req.valid("param").id;
+          const current = c.get("sample");
+          if (!current) {
+            return c.json({ error: "Not found" }, 404);
+          }
+          if (!canUpdateSample(c.get("role"), current)) {
+            return c.json({ error: "Forbidden" }, 403);
+          }
+          const { expectedUpdatedAt, ...input } = c.req.valid("json");
+          // Compared in JS, never as a `where updated_at = ?` predicate: the
+          // column is timestamptz(6) fed by now(), while the value that
+          // round-tripped through the client lost its microseconds to a JS Date,
+          // so a SQL equality would match zero rows and 409 every save. Both
+          // sides here came through postgres-js, which truncates to ms.
+          // Before the reconcile below: a rejected save must not have already
+          // deleted attachments.
+          // ponytail: this read and the write are not one transaction, so a
+          // few-ms window remains, the same race already accepted for publish
+          // below. The edit lock closes it in practice.
+          if (expectedUpdatedAt.getTime() !== current.updatedAt.getTime()) {
+            return c.json(
+              { error: "Sample changed since it was loaded", reason: "stale" },
+              409,
+            );
+          }
+          const toPersist = current.published
+            ? mergePublishedEdit(current, input)
+            : input;
+          // The attachment count is capped by the body validator, so both sides
+          // ignore it.
+          if (current.published) {
+            const existing = samplePublishBlockers(
+              toPublishableFields(current),
+            );
+            const after = samplePublishBlockers(toPublishableFields(toPersist));
+            if (after.some((blocker) => !existing.includes(blocker))) {
+              return c.json(
+                {
+                  error: "Update would make the published sample unpublishable",
+                  reason: "unpublishable",
+                },
+                409,
+              );
+            }
+          }
+          // The content itself was uploaded beforehand through the attachment
+          // routes, so an unlisted attachment is deleted here.
+          await attachmentsRepository.reconcile(
+            id,
+            toPersist.attachments ?? [],
+          );
+          const sample = await repository.update(id, toPersist);
+          if (!sample) {
+            return c.json({ error: "Not found" }, 404);
+          }
+          return c.json({ data: sample });
+        },
+      )
+      .post("/:id/publish", validateIdParam, unlockedSample, async (c) => {
         const id = c.req.valid("param").id;
         const sample = c.get("sample");
         if (!sample) {
@@ -173,12 +245,10 @@ export function createSampleAdminRoutes(
         if (c.get("role") !== "owner") {
           return c.json({ error: "Forbidden" }, 403);
         }
-        // A sample must be classified down to a publishable leaf material before
-        // it can be published (see samplePublishBlockers). ponytail: the guard's
-        // read and publish are separate transactions, so a concurrent change to
-        // material in between is not guarded at the DB level (no CHECK on
-        // material); acceptable for an admin-only action. Read and publish in one
-        // txn if that race matters.
+        // ponytail: the guard's read and publish are separate transactions, so a
+        // concurrent change to material in between is not guarded at the DB level
+        // (no CHECK on material); acceptable for an admin-only action. Read and
+        // publish in one txn if that race matters.
         if (!isSamplePublishable(sample, uploadLimit, c.get("user"))) {
           return c.json({ error: "Sample is not ready to publish" }, 409);
         }
@@ -188,6 +258,7 @@ export function createSampleAdminRoutes(
       .post(
         "/:id/attachments",
         validateIdParam,
+        unlockedSample,
         validateAttachmentUpload,
         async (c) => {
           const sample = c.get("sample");
@@ -199,7 +270,6 @@ export function createSampleAdminRoutes(
             c.req.valid("param").id,
             {
               name: file.name,
-              // The client may omit the type; store a neutral one over "".
               mediaType: file.type || "application/octet-stream",
               description: description ?? null,
             },
@@ -229,12 +299,12 @@ export function createSampleAdminRoutes(
           return attachmentDownload(found.attachment, found.content);
         },
       )
-      // Deletes one attachment on its own, without a sample update: the admin
-      // frees a slot here before uploading the file that replaces it, so a swap
-      // at the limit needs a single save.
+      // The admin frees a slot here before uploading the file that replaces
+      // it, so a swap at the limit needs a single save.
       .delete(
         "/:id/attachments/:attachmentId",
         validateAttachmentParams,
+        unlockedSample,
         async (c) => {
           const sample = c.get("sample");
           if (sample && !canUpdateSample(c.get("role"), sample)) {

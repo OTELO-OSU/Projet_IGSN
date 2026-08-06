@@ -1,3 +1,4 @@
+import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { useState } from "react";
@@ -15,10 +16,12 @@ const BOUND_FIELDS: (keyof AgeFormValues)[] = [
   "geologicalAgeMax",
 ];
 
-// Disabling or switching clears the hidden bounds so no stale value survives to
-// submit. The free-text lithostratigraphic unit is independent of the ICS time
-// scale, so it lives outside the toggle.
+// The free-text lithostratigraphic unit is independent of the ICS time scale,
+// so it lives outside the toggle.
 export function GeologicalAgeFormSection() {
+  // Switching either off clears the bounds, so both follow the rule of the
+  // fields they clear (the kit's escape hatch for non-field controls).
+  const isDisabled = useIsFieldDisabled("age.geologicalAgeMin");
   const form = useAgeForm();
   const values = form.state.values.age;
   const clear = (fields: (keyof AgeFormValues)[]) => {
@@ -28,7 +31,6 @@ export function GeologicalAgeFormSection() {
   const [enabled, setEnabled] = useState(() =>
     BOUND_FIELDS.some((name) => values[name]),
   );
-  // A non-range value stores min == max.
   const [mode, setMode] = useState<AgeMode>(() =>
     values.geologicalAgeMin &&
     values.geologicalAgeMin === values.geologicalAgeMax
@@ -54,6 +56,7 @@ export function GeologicalAgeFormSection() {
       action={
         <Switch
           checked={enabled}
+          disabled={isDisabled}
           onCheckedChange={toggleEnabled}
           aria-label={m.age_stratigraphic_toggle()}
         />
@@ -66,6 +69,7 @@ export function GeologicalAgeFormSection() {
             onChange={changeMode}
             idPrefix="geological-mode"
             label={m.age_geological_mode()}
+            disabled={isDisabled}
           />
 
           {mode === "range" ? (

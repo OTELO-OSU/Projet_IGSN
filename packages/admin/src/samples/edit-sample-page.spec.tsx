@@ -28,9 +28,34 @@ vi.mock("react-oidc-context", () => ({
 }));
 
 const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
+const LOCK_EXPIRY = "2026-07-01T10:15:00.000Z";
 
-// Publishing depends on it, so the page's publisher must be deterministic;
-// accepted unless a test says else.
+type LockHolder = {
+  userId: string;
+  name: string | null;
+  firstname: string | null;
+};
+
+const ME: LockHolder = {
+  userId: "3f2504e0-4f89-41d3-9a0c-0305e82c33aa",
+  name: "Dupont",
+  firstname: "Marie",
+};
+
+const PIERRE: LockHolder = {
+  userId: "3f2504e0-4f89-41d3-9a0c-0305e82c33bb",
+  name: "Martin",
+  firstname: "Pierre",
+};
+
+const ATTACHMENT: SampleAttachment = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305e82c33cc",
+  name: "data.csv",
+  mediaType: "text/csv",
+  description: null,
+};
+
+// Publishing depends on it, so the page's publisher must be deterministic.
 let callerStatus: "pending" | "accepted" = "accepted";
 let callerUnknown = false;
 let sampleFetched = false;
@@ -52,13 +77,12 @@ const overLimitAttachments: SampleAttachment[] = Array.from(
   }),
 );
 
-// Lets the page run its real save/refetch cycle without a backend. Default
-// type and material are leaves so Save & Publish starts enabled (see
+// Default type and material are leaves so Save & Publish starts enabled (see
 // samplePublishBlockers).
 function fakeApi(
   published = false,
   material: string | null = "fossil",
-  fail: "save" | "publish" | false = false,
+  fail: "save" | "publish" | "stale" | "locked" | false = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
   availability: "exists" | "no_longer_exists" = "exists",
@@ -66,7 +90,9 @@ function fakeApi(
   economic: Record<string, unknown> | null = null,
   attachments: SampleAttachment[] = [],
   role: UserSampleRole = "owner",
+  holder: LockHolder | null = null,
 ) {
+  let lockHolder = holder;
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
     attachments,
@@ -102,7 +128,27 @@ function fakeApi(
     updatedAt: "2026-07-01T10:00:00.000Z",
   };
   const calls: string[] = [];
+  const lockCalls: string[] = [];
   worker.use(
+    http.put("*/samples/:id/lock", () => {
+      lockCalls.push("PUT");
+      return lockHolder
+        ? HttpResponse.json(
+            {
+              error: "Sample is being edited by another collaborator",
+              reason: "locked",
+              lock: { ...lockHolder, expiresAt: LOCK_EXPIRY },
+            },
+            { status: 409 },
+          )
+        : HttpResponse.json({
+            lock: { ...ME, expiresAt: LOCK_EXPIRY },
+          });
+    }),
+    http.delete("*/samples/:id/lock", () => {
+      lockCalls.push("DELETE");
+      return new HttpResponse(null, { status: 204 });
+    }),
     http.get("*/admin/currentUser", async () => {
       if (callerUnknown) await new Promise(() => {});
       return HttpResponse.json({
@@ -115,8 +161,24 @@ function fakeApi(
     }),
     http.put("*/samples/:id", async ({ request }) => {
       if (fail === "save") return new HttpResponse(null, { status: 500 });
+      if (fail === "stale") {
+        return HttpResponse.json(
+          { error: "Sample changed since it was loaded", reason: "stale" },
+          { status: 409 },
+        );
+      }
+      if (fail === "locked") {
+        return HttpResponse.json(
+          {
+            error: "Sample is being edited by another collaborator",
+            reason: "locked",
+            lock: { ...PIERRE, expiresAt: LOCK_EXPIRY },
+          },
+          { status: 409 },
+        );
+      }
       // The attachments payload carries {id, description} entries, not the
-      // full attachments; drop them to keep the fake sample parseable.
+      // full attachments.
       const { attachments: _attachments, ...body } = (await request.json()) as {
         attachments: unknown;
         name: string;
@@ -147,13 +209,20 @@ function fakeApi(
       () => new HttpResponse(null, { status: 204 }),
     ),
   );
-  return { id: sample.id, calls };
+  return {
+    id: sample.id,
+    calls,
+    lockCalls,
+    releaseLock: () => {
+      lockHolder = null;
+    },
+  };
 }
 
 async function renderEditPage(
   published = false,
   material: string | null = "fossil",
-  fail: "save" | "publish" | false = false,
+  fail: "save" | "publish" | "stale" | "locked" | false = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
   availability: "exists" | "no_longer_exists" = "exists",
@@ -161,8 +230,9 @@ async function renderEditPage(
   economic: Record<string, unknown> | null = null,
   attachments: SampleAttachment[] = [],
   role: UserSampleRole = "owner",
+  holder: LockHolder | null = null,
 ) {
-  const { id, calls } = fakeApi(
+  const { id, calls, lockCalls, releaseLock } = fakeApi(
     published,
     material,
     fail,
@@ -173,6 +243,7 @@ async function renderEditPage(
     economic,
     attachments,
     role,
+    holder,
   );
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -189,8 +260,31 @@ async function renderEditPage(
       </QueryClientProvider>
     </StrictMode>,
   );
-  return { screen, calls };
+  return {
+    screen,
+    calls,
+    lockCalls,
+    releaseLock,
+    // Stands in for the next poll: the interval is minutes long, and the state
+    // mapping is what matters, not the clock.
+    poll: () => queryClient.refetchQueries({ queryKey: ["sample-lock", id] }),
+  };
 }
+
+const renderEditPageLockedBy = (holder: LockHolder, published = false) =>
+  renderEditPage(
+    published,
+    "fossil",
+    false,
+    null,
+    null,
+    "exists",
+    null,
+    null,
+    [ATTACHMENT],
+    "owner",
+    holder,
+  );
 
 const renderEditPageAsContributor = (published: boolean) =>
   renderEditPage(
@@ -492,8 +586,7 @@ describe("EditSamplePage", () => {
     const save = screen.getByRole("button", { name: "Publish updates" });
 
     // The fixture is published with "Exists", so re-selecting that option clears
-    // the combobox (see Combobox), stripping the requirement: the button
-    // disables and its tooltip explains, like publish.
+    // the combobox (see Combobox), stripping the requirement.
     await screen.getByRole("tab", { name: "Physical description" }).click();
     const availability = screen.getByRole("combobox", {
       name: /availability/i,
@@ -519,8 +612,6 @@ describe("EditSamplePage", () => {
   });
 
   it("should refuse publishing a sample carrying more files than the limit", async () => {
-    // A legacy sample above the cap: nothing was grandfathered, so it must
-    // shed a file before it can be published again.
     const { screen, calls } = await renderEditPage(
       false,
       "fossil",
@@ -549,7 +640,6 @@ describe("EditSamplePage", () => {
     await screen.getByRole("button", { name: "Delete legacy-0.csv" }).click();
     await expect.element(publish).toBeEnabled();
 
-    // The noop sent nothing; back under the limit the same button saves.
     await save.click();
     await vi.waitFor(() =>
       expect(calls).toEqual(["PUT Basalte du Massif Central"]),
@@ -682,8 +772,6 @@ describe("EditSamplePage", () => {
       .getByLabelText("Browse files")
       .upload([new File(["col1\n1\n"], "data.csv", { type: "text/csv" })]);
 
-    // Staged, listed, but nothing sent yet: cancelling now would leave the
-    // server untouched.
     await expect.element(screen.getByText("data.csv")).toBeVisible();
     expect(FakeXhr.instances).toHaveLength(0);
 
@@ -691,13 +779,126 @@ describe("EditSamplePage", () => {
 
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
     expect(FakeXhr.instances[0]!.url).toContain("/attachments");
-    // The save waits for the uploads to settle.
     expect(calls).toEqual([]);
     FakeXhr.instances[0]!.finish();
     await vi.waitFor(() =>
       expect(calls).toEqual(["PUT Basalte du Massif Central"]),
     );
   });
+
+  describe("edit lock", () => {
+    it("should name the holder and disable the form when another user holds the lock", async () => {
+      const { screen } = await renderEditPageLockedBy(PIERRE, true);
+
+      await expect
+        .element(screen.getByRole("status"))
+        .toHaveTextContent("Pierre Martin");
+      await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
+      const save = screen.getByRole("button", { name: "Publish updates" });
+      await expect.element(save).toBeDisabled();
+      save.element().parentElement?.focus();
+      await expect
+        .element(screen.getByRole("tooltip"))
+        .toHaveTextContent("Pierre Martin");
+    });
+
+    it("should hold the form read-only when the lock holder has no name at all", async () => {
+      const { screen } = await renderEditPageLockedBy({
+        userId: "3f2504e0-4f89-41d3-9a0c-0305e82c33dd",
+        name: null,
+        firstname: null,
+      });
+
+      await expect
+        .element(screen.getByRole("status"))
+        .toHaveTextContent("Another collaborator is editing this sample");
+      await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
+    });
+
+    it("should become editable when a later poll returns the lock as mine", async () => {
+      const { screen, releaseLock, poll } =
+        await renderEditPageLockedBy(PIERRE);
+      await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
+
+      releaseLock();
+      await poll();
+
+      await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
+      await expect.element(screen.getByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("should let no attachment be added, deleted or described while another user holds the lock", async () => {
+      const { screen } = await renderEditPageLockedBy(PIERRE);
+      await screen.getByRole("tab", { name: "Links" }).click();
+
+      await expect
+        .element(screen.getByRole("button", { name: "Download data.csv" }))
+        .toBeEnabled();
+      await expect
+        .element(screen.getByRole("button", { name: "Delete data.csv" }))
+        .toBeDisabled();
+      await expect
+        .element(screen.getByLabelText("Description of data.csv"))
+        .toBeDisabled();
+      expect(
+        screen.getByRole("button", { name: "Browse files" }).elements(),
+      ).toHaveLength(0);
+      expect(
+        screen.getByRole("button", { name: "Add a link" }).elements(),
+      ).toHaveLength(0);
+    });
+
+    it("should release the lock when the editor leaves the page", async () => {
+      const { screen, lockCalls } = await renderEditPage();
+      await expect
+        .element(screen.getByRole("button", { name: "Cancel" }))
+        .toBeEnabled();
+
+      await screen.getByRole("button", { name: "Cancel" }).click();
+
+      await expect
+        .element(screen.getByRole("heading", { name: "Samples" }))
+        .toBeVisible();
+      await vi.waitFor(() => expect(lockCalls).toContain("DELETE"));
+    });
+
+    it("should not claim a lock for a caller who cannot update the sample", async () => {
+      const { screen, lockCalls } = await renderEditPageAsContributor(true);
+
+      await expect
+        .element(screen.getByRole("button", { name: "Publish updates" }))
+        .toBeDisabled();
+      expect(lockCalls).toEqual([]);
+    });
+
+    it("should keep the age controls editable on an unlocked published sample", async () => {
+      const { screen } = await renderEditPage(true);
+
+      await screen.getByRole("tab", { name: "Physical description" }).click();
+      await expect
+        .element(screen.getByRole("switch", { name: "Record a numeric age" }))
+        .toBeEnabled();
+    });
+  });
+
+  it.each([
+    ["locked", "Another collaborator is editing this sample"],
+    ["stale", "This sample changed since you opened it"],
+  ] as const)(
+    "should keep the typed input and hold the form read-only when the save is refused as %s",
+    async (reason, message) => {
+      const { screen } = await renderEditPage(false, "fossil", reason);
+      const name = screen.getByLabelText(/name/i);
+      await name.fill("Grès de Fontainebleau");
+      await screen.getByRole("button", { name: "Save as draft" }).click();
+
+      await expect
+        .element(screen.getByRole("alert"))
+        .toHaveTextContent(message);
+      await expect.element(name).toHaveValue("Grès de Fontainebleau");
+      await expect.element(name).toBeDisabled();
+    },
+  );
 
   it("should still save the sample when a staged upload fails", async () => {
     FakeXhr.instances = [];
@@ -708,7 +909,6 @@ describe("EditSamplePage", () => {
     await screen
       .getByLabelText("Browse files")
       .upload([new File(["col1\n1\n"], "data.csv", { type: "text/csv" })]);
-    // The upload dialog shows whatever tab is active when submitting.
     await screen.getByRole("tab", { name: "Sample classification" }).click();
     await screen.getByRole("button", { name: "Save as draft" }).click();
 

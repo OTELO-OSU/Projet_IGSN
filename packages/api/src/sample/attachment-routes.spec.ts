@@ -10,7 +10,7 @@ import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
 
 // requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization
-// header, so these tests just send (or omit) it.
+// header.
 const authHeader = { Authorization: "Bearer test-token" };
 
 const csv = new TextEncoder().encode("col1,col2\n1,2\n");
@@ -241,7 +241,7 @@ describe("admin attachment routes", () => {
   });
 
   pgTest("should delete an attachment and free its slot", async ({ db }) => {
-    // Arrange: a full sample, so the freed slot is what lets the next upload in.
+    // Arrange
     const client = await createTestApp(db);
     const sample = await createSample(client);
     const first = await uploadAttachment(client, sample.id);
@@ -256,7 +256,7 @@ describe("admin attachment routes", () => {
       { param: { id: sample.id, attachmentId: data.id } },
       { headers: authHeader },
     );
-    // Assert: gone, content included, and the sample takes a file again.
+    // Assert
     expect(res.status).toBe(204);
     const read = await client.admin.samples[":id"].$get(
       { param: { id: sample.id } },
@@ -348,6 +348,7 @@ describe("admin attachment routes", () => {
           json: {
             ...sampleBody,
             attachments: [{ id: kept.id, description: "Calibrated" }],
+            expectedUpdatedAt: sample.updatedAt,
           },
         },
         { headers: authHeader },
@@ -363,13 +364,16 @@ describe("admin attachment routes", () => {
   pgTest(
     "should remove every attachment when the sample update omits them",
     async ({ db }) => {
-      // Arrange: PUT semantics, like links.
+      // Arrange
       const client = await createTestApp(db);
       const sample = await createSample(client);
       await uploadAttachment(client, sample.id, "Raw");
       // Act
       const res = await client.admin.samples[":id"].$put(
-        { param: { id: sample.id }, json: sampleBody },
+        {
+          param: { id: sample.id },
+          json: { ...sampleBody, expectedUpdatedAt: sample.updatedAt },
+        },
         { headers: authHeader },
       );
       // Assert
@@ -490,7 +494,14 @@ describe("upload limit on save and publish", () => {
       );
       // Act
       const res = await client.admin.samples[":id"].$put(
-        { param: { id: sample.id }, json: { ...sampleBody, attachments } },
+        {
+          param: { id: sample.id },
+          json: {
+            ...sampleBody,
+            attachments,
+            expectedUpdatedAt: sample.updatedAt,
+          },
+        },
         { headers: authHeader },
       );
       // Assert: rejected before any reconcile, so the sample keeps them all.
@@ -529,6 +540,7 @@ describe("upload limit on save and publish", () => {
           json: {
             ...sampleBody,
             attachments: attachments.slice(0, DEFAULT_UPLOAD_LIMIT),
+            expectedUpdatedAt: sample.updatedAt,
           },
         },
         { headers: authHeader },
@@ -560,7 +572,7 @@ describe("public attachment download", () => {
     // Arrange
     const client = await createTestApp(db);
     const { igsn, attachmentId } = await publishWithAttachment(client);
-    // Act: no auth header, the route is public.
+    // Act
     const res = await client.samples[":igsn"].attachments[":attachmentId"].$get(
       { param: { igsn, attachmentId } },
     );

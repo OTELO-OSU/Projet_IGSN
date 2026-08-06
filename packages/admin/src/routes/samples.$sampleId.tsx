@@ -1,4 +1,10 @@
+import {
+  Alert,
+  AlertDescription,
+} from "@projet-igsn/design-system/components/ui/alert";
+import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { InfoIcon } from "lucide-react";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { FRONTEND_URL } from "#/frontend-url.ts";
@@ -7,8 +13,12 @@ import { SampleForm } from "#/samples/sample-form.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
+import { useSampleEditLock } from "#/samples/use-sample-edit-lock.ts";
 import { ForbiddenError, useSample } from "#/samples/use-sample.ts";
-import { useUpdateSample } from "#/samples/use-update-sample.ts";
+import {
+  SampleConflictError,
+  useUpdateSample,
+} from "#/samples/use-update-sample.ts";
 
 export const Route = createFileRoute("/samples/$sampleId")({
   component: EditSamplePage,
@@ -21,8 +31,12 @@ function EditSamplePage() {
   const query = useSample(sampleId);
   const updateSample = useUpdateSample(sampleId);
   const publishSample = usePublishSample(sampleId);
+  const { heldByOther } = useSampleEditLock(
+    sampleId,
+    query.data != null && canUpdateSample(query.data.role, query.data),
+  );
   // Lives here, not in the (unmounting) Links tab, so staged files survive
-  // tab switches; the form uploads them on submit.
+  // tab switches.
   const attachmentChanges = useAttachmentChanges(
     sampleId,
     query.data?.attachments.length ?? 0,
@@ -46,6 +60,21 @@ function EditSamplePage() {
 
   const isPublished = query.data.published;
   const isPending = updateSample.isPending || publishSample.isPending;
+  const conflict =
+    updateSample.error instanceof SampleConflictError
+      ? updateSample.error.reason
+      : undefined;
+  const lockedMessage = heldByOther
+    ? heldByOther.name
+      ? m.sample_locked_by({ name: heldByOther.name })
+      : m.sample_locked_by_unknown()
+    : undefined;
+  const rejection =
+    conflict === "locked"
+      ? m.edit_sample_locked()
+      : conflict === "stale"
+        ? m.edit_sample_stale()
+        : undefined;
 
   return (
     <>
@@ -64,38 +93,36 @@ function EditSamplePage() {
         <ShareSampleButton sampleId={sampleId} />
       </div>
 
+      {lockedMessage ? (
+        <div role="status">
+          <Alert role="none" variant="info">
+            <InfoIcon />
+            <AlertDescription>{lockedMessage}</AlertDescription>
+          </Alert>
+        </div>
+      ) : null}
+
+      {rejection ? (
+        <Alert variant="destructive">
+          <AlertDescription>{rejection}</AlertDescription>
+        </Alert>
+      ) : null}
+
       <SampleForm
         publisher={me.data}
-        defaultValues={{
-          name: query.data.name,
-          nature: query.data.nature,
-          type: query.data.type,
-          material: query.data.material,
-          texture: query.data.texture,
-          metamorphicFacies: query.data.metamorphicFacies,
-          collectionMethod: query.data.collectionMethod,
-          collectionMethodDescription: query.data.collectionMethodDescription,
-          specificName: query.data.specificName,
-          location: query.data.location,
-          description: query.data.description,
-          condition: query.data.condition,
-          security: query.data.security,
-          scientificContext: query.data.scientificContext,
-          availability: query.data.availability,
-          age: query.data.age,
-          links: query.data.links,
-          economicInterest: query.data.economicInterest,
-          economicInterestElements: query.data.economicInterestElements,
-          economicResourceTypePrecision:
-            query.data.economicResourceTypePrecision,
-          economicDepositName: query.data.economicDepositName,
-          economicDepositDescription: query.data.economicDepositDescription,
-        }}
+        // A rejected save must not cost the user their typing, and the form
+        // re-reads defaultValues once it is pristine (it resets itself on
+        // submit), so it is fed back what it just submitted.
+        defaultValues={
+          (updateSample.isSuccess ? undefined : updateSample.variables) ??
+          query.data
+        }
         sampleId={query.data.id}
         attachments={query.data.attachments}
         attachmentChanges={attachmentChanges}
         isPending={isPending}
         published={isPublished}
+        readOnlyReason={lockedMessage ?? rejection}
         onCancel={() => navigate({ to: "/" })}
         secondaryAction={{
           kind: "submit",

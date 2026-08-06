@@ -2,9 +2,27 @@ import { z } from "zod";
 
 import { userSampleRoleSchema } from "../user-sample/model.ts";
 import { userSchema } from "../user/model.ts";
-import { sampleSchema } from "./sample.ts";
+import { createSampleSchema, sampleSchema } from "./sample.ts";
 import { facetQueryFields } from "./search/facets.ts";
 import { MAX_SEARCH_LENGTH } from "./search/search-tokens.ts";
+
+// The version of the sample the client edited, so the api can refuse a save
+// built on a version someone else has replaced. Required, not optional: a
+// client free to omit an anti-data-loss guard regresses in silence.
+export const updateSampleBodySchema = createSampleSchema.extend({
+  expectedUpdatedAt: z.coerce.date(),
+});
+
+export type UpdateSampleBody = z.infer<typeof updateSampleBodySchema>;
+
+// A save can be refused for several distinct reasons, all 409: clients branch
+// on this discriminator, never on the status.
+export const sampleConflictSchema = z.object({
+  error: z.string(),
+  reason: z.enum(["stale", "unpublishable", "locked"]),
+});
+
+export type SampleConflict = z.infer<typeof sampleConflictSchema>;
 
 export const PAGE_SIZES = [10, 25, 50] as const;
 export const DEFAULT_PAGE_SIZE = 25;

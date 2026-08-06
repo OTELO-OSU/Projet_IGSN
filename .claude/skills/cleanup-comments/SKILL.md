@@ -46,7 +46,7 @@ sentence out of four is the normal outcome, not a compromise.
 **Delete, no discussion:**
 
 - Restates the code: `// increment the counter`, `// import React`
-- Section banner: `// ---- helpers ----`, `// Types`
+- Section banner: `// ---- helpers ----`, `// Types`, except `// Arrange` / `// Act` / `// Assert` in a test file, which the house style keeps
 - Narrates the change or session: `// added filter`, `// was useMemo, now derived`
 - Commented-out code, including "kept just in case"
 - TODO/FIXME with no ticket and no context

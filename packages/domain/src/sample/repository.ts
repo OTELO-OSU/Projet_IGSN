@@ -1,14 +1,11 @@
 import type { UserSampleRole } from "../user-sample/model.ts";
+import type { SampleEditLock } from "./edit-lock.ts";
 import type {
   AdminSampleListItem,
   ListSamplesQuery,
 } from "./sample-validator.ts";
 import type { CreateSample, Sample } from "./sample.ts";
 
-// The validated list query is the repository's param shape: page/perPage/sort/
-// order/search, the bbox and every facet param (see sample/search/facets.ts).
-// Reusing the inferred type keeps the repository in lockstep with the query
-// schema.
 export type ListSamplesParams = ListSamplesQuery;
 
 export type ListSamplesResult = {
@@ -42,4 +39,13 @@ export type SampleRepository = {
   create(input: CreateSample, ownerId: string): Promise<Sample>;
   update(id: string, input: CreateSample): Promise<Sample | null>;
   publish(id: string): Promise<Sample | null>;
+  // The live lock on the sample, `null` when it is free, expired, or unknown.
+  // A lock is a claim on editing, never an authorization decision: who may edit
+  // stays the role's call (see canUpdateSample).
+  getEditLock(id: string): Promise<SampleEditLock | null>;
+  // Claims the lock, or renews it when this user already holds it. Answers the
+  // resulting live lock, whose `userId` says who won.
+  acquireEditLock(id: string, userId: string): Promise<SampleEditLock | null>;
+  // Idempotent, and only ever releases this user's own claim.
+  releaseEditLock(id: string, userId: string): Promise<void>;
 };

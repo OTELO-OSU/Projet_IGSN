@@ -1,5 +1,6 @@
 import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
 
+import { sampleEditLockResponseSchema } from "@projet-igsn/domain/sample/edit-lock";
 import {
   adminListSamplesResponseSchema,
   adminSampleResponseSchema,
@@ -16,11 +17,12 @@ import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
+import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 
 // requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization
-// header, so these tests just send (or omit) it.
+// header.
 const authHeader = { Authorization: "Bearer test-token" };
 const authenticatedCallerEmail = "test-token@example.com";
 
@@ -32,6 +34,18 @@ async function postSample(
 ) {
   return app.request("/admin/samples", {
     method: "POST",
+    headers: { "content-type": "application/json", ...authHeader },
+    body: JSON.stringify(body),
+  });
+}
+
+async function putSample(
+  app: ReturnType<typeof createApp>["app"],
+  id: string,
+  body: unknown,
+) {
+  return app.request(`/admin/samples/${id}`, {
+    method: "PUT",
     headers: { "content-type": "application/json", ...authHeader },
     body: JSON.stringify(body),
   });
@@ -154,8 +168,6 @@ describe("admin sample routes", () => {
         // Arrange
         await provisionUser(db, "test-token", { status: "accepted" });
         const client = testClient(createApp(db).app);
-        // A publishable draft that is then published: admin search must still
-        // see it, unlike the public route which is published-only.
         const created = await client.admin.samples.$post(
           {
             json: {
@@ -277,6 +289,7 @@ describe("admin sample routes", () => {
           nature: "rock_powder",
           type: null,
           collectionMethod: null,
+          expectedUpdatedAt: data.updatedAt,
         },
       },
       { headers: authHeader },
@@ -290,6 +303,309 @@ describe("admin sample routes", () => {
         nature: "rock_powder",
       },
     });
+  });
+
+  describe("overwrite guard", () => {
+    const draftSample = {
+      name: "Basalte du Massif Central",
+      nature: "thin_section" as const,
+      type: null,
+      collectionMethod: null,
+    };
+
+    async function createDraft(app: ReturnType<typeof createApp>["app"]) {
+      const created = await postSample(app, draftSample);
+      return sampleResponseSchema.parse(await created.json()).data;
+    }
+
+    pgTest(
+      "should reject a save built on an older version of the sample",
+      async ({ db }) => {
+        // Arrange
+        const app = createApp(db).app;
+        const sample = await createDraft(app);
+        // Act
+        const res = await putSample(app, sample.id, {
+          ...draftSample,
+          name: "Grès de Fontainebleau",
+          expectedUpdatedAt: new Date(sample.updatedAt.getTime() - 1000),
+        });
+        // Assert
+        expect(res.status).toBe(409);
+        expect(await res.json()).toEqual({
+          error: expect.any(String),
+          reason: "stale",
+        });
+        const kept = await app.request(`/admin/samples/${sample.id}`, {
+          headers: authHeader,
+        });
+        expect(await kept.json()).toMatchObject({
+          data: { name: "Basalte du Massif Central" },
+        });
+      },
+    );
+
+    pgTest(
+      "should leave the attachments untouched when it rejects a stale save",
+      async ({ db }) => {
+        // Arrange
+        const attachmentsDir = join(
+          import.meta.dirname,
+          "..",
+          "..",
+          "attachments",
+        );
+        const app = createApp(db, { attachmentsDir }).app;
+        const sample = await createDraft(app);
+        const form = new FormData();
+        form.set(
+          "file",
+          new File([new TextEncoder().encode("a,b\n1,2\n")], "m.csv", {
+            type: "text/csv",
+          }),
+        );
+        const uploaded = await app.request(
+          `/admin/samples/${sample.id}/attachments`,
+          { method: "POST", headers: authHeader, body: form },
+        );
+        expect(uploaded.status).toBe(201);
+        // Act
+        const res = await putSample(app, sample.id, {
+          ...draftSample,
+          attachments: [],
+          expectedUpdatedAt: new Date(sample.updatedAt.getTime() - 1000),
+        });
+        // Assert
+        expect(res.status).toBe(409);
+        const kept = await app.request(`/admin/samples/${sample.id}`, {
+          headers: authHeader,
+        });
+        expect(
+          adminSampleResponseSchema.parse(await kept.json()).data.attachments,
+        ).toMatchObject([{ name: "m.csv" }]);
+      },
+    );
+
+    pgTest(
+      "should advance the version on a save and accept the next one carrying it",
+      async ({ db }) => {
+        // Arrange: an older stored version, since now() is the (single)
+        // transaction's timestamp for the whole test.
+        const app = createApp(db).app;
+        const sample = await createDraft(app);
+        const before = new Date("2026-01-01T00:00:00.000Z");
+        await db
+          .updateTable("sample")
+          .set({ updated_at: before })
+          .where("id", "=", sample.id)
+          .execute();
+        // Act
+        const first = await putSample(app, sample.id, {
+          ...draftSample,
+          name: "Grès de Fontainebleau",
+          expectedUpdatedAt: before,
+        });
+        const saved = sampleResponseSchema.parse(await first.json()).data;
+        const second = await putSample(app, sample.id, {
+          ...draftSample,
+          name: "Grès relu",
+          expectedUpdatedAt: saved.updatedAt,
+        });
+        // Assert
+        expect(first.status).toBe(200);
+        expect(saved.updatedAt.getTime()).toBeGreaterThan(before.getTime());
+        expect(second.status).toBe(200);
+      },
+    );
+
+    pgTest.for([
+      ["no expectedUpdatedAt at all", {}],
+      ["a malformed expectedUpdatedAt", { expectedUpdatedAt: "yesterday" }],
+    ] as const)("should answer 400 for %s", async ([, body], { db }) => {
+      // Arrange
+      const app = createApp(db).app;
+      const sample = await createDraft(app);
+      // Act
+      const res = await putSample(app, sample.id, { ...draftSample, ...body });
+      // Assert
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe("edit lock", () => {
+    const draftSample = {
+      name: "Basalte du Massif Central",
+      nature: "thin_section" as const,
+      type: null,
+      collectionMethod: null,
+    };
+
+    // The sample belongs to the caller, so only the lock ever refuses a write.
+    async function arrangeSample(db: Parameters<typeof createApp>[0]) {
+      await provisionUser(db, "test-token", { status: "accepted" });
+      const app = createApp(db).app;
+      const created = await postSample(app, draftSample);
+      return {
+        app,
+        sample: sampleResponseSchema.parse(await created.json()).data,
+      };
+    }
+
+    async function lockedByPierre(
+      db: Parameters<typeof createApp>[0],
+      sampleId: string,
+    ) {
+      const pierre = await insertUser(db, "pierre@univ-lorraine.fr", {
+        name: "Pierre Martin",
+      });
+      await acquireEditLock(db, sampleId, pierre.id);
+      return pierre;
+    }
+
+    const putLock = (app: ReturnType<typeof createApp>["app"], id: string) =>
+      app.request(`/admin/samples/${id}/lock`, {
+        method: "PUT",
+        headers: authHeader,
+      });
+
+    const deleteLock = (app: ReturnType<typeof createApp>["app"], id: string) =>
+      app.request(`/admin/samples/${id}/lock`, {
+        method: "DELETE",
+        headers: authHeader,
+      });
+
+    pgTest("should claim a sample nobody is editing", async ({ db }) => {
+      // Arrange
+      const { app, sample } = await arrangeSample(db);
+      // Act
+      const res = await putLock(app, sample.id);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(
+        sampleEditLockResponseSchema.parse(await res.json()).lock,
+      ).toMatchObject({ name: "User", firstname: "Test" });
+    });
+
+    pgTest(
+      "should refuse a claim on a sample another user is editing and name them",
+      async ({ db }) => {
+        // Arrange
+        const { app, sample } = await arrangeSample(db);
+        const pierre = await lockedByPierre(db, sample.id);
+        // Act
+        const res = await putLock(app, sample.id);
+        // Assert
+        expect(res.status).toBe(409);
+        expect(await res.json()).toMatchObject({
+          error: expect.any(String),
+          reason: "locked",
+          lock: { userId: pierre.id, name: "Pierre Martin" },
+        });
+      },
+    );
+
+    pgTest(
+      "should let the next claim through once the holder releases it",
+      async ({ db }) => {
+        // Arrange
+        const { app, sample } = await arrangeSample(db);
+        const claimed = await putLock(app, sample.id);
+        // Act
+        const released = await deleteLock(app, sample.id);
+        // Assert
+        const marie = await insertUser(db, "marie@univ-lorraine.fr");
+        expect(claimed.status).toBe(200);
+        expect(released.status).toBe(204);
+        expect(await acquireEditLock(db, sample.id, marie.id)).toMatchObject({
+          userId: marie.id,
+        });
+      },
+    );
+
+    pgTest.for([
+      [
+        "a save",
+        (app, id, sample) =>
+          putSample(app, id, {
+            ...draftSample,
+            expectedUpdatedAt: sample.updatedAt,
+          }),
+      ],
+      [
+        "a publish",
+        (app, id) =>
+          app.request(`/admin/samples/${id}/publish`, {
+            method: "POST",
+            headers: authHeader,
+          }),
+      ],
+      [
+        "an attachment upload",
+        (app, id) => {
+          const form = new FormData();
+          form.set("file", new File(["a,b\n"], "m.csv", { type: "text/csv" }));
+          return app.request(`/admin/samples/${id}/attachments`, {
+            method: "POST",
+            headers: authHeader,
+            body: form,
+          });
+        },
+      ],
+      [
+        "an attachment deletion",
+        (app, id) =>
+          app.request(
+            `/admin/samples/${id}/attachments/01890a5d-ac96-774b-bcce-b302099a8059`,
+            { method: "DELETE", headers: authHeader },
+          ),
+      ],
+    ] as [
+      string,
+      (
+        app: ReturnType<typeof createApp>["app"],
+        id: string,
+        sample: { updatedAt: Date },
+      ) => Promise<Response>,
+    ][])(
+      "should refuse %s while another user is editing",
+      async ([, write], { db }) => {
+        // Arrange
+        const { app, sample } = await arrangeSample(db);
+        await lockedByPierre(db, sample.id);
+        // Act
+        const res = await write(app, sample.id, sample);
+        // Assert
+        expect(res.status).toBe(409);
+        expect(await res.json()).toMatchObject({ reason: "locked" });
+      },
+    );
+
+    pgTest("should answer 404 on an unknown sample", async ({ db }) => {
+      // Act
+      const res = await putLock(
+        createApp(db).app,
+        "01890a5d-ac96-774b-bcce-b302099a8057",
+      );
+      // Assert
+      expect(res.status).toBe(404);
+    });
+
+    pgTest(
+      "should answer 403 to a user with no role on the sample",
+      async ({ db }) => {
+        // Arrange
+        const other = await insertUser(db, "other@univ-lorraine.fr");
+        const sample = await insertSample(db, draftSample);
+        await insertSampleOwner(db, sample.id, other.id);
+        const app = createApp(db).app;
+        // Act
+        const claim = await putLock(app, sample.id);
+        const release = await deleteLock(app, sample.id);
+        // Assert
+        expect(claim.status).toBe(403);
+        expect(release.status).toBe(403);
+      },
+    );
   });
 
   pgTest(
@@ -307,16 +623,19 @@ describe("admin sample routes", () => {
         { param: { id: data.id } },
         { headers: authHeader },
       );
-      // Act: try to clear the description; its collection date is a frozen leaf.
+      // Act
       const res = await client.admin.samples[":id"].$put(
         {
           param: { id: data.id },
-          json: { ...PUBLISHABLE_SAMPLE, description: null },
+          json: {
+            ...PUBLISHABLE_SAMPLE,
+            description: null,
+            expectedUpdatedAt: data.updatedAt,
+          },
         },
         { headers: authHeader },
       );
-      // Assert: the frozen collection date is preserved by the merge, so the
-      // sample stays publishable and the edit is accepted (not a 409).
+      // Assert
       expect(res.status).toBe(200);
       const kept = await client.admin.samples[":id"].$get(
         { param: { id: data.id } },
@@ -332,7 +651,12 @@ describe("admin sample routes", () => {
       const ok = await client.admin.samples[":id"].$put(
         {
           param: { id: data.id },
-          json: { ...PUBLISHABLE_SAMPLE, name: "Basalte (revu)" },
+          json: {
+            ...PUBLISHABLE_SAMPLE,
+            name: "Basalte (revu)",
+            expectedUpdatedAt: sampleResponseSchema.parse(await res.json()).data
+              .updatedAt,
+          },
         },
         { headers: authHeader },
       );
@@ -393,8 +717,7 @@ describe("admin sample routes", () => {
         // Arrange
         const client = testClient(createApp(db).app);
         const data = await createAndPublish(db, client);
-        // Act: try to change the frozen name (and the material root, frozen
-        // even though deeper levels refine) while editing an editable field.
+        // Act
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
@@ -403,6 +726,7 @@ describe("admin sample routes", () => {
               name: "Renamed basalt",
               material: "rock.igneous.plutonic",
               specificName: "MC-EDIT-1",
+              expectedUpdatedAt: data.updatedAt,
             },
           },
           { headers: authHeader },
@@ -426,7 +750,7 @@ describe("admin sample routes", () => {
         // Arrange
         const client = testClient(createApp(db).app);
         const data = await createAndPublish(db, client);
-        // Act: move the (frozen) coordinates and rename the (editable) locality.
+        // Act
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
@@ -436,6 +760,7 @@ describe("admin sample routes", () => {
                 position: { type: "point", longitude: 99, latitude: 10 },
                 localityName: "New locality",
               },
+              expectedUpdatedAt: data.updatedAt,
             },
           },
           { headers: authHeader },
@@ -478,7 +803,11 @@ describe("admin sample routes", () => {
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
-            json: { ...igneous, texture: "cumulate" },
+            json: {
+              ...igneous,
+              texture: "cumulate",
+              expectedUpdatedAt: data.updatedAt,
+            },
           },
           { headers: authHeader },
         );
@@ -505,7 +834,11 @@ describe("admin sample routes", () => {
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
-            json: { ...metamorphic, metamorphicFacies: null },
+            json: {
+              ...metamorphic,
+              metamorphicFacies: null,
+              expectedUpdatedAt: data.updatedAt,
+            },
           },
           { headers: authHeader },
         );
@@ -526,8 +859,7 @@ describe("admin sample routes", () => {
         // Arrange
         const client = testClient(createApp(db).app);
         const data = await createAndPublish(db, client, igneous);
-        // Act: another material carrying that material's own pair, which the
-        // frozen material would make invalid.
+        // Act
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
@@ -536,6 +868,7 @@ describe("admin sample routes", () => {
               material: metamorphic.material,
               texture: null,
               metamorphicFacies: "eclogite",
+              expectedUpdatedAt: data.updatedAt,
             },
           },
           { headers: authHeader },
@@ -559,12 +892,15 @@ describe("admin sample routes", () => {
         // Arrange
         const client = testClient(createApp(db).app);
         const data = await createAndPublish(db, client);
-        // Act: clear availability, a publish requirement (editable, so the merge
-        // does take the cleared value; the publishable guard then rejects).
+        // Act
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
-            json: { ...publishable, availability: null },
+            json: {
+              ...publishable,
+              availability: null,
+              expectedUpdatedAt: data.updatedAt,
+            },
           },
           { headers: authHeader },
         );
@@ -572,6 +908,7 @@ describe("admin sample routes", () => {
         expect(res.status).toBe(409);
         expect(await res.json()).toEqual({
           error: "Update would make the published sample unpublishable",
+          reason: "unpublishable",
         });
         const re = await client.admin.samples[":id"].$get(
           { param: { id: data.id } },
@@ -588,8 +925,7 @@ describe("admin sample routes", () => {
       async ({ db }) => {
         // Arrange: a published sample forced into a frozen-incomplete state (a
         // null material has no editable prefix, so it stays wholly frozen; only
-        // reachable via DB tampering or a future publish constraint). It already
-        // fails publishability on a FROZEN leaf.
+        // reachable via DB tampering or a future publish constraint).
         const client = testClient(createApp(db).app);
         const data = await createAndPublish(db, client);
         await db
@@ -597,12 +933,15 @@ describe("admin sample routes", () => {
           .set({ material: null })
           .where("id", "=", data.id)
           .execute();
-        // Act: change only an editable field. The merge keeps the frozen null
-        // material, so the update introduces no NEW blocker.
+        // Act
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
-            json: { ...publishable, availability: "no_longer_exists" },
+            json: {
+              ...publishable,
+              availability: "no_longer_exists",
+              expectedUpdatedAt: data.updatedAt,
+            },
           },
           { headers: authHeader },
         );
@@ -636,7 +975,7 @@ describe("admin sample routes", () => {
       const res = await client.admin.samples[":id"].$put(
         {
           param: { id: data.id },
-          json: { ...publishable, material },
+          json: { ...publishable, material, expectedUpdatedAt: data.updatedAt },
         },
         { headers: authHeader },
       );
@@ -655,12 +994,15 @@ describe("admin sample routes", () => {
         // Arrange
         const client = testClient(createApp(db).app);
         const data = await createAndPublish(db, client, igneous);
-        // Act: drop the rock leaf. The merge takes it (it is at the frozen
-        // prefix), so the edit introduces material_incomplete.
+        // Act
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
-            json: { ...publishable, material: "rock.igneous.plutonic.felsic" },
+            json: {
+              ...publishable,
+              material: "rock.igneous.plutonic.felsic",
+              expectedUpdatedAt: data.updatedAt,
+            },
           },
           { headers: authHeader },
         );
@@ -687,14 +1029,14 @@ describe("admin sample routes", () => {
           .set({ material: "sediment.exogenous_detritic" })
           .where("id", "=", data.id)
           .execute();
-        // Act: complete the path. The delta guard must not block an edit that
-        // FIXES a blocker.
+        // Act
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
             json: {
               ...publishable,
               material: "sediment.exogenous_detritic.sand.medium_sand",
+              expectedUpdatedAt: data.updatedAt,
             },
           },
           { headers: authHeader },
@@ -736,7 +1078,14 @@ describe("admin sample routes", () => {
         expect(up.status).toBe(201);
         // Act
         const res = await client.admin.samples[":id"].$put(
-          { param: { id: data.id }, json: { ...publishable, attachments: [] } },
+          {
+            param: { id: data.id },
+            json: {
+              ...publishable,
+              attachments: [],
+              expectedUpdatedAt: data.updatedAt,
+            },
+          },
           { headers: authHeader },
         );
         // Assert
@@ -768,7 +1117,7 @@ describe("admin sample routes", () => {
           { headers: authHeader },
         );
         const { data } = sampleResponseSchema.parse(await created.json());
-        // Act: change the name, a field that would be frozen once published.
+        // Act
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
@@ -777,6 +1126,7 @@ describe("admin sample routes", () => {
               nature: "rock_powder",
               type: null,
               collectionMethod: null,
+              expectedUpdatedAt: data.updatedAt,
             },
           },
           { headers: authHeader },
@@ -800,6 +1150,7 @@ describe("admin sample routes", () => {
           nature: "rock_powder",
           type: null,
           collectionMethod: null,
+          expectedUpdatedAt: new Date(),
         },
       },
       { headers: authHeader },
@@ -936,8 +1287,7 @@ describe("admin sample routes", () => {
     expect(res.status).toBe(200);
   });
 
-  // Publishing is public, so only a moderated-in account may do it; the reason
-  // is computed in samplePublishBlockers, the same source the form's tooltip reads.
+  // Publishing is public, so only a moderated-in account may do it.
   pgTest(
     "should answer 409 when a pending user publishes a complete draft",
     async ({ db }) => {
@@ -969,7 +1319,7 @@ describe("admin sample routes", () => {
   pgTest(
     "should answer 403 when an unverified user updates their published sample",
     async ({ db }) => {
-      // Arrange: publish while accepted, then lose the right to publish.
+      // Arrange
       const owner = await provisionUser(db, "test-token", {
         status: "accepted",
       });
@@ -992,7 +1342,11 @@ describe("admin sample routes", () => {
       const res = await client.admin.samples[":id"].$put(
         {
           param: { id: data.id },
-          json: { ...PUBLISHABLE_SAMPLE, name: "Basalte (revu)" },
+          json: {
+            ...PUBLISHABLE_SAMPLE,
+            name: "Basalte (revu)",
+            expectedUpdatedAt: data.updatedAt,
+          },
         },
         { headers: authHeader },
       );
@@ -1021,7 +1375,11 @@ describe("admin sample routes", () => {
     const res = await client.admin.samples[":id"].$put(
       {
         param: { id: data.id },
-        json: { ...PUBLISHABLE_SAMPLE, name: "Basalte (revu)" },
+        json: {
+          ...PUBLISHABLE_SAMPLE,
+          name: "Basalte (revu)",
+          expectedUpdatedAt: data.updatedAt,
+        },
       },
       { headers: authHeader },
     );
@@ -1385,6 +1743,7 @@ describe("admin sample routes", () => {
               nature: "rock_powder",
               type: null,
               collectionMethod: null,
+              expectedUpdatedAt: sample.updatedAt,
             },
           },
           { headers: authHeader },
@@ -1456,6 +1815,7 @@ describe("admin sample routes", () => {
               nature: "rock_powder",
               type: null,
               collectionMethod: null,
+              expectedUpdatedAt: sample.updatedAt,
             },
           },
           { headers: authHeader },
@@ -1568,7 +1928,6 @@ describe("admin sample routes", () => {
       },
     );
 
-    // Existence is still reported apart from ownership: an unknown id 404s.
     pgTest("should answer 403 for a sample nobody owns", async ({ db }) => {
       // Arrange
       const sample = await insertSample(db, {
@@ -1654,7 +2013,11 @@ describe("admin sample routes", () => {
         const saved = await client.admin.samples[":id"].$put(
           {
             param: { id: sample.id },
-            json: { ...draft, name: "Basalte relu" },
+            json: {
+              ...draft,
+              name: "Basalte relu",
+              expectedUpdatedAt: sample.updatedAt,
+            },
           },
           { headers: authHeader },
         );
@@ -1695,7 +2058,11 @@ describe("admin sample routes", () => {
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: sample.id },
-            json: { ...draft, name: "Basalte détourné" },
+            json: {
+              ...draft,
+              name: "Basalte détourné",
+              expectedUpdatedAt: sample.updatedAt,
+            },
           },
           { headers: authHeader },
         );
@@ -1708,6 +2075,27 @@ describe("admin sample routes", () => {
         expect(await kept.json()).toMatchObject({
           data: { name: "Basalte partagé", published: true },
         });
+      },
+    );
+
+    pgTest(
+      "should answer 403, never name the lock holder, when a contributor updates a published sample another user is editing",
+      async ({ db }) => {
+        const client = testClient(createApp(db).app);
+        const sample = await shareWithCaller(db, { published: true });
+        const pierre = await insertUser(db, "pierre@univ-lorraine.fr");
+        await acquireEditLock(db, sample.id, pierre.id);
+
+        const res = await client.admin.samples[":id"].$put(
+          {
+            param: { id: sample.id },
+            json: { ...draft, expectedUpdatedAt: sample.updatedAt },
+          },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(403);
+        expect(await res.json()).toEqual({ error: "Forbidden" });
       },
     );
 

@@ -16,12 +16,10 @@ export type AuthenticatedEnv = {
 
 // Resolves the caller to their local user row, creating it on first sight: there
 // is no user-management UI, so the token is the only source of accounts (ADR
-// 0019). Runs right after requireAuth, so the claims are already verified.
-// Email is the identity key; a token without one cannot own anything.
-// ORCID logins resolve strictly by the stored orcid (Keycloak brokers the
+// 0019). ORCID logins resolve strictly by the stored orcid (Keycloak brokers the
 // account with username = ORCID iD) and never reach the email upsert: a
 // broker-supplied email is user-controlled, so upserting by it would hand
-// over the matching account (ADR 0020). Unlinked ORCIDs get no account.
+// over the matching account (ADR 0020).
 async function resolveUser(
   users: UserRepository,
   claims: KeycloakClaims,
@@ -51,9 +49,8 @@ export function currentUser(
     if (!user) {
       return c.json({ error: "Forbidden" }, 403);
     }
-    // One guard for every authenticated route: this middleware wraps the whole
-    // /admin mount. 403 rather than 401, or the SPA would retry it as an
-    // expired session. A super admin moderates, so their status never locks them.
+    // 403 rather than 401, or the SPA would retry it as an expired session.
+    // A super admin moderates, so their status never locks them.
     if (user.status === "rejected" && !user.superAdmin) {
       return c.json({ error: "Forbidden" }, 403);
     }

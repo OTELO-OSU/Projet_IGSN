@@ -25,7 +25,18 @@ vi.mock("react-oidc-context", () => ({
 
 function fakeApi(failWrites = false) {
   let sample: Record<string, unknown> | null = null;
+  const lockCalls: string[] = [];
   worker.use(
+    // The create page must never call these; a 500 would show up as a failure
+    // if it did.
+    http.put("*/samples/:id/lock", () => {
+      lockCalls.push("PUT");
+      return new HttpResponse(null, { status: 500 });
+    }),
+    http.delete(
+      "*/samples/:id/lock",
+      () => new HttpResponse(null, { status: 204 }),
+    ),
     http.get("*/admin/currentUser", () =>
       HttpResponse.json({
         sub: "user-1",
@@ -64,10 +75,11 @@ function fakeApi(failWrites = false) {
       HttpResponse.json({ data: sample, role: "owner" }),
     ),
   );
+  return lockCalls;
 }
 
 async function renderCreatePage(failWrites = false) {
-  fakeApi(failWrites);
+  const lockCalls = fakeApi(failWrites);
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -76,13 +88,14 @@ async function renderCreatePage(failWrites = false) {
     context: { queryClient },
     history: createMemoryHistory({ initialEntries: ["/samples/create"] }),
   });
-  return render(
+  const screen = await render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>
     </StrictMode>,
   );
+  return Object.assign(screen, { lockCalls });
 }
 
 describe("CreateSamplePage", () => {
@@ -99,6 +112,15 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByLabelText(/name/i))
       .toHaveValue("Basalte du Massif Central");
+  });
+
+  it("should claim no edit lock: the sample has no id yet", async () => {
+    const screen = await renderCreatePage();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Create" }))
+      .toBeVisible();
+    expect(screen.lockCalls).toEqual([]);
   });
 
   it("should show a toast after creation", async () => {

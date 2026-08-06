@@ -8,24 +8,26 @@ import { m } from "#/paraglide/messages.js";
 
 export type AgeMode = "fixed" | "range";
 
-// Fixed/Range selector, shared by both age blocks. `idPrefix` keeps the two
-// instances' radio ids distinct; `label` names the group so assistive tech can
-// tell the two blocks' otherwise identically-labelled radios apart.
+// `label` names the group so assistive tech can tell the two blocks'
+// otherwise identically-labelled radios apart.
 export function AgeModeRadio({
   mode,
   onChange,
   idPrefix,
   label,
+  disabled,
 }: {
   mode: AgeMode;
   onChange: (mode: AgeMode) => void;
   idPrefix: string;
   label: string;
+  disabled?: boolean;
 }) {
   return (
     <RadioGroup
       aria-label={label}
       value={mode}
+      disabled={disabled}
       onValueChange={(value) => onChange(value as AgeMode)}
     >
       <div className="flex items-center gap-2">

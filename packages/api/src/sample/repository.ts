@@ -5,6 +5,8 @@ import type { DB } from "../db.ts";
 
 import { withTransaction } from "../transaction.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
+import { acquireEditLock } from "./service/acquire-edit-lock.ts";
+import { getEditLock } from "./service/get-edit-lock.ts";
 import { getPublishedSampleByIgsn } from "./service/get-published-sample-by-igsn.ts";
 import { getSample } from "./service/get-sample.ts";
 import { insertSample } from "./service/insert-sample.ts";
@@ -14,6 +16,7 @@ import {
   listSamplesAssignedTo,
 } from "./service/list-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
+import { releaseEditLock } from "./service/release-edit-lock.ts";
 import { updateSample } from "./service/update-sample.ts";
 
 export function createSampleRepository(db: Kysely<DB>): SampleRepository {
@@ -39,5 +42,10 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
     update: (id, input) =>
       withTransaction(db, (trx) => updateSample(trx, id, input)),
     publish: (id) => withTransaction(db, (trx) => publishSample(trx, id)),
+    getEditLock: (id) => withTransaction(db, (trx) => getEditLock(trx, id)),
+    acquireEditLock: (id, userId) =>
+      withTransaction(db, (trx) => acquireEditLock(trx, id, userId)),
+    releaseEditLock: (id, userId) =>
+      withTransaction(db, (trx) => releaseEditLock(trx, id, userId)),
   };
 }

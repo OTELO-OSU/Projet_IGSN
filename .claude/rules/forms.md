@@ -33,4 +33,4 @@ Values hidden by UI state (a field for the other branch of a toggle, a tab hidde
 - On save, exclude them in the compose step before validation, so a hidden value never raises a schema error the user cannot see or fix.
 - After a successful save, reset the form to the draft rebuilt from the submitted value, so dropped leftovers do not look saved.
 - Every rule that hides a field needs its matching exclusion in the compose step, or save becomes a silent noop.
-- `disabled` marks a field frozen by publication and nothing else, and its value is submitted unchanged.
+- `disabled` marks a field frozen by publication, or the whole form held read-only because another collaborator holds the edit lock or the api refused the last save as stale (ADR 0024), and its value is submitted unchanged.

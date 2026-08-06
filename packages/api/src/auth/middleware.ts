@@ -3,10 +3,9 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { jwk } from "hono/jwk";
 
-// Verify the Keycloak access token against the realm JWKS: signature, issuer, and
-// expiry (hono/jwk checks exp by default). In Docker the browser-facing issuer and
-// the URL the api reaches Keycloak on differ, so OIDC_JWKS_URI is separate from
-// OIDC_ISSUER; both default to the local dev Keycloak for non-Docker runs.
+// In Docker the browser-facing issuer and the URL the api reaches Keycloak on
+// differ, so OIDC_JWKS_URI is separate from OIDC_ISSUER; both default to the
+// local dev Keycloak for non-Docker runs.
 const issuer = process.env.OIDC_ISSUER ?? "http://localhost:8080/realms/igsn";
 const jwksUri =
   process.env.OIDC_JWKS_URI ?? `${issuer}/protocol/openid-connect/certs`;
@@ -40,8 +39,7 @@ export const requireAuth = every(
 );
 
 // given_name/family_name come from the default `profile` scope, filled by the
-// IdP attribute mappers (see keycloak/realm-igsn.json); currentUser stores them
-// as the local user's firstname/name.
+// IdP attribute mappers (see keycloak/realm-igsn.json).
 export type KeycloakClaims = {
   sub: string;
   azp?: string;

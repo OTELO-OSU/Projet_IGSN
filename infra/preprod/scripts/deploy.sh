@@ -23,6 +23,7 @@ docker build --platform linux/amd64 -f packages/admin/Dockerfile \
 	--build-arg VITE_OIDC_CLIENT_ID="formaterre-igsn" \
 	--build-arg VITE_FRONTEND_URL="https://igsn.$DOMAIN" \
 	--build-arg VITE_UPLOAD_LIMIT="${UPLOAD_LIMIT:-5}" \
+	--build-arg VITE_SAMPLE_LOCK_POLL_SECONDS="${SAMPLE_LOCK_POLL_SECONDS:-30}" \
 	-t igsn-admin:preprod .
 docker build --platform linux/amd64 -f packages/frontend/Dockerfile \
 	--build-arg VITE_API_URL="https://igsn-api.$DOMAIN" -t igsn-frontend:preprod .
@@ -37,12 +38,10 @@ trap ssh_close EXIT
 ssh $SSH_OPTS "$SSH_USER@$HOST" \
 	'cloud-init status --wait >/dev/null 2>&1 || true; until docker compose version >/dev/null 2>&1; do sleep 5; done'
 
-# 3. docker load reads the gzipped stream directly.
 docker save igsn-api:preprod igsn-admin:preprod igsn-frontend:preprod \
 	| gzip | ssh $SSH_OPTS "$SSH_USER@$HOST" 'docker load'
 
-# 4. Ship the compose file, Caddyfile, and the auth import dirs the compose bind-
-# mounts (keycloak realms + the SAML IdP users). Not the env file: you copy that.
+# Not the env file: you copy that.
 scp $SSH_OPTS infra/preprod/docker-compose.yml infra/preprod/Caddyfile "$SSH_USER@$HOST:~/"
 scp -r $SSH_OPTS keycloak saml-idp "$SSH_USER@$HOST:~/"
 

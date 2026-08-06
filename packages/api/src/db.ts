@@ -18,7 +18,6 @@ type SampleTable = {
   // Metamorphic facies (flat controlled vocabulary); null unless the material is
   // metamorphic. Not part of the material tree, so plain text.
   metamorphic_facies: string | null;
-  // Collection-method taxonomy path (e.g. "coring.gravity_corer").
   collection_method: string | null;
   collection_method_description: string | null;
   specific_name: string | null;
@@ -91,7 +90,6 @@ type SampleTable = {
   pressure_value: number | null;
   pressure_unit: string | null;
   specific_conditions: string | null;
-  // Safety hazards (like the condition, ADR 0016).
   radioactivity: boolean | null;
   radioactivity_explanation: string | null;
   asbestos_rich: boolean | null;
@@ -105,7 +103,6 @@ type SampleTable = {
   sc_research_program_name: string | null;
   sc_research_program_chief: string | null;
   sc_research_program_chief_orcid: string | null;
-  // Multi-select (the chief may belong to several structures).
   sc_research_structure: string[] | null;
   sc_collector_name: string | null;
   sc_collector_orcid: string | null;
@@ -131,6 +128,12 @@ type SampleTable = {
   published: Generated<boolean>;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
+};
+
+type SampleEditLockTable = {
+  sample_id: string;
+  user_id: string;
+  expires_at: Date;
 };
 
 // Related DOI links, one-to-many with sample (ADR 0017). Ids are app-generated
@@ -175,6 +178,7 @@ export type DB = {
   sample: SampleTable;
   sample_link: SampleLinkTable;
   sample_attachment: SampleAttachmentTable;
+  sample_edit_lock: SampleEditLockTable;
   user: UserTable;
   user_sample: UserSampleTable;
 };

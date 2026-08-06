@@ -1082,6 +1082,62 @@ describe("SampleForm", () => {
       .toHaveValue(120);
   });
 
+  it("should operate no age control on a read-only form", async () => {
+    // The toggle and the mode radio clear the age values when used, so a
+    // read-only form leaving them live would wipe what it must preserve.
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          readOnlyReason="Pierre Martin is editing this sample."
+          defaultValues={{
+            name: "Basalte du Massif Central",
+            nature: "thin_section",
+            type: null,
+            material: null,
+            collectionMethod: null,
+            collectionMethodDescription: null,
+            age: {
+              numericAgeMin: 120,
+              numericAgeMax: 120,
+              numericAgeUnit: "ma",
+              numericAgeYearsUnit: null,
+              geologicalAgeMin: 8,
+              geologicalAgeMax: 8,
+              geologicalUnit: null,
+            },
+          }}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+
+    await expect
+      .element(screen.getByRole("switch", { name: "Record a numeric age" }))
+      .toBeDisabled();
+    await expect
+      .element(
+        screen.getByRole("switch", { name: "Record a stratigraphic age" }),
+      )
+      .toBeDisabled();
+    await expect
+      .element(
+        screen
+          .getByRole("radiogroup", { name: "Numeric age entry mode" })
+          .getByRole("radio", { name: "Range (min / max)" }),
+      )
+      .toBeDisabled();
+    await expect
+      .element(
+        screen
+          .getByRole("radiogroup", { name: "Stratigraphic age entry mode" })
+          .getByRole("radio", { name: "Range (min / max)" }),
+      )
+      .toBeDisabled();
+  });
+
   it("should call onCancel when Cancel is clicked", async () => {
     const onCancel = vi.fn();
     const screen = await render(
