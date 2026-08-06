@@ -425,6 +425,7 @@ describe("public sample routes", () => {
   pgTest(
     "should filter published samples by a bbox crossing the dateline",
     async ({ db }) => {
+      await provisionUser(db, "test-token", { status: "accepted" });
       const app = createApp(db);
       const client = testClient(app);
       const inside = await createSample(client, "Fiji", "Fiji 001", {
