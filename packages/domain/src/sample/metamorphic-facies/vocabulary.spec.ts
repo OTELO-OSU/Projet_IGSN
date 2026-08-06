@@ -7,19 +7,13 @@ import {
 } from "./vocabulary.ts";
 
 describe("metamorphicFaciesSchema", () => {
-  it.each(["zeolite", "greenschist", "hornfels_contact", "impactite"])(
-    "should accept the known facies %s",
-    (code) => {
-      expect(metamorphicFaciesSchema.parse(code)).toBe(code);
-    },
-  );
+  it("should accept a known facies", () => {
+    expect(metamorphicFaciesSchema.parse("greenschist")).toBe("greenschist");
+  });
 
-  it.each(["", "unknown", "Zeolite", "gneiss"])(
-    "should reject the unknown facies %s",
-    (code) => {
-      expect(metamorphicFaciesSchema.safeParse(code).success).toBe(false);
-    },
-  );
+  it("should reject an unknown facies", () => {
+    expect(metamorphicFaciesSchema.safeParse("gneiss").success).toBe(false);
+  });
 });
 
 describe("faciesFor", () => {

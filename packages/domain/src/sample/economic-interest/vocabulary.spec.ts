@@ -8,10 +8,6 @@ import {
 } from "./vocabulary.ts";
 
 describe("economicInterestSchema", () => {
-  it.each(ECONOMIC_INTEREST_PATHS)("should accept %s", (path) => {
-    expect(economicInterestSchema.safeParse(path).success).toBe(true);
-  });
-
   it.each(["yes", "no", "unknown"])("should accept the %s answer", (answer) => {
     expect(economicInterestSchema.safeParse(answer).success).toBe(true);
   });
@@ -54,13 +50,16 @@ describe("ECONOMIC_INTEREST_PATHS", () => {
     }
   });
 
-  it.each(ECONOMIC_INTEREST_PATHS.filter((path) => path.includes(".")))(
-    "should include the parent of %s",
-    (path) => {
-      const parent = path.split(".").slice(0, -1).join(".");
-      expect(ECONOMIC_INTEREST_PATHS).toContain(parent);
-    },
-  );
+  it("should include the parent of every dotted path", () => {
+    const orphans = ECONOMIC_INTEREST_PATHS.filter(
+      (path) =>
+        path.includes(".") &&
+        !ECONOMIC_INTEREST_PATHS.includes(
+          path.split(".").slice(0, -1).join("."),
+        ),
+    );
+    expect(orphans).toEqual([]);
+  });
 });
 
 describe("ECONOMIC_INTEREST_TREE", () => {

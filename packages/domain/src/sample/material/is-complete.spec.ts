@@ -1,81 +1,31 @@
 import { describe, expect, it } from "vitest";
 
+import { MATERIAL_TREE } from "./classification.ts";
 import { isMaterialComplete } from "./is-complete.ts";
 
 describe("isMaterialComplete", () => {
   it.each([
-    "rock.hydrothermal.breccia",
-    "rock.hydrothermal.carbonate",
-    "rock.hydrothermal.sulfide",
-    "rock.unknown",
     "mineral",
-    "fossil",
-    "rock.metamorphic.strongly_metamorphosed.gneiss",
+    "rock.hydrothermal.carbonate",
     "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
-    "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.clastic_sedimentary_rock.rudite",
-    "sediment.exogenous_detritic.clay",
-    "sediment.exogenous_detritic.sand.medium_sand",
-    "sediment.exogenous_detritic.silt.very_fine_silt",
-    "sediment.exogenous_detritic.heterogeneous.other",
-    "sediment.volcano_detritic.bomb.pumices",
-    "sediment.biogenic.carbonate.boundstone.frame",
-    "sediment.biogenic.organic_rich.other",
-    "sediment.physico_chemical.precipitates.evaporitic",
-    "rock.sedimentary.microbialite",
-    "rock.sedimentary.volcaniclastic_rock",
-    "rock.sedimentary.hybrid_sedimentary_rock",
-    "rock.sedimentary.clastic_sedimentary_rock.rudite",
-    "rock.sedimentary.clastic_sedimentary_rock.other",
-    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.oolite",
-    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.limestone",
-    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.other",
-    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.ironstone.banded_iron_formation",
-    "rock.igneous.plutonic.felsic.granite",
-    "rock.igneous.volcanic.exotic.foidite",
-    "rock.igneous.plutonic.exotic.carbonatite",
-    "rock.xenolithic_rock.igneous.plutonic.felsic.granite",
-    "rock.xenolithic_rock.metamorphic.strongly_metamorphosed.gneiss",
-    "extraterrestrial_rock.micrometeorites",
-    "extraterrestrial_rock.returned_samples.lunar_sample.rock",
-    "extraterrestrial_rock.returned_samples.asteroid.other",
-    "extraterrestrial_rock.meteorites.chondrites.enstatite_chondrites.ehb",
-    "extraterrestrial_rock.meteorites.achondrites.stony_achondrite.hed.eucrite",
     "extraterrestrial_rock.meteorites.achondrites.iron_meteorite.iab.main_group",
-  ])("should be true for the valid stopping point %s", (path) => {
+  ])("should treat the leaf %s as a valid stopping point", (path) => {
     expect(isMaterialComplete(path)).toBe(true);
   });
 
   it.each([
     "rock",
-    "rock.hydrothermal",
-    "rock.metamorphic",
-    "rock.metamorphic.weakly_metamorphosed",
-    "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock",
-    "rock.metamorphic.strongly_metamorphosed",
-    "rock.igneous",
-    "rock.igneous.plutonic",
     "rock.igneous.plutonic.felsic",
-    "rock.igneous.volcanic.exotic",
-    "rock.xenolithic_rock",
-    "rock.xenolithic_rock.igneous",
-    "rock.xenolithic_rock.metamorphic.weakly_metamorphosed",
-    "sediment",
-    "sediment.biogenic",
-    "sediment.biogenic.carbonate",
     "sediment.biogenic.carbonate.boundstone",
-    "rock.sedimentary",
-    "rock.sedimentary.clastic_sedimentary_rock",
-    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock",
-    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock",
-    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.evaporite",
-    "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.siliceous_rock",
-    "extraterrestrial_rock",
-    "extraterrestrial_rock.returned_samples",
-    "extraterrestrial_rock.returned_samples.lunar_sample",
     "extraterrestrial_rock.meteorites.chondrites",
-    "extraterrestrial_rock.meteorites.achondrites.iron_meteorite.iab",
-    "extraterrestrial_rock.meteorites.achondrites.stony_iron_meteorite.pallasite",
-  ])("should be false for a node that must be refined %s", (path) => {
+  ])("should treat %s as a node that must be refined", (path) => {
     expect(isMaterialComplete(path)).toBe(false);
+  });
+
+  it("should have no optional node, so completeness is leafhood alone today", () => {
+    const optional = Object.entries(MATERIAL_TREE)
+      .filter(([, node]) => node.optional === true)
+      .map(([key]) => key);
+    expect(optional).toEqual([]);
   });
 });

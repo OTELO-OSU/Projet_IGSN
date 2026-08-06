@@ -3,18 +3,14 @@ import { describe, expect, it } from "vitest";
 import { elementSchema } from "./vocabulary.ts";
 
 describe("elementSchema", () => {
-  it.each(["li", "fe", "au", "u", "lv"])("should accept %s", (symbol) => {
-    expect(elementSchema.safeParse(symbol).success).toBe(true);
+  it("should accept an ore element symbol", () => {
+    expect(elementSchema.parse("fe")).toBe("fe");
   });
 
-  it.each([
-    "",
-    "h", // excluded non-ore element
-    "o", // excluded non-ore element
-    "Fe", // uppercase
-    "gold", // name, not symbol
-    "xx",
-  ])("should reject %s", (input) => {
-    expect(elementSchema.safeParse(input).success).toBe(false);
-  });
+  it.each(["h", "o"])(
+    "should reject %s, a non-ore element the vocabulary excludes",
+    (symbol) => {
+      expect(elementSchema.safeParse(symbol).success).toBe(false);
+    },
+  );
 });

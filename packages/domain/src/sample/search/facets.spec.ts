@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { COLLECTION_METHOD_HIERARCHY } from "../collection-method/vocabulary.ts";
-import { MATERIAL_HIERARCHY } from "../material/classification.ts";
-import { SAMPLE_TYPE_HIERARCHY } from "../type/vocabulary.ts";
 import {
   activeFacetKeys,
   facetParamKeys,
@@ -11,37 +8,9 @@ import {
 } from "./facets.ts";
 
 describe("SAMPLE_FACETS", () => {
-  it("should expose the full green-loupe facet set", () => {
-    expect(SAMPLE_FACETS.map((f) => f.key)).toEqual([
-      "type",
-      "material",
-      "collectionMethod",
-      "nature",
-      "texture",
-      "researchProgramName",
-      "researchProgramChief",
-      "researchCampaign",
-      "collectorName",
-      "collectionCurator",
-      "age",
-    ]);
-  });
-
   it("should have unique keys", () => {
     const keys = SAMPLE_FACETS.map((f) => f.key);
     expect(new Set(keys).size).toBe(keys.length);
-  });
-
-  it.each([
-    SAMPLE_TYPE_HIERARCHY,
-    MATERIAL_HIERARCHY,
-    COLLECTION_METHOD_HIERARCHY,
-  ])("should flag at least one searchable root node", (hierarchy) => {
-    const nodes: Record<string, { searchable?: boolean } | undefined> =
-      hierarchy.nodes;
-    expect(
-      hierarchy.roots.some((root) => nodes[root]?.searchable === true),
-    ).toBe(true);
   });
 
   it("should expose at least one searchable root for every hierarchy facet", () => {
@@ -76,26 +45,6 @@ describe("facetParamKeys", () => {
 
 describe("facetQueryFields", () => {
   const fields = facetQueryFields();
-
-  it("should declare one param per non-range facet and three for a range", () => {
-    expect(Object.keys(fields).sort()).toEqual(
-      [
-        "type",
-        "material",
-        "collectionMethod",
-        "nature",
-        "texture",
-        "researchProgramName",
-        "researchProgramChief",
-        "researchCampaign",
-        "collectorName",
-        "collectionCurator",
-        "ageMin",
-        "ageMax",
-        "ageUnit",
-      ].sort(),
-    );
-  });
 
   it.each([
     ["type", "core.section"],

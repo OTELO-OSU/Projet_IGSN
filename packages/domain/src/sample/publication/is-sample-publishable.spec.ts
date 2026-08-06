@@ -1,4 +1,3 @@
-import type { MaterialPath } from "../material/classification.ts";
 import type { Sample } from "../sample.ts";
 
 import { isSamplePublishable } from "./is-sample-publishable.ts";
@@ -40,78 +39,26 @@ const draft: Sample = {
 };
 
 describe("isSamplePublishable", () => {
-  it("should reject a sample with no material", () => {
-    expect(isSamplePublishable(draft)).toBe(false);
+  const publishable: Sample = {
+    ...draft,
+    material: "rock.igneous.plutonic.felsic.granite",
+  };
+
+  it("should accept a sample nothing blocks", () => {
+    expect(isSamplePublishable(publishable)).toBe(true);
   });
 
-  it("should reject a sample with no type", () => {
-    expect(
-      isSamplePublishable({
-        ...draft,
-        type: null,
-        material: "rock.igneous.plutonic.felsic.granite",
-      }),
-    ).toBe(false);
+  it("should reject a sample raising a blocker, which sample-publish-blockers owns case by case", () => {
+    expect(isSamplePublishable({ ...publishable, material: null })).toBe(false);
   });
 
-  it("should reject a sample whose material path is incomplete", () => {
-    expect(isSamplePublishable({ ...draft, material: "rock" })).toBe(false);
+  it("should pass the upload limit through to the blockers", () => {
+    const attachments = Array(4).fill({}) as Sample["attachments"];
+    expect(isSamplePublishable({ ...publishable, attachments }, 3)).toBe(false);
+    expect(isSamplePublishable({ ...publishable, attachments }, 4)).toBe(true);
   });
 
-  it("should reject a complete-material sample with no location", () => {
-    expect(
-      isSamplePublishable({
-        ...draft,
-        material: "rock.igneous.plutonic.felsic.granite",
-        location: null,
-      }),
-    ).toBe(false);
-  });
-
-  it.each<MaterialPath>([
-    "rock.igneous.plutonic.felsic.granite",
-    "extraterrestrial_rock.micrometeorites",
-  ])("should accept a sample with complete material %s", (material) => {
-    expect(isSamplePublishable({ ...draft, material })).toBe(true);
-  });
-
-  it("should accept a sample with no specific name", () => {
-    expect(
-      isSamplePublishable({
-        ...draft,
-        material: "rock.igneous.plutonic.felsic.granite",
-        specificName: null,
-      }),
-    ).toBe(true);
-  });
-
-  it("should reject a sample holding more attachments than the given limit", () => {
-    expect(
-      isSamplePublishable(
-        {
-          ...draft,
-          material: "rock.igneous.plutonic.felsic.granite",
-          attachments: Array(4).fill({}) as Sample["attachments"],
-        },
-        3,
-      ),
-    ).toBe(false);
-  });
-
-  it("should accept a leaf material under an in-scope type", () => {
-    expect(
-      isSamplePublishable({
-        ...draft,
-        material: "rock.igneous.plutonic.felsic.granite",
-      }),
-    ).toBe(true);
-  });
-
-  it("should reject a publishable sample whose publisher is not verified", () => {
-    const publishable = {
-      ...draft,
-      material: "rock.igneous.plutonic.felsic.granite" as MaterialPath,
-    };
+  it("should pass the publisher through to the blockers", () => {
     expect(
       isSamplePublishable(publishable, undefined, {
         status: "pending",

@@ -8,10 +8,6 @@ import {
 } from "./vocabulary.ts";
 
 describe("sampleTypeSchema", () => {
-  it.each(SAMPLE_TYPES)("should accept %s", (type) => {
-    expect(sampleTypeSchema.safeParse(type).success).toBe(true);
-  });
-
   it("should accept a partial classification (ancestor path)", () => {
     expect(sampleTypeSchema.safeParse("core").success).toBe(true);
   });
@@ -36,13 +32,14 @@ describe("SAMPLE_TYPES", () => {
     }
   });
 
-  it.each(SAMPLE_TYPES.filter((path) => path.includes(".")))(
-    "should include the parent of %s",
-    (path) => {
-      const parent = path.split(".").slice(0, -1).join(".");
-      expect(SAMPLE_TYPES).toContain(parent);
-    },
-  );
+  it("should include the parent of every dotted path", () => {
+    const orphans = SAMPLE_TYPES.filter(
+      (path) =>
+        path.includes(".") &&
+        !SAMPLE_TYPES.includes(path.split(".").slice(0, -1).join(".")),
+    );
+    expect(orphans).toEqual([]);
+  });
 
   it("should terminate core.core instead of recursing on the reused core segment", () => {
     // `core` lists itself as a child; the dotted `core.core` override is a

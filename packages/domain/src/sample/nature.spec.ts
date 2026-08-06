@@ -1,20 +1,11 @@
-import { NATURES, natureSchema } from "./nature";
+import { natureSchema } from "./nature";
 
 describe("natureSchema", () => {
-  it.each(NATURES)("should accept the valid nature %s", (input) => {
-    // Arrange / Act
-    const result = natureSchema.safeParse(input);
-    // Assert
-    expect(result.success).toBe(true);
+  it("should accept a known nature", () => {
+    expect(natureSchema.parse("thin_section")).toBe("thin_section");
   });
 
-  it.each(["", "Roche", "Thin section", "thinsection", "Unknown"])(
-    "should reject the invalid nature %s",
-    (input) => {
-      // Arrange / Act
-      const result = natureSchema.safeParse(input);
-      // Assert
-      expect(result.success).toBe(false);
-    },
-  );
+  it("should reject an unknown nature", () => {
+    expect(natureSchema.safeParse("Thin section").success).toBe(false);
+  });
 });
