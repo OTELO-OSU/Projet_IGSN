@@ -217,7 +217,16 @@ describe("composeSeedFromParams", () => {
     });
   });
 
-  it.each(["-10,200,10,50", "10,40,-10,50", "nope"])(
+  it("should seed the map with a box crossing the antimeridian", () => {
+    expect(
+      composeSeedFromParams({ q: "granite", bbox: "170,0,-170,20", page: 1 }),
+    ).toEqual({
+      active: ["text", "location"],
+      drafts: { q: "granite", bbox: "170,0,-170,20" },
+    });
+  });
+
+  it.each(["-10,200,10,50", "-10,50,10,40", "nope"])(
     "should never seed the map with the malformed box %s",
     (bbox) => {
       expect(composeSeedFromParams({ q: "granite", bbox, page: 1 })).toEqual({

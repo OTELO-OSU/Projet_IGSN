@@ -11,7 +11,6 @@ import { pgTest } from "../../tests/pg-test.ts";
 import { insertSample } from "./insert-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
-// All-null age, so a fixture spreads it and overrides only the bounds it needs.
 const emptyAge = {
   numericAgeMin: null,
   numericAgeMax: null,
@@ -29,8 +28,8 @@ const numericAge = (min: number, max: number, unit: NumericUnit = "ma") => ({
   numericAgeUnit: unit,
 });
 
-// A geological (ICS rank) age range, no numeric bounds. Ranks 1..49; rank 4 is
-// Miocene [5.333, 23.03] Ma, rank 8 Cretaceous Upper [66, 100.5] Ma.
+// Ranks 1..49; rank 4 is Miocene [5.333, 23.03] Ma, rank 8 Cretaceous Upper
+// [66, 100.5] Ma.
 const geologicalAge = (min: GeologicalAge, max: GeologicalAge) => ({
   ...emptyAge,
   geologicalAgeMin: min,
@@ -45,7 +44,6 @@ const backdate = (db: Transactional<DB>, id: string) =>
     .where("id", "=", id)
     .execute();
 
-// The query logic every scope shares: sorting, filtering, facets, pagination.
 // Exercised through listAsOwner (no unscoped export exists); the scope
 // predicates themselves have their own specs (list-samples-assigned-to.spec.ts,
 // and routes.spec.ts for the published one).
@@ -64,8 +62,6 @@ describe("listSamples", () => {
       type: null,
       collectionMethod: null,
     });
-    // now() is the transaction timestamp, identical for both inserts; set
-    // distinct updated_at values so the ordering is deterministic.
     await db
       .updateTable("sample")
       .set({ updated_at: new Date("2026-01-01T00:00:00.000Z") })
@@ -110,7 +106,7 @@ describe("listSamples", () => {
       .where("id", "=", draft.id)
       .execute();
 
-    // Act / Assert: asc puts drafts first, desc puts published first.
+    // Act / Assert
     const asc = await listAsOwner(db, {
       page: 1,
       perPage: 10,
@@ -150,7 +146,7 @@ describe("listSamples", () => {
         type: "dredge",
         collectionMethod: null,
       });
-      // Act: picking the "core" ancestor matches its descendant section.
+      // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -239,7 +235,7 @@ describe("listSamples", () => {
       collectionMethod: null,
       age: numericAge(100, 200),
     });
-    // Act: [15, 50] overlaps [10, 20] only.
+    // Act
     const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
@@ -270,7 +266,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: numericAge(5, 15, "ka"),
       });
-      // Act: query [1000, 6000] Ma == [1, 6] Ga overlaps "Ancient" only.
+      // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -300,7 +296,7 @@ describe("listSamples", () => {
       collectionMethod: null,
       age: numericAge(5, 15, "ka"),
     });
-    // Act: no unit, so [4, 6] is read as Ma and overlaps only the Ma sample.
+    // Act
     const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
@@ -315,10 +311,8 @@ describe("listSamples", () => {
   pgTest(
     "should place same-value annum ages on the before-present axis by their years unit",
     async ({ db }) => {
-      // Arrange: four samples all worth 500 a, differing only by calendar
-      // reference. On the before-present axis (present = 1950): 500 BCE = 2449,
-      // 500 CE = 1450, 500 BP = 500, 500 cal BP = 500. Same raw value, four
-      // different points in time.
+      // Arrange: on the before-present axis (present = 1950): 500 BCE = 2449,
+      // 500 CE = 1450, 500 BP = 500, 500 cal BP = 500.
       const eras = [
         ["Five hundred BCE", "bce"],
         ["Five hundred CE", "ce"],
@@ -340,8 +334,7 @@ describe("listSamples", () => {
           },
         });
       }
-      // Act: a small before-present range around 500 must match only the two
-      // whose reference already is before-present, not the CE/BCE ones.
+      // Act
       const nearPresent = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -420,7 +413,7 @@ describe("listSamples", () => {
   pgTest(
     "should match a geological-only sample by overlapping range",
     async ({ db }) => {
-      // Arrange: a sample with only a Miocene (rank 4 = [5.333, 23.03] Ma) age.
+      // Arrange
       await insertSample(db, {
         name: "Miocene",
         nature: "rock_powder",
@@ -428,7 +421,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(4, 4),
       });
-      // Act: [0, 100] Ma overlaps the Miocene interval.
+      // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -453,7 +446,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(4, 4),
       });
-      // Act: [200, 300] Ma is older than the whole Miocene interval.
+      // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -470,8 +463,7 @@ describe("listSamples", () => {
   pgTest(
     "should let numeric age win over an in-range geological age",
     async ({ db }) => {
-      // Arrange: numeric 100-200 Ma (outside the query) but a Miocene geological
-      // age (5.333-23.03 Ma, inside the query). Numeric precedence excludes it.
+      // Arrange
       await insertSample(db, {
         name: "Numeric wins",
         nature: "rock_powder",
@@ -503,8 +495,7 @@ describe("listSamples", () => {
   pgTest(
     "should match on numeric age and ignore an out-of-range geological age",
     async ({ db }) => {
-      // Arrange: numeric 5-15 Ma (inside the query) but a Hadean geological age
-      // (rank 49, 4031-4567 Ma, far outside). Numeric present, so it matches.
+      // Arrange
       await insertSample(db, {
         name: "Numeric in range",
         nature: "rock_powder",
@@ -536,9 +527,8 @@ describe("listSamples", () => {
   pgTest(
     "should match a geological range regardless of rank column order",
     async ({ db }) => {
-      // Arrange: min/max hold the ranks reversed (older rank in min). Young/old
-      // is derived by rank order, so the interval is [rank 4 young, rank 8 old]
-      // = [5.333, 100.5] Ma either way.
+      // Arrange: young/old is derived by rank order, so the interval is
+      // [rank 4 young, rank 8 old] = [5.333, 100.5] Ma either way.
       await insertSample(db, {
         name: "Reversed",
         nature: "rock_powder",
@@ -546,7 +536,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(8, 4),
       });
-      // Act: a range inside the interval overlaps it.
+      // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -563,8 +553,7 @@ describe("listSamples", () => {
   pgTest(
     "should apply an open upper bound to a geological-only sample",
     async ({ db }) => {
-      // Arrange: a young Miocene sample [5.333, 23.03] and an old Cretaceous
-      // Upper sample [66, 100.5].
+      // Arrange
       await insertSample(db, {
         name: "Miocene",
         nature: "rock_powder",
@@ -579,7 +568,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(8, 8),
       });
-      // Act: ageMin only keeps samples reaching back at least 70 Ma.
+      // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -610,7 +599,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(8, 8),
       });
-      // Act: ageMax only keeps samples reaching up to at most 50 Ma.
+      // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -627,7 +616,7 @@ describe("listSamples", () => {
     "should match both stages adjacent to a query bound on their shared edge",
     async ({ db }) => {
       // Arrange: 23.03 Ma is the shared boundary between rank 4 (its old edge)
-      // and rank 5 (its young edge). Inclusive overlap must match both.
+      // and rank 5 (its young edge).
       await insertSample(db, {
         name: "Below edge",
         nature: "rock_powder",
@@ -642,7 +631,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(5, 5),
       });
-      // Act: a point query exactly on the shared edge.
+      // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -662,9 +651,8 @@ describe("listSamples", () => {
   pgTest(
     "should match a single-bound geological range by its one rank",
     async ({ db }) => {
-      // Arrange: only geologicalAgeMin set (rank 8 = Cretaceous Upper). LEAST/
-      // GREATEST skip the null max, so the interval is [66, 100.5] Ma from that
-      // one rank.
+      // Arrange: LEAST/GREATEST skip the null max, so the interval is
+      // [66, 100.5] Ma from that one rank.
       await insertSample(db, {
         name: "Half-entered",
         nature: "rock_powder",
@@ -672,7 +660,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: { ...emptyAge, geologicalAgeMin: 8 },
       });
-      // Act: [0, 100] Ma overlaps the derived interval.
+      // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -698,7 +686,7 @@ describe("listSamples", () => {
         collectionMethod: null,
         age: geologicalAge(1, 1),
       });
-      // Act: a point query exactly on its young edge, the present.
+      // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -722,7 +710,7 @@ describe("listSamples", () => {
       collectionMethod: null,
       age: geologicalAge(49, 49),
     });
-    // Act: a point query exactly on its old edge, the age of the Earth.
+    // Act
     const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
@@ -737,8 +725,7 @@ describe("listSamples", () => {
 
   pgTest("should match a mid-range rank at its point edges", async ({ db }) => {
     // Arrange: rank 25 spans [423.0, 427.4] Ma, an entry in the middle of the
-    // ICS boundary table untouched by any other test in this file, spot-
-    // checking the array away from its ends.
+    // ICS boundary table untouched by any other test in this file.
     await insertSample(db, {
       name: "Mid-range",
       nature: "rock_powder",
@@ -746,7 +733,7 @@ describe("listSamples", () => {
       collectionMethod: null,
       age: geologicalAge(25, 25),
     });
-    // Act + Assert: a point query exactly on each edge matches.
+    // Act + Assert
     const young = await listAsOwner(db, {
       page: 1,
       perPage: 10,
@@ -853,7 +840,7 @@ describe("listSamples", () => {
       perPage: 10,
       bbox: { west: -10, south: 40, east: 10, north: 50 },
     });
-    // Assert: intersection, not containment.
+    // Assert
     expect(data.map((s) => s.id)).toEqual([overlap.id]);
   });
 
@@ -878,6 +865,109 @@ describe("listSamples", () => {
       expect(data).toEqual([]);
     },
   );
+
+  pgTest(
+    "should keep every sample inside a wide transatlantic box",
+    async ({ db }) => {
+      const points = [
+        ["Spain", 0, 41],
+        ["Southern France", 5, 43],
+        ["Mid-Atlantic", -45, 45],
+        ["Kansas", -90, 42],
+      ] as const;
+      for (const [name, longitude, latitude] of points) {
+        await insertSample(db, {
+          name,
+          nature: "rock_powder",
+          type: null,
+          collectionMethod: null,
+          location: { position: { type: "point", longitude, latitude } },
+        });
+      }
+      const { data, total } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        bbox: { west: -100, south: 40, east: 10, north: 60 },
+      });
+      expect(total).toBe(4);
+      expect(data.map((sample) => sample.name).sort()).toEqual(
+        points.map(([name]) => name).sort(),
+      );
+    },
+  );
+
+  pgTest("should filter with a near-world-wide box", async ({ db }) => {
+    for (const longitude of [0, 100, -100, 179]) {
+      await insertSample(db, {
+        name: `Lon ${longitude}`,
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        location: { position: { type: "point", longitude, latitude: 10 } },
+      });
+    }
+    const { data } = await listAsOwner(db, {
+      page: 1,
+      perPage: 10,
+      bbox: { west: -170, south: 0, east: 170, north: 20 },
+    });
+    expect(data.map((sample) => sample.name).sort()).toEqual([
+      "Lon -100",
+      "Lon 0",
+      "Lon 100",
+    ]);
+  });
+
+  pgTest("should filter with a box crossing the dateline", async ({ db }) => {
+    for (const longitude of [175, -175, 0, 160]) {
+      await insertSample(db, {
+        name: `Lon ${longitude}`,
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        location: { position: { type: "point", longitude, latitude: 10 } },
+      });
+    }
+    const { data } = await listAsOwner(db, {
+      page: 1,
+      perPage: 10,
+      bbox: { west: 170, south: 0, east: -170, north: 20 },
+    });
+    expect(data.map((sample) => sample.name).sort()).toEqual([
+      "Lon -175",
+      "Lon 175",
+    ]);
+  });
+
+  pgTest("should match a stored area crossing the dateline", async ({ db }) => {
+    const pacific = await insertSample(db, {
+      name: "Pacific area",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      location: {
+        position: {
+          type: "area",
+          westLongitude: 170,
+          eastLongitude: -170,
+          southLatitude: 0,
+          northLatitude: 20,
+        },
+      },
+    });
+    const nearDateline = await listAsOwner(db, {
+      page: 1,
+      perPage: 10,
+      bbox: { west: 175, south: 5, east: 179, north: 15 },
+    });
+    const overGreenwich = await listAsOwner(db, {
+      page: 1,
+      perPage: 10,
+      bbox: { west: -10, south: 5, east: 10, north: 15 },
+    });
+    expect(nearDateline.data.map((sample) => sample.id)).toEqual([pacific.id]);
+    expect(overGreenwich.data).toEqual([]);
+  });
 
   pgTest("should compose bbox and search with AND", async ({ db }) => {
     // Arrange

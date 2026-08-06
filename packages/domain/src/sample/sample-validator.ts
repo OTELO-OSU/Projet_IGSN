@@ -9,9 +9,9 @@ import { MAX_SEARCH_LENGTH } from "./search/search-tokens.ts";
 export const PAGE_SIZES = [10, 25, 50] as const;
 export const DEFAULT_PAGE_SIZE = 25;
 
-// ponytail: v1 ceiling is west <= east; a dateline-wrapping box
-// (west > east) is rejected here. Supporting it later means splitting the
-// envelope into an OR of two boxes at longitude 180, deferred.
+// west > east is a box crossing the antimeridian, not an error: the api splits
+// it into two envelopes at longitude 180 (see withinBbox). Only the ranges and
+// the latitude order are invariants.
 export const bboxSchema = z.string().transform((value, ctx) => {
   const parts = value.split(",").map(Number);
   const invalid = () => {
@@ -29,8 +29,7 @@ export const bboxSchema = z.string().transform((value, ctx) => {
     south > 90 ||
     north < -90 ||
     north > 90 ||
-    north < south ||
-    east < west
+    north < south
   )
     return invalid();
   return { west, south, east, north };

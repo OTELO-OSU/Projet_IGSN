@@ -4,6 +4,7 @@ import type {
   ListSamplesResult,
 } from "@projet-igsn/domain/sample/repository";
 
+import { splitBbox } from "@projet-igsn/domain/sample/split-bbox";
 import { type Expression, sql, type SqlBool } from "kysely";
 import { jsonObjectFrom } from "kysely/helpers/postgres";
 
@@ -20,17 +21,19 @@ import {
 } from "./search-filter.ts";
 import { toSample } from "./to-sample.ts";
 
-// Rows whose generated geom intersects the drawn box, bound as parameters.
-// ponytail: ST_MakeEnvelope does not wrap the antimeridian; a box crossing
-// longitude 180 (west > east) is out of v1 scope and rejected by the domain
-// schema, so it never reaches here. Split it client-side if it ever matters.
+// Planar, never `::geography`: a geodesic envelope bows its constant-latitude
+// edges poleward and drops results the user drew a rectangle around, while the
+// planar box is exactly that rectangle on a Mercator map (ADR 0014). The price
+// is splitting a box crossing the antimeridian (west > east) at 180 ourselves,
+// and the OR needs its own parentheses, the filters being joined with AND.
 function withinBbox(
   bbox: NonNullable<ListSamplesParams["bbox"]>,
 ): Expression<SqlBool> {
-  return sql<SqlBool>`ST_Intersects(
-    geom,
-    ST_MakeEnvelope(${bbox.west}, ${bbox.south}, ${bbox.east}, ${bbox.north}, 4326)::geography
-  )`;
+  const envelopes = splitBbox(bbox).map(
+    ({ west, south, east, north }) =>
+      sql<SqlBool>`ST_Intersects(geom, ST_MakeEnvelope(${west}, ${south}, ${east}, ${north}, 4326))`,
+  );
+  return sql<SqlBool>`(${sql.join(envelopes, sql` OR `)})`;
 }
 
 // A scope predicate joins the filter array, so it applies to the count query
@@ -93,7 +96,6 @@ async function listSamplesWhere(
           ).as("owner"),
         ),
       )
-      // Status is IGSN presence; last-modified stays as the tiebreak.
       .$if(sort === "status", (qb) => qb.orderBy(sql`igsn is not null`, order))
       .$call((qb) => (relevance ? qb.orderBy(relevance, "desc") : qb))
       .orderBy("updated_at", "desc")
@@ -114,11 +116,9 @@ async function listSamplesWhere(
   });
 }
 
-// `userId` is a required positional argument, so a direct call that omits it
-// does not compile. The
-// repository wiring can still satisfy `SampleRepository.list` while ignoring
-// its `userId` (structural typing); the admin-routes authorization spec is
-// what catches that.
+// The repository wiring can still satisfy `SampleRepository.list` while
+// ignoring its `userId` (structural typing); the admin-routes authorization
+// spec is what catches that.
 export async function listSamplesAssignedTo(
   db: Transactional<DB>,
   params: ListSamplesParams,

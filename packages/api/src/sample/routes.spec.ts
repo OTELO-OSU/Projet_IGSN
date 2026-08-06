@@ -423,6 +423,36 @@ describe("public sample routes", () => {
   );
 
   pgTest(
+    "should filter published samples by a bbox crossing the dateline",
+    async ({ db }) => {
+      const app = createApp(db);
+      const client = testClient(app);
+      const inside = await createSample(client, "Fiji", "Fiji 001", {
+        longitude: 178,
+        latitude: 10,
+      });
+      await publishSample(client, inside.id);
+      const outside = await createSample(
+        client,
+        "Gulf of Guinea",
+        "Guinea 001",
+        {
+          longitude: 0,
+          latitude: 10,
+        },
+      );
+      await publishSample(client, outside.id);
+      const res = await app.request(
+        "/samples?page=1&perPage=10&bbox=170,0,-170,20",
+      );
+      expect(res.status).toBe(200);
+      const body = listSamplesResponseSchema.parse(await res.json());
+      expect(body.meta.total).toBe(1);
+      expect(body.data.map((s) => s.name)).toEqual(["Fiji"]);
+    },
+  );
+
+  pgTest(
     "should ignore a malformed bbox and still return 200",
     async ({ db }) => {
       // Arrange
@@ -431,7 +461,7 @@ describe("public sample routes", () => {
       const client = testClient(app);
       const draft = await createSample(client, "Grès de Fontainebleau");
       await publishSample(client, draft.id);
-      // Act: an out-of-range bbox degrades to no filter (resilient schema).
+      // Act
       const res = await app.request(
         "/samples?page=1&perPage=10&bbox=-10,200,10,50",
       );

@@ -12,6 +12,11 @@ const READING_PATH =
 
 const LINK_PATH = /^links\.(\d+)\.(url|description)$/;
 
+// The generic wording names no range, so an out-of-range coordinate says which
+// axis and which bounds.
+const LONGITUDE_PATH = /^location\.position\.\w*longitude$/i;
+const LATITUDE_PATH = /^location\.position\.\w*latitude$/i;
+
 // Every HierarchySelectField in the form needs an entry here: the widget
 // registers one field per level (`name[depth]`), never the bare name, so an
 // issue on the domain value pins on the next level to refine (the combobox
@@ -106,6 +111,10 @@ function issueMessage(path: string, issue: DraftIssue): string {
   }
   if (reason === "humidity_percentage_range") {
     return m.field_humidity_percentage_range();
+  }
+  if (issue.code === "too_big" || issue.code === "too_small") {
+    if (LONGITUDE_PATH.test(path)) return m.field_longitude_range();
+    if (LATITUDE_PATH.test(path)) return m.field_latitude_range();
   }
   if (path === "condition.humidity.percentage") {
     // Outside the range refinement, only the 0-100 bounds remain.
