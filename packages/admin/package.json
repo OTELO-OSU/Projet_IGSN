@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "generate-routes": "tsr generate",
-    "compile-i18n": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --strategy baseLocale",
+    "compile-i18n": "node scripts/compile-i18n.ts",
     "build": "vite build"
   },
   "dependencies": {

@@ -3,8 +3,9 @@ import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import path from "node:path";
 import { defineConfig } from "vite";
+
+import { paraglideOptions } from "./paraglide.config.ts";
 
 export default defineConfig({
   server: {
@@ -21,15 +22,7 @@ export default defineConfig({
   optimizeDeps: { include: ["radix-ui", "lucide-react", "cmdk", "sonner"] },
   plugins: [
     tailwindcss(),
-    paraglideVitePlugin({
-      project: path.resolve(__dirname, "project.inlang"),
-      outdir: path.resolve(__dirname, "src/paraglide"),
-      // locale-modules bundles ~1 file per locale; message-modules emits one
-      // per message (~1k here), which stalls the cold dev server (all module
-      // requests pending) until the transform cache warms. See paraglide docs.
-      outputStructure: "locale-modules",
-      strategy: ["baseLocale"],
-    }),
+    paraglideVitePlugin(paraglideOptions),
     tanstackRouter({ autoCodeSplitting: true }),
     react(),
     babel({ presets: [reactCompilerPreset()] }),

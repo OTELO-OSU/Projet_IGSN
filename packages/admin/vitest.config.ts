@@ -4,14 +4,15 @@ import { playwright } from "@vitest/browser-playwright";
 import path from "node:path";
 import { defineConfig } from "vitest/config";
 
+import { paraglideOptions } from "./paraglide.config.ts";
+
 export default defineConfig({
   plugins: [
     react(),
     paraglideVitePlugin({
+      ...paraglideOptions,
       project: path.resolve(__dirname, "project.inlang"),
       outdir: path.resolve(__dirname, "src/paraglide"),
-      outputStructure: "message-modules",
-      strategy: ["baseLocale"],
     }),
   ],
   resolve: { tsconfigPaths: true },

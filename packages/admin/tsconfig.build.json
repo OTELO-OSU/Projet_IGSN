@@ -1,6 +1,6 @@
 {
   "extends": "../../tsconfig.base.json",
-  "include": ["vite.config.ts", "vitest.config.ts"],
+  "include": ["vite.config.ts", "vitest.config.ts", "paraglide.config.ts"],
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.build.tsbuildinfo",
     "lib": ["ES2024"],
