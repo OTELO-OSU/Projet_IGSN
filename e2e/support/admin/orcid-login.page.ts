@@ -12,7 +12,6 @@ export function orcidLoginPage(page: Page) {
       await page.getByRole("textbox", { name: /password/i }).fill(password);
       await page.getByRole("button", { name: /sign in/i }).click();
     },
-    // Proves the IdP session ended: it asks for credentials again.
     expectCredentialsPrompt: () =>
       expect(page.getByLabel(/orcid id/i)).toBeVisible(),
   };

@@ -1,6 +1,5 @@
 **/node_modules
 
-# Build files
 **/*.tsbuildinfo
 **/dist
 **/dist-ssr
@@ -17,7 +16,6 @@
 packages/api/attachments
 /attachments
 
-# Environment files
 **/*.local
 **/.env
 infra/preprod/docker-compose.env
@@ -29,7 +27,6 @@ infra/preprod/certs/
 
 .claude/settings.local.json
 
-# Playwright
 **/test-results
 **/playwright-report
 **/.playwright
@@ -37,7 +34,6 @@ infra/preprod/certs/
 
 .devcontainer/.mnt-*/*
 
-# Worktrees created by `make create-worktree`
 /worktrees
 !.devcontainer/.mnt-*/.gitkeep
 .pnpm-store
@@ -47,6 +43,5 @@ infra/preprod/certs/
 
 # Legacy IGSN dump, imported via `make db-import-legacy` (never committed)
 bdd-igsn.sql
-# Legacy import output, tee'd by `make db-import-legacy` (skipped rows, summary)
 import-legacy.log
 .playwright-mcp

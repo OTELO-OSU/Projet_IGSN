@@ -1,19 +1,11 @@
-// Config to pick when opening a git worktree under worktrees/<name> (created by
-// `make create-worktree`), instead of the repo root. Same container as
-// ../devcontainer.json, one difference: what gets mounted.
-//
 // A worktree's .git is a *file* holding the absolute path of the main repo's
 // .git/worktrees/<name>. Mounting only the worktree folder leaves that path
-// missing, so the folder is not a repository inside the container. So mount the
-// repo root instead, at its own path, and open the worktree inside it. Paths
-// then match inside and out, which also stops a prune in the container from
-// deleting worktrees it thinks are gone.
+// missing, so the folder is not a repository inside the container.
 {
   "name": "Projet IGSN (worktree)",
   "build": {
     "dockerfile": "../Dockerfile"
   },
-  // ../.. is the repo root: <repo>/worktrees/<name> up two levels.
   "workspaceMount": "source=${localWorkspaceFolder}/../..,target=${localWorkspaceFolder}/../..,type=bind,consistency=cached",
   "workspaceFolder": "${localWorkspaceFolder}",
   "postCreateCommand": "bash .devcontainer/post-create.sh",

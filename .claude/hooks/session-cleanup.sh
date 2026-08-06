@@ -16,11 +16,9 @@ if [ -e "$src" ]; then
   srcbranch=""
   [ -f "$dir/_source_branch" ] && srcbranch=$(cat "$dir/_source_branch")
 
-  # Merge in whichever tree holds the source branch: cwd if it's still on it
-  # (the idle main tree), otherwise check it out in this doomed worktree.
   tree=""
   if [ -z "$srcbranch" ]; then
-    tree="" # no recorded source branch: nothing safe to merge into
+    tree=""
   elif [ "$(git -C "$cwd" branch --show-current)" = "$srcbranch" ]; then
     tree="$cwd"
   elif [ -n "$srcbranch" ] && git -C "$src" checkout "$srcbranch" >/dev/null 2>&1; then

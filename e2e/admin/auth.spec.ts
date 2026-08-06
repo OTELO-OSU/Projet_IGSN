@@ -44,9 +44,6 @@ test.describe("authentication", () => {
     await shibbolethLoginPage(page).expectCredentialsPrompt();
   });
 
-  // ORCID is a link-then-login mechanism, not a cold-start path: a user may
-  // authenticate with ORCID, but without an account declaring that ORCID iD
-  // the app denies them access (see docs/adr/0020-app-level-orcid-linking.md).
   test("an ORCID sign-in is authenticated but denied app access", async ({
     page,
   }) => {
@@ -59,17 +56,13 @@ test.describe("authentication", () => {
 
     await admin.expectNoAccess();
 
-    // Signing out from the no-access screen must also end the ORCID IdP
-    // session: signing in again asks for credentials.
     await admin.signOut();
     await admin.signIn();
     await keycloakLoginPage(page).chooseOrcid();
     await orcidLoginPage(page).expectCredentialsPrompt();
   });
 
-  // The full link-then-login journey: declare the ORCID iD in Settings while
-  // signed in through the institution, then sign in with ORCID alone. The
-  // ORCID first-broker-login asks nothing (no review-profile step); the api
+  // The ORCID first-broker-login asks nothing (no review-profile step); the api
   // resolves the session by the declared orcid column alone.
   test("a researcher links their ORCID and signs in with it", async ({
     page,

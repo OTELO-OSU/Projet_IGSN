@@ -1,8 +1,7 @@
 default: help
 
 # The e2e stack: prod-built apps + auth stack on shifted ports (own compose
-# project so it runs beside `make dev`). Bring it up, wait until it answers, and
-# tear it down (incl. the throwaway pg volume) when the calling recipe exits.
+# project so it runs beside `make dev`).
 E2E_COMPOSE = docker compose -p igsn-e2e -f docker-compose.e2e.yml
 E2E_URL = ADMIN_URL=http://localhost:4001 FRONTEND_URL=http://localhost:4000
 E2E_UP = trap '$(E2E_COMPOSE) down -v' EXIT; \

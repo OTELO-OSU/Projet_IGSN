@@ -7,8 +7,7 @@ import { pgTest } from "../tests/pg-test.ts";
 import { createUserRepository } from "../user/repository.ts";
 import { type AuthenticatedEnv, currentUser } from "./current-user.ts";
 
-// Drives the middleware through a real Hono app and the real repository. The
-// stand-in for requireAuth sets the verified claims exactly as test/setup.ts
+// The stand-in for requireAuth sets the verified claims exactly as test/setup.ts
 // does, but per test: mounting createApp instead would inherit that suite-wide
 // stub, whose claims always carry an email.
 function appWithClaims(
@@ -66,9 +65,8 @@ describe("currentUser", () => {
     });
   });
 
-  // Email is the identity key, so a token without one cannot own anything: it is
-  // refused rather than given an account keyed on nothing (ADR 0019). No row is
-  // written either, or the next such token would adopt this empty account.
+  // No row is written either, or the next such token would adopt this empty
+  // account.
   pgTest(
     "should answer 403 and provision nothing without an email claim",
     async ({ db }) => {
@@ -85,8 +83,6 @@ describe("currentUser", () => {
     },
   );
 
-  // ORCID logins resolve strictly by the stored orcid column (ADR 0020):
-  // Keycloak brokers the ORCID account with username = ORCID iD.
   const orcidClaims: KeycloakClaims = {
     sub: "f:orcid:0000-0002-1825-0097",
     preferred_username: "0000-0002-1825-0097",
@@ -126,9 +122,6 @@ describe("currentUser", () => {
     },
   );
 
-  // An ORCID token carrying an email (broker config drift, a future flow) must
-  // never reach the email upsert: a user-controlled email matching an existing
-  // account would hand that account over.
   pgTest.for(["orcid", "ORCID"])(
     "should refuse an unlinked %j login even when its token carries an email",
     async (identityProvider, { db }) => {

@@ -9,10 +9,9 @@ import { AppLayout } from "./app-layout.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
 import { OrcidAccessGate } from "./orcid-access-gate.tsx";
 
-// Login page + gate: sign-in redirects to Keycloak, whose own login page
-// offers the identity providers. The SSO owns that list (GaiaData's differs
-// from the mock realm's), so the app sends no kc_idp_hint. Accounts are
-// provisioned on first login (first-broker-login).
+// sign-in redirects to Keycloak, whose own login page offers the identity
+// providers. The SSO owns that list (GaiaData's differs from the mock realm's),
+// so the app sends no kc_idp_hint.
 export function AuthGate({ children }: { children?: ReactNode }) {
   const auth = useAuth();
   const signIn = () =>
@@ -38,8 +37,7 @@ export function AuthGate({ children }: { children?: ReactNode }) {
 
   // ORCID is a link-then-login mechanism, not a cold-start path: an ORCID
   // session reaches the app only when the api resolves its orcid to a linked
-  // account (ADR 0020). Keycloak sets the identity_provider claim on brokered
-  // logins; institution and local logins are not "orcid".
+  // account (ADR 0020).
   const identityProvider = auth.user?.profile.identity_provider;
   if (
     typeof identityProvider === "string" &&

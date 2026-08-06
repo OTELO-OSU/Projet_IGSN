@@ -5,8 +5,7 @@ import { keycloakLoginPage } from "./keycloak-login.page";
 import { keycloakProfilePage } from "./keycloak-profile.page";
 import { shibbolethLoginPage } from "./shibboleth-login.page";
 
-// A SAML researcher from the mock IdP (see saml-idp/authsources.php). Login and
-// email are firstname.lastname@univ-lorraine.fr.
+// A SAML researcher from the mock IdP (see saml-idp/authsources.php).
 export type Researcher = { username: string; email: string };
 
 // Each parallel test signs in as a distinct researcher: concurrent
@@ -22,8 +21,6 @@ export const RESEARCHERS = {
     username: "camille.petit",
     email: "camille.petit@univ-lorraine.fr",
   },
-  // Owns nothing: every seed row names another researcher as its owner, so luc
-  // sees the registry as a researcher who has declared nothing.
   luc: { username: "luc.moreau", email: "luc.moreau@univ-lorraine.fr" },
 } satisfies Record<string, Researcher>;
 
