@@ -20,7 +20,7 @@ export async function userAcceptedMail(
   const named = fullName(user);
   const greeting = named ? `Hello ${named},` : "Hello,";
   const { html } = await mjml2html(
-    TEMPLATE.replaceAll("__TITLE__", escapeHtml(SUBJECT))
+    TEMPLATE.replaceAll("__TITLE__", SUBJECT)
       .replace("__GREETING__", escapeHtml(greeting))
       .replace("__ADMIN_URL__", escapeHtml(adminUrl)),
   );

@@ -44,7 +44,7 @@ async function render(
   usersUrl: string,
 ): Promise<string> {
   const { html } = await mjml2html(
-    TEMPLATE.replaceAll("__TITLE__", escapeHtml(title))
+    TEMPLATE.replaceAll("__TITLE__", title)
       .replace("__ROWS__", rows)
       .replace("__USERS_URL__", escapeHtml(usersUrl)),
   );
