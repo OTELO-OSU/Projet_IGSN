@@ -1,0 +1,33 @@
+<mjml>
+  <mj-head>
+    <mj-title>__TITLE__</mj-title>
+    <mj-attributes>
+      <mj-all font-family="Helvetica, Arial, sans-serif" />
+      <mj-text font-size="14px" color="#1f2937" line-height="22px" />
+      <mj-table font-size="14px" color="#1f2937" />
+    </mj-attributes>
+  </mj-head>
+  <mj-body background-color="#f3f4f6">
+    <mj-section background-color="#ffffff" padding="24px">
+      <mj-column>
+        <mj-text font-size="18px" font-weight="bold">__TITLE__</mj-text>
+        <mj-table cellpadding="8">
+          <tr style="text-align: left; border-bottom: 1px solid #e5e7eb">
+            <th>Name</th>
+            <th>Email</th>
+            <th>Waiting for</th>
+          </tr>
+          __ROWS__
+        </mj-table>
+        <mj-button
+          href="__USERS_URL__"
+          background-color="#1d4ed8"
+          color="#ffffff"
+          padding="24px 0 0"
+        >
+          Moderate these accounts
+        </mj-button>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

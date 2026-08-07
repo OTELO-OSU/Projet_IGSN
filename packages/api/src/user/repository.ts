@@ -76,6 +76,26 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .executeTakeFirst();
         return row ? userSchema.parse(row) : null;
       }),
+    listPending: () =>
+      withTransaction(db, (trx) =>
+        trx
+          .selectFrom("user")
+          .select(["email", "name", "firstname", "created_at as createdAt"])
+          .where("status", "=", "pending")
+          .orderBy("created_at", "asc")
+          .orderBy("email", "asc")
+          .execute(),
+      ),
+    listSuperAdminEmails: () =>
+      withTransaction(db, async (trx) => {
+        const rows = await trx
+          .selectFrom("user")
+          .select("email")
+          .where("super_admin", "=", true)
+          .orderBy("email", "asc")
+          .execute();
+        return rows.map(({ email }) => email);
+      }),
     setStatus: (id, status) =>
       withTransaction(db, async (trx) => {
         const row = await trx

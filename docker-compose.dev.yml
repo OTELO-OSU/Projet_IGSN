@@ -196,6 +196,8 @@ services:
       # The only client whose tokens the api accepts (azp), same var as admin.
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
       CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
+      # Where the digest mail sends a super admin to moderate; read at boot.
+      ADMIN_URL: "http://localhost:3001"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       DATABASE_NAME: igsn
@@ -211,9 +213,9 @@ services:
       # How many files a sample may carry; the admin bundle must agree
       # (VITE_UPLOAD_LIMIT).
       UPLOAD_LIMIT: "5"
-      # Where a future sender will post mail; no code reads these yet. No
-      # SMTP_USER/SMTP_PASSWORD, unlike preprod: maildev takes anonymous SMTP,
-      # and inventing dev credentials would only be parity theatre.
+      # Where the api posts mail, read at boot. No SMTP_USER/SMTP_PASSWORD,
+      # unlike preprod: maildev takes anonymous SMTP, and inventing dev
+      # credentials would only be parity theatre.
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost

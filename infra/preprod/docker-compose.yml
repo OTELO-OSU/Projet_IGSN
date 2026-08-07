@@ -60,6 +60,8 @@ services:
     environment:
       PORT: "8080"
       CORS_ORIGINS: "https://igsn-admin.${DOMAIN},https://igsn.${DOMAIN}"
+      # Where the digest mail sends a super admin to moderate; read at boot.
+      ADMIN_URL: "https://igsn-admin.${DOMAIN}"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       DATABASE_NAME: ${DATABASE_NAME}
@@ -84,10 +86,10 @@ services:
       # deploying shell, not from this host env file: export the same value
       # there so the two agree (see docker-compose.env.example).
       UPLOAD_LIMIT: "${UPLOAD_LIMIT:-5}"
-      # Outbound mail via a transactional-mail provider's SMTP endpoint; no code
-      # reads these yet, they are the target for future senders. All four come
-      # from the host docker-compose.env like the Postgres password; see
-      # docs/preprod-setup.md for the provider setup (DKIM/SPF DNS records).
+      # Outbound mail via a transactional-mail provider's SMTP endpoint, read at
+      # boot. All four values come from the host docker-compose.env like the
+      # Postgres password; see docs/preprod-setup.md for the provider setup
+      # (DKIM/SPF DNS records).
       SMTP_HOST: ${SMTP_HOST}
       # STARTTLS. EC2 blocks outbound 25 by default; 587 is open.
       SMTP_PORT: "${SMTP_PORT:-587}"

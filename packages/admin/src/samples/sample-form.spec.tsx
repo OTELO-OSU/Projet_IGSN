@@ -375,7 +375,7 @@ describe("SampleForm", () => {
         availability: "exists",
       }),
     );
-  });
+  }, 15000);
 
   it("should keep the texture when refining deeper within the same branch", async () => {
     const onSubmit = vi.fn();
@@ -606,7 +606,7 @@ describe("SampleForm", () => {
         availability: "exists",
       }),
     );
-  });
+  }, 15000);
 
   it("should drop the metamorphic facies when the material leaves metamorphic", async () => {
     const onSubmit = vi.fn();

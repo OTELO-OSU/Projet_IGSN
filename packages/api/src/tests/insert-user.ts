@@ -11,9 +11,11 @@ export function insertUser(
   email: string,
   overrides: {
     name?: string | null;
+    firstname?: string | null;
     orcid?: string | null;
     status?: UserStatus;
     superAdmin?: boolean;
+    createdAt?: Date;
   } = {},
 ): Promise<{ id: string }> {
   return db
@@ -22,10 +24,11 @@ export function insertUser(
       id: crypto.randomUUID(),
       email,
       name: overrides.name ?? null,
-      firstname: null,
+      firstname: overrides.firstname ?? null,
       orcid: overrides.orcid,
       status: overrides.status,
       super_admin: overrides.superAdmin,
+      created_at: overrides.createdAt,
     })
     .returning("id")
     .executeTakeFirstOrThrow();

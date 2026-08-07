@@ -524,4 +524,69 @@ describe("createUserRepository", () => {
     // Assert
     expect(updated).toBeNull();
   });
+
+  pgTest(
+    "should list the pending users, longest wait first",
+    async ({ db }) => {
+      await insertUser(db, "recent@univ-lorraine.fr", {
+        name: "Recent",
+        firstname: "Rose",
+        createdAt: new Date("2026-08-05T09:00:00Z"),
+      });
+      await insertUser(db, "oldest@univ-lorraine.fr", {
+        name: "Oldest",
+        firstname: "Olga",
+        createdAt: new Date("2026-07-07T12:00:00Z"),
+      });
+      await insertUser(db, "accepted@univ-lorraine.fr", {
+        status: "accepted",
+        createdAt: new Date("2026-06-01T12:00:00Z"),
+      });
+      await insertUser(db, "rejected@univ-lorraine.fr", {
+        status: "rejected",
+        createdAt: new Date("2026-06-01T12:00:00Z"),
+      });
+
+      const pending = await createUserRepository(db).listPending();
+
+      expect(pending).toEqual([
+        {
+          email: "oldest@univ-lorraine.fr",
+          name: "Oldest",
+          firstname: "Olga",
+          createdAt: new Date("2026-07-07T12:00:00Z"),
+        },
+        {
+          email: "recent@univ-lorraine.fr",
+          name: "Recent",
+          firstname: "Rose",
+          createdAt: new Date("2026-08-05T09:00:00Z"),
+        },
+      ]);
+    },
+  );
+
+  pgTest("should list no pending user when none waits", async ({ db }) => {
+    await insertUser(db, "accepted@univ-lorraine.fr", { status: "accepted" });
+
+    const pending = await createUserRepository(db).listPending();
+
+    expect(pending).toEqual([]);
+  });
+
+  pgTest("should list the super admins' emails", async ({ db }) => {
+    await insertUser(db, "zoe@univ-lorraine.fr", {
+      status: "accepted",
+      superAdmin: true,
+    });
+    await insertUser(db, "admin@univ-lorraine.fr", {
+      status: "accepted",
+      superAdmin: true,
+    });
+    await insertUser(db, "researcher@univ-lorraine.fr", { status: "accepted" });
+
+    const emails = await createUserRepository(db).listSuperAdminEmails();
+
+    expect(emails).toEqual(["admin@univ-lorraine.fr", "zoe@univ-lorraine.fr"]);
+  });
 });

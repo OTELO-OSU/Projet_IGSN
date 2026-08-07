@@ -65,6 +65,8 @@ services:
       # The only client whose tokens the api accepts (azp); pinned to the SPA's.
       OIDC_CLIENT_ID: igsn-admin
       CORS_ORIGINS: http://localhost:4001,http://localhost:4000
+      # Same port-shifted admin as above; the digest mail links to it.
+      ADMIN_URL: http://localhost:4001
       # Off here: repeated seeding and navigation share one client address, so a
       # budget would make scenarios order-dependent.
       RATE_LIMIT_ENABLED: "false"
@@ -77,8 +79,8 @@ services:
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
       # Same, for the attachment cap the admin bundle bakes in.
       UPLOAD_LIMIT: "5"
-      # Same names as dev; no code reads them yet. No SMTP_USER/SMTP_PASSWORD,
-      # unlike preprod: maildev takes anonymous SMTP.
+      # Same names as dev, read at boot by the mail sender. No
+      # SMTP_USER/SMTP_PASSWORD, unlike preprod: maildev takes anonymous SMTP.
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost

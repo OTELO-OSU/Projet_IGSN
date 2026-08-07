@@ -10,14 +10,18 @@
     "seed": "node scripts/seed.ts",
     "seed:demo": "node scripts/seed-demo.ts",
     "seed:e2e": "node scripts/reset-and-seed.ts",
+    "digest:send": "node scripts/send-pending-users-digest.ts",
     "import:legacy": "node scripts/import-legacy.ts"
   },
   "dependencies": {
     "@hono/node-server": "catalog:",
     "@projet-igsn/domain": "workspace:*",
+    "croner": "catalog:",
     "hono": "catalog:",
     "kysely": "catalog:",
     "kysely-postgres-js": "catalog:",
+    "mjml": "catalog:",
+    "nodemailer": "catalog:",
     "postgres": "catalog:",
     "rate-limiter-flexible": "catalog:",
     "uuid": "catalog:",
@@ -25,7 +29,9 @@
   },
   "devDependencies": {
     "@kysely-vitest/postgres": "catalog:",
+    "@types/mjml": "catalog:",
     "@types/node": "catalog:",
+    "@types/nodemailer": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
