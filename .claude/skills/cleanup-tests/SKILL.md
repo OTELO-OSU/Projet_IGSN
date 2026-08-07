@@ -7,28 +7,18 @@ description: Use when asked to clean up, trim, prune, or audit tests on a branch
 
 Every test must be able to fail. Name the edit that breaks it, or delete it.
 
-Scope: every test in every spec file the branch touches, pre-existing ones
-included. Not the whole repo. Tests only: never edit source, and never delete a
-red test, a failing test is a bug report.
+Scope: every Vitest spec file the branch touches, pre-existing tests included.
+Not the whole repo, and not `e2e/` (Playwright journeys, no mutation gate,
+ruled by `.claude/rules/testing-e2e-frontend.md`). Tests only:
+never edit source, and never delete a red test, a failing test is a bug report.
 
 ## Workflow
 
 1. List the files:
-   `git diff --name-only --diff-filter=d origin/main...HEAD -- '*.spec.ts' '*.spec.tsx'`
+   `git diff --name-only --diff-filter=d origin/main...HEAD -- 'packages/**/*.spec.ts' 'packages/**/*.spec.tsx'`
    (`git fetch origin main` first if stale).
-2. Baseline the package, then list the `it.each` fan-outs worth opening first
-   (test names grouped after blanking interpolated values, 8+ rows):
-
-   ```sh
-   cd packages/<pkg>
-   pnpm exec vitest run --reporter=json --outputFile=/tmp/census.json
-   jq -r '.testResults[]|.name as $f|.assertionResults
-     |group_by(.title|gsub("[0-9._]+";"*"))|map(select(length>=8))[]
-     |"\($f)  \(length)x  \(.[0].title)"' /tmp/census.json
-   ```
-
-   Record the test and failure counts (`.numTotalTests`, `.numFailedTests`): the
-   run must stay green, minus known flakes.
+2. Baseline the package: `cd packages/<pkg> && pnpm exec vitest run`. Record the
+   test and failure counts: the run must stay green, minus known flakes.
 
 3. Read each spec whole, and the source it tests. A test's value is decided by
    the implementation, not by how it reads.
@@ -54,6 +44,11 @@ Delete:
 Keep: a conditional rule (a field required only when a sibling is set, `min <= max`),
 a boundary, an error code a consumer keys off, a policy the data does not state,
 a regression with a cause.
+
+Keep unconditionally, they are the trust boundary, not duplicates
+(`.claude/rules/testing-backend.md`): an `api` endpoint's 400 / 401 / 403 / 404
+cases, even when the 400 looks like third-party Zod behavior and the 401 reads
+like a sibling of the 403.
 
 ### Collapse a parametrised invariant
 

@@ -55,5 +55,6 @@ export type KeycloakClaims = {
   // Which IdP brokered the login (session-note mapper on igsn-admin); absent
   // on local logins.
   identity_provider?: string;
+  identity_provider_identity?: string;
   realm_access?: { roles?: string[] };
 };

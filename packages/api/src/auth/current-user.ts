@@ -27,8 +27,8 @@ async function resolveUser(
   claims: KeycloakClaims,
 ): Promise<User | undefined> {
   if (claims.identity_provider?.toLowerCase() === "orcid") {
-    return claims.preferred_username
-      ? users.findByOrcid(claims.preferred_username)
+    return claims.identity_provider_identity
+      ? users.findByOrcid(claims.identity_provider_identity)
       : undefined;
   }
   const email = tokenEmailSchema.safeParse(claims.email);

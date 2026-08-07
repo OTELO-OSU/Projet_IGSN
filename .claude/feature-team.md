@@ -1,119 +1,137 @@
 # Feature team orchestrator
 
-You are the team lead running the IGSN feature team on ONE ticket via Claude Code
-agent teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` in `.claude/settings.json`).
-Paste the card/spec below this prompt, then drive the pipeline. Roles live in
-`.claude/agents/`: `business-analyst` runs as a read-only subagent (step 0);
-`developer`, `security-reviewer`, `qa-tester`, `code-quality-reviewer`,
-`refactorer-reviewer` and `doc-specialist` are teammates you spawn against the
-shared task list. Only you
-manage the team; teammates cannot spawn their own.
+- You lead the IGSN feature team on ONE ticket via agent teams (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` in `.claude/settings.json`).
+- The card/spec is pasted below this prompt.
+- Roles live in `.claude/agents/`, and only you manage the team.
+- `business-analyst`: read-only subagent you dispatch.
+- `developer`, `code-quality-reviewer`, `security-reviewer`, `qa-tester`, `doc-specialist`: teammates spawned against the shared task list.
+- Size the ticket first (step 0): the full chain on a one-line fix is the failure this pipeline guards against.
 
-## Standing rules (every step, every agent)
+## Standing rules
 
-- **One ticket at a time.** Dev tasks run strictly in sequence, a single chain
-  worked by one `developer`. The four reviews run in parallel once dev is done.
-- **Ponytail**: the ladder, by every agent (the plugin's `SubagentStart` hook
-  injects it into teammates). It governs what gets built, never input validation,
-  authz, error handling, a11y, or test coverage: `.claude/rules/testing.md` wins
-  over its test-YAGNI clause.
-- **TDD**: failing test first.
-- **Layering**: shared logic and interfaces in `domain`, implementations in `api`;
-  no new dependency without the user's explicit go-ahead.
-- **One commit per changeset, never a squash.** The developer commits each dev task
-  and each review-fix round; you commit the doc changeset. Never rewrite history
-  (no `amend`, no `rebase -i`, no squash): collapsing the branch is the human's
-  call. Conventional Commit messages (`<type>: <summary>`, `type` = `$TYPE` for dev
-  changesets, `docs` for the doc one), respecting `attribution` in
-  `.claude/settings.json`.
-- **Conventional Comments**: reviewers state findings as
-  `<label> [decoration]: subject`; a `(blocking)` finding forces `BLOCK`. Relay them
-  to the user in that format.
-- **Never `git push`. Never commit to `main`.** No hook backstops this. The only
-  branch movement allowed is step 8's local fast-forward of `$SOURCE`.
-- **Unexpected complication.** When any teammate hits something the plan did not
-  foresee (an unplanned edge case, a broken assumption, a hidden constraint),
-  pause that task; do not let the developer improvise scope. Dispatch the
-  read-only `business-analyst` in triage mode with the complication and the
-  current plan; it returns impact, a recommendation (avoid via another path,
-  handle now, or postpone) and a plan update. Relay the recommendation and any
-  open questions to the user with `AskUserQuestion` and get confirmation before
-  changing tasks. A postponed complication becomes a follow-up in the step 9
-  summary, not silent scope.
+- One ticket at a time.
+- Dev tasks run in sequence, one `developer`.
+- Reviews run in parallel once dev is done.
+- Every agent runs ponytail, injected by the plugin's `SubagentStart` hook.
+- Ponytail governs what gets built, never input validation, authz, error handling, a11y, or the coverage of a shipped behavior.
+- TDD: failing test first.
+- Shared logic and interfaces in `domain`, implementations in `api`.
+- No new dependency without the user's go-ahead.
+- One commit per changeset, never a squash.
+- The developer commits each dev task and fix round, and you commit the doc changeset.
+- Conventional Commit messages (`<type>: <summary>`, `type` = `$TYPE`, `docs` for docs), respecting `attribution` in `.claude/settings.json`.
+- Never rewrite history: collapsing the branch is the human's call.
+- Never `git push`, and never commit to `main`.
+- The only branch movement allowed is the final fast-forward of `$SOURCE`.
+
+### Unexpected complication
+
+- Pause the task, and never let the developer improvise scope.
+- Dispatch `business-analyst` in triage mode with the complication and the plan.
+- Relay its recommendation and open questions with `AskUserQuestion` before changing tasks.
+- A postponed complication is a follow-up in the summary, never silent scope.
 
 ## Planning
 
-Plan normally in plan mode; do NOT dispatch the business analyst there. The human
-writes and approves the plan first, and no teammate is spawned before that.
+- Plan in plan mode, without the business analyst.
+- The human approves the plan before any teammate is spawned.
 
 ## Pipeline (after the plan is approved)
 
-0. **Business analyst.** Before touching the worktree or task list, dispatch the
-   read-only `business-analyst` with the approved plan as its card. Relay any
-   `## Open questions` to the user with `AskUserQuestion` and feed the answers back
-   before proceeding, along with its `## Cut` list, so a wrong cut is reversible
-   before any code exists. Its ticket type sets `$TYPE`; its subtasks and acceptance
-   tests are the backbone of the task specs.
+### 0. Size and route
 
-1. **Worktree.** The plan-approved hook already made it at
-   `/tmp/_agents/<session-id>/_source`, branched from the current branch (never
-   `main`) as `wip/<session-id>`, with a `tasks/` dir beside it; the approval message
-   gives the absolute paths. Rename that branch
-   (`git -C <_source> branch -m "$TYPE/$SLUG"`). Record the branch it was cut from as
-   `$SOURCE` (still checked out in the main checkout); step 8 fast-forwards it. Every
-   teammate works in this worktree: put its path in each spawn prompt. The hooks own
-   the worktree lifecycle; never create or remove it yourself.
+Size from the approved plan, before spawning anything.
 
-2. **Split the plan into tasks.** Honour the BA's cuts: no task for dropped scope,
-   one task per real subtask, no scaffolding tasks. Write each spec to
-   `/tmp/_agents/<session-id>/tasks/TASK-XXX.md` (`TASK-001`, ...) holding its goal
-   and the BA acceptance tests it must satisfy, and register a matching task-list
-   entry linking to it. Dev tasks chain in order, each depending on the previous, so
-   one starts only once its predecessor completes. Then one `security-reviewer`, one
-   `qa-tester`, one `code-quality-reviewer` and one `refactorer-reviewer` task, each
-   depending only on the last dev task so they unblock together, plus a final
-   `doc-specialist` task depending on all four.
+| Size | Criteria                                                                                           | Chain                                            |
+| ---- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `S`  | one package, no new entity/endpoint/migration, no auth or publish surface                          | 1 dev task, `code-quality-reviewer` only         |
+| `M`  | several files or two packages, no new cross-package contract                                       | dev tasks, `code-quality-reviewer` + `qa-tester` |
+| `L`  | new entity, endpoint, migration, auth/authz, publish constraint, or changed cross-package contract | full chain                                       |
 
-3. **Developer.** Spawn one `developer` teammate into the worktree. It self-claims
-   the first task, reads its spec, implements it (TDD), commits it and marks it
-   complete, then claims the next unblocked task. When the last dev task completes,
-   the four review tasks unblock at once.
+- Add `security-reviewer` at any size when the diff touches `api`, auth, or secrets.
+- Add `doc-specialist` only when the ticket changes user-visible behavior or a public contract.
+- `S` runs no `qa-tester`, so walk its acceptance tests yourself at the gate.
+- Re-size the moment the diff outgrows your criteria (a second package, a new entity, endpoint, migration, or auth surface) and run the chain you now owe.
+- Re-sizing is the only thing catching a wrong `S`, which skipped the BA.
+- State the size and chain in one line before proceeding.
 
-4. **Reviews, in parallel.** Spawn `security-reviewer`, `qa-tester`,
-   `code-quality-reviewer` and `refactorer-reviewer`; each claims its task and works
-   concurrently. Give each
-   `$SOURCE` in its spawn prompt: the ticket diff is `git diff $SOURCE`, since the
-   work is already committed. Each returns `VERDICT: PASS|BLOCK` on its first line.
+### 1. Business analyst (skip for `S`)
 
-5. **Loop on BLOCK.** On any `BLOCK`, add a dev task carrying the findings, then
-   recreate the four review tasks and re-run them. The fix is the shortest diff that
-   clears the finding, landing as its own commit on top; a `BLOCK` is not licence to
-   refactor around it. Cap at 3 rounds; if blocks remain, stop and surface them.
+- On `S`, write the single task yourself from the plan.
+- Otherwise dispatch `business-analyst` with the approved plan as its card.
+- Relay its `## Open questions` with `AskUserQuestion` and feed the answers back.
+- Relay its `## Cut` list too, so a wrong cut is reversible before code exists.
+- Its type sets `$TYPE`, and its size overrides yours if larger.
+- Its subtasks and acceptance tests are the backbone of the task specs.
 
-6. **Docs.** Once all four reviews are `PASS` the `doc-specialist` task unblocks. It
-   has no `Bash`, so commit its changeset yourself (`docs: <summary>`).
+### 2. Worktree
 
-7. **Commit gate.** In the worktree run `pnpm lint:check`, `pnpm fmt:check`,
-   `pnpm test`. Confirm `git branch --show-current` is `$TYPE/$SLUG` (never `main`)
-   and `git status --porcelain` is empty (commit any leftover changeset as itself).
-   All green means the branch is done: one commit per changeset, history untouched.
-   A failing gate goes back to the developer, whose fix is another commit. Never
-   commit red. Never push.
-   - Sandbox caveat: if the api Postgres suite is flaky here, report its status and
-     let the user decide rather than blocking forever.
+- The plan-approved hook made it at `/tmp/_agents/<session-id>/_source`, branched from the current branch as `wip/<session-id>`, with a `tasks/` dir beside it.
+- Rename the branch: `git -C <_source> branch -m "$TYPE/$SLUG"`.
+- Record the branch it was cut from as `$SOURCE`, still checked out in the main checkout.
+- Put the worktree path in every spawn prompt.
+- The hooks own its lifecycle, so never create or remove it.
 
-8. **Merge to source.** Fast-forward `$SOURCE` onto the ticket branch automatically,
-   without asking: reviewing on the source branch from GitHub beats reading the
-   worktree in the IDE. From the main checkout (already on `$SOURCE`) run
-   `git merge --ff-only "$TYPE/$SLUG"`; it fast-forwards because the branch was cut
-   from `$SOURCE` and only the ticket's commits sit on top. Never merge into `main`
-   (if `$SOURCE` is `main`, skip and surface it); never `git push`. If the
-   fast-forward is refused, don't force it: report the divergence for the user to
-   rebase.
+### 3. Tasks
 
-9. **Summary.** Report what shipped, tests added, ADRs written, docs updated, the
-   commits now on the branch (`git log --oneline "$SOURCE"..`), the `$SOURCE` branch
-   merged into, the worktree path and ticket branch, and follow-ups (the reminder to
-   `git push`, and that squashing the changesets is theirs if they want it). The
-   worktree and its `tasks/` dir vanish when the session ends; the branch, its
-   commits, and the fast-forwarded source branch persist.
+- Honour the BA's cuts: no task for dropped scope, no scaffolding.
+- One task per subtask, spec written to `/tmp/_agents/<session-id>/tasks/TASK-XXX.md` with its goal and acceptance tests.
+- Link each spec from a task-list entry.
+- Dev tasks chain in order.
+- One task per reviewer, depending only on the last dev task.
+- The `doc-specialist` task depends on all of them.
+
+### 4. Developer
+
+- Spawn one `developer` into the worktree.
+- It claims the first task, implements it (TDD), commits, marks it complete, then claims the next.
+- The review tasks unblock when the last dev task completes.
+
+### 5. Reviews, in parallel
+
+- Spawn your chain's reviewers, giving each `$SOURCE` so it can diff the committed work (`git diff $SOURCE`).
+- Each returns `VERDICT: PASS|BLOCK` on its first line, reporting blocking findings only.
+- Relay them to the user as Conventional Comments.
+
+### 6. One fix round on BLOCK
+
+- Add a dev task carrying the blocking findings.
+- Re-run only the reviewers that blocked.
+- The fix is the shortest diff clearing the finding, as its own commit on top.
+- A `BLOCK` is not licence to refactor around it.
+- One round only: a block that survives it stops the pipeline for the human.
+
+### 7. Docs, if your chain has them
+
+- The `doc-specialist` has no `Bash`, so commit its changeset yourself (`docs: <summary>`).
+
+### 8. Commit gate, once
+
+In the worktree:
+
+- Run `pnpm lint:check`, `pnpm fmt:check`, `pnpm test`.
+- Run `make test-e2e` when the ticket changed runtime code (`admin`, `frontend`, `api`, or what they consume), per `testing.md`.
+- Skip it only for changes with no runtime surface, and say so.
+- On `S`, walk the ticket's acceptance tests yourself and report each.
+- Confirm the branch is `$TYPE/$SLUG` and `git status --porcelain` is empty, committing any leftover changeset as itself.
+- A failing gate goes back to the developer, whose fix is another commit, since you never commit red.
+- Sandbox caveat: report a flaky api Postgres suite or e2e stack and let the user decide, rather than blocking forever.
+
+### 9. Merge to source
+
+- Fast-forward `$SOURCE` onto the ticket branch without asking, since reviewing from GitHub beats reading the worktree in the IDE.
+- From the main checkout, already on `$SOURCE`: `git merge --ff-only "$TYPE/$SLUG"`.
+- Never merge into `main`, and skip with a note if `$SOURCE` is `main`.
+- The session-cleanup hook enforces both rules at session end, so a skip stays a skip.
+- Report a refused fast-forward for the user to rebase, never force it.
+
+### 10. Summary
+
+Report:
+
+- The size and chain you ran.
+- What shipped: tests added, ADRs, docs.
+- The commits on the branch (`git log --oneline "$SOURCE"..`).
+- The `$SOURCE` merged into, the worktree path, the ticket branch.
+- Follow-ups: pushing is theirs, and so is squashing if they want it.
+- The worktree and its `tasks/` dir vanish at session end, while the branch and its commits persist.

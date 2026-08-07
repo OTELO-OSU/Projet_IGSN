@@ -10,153 +10,83 @@ paths:
 
 ## Core principles
 
-- KISS: simplest solution that works. Clarity over cleverness.
+- KISS: ship the simplest solution that works, clarity over cleverness.
 - DRY: extract on real repetition, not speculation.
 - YAGNI: don't build features before they're needed.
-- DDD: model the domain explicitly (samples, sub-samples, IGSN, roles). Shared
-  business logic and contracts live in `domain`, implementations in `api`;
-  name types and functions after domain concepts.
-- Functional: can a caller observe the call's effects anywhere but its return
-  value? Yes → hidden side effect; remove it, or return the change. Compose
-  with `map`/`filter`/`reduce`.
-- Composition over inheritance: compose small functions and types; no class
-  hierarchies.
-- Least knowledge: can a caller use the unit from its signature alone, and can
-  the unit run without knowing its callers? Either no → a detail is leaking.
-- Single responsibility: does a part of a component or function carry its own
-  state, logic, or validation? Yes → extract that part into its own file.
-
-## Immutability
-
-Create new objects, never mutate existing ones.
+- DDD: name types and functions after domain concepts (samples, sub-samples, IGSN, roles).
+- Functional: if a caller can observe a call's effects anywhere but its return value, remove the side effect or return the change.
+- Composition over inheritance: compose small functions and types, no class hierarchies.
+- Least knowledge: a unit a caller cannot use from its signature alone, or that knows its callers, leaks a detail.
+- Single responsibility: a part of a component or function carrying its own state, logic, or validation moves to its own file.
+- Immutability: create new objects, never mutate existing ones.
 
 ## File organization
 
 - Many small files over few large ones: 200-400 lines typical, 800 max.
-- High cohesion, low coupling. Organize by feature/domain, not by type.
-- When an edit would push a file past ~400 lines, extract a module instead of
-  appending.
-- No barrel files: never create `index.ts`/`index.js` that only re-export from
-  sibling modules. Import directly from the file that defines the symbol.
+- Organize by feature/domain, not by type.
+- When an edit would push a file past ~400 lines, extract a module instead of appending.
+- Never create a barrel `index.ts`/`index.js` that only re-exports siblings; import from the file that defines the symbol.
 
 ## Naming
 
-- Variables, functions, hooks: camelCase (hooks prefixed `use`)
-- Booleans: `is`/`has`/`should`/`can` prefix
-- Types, components: PascalCase
-- Constants: UPPER_SNAKE_CASE
-- Files: kebab-case, including component files, to match shadcn UI style
-  (`user-card.tsx`, not `UserCard.tsx`)
+- Variables, functions, hooks: camelCase (hooks prefixed `use`).
+- Booleans: `is`/`has`/`should`/`can` prefix.
+- Types, components: PascalCase.
+- Constants: UPPER_SNAKE_CASE.
+- Files: kebab-case, including component files (`user-card.tsx`, not `UserCard.tsx`).
 
 ## Types
 
-Always use `type`, never `interface`. Never use TypeScript `enum`: define the
-set with a Zod enum schema and infer the type with `z.infer`. Add explicit
-parameter and return types to exported functions; let TypeScript infer obvious
-local types.
-
-    type User = {
-      id: string
-      email: string
-    }
-
-    const userRoleSchema = z.enum(['admin', 'member'])
-    type UserRole = z.infer<typeof userRoleSchema>
-
-Prefer a Zod schema with `z.infer<typeof schema>` when runtime validation is
-useful (one source of truth). Use plain `type` for internal shapes, generics,
-and prop types.
-
-Prefer composition over inheritance: compose types with intersections (`&`) and
-build behavior from small functions, not class hierarchies.
+- Always `type`, never `interface`.
+- Never a TypeScript `enum`: define the set with a Zod enum schema and infer the type with `z.infer`.
+- Put explicit parameter and return types on exported functions, and let TypeScript infer obvious local types.
+- Use a Zod schema plus `z.infer` when runtime validation is useful, a plain `type` for internal shapes, generics, and props.
+- Compose types with intersections (`&`), never class hierarchies.
 
 ## Avoid any
 
-Never use `any` in application code. Use `unknown` for untrusted input, then
-narrow. Use generics when a value's type depends on the caller.
-
-    // Wrong
-    function getErrorMessage(error: any) {
-      return error.message
-    }
-
-    // Correct
-    function getErrorMessage(error: unknown): string {
-      if (error instanceof Error) return error.message
-      return 'Unexpected error'
-    }
-
-## React props
-
-Define props with a named `type`. Type callback props explicitly. Don't use
-`React.FC` without a specific reason.
-
-    type UserCardProps = {
-      user: User
-      onSelect: (id: string) => void
-    }
-
-    function UserCard({ user, onSelect }: UserCardProps) {
-      return <button onClick={() => onSelect(user.id)}>{user.email}</button>
-    }
+- Never `any` in application code.
+- Use `unknown` for untrusted input, then narrow.
+- Use generics when a value's type depends on the caller.
 
 ## Input validation with Zod
 
-Validate all external data (user input, API responses, file content) at the
-boundary. Infer types from the schema and fail fast with clear errors.
-
-    import { z } from 'zod'
-
-    const userSchema = z.object({
-      email: z.string().email(),
-      age: z.number().int().min(0).max(150)
-    })
-
-    type UserInput = z.infer<typeof userSchema>
-    const validated: UserInput = userSchema.parse(input)
+- Validate all external data (user input, API responses, file content) at the boundary.
+- Infer types from the schema.
+- Fail fast with clear errors.
 
 ## Error handling
 
-Never silently swallow errors. Use async/await with try-catch and narrow
-`unknown` errors before accessing properties. User-facing code: friendly
-messages. Server-side: log detailed context.
-
-    async function loadUser(userId: string): Promise<User> {
-      try {
-        return await riskyOperation(userId)
-      } catch (error: unknown) {
-        logger.error('Operation failed', error)
-        throw new Error(getErrorMessage(error))
-      }
-    }
+- Never silently swallow an error.
+- Use async/await with try-catch, narrowing `unknown` errors before accessing properties.
+- Show friendly messages to users and log detailed context server-side.
 
 ## Code smells to avoid
 
-- Deep nesting (>4 levels): use early returns
-- Magic numbers: use named constants
-- Long functions (>50 lines): split into focused pieces
-- Large files (>800 lines): extract modules
-- `console.log` in production code: use a logging library
-- Hidden side effects: return every change (a `Promise` if async), don't mutate
-  behind the caller's back
-- Code testable only through mocks: a sign the logic is too coupled to its I/O
+- Deep nesting (>4 levels): use early returns.
+- Magic numbers: use named constants.
+- Long functions (>50 lines): split into focused pieces.
+- Large files (>800 lines): extract modules.
+- `console.log` in production code: use a logging library.
+- Hidden side effects: return every change (a `Promise` if async).
+- Code testable only through mocks: the logic is too coupled to its I/O.
 
 ## Comments
 
-No comment is the rule. A comment is the exception, for code a reader cannot follow on its own.
+No comment is the rule, and a comment is the exception for code a reader cannot follow on its own.
 
-When you do write one:
+- Write for a human, one or two lines, never narration.
+- Carry what the code cannot (intent, trade-off, non-obvious edge case, why the obvious approach fails), never the what or the how.
+- Prefer a clear name or a smaller function over a comment explaining an unclear one.
+- Never restate the code, describe past implementations, leave commented-out code, add section banners, or JSDoc a self-evident signature.
+- A `ponytail:` comment naming a deliberate shortcut and its ceiling is a keeper, since that intent lives nowhere else.
 
-- Write it for a human, not as narration: one or two lines, no paragraphs.
-- Carry information the code cannot: intent, trade-off, non-obvious edge case, why the obvious approach fails. Never the what or the how.
-- Prefer a clear name or a smaller function over a comment that explains an unclear one.
+```
+// Wrong
+// loop over the samples and keep the published ones
+const published = samples.filter((s) => s.publishedAt !== null)
 
-Never: restating the code, past implementations or how it used to work, commented-out code, section banners, JSDoc on self-evident signatures.
-
-    // Wrong
-    // loop over the samples and keep the published ones
-    const published = samples.filter((s) => s.publishedAt !== null)
-
-    // Correct
-    // age_min_a is generated, so a NULL means the sample has no age at all
-    .where('age_min_a', 'is not', null)
+// Correct
+// age_min_a is generated, so a NULL means the sample has no age at all
+.where('age_min_a', 'is not', null)
+```
