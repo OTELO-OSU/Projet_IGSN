@@ -1,4 +1,4 @@
-import { describe, expect, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
@@ -108,4 +108,25 @@ describe("sendPendingUsersDigest", () => {
       logged.mockRestore();
     },
   );
+
+  it("should log a failed lookup rather than crash the api", async () => {
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+    const sendMail = vi.fn().mockResolvedValue(undefined);
+
+    await expect(
+      sendPendingUsersDigest(
+        {
+          listPending: () => Promise.reject(new Error("database down")),
+          listSuperAdminEmails: () => Promise.resolve([]),
+        },
+        sendMail,
+        USERS_URL,
+        now,
+      ),
+    ).resolves.toBeUndefined();
+
+    expect(logged).toHaveBeenCalled();
+    expect(sendMail).not.toHaveBeenCalled();
+    logged.mockRestore();
+  });
 });

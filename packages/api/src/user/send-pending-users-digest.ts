@@ -5,18 +5,18 @@ import type { SendMail } from "../mail/send-mail.ts";
 import { pendingUsersDigest } from "./pending-users-digest.ts";
 
 export async function sendPendingUsersDigest(
-  userRepository: UserRepository,
+  userRepository: Pick<UserRepository, "listPending" | "listSuperAdminEmails">,
   sendMail: SendMail,
   usersUrl: string,
   now: Date = new Date(),
 ): Promise<void> {
-  const pending = await userRepository.listPending();
-  if (pending.length === 0) return;
-
-  const recipients = await userRepository.listSuperAdminEmails();
-  if (recipients.length === 0) return;
-
   try {
+    const pending = await userRepository.listPending();
+    if (pending.length === 0) return;
+
+    const recipients = await userRepository.listSuperAdminEmails();
+    if (recipients.length === 0) return;
+
     await sendMail({
       to: recipients,
       ...(await pendingUsersDigest(pending, usersUrl, now)),
