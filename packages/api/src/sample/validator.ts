@@ -15,6 +15,10 @@ const attachmentParamsSchema = idParamSchema.extend({
   attachmentId: z.uuid(),
 });
 
+const collaboratorParamsSchema = idParamSchema.extend({
+  userId: z.uuid(),
+});
+
 const igsnAttachmentParamsSchema = igsnParamSchema.extend({
   attachmentId: z.uuid(),
 });
@@ -58,6 +62,14 @@ export const validateAddContributorBody = validator("json", (value, c) => {
   const parsed = addContributorBodySchema.safeParse(value);
   if (!parsed.success) {
     return c.json({ error: "Invalid contributor" }, 400);
+  }
+  return parsed.data;
+});
+
+export const validateCollaboratorParams = validator("param", (value, c) => {
+  const parsed = collaboratorParamsSchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid collaborator id" }, 400);
   }
   return parsed.data;
 });

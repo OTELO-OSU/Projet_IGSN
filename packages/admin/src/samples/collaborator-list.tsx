@@ -1,9 +1,14 @@
+import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { X } from "lucide-react";
+
 import { m } from "#/paraglide/messages.js";
 import { fullName } from "#/samples/full-name.ts";
 import { useCollaborators } from "#/samples/use-collaborators.ts";
+import { useRemoveContributor } from "#/samples/use-remove-contributor.ts";
 
 export function CollaboratorList({ sampleId }: { sampleId: string }) {
   const collaborators = useCollaborators(sampleId);
+  const removeContributor = useRemoveContributor(sampleId);
   const owner = collaborators.data?.find((user) => user.role === "owner");
   const contributors =
     collaborators.data?.filter((user) => user.role === "contributor") ?? [];
@@ -36,9 +41,22 @@ export function CollaboratorList({ sampleId }: { sampleId: string }) {
         ) : (
           <ul className="grid gap-1 text-sm">
             {contributors.map((user) => (
-              <li key={user.id}>
-                {fullName(user)}{" "}
-                <span className="text-muted-foreground">{user.email}</span>
+              <li key={user.id} className="flex items-center gap-2">
+                <span className="min-w-0 flex-1 truncate">
+                  {fullName(user)}{" "}
+                  <span className="text-muted-foreground">{user.email}</span>
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={m.share_contributor_remove({
+                    name: fullName(user),
+                  })}
+                  onClick={() => removeContributor.mutate(user.id)}
+                >
+                  <X aria-hidden />
+                </Button>
               </li>
             ))}
           </ul>

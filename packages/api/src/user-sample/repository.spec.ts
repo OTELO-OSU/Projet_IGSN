@@ -186,6 +186,54 @@ describe("userSampleRepository", () => {
     ]);
   });
 
+  pgTest("should remove a contributor from a sample", async ({ db }) => {
+    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+    const contributor = await insertUser(db, "contributor@univ-lorraine.fr");
+    const sample = await insertSample(db, draft);
+    const repository = createUserSampleRepository(db);
+    await repository.addOwner(sample.id, owner.id);
+    await repository.addContributor(sample.id, contributor.id);
+
+    const result = await repository.removeContributor(
+      sample.id,
+      contributor.id,
+    );
+
+    expect(result).toBe("removed");
+    expect(await repository.listCollaborators(sample.id)).toEqual([
+      {
+        id: owner.id,
+        email: "owner@univ-lorraine.fr",
+        name: null,
+        firstname: null,
+        orcid: null,
+        role: "owner",
+      },
+    ]);
+  });
+
+  pgTest(
+    "should leave the owner untouched when removed as contributor",
+    async ({ db }) => {
+      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const sample = await insertSample(db, draft);
+      const repository = createUserSampleRepository(db);
+      await repository.addOwner(sample.id, owner.id);
+
+      const result = await repository.removeContributor(sample.id, owner.id);
+
+      expect(result).toBe("not_found");
+      const rows = await db
+        .selectFrom("user_sample")
+        .selectAll()
+        .where("sample_id", "=", sample.id)
+        .execute();
+      expect(rows).toEqual([
+        { sample_id: sample.id, user_id: owner.id, role: "owner" },
+      ]);
+    },
+  );
+
   pgTest("should list collaborators ordered by name", async ({ db }) => {
     const owner = await insertUser(db, "owner@univ-lorraine.fr", {
       name: "Moreau",
