@@ -3,15 +3,19 @@ import { serve } from "@hono/node-server";
 import { createApp } from "./app.ts";
 import { createDb } from "./db.ts";
 import { createSendMail } from "./mail/send-mail.ts";
-import { adminUsersUrl } from "./user/admin-users-url.ts";
+import { adminAppUrl, adminUsersUrl } from "./user/admin-users-url.ts";
 import { schedulePendingUsersDigest } from "./user/pending-users-digest-schedule.ts";
 import { createUserRepository } from "./user/repository.ts";
 import { sendPendingUsersDigest } from "./user/send-pending-users-digest.ts";
+import { sendUserAcceptedMail } from "./user/send-user-accepted-mail.ts";
 
 const db = createDb();
-const app = createApp(db);
-
 const sendMail = createSendMail();
+const app = createApp(db, {
+  notifyUserAccepted: (user) =>
+    sendUserAcceptedMail(user, sendMail, adminAppUrl()),
+});
+
 const usersUrl = adminUsersUrl();
 const userRepository = createUserRepository(db);
 schedulePendingUsersDigest(() => {

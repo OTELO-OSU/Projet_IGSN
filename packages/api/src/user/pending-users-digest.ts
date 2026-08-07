@@ -3,6 +3,9 @@ import type { PendingUser } from "@projet-igsn/domain/user/repository";
 import mjml2html from "mjml";
 import { readFileSync } from "node:fs";
 
+import { escapeHtml } from "../mail/escape-html.ts";
+import { fullName } from "./full-name.ts";
+
 const HOUR_MS = 60 * 60 * 1000;
 
 const TEMPLATE = readFileSync(
@@ -20,21 +23,11 @@ function waitedFor(since: Date, now: Date): string {
   return plural(Math.floor(hours / 24), "day");
 }
 
-const fullName = ({ name, firstname }: PendingUser) =>
-  [firstname, name].filter(Boolean).join(" ");
-
 function accountLine(user: PendingUser, now: Date) {
   const named = fullName(user);
   const who = named ? `${named} (${user.email})` : user.email;
   return `- ${who}, waiting for ${waitedFor(user.createdAt, now)}`;
 }
-
-const escapeHtml = (value: string) =>
-  value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
 
 const accountRow = (user: PendingUser, now: Date) =>
   [

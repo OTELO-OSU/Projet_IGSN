@@ -1,3 +1,4 @@
+import type { User } from "@projet-igsn/domain/user/model";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type {
   ListUsersResponse,
@@ -36,7 +37,10 @@ export function createUserSearchRoutes(userRepository: UserRepository) {
 
 // Moderating accounts is super-admin-only: the guard sits on the mount so it
 // travels with these routes rather than with a path glob in app.ts.
-export function createUserRoutes(repository: UserRepository) {
+export function createUserRoutes(
+  repository: UserRepository,
+  notifyUserAccepted: (user: User) => Promise<void> = async () => undefined,
+) {
   return (
     new Hono<AuthenticatedEnv>()
       .use("*", requireSuperAdmin)
@@ -61,6 +65,7 @@ export function createUserRoutes(repository: UserRepository) {
         validateUserIdParam,
         validateSetUserStatusBody,
         async (c) => {
+          const previous = await repository.get(c.req.valid("param").id);
           const user = await repository.setStatus(
             c.req.valid("param").id,
             c.req.valid("json").status,
@@ -74,6 +79,9 @@ export function createUserRoutes(repository: UserRepository) {
             target: user.id,
             status: user.status,
           });
+          if (previous?.status === "pending" && user.status === "accepted") {
+            await notifyUserAccepted(user);
+          }
           const body: UserResponse = { data: user };
           return c.json(body);
         },

@@ -1,3 +1,4 @@
+import type { User } from "@projet-igsn/domain/user/model";
 import type { Kysely } from "kysely";
 
 import { Hono } from "hono";
@@ -24,7 +25,11 @@ export function createApp(
   {
     // Local disk for now; a Ceph mount will take over this path (ADR 0017).
     attachmentsDir = process.env.ATTACHMENTS_DIR ?? "attachments",
-  }: { attachmentsDir?: string } = {},
+    notifyUserAccepted,
+  }: {
+    attachmentsDir?: string;
+    notifyUserAccepted?: (user: User) => Promise<void>;
+  } = {},
 ) {
   const corsOrigins = (process.env.CORS_ORIGINS ?? "")
     .split(",")
@@ -70,7 +75,7 @@ export function createApp(
     // Registered first: the directory search is open to any authenticated user,
     // where createUserRoutes is super-admin-only throughout.
     .route("/users/search", createUserSearchRoutes(userRepository))
-    .route("/users", createUserRoutes(userRepository));
+    .route("/users", createUserRoutes(userRepository, notifyUserAccepted));
 
   return (
     new Hono<AuthenticatedEnv>()

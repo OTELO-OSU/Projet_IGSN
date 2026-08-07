@@ -12,6 +12,7 @@ import { requireActiveSession } from "../auth/active-session.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { createUserRepository } from "./repository.ts";
+import { sendUserAcceptedMail } from "./send-user-accepted-mail.ts";
 
 describe("admin user search routes", () => {
   const authHeader = { Authorization: "Bearer test-token" };
@@ -316,6 +317,100 @@ describe("admin user routes", () => {
         .executeTakeFirstOrThrow(),
     ).resolves.toEqual({ status: "accepted" });
   });
+
+  pgTest("should notify the user accepted from pending", async ({ db }) => {
+    // Arrange
+    await insertResearchers(db);
+    await provisionUser(db, "moderator", {
+      status: "accepted",
+      superAdmin: true,
+    });
+    const notifyUserAccepted = vi.fn().mockResolvedValue(undefined);
+    const client = testClient(createApp(db, { notifyUserAccepted }));
+    // Act
+    const res = await client.admin.users[":id"].status.$put(
+      {
+        param: { id: "01890a5d-ac96-774b-bcce-b302099a8061" },
+        json: { status: "accepted" },
+      },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    expect(notifyUserAccepted).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "pending@univ-lorraine.fr",
+        status: "accepted",
+      }),
+    );
+  });
+
+  pgTest.for([
+    [
+      "a rejected pending user",
+      "01890a5d-ac96-774b-bcce-b302099a8061",
+      "rejected",
+    ],
+    [
+      "an already accepted user",
+      "01890a5d-ac96-774b-bcce-b302099a8062",
+      "accepted",
+    ],
+    [
+      "a rejected accepted user",
+      "01890a5d-ac96-774b-bcce-b302099a8062",
+      "rejected",
+    ],
+  ] as const)("should not notify %s", async ([, id, status], { db }) => {
+    // Arrange
+    await insertResearchers(db);
+    await provisionUser(db, "moderator", {
+      status: "accepted",
+      superAdmin: true,
+    });
+    const notifyUserAccepted = vi.fn().mockResolvedValue(undefined);
+    const client = testClient(createApp(db, { notifyUserAccepted }));
+    // Act
+    const res = await client.admin.users[":id"].status.$put(
+      { param: { id }, json: { status } },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    expect(notifyUserAccepted).not.toHaveBeenCalled();
+  });
+
+  pgTest(
+    "should answer 200 when the acceptance mail cannot be sent",
+    async ({ db }) => {
+      // Arrange
+      await insertResearchers(db);
+      await provisionUser(db, "moderator", {
+        status: "accepted",
+        superAdmin: true,
+      });
+      const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+      const sendMail = vi.fn().mockRejectedValue(new Error("SMTP down"));
+      const client = testClient(
+        createApp(db, {
+          notifyUserAccepted: (user) =>
+            sendUserAcceptedMail(user, sendMail, "http://localhost:3001/"),
+        }),
+      );
+      // Act
+      const res = await client.admin.users[":id"].status.$put(
+        {
+          param: { id: "01890a5d-ac96-774b-bcce-b302099a8061" },
+          json: { status: "accepted" },
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(logged).toHaveBeenCalled();
+      logged.mockRestore();
+    },
+  );
 
   pgTest(
     "should trace the decision with both ids, no email",
