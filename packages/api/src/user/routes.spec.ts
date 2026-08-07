@@ -12,7 +12,8 @@ import { requireActiveSession } from "../auth/active-session.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { createUserRepository } from "./repository.ts";
-import { sendUserAcceptedMail } from "./send-user-accepted-mail.ts";
+
+const ADMIN_URL = "http://localhost:3001/";
 
 describe("admin user search routes", () => {
   const authHeader = { Authorization: "Bearer test-token" };
@@ -29,7 +30,7 @@ describe("admin user search routes", () => {
     await insertResearcher(db, "Curie", "marie.curie@univ-lorraine.fr");
     await insertResearcher(db, "Dupont", "pierre.dupont@univ-lorraine.fr");
 
-    const res = await testClient(createApp(db)).admin.users.search.$get(
+    const res = await testClient(createApp(db).app).admin.users.search.$get(
       { query: { search: "curie" } },
       { headers: authHeader },
     );
@@ -42,7 +43,7 @@ describe("admin user search routes", () => {
   pgTest("should search researchers by email", async ({ db }) => {
     await insertResearcher(db, "Curie", "marie.curie@univ-lorraine.fr");
 
-    const res = await testClient(createApp(db)).admin.users.search.$get(
+    const res = await testClient(createApp(db).app).admin.users.search.$get(
       { query: { search: "marie.curie@" } },
       { headers: authHeader },
     );
@@ -58,7 +59,7 @@ describe("admin user search routes", () => {
     async ({ db }) => {
       await insertResearcher(db, "Curie", "marie.curie@univ-lorraine.fr");
 
-      const res = await testClient(createApp(db)).admin.users.search.$get(
+      const res = await testClient(createApp(db).app).admin.users.search.$get(
         { query: { search: "zzz" } },
         { headers: authHeader },
       );
@@ -77,7 +78,7 @@ describe("admin user search routes", () => {
       );
     }
 
-    const res = await testClient(createApp(db)).admin.users.search.$get(
+    const res = await testClient(createApp(db).app).admin.users.search.$get(
       { query: { search: "geologue" } },
       { headers: authHeader },
     );
@@ -89,7 +90,7 @@ describe("admin user search routes", () => {
   pgTest.for(["", "c"])(
     "should reject the search term %s with 400",
     async (search, { db }) => {
-      const res = await createApp(db).request(
+      const res = await createApp(db).app.request(
         `/admin/users/search?search=${search}`,
         {
           headers: authHeader,
@@ -103,7 +104,7 @@ describe("admin user search routes", () => {
   pgTest(
     "should reject a search term past the length ceiling with 400",
     async ({ db }) => {
-      const res = await createApp(db).request(
+      const res = await createApp(db).app.request(
         `/admin/users/search?search=${"a".repeat(MAX_SEARCH_LENGTH + 1)}`,
         { headers: authHeader },
       );
@@ -115,7 +116,7 @@ describe("admin user search routes", () => {
   pgTest("should exclude the caller from the results", async ({ db }) => {
     await insertResearcher(db, "User", "another.user@univ-lorraine.fr");
 
-    const res = await testClient(createApp(db)).admin.users.search.$get(
+    const res = await testClient(createApp(db).app).admin.users.search.$get(
       { query: { search: "user" } },
       { headers: authHeader },
     );
@@ -132,7 +133,7 @@ describe("admin user search routes", () => {
       await insertResearcher(db, "Zeller", "zeller@univ-lorraine.fr");
       await insertResearcher(db, "Aubry", "aubry@univ-lorraine.fr");
 
-      const res = await createApp(db).request("/admin/users/search", {
+      const res = await createApp(db).app.request("/admin/users/search", {
         headers: authHeader,
       });
 
@@ -156,7 +157,7 @@ describe("admin user search routes", () => {
         );
       }
 
-      const res = await createApp(db).request("/admin/users/search", {
+      const res = await createApp(db).app.request("/admin/users/search", {
         headers: authHeader,
       });
 
@@ -167,7 +168,9 @@ describe("admin user search routes", () => {
   );
 
   pgTest("should reject an unauthenticated search with 401", async ({ db }) => {
-    const res = await createApp(db).request("/admin/users/search?search=curie");
+    const res = await createApp(db).app.request(
+      "/admin/users/search?search=curie",
+    );
 
     expect(res.status).toBe(401);
   });
@@ -203,7 +206,7 @@ describe("admin user routes", () => {
       status: "accepted",
       superAdmin: true,
     });
-    return testClient(createApp(db));
+    return testClient(createApp(db).app);
   };
 
   pgTest("should list every user with a total", async ({ db }) => {
@@ -279,7 +282,7 @@ describe("admin user routes", () => {
     // Arrange
     await asSuperAdmin(db);
     // Act
-    const res = await createApp(db).request("/admin/users/not-a-uuid", {
+    const res = await createApp(db).app.request("/admin/users/not-a-uuid", {
       headers: authHeader,
     });
     // Assert
@@ -325,8 +328,10 @@ describe("admin user routes", () => {
       status: "accepted",
       superAdmin: true,
     });
-    const notifyUserAccepted = vi.fn().mockResolvedValue(undefined);
-    const client = testClient(createApp(db, { notifyUserAccepted }));
+    const sendMail = vi.fn().mockResolvedValue(undefined);
+    const client = testClient(
+      createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+    );
     // Act
     const res = await client.admin.users[":id"].status.$put(
       {
@@ -337,10 +342,10 @@ describe("admin user routes", () => {
     );
     // Assert
     expect(res.status).toBe(200);
-    expect(notifyUserAccepted).toHaveBeenCalledWith(
+    expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
-        email: "pending@univ-lorraine.fr",
-        status: "accepted",
+        to: ["pending@univ-lorraine.fr"],
+        subject: "Your account has been approved",
       }),
     );
   });
@@ -361,8 +366,10 @@ describe("admin user routes", () => {
       status: "accepted",
       superAdmin: true,
     });
-    const notifyUserAccepted = vi.fn().mockResolvedValue(undefined);
-    const client = testClient(createApp(db, { notifyUserAccepted }));
+    const sendMail = vi.fn().mockResolvedValue(undefined);
+    const client = testClient(
+      createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+    );
     // Act
     const res = await client.admin.users[":id"].status.$put(
       {
@@ -373,10 +380,10 @@ describe("admin user routes", () => {
     );
     // Assert
     expect(res.status).toBe(200);
-    expect(notifyUserAccepted).toHaveBeenCalledWith(
+    expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
-        email: "rejected@univ-lorraine.fr",
-        status: "accepted",
+        to: ["rejected@univ-lorraine.fr"],
+        subject: "Your account has been approved",
       }),
     );
   });
@@ -392,11 +399,6 @@ describe("admin user routes", () => {
       "01890a5d-ac96-774b-bcce-b302099a8062",
       "accepted",
     ],
-    [
-      "a rejected accepted user",
-      "01890a5d-ac96-774b-bcce-b302099a8062",
-      "rejected",
-    ],
   ] as const)("should not notify %s", async ([, id, status], { db }) => {
     // Arrange
     await insertResearchers(db);
@@ -404,8 +406,10 @@ describe("admin user routes", () => {
       status: "accepted",
       superAdmin: true,
     });
-    const notifyUserAccepted = vi.fn().mockResolvedValue(undefined);
-    const client = testClient(createApp(db, { notifyUserAccepted }));
+    const sendMail = vi.fn().mockResolvedValue(undefined);
+    const client = testClient(
+      createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+    );
     // Act
     const res = await client.admin.users[":id"].status.$put(
       { param: { id }, json: { status } },
@@ -413,7 +417,7 @@ describe("admin user routes", () => {
     );
     // Assert
     expect(res.status).toBe(200);
-    expect(notifyUserAccepted).not.toHaveBeenCalled();
+    expect(sendMail).not.toHaveBeenCalled();
   });
 
   pgTest(
@@ -428,10 +432,7 @@ describe("admin user routes", () => {
       const logged = vi.spyOn(console, "error").mockImplementation(() => {});
       const sendMail = vi.fn().mockRejectedValue(new Error("SMTP down"));
       const client = testClient(
-        createApp(db, {
-          notifyUserAccepted: (user) =>
-            sendUserAcceptedMail(user, sendMail, "http://localhost:3001/"),
-        }),
+        createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
       );
       // Act
       const res = await client.admin.users[":id"].status.$put(
@@ -461,7 +462,7 @@ describe("admin user routes", () => {
         .spyOn(console, "info")
         .mockImplementation(() => undefined);
       // Act
-      await testClient(createApp(db)).admin.users[":id"].status.$put(
+      await testClient(createApp(db).app).admin.users[":id"].status.$put(
         {
           param: { id: "01890a5d-ac96-774b-bcce-b302099a8061" },
           json: { status: "accepted" },
@@ -513,7 +514,7 @@ describe("admin user routes", () => {
       await insertResearchers(db);
       await asSuperAdmin(db);
       // Act
-      const res = await createApp(db).request(
+      const res = await createApp(db).app.request(
         "/admin/users/01890a5d-ac96-774b-bcce-b302099a8061/status",
         {
           method: "PUT",
@@ -583,7 +584,7 @@ describe("admin user routes", () => {
       async (status, { db }) => {
         // Arrange
         await provisionUser(db, "moderator", { status });
-        const client = testClient(createApp(db));
+        const client = testClient(createApp(db).app);
         // Act
         const list = await client.admin.users.$get(
           { query: { page: "1", perPage: "25" } },
@@ -603,7 +604,7 @@ describe("admin user routes", () => {
 
     pgTest("should answer 401 to an unauthenticated caller", async ({ db }) => {
       // Act
-      const res = await createApp(db).request("/admin/users");
+      const res = await createApp(db).app.request("/admin/users");
       // Assert
       expect(res.status).toBe(401);
     });

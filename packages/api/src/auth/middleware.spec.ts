@@ -100,7 +100,7 @@ const getMe = async (
   vi.resetModules();
   const { createApp } = await import("../app.ts");
 
-  return testClient(createApp(db)).admin.currentUser.$get(undefined, {
+  return testClient(createApp(db).app).admin.currentUser.$get(undefined, {
     headers: { Authorization: `Bearer ${token}` },
   });
 };

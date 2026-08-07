@@ -1,4 +1,3 @@
-import type { User } from "@projet-igsn/domain/user/model";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type {
   ListUsersResponse,
@@ -9,9 +8,11 @@ import type {
 import { Hono } from "hono";
 
 import type { AuthenticatedEnv } from "../auth/current-user.ts";
+import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireSuperAdmin } from "../auth/require-super-admin.ts";
+import { sendUserAcceptedMail } from "./send-user-accepted-mail.ts";
 import {
   validateListUsersQuery,
   validateSearchUsersQuery,
@@ -39,7 +40,7 @@ export function createUserSearchRoutes(userRepository: UserRepository) {
 // travels with these routes rather than with a path glob in app.ts.
 export function createUserRoutes(
   repository: UserRepository,
-  notifyUserAccepted: (user: User) => Promise<void> = async () => undefined,
+  mail?: { sendMail: SendMail; adminUrl: string },
 ) {
   return (
     new Hono<AuthenticatedEnv>()
@@ -79,8 +80,12 @@ export function createUserRoutes(
             target: user.id,
             status: user.status,
           });
-          if (previous?.status !== "accepted" && user.status === "accepted") {
-            await notifyUserAccepted(user);
+          if (
+            mail &&
+            previous?.status !== "accepted" &&
+            user.status === "accepted"
+          ) {
+            await sendUserAcceptedMail(user, mail.sendMail, mail.adminUrl);
           }
           const body: UserResponse = { data: user };
           return c.json(body);
