@@ -84,6 +84,14 @@ function fakeApi({
       }
       return new HttpResponse(null, { status: 204 });
     }),
+    http.delete(
+      "*/samples/:id/collaborators/:userId",
+      ({ request, params }) => {
+        calls.push(`DELETE ${request.url}`);
+        listed = listed.filter((user) => user.id !== params.userId);
+        return new HttpResponse(null, { status: 204 });
+      },
+    ),
     http.get("*/admin/users/search", ({ request }) => {
       calls.push(`GET ${request.url}`);
       const search = (
@@ -385,6 +393,42 @@ describe("ShareSampleButton", () => {
     await expect
       .element(collaborators(screen))
       .toHaveTextContent("Pierre Dupont");
+  });
+
+  it("should remove a contributor from the list", async () => {
+    const { screen } = await renderShareButton({ contributors: [curie] });
+    await openDialog(screen);
+
+    await screen.getByRole("button", { name: "Remove Marie Curie" }).click();
+
+    await expect.element(screen.getByText("No collaborator yet")).toBeVisible();
+    await expect
+      .element(screen.getByText("Collaborator removed"))
+      .toBeVisible();
+  });
+
+  it("should keep the contributor listed when the removal fails", async () => {
+    const { screen } = await renderShareButton({ contributors: [curie] });
+    worker.use(
+      http.delete(
+        "*/samples/:id/collaborators/:userId",
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+    await openDialog(screen);
+
+    await screen.getByRole("button", { name: "Remove Marie Curie" }).click();
+
+    await expect
+      .element(
+        screen.getByText(
+          "Could not remove the collaborator. Please try again.",
+        ),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("marie.curie@univ-lorraine.fr"))
+      .toBeVisible();
   });
 
   it("should render nothing for a contributor", async () => {
