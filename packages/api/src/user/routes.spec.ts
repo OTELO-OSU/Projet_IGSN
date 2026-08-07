@@ -106,7 +106,7 @@ describe("admin user search routes", () => {
       });
       await insertSampleContributor(db, sample.id, curie.id);
 
-      const res = await testClient(createApp(db)).admin.users.search.$get(
+      const res = await testClient(createApp(db).app).admin.users.search.$get(
         { query: { excludeCollaboratorsOf: sample.id } },
         { headers: authHeader },
       );
@@ -120,7 +120,7 @@ describe("admin user search routes", () => {
   pgTest(
     "should reject a malformed excluded sample id with 400",
     async ({ db }) => {
-      const res = await createApp(db).request(
+      const res = await createApp(db).app.request(
         "/admin/users/search?excludeCollaboratorsOf=not-a-uuid",
         { headers: authHeader },
       );

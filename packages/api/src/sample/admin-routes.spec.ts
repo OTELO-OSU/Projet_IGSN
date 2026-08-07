@@ -1512,7 +1512,7 @@ describe("admin sample routes", () => {
         });
         const sample = await insertOtherResearcherSample(db);
         const colleague = await insertUser(db, "colleague@univ-lorraine.fr");
-        const client = testClient(createApp(db));
+        const client = testClient(createApp(db).app);
         await client.admin.samples[":id"].collaborators.$post(
           { param: { id: sample.id }, json: { userId: colleague.id } },
           { headers: authHeader },
