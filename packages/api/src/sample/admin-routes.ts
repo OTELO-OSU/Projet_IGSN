@@ -16,9 +16,11 @@ import {
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { Hono } from "hono";
 
+import type { SendMail } from "../mail/send-mail.ts";
 import type { SampleAccessEnv } from "./require-sample-access.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
+import { sendSampleInvitationMail } from "../user-sample/send-sample-invitation-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
 import { uploadLimit } from "./upload-limit.ts";
@@ -41,6 +43,7 @@ export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
   userSampleRepository: UserSampleRepository,
+  mail?: { sendMail: SendMail; adminUrl: string },
 ) {
   // Guards every route naming a sample id and hands it the sample it fetched
   // plus the caller's role on it: present means they have a role (200), absent
@@ -111,18 +114,31 @@ export function createSampleAdminRoutes(
         validateIdParam,
         validateAddContributorBody,
         async (c) => {
-          if (!c.get("sample")) {
+          const sample = c.get("sample");
+          if (!sample) {
             return c.json({ error: "Not found" }, 404);
           }
           if (c.get("role") !== "owner") {
             return c.json({ error: "Forbidden" }, 403);
           }
+          const id = c.req.valid("param").id;
           const added = await userSampleRepository.addContributor(
-            c.req.valid("param").id,
+            id,
             c.req.valid("json").userId,
           );
           if (added === "unknown_user") {
             return c.json({ error: "User not found" }, 404);
+          }
+          if (mail && added !== "already_contributor") {
+            await sendSampleInvitationMail(
+              {
+                invitee: added.added,
+                inviter: c.get("user"),
+                sampleName: sample.name,
+                sampleUrl: new URL(`/samples/${id}`, mail.adminUrl).toString(),
+              },
+              mail.sendMail,
+            );
           }
           return c.body(null, 204);
         },

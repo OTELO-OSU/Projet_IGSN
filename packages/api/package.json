@@ -18,6 +18,7 @@
     "@projet-igsn/domain": "workspace:*",
     "croner": "catalog:",
     "hono": "catalog:",
+    "i18next": "catalog:",
     "kysely": "catalog:",
     "kysely-postgres-js": "catalog:",
     "mjml": "catalog:",

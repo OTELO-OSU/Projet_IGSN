@@ -72,6 +72,7 @@ export function createApp(
         sampleRepository,
         sampleAttachmentRepository,
         userSampleRepository,
+        mail,
       ),
     )
     // Registered first: the directory search is open to any authenticated user,

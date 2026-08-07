@@ -11,16 +11,14 @@
       <mj-column>
         <mj-text font-size="18px" font-weight="bold">__TITLE__</mj-text>
         <mj-text>__GREETING__</mj-text>
-        <mj-text>
-          Your account has been approved. You can now publish samples.
-        </mj-text>
+        <mj-text>__BODY__</mj-text>
         <mj-button
-          href="__ADMIN_URL__"
+          href="__URL__"
           background-color="#1d4ed8"
           color="#ffffff"
           padding="24px 0 0"
         >
-          Open the sample registry
+          __CTA__
         </mj-button>
       </mj-column>
     </mj-section>

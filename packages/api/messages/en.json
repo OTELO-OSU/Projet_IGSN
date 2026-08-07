@@ -1,0 +1,22 @@
+{
+  "mail_greeting": "Hello {{name}},",
+  "mail_greeting_anonymous": "Hello,",
+  "mail_account_approved_subject": "Your account has been approved",
+  "mail_account_approved_body": "Your account has been approved. You can now publish samples.",
+  "mail_account_approved_cta": "Open the sample registry",
+  "mail_invitation_subject": "{{inviter}} invited you to contribute to \"{{sample}}\"",
+  "mail_invitation_body": "{{inviter}} invited you to contribute to the sample \"{{sample}}\".",
+  "mail_invitation_cta": "Open the sample",
+  "mail_digest_subject_one": "{{count}} user is waiting for validation",
+  "mail_digest_subject_other": "{{count}} users are waiting for validation",
+  "mail_digest_account_line": "- {{who}}, waiting for {{waited}}",
+  "mail_digest_column_name": "Name",
+  "mail_digest_column_email": "Email",
+  "mail_digest_column_waited": "Waiting for",
+  "mail_digest_cta": "Moderate these accounts",
+  "mail_digest_waited_under_hour": "less than an hour",
+  "mail_digest_waited_hours_one": "{{count}} hour",
+  "mail_digest_waited_hours_other": "{{count}} hours",
+  "mail_digest_waited_days_one": "{{count}} day",
+  "mail_digest_waited_days_other": "{{count}} days"
+}

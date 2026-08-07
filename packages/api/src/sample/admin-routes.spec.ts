@@ -10,6 +10,8 @@ import { testClient } from "hono/testing";
 import { join } from "node:path";
 import { describe, expect } from "vitest";
 
+import type { SendMail } from "../mail/send-mail.ts";
+
 import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { insertUser } from "../tests/insert-user.ts";
@@ -1911,9 +1913,13 @@ describe("admin sample routes", () => {
       collectionMethod: null,
     };
     const colleagueHeader = { Authorization: "Bearer colleague" };
+    const ADMIN_URL = "http://localhost:3001/";
 
-    async function arrangeOwnedSample(db: Parameters<typeof createApp>[0]) {
-      const app = createApp(db).app;
+    async function arrangeOwnedSample(
+      db: Parameters<typeof createApp>[0],
+      mail?: { sendMail: SendMail; adminUrl: string },
+    ) {
+      const app = createApp(db, { mail }).app;
       const owner = await insertUser(db, authenticatedCallerEmail);
       const colleague = await insertUser(db, "colleague@example.com");
       const created = await testClient(app).admin.samples.$post(
@@ -2105,6 +2111,104 @@ describe("admin sample routes", () => {
 
       expect(res.status).toBe(404);
     });
+
+    pgTest("should invite an added contributor by mail", async ({ db }) => {
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const { app, sample, colleague } = await arrangeOwnedSample(db, {
+        sendMail,
+        adminUrl: ADMIN_URL,
+      });
+
+      const res = await testClient(app).admin.samples[
+        ":id"
+      ].collaborators.$post(
+        { param: { id: sample.id }, json: { userId: colleague.id } },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(204);
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: ["colleague@example.com"],
+          subject:
+            'Test User invited you to contribute to "Basalte à partager"',
+        }),
+      );
+      expect(sendMail.mock.calls[0]?.[0].text).toContain(
+        `${ADMIN_URL}samples/${sample.id}`,
+      );
+    });
+
+    pgTest("should not invite a contributor added twice", async ({ db }) => {
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const { app, sample, colleague } = await arrangeOwnedSample(db, {
+        sendMail,
+        adminUrl: ADMIN_URL,
+      });
+      const client = testClient(app);
+      await client.admin.samples[":id"].collaborators.$post(
+        { param: { id: sample.id }, json: { userId: colleague.id } },
+        { headers: authHeader },
+      );
+      sendMail.mockClear();
+
+      const again = await client.admin.samples[":id"].collaborators.$post(
+        { param: { id: sample.id }, json: { userId: colleague.id } },
+        { headers: authHeader },
+      );
+
+      expect(again.status).toBe(204);
+      expect(sendMail).not.toHaveBeenCalled();
+    });
+
+    pgTest("should not invite an unknown user id", async ({ db }) => {
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const { app, sample } = await arrangeOwnedSample(db, {
+        sendMail,
+        adminUrl: ADMIN_URL,
+      });
+
+      const res = await testClient(app).admin.samples[
+        ":id"
+      ].collaborators.$post(
+        {
+          param: { id: sample.id },
+          json: { userId: "01890a5d-ac96-774b-bcce-b302099a8057" },
+        },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(404);
+      expect(sendMail).not.toHaveBeenCalled();
+    });
+
+    pgTest(
+      "should still add the contributor when the invitation cannot be sent",
+      async ({ db }) => {
+        const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+        const sendMail = vi.fn().mockRejectedValue(new Error("SMTP down"));
+        const { app, sample, colleague } = await arrangeOwnedSample(db, {
+          sendMail,
+          adminUrl: ADMIN_URL,
+        });
+        const client = testClient(app);
+
+        const res = await client.admin.samples[":id"].collaborators.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(204);
+        expect(logged).toHaveBeenCalled();
+        logged.mockRestore();
+        const listed = await client.admin.samples[":id"].collaborators.$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+        const { data } = (await listed.json()) as SampleCollaboratorsResponse;
+        expect(data.map(({ id }) => id)).toContain(colleague.id);
+      },
+    );
 
     pgTest(
       "should answer 403 when a contributor lists contributors",

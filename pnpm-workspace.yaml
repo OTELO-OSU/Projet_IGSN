@@ -42,6 +42,7 @@ catalog:
   cmdk: ^1.1.1
   hono: ^4.12.26
   husky: ^9.1.7
+  i18next: ^26.3.6
   kysely: ^0.29.4
   kysely-postgres-js: ^3.0.0
   leaflet: ^1.9.4

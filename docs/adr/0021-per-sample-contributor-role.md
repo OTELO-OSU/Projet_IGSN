@@ -108,6 +108,9 @@ only lowers the cost of the first 20.
   contributor's write access without notifying them; only the owner is told
   (implicitly, by regaining sole write access). Acceptable for a first cut;
   a notification is a separate ticket.
+- Since 2026-08-07, being added does send an invitation mail naming the
+  inviter and the sample (`packages/api/src/user-sample/sample-invitation-mail.ts`);
+  a re-add sends nothing, and losing access on publication still notifies nobody.
 - Un-sharing, an editor role, and an admin override remain open, same as ADR
   0019 left them. This ADR narrows that list by one (sharing/roles landed)
   and hands the rest, plus the removal gap it introduces, to future tickets.

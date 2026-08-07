@@ -23,7 +23,13 @@ describe("userSampleRepository", () => {
     // Act
     const result = await repository.addContributor(sample.id, admin.id);
     // Assert
-    expect(result).toBe("added");
+    expect(result).toEqual({
+      added: {
+        email: "admin@univ-lorraine.fr",
+        name: null,
+        firstname: null,
+      },
+    });
     const rows = await db
       .selectFrom("user_sample")
       .selectAll()
@@ -95,7 +101,13 @@ describe("userSampleRepository", () => {
 
     const result = await repository.addContributor(sample.id, contributor.id);
 
-    expect(result).toBe("added");
+    expect(result).toEqual({
+      added: {
+        email: "contributor@univ-lorraine.fr",
+        name: "Curie",
+        firstname: null,
+      },
+    });
     expect(await repository.listCollaborators(sample.id)).toEqual([
       {
         id: contributor.id,
@@ -126,7 +138,7 @@ describe("userSampleRepository", () => {
 
     const result = await repository.addContributor(sample.id, contributor.id);
 
-    expect(result).toBe("added");
+    expect(result).toBe("already_contributor");
     expect(await repository.listCollaborators(sample.id)).toHaveLength(2);
   });
 
@@ -140,7 +152,7 @@ describe("userSampleRepository", () => {
 
       const result = await repository.addContributor(sample.id, owner.id);
 
-      expect(result).toBe("added");
+      expect(result).toBe("already_contributor");
       expect(await repository.listCollaborators(sample.id)).toEqual([
         {
           id: owner.id,
