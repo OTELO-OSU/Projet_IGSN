@@ -79,6 +79,8 @@ services:
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
       # Same, for the attachment cap the admin bundle bakes in.
       UPLOAD_LIMIT: "5"
+      # Same, for the edit-lock TTL (ADR 0024).
+      SAMPLE_EDIT_LOCK_TTL_MINUTES: "15"
       # Same names as dev, read at boot by the mail sender. No
       # SMTP_USER/SMTP_PASSWORD, unlike preprod: maildev takes anonymous SMTP.
       SMTP_HOST: maildev
@@ -105,6 +107,7 @@ services:
         VITE_OIDC_AUTHORITY: http://localhost:18080/realms/igsn
         VITE_OIDC_CLIENT_ID: igsn-admin
         VITE_API_URL: http://localhost:4002
+        VITE_SAMPLE_LOCK_POLL_SECONDS: "30"
     # Caddy binds $PORT (Caddyfile), so listen on 3001 to match the mapping.
     environment:
       PORT: "3001"

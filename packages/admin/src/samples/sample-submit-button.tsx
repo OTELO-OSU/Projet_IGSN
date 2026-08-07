@@ -18,6 +18,7 @@ type SampleSubmitButtonProps = {
   variant?: ComponentProps<typeof Button>["variant"];
   sampleId?: string;
   published: boolean;
+  blockedReason?: string;
 };
 
 export function SampleSubmitButton({
@@ -26,19 +27,23 @@ export function SampleSubmitButton({
   variant,
   sampleId,
   published,
+  blockedReason,
 }: SampleSubmitButtonProps) {
   const form = useTypedAppFormContext({ defaultValues: {} });
   const roleOnSample = useUserRoleOnSample(sampleId);
-  const isBlocked =
-    roleOnSample !== null && !canUpdateSample(roleOnSample, { published });
+  const reason =
+    blockedReason ??
+    (roleOnSample !== null && !canUpdateSample(roleOnSample, { published })
+      ? m.save_blocked_not_owner()
+      : undefined);
   const button = (
     <form.SubmitButton
       label={label}
       variant={variant}
-      disabled={disabled || isBlocked}
+      disabled={disabled || reason !== undefined}
     />
   );
-  if (!isBlocked) {
+  if (reason === undefined) {
     return button;
   }
   return (
@@ -47,7 +52,7 @@ export function SampleSubmitButton({
         <span tabIndex={0}>{button}</span>
       </TooltipTrigger>
       <TooltipContent>
-        <p>{m.save_blocked_not_owner()}</p>
+        <p>{reason}</p>
       </TooltipContent>
     </Tooltip>
   );

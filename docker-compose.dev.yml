@@ -138,6 +138,8 @@ services:
     environment:
       VITE_OIDC_AUTHORITY: ${OIDC_ISSUER:-http://localhost:8080/realms/igsn}
       VITE_OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
+      # Tighter than the 30s default, so testing a takeover by hand is quick.
+      VITE_SAMPLE_LOCK_POLL_SECONDS: "15"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3001/"]
       interval: 10s
@@ -213,6 +215,8 @@ services:
       # How many files a sample may carry; the admin bundle must agree
       # (VITE_UPLOAD_LIMIT).
       UPLOAD_LIMIT: "5"
+      # How long a sample edit lock survives without a heartbeat (ADR 0024).
+      SAMPLE_EDIT_LOCK_TTL_MINUTES: "15"
       # Where the api posts mail, read at boot. No SMTP_USER/SMTP_PASSWORD,
       # unlike preprod: maildev takes anonymous SMTP, and inventing dev
       # credentials would only be parity theatre.

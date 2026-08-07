@@ -1,3 +1,4 @@
+import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { numericUnitSchema } from "@projet-igsn/domain/sample/age/numeric-unit";
@@ -34,6 +35,9 @@ const ALL_FIELDS: (keyof AgeFormValues)[] = [
 ];
 
 export function NumericAgeFormSection() {
+  // Switching either off clears the values, so both follow the rule of the
+  // fields they clear (the kit's escape hatch for non-field controls).
+  const isDisabled = useIsFieldDisabled("age.numericAgeMin");
   const form = useAgeForm();
   const values = form.state.values.age;
   const clear = (fields: (keyof AgeFormValues)[]) => {
@@ -43,8 +47,6 @@ export function NumericAgeFormSection() {
   const [enabled, setEnabled] = useState(() =>
     ALL_FIELDS.some((name) => values[name] != null),
   );
-  // A non-range value stores min == max. Guard with `!= null` so a `0` bound is
-  // not misread as empty.
   const [mode, setMode] = useState<AgeMode>(() =>
     values.numericAgeMin != null &&
     values.numericAgeMin === values.numericAgeMax
@@ -70,6 +72,7 @@ export function NumericAgeFormSection() {
       action={
         <Switch
           checked={enabled}
+          disabled={isDisabled}
           onCheckedChange={toggleEnabled}
           aria-label={m.age_numeric_toggle()}
         />
@@ -82,6 +85,7 @@ export function NumericAgeFormSection() {
             onChange={changeMode}
             idPrefix="numeric-mode"
             label={m.age_numeric_mode()}
+            disabled={isDisabled}
           />
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

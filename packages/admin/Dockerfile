@@ -27,7 +27,6 @@ WORKDIR /app/packages/admin
 # (react-compiler injects `import "react/compiler-runtime"` into its source).
 RUN pnpm -F "@projet-igsn/admin..." install --frozen-lockfile
 
-# Then the source (busts only the layers below, not the install above).
 ADD --chown=node:node tsconfig.base.json /app/
 ADD --chown=node:node packages/admin /app/packages/admin
 ADD --chown=node:node packages/domain /app/packages/domain
@@ -54,6 +53,9 @@ ENV VITE_FRONTEND_URL=$VITE_FRONTEND_URL
 # Must match the api's UPLOAD_LIMIT, or the UI promises what the api refuses.
 ARG VITE_UPLOAD_LIMIT=5
 ENV VITE_UPLOAD_LIMIT=$VITE_UPLOAD_LIMIT
+# How often the edit page asks whether a lock another user holds came free.
+ARG VITE_SAMPLE_LOCK_POLL_SECONDS=30
+ENV VITE_SAMPLE_LOCK_POLL_SECONDS=$VITE_SAMPLE_LOCK_POLL_SECONDS
 
 RUN pnpm -F @projet-igsn/admin build
 
