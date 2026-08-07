@@ -18,13 +18,15 @@ import {
 const DEBOUNCE_MS = 300;
 
 export function ColleagueSearch({
+  sampleId,
   onPick,
 }: {
+  sampleId: string;
   onPick: (userId: string) => void;
 }) {
   const [term, setTerm] = useState("");
   const [search] = useDebouncedValue(term, { wait: DEBOUNCE_MS });
-  const found = useSearchUsers(search);
+  const found = useSearchUsers(search, sampleId);
 
   return (
     <Command shouldFilter={false} label={m.share_search_placeholder()}>

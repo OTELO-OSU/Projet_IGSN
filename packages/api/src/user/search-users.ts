@@ -11,11 +11,34 @@ export function searchUsers(
   db: Transactional<DB>,
   query: string | undefined,
   callerId: string,
+  excludeCollaboratorsOf?: string,
 ): Promise<UserIdentity[]> {
   const others = db
     .selectFrom("user")
     .select(["id", "email", "name", "firstname", "orcid"])
-    .where("id", "!=", callerId);
+    .where("id", "!=", callerId)
+    .$if(excludeCollaboratorsOf !== undefined, (qb) =>
+      qb.where((eb) =>
+        eb.not(
+          eb.exists(
+            eb
+              .selectFrom("user_sample")
+              .select("user_sample.user_id")
+              .whereRef("user_sample.user_id", "=", "user.id")
+              .where("user_sample.sample_id", "=", excludeCollaboratorsOf!)
+              .where((web) =>
+                web.exists(
+                  web
+                    .selectFrom("user_sample as caller")
+                    .select("caller.user_id")
+                    .where("caller.sample_id", "=", excludeCollaboratorsOf!)
+                    .where("caller.user_id", "=", callerId),
+                ),
+              ),
+          ),
+        ),
+      ),
+    );
   if (query === undefined) {
     return others.orderBy("email").limit(BROWSE_LIMIT).execute();
   }

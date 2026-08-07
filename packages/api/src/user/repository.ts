@@ -106,8 +106,10 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .executeTakeFirst();
         return row ? userSchema.parse(row) : null;
       }),
-    search: (query, callerId) =>
-      withTransaction(db, (trx) => searchUsers(trx, query, callerId)),
+    search: (query, callerId, excludeCollaboratorsOf) =>
+      withTransaction(db, (trx) =>
+        searchUsers(trx, query, callerId, excludeCollaboratorsOf),
+      ),
     // One guarded statement, not a catch on the unique violation: an aborted
     // transaction would poison the caller's (no savepoints, transactions rule).
     // ponytail: a concurrent claim of the same orcid can still trip the unique

@@ -21,5 +21,7 @@ export function shareSamplePage(page: Page) {
       expect(
         dialog.getByRole("listitem").filter({ hasText: email }),
       ).toBeVisible(),
+    removeCollaborator: (name: string) =>
+      dialog.getByRole("button", { name: `Remove ${name}` }).click(),
   };
 }

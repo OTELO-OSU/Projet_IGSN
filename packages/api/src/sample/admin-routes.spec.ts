@@ -1503,6 +1503,41 @@ describe("admin sample routes", () => {
     );
 
     pgTest(
+      "should let a super admin remove a contributor from another researcher's sample",
+      async ({ db }) => {
+        // Arrange
+        await provisionUser(db, "test-token", {
+          status: "accepted",
+          superAdmin: true,
+        });
+        const sample = await insertOtherResearcherSample(db);
+        const colleague = await insertUser(db, "colleague@univ-lorraine.fr");
+        const client = testClient(createApp(db).app);
+        await client.admin.samples[":id"].collaborators.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id } },
+          { headers: authHeader },
+        );
+        // Act
+        const removed = await client.admin.samples[":id"].collaborators[
+          ":userId"
+        ].$delete(
+          { param: { id: sample.id, userId: colleague.id } },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(removed.status).toBe(204);
+        const listed = await client.admin.samples[":id"].collaborators.$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+        const { data } = (await listed.json()) as SampleCollaboratorsResponse;
+        expect(data.map(({ email, role }) => ({ email, role }))).toEqual([
+          { email: "other@univ-lorraine.fr", role: "owner" },
+        ]);
+      },
+    );
+
+    pgTest(
       "should answer 403 when publishing another researcher's sample",
       async ({ db }) => {
         // Arrange
@@ -2089,6 +2124,113 @@ describe("admin sample routes", () => {
         ],
       });
     });
+
+    pgTest("should let the owner remove a contributor", async ({ db }) => {
+      const { app, sample, owner, colleague } = await arrangeOwnedSample(db);
+      const client = testClient(app);
+      await client.admin.samples[":id"].collaborators.$post(
+        { param: { id: sample.id }, json: { userId: colleague.id } },
+        { headers: authHeader },
+      );
+
+      const removed = await client.admin.samples[":id"].collaborators[
+        ":userId"
+      ].$delete(
+        { param: { id: sample.id, userId: colleague.id } },
+        { headers: authHeader },
+      );
+
+      expect(removed.status).toBe(204);
+      const listed = await client.admin.samples[":id"].collaborators.$get(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+      const { data } = (await listed.json()) as SampleCollaboratorsResponse;
+      expect(data.map(({ id, role }) => ({ id, role }))).toEqual([
+        { id: owner.id, role: "owner" },
+      ]);
+      const read = await client.admin.samples[":id"].$get(
+        { param: { id: sample.id } },
+        { headers: colleagueHeader },
+      );
+      expect(read.status).toBe(403);
+    });
+
+    pgTest("should answer 404 when removing the owner", async ({ db }) => {
+      const { app, sample, owner } = await arrangeOwnedSample(db);
+      const client = testClient(app);
+
+      const res = await client.admin.samples[":id"].collaborators[
+        ":userId"
+      ].$delete(
+        { param: { id: sample.id, userId: owner.id } },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(404);
+      const rows = await db
+        .selectFrom("user_sample")
+        .selectAll()
+        .where("sample_id", "=", sample.id)
+        .execute();
+      expect(rows).toEqual([
+        { sample_id: sample.id, user_id: owner.id, role: "owner" },
+      ]);
+    });
+
+    pgTest(
+      "should answer 403 when a contributor removes a contributor",
+      async ({ db }) => {
+        const { app, sample, colleague } = await arrangeOwnedSample(db);
+        const client = testClient(app);
+        await client.admin.samples[":id"].collaborators.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        const res = await client.admin.samples[":id"].collaborators[
+          ":userId"
+        ].$delete(
+          { param: { id: sample.id, userId: colleague.id } },
+          { headers: colleagueHeader },
+        );
+
+        expect(res.status).toBe(403);
+      },
+    );
+
+    pgTest(
+      "should reject a removal with a malformed user id with 400",
+      async ({ db }) => {
+        const { app, sample } = await arrangeOwnedSample(db);
+
+        const res = await app.request(
+          `/admin/samples/${sample.id}/collaborators/not-a-uuid`,
+          { method: "DELETE", headers: authHeader },
+        );
+
+        expect(res.status).toBe(400);
+      },
+    );
+
+    pgTest(
+      "should answer 401 on removal when the session is no longer active",
+      async ({ db }) => {
+        const { app, sample, colleague } = await arrangeOwnedSample(db);
+        vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
+          c.json({ error: "Unauthorized" }, 401),
+        );
+
+        const res = await testClient(app).admin.samples[":id"].collaborators[
+          ":userId"
+        ].$delete(
+          { param: { id: sample.id, userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(401);
+      },
+    );
 
     pgTest("should answer 404 for an unknown user id", async ({ db }) => {
       const { app, sample } = await arrangeOwnedSample(db);
