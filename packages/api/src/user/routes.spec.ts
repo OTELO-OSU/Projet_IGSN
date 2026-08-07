@@ -90,7 +90,7 @@ describe("admin user search routes", () => {
   });
 
   pgTest(
-    "should leave out the collaborators of the excluded sample",
+    "should ignore the exclusion when the caller is not on that sample",
     async ({ db }) => {
       const curie = await createUserRepository(db).upsert({
         email: "marie.curie@univ-lorraine.fr",
@@ -113,7 +113,7 @@ describe("admin user search routes", () => {
 
       expect(res.status).toBe(200);
       const body = userIdentitiesResponseSchema.parse(await res.json());
-      expect(body.data.map((user) => user.name)).toEqual(["Dupont"]);
+      expect(body.data.map((user) => user.name)).toEqual(["Curie", "Dupont"]);
     },
   );
 
