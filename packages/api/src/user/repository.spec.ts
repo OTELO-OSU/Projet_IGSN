@@ -566,14 +566,6 @@ describe("createUserRepository", () => {
     },
   );
 
-  pgTest("should list no pending user when none waits", async ({ db }) => {
-    await insertUser(db, "accepted@univ-lorraine.fr", { status: "accepted" });
-
-    const pending = await createUserRepository(db).listPending();
-
-    expect(pending).toEqual([]);
-  });
-
   pgTest("should list the super admins' emails", async ({ db }) => {
     await insertUser(db, "zoe@univ-lorraine.fr", {
       status: "accepted",

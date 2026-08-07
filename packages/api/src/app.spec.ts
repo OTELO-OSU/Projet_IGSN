@@ -14,7 +14,7 @@ import { insertSampleOwner } from "./user-sample/insert-sample-owner.ts";
 describe("app", () => {
   describe("GET /", () => {
     pgTest("should return Hello World", async ({ db }) => {
-      const client = testClient(createApp(db));
+      const client = testClient(createApp(db).app);
 
       const res = await client.index.$get();
       expect(res.status).toBe(200);
@@ -27,7 +27,7 @@ describe("app", () => {
     const callerEmail = "test-token@example.com";
 
     pgTest("rejects a request with no bearer token", async ({ db }) => {
-      const client = testClient(createApp(db));
+      const client = testClient(createApp(db).app);
 
       const res = await client.admin.currentUser.$get();
       expect(res.status).toBe(401);
@@ -45,7 +45,7 @@ describe("app", () => {
         // Arrange
         await insertUser(db, callerEmail, seeded);
         // Act
-        const res = await testClient(createApp(db)).admin.currentUser.$get(
+        const res = await testClient(createApp(db).app).admin.currentUser.$get(
           undefined,
           { headers: authHeader },
         );
@@ -70,7 +70,7 @@ describe("app", () => {
     pgTest("should be refused on a read and on a write", async ({ db }) => {
       // Arrange
       await insertUser(db, rejectedEmail, { status: "rejected" });
-      const app = createApp(db);
+      const app = createApp(db).app;
       // Act
       const read = await app.request("/admin/samples?page=1&perPage=10", {
         headers: authHeader,
@@ -108,7 +108,7 @@ describe("app", () => {
         .where("id", "=", owner.id)
         .execute();
       // Act
-      const res = await createApp(db).request("/admin/samples", {
+      const res = await createApp(db).app.request("/admin/samples", {
         headers: authHeader,
       });
       // Assert
@@ -121,7 +121,7 @@ describe("app", () => {
 
   describe("error handling", () => {
     pgTest("should answer an unexpected failure as JSON", async ({ db }) => {
-      const app = createApp(db);
+      const app = createApp(db).app;
       vi.spyOn(db, "selectFrom").mockImplementation(() => {
         throw new Error("connection terminated: password=hunter2");
       });
@@ -149,7 +149,7 @@ describe("app", () => {
     pgTest(
       "should reflect the allow-origin header for an allowed origin",
       async ({ db }) => {
-        const client = testClient(createApp(db));
+        const client = testClient(createApp(db).app);
 
         const res = await client.index.$get(undefined, {
           headers: { Origin: allowedOrigin },
@@ -167,7 +167,7 @@ describe("app", () => {
     pgTest(
       "should not set allow-origin for a disallowed origin",
       async ({ db }) => {
-        const client = testClient(createApp(db));
+        const client = testClient(createApp(db).app);
 
         const res = await client.index.$get(undefined, {
           headers: { Origin: "https://evil.example.test" },
@@ -180,7 +180,7 @@ describe("app", () => {
     pgTest(
       "should allow Authorization and Content-Type headers on preflight",
       async ({ db }) => {
-        const app = createApp(db);
+        const app = createApp(db).app;
 
         const res = await app.request("/samples", {
           method: "OPTIONS",
@@ -201,7 +201,7 @@ describe("app", () => {
       "should deny every origin when CORS_ORIGINS is empty",
       async ({ db }) => {
         delete process.env.CORS_ORIGINS;
-        const client = testClient(createApp(db));
+        const client = testClient(createApp(db).app);
 
         const res = await client.index.$get(undefined, {
           headers: { Origin: allowedOrigin },
@@ -236,7 +236,7 @@ describe("app", () => {
     };
 
     pgTest("should limit a public read per client IP", async ({ db }) => {
-      const app = createApp(db);
+      const app = createApp(db).app;
       const from = (ip: string) =>
         app.request("/samples", { headers: { "X-Real-IP": ip } });
 
@@ -248,7 +248,7 @@ describe("app", () => {
     pgTest(
       "should limit an admin route per authenticated user",
       async ({ db }) => {
-        const app = createApp(db);
+        const app = createApp(db).app;
         const from = (token: string) =>
           app.request("/admin/currentUser", {
             headers: { Authorization: `Bearer ${token}` },
@@ -261,7 +261,7 @@ describe("app", () => {
     );
 
     pgTest("should let a browser read the 429 headers", async ({ db }) => {
-      const app = createApp(db);
+      const app = createApp(db).app;
       const from = () =>
         app.request("/samples", {
           headers: {
@@ -288,7 +288,7 @@ describe("app", () => {
     });
 
     pgTest("should never limit a CORS preflight", async ({ db }) => {
-      const app = createApp(db);
+      const app = createApp(db).app;
       const preflight = () =>
         app.request("/samples", {
           method: "OPTIONS",
@@ -308,7 +308,7 @@ describe("app", () => {
     pgTest(
       "should reject an unauthenticated admin request before limiting it",
       async ({ db }) => {
-        const app = createApp(db);
+        const app = createApp(db).app;
 
         const statuses = await Promise.all(
           Array.from(
@@ -322,7 +322,7 @@ describe("app", () => {
     );
 
     pgTest("should never limit the healthcheck", async ({ db }) => {
-      const app = createApp(db);
+      const app = createApp(db).app;
 
       const statuses = await Promise.all(
         Array.from(
@@ -340,7 +340,7 @@ describe("app", () => {
       "should pass every request through when disabled",
       async ({ db }) => {
         process.env.RATE_LIMIT_ENABLED = "false";
-        const app = createApp(db);
+        const app = createApp(db).app;
         const from = () =>
           app.request("/samples", { headers: { "X-Real-IP": "10.0.0.1" } });
 
@@ -352,5 +352,39 @@ describe("app", () => {
         }
       },
     );
+  });
+
+  describe("startPendingUsersDigest", () => {
+    pgTest(
+      "should mail the super admins a digest linking the users list",
+      async ({ db }) => {
+        // Arrange
+        await insertUser(db, "admin@univ-lorraine.fr", {
+          status: "accepted",
+          superAdmin: true,
+        });
+        await insertUser(db, "jean.martin@univ-lorraine.fr");
+        const sendMail = vi.fn().mockResolvedValue(undefined);
+        const job = createApp(db, {
+          mail: { sendMail, adminUrl: "http://localhost:3001" },
+        }).startPendingUsersDigest();
+        // Act
+        await job.trigger();
+        job.stop();
+        // Assert
+        await vi.waitFor(() =>
+          expect(sendMail).toHaveBeenCalledWith(
+            expect.objectContaining({
+              to: ["admin@univ-lorraine.fr"],
+              text: expect.stringContaining("http://localhost:3001/users"),
+            }),
+          ),
+        );
+      },
+    );
+
+    pgTest("should refuse to start without mail wired", async ({ db }) => {
+      expect(() => createApp(db).startPendingUsersDigest()).toThrow("mail");
+    });
   });
 });

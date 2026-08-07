@@ -5,6 +5,7 @@ import { cors } from "hono/cors";
 import { HTTPException } from "hono/http-exception";
 
 import type { DB } from "./db.ts";
+import type { SendMail } from "./mail/send-mail.ts";
 
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
@@ -16,15 +17,21 @@ import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createCurrentUserRoutes } from "./user/current-user-routes.ts";
+import { schedulePendingUsersDigest } from "./user/pending-users-digest-schedule.ts";
 import { createUserRepository } from "./user/repository.ts";
 import { createUserRoutes, createUserSearchRoutes } from "./user/routes.ts";
+import { sendPendingUsersDigest } from "./user/send-pending-users-digest.ts";
 
 export function createApp(
   database: Kysely<DB>,
   {
     // Local disk for now; a Ceph mount will take over this path (ADR 0017).
     attachmentsDir = process.env.ATTACHMENTS_DIR ?? "attachments",
-  }: { attachmentsDir?: string } = {},
+    mail,
+  }: {
+    attachmentsDir?: string;
+    mail?: { sendMail: SendMail; adminUrl: string };
+  } = {},
 ) {
   const corsOrigins = (process.env.CORS_ORIGINS ?? "")
     .split(",")
@@ -70,36 +77,47 @@ export function createApp(
     // Registered first: the directory search is open to any authenticated user,
     // where createUserRoutes is super-admin-only throughout.
     .route("/users/search", createUserSearchRoutes(userRepository))
-    .route("/users", createUserRoutes(userRepository));
+    .route("/users", createUserRoutes(userRepository, mail));
 
-  return (
-    new Hono<AuthenticatedEnv>()
-      .use(
-        "*",
-        cors({
-          origin: (origin) => (corsOrigins.includes(origin) ? origin : null),
-          credentials: true,
-          allowHeaders: ["Authorization", "Content-Type"],
-          // None of these are CORS-safelisted, so without this the admin SPA
-          // cannot read how long a 429 asks it to wait, nor what budget it hit.
-          exposeHeaders: [
-            "Retry-After",
-            "RateLimit-Limit",
-            "RateLimit-Remaining",
-            "RateLimit-Reset",
-          ],
-        }),
-      )
-      // The cause is logged, never serialised: a driver message can carry SQL
-      // or a connection string. An HTTPException (the auth guard's 401 and its
-      // headers) already carries its own response.
-      .onError((error, c) => {
-        if (error instanceof HTTPException) return error.getResponse();
-        console.error("unhandled api error", error);
-        return c.json({ error: "Internal server error" }, 500);
-      })
-      .get("/", (c) => c.json({ message: "OK" }))
-      .route("/samples", publicSampleRoutes)
-      .route("/admin", adminRoutes)
-  );
+  const startPendingUsersDigest = () => {
+    if (!mail) throw new Error("mail is required to send the digest");
+    return schedulePendingUsersDigest(() => {
+      void sendPendingUsersDigest(
+        userRepository,
+        mail.sendMail,
+        new URL("/users", mail.adminUrl).toString(),
+      );
+    });
+  };
+
+  const app = new Hono<AuthenticatedEnv>()
+    .use(
+      "*",
+      cors({
+        origin: (origin) => (corsOrigins.includes(origin) ? origin : null),
+        credentials: true,
+        allowHeaders: ["Authorization", "Content-Type"],
+        // None of these are CORS-safelisted, so without this the admin SPA
+        // cannot read how long a 429 asks it to wait, nor what budget it hit.
+        exposeHeaders: [
+          "Retry-After",
+          "RateLimit-Limit",
+          "RateLimit-Remaining",
+          "RateLimit-Reset",
+        ],
+      }),
+    )
+    // The cause is logged, never serialised: a driver message can carry SQL
+    // or a connection string. An HTTPException (the auth guard's 401 and its
+    // headers) already carries its own response.
+    .onError((error, c) => {
+      if (error instanceof HTTPException) return error.getResponse();
+      console.error("unhandled api error", error);
+      return c.json({ error: "Internal server error" }, 500);
+    })
+    .get("/", (c) => c.json({ message: "OK" }))
+    .route("/samples", publicSampleRoutes)
+    .route("/admin", adminRoutes);
+
+  return { app, startPendingUsersDigest };
 }

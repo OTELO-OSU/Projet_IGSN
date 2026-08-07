@@ -19,7 +19,9 @@ function csvFile(name = "measurements.csv") {
   return new File([csv], name, { type: "text/csv" });
 }
 
-type Client = ReturnType<typeof testClient<ReturnType<typeof createApp>>>;
+type Client = ReturnType<
+  typeof testClient<ReturnType<typeof createApp>["app"]>
+>;
 type Db = Parameters<typeof createApp>[0];
 
 // Rows inserted straight into the table, bypassing the upload cap on purpose:
@@ -47,7 +49,7 @@ const attachmentsDir = join(import.meta.dirname, "..", "..", "attachments");
 // caller these specs upload and publish with is provisioned as one.
 async function createTestApp(db: Parameters<typeof createApp>[0]) {
   await provisionUser(db, "test-token", { status: "accepted" });
-  return testClient(createApp(db, { attachmentsDir }));
+  return testClient(createApp(db, { attachmentsDir }).app);
 }
 
 const sampleBody = {

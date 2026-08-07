@@ -8,9 +8,11 @@ import type {
 import { Hono } from "hono";
 
 import type { AuthenticatedEnv } from "../auth/current-user.ts";
+import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireSuperAdmin } from "../auth/require-super-admin.ts";
+import { sendUserAcceptedMail } from "./send-user-accepted-mail.ts";
 import {
   validateListUsersQuery,
   validateSearchUsersQuery,
@@ -36,7 +38,10 @@ export function createUserSearchRoutes(userRepository: UserRepository) {
 
 // Moderating accounts is super-admin-only: the guard sits on the mount so it
 // travels with these routes rather than with a path glob in app.ts.
-export function createUserRoutes(repository: UserRepository) {
+export function createUserRoutes(
+  repository: UserRepository,
+  mail?: { sendMail: SendMail; adminUrl: string },
+) {
   return (
     new Hono<AuthenticatedEnv>()
       .use("*", requireSuperAdmin)
@@ -61,6 +66,7 @@ export function createUserRoutes(repository: UserRepository) {
         validateUserIdParam,
         validateSetUserStatusBody,
         async (c) => {
+          const previous = await repository.get(c.req.valid("param").id);
           const user = await repository.setStatus(
             c.req.valid("param").id,
             c.req.valid("json").status,
@@ -74,6 +80,13 @@ export function createUserRoutes(repository: UserRepository) {
             target: user.id,
             status: user.status,
           });
+          if (
+            mail &&
+            previous?.status !== "accepted" &&
+            user.status === "accepted"
+          ) {
+            await sendUserAcceptedMail(user, mail.sendMail, mail.adminUrl);
+          }
           const body: UserResponse = { data: user };
           return c.json(body);
         },

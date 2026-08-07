@@ -11,7 +11,7 @@ const authHeader = { Authorization: "Bearer test-token" };
 describe("currentUser routes", () => {
   pgTest("should return the caller's claims and orcid", async ({ db }) => {
     // Act
-    const res = await testClient(createApp(db)).admin.currentUser.$get(
+    const res = await testClient(createApp(db).app).admin.currentUser.$get(
       undefined,
       {
         headers: authHeader,
@@ -30,7 +30,7 @@ describe("currentUser routes", () => {
 
   pgTest("should set the caller's orcid", async ({ db }) => {
     // Arrange
-    const client = testClient(createApp(db));
+    const client = testClient(createApp(db).app);
     // Act
     const res = await client.admin.currentUser.orcid.$put(
       { json: { orcid: "0000-0002-1825-0097" } },
@@ -47,7 +47,7 @@ describe("currentUser routes", () => {
 
   pgTest("should clear the caller's orcid with null", async ({ db }) => {
     // Arrange
-    const client = testClient(createApp(db));
+    const client = testClient(createApp(db).app);
     await client.admin.currentUser.orcid.$put(
       { json: { orcid: "0000-0002-1825-0097" } },
       { headers: authHeader },
@@ -70,7 +70,9 @@ describe("currentUser routes", () => {
         orcid: "0000-0002-1825-0097",
       });
       // Act
-      const res = await testClient(createApp(db)).admin.currentUser.orcid.$put(
+      const res = await testClient(
+        createApp(db).app,
+      ).admin.currentUser.orcid.$put(
         { json: { orcid: "0000-0002-1825-0097" } },
         { headers: authHeader },
       );
@@ -93,7 +95,7 @@ describe("currentUser routes", () => {
     },
   ])("should answer 400 on $case", async ({ body }, { db }) => {
     // Act
-    const res = await createApp(db).request("/admin/currentUser/orcid", {
+    const res = await createApp(db).app.request("/admin/currentUser/orcid", {
       method: "PUT",
       headers: { "content-type": "application/json", ...authHeader },
       body: JSON.stringify(body),
@@ -111,7 +113,9 @@ describe("currentUser routes", () => {
         c.json({ error: "Unauthorized" }, 401),
       );
       // Act
-      const res = await testClient(createApp(db)).admin.currentUser.orcid.$put(
+      const res = await testClient(
+        createApp(db).app,
+      ).admin.currentUser.orcid.$put(
         { json: { orcid: "0000-0002-1825-0097" } },
         { headers: authHeader },
       );

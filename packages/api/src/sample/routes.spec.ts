@@ -15,10 +15,12 @@ const authHeader = { Authorization: "Bearer test-token" };
 // caller these specs seed with is provisioned as one.
 async function acceptedClient(db: Parameters<typeof createApp>[0]) {
   await provisionUser(db, "test-token", { status: "accepted" });
-  return testClient(createApp(db));
+  return testClient(createApp(db).app);
 }
 
-type Client = ReturnType<typeof testClient<ReturnType<typeof createApp>>>;
+type Client = ReturnType<
+  typeof testClient<ReturnType<typeof createApp>["app"]>
+>;
 
 async function createSample(
   client: Client,
@@ -356,7 +358,7 @@ describe("public sample routes", () => {
     vi.resetModules();
     const { createApp: createLooseApp } = await import("../app.ts");
     await provisionUser(db, "test-token", { status: "accepted" });
-    const client = testClient(createLooseApp(db));
+    const client = testClient(createLooseApp(db).app);
     await createPublishedSample(client, "Sandstone Block");
     // Act
     const names = await searchNames(client, "sane");
@@ -398,7 +400,7 @@ describe("public sample routes", () => {
     async ({ db }) => {
       // Arrange
       await provisionUser(db, "test-token", { status: "accepted" });
-      const app = createApp(db);
+      const app = createApp(db).app;
       const client = testClient(app);
       const inside = await createSample(client, "Inside", "Inside 001", {
         longitude: 5,
@@ -426,7 +428,7 @@ describe("public sample routes", () => {
     "should filter published samples by a bbox crossing the dateline",
     async ({ db }) => {
       await provisionUser(db, "test-token", { status: "accepted" });
-      const app = createApp(db);
+      const app = createApp(db).app;
       const client = testClient(app);
       const inside = await createSample(client, "Fiji", "Fiji 001", {
         longitude: 178,
@@ -458,7 +460,7 @@ describe("public sample routes", () => {
     async ({ db }) => {
       // Arrange
       await provisionUser(db, "test-token", { status: "accepted" });
-      const app = createApp(db);
+      const app = createApp(db).app;
       const client = testClient(app);
       const draft = await createSample(client, "Grès de Fontainebleau");
       await publishSample(client, draft.id);
@@ -516,7 +518,7 @@ describe("public sample routes", () => {
 
   pgTest("should reject a malformed igsn with 400", async ({ db }) => {
     // Act
-    const res = await createApp(db).request("/samples/not-an-igsn");
+    const res = await createApp(db).app.request("/samples/not-an-igsn");
     // Assert
     expect(res.status).toBe(400);
   });
