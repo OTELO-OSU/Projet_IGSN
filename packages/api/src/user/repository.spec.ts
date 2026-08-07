@@ -242,12 +242,8 @@ describe("createUserRepository", () => {
         const curie = await repository.search("curie", CALLER_ID);
         await insertSampleContributor(db, sample.id, curie[0]!.id);
 
-        const searched = await repository.search("univ", CALLER_ID, sample.id);
-        const browsed = await repository.search(
-          undefined,
-          CALLER_ID,
-          sample.id,
-        );
+        const searched = await repository.search("univ", owner.id, sample.id);
+        const browsed = await repository.search(undefined, owner.id, sample.id);
 
         expect(searched.map((user) => user.email)).toEqual([
           "pierre.dupont@univ-lorraine.fr",

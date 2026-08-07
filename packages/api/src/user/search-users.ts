@@ -25,7 +25,16 @@ export function searchUsers(
               .selectFrom("user_sample")
               .select("user_sample.user_id")
               .whereRef("user_sample.user_id", "=", "user.id")
-              .where("user_sample.sample_id", "=", excludeCollaboratorsOf!),
+              .where("user_sample.sample_id", "=", excludeCollaboratorsOf!)
+              .where((web) =>
+                web.exists(
+                  web
+                    .selectFrom("user_sample as caller")
+                    .select("caller.user_id")
+                    .where("caller.sample_id", "=", excludeCollaboratorsOf!)
+                    .where("caller.user_id", "=", callerId),
+                ),
+              ),
           ),
         ),
       ),
