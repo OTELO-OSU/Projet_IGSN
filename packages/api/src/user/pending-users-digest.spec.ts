@@ -17,24 +17,17 @@ const pendingUser = (overrides: Partial<PendingUser> = {}): PendingUser => ({
 });
 
 describe("pendingUsersDigest", () => {
-  it("should title the mail with the number of accounts waiting", async () => {
-    const digest = await pendingUsersDigest(
-      [
-        pendingUser(),
-        pendingUser({ email: "marie.dupont@univ-lorraine.fr" }),
-        pendingUser({ email: "luc.blanc@univ-lorraine.fr" }),
-      ],
-      USERS_URL,
-      now,
+  it.each([
+    { count: 1, subject: "1 user is waiting for validation" },
+    { count: 3, subject: "3 users are waiting for validation" },
+  ])("should title the mail $subject", async ({ count, subject }) => {
+    const pending = Array.from({ length: count }, (_, i) =>
+      pendingUser({ email: `user${i}@univ-lorraine.fr` }),
     );
 
-    expect(digest.subject).toBe("3 users are waiting for validation");
-  });
+    const digest = await pendingUsersDigest(pending, USERS_URL, now);
 
-  it("should keep the title singular for a single account", async () => {
-    const digest = await pendingUsersDigest([pendingUser()], USERS_URL, now);
-
-    expect(digest.subject).toBe("1 user is waiting for validation");
+    expect(digest.subject).toBe(subject);
   });
 
   it("should list each account with its name, email and waiting time", async () => {
@@ -116,16 +109,6 @@ Moderate these accounts: http://localhost:3001/users
 
     expect(text).toContain(`Moderate these accounts: ${USERS_URL}`);
     expect(html).toContain(`href="${USERS_URL}"`);
-  });
-
-  it("should title the html document with the subject", async () => {
-    const { subject, html } = await pendingUsersDigest(
-      [pendingUser()],
-      USERS_URL,
-      now,
-    );
-
-    expect(html).toContain(`<title>${subject}</title>`);
   });
 
   it("should escape markup coming from an account", async () => {

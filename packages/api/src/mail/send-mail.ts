@@ -11,12 +11,12 @@ export type SendMail = (mail: Mail) => Promise<void>;
 
 export function createSendMail(env: NodeJS.ProcessEnv = process.env): SendMail {
   const port = Number(env.SMTP_PORT) || 587;
-  const user = env.SMTP_USER || undefined;
+  const user = env.SMTP_USER;
   const transport = nodemailer.createTransport({
     host: env.SMTP_HOST,
     port,
     secure: port === 465,
-    requireTLS: user !== undefined,
+    requireTLS: !!user,
     auth: user ? { user, pass: env.SMTP_PASSWORD } : undefined,
   });
   return async ({ to, subject, text, html }) => {

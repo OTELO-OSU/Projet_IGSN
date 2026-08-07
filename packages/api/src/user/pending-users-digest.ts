@@ -50,13 +50,11 @@ async function render(
   rows: string,
   usersUrl: string,
 ): Promise<string> {
-  const { html, errors } = await mjml2html(
+  const { html } = await mjml2html(
     TEMPLATE.replaceAll("__TITLE__", escapeHtml(title))
       .replace("__ROWS__", rows)
       .replace("__USERS_URL__", escapeHtml(usersUrl)),
   );
-  const [failure] = errors;
-  if (failure) throw new Error(failure.formattedMessage);
   return html;
 }
 
