@@ -1,15 +1,5 @@
 import type { ReactNode } from "react";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@projet-igsn/design-system/components/ui/sidebar";
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { Link, useLocation } from "@tanstack/react-router";
 import { MountainIcon, UsersIcon } from "lucide-react";
@@ -21,6 +11,9 @@ import { SignOutButton } from "./sign-out-button.tsx";
 import { useCurrentUser } from "./use-current-user.ts";
 
 const listSearch = { page: 1, perPage: DEFAULT_PAGE_SIZE };
+
+const navLinkClass =
+  "hover:bg-accent aria-[current=page]:bg-accent flex items-center gap-2 rounded-md p-2 text-sm [&>svg]:size-4 [&>svg]:shrink-0";
 
 export function AppLayout({
   onSignOut,
@@ -35,51 +28,50 @@ export function AppLayout({
   const isSamplesSection = pathname === "/" || pathname.startsWith("/samples");
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <Link
-            to="/"
-            className="px-2 py-1 text-xl font-bold"
-            search={listSearch}
-          >
-            {m.app_title()}
-          </Link>
-        </SidebarHeader>
-        <SidebarContent>
-          <nav>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={isSamplesSection}>
-                  <Link to="/" search={listSearch}>
-                    <MountainIcon />
-                    {m.nav_samples()}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {me?.superAdmin && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild isActive={isUsersSection}>
-                    <Link to="/users" search={listSearch}>
-                      <UsersIcon />
-                      {m.nav_users()}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
-            </SidebarMenu>
-          </nav>
-        </SidebarContent>
-      </Sidebar>
+    <div className="flex min-h-screen w-full flex-col md:flex-row">
+      <aside className="flex flex-col gap-2 border-b p-2 md:w-64 md:shrink-0 md:border-r md:border-b-0">
+        <Link
+          to="/"
+          className="px-2 py-1 text-xl font-bold"
+          search={listSearch}
+        >
+          {m.app_title()}
+        </Link>
+        <nav>
+          <ul className="flex gap-1 md:flex-col">
+            <li>
+              <Link
+                to="/"
+                search={listSearch}
+                className={navLinkClass}
+                aria-current={isSamplesSection ? "page" : undefined}
+              >
+                <MountainIcon />
+                {m.nav_samples()}
+              </Link>
+            </li>
+            {me?.superAdmin && (
+              <li>
+                <Link
+                  to="/users"
+                  search={listSearch}
+                  className={navLinkClass}
+                  aria-current={isUsersSection ? "page" : undefined}
+                >
+                  <UsersIcon />
+                  {m.nav_users()}
+                </Link>
+              </li>
+            )}
+          </ul>
+        </nav>
+      </aside>
       <div className="flex min-h-screen w-full flex-1 flex-col">
         <header className="border-b">
-          <div className="flex items-center justify-between gap-4 px-6 py-4">
-            <SidebarTrigger />
-            <div className="flex items-center gap-4">
-              <Link to="/settings">{m.nav_settings()}</Link>
-              <UserName />
-              <SignOutButton onSignOut={onSignOut} />
-            </div>
+          <div className="flex items-center justify-end gap-4 px-6 py-4">
+            <Link to="/settings">{m.nav_settings()}</Link>
+            <UserName />
+            <SignOutButton onSignOut={onSignOut} />
           </div>
         </header>
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-6">
@@ -94,6 +86,6 @@ export function AppLayout({
           {children}
         </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
