@@ -1,7 +1,10 @@
 import { describe, expect } from "vitest";
 
+import { insertSample } from "../sample/service/insert-sample.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
+import { insertSampleContributor } from "../user-sample/insert-sample-contributor.ts";
+import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { createUserRepository } from "./repository.ts";
 
 const claims = {
@@ -219,6 +222,41 @@ describe("createUserRepository", () => {
         "pierre.dupont@univ-lorraine.fr",
       ]);
     });
+
+    pgTest(
+      "should leave out the collaborators of the given sample",
+      async ({ db }) => {
+        const repository = await insertResearchers(db);
+        const owner = await repository.upsert({
+          email: "owner@univ-lorraine.fr",
+          name: "Moreau",
+          firstname: null,
+        });
+        const sample = await insertSample(db, {
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: null,
+          collectionMethod: null,
+        });
+        await insertSampleOwner(db, sample.id, owner.id);
+        const curie = await repository.search("curie", CALLER_ID);
+        await insertSampleContributor(db, sample.id, curie[0]!.id);
+
+        const searched = await repository.search("univ", CALLER_ID, sample.id);
+        const browsed = await repository.search(
+          undefined,
+          CALLER_ID,
+          sample.id,
+        );
+
+        expect(searched.map((user) => user.email)).toEqual([
+          "pierre.dupont@univ-lorraine.fr",
+        ]);
+        expect(browsed.map((user) => user.email)).toEqual([
+          "pierre.dupont@univ-lorraine.fr",
+        ]);
+      },
+    );
 
     pgTest("should find a researcher by email", async ({ db }) => {
       const repository = await insertResearchers(db);

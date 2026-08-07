@@ -9,8 +9,10 @@ import { describe, expect, vi } from "vitest";
 
 import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
+import { insertSample } from "../sample/service/insert-sample.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
+import { insertSampleContributor } from "../user-sample/insert-sample-contributor.ts";
 import { createUserRepository } from "./repository.ts";
 
 const ADMIN_URL = "http://localhost:3001/";
@@ -86,6 +88,46 @@ describe("admin user search routes", () => {
     const body = userIdentitiesResponseSchema.parse(await res.json());
     expect(body.data).toHaveLength(10);
   });
+
+  pgTest(
+    "should leave out the collaborators of the excluded sample",
+    async ({ db }) => {
+      const curie = await createUserRepository(db).upsert({
+        email: "marie.curie@univ-lorraine.fr",
+        name: "Curie",
+        firstname: null,
+      });
+      await insertResearcher(db, "Dupont", "pierre.dupont@univ-lorraine.fr");
+      const sample = await insertSample(db, {
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        type: null,
+        collectionMethod: null,
+      });
+      await insertSampleContributor(db, sample.id, curie.id);
+
+      const res = await testClient(createApp(db)).admin.users.search.$get(
+        { query: { excludeCollaboratorsOf: sample.id } },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(200);
+      const body = userIdentitiesResponseSchema.parse(await res.json());
+      expect(body.data.map((user) => user.name)).toEqual(["Dupont"]);
+    },
+  );
+
+  pgTest(
+    "should reject a malformed excluded sample id with 400",
+    async ({ db }) => {
+      const res = await createApp(db).request(
+        "/admin/users/search?excludeCollaboratorsOf=not-a-uuid",
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(400);
+    },
+  );
 
   pgTest.for(["", "c"])(
     "should reject the search term %s with 400",
