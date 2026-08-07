@@ -47,7 +47,6 @@ export function NumericAgeFormSection() {
   const [enabled, setEnabled] = useState(() =>
     ALL_FIELDS.some((name) => values[name] != null),
   );
-  // Guard with `!= null` so a `0` bound is not misread as empty.
   const [mode, setMode] = useState<AgeMode>(() =>
     values.numericAgeMin != null &&
     values.numericAgeMin === values.numericAgeMax

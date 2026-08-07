@@ -66,8 +66,6 @@ function AttachmentRowLayout({
   isStruck,
   description,
 }: AttachmentRowLayoutProps) {
-  // The description is persisted with the sample, so a read-only page must not
-  // take an edit the disabled submit would silently drop.
   const isDisabled = useIsFieldDisabled("links");
   return (
     <li className="grid gap-2">
@@ -112,8 +110,6 @@ type AttachmentRowProps = {
 function AttachmentRow({ sampleId, attachment, changes }: AttachmentRowProps) {
   const download = useDownloadAttachment(sampleId);
   const isMarkedForDeletion = changes.deletions.includes(attachment.id);
-  // Attachments are no form field, so they follow the links field's rule: a
-  // read-only page still downloads, it just changes nothing.
   const isDisabled = useIsFieldDisabled("links");
 
   return (
