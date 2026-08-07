@@ -1,10 +1,10 @@
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { COUNTRIES } from "@projet-igsn/domain/sample/location/country";
 import { OCEAN_SEAS } from "@projet-igsn/domain/sample/location/ocean-sea";
-import { oceanSeaName } from "@projet-igsn/domain/sample/location/ocean-sea-label";
 
 import { m } from "#/paraglide/messages.js";
 import { countryName, regionKindLabel } from "#/samples/location-label.ts";
+import { oceanSeaLabel } from "#/samples/sample-labels.ts";
 import { useLocationForm } from "#/samples/use-location-form.ts";
 
 const regionKindItems = toComboboxItems(
@@ -12,7 +12,7 @@ const regionKindItems = toComboboxItems(
   regionKindLabel,
 );
 const countryItems = toComboboxItems(COUNTRIES, countryName);
-const oceanSeaItems = toComboboxItems(OCEAN_SEAS, oceanSeaName);
+const oceanSeaItems = toComboboxItems(OCEAN_SEAS, oceanSeaLabel);
 
 export function LocationRegionFields() {
   const form = useLocationForm();
