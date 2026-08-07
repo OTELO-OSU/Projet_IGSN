@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 export type SmtpTransportOptions = {
-  host?: string;
+  host: string;
   port: number;
   secure: boolean;
   requireTLS: boolean;
@@ -20,10 +20,13 @@ export type SendMail = (mail: Mail) => Promise<void>;
 export function smtpTransportOptions(
   env: NodeJS.ProcessEnv,
 ): SmtpTransportOptions {
+  const host = env.SMTP_HOST;
+  if (!host) throw new Error("SMTP_HOST is required to send mail");
+
   const port = Number(env.SMTP_PORT) || 587;
   const user = env.SMTP_USER;
   return {
-    host: env.SMTP_HOST,
+    host,
     port,
     secure: port === 465,
     requireTLS: !!user,

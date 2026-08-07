@@ -72,6 +72,13 @@ describe("smtpTransportOptions", () => {
   ])("should use $what", ({ env, options }) => {
     expect(smtpTransportOptions(env)).toEqual(options);
   });
+
+  it.each([{}, { SMTP_HOST: "" }, { SMTP_PORT: "1025" }])(
+    "should refuse to boot without an SMTP host: %o",
+    (env) => {
+      expect(() => smtpTransportOptions(env)).toThrow("SMTP_HOST");
+    },
+  );
 });
 
 describe("createSendMail", () => {
