@@ -12,6 +12,7 @@ import { validateUuidIdParam } from "../uuid-param.ts";
 const searchUsersQuerySchema = z.strictObject({
   // Absent browses the whole directory; present still has to be a real term.
   search: z.string().trim().min(2).max(MAX_SEARCH_LENGTH).optional(),
+  excludeCollaboratorsOf: z.uuid().optional(),
 });
 
 export const validateSearchUsersQuery = validator("query", (value, c) => {

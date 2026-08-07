@@ -94,12 +94,15 @@ function fakeApi({
     ),
     http.get("*/admin/users/search", ({ request }) => {
       calls.push(`GET ${request.url}`);
-      const search = (
-        new URL(request.url).searchParams.get("search") ?? ""
-      ).toLowerCase();
+      const url = new URL(request.url);
+      const search = (url.searchParams.get("search") ?? "").toLowerCase();
+      const excluded = url.searchParams.get("excludeCollaboratorsOf")
+        ? new Set([OWNER_ID, ...listed.map((user) => user.id)])
+        : new Set<string>();
       return HttpResponse.json({
-        data: directory.filter((user) =>
-          user.name?.toLowerCase().includes(search),
+        data: directory.filter(
+          (user) =>
+            !excluded.has(user.id) && user.name?.toLowerCase().includes(search),
         ),
       });
     }),
@@ -125,8 +128,6 @@ async function renderShareButton(options?: Parameters<typeof fakeApi>[0]) {
     calls.filter((call) => call.includes("admin/users"));
   const filteredSearches = () =>
     userSearches().filter((call) => call.includes("search="));
-  const contributorPosts = () =>
-    calls.filter((call) => call.startsWith("POST"));
   const roleLoaded = () =>
     vi.waitFor(() =>
       expect(queryClient.getQueryState(["samples", SAMPLE_ID])?.status).toBe(
@@ -138,7 +139,6 @@ async function renderShareButton(options?: Parameters<typeof fakeApi>[0]) {
     calls,
     userSearches,
     filteredSearches,
-    contributorPosts,
     roleLoaded,
   };
 }
@@ -294,28 +294,6 @@ describe("ShareSampleButton", () => {
     await expect.element(screen.getByText("Collaborator added")).toBeVisible();
   });
 
-  it("should leave the list unchanged when picking an already listed colleague", async () => {
-    const { screen, contributorPosts } = await renderShareButton({
-      contributors: [dupont],
-      directory: [dupont],
-    });
-    await openPicker(screen);
-
-    await searchField(screen).fill("dup");
-    await screen.getByRole("option", { name: /Dupont/ }).click();
-    await vi.waitFor(() => expect(contributorPosts()).toHaveLength(1));
-
-    await expect
-      .element(collaborators(screen))
-      .toHaveTextContent("Pierre Dupont pierre.dupont@univ-lorraine.fr");
-    expect(collaborators(screen).elements()).toHaveLength(1);
-    expect(
-      screen
-        .getByText("Could not add the collaborator. Please try again.")
-        .query(),
-    ).toBeNull();
-  });
-
   it("should list the colleagues on opening the autocomplete, before anything is typed", async () => {
     const { screen, filteredSearches } = await renderShareButton({
       directory: [dupont, curie],
@@ -393,6 +371,40 @@ describe("ShareSampleButton", () => {
     await expect
       .element(collaborators(screen))
       .toHaveTextContent("Pierre Dupont");
+  });
+
+  it("should not offer an existing collaborator as a suggestion", async () => {
+    const { screen } = await renderShareButton({
+      contributors: [dupont],
+      directory: [dupont, curie],
+    });
+
+    await openPicker(screen);
+
+    await expect
+      .element(screen.getByRole("option", { name: /Curie/ }))
+      .toBeVisible();
+    expect(screen.getByRole("option", { name: /Dupont/ }).elements()).toEqual(
+      [],
+    );
+  });
+
+  it("should stop offering a colleague once added", async () => {
+    const { screen, userSearches } = await renderShareButton({
+      directory: [dupont],
+    });
+    await openPicker(screen);
+    await screen.getByRole("option", { name: /Dupont/ }).click();
+    await expect
+      .element(collaborators(screen))
+      .toHaveTextContent("Pierre Dupont");
+
+    await screen.getByRole("combobox", { name: "Search a colleague" }).click();
+
+    await vi.waitFor(() => {
+      expect(userSearches()).toHaveLength(2);
+      expect(screen.getByRole("option").elements()).toEqual([]);
+    });
   });
 
   it("should remove a contributor from the list", async () => {

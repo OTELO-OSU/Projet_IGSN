@@ -21,7 +21,11 @@ export type UserRepository = {
   // No query browses everyone. `callerId` comes from the token, never from
   // the client: nobody shares a sample with themself, so the caller is
   // always left out of the results.
-  search(query: string | undefined, callerId: string): Promise<UserIdentity[]>;
+  search(
+    query: string | undefined,
+    callerId: string,
+    excludeCollaboratorsOf?: string,
+  ): Promise<UserIdentity[]>;
   // Resolves to null when another user already holds that ORCID.
   setOrcid(userId: string, orcid: string | null): Promise<User | null>;
   findByOrcid(orcid: string): Promise<User | undefined>;
