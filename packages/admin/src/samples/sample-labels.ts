@@ -16,6 +16,7 @@ export const {
   textureLabel,
   metamorphicFaciesLabel,
   natureLabel,
+  oceanSeaLabel,
   packagingLabel,
   storageConditionLabel,
   temperatureTypeLabel,

@@ -2,9 +2,9 @@ import type { Location } from "@projet-igsn/domain/sample/location/model";
 import type { VerticalDatum } from "@projet-igsn/domain/sample/location/vertical-datum";
 
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
-import { oceanSeaName } from "@projet-igsn/domain/sample/location/ocean-sea-label";
 
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
+import { oceanSeaLabel } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
 
@@ -90,7 +90,7 @@ export function LocationView({ location }: { location: Location }) {
               ? countryLabel(region.country, getLocale())
               : m.region_kind_continent()
             : region.oceanSea
-              ? oceanSeaName(region.oceanSea)
+              ? oceanSeaLabel(region.oceanSea)
               : m.region_kind_ocean())
         }
       />

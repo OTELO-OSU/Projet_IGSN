@@ -8,6 +8,7 @@ import { HttpResponse, http } from "msw";
 import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
+import { page } from "vitest/browser";
 
 import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
@@ -97,6 +98,11 @@ async function renderCreatePage(failWrites = false) {
   );
   return Object.assign(screen, { lockCalls });
 }
+
+// Tests run without the app CSS, so the whole page is one vertical flow; the
+// default 414x896 viewport leaves deep combobox options outside the viewport,
+// where Playwright cannot click them.
+beforeAll(() => page.viewport(1280, 1600));
 
 describe("CreateSamplePage", () => {
   it("should redirect to the new sample's edit page after creation", async () => {
