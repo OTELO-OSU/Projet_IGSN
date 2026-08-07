@@ -345,6 +345,42 @@ describe("admin user routes", () => {
     );
   });
 
+  pgTest("should notify the user accepted from rejected", async ({ db }) => {
+    // Arrange
+    await db
+      .insertInto("user")
+      .values({
+        id: "01890a5d-ac96-774b-bcce-b302099a8063",
+        email: "rejected@univ-lorraine.fr",
+        name: "Rejected",
+        firstname: "Rose",
+        status: "rejected",
+      })
+      .execute();
+    await provisionUser(db, "moderator", {
+      status: "accepted",
+      superAdmin: true,
+    });
+    const notifyUserAccepted = vi.fn().mockResolvedValue(undefined);
+    const client = testClient(createApp(db, { notifyUserAccepted }));
+    // Act
+    const res = await client.admin.users[":id"].status.$put(
+      {
+        param: { id: "01890a5d-ac96-774b-bcce-b302099a8063" },
+        json: { status: "accepted" },
+      },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    expect(notifyUserAccepted).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: "rejected@univ-lorraine.fr",
+        status: "accepted",
+      }),
+    );
+  });
+
   pgTest.for([
     [
       "a rejected pending user",

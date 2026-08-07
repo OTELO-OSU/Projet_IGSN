@@ -79,7 +79,7 @@ export function createUserRoutes(
             target: user.id,
             status: user.status,
           });
-          if (previous?.status === "pending" && user.status === "accepted") {
+          if (previous?.status !== "accepted" && user.status === "accepted") {
             await notifyUserAccepted(user);
           }
           const body: UserResponse = { data: user };
