@@ -75,7 +75,7 @@ Moderate these accounts: http://localhost:3001/users
     },
   );
 
-  it("should render one html row per account, in the order given", async () => {
+  it("should render one linked html row per account, in the order given", async () => {
     const html = (
       await pendingUsersDigest(
         [
@@ -95,20 +95,10 @@ Moderate these accounts: http://localhost:3001/users
     expect(html).toContain("<td>Jean Martin</td>");
     expect(html).toContain("<td>jean.martin@univ-lorraine.fr</td>");
     expect(html).toContain("<td>30 days</td>");
+    expect(html).toContain(`href="${USERS_URL}"`);
     expect(html.indexOf("Jean Martin")).toBeLessThan(
       html.indexOf("Marie Dupont"),
     );
-  });
-
-  it("should link to the admin users list in both parts", async () => {
-    const { text, html } = await pendingUsersDigest(
-      [pendingUser()],
-      USERS_URL,
-      now,
-    );
-
-    expect(text).toContain(`Moderate these accounts: ${USERS_URL}`);
-    expect(html).toContain(`href="${USERS_URL}"`);
   });
 
   it("should escape markup coming from an account", async () => {

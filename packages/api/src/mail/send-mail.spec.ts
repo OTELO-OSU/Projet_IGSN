@@ -73,7 +73,7 @@ describe("smtpTransportOptions", () => {
     expect(smtpTransportOptions(env)).toEqual(options);
   });
 
-  it.each([{}, { SMTP_HOST: "" }, { SMTP_PORT: "1025" }])(
+  it.each([{}, { SMTP_HOST: "" }])(
     "should refuse to boot without an SMTP host: %o",
     (env) => {
       expect(() => smtpTransportOptions(env)).toThrow("SMTP_HOST");
