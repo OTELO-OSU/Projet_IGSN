@@ -7,7 +7,14 @@ import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 import type { KeycloakClaims } from "../auth/middleware.ts";
 import type { RateLimitConfig, RateLimitScope } from "./config.ts";
 
+import { AUTHENTICATED_USER_BUDGET, PUBLIC_IP_BUDGET } from "./config.ts";
+
 type RateLimitEnv = { Variables: { jwtPayload: KeycloakClaims } };
+
+const BUDGET = {
+  ip: PUBLIC_IP_BUDGET,
+  user: AUTHENTICATED_USER_BUDGET,
+};
 
 // The key must come from the trust boundary, never from the client: a header is
 // only read when a reverse proxy we control sets it (trustProxyHeaders),
@@ -39,7 +46,7 @@ export function rateLimit(
 
   // ponytail: in-process counters, one replica only; RateLimiterRedis when the
   // api scales out.
-  const limiter = new RateLimiterMemory(config[scope]);
+  const limiter = new RateLimiterMemory(BUDGET[scope]);
 
   return createMiddleware<RateLimitEnv>(async (c, next) => {
     try {

@@ -1,19 +1,13 @@
-import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
 import { textureLabel } from "#/samples/sample-labels.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// Igneous texture selector: shown only when the chosen material is a plutonic or
-// volcanic branch (the vocabulary that applies then). The material field resets
-// this value when the material changes, so a stale texture never survives a
-// branch switch. Render inside a `form.AppForm`.
 export function TextureField() {
-  const form = useTypedAppFormContext({
-    defaultValues: {} as { materialPath: string[]; texture: string },
-  });
+  const form = useSampleForm();
   return (
     <form.Subscribe selector={(state) => state.values.materialPath}>
       {(materialPath) => {

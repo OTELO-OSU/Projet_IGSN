@@ -9,7 +9,7 @@ import type { AgeMode } from "#/samples/age-mode-radio.tsx";
 import { m } from "#/paraglide/messages.js";
 import { AgeModeRadio } from "#/samples/age-mode-radio.tsx";
 import { GeologicalField } from "#/samples/geological-field.tsx";
-import { useAgeForm } from "#/samples/use-age-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const BOUND_FIELDS: (keyof AgeFormValues)[] = [
   "geologicalAgeMin",
@@ -19,10 +19,8 @@ const BOUND_FIELDS: (keyof AgeFormValues)[] = [
 // The free-text lithostratigraphic unit is independent of the ICS time scale,
 // so it lives outside the toggle.
 export function GeologicalAgeFormSection() {
-  // Switching either off clears the bounds, so both follow the rule of the
-  // fields they clear (the kit's escape hatch for non-field controls).
   const isDisabled = useIsFieldDisabled("age.geologicalAgeMin");
-  const form = useAgeForm();
+  const form = useSampleForm();
   const values = form.state.values.age;
   const clear = (fields: (keyof AgeFormValues)[]) => {
     for (const name of fields) form.setFieldValue(`age.${name}`, undefined);

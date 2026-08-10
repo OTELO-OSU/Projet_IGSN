@@ -13,7 +13,7 @@ import { hasNumericAgeValue, numericAgeUnitOf } from "#/samples/age-form.ts";
 import { AgeModeRadio } from "#/samples/age-mode-radio.tsx";
 import { NumericValueField } from "#/samples/numeric-value-field.tsx";
 import { numericUnitLabel, yearsUnitLabel } from "#/samples/sample-labels.ts";
-import { useAgeForm } from "#/samples/use-age-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const numericUnitItems = numericUnitSchema.options.map((unit) => ({
   value: unit,
@@ -35,10 +35,8 @@ const ALL_FIELDS: (keyof AgeFormValues)[] = [
 ];
 
 export function NumericAgeFormSection() {
-  // Switching either off clears the values, so both follow the rule of the
-  // fields they clear (the kit's escape hatch for non-field controls).
   const isDisabled = useIsFieldDisabled("age.numericAgeMin");
-  const form = useAgeForm();
+  const form = useSampleForm();
   const values = form.state.values.age;
   const clear = (fields: (keyof AgeFormValues)[]) => {
     for (const name of fields) form.setFieldValue(`age.${name}`, undefined);

@@ -5,7 +5,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@projet-igsn/design-system/components/ui/select";
-import { PAGE_SIZES } from "@projet-igsn/domain/sample/sample-validator";
 import {
   USER_STATUSES,
   userStatusSchema,
@@ -78,7 +77,6 @@ function UsersPage() {
         page={page}
         pageCount={pageCount}
         perPage={perPage}
-        pageSizes={PAGE_SIZES}
         onPageChange={(nextPage) =>
           void navigate({ search: { page: nextPage, perPage, status } })
         }

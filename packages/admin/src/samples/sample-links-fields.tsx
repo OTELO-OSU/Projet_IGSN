@@ -1,19 +1,13 @@
-import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { Trash2 } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
-import { type LinkDraft } from "#/samples/sample-draft-schema.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// Render inside a `form.AppForm`.
 export function SampleLinksFields() {
-  const form = useTypedAppFormContext({
-    defaultValues: {} as { links: LinkDraft[] },
-  });
-  // Buttons, not fields, so they ask the form's rule for the field they edit
-  // (same escape hatch as the collection-date mode switch).
+  const form = useSampleForm();
   const isDisabled = useIsFieldDisabled("links");
   return (
     <FormSection title={m.section_doi_links()}>

@@ -14,13 +14,6 @@ describe("HttpError.fromResponse", () => {
     expect(responded(429, "60").retryAfterMs).toBe(60_000);
   });
 
-  // RFC 9110 allows an HTTP date, which a 429 from Cloudflare or Caddy can send.
-  it("should read Retry-After as an HTTP date", () => {
-    const header = new Date(Date.now() + 30_000).toUTCString();
-
-    expect(responded(429, header).retryAfterMs).toBeGreaterThan(28_000);
-  });
-
   it.each(["not-a-date", "0", "-5"])(
     "should fall back to a second on %s",
     (header) => {
@@ -43,8 +36,6 @@ describe("shouldRetry", () => {
     expect(shouldRetry(0, new HttpError(status, "boom"))).toBe(true);
   });
 
-  // The request was fine, the budget was spent: retrying once at the api's own
-  // pace beats an error the researcher can only answer by reloading.
   it("should retry a 429 once", () => {
     expect(shouldRetry(0, responded(429, "60"))).toBe(true);
     expect(shouldRetry(1, responded(429, "60"))).toBe(false);
@@ -61,8 +52,6 @@ describe("shouldRetry", () => {
 });
 
 describe("retryDelay", () => {
-  // Waking before the window reopens would spend the single 429 retry on a
-  // second refusal.
   it("should wait out the window a 429 asks for", () => {
     expect(retryDelay(0, responded(429, "60"))).toBe(60_000);
   });

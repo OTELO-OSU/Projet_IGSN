@@ -5,15 +5,24 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { KeycloakClaims } from "../auth/middleware.ts";
 import type { RateLimitConfig } from "./config.ts";
 
+import { AUTHENTICATED_USER_BUDGET, PUBLIC_IP_BUDGET } from "./config.ts";
 import { rateLimit } from "./middleware.ts";
 
 const config = (overrides: Partial<RateLimitConfig> = {}): RateLimitConfig => ({
   enabled: true,
   trustProxyHeaders: false,
-  ip: { points: 2, duration: 60 },
-  user: { points: 2, duration: 60 },
   ...overrides,
 });
+
+// Budgets are fixed policy, so a per-key budget is spent by actually calling.
+const spendBudget = async (
+  request: () => Promise<Response> | Response,
+  points: number,
+) => {
+  for (let i = 0; i < points; i++) {
+    expect((await request()).status).toBe(200);
+  }
+};
 
 const publicApp = (rateLimitConfig: RateLimitConfig) =>
   new Hono()
@@ -56,17 +65,16 @@ describe("rateLimit", () => {
   });
 
   it("should serve the budget then refuse with 429 and the limit headers", async () => {
-    const app = publicApp(config({ ip: { points: 2, duration: 60 } }));
+    const app = publicApp(config());
+    await spendBudget(() => app.request("/samples"), PUBLIC_IP_BUDGET.points);
 
-    expect((await app.request("/samples")).status).toBe(200);
-    expect((await app.request("/samples")).status).toBe(200);
     const refused = await app.request("/samples");
 
     expect(refused.status).toBe(429);
     expect(await refused.json()).toEqual({ error: "Too many requests" });
     expect(limitHeaders(refused)).toEqual({
       "retry-after": "60",
-      "ratelimit-limit": "2",
+      "ratelimit-limit": String(PUBLIC_IP_BUDGET.points),
       "ratelimit-remaining": "0",
       "ratelimit-reset": "60",
     });
@@ -84,55 +92,47 @@ describe("rateLimit", () => {
   });
 
   it("should count each client IP against its own budget", async () => {
-    const app = publicApp(
-      config({ trustProxyHeaders: true, ip: { points: 1, duration: 60 } }),
-    );
+    const app = publicApp(config({ trustProxyHeaders: true }));
     const from = (ip: string) =>
       app.request("/samples", { headers: { "X-Real-IP": ip } });
+    await spendBudget(() => from("10.0.0.1"), PUBLIC_IP_BUDGET.points);
 
-    expect((await from("10.0.0.1")).status).toBe(200);
     expect((await from("10.0.0.2")).status).toBe(200);
     expect((await from("10.0.0.1")).status).toBe(429);
   });
 
   it("should ignore a forged X-Real-IP when proxy headers are untrusted", async () => {
-    const app = publicApp(config({ ip: { points: 1, duration: 60 } }));
+    const app = publicApp(config());
     const forging = (ip: string) =>
       fromPeer(app, "10.0.0.1", { "X-Real-IP": ip });
+    await spendBudget(() => forging("203.0.113.1"), PUBLIC_IP_BUDGET.points);
 
-    expect((await forging("203.0.113.1")).status).toBe(200);
     expect((await forging("203.0.113.2")).status).toBe(429);
     expect((await fromPeer(app, "10.0.0.2")).status).toBe(200);
   });
 
-  // A proxy site edited without header_up X-Real-IP would otherwise turn the
-  // per-visitor budget into a single shared one for everyone behind it.
   it("should fall back to the peer address when a trusted proxy sends no X-Real-IP", async () => {
-    const app = publicApp(
-      config({ trustProxyHeaders: true, ip: { points: 1, duration: 60 } }),
-    );
+    const app = publicApp(config({ trustProxyHeaders: true }));
+    await spendBudget(() => fromPeer(app, "10.0.0.1"), PUBLIC_IP_BUDGET.points);
 
-    expect((await fromPeer(app, "10.0.0.1")).status).toBe(200);
     expect((await fromPeer(app, "10.0.0.2")).status).toBe(200);
     expect((await fromPeer(app, "10.0.0.1")).status).toBe(429);
   });
 
   it("should count each authenticated user against its own budget", async () => {
-    const app = adminApp(config({ user: { points: 1, duration: 60 } }));
+    const app = adminApp(config());
     const from = (sub: string) =>
       app.request("/admin/samples", {
         headers: { Authorization: `Bearer ${sub}` },
       });
+    await spendBudget(() => from("user-1"), AUTHENTICATED_USER_BUDGET.points);
 
-    expect((await from("user-1")).status).toBe(200);
     expect((await from("user-1")).status).toBe(429);
     expect((await from("user-2")).status).toBe(200);
   });
 
   it("should refuse nothing when the limiter is disabled", async () => {
-    const app = publicApp(
-      config({ enabled: false, ip: { points: 1, duration: 60 } }),
-    );
+    const app = publicApp(config({ enabled: false }));
 
     const first = await app.request("/samples");
     expect(first.status).toBe(200);

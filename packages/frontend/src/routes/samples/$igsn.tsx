@@ -31,33 +31,5 @@ function SampleDetail() {
     return null;
   }
 
-  return (
-    <SampleView
-      name={sample.name}
-      igsn={sample.igsn}
-      nature={sample.nature}
-      type={sample.type}
-      material={sample.material}
-      texture={sample.texture}
-      metamorphicFacies={sample.metamorphicFacies}
-      specificName={sample.specificName}
-      collectionMethod={sample.collectionMethod}
-      collectionMethodDescription={sample.collectionMethodDescription}
-      description={sample.description}
-      condition={sample.condition}
-      scientificContext={sample.scientificContext}
-      location={sample.location}
-      security={sample.security}
-      availability={sample.availability}
-      publicationYear={sample.publicationYear}
-      age={sample.age}
-      links={sample.links}
-      attachments={sample.attachments}
-      economicInterest={sample.economicInterest}
-      economicInterestElements={sample.economicInterestElements}
-      economicResourceTypePrecision={sample.economicResourceTypePrecision}
-      economicDepositName={sample.economicDepositName}
-      economicDepositDescription={sample.economicDepositDescription}
-    />
-  );
+  return <SampleView sample={sample} />;
 }

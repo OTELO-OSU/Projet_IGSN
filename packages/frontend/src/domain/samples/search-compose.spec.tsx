@@ -113,23 +113,6 @@ describe("SearchCompose", () => {
     ).toBeNull();
   });
 
-  it("should keep the add button usable when a search is already present", async () => {
-    const screen = await render(
-      <SearchCompose
-        initialActive={["text"]}
-        initialDrafts={{ q: "granite", bbox: undefined }}
-        onSearch={vi.fn()}
-        shrunk
-      />,
-    );
-
-    await screen.getByRole("button", { name: "Add location" }).click();
-
-    await expect
-      .element(screen.getByRole("button", { name: "Remove Location" }))
-      .toBeInTheDocument();
-  });
-
   it("should submit both engines' drafts once via the single Search button", async () => {
     const onSearch = vi.fn();
     const screen = await render(
@@ -276,7 +259,6 @@ describe("SearchCompose", () => {
         initialDrafts={{ q: "granite", bbox: undefined }}
         onSearch={vi.fn()}
         shrunk
-        fixedEngines
       />,
     );
 
@@ -299,7 +281,6 @@ describe("SearchCompose", () => {
         initialDrafts={{ q: "granite", bbox: "-10,40,10,50" }}
         onSearch={vi.fn()}
         shrunk
-        fixedEngines
       />,
     );
 
@@ -321,7 +302,6 @@ describe("SearchCompose", () => {
         initialDrafts={{ q: undefined, bbox: "-10,40,10,50" }}
         onSearch={vi.fn()}
         shrunk
-        fixedEngines
       />,
     );
 

@@ -5,7 +5,6 @@ import { page } from "vitest/browser";
 import { Pagination } from "./pagination.tsx";
 
 const noop = () => {};
-const pageSizes = [10, 25, 50];
 
 describe("Pagination", () => {
   it("should show the current page and page count", async () => {
@@ -14,7 +13,6 @@ describe("Pagination", () => {
         page={2}
         pageCount={5}
         perPage={10}
-        pageSizes={pageSizes}
         onPageChange={noop}
         onPerPageChange={noop}
       />,
@@ -29,7 +27,6 @@ describe("Pagination", () => {
         page={1}
         pageCount={5}
         perPage={10}
-        pageSizes={pageSizes}
         onPageChange={noop}
         onPerPageChange={noop}
       />,
@@ -46,7 +43,6 @@ describe("Pagination", () => {
         page={5}
         pageCount={5}
         perPage={10}
-        pageSizes={pageSizes}
         onPageChange={noop}
         onPerPageChange={noop}
       />,
@@ -64,7 +60,6 @@ describe("Pagination", () => {
         page={3}
         pageCount={5}
         perPage={10}
-        pageSizes={pageSizes}
         onPageChange={onPageChange}
         onPerPageChange={noop}
       />,
@@ -82,7 +77,6 @@ describe("Pagination", () => {
         page={3}
         pageCount={5}
         perPage={10}
-        pageSizes={pageSizes}
         onPageChange={onPageChange}
         onPerPageChange={noop}
       />,
@@ -100,7 +94,6 @@ describe("Pagination", () => {
         page={1}
         pageCount={5}
         perPage={10}
-        pageSizes={pageSizes}
         onPageChange={noop}
         onPerPageChange={onPerPageChange}
       />,

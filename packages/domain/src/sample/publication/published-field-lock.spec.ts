@@ -6,7 +6,7 @@ import {
   type Sample,
 } from "../sample.ts";
 import {
-  frozenHierarchyDepths,
+  frozenMaterialDepth,
   mergePublishedEdit,
 } from "./published-field-lock.ts";
 
@@ -416,12 +416,12 @@ describe("mergePublishedEdit", () => {
   });
 });
 
-describe("frozenHierarchyDepths", () => {
+describe("frozenMaterialDepth", () => {
   it.each([
     ["rock.igneous.plutonic.felsic.granite", 4],
     ["rock.igneous.plutonic", Infinity],
     [null, Infinity],
   ])("locks the levels of %s above depth %s", (material, depth) => {
-    expect(frozenHierarchyDepths(material)).toEqual({ materialPath: depth });
+    expect(frozenMaterialDepth(material)).toBe(depth);
   });
 });

@@ -1,12 +1,12 @@
-import type { ListSamplesParams } from "@projet-igsn/domain/sample/repository";
+import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
 
 import { numericAgeToAnnum } from "@projet-igsn/domain/sample/age/numeric-age-to-annum";
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { type Expression, sql, type SqlBool } from "kysely";
 
-// Each facet key maps to the sample column it filters. The mapping is an
-// allow-list (facet keys are fixed, never user input), so column names are safe
-// to embed as identifiers; values are always bound parameters.
+// The mapping is an allow-list (facet keys are fixed, never user input), so
+// column names are safe to embed as identifiers; values are always bound
+// parameters.
 export const FACET_COLUMN: Record<string, string> = {
   type: "type",
   material: "material",
@@ -46,7 +46,7 @@ function facetFilter(
 
 // The bounds cross because this is an overlap, not a containment: "at least X
 // old" bites on the sample's oldest edge, "at most Y old" on its youngest.
-function numericAgeFilters(params: ListSamplesParams): Expression<SqlBool>[] {
+function numericAgeFilters(params: ListSamplesQuery): Expression<SqlBool>[] {
   const unit = params.ageUnit ?? "ma";
   return [
     ...(params.ageMin != null
@@ -58,9 +58,9 @@ function numericAgeFilters(params: ListSamplesParams): Expression<SqlBool>[] {
   ];
 }
 
-export function facetFilters(params: ListSamplesParams): Expression<SqlBool>[] {
+export function facetFilters(params: ListSamplesQuery): Expression<SqlBool>[] {
   // Facet params are validated by the query schema; read them by the registry's
-  // (string) keys, which the typed ListSamplesParams cannot be indexed by.
+  // (string) keys, which the typed ListSamplesQuery cannot be indexed by.
   const values: Record<string, unknown> = params;
 
   return [

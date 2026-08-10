@@ -1,7 +1,5 @@
-import type {
-  ListSamplesParams,
-  ListSamplesResult,
-} from "@projet-igsn/domain/sample/repository";
+import type { ListSamplesResult } from "@projet-igsn/domain/sample/repository";
+import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
 
 import type { DB } from "../db.ts";
 
@@ -9,13 +7,13 @@ import { listSamplesAssignedTo } from "../sample/service/list-sample.ts";
 import { type Transactional } from "../transaction.ts";
 import { insertUser } from "./insert-user.ts";
 
-// Lists every sample in the table by claiming it for a fresh owner first. The
-// only list exports are the scoped ones (no route may list unscoped), so specs
-// covering the query logic every scope shares (sorting, facets, pagination) go
-// through the owner scope rather than getting an unscoped variant to leak.
+// The only list exports are the scoped ones (no route may list unscoped), so
+// specs covering the query logic every scope shares (sorting, facets,
+// pagination) go through the owner scope rather than getting an unscoped
+// variant to leak.
 export async function listAsOwner(
   db: Transactional<DB>,
-  params: ListSamplesParams,
+  params: ListSamplesQuery,
 ): Promise<ListSamplesResult> {
   const owner = await insertUser(db, `${crypto.randomUUID()}@univ-lorraine.fr`);
   const samples = await db.selectFrom("sample").select("id").execute();

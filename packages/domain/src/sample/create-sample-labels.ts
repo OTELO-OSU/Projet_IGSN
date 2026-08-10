@@ -4,34 +4,29 @@ import { type GeologicalAge } from "./age/geological-age.ts";
 import { type NumericUnit } from "./age/numeric-unit.ts";
 import { type YearsUnit } from "./age/years-unit.ts";
 import { type Availability } from "./availability/availability.ts";
-import { collectionMethodLabelKey } from "./collection-method/label.ts";
 import { type HumidityType } from "./condition/humidity-type.ts";
 import { type Light } from "./condition/light.ts";
 import { type Packaging } from "./condition/packaging.ts";
 import { type PressureType } from "./condition/pressure-type.ts";
 import { type StorageCondition } from "./condition/storage-condition.ts";
 import { type TemperatureType } from "./condition/temperature-type.ts";
-import { economicInterestLabelKey } from "./economic-interest/label.ts";
 import { type Element } from "./element/vocabulary.ts";
 import { type OceanSea } from "./location/ocean-sea.ts";
-import { materialLabelKey } from "./material/label.ts";
 import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
 import { type Nature } from "./nature.ts";
+import { pathSegment } from "./path/segment.ts";
 import { vocabularyLabel } from "./path/vocabulary-label.ts";
 import { type CollectionOrigin } from "./scientific-context/collection-origin.ts";
 import { type ProvenanceStatus } from "./scientific-context/provenance-status.ts";
 import { type Texture } from "./texture/vocabulary.ts";
-import { sampleTypeLabelKey } from "./type/label.ts";
 
 // The shared vocabulary catalog's keys, derived from the JSON itself (type-only
-// import, erased at runtime). Domain owns the catalog, so it can type against it.
+// import, erased at runtime).
 type MessageKey = keyof typeof Catalog;
 
 // Compile-time coverage for the flat vocabularies (input is a literal union):
 // a code whose translation is missing from the catalog fails to compile here,
-// so it can never render a raw key to users. The tree vocabularies (material,
-// type, collection method) take runtime string paths whose full key set is a
-// runtime value, so they are covered by create-sample-labels.spec.ts instead.
+// so it can never render a raw key to users.
 type AssertKeys<T extends MessageKey> = T;
 type _natureKeys = AssertKeys<`nature_${Nature}`>;
 type _textureKeys = AssertKeys<`texture_${Texture}`>;
@@ -56,9 +51,7 @@ type _oceanSeaKeys = AssertKeys<`ocean_sea_${OceanSea}`>;
 
 // A message catalog: the app's compiled paraglide `m`, keyed by the catalog's
 // own message keys (minus the `$`-prefixed metadata entries, e.g. `$schema`,
-// which paraglide does not compile to a message). Apps pass `m` through an
-// `as unknown as Messages` cast (paraglide's message functions carry input and
-// metadata types this drops); this is the domain/paraglide DI seam.
+// which paraglide does not compile to a message).
 export type Messages = Record<
   Exclude<MessageKey, `$${string}`>,
   (() => string) | undefined
@@ -88,15 +81,21 @@ export type SampleLabels = {
   collectionOriginLabel: (origin: CollectionOrigin) => string;
 };
 
-// The sample label resolvers, bound to one app's message catalog. Paraglide
-// compiles a separate `m` per app (each with its own locale strategy), so the
-// binding happens per app; the resolving logic lives here, once.
 export function createSampleLabels(m: Messages): SampleLabels {
   return {
-    materialPathLabel: vocabularyLabel(materialLabelKey, m),
-    typeLabel: vocabularyLabel(sampleTypeLabelKey, m),
-    collectionMethodLabel: vocabularyLabel(collectionMethodLabelKey, m),
-    economicInterestLabel: vocabularyLabel(economicInterestLabelKey, m),
+    materialPathLabel: vocabularyLabel(
+      (path) => `material_${pathSegment(path)}`,
+      m,
+    ),
+    typeLabel: vocabularyLabel((type) => `type_${pathSegment(type)}`, m),
+    collectionMethodLabel: vocabularyLabel(
+      (method) => `collection_method_${pathSegment(method)}`,
+      m,
+    ),
+    economicInterestLabel: vocabularyLabel(
+      (path) => `economic_interest_${pathSegment(path)}`,
+      m,
+    ),
     elementLabel: vocabularyLabel((element) => `element_${element}`, m),
     textureLabel: vocabularyLabel((texture) => `texture_${texture}`, m),
     metamorphicFaciesLabel: vocabularyLabel(

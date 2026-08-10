@@ -65,15 +65,9 @@ export const FROZEN_FORM_FIELDS_BY_PROVENANCE: Record<
   ).flat(),
 };
 
-// The depth down to which each per-level hierarchy form field is frozen, for the
-// admin form kit (which knows the `name[index]` format but not what a level
-// means). Infinity: no material, or a wholly frozen one, so every level locks.
-export function frozenHierarchyDepths(
-  material: Sample["material"],
-): Record<string, number> {
-  return {
-    materialPath: frozenMaterialPrefix(material)?.split(".").length ?? Infinity,
-  };
+// Infinity: no material, or a wholly frozen one, so every level locks.
+export function frozenMaterialDepth(material: Sample["material"]): number {
+  return frozenMaterialPrefix(material)?.split(".").length ?? Infinity;
 }
 
 type RecentCollection = Extract<
@@ -164,9 +158,7 @@ function mergeScientificContext(
     return null;
   }
   // The editable leaves are only trusted on the stored branch, so a payload
-  // that flips the provenance status reads as "no edit": the stored context is
-  // kept whole, rather than rebuilt from the mismatched branch (which would
-  // wipe the editable leaves it cannot describe).
+  // that flips the provenance status reads as "no edit".
   if (current.provenanceStatus === "recent_collection") {
     if (incoming?.provenanceStatus !== "recent_collection") return current;
     const payload: RecentCollection = { ...incoming };
@@ -202,8 +194,7 @@ function mergeMaterialDependent(
 }
 
 // The post-publish mass-assignment guard: frozen fields always come from
-// storage, never from the payload. The admin form disabling its inputs is UX,
-// not enforcement.
+// storage, never from the payload.
 export function mergePublishedEdit(
   current: Sample,
   incoming: CreateSample,

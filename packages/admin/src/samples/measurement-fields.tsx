@@ -8,7 +8,7 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
-import { useDescriptionForm } from "#/samples/use-description-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 // Size and mass units are language-neutral symbols (their own label); volume
 // units need the display map for superscripts (see volumeUnitLabel).
@@ -52,12 +52,8 @@ const measurements = [
   },
 ];
 
-// The measurement rows, one value + unit pair each. The unit only exists once
-// its value is entered, and is then required to publish (mirroring the location
-// elevation unit); the domain schema, run live by the form, requires the unit
-// once the value is set and rejects non-positive values.
 export function MeasurementFields() {
-  const form = useDescriptionForm();
+  const form = useSampleForm();
   return (
     <>
       {measurements.map(({ key, label, unitLabel, items }) => (

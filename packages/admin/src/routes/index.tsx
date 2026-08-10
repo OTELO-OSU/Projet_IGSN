@@ -1,9 +1,6 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { SearchField } from "@projet-igsn/design-system/components/ui/search-field";
-import {
-  PAGE_SIZES,
-  listSamplesQuerySchema,
-} from "@projet-igsn/domain/sample/sample-validator";
+import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { type SortingState } from "@tanstack/react-table";
 
@@ -25,8 +22,6 @@ function SampleListPage() {
   const total = query.data?.total ?? 0;
   const pageCount = Math.max(1, Math.ceil(total / perPage));
 
-  // URL <-> table sorting state. Sorting lives in the URL (shareable, applied
-  // by the API); the table only reports toggles.
   const sorting: SortingState = sort
     ? [{ id: sort, desc: order === "desc" }]
     : [];
@@ -86,7 +81,6 @@ function SampleListPage() {
         page={page}
         pageCount={pageCount}
         perPage={perPage}
-        pageSizes={PAGE_SIZES}
         onPageChange={(nextPage) =>
           navigate({ search: { page: nextPage, perPage, sort, order, search } })
         }

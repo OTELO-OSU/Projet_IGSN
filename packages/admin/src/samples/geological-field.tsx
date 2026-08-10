@@ -4,7 +4,7 @@ import type { AgeFormValues } from "#/samples/age-form.ts";
 
 import { m } from "#/paraglide/messages.js";
 import { geologicalAgeLabel } from "#/samples/sample-labels.ts";
-import { useAgeForm } from "#/samples/use-age-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 // The combobox is string-keyed; the domain value is the rank integer, so the
 // item value is its string form (parsed back in toAgeInput).
@@ -13,7 +13,6 @@ const geologicalAgeItems = GEOLOGICAL_AGES.map((age) => ({
   label: geologicalAgeLabel(age),
 }));
 
-// One stratigraphic age select, backed by the geological-age vocabulary.
 export function GeologicalField({
   name,
   label,
@@ -24,13 +23,13 @@ export function GeologicalField({
   label: string;
   // The sibling bound (max for min, min for max): a range needs both, so this
   // bound is required once the sibling holds a value (publish blocker
-  // geological_age_range_incomplete). Omitted for a fixed value, which has no sibling.
+  // geological_age_range_incomplete).
   requiredWhenName?: keyof AgeFormValues;
   // A non-range value is stored in both bounds (min == max), so the fixed select
   // mirrors its value into the other bound on change.
   mirrorName?: keyof AgeFormValues;
 }) {
-  const form = useAgeForm();
+  const form = useSampleForm();
   return (
     <form.AppField
       name={`age.${name}`}

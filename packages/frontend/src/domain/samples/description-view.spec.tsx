@@ -23,7 +23,7 @@ describe("DescriptionView", () => {
     await expect
       .element(screen.getByText("Collection date"))
       .toBeInTheDocument();
-    await expect.element(screen.getByText("March 5, 2024")).toBeInTheDocument();
+    await expect.element(screen.getByText("2024-03-05")).toBeInTheDocument();
     await expect.element(screen.getByText("Oriented")).toBeInTheDocument();
     await expect
       .element(screen.getByText("Yes", { exact: true }))
@@ -64,7 +64,7 @@ describe("DescriptionView", () => {
     );
 
     await expect
-      .element(screen.getByText("March 5, 2024 - April 1, 2024"))
+      .element(screen.getByText("2024-03-05 - 2024-04-01"))
       .toBeInTheDocument();
   });
 

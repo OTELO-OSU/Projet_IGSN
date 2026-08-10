@@ -1,17 +1,12 @@
 import type { Selectable } from "kysely";
 
+import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { type Sample, sampleSchema } from "@projet-igsn/domain/sample/sample";
 import { scientificContextSchema } from "@projet-igsn/domain/sample/scientific-context/model";
 
 import type { DB } from "../../db.ts";
 
 import { toLocation } from "./to-location.ts";
-
-// `date` columns come back from postgres.js as UTC-midnight Date objects;
-// slicing the ISO string recovers the day with no timezone drift (ADR 0015).
-function toIsoDate(value: Date): string {
-  return value.toISOString().slice(0, 10);
-}
 
 // A measurement exists only when both halves do; the schema then enforces the
 // value/unit coupling on parse.
@@ -43,8 +38,8 @@ function toDescription(row: Selectable<DB["sample"]>) {
     collectionDate:
       row.collection_date_start !== null && row.collection_date_end !== null
         ? {
-            start: toIsoDate(row.collection_date_start),
-            end: toIsoDate(row.collection_date_end),
+            start: formatDate(row.collection_date_start),
+            end: formatDate(row.collection_date_end),
           }
         : null,
     oriented: row.oriented,

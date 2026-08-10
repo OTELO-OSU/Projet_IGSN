@@ -1,11 +1,8 @@
-// The api sends whole seconds, but RFC 9110 also allows an HTTP date, which a
-// 429 from Cloudflare or Caddy can carry. Anything unparseable falls back to a
-// second so a malformed header still paces the retry instead of hammering.
-export function parseRetryAfter(header: string | null): number {
+// Anything unparseable falls back to a second, so a malformed header still
+// paces the retry instead of hammering the api.
+export function parseRetryAfter(header: string): number {
   const seconds = Number(header);
-  if (Number.isFinite(seconds) && seconds > 0) return seconds * 1000;
-  const date = header ? Date.parse(header) : Number.NaN;
-  return Number.isNaN(date) ? 1000 : Math.max(date - Date.now(), 1000);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 1000;
 }
 
 export class HttpError extends Error {
@@ -27,11 +24,6 @@ export class HttpError extends Error {
   }
 }
 
-// A 4xx says the request itself is wrong: retrying only delays the error the
-// page already knows how to render. Without this, opening another researcher's
-// sample spins on "Loading..." for 7s (react-query retries 3 times by default,
-// 1s/2s/4s backoff) and the api absorbs four denials. A 5xx or a network
-// failure has no status under 500 and keeps the retries.
 // A 429 is the exception: the request was fine, the budget was spent, and the
 // api says when it reopens, so it is retried once at that pace.
 export function shouldRetry(failureCount: number, error: Error): boolean {

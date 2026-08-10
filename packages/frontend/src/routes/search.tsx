@@ -14,13 +14,13 @@ import {
 import { SampleFacets } from "#/domain/samples/sample-facets.tsx";
 import { SearchBanner } from "#/domain/samples/search-banner.tsx";
 import { SearchCompose } from "#/domain/samples/search-compose.tsx";
-import { searchEmptyMessage } from "#/domain/samples/search-empty-message.ts";
 import {
   composeSeedFromParams,
   searchParamsSchema,
   searchQueryParams,
 } from "#/domain/samples/search-params.ts";
 import { SearchResultsView } from "#/domain/samples/search-results-view.tsx";
+import { m } from "#/paraglide/messages.js";
 
 const FACET_KEYS = facetParamKeys();
 
@@ -51,7 +51,6 @@ function SearchPage() {
           initialActive={seed.active}
           initialDrafts={seed.drafts}
           shrunk
-          fixedEngines
           // Engine params only: a new query must not discard the facets.
           onSearch={(next) =>
             navigate({
@@ -109,7 +108,11 @@ function Results({ params }: { params: ListSamplesParams }) {
       page={params.page}
       pageCount={pageCount}
       perPage={params.perPage}
-      emptyMessage={searchEmptyMessage(params)}
+      emptyMessage={
+        params.bbox && !params.search
+          ? m.search_location_empty_hint()
+          : m.search_no_results()
+      }
       onPageChange={(next) =>
         navigate({ search: (prev) => ({ ...prev, page: next }) })
       }

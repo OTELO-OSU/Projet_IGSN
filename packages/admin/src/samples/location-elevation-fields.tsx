@@ -5,7 +5,7 @@ import { VERTICAL_DATUMS } from "@projet-igsn/domain/sample/location/vertical-da
 import { m } from "#/paraglide/messages.js";
 import { isElevationEntered } from "#/samples/compose-location.ts";
 import { verticalDatumLabel } from "#/samples/location-label.ts";
-import { useLocationForm } from "#/samples/use-location-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const metaFields = [
   {
@@ -30,7 +30,7 @@ const metaFields = [
 // Emits its fields as bare grid items: the parent owns the grid, since a point
 // lays them out next to the elevation and an area on their own row.
 export function LocationElevationFields() {
-  const form = useLocationForm();
+  const form = useSampleForm();
   return (
     <form.Subscribe
       selector={(state) => isElevationEntered(state.values.location)}
