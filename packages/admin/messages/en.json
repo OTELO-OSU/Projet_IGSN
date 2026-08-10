@@ -149,6 +149,8 @@
   "share_contributor_added": "Collaborator added",
   "share_contributor_error": "Could not add the collaborator. Please try again.",
   "share_contributor_remove": "Remove {name}",
+  "share_contributor_remove_title": "Remove this collaborator?",
+  "share_contributor_remove_description": "{name} will no longer be able to edit this sample.",
   "share_contributor_removed": "Collaborator removed",
   "share_contributor_remove_error": "Could not remove the collaborator. Please try again.",
   "publish_blocked_user_not_verified": "Your account is not yet validated, so you cannot publish.",

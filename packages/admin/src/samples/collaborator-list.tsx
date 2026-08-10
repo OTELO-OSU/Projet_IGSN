@@ -1,8 +1,6 @@
-import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { X } from "lucide-react";
-
 import { m } from "#/paraglide/messages.js";
 import { fullName } from "#/samples/full-name.ts";
+import { RemoveContributorButton } from "#/samples/remove-contributor-button.tsx";
 import { useCollaborators } from "#/samples/use-collaborators.ts";
 import { useRemoveContributor } from "#/samples/use-remove-contributor.ts";
 
@@ -46,17 +44,10 @@ export function CollaboratorList({ sampleId }: { sampleId: string }) {
                   {fullName(user)}{" "}
                   <span className="text-muted-foreground">{user.email}</span>
                 </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-label={m.share_contributor_remove({
-                    name: fullName(user),
-                  })}
-                  onClick={() => removeContributor.mutate(user.id)}
-                >
-                  <X aria-hidden />
-                </Button>
+                <RemoveContributorButton
+                  name={fullName(user)}
+                  onConfirm={() => removeContributor.mutate(user.id)}
+                />
               </li>
             ))}
           </ul>

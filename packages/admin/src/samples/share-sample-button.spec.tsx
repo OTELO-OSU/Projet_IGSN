@@ -149,7 +149,14 @@ const searchField = (screen: Screen) =>
   screen.getByRole("combobox", { name: "Search by name or email" });
 
 const collaborators = (screen: Screen) =>
-  screen.getByRole("dialog").getByRole("listitem");
+  screen
+    .getByRole("dialog", { name: "Share this sample" })
+    .getByRole("listitem");
+
+const removeCollaborator = async (screen: Screen, name: string) => {
+  await screen.getByRole("button", { name: `Remove ${name}` }).click();
+  await screen.getByRole("button", { name: "Confirm" }).click();
+};
 
 const openDialog = (screen: Screen) =>
   screen.getByRole("button", { name: "Share" }).click();
@@ -407,16 +414,36 @@ describe("ShareSampleButton", () => {
     });
   });
 
-  it("should remove a contributor from the list", async () => {
+  it("should remove a contributor from the list once the removal is confirmed", async () => {
     const { screen } = await renderShareButton({ contributors: [curie] });
     await openDialog(screen);
 
-    await screen.getByRole("button", { name: "Remove Marie Curie" }).click();
+    await removeCollaborator(screen, "Marie Curie");
 
     await expect.element(screen.getByText("No collaborator yet")).toBeVisible();
     await expect
       .element(screen.getByText("Collaborator removed"))
       .toBeVisible();
+  });
+
+  it("should keep the contributor when the removal is cancelled", async () => {
+    const { screen, calls } = await renderShareButton({
+      contributors: [curie],
+    });
+    await openDialog(screen);
+
+    await screen.getByRole("button", { name: "Remove Marie Curie" }).click();
+    await expect
+      .element(
+        screen.getByRole("dialog", { name: "Remove this collaborator?" }),
+      )
+      .toHaveTextContent("Marie Curie will no longer be able to edit");
+    await screen.getByRole("button", { name: "Cancel" }).click();
+
+    await expect
+      .element(screen.getByText("marie.curie@univ-lorraine.fr"))
+      .toBeVisible();
+    expect(calls.filter((call) => call.startsWith("DELETE"))).toEqual([]);
   });
 
   it("should keep the contributor listed when the removal fails", async () => {
@@ -429,7 +456,7 @@ describe("ShareSampleButton", () => {
     );
     await openDialog(screen);
 
-    await screen.getByRole("button", { name: "Remove Marie Curie" }).click();
+    await removeCollaborator(screen, "Marie Curie");
 
     await expect
       .element(
