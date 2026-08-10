@@ -4,8 +4,8 @@ import type { Kysely } from "kysely";
 import type { DB } from "../db.ts";
 
 import { withTransaction } from "../transaction.ts";
-import { deleteSampleContributor } from "./delete-sample-contributor.ts";
-import { insertSampleContributor } from "./insert-sample-contributor.ts";
+import { deleteSampleCollaborator } from "./delete-sample-collaborator.ts";
+import { insertSampleCollaborator } from "./insert-sample-collaborator.ts";
 import { insertSampleOwner } from "./insert-sample-owner.ts";
 import { listSampleCollaborators } from "./list-sample-collaborators.ts";
 
@@ -15,13 +15,13 @@ export function createUserSampleRepository(
   return {
     addOwner: (sampleId, userId) =>
       withTransaction(db, (trx) => insertSampleOwner(trx, sampleId, userId)),
-    addContributor: (sampleId, userId) =>
+    addCollaborator: (sampleId, userId, role, options) =>
       withTransaction(db, (trx) =>
-        insertSampleContributor(trx, sampleId, userId),
+        insertSampleCollaborator(trx, sampleId, userId, role, options),
       ),
-    removeContributor: (sampleId, userId) =>
+    removeCollaborator: (sampleId, userId) =>
       withTransaction(db, (trx) =>
-        deleteSampleContributor(trx, sampleId, userId),
+        deleteSampleCollaborator(trx, sampleId, userId),
       ),
     listCollaborators: (sampleId) =>
       withTransaction(db, (trx) => listSampleCollaborators(trx, sampleId)),

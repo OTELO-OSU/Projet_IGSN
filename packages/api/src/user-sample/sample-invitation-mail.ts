@@ -1,3 +1,4 @@
+import type { CollaboratorRole } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 
 import { readFileSync } from "node:fs";
@@ -15,6 +16,7 @@ const TEMPLATE = readFileSync(
 export type SampleInvitation = {
   invitee: Pick<User, "email" | "name" | "firstname">;
   inviter: Pick<User, "email" | "name" | "firstname">;
+  role: CollaboratorRole;
   sampleName: string;
   sampleUrl: string;
 };
@@ -22,6 +24,7 @@ export type SampleInvitation = {
 export async function sampleInvitationMail({
   invitee,
   inviter,
+  role,
   sampleName,
   sampleUrl,
 }: SampleInvitation): Promise<{
@@ -39,7 +42,7 @@ export async function sampleInvitationMail({
     sample: sampleName,
   };
   const subject = t("mail_invitation_subject", params);
-  const body = t("mail_invitation_body", params);
+  const body = t(`mail_invitation_body_${role}`, params);
   const cta = t("mail_invitation_cta");
   return {
     subject,

@@ -1196,48 +1196,17 @@ describe("admin sample routes", () => {
     expect(await res.json()).toMatchObject({ data: { id: data.id } });
   });
 
-  pgTest(
-    "should answer 409 when publishing a sample with no material",
-    async ({ db }) => {
+  pgTest.for([
+    ["no material", { name: "Unclassified draft", material: undefined }],
+    ["an internal-node material", { name: "Rock draft", material: "rock" }],
+  ] as const)(
+    "should answer 409 when publishing a sample with %s",
+    async ([, { name, material }], { db }) => {
       // Arrange
       await provisionUser(db, "test-token", { status: "accepted" });
       const client = testClient(createApp(db).app);
       const created = await client.admin.samples.$post(
-        {
-          json: {
-            name: "Unclassified draft",
-            nature: "thin_section",
-            type: null,
-          },
-        },
-        { headers: authHeader },
-      );
-      const { data } = sampleResponseSchema.parse(await created.json());
-      // Act
-      const res = await client.admin.samples[":id"].publish.$post(
-        { param: { id: data.id } },
-        { headers: authHeader },
-      );
-      // Assert
-      expect(res.status).toBe(409);
-    },
-  );
-
-  pgTest(
-    "should answer 409 when publishing a sample with an internal-node material",
-    async ({ db }) => {
-      // Arrange
-      await provisionUser(db, "test-token", { status: "accepted" });
-      const client = testClient(createApp(db).app);
-      const created = await client.admin.samples.$post(
-        {
-          json: {
-            name: "Rock draft",
-            nature: "thin_section",
-            type: null,
-            material: "rock",
-          },
-        },
+        { json: { name, nature: "thin_section", type: null, material } },
         { headers: authHeader },
       );
       const { data } = sampleResponseSchema.parse(await created.json());
@@ -1409,65 +1378,64 @@ describe("admin sample routes", () => {
       expect(res.status).toBe(400);
     });
 
-    pgTest("should reject an unknown nature with 400", async ({ db }) => {
-      const res = await postSample(createApp(db).app, {
-        name: "Grès",
-        nature: "Roche inconnue",
-      });
-      expect(res.status).toBe(400);
-    });
-
-    pgTest("should create a sample with a type", async ({ db }) => {
-      const res = await postSample(createApp(db).app, {
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: "core.section",
-      });
-      expect(res.status).toBe(201);
-      expect(await res.json()).toMatchObject({
-        data: { type: "core.section" },
-      });
-    });
-
-    pgTest("should reject an unknown type with 400", async ({ db }) => {
-      const res = await postSample(createApp(db).app, {
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: "half_round",
-      });
-      expect(res.status).toBe(400);
-    });
-
-    pgTest(
-      "should create a sample with a collection method",
-      async ({ db }) => {
-        const res = await postSample(createApp(db).app, {
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
+    pgTest.for([
+      ["a type", { type: "core.section" }, { type: "core.section" }],
+      [
+        "a collection method",
+        {
           collectionMethod: "coring.gravity_corer",
           collectionMethodDescription: "Short barrel, soft sediment",
-        });
-        expect(res.status).toBe(201);
-        expect(await res.json()).toMatchObject({
-          data: {
-            collectionMethod: "coring.gravity_corer",
-            collectionMethodDescription: "Short barrel, soft sediment",
-          },
-        });
-      },
-    );
-
-    pgTest(
-      "should reject an unknown collection method with 400",
-      async ({ db }) => {
+        },
+        {
+          collectionMethod: "coring.gravity_corer",
+          collectionMethodDescription: "Short barrel, soft sediment",
+        },
+      ],
+      [
+        "a leaf material path and texture",
+        {
+          material: "rock.igneous.plutonic.felsic.granite",
+          texture: "phaneritic",
+        },
+        {
+          material: "rock.igneous.plutonic.felsic.granite",
+          texture: "phaneritic",
+        },
+      ],
+      [
+        "a metamorphic facies",
+        {
+          material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+          metamorphicFacies: "amphibolite",
+        },
+        { metamorphicFacies: "amphibolite" },
+      ],
+    ] as const)(
+      "should create a sample with %s",
+      async ([, fields, expected], { db }) => {
         const res = await postSample(createApp(db).app, {
           name: "Basalte du Massif Central",
           nature: "thin_section",
-          collectionMethod: "gravity_corer",
+          ...fields,
         });
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(201);
+        expect(await res.json()).toMatchObject({ data: expected });
       },
     );
+
+    pgTest.for([
+      ["an unknown nature", { nature: "Roche inconnue" }],
+      ["an unknown type", { type: "half_round" }],
+      ["an unknown collection method", { collectionMethod: "gravity_corer" }],
+      ["an unknown material", { material: "lava" }],
+    ] as const)("should reject %s with 400", async ([, fields], { db }) => {
+      const res = await postSample(createApp(db).app, {
+        name: "Basalte du Massif Central",
+        nature: "thin_section",
+        ...fields,
+      });
+      expect(res.status).toBe(400);
+    });
 
     // The owner guard skips a malformed id rather than querying it, so the
     // validator is what answers here, not a 403 or a failed uuid cast.
@@ -1488,33 +1456,6 @@ describe("admin sample routes", () => {
     });
 
     pgTest(
-      "should create a sample with a leaf material path and texture",
-      async ({ db }) => {
-        const client = testClient(createApp(db).app);
-        const res = await client.admin.samples.$post(
-          {
-            json: {
-              name: "Basalt",
-              nature: "thin_section",
-              type: null,
-              material: "rock.igneous.plutonic.felsic.granite",
-              texture: "phaneritic",
-            },
-          },
-          { headers: authHeader },
-        );
-        expect(res.status).toBe(201);
-        expect(await res.json()).toMatchObject({
-          data: {
-            name: "Basalt",
-            material: "rock.igneous.plutonic.felsic.granite",
-            texture: "phaneritic",
-          },
-        });
-      },
-    );
-
-    pgTest(
       "should reject a texture inconsistent with the material with 400",
       async ({ db }) => {
         const res = await postSample(createApp(db).app, {
@@ -1524,32 +1465,6 @@ describe("admin sample routes", () => {
           texture: "cumulate",
         });
         expect(res.status).toBe(400);
-      },
-    );
-
-    pgTest(
-      "should create a metamorphic sample with a facies",
-      async ({ db }) => {
-        const client = testClient(createApp(db).app);
-        const res = await client.admin.samples.$post(
-          {
-            json: {
-              name: "Gneiss",
-              nature: "thin_section",
-              type: null,
-              material: "rock.metamorphic.strongly_metamorphosed.gneiss",
-              metamorphicFacies: "amphibolite",
-            },
-          },
-          { headers: authHeader },
-        );
-        expect(res.status).toBe(201);
-        expect(await res.json()).toMatchObject({
-          data: {
-            name: "Gneiss",
-            metamorphicFacies: "amphibolite",
-          },
-        });
       },
     );
 
@@ -1592,15 +1507,6 @@ describe("admin sample routes", () => {
       },
     );
 
-    pgTest("should reject an unknown material with 400", async ({ db }) => {
-      const res = await postSample(createApp(db).app, {
-        name: "Grès",
-        nature: "rock_powder",
-        material: "lava",
-      });
-      expect(res.status).toBe(400);
-    });
-
     pgTest("should reject an invalid update body with 400", async ({ db }) => {
       const res = await createApp(db).app.request(
         "/admin/samples/01890a5d-ac96-774b-bcce-b302099a8057",
@@ -1615,52 +1521,29 @@ describe("admin sample routes", () => {
   });
 
   describe("authentication", () => {
-    pgTest("should reject an unauthenticated list with 401", async ({ db }) => {
-      const res = await createApp(db).app.request("/admin/samples");
-      expect(res.status).toBe(401);
-    });
+    const jsonBody = {
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: "Grès", nature: "rock_powder" }),
+    };
 
-    pgTest("should reject an unauthenticated get with 401", async ({ db }) => {
-      const res = await createApp(db).app.request(
+    pgTest.for([
+      ["list", "/admin/samples", {}],
+      ["get", "/admin/samples/01890a5d-ac96-774b-bcce-b302099a8057", {}],
+      ["create", "/admin/samples", { method: "POST", ...jsonBody }],
+      [
+        "update",
         "/admin/samples/01890a5d-ac96-774b-bcce-b302099a8057",
-      );
-      expect(res.status).toBe(401);
-    });
-
-    pgTest(
-      "should reject an unauthenticated create with 401",
-      async ({ db }) => {
-        const res = await createApp(db).app.request("/admin/samples", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ name: "Grès", nature: "rock_powder" }),
-        });
-        expect(res.status).toBe(401);
-      },
-    );
-
-    pgTest(
-      "should reject an unauthenticated update with 401",
-      async ({ db }) => {
-        const res = await createApp(db).app.request(
-          "/admin/samples/01890a5d-ac96-774b-bcce-b302099a8057",
-          {
-            method: "PUT",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({ name: "Grès", nature: "rock_powder" }),
-          },
-        );
-        expect(res.status).toBe(401);
-      },
-    );
-
-    pgTest(
-      "should reject an unauthenticated publish with 401",
-      async ({ db }) => {
-        const res = await createApp(db).app.request(
-          "/admin/samples/01890a5d-ac96-774b-bcce-b302099a8057/publish",
-          { method: "POST" },
-        );
+        { method: "PUT", ...jsonBody },
+      ],
+      [
+        "publish",
+        "/admin/samples/01890a5d-ac96-774b-bcce-b302099a8057/publish",
+        { method: "POST" },
+      ],
+    ] as const)(
+      "should reject an unauthenticated %s with 401",
+      async ([, path, init], { db }) => {
+        const res = await createApp(db).app.request(path, init);
         expect(res.status).toBe(401);
       },
     );
@@ -1839,7 +1722,10 @@ describe("admin sample routes", () => {
         const client = testClient(createApp(db).app);
         // Act
         const added = await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
         // Assert
@@ -1872,7 +1758,10 @@ describe("admin sample routes", () => {
         const colleague = await insertUser(db, "colleague@univ-lorraine.fr");
         const client = testClient(createApp(db).app);
         await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
         // Act
@@ -2212,6 +2101,182 @@ describe("admin sample routes", () => {
     );
   });
 
+  describe("editor authorization", () => {
+    const draft = {
+      name: "Basalte confié",
+      nature: "thin_section" as const,
+      type: null,
+      collectionMethod: null,
+    };
+    const colleagueHeader = { Authorization: "Bearer colleague" };
+
+    async function shareWithCallerAsEditor(
+      db: Parameters<typeof createApp>[0],
+      {
+        json = draft,
+        published = false,
+      }: {
+        json?: Parameters<typeof insertSample>[1];
+        published?: boolean;
+      } = {},
+    ) {
+      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const caller = await insertUser(db, authenticatedCallerEmail, {
+        status: "accepted",
+      });
+      const sample = await insertSample(db, json);
+      await insertSampleOwner(db, sample.id, owner.id);
+      await db
+        .insertInto("user_sample")
+        .values({ sample_id: sample.id, user_id: caller.id, role: "editor" })
+        .execute();
+      if (published) {
+        await publishSample(db, sample.id);
+      }
+      return sample;
+    }
+
+    pgTest("should let an editor publish a sample", async ({ db }) => {
+      const client = testClient(createApp(db).app);
+      const sample = await shareWithCallerAsEditor(db, {
+        json: { ...PUBLISHABLE_SAMPLE, collectionMethod: null },
+      });
+
+      const res = await client.admin.samples[":id"].publish.$post(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(200);
+      const read = await client.admin.samples[":id"].$get(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+      expect(await read.json()).toMatchObject({ data: { published: true } });
+    });
+
+    pgTest(
+      "should let an editor invite a collaborator, who gains access",
+      async ({ db }) => {
+        const client = testClient(createApp(db).app);
+        const sample = await shareWithCallerAsEditor(db);
+        const colleague = await insertUser(db, "colleague@example.com");
+
+        const added = await client.admin.samples[":id"].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
+          { headers: authHeader },
+        );
+
+        expect(added.status).toBe(204);
+        const read = await client.admin.samples[":id"].$get(
+          { param: { id: sample.id } },
+          { headers: colleagueHeader },
+        );
+        expect(read.status).toBe(200);
+      },
+    );
+
+    pgTest(
+      "should answer 403 when an editor changes a collaborator's role",
+      async ({ db }) => {
+        const client = testClient(createApp(db).app);
+        const sample = await shareWithCallerAsEditor(db);
+        const colleague = await insertUser(db, "colleague@example.com");
+        await client.admin.samples[":id"].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
+          { headers: authHeader },
+        );
+
+        const changed = await client.admin.samples[":id"].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "editor" },
+          },
+          { headers: authHeader },
+        );
+
+        expect(changed.status).toBe(403);
+        const stored = await db
+          .selectFrom("user_sample")
+          .select("role")
+          .where("sample_id", "=", sample.id)
+          .where("user_id", "=", colleague.id)
+          .executeTakeFirst();
+        expect(stored).toEqual({ role: "contributor" });
+      },
+    );
+
+    pgTest("should let an editor update a published sample", async ({ db }) => {
+      const client = testClient(createApp(db).app);
+      const sample = await shareWithCallerAsEditor(db, { published: true });
+      const read = await client.admin.samples[":id"].$get(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+      const { data } = adminSampleResponseSchema.parse(await read.json());
+
+      const saved = await client.admin.samples[":id"].$put(
+        {
+          param: { id: sample.id },
+          json: {
+            ...draft,
+            specificName: "MC-2026-007",
+            expectedUpdatedAt: data.updatedAt,
+          },
+        },
+        { headers: authHeader },
+      );
+
+      expect(saved.status).toBe(200);
+      expect(await saved.json()).toMatchObject({
+        data: { id: sample.id, specificName: "MC-2026-007" },
+      });
+    });
+
+    pgTest("should let an editor list collaborators", async ({ db }) => {
+      const client = testClient(createApp(db).app);
+      const sample = await shareWithCallerAsEditor(db);
+
+      const res = await client.admin.samples[":id"].collaborators.$get(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(200);
+    });
+
+    pgTest(
+      "should answer 403 when an editor removes a collaborator",
+      async ({ db }) => {
+        const client = testClient(createApp(db).app);
+        const sample = await shareWithCallerAsEditor(db);
+        const colleague = await insertUser(db, "colleague@example.com");
+        await client.admin.samples[":id"].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
+          { headers: authHeader },
+        );
+
+        const res = await client.admin.samples[":id"].collaborators[
+          ":userId"
+        ].$delete(
+          { param: { id: sample.id, userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(403);
+      },
+    );
+  });
+
   describe("owner and role in responses", () => {
     const draft = {
       name: "Basalte du Massif Central",
@@ -2355,7 +2420,10 @@ describe("admin sample routes", () => {
         const { app, sample, owner, colleague } = await arrangeOwnedSample(db);
         const client = testClient(app);
         await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
 
@@ -2395,7 +2463,10 @@ describe("admin sample routes", () => {
         const client = testClient(app);
 
         const added = await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
 
@@ -2414,12 +2485,18 @@ describe("admin sample routes", () => {
         const { app, sample, owner, colleague } = await arrangeOwnedSample(db);
         const client = testClient(app);
         await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
 
         const again = await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
 
@@ -2443,7 +2520,10 @@ describe("admin sample routes", () => {
         const client = testClient(app);
 
         const res = await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: owner.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: owner.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
 
@@ -2475,76 +2555,95 @@ describe("admin sample routes", () => {
       },
     );
 
-    pgTest("should add a super admin as contributor", async ({ db }) => {
-      const { app, sample, owner } = await arrangeOwnedSample(db);
-      const admin = await insertUser(db, "admin@univ-lorraine.fr", {
-        name: "Admin",
-        superAdmin: true,
-      });
+    pgTest("should add a collaborator as editor", async ({ db }) => {
+      const { app, sample, colleague } = await arrangeOwnedSample(db);
       const client = testClient(app);
 
-      const res = await client.admin.samples[":id"].collaborators.$post(
-        { param: { id: sample.id }, json: { userId: admin.id } },
+      const added = await client.admin.samples[":id"].collaborators.$post(
+        {
+          param: { id: sample.id },
+          json: { userId: colleague.id, role: "editor" },
+        },
         { headers: authHeader },
       );
 
-      expect(res.status).toBe(204);
-      const listed = await client.admin.samples[":id"].collaborators.$get(
-        { param: { id: sample.id } },
-        { headers: authHeader },
-      );
-      expect(await listed.json()).toEqual({
-        data: [
-          {
-            id: admin.id,
-            email: "admin@univ-lorraine.fr",
-            name: "Admin",
-            firstname: null,
-            orcid: null,
-            role: "contributor",
-          },
-          {
-            id: owner.id,
-            email: authenticatedCallerEmail,
-            name: "User",
-            firstname: "Test",
-            orcid: null,
-            role: "owner",
-          },
-        ],
-      });
-    });
-
-    pgTest("should let the owner remove a contributor", async ({ db }) => {
-      const { app, sample, owner, colleague } = await arrangeOwnedSample(db);
-      const client = testClient(app);
-      await client.admin.samples[":id"].collaborators.$post(
-        { param: { id: sample.id }, json: { userId: colleague.id } },
-        { headers: authHeader },
-      );
-
-      const removed = await client.admin.samples[":id"].collaborators[
-        ":userId"
-      ].$delete(
-        { param: { id: sample.id, userId: colleague.id } },
-        { headers: authHeader },
-      );
-
-      expect(removed.status).toBe(204);
+      expect(added.status).toBe(204);
       const listed = await client.admin.samples[":id"].collaborators.$get(
         { param: { id: sample.id } },
         { headers: authHeader },
       );
       const { data } = (await listed.json()) as SampleCollaboratorsResponse;
-      expect(data.map(({ id, role }) => ({ id, role }))).toEqual([
-        { id: owner.id, role: "owner" },
-      ]);
-      const read = await client.admin.samples[":id"].$get(
-        { param: { id: sample.id } },
-        { headers: colleagueHeader },
+      expect(data).toContainEqual(
+        expect.objectContaining({ id: colleague.id, role: "editor" }),
       );
-      expect(read.status).toBe(403);
     });
+
+    pgTest(
+      "should move a collaborator to the role the owner re-invites them with",
+      async ({ db }) => {
+        const { app, sample, colleague } = await arrangeOwnedSample(db);
+        const client = testClient(app);
+        await client.admin.samples[":id"].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
+          { headers: authHeader },
+        );
+
+        const again = await client.admin.samples[":id"].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "editor" },
+          },
+          { headers: authHeader },
+        );
+
+        expect(again.status).toBe(204);
+        const listed = await client.admin.samples[":id"].collaborators.$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+        const { data } = (await listed.json()) as SampleCollaboratorsResponse;
+        expect(data).toContainEqual(
+          expect.objectContaining({ id: colleague.id, role: "editor" }),
+        );
+      },
+    );
+
+    pgTest.for(["editor", "contributor"] as const)(
+      "should let the owner remove the %s",
+      async (role, { db }) => {
+        const { app, sample, owner, colleague } = await arrangeOwnedSample(db);
+        const client = testClient(app);
+        await client.admin.samples[":id"].collaborators.$post(
+          { param: { id: sample.id }, json: { userId: colleague.id, role } },
+          { headers: authHeader },
+        );
+
+        const removed = await client.admin.samples[":id"].collaborators[
+          ":userId"
+        ].$delete(
+          { param: { id: sample.id, userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        expect(removed.status).toBe(204);
+        const listed = await client.admin.samples[":id"].collaborators.$get(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+        const { data } = (await listed.json()) as SampleCollaboratorsResponse;
+        expect(
+          data.map(({ id, role: stored }) => ({ id, role: stored })),
+        ).toEqual([{ id: owner.id, role: "owner" }]);
+        const read = await client.admin.samples[":id"].$get(
+          { param: { id: sample.id } },
+          { headers: colleagueHeader },
+        );
+        expect(read.status).toBe(403);
+      },
+    );
 
     pgTest("should answer 404 when removing the owner", async ({ db }) => {
       const { app, sample, owner } = await arrangeOwnedSample(db);
@@ -2574,7 +2673,10 @@ describe("admin sample routes", () => {
         const { app, sample, colleague } = await arrangeOwnedSample(db);
         const client = testClient(app);
         await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
 
@@ -2630,7 +2732,10 @@ describe("admin sample routes", () => {
       ].collaborators.$post(
         {
           param: { id: sample.id },
-          json: { userId: "01890a5d-ac96-774b-bcce-b302099a8057" },
+          json: {
+            userId: "01890a5d-ac96-774b-bcce-b302099a8057",
+            role: "contributor",
+          },
         },
         { headers: authHeader },
       );
@@ -2648,7 +2753,10 @@ describe("admin sample routes", () => {
       const res = await testClient(app).admin.samples[
         ":id"
       ].collaborators.$post(
-        { param: { id: sample.id }, json: { userId: colleague.id } },
+        {
+          param: { id: sample.id },
+          json: { userId: colleague.id, role: "contributor" },
+        },
         { headers: authHeader },
       );
 
@@ -2658,7 +2766,7 @@ describe("admin sample routes", () => {
           expect.objectContaining({
             to: ["colleague@example.com"],
             subject:
-              'Test User invited you to contribute to "Basalte à partager"',
+              'Test User invited you to collaborate on "Basalte à partager"',
           }),
         ),
       );
@@ -2675,14 +2783,20 @@ describe("admin sample routes", () => {
       });
       const client = testClient(app);
       await client.admin.samples[":id"].collaborators.$post(
-        { param: { id: sample.id }, json: { userId: colleague.id } },
+        {
+          param: { id: sample.id },
+          json: { userId: colleague.id, role: "contributor" },
+        },
         { headers: authHeader },
       );
       await vi.waitFor(() => expect(sendMail).toHaveBeenCalled());
       sendMail.mockClear();
 
       const again = await client.admin.samples[":id"].collaborators.$post(
-        { param: { id: sample.id }, json: { userId: colleague.id } },
+        {
+          param: { id: sample.id },
+          json: { userId: colleague.id, role: "contributor" },
+        },
         { headers: authHeader },
       );
 
@@ -2702,7 +2816,10 @@ describe("admin sample routes", () => {
       ].collaborators.$post(
         {
           param: { id: sample.id },
-          json: { userId: "01890a5d-ac96-774b-bcce-b302099a8057" },
+          json: {
+            userId: "01890a5d-ac96-774b-bcce-b302099a8057",
+            role: "contributor",
+          },
         },
         { headers: authHeader },
       );
@@ -2723,7 +2840,10 @@ describe("admin sample routes", () => {
         const client = testClient(app);
 
         const res = await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
 
@@ -2739,42 +2859,51 @@ describe("admin sample routes", () => {
       },
     );
 
-    pgTest(
-      "should answer 403 when a contributor lists contributors",
-      async ({ db }) => {
+    pgTest("should let a contributor list collaborators", async ({ db }) => {
+      const { app, sample, colleague } = await arrangeOwnedSample(db);
+      const client = testClient(app);
+      await client.admin.samples[":id"].collaborators.$post(
+        {
+          param: { id: sample.id },
+          json: { userId: colleague.id, role: "contributor" },
+        },
+        { headers: authHeader },
+      );
+
+      const res = await client.admin.samples[":id"].collaborators.$get(
+        { param: { id: sample.id } },
+        { headers: colleagueHeader },
+      );
+
+      expect(res.status).toBe(200);
+    });
+
+    pgTest.for([
+      { case: "adds another contributor", role: "contributor", status: 204 },
+      { case: "adds an editor", role: "editor", status: 403 },
+    ])(
+      "should answer $status when a contributor $case",
+      async ({ role, status }, { db }) => {
         const { app, sample, colleague } = await arrangeOwnedSample(db);
         const client = testClient(app);
         await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
-          { headers: authHeader },
-        );
-
-        const res = await client.admin.samples[":id"].collaborators.$get(
-          { param: { id: sample.id } },
-          { headers: colleagueHeader },
-        );
-
-        expect(res.status).toBe(403);
-      },
-    );
-
-    pgTest(
-      "should answer 403 when a contributor adds a contributor",
-      async ({ db }) => {
-        const { app, sample, colleague } = await arrangeOwnedSample(db);
-        const client = testClient(app);
-        await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
         const stranger = await insertUser(db, "stranger@univ-lorraine.fr");
 
         const res = await client.admin.samples[":id"].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: stranger.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: stranger.id, role: role as "contributor" },
+          },
           { headers: colleagueHeader },
         );
 
-        expect(res.status).toBe(403);
+        expect(res.status).toBe(status);
       },
     );
 
@@ -2805,7 +2934,10 @@ describe("admin sample routes", () => {
         const res = await testClient(app).admin.samples[
           ":id"
         ].collaborators.$post(
-          { param: { id: sample.id }, json: { userId: colleague.id } },
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
           { headers: authHeader },
         );
 
@@ -2821,26 +2953,36 @@ describe("admin sample routes", () => {
         {
           method: "POST",
           headers: { "content-type": "application/json", ...authHeader },
-          body: JSON.stringify({ userId: "not-a-uuid" }),
+          body: JSON.stringify({ userId: "not-a-uuid", role: "contributor" }),
         },
       );
 
       expect(res.status).toBe(400);
     });
 
-    pgTest("should reject an unknown body field with 400", async ({ db }) => {
-      const { app, sample, colleague } = await arrangeOwnedSample(db);
+    pgTest.for([
+      { case: "no role", role: undefined },
+      { case: "the owner role", role: "owner" },
+      { case: "an unknown role", role: "moderator" },
+    ])("should reject a body with $case with 400", async ({ role }, { db }) => {
+      const { app, sample, owner, colleague } = await arrangeOwnedSample(db);
 
       const res = await app.request(
         `/admin/samples/${sample.id}/collaborators`,
         {
           method: "POST",
           headers: { "content-type": "application/json", ...authHeader },
-          body: JSON.stringify({ userId: colleague.id, role: "owner" }),
+          body: JSON.stringify({ userId: colleague.id, role }),
         },
       );
 
       expect(res.status).toBe(400);
+      const rows = await db
+        .selectFrom("user_sample")
+        .select("user_id")
+        .where("sample_id", "=", sample.id)
+        .execute();
+      expect(rows).toEqual([{ user_id: owner.id }]);
     });
 
     pgTest(
@@ -2853,7 +2995,10 @@ describe("admin sample routes", () => {
           {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ userId: colleague.id }),
+            body: JSON.stringify({
+              userId: colleague.id,
+              role: "contributor",
+            }),
           },
         );
 

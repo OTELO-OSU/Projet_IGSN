@@ -25,13 +25,16 @@ test.describe("share a sample", () => {
     const share = shareSamplePage(page);
     await share.open();
     await share.expectOwner("Camille Petit", RESEARCHERS.camille.email);
-    await share.expectNoCollaborator();
+    await share.expectNoCollaborator(COLLEAGUE);
 
     await share.openPicker();
     await share.expectColleagueOffered("Martin");
     await share.pickColleague("Martin");
+    await share.chooseRole("Editor");
+    await share.invite();
 
     await share.expectCollaborator(COLLEAGUE);
+    await share.expectCollaboratorRole(COLLEAGUE, "Editor");
 
     await share.close();
     // The add must not bounce the owner back to the list (a 401 from the
@@ -41,6 +44,6 @@ test.describe("share a sample", () => {
     await share.expectCollaborator(COLLEAGUE);
 
     await share.removeCollaborator("Jean Martin");
-    await share.expectNoCollaborator();
+    await share.expectNoCollaborator(COLLEAGUE);
   });
 });

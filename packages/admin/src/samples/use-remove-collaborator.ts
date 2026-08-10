@@ -5,29 +5,26 @@ import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useAddContributor(sampleId: string) {
+export function useRemoveCollaborator(sampleId: string) {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userId: string) => {
       const res = await apiFetch(
-        new URL(`admin/samples/${sampleId}/collaborators`, API_URL),
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ userId }),
-        },
+        new URL(`admin/samples/${sampleId}/collaborators/${userId}`, API_URL),
+        { method: "DELETE" },
       );
       if (!res.ok) {
-        throw new Error(`Failed to add the contributor (${res.status})`);
+        throw new Error(`Failed to remove the collaborator (${res.status})`);
       }
     },
     onSuccess: () => {
-      toast.success(m.share_contributor_added());
+      toast.success(m.share_contributor_removed());
+      queryClient.removeQueries({ queryKey: ["users"] });
       return queryClient.invalidateQueries({
         queryKey: ["samples", sampleId, "collaborators"],
       });
     },
-    onError: () => toast.error(m.share_contributor_error()),
+    onError: () => toast.error(m.share_contributor_remove_error()),
   });
 }

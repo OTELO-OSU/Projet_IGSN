@@ -97,10 +97,11 @@ function DialogFooter({
   closeLabel,
   children,
   ...props
-}: React.ComponentProps<"div"> & {
-  showCloseButton?: boolean;
-  closeLabel: string;
-}) {
+}: React.ComponentProps<"div"> &
+  (
+    | { showCloseButton: true; closeLabel: string }
+    | { showCloseButton?: false; closeLabel?: never }
+  )) {
   return (
     <div
       data-slot="dialog-footer"

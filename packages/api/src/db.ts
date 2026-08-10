@@ -45,19 +45,16 @@ type SampleTable = {
   numeric_age_unit: string | null;
   numeric_age_years_unit: string | null;
   // Generated STORED, never inserted (like `geom`): the comparable age interval
-  // in annum, from the numeric age or the geological rank. See the
-  // age-annum-columns migration.
+  // in annum, from the numeric age or the geological rank.
   annum_min: Generated<number | null>;
   annum_max: Generated<number | null>;
   // Geological bounds are stored as their rank (1-based integer), not the ics
-  // code, so a range filter compares them directly. api maps code <-> rank at
-  // the boundary. See the geological-age-as-rank migration.
+  // code, so a range filter compares them directly.
   geological_age_min: number | null;
   geological_age_max: number | null;
   geological_unit: string | null;
   // Location (ADR 0014). `location_type` (point/area), not `type`: that is the
-  // taxonomy path above. `geom` is a DB-generated planar geometry (never
-  // inserted), referenced only in spatial predicates.
+  // taxonomy path above.
   location_type: string | null;
   point_longitude: number | null;
   point_latitude: number | null;
@@ -171,7 +168,7 @@ type UserTable = {
 type UserSampleTable = {
   user_id: string;
   sample_id: string;
-  role: "owner" | "contributor";
+  role: "owner" | "editor" | "contributor";
 };
 
 export type DB = {

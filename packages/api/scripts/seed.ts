@@ -7,6 +7,7 @@ import {
   createSampleSchema,
   sampleSchema,
 } from "@projet-igsn/domain/sample/sample";
+import { collaboratorRoleSchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
@@ -43,10 +44,7 @@ export type ResearcherKey = z.infer<typeof researcherKeySchema>;
 
 // Ids are static v7-shaped uuids like the sample ids; the api adopts these rows
 // by email when the real account signs in (see src/user/repository.ts), which is
-// what keeps the ownership. The six researchers are accepted (they publish); luc
-// owns no sample anywhere: he is the researcher who signs in to an empty
-// registry (see e2e/admin/samples.spec.ts). The last three exist to sign in to
-// each moderation state: nadia moderates, theo waits, chloe is locked out.
+// what keeps the ownership.
 export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   marie: {
     id: "01980e2d-6f9b-7000-8000-000000000001",
@@ -124,10 +122,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
 };
 
 // Upserts the mock researchers by email (a row may already exist from a real
-// sign-in, with another id) and returns each researcher's database id. Re-seeding
-// re-applies the moderation state, so a stale local row cannot keep rights the
-// fixture no longer grants; name and firstname stay untouched, so a real
-// sign-in's own profile keeps winning those.
+// sign-in, with another id) and returns each researcher's database id.
 async function seedOwners(
   db: Kysely<DB>,
 ): Promise<Record<ResearcherKey, string>> {
@@ -175,7 +170,7 @@ export async function seed(
   (Pick<
     Selectable<DB["sample"]>,
     "id" | "name" | "nature" | "igsn" | "published"
-  > & { owner: ResearcherKey })[]
+  > & { owner: ResearcherKey; collaborators: SeedCollaborator[] })[]
 > {
   const ownerIds = await seedOwners(db);
   const parsed = samples.map(parseSeedSample);
@@ -185,6 +180,7 @@ export async function seed(
       parsed.map(
         ({
           owner: _owner,
+          collaborators: _collaborators,
           material,
           collectionMethod,
           collectionMethodDescription,
@@ -215,20 +211,31 @@ export async function seed(
   await db
     .insertInto("user_sample")
     .values(
-      parsed.map((row) => ({
-        sample_id: row.id,
-        user_id: ownerIds[row.owner],
-        role: "owner" as const,
-      })),
+      parsed.flatMap((row) => [
+        {
+          sample_id: row.id,
+          user_id: ownerIds[row.owner],
+          role: "owner" as const,
+        },
+        ...(row.collaborators ?? []).map(({ researcher, role }) => ({
+          sample_id: row.id,
+          user_id: ownerIds[researcher],
+          role,
+        })),
+      ]),
     )
     .execute();
 
   // Matched by id, not by array position: RETURNING order is not guaranteed.
-  const ownerById = new Map(parsed.map((row) => [row.id, row.owner]));
+  const seedById = new Map(parsed.map((row) => [row.id, row]));
   return created.map((sample) => {
-    const owner = ownerById.get(sample.id);
-    if (!owner) throw new Error(`created sample ${sample.id} has no seed row`);
-    return { ...sample, owner };
+    const row = seedById.get(sample.id);
+    if (!row) throw new Error(`created sample ${sample.id} has no seed row`);
+    return {
+      ...sample,
+      owner: row.owner,
+      collaborators: row.collaborators ?? [],
+    };
   });
 }
 
@@ -270,17 +277,36 @@ export const seedSampleSchema = sampleSchema
     igsn: true,
     published: true,
   })
-  // Seed metadata (a user_sample row), not a sample column.
-  .extend({ owner: researcherKeySchema });
+  // Seed metadata (user_sample rows), not sample columns.
+  .extend({
+    owner: researcherKeySchema,
+    collaborators: z
+      .array(
+        z.object({
+          researcher: researcherKeySchema,
+          role: collaboratorRoleSchema,
+        }),
+      )
+      .optional(),
+  });
 
 export type SeedSample = z.infer<typeof seedSampleSchema>;
+
+export type SeedCollaborator = NonNullable<SeedSample["collaborators"]>[number];
 
 // A seed row must hold the bar the API enforces on the same data: the create
 // schema for a draft, the published schema (publish blockers raised as
 // issues) for a published row, since seeding bypasses the publish flow.
 export function parseSeedSample(sample: SeedSample): SeedSample {
   const parsed = seedSampleSchema.parse(sample);
-  const { id: _id, igsn: _igsn, owner: _owner, published, ...create } = parsed;
+  const {
+    id: _id,
+    igsn: _igsn,
+    owner: _owner,
+    collaborators: _collaborators,
+    published,
+    ...create
+  } = parsed;
   const result = (
     published ? publishedSampleSchema : createSampleSchema
   ).safeParse(create);
@@ -292,10 +318,8 @@ export function parseSeedSample(sample: SeedSample): SeedSample {
   return parsed;
 }
 
-// Shared seed data, reused by the E2E reset (see scripts/reset-and-seed.ts), so
-// kept English per the i18n testing rule. Only the published rows below are
-// visible on the public frontend; the frontend detail E2E asserts the first
-// published row's nature (`hand_sample`).
+// Only the published rows below are visible on the public frontend; the frontend
+// detail E2E asserts the first published row's nature (`hand_sample`).
 export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "00000000-0000-7000-8000-000000000001",
@@ -305,6 +329,9 @@ export const SEED_SAMPLES: SeedSample[] = [
     type: "dredge",
     material: "rock.sedimentary",
     collectionMethod: "dredging.chain_bag",
+    // Camille is an invited editor here, so the E2E editor journey can sign in
+    // as one without being invited through the UI first.
+    collaborators: [{ researcher: "camille", role: "editor" }],
   },
   {
     id: "00000000-0000-7000-8000-000000000002",
@@ -403,8 +430,6 @@ export const SEED_SAMPLES: SeedSample[] = [
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),
     published: true,
   },
-  // Drafts of the pending researcher: an unverified account declares samples
-  // but cannot publish them, so these two stay drafts.
   {
     id: "00000000-0000-7000-8000-000000000006",
     name: "Awaiting validation basalt",

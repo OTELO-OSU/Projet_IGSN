@@ -16,6 +16,7 @@ const invitation = {
     name: "Martin",
     firstname: "Jean",
   },
+  role: "contributor" as const,
   sampleName: "Basalt core 12",
   sampleUrl: SAMPLE_URL,
 };
@@ -25,12 +26,12 @@ describe("sampleInvitationMail", () => {
     const mail = await sampleInvitationMail(invitation);
 
     expect(mail.subject).toBe(
-      'Jean Martin invited you to contribute to "Basalt core 12"',
+      'Jean Martin invited you to collaborate on "Basalt core 12"',
     );
     expect(mail.text).toBe(
       `Hello Marie Dupont,
 
-Jean Martin invited you to contribute to the sample "Basalt core 12".
+Jean Martin invited you to contribute to the sample "Basalt core 12", which you may edit while it is a draft.
 
 Open the sample: ${SAMPLE_URL}
 `,
@@ -38,6 +39,14 @@ Open the sample: ${SAMPLE_URL}
     expect(mail.html).toContain("Jean Martin");
     expect(mail.html).toContain("Basalt core 12");
     expect(mail.html).toContain(SAMPLE_URL);
+  });
+
+  it("should tell an editor they may publish the sample", async () => {
+    const mail = await sampleInvitationMail({ ...invitation, role: "editor" });
+
+    expect(mail.text).toContain(
+      'Jean Martin invited you to edit the sample "Basalt core 12", which you may also publish and keep editing afterwards.',
+    );
   });
 
   it("should fall back to a plain greeting when the invitee has no name", async () => {
@@ -65,7 +74,7 @@ Open the sample: ${SAMPLE_URL}
     });
 
     expect(mail.subject).toBe(
-      'jean.martin@univ-lorraine.fr invited you to contribute to "Basalt core 12"',
+      'jean.martin@univ-lorraine.fr invited you to collaborate on "Basalt core 12"',
     );
     expect(mail.text).toContain("jean.martin@univ-lorraine.fr invited you");
   });

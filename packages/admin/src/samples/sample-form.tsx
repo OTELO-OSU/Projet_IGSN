@@ -27,6 +27,7 @@ import {
   samplePublishBlockers,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { type CreateSample } from "@projet-igsn/domain/sample/sample";
+import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 
 import { m } from "#/paraglide/messages.js";
 import { AgeFields } from "#/samples/age-fields.tsx";
@@ -271,7 +272,7 @@ export function SampleForm({
       );
     }
     if (action.kind === "publish") {
-      if (roleOnSample === "contributor") {
+      if (roleOnSample !== null && !isSampleEditor(roleOnSample)) {
         return null;
       }
       // Save & Publish saves first, so unsaved edits are not a blocker here.

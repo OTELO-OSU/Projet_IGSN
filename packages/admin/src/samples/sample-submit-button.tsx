@@ -34,7 +34,7 @@ export function SampleSubmitButton({
   const reason =
     blockedReason ??
     (roleOnSample !== null && !canUpdateSample(roleOnSample, { published })
-      ? m.save_blocked_not_owner()
+      ? m.save_blocked_not_editor()
       : undefined);
   const button = (
     <form.SubmitButton
