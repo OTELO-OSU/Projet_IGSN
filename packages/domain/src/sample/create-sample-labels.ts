@@ -13,6 +13,7 @@ import { type StorageCondition } from "./condition/storage-condition.ts";
 import { type TemperatureType } from "./condition/temperature-type.ts";
 import { economicInterestLabelKey } from "./economic-interest/label.ts";
 import { type Element } from "./element/vocabulary.ts";
+import { type OceanSea } from "./location/ocean-sea.ts";
 import { materialLabelKey } from "./material/label.ts";
 import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
 import { type Nature } from "./nature.ts";
@@ -51,6 +52,7 @@ type _provenanceStatusKeys =
   AssertKeys<`provenance_status_${ProvenanceStatus}`>;
 type _collectionOriginKeys =
   AssertKeys<`collection_origin_${CollectionOrigin}`>;
+type _oceanSeaKeys = AssertKeys<`ocean_sea_${OceanSea}`>;
 
 // A message catalog: the app's compiled paraglide `m`, keyed by the catalog's
 // own message keys (minus the `$`-prefixed metadata entries, e.g. `$schema`,
@@ -71,6 +73,7 @@ export type SampleLabels = {
   textureLabel: (texture: Texture) => string;
   metamorphicFaciesLabel: (facies: MetamorphicFacies) => string;
   natureLabel: (nature: Nature) => string;
+  oceanSeaLabel: (oceanSea: OceanSea) => string;
   packagingLabel: (packaging: Packaging) => string;
   storageConditionLabel: (storageCondition: StorageCondition) => string;
   temperatureTypeLabel: (type: TemperatureType) => string;
@@ -101,6 +104,7 @@ export function createSampleLabels(m: Messages): SampleLabels {
       m,
     ),
     natureLabel: vocabularyLabel((nature) => `nature_${nature}`, m),
+    oceanSeaLabel: vocabularyLabel((oceanSea) => `ocean_sea_${oceanSea}`, m),
     packagingLabel: vocabularyLabel((packaging) => `packaging_${packaging}`, m),
     storageConditionLabel: vocabularyLabel(
       (storageCondition) => `storage_condition_${storageCondition}`,

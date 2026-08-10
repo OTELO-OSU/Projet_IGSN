@@ -3,12 +3,14 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
-import { oceanSeaName } from "@projet-igsn/domain/sample/location/ocean-sea-label";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
 import { exactRanges, matchRanges } from "#/domain/samples/highlight-match.ts";
-import { materialPathLabel } from "#/domain/samples/sample-labels.ts";
+import {
+  materialPathLabel,
+  oceanSeaLabel,
+} from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
 
@@ -22,7 +24,7 @@ function locationText(location: Location | null): string {
   const regionName =
     region?.kind === "continent"
       ? region.country && countryLabel(region.country, getLocale())
-      : region?.oceanSea && oceanSeaName(region.oceanSea);
+      : region?.oceanSea && oceanSeaLabel(region.oceanSea);
   return [location?.localityName, regionName].filter(Boolean).join(", ");
 }
 
