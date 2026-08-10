@@ -1,8 +1,7 @@
-// The one definition of src/sample/scientific-context/organization.ts, shared by
-// generate-organizations.ts (CSV import) and sync-organizations.ts (ROR refresh),
-// so neither script can drift from the other. Rows come out one per line; the
-// callers run `pnpm fmt:apply` on the target, which reflows them, so re-emitting
-// an unchanged row is byte-identical to what is checked in.
+// The one definition of src/sample/scientific-context/organization.ts, used by
+// sync-organizations.ts (ROR refresh). Rows come out one per line; the caller
+// runs `pnpm fmt:apply` on the target, which reflows them, so re-emitting an
+// unchanged row is byte-identical to what is checked in.
 import type { Organization } from "../src/sample/scientific-context/organization.ts";
 
 export function emitOrganizations(
@@ -23,8 +22,8 @@ export function emitOrganizations(
 // organization by its ROR id; the id is the stable code, the name/acronym are
 // display data (proper nouns, not translated, so not in the i18n catalog).
 //
-// Generated from a CSV export; do not edit by hand for bulk changes. Regenerate
-// with: pnpm -F @projet-igsn/domain generate-organizations path/to/orgs.csv
+// Generated from a CSV export; do not edit by hand for bulk changes. Refresh
+// with: node packages/domain/scripts/sync-organizations.ts
 // A one-off addition can be appended to ORGANIZATIONS directly (keep ROR ids
 // unique). Promote to a DB table only if orgs must be editable at runtime.
 export type Organization = {

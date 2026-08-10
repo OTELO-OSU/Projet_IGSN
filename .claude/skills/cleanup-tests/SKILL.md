@@ -32,14 +32,14 @@ covers it, delete it. Ambiguity resolves to deletion.
 
 Delete:
 
-| Pattern              | Symptom                                                                                                        |
-| -------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Tautology            | Asserts a schema against the const it is built from (`z.enum(X)` over `X`)                                     |
-| Third-party behavior | Zod rejects a non-member, the framework routes, `JSON.parse` throws                                            |
-| Thin wrapper         | The unit delegates (`materialSegment` -> `pathSegment`, `g(...).length === 0`) and the callee has its own spec |
-| Data mirror          | Literal copy of a structure: child lists, key lists, `toHaveLength(240)`                                       |
-| Composition-only     | `parse({ ...valid, sub: <valid sub> })` where `sub` owns a spec                                                |
-| Restates a sibling   | Two tests, one assertion, different words                                                                      |
+| Pattern              | Symptom                                                                    |
+| -------------------- | -------------------------------------------------------------------------- |
+| Tautology            | Asserts a schema against the const it is built from (`z.enum(X)` over `X`) |
+| Third-party behavior | Zod rejects a non-member, the framework routes, `JSON.parse` throws        |
+| Thin wrapper         | The unit delegates (`g(...).length === 0`) and the callee has its own spec |
+| Data mirror          | Literal copy of a structure: child lists, key lists, `toHaveLength(240)`   |
+| Composition-only     | `parse({ ...valid, sub: <valid sub> })` where `sub` owns a spec            |
+| Restates a sibling   | Two tests, one assertion, different words                                  |
 
 Keep: a conditional rule (a field required only when a sibling is set, `min <= max`),
 a boundary, an error code a consumer keys off, a policy the data does not state,

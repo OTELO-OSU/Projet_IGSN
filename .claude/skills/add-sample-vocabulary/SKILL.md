@@ -94,8 +94,7 @@ core: { choices: ["core", "half_round", /* ... */] },
 `expandPaths` resolves each node by the longest matching suffix, so `core.core`
 hits this childless leaf, not bare `core`, and stops. Without it the walk cycles
 (`core.core.core...`) and throws `Path tree cycle` at import, reddening every
-spec. The dotted key is excluded from `SampleTypeSegment`, so labels still key by
-bare segment (`core.core`'s label is the `core` message).
+spec. The label key derives from the last segment (`pathLabelKey` calling `pathSegment`), so labels still key by bare segment, `core.core`'s label being the `core` message.
 
 Picker options come from `SAMPLE_TYPES` (the `expandPaths` output), so prove the
 value is selectable in the spec:

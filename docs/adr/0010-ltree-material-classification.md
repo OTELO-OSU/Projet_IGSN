@@ -33,8 +33,8 @@ The vocabulary is the source of truth in `domain`, as a flat `as const` tuple
 `MATERIAL_PATHS` (every node, including intermediate levels). `materialPathSchema`
 is a `z.enum` over it, giving one compile-time and runtime source. Because the
 parent of every non-root path is itself a member (asserted by a spec), children,
-leaf-ness, and ancestors derive by string-prefix helpers (`materialChildren`,
-`isMaterialLeaf`) with no tree data structure.
+leaf-ness, and ancestors derive by string-prefix helpers (`pathChildren`,
+`isPathLeaf`) with no tree data structure.
 
 Publication requires the material path to be a leaf (fully classified);
 `samplePublishBlockers` reports `material_missing` or `material_incomplete`

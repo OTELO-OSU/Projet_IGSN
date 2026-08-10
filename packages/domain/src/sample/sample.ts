@@ -92,7 +92,7 @@ export type Sample = z.infer<typeof sampleSchema>;
 
 // material is optional at creation: a draft can be saved before it is
 // classified (omitted or null). It becomes mandatory, and must reach a leaf,
-// only at publish (see isSamplePublishable).
+// only at publish (see samplePublishBlockers).
 export const createSampleSchema = z
   .strictObject({
     name: nameSchema,
