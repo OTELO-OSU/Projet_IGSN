@@ -8,8 +8,6 @@
     "correctness": "error"
   },
   "rules": {
-    "eslint/no-unused-vars": "error",
-    "@typescript-eslint/consistent-type-imports": "error",
-    "typescript/no-redundant-type-constituents": "error"
+    "@typescript-eslint/consistent-type-imports": "error"
   }
 }

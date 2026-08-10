@@ -3,7 +3,6 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "strictNullChecks": true,
     "target": "es2024",
     "allowJs": true,
     "resolveJsonModule": true,
@@ -16,10 +15,8 @@
     "module": "esnext",
     "moduleResolution": "bundler",
     "sourceMap": true,
-    "declaration": true,
     "composite": true,
     "declarationMap": true,
-    "incremental": true,
     "noEmit": true,
     "allowImportingTsExtensions": true
   }

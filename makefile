@@ -1,14 +1,9 @@
 default: help
 
-# The e2e stack: prod-built apps + auth stack on shifted ports (own compose
-# project so it runs beside `make dev`). Bring it up, wait until it answers, and
-# tear it down (incl. the throwaway pg volume) when the calling recipe exits.
 E2E_COMPOSE = docker compose -p igsn-e2e -f docker-compose.e2e.yml
 E2E_URL = ADMIN_URL=http://localhost:4001 FRONTEND_URL=http://localhost:4000
 E2E_UP = trap '$(E2E_COMPOSE) down -v' EXIT; \
-	$(E2E_COMPOSE) up -d --build && \
-	echo "waiting for admin, frontend, keycloak and saml-idp..." && \
-	timeout 300 sh -c 'until curl -sfo /dev/null http://localhost:4001 && curl -sfo /dev/null http://localhost:4000 && curl -sfo /dev/null http://localhost:18080/realms/igsn/.well-known/openid-configuration && curl -sfo /dev/null http://localhost:18081/simplesaml/saml2/idp/metadata.php; do sleep 2; done'
+	$(E2E_COMPOSE) up -d --build --wait --wait-timeout 300
 
 help:									## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(firstword $(MAKEFILE_LIST)) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -96,8 +91,20 @@ material-tree:							## Dump the full material tree, indented by depth
 material-tree-json:						## Dump the material vocabulary structure as JSON
 	@pnpm -F @projet-igsn/domain material-tree:json
 
-generate:								## Recompile the i18n catalogs and route trees, if their sources changed
-	@./scripts/generate-if-stale.sh
+# mtime, not `git diff`: both outputs are gitignored, so git has no baseline
+CATALOGS = packages/admin/src/paraglide/messages.js packages/frontend/src/paraglide/messages.js
+ROUTE_TREES = packages/admin/src/routeTree.gen.ts packages/frontend/src/routeTree.gen.ts
+
+generate: $(CATALOGS) $(ROUTE_TREES)	## Recompile the i18n catalogs and route trees, if their sources changed
+	@:
+
+$(CATALOGS) &: $(wildcard packages/*/messages/*.json packages/*/project.inlang/settings.json)
+	@pnpm -r --parallel run compile-i18n
+
+# Dir mtimes track the route set; tsr may skip the output, so stamp it
+$(ROUTE_TREES) &: $(shell find packages/*/src/routes -type d)
+	@pnpm -r --parallel run generate-routes
+	@touch $(ROUTE_TREES)
 
 preprod-deploy:							## Deploy to preprod over SSH (requires DOMAIN=...)
 	@DOMAIN=$(DOMAIN) ./infra/preprod/scripts/deploy.sh

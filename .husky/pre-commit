@@ -1,4 +1,4 @@
-./scripts/generate-if-stale.sh
+make generate
 
 pnpm lint:apply
 pnpm fmt:apply

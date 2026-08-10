@@ -1,12 +1,12 @@
-# Prod-mode stack for E2E: the apps run their prod Dockerfile stages (built, not
-# vite dev), behind Keycloak + the mock IdPs, plus a real Postgres and a one-off
-# migration that gates the api the same way CD does.
-#
-# Ports are shifted off the dev ports so this can run alongside `make dev`:
-#   frontend 4000, admin 4001, api 4002, keycloak 18080, saml-idp 18081,
-#   maildev 11080
-# Keycloak listens on 18080 inside the container too (KC_HTTP_PORT) so its
-# issued URLs are identical for the browser and for its own broker calls.
+# Ports are shifted off the dev ports so this can run alongside `make dev`
+# KC_HTTP_PORT 18080 inside too, so issued URLs match browser and broker
+
+x-healthcheck: &healthcheck
+  test: ["CMD-SHELL", "curl -fsS http://localhost:$$PORT/"]
+  interval: 2s
+  timeout: 3s
+  retries: 60
+
 services:
   postgres:
     image: postgis/postgis:17-3.5
@@ -15,9 +15,7 @@ services:
       POSTGRES_PASSWORD: igsn
       POSTGRES_DB: igsn
     healthcheck:
-      # -h localhost forces a TCP check: the postgis image runs its init behind a
-      # socket-only server, so a socket pg_isready reports ready while TCP 5432 is
-      # still refused (migrate connects over TCP and would race the init).
+      # -h localhost forces TCP: the postgis init serves a socket-only server
       test: ["CMD-SHELL", "pg_isready -U igsn -d igsn -h localhost"]
       interval: 2s
       timeout: 3s
@@ -30,8 +28,7 @@ services:
       context: .
       dockerfile: ./packages/api/Dockerfile
       target: prod
-    # Run node directly (like the api CMD and CD), not `pnpm run`: prod runs as
-    # USER node but /app is root-owned, and `pnpm run` writes a temp file there.
+    # node, not `pnpm run`: /app is root-owned and `pnpm run` writes there
     command: ["node", "scripts/migrate.ts"]
     environment:
       DATABASE_HOST: postgres
@@ -56,38 +53,27 @@ services:
       DATABASE_NAME: igsn
       DATABASE_USER: igsn
       DATABASE_PASSWORD: igsn
-      # Token issuer is the browser-facing Keycloak URL; JWKS and userinfo are
-      # fetched over the compose network from the keycloak service (same 18080
-      # port, see below).
       OIDC_ISSUER: http://localhost:18080/realms/igsn
       OIDC_JWKS_URI: http://keycloak:18080/realms/igsn/protocol/openid-connect/certs
       OIDC_USERINFO_URI: http://keycloak:18080/realms/igsn/protocol/openid-connect/userinfo
-      # The only client whose tokens the api accepts (azp); pinned to the SPA's.
       OIDC_CLIENT_ID: igsn-admin
       CORS_ORIGINS: http://localhost:4001,http://localhost:4000
-      # Same port-shifted admin as above; the digest mail links to it.
       ADMIN_URL: http://localhost:4001
-      # Off here: repeated seeding and navigation share one client address, so a
-      # budget would make scenarios order-dependent.
+      # Off: all traffic shares one client address, so a budget flakes runs
       RATE_LIMIT_ENABLED: "false"
-      # Uploaded sample attachments (ADR 0017). Named volume, wiped by the
-      # `down -v` teardown: a host bind mount here leaks blob dirs across
-      # runs, and one created by another stack running as root gives the
-      # `node`-user api EACCES on seeded (fixed-id) samples.
+      # Named volume: a bind mount leaks blobs across runs and gives EACCES
       ATTACHMENTS_DIR: /data/attachments
       # Pinned so the search assertions do not depend on the host shell.
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
-      # Same, for the attachment cap the admin bundle bakes in.
       UPLOAD_LIMIT: "5"
-      # Same, for the edit-lock TTL (ADR 0024).
       SAMPLE_EDIT_LOCK_TTL_MINUTES: "15"
-      # Same names as dev, read at boot by the mail sender. No
-      # SMTP_USER/SMTP_PASSWORD, unlike preprod: maildev takes anonymous SMTP.
+      # No SMTP_USER/SMTP_PASSWORD, unlike preprod: maildev takes anonymous SMTP.
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost
     volumes:
       - attachments:/data/attachments
+    healthcheck: *healthcheck
     depends_on:
       postgres:
         condition: service_healthy
@@ -102,8 +88,6 @@ services:
       dockerfile: ./packages/admin/Dockerfile
       target: prod
       args:
-        # Baked into the bundle at build time — point the SPA at the e2e Keycloak
-        # and the port-shifted e2e api.
         VITE_OIDC_AUTHORITY: http://localhost:18080/realms/igsn
         VITE_OIDC_CLIENT_ID: igsn-admin
         VITE_API_URL: http://localhost:4002
@@ -111,6 +95,7 @@ services:
     # Caddy binds $PORT (Caddyfile), so listen on 3001 to match the mapping.
     environment:
       PORT: "3001"
+    healthcheck: *healthcheck
     ports:
       - "4001:3001"
 
@@ -120,13 +105,12 @@ services:
       dockerfile: ./packages/frontend/Dockerfile
       target: prod
       args:
-        # Browser-side: baked into the bundle, host-facing port-shifted api.
         VITE_API_URL: http://localhost:4002
-    # Nitro binds $PORT; listen on 3000 to match the mapping. SSR reaches the api
-    # over the compose network (server-to-server, no CORS).
+    # Nitro binds $PORT; SSR reaches the api in-network, so no CORS
     environment:
       PORT: "3000"
       API_URL: http://api:3002
+    healthcheck: *healthcheck
     ports:
       - "4000:3000"
 
@@ -137,11 +121,7 @@ services:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HTTP_PORT: "18080"
-      # Pin the frontend URL so the realm issuer is the same string whichever
-      # host a request arrives on: start-dev otherwise derives it from the
-      # request, and the api's backchannel userinfo call (Host keycloak:18080)
-      # then rejects a token issued to localhost:18080. The backchannel stays
-      # dynamic so that in-network call keeps resolving.
+      # Pin the issuer: start-dev derives it per request and breaks backchannel
       KC_HOSTNAME: http://localhost:18080
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       # Port-shifted URLs the realm import substitutes (see keycloak/*.json).
@@ -156,6 +136,16 @@ services:
       ORCID_USERINFO_URL: http://localhost:18080/realms/mock-orcid/protocol/openid-connect/userinfo
       ORCID_ISSUER: http://localhost:18080/realms/mock-orcid
       ORCID_JWKS_URL: http://localhost:18080/realms/mock-orcid/protocol/openid-connect/certs
+    # No curl in the image; the realm endpoint proves --import-realm finished
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "exec 3<>/dev/tcp/localhost/18080; printf 'GET /realms/igsn/.well-known/openid-configuration HTTP/1.0\\r\\n\\r\\n' >&3; head -1 <&3 | grep -q ' 200 '",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 60
     ports:
       - "18080:18080"
     volumes:
@@ -163,6 +153,17 @@ services:
 
   saml-idp:
     image: kenchan0130/simplesamlphp
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-fsS",
+          "http://localhost:8080/simplesaml/saml2/idp/metadata.php",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 60
     ports:
       - "18081:8080"
     environment:
@@ -173,8 +174,6 @@ services:
     volumes:
       - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
 
-  # Same catch-all SMTP sink as dev, so a run never sends real mail. Only its
-  # web UI is published, port-shifted off dev's 1080; SMTP 1025 stays internal.
   maildev:
     image: maildev/maildev:2.2.1
     ports:
