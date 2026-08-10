@@ -3,12 +3,22 @@ import { serve } from "@hono/node-server";
 import { createApp } from "./app.ts";
 import { createDb } from "./db.ts";
 import { createSendMail } from "./mail/send-mail.ts";
-import { adminAppUrl } from "./user/admin-users-url.ts";
+import { adminAppUrl } from "./user/admin-app-url.ts";
+import { schedulePendingUsersDigest } from "./user/pending-users-digest-schedule.ts";
+import { createUserRepository } from "./user/repository.ts";
+import { sendPendingUsersDigest } from "./user/send-pending-users-digest.ts";
 
-const { app, startPendingUsersDigest } = createApp(createDb(), {
-  mail: { sendMail: createSendMail(), adminUrl: adminAppUrl() },
+const db = createDb();
+const sendMail = createSendMail();
+const adminUrl = adminAppUrl();
+const { app } = createApp(db, { mail: { sendMail, adminUrl } });
+schedulePendingUsersDigest(() => {
+  void sendPendingUsersDigest(
+    createUserRepository(db),
+    sendMail,
+    new URL("/users", adminUrl).toString(),
+  );
 });
-startPendingUsersDigest();
 
 const port = process.env.PORT ? parseInt(process.env.PORT) : 3002;
 

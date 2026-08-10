@@ -1,6 +1,6 @@
 import { m } from "#/paraglide/messages.js";
 import { LocationElevationFields } from "#/samples/location-elevation-fields.tsx";
-import { useLocationForm } from "#/samples/use-location-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const boundFields = [
   ["location.westLongitude", m.field_west_longitude, m.field_longitude_hint],
@@ -23,7 +23,7 @@ const rangeFields = [
 ] as const;
 
 export function LocationAreaFields({ required }: { required: boolean }) {
-  const form = useLocationForm();
+  const form = useSampleForm();
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       {boundFields.map(([name, label, hint]) => (

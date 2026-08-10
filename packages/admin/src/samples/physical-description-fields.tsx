@@ -6,22 +6,19 @@ import { m } from "#/paraglide/messages.js";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { SampleConditionFields } from "#/samples/sample-condition-fields.tsx";
 import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
-import { useLocationForm } from "#/samples/use-location-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// The Physical description tab: the description section, the location
-// section, then the condition section. Render inside a `form.AppForm`.
 export function PhysicalDescriptionFields() {
-  const form = useLocationForm();
+  const form = useSampleForm();
   return (
     <>
       <FormSection title={m.section_description()}>
         <SampleDescriptionFields />
       </FormSection>
 
-      {/* The section shows only once the material settles how to validate it
-          (required or optional). Synthetic samples must not carry a location
-          (ADR 0014), and an undetermined material cannot be asked about one
-          yet, so both cases hide it. */}
+      {/* Synthetic samples must not carry a location (ADR 0014), and an
+          undetermined material cannot be asked about one yet, so both cases
+          hide it. */}
       <form.Subscribe
         selector={(state) => {
           const requirement = locationRequirement(

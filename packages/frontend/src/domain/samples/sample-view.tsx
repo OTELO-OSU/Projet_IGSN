@@ -22,62 +22,37 @@ import { SecurityView } from "#/domain/samples/security-view.tsx";
 import { useActiveSection } from "#/domain/samples/use-active-section.ts";
 import { m } from "#/paraglide/messages.js";
 
-type SampleViewProps = {
-  name: Sample["name"];
-  igsn: Sample["igsn"];
-  nature: Sample["nature"];
-  type: Sample["type"];
-  material: Sample["material"];
-  texture: Sample["texture"];
-  metamorphicFacies: Sample["metamorphicFacies"];
-  specificName: Sample["specificName"];
-  collectionMethod: Sample["collectionMethod"];
-  collectionMethodDescription: Sample["collectionMethodDescription"];
-  description: Sample["description"];
-  condition: Sample["condition"];
-  scientificContext: Sample["scientificContext"];
-  location: Sample["location"];
-  security: Sample["security"];
-  availability: Sample["availability"];
-  publicationYear: Sample["publicationYear"];
-  age: Sample["age"];
-  // Defaulted so the many link-less renders (and tests) can omit them.
-  links?: Sample["links"];
-  attachments?: Sample["attachments"];
-  economicInterest?: Sample["economicInterest"];
-  economicInterestElements?: Sample["economicInterestElements"];
-  economicResourceTypePrecision?: Sample["economicResourceTypePrecision"];
-  economicDepositName?: Sample["economicDepositName"];
-  economicDepositDescription?: Sample["economicDepositDescription"];
-};
-
 export function SampleView({
-  name,
-  igsn,
-  nature,
-  type,
-  material,
-  texture,
-  metamorphicFacies,
-  specificName,
-  collectionMethod,
-  collectionMethodDescription,
-  description,
-  condition,
-  scientificContext,
-  location,
-  security,
-  availability,
-  publicationYear,
-  age,
-  links = [],
-  attachments = [],
-  economicInterest = null,
-  economicInterestElements = [],
-  economicResourceTypePrecision = null,
-  economicDepositName = null,
-  economicDepositDescription = null,
-}: SampleViewProps) {
+  sample: {
+    name,
+    igsn,
+    nature,
+    type,
+    material,
+    texture,
+    metamorphicFacies,
+    specificName,
+    collectionMethod,
+    collectionMethodDescription,
+    description,
+    condition,
+    scientificContext,
+    location,
+    security,
+    availability,
+    publicationYear,
+    age,
+    links,
+    attachments,
+    economicInterest,
+    economicInterestElements,
+    economicResourceTypePrecision,
+    economicDepositName,
+    economicDepositDescription,
+  },
+}: {
+  sample: Sample;
+}) {
   // One entry per section actually present; drives the nav and the body, so a
   // section cannot appear in one without the other.
   const sections = [

@@ -17,10 +17,8 @@ import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createCurrentUserRoutes } from "./user/current-user-routes.ts";
-import { schedulePendingUsersDigest } from "./user/pending-users-digest-schedule.ts";
 import { createUserRepository } from "./user/repository.ts";
 import { createUserRoutes, createUserSearchRoutes } from "./user/routes.ts";
-import { sendPendingUsersDigest } from "./user/send-pending-users-digest.ts";
 
 export function createApp(
   database: Kysely<DB>,
@@ -48,10 +46,9 @@ export function createApp(
   const userRepository = createUserRepository(database);
   const userSampleRepository = createUserSampleRepository(database);
 
-  // IP limiter wraps only the public sample routes, so the healthcheck (GET /)
-  // and the separately user-limited /admin mount are never touched by it. It sits
-  // under the global cors below, so a 429 still carries the allow-origin header the
-  // admin SPA needs to read it, and cors answers a preflight before it runs.
+  // It sits under the global cors below, so a 429 still carries the allow-origin
+  // header the admin SPA needs to read it, and cors answers a preflight before
+  // it runs.
   const publicSampleRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
     .route(
@@ -80,17 +77,6 @@ export function createApp(
     .route("/users/search", createUserSearchRoutes(userRepository))
     .route("/users", createUserRoutes(userRepository, mail));
 
-  const startPendingUsersDigest = () => {
-    if (!mail) throw new Error("mail is required to send the digest");
-    return schedulePendingUsersDigest(() => {
-      void sendPendingUsersDigest(
-        userRepository,
-        mail.sendMail,
-        new URL("/users", mail.adminUrl).toString(),
-      );
-    });
-  };
-
   const app = new Hono<AuthenticatedEnv>()
     .use(
       "*",
@@ -109,8 +95,7 @@ export function createApp(
       }),
     )
     // The cause is logged, never serialised: a driver message can carry SQL
-    // or a connection string. An HTTPException (the auth guard's 401 and its
-    // headers) already carries its own response.
+    // or a connection string.
     .onError((error, c) => {
       if (error instanceof HTTPException) return error.getResponse();
       console.error("unhandled api error", error);
@@ -120,5 +105,5 @@ export function createApp(
     .route("/samples", publicSampleRoutes)
     .route("/admin", adminRoutes);
 
-  return { app, startPendingUsersDigest };
+  return { app };
 }

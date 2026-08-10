@@ -6,8 +6,6 @@ import type {
 } from "./sample-validator.ts";
 import type { CreateSample, Sample } from "./sample.ts";
 
-export type ListSamplesParams = ListSamplesQuery;
-
 export type ListSamplesResult = {
   data: Sample[];
   total: number;
@@ -18,17 +16,17 @@ export type AdminListSamplesResult = {
   total: number;
 };
 
-// `userId` is a separate argument, never part of ListSamplesParams (the
+// `userId` is a separate argument, never part of ListSamplesQuery (the
 // validated query): the caller's id comes from the token, never from the client.
 export type SampleRepository = {
   listAssignedTo(
-    params: ListSamplesParams,
+    params: ListSamplesQuery,
     userId: string,
   ): Promise<AdminListSamplesResult>;
   listAllAsSuperAdmin(
-    params: ListSamplesParams,
+    params: ListSamplesQuery,
   ): Promise<AdminListSamplesResult>;
-  listPublished(params: ListSamplesParams): Promise<ListSamplesResult>;
+  listPublished(params: ListSamplesQuery): Promise<ListSamplesResult>;
   // Reading a sample is relative to who reads it: no row at all (the api answers
   // 404) or the row plus this user's role on it (403 when they hold none).
   get(

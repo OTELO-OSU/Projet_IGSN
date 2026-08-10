@@ -37,7 +37,7 @@ What a published sample may still change lives in ONE place too, the lock maps a
 
 The admin form never restates that rule.
 
-- It consumes the maps' flattened form names (`FROZEN_FORM_FIELDS`, `FROZEN_FORM_FIELDS_BY_PROVENANCE`) through `publishedSampleFrozenField` (`admin/src/samples/published-sample-frozen-field.ts`), which adds only the hierarchy-level suffix stripping and the frozen depths from `frozenHierarchyDepths`.
+- It consumes the maps' flattened form names (`FROZEN_FORM_FIELDS`, `FROZEN_FORM_FIELDS_BY_PROVENANCE`) through `publishedSampleFrozenField` (`admin/src/samples/published-sample-frozen-field.ts`), which adds only the hierarchy-level suffix stripping and the frozen material depth from `frozenMaterialDepth`.
 - `SampleForm` feeds it to the form kit's `FieldDisabledProvider`.
 - No control decides for itself that publication freezes it: a kit field control resolves it through `useFieldDisabled`, and a control with no field context (the collection-date mode switch) asks `useIsFieldDisabled()` for the field it follows.
 - Freeze a new control by listing its field name in `publishedSampleFrozenField`, never with a published flag of its own.

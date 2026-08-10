@@ -8,7 +8,7 @@ import { locationTypeLabel } from "#/samples/location-label.ts";
 import { LocationNavigationTypeField } from "#/samples/location-navigation-type-field.tsx";
 import { LocationPointFields } from "#/samples/location-point-fields.tsx";
 import { LocationRegionFields } from "#/samples/location-region-fields.tsx";
-import { useLocationForm } from "#/samples/use-location-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const typeItems = LOCATION_TYPES.map((value) => ({
   value,
@@ -20,7 +20,7 @@ const isPositionRequired = (materialPath: string[]): boolean =>
 
 // Every part is optional and independent (ADR 0014).
 export function LocationFields() {
-  const form = useLocationForm();
+  const form = useSampleForm();
   return (
     <div className="grid gap-4">
       <form.Subscribe

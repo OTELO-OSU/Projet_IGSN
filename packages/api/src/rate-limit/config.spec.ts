@@ -1,26 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  AUTHENTICATED_USER_BUDGET,
-  loadRateLimitConfig,
-  PUBLIC_IP_BUDGET,
-} from "./config.ts";
+import { loadRateLimitConfig } from "./config.ts";
 
 describe("loadRateLimitConfig", () => {
   it("should enable the limiter and distrust proxy headers when nothing is set", () => {
     expect(loadRateLimitConfig({})).toEqual({
       enabled: true,
       trustProxyHeaders: false,
-      ip: PUBLIC_IP_BUDGET,
-      user: AUTHENTICATED_USER_BUDGET,
     });
-  });
-
-  it("should carry the two fixed tier budgets", () => {
-    const { ip, user } = loadRateLimitConfig({});
-
-    expect(ip).toEqual({ points: 50, duration: 60 });
-    expect(user).toEqual({ points: 100, duration: 60 });
   });
 
   it("should disable the limiter when RATE_LIMIT_ENABLED is false", () => {

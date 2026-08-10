@@ -1,3 +1,5 @@
+import { formatDate } from "../../date/format-date.ts";
+
 // A collection date cannot be in the future. Date-only rule, timezone proof:
 // "today" is the latest calendar day anywhere on Earth (UTC+14), so the
 // verdict depends only on the instant, never on the machine's timezone. The
@@ -8,8 +10,6 @@
 const MAX_UTC_OFFSET_MS = 14 * 3_600_000; // UTC+14, the earliest timezone
 
 export function isFutureDate(isoDate: string): boolean {
-  const lastTodayOnEarth = new Date(Date.now() + MAX_UTC_OFFSET_MS)
-    .toISOString()
-    .slice(0, 10);
+  const lastTodayOnEarth = formatDate(new Date(Date.now() + MAX_UTC_OFFSET_MS));
   return isoDate > lastTodayOnEarth;
 }

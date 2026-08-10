@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@projet-igsn/design-system/components/ui/select";
+import { PAGE_SIZES } from "@projet-igsn/domain/sample/sample-validator";
 
 import { m } from "#/paraglide/messages.js";
 
@@ -13,7 +14,6 @@ type PaginationProps = {
   page: number;
   pageCount: number;
   perPage: number;
-  pageSizes: readonly number[];
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
 };
@@ -22,7 +22,6 @@ export function Pagination({
   page,
   pageCount,
   perPage,
-  pageSizes,
   onPageChange,
   onPerPageChange,
 }: PaginationProps) {
@@ -36,7 +35,7 @@ export function Pagination({
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          {pageSizes.map((size) => (
+          {PAGE_SIZES.map((size) => (
             <SelectItem key={size} value={String(size)}>
               {size}
             </SelectItem>

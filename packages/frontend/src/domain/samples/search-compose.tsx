@@ -26,13 +26,11 @@ type Drafts = { q?: string; bbox?: string };
 
 // `active[0]` is the primary engine, the one the tabs point at.
 export function SearchCompose({
-  fixedEngines = false,
   initialActive,
   initialDrafts,
   onSearch,
   shrunk = false,
 }: {
-  fixedEngines?: boolean;
   initialActive: SearchEngine[];
   initialDrafts: Drafts;
   onSearch: (params: SearchParams) => void;
@@ -77,18 +75,18 @@ export function SearchCompose({
   // A map row is too tall to hold the button inline, so it falls below instead.
   const actions = (
     <div className="flex items-center gap-2">
-      {ENGINES.filter(
-        (engine) => !fixedEngines && !active.includes(engine),
-      ).map((engine) => (
-        <Button
-          key={engine}
-          type="button"
-          variant="outline"
-          onClick={() => addEngine(engine)}
-        >
-          {addEngineLabel(engine)}
-        </Button>
-      ))}
+      {ENGINES.filter((engine) => !shrunk && !active.includes(engine)).map(
+        (engine) => (
+          <Button
+            key={engine}
+            type="button"
+            variant="outline"
+            onClick={() => addEngine(engine)}
+          >
+            {addEngineLabel(engine)}
+          </Button>
+        ),
+      )}
       {/* An empty submit clears a search, but on the landing it would just dump
           the reader on an empty page. */}
       <Button type="submit" disabled={isEmpty && !shrunk}>
@@ -99,7 +97,7 @@ export function SearchCompose({
 
   return (
     <form role="search" onSubmit={submit}>
-      {fixedEngines ? null : (
+      {shrunk ? null : (
         <div className="flex justify-center">
           {/* active is never empty: seeded with >=1, remove only drops non-primary. */}
           <SearchEngineTabs
@@ -136,7 +134,7 @@ export function SearchCompose({
               )}
             </div>
             {engine === "text" ? <SearchHelp /> : null}
-            {index > 0 && !fixedEngines ? (
+            {index > 0 && !shrunk ? (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>

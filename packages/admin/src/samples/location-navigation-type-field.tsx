@@ -2,7 +2,7 @@ import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combob
 import { NAVIGATION_TYPES } from "@projet-igsn/domain/sample/location/navigation-type";
 
 import { m } from "#/paraglide/messages.js";
-import { useLocationForm } from "#/samples/use-location-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 // Navigation types are language-neutral codes (their own label).
 const navigationTypeItems = toComboboxItems(NAVIGATION_TYPES, (value) => value);
@@ -10,7 +10,7 @@ const navigationTypeItems = toComboboxItems(NAVIGATION_TYPES, (value) => value);
 // Navigation type qualifies how the coordinates were fixed, so it only applies
 // once a geometry (point or area) is chosen.
 export function LocationNavigationTypeField() {
-  const form = useLocationForm();
+  const form = useSampleForm();
   return (
     <form.Subscribe selector={(state) => Boolean(state.values.location.type)}>
       {(show) =>

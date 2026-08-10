@@ -1,18 +1,12 @@
-import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
-
 import { m } from "#/paraglide/messages.js";
-import {
-  isHazardDeclared,
-  type SecurityDraft,
-} from "#/samples/compose-security.ts";
+import { isHazardDeclared } from "#/samples/compose-security.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const yesNoItems = [
   { value: "yes", label: m.hazard_yes() },
   { value: "no", label: m.hazard_no() },
 ];
 
-// One safety hazard: its yes/no flag and the explanation shown once declared.
-// The same triples the domain schema refines over (see security/model.ts).
 const hazards = [
   {
     flag: "radioactivity",
@@ -34,15 +28,8 @@ const hazards = [
   },
 ] as const;
 
-// The Security section. Every hazard is optional and independent; its
-// explanation only exists once the hazard is answered yes. Render inside a
-// `form.AppForm`. The form store holds the flat `security.*` draft (so a value
-// typed then hidden is kept while editing); `composeSecurity` drops any
-// explanation whose flag is not yes on submit.
 export function SampleSecurityFields() {
-  const form = useTypedAppFormContext({
-    defaultValues: {} as { security: SecurityDraft },
-  });
+  const form = useSampleForm();
   return (
     <div className="grid gap-4">
       {hazards.map((hazard) => (

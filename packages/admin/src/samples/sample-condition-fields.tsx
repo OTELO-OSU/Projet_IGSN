@@ -1,4 +1,3 @@
-import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { HUMIDITY_TYPES } from "@projet-igsn/domain/sample/condition/humidity-type";
 import { LIGHTS } from "@projet-igsn/domain/sample/condition/light";
@@ -16,10 +15,7 @@ import {
 } from "@projet-igsn/domain/sample/condition/temperature-unit";
 
 import { m } from "#/paraglide/messages.js";
-import {
-  type ConditionDraft,
-  hasReadingType,
-} from "#/samples/compose-condition.ts";
+import { hasReadingType } from "#/samples/compose-condition.ts";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import {
   humidityTypeLabel,
@@ -29,13 +25,12 @@ import {
   storageConditionLabel,
   temperatureTypeLabel,
 } from "#/samples/sample-labels.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const packagingItems = toComboboxItems(PACKAGINGS, packagingLabel);
 const lightItems = toComboboxItems(LIGHTS, lightLabel);
 const humidityTypeItems = toComboboxItems(HUMIDITY_TYPES, humidityTypeLabel);
 
-// Temperature and pressure share the reading-row shape: a category, then a
-// value whose unit only appears once it is entered (see MeasurementFields).
 const readings = [
   {
     key: "temperature" as const,
@@ -68,11 +63,7 @@ const readings = [
 ];
 
 // "No specific condition" contradicts every controlled condition, so whichever
-// side is checked drops the other from the list (dependent-fields rule: the
-// invalid mix cannot be expressed, matching the schema's exclusivity
-// refinement). A checked value whose item is filtered out survives `toggle`
-// untouched, so a stored contradictory mix is displayed empty but never
-// silently rewritten.
+// side is checked drops the other from the list.
 const storageConditionItems = (selected: readonly string[]) => {
   const none = selected.includes("no_specific_condition");
   const controlled = selected.some(
@@ -83,17 +74,8 @@ const storageConditionItems = (selected: readonly string[]) => {
   ).map((value) => ({ value, label: storageConditionLabel(value) }));
 };
 
-// The Condition tab. Every part is optional and independent; a reading's unit
-// only appears once its value is entered (and is then required to publish).
-// Render inside a `form.AppForm`. The form store holds the flat `condition.*`
-// draft; `composeCondition` maps it back on submit.
 export function SampleConditionFields() {
-  // The sample form, typed down to what this tab reads: the flat
-  // `condition.*` draft (same seam as use-description-form.ts, inlined while
-  // this is its only consumer).
-  const form = useTypedAppFormContext({
-    defaultValues: {} as { condition: ConditionDraft },
-  });
+  const form = useSampleForm();
   return (
     <div className="grid gap-4">
       <form.AppField name="condition.packaging">

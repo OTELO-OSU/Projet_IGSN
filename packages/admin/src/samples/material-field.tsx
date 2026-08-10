@@ -1,4 +1,3 @@
-import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import {
   composeHierarchyValue,
   HierarchySelectField,
@@ -9,15 +8,10 @@ import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
 import { materialPathLabel } from "#/samples/sample-labels.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 export function MaterialField() {
-  const form = useTypedAppFormContext({
-    defaultValues: {} as {
-      materialPath: string[];
-      texture: string;
-      metamorphicFacies: string;
-    },
-  });
+  const form = useSampleForm();
   return (
     <HierarchySelectField
       name="materialPath"
@@ -31,17 +25,17 @@ export function MaterialField() {
       // Texture and metamorphic facies depend on the material branch, so drop
       // each only when it no longer applies to the new path (branch switch or
       // leaving igneous/metamorphic), not when refining deeper within the same
-      // branch (see TextureField / MetamorphicFaciesField).
+      // branch.
       onChange={() => {
         const { materialPath, texture, metamorphicFacies } = form.state.values;
         const material = composeHierarchyValue(materialPath ?? []);
         const textures: readonly string[] = texturesFor(material);
         if (texture && !textures.includes(texture)) {
-          form.setFieldValue("texture", "");
+          form.setFieldValue("texture", undefined);
         }
         const facies: readonly string[] = faciesFor(material);
         if (metamorphicFacies && !facies.includes(metamorphicFacies)) {
-          form.setFieldValue("metamorphicFacies", "");
+          form.setFieldValue("metamorphicFacies", undefined);
         }
       }}
     />

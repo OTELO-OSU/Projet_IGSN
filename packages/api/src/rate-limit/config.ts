@@ -2,16 +2,12 @@ import { z } from "zod";
 
 export type RateLimitScope = "ip" | "user";
 
-export const PUBLIC_IP_BUDGET = { points: 50, duration: 60 } as const; // per client IP
-export const AUTHENTICATED_USER_BUDGET = { points: 100, duration: 60 } as const; // per JWT sub
-
-type RateLimitTier = { points: number; duration: number };
+export const PUBLIC_IP_BUDGET = { points: 50, duration: 60 } as const;
+export const AUTHENTICATED_USER_BUDGET = { points: 100, duration: 60 } as const;
 
 export type RateLimitConfig = {
   enabled: boolean;
   trustProxyHeaders: boolean;
-  ip: RateLimitTier;
-  user: RateLimitTier;
 };
 
 // Malformed values throw rather than falling back: a deploy typo must surface at
@@ -31,7 +27,5 @@ export function loadRateLimitConfig(
     trustProxyHeaders: flagSchema("TRUST_PROXY_HEADERS", false).parse(
       env.TRUST_PROXY_HEADERS || undefined,
     ),
-    ip: PUBLIC_IP_BUDGET,
-    user: AUTHENTICATED_USER_BUDGET,
   };
 }

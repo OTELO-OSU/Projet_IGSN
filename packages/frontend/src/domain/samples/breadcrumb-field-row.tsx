@@ -1,7 +1,6 @@
 import { ChevronRightIcon } from "lucide-react";
 
 import { FieldRow } from "#/domain/samples/field-rows.tsx";
-import { pathBreadcrumb } from "#/domain/samples/path-breadcrumb.ts";
 
 // aria-labelledby names the list after its row label ("Type"/"Material"), and
 // the chevron carries a ">" label so the path reads "Rock > Igneous" to
@@ -54,7 +53,15 @@ export function BreadcrumbFieldRow({
         path && (
           <ClassificationBreadcrumb
             labelId={id}
-            segments={pathBreadcrumb(path, pathLabel)}
+            segments={path
+              .split(".")
+              .map((_, index, segments) =>
+                segments.slice(0, index + 1).join("."),
+              )
+              .map((ancestor) => ({
+                path: ancestor,
+                label: pathLabel(ancestor),
+              }))}
           />
         )
       }

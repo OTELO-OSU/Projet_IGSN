@@ -2,16 +2,15 @@ import { m } from "#/paraglide/messages.js";
 import { CollectionDatesField } from "#/samples/collection-dates-field.tsx";
 import { isOrientedYes } from "#/samples/compose-description.ts";
 import { MeasurementFields } from "#/samples/measurement-fields.tsx";
-import { useDescriptionForm } from "#/samples/use-description-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const orientedItems = [
   { value: "yes", label: m.oriented_yes() },
   { value: "no", label: m.oriented_no() },
 ];
 
-// The Description tab (ADR 0015). Render inside a `form.AppForm`.
 export function SampleDescriptionFields() {
-  const form = useDescriptionForm();
+  const form = useSampleForm();
   return (
     <div className="grid gap-4">
       <CollectionDatesField />

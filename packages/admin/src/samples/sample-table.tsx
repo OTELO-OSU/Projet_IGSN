@@ -2,7 +2,7 @@ import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-vali
 
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
-import { formatDate } from "@projet-igsn/design-system/lib/format-date";
+import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
@@ -26,7 +26,6 @@ const columns: ColumnDef<AdminSampleListItem>[] = [
   },
   {
     id: "status",
-    // Derived, not stored: a sample is published exactly when it has an IGSN.
     // Sorting is manual (server-side, keyed on IGSN presence); the accessor
     // never orders rows, it only marks the column sortable.
     accessorFn: (sample) => (sample.igsn ? 1 : 0),

@@ -1,9 +1,9 @@
 import { m } from "#/paraglide/messages.js";
 import { LocationElevationFields } from "#/samples/location-elevation-fields.tsx";
-import { useLocationForm } from "#/samples/use-location-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 export function LocationPointFields({ required }: { required: boolean }) {
-  const form = useLocationForm();
+  const form = useSampleForm();
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <form.AppField name="location.longitude">

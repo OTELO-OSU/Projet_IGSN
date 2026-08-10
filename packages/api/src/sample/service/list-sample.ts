@@ -1,8 +1,8 @@
 import type {
   AdminListSamplesResult,
-  ListSamplesParams,
   ListSamplesResult,
 } from "@projet-igsn/domain/sample/repository";
+import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
 
 import { splitBbox } from "@projet-igsn/domain/sample/split-bbox";
 import { type Expression, sql, type SqlBool } from "kysely";
@@ -23,11 +23,9 @@ import { toSample } from "./to-sample.ts";
 
 // Planar, never `::geography`: a geodesic envelope bows its constant-latitude
 // edges poleward and drops results the user drew a rectangle around, while the
-// planar box is exactly that rectangle on a Mercator map (ADR 0014). The price
-// is splitting a box crossing the antimeridian (west > east) at 180 ourselves,
-// and the OR needs its own parentheses, the filters being joined with AND.
+// planar box is exactly that rectangle on a Mercator map (ADR 0014).
 function withinBbox(
-  bbox: NonNullable<ListSamplesParams["bbox"]>,
+  bbox: NonNullable<ListSamplesQuery["bbox"]>,
 ): Expression<SqlBool> {
   const envelopes = splitBbox(bbox).map(
     ({ west, south, east, north }) =>
@@ -50,12 +48,9 @@ function isPublished(): Expression<SqlBool> {
   return sql<SqlBool>`published = true`;
 }
 
-// Who the list is for is a separate argument from `params` (the validated query),
-// and every entry point below names it: the caller's identity and the visibility
-// rule come from the server, never from the query string.
 async function listSamplesWhere(
   db: Transactional<DB>,
-  params: ListSamplesParams,
+  params: ListSamplesQuery,
   scope: Expression<SqlBool>[],
   withOwner = false,
 ) {
@@ -118,7 +113,7 @@ async function listSamplesWhere(
 
 async function listWithOwners(
   db: Transactional<DB>,
-  params: ListSamplesParams,
+  params: ListSamplesQuery,
   scope: Expression<SqlBool>[],
 ): Promise<AdminListSamplesResult> {
   const { data, owners, total } = await listSamplesWhere(
@@ -135,7 +130,7 @@ async function listWithOwners(
 
 export function listSamplesAssignedTo(
   db: Transactional<DB>,
-  params: ListSamplesParams,
+  params: ListSamplesQuery,
   userId: string,
 ): Promise<AdminListSamplesResult> {
   return listWithOwners(db, params, [assignedTo(userId)]);
@@ -143,14 +138,14 @@ export function listSamplesAssignedTo(
 
 export function listAllSamples(
   db: Transactional<DB>,
-  params: ListSamplesParams,
+  params: ListSamplesQuery,
 ): Promise<AdminListSamplesResult> {
   return listWithOwners(db, params, []);
 }
 
 export async function listPublishedSamples(
   db: Transactional<DB>,
-  params: ListSamplesParams,
+  params: ListSamplesQuery,
 ): Promise<ListSamplesResult> {
   const { data, total } = await listSamplesWhere(db, params, [isPublished()]);
   return { data, total };

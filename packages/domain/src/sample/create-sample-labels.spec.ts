@@ -1,23 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import catalog from "../../messages/en.json";
-import { collectionMethodLabelKey } from "./collection-method/label.ts";
 import { COLLECTION_METHODS } from "./collection-method/vocabulary.ts";
 import { createSampleLabels, type Messages } from "./create-sample-labels.ts";
-import { economicInterestLabelKey } from "./economic-interest/label.ts";
 import {
   ECONOMIC_INTEREST_PATHS,
   ECONOMIC_INTEREST_TREE,
 } from "./economic-interest/vocabulary.ts";
 import { MATERIAL_PATHS } from "./material/classification.ts";
-import { materialLabelKey } from "./material/label.ts";
-import { sampleTypeLabelKey } from "./type/label.ts";
+import { pathSegment } from "./path/segment.ts";
 import { SAMPLE_TYPES } from "./type/vocabulary.ts";
 
 // Build the app's paraglide `m` from the shared catalog: paraglide compiles
-// each key to a function returning its text, which is exactly this shape. Testing
-// the catalog directly (its own source of truth) covers every app's runtime,
-// since each app's `m` is generated from this same file.
+// each key to a function returning its text, which is exactly this shape.
 const m = Object.fromEntries(
   Object.entries(catalog as Record<string, string>)
     .filter(([key]) => !key.startsWith("$"))
@@ -55,43 +50,41 @@ describe("typeLabel", () => {
 
 // The tree vocabularies take runtime string paths, so their key coverage is not
 // compile-checked (unlike the flat vocabularies, guarded by AssertKeys in
-// create-sample-labels.ts). Walk every path and fail on any label that fell back
-// to its raw message key.
+// create-sample-labels.ts).
 describe("tree vocabulary label coverage", () => {
   it.each([
-    ["material", MATERIAL_PATHS, materialPathLabel, materialLabelKey],
-    ["type", SAMPLE_TYPES, typeLabel, sampleTypeLabelKey],
+    ["material", MATERIAL_PATHS, materialPathLabel, "material"],
+    ["type", SAMPLE_TYPES, typeLabel, "type"],
     [
       "collection method",
       COLLECTION_METHODS,
       collectionMethodLabel,
-      collectionMethodLabelKey,
+      "collection_method",
     ],
     [
       "economic interest",
       ECONOMIC_INTEREST_PATHS,
       economicInterestLabel,
-      economicInterestLabelKey,
+      "economic_interest",
     ],
   ] as const)(
     "should translate every %s path",
-    (_vocabulary, paths, label, labelKey) => {
+    (_vocabulary, paths, label, prefix) => {
       const untranslated = paths.filter(
-        (path) => label(path) === labelKey(path),
+        (path) => label(path) === `${prefix}_${pathSegment(path)}`,
       );
       expect(untranslated).toEqual([]);
     },
   );
 
   // A node's childLabel names the level it opens; it is a code, not a path, so
-  // the walk above never covers it. Fail on any childLabel that falls back to
-  // its raw message key.
+  // the walk above never covers it.
   it("should translate every economic-interest childLabel code", () => {
     const childLabels = Object.values(ECONOMIC_INTEREST_TREE)
       .map((node) => node.childLabel)
       .filter((code): code is string => code !== undefined);
     const untranslated = childLabels.filter(
-      (code) => economicInterestLabel(code) === economicInterestLabelKey(code),
+      (code) => economicInterestLabel(code) === `economic_interest_${code}`,
     );
     expect(untranslated).toEqual([]);
   });

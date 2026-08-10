@@ -1,4 +1,3 @@
-import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import {
   composeHierarchyValue,
   HierarchySelectField,
@@ -8,29 +7,19 @@ import { ELEMENTS } from "@projet-igsn/domain/sample/element/vocabulary";
 import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 
 import { m } from "#/paraglide/messages.js";
-import { type EconomicInterestDraft } from "#/samples/compose-economic-interest.ts";
 import {
   economicInterestLabel,
   elementLabel,
 } from "#/samples/sample-labels.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// The ~100 elements as multi-select items (searchable chips, not a flat list).
 const elementItems = ELEMENTS.map((value) => ({
   value,
   label: elementLabel(value),
 }));
 
-// The Economic interest section. The answer is a yes/no/unknown hierarchy (a
-// resource classification refines it under `yes`); the free-text detail applies
-// to any `yes` answer and the chemical elements only to a mineral_and_ore
-// resource, so neither is rendered until it applies (dependent-fields rule).
-// Render inside a `form.AppForm`. The form store holds the flat
-// economic-interest draft, so a value hidden by the current answer survives a
-// switch back (ADR 0015); composeEconomicInterest drops it on submit.
 export function SampleEconomicInterestFields() {
-  const form = useTypedAppFormContext({
-    defaultValues: {} as EconomicInterestDraft,
-  });
+  const form = useSampleForm();
   return (
     <div className="grid gap-4">
       <HierarchySelectField

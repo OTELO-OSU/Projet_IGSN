@@ -212,9 +212,8 @@ describe("app", () => {
     );
   });
 
-  // Thin wiring checks only; the limiter's own behaviour lives in
-  // rate-limit/middleware.spec.ts. The budgets are fixed (config.ts), so these
-  // exhaust the real tier rather than lowering it.
+  // The budgets are fixed (config.ts), so these exhaust the real tier rather
+  // than lowering it.
   describe("rate limiting", () => {
     beforeEach(() => {
       process.env.TRUST_PROXY_HEADERS = "true";
@@ -352,39 +351,5 @@ describe("app", () => {
         }
       },
     );
-  });
-
-  describe("startPendingUsersDigest", () => {
-    pgTest(
-      "should mail the super admins a digest linking the users list",
-      async ({ db }) => {
-        // Arrange
-        await insertUser(db, "admin@univ-lorraine.fr", {
-          status: "accepted",
-          superAdmin: true,
-        });
-        await insertUser(db, "jean.martin@univ-lorraine.fr");
-        const sendMail = vi.fn().mockResolvedValue(undefined);
-        const job = createApp(db, {
-          mail: { sendMail, adminUrl: "http://localhost:3001" },
-        }).startPendingUsersDigest();
-        // Act
-        await job.trigger();
-        job.stop();
-        // Assert
-        await vi.waitFor(() =>
-          expect(sendMail).toHaveBeenCalledWith(
-            expect.objectContaining({
-              to: ["admin@univ-lorraine.fr"],
-              text: expect.stringContaining("http://localhost:3001/users"),
-            }),
-          ),
-        );
-      },
-    );
-
-    pgTest("should refuse to start without mail wired", async ({ db }) => {
-      expect(() => createApp(db).startPendingUsersDigest()).toThrow("mail");
-    });
   });
 });

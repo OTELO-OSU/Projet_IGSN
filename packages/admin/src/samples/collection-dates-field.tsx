@@ -5,17 +5,15 @@ import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
-import { useDescriptionForm } from "#/samples/use-description-form.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 // In single mode the one input mirrors into both ends of the degenerate range
-// (ADR 0015); in range mode entering the same date on both ends is rejected
-// here, since that is what single mode is for.
+// (ADR 0015).
 export function CollectionDatesField() {
   // The mode switch follows the dates it drives: toggling it writes
   // collectionDateEnd, which would show an edit that the API's merge then drops.
-  // It is not a form field, so it asks the resolver by name itself.
   const isDateDisabled = useIsFieldDisabled("description.collectionDateStart");
-  const form = useDescriptionForm();
+  const form = useSampleForm();
   const [isRange, setIsRange] = useState(() => {
     const { collectionDateStart, collectionDateEnd } =
       form.state.values.description;
@@ -43,9 +41,7 @@ export function CollectionDatesField() {
   };
 
   // Equal bounds are valid domain data (the degenerate single date), so this
-  // is UI steering toward single mode, not schema validation; every other
-  // date rule (future, ordering) comes from the domain schema via the form's
-  // live validator.
+  // is UI steering toward single mode, not schema validation.
   const identicalRange = () => {
     const start = form.getFieldValue("description.collectionDateStart");
     const end = form.getFieldValue("description.collectionDateEnd");

@@ -1,4 +1,3 @@
-import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 import { ORGANIZATIONS } from "@projet-igsn/domain/sample/scientific-context/organization";
@@ -6,11 +5,11 @@ import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context
 import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
 import { m } from "#/paraglide/messages.js";
-import { type ScientificContextDraft } from "#/samples/compose-scientific-context.ts";
 import {
   collectionOriginLabel,
   provenanceStatusLabel,
 } from "#/samples/sample-labels.ts";
+import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 // Organization names are proper nouns (reference data, not vocabulary), so the
 // label comes from the domain list via organizationLabel, not the i18n catalog.
@@ -28,11 +27,8 @@ const collectionOriginItems = toComboboxItems(
   collectionOriginLabel,
 );
 
-// Render inside a `form.AppForm`.
 export function SampleScientificContextFields() {
-  const form = useTypedAppFormContext({
-    defaultValues: {} as { scientificContext: ScientificContextDraft },
-  });
+  const form = useSampleForm();
   return (
     <div className="grid gap-4">
       <form.AppField name="scientificContext.provenanceStatus">
