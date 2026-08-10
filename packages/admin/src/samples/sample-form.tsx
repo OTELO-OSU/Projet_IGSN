@@ -8,6 +8,7 @@ import { FormSection } from "@projet-igsn/design-system/components/form/form-sec
 import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
+import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import {
   Tabs,
   TabsContent,
@@ -38,7 +39,6 @@ import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
-import { PublishSampleButton } from "#/samples/publish-sample-button.tsx";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
 import { SampleAttachments } from "#/samples/sample-attachments.tsx";
@@ -276,13 +276,19 @@ export function SampleForm({
       }
       // Save & Publish saves first, so unsaved edits are not a blocker here.
       return renderPublishGated((disabled) => (
-        <PublishSampleButton
-          label={action.label}
+        <ConfirmButton
           disabled={disabled}
-          onPublish={() =>
+          title={m.publish_sample_title()}
+          description={m.publish_sample_warning()}
+          confirmLabel={m.action_confirm()}
+          cancelLabel={m.action_cancel()}
+          closeLabel={m.action_close()}
+          onConfirm={() =>
             void form.handleSubmit({ onValid: action.onPublish })
           }
-        />
+        >
+          {action.label}
+        </ConfirmButton>
       ));
     }
     // ponytail: a native submit button routes through the form's default meta

@@ -21,5 +21,12 @@ export function shareSamplePage(page: Page) {
       expect(
         dialog.getByRole("listitem").filter({ hasText: email }),
       ).toBeVisible(),
+    removeCollaborator: async (name: string) => {
+      await dialog.getByRole("button", { name: `Remove ${name}` }).click();
+      await page
+        .getByRole("dialog", { name: "Remove this collaborator?" })
+        .getByRole("button", { name: "Confirm" })
+        .click();
+    },
   };
 }

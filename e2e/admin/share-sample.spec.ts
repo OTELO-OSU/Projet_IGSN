@@ -39,5 +39,8 @@ test.describe("share a sample", () => {
     await edit.expectVisible();
     await share.open();
     await share.expectCollaborator(COLLEAGUE);
+
+    await share.removeCollaborator("Jean Martin");
+    await share.expectNoCollaborator();
   });
 });

@@ -32,6 +32,7 @@ export function ColleaguePicker({ sampleId }: { sampleId: string }) {
       </PopoverTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <ColleagueSearch
+          sampleId={sampleId}
           onPick={(userId) => {
             addContributor.mutate(userId);
             setIsOpen(false);

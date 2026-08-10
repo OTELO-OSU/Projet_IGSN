@@ -33,6 +33,7 @@ import {
   validateAddContributorBody,
   validateAttachmentParams,
   validateAttachmentUpload,
+  validateCollaboratorParams,
   validateCreateSampleBody,
   validateIdParam,
   validateListQuery,
@@ -141,6 +142,28 @@ export function createSampleAdminRoutes(
               },
               mail.sendMail,
             );
+          }
+          return c.body(null, 204);
+        },
+      )
+      .delete(
+        "/:id/collaborators/:userId",
+        requireActiveSession,
+        validateCollaboratorParams,
+        async (c) => {
+          if (!c.get("sample")) {
+            return c.json({ error: "Not found" }, 404);
+          }
+          if (c.get("role") !== "owner") {
+            return c.json({ error: "Forbidden" }, 403);
+          }
+          const { id, userId } = c.req.valid("param");
+          const removed = await userSampleRepository.removeContributor(
+            id,
+            userId,
+          );
+          if (removed === "not_found") {
+            return c.json({ error: "Contributor not found" }, 404);
           }
           return c.body(null, 204);
         },

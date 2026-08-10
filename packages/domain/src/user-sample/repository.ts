@@ -12,5 +12,9 @@ export type UserSampleRepository = {
     sampleId: string,
     userId: string,
   ): Promise<AddContributorResult>;
+  removeContributor(
+    sampleId: string,
+    userId: string,
+  ): Promise<"removed" | "not_found">;
   listCollaborators(sampleId: string): Promise<SampleCollaborator[]>;
 };
