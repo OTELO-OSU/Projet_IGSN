@@ -1,6 +1,8 @@
+import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
+import { X } from "lucide-react";
+
 import { m } from "#/paraglide/messages.js";
 import { fullName } from "#/samples/full-name.ts";
-import { RemoveContributorButton } from "#/samples/remove-contributor-button.tsx";
 import { useCollaborators } from "#/samples/use-collaborators.ts";
 import { useRemoveContributor } from "#/samples/use-remove-contributor.ts";
 
@@ -44,10 +46,23 @@ export function CollaboratorList({ sampleId }: { sampleId: string }) {
                   {fullName(user)}{" "}
                   <span className="text-muted-foreground">{user.email}</span>
                 </span>
-                <RemoveContributorButton
-                  name={fullName(user)}
+                <ConfirmButton
+                  variant="ghost"
+                  size="icon"
+                  aria-label={m.share_contributor_remove({
+                    name: fullName(user),
+                  })}
+                  title={m.share_contributor_remove_title()}
+                  description={m.share_contributor_remove_description({
+                    name: fullName(user),
+                  })}
+                  confirmLabel={m.action_confirm()}
+                  cancelLabel={m.action_cancel()}
+                  closeLabel={m.action_close()}
                   onConfirm={() => removeContributor.mutate(user.id)}
-                />
+                >
+                  <X aria-hidden />
+                </ConfirmButton>
               </li>
             ))}
           </ul>
