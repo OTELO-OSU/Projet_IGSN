@@ -15,7 +15,7 @@ A pnpm workspace monorepo for managing IGSN (International Generic Sample Number
 ## Requirements
 
 - Node `24` (see [.nvmrc](.nvmrc))
-- pnpm `11.7` (pinned via `packageManager` in [package.json](package.json))
+- pnpm `11.9` (pinned via `packageManager` in [package.json](package.json))
 - Docker (for `make dev`)
 
 Tooling is shared across packages from the workspace root: [oxlint](https://oxc.rs) for
@@ -55,9 +55,9 @@ Run every package together in Docker with live file watching:
 make dev
 ```
 
-This builds and starts `admin` (http://localhost:3001) and `api` (http://localhost:3002)
-via [docker-compose.dev.yml](docker-compose.dev.yml). Source changes sync into the
-containers automatically.
+This builds and starts `frontend` (http://localhost:3000), `admin` (http://localhost:3001)
+and `api` (http://localhost:3002) via [docker-compose.dev.yml](docker-compose.dev.yml).
+Source changes sync into the containers automatically.
 
 ## Design system
 

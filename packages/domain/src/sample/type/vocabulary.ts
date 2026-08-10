@@ -68,9 +68,6 @@ const typeTree = {
 // Every tree key, including dotted path-section overrides like `core.core`.
 export type SampleTypeKey = keyof typeof typeTree;
 
-// Bare segment codes only; dotted override keys excluded, as labels key by segment.
-export type SampleTypeSegment = Exclude<SampleTypeKey, `${string}.${string}`>;
-
 // Widen values to TreeNode for uniform reads, keeping the literal keys.
 export const SAMPLE_TYPE_TREE: Record<SampleTypeKey, TreeNode> = typeTree;
 

@@ -30,7 +30,6 @@ infra/preprod/certs/
 **/test-results
 **/playwright-report
 **/.playwright
-**/.vitest-attachments
 
 .devcontainer/.mnt-*/*
 !.devcontainer/.mnt-*/.gitkeep

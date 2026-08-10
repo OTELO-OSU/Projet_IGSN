@@ -22,22 +22,6 @@ export const userManager = new UserManager({
   revokeTokenTypes: ["access_token"],
 });
 
-// TODO temporary debug: remove once we know what metadata Keycloak returns
-// for a real account.
-const decodeJwtPayload = (jwt: string): unknown =>
-  JSON.parse(
-    atob((jwt.split(".")[1] ?? "").replace(/-/g, "+").replace(/_/g, "/")),
-  );
-userManager.events.addUserLoaded((user) => {
-  console.log("[keycloak] user loaded", user);
-  console.log(
-    "[keycloak] access_token claims",
-    decodeJwtPayload(user.access_token),
-  );
-  if (user.id_token)
-    console.log("[keycloak] id_token claims", decodeJwtPayload(user.id_token));
-});
-
 export const onSigninCallback = (): void => {
   window.history.replaceState({}, document.title, window.location.pathname);
 };

@@ -189,10 +189,7 @@ const dbConfigSchema = z.object({
   database: z.string().min(1),
   username: z.string().min(1),
   password: z.string().min(1),
-  ssl: z
-    .literal("require")
-    .optional()
-    .transform((v) => v ?? undefined),
+  ssl: z.literal("require").optional(),
 });
 
 export function createDb(): Kysely<DB> {

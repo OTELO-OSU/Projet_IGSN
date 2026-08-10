@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
+import { userEvent } from "vitest/browser";
 
 import { SearchField } from "./search-field.tsx";
 
@@ -38,53 +39,27 @@ describe("SearchField", () => {
     expect(onSearch).not.toHaveBeenCalled();
   });
 
-  it("should call onSearch with the current term when the button is clicked", async () => {
+  it("should report the current term at once on submit", async () => {
     const onSearch = vi.fn();
     const screen = await render(
-      <SearchField
-        {...labels}
-        defaultValue="Basalt"
-        buttonLabel="Search"
-        onSearch={onSearch}
-      />,
+      <SearchField {...labels} defaultValue="Basalt" onSearch={onSearch} />,
     );
 
-    await screen.getByRole("button", { name: "Search" }).click();
+    screen.getByRole("searchbox").element().focus();
+    await userEvent.keyboard("{Enter}");
 
     expect(onSearch).toHaveBeenCalledWith("Basalt");
   });
 
-  it("should not search while typing when searchOnType is false", async () => {
+  it("should not submit when the query is empty", async () => {
     const onSearch = vi.fn();
     const screen = await render(
-      <SearchField
-        {...labels}
-        searchOnType={false}
-        buttonLabel="Search"
-        onSearch={onSearch}
-      />,
+      <SearchField {...labels} onSearch={onSearch} />,
     );
 
-    await screen.getByRole("searchbox").fill("granite");
-    // No debounced search: only submit reports the term.
-    await vi.waitFor(() => expect(onSearch).not.toHaveBeenCalled());
+    screen.getByRole("searchbox").element().focus();
+    await userEvent.keyboard("{Enter}");
 
-    await screen.getByRole("button", { name: "Search" }).click();
-    expect(onSearch).toHaveBeenCalledWith("granite");
-  });
-
-  it("should disable the button and not submit when the query is empty", async () => {
-    const onSearch = vi.fn();
-    const screen = await render(
-      <SearchField {...labels} buttonLabel="Search" onSearch={onSearch} />,
-    );
-
-    const button = screen.getByRole("button", { name: "Search" });
-    await expect.element(button).toBeDisabled();
-
-    // Enter on the empty field must not fire a search either.
-    await screen.getByRole("searchbox").fill("granite");
-    await screen.getByRole("searchbox").fill("");
-    await expect.element(button).toBeDisabled();
+    expect(onSearch).not.toHaveBeenCalled();
   });
 });

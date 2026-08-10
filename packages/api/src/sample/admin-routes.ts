@@ -11,7 +11,6 @@ import type {
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
 
-import { isSamplePublishable } from "@projet-igsn/domain/sample/publication/is-sample-publishable";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import {
   samplePublishBlockers,
@@ -279,7 +278,9 @@ export function createSampleAdminRoutes(
         // concurrent change to material in between is not guarded at the DB level
         // (no CHECK on material); acceptable for an admin-only action. Read and
         // publish in one txn if that race matters.
-        if (!isSamplePublishable(sample, uploadLimit, c.get("user"))) {
+        if (
+          samplePublishBlockers(sample, uploadLimit, c.get("user")).length > 0
+        ) {
           return c.json({ error: "Sample is not ready to publish" }, 409);
         }
         const published = await repository.publish(id);

@@ -136,7 +136,6 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
-      KC_HEALTH_ENABLED: "true"
       KC_HTTP_PORT: "18080"
       # Pin the frontend URL so the realm issuer is the same string whichever
       # host a request arrives on: start-dev otherwise derives it from the

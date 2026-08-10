@@ -123,7 +123,6 @@ services:
       # Also exposed bare so the realm import substitutes it into the mock-orcid
       # user's password (${KEYCLOAK_PASSWORD} in mock-orcid-realm.json).
       KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
-      KC_HEALTH_ENABLED: "true"
       KC_HOSTNAME: "https://igsn-auth.${DOMAIN}"
       KC_PROXY_HEADERS: xforwarded
       # URLs the realm import substitutes for the public preprod hosts.

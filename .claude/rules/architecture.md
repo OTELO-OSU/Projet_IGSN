@@ -19,7 +19,7 @@
 
 Why a sample cannot be published lives in ONE place, `domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`).
 
-- `isSamplePublishable` and the admin publish tooltip both derive from it.
+- The api publish guard and the admin publish tooltip both derive from it.
 - Add a constraint by adding a code to `publishBlockerSchema` and pushing it in `samplePublishBlockers`.
 - The admin label map (`publish-blocker-label.ts`) is an exhaustive `Record<PublishBlocker, () => string>`, so it fails to compile until the new reason is translated.
 
