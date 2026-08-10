@@ -442,7 +442,6 @@ describe("admin sample routes", () => {
       collectionMethod: null,
     };
 
-    // The sample belongs to the caller, so only the lock ever refuses a write.
     async function arrangeSample(db: Parameters<typeof createApp>[0]) {
       await provisionUser(db, "test-token", { status: "accepted" });
       const app = createApp(db).app;
@@ -782,8 +781,6 @@ describe("admin sample routes", () => {
       },
     );
 
-    // Only a complete material path publishes (material_incomplete otherwise),
-    // so these two carry the full branch.
     const igneous = {
       ...publishable,
       material: "rock.igneous.plutonic.felsic.granite",
@@ -1289,7 +1286,6 @@ describe("admin sample routes", () => {
     expect(res.status).toBe(200);
   });
 
-  // Publishing is public, so only a moderated-in account may do it.
   pgTest(
     "should answer 409 when a pending user publishes a complete draft",
     async ({ db }) => {
@@ -2657,12 +2653,14 @@ describe("admin sample routes", () => {
       );
 
       expect(res.status).toBe(204);
-      expect(sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: ["colleague@example.com"],
-          subject:
-            'Test User invited you to contribute to "Basalte à partager"',
-        }),
+      await vi.waitFor(() =>
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({
+            to: ["colleague@example.com"],
+            subject:
+              'Test User invited you to contribute to "Basalte à partager"',
+          }),
+        ),
       );
       expect(sendMail.mock.calls[0]?.[0].text).toContain(
         `${ADMIN_URL}samples/${sample.id}`,
@@ -2680,6 +2678,7 @@ describe("admin sample routes", () => {
         { param: { id: sample.id }, json: { userId: colleague.id } },
         { headers: authHeader },
       );
+      await vi.waitFor(() => expect(sendMail).toHaveBeenCalled());
       sendMail.mockClear();
 
       const again = await client.admin.samples[":id"].collaborators.$post(
@@ -2729,7 +2728,7 @@ describe("admin sample routes", () => {
         );
 
         expect(res.status).toBe(204);
-        expect(logged).toHaveBeenCalled();
+        await vi.waitFor(() => expect(logged).toHaveBeenCalled());
         logged.mockRestore();
         const listed = await client.admin.samples[":id"].collaborators.$get(
           { param: { id: sample.id } },

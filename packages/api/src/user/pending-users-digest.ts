@@ -1,12 +1,12 @@
 import type { PendingUser } from "@projet-igsn/domain/user/repository";
 
-import mjml2html from "mjml";
 import { readFileSync } from "node:fs";
 
-import type { Locale, Translator } from "../mail/i18n.ts";
+import type { Translator } from "../mail/i18n.ts";
 
 import { escapeHtml } from "../mail/escape-html.ts";
-import { DEFAULT_LOCALE, translator } from "../mail/i18n.ts";
+import { translator } from "../mail/i18n.ts";
+import { renderMjml } from "../mail/render-mjml.ts";
 import { fullName } from "./full-name.ts";
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -41,32 +41,28 @@ const accountRow = (t: Translator, user: PendingUser, now: Date) =>
     "</tr>",
   ].join("");
 
-async function render(
+const render = (
   t: Translator,
   title: string,
   rows: string,
   usersUrl: string,
-): Promise<string> {
-  const { html } = await mjml2html(
-    TEMPLATE.replaceAll("__TITLE__", title)
-      .replace("__COLUMN_NAME__", t("mail_digest_column_name"))
-      .replace("__COLUMN_EMAIL__", t("mail_digest_column_email"))
-      .replace("__COLUMN_WAITED__", t("mail_digest_column_waited"))
-      .replace("__ROWS__", rows)
-      .replace("__CTA__", t("mail_digest_cta"))
-      .replace("__USERS_URL__", escapeHtml(usersUrl)),
-  );
-  return html;
-}
+): Promise<string> =>
+  renderMjml(TEMPLATE, {
+    __TITLE__: title,
+    __COLUMN_NAME__: t("mail_digest_column_name"),
+    __COLUMN_EMAIL__: t("mail_digest_column_email"),
+    __COLUMN_WAITED__: t("mail_digest_column_waited"),
+    __ROWS__: rows,
+    __CTA__: t("mail_digest_cta"),
+    __USERS_URL__: escapeHtml(usersUrl),
+  });
 
-// ponytail: locale is always the default until a `user.locale` column, fed from the Keycloak claim, carries the admin's own.
 export async function pendingUsersDigest(
   pending: PendingUser[],
   usersUrl: string,
   now: Date,
-  locale: Locale = DEFAULT_LOCALE,
 ): Promise<{ subject: string; text: string; html: string }> {
-  const t = translator(locale);
+  const t = translator();
   const subject = t("mail_digest_subject", { count: pending.length });
   const lines = pending.map((user) => accountLine(t, user, now)).join("\n");
   return {

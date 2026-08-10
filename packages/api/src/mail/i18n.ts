@@ -4,8 +4,6 @@ import en from "../../messages/en.json" with { type: "json" };
 
 export const DEFAULT_LOCALE = "en";
 
-export type Locale = typeof DEFAULT_LOCALE;
-
 declare module "i18next" {
   interface CustomTypeOptions {
     resources: { translation: typeof en };
@@ -21,7 +19,7 @@ void instance.init({
   interpolation: { escapeValue: false },
 });
 
-export const translator = (locale: Locale = DEFAULT_LOCALE) =>
-  instance.getFixedT(locale);
+// ponytail: every mail is English until a `user.locale` column, fed from the Keycloak claim, carries the recipient's own; then this takes it as a parameter.
+export const translator = () => instance.getFixedT(DEFAULT_LOCALE);
 
 export type Translator = ReturnType<typeof translator>;

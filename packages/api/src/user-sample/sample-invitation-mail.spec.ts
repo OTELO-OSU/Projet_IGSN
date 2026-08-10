@@ -86,4 +86,27 @@ Open the sample: ${SAMPLE_URL}
     expect(mail.html).not.toContain("<script>alert(1)</script>");
     expect(mail.html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
   });
+
+  it.each([
+    ["Core $& 12", "Core $&amp; 12"],
+    ["Core $' 12", "Core $' 12"],
+    ["Core $` 12", "Core $` 12"],
+    ["Core $1 12", "Core $1 12"],
+  ])(
+    "should render %s literally rather than as a replacement pattern",
+    async (sampleName, expected) => {
+      const mail = await sampleInvitationMail({ ...invitation, sampleName });
+
+      expect(mail.html).toContain(expected);
+    },
+  );
+
+  it("should not let a sample name named after a placeholder consume it", async () => {
+    const mail = await sampleInvitationMail({
+      ...invitation,
+      sampleName: "__URL__",
+    });
+
+    expect(mail.html).toContain(`href="${SAMPLE_URL}"`);
+  });
 });
