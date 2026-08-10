@@ -40,16 +40,12 @@ import {
   validateUpdateSampleBody,
 } from "./validator.ts";
 
-// Authentication is enforced once by the requireAuth guard on the /admin mount
-// (see app.ts), so no per-route authentication guard here.
 export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
   userSampleRepository: UserSampleRepository,
   mail?: { sendMail: SendMail; adminUrl: string },
 ) {
-  // Registered before those routes below, since Hono runs handlers in
-  // registration order.
   const accessibleSample = requireSampleAccess(repository);
   // Mounted on the writes only, never on the /lock routes below: claiming or
   // releasing a lock must work whoever holds it.
@@ -133,7 +129,8 @@ export function createSampleAdminRoutes(
             return c.json({ error: "User not found" }, 404);
           }
           if (mail && added !== "already_contributor") {
-            await sendSampleInvitationMail(
+            // ponytail: fire and forget, since nothing in the 204 depends on the mail and an unreachable SMTP would otherwise hold the request for nodemailer's two-minute default; a retry queue if a lost invitation ever matters.
+            void sendSampleInvitationMail(
               {
                 invitee: added.added,
                 inviter: c.get("user"),
@@ -231,8 +228,6 @@ export function createSampleAdminRoutes(
           // round-tripped through the client lost its microseconds to a JS Date,
           // so a SQL equality would match zero rows and 409 every save. Both
           // sides here came through postgres-js, which truncates to ms.
-          // Before the reconcile below: a rejected save must not have already
-          // deleted attachments.
           // ponytail: this read and the write are not one transaction, so a
           // few-ms window remains, the same race already accepted for publish
           // below. The edit lock closes it in practice.
@@ -245,8 +240,6 @@ export function createSampleAdminRoutes(
           const toPersist = current.published
             ? mergePublishedEdit(current, input)
             : input;
-          // The attachment count is capped by the body validator, so both sides
-          // ignore it.
           if (current.published) {
             const existing = samplePublishBlockers(
               toPublishableFields(current),
@@ -262,8 +255,6 @@ export function createSampleAdminRoutes(
               );
             }
           }
-          // The content itself was uploaded beforehand through the attachment
-          // routes, so an unlisted attachment is deleted here.
           await attachmentsRepository.reconcile(
             id,
             toPersist.attachments ?? [],
@@ -338,8 +329,6 @@ export function createSampleAdminRoutes(
           return attachmentDownload(found.attachment, found.content);
         },
       )
-      // The admin frees a slot here before uploading the file that replaces
-      // it, so a swap at the limit needs a single save.
       .delete(
         "/:id/attachments/:attachmentId",
         validateAttachmentParams,

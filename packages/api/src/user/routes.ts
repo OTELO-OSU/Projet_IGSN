@@ -38,8 +38,6 @@ export function createUserSearchRoutes(userRepository: UserRepository) {
   );
 }
 
-// Moderating accounts is super-admin-only: the guard sits on the mount so it
-// travels with these routes rather than with a path glob in app.ts.
 export function createUserRoutes(
   repository: UserRepository,
   mail?: { sendMail: SendMail; adminUrl: string },
@@ -87,7 +85,8 @@ export function createUserRoutes(
             previous?.status !== "accepted" &&
             user.status === "accepted"
           ) {
-            await sendUserAcceptedMail(user, mail.sendMail, mail.adminUrl);
+            // ponytail: fire and forget, so an unreachable SMTP cannot hold the response for nodemailer's two-minute default; a retry queue if a lost notification ever matters.
+            void sendUserAcceptedMail(user, mail.sendMail, mail.adminUrl);
           }
           const body: UserResponse = { data: user };
           return c.json(body);

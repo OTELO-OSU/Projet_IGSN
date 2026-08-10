@@ -384,11 +384,13 @@ describe("admin user routes", () => {
     );
     // Assert
     expect(res.status).toBe(200);
-    expect(sendMail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: ["pending@univ-lorraine.fr"],
-        subject: "Your account has been approved",
-      }),
+    await vi.waitFor(() =>
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: ["pending@univ-lorraine.fr"],
+          subject: "Your account has been approved",
+        }),
+      ),
     );
   });
 
@@ -422,11 +424,13 @@ describe("admin user routes", () => {
     );
     // Assert
     expect(res.status).toBe(200);
-    expect(sendMail).toHaveBeenCalledWith(
-      expect.objectContaining({
-        to: ["rejected@univ-lorraine.fr"],
-        subject: "Your account has been approved",
-      }),
+    await vi.waitFor(() =>
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: ["rejected@univ-lorraine.fr"],
+          subject: "Your account has been approved",
+        }),
+      ),
     );
   });
 
@@ -486,7 +490,7 @@ describe("admin user routes", () => {
       );
       // Assert
       expect(res.status).toBe(200);
-      expect(logged).toHaveBeenCalled();
+      await vi.waitFor(() => expect(logged).toHaveBeenCalled());
       logged.mockRestore();
     },
   );
