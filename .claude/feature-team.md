@@ -4,7 +4,7 @@
 - The card/spec is pasted below this prompt.
 - Roles live in `.claude/agents/`, and only you manage the team.
 - `business-analyst`: read-only subagent you dispatch.
-- `developer`, `code-quality-reviewer`, `security-reviewer`, `qa-tester`, `doc-specialist`: teammates spawned against the shared task list.
+- `developer`, `code-quality-reviewer`, `security-reviewer`, `doc-specialist`: teammates spawned against the shared task list.
 - Size the ticket first (step 0): the full chain on a one-line fix is the failure this pipeline guards against.
 
 ## Standing rules
@@ -42,15 +42,15 @@
 
 Size from the approved plan, before spawning anything.
 
-| Size | Criteria                                                                                           | Chain                                            |
-| ---- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| `S`  | one package, no new entity/endpoint/migration, no auth or publish surface                          | 1 dev task, `code-quality-reviewer` only         |
-| `M`  | several files or two packages, no new cross-package contract                                       | dev tasks, `code-quality-reviewer` + `qa-tester` |
-| `L`  | new entity, endpoint, migration, auth/authz, publish constraint, or changed cross-package contract | full chain                                       |
+| Size | Criteria                                                                                           | Chain                                    |
+| ---- | -------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| `S`  | one package, no new entity/endpoint/migration, no auth or publish surface                          | 1 dev task, `code-quality-reviewer` only |
+| `M`  | several files or two packages, no new cross-package contract                                       | dev tasks, `code-quality-reviewer`       |
+| `L`  | new entity, endpoint, migration, auth/authz, publish constraint, or changed cross-package contract | full chain                               |
 
 - Add `security-reviewer` at any size when the diff touches `api`, auth, or secrets.
 - Add `doc-specialist` only when the ticket changes user-visible behavior or a public contract.
-- `S` runs no `qa-tester`, so walk its acceptance tests yourself at the gate.
+- No role runs acceptance tests, so walk them yourself at the gate, whatever the size.
 - Re-size the moment the diff outgrows your criteria (a second package, a new entity, endpoint, migration, or auth surface) and run the chain you now owe.
 - Re-sizing is the only thing catching a wrong `S`, which skipped the BA.
 - State the size and chain in one line before proceeding.
@@ -112,7 +112,7 @@ In the worktree:
 - Run `pnpm lint:check`, `pnpm fmt:check`, `pnpm test`.
 - Run `make test-e2e` when the ticket changed runtime code (`admin`, `frontend`, `api`, or what they consume), per `testing.md`.
 - Skip it only for changes with no runtime surface, and say so.
-- On `S`, walk the ticket's acceptance tests yourself and report each.
+- Walk the ticket's acceptance tests yourself and report each.
 - Confirm the branch is `$TYPE/$SLUG` and `git status --porcelain` is empty, committing any leftover changeset as itself.
 - A failing gate goes back to the developer, whose fix is another commit, since you never commit red.
 - Sandbox caveat: report a flaky api Postgres suite or e2e stack and let the user decide, rather than blocking forever.
