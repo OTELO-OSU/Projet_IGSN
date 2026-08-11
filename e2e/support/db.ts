@@ -10,6 +10,7 @@ export type SeededSample = {
   // The RESEARCHERS key of the sample's owner; specs group by it to assert
   // per-researcher visibility.
   owner: string;
+  collaborators: { researcher: string; role: "editor" | "contributor" }[];
 };
 
 function resetAndSeed(): SeededSample[] {
@@ -19,8 +20,8 @@ function resetAndSeed(): SeededSample[] {
   // parse that `docker compose exec` pays per call. Per-test seed is a few
   // seconds — fine at workers:1; move to global-setup if it grows.
   // Run node directly (not `pnpm run`): prod runs as USER node but /app is
-  // root-owned, and `pnpm run` writes a temp file there (EACCES). Matches the
-  // `migrate` service and the api CMD. WORKDIR is /app/packages/api.
+  // root-owned, and `pnpm run` writes a temp file there (EACCES). WORKDIR is
+  // /app/packages/api.
   const out = execFileSync(
     "docker",
     ["exec", "igsn-e2e-api-1", "node", "scripts/reset-and-seed.ts"],
@@ -30,8 +31,6 @@ function resetAndSeed(): SeededSample[] {
   return JSON.parse(lastLine) as SeededSample[];
 }
 
-// `samples` is auto so every test starts from the seeded baseline; tests that
-// need the data declare `{ samples }` to read it.
 export const test = base.extend<{ samples: SeededSample[] }>({
   samples: [
     // Playwright requires the destructuring pattern for the fixtures arg; this

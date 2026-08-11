@@ -1,26 +1,21 @@
+import type { UserSampleRole } from "./model.ts";
+
 import { canUpdateSample } from "./can-update-sample.ts";
 
 describe("canUpdateSample", () => {
-  it("should let the owner update a draft", () => {
-    expect(canUpdateSample("owner", { published: false })).toBe(true);
-  });
-
-  it("should let the owner update a published sample", () => {
-    expect(canUpdateSample("owner", { published: true })).toBe(true);
-  });
-
-  it("should let a contributor update a draft", () => {
-    expect(canUpdateSample("contributor", { published: false })).toBe(true);
-  });
-
-  it("should refuse a contributor on a published sample", () => {
-    expect(canUpdateSample("contributor", { published: true })).toBe(false);
-  });
-
-  it.each([false, true])(
-    "should refuse a roleless reader on a sample published=%s",
-    (published) => {
-      expect(canUpdateSample(null, { published })).toBe(false);
+  it.each([
+    ["owner", false, true],
+    ["owner", true, true],
+    ["editor", false, true],
+    ["editor", true, true],
+    ["contributor", false, true],
+    ["contributor", true, false],
+    [null, false, false],
+    [null, true, false],
+  ] as [UserSampleRole | null, boolean, boolean][])(
+    "should answer, for the %s on a sample published=%s, %s",
+    (role, published, expected) => {
+      expect(canUpdateSample(role, { published })).toBe(expected);
     },
   );
 });

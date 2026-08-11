@@ -1,18 +1,24 @@
 import type { User } from "../user/model.ts";
-import type { SampleCollaborator } from "./user-sample-validator.ts";
+import type {
+  CollaboratorRole,
+  SampleCollaborator,
+} from "./user-sample-validator.ts";
 
-export type AddContributorResult =
+export type AddCollaboratorResult =
   | "unknown_user"
-  | "already_contributor"
+  | "already_collaborator"
+  | "role_change_forbidden"
   | { added: Pick<User, "email" | "name" | "firstname"> };
 
 export type UserSampleRepository = {
   addOwner(sampleId: string, userId: string): Promise<void>;
-  addContributor(
+  addCollaborator(
     sampleId: string,
     userId: string,
-  ): Promise<AddContributorResult>;
-  removeContributor(
+    role: CollaboratorRole,
+    options?: { mayChangeRole: boolean },
+  ): Promise<AddCollaboratorResult>;
+  removeCollaborator(
     sampleId: string,
     userId: string,
   ): Promise<"removed" | "not_found">;

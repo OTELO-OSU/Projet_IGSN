@@ -7,10 +7,15 @@ import { useApiClient } from "#/use-api-client.ts";
 
 export const MIN_SEARCH_LENGTH = 2;
 
-export function useSearchUsers(search: string, excludeCollaboratorsOf: string) {
+export function useSearchUsers(
+  search: string,
+  excludeCollaboratorsOf: string,
+  { enabled = true }: { enabled?: boolean } = {},
+) {
   const apiFetch = useApiClient();
   const term = search.length >= MIN_SEARCH_LENGTH ? search : "";
   return useQuery({
+    enabled,
     queryKey: ["users", term, excludeCollaboratorsOf],
     queryFn: async () => {
       const url = new URL("admin/users/search", API_URL);

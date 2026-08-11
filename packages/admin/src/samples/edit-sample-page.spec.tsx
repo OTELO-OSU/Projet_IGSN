@@ -55,7 +55,6 @@ const ATTACHMENT: SampleAttachment = {
   description: null,
 };
 
-// Publishing depends on it, so the page's publisher must be deterministic.
 let callerStatus: "pending" | "accepted" = "accepted";
 let callerUnknown = false;
 let sampleFetched = false;
@@ -300,6 +299,20 @@ const renderEditPageAsContributor = (published: boolean) =>
     "contributor",
   );
 
+const renderEditPageAsEditor = (published: boolean) =>
+  renderEditPage(
+    published,
+    "fossil",
+    false,
+    null,
+    null,
+    "exists",
+    null,
+    null,
+    [],
+    "editor",
+  );
+
 describe("EditSamplePage", () => {
   it("should not offer Save & Publish to a contributor on a draft", async () => {
     const { screen } = await renderEditPageAsContributor(false);
@@ -310,6 +323,22 @@ describe("EditSamplePage", () => {
     expect(
       screen.getByRole("button", { name: "Save & Publish" }).elements(),
     ).toHaveLength(0);
+  });
+
+  it("should offer Save & Publish to an editor on a draft", async () => {
+    const { screen } = await renderEditPageAsEditor(false);
+
+    await expect
+      .element(screen.getByRole("button", { name: "Save & Publish" }))
+      .toBeEnabled();
+  });
+
+  it("should let an editor save a published sample", async () => {
+    const { screen } = await renderEditPageAsEditor(true);
+
+    await expect
+      .element(screen.getByRole("button", { name: "Publish updates" }))
+      .toBeEnabled();
   });
 
   it("should leave no focusable publish tooltip behind for a contributor on a blocked draft", async () => {
@@ -343,7 +372,9 @@ describe("EditSamplePage", () => {
     save.element().parentElement?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/only the owner can update a published sample/i);
+      .toHaveTextContent(
+        /only the owner or an editor can update a published sample/i,
+      );
   });
 
   it("should offer Share to the owner next to the title", async () => {
@@ -352,17 +383,6 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("button", { name: "Share" }))
       .toBeVisible();
-  });
-
-  it("should not offer Share to a contributor", async () => {
-    const { screen } = await renderEditPageAsContributor(false);
-
-    await expect
-      .element(screen.getByRole("button", { name: "Save as draft" }))
-      .toBeEnabled();
-    expect(
-      screen.getByRole("button", { name: "Share" }).elements(),
-    ).toHaveLength(0);
   });
 
   it("should let the owner save a published sample", async () => {
@@ -401,26 +421,14 @@ describe("EditSamplePage", () => {
     await expect.element(publish).toBeDisabled();
 
     publish.element().parentElement?.focus();
-    await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/account is not yet validated/i);
-    await expect
-      .element(screen.getByRole("button", { name: "Save as draft" }))
-      .toBeEnabled();
-  });
-
-  it("should list only the account reason for a pending account on a complete sample", async () => {
-    callerStatus = "pending";
-    const { screen } = await renderEditPage();
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
-    await expect.element(publish).toBeDisabled();
-
-    publish.element().parentElement?.focus();
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
       .toHaveTextContent(/account is not yet validated/i);
     await expect.element(tooltip).not.toHaveTextContent(/before publishing/i);
+    await expect
+      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .toBeEnabled();
   });
 
   it("should drop the material reason once a pending account completes the cascade", async () => {

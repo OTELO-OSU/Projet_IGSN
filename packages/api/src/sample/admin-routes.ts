@@ -16,7 +16,10 @@ import {
   samplePublishBlockers,
   toPublishableFields,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { canGrantRole } from "@projet-igsn/domain/user-sample/can-grant-role";
+import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-manage-collaborators";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
+import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { Hono } from "hono";
 
 import type { SendMail } from "../mail/send-mail.ts";
@@ -29,7 +32,7 @@ import { requireEditLock } from "./require-edit-lock.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
-  validateAddContributorBody,
+  validateAddCollaboratorBody,
   validateAttachmentParams,
   validateAttachmentUpload,
   validateCollaboratorParams,
@@ -96,9 +99,6 @@ export function createSampleAdminRoutes(
         if (!c.get("sample")) {
           return c.json({ error: "Not found" }, 404);
         }
-        if (c.get("role") !== "owner") {
-          return c.json({ error: "Forbidden" }, 403);
-        }
         const body: SampleCollaboratorsResponse = {
           data: await userSampleRepository.listCollaborators(
             c.req.valid("param").id,
@@ -110,29 +110,36 @@ export function createSampleAdminRoutes(
         "/:id/collaborators",
         requireActiveSession,
         validateIdParam,
-        validateAddContributorBody,
+        validateAddCollaboratorBody,
         async (c) => {
           const sample = c.get("sample");
           if (!sample) {
             return c.json({ error: "Not found" }, 404);
           }
-          if (c.get("role") !== "owner") {
+          const id = c.req.valid("param").id;
+          const { userId, role } = c.req.valid("json");
+          if (!canGrantRole(c.get("role"), role)) {
             return c.json({ error: "Forbidden" }, 403);
           }
-          const id = c.req.valid("param").id;
-          const added = await userSampleRepository.addContributor(
+          const added = await userSampleRepository.addCollaborator(
             id,
-            c.req.valid("json").userId,
+            userId,
+            role,
+            { mayChangeRole: canManageCollaborators(c.get("role")) },
           );
           if (added === "unknown_user") {
             return c.json({ error: "User not found" }, 404);
           }
-          if (mail && added !== "already_contributor") {
+          if (added === "role_change_forbidden") {
+            return c.json({ error: "Forbidden" }, 403);
+          }
+          if (mail && added !== "already_collaborator") {
             // ponytail: fire and forget, since nothing in the 204 depends on the mail and an unreachable SMTP would otherwise hold the request for nodemailer's two-minute default; a retry queue if a lost invitation ever matters.
             void sendSampleInvitationMail(
               {
                 invitee: added.added,
                 inviter: c.get("user"),
+                role,
                 sampleName: sample.name,
                 sampleUrl: new URL(`/samples/${id}`, mail.adminUrl).toString(),
               },
@@ -150,16 +157,16 @@ export function createSampleAdminRoutes(
           if (!c.get("sample")) {
             return c.json({ error: "Not found" }, 404);
           }
-          if (c.get("role") !== "owner") {
+          if (!canManageCollaborators(c.get("role"))) {
             return c.json({ error: "Forbidden" }, 403);
           }
           const { id, userId } = c.req.valid("param");
-          const removed = await userSampleRepository.removeContributor(
+          const removed = await userSampleRepository.removeCollaborator(
             id,
             userId,
           );
           if (removed === "not_found") {
-            return c.json({ error: "Contributor not found" }, 404);
+            return c.json({ error: "Collaborator not found" }, 404);
           }
           return c.body(null, 204);
         },
@@ -225,8 +232,7 @@ export function createSampleAdminRoutes(
           // Compared in JS, never as a `where updated_at = ?` predicate: the
           // column is timestamptz(6) fed by now(), while the value that
           // round-tripped through the client lost its microseconds to a JS Date,
-          // so a SQL equality would match zero rows and 409 every save. Both
-          // sides here came through postgres-js, which truncates to ms.
+          // so a SQL equality would match zero rows and 409 every save.
           // ponytail: this read and the write are not one transaction, so a
           // few-ms window remains, the same race already accepted for publish
           // below. The edit lock closes it in practice.
@@ -271,7 +277,7 @@ export function createSampleAdminRoutes(
         if (!sample) {
           return c.json({ error: "Not found" }, 404);
         }
-        if (c.get("role") !== "owner") {
+        if (!isSampleEditor(c.get("role"))) {
           return c.json({ error: "Forbidden" }, 403);
         }
         // ponytail: the guard's read and publish are separate transactions, so a

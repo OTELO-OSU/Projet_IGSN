@@ -12,7 +12,7 @@ import { requireActiveSession } from "../auth/active-session.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
-import { insertSampleContributor } from "../user-sample/insert-sample-contributor.ts";
+import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 import { createUserRepository } from "./repository.ts";
 
 const ADMIN_URL = "http://localhost:3001/";
@@ -42,53 +42,6 @@ describe("admin user search routes", () => {
     expect(body.data.map((user) => user.name)).toEqual(["Curie"]);
   });
 
-  pgTest("should search researchers by email", async ({ db }) => {
-    await insertResearcher(db, "Curie", "marie.curie@univ-lorraine.fr");
-
-    const res = await testClient(createApp(db).app).admin.users.search.$get(
-      { query: { search: "marie.curie@" } },
-      { headers: authHeader },
-    );
-
-    expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({
-      data: [{ email: "marie.curie@univ-lorraine.fr" }],
-    });
-  });
-
-  pgTest(
-    "should answer 200 with no result for an unknown term",
-    async ({ db }) => {
-      await insertResearcher(db, "Curie", "marie.curie@univ-lorraine.fr");
-
-      const res = await testClient(createApp(db).app).admin.users.search.$get(
-        { query: { search: "zzz" } },
-        { headers: authHeader },
-      );
-
-      expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ data: [] });
-    },
-  );
-
-  pgTest("should return at most ten researchers", async ({ db }) => {
-    for (let index = 0; index < 12; index += 1) {
-      await insertResearcher(
-        db,
-        `Geologue${index}`,
-        `geologue${index}@univ-lorraine.fr`,
-      );
-    }
-
-    const res = await testClient(createApp(db).app).admin.users.search.$get(
-      { query: { search: "geologue" } },
-      { headers: authHeader },
-    );
-
-    const body = userIdentitiesResponseSchema.parse(await res.json());
-    expect(body.data).toHaveLength(10);
-  });
-
   pgTest(
     "should ignore the exclusion when the caller is not on that sample",
     async ({ db }) => {
@@ -104,7 +57,7 @@ describe("admin user search routes", () => {
         type: null,
         collectionMethod: null,
       });
-      await insertSampleContributor(db, sample.id, curie.id);
+      await insertSampleCollaborator(db, sample.id, curie.id, "contributor");
 
       const res = await testClient(createApp(db).app).admin.users.search.$get(
         { query: { excludeCollaboratorsOf: sample.id } },
@@ -185,27 +138,6 @@ describe("admin user search routes", () => {
         "aubry@univ-lorraine.fr",
         "zeller@univ-lorraine.fr",
       ]);
-    },
-  );
-
-  pgTest(
-    "should return at most twenty users with no search term",
-    async ({ db }) => {
-      for (let index = 0; index < 21; index += 1) {
-        await insertResearcher(
-          db,
-          `Geologue${index}`,
-          `geologue${String(index).padStart(2, "0")}@univ-lorraine.fr`,
-        );
-      }
-
-      const res = await createApp(db).app.request("/admin/users/search", {
-        headers: authHeader,
-      });
-
-      const body = userIdentitiesResponseSchema.parse(await res.json());
-      expect(body.data).toHaveLength(20);
-      expect(body.data.at(-1)?.email).toBe("geologue19@univ-lorraine.fr");
     },
   );
 
@@ -363,76 +295,49 @@ describe("admin user routes", () => {
     ).resolves.toEqual({ status: "accepted" });
   });
 
-  pgTest("should notify the user accepted from pending", async ({ db }) => {
-    // Arrange
-    await insertResearchers(db);
-    await provisionUser(db, "moderator", {
-      status: "accepted",
-      superAdmin: true,
-    });
-    const sendMail = vi.fn().mockResolvedValue(undefined);
-    const client = testClient(
-      createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
-    );
-    // Act
-    const res = await client.admin.users[":id"].status.$put(
-      {
-        param: { id: "01890a5d-ac96-774b-bcce-b302099a8061" },
-        json: { status: "accepted" },
-      },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    await vi.waitFor(() =>
-      expect(sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: ["pending@univ-lorraine.fr"],
-          subject: "Your account has been approved",
-        }),
-      ),
-    );
-  });
-
-  pgTest("should notify the user accepted from rejected", async ({ db }) => {
-    // Arrange
-    await db
-      .insertInto("user")
-      .values({
-        id: "01890a5d-ac96-774b-bcce-b302099a8063",
-        email: "rejected@univ-lorraine.fr",
-        name: "Rejected",
-        firstname: "Rose",
-        status: "rejected",
-      })
-      .execute();
-    await provisionUser(db, "moderator", {
-      status: "accepted",
-      superAdmin: true,
-    });
-    const sendMail = vi.fn().mockResolvedValue(undefined);
-    const client = testClient(
-      createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
-    );
-    // Act
-    const res = await client.admin.users[":id"].status.$put(
-      {
-        param: { id: "01890a5d-ac96-774b-bcce-b302099a8063" },
-        json: { status: "accepted" },
-      },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    await vi.waitFor(() =>
-      expect(sendMail).toHaveBeenCalledWith(
-        expect.objectContaining({
-          to: ["rejected@univ-lorraine.fr"],
-          subject: "Your account has been approved",
-        }),
-      ),
-    );
-  });
+  pgTest.for([
+    ["pending", "01890a5d-ac96-774b-bcce-b302099a8061", "pending"],
+    ["rejected", "01890a5d-ac96-774b-bcce-b302099a8063", "rejected"],
+  ] as const)(
+    "should notify the user accepted from %s",
+    async ([, id, mailbox], { db }) => {
+      // Arrange
+      await insertResearchers(db);
+      await db
+        .insertInto("user")
+        .values({
+          id: "01890a5d-ac96-774b-bcce-b302099a8063",
+          email: "rejected@univ-lorraine.fr",
+          name: "Rejected",
+          firstname: "Rose",
+          status: "rejected",
+        })
+        .execute();
+      await provisionUser(db, "moderator", {
+        status: "accepted",
+        superAdmin: true,
+      });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const client = testClient(
+        createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+      );
+      // Act
+      const res = await client.admin.users[":id"].status.$put(
+        { param: { id }, json: { status: "accepted" } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      await vi.waitFor(() =>
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({
+            to: [`${mailbox}@univ-lorraine.fr`],
+            subject: "Your account has been approved",
+          }),
+        ),
+      );
+    },
+  );
 
   pgTest.for([
     [

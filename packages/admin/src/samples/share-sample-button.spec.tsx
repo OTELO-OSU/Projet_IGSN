@@ -59,10 +59,16 @@ function fakeApi({
     email: OWNER_EMAIL,
   } as { name: string | null; firstname: string | null; email: string } | null,
   contributors = [] as UserIdentity[],
+  editors = [] as UserIdentity[],
   directory = [] as UserIdentity[],
 } = {}) {
-  let listed = [...contributors];
+  // The api returns the owner, then the editors, then the contributors.
+  let listed = [
+    ...editors.map((user) => ({ ...user, role: "editor" })),
+    ...contributors.map((user) => ({ ...user, role: "contributor" })),
+  ];
   const calls: string[] = [];
+  const invites: { userId: string; role: string }[] = [];
   worker.use(
     http.get("*/samples/:id/collaborators", ({ request }) => {
       calls.push(`GET ${request.url}`);
@@ -71,16 +77,17 @@ function fakeApi({
           ...(owner
             ? [{ id: OWNER_ID, orcid: null, ...owner, role: "owner" }]
             : []),
-          ...listed.map((user) => ({ ...user, role: "contributor" })),
+          ...listed,
         ],
       });
     }),
     http.post("*/samples/:id/collaborators", async ({ request }) => {
       calls.push(`POST ${request.url}`);
-      const { userId } = (await request.json()) as { userId: string };
-      const picked = directory.find((user) => user.id === userId);
+      const invite = (await request.json()) as { userId: string; role: string };
+      invites.push(invite);
+      const picked = directory.find((user) => user.id === invite.userId);
       if (picked && !listed.some((user) => user.id === picked.id)) {
-        listed = [...listed, picked];
+        listed = [...listed, { ...picked, role: invite.role }];
       }
       return new HttpResponse(null, { status: 204 });
     }),
@@ -110,11 +117,11 @@ function fakeApi({
       HttpResponse.json({ data: fakeSample, role }),
     ),
   );
-  return { calls };
+  return { calls, invites };
 }
 
 async function renderShareButton(options?: Parameters<typeof fakeApi>[0]) {
-  const { calls } = fakeApi(options);
+  const { calls, invites } = fakeApi(options);
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -137,6 +144,7 @@ async function renderShareButton(options?: Parameters<typeof fakeApi>[0]) {
   return {
     screen,
     calls,
+    invites,
     userSearches,
     filteredSearches,
     roleLoaded,
@@ -153,6 +161,14 @@ const collaborators = (screen: Screen) =>
     .getByRole("dialog", { name: "Share this sample" })
     .getByRole("listitem");
 
+const collaboratorRows = (screen: Screen) =>
+  collaborators(screen)
+    .elements()
+    .map((row) => row.textContent);
+
+const expectCollaborators = (screen: Screen, expected: unknown[]) =>
+  vi.waitFor(() => expect(collaboratorRows(screen)).toEqual(expected));
+
 const removeCollaborator = async (screen: Screen, name: string) => {
   await screen.getByRole("button", { name: `Remove ${name}` }).click();
   await screen.getByRole("button", { name: "Confirm" }).click();
@@ -161,23 +177,40 @@ const removeCollaborator = async (screen: Screen, name: string) => {
 const openDialog = (screen: Screen) =>
   screen.getByRole("button", { name: "Share" }).click();
 
-const openPicker = async (screen: Screen) => {
+const emailField = (screen: Screen) =>
+  screen.getByRole("combobox", { name: "Email" });
+
+const openInvite = (screen: Screen) =>
+  screen.getByRole("button", { name: "Invite" }).click();
+
+const openInviteDialog = async (screen: Screen) => {
   await openDialog(screen);
-  await screen.getByRole("combobox", { name: "Search a colleague" }).click();
+  await openInvite(screen);
+};
+
+const openPicker = async (screen: Screen) => {
+  await openInviteDialog(screen);
+  await emailField(screen).click();
+};
+
+const invite = (screen: Screen) =>
+  screen.getByRole("button", { name: "Send invitation" }).click();
+
+const pickAndInvite = async (screen: Screen, name: RegExp) => {
+  await screen.getByRole("option", { name }).click();
+  await invite(screen);
 };
 
 describe("ShareSampleButton", () => {
-  it("should show the sample owner first", async () => {
+  it("should not offer to remove the owner", async () => {
     const { screen } = await renderShareButton();
 
     await openDialog(screen);
 
-    await expect
-      .element(screen.getByRole("heading", { name: "Owner" }))
-      .toBeVisible();
-    await expect
-      .element(screen.getByText(`Marie Dupont ${OWNER_EMAIL}`))
-      .toBeVisible();
+    await expect.element(screen.getByText(OWNER_EMAIL)).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Remove Marie Dupont" }).elements(),
+    ).toEqual([]);
   });
 
   it("should not load the collaborators before the dialog opens", async () => {
@@ -203,24 +236,9 @@ describe("ShareSampleButton", () => {
     await openDialog(screen);
 
     await expect
-      .element(screen.getByText("Jean Petit jean.petit@univ-lorraine.fr"))
+      .element(screen.getByText("jean.petit@univ-lorraine.fr"))
       .toBeVisible();
-    expect(screen.getByText(`Marie Dupont ${OWNER_EMAIL}`).elements()).toEqual(
-      [],
-    );
-  });
-
-  it("should show no owner section on a sample nobody owns", async () => {
-    const { screen } = await renderShareButton({ owner: null });
-
-    await openDialog(screen);
-
-    await expect
-      .element(screen.getByRole("dialog"))
-      .toHaveTextContent("Share this sample");
-    expect(screen.getByRole("heading", { name: "Owner" }).elements()).toEqual(
-      [],
-    );
+    expect(screen.getByText(OWNER_EMAIL).elements()).toEqual([]);
   });
 
   it("should list the current collaborators under their own label", async () => {
@@ -232,15 +250,15 @@ describe("ShareSampleButton", () => {
       .element(screen.getByRole("dialog"))
       .toHaveTextContent("Share this sample");
     await expect
-      .element(screen.getByRole("heading", { name: "Collaborators" }))
+      .element(screen.getByRole("list", { name: "Collaborators" }))
       .toBeVisible();
     await expect
       .element(screen.getByText("marie.curie@univ-lorraine.fr"))
       .toBeVisible();
   });
 
-  it("should show an empty state when nobody collaborates yet", async () => {
-    const { screen } = await renderShareButton();
+  it("should show an empty state when nobody works on the sample yet", async () => {
+    const { screen } = await renderShareButton({ owner: null });
 
     await openDialog(screen);
 
@@ -279,26 +297,30 @@ describe("ShareSampleButton", () => {
   it("should offer no suggestion until the autocomplete is opened", async () => {
     const { screen } = await renderShareButton({ directory: [dupont] });
 
-    await openDialog(screen);
+    await openInviteDialog(screen);
 
-    await expect
-      .element(screen.getByRole("combobox", { name: "Search a colleague" }))
-      .toBeVisible();
+    await expect.element(emailField(screen)).toBeVisible();
     expect(screen.getByRole("option").elements()).toEqual([]);
     expect(screen.getByRole("listbox").elements()).toEqual([]);
   });
 
-  it("should add the picked colleague to the collaborator list", async () => {
-    const { screen } = await renderShareButton({ directory: [dupont] });
+  it("should add the picked colleague as contributor, the default role", async () => {
+    const { screen, invites } = await renderShareButton({
+      directory: [dupont],
+    });
     await openPicker(screen);
 
     await searchField(screen).fill("dup");
-    await screen.getByRole("option", { name: /Dupont/ }).click();
+    await pickAndInvite(screen, /Dupont/);
 
-    await expect
-      .element(collaborators(screen))
-      .toHaveTextContent("Pierre Dupont pierre.dupont@univ-lorraine.fr");
+    await expectCollaborators(screen, [
+      expect.stringContaining("Marie Dupont"),
+      expect.stringContaining(
+        "Pierre Dupontpierre.dupont@univ-lorraine.frContributor",
+      ),
+    ]);
     await expect.element(screen.getByText("Collaborator added")).toBeVisible();
+    expect(invites).toEqual([{ userId: dupont.id, role: "contributor" }]);
   });
 
   it("should list the colleagues on opening the autocomplete, before anything is typed", async () => {
@@ -363,21 +385,19 @@ describe("ShareSampleButton", () => {
 
   it("should let a keyboard user open the autocomplete and add a colleague", async () => {
     const { screen } = await renderShareButton({ directory: [dupont] });
-    await openDialog(screen);
+    await openInviteDialog(screen);
 
-    screen
-      .getByRole("combobox", { name: "Search a colleague" })
-      .element()
-      .focus();
+    emailField(screen).element().focus();
     await userEvent.keyboard("{Enter}");
     await expect
       .element(screen.getByRole("option", { name: /Dupont/ }))
       .toBeVisible();
     await userEvent.keyboard("{Enter}");
+    await invite(screen);
 
     await expect
-      .element(collaborators(screen))
-      .toHaveTextContent("Pierre Dupont");
+      .element(screen.getByText("pierre.dupont@univ-lorraine.fr"))
+      .toBeVisible();
   });
 
   it("should not offer an existing collaborator as a suggestion", async () => {
@@ -401,15 +421,17 @@ describe("ShareSampleButton", () => {
       directory: [dupont],
     });
     await openPicker(screen);
-    await screen.getByRole("option", { name: /Dupont/ }).click();
+    await pickAndInvite(screen, /Dupont/);
     await expect
-      .element(collaborators(screen))
-      .toHaveTextContent("Pierre Dupont");
+      .element(screen.getByText("pierre.dupont@univ-lorraine.fr"))
+      .toBeVisible();
 
-    await screen.getByRole("combobox", { name: "Search a colleague" }).click();
+    const searchesBeforeReopen = userSearches().length;
+    await openInvite(screen);
+    await emailField(screen).click();
 
     await vi.waitFor(() => {
-      expect(userSearches()).toHaveLength(2);
+      expect(userSearches().length).toBeGreaterThan(searchesBeforeReopen);
       expect(screen.getByRole("option").elements()).toEqual([]);
     });
   });
@@ -420,7 +442,9 @@ describe("ShareSampleButton", () => {
 
     await removeCollaborator(screen, "Marie Curie");
 
-    await expect.element(screen.getByText("No collaborator yet")).toBeVisible();
+    await expectCollaborators(screen, [
+      expect.stringContaining("Marie Dupont"),
+    ]);
     await expect
       .element(screen.getByText("Collaborator removed"))
       .toBeVisible();
@@ -470,15 +494,85 @@ describe("ShareSampleButton", () => {
       .toBeVisible();
   });
 
-  it("should render nothing for a contributor", async () => {
-    const { screen, roleLoaded } = await renderShareButton({
-      role: "contributor",
+  it("should invite the picked colleague with the role chosen after the pick", async () => {
+    const { screen, invites } = await renderShareButton({
+      directory: [dupont],
+    });
+    await openPicker(screen);
+
+    await screen.getByRole("option", { name: /Dupont/ }).click();
+    await screen.getByRole("radio", { name: /Editor/ }).click();
+    await invite(screen);
+
+    await vi.waitFor(() =>
+      expect(invites).toEqual([{ userId: dupont.id, role: "editor" }]),
+    );
+  });
+
+  it("should invite nobody until the invitation is submitted", async () => {
+    const { screen, invites } = await renderShareButton({
+      directory: [dupont],
+    });
+    await openInviteDialog(screen);
+    await expect
+      .element(screen.getByRole("button", { name: "Send invitation" }))
+      .toBeDisabled();
+
+    await emailField(screen).click();
+    await screen.getByRole("option", { name: /Dupont/ }).click();
+
+    await expect.element(emailField(screen)).toHaveTextContent("Pierre Dupont");
+    expect(invites).toEqual([]);
+  });
+
+  it("should state the role of each collaborator", async () => {
+    const { screen } = await renderShareButton({
+      contributors: [curie],
+      editors: [dupont],
     });
 
-    await roleLoaded();
+    await openDialog(screen);
 
-    expect(screen.getByRole("button", { name: "Share" }).elements()).toEqual(
+    await expectCollaborators(screen, [
+      expect.stringMatching(/Marie Dupont.*Owner \/ Editor/),
+      expect.stringMatching(/Pierre Dupont.*Editor/),
+      expect.stringMatching(/Marie Curie.*Contributor/),
+    ]);
+  });
+
+  it.each(["editor", "contributor"] as const)(
+    "should show the collaborator list to the %s, with no way to remove anyone",
+    async (role) => {
+      const { screen } = await renderShareButton({
+        role,
+        contributors: [curie],
+      });
+
+      await openDialog(screen);
+
+      await expect
+        .element(screen.getByText("marie.curie@univ-lorraine.fr"))
+        .toBeVisible();
+      expect(
+        screen.getByRole("button", { name: /^Remove/ }).elements(),
+      ).toEqual([]);
+    },
+  );
+
+  it("should let a contributor invite a contributor, never an editor", async () => {
+    const { screen, invites } = await renderShareButton({
+      role: "contributor",
+      directory: [dupont],
+    });
+    await openPicker(screen);
+
+    expect(screen.getByRole("radio", { name: /Editor/ }).elements()).toEqual(
       [],
+    );
+    await pickAndInvite(screen, /Dupont/);
+
+    await vi.waitFor(() =>
+      expect(invites).toEqual([{ userId: dupont.id, role: "contributor" }]),
     );
   });
 });

@@ -70,6 +70,7 @@ anonymous readers.
 - Samples predating this change have no owner row and are unreachable in admin
   until assigned. Only demo data is affected; `make db-seed-demo` re-seeds it.
 - Adding, removing, or editing owners is still to come. **Update (ADR 0021):**
-  the role column landed (`owner | contributor`), with sharing but not removal.
+  the role column landed (`owner | editor | contributor`), with sharing and
+  removal both live.
   **Update (ADR 0023):** moderation status and super admin landed; the join
   table shape did not need to change for either.

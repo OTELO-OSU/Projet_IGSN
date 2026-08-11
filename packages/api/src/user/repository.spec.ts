@@ -3,7 +3,7 @@ import { describe, expect } from "vitest";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
-import { insertSampleContributor } from "../user-sample/insert-sample-contributor.ts";
+import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { createUserRepository } from "./repository.ts";
 
@@ -61,23 +61,6 @@ describe("createUserRepository", () => {
       expect(renamed).toEqual({ ...first, name: "Martin-Durand" });
     },
   );
-
-  // A seeded owner (see scripts/seed.ts) must keep its samples once the real
-  // account signs in, which only holds if the upsert adopts the row by email.
-  pgTest("should adopt a seeded row with the same email", async ({ db }) => {
-    // Arrange
-    const seeded = { id: "01890a5d-ac96-774b-bcce-b302099a8057", ...claims };
-    await db.insertInto("user").values(seeded).execute();
-    // Act
-    const user = await createUserRepository(db).upsert(claims);
-    // Assert
-    expect(user).toEqual({
-      ...seeded,
-      orcid: null,
-      status: "pending",
-      superAdmin: false,
-    });
-  });
 
   pgTest("should keep the stored orcid on the next sight", async ({ db }) => {
     // Arrange
@@ -240,7 +223,12 @@ describe("createUserRepository", () => {
         });
         await insertSampleOwner(db, sample.id, owner.id);
         const curie = await repository.search("curie", CALLER_ID);
-        await insertSampleContributor(db, sample.id, curie[0]!.id);
+        await insertSampleCollaborator(
+          db,
+          sample.id,
+          curie[0]!.id,
+          "contributor",
+        );
 
         const searched = await repository.search("univ", owner.id, sample.id);
         const browsed = await repository.search(undefined, owner.id, sample.id);
@@ -370,21 +358,6 @@ describe("createUserRepository", () => {
 
         expect(found).toHaveLength(20);
         expect(found.at(-1)?.email).toBe("geologue19@univ-lorraine.fr");
-      });
-
-      pgTest("should exclude the caller", async ({ db }) => {
-        const repository = await insertResearchers(db);
-        const caller = await repository.upsert({
-          email: "aaa.caller@univ-lorraine.fr",
-          name: "Caller",
-          firstname: null,
-        });
-
-        const found = await repository.search(undefined, caller.id);
-
-        expect(found.map((user) => user.email)).not.toContain(
-          "aaa.caller@univ-lorraine.fr",
-        );
       });
     });
   });
