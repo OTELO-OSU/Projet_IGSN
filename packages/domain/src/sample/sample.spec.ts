@@ -63,6 +63,9 @@ describe("sampleSchema", () => {
       economicDepositName: null,
       economicDepositDescription: null,
       igsn: null,
+      institutionalOrganization: null,
+      institutionalOsu: null,
+      institutionalLaboratory: null,
       published: false,
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
       updatedAt: new Date("2026-07-02T10:00:00.000Z"),
@@ -349,11 +352,8 @@ describe("createSampleSchema", () => {
     { material: "rock.igneous.volcanic.mafic.basalt", texture: "cumulate" },
     // A volcanic-only texture under a plutonic material.
     { material: "rock.igneous.plutonic.felsic.granite", texture: "glassy" },
-    // A texture with no igneous branch selected.
     { material: "rock.igneous", texture: "phaneritic" },
-    // A texture with a non-igneous material.
     { material: "rock.sedimentary.microbialite", texture: "phaneritic" },
-    // A texture with no material at all.
     { material: null, texture: "phaneritic" },
   ])(
     "should reject a texture inconsistent with the material %o",
@@ -379,12 +379,10 @@ describe("createSampleSchema", () => {
   });
 
   it.each([
-    // A facies with a non-metamorphic material.
     {
       material: "rock.igneous.plutonic.felsic.granite",
       metamorphicFacies: "amphibolite",
     },
-    // A facies with no material at all.
     { material: null, metamorphicFacies: "amphibolite" },
   ])(
     "should reject a metamorphic facies inconsistent with the material %o",
@@ -406,7 +404,6 @@ describe("createSampleSchema", () => {
       material: "rock",
       rockType: "igneous",
     });
-    // strictObject: unknown keys are rejected.
     expect(result.success).toBe(false);
   });
 
@@ -454,7 +451,6 @@ describe("createSampleSchema", () => {
     { name: "Grès", nature: "Roche inconnue" },
     { nature: "rock_powder" },
     { name: "Grès", nature: "rock_powder", type: "half_round" },
-    // unknown vocabulary codes
     { name: "Grès", nature: "rock_powder", material: "lava" },
     { name: "Grès", nature: "rock_powder", collectionMethod: "gravity_corer" },
     {

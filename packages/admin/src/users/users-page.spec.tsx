@@ -9,6 +9,7 @@ import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
+import { CALLER_GROUPS } from "../../test/caller-groups.ts";
 import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
@@ -53,6 +54,7 @@ function fakeApi({ forbidden = false }: { forbidden?: boolean } = {}) {
         orcid: null,
         status: "accepted",
         superAdmin: true,
+        ...CALLER_GROUPS,
       }),
     ),
     http.get("*/admin/users/:id", ({ params }) =>

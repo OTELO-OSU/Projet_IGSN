@@ -24,6 +24,9 @@ const user = (overrides: Partial<User>): User => ({
   orcid: null,
   status: "accepted",
   superAdmin: false,
+  institutionalOrganization: null,
+  institutionalOsu: null,
+  institutionalLaboratory: null,
   ...overrides,
 });
 

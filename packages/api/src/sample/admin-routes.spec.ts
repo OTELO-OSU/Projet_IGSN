@@ -95,6 +95,82 @@ describe("admin sample routes", () => {
     });
   });
 
+  describe("institutional groups snapshot", () => {
+    const CALLER_GROUPS = {
+      institutionalOrganization: "04vfs2w97",
+      institutionalOsu: "OTELo",
+      institutionalLaboratory: "CRPG",
+    };
+
+    const draft = {
+      name: "Basalte du Massif Central",
+      nature: "thin_section" as const,
+      type: null,
+      collectionMethod: null,
+    };
+
+    pgTest(
+      "should copy the caller's groups onto a new sample",
+      async ({ db }) => {
+        // Arrange
+        await insertUser(db, authenticatedCallerEmail, CALLER_GROUPS);
+        // Act
+        const res = await testClient(createApp(db).app).admin.samples.$post(
+          { json: draft },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(201);
+        expect(sampleResponseSchema.parse(await res.json()).data).toMatchObject(
+          CALLER_GROUPS,
+        );
+      },
+    );
+
+    pgTest(
+      "should keep the snapshot when the sample is edited",
+      async ({ db }) => {
+        // Arrange
+        await insertUser(db, authenticatedCallerEmail, CALLER_GROUPS);
+        const client = testClient(createApp(db).app);
+        const created = await client.admin.samples.$post(
+          { json: draft },
+          { headers: authHeader },
+        );
+        const { id, updatedAt } = sampleResponseSchema.parse(
+          await created.json(),
+        ).data;
+        // Act
+        const res = await client.admin.samples[":id"].$put(
+          {
+            param: { id },
+            json: {
+              ...draft,
+              name: "Basalte renommé",
+              expectedUpdatedAt: updatedAt,
+            },
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        expect(sampleResponseSchema.parse(await res.json()).data).toMatchObject(
+          { name: "Basalte renommé", ...CALLER_GROUPS },
+        );
+      },
+    );
+
+    pgTest("should refuse a body choosing its own groups", async ({ db }) => {
+      // Act
+      const res = await postSample(createApp(db).app, {
+        ...draft,
+        ...CALLER_GROUPS,
+      });
+      // Assert
+      expect(res.status).toBe(400);
+    });
+  });
+
   pgTest("should list created samples", async ({ db }) => {
     // Arrange
     const client = testClient(createApp(db).app);

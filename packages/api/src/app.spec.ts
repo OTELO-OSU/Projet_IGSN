@@ -54,6 +54,9 @@ describe("app", () => {
           sub: "test-token",
           email: callerEmail,
           orcid: null,
+          institutionalOrganization: null,
+          institutionalOsu: null,
+          institutionalLaboratory: null,
           status: seeded.status,
           superAdmin,
         });

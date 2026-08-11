@@ -138,5 +138,9 @@
   "facet_collection_curator": "Collection curator",
   "facet_age_min": "Min",
   "facet_age_max": "Max",
-  "facet_age_unit": "Unit"
+  "facet_age_unit": "Unit",
+  "sample_section_institution": "Institution",
+  "sample_field_institutional_organization": "Organization",
+  "sample_field_institutional_osu": "OSU",
+  "sample_field_institutional_laboratory": "Laboratory"
 }

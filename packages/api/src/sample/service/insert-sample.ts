@@ -1,3 +1,4 @@
+import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 
 import { v7 as uuidv7 } from "uuid";
@@ -18,6 +19,7 @@ import { locationColumns } from "./to-location.ts";
 export async function insertSample(
   db: Transactional<DB>,
   input: CreateSample,
+  groups?: InstitutionalGroups,
 ): Promise<Sample> {
   const row = await db
     .insertInto("sample")
@@ -33,6 +35,9 @@ export async function insertSample(
       collection_method_description: input.collectionMethodDescription ?? null,
       specific_name: input.specificName ?? null,
       availability: input.availability ?? null,
+      institutional_organization: groups?.institutionalOrganization ?? null,
+      institutional_osu: groups?.institutionalOsu ?? null,
+      institutional_laboratory: groups?.institutionalLaboratory ?? null,
       ...descriptionColumns(input.description),
       ...locationColumns(input.location),
       ...conditionColumns(input.condition),

@@ -12,11 +12,8 @@ type SampleTable = {
   // reads and writes as text.
   type: string | null;
   material: string | null;
-  // Igneous texture (flat controlled vocabulary); null unless the material is a
-  // plutonic/volcanic path. Not part of the material tree, so plain text.
+  // Not part of the material tree, so plain text.
   texture: string | null;
-  // Metamorphic facies (flat controlled vocabulary); null unless the material is
-  // metamorphic. Not part of the material tree, so plain text.
   metamorphic_facies: string | null;
   collection_method: string | null;
   collection_method_description: string | null;
@@ -113,8 +110,6 @@ type SampleTable = {
   sc_collection_context_description: string | null;
   availability: string | null;
   publication_year: number | null;
-  // Economic interest as a dot-path rooted at the yes/no/unknown answer
-  // (resource type / deposit / uranium sub-type follow under `yes`).
   economic_interest: string | null;
   economic_interest_elements: string[] | null;
   economic_resource_type_precision: string | null;
@@ -122,6 +117,10 @@ type SampleTable = {
   economic_deposit_description: string | null;
   // Null until the sample is published; then derived from the id with generateIgsnSuffix.
   igsn: string | null;
+  // ponytail: snapshot of the owner's groups at creation, kept even though the mock data derives the upper two from the labo, since real co-tutelle data will not be a clean tree
+  institutional_organization: string | null;
+  institutional_osu: string | null;
+  institutional_laboratory: string | null;
   published: Generated<boolean>;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
@@ -133,8 +132,7 @@ type SampleEditLockTable = {
   expires_at: Date;
 };
 
-// Related DOI links, one-to-many with sample (ADR 0017). Ids are app-generated
-// UUIDv7, so ordering by id is creation order.
+// Ids are app-generated UUIDv7, so ordering by id is creation order.
 type SampleLinkTable = {
   id: string;
   sample_id: string;
@@ -160,6 +158,9 @@ type UserTable = {
   firstname: string | null;
   // Self-declared ORCID iD, unique: the lookup key for ORCID logins (ADR 0020).
   orcid: string | null;
+  institutional_organization: string | null;
+  institutional_osu: string | null;
+  institutional_laboratory: string | null;
   status: Generated<string>;
   super_admin: Generated<boolean>;
   created_at: Generated<Date>;

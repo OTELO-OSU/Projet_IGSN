@@ -1,6 +1,7 @@
 import { HttpResponse, http } from "msw";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { CALLER_GROUPS } from "../test/caller-groups.ts";
 import { worker } from "../test/msw.ts";
 import { fetchCurrentUser } from "./api.ts";
 
@@ -40,6 +41,7 @@ const identity = {
   orcid: null,
   status: "accepted",
   superAdmin: false,
+  ...CALLER_GROUPS,
 };
 
 const ok = (body: Parameters<typeof HttpResponse.json>[0]) =>

@@ -25,6 +25,9 @@ describe("currentUser routes", () => {
       superAdmin: false,
       email: "test-token@example.com",
       orcid: null,
+      institutionalOrganization: null,
+      institutionalOsu: null,
+      institutionalLaboratory: null,
     });
   });
 
@@ -104,6 +107,134 @@ describe("currentUser routes", () => {
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "Invalid ORCID" });
   });
+
+  pgTest.for([
+    {
+      case: "a full trio",
+      json: {
+        institutionalOrganization: "04vfs2w97",
+        institutionalOsu: "OTELo",
+        institutionalLaboratory: "CRPG",
+      },
+      stored: {
+        institutionalOrganization: "04vfs2w97",
+        institutionalOsu: "OTELo",
+        institutionalLaboratory: "CRPG",
+      },
+    },
+    {
+      case: "a laboratory outside any OSU",
+      json: {
+        institutionalOrganization: "05hnb7x64",
+        institutionalLaboratory: "LAB-BRGM",
+      },
+      stored: {
+        institutionalOrganization: "05hnb7x64",
+        institutionalOsu: null,
+        institutionalLaboratory: "LAB-BRGM",
+      },
+    },
+  ])(
+    "should set the caller's groups from $case",
+    async ({ json, stored }, { db }) => {
+      // Arrange
+      const client = testClient(createApp(db).app);
+      // Act
+      const res = await client.admin.currentUser["institutional-groups"].$put(
+        { json },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(204);
+      const me = await client.admin.currentUser.$get(undefined, {
+        headers: authHeader,
+      });
+      expect(await me.json()).toMatchObject(stored);
+    },
+  );
+
+  pgTest(
+    "should answer 400 on a laboratory outside the submitted OSU",
+    async ({ db }) => {
+      // Act
+      const res = await testClient(createApp(db).app).admin.currentUser[
+        "institutional-groups"
+      ].$put(
+        {
+          json: {
+            institutionalOrganization: "04kdfz702",
+            institutionalOsu: "OSUG",
+            institutionalLaboratory: "GEOSCIENCES-RENNES",
+          },
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({
+        error: "Invalid institutional groups",
+      });
+    },
+  );
+
+  pgTest(
+    "should answer 401 to an unauthenticated groups set",
+    async ({ db }) => {
+      // Act
+      const res = await createApp(db).app.request(
+        "/admin/currentUser/institutional-groups",
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            institutionalOrganization: "04vfs2w97",
+            institutionalLaboratory: "CRPG",
+          }),
+        },
+      );
+      // Assert
+      expect(res.status).toBe(401);
+    },
+  );
+
+  pgTest(
+    "should answer 409 and keep the stored groups on a second set",
+    async ({ db }) => {
+      // Arrange
+      const client = testClient(createApp(db).app);
+      await client.admin.currentUser["institutional-groups"].$put(
+        {
+          json: {
+            institutionalOrganization: "04vfs2w97",
+            institutionalOsu: "OTELo",
+            institutionalLaboratory: "CRPG",
+          },
+        },
+        { headers: authHeader },
+      );
+      // Act
+      const res = await client.admin.currentUser["institutional-groups"].$put(
+        {
+          json: {
+            institutionalOrganization: "04kdfz702",
+            institutionalOsu: "OSUG",
+            institutionalLaboratory: "ISTERRE",
+          },
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(409);
+      const me = await client.admin.currentUser.$get(undefined, {
+        headers: authHeader,
+      });
+      expect(await me.json()).toMatchObject({
+        institutionalOrganization: "04vfs2w97",
+        institutionalOsu: "OTELo",
+        institutionalLaboratory: "CRPG",
+      });
+    },
+  );
 
   pgTest(
     "should answer 401 when Keycloak reports the session revoked",

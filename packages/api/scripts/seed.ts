@@ -27,6 +27,11 @@ type SeedUser = {
   orcid?: string;
   status: UserStatus;
   superAdmin: boolean;
+  // Must satisfy setInstitutionalGroupsSchema, or the seed writes affiliations
+  // the api itself would refuse.
+  institutionalOrganization: string | null;
+  institutionalOsu: string | null;
+  institutionalLaboratory: string | null;
 };
 
 export const researcherKeySchema = z.enum([
@@ -44,7 +49,9 @@ export type ResearcherKey = z.infer<typeof researcherKeySchema>;
 
 // Ids are static v7-shaped uuids like the sample ids; the api adopts these rows
 // by email when the real account signs in (see src/user/repository.ts), which is
-// what keeps the ownership.
+// what keeps the ownership. Everyone but theo carries institutional groups, so
+// signing in lands on the dashboard rather than on the groups gate; theo is the
+// first-login fixture.
 export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   marie: {
     id: "01980e2d-6f9b-7000-8000-000000000001",
@@ -54,6 +61,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     orcid: "0000-0001-5109-3700",
     status: "accepted",
     superAdmin: false,
+    institutionalOrganization: "04vfs2w97",
+    institutionalOsu: "OTELo",
+    institutionalLaboratory: "CRPG",
   },
   jean: {
     id: "01980e2d-6f9b-7000-8000-000000000002",
@@ -62,6 +72,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Jean",
     status: "accepted",
     superAdmin: false,
+    institutionalOrganization: "04vfs2w97",
+    institutionalOsu: "OTELo",
+    institutionalLaboratory: "GEORESSOURCES",
   },
   sophie: {
     id: "01980e2d-6f9b-7000-8000-000000000003",
@@ -70,6 +83,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Sophie",
     status: "accepted",
     superAdmin: false,
+    institutionalOrganization: "04kdfz702",
+    institutionalOsu: "OSUG",
+    institutionalLaboratory: "ISTERRE",
   },
   pierre: {
     id: "01980e2d-6f9b-7000-8000-000000000004",
@@ -78,6 +94,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Pierre",
     status: "accepted",
     superAdmin: false,
+    institutionalOrganization: "04vfs2w97",
+    institutionalOsu: "OTELo",
+    institutionalLaboratory: "CRPG",
   },
   camille: {
     id: "01980e2d-6f9b-7000-8000-000000000005",
@@ -86,6 +105,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Camille",
     status: "accepted",
     superAdmin: false,
+    institutionalOrganization: "04kdfz702",
+    institutionalOsu: "OSUR",
+    institutionalLaboratory: "GEOSCIENCES-RENNES",
   },
   luc: {
     id: "01980e2d-6f9b-7000-8000-000000000006",
@@ -94,6 +116,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Luc",
     status: "accepted",
     superAdmin: false,
+    institutionalOrganization: "05hnb7x64",
+    institutionalOsu: null,
+    institutionalLaboratory: "LAB-BRGM",
   },
   nadia: {
     id: "01980e2d-6f9b-7000-8000-000000000007",
@@ -102,6 +127,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Nadia",
     status: "accepted",
     superAdmin: true,
+    institutionalOrganization: "04vfs2w97",
+    institutionalOsu: "OTELo",
+    institutionalLaboratory: "CRPG",
   },
   theo: {
     id: "01980e2d-6f9b-7000-8000-000000000008",
@@ -110,6 +138,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Theo",
     status: "pending",
     superAdmin: false,
+    institutionalOrganization: null,
+    institutionalOsu: null,
+    institutionalLaboratory: null,
   },
   chloe: {
     id: "01980e2d-6f9b-7000-8000-000000000009",
@@ -118,6 +149,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Chloe",
     status: "rejected",
     superAdmin: false,
+    institutionalOrganization: "04vfs2w97",
+    institutionalOsu: "OTELo",
+    institutionalLaboratory: "CRPG",
   },
 };
 
@@ -130,15 +164,34 @@ async function seedOwners(
   await db
     .insertInto("user")
     .values(
-      owners.map(({ superAdmin, ...owner }) => ({
-        ...owner,
-        super_admin: superAdmin,
-      })),
+      owners.map(
+        ({
+          superAdmin,
+          institutionalOrganization,
+          institutionalOsu,
+          institutionalLaboratory,
+          ...owner
+        }) => ({
+          ...owner,
+          super_admin: superAdmin,
+          institutional_organization: institutionalOrganization,
+          institutional_osu: institutionalOsu,
+          institutional_laboratory: institutionalLaboratory,
+        }),
+      ),
     )
     .onConflict((oc) =>
       oc.column("email").doUpdateSet((eb) => ({
         status: eb.ref("excluded.status"),
         super_admin: eb.ref("excluded.super_admin"),
+        // Re-applied like the moderation state: the api sets groups once and
+        // never again, so without this a previous run's groups would stick to
+        // theo and the first-login e2e would pass only on a virgin database.
+        institutional_organization: eb.ref(
+          "excluded.institutional_organization",
+        ),
+        institutional_osu: eb.ref("excluded.institutional_osu"),
+        institutional_laboratory: eb.ref("excluded.institutional_laboratory"),
       })),
     )
     .execute();
@@ -179,7 +232,7 @@ export async function seed(
     .values(
       parsed.map(
         ({
-          owner: _owner,
+          owner,
           collaborators: _collaborators,
           material,
           collectionMethod,
@@ -202,6 +255,13 @@ export async function seed(
           ...locationColumns(location),
           ...descriptionColumns(description),
           ...scientificContextColumns(scientificContext),
+          // Snapshot of the owner's affiliation, the way insert-sample.ts copies
+          // the creator's groups.
+          institutional_organization:
+            MOCK_RESEARCHERS[owner].institutionalOrganization,
+          institutional_osu: MOCK_RESEARCHERS[owner].institutionalOsu,
+          institutional_laboratory:
+            MOCK_RESEARCHERS[owner].institutionalLaboratory,
         }),
       ),
     )

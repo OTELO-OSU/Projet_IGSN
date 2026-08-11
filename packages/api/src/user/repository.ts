@@ -17,6 +17,9 @@ const USER_COLUMNS = [
   "orcid",
   "status",
   "super_admin as superAdmin",
+  "institutional_organization as institutionalOrganization",
+  "institutional_osu as institutionalOsu",
+  "institutional_laboratory as institutionalLaboratory",
 ] as const;
 
 // Rows come back parsed, never cast: status is a text column (Zod owns the
@@ -44,8 +47,6 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .executeTakeFirstOrThrow();
         return userSchema.parse(row);
       }),
-    // Filtering and pagination run in the query, so the total describes the
-    // whole filtered set rather than the page (server-side filtering rule).
     list: ({ page, perPage, status }) =>
       withTransaction(db, async (trx) => {
         // A builder is immutable, so both queries branch off this one.
@@ -131,6 +132,23 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
               ),
             ),
           )
+          .returning(USER_COLUMNS)
+          .executeTakeFirst(),
+      );
+      return row ? userSchema.parse(row) : null;
+    },
+    // ponytail: one guarded statement, no read-then-write; the null guard in the where makes the first set win and answers 409 for the rest
+    setInstitutionalGroups: async (userId, groups) => {
+      const row = await withTransaction(db, (trx) =>
+        trx
+          .updateTable("user")
+          .set({
+            institutional_organization: groups.institutionalOrganization,
+            institutional_osu: groups.institutionalOsu ?? null,
+            institutional_laboratory: groups.institutionalLaboratory,
+          })
+          .where("id", "=", userId)
+          .where("institutional_organization", "is", null)
           .returning(USER_COLUMNS)
           .executeTakeFirst(),
       );

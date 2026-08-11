@@ -44,6 +44,9 @@ describe("currentUser", () => {
         firstname: "Jean",
         name: "Martin",
         orcid: null,
+        institutionalOrganization: null,
+        institutionalOsu: null,
+        institutionalLaboratory: null,
         status: "pending",
         superAdmin: false,
       });
@@ -65,6 +68,9 @@ describe("currentUser", () => {
       firstname: null,
       name: null,
       orcid: null,
+      institutionalOrganization: null,
+      institutionalOsu: null,
+      institutionalLaboratory: null,
       status: "pending",
       superAdmin: false,
     });

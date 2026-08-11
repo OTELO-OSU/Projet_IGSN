@@ -1,5 +1,11 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
+import {
+  laboratoryLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
+import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
+
 import { AgeView, hasAge } from "#/domain/samples/age-view.tsx";
 import { BreadcrumbFieldRow } from "#/domain/samples/breadcrumb-field-row.tsx";
 import { ConditionView } from "#/domain/samples/condition-view.tsx";
@@ -37,6 +43,9 @@ export function SampleView({
     description,
     condition,
     scientificContext,
+    institutionalOrganization,
+    institutionalOsu,
+    institutionalLaboratory,
     location,
     security,
     availability,
@@ -131,6 +140,29 @@ export function SampleView({
       id: "scientific-context",
       title: m.sample_section_scientific_context(),
       content: <ScientificContextView scientificContext={scientificContext} />,
+    },
+    institutionalOrganization !== null && {
+      id: "institution",
+      title: m.sample_section_institution(),
+      content: (
+        <FieldRows>
+          <FieldRow
+            label={m.sample_field_institutional_organization()}
+            value={organizationLabel(institutionalOrganization)}
+          />
+          <FieldRow
+            label={m.sample_field_institutional_osu()}
+            value={institutionalOsu && osuLabel(institutionalOsu)}
+          />
+          <FieldRow
+            label={m.sample_field_institutional_laboratory()}
+            value={
+              institutionalLaboratory &&
+              laboratoryLabel(institutionalLaboratory)
+            }
+          />
+        </FieldRows>
+      ),
     },
     hasAge(age)
       ? {

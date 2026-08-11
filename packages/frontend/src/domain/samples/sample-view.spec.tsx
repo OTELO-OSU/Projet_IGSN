@@ -18,6 +18,9 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
   name: "Basalt 42",
   igsn: "0123456789ABCDEFGHJKMNPQRS",
+  institutionalOrganization: null,
+  institutionalOsu: null,
+  institutionalLaboratory: null,
   nature: "rock_powder",
   type: null,
   material: null,
@@ -341,6 +344,33 @@ describe("SampleView", () => {
 
     await expect
       .element(screen.getByRole("heading", { name: "Economic interest" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show the declarer's institution as its own section", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          institutionalOrganization: "04vfs2w97",
+          institutionalOsu: "OTELo",
+          institutionalLaboratory: "CRPG",
+        })}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Institution" }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Université de Lorraine"))
+      .toBeInTheDocument();
+  });
+
+  it("should omit the Institution section when the sample carries no group", async () => {
+    const screen = await render(<SampleView sample={sample()} />);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Institution" }))
       .not.toBeInTheDocument();
   });
 

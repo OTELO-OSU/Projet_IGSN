@@ -1,10 +1,8 @@
 import { z } from "zod";
 
+import { institutionalGroupsFields } from "../institutional-group/model.ts";
 import { userStatusSchema } from "./model.ts";
 
-// The GET /admin/currentUser contract: the verified token claims echoed by the api,
-// plus the caller's stored ORCID. Shared so the admin app parses the response
-// at the boundary instead of hand-writing the shape.
 export const currentUserSchema = z.object({
   sub: z.string(),
   username: z.string().optional(),
@@ -13,5 +11,6 @@ export const currentUserSchema = z.object({
   orcid: z.string().nullable(),
   status: userStatusSchema,
   superAdmin: z.boolean(),
+  ...institutionalGroupsFields,
 });
 export type CurrentUser = z.infer<typeof currentUserSchema>;

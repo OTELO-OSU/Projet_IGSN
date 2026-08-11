@@ -10,6 +10,7 @@ import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
+import { CALLER_GROUPS } from "../../test/caller-groups.ts";
 import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
@@ -42,8 +43,10 @@ function fakeApi(failWrites = false) {
       HttpResponse.json({
         sub: "user-1",
         name: "Marie Dupont",
+        orcid: null,
         status: "accepted",
         superAdmin: false,
+        ...CALLER_GROUPS,
       }),
     ),
     http.post("*/samples", async ({ request }) => {

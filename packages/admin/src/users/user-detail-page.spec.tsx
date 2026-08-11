@@ -9,6 +9,7 @@ import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
+import { CALLER_GROUPS } from "../../test/caller-groups.ts";
 import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
@@ -50,6 +51,7 @@ function fakeApi({
     orcid: null,
     status,
     superAdmin: false,
+    ...CALLER_GROUPS,
   };
   const calls: string[] = [];
   worker.use(
@@ -60,6 +62,7 @@ function fakeApi({
         orcid: null,
         status: "accepted",
         superAdmin: true,
+        ...CALLER_GROUPS,
       }),
     ),
     http.put("*/admin/users/:id/status", async ({ request }) => {
@@ -106,6 +109,16 @@ describe("UserDetailPage", () => {
       .toBeVisible();
     await expect.element(screen.getByText("Pending")).toBeVisible();
     expect(screen.getByRole("textbox").elements()).toHaveLength(0);
+  });
+
+  it("should show the institution the user belongs to", async () => {
+    const { screen } = await renderUserPage();
+
+    await expect
+      .element(screen.getByText("Université de Lorraine"))
+      .toBeVisible();
+    await expect.element(screen.getByText(/\(OTELo\)/)).toBeVisible();
+    await expect.element(screen.getByText(/\(CRPG\)/)).toBeVisible();
   });
 
   it("should offer both decisions on a pending account", async () => {

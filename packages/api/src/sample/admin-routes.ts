@@ -91,7 +91,7 @@ export function createSampleAdminRoutes(
       .post("/", validateCreateSampleBody, async (c) => {
         const sample = await repository.create(
           c.req.valid("json"),
-          c.get("user").id,
+          c.get("user"),
         );
         return c.json({ data: sample }, 201);
       })

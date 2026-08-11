@@ -16,6 +16,9 @@ export function insertUser(
     status?: UserStatus;
     superAdmin?: boolean;
     createdAt?: Date;
+    institutionalOrganization?: string;
+    institutionalOsu?: string;
+    institutionalLaboratory?: string;
   } = {},
 ): Promise<{ id: string }> {
   return db
@@ -29,6 +32,9 @@ export function insertUser(
       status: overrides.status,
       super_admin: overrides.superAdmin,
       created_at: overrides.createdAt,
+      institutional_organization: overrides.institutionalOrganization ?? null,
+      institutional_osu: overrides.institutionalOsu ?? null,
+      institutional_laboratory: overrides.institutionalLaboratory ?? null,
     })
     .returning("id")
     .executeTakeFirstOrThrow();

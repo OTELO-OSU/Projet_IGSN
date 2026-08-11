@@ -22,6 +22,7 @@ export const RESEARCHERS = {
     email: "camille.petit@univ-lorraine.fr",
   },
   luc: { username: "luc.moreau", email: "luc.moreau@univ-lorraine.fr" },
+  theo: { username: "theo.roux", email: "theo.roux@univ-lorraine.fr" },
 } satisfies Record<string, Researcher>;
 
 export async function signInAsResearcher(page: Page, researcher: Researcher) {
