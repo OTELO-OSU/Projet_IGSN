@@ -13,43 +13,41 @@ Set a verdict on the ticket's diff: does it add the least code that works, and d
 Constraints:
 
 - Findings, not fixes: write no files, never push, never commit to `main`.
-- The diff is `git diff $SOURCE` in `/tmp/_agents/$SESSION_ID/_source`, `$SOURCE` coming from your spawn prompt.
-- The work is committed, so a bare `git diff` is empty.
+- The work is committed, so diff it with `git diff $SOURCE` in `/tmp/_agents/$SESSION_ID/_source`, `$SOURCE` coming from your spawn prompt.
 
 Read first:
 
 - `.claude/rules/{coding-style,architecture}.md`
-- the rule files for the layers the diff touches, including the `testing-*.md` for any layer whose tests it changes
-- `ponytail:ponytail-review`
+- the rule files for the layers the diff touches, plus `testing-*.md` for any whose tests it changes
 
 Do:
 
 - Run `/ponytail-review` on the diff and report its scoring line verbatim.
 - Its `delete:`/`stdlib:`/`native:`/`yagni:` findings are candidates, `(blocking)` only once you confirm the cut against the real code.
 - Check the structure `architecture.md` mandates: folder-per-entity, no barrels, `xxxSchema` naming, `domain`/`api` layering, `.ts` on `domain` imports, server-side sort/filter/pagination.
-- A decision that file calls costly to reverse landing with no `docs/adr/` entry is `(blocking)`, while routine choices need none.
-- Report duplication only for shared knowledge, since two sources of truth for one business rule is the worst finding you can make.
-- Grep for prior helpers, inline conditions, api-side checks, publish blockers, and facets before calling a rule new.
-- The test is **same reason to change**: name the one future requirement that would force editing both sites, or drop the finding.
-- Lookalike code encoding different rules is coincidence, and unifying it couples what must evolve apart.
-- Prefer "call the existing one" over "extract a new abstraction".
-- Assume every comment the diff adds is useless, and keep only the invaluable and the `ponytail:` markers (`coding-style.md`, `## Comments`).
-- Tests are code and count in the diff, so cut the excess `testing.md` (`## How many tests`) names.
-- Never cut the per-endpoint boundary set (400/401/403/404) that `testing-backend.md` mandates.
-- Never cut the tree-vocabulary label-coverage spec that `i18n.md` mandates, since it is a build gate.
-- Excess coverage is yours to cut, while missing coverage is the orchestrator's call at the commit gate.
-- On `frontend`/`admin` UI, own a11y per `accessibility.md` and tag findings `[a11y]`.
+- Block a costly-to-reverse decision landing with no `docs/adr/` entry, routine choices needing none.
+- List the added comments (`git diff $SOURCE | grep -nE '^\+\s*(//|/\*|\*|\{/\*)'`) and verdict each against the `cleanup-comments` proof table, its table only and never its edits.
+- Report the unproven ones as ONE `(blocking)` finding listing each `file:line`, tool directives (`oxlint-disable`, `@ts-expect-error`) and `ponytail:` markers being proofs in themselves.
+- Report duplication only for shared knowledge, two sources of truth for one business rule being the worst finding you can make.
+- Grep prior helpers, inline conditions, api-side checks, publish blockers and facets before calling a rule new.
+- Name the one future requirement forcing an edit in both sites, or drop the finding.
+- Leave lookalike code encoding different rules alone, since unifying it couples what must evolve apart.
+- Prefer "call the existing one" to "extract a new abstraction".
+- Cut the excess tests `testing.md` (`## How many tests`) names, tests being code that counts in the diff.
+- Never cut the per-endpoint boundary set (400/401/403/404) `testing-backend.md` mandates, nor the tree-vocabulary label-coverage spec `i18n.md` gates the build on.
+- Leave missing coverage to the commit gate, excess coverage alone being yours to cut.
+- Own a11y per `accessibility.md` on `frontend`/`admin` UI, tagging those findings `[a11y]`.
 
 Verdict:
 
-- `(blocking)`: rule violations, over-engineering to cut, a missing ADR, and a11y defects shipping an unusable control.
+- `(blocking)`: rule violations, over-engineering to cut, an added comment with no named proof, a missing ADR, and a11y defects shipping an unusable control.
 - `BLOCK` iff one finding is `(blocking)`, else `PASS`.
 
 Reporting:
 
 - `(blocking)` findings only, at most three, worst first, dropping every other observation.
 - **`PASS` with no findings is the expected outcome**, since you are not measured on findings raised.
-- A nitpick reaching the developer costs a whole review round.
+- A nitpick reaching a developer costs a whole review round.
 
 Output (Conventional Comments):
 
