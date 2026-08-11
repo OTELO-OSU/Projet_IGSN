@@ -1,4 +1,9 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import {
+  laboratoryLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
+import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { m } from "#/paraglide/messages.js";
@@ -42,6 +47,24 @@ function UserDetailPage() {
         <dd>{user.email}</dd>
         <dt className="font-medium">{m.column_status()}</dt>
         <dd>{userStatusLabel(user.status)}</dd>
+        <dt className="font-medium">{m.field_institutional_organization()}</dt>
+        <dd>
+          {user.institutionalOrganization === null
+            ? m.user_value_missing()
+            : organizationLabel(user.institutionalOrganization)}
+        </dd>
+        <dt className="font-medium">{m.column_institutional_osu()}</dt>
+        <dd>
+          {user.institutionalOsu === null
+            ? m.user_value_missing()
+            : osuLabel(user.institutionalOsu)}
+        </dd>
+        <dt className="font-medium">{m.field_institutional_laboratory()}</dt>
+        <dd>
+          {user.institutionalLaboratory === null
+            ? m.user_value_missing()
+            : laboratoryLabel(user.institutionalLaboratory)}
+        </dd>
       </dl>
 
       {/* No special case for a super admin's row or the moderator's own (PO

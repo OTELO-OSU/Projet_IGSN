@@ -33,10 +33,10 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
       withTransaction(db, (trx) => getPublishedSampleByIgsn(trx, igsn)),
     // Sample and owner in one transaction: an unowned sample would be
     // unreachable for everyone, including its creator.
-    create: (input, ownerId) =>
+    create: (input, owner) =>
       withTransaction(db, async (trx) => {
-        const sample = await insertSample(trx, input);
-        await insertSampleOwner(trx, sample.id, ownerId);
+        const sample = await insertSample(trx, input, owner);
+        await insertSampleOwner(trx, sample.id, owner.id);
         return sample;
       }),
     update: (id, input) =>

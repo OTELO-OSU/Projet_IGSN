@@ -1,3 +1,4 @@
+import { setInstitutionalGroupsSchema } from "@projet-igsn/domain/institutional-group/institutional-groups-validator";
 import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
 import { orcidSchema } from "@projet-igsn/domain/user/orcid";
 import {
@@ -10,7 +11,6 @@ import { z } from "zod";
 import { validateUuidIdParam } from "../uuid-param.ts";
 
 const searchUsersQuerySchema = z.strictObject({
-  // Absent browses the whole directory; present still has to be a real term.
   search: z.string().trim().min(2).max(MAX_SEARCH_LENGTH).optional(),
   excludeCollaboratorsOf: z.uuid().optional(),
 });
@@ -23,7 +23,6 @@ export const validateSearchUsersQuery = validator("query", (value, c) => {
   return parsed.data;
 });
 
-// null clears the orcid; strict() rejects any other field (mass assignment).
 const setOrcidSchema = z.object({ orcid: orcidSchema.nullable() }).strict();
 
 export const validateSetOrcidBody = validator("json", (value, c) => {
@@ -33,6 +32,17 @@ export const validateSetOrcidBody = validator("json", (value, c) => {
   }
   return parsed.data;
 });
+
+export const validateSetInstitutionalGroupsBody = validator(
+  "json",
+  (value, c) => {
+    const parsed = setInstitutionalGroupsSchema.safeParse(value);
+    if (!parsed.success) {
+      return c.json({ error: "Invalid institutional groups" }, 400);
+    }
+    return parsed.data;
+  },
+);
 
 export const validateUserIdParam = validateUuidIdParam("Invalid user id");
 

@@ -12,6 +12,7 @@ import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
+import { CALLER_GROUPS } from "../../test/caller-groups.ts";
 import { FakeXhr } from "../../test/fake-xhr.ts";
 import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
@@ -156,6 +157,7 @@ function fakeApi(
         orcid: null,
         status: callerStatus,
         superAdmin: false,
+        ...CALLER_GROUPS,
       });
     }),
     http.put("*/samples/:id", async ({ request }) => {

@@ -152,6 +152,12 @@ describe("admin user search routes", () => {
 
 // requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization
 // header, and the bearer value stands for the user (see provisionUser).
+const NO_GROUPS = {
+  institutionalOrganization: null,
+  institutionalOsu: null,
+  institutionalLaboratory: null,
+};
+
 const authHeader = { Authorization: "Bearer moderator" };
 
 const insertResearchers = (db: Parameters<typeof createApp>[0]) =>
@@ -235,6 +241,7 @@ describe("admin user routes", () => {
       name: "Pending",
       firstname: "Paul",
       orcid: null,
+      ...NO_GROUPS,
       status: "pending",
       superAdmin: false,
     });
@@ -283,6 +290,7 @@ describe("admin user routes", () => {
       name: "Pending",
       firstname: "Paul",
       orcid: null,
+      ...NO_GROUPS,
       status: "accepted",
       superAdmin: false,
     });
@@ -452,6 +460,7 @@ describe("admin user routes", () => {
         name: "Accepted",
         firstname: "Anne",
         orcid: null,
+        ...NO_GROUPS,
         status: "rejected",
         superAdmin: false,
       });

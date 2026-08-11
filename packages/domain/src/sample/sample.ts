@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { igsnSchema } from "../igsn/model.ts";
+import { institutionalGroupsFields } from "../institutional-group/model.ts";
 import { ageSchema } from "./age/model.ts";
 import { updateSampleAttachmentSchema } from "./attachment/attachment-validator.ts";
 import { sampleAttachmentSchema } from "./attachment/model.ts";
@@ -30,40 +31,28 @@ export const sampleSchema = z.object({
   id: z.uuid(),
   name: nameSchema,
   nature: natureSchema,
-  // Null until the sample is classified.
   type: sampleTypeSchema.nullable(),
   material: materialPathSchema.nullable(),
-  // Igneous texture; only set for a plutonic/volcanic material (see texturesFor),
-  // null otherwise. Not part of the material tree.
+  // Not part of the material tree.
   texture: textureSchema.nullable(),
-  // Metamorphic facies; only set for a metamorphic material (see faciesFor),
-  // null otherwise. Not part of the material tree, but required to publish a
-  // metamorphic sample (see sample-publish-blockers).
+  // Not part of the material tree, but required to publish a metamorphic
+  // sample (see sample-publish-blockers).
   metamorphicFacies: metamorphicFaciesSchema.nullable(),
-  // Null until the collection method is recorded.
   collectionMethod: collectionMethodSchema.nullable(),
-  // Free-text detail on the collection method; optional, null when not provided.
   collectionMethodDescription: nameSchema.nullable(),
-  // Precise sample designation; optional, null when not provided.
   specificName: nameSchema.nullable(),
-  // Geographic location; null when the sample has none (see location/model.ts).
   location: locationSchema.nullable(),
-  // Physical description; null when the sample has none (see description/model.ts).
   description: descriptionSchema.nullable(),
-  // Storage/conditioning state; null when the sample has none (see condition/model.ts).
   condition: conditionSchema.nullable(),
-  // Scientific context (provenance, programme or collection); null when the
-  // sample has none (see scientific-context/model.ts). Defaulted so a payload
-  // predating the feature reads as "no context recorded".
+  // Defaulted so a payload predating the feature reads as "no context
+  // recorded".
   scientificContext: scientificContextSchema.nullable().default(null),
-  // Geological age; null until recorded (flat columns on the sample table).
   // Defaulted so a payload without the key reads as "no age recorded".
   age: ageSchema.nullable().default(null),
   // Related DOI links and attached files (ADR 0017); empty arrays when none.
   // Defaulted so payloads predating the feature keep parsing.
   links: z.array(sampleLinkSchema).default([]),
   attachments: z.array(sampleAttachmentSchema).default([]),
-  // Safety hazards; null when the sample has none (see security/model.ts).
   security: securitySchema.nullable(),
   // Whether the physical sample still exists; null on a draft, required to
   // publish (see sample-publish-blockers).
@@ -76,13 +65,14 @@ export const sampleSchema = z.object({
   // Chemical elements of interest; only meaningful for a mineral_and_ore sample,
   // empty otherwise.
   economicInterestElements: z.array(elementSchema).default([]),
-  // Free-text economic detail; null when not provided.
   economicResourceTypePrecision: nameSchema.nullable(),
   economicDepositName: nameSchema.nullable(),
   economicDepositDescription: nameSchema.nullable(),
-  // Null until the sample is published. Lax schema: accepts both minted
-  // suffixes and legacy IGSNs imported from the old registry.
+  // Lax schema: accepts both minted suffixes and legacy IGSNs imported from
+  // the old registry.
   igsn: igsnSchema.nullable(),
+  // ponytail: snapshot of the owner's groups at creation, never edited afterwards, so it stays out of createSampleSchema
+  ...institutionalGroupsFields,
   published: z.boolean(),
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
@@ -99,39 +89,25 @@ export const createSampleSchema = z
     nature: natureSchema,
     type: sampleTypeSchema.nullable().default(null),
     material: materialPathSchema.nullish(),
-    // Optional; valid only for the material's igneous branch (see texturesFor).
     texture: textureSchema.nullish(),
-    // Optional at creation; valid only for a metamorphic material (see faciesFor).
-    // Required only at publish, not at creation (like material).
     metamorphicFacies: metamorphicFaciesSchema.nullish(),
-    // Optional at creation, like material: omitted or null on a draft.
     collectionMethod: collectionMethodSchema.nullish(),
     collectionMethodDescription: nameSchema.nullish(),
     specificName: nameSchema.nullish(),
     location: locationSchema.nullish(),
-    // Optional at creation; its collection date is required only at publish
-    // (see sample-publish-blockers).
     description: descriptionSchema.nullish(),
-    // Optional at creation and at publication (no publish blocker).
     condition: conditionSchema.nullish(),
-    // Optional at creation; the provenance status and its branch's mandatory
-    // fields are required only at publish (see sample-publish-blockers).
     scientificContext: scientificContextSchema.nullish(),
     age: ageSchema.nullish(),
     // Related DOI links, replaced wholesale on update.
     links: z.array(createSampleLinkSchema).optional(),
     // Attachment metadata, reconciled wholesale on update like links: a
     // listed attachment keeps or updates its description, an unlisted one is
-    // deleted with its content. The content itself uploads through the
-    // dedicated attachment route first; this payload references the id.
+    // deleted with its content.
     attachments: z.array(updateSampleAttachmentSchema).optional(),
-    // Safety hazards; optional at creation and at publication.
     security: securitySchema.nullish(),
-    // Optional on a draft (null); required only at publish (see
-    // sample-publish-blockers).
     availability: availabilitySchema.nullish(),
-    // Economic interest; all optional at creation and publication (no publish
-    // blocker). Detail columns are kept only under a `yes` path (see the API columns).
+    // Detail columns are kept only under a `yes` path (see the API columns).
     economicInterest: economicInterestSchema.nullish(),
     economicInterestElements: z.array(elementSchema).optional(),
     economicResourceTypePrecision: nameSchema.nullish(),
@@ -139,8 +115,8 @@ export const createSampleSchema = z
     economicDepositDescription: nameSchema.nullish(),
   })
   .superRefine((value, ctx) => {
-    // A texture must match the selected material's branch. This guards the
-    // "texture resets when the material changes" invariant server-side.
+    // This guards the "texture resets when the material changes" invariant
+    // server-side.
     if (
       value.texture != null &&
       !texturesFor(value.material ?? null).includes(value.texture)
@@ -163,8 +139,8 @@ export const createSampleSchema = z
       });
     }
   })
-  // A facies is only valid when the material is metamorphic. Guards the
-  // "facies resets when the material changes" invariant server-side.
+  // Guards the "facies resets when the material changes" invariant
+  // server-side.
   .superRefine((value, ctx) => {
     if (value.metamorphicFacies == null) return;
     if (!faciesFor(value.material ?? null).includes(value.metamorphicFacies)) {

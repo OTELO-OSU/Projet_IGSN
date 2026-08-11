@@ -120,6 +120,9 @@ describe("requireAuth", () => {
         orcid: null,
         status: "pending",
         superAdmin: false,
+        institutionalOrganization: null,
+        institutionalOsu: null,
+        institutionalLaboratory: null,
       });
     },
   );

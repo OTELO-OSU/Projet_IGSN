@@ -7,6 +7,12 @@ import { insertSampleCollaborator } from "../user-sample/insert-sample-collabora
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { createUserRepository } from "./repository.ts";
 
+const NO_GROUPS = {
+  institutionalOrganization: null,
+  institutionalOsu: null,
+  institutionalLaboratory: null,
+};
+
 const claims = {
   email: "jean.martin@univ-lorraine.fr",
   name: "Martin",
@@ -22,6 +28,7 @@ describe("createUserRepository", () => {
       id: expect.any(String),
       ...claims,
       orcid: null,
+      ...NO_GROUPS,
       status: "pending",
       superAdmin: false,
     });
@@ -41,6 +48,7 @@ describe("createUserRepository", () => {
       name: null,
       firstname: null,
       orcid: null,
+      ...NO_GROUPS,
       status: "pending",
       superAdmin: false,
     });
@@ -144,6 +152,7 @@ describe("createUserRepository", () => {
       id: "01890a5d-ac96-774b-bcce-b302099a8058",
       ...claims,
       orcid: null,
+      ...NO_GROUPS,
       status: "accepted",
       superAdmin: true,
     });
@@ -411,6 +420,7 @@ describe("createUserRepository", () => {
       name: "Accepted",
       firstname: "Anne",
       orcid: null,
+      ...NO_GROUPS,
       status: "accepted",
       superAdmin: false,
     });
@@ -464,6 +474,7 @@ describe("createUserRepository", () => {
       name: "Pending",
       firstname: "Paul",
       orcid: null,
+      ...NO_GROUPS,
       status: "pending",
       superAdmin: false,
     });
@@ -490,6 +501,7 @@ describe("createUserRepository", () => {
       name: "Pending",
       firstname: "Paul",
       orcid: null,
+      ...NO_GROUPS,
       status: "accepted",
       superAdmin: false,
     });
@@ -499,6 +511,7 @@ describe("createUserRepository", () => {
       name: "Accepted",
       firstname: "Anne",
       orcid: null,
+      ...NO_GROUPS,
       status: "rejected",
       superAdmin: false,
     });

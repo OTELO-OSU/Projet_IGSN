@@ -8,10 +8,10 @@ import { m } from "#/paraglide/messages.js";
 import { AccountGate } from "./account-gate.tsx";
 import { AppLayout } from "./app-layout.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
+import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
 import { OrcidAccessGate } from "./orcid-access-gate.tsx";
 
-// sign-in redirects to Keycloak, whose own login page offers the identity
-// providers. The SSO owns that list (GaiaData's differs from the mock realm's),
+// The SSO owns that list (GaiaData's differs from the mock realm's),
 // so the app sends no kc_idp_hint.
 export function AuthGate({ children }: { children?: ReactNode }) {
   const auth = useAuth();
@@ -50,7 +50,9 @@ export function AuthGate({ children }: { children?: ReactNode }) {
   // an unauthenticated render has no token (and no QueryClient) for.
   return (
     <Gate onSignOut={signOut}>
-      <AppLayout onSignOut={signOut}>{children}</AppLayout>
+      <InstitutionalGroupsGate onSignOut={signOut}>
+        <AppLayout onSignOut={signOut}>{children}</AppLayout>
+      </InstitutionalGroupsGate>
     </Gate>
   );
 }

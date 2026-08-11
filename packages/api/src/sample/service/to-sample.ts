@@ -8,8 +8,6 @@ import type { DB } from "../../db.ts";
 
 import { toLocation } from "./to-location.ts";
 
-// A measurement exists only when both halves do; the schema then enforces the
-// value/unit coupling on parse.
 function measurement(value: number | null, unit: string | null) {
   return value !== null && unit !== null ? { value, unit } : null;
 }
@@ -54,8 +52,7 @@ function toDescription(row: Selectable<DB["sample"]>) {
 }
 
 // Flat condition columns -> nested domain condition (same storage pattern as
-// the description, ADR 0016). A numeric
-// reading nests under its category, so it only exists when the category does.
+// the description, ADR 0016).
 function toCondition(row: Selectable<DB["sample"]>) {
   return prune({
     packaging: row.packaging,
@@ -89,9 +86,6 @@ function toCondition(row: Selectable<DB["sample"]>) {
   });
 }
 
-// Flat security columns -> nested domain security (same storage pattern as the
-// condition, ADR 0016). A sample without any hazard recorded carries
-// `security: null`.
 function toSecurity(row: Selectable<DB["sample"]>) {
   return prune({
     radioactivity: row.radioactivity,
@@ -104,9 +98,7 @@ function toSecurity(row: Selectable<DB["sample"]>) {
 }
 
 // Flat scientific-context columns -> nested domain scientific context (ADR 0014
-// storage pattern). `sc_provenance_status` is the discriminant; only its
-// branch's columns are read, and `sc_collector_name` is shared by both. A row
-// with no status carries `scientificContext: null`.
+// storage pattern).
 function toScientificContext(row: Selectable<DB["sample"]>) {
   if (row.sc_provenance_status === "recent_collection") {
     return scientificContextSchema.parse({
@@ -141,11 +133,6 @@ function toScientificContext(row: Selectable<DB["sample"]>) {
   return null;
 }
 
-// DB row (snake_case) -> domain Sample (camelCase), validated at the boundary.
-// Location is flat on the row (see to-location.ts). Age is flat too: all-null
-// age columns -> null age. sampleSchema.parse validates the codes at the boundary.
-// Links and attachments are child rows (see sample-links.ts and sample-attachments.ts); the
-// schema defaults them to [] when a caller has none to attach.
 export function toSample(
   row: Selectable<DB["sample"]>,
   links: Selectable<DB["sample_link"]>[] = [],
@@ -207,6 +194,9 @@ export function toSample(
     economicDepositName: row.economic_deposit_name,
     economicDepositDescription: row.economic_deposit_description,
     igsn: row.igsn,
+    institutionalOrganization: row.institutional_organization,
+    institutionalOsu: row.institutional_osu,
+    institutionalLaboratory: row.institutional_laboratory,
     published: row.published,
     createdAt: row.created_at,
     updatedAt: row.updated_at,

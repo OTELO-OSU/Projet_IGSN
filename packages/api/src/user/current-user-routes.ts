@@ -6,7 +6,10 @@ import { Hono } from "hono";
 import type { AuthenticatedEnv } from "../auth/current-user.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
-import { validateSetOrcidBody } from "./validator.ts";
+import {
+  validateSetInstitutionalGroupsBody,
+  validateSetOrcidBody,
+} from "./validator.ts";
 
 // Mounted under /admin, so requireAuth and currentUser already ran.
 export function createCurrentUserRoutes(users: UserRepository) {
@@ -25,6 +28,9 @@ export function createCurrentUserRoutes(users: UserRepository) {
           orcid: user.orcid,
           status: user.status,
           superAdmin: user.superAdmin,
+          institutionalOrganization: user.institutionalOrganization,
+          institutionalOsu: user.institutionalOsu,
+          institutionalLaboratory: user.institutionalLaboratory,
         };
         return c.json(currentUser);
       })
@@ -43,5 +49,20 @@ export function createCurrentUserRoutes(users: UserRepository) {
         }
         return c.json({ orcid: updated.orcid });
       })
+      // ponytail: no requireActiveSession, unlike orcid: groups grant no rights and are not a login credential. Accepted ceiling: first-set-only until ticket 115, so a stolen token could misattribute an institution irreversibly onto every later sample
+      .put(
+        "/institutional-groups",
+        validateSetInstitutionalGroupsBody,
+        async (c) => {
+          const updated = await users.setInstitutionalGroups(
+            c.get("user").id,
+            c.req.valid("json"),
+          );
+          if (!updated) {
+            return c.json({ error: "Institutional groups already set" }, 409);
+          }
+          return c.body(null, 204);
+        },
+      )
   );
 }

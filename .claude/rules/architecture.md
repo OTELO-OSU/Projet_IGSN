@@ -8,6 +8,15 @@
 - Logic shared by `frontend`/`admin` and/or `api` MUST live in `domain`.
 - A service or repository signature MUST live in `domain`; only its implementation lives in `api`.
 
+## Institutional groups
+
+- Organisme / OSU / Labo is a graph, not a chain: many labos per organisme, a labo shared by several organismes (co-tutelle), an OSU in one organisme, a labo in zero or one OSU.
+- `domain/institutional-group/filter-laboratories-by-org-and-osu.ts` is the single source of truth for a group's labos: the form offers that list, `institutional-groups-validator.ts` checks against it.
+- The OSU only narrows, so no OSU means any labo of the organisme, OSU-bound included.
+- A submitted OSU MUST belong to the submitted organisme, so a co-tutelle user picking the other organisme records no OSU.
+- `osu.ts` and `laboratory.ts` are mock data pending the real lists, shaped like `sample/scientific-context/organization.ts`.
+- A sample snapshots the three codes at creation, never after, and they stay out of `createSampleSchema`.
+
 ## Server-side sorting and filtering
 
 - Lists are paginated server-side, so sorting and filtering MUST happen in the Postgres query (Kysely `orderBy`/`where`), never in the client or on a fetched page.

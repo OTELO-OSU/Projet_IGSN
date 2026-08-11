@@ -10,6 +10,7 @@ import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
+import { CALLER_GROUPS } from "../../test/caller-groups.ts";
 import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
@@ -24,8 +25,6 @@ vi.mock("react-oidc-context", () => ({
   }),
 }));
 
-// In-memory API: GET /admin/currentUser serves the stored orcid, PUT updates it (or
-// answers 409). Lets the page run its real load-edit-save cycle backendless.
 function fakeApi({
   orcid = null,
   conflict = false,
@@ -48,6 +47,7 @@ function fakeApi({
         orcid: stored,
         status: "accepted",
         superAdmin: false,
+        ...CALLER_GROUPS,
       }),
     ),
   );
@@ -80,6 +80,16 @@ describe("settings page", () => {
     await expect
       .element(page.getByLabelText(/orcid/i))
       .toHaveValue("0000-0002-1825-0097");
+  });
+
+  it("should show the institution without letting it be changed", async () => {
+    await renderSettingsPage();
+    const organization = page.getByRole("combobox", { name: /organization/i });
+    await expect.element(organization).toHaveTextContent(/Lorraine/);
+    await expect.element(organization).toBeDisabled();
+    await expect
+      .element(page.getByRole("combobox", { name: /laboratory/i }))
+      .toHaveTextContent(/CRPG/);
   });
 
   it("should save a valid orcid", async () => {

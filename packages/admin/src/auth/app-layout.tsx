@@ -69,8 +69,8 @@ export function AppLayout({
       <div className="flex min-h-screen w-full flex-1 flex-col">
         <header className="border-b">
           <div className="flex items-center justify-end gap-4 px-6 py-4">
-            <Link to="/settings">{m.nav_settings()}</Link>
             <UserName />
+            <Link to="/settings">{m.nav_settings()}</Link>
             <SignOutButton onSignOut={onSignOut} />
           </div>
         </header>

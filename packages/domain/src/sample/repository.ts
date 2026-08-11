@@ -1,4 +1,5 @@
 import type { UserSampleRole } from "../user-sample/model.ts";
+import type { User } from "../user/model.ts";
 import type { SampleEditLock } from "./edit-lock.ts";
 import type {
   AdminSampleListItem,
@@ -34,7 +35,7 @@ export type SampleRepository = {
     userId: string,
   ): Promise<{ sample: Sample; role: UserSampleRole | null } | null>;
   getPublishedByIgsn(igsn: string): Promise<Sample | null>;
-  create(input: CreateSample, ownerId: string): Promise<Sample>;
+  create(input: CreateSample, owner: User): Promise<Sample>;
   update(id: string, input: CreateSample): Promise<Sample | null>;
   publish(id: string): Promise<Sample | null>;
   // The live lock on the sample, `null` when it is free, expired, or unknown.
