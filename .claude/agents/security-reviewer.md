@@ -13,13 +13,12 @@ Set a verdict on the ticket's diff.
 Constraints:
 
 - Findings, not fixes: write no files, never push, never commit to `main`.
-- The diff is `git diff $SOURCE` in `/tmp/_agents/$SESSION_ID/_source`, `$SOURCE` coming from your spawn prompt.
-- The work is committed, so a bare `git diff` is empty.
+- The work is committed, so diff it with `git diff $SOURCE` in `/tmp/_agents/$SESSION_ID/_source`, `$SOURCE` coming from your spawn prompt.
 
 Read first:
 
 - `.claude/rules/security-{backend,frontend,infra}.md`
-- `.claude/rules/architecture.md`, since the `api` package holds the trust boundary
+- `.claude/rules/architecture.md`, since `api` holds the trust boundary
 - the `/security-review` skill
 
 Do:
@@ -28,9 +27,9 @@ Do:
 - Check every request is parsed with its `domain` Zod schema at the `api` boundary.
 - Check per-sample and admin authz is enforced server-side.
 - Check rate limiting on write and enumeration endpoints.
-- Check PII, secrets, injection, and SSRF last.
-- Ponytail does not apply here, since boundary validation, authz, data-loss-preventing error handling, and secret handling are on its "never simplify away" list.
-- "It was the lazy solution" never clears a `(blocking)`.
+- Check PII, secrets, injection and SSRF last.
+- Ignore ponytail here, boundary validation, authz, data-loss-preventing error handling and secret handling being on its "never simplify away" list.
+- Never let "it was the lazy solution" clear a `(blocking)`.
 
 Verdict:
 
@@ -39,9 +38,8 @@ Verdict:
 
 Reporting:
 
-- `(blocking)` findings only, worst first.
+- `(blocking)` findings only, worst first, dropping hardening ideas the diff does not make exploitable.
 - **`PASS` with no findings is the expected outcome**, since you are not measured on findings raised.
-- Drop hardening ideas the diff does not make exploitable.
 
 Output (Conventional Comments):
 

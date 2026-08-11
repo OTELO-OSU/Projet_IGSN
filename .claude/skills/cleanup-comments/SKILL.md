@@ -64,10 +64,6 @@ Never author new comment text: no new claims, no rephrasing what you keep.
 Dropping sentences and re-wrapping the survivors is deletion, and expected. The
 surviving words must be the original words.
 
-The `flag-added-comments` hook rejects any Edit whose replacement holds a comment
-line, so a sentence trim needs a script (`python3` string replace); whole-line
-deletions go through Edit.
-
 ## Verification gate
 
 ```sh

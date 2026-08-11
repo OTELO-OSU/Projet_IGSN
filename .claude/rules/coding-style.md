@@ -73,13 +73,14 @@ paths:
 
 ## Comments
 
-No comment is the rule, and a comment is the exception for code a reader cannot follow on its own.
+A comment ships only with a named proof from the `cleanup-comments` verdict table, and every other comment is a defect the `code-quality-reviewer` blocks on.
 
-- Write for a human, one or two lines, never narration.
-- Carry what the code cannot (intent, trade-off, non-obvious edge case, why the obvious approach fails), never the what or the how.
-- Prefer a clear name or a smaller function over a comment explaining an unclear one.
+- A changeset adds zero comments by default.
+- Name the proof before typing it (tool directive, `ponytail:` marker, non-obvious why, external constraint, counter-intuitive workaround with its cause, warning preventing a real mistake, TODO with a ticket), or do not type it.
+- One or two lines, for a human, never narration, never the what or the how.
+- Prefer a clear name or a smaller function to a comment explaining an unclear one.
 - Never restate the code, describe past implementations, leave commented-out code, add section banners, or JSDoc a self-evident signature.
-- A `ponytail:` comment naming a deliberate shortcut and its ceiling is a keeper, since that intent lives nowhere else.
+- Ambiguity resolves to deletion, "might help someone later" being no proof.
 
 ```
 // Wrong
