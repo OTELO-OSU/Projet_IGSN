@@ -14,12 +14,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@projet-igsn/design-system/components/ui/popover";
+import { fullName } from "@projet-igsn/domain/user/full-name";
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { ChevronsUpDownIcon } from "lucide-react";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
-import { fullName } from "#/samples/full-name.ts";
 import {
   MIN_SEARCH_LENGTH,
   useSearchUsers,

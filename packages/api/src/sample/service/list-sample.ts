@@ -12,8 +12,7 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import { facetFilters } from "./facet-filter.ts";
-import { sampleAttachments } from "./sample-attachments.ts";
-import { sampleLinks } from "./sample-links.ts";
+import { sampleAttachments, sampleLinks } from "./sample-children.ts";
 import {
   applyFuzzyThreshold,
   relevanceScore,
@@ -22,8 +21,7 @@ import {
 import { toSample } from "./to-sample.ts";
 
 // Planar, never `::geography`: a geodesic envelope bows its constant-latitude
-// edges poleward and drops results the user drew a rectangle around, while the
-// planar box is exactly that rectangle on a Mercator map (ADR 0014).
+// edges poleward and drops results the user drew a rectangle around (ADR 0014).
 function withinBbox(
   bbox: NonNullable<ListSamplesQuery["bbox"]>,
 ): Expression<SqlBool> {
@@ -67,7 +65,6 @@ async function listSamplesWhere(
       ...facetFilters(params),
       ...scope,
     ];
-    // Shared by the page and the count, so a filter can never reach one only.
     const matching = () =>
       trx
         .selectFrom("sample")

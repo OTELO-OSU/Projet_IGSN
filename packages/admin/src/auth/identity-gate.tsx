@@ -1,0 +1,39 @@
+import type { ReactNode } from "react";
+
+import { HttpError } from "#/http-error.ts";
+import { m } from "#/paraglide/messages.js";
+
+import { CenteredScreen } from "./centered-screen.tsx";
+import { SignOutButton } from "./sign-out-button.tsx";
+import { useCurrentUser } from "./use-current-user.ts";
+
+// An ORCID session reaches the app only once the api resolves its orcid to a
+// linked account (ADR 0020), so there any load failure blocks; on Keycloak only
+// a 403 does, since a flaky call must not lock a legitimate user out.
+export function IdentityGate({
+  isOrcid,
+  onSignOut,
+  children,
+}: {
+  isOrcid: boolean;
+  onSignOut: () => void;
+  children?: ReactNode;
+}) {
+  const { data, error } = useCurrentUser();
+  const isForbidden = error instanceof HttpError && error.status === 403;
+  const forbiddenMessage = isOrcid ? m.auth_no_access() : m.account_rejected();
+
+  if (isForbidden || (isOrcid && error)) {
+    return (
+      <CenteredScreen
+        isError
+        message={isForbidden ? forbiddenMessage : m.user_name_error()}
+      >
+        <SignOutButton onSignOut={onSignOut} />
+      </CenteredScreen>
+    );
+  }
+
+  if (isOrcid && !data) return <p>{m.auth_loading()}</p>;
+  return children;
+}

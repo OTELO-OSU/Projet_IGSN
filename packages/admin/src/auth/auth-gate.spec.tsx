@@ -12,10 +12,10 @@ const auth = {
 };
 vi.mock("react-oidc-context", () => ({ useAuth: () => auth }));
 
-// The gate behind an ORCID session; its own spec covers the linked/unlinked
-// split, here it only needs to be what an ORCID session renders.
-vi.mock("./orcid-access-gate.tsx", () => ({
-  OrcidAccessGate: () => <p role="alert">orcid access gate</p>,
+vi.mock("./identity-gate.tsx", () => ({
+  IdentityGate: ({ isOrcid }: { isOrcid: boolean }) => (
+    <p role="alert">{isOrcid ? "orcid access gate" : "account gate"}</p>
+  ),
 }));
 
 beforeEach(() => {

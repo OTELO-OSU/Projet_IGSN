@@ -33,10 +33,7 @@ export const sampleSchema = z.object({
   nature: natureSchema,
   type: sampleTypeSchema.nullable(),
   material: materialPathSchema.nullable(),
-  // Not part of the material tree.
   texture: textureSchema.nullable(),
-  // Not part of the material tree, but required to publish a metamorphic
-  // sample (see sample-publish-blockers).
   metamorphicFacies: metamorphicFaciesSchema.nullable(),
   collectionMethod: collectionMethodSchema.nullable(),
   collectionMethodDescription: nameSchema.nullable(),
@@ -47,23 +44,13 @@ export const sampleSchema = z.object({
   // Defaulted so a payload predating the feature reads as "no context
   // recorded".
   scientificContext: scientificContextSchema.nullable().default(null),
-  // Defaulted so a payload without the key reads as "no age recorded".
   age: ageSchema.nullable().default(null),
-  // Related DOI links and attached files (ADR 0017); empty arrays when none.
-  // Defaulted so payloads predating the feature keep parsing.
   links: z.array(sampleLinkSchema).default([]),
   attachments: z.array(sampleAttachmentSchema).default([]),
   security: securitySchema.nullable(),
-  // Whether the physical sample still exists; null on a draft, required to
-  // publish (see sample-publish-blockers).
   availability: availabilitySchema.nullable(),
-  // Year of first publication; auto-set at publish, null on an unpublished draft.
   publicationYear: z.number().int().positive().nullable(),
-  // Economic interest as a dot-path rooted at the yes/no/unknown answer
-  // (resource type / deposit / uranium sub-type follow under `yes`); null until set.
   economicInterest: economicInterestSchema.nullable(),
-  // Chemical elements of interest; only meaningful for a mineral_and_ore sample,
-  // empty otherwise.
   economicInterestElements: z.array(elementSchema).default([]),
   economicResourceTypePrecision: nameSchema.nullable(),
   economicDepositName: nameSchema.nullable(),
@@ -81,8 +68,7 @@ export const sampleSchema = z.object({
 export type Sample = z.infer<typeof sampleSchema>;
 
 // material is optional at creation: a draft can be saved before it is
-// classified (omitted or null). It becomes mandatory, and must reach a leaf,
-// only at publish (see samplePublishBlockers).
+// classified.
 export const createSampleSchema = z
   .strictObject({
     name: nameSchema,
@@ -99,15 +85,12 @@ export const createSampleSchema = z
     condition: conditionSchema.nullish(),
     scientificContext: scientificContextSchema.nullish(),
     age: ageSchema.nullish(),
-    // Related DOI links, replaced wholesale on update.
     links: z.array(createSampleLinkSchema).optional(),
-    // Attachment metadata, reconciled wholesale on update like links: a
-    // listed attachment keeps or updates its description, an unlisted one is
-    // deleted with its content.
+    // Attachment metadata, reconciled wholesale on update like links: an
+    // unlisted one is deleted with its content.
     attachments: z.array(updateSampleAttachmentSchema).optional(),
     security: securitySchema.nullish(),
     availability: availabilitySchema.nullish(),
-    // Detail columns are kept only under a `yes` path (see the API columns).
     economicInterest: economicInterestSchema.nullish(),
     economicInterestElements: z.array(elementSchema).optional(),
     economicResourceTypePrecision: nameSchema.nullish(),
@@ -115,8 +98,6 @@ export const createSampleSchema = z
     economicDepositDescription: nameSchema.nullish(),
   })
   .superRefine((value, ctx) => {
-    // This guards the "texture resets when the material changes" invariant
-    // server-side.
     if (
       value.texture != null &&
       !texturesFor(value.material ?? null).includes(value.texture)
@@ -127,7 +108,16 @@ export const createSampleSchema = z
         message: "texture is not valid for the selected material",
       });
     }
-    // Synthetic material derives its location from the structure ROR (ADR 0014).
+    if (
+      value.metamorphicFacies != null &&
+      !faciesFor(value.material ?? null).includes(value.metamorphicFacies)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["metamorphicFacies"],
+        message: "metamorphic facies is not valid for the selected material",
+      });
+    }
     if (
       value.location != null &&
       locationRequirement(value.material ?? null) === "forbidden"
@@ -136,18 +126,6 @@ export const createSampleSchema = z
         code: "custom",
         path: ["location"],
         message: "a synthetic sample must not have a location",
-      });
-    }
-  })
-  // Guards the "facies resets when the material changes" invariant
-  // server-side.
-  .superRefine((value, ctx) => {
-    if (value.metamorphicFacies == null) return;
-    if (!faciesFor(value.material ?? null).includes(value.metamorphicFacies)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["metamorphicFacies"],
-        message: "metamorphic facies is not valid for the selected material",
       });
     }
   });

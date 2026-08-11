@@ -1,11 +1,9 @@
 import { z } from "zod";
 
-// Igneous texture: a flat controlled vocabulary shown alongside the material
-// classification once an igneous branch (plutonic/volcanic) is chosen. It is NOT
-// part of the material tree (a separate sample field); the valid set depends on
-// the branch, and `porphyritic` is shared by both. See the igneous screenshot.
-//
-// The stored value is any of the union (porphyritic listed once).
+import { isPathAtOrUnder } from "../path/is-at-or-under.ts";
+
+// It is NOT part of the material tree (a separate sample field); the valid set
+// depends on the branch, and `porphyritic` is shared by both.
 export const TEXTURES = [
   "phaneritic",
   "porphyritic",
@@ -52,9 +50,8 @@ export const VOLCANIC_TEXTURES = [
   "hyaloclastic",
 ] as const satisfies readonly Texture[];
 
-// Paths under which each texture set applies. The plutonic/volcanic branch
-// lives under `igneous` and is reused under metamorphic `meta_igneous_rock`, so
-// each branch has two paths.
+// The plutonic/volcanic branch lives under `igneous` and is reused under
+// metamorphic `meta_igneous_rock`, so each branch has two paths.
 const TEXTURE_BRANCHES = [
   { path: "rock.igneous.plutonic", textures: PLUTONIC_TEXTURES },
   { path: "rock.igneous.volcanic", textures: VOLCANIC_TEXTURES },
@@ -68,13 +65,10 @@ const TEXTURE_BRANCHES = [
   },
 ];
 
-// The textures valid for a material path: the branch's set, or none unless the
-// path is under a plutonic/volcanic branch.
 export function texturesFor(material: string | null): readonly Texture[] {
   if (!material) return [];
   return (
-    TEXTURE_BRANCHES.find(
-      (b) => material === b.path || material.startsWith(`${b.path}.`),
-    )?.textures ?? []
+    TEXTURE_BRANCHES.find((b) => isPathAtOrUnder(material, b.path))?.textures ??
+    []
   );
 }

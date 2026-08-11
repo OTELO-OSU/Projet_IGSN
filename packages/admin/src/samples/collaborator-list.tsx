@@ -1,10 +1,10 @@
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
+import { fullName } from "@projet-igsn/domain/user/full-name";
 import { X } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { collaboratorRoleLabel } from "#/samples/collaborator-role-label.ts";
-import { fullName } from "#/samples/full-name.ts";
 import { useCollaborators } from "#/samples/use-collaborators.ts";
 import { useRemoveCollaborator } from "#/samples/use-remove-collaborator.ts";
 

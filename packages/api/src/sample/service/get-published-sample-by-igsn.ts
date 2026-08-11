@@ -3,19 +3,14 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
-import { sampleAttachments } from "./sample-attachments.ts";
-import { sampleLinks } from "./sample-links.ts";
+import { selectSample } from "./select-sample.ts";
 import { toSample } from "./to-sample.ts";
 
 export async function getPublishedSampleByIgsn(
   db: Transactional<DB>,
   igsn: string,
 ): Promise<Sample | null> {
-  const row = await db
-    .selectFrom("sample")
-    .selectAll()
-    .select(sampleLinks)
-    .select(sampleAttachments)
+  const row = await selectSample(db)
     .where("igsn", "=", igsn)
     .where("published", "=", true)
     .executeTakeFirst();

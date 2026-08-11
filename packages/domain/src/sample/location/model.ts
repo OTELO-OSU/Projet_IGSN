@@ -1,14 +1,12 @@
 import { z } from "zod";
 
+import { freeTextSchema } from "../free-text.ts";
 import { countrySchema } from "./country.ts";
 import { elevationUnitSchema } from "./elevation-unit.ts";
 import { navigationTypeSchema } from "./navigation-type.ts";
 import { oceanSeaSchema } from "./ocean-sea.ts";
 import { verticalDatumSchema } from "./vertical-datum.ts";
 
-// nameSchema is not imported from sample.ts: sample.ts imports this module, so
-// the dependency must not run the other way.
-const freeText = z.string().trim().min(1);
 const longitudeSchema = z.number().min(-180).max(180);
 const latitudeSchema = z.number().min(-90).max(90);
 
@@ -48,15 +46,13 @@ export const locationSchema = z
     position: positionSchema.nullish(),
     region: regionSchema.nullish(),
     navigationType: navigationTypeSchema.nullish(),
-    localityName: freeText.nullish(),
-    localityDescription: freeText.nullish(),
+    localityName: freeTextSchema.nullish(),
+    localityDescription: freeTextSchema.nullish(),
   })
   // Longitude ordering is intentionally unchecked: west > east is a valid
   // dateline-crossing area (ADR 0014).
   .superRefine((location, ctx) => {
     const { position } = location;
-    // Navigation type records how the coordinates were fixed, so it is
-    // meaningless without a position (ADR 0014).
     if (location.navigationType != null && !position) {
       ctx.addIssue({
         code: "custom",
