@@ -37,7 +37,7 @@ Do:
 - Tests are code and count in the diff, so cut the excess `testing.md` (`## How many tests`) names.
 - Never cut the per-endpoint boundary set (400/401/403/404) that `testing-backend.md` mandates.
 - Never cut the tree-vocabulary label-coverage spec that `i18n.md` mandates, since it is a build gate.
-- Missing coverage is the `qa-tester`'s call, while excess is yours.
+- Excess coverage is yours to cut, while missing coverage is the orchestrator's call at the commit gate.
 - On `frontend`/`admin` UI, own a11y per `accessibility.md` and tag findings `[a11y]`.
 
 Verdict:
