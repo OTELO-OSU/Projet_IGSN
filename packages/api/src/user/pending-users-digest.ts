@@ -1,5 +1,6 @@
 import type { PendingUser } from "@projet-igsn/domain/user/repository";
 
+import { fullName } from "@projet-igsn/domain/user/full-name";
 import { readFileSync } from "node:fs";
 
 import type { Translator } from "../mail/i18n.ts";
@@ -7,7 +8,6 @@ import type { Translator } from "../mail/i18n.ts";
 import { escapeHtml } from "../mail/escape-html.ts";
 import { translator } from "../mail/i18n.ts";
 import { renderMjml } from "../mail/render-mjml.ts";
-import { fullName } from "./full-name.ts";
 
 const HOUR_MS = 60 * 60 * 1000;
 

@@ -1,4 +1,5 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { SearchInput } from "@projet-igsn/design-system/components/ui/search-input";
 import {
   Tooltip,
   TooltipContent,
@@ -19,12 +20,11 @@ import {
   engineLabel,
 } from "#/domain/samples/search-engine-tabs.tsx";
 import { SearchHelp } from "#/domain/samples/search-help.tsx";
-import { SearchTextInput } from "#/domain/samples/search-text-input.tsx";
 import { m } from "#/paraglide/messages.js";
 
 type Drafts = { q?: string; bbox?: string };
 
-// `active[0]` is the primary engine, the one the tabs point at.
+// `active[0]` is the primary engine.
 export function SearchCompose({
   initialActive,
   initialDrafts,
@@ -119,9 +119,11 @@ export function SearchCompose({
           >
             <div className="flex-1">
               {engine === "text" ? (
-                <SearchTextInput
+                <SearchInput
                   value={drafts.q ?? ""}
-                  onChange={(q) => setDrafts({ ...drafts, q })}
+                  onChange={(event) =>
+                    setDrafts({ ...drafts, q: event.target.value })
+                  }
                   label={m.samples_search_label()}
                   placeholder={m.search_placeholder()}
                 />

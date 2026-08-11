@@ -1,4 +1,3 @@
-import { Logo } from "@projet-igsn/design-system/components/icon/logo";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import {
   HeadContent,
@@ -8,6 +7,7 @@ import {
   createRootRouteWithContext,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { Mountain } from "lucide-react";
 
 import type { MyRouterContext } from "../router-context";
 
@@ -19,8 +19,7 @@ import "../styles.css";
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: ({ matches }) => {
     // The router works on delocalized paths; the leaf match holds the current
-    // one. Point the canonical at its English (base-locale) URL so search
-    // engines rank one page per route regardless of the visitor's locale.
+    // one.
     const path = matches.at(-1)?.pathname ?? "/";
     return {
       meta: [
@@ -65,7 +64,7 @@ function RootLayout() {
           aria-label={m.app_title()}
           className="flex items-center gap-3 text-sky-900"
         >
-          <Logo />
+          <Mountain className="text-foreground size-9" aria-hidden="true" />
           <span className="flex flex-col leading-tight">
             <span className="text-2xl font-bold">{m.app_title()}</span>
             <span className="text-muted-foreground text-sm">

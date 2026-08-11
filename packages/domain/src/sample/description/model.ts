@@ -1,20 +1,13 @@
 import { z } from "zod";
 
+import { freeTextSchema } from "../free-text.ts";
 import { measurementSchema } from "../measurement.ts";
 import { isFutureDate } from "./is-future-date.ts";
 import { massUnitSchema } from "./mass-unit.ts";
 import { sizeUnitSchema } from "./size-unit.ts";
 import { volumeUnitSchema } from "./volume-unit.ts";
 
-// A sample's physical description (ADR 0015). Every part is independent and
-// optional; `sample.description` as a whole is nullable.
-//
-// nameSchema is not imported from sample.ts: sample.ts imports this module, so
-// the dependency must not run the other way (same seam as location/model.ts).
-const freeText = z.string().trim().min(1);
-
-// Collection period, date-only ISO strings (no time, no timezone). A single
-// collection date is the degenerate range start === end (ADR 0015).
+// A single collection date is the degenerate range start === end (ADR 0015).
 const collectionDateSchema = z.object({
   start: z.iso.date(),
   end: z.iso.date(),
@@ -23,11 +16,9 @@ const collectionDateSchema = z.object({
 export const descriptionSchema = z
   .object({
     collectionDate: collectionDateSchema.nullish(),
-    // Null until the question is answered; the form offers yes/no.
     oriented: z.boolean().nullish(),
-    orientationExplanation: freeText.nullish(),
-    // Free text: morphology, texture, alteration, interest.
-    openDescription: freeText.nullish(),
+    orientationExplanation: freeTextSchema.nullish(),
+    openDescription: freeTextSchema.nullish(),
     // Each size dimension carries its own unit (a long axis in cm can pair
     // with a thickness in mm).
     length: measurementSchema(sizeUnitSchema).nullish(),
@@ -49,7 +40,6 @@ export const descriptionSchema = z
         params: { code: "collection_date_order" },
       });
     }
-    // A sample cannot have been collected in the future.
     for (const bound of ["start", "end"] as const) {
       if (period != null && isFutureDate(period[bound])) {
         ctx.addIssue({
@@ -60,8 +50,6 @@ export const descriptionSchema = z
         });
       }
     }
-    // The explanation documents why/how the sample is oriented, so it is
-    // meaningless unless the orientation question was answered yes.
     if (
       description.orientationExplanation != null &&
       description.oriented !== true

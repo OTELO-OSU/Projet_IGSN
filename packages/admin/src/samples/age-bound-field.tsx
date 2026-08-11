@@ -13,20 +13,17 @@ const geologicalAgeItems = GEOLOGICAL_AGES.map((age) => ({
   label: geologicalAgeLabel(age),
 }));
 
-export function GeologicalField({
+export function AgeBoundField({
+  control,
   name,
   label,
   requiredWhenName,
   mirrorName,
 }: {
+  control: "numeric" | "geological";
   name: keyof AgeFormValues;
   label: string;
-  // The sibling bound (max for min, min for max): a range needs both, so this
-  // bound is required once the sibling holds a value (publish blocker
-  // geological_age_range_incomplete).
   requiredWhenName?: keyof AgeFormValues;
-  // A non-range value is stored in both bounds (min == max), so the fixed select
-  // mirrors its value into the other bound on change.
   mirrorName?: keyof AgeFormValues;
 }) {
   const form = useSampleForm();
@@ -50,16 +47,20 @@ export function GeologicalField({
               : false
           }
         >
-          {(required) => (
-            <field.ComboboxField
-              label={label}
-              requiredToPublish={required}
-              items={geologicalAgeItems}
-              placeholder={m.age_geological_placeholder()}
-              searchPlaceholder={m.age_geological_search_placeholder()}
-              emptyText={m.age_geological_empty()}
-            />
-          )}
+          {(required) =>
+            control === "numeric" ? (
+              <field.NumberField label={label} requiredToPublish={required} />
+            ) : (
+              <field.ComboboxField
+                label={label}
+                requiredToPublish={required}
+                items={geologicalAgeItems}
+                placeholder={m.age_geological_placeholder()}
+                searchPlaceholder={m.age_geological_search_placeholder()}
+                emptyText={m.age_geological_empty()}
+              />
+            )
+          }
         </form.Subscribe>
       )}
     </form.AppField>

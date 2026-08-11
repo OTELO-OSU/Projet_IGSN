@@ -1,4 +1,4 @@
-import type { User } from "@projet-igsn/domain/user/model";
+import type { User } from "./model.ts";
 
 export const fullName = ({
   firstname,

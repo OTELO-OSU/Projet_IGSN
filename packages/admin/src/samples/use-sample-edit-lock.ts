@@ -1,9 +1,9 @@
 import { sampleLockedSchema } from "@projet-igsn/domain/sample/edit-lock";
+import { fullName } from "@projet-igsn/domain/user/full-name";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
 import { API_URL } from "#/api-url.ts";
-import { fullName } from "#/samples/full-name.ts";
 import { LOCK_POLL_INTERVAL_MS } from "#/samples/lock-poll-interval.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
@@ -13,8 +13,6 @@ const HEARTBEAT_INTERVAL_MS = 5 * 60_000;
 
 export type SampleEditLockState = {
   isMine: boolean;
-  // Set only while ANOTHER collaborator holds it, so its presence is what puts
-  // the page in read-only.
   heldByOther?: { name: string };
 };
 
@@ -81,8 +79,8 @@ export function useSampleEditLock(
   const wasMine = useRef(isMine);
   useEffect(() => {
     // Taking over a sample someone else was editing: their save may have
-    // changed it, and a read-only form has nothing to lose, so start again from
-    // the stored version rather than have the next save rejected as stale.
+    // changed it, so start again from the stored version rather than have the
+    // next save rejected as stale.
     if (wasMine.current === false && isMine === true) {
       void queryClient.invalidateQueries({ queryKey: ["samples", id] });
     }

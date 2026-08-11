@@ -18,7 +18,7 @@ Use [Kysely](https://kysely.dev/) as the DBAL, a type-safe SQL query builder rat
 ## One query over app-side assembly
 
 - Never fetch rows only to join, merge, aggregate, or count them in JS: that adds round-trips and re-implements the database.
-- Use joins, aggregates, and the Kysely json helpers (`jsonObjectFrom`, `jsonArrayFrom`) so related data arrives with the main row (see `sample/service/sample-links.ts`).
+- Use joins, aggregates, and the Kysely json helpers (`jsonObjectFrom`, `jsonArrayFrom`) so related data arrives with the main row (see `sample/service/sample-children.ts`).
 - Keep a follow-up query as a last resort, for what SQL cannot express.
 
 ## Transactions

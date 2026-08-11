@@ -3,6 +3,7 @@ import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-vali
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
+import { fullName } from "@projet-igsn/domain/user/full-name";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
@@ -13,7 +14,6 @@ import {
 } from "@tanstack/react-table";
 
 import { m } from "#/paraglide/messages.js";
-import { fullName } from "#/samples/full-name.ts";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
 
 const CAPPED_NAME_CLASS = "block max-w-48 wrap-break-word";

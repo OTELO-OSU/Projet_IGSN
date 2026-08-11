@@ -1,14 +1,9 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
-import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { Label } from "@projet-igsn/design-system/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@projet-igsn/design-system/components/ui/select";
+  Pager,
+  PageSizeSelect,
+} from "@projet-igsn/design-system/components/ui/pagination";
 import { PAGE_SIZES } from "@projet-igsn/domain/sample/sample-validator";
 
 import { SampleList } from "#/domain/samples/sample-list.tsx";
@@ -51,24 +46,12 @@ export function SearchResultsView({
             ? m.search_results_count_one()
             : m.search_results_count({ count: total })}
         </p>
-        <div className="flex items-center gap-2">
-          <Label htmlFor="per-page">{m.search_per_page()}</Label>
-          <Select
-            value={String(perPage)}
-            onValueChange={(value) => onPerPageChange(Number(value))}
-          >
-            <SelectTrigger id="per-page" className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PAGE_SIZES.map((size) => (
-                <SelectItem key={size} value={String(size)}>
-                  {size}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        <PageSizeSelect
+          perPage={perPage}
+          pageSizes={PAGE_SIZES}
+          label={m.search_per_page()}
+          onPerPageChange={onPerPageChange}
+        />
       </div>
       <SampleList samples={samples} query={query} />
 
@@ -77,23 +60,13 @@ export function SearchResultsView({
           aria-label={m.pagination_label()}
           className="mt-8 flex items-center justify-center gap-4"
         >
-          <Button
-            variant="outline"
-            disabled={page <= 1}
-            onClick={() => onPageChange(page - 1)}
-          >
-            {m.pagination_previous()}
-          </Button>
-          <span aria-live="polite">
-            {page} / {pageCount}
-          </span>
-          <Button
-            variant="outline"
-            disabled={page >= pageCount}
-            onClick={() => onPageChange(page + 1)}
-          >
-            {m.pagination_next()}
-          </Button>
+          <Pager
+            page={page}
+            pageCount={pageCount}
+            previousLabel={m.pagination_previous()}
+            nextLabel={m.pagination_next()}
+            onPageChange={onPageChange}
+          />
         </nav>
       ) : null}
     </div>

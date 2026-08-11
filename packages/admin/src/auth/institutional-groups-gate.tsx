@@ -16,7 +16,7 @@ export function InstitutionalGroupsGate({
 }) {
   const { data } = useCurrentUser();
 
-  // ponytail: no loading branch, like AccountGate: an identity call still in flight or failed must not hold the app, and the gate closes as soon as the answer says groups are missing
+  // ponytail: no loading branch, like IdentityGate on Keycloak: an identity call still in flight or failed must not hold the app, and the gate closes as soon as the answer says groups are missing
   const isMissingGroups =
     data !== undefined &&
     (data.institutionalOrganization === null ||

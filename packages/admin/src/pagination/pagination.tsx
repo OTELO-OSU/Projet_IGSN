@@ -1,11 +1,7 @@
-import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@projet-igsn/design-system/components/ui/select";
+  Pager,
+  PageSizeSelect,
+} from "@projet-igsn/design-system/components/ui/pagination";
 import { PAGE_SIZES } from "@projet-igsn/domain/sample/sample-validator";
 
 import { m } from "#/paraglide/messages.js";
@@ -27,40 +23,22 @@ export function Pagination({
 }: PaginationProps) {
   return (
     <div className="flex items-center justify-end gap-4">
-      <Select
-        value={String(perPage)}
-        onValueChange={(value) => onPerPageChange(Number(value))}
-      >
-        <SelectTrigger className="w-32" aria-label={m.page_size_label()}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {PAGE_SIZES.map((size) => (
-            <SelectItem key={size} value={String(size)}>
-              {size}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <PageSizeSelect
+        perPage={perPage}
+        pageSizes={PAGE_SIZES}
+        label={m.page_size_label()}
+        hideLabel
+        onPerPageChange={onPerPageChange}
+      />
 
       <div className="flex items-center gap-2">
-        <Button
-          variant="outline"
-          disabled={page <= 1}
-          onClick={() => onPageChange(page - 1)}
-        >
-          {m.pagination_previous()}
-        </Button>
-        <span aria-live="polite">
-          {page} / {pageCount}
-        </span>
-        <Button
-          variant="outline"
-          disabled={page >= pageCount}
-          onClick={() => onPageChange(page + 1)}
-        >
-          {m.pagination_next()}
-        </Button>
+        <Pager
+          page={page}
+          pageCount={pageCount}
+          previousLabel={m.pagination_previous()}
+          nextLabel={m.pagination_next()}
+          onPageChange={onPageChange}
+        />
       </div>
     </div>
   );

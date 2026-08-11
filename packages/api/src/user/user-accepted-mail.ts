@@ -1,11 +1,11 @@
 import type { User } from "@projet-igsn/domain/user/model";
 
+import { fullName } from "@projet-igsn/domain/user/full-name";
 import { readFileSync } from "node:fs";
 
 import { escapeHtml } from "../mail/escape-html.ts";
 import { translator } from "../mail/i18n.ts";
 import { renderMjml } from "../mail/render-mjml.ts";
-import { fullName } from "./full-name.ts";
 
 const TEMPLATE = readFileSync(
   new URL("../mail/cta-mail.mjml", import.meta.url),

@@ -3,16 +3,13 @@ import { FormSection } from "@projet-igsn/design-system/components/form/form-sec
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { numericUnitSchema } from "@projet-igsn/domain/sample/age/numeric-unit";
 import { yearsUnitSchema } from "@projet-igsn/domain/sample/age/years-unit";
-import { useState } from "react";
-
-import type { AgeFormValues } from "#/samples/age-form.ts";
-import type { AgeMode } from "#/samples/age-mode-radio.tsx";
 
 import { m } from "#/paraglide/messages.js";
+import { AgeBoundField } from "#/samples/age-bound-field.tsx";
 import { hasNumericAgeValue, numericAgeUnitOf } from "#/samples/age-form.ts";
 import { AgeModeRadio } from "#/samples/age-mode-radio.tsx";
-import { NumericValueField } from "#/samples/numeric-value-field.tsx";
 import { numericUnitLabel, yearsUnitLabel } from "#/samples/sample-labels.ts";
+import { useAgeSection } from "#/samples/use-age-section.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const numericUnitItems = numericUnitSchema.options.map((unit) => ({
@@ -24,44 +21,13 @@ const yearsUnitItems = yearsUnitSchema.options.map((unit) => ({
   label: yearsUnitLabel(unit),
 }));
 
-const VALUE_FIELDS: (keyof AgeFormValues)[] = [
-  "numericAgeMin",
-  "numericAgeMax",
-];
-const ALL_FIELDS: (keyof AgeFormValues)[] = [
-  ...VALUE_FIELDS,
-  "numericAgeUnit",
-  "numericAgeYearsUnit",
-];
-
 export function NumericAgeFormSection() {
   const isDisabled = useIsFieldDisabled("age.numericAgeMin");
   const form = useSampleForm();
-  const values = form.state.values.age;
-  const clear = (fields: (keyof AgeFormValues)[]) => {
-    for (const name of fields) form.setFieldValue(`age.${name}`, undefined);
-  };
-
-  const [enabled, setEnabled] = useState(() =>
-    ALL_FIELDS.some((name) => values[name] != null),
+  const { enabled, mode, toggleEnabled, changeMode } = useAgeSection(
+    ["numericAgeMin", "numericAgeMax"],
+    ["numericAgeMin", "numericAgeMax", "numericAgeUnit", "numericAgeYearsUnit"],
   );
-  const [mode, setMode] = useState<AgeMode>(() =>
-    values.numericAgeMin != null &&
-    values.numericAgeMin === values.numericAgeMax
-      ? "fixed"
-      : values.numericAgeMin != null || values.numericAgeMax != null
-        ? "range"
-        : "fixed",
-  );
-
-  const toggleEnabled = (next: boolean) => {
-    setEnabled(next);
-    if (!next) clear(ALL_FIELDS);
-  };
-  const changeMode = (next: AgeMode) => {
-    setMode(next);
-    clear(VALUE_FIELDS);
-  };
 
   return (
     <FormSection
@@ -89,12 +55,14 @@ export function NumericAgeFormSection() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {mode === "range" ? (
               <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
-                <NumericValueField
+                <AgeBoundField
+                  control="numeric"
                   name="numericAgeMin"
                   label={m.field_numeric_age_min()}
                   requiredWhenName="numericAgeMax"
                 />
-                <NumericValueField
+                <AgeBoundField
+                  control="numeric"
                   name="numericAgeMax"
                   label={m.field_numeric_age_max()}
                   requiredWhenName="numericAgeMin"
@@ -102,7 +70,8 @@ export function NumericAgeFormSection() {
               </div>
             ) : (
               <div className="sm:col-span-2">
-                <NumericValueField
+                <AgeBoundField
+                  control="numeric"
                   name="numericAgeMin"
                   label={m.field_numeric_age()}
                   mirrorName="numericAgeMax"

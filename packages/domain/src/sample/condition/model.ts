@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { freeTextSchema } from "../free-text.ts";
 import { measurementSchema } from "../measurement.ts";
 import {
   humidityTypeSchema,
@@ -13,14 +14,8 @@ import { storageConditionSchema } from "./storage-condition.ts";
 import { temperatureTypeSchema } from "./temperature-type.ts";
 import { temperatureUnitSchema } from "./temperature-unit.ts";
 
-// A sample's storage/conditioning state, modeled like the description
-// (ADR 0016). Every part is independent and optional, even at publication;
-// `sample.condition` as a whole is nullable.
-const freeText = z.string().trim().min(1);
-
 // A numeric reading is meaningful only once its category is chosen, so it
-// nests under the category: "the value needs its category" holds structurally,
-// no refinement to forget (same seam as measurementSchema, ADR 0016).
+// nests under the category (same seam as measurementSchema, ADR 0016).
 const temperatureSchema = z.object({
   type: temperatureTypeSchema,
   // Sub-zero storage exists (freezing, liquid nitrogen): no positivity bound.
@@ -41,18 +36,14 @@ const pressureSchema = z.object({
 export const conditionSchema = z
   .object({
     packaging: packagingSchema.nullish(),
-    // Checkbox multi-select; "not filled" is null/absent, never [].
     storageConditions: z.array(storageConditionSchema).min(1).nullish(),
     temperature: temperatureSchema.nullish(),
     humidity: humiditySchema.nullish(),
     light: lightSchema.nullish(),
     pressure: pressureSchema.nullish(),
-    // Free text: conditioning details (temperature, preparation protocol...).
-    specificConditions: freeText.nullish(),
+    specificConditions: freeTextSchema.nullish(),
   })
   .superRefine((condition, ctx) => {
-    // params.code lets consumers (the admin form) translate the issue without
-    // matching on the message text.
     const storage = condition.storageConditions;
     if (storage != null && new Set(storage).size !== storage.length) {
       ctx.addIssue({

@@ -1,28 +1,23 @@
-import { Input } from "@projet-igsn/design-system/components/ui/input";
+import type { ComponentProps } from "react";
+
 import { SearchIcon } from "lucide-react";
 
-export function SearchTextInput({
-  value,
-  onChange,
+import { Input } from "./input.tsx";
+
+export function SearchInput({
   label,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  label: string;
-  placeholder: string;
-}) {
+  ...props
+}: ComponentProps<typeof Input> & { label: string }) {
   return (
     <label className="flex-1">
       <span className="sr-only">{label}</span>
       <div className="relative">
         <Input
           type="search"
-          value={value}
-          placeholder={placeholder}
-          // Legible on the colored hero; the native clear button is ugly.
+          // Hide the browser-native search clear button (ugly beveled gradient
+          // on Chromium/Linux).
           className="bg-background ps-9 [&::-webkit-search-cancel-button]:appearance-none"
-          onChange={(event) => onChange(event.target.value)}
+          {...props}
         />
         <SearchIcon
           aria-hidden

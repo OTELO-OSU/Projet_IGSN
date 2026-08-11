@@ -20,13 +20,10 @@ import { type CollectionOrigin } from "./scientific-context/collection-origin.ts
 import { type ProvenanceStatus } from "./scientific-context/provenance-status.ts";
 import { type Texture } from "./texture/vocabulary.ts";
 
-// The shared vocabulary catalog's keys, derived from the JSON itself (type-only
-// import, erased at runtime).
 type MessageKey = keyof typeof Catalog;
 
 // Compile-time coverage for the flat vocabularies (input is a literal union):
-// a code whose translation is missing from the catalog fails to compile here,
-// so it can never render a raw key to users.
+// a code whose translation is missing from the catalog fails to compile here.
 type AssertKeys<T extends MessageKey> = T;
 type _natureKeys = AssertKeys<`nature_${Nature}`>;
 type _textureKeys = AssertKeys<`texture_${Texture}`>;
@@ -49,9 +46,8 @@ type _collectionOriginKeys =
   AssertKeys<`collection_origin_${CollectionOrigin}`>;
 type _oceanSeaKeys = AssertKeys<`ocean_sea_${OceanSea}`>;
 
-// A message catalog: the app's compiled paraglide `m`, keyed by the catalog's
-// own message keys (minus the `$`-prefixed metadata entries, e.g. `$schema`,
-// which paraglide does not compile to a message).
+// Minus the `$`-prefixed metadata entries, e.g. `$schema`, which paraglide does
+// not compile to a message.
 export type Messages = Record<
   Exclude<MessageKey, `$${string}`>,
   (() => string) | undefined
@@ -81,55 +77,41 @@ export type SampleLabels = {
   collectionOriginLabel: (origin: CollectionOrigin) => string;
 };
 
+const LABEL_KEY = {
+  materialPathLabel: ["material", "path"],
+  typeLabel: ["type", "path"],
+  collectionMethodLabel: ["collection_method", "path"],
+  economicInterestLabel: ["economic_interest", "path"],
+  elementLabel: ["element", "code"],
+  textureLabel: ["texture", "code"],
+  metamorphicFaciesLabel: ["metamorphic_facies", "code"],
+  natureLabel: ["nature", "code"],
+  oceanSeaLabel: ["ocean_sea", "code"],
+  packagingLabel: ["packaging", "code"],
+  storageConditionLabel: ["storage_condition", "code"],
+  temperatureTypeLabel: ["temperature", "code"],
+  humidityTypeLabel: ["humidity", "code"],
+  lightLabel: ["light", "code"],
+  pressureTypeLabel: ["pressure", "code"],
+  numericUnitLabel: ["age_unit", "code"],
+  yearsUnitLabel: ["age_years", "code"],
+  geologicalAgeLabel: ["age_ics", "code"],
+  availabilityLabel: ["availability", "code"],
+  provenanceStatusLabel: ["provenance_status", "code"],
+  collectionOriginLabel: ["collection_origin", "code"],
+} satisfies Record<keyof SampleLabels, [string, "path" | "code"]>;
+
 export function createSampleLabels(m: Messages): SampleLabels {
-  return {
-    materialPathLabel: vocabularyLabel(
-      (path) => `material_${pathSegment(path)}`,
-      m,
-    ),
-    typeLabel: vocabularyLabel((type) => `type_${pathSegment(type)}`, m),
-    collectionMethodLabel: vocabularyLabel(
-      (method) => `collection_method_${pathSegment(method)}`,
-      m,
-    ),
-    economicInterestLabel: vocabularyLabel(
-      (path) => `economic_interest_${pathSegment(path)}`,
-      m,
-    ),
-    elementLabel: vocabularyLabel((element) => `element_${element}`, m),
-    textureLabel: vocabularyLabel((texture) => `texture_${texture}`, m),
-    metamorphicFaciesLabel: vocabularyLabel(
-      (facies) => `metamorphic_facies_${facies}`,
-      m,
-    ),
-    natureLabel: vocabularyLabel((nature) => `nature_${nature}`, m),
-    oceanSeaLabel: vocabularyLabel((oceanSea) => `ocean_sea_${oceanSea}`, m),
-    packagingLabel: vocabularyLabel((packaging) => `packaging_${packaging}`, m),
-    storageConditionLabel: vocabularyLabel(
-      (storageCondition) => `storage_condition_${storageCondition}`,
-      m,
-    ),
-    temperatureTypeLabel: vocabularyLabel((type) => `temperature_${type}`, m),
-    humidityTypeLabel: vocabularyLabel((type) => `humidity_${type}`, m),
-    lightLabel: vocabularyLabel((light) => `light_${light}`, m),
-    pressureTypeLabel: vocabularyLabel((type) => `pressure_${type}`, m),
-    numericUnitLabel: vocabularyLabel((unit) => `age_unit_${unit}`, m),
-    yearsUnitLabel: vocabularyLabel((unit) => `age_years_${unit}`, m),
-    geologicalAgeLabel: vocabularyLabel<GeologicalAge>(
-      (age) => `age_ics_${age}`,
-      m,
-    ),
-    availabilityLabel: vocabularyLabel(
-      (availability) => `availability_${availability}`,
-      m,
-    ),
-    provenanceStatusLabel: vocabularyLabel(
-      (status) => `provenance_status_${status}`,
-      m,
-    ),
-    collectionOriginLabel: vocabularyLabel(
-      (origin) => `collection_origin_${origin}`,
-      m,
-    ),
-  };
+  return Object.fromEntries(
+    Object.entries(LABEL_KEY).map(([name, [prefix, kind]]) => [
+      name,
+      vocabularyLabel(
+        (value: string) =>
+          `${prefix}_${kind === "path" ? pathSegment(value) : value}`,
+        m,
+      ),
+    ]),
+    // The value types differ per label (a code, a path, a rank integer), which
+    // Object.fromEntries cannot carry.
+  ) as unknown as SampleLabels;
 }

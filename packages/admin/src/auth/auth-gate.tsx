@@ -5,11 +5,10 @@ import { useAuth } from "react-oidc-context";
 
 import { m } from "#/paraglide/messages.js";
 
-import { AccountGate } from "./account-gate.tsx";
 import { AppLayout } from "./app-layout.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
+import { IdentityGate } from "./identity-gate.tsx";
 import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
-import { OrcidAccessGate } from "./orcid-access-gate.tsx";
 
 // The SSO owns that list (GaiaData's differs from the mock realm's),
 // so the app sends no kc_idp_hint.
@@ -36,23 +35,18 @@ export function AuthGate({ children }: { children?: ReactNode }) {
     );
   }
 
-  // ORCID is a link-then-login mechanism, not a cold-start path: an ORCID
-  // session reaches the app only when the api resolves its orcid to a linked
-  // account (ADR 0020).
   const identityProvider = auth.user?.profile.identity_provider;
-  const Gate =
+  const isOrcid =
     typeof identityProvider === "string" &&
-    identityProvider.toLowerCase() === "orcid"
-      ? OrcidAccessGate
-      : AccountGate;
+    identityProvider.toLowerCase() === "orcid";
 
   // Inside the authenticated branch only: the gate reads the api identity, which
   // an unauthenticated render has no token (and no QueryClient) for.
   return (
-    <Gate onSignOut={signOut}>
+    <IdentityGate isOrcid={isOrcid} onSignOut={signOut}>
       <InstitutionalGroupsGate onSignOut={signOut}>
         <AppLayout onSignOut={signOut}>{children}</AppLayout>
       </InstitutionalGroupsGate>
-    </Gate>
+    </IdentityGate>
   );
 }
