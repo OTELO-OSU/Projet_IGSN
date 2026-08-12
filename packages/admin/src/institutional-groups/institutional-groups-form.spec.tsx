@@ -8,8 +8,7 @@ vi.mock("react-oidc-context", () => ({
   useAuth: () => ({ user: { access_token: "tok" } }),
 }));
 
-// The organization list is long enough to scroll, so a pick searches first,
-// the way a user does.
+// The organization list is long enough to scroll, so a pick searches first.
 const pick = async (field: RegExp, search: string, option: RegExp) => {
   await page.getByRole("combobox", { name: field }).click();
   await page.getByPlaceholder(/^Search/).fill(search);
@@ -33,21 +32,32 @@ describe("InstitutionalGroupsForm", () => {
 
   it("should narrow the laboratories to the OSU once one is picked", async () => {
     await render(<InstitutionalGroupsForm />);
-    await pick(/Organization/, "INSU", /CNRS - INSU/);
+    await pick(/Organization/, "Orléans", /Université d'Orléans/);
 
     await page.getByRole("combobox", { name: /Laboratory/ }).click();
     await expect
-      .element(page.getByRole("option", { name: /Géosciences Rennes/ }))
+      .element(page.getByRole("option", { name: /\(ORN\)/ }))
       .toBeVisible();
-    await page.getByRole("option", { name: /ISTerre/ }).click();
+    await page.getByRole("option", { name: /\(ISTO\)/ }).click();
 
-    await pick(/OSU/, "OSUG", /OSUG/);
+    await pick(/OSU/, "OSUC", /OSUC/);
     await page.getByRole("combobox", { name: /Laboratory/ }).click();
     await expect
-      .element(page.getByRole("option", { name: /ISTerre/ }))
+      .element(page.getByRole("option", { name: /\(ISTO\)/ }))
       .toBeVisible();
     expect(
-      page.getByRole("option", { name: /Géosciences Rennes/ }).elements(),
+      page.getByRole("option", { name: /\(ORN\)/ }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should not offer an organization that has no laboratory", async () => {
+    await render(<InstitutionalGroupsForm />);
+
+    await page.getByRole("combobox", { name: /Organization/ }).click();
+    await page.getByPlaceholder(/^Search/).fill("INSU");
+
+    expect(
+      page.getByRole("option", { name: /CNRS - INSU/ }).elements(),
     ).toHaveLength(0);
   });
 
@@ -57,7 +67,7 @@ describe("InstitutionalGroupsForm", () => {
     await pick(/OSU/, "OTELo", /OTELo/);
     await pick(/Laboratory/, "CRPG", /CRPG/);
 
-    await pick(/Organization/, "INSU", /CNRS - INSU/);
+    await pick(/Organization/, "Orléans", /Université d'Orléans/);
 
     await expect
       .element(page.getByRole("combobox", { name: /OSU/ }))

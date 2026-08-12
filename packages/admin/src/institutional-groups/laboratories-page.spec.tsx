@@ -27,7 +27,7 @@ const MEMBERS = [
     superAdmin: false,
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
-    institutionalLaboratory: "CRPG",
+    institutionalLaboratory: "UMR7358",
   },
   {
     id: "3f2504e0-4f89-41d3-9a0c-030500000002",
@@ -37,9 +37,9 @@ const MEMBERS = [
     orcid: null,
     status: "pending",
     superAdmin: false,
-    institutionalOrganization: "04kdfz702",
+    institutionalOrganization: "02feahw73",
     institutionalOsu: "OSUG",
-    institutionalLaboratory: "ISTERRE",
+    institutionalLaboratory: "UMR5275",
   },
 ];
 
@@ -84,8 +84,8 @@ const ORGANIZATION_SEARCH = "Search organizations...";
 const OSU_FILTER = "OSU";
 const OSU_SEARCH = "Search OSUs...";
 const LORRAINE = "Université de Lorraine";
-const INSU = "Institut national des sciences de l'Univers (CNRS - INSU)";
-const OSUG = "Observatoire des Sciences de l'Univers de Grenoble (OSUG)";
+const CNRS = "Centre National de la Recherche Scientifique (CNRS)";
+const OSUC = "OSUC (OSUC)";
 
 describe("LaboratoriesPage", () => {
   it("should keep only the laboratories of the chosen organization and record it in the URL", async () => {
@@ -102,13 +102,13 @@ describe("LaboratoriesPage", () => {
       .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("cell", { name: "GeoRessources", exact: true }))
+      .element(screen.getByRole("cell", { name: "GEORESSOURCES", exact: true }))
       .toBeVisible();
     expect(
       screen.getByRole("cell", { name: "ISTerre", exact: true }).elements(),
     ).toHaveLength(0);
     expect(
-      screen.getByRole("cell", { name: "BRGM Labo", exact: true }).elements(),
+      screen.getByRole("cell", { name: "ISTO", exact: true }).elements(),
     ).toHaveLength(0);
     await expect
       .poll(() => router.state.location.search)
@@ -118,22 +118,20 @@ describe("LaboratoriesPage", () => {
   it("should narrow the laboratories further with an OSU", async () => {
     fakeApi();
     const { screen } = await renderLaboratories(
-      "/institutional-groups/laboratories?organization=04kdfz702",
+      "/institutional-groups/laboratories?organization=014zrew76",
     );
 
     await chooseOption(screen, {
       filter: OSU_FILTER,
       search: OSU_SEARCH,
-      option: OSUG,
+      option: OSUC,
     });
 
     await expect
-      .element(screen.getByRole("cell", { name: "ISTerre", exact: true }))
+      .element(screen.getByRole("cell", { name: "ISTO", exact: true }))
       .toBeVisible();
     expect(
-      screen
-        .getByRole("cell", { name: "Géosciences Rennes", exact: true })
-        .elements(),
+      screen.getByRole("cell", { name: "ORN", exact: true }).elements(),
     ).toHaveLength(0);
     expect(
       screen.getByRole("cell", { name: "CRPG", exact: true }).elements(),
@@ -143,7 +141,7 @@ describe("LaboratoriesPage", () => {
   it("should drop the OSU when the organization changes", async () => {
     fakeApi();
     const { screen, router } = await renderLaboratories(
-      "/institutional-groups/laboratories?organization=04kdfz702&osu=OSUG",
+      "/institutional-groups/laboratories?organization=014zrew76&osu=OSUC",
     );
 
     await chooseOption(screen, {
@@ -163,11 +161,11 @@ describe("LaboratoriesPage", () => {
   it("should ignore an OSU that comes without an organization", async () => {
     fakeApi();
     const { screen } = await renderLaboratories(
-      "/institutional-groups/laboratories?osu=OSUG",
+      "/institutional-groups/laboratories?osu=OSUC",
     );
 
     await expect
-      .element(screen.getByRole("cell", { name: "BRGM Labo", exact: true }))
+      .element(screen.getByRole("cell", { name: "ISTO", exact: true }))
       .toBeVisible();
     await expect
       .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
@@ -182,11 +180,11 @@ describe("LaboratoriesPage", () => {
 
     await expect
       .poll(() => router.state.location.pathname)
-      .toBe("/institutional-groups/laboratories/CRPG");
+      .toBe("/institutional-groups/laboratories/UMR7358");
     await expect
       .element(
         screen.getByRole("heading", {
-          name: "Centre de Recherches Pétrographiques et Géochimiques",
+          name: "Centre de recherches pétrographiques et géochimiques",
         }),
       )
       .toBeVisible();
@@ -198,7 +196,7 @@ describe("LaboratoriesPage", () => {
       )
       .toBeVisible();
     await expect.element(screen.getByText(LORRAINE)).toBeVisible();
-    await expect.element(screen.getByText(INSU)).toBeVisible();
+    await expect.element(screen.getByText(CNRS)).toBeVisible();
     await expect
       .element(
         screen.getByRole("cell", { name: "crpg.member@univ-lorraine.fr" }),
@@ -209,7 +207,7 @@ describe("LaboratoriesPage", () => {
         .getByRole("cell", { name: "isterre.member@univ-grenoble.fr" })
         .elements(),
     ).toHaveLength(0);
-    expect(requested.at(-1)).toContain("institutionalLaboratory=CRPG");
+    expect(requested.at(-1)).toContain("institutionalLaboratory=UMR7358");
   });
 
   it("should say a laboratory is unknown and ask for no member", async () => {

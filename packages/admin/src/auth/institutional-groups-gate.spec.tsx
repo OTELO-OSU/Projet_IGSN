@@ -37,7 +37,7 @@ describe("InstitutionalGroupsGate", () => {
       groups: {
         institutionalOrganization: null,
         institutionalOsu: null,
-        institutionalLaboratory: "CRPG",
+        institutionalLaboratory: "UMR7358",
       },
     },
     {
@@ -63,7 +63,7 @@ describe("InstitutionalGroupsGate", () => {
     fakeIdentity({
       institutionalOrganization: "04vfs2w97",
       institutionalOsu: "OTELo",
-      institutionalLaboratory: "CRPG",
+      institutionalLaboratory: "UMR7358",
     });
 
     const screen = await renderGate();

@@ -1,18 +1,20 @@
 import { Combobox } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
+import { filterOrganizationsWithLaboratory } from "@projet-igsn/domain/institutional-group/filter-organizations-with-laboratory";
 import { filterOsusByOrg } from "@projet-igsn/domain/institutional-group/filter-osus-by-org";
 import {
   organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
-import { ORGANIZATIONS } from "@projet-igsn/domain/institutional-group/organization";
 
 import { m } from "#/paraglide/messages.js";
 
-const organizationItems = ORGANIZATIONS.map(({ ror }) => ({
-  value: ror,
-  label: organizationLabel(ror),
-}));
+const organizationItems = filterOrganizationsWithLaboratory().map(
+  ({ ror }) => ({
+    value: ror,
+    label: organizationLabel(ror),
+  }),
+);
 
 type FilterProps = {
   value: string | undefined;

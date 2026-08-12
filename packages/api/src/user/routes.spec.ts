@@ -231,12 +231,14 @@ describe("admin user routes", () => {
     await insertUser(db, "crpg@univ-lorraine.fr", {
       institutionalOrganization: "04vfs2w97",
       institutionalOsu: "OTELo",
-      institutionalLaboratory: "CRPG",
+      institutionalLaboratory: "UMR7358",
     });
     const client = await asSuperAdmin(db);
     // Act
     const res = await client.admin.users.$get(
-      { query: { page: "1", perPage: "25", institutionalLaboratory: "CRPG" } },
+      {
+        query: { page: "1", perPage: "25", institutionalLaboratory: "UMR7358" },
+      },
       { headers: authHeader },
     );
     // Assert

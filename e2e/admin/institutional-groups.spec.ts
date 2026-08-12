@@ -17,7 +17,7 @@ test.describe("institutional groups", () => {
     await groups.declare({
       organization: "Université de Lorraine",
       osu: "Observatoire Terre et Environnement de Lorraine",
-      laboratory: "Centre de Recherches Pétrographiques",
+      laboratory: "Centre de recherches pétrographiques et géochimiques",
     });
 
     await samples.expectVisible();
@@ -44,9 +44,14 @@ test.describe("institutional groups", () => {
     await lists.expectLaboratoryRow("CRPG");
     await lists.expectNoLaboratoryRow("ISTerre");
 
-    await lists.openLaboratory("CRPG");
+    await lists.openLaboratory("UMR7358");
 
     await lists.expectMember("nadia.leroy@univ-lorraine.fr");
+
+    // UNIDIA's code carries a space, so opening it covers the route encoding.
+    await lists.openLaboratories();
+    await lists.openLaboratory("UAR 2050");
+    await lists.expectLaboratoryCode("UAR 2050");
   });
 
   test("a researcher who is not a super admin cannot reach the institutional groups", async ({

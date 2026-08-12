@@ -1,7 +1,7 @@
 import { setInstitutionalGroupsSchema } from "./institutional-groups-validator.ts";
 
+const ORLEANS = "014zrew76";
 const LORRAINE = "04vfs2w97";
-const INSU = "04kdfz702";
 const BRGM = "05hnb7x64";
 
 const parse = (groups: object) =>
@@ -12,16 +12,16 @@ describe("setInstitutionalGroupsSchema", () => {
     {
       rule: "a laboratory under the given OSU and organization",
       groups: {
-        institutionalOrganization: LORRAINE,
-        institutionalOsu: "OTELo",
-        institutionalLaboratory: "CRPG",
+        institutionalOrganization: ORLEANS,
+        institutionalOsu: "OSUC",
+        institutionalLaboratory: "UMR7327",
       },
     },
     {
       rule: "a shared laboratory under its other organization",
       groups: {
-        institutionalOrganization: INSU,
-        institutionalLaboratory: "CRPG",
+        institutionalOrganization: BRGM,
+        institutionalLaboratory: "UMR7327",
       },
     },
   ])("should accept $rule", ({ groups }) => {
@@ -32,26 +32,26 @@ describe("setInstitutionalGroupsSchema", () => {
     {
       rule: "a laboratory of other organizations",
       groups: {
-        institutionalOrganization: BRGM,
-        institutionalLaboratory: "CRPG",
+        institutionalOrganization: LORRAINE,
+        institutionalLaboratory: "UMR7327",
       },
       path: "institutionalLaboratory",
     },
     {
       rule: "a laboratory outside the submitted OSU",
       groups: {
-        institutionalOrganization: INSU,
-        institutionalOsu: "OSUR",
-        institutionalLaboratory: "ISTERRE",
+        institutionalOrganization: ORLEANS,
+        institutionalOsu: "OBSPM",
+        institutionalLaboratory: "UMR7327",
       },
       path: "institutionalLaboratory",
     },
     {
       rule: "an OSU of another organization",
       groups: {
-        institutionalOrganization: INSU,
+        institutionalOrganization: ORLEANS,
         institutionalOsu: "OTELo",
-        institutionalLaboratory: "CRPG",
+        institutionalLaboratory: "UMR7327",
       },
       path: "institutionalOsu",
     },

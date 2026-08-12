@@ -23,8 +23,10 @@ export function institutionalGroupsListPage(page: Page) {
       expect(
         page.getByRole("cell", { name: acronym, exact: true }),
       ).toBeHidden(),
-    openLaboratory: (acronym: string) =>
-      page.getByRole("link", { name: acronym, exact: true }).click(),
+    openLaboratory: (code: string) =>
+      page.getByRole("link", { name: code, exact: true }).click(),
+    expectLaboratoryCode: (code: string) =>
+      expect(page.getByText(code, { exact: true })).toBeVisible(),
     expectMember: (email: string) =>
       expect(page.getByRole("cell", { name: email })).toBeVisible(),
     expectNoMenuSection: () =>

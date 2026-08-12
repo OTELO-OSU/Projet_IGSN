@@ -353,7 +353,7 @@ describe("SampleView", () => {
         sample={sample({
           institutionalOrganization: "04vfs2w97",
           institutionalOsu: "OTELo",
-          institutionalLaboratory: "CRPG",
+          institutionalLaboratory: "UMR7358",
         })}
       />,
     );

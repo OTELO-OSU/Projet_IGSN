@@ -3,6 +3,7 @@ import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-grou
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { FieldDisabledProvider } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { filterLaboratoriesByOrgAndOsu } from "@projet-igsn/domain/institutional-group/filter-laboratories-by-org-and-osu";
+import { filterOrganizationsWithLaboratory } from "@projet-igsn/domain/institutional-group/filter-organizations-with-laboratory";
 import { filterOsusByOrg } from "@projet-igsn/domain/institutional-group/filter-osus-by-org";
 import { setInstitutionalGroupsSchema } from "@projet-igsn/domain/institutional-group/institutional-groups-validator";
 import {
@@ -10,7 +11,6 @@ import {
   organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
-import { ORGANIZATIONS } from "@projet-igsn/domain/institutional-group/organization";
 
 import { m } from "#/paraglide/messages.js";
 
@@ -27,10 +27,12 @@ const toItems = (
   label: (code: string) => string,
 ) => entries.map(({ code }) => ({ value: code, label: label(code) }));
 
-const organizationItems = ORGANIZATIONS.map(({ ror }) => ({
-  value: ror,
-  label: organizationLabel(ror),
-}));
+const organizationItems = filterOrganizationsWithLaboratory().map(
+  ({ ror }) => ({
+    value: ror,
+    label: organizationLabel(ror),
+  }),
+);
 
 const validate = ({ value }: { value: InstitutionalGroups }) => {
   const parsed = setInstitutionalGroupsSchema.safeParse(value);

@@ -8,12 +8,15 @@
   },
   "scripts": {
     "material-tree": "node scripts/dump-material-tree.ts",
-    "material-tree:json": "node scripts/dump-material-json.ts"
+    "material-tree:json": "node scripts/dump-material-json.ts",
+    "sync-institutions": "node scripts/sync-institutions.ts"
   },
   "dependencies": {
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/papaparse": "catalog:",
+    "papaparse": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

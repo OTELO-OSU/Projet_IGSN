@@ -47,11 +47,8 @@ export const researcherKeySchema = z.enum([
 ]);
 export type ResearcherKey = z.infer<typeof researcherKeySchema>;
 
-// Ids are static v7-shaped uuids like the sample ids; the api adopts these rows
-// by email when the real account signs in (see src/user/repository.ts), which is
-// what keeps the ownership. Everyone but theo carries institutional groups, so
-// signing in lands on the dashboard rather than on the groups gate; theo is the
-// first-login fixture.
+// Everyone but theo carries institutional groups, so signing in lands on the
+// dashboard rather than on the groups gate.
 export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   marie: {
     id: "01980e2d-6f9b-7000-8000-000000000001",
@@ -63,7 +60,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     superAdmin: false,
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
-    institutionalLaboratory: "CRPG",
+    institutionalLaboratory: "UMR7358",
   },
   jean: {
     id: "01980e2d-6f9b-7000-8000-000000000002",
@@ -74,7 +71,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     superAdmin: false,
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
-    institutionalLaboratory: "GEORESSOURCES",
+    institutionalLaboratory: "UMR7359",
   },
   sophie: {
     id: "01980e2d-6f9b-7000-8000-000000000003",
@@ -83,9 +80,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Sophie",
     status: "accepted",
     superAdmin: false,
-    institutionalOrganization: "04kdfz702",
+    institutionalOrganization: "02rx3b187",
     institutionalOsu: "OSUG",
-    institutionalLaboratory: "ISTERRE",
+    institutionalLaboratory: "UMR5275",
   },
   pierre: {
     id: "01980e2d-6f9b-7000-8000-000000000004",
@@ -96,7 +93,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     superAdmin: false,
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
-    institutionalLaboratory: "CRPG",
+    institutionalLaboratory: "UMR7358",
   },
   camille: {
     id: "01980e2d-6f9b-7000-8000-000000000005",
@@ -105,9 +102,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     firstname: "Camille",
     status: "accepted",
     superAdmin: false,
-    institutionalOrganization: "04kdfz702",
-    institutionalOsu: "OSUR",
-    institutionalLaboratory: "GEOSCIENCES-RENNES",
+    institutionalOrganization: "014zrew76",
+    institutionalOsu: "OSUC",
+    institutionalLaboratory: "UMR7327",
   },
   luc: {
     id: "01980e2d-6f9b-7000-8000-000000000006",
@@ -118,7 +115,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     superAdmin: false,
     institutionalOrganization: "05hnb7x64",
     institutionalOsu: null,
-    institutionalLaboratory: "LAB-BRGM",
+    institutionalLaboratory: "UMR7327",
   },
   nadia: {
     id: "01980e2d-6f9b-7000-8000-000000000007",
@@ -129,7 +126,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     superAdmin: true,
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
-    institutionalLaboratory: "CRPG",
+    institutionalLaboratory: "UMR7358",
   },
   theo: {
     id: "01980e2d-6f9b-7000-8000-000000000008",
@@ -151,12 +148,12 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     superAdmin: false,
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
-    institutionalLaboratory: "CRPG",
+    institutionalLaboratory: "UMR7358",
   },
 };
 
 // Upserts the mock researchers by email (a row may already exist from a real
-// sign-in, with another id) and returns each researcher's database id.
+// sign-in, with another id).
 async function seedOwners(
   db: Kysely<DB>,
 ): Promise<Record<ResearcherKey, string>> {
@@ -184,9 +181,9 @@ async function seedOwners(
       oc.column("email").doUpdateSet((eb) => ({
         status: eb.ref("excluded.status"),
         super_admin: eb.ref("excluded.super_admin"),
-        // Re-applied like the moderation state: the api sets groups once and
-        // never again, so without this a previous run's groups would stick to
-        // theo and the first-login e2e would pass only on a virgin database.
+        // The api sets groups once and never again, so without this a previous
+        // run's groups would stick to theo and the first-login e2e would pass
+        // only on a virgin database.
         institutional_organization: eb.ref(
           "excluded.institutional_organization",
         ),
@@ -255,8 +252,6 @@ export async function seed(
           ...locationColumns(location),
           ...descriptionColumns(description),
           ...scientificContextColumns(scientificContext),
-          // Snapshot of the owner's affiliation, the way insert-sample.ts copies
-          // the creator's groups.
           institutional_organization:
             MOCK_RESEARCHERS[owner].institutionalOrganization,
           institutional_osu: MOCK_RESEARCHERS[owner].institutionalOsu,
@@ -337,7 +332,6 @@ export const seedSampleSchema = sampleSchema
     igsn: true,
     published: true,
   })
-  // Seed metadata (user_sample rows), not sample columns.
   .extend({
     owner: researcherKeySchema,
     collaborators: z
@@ -354,9 +348,8 @@ export type SeedSample = z.infer<typeof seedSampleSchema>;
 
 export type SeedCollaborator = NonNullable<SeedSample["collaborators"]>[number];
 
-// A seed row must hold the bar the API enforces on the same data: the create
-// schema for a draft, the published schema (publish blockers raised as
-// issues) for a published row, since seeding bypasses the publish flow.
+// A seed row must hold the bar the API enforces on the same data, since seeding
+// bypasses the publish flow.
 export function parseSeedSample(sample: SeedSample): SeedSample {
   const parsed = seedSampleSchema.parse(sample);
   const {
@@ -378,8 +371,8 @@ export function parseSeedSample(sample: SeedSample): SeedSample {
   return parsed;
 }
 
-// Only the published rows below are visible on the public frontend; the frontend
-// detail E2E asserts the first published row's nature (`hand_sample`).
+// The frontend detail E2E asserts the first published row's nature
+// (`hand_sample`).
 export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "00000000-0000-7000-8000-000000000001",
