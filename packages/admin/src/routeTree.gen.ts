@@ -16,6 +16,12 @@ import { Route as UsersUserIdRouteImport } from './routes/users.$userId'
 import { Route as SamplesCreateRouteImport } from './routes/samples.create'
 import { Route as SamplesSampleIdRouteImport } from './routes/samples.$sampleId'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
+import { Route as InstitutionalGroupsOsusIndexRouteImport } from './routes/institutional-groups.osus.index'
+import { Route as InstitutionalGroupsOrganizationsIndexRouteImport } from './routes/institutional-groups.organizations.index'
+import { Route as InstitutionalGroupsLaboratoriesIndexRouteImport } from './routes/institutional-groups.laboratories.index'
+import { Route as InstitutionalGroupsOsusCodeRouteImport } from './routes/institutional-groups.osus.$code'
+import { Route as InstitutionalGroupsOrganizationsRorRouteImport } from './routes/institutional-groups.organizations.$ror'
+import { Route as InstitutionalGroupsLaboratoriesCodeRouteImport } from './routes/institutional-groups.laboratories.$code'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -52,6 +58,42 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InstitutionalGroupsOsusIndexRoute =
+  InstitutionalGroupsOsusIndexRouteImport.update({
+    id: '/institutional-groups/osus/',
+    path: '/institutional-groups/osus/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InstitutionalGroupsOrganizationsIndexRoute =
+  InstitutionalGroupsOrganizationsIndexRouteImport.update({
+    id: '/institutional-groups/organizations/',
+    path: '/institutional-groups/organizations/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InstitutionalGroupsLaboratoriesIndexRoute =
+  InstitutionalGroupsLaboratoriesIndexRouteImport.update({
+    id: '/institutional-groups/laboratories/',
+    path: '/institutional-groups/laboratories/',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InstitutionalGroupsOsusCodeRoute =
+  InstitutionalGroupsOsusCodeRouteImport.update({
+    id: '/institutional-groups/osus/$code',
+    path: '/institutional-groups/osus/$code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InstitutionalGroupsOrganizationsRorRoute =
+  InstitutionalGroupsOrganizationsRorRouteImport.update({
+    id: '/institutional-groups/organizations/$ror',
+    path: '/institutional-groups/organizations/$ror',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const InstitutionalGroupsLaboratoriesCodeRoute =
+  InstitutionalGroupsLaboratoriesCodeRouteImport.update({
+    id: '/institutional-groups/laboratories/$code',
+    path: '/institutional-groups/laboratories/$code',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +103,12 @@ export interface FileRoutesByFullPath {
   '/samples/create': typeof SamplesCreateRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/users/': typeof UsersIndexRoute
+  '/institutional-groups/laboratories/$code': typeof InstitutionalGroupsLaboratoriesCodeRoute
+  '/institutional-groups/organizations/$ror': typeof InstitutionalGroupsOrganizationsRorRoute
+  '/institutional-groups/osus/$code': typeof InstitutionalGroupsOsusCodeRoute
+  '/institutional-groups/laboratories/': typeof InstitutionalGroupsLaboratoriesIndexRoute
+  '/institutional-groups/organizations/': typeof InstitutionalGroupsOrganizationsIndexRoute
+  '/institutional-groups/osus/': typeof InstitutionalGroupsOsusIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +118,12 @@ export interface FileRoutesByTo {
   '/samples/create': typeof SamplesCreateRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/users': typeof UsersIndexRoute
+  '/institutional-groups/laboratories/$code': typeof InstitutionalGroupsLaboratoriesCodeRoute
+  '/institutional-groups/organizations/$ror': typeof InstitutionalGroupsOrganizationsRorRoute
+  '/institutional-groups/osus/$code': typeof InstitutionalGroupsOsusCodeRoute
+  '/institutional-groups/laboratories': typeof InstitutionalGroupsLaboratoriesIndexRoute
+  '/institutional-groups/organizations': typeof InstitutionalGroupsOrganizationsIndexRoute
+  '/institutional-groups/osus': typeof InstitutionalGroupsOsusIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +134,12 @@ export interface FileRoutesById {
   '/samples/create': typeof SamplesCreateRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/users/': typeof UsersIndexRoute
+  '/institutional-groups/laboratories/$code': typeof InstitutionalGroupsLaboratoriesCodeRoute
+  '/institutional-groups/organizations/$ror': typeof InstitutionalGroupsOrganizationsRorRoute
+  '/institutional-groups/osus/$code': typeof InstitutionalGroupsOsusCodeRoute
+  '/institutional-groups/laboratories/': typeof InstitutionalGroupsLaboratoriesIndexRoute
+  '/institutional-groups/organizations/': typeof InstitutionalGroupsOrganizationsIndexRoute
+  '/institutional-groups/osus/': typeof InstitutionalGroupsOsusIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +151,12 @@ export interface FileRouteTypes {
     | '/samples/create'
     | '/users/$userId'
     | '/users/'
+    | '/institutional-groups/laboratories/$code'
+    | '/institutional-groups/organizations/$ror'
+    | '/institutional-groups/osus/$code'
+    | '/institutional-groups/laboratories/'
+    | '/institutional-groups/organizations/'
+    | '/institutional-groups/osus/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +166,12 @@ export interface FileRouteTypes {
     | '/samples/create'
     | '/users/$userId'
     | '/users'
+    | '/institutional-groups/laboratories/$code'
+    | '/institutional-groups/organizations/$ror'
+    | '/institutional-groups/osus/$code'
+    | '/institutional-groups/laboratories'
+    | '/institutional-groups/organizations'
+    | '/institutional-groups/osus'
   id:
     | '__root__'
     | '/'
@@ -109,6 +181,12 @@ export interface FileRouteTypes {
     | '/samples/create'
     | '/users/$userId'
     | '/users/'
+    | '/institutional-groups/laboratories/$code'
+    | '/institutional-groups/organizations/$ror'
+    | '/institutional-groups/osus/$code'
+    | '/institutional-groups/laboratories/'
+    | '/institutional-groups/organizations/'
+    | '/institutional-groups/osus/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +197,12 @@ export interface RootRouteChildren {
   SamplesCreateRoute: typeof SamplesCreateRoute
   UsersUserIdRoute: typeof UsersUserIdRoute
   UsersIndexRoute: typeof UsersIndexRoute
+  InstitutionalGroupsLaboratoriesCodeRoute: typeof InstitutionalGroupsLaboratoriesCodeRoute
+  InstitutionalGroupsOrganizationsRorRoute: typeof InstitutionalGroupsOrganizationsRorRoute
+  InstitutionalGroupsOsusCodeRoute: typeof InstitutionalGroupsOsusCodeRoute
+  InstitutionalGroupsLaboratoriesIndexRoute: typeof InstitutionalGroupsLaboratoriesIndexRoute
+  InstitutionalGroupsOrganizationsIndexRoute: typeof InstitutionalGroupsOrganizationsIndexRoute
+  InstitutionalGroupsOsusIndexRoute: typeof InstitutionalGroupsOsusIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +256,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/institutional-groups/osus/': {
+      id: '/institutional-groups/osus/'
+      path: '/institutional-groups/osus'
+      fullPath: '/institutional-groups/osus/'
+      preLoaderRoute: typeof InstitutionalGroupsOsusIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/institutional-groups/organizations/': {
+      id: '/institutional-groups/organizations/'
+      path: '/institutional-groups/organizations'
+      fullPath: '/institutional-groups/organizations/'
+      preLoaderRoute: typeof InstitutionalGroupsOrganizationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/institutional-groups/laboratories/': {
+      id: '/institutional-groups/laboratories/'
+      path: '/institutional-groups/laboratories'
+      fullPath: '/institutional-groups/laboratories/'
+      preLoaderRoute: typeof InstitutionalGroupsLaboratoriesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/institutional-groups/osus/$code': {
+      id: '/institutional-groups/osus/$code'
+      path: '/institutional-groups/osus/$code'
+      fullPath: '/institutional-groups/osus/$code'
+      preLoaderRoute: typeof InstitutionalGroupsOsusCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/institutional-groups/organizations/$ror': {
+      id: '/institutional-groups/organizations/$ror'
+      path: '/institutional-groups/organizations/$ror'
+      fullPath: '/institutional-groups/organizations/$ror'
+      preLoaderRoute: typeof InstitutionalGroupsOrganizationsRorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/institutional-groups/laboratories/$code': {
+      id: '/institutional-groups/laboratories/$code'
+      path: '/institutional-groups/laboratories/$code'
+      fullPath: '/institutional-groups/laboratories/$code'
+      preLoaderRoute: typeof InstitutionalGroupsLaboratoriesCodeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +309,16 @@ const rootRouteChildren: RootRouteChildren = {
   SamplesCreateRoute: SamplesCreateRoute,
   UsersUserIdRoute: UsersUserIdRoute,
   UsersIndexRoute: UsersIndexRoute,
+  InstitutionalGroupsLaboratoriesCodeRoute:
+    InstitutionalGroupsLaboratoriesCodeRoute,
+  InstitutionalGroupsOrganizationsRorRoute:
+    InstitutionalGroupsOrganizationsRorRoute,
+  InstitutionalGroupsOsusCodeRoute: InstitutionalGroupsOsusCodeRoute,
+  InstitutionalGroupsLaboratoriesIndexRoute:
+    InstitutionalGroupsLaboratoriesIndexRoute,
+  InstitutionalGroupsOrganizationsIndexRoute:
+    InstitutionalGroupsOrganizationsIndexRoute,
+  InstitutionalGroupsOsusIndexRoute: InstitutionalGroupsOsusIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

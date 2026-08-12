@@ -1,13 +1,10 @@
-import { HttpResponse, http } from "msw";
 import { page } from "vitest/browser";
 
-import { worker } from "../../test/msw.ts";
+import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { render } from "../../test/render.tsx";
 import { AppLayout } from "./app-layout.tsx";
 
 let pathname = "/";
-// The layout is rendered outside a router here, so Link degrades to the anchor
-// it renders: `to` becomes the href a user (and getByRole("link")) sees.
 vi.mock("@tanstack/react-router", () => ({
   Link: ({ to, children }: { to: string; children?: React.ReactNode }) => (
     <a href={to}>{children}</a>
@@ -26,20 +23,6 @@ const renderLayout = () =>
     </AppLayout>,
   );
 
-const fakeIdentity = (overrides: Record<string, unknown>) =>
-  worker.use(
-    http.get("*/admin/currentUser", () =>
-      HttpResponse.json({
-        sub: "s",
-        name: "Marie Dupont",
-        orcid: null,
-        status: "accepted",
-        superAdmin: false,
-        ...overrides,
-      }),
-    ),
-  );
-
 beforeAll(() => page.viewport(1024, 768));
 
 beforeEach(() => {
@@ -48,7 +31,7 @@ beforeEach(() => {
 
 describe("AppLayout", () => {
   it("should warn a pending user that their account awaits validation", async () => {
-    fakeIdentity({ status: "pending" });
+    fakeCurrentUser({ status: "pending" });
 
     const screen = await renderLayout();
 
@@ -59,7 +42,7 @@ describe("AppLayout", () => {
   });
 
   it("should list both resources in the sidebar for a super admin", async () => {
-    fakeIdentity({ superAdmin: true });
+    fakeCurrentUser({ superAdmin: true });
 
     const screen = await renderLayout();
     const nav = screen.getByRole("navigation");
@@ -72,8 +55,25 @@ describe("AppLayout", () => {
       .toHaveAttribute("href", "/users");
   });
 
+  it("should offer the three institutional group lists to a super admin", async () => {
+    fakeCurrentUser({ superAdmin: true });
+
+    const screen = await renderLayout();
+    const groups = screen.getByRole("list", { name: "Institutional groups" });
+
+    await expect
+      .element(groups.getByRole("link", { name: "Organizations" }))
+      .toHaveAttribute("href", "/institutional-groups/organizations");
+    await expect
+      .element(groups.getByRole("link", { name: "OSUs" }))
+      .toHaveAttribute("href", "/institutional-groups/osus");
+    await expect
+      .element(groups.getByRole("link", { name: "Laboratories" }))
+      .toHaveAttribute("href", "/institutional-groups/laboratories");
+  });
+
   it("should list only the samples resource for a plain researcher", async () => {
-    fakeIdentity({});
+    fakeCurrentUser();
 
     const screen = await renderLayout();
     const nav = screen.getByRole("navigation");
@@ -82,10 +82,17 @@ describe("AppLayout", () => {
       .element(nav.getByRole("link", { name: "Samples" }))
       .toBeVisible();
     expect(nav.getByRole("link", { name: "Users" }).elements()).toHaveLength(0);
+    expect(
+      nav.getByRole("link", { name: "Organizations" }).elements(),
+    ).toHaveLength(0);
+    expect(nav.getByRole("link", { name: "OSUs" }).elements()).toHaveLength(0);
+    expect(
+      nav.getByRole("link", { name: "Laboratories" }).elements(),
+    ).toHaveLength(0);
   });
 
   it("should show no banner to an accepted user", async () => {
-    fakeIdentity({});
+    fakeCurrentUser();
 
     const screen = await renderLayout();
 

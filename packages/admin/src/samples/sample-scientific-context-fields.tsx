@@ -1,7 +1,7 @@
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
+import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
+import { ORGANIZATIONS } from "@projet-igsn/domain/institutional-group/organization";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
-import { ORGANIZATIONS } from "@projet-igsn/domain/sample/scientific-context/organization";
-import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
 import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
 import { m } from "#/paraglide/messages.js";
@@ -11,8 +11,6 @@ import {
 } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// Organization names are proper nouns (reference data, not vocabulary), so the
-// label comes from the domain list via organizationLabel, not the i18n catalog.
 const organizationItems = ORGANIZATIONS.map((organization) => ({
   value: organization.ror,
   label: organizationLabel(organization.ror),

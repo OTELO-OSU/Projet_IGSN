@@ -1,4 +1,4 @@
-import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
+import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 import { render } from "vitest-browser-react";
 
 import { ScientificContextView } from "./scientific-context-view.tsx";
@@ -32,17 +32,12 @@ describe("ScientificContextView", () => {
       .element(screen.getByText("Recent collection"))
       .toBeInTheDocument();
 
-    // Organizations resolve their ROR to a name and link to ror.org. The names
-    // come from organizationLabel, not from literals: the list is refreshed from
-    // ROR, so a pinned name would drift. The ROR ids stay pinned, they are the
-    // stable code and the sync never rewrites one.
     for (const ror of ["03fd77x13", "043htjv09", "00z54nq84"]) {
       await expect
         .element(screen.getByRole("link", { name: organizationLabel(ror) }))
         .toHaveAttribute("href", `https://ror.org/${ror}`);
     }
 
-    // ORCID iDs link to orcid.org.
     await expect
       .element(screen.getByRole("link", { name: "0000-0002-1825-0097" }))
       .toHaveAttribute("href", "https://orcid.org/0000-0002-1825-0097");
@@ -76,7 +71,6 @@ describe("ScientificContextView", () => {
     await expect
       .element(screen.getByText("Alfred Curator"))
       .toBeInTheDocument();
-    // Recent-collection fields never appear on a historical specimen.
     await expect
       .element(screen.getByText("Funder organization"))
       .not.toBeInTheDocument();

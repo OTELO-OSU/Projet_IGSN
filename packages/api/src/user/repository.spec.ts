@@ -458,6 +458,106 @@ describe("createUserRepository", () => {
     ]);
   });
 
+  const insertGroupedUsers = (db: Parameters<typeof createUserRepository>[0]) =>
+    Promise.all([
+      insertUser(db, "alice@univ-lorraine.fr", {
+        status: "accepted",
+        institutionalOrganization: "04vfs2w97",
+        institutionalOsu: "OTELo",
+        institutionalLaboratory: "CRPG",
+      }),
+      insertUser(db, "bruno@univ-lorraine.fr", {
+        status: "pending",
+        institutionalOrganization: "04kdfz702",
+        institutionalLaboratory: "CRPG",
+      }),
+      insertUser(db, "carla@univ-lorraine.fr", {
+        status: "accepted",
+        institutionalOrganization: "04kdfz702",
+        institutionalOsu: "OSUG",
+        institutionalLaboratory: "ISTERRE",
+      }),
+    ]);
+
+  pgTest.for([
+    [
+      "organization",
+      { institutionalOrganization: "04vfs2w97" },
+      ["alice@univ-lorraine.fr"],
+    ],
+    ["OSU", { institutionalOsu: "OTELo" }, ["alice@univ-lorraine.fr"]],
+    [
+      "laboratory",
+      { institutionalLaboratory: "CRPG" },
+      ["alice@univ-lorraine.fr", "bruno@univ-lorraine.fr"],
+    ],
+  ] as const)(
+    "should return only the users of the requested %s, total included",
+    async ([, filter, expected], { db }) => {
+      // Arrange
+      await insertGroupedUsers(db);
+      // Act
+      const { data, total } = await createUserRepository(db).list({
+        page: 1,
+        perPage: 25,
+        status: undefined,
+        ...filter,
+      });
+      // Assert
+      expect(data.map((user) => user.email)).toEqual(expected);
+      expect(total).toBe(expected.length);
+    },
+  );
+
+  pgTest("should combine a group filter with the status", async ({ db }) => {
+    // Arrange
+    await insertGroupedUsers(db);
+    // Act
+    const { data, total } = await createUserRepository(db).list({
+      page: 1,
+      perPage: 25,
+      status: "accepted",
+      institutionalLaboratory: "CRPG",
+    });
+    // Assert
+    expect(data.map((user) => user.email)).toEqual(["alice@univ-lorraine.fr"]);
+    expect(total).toBe(1);
+  });
+
+  pgTest("should return an empty page for an unknown code", async ({ db }) => {
+    // Arrange
+    await insertGroupedUsers(db);
+    // Act
+    const result = await createUserRepository(db).list({
+      page: 1,
+      perPage: 25,
+      status: undefined,
+      institutionalLaboratory: "UNKNOWN",
+    });
+    // Assert
+    expect(result).toEqual({ data: [], total: 0 });
+  });
+
+  pgTest(
+    "should keep the order and the pagination when filtering",
+    async ({ db }) => {
+      // Arrange
+      await insertGroupedUsers(db);
+      // Act
+      const { data, total } = await createUserRepository(db).list({
+        page: 2,
+        perPage: 1,
+        status: undefined,
+        institutionalLaboratory: "CRPG",
+      });
+      // Assert
+      expect(data.map((user) => user.email)).toEqual([
+        "bruno@univ-lorraine.fr",
+      ]);
+      expect(total).toBe(2);
+    },
+  );
+
   pgTest("should read one user, or null when unknown", async ({ db }) => {
     // Arrange
     await insertUsers(db);

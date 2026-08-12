@@ -1,15 +1,7 @@
 import { z } from "zod";
 
-// Research organizations with their ROR identifier (Research Organization
-// Registry), the internal reference list PY maintains. A sample's funder
-// organization and the program chief's research structure both reference an
-// organization by its ROR id; the id is the stable code, the name/acronym are
-// display data (proper nouns, not translated, so not in the i18n catalog).
-//
 // Generated from a CSV export; do not edit by hand for bulk changes. Refresh
 // with: node packages/domain/scripts/sync-organizations.ts
-// A one-off addition can be appended to ORGANIZATIONS directly (keep ROR ids
-// unique). Promote to a DB table only if orgs must be editable at runtime.
 export type Organization = {
   ror: string;
   name: string;
@@ -420,9 +412,7 @@ export const ORGANIZATIONS: readonly Organization[] = [
 ];
 
 // A ROR identifier: nine chars, a leading 0 then a base32 body and a two-digit
-// checksum (https://ror.readme.io/docs/identifier). Validated by format, not by
-// membership in ORGANIZATIONS, so the list can grow without rejecting values
-// already stored.
+// checksum (https://ror.readme.io/docs/identifier).
 export const organizationRorSchema = z
   .string()
   .regex(/^0[0-9a-hj-km-np-tv-z]{6}[0-9]{2}$/, "invalid ROR identifier");

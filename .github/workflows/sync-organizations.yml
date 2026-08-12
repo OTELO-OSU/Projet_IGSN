@@ -1,27 +1,11 @@
 name: "Sync organizations"
 
-# Refreshes packages/domain/src/sample/scientific-context/organization.ts from
-# ROR (see that file's header for what is stored and why). This workflow is
-# only the trigger and the PR mechanics; the merge policy lives in
-# packages/domain/src/sample/scientific-context/merge-ror-organization.ts.
-#
-# The opened PR is the approval gate: nothing here merges by itself, and the
-# sync never adds or removes a row, only updates name/acronym/status in place.
 # Repo one-time setup:
-# - optional secret ROR_CLIENT_ID exempts these requests from ROR rate
-#   limiting (https://ror.readme.io/v2/docs/rest-api); works without it too.
 # - Settings -> Actions -> General -> "Allow GitHub Actions to create and
 #   approve pull requests" must be enabled, or `gh pr create` below 403s.
-# Cadence: repo variable ORGANIZATION_SYNC_INTERVAL_MONTHS (default 12, so
-# January only; 3 for quarterly, 1 for monthly). See the `due` job.
-#
-# The list drifted since its original CSV import, so the first sync PR this
-# workflow opens is large (roughly half the rows): review it as a real diff,
-# not a rubber stamp.
 on:
   schedule:
     # GitHub requires a literal cron, so it cannot read the interval variable.
-    # It fires monthly and the `due` job applies ORGANIZATION_SYNC_INTERVAL_MONTHS.
     - cron: "0 3 1 * *"
   workflow_dispatch:
 
@@ -88,22 +72,17 @@ jobs:
         run: node packages/domain/scripts/sync-organizations.ts
 
       - name: Format the generated file
-        run: pnpm fmt:apply packages/domain/src/sample/scientific-context/organization.ts
+        run: pnpm fmt:apply packages/domain/src/institutional-group/organization.ts
 
       - name: Open the pull request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          path=packages/domain/src/sample/scientific-context/organization.ts
+          path=packages/domain/src/institutional-group/organization.ts
           if git diff --quiet -- "$path"; then
             echo "ROR agrees with the stored list, nothing to propose."
             exit 0
           fi
-          # One dated branch and PR per run, so a run never touches an earlier
-          # one: no approval carried over to unreviewed data, no hand fix
-          # overwritten, no ambiguity with an already merged sync PR. Nothing
-          # here rewrites history, so a second run on the same day is rejected
-          # on the push and the day's open proposal stands untouched.
           date=$(date -u +%F)
           branch="chore/sync-organizations-$date"
           title="chore(domain): sync organizations from ROR ($date)"
@@ -116,8 +95,6 @@ jobs:
             --body "Refreshed from the ROR API. The diff is the whole proposal: every changed name or acronym is a row below. A row ROR could not be reached for is left untouched and named in the run log."
 
       # A PR opened with GITHUB_TOKEN does not trigger check.yml, so the sync
-      # runs its own check. Last on purpose: a failure turns the job red but
-      # leaves the PR up for a human to fix. No spec pins an organization name,
-      # so this fails on a broken emit, not on a rename.
+      # runs its own check.
       - name: Run the domain tests
         run: pnpm test --project @projet-igsn/domain

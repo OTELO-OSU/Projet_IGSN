@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { organizationRorSchema } from "../sample/scientific-context/organization.ts";
 import { filterLaboratoriesByOrgAndOsu } from "./filter-laboratories-by-org-and-osu.ts";
 import { filterOsusByOrg } from "./filter-osus-by-org.ts";
 import { laboratoryCodeSchema } from "./laboratory.ts";
+import { organizationRorSchema } from "./organization.ts";
 import { osuCodeSchema } from "./osu.ts";
 
 export const setInstitutionalGroupsSchema = z

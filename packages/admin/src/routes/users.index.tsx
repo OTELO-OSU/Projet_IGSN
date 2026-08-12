@@ -12,6 +12,7 @@ import {
 import { listUsersQuerySchema } from "@projet-igsn/domain/user/user-validator";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { Pagination } from "#/pagination/pagination.tsx";
 import { m } from "#/paraglide/messages.js";
 import { useUsers } from "#/users/use-users.ts";
@@ -20,7 +21,11 @@ import { UserTable } from "#/users/user-table.tsx";
 
 export const Route = createFileRoute("/users/")({
   validateSearch: listUsersQuerySchema,
-  component: UsersPage,
+  component: () => (
+    <SuperAdminOnly>
+      <UsersPage />
+    </SuperAdminOnly>
+  ),
 });
 
 const ALL_STATUSES = "all";

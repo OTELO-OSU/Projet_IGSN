@@ -26,6 +26,25 @@ describe("listUsersQuerySchema", () => {
       listUsersQuerySchema.parse({ page: "0", perPage: "7", status: "banned" }),
     ).toEqual({ page: 1, perPage: DEFAULT_PAGE_SIZE, status: undefined });
   });
+
+  it.each([
+    ["an empty value", ""],
+    ["an absent value", undefined],
+  ])("should read %s as no institutional filter", (_case, value) => {
+    expect(
+      listUsersQuerySchema.parse({
+        institutionalOrganization: value,
+        institutionalOsu: value,
+        institutionalLaboratory: value,
+      }),
+    ).toStrictEqual({
+      page: 1,
+      perPage: DEFAULT_PAGE_SIZE,
+      institutionalOrganization: undefined,
+      institutionalOsu: undefined,
+      institutionalLaboratory: undefined,
+    });
+  });
 });
 
 describe("setUserStatusBodySchema", () => {

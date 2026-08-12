@@ -7,10 +7,10 @@ import { filterOsusByOrg } from "@projet-igsn/domain/institutional-group/filter-
 import { setInstitutionalGroupsSchema } from "@projet-igsn/domain/institutional-group/institutional-groups-validator";
 import {
   laboratoryLabel,
+  organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
-import { ORGANIZATIONS } from "@projet-igsn/domain/sample/scientific-context/organization";
-import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
+import { ORGANIZATIONS } from "@projet-igsn/domain/institutional-group/organization";
 
 import { m } from "#/paraglide/messages.js";
 

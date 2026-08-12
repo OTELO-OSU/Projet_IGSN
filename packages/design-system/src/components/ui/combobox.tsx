@@ -65,7 +65,9 @@ export function Combobox({
           className="w-full justify-between font-normal"
           {...aria}
         >
-          {selected ? selected.label : placeholder}
+          <span className="truncate">
+            {selected ? selected.label : placeholder}
+          </span>
           <ChevronsUpDownIcon className="opacity-50" />
         </Button>
       </PopoverTrigger>
