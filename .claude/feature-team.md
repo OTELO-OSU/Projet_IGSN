@@ -19,7 +19,7 @@
 - One commit per changeset and never a squash: the developers commit their tasks and fix rounds, you commit the docs.
 - Conventional Commit messages (`<type>: <summary>`, `type` = `$TYPE`, `docs` for docs), respecting `attribution` in `.claude/settings.json`.
 - Never rewrite history, never push, never commit to `main`, collapsing the branch being the human's call.
-- The only branch movement allowed is the final fast-forward of `$SOURCE`.
+- Never switch, create, or merge a branch beyond step 2, the human owning the branch you were handed.
 
 ### Unexpected complication
 
@@ -59,13 +59,12 @@ Size from the approved plan, before spawning anything.
 - Its type sets `$TYPE`, its size overrides yours if larger, and its refinements, edge cases and test suite are the task specs' backbone.
 - It never splits the ticket, so splitting its output across packages is yours.
 
-### 2. Worktree
+### 2. Branch
 
-- The plan-approved hook made it at `/tmp/_agents/<session-id>/_source`, branched from the current branch as `wip/<session-id>`, with a `tasks/` dir beside it.
-- Rename the branch: `git -C <_source> branch -m "$TYPE/$SLUG"`.
-- Record the branch it was cut from as `$SOURCE`, still checked out in the main checkout.
-- Put the worktree path in every spawn prompt.
-- The hooks own its lifecycle, so never create or remove it.
+- Everyone works in place in the main checkout, on the branch already checked out, since worktrees broke more than they isolated.
+- Cut `$TYPE/$SLUG` only when that branch is `main` or `master`.
+- `$BASE` is the commit the plan-approved hook recorded in `/tmp/_agents/<session-id>/_base`, what the reviewers diff against.
+- The hook also made the `tasks/` dir, and the session-cleanup hook drops both at session end.
 
 ### 3. Tasks
 
@@ -77,13 +76,13 @@ Size from the approved plan, before spawning anything.
 
 ### 4. Developers
 
-- Spawn one `developer` per unblocked dev task into the worktree, so the siblings run at once.
+- Spawn one `developer` per unblocked dev task, so the siblings run at once.
 - Each claims its task, implements it (TDD), marks it complete, and commits its own paths with an explicit pathspec, retrying a busy `index.lock`.
 - The review tasks unblock when the last dev task completes.
 
 ### 5. Reviews, in parallel
 
-- Spawn your chain's reviewers, giving each `$SOURCE` so it can diff the committed work (`git diff $SOURCE`).
+- Spawn your chain's reviewers, giving each `$BASE` so it can diff the committed work (`git diff $BASE`).
 - Each returns `VERDICT: PASS|BLOCK` on its first line, reporting blocking findings only.
 - Relay them to the user as Conventional Comments.
 
@@ -95,32 +94,22 @@ Size from the approved plan, before spawning anything.
 
 ### 7. Docs, if your chain has them
 
-- It has no `Bash`, so dump the diff for it (`git diff $SOURCE > /tmp/_agents/<session-id>/tasks/DIFF.patch`) and commit its changeset yourself (`docs: <summary>`).
+- It has no `Bash`, so dump the diff for it (`git diff $BASE > /tmp/_agents/<session-id>/tasks/DIFF.patch`) and commit its changeset yourself (`docs: <summary>`).
 - Point its spawn prompt at that path and the developers' `## Changes`, so it never greps for what changed.
 
 ### 8. Commit gate, once
 
-In the worktree:
-
 - Run `pnpm lint:check`, `pnpm fmt:check`, `pnpm test`.
 - Run `make test-e2e` when the ticket changed runtime code (`admin`, `frontend`, `api`, or what they consume) per `testing.md`, skipping it only with no runtime surface and saying so.
 - Walk the ticket's e2e tests yourself and report each.
-- Confirm the branch is `$TYPE/$SLUG` and `git status --porcelain` is empty, committing any leftover changeset as itself.
+- Confirm `git status --porcelain` is empty, committing any leftover changeset as itself.
 - A failing gate goes back to its developer, whose fix is another commit, since you never commit red.
 - Sandbox caveat: report a flaky api Postgres suite or e2e stack and let the user decide, rather than blocking forever.
 
-### 9. Merge to source
-
-- Fast-forward `$SOURCE` onto the ticket branch without asking, since reviewing from GitHub beats reading the worktree in the IDE.
-- From the main checkout, already on `$SOURCE`: `git merge --ff-only "$TYPE/$SLUG"`.
-- Never merge into `main`, skipping with a note if `$SOURCE` is `main`, which the session-cleanup hook enforces at session end.
-- Report a refused fast-forward for the user to rebase, never force it.
-
-### 10. Summary
+### 9. Summary
 
 - The size and chain you ran.
 - What shipped: tests added, ADRs, docs.
-- The commits on the branch (`git log --oneline "$SOURCE"..`).
-- The `$SOURCE` merged into, the worktree path, the ticket branch.
+- The commits added (`git log --oneline $BASE..`), on the branch you were handed.
 - Follow-ups, pushing and squashing being theirs.
-- The worktree and its `tasks/` dir vanish at session end, while the branch and its commits persist.
+- The `tasks/` dir vanishes at session end, while the commits persist.

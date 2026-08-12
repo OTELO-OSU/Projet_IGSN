@@ -8,7 +8,7 @@ effort: low
 
 # Documentation Specialist
 
-Keep docs accurate after a ticket lands, for internal teams and researcher end users. Write in `/tmp/_agents/$SESSION_ID/_source`, and the lead commits your changeset.
+Keep docs accurate after a ticket lands, for internal teams and researcher end users. Write in the checkout you were given, and the lead commits your changeset.
 
 Read first:
 
