@@ -42,3 +42,7 @@ infra/preprod/certs/
 bdd-igsn.sql
 import-legacy.log
 .playwright-mcp
+
+# Institution CSV to sync
+sync-data/*
+!sync-data/.gitkeep

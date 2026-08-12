@@ -33,8 +33,16 @@ function OsuDetailPage() {
       <dl className="grid grid-cols-[10rem_1fr] gap-2">
         <dt className="font-medium">{m.column_code()}</dt>
         <dd>{osu.code}</dd>
-        <dt className="font-medium">{m.field_institutional_organization()}</dt>
-        <dd>{organizationLabel(osu.organizationRor)}</dd>
+        <dt className="font-medium">
+          {m.column_institutional_organizations()}
+        </dt>
+        <dd>
+          <ul>
+            {osu.organizationRors.map((ror) => (
+              <li key={ror}>{organizationLabel(ror)}</li>
+            ))}
+          </ul>
+        </dd>
       </dl>
 
       <GroupMembers

@@ -114,24 +114,24 @@ describe("currentUser routes", () => {
       json: {
         institutionalOrganization: "04vfs2w97",
         institutionalOsu: "OTELo",
-        institutionalLaboratory: "CRPG",
+        institutionalLaboratory: "UMR7358",
       },
       stored: {
         institutionalOrganization: "04vfs2w97",
         institutionalOsu: "OTELo",
-        institutionalLaboratory: "CRPG",
+        institutionalLaboratory: "UMR7358",
       },
     },
     {
       case: "a laboratory outside any OSU",
       json: {
-        institutionalOrganization: "05hnb7x64",
-        institutionalLaboratory: "LAB-BRGM",
+        institutionalOrganization: "01frn9647",
+        institutionalLaboratory: "UMR5150",
       },
       stored: {
-        institutionalOrganization: "05hnb7x64",
+        institutionalOrganization: "01frn9647",
         institutionalOsu: null,
-        institutionalLaboratory: "LAB-BRGM",
+        institutionalLaboratory: "UMR5150",
       },
     },
   ])(
@@ -153,29 +153,33 @@ describe("currentUser routes", () => {
     },
   );
 
-  pgTest(
-    "should answer 400 on a laboratory outside the submitted OSU",
-    async ({ db }) => {
-      // Act
-      const res = await testClient(createApp(db).app).admin.currentUser[
-        "institutional-groups"
-      ].$put(
-        {
-          json: {
-            institutionalOrganization: "04kdfz702",
-            institutionalOsu: "OSUG",
-            institutionalLaboratory: "GEOSCIENCES-RENNES",
-          },
-        },
-        { headers: authHeader },
-      );
-      // Assert
-      expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({
-        error: "Invalid institutional groups",
-      });
+  pgTest.for([
+    {
+      case: "a laboratory outside the submitted OSU",
+      json: {
+        institutionalOrganization: "014zrew76",
+        institutionalOsu: "OBSPM",
+        institutionalLaboratory: "UMR7327",
+      },
     },
-  );
+    {
+      case: "a laboratory outside the submitted organization",
+      json: {
+        institutionalOrganization: "05hnb7x64",
+        institutionalLaboratory: "UMR7358",
+      },
+    },
+  ])("should answer 400 on $case", async ({ json }, { db }) => {
+    // Act
+    const res = await testClient(createApp(db).app).admin.currentUser[
+      "institutional-groups"
+    ].$put({ json }, { headers: authHeader });
+    // Assert
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({
+      error: "Invalid institutional groups",
+    });
+  });
 
   pgTest(
     "should answer 401 to an unauthenticated groups set",
@@ -188,7 +192,7 @@ describe("currentUser routes", () => {
           headers: { "content-type": "application/json" },
           body: JSON.stringify({
             institutionalOrganization: "04vfs2w97",
-            institutionalLaboratory: "CRPG",
+            institutionalLaboratory: "UMR7358",
           }),
         },
       );
@@ -207,7 +211,7 @@ describe("currentUser routes", () => {
           json: {
             institutionalOrganization: "04vfs2w97",
             institutionalOsu: "OTELo",
-            institutionalLaboratory: "CRPG",
+            institutionalLaboratory: "UMR7358",
           },
         },
         { headers: authHeader },
@@ -216,9 +220,9 @@ describe("currentUser routes", () => {
       const res = await client.admin.currentUser["institutional-groups"].$put(
         {
           json: {
-            institutionalOrganization: "04kdfz702",
+            institutionalOrganization: "02rx3b187",
             institutionalOsu: "OSUG",
-            institutionalLaboratory: "ISTERRE",
+            institutionalLaboratory: "UMR5275",
           },
         },
         { headers: authHeader },
@@ -231,7 +235,7 @@ describe("currentUser routes", () => {
       expect(await me.json()).toMatchObject({
         institutionalOrganization: "04vfs2w97",
         institutionalOsu: "OTELo",
-        institutionalLaboratory: "CRPG",
+        institutionalLaboratory: "UMR7358",
       });
     },
   );

@@ -3,7 +3,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     globals: true,
-    include: ["src/**/*.spec.ts", "test/**/*.spec.ts"],
+    include: ["src/**/*.spec.ts", "test/**/*.spec.ts", "scripts/**/*.spec.ts"],
     maxWorkers: 2,
     maxConcurrency: 2,
     testTimeout: 5000,

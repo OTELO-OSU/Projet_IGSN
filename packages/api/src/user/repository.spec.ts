@@ -464,18 +464,18 @@ describe("createUserRepository", () => {
         status: "accepted",
         institutionalOrganization: "04vfs2w97",
         institutionalOsu: "OTELo",
-        institutionalLaboratory: "CRPG",
+        institutionalLaboratory: "UMR7358",
       }),
       insertUser(db, "bruno@univ-lorraine.fr", {
         status: "pending",
-        institutionalOrganization: "04kdfz702",
-        institutionalLaboratory: "CRPG",
+        institutionalOrganization: "02feahw73",
+        institutionalLaboratory: "UMR7358",
       }),
       insertUser(db, "carla@univ-lorraine.fr", {
         status: "accepted",
-        institutionalOrganization: "04kdfz702",
+        institutionalOrganization: "02rx3b187",
         institutionalOsu: "OSUG",
-        institutionalLaboratory: "ISTERRE",
+        institutionalLaboratory: "UMR5275",
       }),
     ]);
 
@@ -488,7 +488,7 @@ describe("createUserRepository", () => {
     ["OSU", { institutionalOsu: "OTELo" }, ["alice@univ-lorraine.fr"]],
     [
       "laboratory",
-      { institutionalLaboratory: "CRPG" },
+      { institutionalLaboratory: "UMR7358" },
       ["alice@univ-lorraine.fr", "bruno@univ-lorraine.fr"],
     ],
   ] as const)(
@@ -517,7 +517,7 @@ describe("createUserRepository", () => {
       page: 1,
       perPage: 25,
       status: "accepted",
-      institutionalLaboratory: "CRPG",
+      institutionalLaboratory: "UMR7358",
     });
     // Assert
     expect(data.map((user) => user.email)).toEqual(["alice@univ-lorraine.fr"]);
@@ -548,7 +548,7 @@ describe("createUserRepository", () => {
         page: 2,
         perPage: 1,
         status: undefined,
-        institutionalLaboratory: "CRPG",
+        institutionalLaboratory: "UMR7358",
       });
       // Assert
       expect(data.map((user) => user.email)).toEqual([

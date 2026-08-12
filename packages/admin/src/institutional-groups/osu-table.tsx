@@ -31,9 +31,15 @@ const columns: ColumnDef<Osu>[] = [
     cell: ({ row }) => row.original.name,
   },
   {
-    accessorKey: "organizationRor",
-    header: () => m.field_institutional_organization(),
-    cell: ({ row }) => organizationLabel(row.original.organizationRor),
+    accessorKey: "organizationRors",
+    header: () => m.column_institutional_organizations(),
+    cell: ({ row }) => (
+      <ul>
+        {row.original.organizationRors.map((ror) => (
+          <li key={ror}>{organizationLabel(ror)}</li>
+        ))}
+      </ul>
+    ),
   },
 ];
 

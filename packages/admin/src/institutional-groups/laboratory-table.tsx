@@ -11,18 +11,24 @@ import {
 import { m } from "#/paraglide/messages.js";
 
 const columns: ColumnDef<Laboratory>[] = [
+  // Acronyms repeat across laboratories, so the unique code carries the link.
   {
-    accessorKey: "acronym",
-    header: () => m.column_acronym(),
+    accessorKey: "code",
+    header: () => m.column_code(),
     cell: ({ row }) => (
       <Link
         to="/institutional-groups/laboratories/$code"
         params={{ code: row.original.code }}
         className="hover:underline"
       >
-        {row.original.acronym}
+        {row.original.code}
       </Link>
     ),
+  },
+  {
+    accessorKey: "acronym",
+    header: () => m.column_acronym(),
+    cell: ({ row }) => row.original.acronym,
   },
   {
     accessorKey: "name",

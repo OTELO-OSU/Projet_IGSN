@@ -25,24 +25,45 @@ function fakeApi() {
   );
 }
 
+const LORRAINE = "Université de Lorraine";
+const CNRS = "Centre National de la Recherche Scientifique (CNRS)";
+
 describe("OsusPage", () => {
   it("should keep only the OSUs of the chosen organization", async () => {
     fakeApi();
     const { screen } = await renderRoute("/institutional-groups/osus");
 
     await screen.getByRole("combobox", { name: "Organization" }).click();
-    const insu = "Institut national des sciences de l'Univers (CNRS - INSU)";
-    await screen.getByPlaceholder("Search organizations...").fill(insu);
-    await screen.getByRole("option", { name: insu }).click();
+    await screen.getByPlaceholder("Search organizations...").fill(LORRAINE);
+    await screen.getByRole("option", { name: LORRAINE }).click();
 
     await expect
-      .element(screen.getByRole("cell", { name: "OSUG", exact: true }))
-      .toBeVisible();
-    await expect
-      .element(screen.getByRole("cell", { name: "OSUR", exact: true }))
+      .element(screen.getByRole("cell", { name: "OTELo", exact: true }))
       .toBeVisible();
     expect(
-      screen.getByRole("cell", { name: "OTELo", exact: true }).elements(),
+      screen.getByRole("cell", { name: "OSUG", exact: true }).elements(),
     ).toHaveLength(0);
+  });
+
+  it("should list every organization of an OSU in the table", async () => {
+    fakeApi();
+    const { screen } = await renderRoute(
+      "/institutional-groups/osus?organization=04vfs2w97",
+    );
+
+    await expect
+      .element(screen.getByRole("cell", { name: CNRS }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("cell", { name: LORRAINE }))
+      .toBeVisible();
+  });
+
+  it("should list every organization of an OSU on its detail page", async () => {
+    fakeApi();
+    const { screen } = await renderRoute("/institutional-groups/osus/OTELo");
+
+    await expect.element(screen.getByText(CNRS)).toBeVisible();
+    await expect.element(screen.getByText(LORRAINE)).toBeVisible();
   });
 });

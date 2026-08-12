@@ -99,7 +99,7 @@ describe("admin sample routes", () => {
     const CALLER_GROUPS = {
       institutionalOrganization: "04vfs2w97",
       institutionalOsu: "OTELo",
-      institutionalLaboratory: "CRPG",
+      institutionalLaboratory: "UMR7358",
     };
 
     const draft = {
@@ -467,8 +467,8 @@ describe("admin sample routes", () => {
     pgTest(
       "should advance the version on a save and accept the next one carrying it",
       async ({ db }) => {
-        // Arrange: an older stored version, since now() is the (single)
-        // transaction's timestamp for the whole test.
+        // Arrange: now() is the (single) transaction's timestamp for the whole
+        // test.
         const app = createApp(db).app;
         const sample = await createDraft(app);
         const before = new Date("2026-01-01T00:00:00.000Z");
@@ -998,9 +998,9 @@ describe("admin sample routes", () => {
     pgTest(
       "lets an already-broken published sample be edited without re-blocking it",
       async ({ db }) => {
-        // Arrange: a published sample forced into a frozen-incomplete state (a
-        // null material has no editable prefix, so it stays wholly frozen; only
-        // reachable via DB tampering or a future publish constraint).
+        // Arrange: a null material has no editable prefix, so it stays wholly
+        // frozen; only reachable via DB tampering or a future publish
+        // constraint.
         const client = testClient(createApp(db).app);
         const data = await createAndPublish(db, client);
         await db
