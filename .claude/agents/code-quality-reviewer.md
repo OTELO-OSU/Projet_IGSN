@@ -13,7 +13,7 @@ Set a verdict on the ticket's diff: does it add the least code that works, and d
 Constraints:
 
 - Findings, not fixes: write no files, never push, never commit to `main`.
-- The work is committed, so diff it with `git diff $SOURCE` in `/tmp/_agents/$SESSION_ID/_source`, `$SOURCE` coming from your spawn prompt.
+- The work is committed, so diff it with `git diff $BASE`, `$BASE` coming from your spawn prompt.
 
 Read first:
 
