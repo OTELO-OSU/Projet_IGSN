@@ -32,15 +32,15 @@ Terraform, or a hardened realm import); we do not ship a prod realm file, to
 avoid drift with the dev one. The required prod configuration is the dev realm
 (`keycloak/realm-igsn.json`) with these deltas:
 
-| Setting                              | Dev value        | Prod value                |
-| ------------------------------------ | ---------------- | ------------------------- |
-| realm `sslRequired`                  | `none`           | `external` (default)      |
-| `igsn-admin` redirect/web-origins    | `localhost:3001` | real admin origin (https) |
-| shibboleth `validateSignature`       | `false`          | `true`                    |
-| shibboleth `wantAuthnRequestsSigned` | `false`          | `true`                    |
-| shibboleth IdP metadata/cert         | SimpleSAMLphp    | real RENATER/eduGAIN IdP  |
-| orcid endpoints + client             | mock-orcid realm | production ORCID app      |
-| `test`/`test` user                   | present (admin)  | absent                    |
+| Setting                           | Dev value        | Prod value                |
+| --------------------------------- | ---------------- | ------------------------- |
+| realm `sslRequired`               | `none`           | `external` (default)      |
+| `igsn-admin` redirect/web-origins | `localhost:3001` | real admin origin (https) |
+| satosa `validateSignature`        | `false`          | `true`                    |
+| satosa `wantAuthnRequestsSigned`  | `false`          | `true`                    |
+| satosa IdP metadata/cert          | SimpleSAMLphp    | real RENATER/eduGAIN IdP  |
+| orcid endpoints + client          | mock-orcid realm | production ORCID app      |
+| `test`/`test` user                | present (admin)  | absent                    |
 
 The IdP attribute mappers (email, given/family name), the first-broker-login
 flow, and the `admin` realm role are the same as dev; copy them across.
@@ -102,7 +102,7 @@ Ordered production checklist:
    domain.
 3. Configure the Shibboleth SAML broker with signature validation on, signed
    AuthnRequests, and the real IdP metadata/cert; register Keycloak's SP metadata
-   (`.../realms/igsn/broker/shibboleth/endpoint`) with RENATER and opt into eduGAIN.
+   (`.../realms/igsn/broker/satosa/endpoint`) with RENATER and opt into eduGAIN.
 4. Configure the ORCID OIDC broker with the production ORCID app credentials and
    endpoints (the `ORCID_*` vars in `.env.example` are exactly this set), with
    account auto-creation OFF (ORCID links to a RENATER account, never creates one).

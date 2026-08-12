@@ -47,20 +47,24 @@ Proposed `igsn-api`; an env-suffixed name per their convention
 
 ## Claims the apps consume
 
-| Claim                                 | Use                                                           |
-| ------------------------------------- | ------------------------------------------------------------- |
-| `sub`                                 | user reference key (api, future user store)                   |
-| `name`, `email`, `preferred_username` | display; from the `profile` / `email` scopes                  |
-| `realm_access.roles`                  | `admin` realm role (api role guard)                           |
-| `identity_provider`                   | session-note protocol mapper; the SPA gates ORCID-only logins |
+| Claim                                 | Use                                                                                                                        |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `sub`                                 | user reference key (api, future user store)                                                                                |
+| `name`, `email`, `preferred_username` | display; from the `profile` / `email` scopes                                                                               |
+| `realm_access.roles`                  | `admin` realm role (api role guard)                                                                                        |
+| `identity_provider`                   | session-note protocol mapper; the api gates every login on this claim, not only ORCID's, so dropping it locks everyone out |
 
 ## Realm-level needs (beyond the client)
 
 Per ADR 0003; this is the "who creates what" to settle:
 
+- The GaiaData SSO exposes three broker aliases: `satosa` (eduGAIN,
+  RENATER's SAML broker), `ORCID`, and `myaccessid`. The api's allow-list
+  accepts logins from `satosa` and `orcid` only; `myaccessid` and any
+  self-registered local account are refused (product-owner decision).
 - RENATER/eduGAIN Shibboleth broker: signature validation ON, signed
   AuthnRequests, real IdP metadata; register the SP endpoint
-  (`.../realms/<realm>/broker/shibboleth/endpoint`) with RENATER.
+  (`.../realms/<realm>/broker/satosa/endpoint`) with RENATER.
 - Single logout on that broker (the IdP metadata's SLO endpoint in
   `singleLogoutServiceUrl`). Without it Keycloak silently skips IdP logout on
   sign-out and the institution SSO session survives, so the next login

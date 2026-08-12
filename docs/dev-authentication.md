@@ -29,8 +29,8 @@ account on first login (first-broker-login):
 
 | Provider    | Keycloak broker | Dev IdP                                | Prod IdP                     |
 | ----------- | --------------- | -------------------------------------- | ---------------------------- |
-| Institution | SAML            | SimpleSAMLphp at http://localhost:8081 | RENATER / eduGAIN Shibboleth |
-| ORCID       | OIDC            | Mock `mock-orcid` Keycloak realm       | ORCID production             |
+| Institution | SAML (`satosa`) | SimpleSAMLphp at http://localhost:8081 | RENATER / eduGAIN Shibboleth |
+| ORCID       | OIDC (`orcid`)  | Mock `mock-orcid` Keycloak realm       | ORCID production             |
 
 The broker alias reaches the app in the `identity_provider` claim, and its case
 differs per environment (`orcid` on the mock realm, `ORCID` on GaiaData), so the
@@ -43,6 +43,23 @@ ever talks to Keycloak, never to RENATER/ORCID directly, so the same build runs 
 environment; only which IdP each broker points at changes, via env vars (prod overrides
 them, dev falls back to the mocks). `make dev` brings both IdPs up; `make auth` starts
 just Keycloak + the SAML IdP.
+
+`currentUser` refuses any login whose `identity_provider` claim is missing or
+outside an allow-list, before any lookup or write: only `satosa` (eduGAIN) and
+`orcid` may sign in, the GaiaData SSO's own MyAccessID broker and
+self-registration included among the refusals. The allow-list is
+`OIDC_ALLOWED_IDENTITY_PROVIDERS`, comma-separated and case-insensitive,
+defaulting to `satosa,orcid` (also the fallback when the variable is empty or
+whitespace-only). A Keycloak-local account with no brokered IdP, like the
+`test` / `test` user above, carries no `identity_provider` claim at all and is
+refused by the same rule; it is the fixture for the two identity-provider
+refusal scenarios in [`e2e/admin/auth.spec.ts`](../e2e/admin/auth.spec.ts).
+
+> The institution broker's alias was renamed `shibboleth` -> `satosa` to match
+> the real GaiaData SSO. Keycloak only imports a realm into an empty one, so
+> `docker compose -f docker-compose.dev.yml down` is required before `make dev`
+> picks the rename up; an already-imported dev account otherwise keeps its
+> federated link under the old `shibboleth` alias.
 
 ### Test identities
 
@@ -119,5 +136,5 @@ In production the admin SPA points at an externally-managed Keycloak via
 The realm files, the `test` user, and the mock IdPs here are **dev/e2e only and are never
 shipped** — the insecure-by-design bits (`sslRequired: none`, unsigned SAML, a local admin
 password) live only in that throwaway setup. Standing up the prod Keycloak is an ops task:
-register its SP metadata (`…/realms/igsn/broker/shibboleth/endpoint`) with the RENATER
+register its SP metadata (`…/realms/igsn/broker/satosa/endpoint`) with the RENATER
 federation, opt into eduGAIN, and configure the ORCID broker against production ORCID.

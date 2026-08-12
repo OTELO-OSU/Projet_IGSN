@@ -74,3 +74,22 @@ anonymous readers.
   removal both live.
   **Update (ADR 0023):** moderation status and super admin landed; the join
   table shape did not need to change for either.
+
+## Amendment 2026-08-12: email keys only an eduGAIN login
+
+"Email is the identity key" above now holds only once the login has passed an
+identity-provider allow-list. A token from any provider outside it, or with no
+`identity_provider` claim at all, provisions no row and is refused 403 with a
+`reason` code (`unsupported_identity_provider`); the email upsert never runs
+for it. eduGAIN (brokered as `satosa`) and ORCID are the only providers on the
+list.
+
+The check runs in `currentUser` before the user lookup, so there is
+deliberately no super-admin bypass: the allow-list applies to every caller,
+super admin included. A row already provisioned from a now-refused provider is
+left as is rather than migrated away; it can no longer authenticate, and a
+super admin can reject it from `/users` (ADR 0023) like any other unwanted
+account.
+
+ADR 0020's ORCID branch (resolving strictly by the stored `orcid` column) is
+unchanged; it is now reached only after a login has passed the allow-list.

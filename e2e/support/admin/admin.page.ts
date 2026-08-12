@@ -11,6 +11,8 @@ export function adminPage(page: Page) {
       expect(page.getByRole("alert")).toContainText(
         /not linked to an account/i,
       ),
+    expectUnsupportedProvider: () =>
+      expect(page.getByRole("alert")).toContainText(/eduGAIN.*ORCID iD/is),
     expectSignedIn: () =>
       expect(page.getByRole("button", { name: "Sign out" })).toBeVisible(),
     // The header name is filled from the api's protected /me route, so seeing it

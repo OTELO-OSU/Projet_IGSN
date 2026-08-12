@@ -74,6 +74,8 @@ services:
       # The realm is shared with other service providers, so the api accepts
       # tokens issued to this client only (azp); admin bakes the same value.
       OIDC_CLIENT_ID: "formaterre-igsn"
+      # Brokers whose users may sign in; an SSO alias change is a redeploy, not a code fix.
+      OIDC_ALLOWED_IDENTITY_PROVIDERS: "${OIDC_ALLOWED_IDENTITY_PROVIDERS:-satosa,orcid}"
       # Key the per-IP rate limit on the X-Real-IP Caddy sets from
       # Cf-Connecting-IP. Only safe because nothing but Caddy can reach this
       # service: no port is published.
@@ -148,8 +150,8 @@ services:
     restart: unless-stopped
     environment:
       SIMPLESAMLPHP_SP_ENTITY_ID: "https://igsn-auth.${DOMAIN}/realms/igsn"
-      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/shibboleth/endpoint"
-      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/shibboleth/endpoint"
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/satosa/endpoint"
+      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/satosa/endpoint"
       SIMPLESAMLPHP_IDP_BASE_URL: "https://igsn-idp.${DOMAIN}/simplesaml/"
       # Shared with the Keycloak admin password; read by authsources.php.
       KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}

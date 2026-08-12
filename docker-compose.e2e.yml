@@ -57,6 +57,8 @@ services:
       OIDC_JWKS_URI: http://keycloak:18080/realms/igsn/protocol/openid-connect/certs
       OIDC_USERINFO_URI: http://keycloak:18080/realms/igsn/protocol/openid-connect/userinfo
       OIDC_CLIENT_ID: igsn-admin
+      # Pinned so the refusal assertions do not depend on the host shell.
+      OIDC_ALLOWED_IDENTITY_PROVIDERS: "satosa,orcid"
       CORS_ORIGINS: http://localhost:4001,http://localhost:4000
       ADMIN_URL: http://localhost:4001
       # Off: all traffic shares one client address, so a budget flakes runs
@@ -168,8 +170,8 @@ services:
       - "18081:8080"
     environment:
       SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost:18080/realms/igsn
-      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost:18080/realms/igsn/broker/shibboleth/endpoint
-      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://localhost:18080/realms/igsn/broker/shibboleth/endpoint
+      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost:18080/realms/igsn/broker/satosa/endpoint
+      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://localhost:18080/realms/igsn/broker/satosa/endpoint
       SIMPLESAMLPHP_IDP_BASE_URL: http://localhost:18081/simplesaml/
     volumes:
       - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro

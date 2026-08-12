@@ -29,6 +29,7 @@ const claims: KeycloakClaims = {
   email: "jean.martin@univ-lorraine.fr",
   given_name: "Jean",
   family_name: "Martin",
+  identity_provider: "satosa",
 };
 
 describe("currentUser", () => {
@@ -58,6 +59,7 @@ describe("currentUser", () => {
     const withoutProfile: KeycloakClaims = {
       sub: claims.sub,
       email: claims.email,
+      identity_provider: claims.identity_provider,
     };
     // Act
     const res = await appWithClaims(db, withoutProfile).request("/probe");
@@ -114,7 +116,11 @@ describe("currentUser", () => {
     "should answer 403 and provision nothing on an email claim that is not an address",
     async ({ db }) => {
       // Arrange
-      const notAnAddress: KeycloakClaims = { sub: claims.sub, email: "nope" };
+      const notAnAddress: KeycloakClaims = {
+        sub: claims.sub,
+        email: "nope",
+        identity_provider: claims.identity_provider,
+      };
       // Act
       const res = await appWithClaims(db, notAnAddress).request("/probe");
       // Assert
@@ -131,7 +137,10 @@ describe("currentUser", () => {
     "should answer 403 and provision nothing without an email claim",
     async ({ db }) => {
       // Arrange
-      const withoutEmail: KeycloakClaims = { sub: claims.sub };
+      const withoutEmail: KeycloakClaims = {
+        sub: claims.sub,
+        identity_provider: claims.identity_provider,
+      };
       // Act
       const res = await appWithClaims(db, withoutEmail).request("/probe");
       // Assert
@@ -218,6 +227,60 @@ describe("currentUser", () => {
       const res = await appWithClaims(db, withEmail).request("/probe");
       // Assert
       expect(res.status).toBe(403);
+    },
+  );
+
+  pgTest.for([undefined, "myaccessid"])(
+    "should answer 403 and provision nothing for the identity provider %j",
+    async (identityProvider, { db }) => {
+      // Arrange
+      const refused: KeycloakClaims = {
+        ...claims,
+        identity_provider: identityProvider,
+      };
+      // Act
+      const res = await appWithClaims(db, refused).request("/probe");
+      // Assert
+      expect(res.status).toBe(403);
+      expect(await res.json()).toEqual({
+        error: "Forbidden",
+        reason: "unsupported_identity_provider",
+      });
+      await expect(
+        db.selectFrom("user").selectAll().execute(),
+      ).resolves.toEqual([]);
+    },
+  );
+
+  pgTest(
+    "should refuse a provider the operator left out of the allow-list",
+    async ({ db }) => {
+      // Arrange
+      process.env.OIDC_ALLOWED_IDENTITY_PROVIDERS = "satosa";
+      // Act
+      const res = await appWithClaims(db, orcidClaims).request("/probe");
+      // Assert
+      expect(res.status).toBe(403);
+      expect(await res.json()).toEqual({
+        error: "Forbidden",
+        reason: "unsupported_identity_provider",
+      });
+    },
+  );
+
+  pgTest.for(["", "   "])(
+    "should fall back to the default allow-list when the configured one is %j",
+    async (configured, { db }) => {
+      // Arrange
+      process.env.OIDC_ALLOWED_IDENTITY_PROVIDERS = configured;
+      // Act
+      const brokered = await appWithClaims(db, claims).request("/probe");
+      const orcid = await appWithClaims(db, orcidClaims).request("/probe");
+      // Assert
+      expect(brokered.status).toBe(200);
+      // No reason, so this ORCID login passed the allow-list and failed on the
+      // missing local link instead.
+      expect(await orcid.json()).toEqual({ error: "Forbidden" });
     },
   );
 
