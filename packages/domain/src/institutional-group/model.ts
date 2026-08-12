@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-import { organizationRorSchema } from "../sample/scientific-context/organization.ts";
 import { laboratoryCodeSchema } from "./laboratory.ts";
+import { organizationRorSchema } from "./organization.ts";
 import { osuCodeSchema } from "./osu.ts";
 
 // ponytail: three flat fields spread into userSchema and sampleSchema, no nested object, so neither table needs json building; defaulted null so payloads predating the feature keep parsing

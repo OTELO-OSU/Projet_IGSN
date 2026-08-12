@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import { laboratoryCodeSchema } from "../institutional-group/laboratory.ts";
+import { organizationRorSchema } from "../institutional-group/organization.ts";
+import { osuCodeSchema } from "../institutional-group/osu.ts";
 import {
   DEFAULT_PAGE_SIZE,
   pageSizeSchema,
@@ -33,6 +36,9 @@ export const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1).catch(1),
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
   status: userStatusSchema.optional().catch(undefined),
+  institutionalOrganization: organizationRorSchema.optional().catch(undefined),
+  institutionalOsu: osuCodeSchema.optional().catch(undefined),
+  institutionalLaboratory: laboratoryCodeSchema.optional().catch(undefined),
 });
 
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;

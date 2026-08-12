@@ -10,6 +10,7 @@ import { describe, expect, vi } from "vitest";
 import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
+import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
@@ -221,6 +222,28 @@ describe("admin user routes", () => {
     expect(body.meta.total).toBe(1);
     expect(body.data.map((user) => user.email)).toEqual([
       "pending@univ-lorraine.fr",
+    ]);
+  });
+
+  pgTest("should filter on an institutional code", async ({ db }) => {
+    // Arrange
+    await insertResearchers(db);
+    await insertUser(db, "crpg@univ-lorraine.fr", {
+      institutionalOrganization: "04vfs2w97",
+      institutionalOsu: "OTELo",
+      institutionalLaboratory: "CRPG",
+    });
+    const client = await asSuperAdmin(db);
+    // Act
+    const res = await client.admin.users.$get(
+      { query: { page: "1", perPage: "25", institutionalLaboratory: "CRPG" } },
+      { headers: authHeader },
+    );
+    // Assert
+    const body = listUsersResponseSchema.parse(await res.json());
+    expect(body.meta.total).toBe(1);
+    expect(body.data.map((user) => user.email)).toEqual([
+      "crpg@univ-lorraine.fr",
     ]);
   });
 

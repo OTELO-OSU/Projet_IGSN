@@ -1,12 +1,9 @@
 import { z } from "zod";
 
+import { organizationRorSchema } from "../../institutional-group/organization.ts";
 import { orcidSchema } from "../../user/orcid.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { collectionOriginSchema } from "./collection-origin.ts";
-import { organizationRorSchema } from "./organization.ts";
-
-// Every leaf is optional (a draft may hold only the status); the mandatory ones
-// surface as publish blockers, not schema errors (see sample-publish-blockers).
 
 const recentCollectionSchema = z
   .object({

@@ -1,7 +1,7 @@
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 
 import { ExternalLink } from "@projet-igsn/design-system/components/ui/external-link";
-import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
+import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import {
@@ -19,8 +19,6 @@ type HistoricalSpecimen = Extract<
   { provenanceStatus: "historical_specimen" }
 >;
 
-// A ROR id shown as its organization name, linked to its ror.org record. ROR
-// and the org name are reference data, so the name comes from the domain list.
 function OrgLink({ ror }: { ror: string }) {
   return (
     <ExternalLink href={`https://ror.org/${ror}`}>
@@ -29,7 +27,6 @@ function OrgLink({ ror }: { ror: string }) {
   );
 }
 
-// An ORCID iD linked to its orcid.org record.
 function OrcidLink({ orcid }: { orcid: string }) {
   return (
     <ExternalLink href={`https://orcid.org/${orcid}`}>{orcid}</ExternalLink>
@@ -131,10 +128,6 @@ function HistoricalSpecimenRows({ context }: { context: HistoricalSpecimen }) {
   );
 }
 
-// The scientific-context rows of the sample detail page. The context is a
-// discriminated union on provenance status, so the two branches share only the
-// status row; FieldRow drops any field the sample lacks (the parent hides the
-// whole section when the sample has no context at all).
 export function ScientificContextView({
   scientificContext,
 }: {

@@ -2,9 +2,9 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import {
   laboratoryLabel,
+  organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
-import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
 
 import { AgeView, hasAge } from "#/domain/samples/age-view.tsx";
 import { BreadcrumbFieldRow } from "#/domain/samples/breadcrumb-field-row.tsx";
@@ -62,8 +62,6 @@ export function SampleView({
 }: {
   sample: Sample;
 }) {
-  // One entry per section actually present; drives the nav and the body, so a
-  // section cannot appear in one without the other.
   const sections = [
     {
       id: "sample",
@@ -214,7 +212,7 @@ export function SampleView({
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
         {/* self-start keeps the nav its own height (a stretched flex child
-            never sticks); it then follows the scroll alongside the sections. */}
+            never sticks). */}
         <nav
           aria-label={m.sample_section_sample()}
           className="sticky top-28 w-40 shrink-0 self-start"

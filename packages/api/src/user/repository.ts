@@ -22,10 +22,6 @@ const USER_COLUMNS = [
   "institutional_laboratory as institutionalLaboratory",
 ] as const;
 
-// Rows come back parsed, never cast: status is a text column (Zod owns the
-// vocabulary), so a value outside it fails here instead of travelling on as a
-// valid account.
-//
 // upsert provisions the caller from their verified token on every authenticated
 // request: email is the identity key, so this also adopts a row seeded for that
 // email and keeps the samples already assigned to it (ADR 0019).
@@ -47,13 +43,25 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .executeTakeFirstOrThrow();
         return userSchema.parse(row);
       }),
-    list: ({ page, perPage, status }) =>
+    list: ({
+      page,
+      perPage,
+      status,
+      institutionalOrganization,
+      institutionalOsu,
+      institutionalLaboratory,
+    }) =>
       withTransaction(db, async (trx) => {
-        // A builder is immutable, so both queries branch off this one.
-        const matching =
-          status === undefined
-            ? trx.selectFrom("user")
-            : trx.selectFrom("user").where("status", "=", status);
+        // The object form of `and` drops the undefined filters and yields
+        // `1 = 1` when they are all absent.
+        const matching = trx.selectFrom("user").where((eb) =>
+          eb.and({
+            status,
+            institutional_organization: institutionalOrganization,
+            institutional_osu: institutionalOsu,
+            institutional_laboratory: institutionalLaboratory,
+          }),
+        );
         const rows = await matching
           .select(USER_COLUMNS)
           .orderBy("email", "asc")

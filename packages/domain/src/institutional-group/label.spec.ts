@@ -1,9 +1,8 @@
-import { organizationLabel } from "./organization-label.ts";
+import { organizationLabel } from "./label.ts";
 import { ORGANIZATIONS } from "./organization.ts";
 
 // The cases are picked from the list rather than naming a ROR id, because the
-// list is refreshed from ROR and any name pinned here would drift. What this
-// spec owns is the label composition, not the reference data.
+// list is refreshed from ROR and any name pinned here would drift.
 const withAcronym = ORGANIZATIONS.find(
   (organization) => organization.acronym !== null,
 );

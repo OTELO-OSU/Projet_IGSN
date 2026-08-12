@@ -1,18 +1,23 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   laboratoryLabel,
+  organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
-import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
 import { createFileRoute } from "@tanstack/react-router";
 
+import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { m } from "#/paraglide/messages.js";
 import { useSetUserStatus } from "#/users/use-set-user-status.ts";
 import { useUser } from "#/users/use-user.ts";
 import { userStatusLabel } from "#/users/user-status-label.ts";
 
 export const Route = createFileRoute("/users/$userId")({
-  component: UserDetailPage,
+  component: () => (
+    <SuperAdminOnly>
+      <UserDetailPage />
+    </SuperAdminOnly>
+  ),
 });
 
 function UserDetailPage() {
@@ -67,8 +72,6 @@ function UserDetailPage() {
         </dd>
       </dl>
 
-      {/* No special case for a super admin's row or the moderator's own (PO
-          decision). */}
       <div className="flex gap-3">
         <Button
           type="button"

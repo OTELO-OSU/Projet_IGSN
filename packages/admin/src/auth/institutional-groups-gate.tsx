@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { m } from "#/paraglide/messages.js";
 
-import { InstitutionalGroupsForm } from "../groups/institutional-groups-form.tsx";
+import { InstitutionalGroupsForm } from "../institutional-groups/institutional-groups-form.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
 import { useCurrentUser } from "./use-current-user.ts";

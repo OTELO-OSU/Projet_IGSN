@@ -13,9 +13,9 @@ export function useUsers(params: ListUsersQuery) {
     queryKey: ["users", params],
     queryFn: async () => {
       const url = new URL("admin/users", API_URL);
-      url.searchParams.set("page", String(params.page));
-      url.searchParams.set("perPage", String(params.perPage));
-      if (params.status) url.searchParams.set("status", params.status);
+      for (const [key, value] of Object.entries(params)) {
+        if (value !== undefined) url.searchParams.set(key, String(value));
+      }
 
       const res = await apiFetch(url);
       if (!res.ok) {

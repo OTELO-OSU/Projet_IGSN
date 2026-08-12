@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
-import { InstitutionalGroupsForm } from "#/groups/institutional-groups-form.tsx";
+import { InstitutionalGroupsForm } from "#/institutional-groups/institutional-groups-form.tsx";
 import { m } from "#/paraglide/messages.js";
 import { OrcidSettingsForm } from "#/settings/orcid-settings-form.tsx";
 

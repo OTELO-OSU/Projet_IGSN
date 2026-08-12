@@ -1,6 +1,6 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
-import { organizationLabel } from "@projet-igsn/domain/sample/scientific-context/organization-label";
+import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 import { vi } from "vitest";
 
 import { render } from "../../test/render.tsx";
@@ -42,10 +42,7 @@ const pickProvenance = async (
   await screen.getByRole("option", { name: option }).click();
 };
 
-// Searches and picks by the label the combobox actually renders, derived from
-// the ROR id. The list is refreshed from ROR, so a name typed in here would
-// drift; the id is the stable code and the sync never rewrites one. Assumes the
-// organization combobox is already open.
+// Assumes the organization combobox is already open.
 const pickOrganization = async (
   screen: Awaited<ReturnType<typeof renderScientificContextSection>>,
   ror: string,
@@ -82,7 +79,6 @@ describe("SampleScientificContextFields", () => {
     await screen
       .getByLabelText("Name of the research programme *")
       .fill("Deep Biosphere Survey");
-    // The research structure is a multi-select: two picks, two chips.
     await screen
       .getByRole("combobox", {
         name: "Research structure of the programme chief *",
@@ -151,9 +147,6 @@ describe("SampleScientificContextFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
-    // Enter recent-collection values, then switch branch: the other branch's
-    // fields hide but keep their values (ADR 0015), so switching back
-    // restores them.
     await pickProvenance(screen, "Recent collection");
     await screen
       .getByLabelText("Name of the research programme *")
@@ -167,13 +160,11 @@ describe("SampleScientificContextFields", () => {
       .element(screen.getByLabelText("Collector name"))
       .toHaveValue("Pierre Curie");
 
-    // Switching back restores the recent branch as entered.
     await pickProvenance(screen, "Recent collection");
     await expect
       .element(screen.getByLabelText("Name of the research programme *"))
       .toHaveValue("Deep Biosphere Survey");
 
-    // And the submitted payload only ever carries the active branch.
     await pickProvenance(screen, "Collection / historical specimen");
     await screen
       .getByLabelText("Name of the collection curator *")

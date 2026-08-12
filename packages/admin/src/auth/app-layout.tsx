@@ -1,8 +1,16 @@
+import type { LinkProps } from "@tanstack/react-router";
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { Link, useLocation } from "@tanstack/react-router";
-import { MountainIcon, UsersIcon } from "lucide-react";
+import {
+  Building2Icon,
+  FlaskConicalIcon,
+  MountainIcon,
+  TelescopeIcon,
+  UsersIcon,
+} from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 
@@ -12,8 +20,54 @@ import { useCurrentUser } from "./use-current-user.ts";
 
 const listSearch = { page: 1, perPage: DEFAULT_PAGE_SIZE };
 
+const GROUPS_NAV_ID = "nav-institutional-groups";
+
+const GROUPS_NAV = [
+  {
+    to: "/institutional-groups/organizations",
+    Icon: Building2Icon,
+    label: m.nav_organizations,
+  },
+  { to: "/institutional-groups/osus", Icon: TelescopeIcon, label: m.nav_osus },
+  {
+    to: "/institutional-groups/laboratories",
+    Icon: FlaskConicalIcon,
+    label: m.nav_laboratories,
+  },
+] as const;
+
 const navLinkClass =
   "hover:bg-accent aria-[current=page]:bg-accent flex items-center gap-2 rounded-md p-2 text-sm [&>svg]:size-4 [&>svg]:shrink-0";
+
+// Each section owns when it is current: a prefix match is right for the group
+// lists but would light the sample link up on every route.
+function NavItem({
+  to,
+  search,
+  Icon,
+  label,
+  isCurrent,
+}: {
+  to: LinkProps["to"];
+  search?: LinkProps["search"];
+  Icon: LucideIcon;
+  label: string;
+  isCurrent: boolean;
+}) {
+  return (
+    <li>
+      <Link
+        to={to}
+        search={search}
+        className={navLinkClass}
+        aria-current={isCurrent ? "page" : undefined}
+      >
+        <Icon />
+        {label}
+      </Link>
+    </li>
+  );
+}
 
 export function AppLayout({
   onSignOut,
@@ -39,29 +93,39 @@ export function AppLayout({
         </Link>
         <nav>
           <ul className="flex gap-1 md:flex-col">
-            <li>
-              <Link
-                to="/"
-                search={listSearch}
-                className={navLinkClass}
-                aria-current={isSamplesSection ? "page" : undefined}
-              >
-                <MountainIcon />
-                {m.nav_samples()}
-              </Link>
-            </li>
+            <NavItem
+              to="/"
+              search={listSearch}
+              Icon={MountainIcon}
+              label={m.nav_samples()}
+              isCurrent={isSamplesSection}
+            />
             {me?.superAdmin && (
-              <li>
-                <Link
+              <>
+                <NavItem
                   to="/users"
                   search={listSearch}
-                  className={navLinkClass}
-                  aria-current={isUsersSection ? "page" : undefined}
-                >
-                  <UsersIcon />
-                  {m.nav_users()}
-                </Link>
-              </li>
+                  Icon={UsersIcon}
+                  label={m.nav_users()}
+                  isCurrent={isUsersSection}
+                />
+                <li>
+                  <p id={GROUPS_NAV_ID} className="p-2 text-sm font-medium">
+                    {m.nav_institutional_groups()}
+                  </p>
+                  <ul aria-labelledby={GROUPS_NAV_ID} className="md:pl-3">
+                    {GROUPS_NAV.map(({ to, Icon, label }) => (
+                      <NavItem
+                        key={to}
+                        to={to}
+                        Icon={Icon}
+                        label={label()}
+                        isCurrent={pathname.startsWith(to)}
+                      />
+                    ))}
+                  </ul>
+                </li>
+              </>
             )}
           </ul>
         </nav>

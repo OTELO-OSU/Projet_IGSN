@@ -1,11 +1,3 @@
-// Refresh src/sample/scientific-context/organization.ts from ROR: every row is
-// refetched by its ROR id and re-emitted through emit-organizations.ts, so the
-// list can neither grow nor shrink and only name/acronym can change.
-//
-// Run from the repo root: node packages/domain/scripts/sync-organizations.ts
-//
-// The diff is the report: the workflow opens a PR with it and a reviewer reads
-// the changed rows. Progress goes to stderr.
 import { writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,20 +5,20 @@ import { fileURLToPath } from "node:url";
 import {
   mergeRorOrganization,
   rorRecordSchema,
-} from "../src/sample/scientific-context/merge-ror-organization.ts";
+} from "../src/institutional-group/merge-ror-organization.ts";
 import {
   ORGANIZATIONS,
   type Organization,
-} from "../src/sample/scientific-context/organization.ts";
+} from "../src/institutional-group/organization.ts";
 import { emitOrganizations } from "./emit-organizations.ts";
 
 const ORGANIZATIONS_PATH = join(
   dirname(fileURLToPath(import.meta.url)),
-  "../src/sample/scientific-context/organization.ts",
+  "../src/institutional-group/organization.ts",
 );
 
-// ROR does not enforce this today. Sending it is what exempts us from rate
-// limiting when they re-enable the check (https://ror.readme.io/v2/docs/rest-api).
+// Sending it is what exempts us from rate limiting when they re-enable the
+// check (https://ror.readme.io/v2/docs/rest-api).
 const clientId = process.env.ROR_CLIENT_ID;
 const headers = clientId ? { "Client-Id": clientId } : undefined;
 
