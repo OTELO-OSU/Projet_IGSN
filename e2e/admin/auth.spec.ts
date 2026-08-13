@@ -2,16 +2,17 @@ import { adminPage } from "../support/admin/admin.page";
 import { keycloakLoginPage } from "../support/admin/keycloak-login.page";
 import { keycloakProfilePage } from "../support/admin/keycloak-profile.page";
 import { orcidLoginPage } from "../support/admin/orcid-login.page";
+import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { settingsPage } from "../support/admin/settings.page";
 import { shibbolethLoginPage } from "../support/admin/shibboleth-login.page";
+import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { test } from "../support/db";
 
 test.describe("authentication", () => {
   test("a researcher signs in through their institution", async ({ page }) => {
     const admin = adminPage(page);
     await admin.goto();
-    await admin.signIn();
     await keycloakLoginPage(page).chooseInstitution();
 
     await shibbolethLoginPage(page).login("marie.dupont", "password");
@@ -23,14 +24,11 @@ test.describe("authentication", () => {
     await admin.expectUserName("Marie Dupont");
   });
 
-  // Signing out must end the whole SSO chain (app + Keycloak + IdP): clicking
-  // sign-in again asks for credentials instead of silently reusing a session.
   test("a researcher who signed out must re-enter credentials", async ({
     page,
   }) => {
     const admin = adminPage(page);
     await admin.goto();
-    await admin.signIn();
     await keycloakLoginPage(page).chooseInstitution();
     await shibbolethLoginPage(page).login("luc.moreau", "password");
     await keycloakProfilePage(page).completeIfShown(
@@ -50,7 +48,6 @@ test.describe("authentication", () => {
   }) => {
     const admin = adminPage(page);
     await admin.goto();
-    await admin.signIn();
     await keycloakLoginPage(page).chooseOrcid();
 
     await orcidLoginPage(page).login("0000-0002-1825-0097", "password");
@@ -68,7 +65,6 @@ test.describe("authentication", () => {
   }) => {
     const admin = adminPage(page);
     await admin.goto();
-    await admin.signIn();
 
     await keycloakLoginPage(page).loginLocally("test", "test");
 
@@ -81,7 +77,6 @@ test.describe("authentication", () => {
   }) => {
     const admin = adminPage(page);
     await admin.goto();
-    await admin.signIn();
     await keycloakLoginPage(page).loginLocally("test", "test");
     await admin.expectUnsupportedProvider();
 
@@ -91,14 +86,11 @@ test.describe("authentication", () => {
     await keycloakLoginPage(page).expectCredentialsPrompt();
   });
 
-  // The ORCID first-broker-login asks nothing (no review-profile step); the api
-  // resolves the session by the declared orcid column alone.
   test("a researcher links their ORCID and signs in with it", async ({
     page,
   }) => {
     const admin = adminPage(page);
     await admin.goto();
-    await admin.signIn();
     await keycloakLoginPage(page).chooseInstitution();
     await shibbolethLoginPage(page).login("marie.dupont", "password");
     await keycloakProfilePage(page).completeIfShown(
@@ -117,5 +109,22 @@ test.describe("authentication", () => {
 
     await admin.expectSignedIn();
     await admin.expectUserName("Marie Dupont");
+  });
+
+  test("a researcher opening a sample link in a new tab lands on that sample", async ({
+    page,
+    samples,
+  }) => {
+    const sample = samples.find((s) => s.owner === "camille");
+    if (!sample) throw new Error("seed must include a sample for camille");
+
+    await signInAsResearcher(page, RESEARCHERS.camille);
+
+    const tab = await page.context().newPage();
+    const edit = sampleEditPage(tab);
+    await edit.goto(sample.id);
+
+    await edit.expectVisible();
+    await edit.expectName(sample.name);
   });
 });

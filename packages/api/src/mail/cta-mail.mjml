@@ -20,6 +20,13 @@
         >
           __CTA__
         </mj-button>
+        <mj-text font-size="12px" color="#6b7280" padding="16px 0 0">
+          __LINK_FALLBACK__<br /><a
+            href="__URL__"
+            style="color: #1d4ed8; word-break: break-all"
+            >__URL__</a
+          >
+        </mj-text>
       </mj-column>
     </mj-section>
   </mj-body>

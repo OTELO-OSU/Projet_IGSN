@@ -19,6 +19,7 @@ export async function sendPendingUsersDigest(
 
     await sendMail({
       to: recipients,
+      audience: "admin",
       ...(await pendingUsersDigest(pending, usersUrl, now)),
     });
   } catch (error: unknown) {

@@ -52,6 +52,7 @@ export async function sampleInvitationMail({
       __GREETING__: escapeHtml(greeting),
       __BODY__: escapeHtml(body),
       __CTA__: cta,
+      __LINK_FALLBACK__: t("mail_link_fallback"),
       __URL__: escapeHtml(sampleUrl),
     }),
   };

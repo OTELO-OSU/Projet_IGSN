@@ -90,7 +90,8 @@ defect. Future user data is domain modeling keyed by `sub`
 is the request we send; the answers land in env (`VITE_OIDC_AUTHORITY`,
 `VITE_OIDC_CLIENT_ID`, `OIDC_ISSUER`, `OIDC_AUDIENCE`) and in rollout
 planning. Redirect URIs are exact, no wildcard: the SPA always returns to
-origin + `/auth/callback` and deep links ride the oidc `state`.
+origin + `/auth/callback` and deep links ride the oidc `state` (2026-08-13
+amendment).
 
 ## Consequences
 
@@ -133,6 +134,30 @@ This is a knowing deviation from [REQ-TOKEN-03/04](#gt-sso-requirements). When
 GaiaData ships an audience scope for the client, set `OIDC_AUDIENCE` per
 environment and restore the mock realm mapper; the `azp`/`typ` check can then
 go, no other code change needed.
+
+## Amendment 2026-08-13: automatic redirect on load, deep links resolved via `url_state`
+
+An invitation mail opens in a new tab, whose user store starts empty even next
+to a live GaiaData session in another tab; the visitor saw the welcome screen,
+then landed on the sample list instead of the invited sample after signing in.
+
+**`AuthGate` starts `signinRedirect` itself on load**, instead of waiting for
+a "Sign in" click. A live session round-trips silently with no welcome
+screen; an expired one still lands on Keycloak's login page. Every
+`signinRedirect` call (this one, the manual button, and the api's
+session-renewal retry) sends `url_state` set to the visited path;
+`/auth/callback` reads it off `useAuth().user.url_state` and navigates there
+instead of always to `/`, `safeReturnPath` keeping it to an app-local path and
+rejecting the callback route itself and anything off-origin. Deep links ride
+the oidc `state` (above) via that `url_state` field: aspirational when first
+written, built now.
+
+**Exception: right after an explicit sign-out.** Auto-redirecting
+unconditionally would bounce a user `IdentityGate` rejects for an unsupported
+identity provider straight back into the same rejected login, with no way
+out. A per-tab `sessionStorage` flag, set on sign-out and cleared on the next
+mount, skips the auto-redirect for that one render, so the welcome screen and
+its "Sign in" button show instead.
 
 ## GT-SSO requirements
 

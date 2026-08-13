@@ -7,9 +7,6 @@ services:
       POSTGRES_PASSWORD: igsn
       POSTGRES_DB: igsn
     healthcheck:
-      # -h localhost forces a TCP check: the postgis image runs its init behind a
-      # socket-only server, so a socket pg_isready reports ready while TCP 5432 is
-      # still refused.
       test: ["CMD-SHELL", "pg_isready -U igsn -d igsn -h localhost"]
       interval: 2s
       timeout: 3s
@@ -22,20 +19,10 @@ services:
     command: start-dev --import-realm
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      # One shared password var for Keycloak admin, the SAML users, and the
-      # mock-orcid user; `password` in dev. The bare KEYCLOAK_PASSWORD is what
-      # the realm import substitutes into the mock-orcid user's password.
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
       KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
-      # Pin the frontend URL so the realm issuer is the same string whichever
-      # host a request arrives on: start-dev otherwise derives it from the
-      # request, and the api's backchannel userinfo call (Host keycloak:8080)
-      # then rejects a token issued to localhost:8080. The backchannel stays
-      # dynamic so that in-network call keeps resolving.
       KC_HOSTNAME: http://localhost:8080
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
-    # The "orcid" broker defaults to the local mock-orcid realm, so dev needs no
-    # credentials.
     env_file:
       - path: .env
         required: false
@@ -44,8 +31,6 @@ services:
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
 
-  # In prod this is replaced by the real RENATER/eduGAIN IdP — only the
-  # metadata/SSO URL changes.
   saml-idp:
     image: kenchan0130/simplesamlphp
     container_name: saml-idp
@@ -54,19 +39,12 @@ services:
     environment:
       SIMPLESAMLPHP_SP_ENTITY_ID: http://localhost:8080/realms/igsn
       SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: http://localhost:8080/realms/igsn/broker/satosa/endpoint
-      # Where the IdP sends its SAML LogoutResponse, so Keycloak-initiated
-      # logout also ends the IdP session (same broker endpoint).
       SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: http://localhost:8080/realms/igsn/broker/satosa/endpoint
       SIMPLESAMLPHP_IDP_BASE_URL: http://localhost:8081/simplesaml/
-      # Password shared with the Keycloak admin var; read by authsources.php.
       KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD:-password}
     volumes:
       - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
 
-  # Catch-all SMTP sink so dev mail never leaves the machine: it accepts every
-  # recipient and shows the message in its web UI (http://localhost:1080)
-  # instead of delivering it. SMTP 1025 stays compose-internal, nothing on the
-  # host needs to reach it.
   maildev:
     image: maildev/maildev:2.2.1
     container_name: maildev
@@ -82,8 +60,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      # Browser hits the api at localhost:3002 (VITE_API_URL default); SSR runs
-      # inside this container and reaches it on the compose network instead.
       API_URL: http://api:3002
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3000/"]
@@ -91,9 +67,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
-    # Hot source is bind-mounted, not compose-watch synced: sync can silently
-    # drop events on bulk changes (git checkout, rebase) and leave the container
-    # serving a stale mixed tree; a mount cannot go stale (ADR 0013).
     volumes:
       - ./packages/frontend/src:/app/packages/frontend/src
       - ./packages/frontend/messages:/app/packages/frontend/messages
@@ -137,7 +110,6 @@ services:
     environment:
       VITE_OIDC_AUTHORITY: ${OIDC_ISSUER:-http://localhost:8080/realms/igsn}
       VITE_OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
-      # Tighter than the 30s default, so testing a takeover by hand is quick.
       VITE_SAMPLE_LOCK_POLL_SECONDS: "15"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3001/"]
@@ -145,7 +117,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
-    # Same bind-mount rationale as frontend (ADR 0013).
     volumes:
       - ./packages/admin/src:/app/packages/admin/src
       - ./packages/admin/messages:/app/packages/admin/messages
@@ -187,40 +158,23 @@ services:
     ports:
       - "3002:3002"
     environment:
-      # Token issuer is the browser-facing Keycloak URL; the api fetches JWKS and
-      # userinfo on its own network, so those URLs point at the keycloak service
-      # directly (an issuer-derived URL is unreachable from this container).
       OIDC_ISSUER: ${OIDC_ISSUER:-http://localhost:8080/realms/igsn}
       OIDC_JWKS_URI: ${OIDC_JWKS_URI:-http://keycloak:8080/realms/igsn/protocol/openid-connect/certs}
-      # Same reason for the live session check on rights-changing routes.
       OIDC_USERINFO_URI: ${OIDC_USERINFO_URI:-http://keycloak:8080/realms/igsn/protocol/openid-connect/userinfo}
-      # The only client whose tokens the api accepts (azp), same var as admin.
       OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
-      # Brokers whose users may sign in; an SSO alias change is a redeploy, not a code fix.
       OIDC_ALLOWED_IDENTITY_PROVIDERS: "${OIDC_ALLOWED_IDENTITY_PROVIDERS:-satosa,orcid}"
       CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"
-      # Where the digest mail sends a super admin to moderate; read at boot.
       ADMIN_URL: "http://localhost:3001"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       DATABASE_NAME: igsn
       DATABASE_USER: igsn
       DATABASE_PASSWORD: igsn
-      # Lets a curl pick its own X-Real-IP to exercise the rate limit by hand.
       TRUST_PROXY_HEADERS: "true"
-      # Uploaded sample attachments (ADR 0017); a named volume so blobs
-      # survive restarts without cluttering the host working tree.
       ATTACHMENTS_DIR: /data/attachments
-      # Minimum word_similarity for the search's typo tolerance (ADR 0018).
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "0.8"
-      # How many files a sample may carry; the admin bundle must agree
-      # (VITE_UPLOAD_LIMIT).
       UPLOAD_LIMIT: "5"
-      # How long a sample edit lock survives without a heartbeat (ADR 0024).
       SAMPLE_EDIT_LOCK_TTL_MINUTES: "15"
-      # Where the api posts mail, read at boot. No SMTP_USER/SMTP_PASSWORD,
-      # unlike preprod: maildev takes anonymous SMTP, and inventing dev
-      # credentials would only be parity theatre.
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost
@@ -233,10 +187,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    # Same bind-mount rationale as frontend (ADR 0013). Read-only: the api
-    # generates nothing into src, so it keeps running as root safely. scripts
-    # is mounted too so `make db-seed*` always runs the checked-out seed, even
-    # when the stack was started without watch or from a stale image.
     volumes:
       - ./packages/api/src:/app/packages/api/src:ro
       - ./packages/api/scripts:/app/packages/api/scripts:ro

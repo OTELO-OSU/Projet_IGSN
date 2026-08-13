@@ -101,6 +101,13 @@ Moderate these accounts: http://localhost:3001/users
     );
   });
 
+  it("should repeat the url as copyable text besides the button link", async () => {
+    const digest = await pendingUsersDigest([pendingUser()], USERS_URL, now);
+
+    expect(digest.html).toContain(`href="${USERS_URL}"`);
+    expect(digest.html).toContain(`>${USERS_URL}</a`);
+  });
+
   it("should escape markup coming from an account", async () => {
     const html = (
       await pendingUsersDigest(

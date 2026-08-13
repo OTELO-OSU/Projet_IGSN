@@ -1,12 +1,3 @@
-# Production stack for the preprod EC2 host: runs the pre-built igsn-*:preprod
-# images shipped by infra/preprod/scripts/deploy.sh via `docker save | ssh docker load`.
-# Postgres runs here as a container with a persistent volume; its password comes
-# from the host docker-compose.env that the operator copies to the host.
-#
-# Not meant to `up` locally: it needs the loaded igsn-*:preprod images and DNS
-# for $DOMAIN.
-
-# Shared HTTP healthcheck: every app listens on :8080 and returns 2xx on /.
 x-healthcheck: &healthcheck
   test: ["CMD", "curl", "-fsS", "http://localhost:8080/"]
   interval: 10s
@@ -16,9 +7,6 @@ x-healthcheck: &healthcheck
 
 services:
   postgres:
-    # Alpine variant, unlike dev's Debian one: the existing pgdata volume was
-    # initialized under musl, and moving to glibc would change collation and
-    # corrupt text index ordering.
     image: postgis/postgis:17-3.5-alpine
     restart: unless-stopped
     environment:
@@ -26,9 +14,6 @@ services:
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
     healthcheck:
-      # -h localhost forces a TCP check: the postgis image runs its init behind a
-      # socket-only server, so a socket pg_isready reports ready while TCP 5432 is
-      # still refused.
       test:
         [
           "CMD-SHELL",
@@ -60,47 +45,27 @@ services:
     environment:
       PORT: "8080"
       CORS_ORIGINS: "https://igsn-admin.${DOMAIN},https://igsn.${DOMAIN}"
-      # Where the digest mail sends a super admin to moderate; read at boot.
       ADMIN_URL: "https://igsn-admin.${DOMAIN}"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       DATABASE_NAME: ${DATABASE_NAME}
       DATABASE_USER: ${DATABASE_USER}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD}
-      # Public issuer, reachable from here as-is, so the api derives the JWKS and
-      # userinfo URLs from it: no OIDC_JWKS_URI / OIDC_USERINFO_URI override is
-      # needed (dev and e2e need them, their issuer is browser-facing only).
       OIDC_ISSUER: "https://sso-test.earth-data.fr/realms/gaia-data"
-      # The realm is shared with other service providers, so the api accepts
-      # tokens issued to this client only (azp); admin bakes the same value.
       OIDC_CLIENT_ID: "formaterre-igsn"
-      # Brokers whose users may sign in; an SSO alias change is a redeploy, not a code fix.
       OIDC_ALLOWED_IDENTITY_PROVIDERS: "${OIDC_ALLOWED_IDENTITY_PROVIDERS:-satosa,orcid}"
-      # Key the per-IP rate limit on the X-Real-IP Caddy sets from
-      # Cf-Connecting-IP. Only safe because nothing but Caddy can reach this
-      # service: no port is published.
       TRUST_PROXY_HEADERS: "true"
-      # Uploaded sample attachments (ADR 0017); a named volume so blobs
-      # survive image redeploys.
       ATTACHMENTS_DIR: /data/attachments
       SAMPLE_SEARCH_FUZZY_THRESHOLD: "${SAMPLE_SEARCH_FUZZY_THRESHOLD:-0.8}"
-      # The admin bundle bakes its own copy (VITE_UPLOAD_LIMIT) from the
-      # deploying shell, not from this host env file: export the same value
-      # there so the two agree (see docker-compose.env.example).
       UPLOAD_LIMIT: "${UPLOAD_LIMIT:-5}"
       SAMPLE_EDIT_LOCK_TTL_MINUTES: "${SAMPLE_EDIT_LOCK_TTL_MINUTES:-15}"
-      # Outbound mail via a transactional-mail provider's SMTP endpoint, read at
-      # boot. All four values come from the host docker-compose.env like the
-      # Postgres password; see docs/preprod-setup.md for the provider setup
-      # (DKIM/SPF DNS records).
       SMTP_HOST: ${SMTP_HOST}
-      # STARTTLS. EC2 blocks outbound 25 by default; 587 is open.
       SMTP_PORT: "${SMTP_PORT:-587}"
       SMTP_USER: ${SMTP_USER}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
-      # The sender address; the provider must be authorized for its domain (the
-      # DKIM/SPF records above) or it rejects or spam-folders every send.
       SMTP_FROM: "postmaster@igsn.${DOMAIN}"
+      SMTP_FROM_NAME: "${SMTP_FROM_NAME}"
+      SMTP_FROM_NAME_ADMIN: "${SMTP_FROM_NAME_ADMIN}"
     healthcheck: *healthcheck
     volumes:
       - attachments:/data/attachments
@@ -108,9 +73,6 @@ services:
       migrate:
         condition: service_completed_successfully
 
-  # Same throwaway Keycloak as dev (start-dev, realm imported from keycloak/*.json)
-  # plus the mock SAML IdP, so preprod exercises the real broker flow without
-  # wiring true RENATER. See docs/adr/0003-preprod-auth-stack.md.
   # ponytail: H2 in-memory, so brokered users vanish on container recreate and
   # re-provision on next login. Switch to `start` + Postgres if durable state matters.
   # Unused by the apps while GaiaData is the SSO: kept as the rollback path, to
@@ -122,20 +84,14 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
-      # Also exposed bare so the realm import substitutes it into the mock-orcid
-      # user's password (${KEYCLOAK_PASSWORD} in mock-orcid-realm.json).
       KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
       KC_HOSTNAME: "https://igsn-auth.${DOMAIN}"
       KC_PROXY_HEADERS: xforwarded
-      # URLs the realm import substitutes for the public preprod hosts.
       ADMIN_REDIRECT_URI: "https://igsn-admin.${DOMAIN}/*"
       ADMIN_WEB_ORIGIN: "https://igsn-admin.${DOMAIN}"
       SHIBBOLETH_SSO_URL: "https://igsn-idp.${DOMAIN}/simplesaml/saml2/idp/SSOService.php"
       SHIBBOLETH_SLO_URL: "https://igsn-idp.${DOMAIN}/simplesaml/saml2/idp/SingleLogoutService.php"
       ORCID_LOGOUT_URL: "https://igsn-auth.${DOMAIN}/realms/mock-orcid/protocol/openid-connect/logout"
-      # Browser-facing URLs (authorization, broker redirect, issuer) are public;
-      # backend calls keycloak reaches over localhost, the same public/internal
-      # split as the api.
       ORCID_BROKER_REDIRECT_URI: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/orcid/endpoint"
       ORCID_AUTHORIZATION_URL: "https://igsn-auth.${DOMAIN}/realms/mock-orcid/protocol/openid-connect/auth"
       ORCID_TOKEN_URL: "http://localhost:8080/realms/mock-orcid/protocol/openid-connect/token"
@@ -153,7 +109,6 @@ services:
       SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/satosa/endpoint"
       SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/satosa/endpoint"
       SIMPLESAMLPHP_IDP_BASE_URL: "https://igsn-idp.${DOMAIN}/simplesaml/"
-      # Shared with the Keycloak admin password; read by authsources.php.
       KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
     volumes:
       - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
@@ -169,11 +124,6 @@ services:
     restart: unless-stopped
     environment:
       PORT: "8080"
-      # Compose network, not the public URL: hairpinning out through Cloudflare
-      # and back in through Caddy would overwrite the visitor X-Real-IP this
-      # container forwards with the host's own address, and the per-IP rate limit
-      # would bill every reader to one bucket. Safe because nothing renders
-      # API_URL into HTML (links-view.tsx uses VITE_API_URL for browser hrefs).
       API_URL: http://api:8080
     healthcheck: *healthcheck
 
@@ -187,7 +137,6 @@ services:
       DOMAIN: ${DOMAIN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      # Cloudflare Origin CA cert + key the operator copies to the host ~/certs.
       - ./certs:/certs:ro
       - caddy_data:/data
       - caddy_config:/config
@@ -198,8 +147,6 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
-      # No in-container curl, so no healthcheck: just order the start. Caddy
-      # retries the upstream until Keycloak/the IdP answer.
       keycloak:
         condition: service_started
       saml-idp:

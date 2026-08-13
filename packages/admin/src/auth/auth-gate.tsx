@@ -1,34 +1,52 @@
 import type { ReactNode } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "react-oidc-context";
 
 import { m } from "#/paraglide/messages.js";
 
 import { AppLayout } from "./app-layout.tsx";
+import { CenteredLoader } from "./centered-loader.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
 import { IdentityGate } from "./identity-gate.tsx";
 import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
+import { signIn } from "./sign-in.ts";
+import { clearSignedOut, markSignedOut, readSignedOut } from "./signed-out.ts";
 
-// The SSO owns that list (GaiaData's differs from the mock realm's),
-// so the app sends no kc_idp_hint.
 export function AuthGate({ children }: { children?: ReactNode }) {
   const auth = useAuth();
-  const signIn = () =>
-    void auth.signinRedirect({
-      // oidc-client-ts sends no nonce by default on the code flow; given one it
-      // stores it and verifies the id_token claim (GT-SSO REQ-PARAM-00/01).
-      nonce: crypto.randomUUID(),
-    });
-  const signOut = () => void auth.signoutRedirect();
+  const [hasSignedOut, setHasSignedOut] = useState(readSignedOut);
+  const hasRedirected = useRef(false);
+  const shouldSignIn =
+    !hasSignedOut && !auth.isLoading && !auth.error && !auth.isAuthenticated;
 
-  if (auth.isLoading) return <p>{m.auth_loading()}</p>;
-  if (auth.error) return <p>{m.auth_error({ message: auth.error.message })}</p>;
+  useEffect(() => clearSignedOut(), []);
+  useEffect(() => {
+    if (!shouldSignIn || hasRedirected.current) return;
+    hasRedirected.current = true;
+    signIn(auth);
+  }, [shouldSignIn, auth]);
+
+  const signOut = () => {
+    setHasSignedOut(true);
+    markSignedOut();
+    void auth.signoutRedirect();
+  };
+
+  if (auth.isLoading || shouldSignIn) return <CenteredLoader />;
+  if (auth.error)
+    return (
+      <CenteredScreen
+        isError
+        message={m.auth_error({ message: auth.error.message })}
+      />
+    );
 
   if (!auth.isAuthenticated) {
     return (
       <CenteredScreen message={m.auth_welcome()}>
-        <Button type="button" size="lg" onClick={signIn}>
+        <Button type="button" size="lg" onClick={() => signIn(auth)}>
           {m.auth_sign_in()}
         </Button>
       </CenteredScreen>
@@ -40,8 +58,6 @@ export function AuthGate({ children }: { children?: ReactNode }) {
     typeof identityProvider === "string" &&
     identityProvider.toLowerCase() === "orcid";
 
-  // Inside the authenticated branch only: the gate reads the api identity, which
-  // an unauthenticated render has no token (and no QueryClient) for.
   return (
     <IdentityGate isOrcid={isOrcid} onSignOut={signOut}>
       <InstitutionalGroupsGate onSignOut={signOut}>

@@ -8,11 +8,16 @@ export type SmtpTransportOptions = {
   auth?: { user: string; pass?: string };
 };
 
+export type MailAudience = "user" | "admin";
+
+export type MailFrom = { name: string; address: string };
+
 export type Mail = {
   to: string[];
   subject: string;
   text: string;
   html: string;
+  audience?: MailAudience;
 };
 
 export type SendMail = (mail: Mail) => Promise<void>;
@@ -34,9 +39,26 @@ export function smtpTransportOptions(
   };
 }
 
+export function mailFrom(
+  env: NodeJS.ProcessEnv,
+  audience: MailAudience = "user",
+): MailFrom {
+  const name =
+    audience === "admin"
+      ? env.SMTP_FROM_NAME_ADMIN || "No-reply"
+      : env.SMTP_FROM_NAME || "IGSN";
+  return { name, address: env.SMTP_FROM ?? "" };
+}
+
 export function createSendMail(env: NodeJS.ProcessEnv = process.env): SendMail {
   const transport = nodemailer.createTransport(smtpTransportOptions(env));
-  return async ({ to, subject, text, html }) => {
-    await transport.sendMail({ from: env.SMTP_FROM, to, subject, text, html });
+  return async ({ to, subject, text, html, audience }) => {
+    await transport.sendMail({
+      from: mailFrom(env, audience),
+      to,
+      subject,
+      text,
+      html,
+    });
   };
 }

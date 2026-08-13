@@ -5,12 +5,8 @@ import { keycloakLoginPage } from "./keycloak-login.page";
 import { keycloakProfilePage } from "./keycloak-profile.page";
 import { shibbolethLoginPage } from "./shibboleth-login.page";
 
-// A SAML researcher from the mock IdP (see saml-idp/authsources.php).
 export type Researcher = { username: string; email: string };
 
-// Each parallel test signs in as a distinct researcher: concurrent
-// first-broker-login for the *same* brokered identity races in Keycloak (one
-// session imports the account, the others hit the account-conflict page).
 export const RESEARCHERS = {
   jean: { username: "jean.martin", email: "jean.martin@univ-lorraine.fr" },
   pierre: {
@@ -29,7 +25,6 @@ export const RESEARCHERS = {
 export async function signInAsResearcher(page: Page, researcher: Researcher) {
   const admin = adminPage(page);
   await admin.goto();
-  await admin.signIn();
   await keycloakLoginPage(page).chooseInstitution();
   await shibbolethLoginPage(page).login(researcher.username, "password");
   await keycloakProfilePage(page).completeIfShown(researcher.email);
