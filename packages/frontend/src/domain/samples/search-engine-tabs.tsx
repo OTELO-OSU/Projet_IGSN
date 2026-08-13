@@ -18,7 +18,6 @@ export function engineLabel(engine: SearchEngine): string {
     : m.search_engine_text();
 }
 
-// Its own copy, not "Add " + engineLabel(): the two read differently per engine.
 export function addEngineLabel(engine: SearchEngine): string {
   return engine === "location"
     ? m.search_add_engine_location()
@@ -37,9 +36,16 @@ export function SearchEngineTabs({
       value={engine}
       onValueChange={(value) => onEngineChange(value as SearchEngine)}
     >
-      <TabsList>
-        <TabsTrigger value="text">{m.search_engine_text()}</TabsTrigger>
-        <TabsTrigger value="location">{m.search_engine_location()}</TabsTrigger>
+      <TabsList className="bg-sky-800 p-1 group-data-[orientation=horizontal]/tabs:h-14">
+        {ENGINES.map((option) => (
+          <TabsTrigger
+            key={option}
+            value={option}
+            className="px-5 text-base text-white hover:text-white data-[state=active]:text-sky-900 dark:text-white dark:hover:text-white dark:data-[state=active]:text-sky-900"
+          >
+            {engineLabel(option)}
+          </TabsTrigger>
+        ))}
       </TabsList>
     </Tabs>
   );

@@ -2,10 +2,13 @@ import type { ComponentProps } from "react";
 
 import { SearchIcon } from "lucide-react";
 
+import { cn } from "#/lib/utils.ts";
+
 import { Input } from "./input.tsx";
 
 export function SearchInput({
   label,
+  className,
   ...props
 }: ComponentProps<typeof Input> & { label: string }) {
   return (
@@ -14,9 +17,10 @@ export function SearchInput({
       <div className="relative">
         <Input
           type="search"
-          // Hide the browser-native search clear button (ugly beveled gradient
-          // on Chromium/Linux).
-          className="bg-background ps-9 [&::-webkit-search-cancel-button]:appearance-none"
+          className={cn(
+            "bg-background ps-9 [&::-webkit-search-cancel-button]:appearance-none",
+            className,
+          )}
           {...props}
         />
         <SearchIcon

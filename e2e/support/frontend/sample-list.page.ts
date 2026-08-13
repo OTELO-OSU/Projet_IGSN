@@ -4,7 +4,6 @@ import { frontendUrl } from "../urls";
 
 export function sampleListPage(page: Page) {
   return {
-    // A query is composed on the landing page: /search only holds results.
     goto: () => page.goto(frontendUrl),
     gotoEmptySearch: () => page.goto(`${frontendUrl}/search`),
     gotoWithSearch: async (query: string) => {
@@ -30,8 +29,6 @@ export function sampleListPage(page: Page) {
       await page.getByRole("option", { name: option }).click();
       await page.waitForURL(new RegExp(`[?&]${param}=`));
     },
-    // No URL wait: the param may already be present from a shallower value, so
-    // the caller asserts on the narrowed results instead.
     chooseFacetOption: async (level: string, option: string) => {
       await page.getByRole("combobox", { name: level }).click();
       await page.getByRole("option", { name: option }).click();
@@ -50,10 +47,15 @@ export function sampleListPage(page: Page) {
     },
     clearAllFilters: () =>
       page.getByRole("button", { name: /clear all filters/i }).click(),
+    pickCardField: async (field: string) => {
+      await page.getByRole("button", { name: "Add field results" }).click();
+      await page.getByRole("checkbox", { name: field }).click();
+      await page.keyboard.press("Escape");
+    },
+    expectCardLine: (line: string) =>
+      expect(page.getByText(line, { exact: true }).first()).toBeVisible(),
     search: async (query: string) => {
       await page.waitForLoadState("networkidle");
-      // networkidle does not mean hydrated: a `fill` before React attaches its
-      // listeners never reaches component state, so the submit finds nothing.
       await expect(async () => {
         const searchbox = page.getByRole("searchbox", {
           name: "Search samples",

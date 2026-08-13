@@ -33,7 +33,7 @@ describe("SearchCompose", () => {
       />,
     );
 
-    await screen.getByRole("button", { name: "Add text search" }).click();
+    await screen.getByRole("button", { name: "Add terms" }).click();
 
     await expect
       .element(screen.getByRole("searchbox", { name: "Search samples" }))
@@ -67,7 +67,6 @@ describe("SearchCompose", () => {
 
     await screen.getByRole("button", { name: "Remove Location" }).hover();
 
-    // Radix portals the tooltip out of the render container, hence `page`.
     await expect
       .element(page.getByRole("tooltip"))
       .toHaveTextContent("Remove Location");
@@ -86,7 +85,7 @@ describe("SearchCompose", () => {
       .element(screen.getByRole("button", { name: "Remove Location" }))
       .toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Remove Text" }).query(),
+      screen.getByRole("button", { name: "Remove Terms" }).query(),
     ).toBeNull();
   });
 
@@ -136,27 +135,18 @@ describe("SearchCompose", () => {
     });
   });
 
-  it("should carry the primary engine when location leads the stack", async () => {
-    const onSearch = vi.fn();
+  it("should keep Search as the last control once the map is open", async () => {
     const screen = await render(
       <SearchCompose
-        initialActive={["location", "text"]}
-        initialDrafts={{ q: undefined, bbox: "-10,40,10,50" }}
-        onSearch={onSearch}
+        initialActive={["text", "location"]}
+        initialDrafts={noSeed}
+        onSearch={vi.fn()}
       />,
     );
 
-    await screen
-      .getByRole("searchbox", { name: "Search samples" })
-      .fill("granite");
-    await screen.getByRole("button", { name: "Search", exact: true }).click();
+    const buttons = screen.getByRole("button").elements();
 
-    expect(onSearch).toHaveBeenCalledWith({
-      q: "granite",
-      bbox: "-10,40,10,50",
-      engine: "location",
-      page: 1,
-    });
+    expect(buttons.at(-1)).toHaveTextContent("Search");
   });
 
   it("should omit a removed engine's draft from the next search", async () => {
@@ -252,7 +242,7 @@ describe("SearchCompose", () => {
     expect(onSearch).toHaveBeenCalledWith({ q: "", page: 1 });
   });
 
-  it("should drop the tabs and the add button once the engines are fixed", async () => {
+  it("should drop the tabs but still offer adding an engine on the results page", async () => {
     const screen = await render(
       <SearchCompose
         initialActive={["text"]}
@@ -266,15 +256,12 @@ describe("SearchCompose", () => {
       .element(screen.getByRole("searchbox", { name: "Search samples" }))
       .toBeInTheDocument();
     await expect
-      .element(screen.getByRole("button", { name: "Search", exact: true }))
+      .element(screen.getByRole("button", { name: "Add location" }))
       .toBeInTheDocument();
     expect(screen.getByRole("tab").query()).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "Add location" }).query(),
-    ).toBeNull();
   });
 
-  it("should keep both fixed engines without a remove control", async () => {
+  it("should keep an engine the results page was searched with", async () => {
     const screen = await render(
       <SearchCompose
         initialActive={["text", "location"]}
@@ -285,14 +272,29 @@ describe("SearchCompose", () => {
     );
 
     await expect
-      .element(screen.getByRole("searchbox", { name: "Search samples" }))
-      .toBeInTheDocument();
-    await expect
       .element(screen.getByRole("group", { name: "Search area map" }))
       .toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Remove Location" }).query(),
     ).toBeNull();
+  });
+
+  it("should let the results page drop an engine it just added", async () => {
+    const onSearch = vi.fn();
+    const screen = await render(
+      <SearchCompose
+        initialActive={["text"]}
+        initialDrafts={{ q: "granite", bbox: undefined }}
+        onSearch={onSearch}
+        shrunk
+      />,
+    );
+
+    await screen.getByRole("button", { name: "Add location" }).click();
+    await screen.getByRole("button", { name: "Remove Location" }).click();
+    await screen.getByRole("button", { name: "Search", exact: true }).click();
+
+    expect(onSearch).toHaveBeenCalledWith({ q: "granite", page: 1 });
   });
 
   it("should let the reader enlarge the results banner map", async () => {

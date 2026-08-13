@@ -73,14 +73,16 @@ paths:
 
 ## Comments
 
-A comment ships only with a named proof from the `cleanup-comments` verdict table, and every other comment is a defect the `code-quality-reviewer` blocks on.
+A comment ships only from the `cleanup-comments` keep table, and every other comment is a defect the `code-quality-reviewer` blocks on.
 
-- A changeset adds zero comments by default.
-- Name the proof before typing it (tool directive, `ponytail:` marker, non-obvious why, external constraint, counter-intuitive workaround with its cause, warning preventing a real mistake, TODO with a ticket), or do not type it.
+- A changeset adds zero comments.
+- The four that ship: a business rule the code cannot state, a `ponytail:` marker, a temporary TODO or out-of-scope note, a tool directive.
+- A TODO ships only as temporary, naming the work that deletes it, never as documentation nobody will remove.
+- Everything else goes, a non-obvious why, a library quirk, a workaround's cause and a warning against a future mistake included.
 - One or two lines, for a human, never narration, never the what or the how.
 - Prefer a clear name or a smaller function to a comment explaining an unclear one.
 - Never restate the code, describe past implementations, leave commented-out code, add section banners, or JSDoc a self-evident signature.
-- Ambiguity resolves to deletion, "might help someone later" being no proof.
+- Doubt deletes, "might help someone later" being no standing and "someone will break this" being a test to write.
 
 ```
 // Wrong

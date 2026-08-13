@@ -10,7 +10,7 @@ describe("SearchEngineTabs", () => {
     );
 
     await expect
-      .element(screen.getByRole("tab", { name: "Text" }))
+      .element(screen.getByRole("tab", { name: "Terms" }))
       .toHaveAttribute("aria-selected", "true");
     await expect
       .element(screen.getByRole("tab", { name: "Location" }))

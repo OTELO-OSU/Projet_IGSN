@@ -10,26 +10,6 @@ describe("searchParamsSchema", () => {
     expect(searchParamsSchema.parse({}).page).toBe(1);
   });
 
-  it("should keep the engine param naming the primary engine", () => {
-    expect(
-      searchParamsSchema.parse({
-        engine: "location",
-        q: "granite",
-        bbox: "-10,40,10,50",
-      }),
-    ).toMatchObject({
-      engine: "location",
-      q: "granite",
-      bbox: "-10,40,10,50",
-    });
-  });
-
-  it("should drop an unknown engine value", () => {
-    expect(
-      searchParamsSchema.parse({ engine: "nope", q: "granite" }),
-    ).toMatchObject({ engine: undefined, q: "granite", page: 1 });
-  });
-
   it("should keep both q and bbox at once", () => {
     expect(
       searchParamsSchema.parse({ q: "granite", bbox: "-10,40,10,50" }),
@@ -162,35 +142,12 @@ describe("composeSeedFromParams", () => {
     });
   });
 
-  it("should seed both engines with text primary", () => {
+  it("should seed both engines when both params are present", () => {
     expect(
       composeSeedFromParams({ q: "granite", bbox: "-10,40,10,50", page: 1 }),
     ).toEqual({
       active: ["text", "location"],
       drafts: { q: "granite", bbox: "-10,40,10,50" },
-    });
-  });
-
-  it("should seed location primary when the engine param says so", () => {
-    expect(
-      composeSeedFromParams({
-        q: "granite",
-        bbox: "-10,40,10,50",
-        engine: "location",
-        page: 1,
-      }),
-    ).toEqual({
-      active: ["location", "text"],
-      drafts: { q: "granite", bbox: "-10,40,10,50" },
-    });
-  });
-
-  it("should ignore the engine param when its engine is not open", () => {
-    expect(
-      composeSeedFromParams({ q: "granite", engine: "location", page: 1 }),
-    ).toEqual({
-      active: ["text"],
-      drafts: { q: "granite", bbox: undefined },
     });
   });
 
