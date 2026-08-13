@@ -76,6 +76,8 @@ const nowSeconds = () => Math.floor(Date.now() / 1000);
 
 // GaiaData tokens carry no aud claim, so the valid token has none either; azp
 // and typ are what Keycloak stamps on an access token issued to our client.
+// identity_provider is what currentUser needs downstream of this middleware:
+// without it the route refuses an otherwise valid token.
 const validClaims = () => ({
   iss: ISSUER,
   azp: CLIENT_ID,
@@ -85,6 +87,7 @@ const validClaims = () => ({
   preferred_username: "marie",
   name: "Marie Dupont",
   email: "marie.dupont@univ-lorraine.fr",
+  identity_provider: "satosa",
 });
 
 // The middleware reads its env once, when it is imported, so each auth

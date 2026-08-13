@@ -20,6 +20,7 @@
   "settings_institution_hint": "Contact an administrator to change your institution.",
   "action_save": "Save",
   "account_rejected": "You do not have access to this application.",
+  "account_unsupported_provider": "Sign in with your institution (eduGAIN) or your ORCID iD. A Gaia Data account cannot be used to access this application.",
   "account_pending_banner": "Your account is not yet validated. You can prepare your declarations, but you cannot publish them yet.",
   "nav_samples": "Samples",
   "nav_users": "Users",

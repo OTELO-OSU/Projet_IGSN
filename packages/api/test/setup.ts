@@ -21,6 +21,9 @@ vi.mock("../src/auth/middleware.ts", () => ({
       email: `${sub}@example.com`,
       given_name: "Test",
       family_name: "User",
+      // currentUser refuses a provider outside the allow-list, so the stand-in
+      // token has to be brokered like a real one.
+      identity_provider: "satosa",
     });
     await next();
   },
@@ -44,6 +47,7 @@ vi.mock("../src/auth/active-session.ts", () => ({
 const clearEnvOverrides = () => {
   delete process.env.SAMPLE_SEARCH_FUZZY_THRESHOLD;
   delete process.env.TRUST_PROXY_HEADERS;
+  delete process.env.OIDC_ALLOWED_IDENTITY_PROVIDERS;
   for (const key of Object.keys(process.env)) {
     if (key.startsWith("RATE_LIMIT_")) delete process.env[key];
   }

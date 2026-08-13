@@ -5,7 +5,10 @@ import { m } from "#/paraglide/messages.js";
 
 import { CenteredScreen } from "./centered-screen.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
-import { useCurrentUser } from "./use-current-user.ts";
+import {
+  UnsupportedIdentityProviderError,
+  useCurrentUser,
+} from "./use-current-user.ts";
 
 // An ORCID session reaches the app only once the api resolves its orcid to a
 // linked account (ADR 0020), so there any load failure blocks; on Keycloak only
@@ -21,7 +24,12 @@ export function IdentityGate({
 }) {
   const { data, error } = useCurrentUser();
   const isForbidden = error instanceof HttpError && error.status === 403;
-  const forbiddenMessage = isOrcid ? m.auth_no_access() : m.account_rejected();
+  const forbiddenMessage =
+    error instanceof UnsupportedIdentityProviderError
+      ? m.account_unsupported_provider()
+      : isOrcid
+        ? m.auth_no_access()
+        : m.account_rejected();
 
   if (isForbidden || (isOrcid && error)) {
     return (

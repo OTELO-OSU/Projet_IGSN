@@ -2,6 +2,7 @@ import { adminPage } from "../support/admin/admin.page";
 import { keycloakLoginPage } from "../support/admin/keycloak-login.page";
 import { keycloakProfilePage } from "../support/admin/keycloak-profile.page";
 import { orcidLoginPage } from "../support/admin/orcid-login.page";
+import { sampleListPage } from "../support/admin/sample-list.page";
 import { settingsPage } from "../support/admin/settings.page";
 import { shibbolethLoginPage } from "../support/admin/shibboleth-login.page";
 import { test } from "../support/db";
@@ -60,6 +61,34 @@ test.describe("authentication", () => {
     await admin.signIn();
     await keycloakLoginPage(page).chooseOrcid();
     await orcidLoginPage(page).expectCredentialsPrompt();
+  });
+
+  test("a Gaia Data account with no supported provider is denied app access", async ({
+    page,
+  }) => {
+    const admin = adminPage(page);
+    await admin.goto();
+    await admin.signIn();
+
+    await keycloakLoginPage(page).loginLocally("test", "test");
+
+    await admin.expectUnsupportedProvider();
+    await sampleListPage(page).expectHidden();
+  });
+
+  test("a Gaia Data account denied for its provider must re-enter credentials", async ({
+    page,
+  }) => {
+    const admin = adminPage(page);
+    await admin.goto();
+    await admin.signIn();
+    await keycloakLoginPage(page).loginLocally("test", "test");
+    await admin.expectUnsupportedProvider();
+
+    await admin.signOut();
+    await admin.signIn();
+
+    await keycloakLoginPage(page).expectCredentialsPrompt();
   });
 
   // The ORCID first-broker-login asks nothing (no review-profile step); the api

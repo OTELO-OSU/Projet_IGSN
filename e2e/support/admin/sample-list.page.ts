@@ -6,6 +6,8 @@ export function sampleListPage(page: Page) {
   return {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Samples" })).toBeVisible(),
+    expectHidden: () =>
+      expect(page.getByRole("heading", { name: "Samples" })).toBeHidden(),
     goToCreate: () => page.getByRole("link", { name: "Create" }).click(),
     openSample: (name: string) => page.getByRole("link", { name }).click(),
     expectColumns: async () => {

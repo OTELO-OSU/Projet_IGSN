@@ -6,7 +6,7 @@ import { IdentityGate } from "./identity-gate.tsx";
 
 const onSignOut = vi.fn();
 
-const fakeIdentity = (status: number) =>
+const fakeIdentity = (status: number, body?: BodyInit) =>
   worker.use(
     http.get("*/admin/currentUser", () =>
       status === 200
@@ -16,7 +16,7 @@ const fakeIdentity = (status: number) =>
             status: "accepted",
             superAdmin: false,
           })
-        : new HttpResponse(null, { status }),
+        : new HttpResponse(body ?? null, { status }),
     ),
   );
 
@@ -59,6 +59,38 @@ describe("IdentityGate", () => {
       expect(onSignOut).toHaveBeenCalledOnce();
     },
   );
+
+  it("should name eduGAIN and ORCID when the api refuses the identity provider", async () => {
+    fakeIdentity(
+      403,
+      JSON.stringify({
+        error: "Forbidden",
+        reason: "unsupported_identity_provider",
+      }),
+    );
+
+    const screen = await renderGate(false);
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent(/eduGAIN.*ORCID iD/i);
+    await expect
+      .element(screen.getByRole("alert"))
+      .not.toHaveTextContent(/do not have access/i);
+    await expect
+      .element(screen.getByRole("button", { name: "Sign out" }))
+      .toBeVisible();
+  });
+
+  it("should keep the generic denial when the forbidden body is not JSON", async () => {
+    fakeIdentity(403, "Forbidden");
+
+    const screen = await renderGate(false);
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent(/do not have access/i);
+  });
 
   it("should show the app when the identity call fails otherwise", async () => {
     fakeIdentity(500);
