@@ -26,8 +26,8 @@ Do:
 - Its `delete:`/`stdlib:`/`native:`/`yagni:` findings are candidates, `(blocking)` only once you confirm the cut against the real code.
 - Check the structure `architecture.md` mandates: folder-per-entity, no barrels, `xxxSchema` naming, `domain`/`api` layering, `.ts` on `domain` imports, server-side sort/filter/pagination.
 - Block a costly-to-reverse decision landing with no `docs/adr/` entry, routine choices needing none.
-- List the added comments (`git diff $SOURCE | grep -nE '^\+\s*(//|/\*|\*|\{/\*)'`) and verdict each against the `cleanup-comments` proof table, its table only and never its edits.
-- Report the unproven ones as ONE `(blocking)` finding listing each `file:line`, tool directives (`oxlint-disable`, `@ts-expect-error`) and `ponytail:` markers being proofs in themselves.
+- List the added comments (`git diff $SOURCE | grep -nE '^\+\s*(//|/\*|\*|\{/\*)'`) and verdict each against the `cleanup-comments` keep table, its table only and never its edits.
+- Report every comment outside that table as ONE `(blocking)` finding listing each `file:line`, only a business rule, a `ponytail:` marker, a temporary TODO and a tool directive (`oxlint-disable`, `@ts-expect-error`) standing.
 - Report duplication only for shared knowledge, two sources of truth for one business rule being the worst finding you can make.
 - Grep prior helpers, inline conditions, api-side checks, publish blockers and facets before calling a rule new.
 - Name the one future requirement forcing an edit in both sites, or drop the finding.
@@ -40,7 +40,7 @@ Do:
 
 Verdict:
 
-- `(blocking)`: rule violations, over-engineering to cut, an added comment with no named proof, a missing ADR, and a11y defects shipping an unusable control.
+- `(blocking)`: rule violations, over-engineering to cut, an added comment outside the keep table, a missing ADR, and a11y defects shipping an unusable control.
 - `BLOCK` iff one finding is `(blocking)`, else `PASS`.
 
 Reporting:

@@ -15,15 +15,9 @@ import type {
 } from "#/domain/samples/client/list-samples.ts";
 import type { SearchEngine } from "#/domain/samples/search-engine-tabs.tsx";
 
-import { searchEngineSchema } from "#/domain/samples/search-engine-tabs.tsx";
-
 export const PER_PAGE = 10;
 
-// A param is present iff its engine is open, so "?q=" means open and unfilled.
-// bbox ("west,south,east,north") stays raw; the domain schema validates it.
 export const searchParamsSchema = z.object({
-  // Same cap as listSamplesQuerySchema, and truncated the same way, so the URL,
-  // the request and the highlighting all carry the same query.
   q: z
     .string()
     .trim()
@@ -31,7 +25,6 @@ export const searchParamsSchema = z.object({
     .optional()
     .catch(undefined),
   bbox: z.string().optional().catch(undefined),
-  engine: searchEngineSchema.optional().catch(undefined),
   page: z.coerce.number().int().min(1).default(1).catch(1),
   perPage: pageSizeSchema(PER_PAGE).optional(),
   ...facetQueryFields(),
@@ -50,8 +43,6 @@ export function toFilters(params: SearchParams): SampleFilters {
   return filters;
 }
 
-// Undefined when there is nothing to search, so the loader prefetch and the
-// in-page query agree to skip it.
 export function searchQueryParams(
   params: SearchParams,
 ): ListSamplesParams | undefined {
@@ -68,8 +59,6 @@ export function searchQueryParams(
   };
 }
 
-// A malformed bbox is dropped, never handed to the map, which would draw it as a
-// rectangle off the world.
 export function composeSeedFromParams(params: SearchParams): {
   active: SearchEngine[];
   drafts: { q?: string; bbox?: string };
@@ -78,11 +67,6 @@ export function composeSeedFromParams(params: SearchParams): {
   if (params.q !== undefined) active.push("text");
   if (params.bbox !== undefined) active.push("location");
   if (active.length === 0) active.push("text");
-  // ponytail: two engines, so a reverse puts the URL's primary first; partition
-  // on a third.
-  if (params.engine && active.length > 1 && active[0] !== params.engine) {
-    active.reverse();
-  }
   return {
     active,
     drafts: {

@@ -10,7 +10,6 @@ import { Suspense, lazy, useEffect, useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 
-// Leaflet touches `window` at module scope, so it must stay off the SSR path.
 const SearchLocationMap = lazy(() =>
   import("#/domain/samples/search-location-map.tsx").then((module) => ({
     default: module.SearchLocationMap,
@@ -25,7 +24,6 @@ type LazyLocationMapProps = {
   collapsible?: boolean;
 };
 
-// Reserves the height server-side, so the map does not push the results down.
 export function LazyLocationMap({
   collapsible = false,
   onChange,
@@ -42,7 +40,6 @@ export function LazyLocationMap({
       <p id={HINT_ID} className="mb-2 text-sky-100">
         {m.search_map_hint()}
       </p>
-      {/* react-leaflet's MapContainer does not forward role/aria-*. */}
       <div
         role="group"
         aria-label={m.search_map_label()}
@@ -63,7 +60,7 @@ export function LazyLocationMap({
           </Suspense>
         ) : null}
         <TooltipProvider>
-          <div className="absolute start-2 bottom-2 z-[1001] flex gap-2">
+          <div className="absolute start-2 bottom-2 flex gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -76,9 +73,7 @@ export function LazyLocationMap({
                   {m.search_map_draw()}
                 </Button>
               </TooltipTrigger>
-              <TooltipContent className="z-[1001]">
-                {m.search_map_draw_hint()}
-              </TooltipContent>
+              <TooltipContent>{m.search_map_draw_hint()}</TooltipContent>
             </Tooltip>
             {collapsible ? (
               <Tooltip>
@@ -100,7 +95,7 @@ export function LazyLocationMap({
                     )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="z-[1001]">
+                <TooltipContent>
                   {compact ? m.search_map_enlarge() : m.search_map_shrink()}
                 </TooltipContent>
               </Tooltip>

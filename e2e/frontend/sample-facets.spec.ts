@@ -76,7 +76,7 @@ test.describe("search facets", () => {
     const list = sampleListPage(page);
 
     // A box over France holds both published seed samples.
-    await list.gotoWithSearch("engine=location&bbox=-10,40,10,50");
+    await list.gotoWithSearch("bbox=-10,40,10,50");
     await list.expectFacetsVisible();
     await list.expectResultCount(2);
 

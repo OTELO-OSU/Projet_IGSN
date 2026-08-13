@@ -12,7 +12,7 @@ function Home() {
 
   return (
     <div className="bg-sky-700 text-white">
-      <div className="mx-auto max-w-3xl px-6 py-16 text-center">
+      <div className="mx-auto max-w-6xl px-6 py-16 text-center">
         <h1 className="text-4xl font-bold sm:text-5xl">
           {m.search_landing_title()}
         </h1>

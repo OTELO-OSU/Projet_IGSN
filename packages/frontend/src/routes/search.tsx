@@ -20,6 +20,7 @@ import {
   searchQueryParams,
 } from "#/domain/samples/search-params.ts";
 import { SearchResultsView } from "#/domain/samples/search-results-view.tsx";
+import { useCardFields } from "#/domain/samples/use-card-fields.ts";
 import { m } from "#/paraglide/messages.js";
 
 const FACET_KEYS = facetParamKeys();
@@ -44,21 +45,17 @@ function SearchPage() {
   return (
     <div>
       <SearchBanner>
-        {/* SearchCompose seeds once, so key by the URL to reseed it on history
-            back/forward. JSON, not a template: "" must not read as undefined. */}
         <SearchCompose
-          key={JSON.stringify([search.q, search.bbox, search.engine])}
+          key={JSON.stringify([search.q, search.bbox])}
           initialActive={seed.active}
           initialDrafts={seed.drafts}
           shrunk
-          // Engine params only: a new query must not discard the facets.
           onSearch={(next) =>
             navigate({
               search: (prev) => ({
                 ...prev,
                 q: next.q,
                 bbox: next.bbox,
-                engine: next.engine,
                 page: 1,
               }),
             })
@@ -98,6 +95,7 @@ function SearchPage() {
 function Results({ params }: { params: ListSamplesParams }) {
   const navigate = Route.useNavigate();
   const { data } = useListSamples(params);
+  const { fields, saveFields } = useCardFields();
   const pageCount = Math.max(1, Math.ceil(data.total / params.perPage));
 
   return (
@@ -108,6 +106,7 @@ function Results({ params }: { params: ListSamplesParams }) {
       page={params.page}
       pageCount={pageCount}
       perPage={params.perPage}
+      fields={fields}
       emptyMessage={
         params.bbox && !params.search
           ? m.search_location_empty_hint()
@@ -119,6 +118,7 @@ function Results({ params }: { params: ListSamplesParams }) {
       onPerPageChange={(perPage) =>
         navigate({ search: (prev) => ({ ...prev, perPage, page: 1 }) })
       }
+      onFieldsChange={saveFields}
     />
   );
 }

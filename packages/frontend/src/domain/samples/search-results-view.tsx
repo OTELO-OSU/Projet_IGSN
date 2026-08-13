@@ -6,6 +6,7 @@ import {
 } from "@projet-igsn/design-system/components/ui/pagination";
 import { PAGE_SIZES } from "@projet-igsn/domain/sample/sample-validator";
 
+import { CardFieldPicker } from "#/domain/samples/card-field-picker.tsx";
 import { SampleList } from "#/domain/samples/sample-list.tsx";
 import { m } from "#/paraglide/messages.js";
 
@@ -16,9 +17,11 @@ export function SearchResultsView({
   page,
   pageCount,
   perPage,
+  fields,
   emptyMessage,
   onPageChange,
   onPerPageChange,
+  onFieldsChange,
 }: {
   samples: Sample[];
   total: number;
@@ -26,9 +29,11 @@ export function SearchResultsView({
   page: number;
   pageCount: number;
   perPage: number;
+  fields?: string[];
   emptyMessage: string;
   onPageChange: (page: number) => void;
   onPerPageChange: (perPage: number) => void;
+  onFieldsChange: (fields: string[]) => void;
 }) {
   if (total === 0) {
     return (
@@ -46,14 +51,17 @@ export function SearchResultsView({
             ? m.search_results_count_one()
             : m.search_results_count({ count: total })}
         </p>
-        <PageSizeSelect
-          perPage={perPage}
-          pageSizes={PAGE_SIZES}
-          label={m.search_per_page()}
-          onPerPageChange={onPerPageChange}
-        />
+        <div className="flex items-center gap-4">
+          <PageSizeSelect
+            perPage={perPage}
+            pageSizes={PAGE_SIZES}
+            label={m.search_per_page()}
+            onPerPageChange={onPerPageChange}
+          />
+          <CardFieldPicker fields={fields} onFieldsChange={onFieldsChange} />
+        </div>
       </div>
-      <SampleList samples={samples} query={query} />
+      <SampleList samples={samples} query={query} fields={fields} />
 
       {pageCount > 1 ? (
         <nav

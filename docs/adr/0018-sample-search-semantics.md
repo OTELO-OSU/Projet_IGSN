@@ -104,4 +104,5 @@ search and `AND`/`OR` operators are separate tickets.
   millisecond, so it identifies no sample. Equality rides the unique
   constraint's index, so `igsn` carries no trigram index (migration
   `20260804144413` dropped it); restoring a substring arm restores that index.
-- The search help popover ships English only; the app has no French catalog yet.
+- The grammar above is documented nowhere in the UI: the search help popover
+  that once explained it was removed.

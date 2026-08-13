@@ -58,6 +58,21 @@ test.describe("sample list", () => {
     await list.expectNoResults();
   });
 
+  test("a reader adds a field to the result cards and keeps it after a reload", async ({
+    page,
+  }) => {
+    const list = sampleListPage(page);
+    await list.goto();
+    await list.search("basalt");
+
+    await list.pickCardField("Collection method");
+    await list.expectCardLine("Collection method: Blasting");
+
+    await page.reload();
+
+    await list.expectCardLine("Collection method: Blasting");
+  });
+
   test("a reader can search with a wildcard", async ({ page, samples }) => {
     const target = samples.find((sample) => sample.name === "Basalt 42");
     if (!target?.igsn) {
@@ -69,7 +84,6 @@ test.describe("sample list", () => {
     await list.search("bas*");
 
     await list.expectSampleLink(target.name, target.igsn);
-    // "Granite 7" is the other published sample; it has no word starting "bas".
     await list.expectSampleAbsent("Granite 7");
   });
 });

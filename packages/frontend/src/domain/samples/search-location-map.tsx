@@ -11,14 +11,11 @@ import {
   useMapEvents,
 } from "react-leaflet";
 
-// Leaflet's lat/lng are unbounded (lng 220 on a wrapped world), which the domain
-// schema rejects.
 const WORLD_BOUNDS: LatLngBoundsExpression = [
   [-90, -180],
   [90, 180],
 ];
 
-// A click with no drag would still produce a schema-valid zero-area box.
 const MIN_DRAG_PX = 5;
 
 const round6 = (value: number) => Math.round(value * 1e6) / 1e6;
@@ -28,8 +25,6 @@ const clampLatitude = (value: number) =>
 const wrapLongitude = (value: number) =>
   round6(Util.wrapNum(value, [-180, 180], true));
 
-// Not re-sorted after wrapping: west stays the start of the eastward span, so a
-// drag that ran past 180 yields west > east, the crossing box the api splits.
 export function formatBbox(a: LatLng, b: LatLng): string {
   const lats = [clampLatitude(a.lat), clampLatitude(b.lat)];
   const start = Math.min(a.lng, b.lng);
@@ -40,9 +35,6 @@ export function formatBbox(a: LatLng, b: LatLng): string {
   return `${west},${Math.min(...lats)},${east},${Math.max(...lats)}`;
 }
 
-// One bounds, or the two halves of a crossing box: Leaflet normalizes a single
-// west > east bounds into the complement span, drawing the rectangle everywhere
-// the selection is not.
 function toBoundsList(bbox: string | undefined): LatLngBoundsExpression[] {
   const parsed = bboxSchema.safeParse(bbox);
   if (!parsed.success) return [];
@@ -63,8 +55,6 @@ export function RectangleDrawer({
   drawing: boolean;
   onSelect: (bbox: string) => void;
 }) {
-  // A plain click fires mousedown, mouseup then click, so only a drag may end
-  // on mouseup.
   const startRef = useRef<{ latlng: LatLng; drag: boolean } | null>(null);
   const [draft, setDraft] = useState<LatLngBoundsExpression | null>(null);
   const map = useMapEvents({
@@ -84,8 +74,6 @@ export function RectangleDrawer({
     mouseup(event) {
       if (startRef.current?.drag) end(event.latlng);
     },
-    // Leaflet drops the click that ends a pan, so leaving dragging enabled keeps
-    // the map pannable between the two corners.
     click(event) {
       if (!drawing) return;
       if (startRef.current) end(event.latlng);
@@ -111,10 +99,6 @@ export function RectangleDrawer({
     onSelect(formatBbox(start.latlng, corner));
   }
 
-  // Leaflet's mouseup fires only over the map surface, so a release anywhere
-  // else would leave the box stuck to the cursor. No dep array on purpose:
-  // `end` closes over `onSelect`, a fresh arrow every render, so a pinned
-  // listener would commit against a stale draft.
   useEffect(() => {
     function onDocumentMouseUp(event: MouseEvent) {
       if (startRef.current?.drag) end(map.mouseEventToLatLng(event));
@@ -123,8 +107,6 @@ export function RectangleDrawer({
     return () => document.removeEventListener("mouseup", onDocumentMouseUp);
   });
 
-  // Leaving draw mode with one corner placed would strand a rectangle on the
-  // cursor.
   useEffect(() => {
     if (drawing || startRef.current?.drag) return;
     startRef.current = null;
@@ -161,7 +143,6 @@ export function InvalidateOnResize({ compact }: { compact: boolean }) {
 export function FitSelection({ bbox }: { bbox: string | undefined }) {
   const map = useMap();
   useEffect(() => {
-    // A crossing selection has no single bounds to fit: show the whole world.
     const [bounds, ...rest] = toBoundsList(bbox);
     if (bounds) map.fitBounds(rest.length > 0 ? WORLD_BOUNDS : bounds);
   }, [bbox, map]);
@@ -190,7 +171,7 @@ export function SearchLocationMap({
       boxZoom={false}
       maxBounds={WORLD_BOUNDS}
       maxBoundsViscosity={1}
-      className="h-full w-full rounded-md select-none"
+      className="z-0 h-full w-full rounded-md select-none"
     >
       {/* ponytail: OSM public tiles are a known ceiling, self-host if traffic
           grows. The attribution is required by their usage policy. */}

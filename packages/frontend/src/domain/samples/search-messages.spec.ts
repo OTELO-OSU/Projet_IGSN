@@ -2,7 +2,7 @@ import { m } from "#/paraglide/messages.js";
 
 describe("location search messages", () => {
   it.each([
-    [m.search_engine_text, "Text"],
+    [m.search_engine_text, "Terms"],
     [m.search_engine_location, "Location"],
     [m.search_map_label, "Search area map"],
     [
@@ -11,7 +11,7 @@ describe("location search messages", () => {
     ],
     [m.search_map_draw, "Draw an area"],
     [m.search_map_draw_hint, "Or hold Shift and drag on the map."],
-    [m.search_add_engine_text, "Add text search"],
+    [m.search_add_engine_text, "Add terms"],
     [m.search_add_engine_location, "Add location"],
     [() => m.search_remove_engine({ engine: "Location" }), "Remove Location"],
     [

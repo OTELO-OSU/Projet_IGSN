@@ -1,34 +1,17 @@
-import type { Location } from "@projet-igsn/domain/sample/location/model";
-import type { Sample } from "@projet-igsn/domain/sample/sample";
-
-import { Badge } from "@projet-igsn/design-system/components/ui/badge";
-import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
-import { exactRanges, matchRanges } from "#/domain/samples/highlight-match.ts";
+import type { CardSample } from "#/domain/samples/card-fields.ts";
+
 import {
-  materialPathLabel,
-  oceanSeaLabel,
-} from "#/domain/samples/sample-labels.ts";
+  locationText,
+  materialText,
+  selectedCardFields,
+  typeNatureText,
+} from "#/domain/samples/card-fields.ts";
+import { exactRanges, matchRanges } from "#/domain/samples/highlight-match.ts";
 import { m } from "#/paraglide/messages.js";
-import { getLocale } from "#/paraglide/runtime.js";
 
-export type SampleListItem = Pick<
-  Sample,
-  "igsn" | "name" | "material" | "location" | "scientificContext"
->;
-
-function locationText(location: Location | null): string {
-  const region = location?.region;
-  const regionName =
-    region?.kind === "continent"
-      ? region.country && countryLabel(region.country, getLocale())
-      : region?.oceanSea && oceanSeaLabel(region.oceanSea);
-  return [location?.localityName, regionName].filter(Boolean).join(", ");
-}
-
-// Registry name shared with the ::highlight() rule in styles.css.
 const SEARCH_HIGHLIGHT = "sample-search-match";
 
 function toRange(node: Node, [start, end]: [number, number]): Range {
@@ -51,23 +34,21 @@ function elementRanges(element: Element, query: string): Range[] {
   return ranges.map((match) => toRange(node, match));
 }
 
-const MATERIAL_BADGE_CLASS: Record<string, string> = {
-  rock: "bg-amber-100 text-amber-900",
-  sediment: "bg-sky-100 text-sky-900",
-  mineral: "bg-purple-100 text-purple-900",
-  fossil: "bg-orange-100 text-orange-900",
-  synthetic_rock_mineral: "bg-teal-100 text-teal-900",
-  extraterrestrial_rock: "bg-indigo-100 text-indigo-900",
-};
+function CardLine({ children }: { children: React.ReactNode }) {
+  return <p className="text-muted-foreground mt-1 text-sm">{children}</p>;
+}
 
 export function SampleList({
   samples,
   query = "",
+  fields,
 }: {
-  samples: SampleListItem[];
+  samples: CardSample[];
   query?: string;
+  fields?: string[];
 }) {
   const listRef = useRef<HTMLUListElement>(null);
+  const extraFields = selectedCardFields(fields);
 
   useEffect(() => {
     const container = listRef.current;
@@ -92,13 +73,15 @@ export function SampleList({
 
   return (
     <ul ref={listRef} className="grid gap-4 sm:grid-cols-2">
-      {samples.map(({ igsn, name, material, location, scientificContext }) => {
+      {samples.map((sample) => {
+        const { igsn, name, location, scientificContext } = sample;
         // The public list only carries published samples, which always have an
-        // igsn; skip any that somehow don't rather than link to a broken page.
+        // igsn.
         if (igsn === null) {
           return null;
         }
-        const root = material?.split(".")[0];
+        const kind = typeNatureText(sample);
+        const material = materialText(sample);
         const place = locationText(location);
         const collector = scientificContext?.collectorName;
         return (
@@ -117,19 +100,25 @@ export function SampleList({
               >
                 {igsn}
               </p>
-              {place ? (
-                <p className="text-muted-foreground mt-1 text-sm">{place}</p>
-              ) : null}
+              {kind ? <CardLine>{kind}</CardLine> : null}
+              {material ? <CardLine>{material}</CardLine> : null}
+              {place ? <CardLine>{place}</CardLine> : null}
               {collector ? (
-                <p className="text-muted-foreground mt-1 text-sm">
-                  {m.sample_list_collector({ name: collector })}
-                </p>
+                <CardLine>
+                  {m.card_field_line({
+                    label: m.sample_field_collector_name(),
+                    value: collector,
+                  })}
+                </CardLine>
               ) : null}
-              {root ? (
-                <Badge className={`mt-2 ${MATERIAL_BADGE_CLASS[root] ?? ""}`}>
-                  {materialPathLabel(root)}
-                </Badge>
-              ) : null}
+              {extraFields.map((field) => {
+                const value = field.get(sample);
+                return value ? (
+                  <CardLine key={field.key}>
+                    {m.card_field_line({ label: field.label(), value })}
+                  </CardLine>
+                ) : null;
+              })}
             </Link>
           </li>
         );
