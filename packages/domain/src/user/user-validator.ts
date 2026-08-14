@@ -9,9 +9,8 @@ import {
 } from "../sample/sample-validator.ts";
 import { userSchema, userStatusSchema } from "./model.ts";
 
-// Identity fields only: collaborator search and contributor lists are served
-// to any authenticated user, so moderation state (status, superAdmin) stays
-// out of them.
+// Identity fields only: collaborator search is served to any authenticated
+// user, so moderation state (status, superAdmin) stays out of it.
 export const userIdentitySchema = userSchema.pick({
   id: true,
   email: true,
@@ -30,8 +29,6 @@ export type UserIdentitiesResponse = z.infer<
   typeof userIdentitiesResponseSchema
 >;
 
-// Every field is resilient (`.catch`): a hand-edited URL degrades to the default
-// rather than 400ing the page, like listSamplesQuerySchema.
 export const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1).catch(1),
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),

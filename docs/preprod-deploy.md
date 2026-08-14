@@ -49,10 +49,9 @@ make preprod-deploy DOMAIN=<domain>
 ```
 
 The script builds the three images, opens SSH to your current public IP, ships
-the images + [docker-compose.yml](../infra/preprod/docker-compose.yml) + Caddyfile
-
-- the `keycloak/` and `saml-idp/` import dirs, runs migrations, then starts the
-  stack (env from the host `docker-compose.env`). SSH ingress is revoked on exit.
+the images + [docker-compose.yml](../infra/preprod/docker-compose.yml) +
+Caddyfile, runs migrations, then starts the stack (env from the host
+`docker-compose.env`). SSH ingress is revoked on exit.
 
 ### Manual SSH access
 

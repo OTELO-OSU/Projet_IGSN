@@ -1,29 +1,18 @@
-# Preprod edge, behind Cloudflare (SSL mode Full (strict)): Caddy serves a
-# Cloudflare Origin CA cert from /certs, since ACME can't validate behind the
-# proxy. Hosts stay one label deep, the *.$DOMAIN cert covers no more.
-#
-#   frontend igsn.{$DOMAIN}  admin igsn-admin.{$DOMAIN}  api igsn-api.{$DOMAIN}
 {
 	servers {
-		# {client_ip} feeds the api's per-IP rate limit. Trusting everything is
-		# safe only while 80/443 is firewalled to Cloudflare (tf/ec2.tf).
-		# trusted_proxies_strict would yield the peer address, not the visitor.
 		trusted_proxies static 0.0.0.0/0 ::/0
 		client_ip_headers Cf-Connecting-IP
 	}
 }
 
-# origin.pem/origin.key: secrets copied to the host, see docs/preprod-deploy.md.
 (edgetls) {
 	tls /certs/origin.pem /certs/origin.key
 }
 
-# Visitor IP for the api's per-IP budget; overwrites any client-sent value.
 (realip) {
 	header_up X-Real-IP {client_ip}
 }
 
-# Required on every response (.claude/rules/security-infra.md).
 (sechdrs) {
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
@@ -39,7 +28,6 @@
 igsn.{$DOMAIN} {
 	import edgetls
 	import sechdrs
-	# Forwarded again by the frontend's SSR api calls.
 	reverse_proxy frontend:8080 {
 		import realip
 	}
@@ -48,7 +36,6 @@ igsn.{$DOMAIN} {
 igsn-admin.{$DOMAIN} {
 	import edgetls
 	import sechdrs
-	# Inert (admin is static), set so the rule holds if that changes.
 	reverse_proxy admin:8080 {
 		import realip
 	}
@@ -60,21 +47,4 @@ igsn-api.{$DOMAIN} {
 	reverse_proxy api:8080 {
 		import realip
 	}
-}
-
-# Auth stack (docs/adr/0003-preprod-auth-stack.md). X-Forwarded-* lets Keycloak
-# resolve its public https URLs.
-igsn-auth.{$DOMAIN} {
-	import edgetls
-	import sechdrs
-	# Only the auth flows are public.
-	@admin path /admin /admin/*
-	respond @admin 404
-	reverse_proxy keycloak:8080
-}
-
-igsn-idp.{$DOMAIN} {
-	import edgetls
-	import sechdrs
-	reverse_proxy saml-idp:8080
 }

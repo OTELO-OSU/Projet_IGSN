@@ -29,6 +29,10 @@ The link is a nullable, unique `orcid` column on the `user` table.
   BEFORE the email upsert: a broker-supplied email is user-controlled, so
   upserting by it would hand over the matching account. ORCID logins never
   provision or refresh a local user.
+- The lookup uppercases the claim: the GaiaData SSO hands the identity over
+  lowercased, and the checksum letter X is the only character of an ORCID iD
+  that carries a case, so an iD ending in X would otherwise never match the
+  stored value, which `orcidSchema` keeps uppercase.
 - The `orcid` broker uses a dedicated first-broker-login flow with no
   review-profile step: the Keycloak shell account is created silently, without
   an email, because nothing in the app reads it.

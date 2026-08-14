@@ -2181,9 +2181,7 @@ describe("admin sample routes", () => {
       } = {},
     ) {
       const owner = await insertUser(db, "owner@univ-lorraine.fr");
-      const caller = await insertUser(db, authenticatedCallerEmail, {
-        status: "accepted",
-      });
+      const caller = await insertUser(db, authenticatedCallerEmail);
       const sample = await insertSample(db, json);
       await insertSampleOwner(db, sample.id, owner.id);
       await db
@@ -2555,6 +2553,7 @@ describe("admin sample routes", () => {
               firstname: "Test",
               orcid: null,
               role: "owner",
+              status: "accepted",
             },
             {
               id: colleague.id,
@@ -2563,6 +2562,7 @@ describe("admin sample routes", () => {
               firstname: null,
               orcid: null,
               role: "contributor",
+              status: "accepted",
             },
           ],
         });
@@ -2654,6 +2654,7 @@ describe("admin sample routes", () => {
               firstname: "Test",
               orcid: null,
               role: "owner",
+              status: "accepted",
             },
           ],
         });
@@ -2916,6 +2917,33 @@ describe("admin sample routes", () => {
       expect(again.status).toBe(204);
       expect(sendMail).not.toHaveBeenCalled();
     });
+
+    pgTest(
+      "should answer 403 and send no invitation for a rejected invitee",
+      async ({ db }) => {
+        const sendMail = vi.fn().mockResolvedValue(undefined);
+        const { app, sample } = await arrangeOwnedSample(db, {
+          sendMail,
+          adminUrl: ADMIN_URL,
+        });
+        const invitee = await insertUser(db, "invitee@example.com", {
+          status: "rejected",
+        });
+
+        const res = await testClient(app).admin.samples[
+          ":id"
+        ].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: invitee.id, role: "contributor" },
+          },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(403);
+        expect(sendMail).not.toHaveBeenCalled();
+      },
+    );
 
     pgTest("should not invite an unknown user id", async ({ db }) => {
       const sendMail = vi.fn().mockResolvedValue(undefined);

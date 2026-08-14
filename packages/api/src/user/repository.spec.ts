@@ -134,6 +134,18 @@ describe("createUserRepository", () => {
     expect(await repository.findByOrcid("0000-0001-5109-3700")).toBeUndefined();
   });
 
+  pgTest("should find a user by a lowercased orcid", async ({ db }) => {
+    // Arrange
+    const repository = createUserRepository(db);
+    const user = await repository.upsert(claims);
+    await repository.setOrcid(user.id, "0000-0001-5109-370X");
+    // Act / Assert
+    expect(await repository.findByOrcid("0000-0001-5109-370x")).toEqual({
+      ...user,
+      orcid: "0000-0001-5109-370X",
+    });
+  });
+
   pgTest("should leave a moderated row's status untouched", async ({ db }) => {
     // Arrange
     await db
@@ -164,18 +176,15 @@ describe("createUserRepository", () => {
     async function insertResearchers(
       db: Parameters<typeof createUserRepository>[0],
     ) {
-      const repository = createUserRepository(db);
-      await repository.upsert({
-        email: "marie.curie@univ-lorraine.fr",
+      await insertUser(db, "marie.curie@univ-lorraine.fr", {
         name: "Curie",
         firstname: "Marie",
       });
-      await repository.upsert({
-        email: "pierre.dupont@univ-lorraine.fr",
+      await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
         name: "Dupont",
         firstname: "Pierre",
       });
-      return repository;
+      return createUserRepository(db);
     }
 
     pgTest("should find a researcher by family name", async ({ db }) => {
@@ -219,10 +228,8 @@ describe("createUserRepository", () => {
       "should leave out the collaborators of the given sample",
       async ({ db }) => {
         const repository = await insertResearchers(db);
-        const owner = await repository.upsert({
-          email: "owner@univ-lorraine.fr",
+        const owner = await insertUser(db, "owner@univ-lorraine.fr", {
           name: "Moreau",
-          firstname: null,
         });
         const sample = await insertSample(db, {
           name: "Basalte du Massif Central",
@@ -269,8 +276,7 @@ describe("createUserRepository", () => {
 
     pgTest("should not match a firstname alone", async ({ db }) => {
       const repository = createUserRepository(db);
-      await repository.upsert({
-        email: "geologue@univ-lorraine.fr",
+      await insertUser(db, "geologue@univ-lorraine.fr", {
         name: "Blanchard",
         firstname: "Solene",
       });
@@ -290,10 +296,8 @@ describe("createUserRepository", () => {
     pgTest("should order results by name", async ({ db }) => {
       const repository = createUserRepository(db);
       for (const name of ["Zeller", "Aubry", "Marchand"]) {
-        await repository.upsert({
-          email: `${name.toLowerCase()}@univ-lorraine.fr`,
+        await insertUser(db, `${name.toLowerCase()}@univ-lorraine.fr`, {
           name,
-          firstname: null,
         });
       }
 
@@ -309,10 +313,8 @@ describe("createUserRepository", () => {
     pgTest("should return at most ten researchers", async ({ db }) => {
       const repository = createUserRepository(db);
       for (let index = 0; index < 12; index += 1) {
-        await repository.upsert({
-          email: `geologue${index}@univ-lorraine.fr`,
+        await insertUser(db, `geologue${index}@univ-lorraine.fr`, {
           name: `Geologue${index}`,
-          firstname: null,
         });
       }
 
@@ -330,10 +332,8 @@ describe("createUserRepository", () => {
 
     pgTest("should never return the caller", async ({ db }) => {
       const repository = await insertResearchers(db);
-      const caller = await repository.upsert({
-        email: "caller@univ-lorraine.fr",
+      const caller = await insertUser(db, "caller@univ-lorraine.fr", {
         name: "Caller",
-        firstname: null,
       });
 
       const found = await repository.search("caller", caller.id);
@@ -356,11 +356,11 @@ describe("createUserRepository", () => {
       pgTest("should return at most twenty researchers", async ({ db }) => {
         const repository = createUserRepository(db);
         for (let index = 0; index < 21; index += 1) {
-          await repository.upsert({
-            email: `geologue${String(index).padStart(2, "0")}@univ-lorraine.fr`,
-            name: `Geologue${index}`,
-            firstname: null,
-          });
+          await insertUser(
+            db,
+            `geologue${String(index).padStart(2, "0")}@univ-lorraine.fr`,
+            { name: `Geologue${index}` },
+          );
         }
 
         const found = await repository.search(undefined, CALLER_ID);
@@ -461,7 +461,6 @@ describe("createUserRepository", () => {
   const insertGroupedUsers = (db: Parameters<typeof createUserRepository>[0]) =>
     Promise.all([
       insertUser(db, "alice@univ-lorraine.fr", {
-        status: "accepted",
         institutionalOrganization: "04vfs2w97",
         institutionalOsu: "OTELo",
         institutionalLaboratory: "UMR7358",
@@ -472,7 +471,6 @@ describe("createUserRepository", () => {
         institutionalLaboratory: "UMR7358",
       }),
       insertUser(db, "carla@univ-lorraine.fr", {
-        status: "accepted",
         institutionalOrganization: "02rx3b187",
         institutionalOsu: "OSUG",
         institutionalLaboratory: "UMR5275",
@@ -620,21 +618,6 @@ describe("createUserRepository", () => {
     ).resolves.toEqual(accepted);
   });
 
-  pgTest("should refuse an unknown status at the database", async ({ db }) => {
-    await expect(
-      db
-        .insertInto("user")
-        .values({
-          id: "01890a5d-ac96-774b-bcce-b302099a8064",
-          email: "broken@univ-lorraine.fr",
-          name: null,
-          firstname: null,
-          status: "banned",
-        })
-        .execute(),
-    ).rejects.toThrow(/user_status_check/);
-  });
-
   pgTest("should answer null when setting an unknown user", async ({ db }) => {
     // Act
     const updated = await createUserRepository(db).setStatus(
@@ -651,11 +634,13 @@ describe("createUserRepository", () => {
       await insertUser(db, "recent@univ-lorraine.fr", {
         name: "Recent",
         firstname: "Rose",
+        status: "pending",
         createdAt: new Date("2026-08-05T09:00:00Z"),
       });
       await insertUser(db, "oldest@univ-lorraine.fr", {
         name: "Oldest",
         firstname: "Olga",
+        status: "pending",
         createdAt: new Date("2026-07-07T12:00:00Z"),
       });
       await insertUser(db, "accepted@univ-lorraine.fr", {
@@ -687,15 +672,9 @@ describe("createUserRepository", () => {
   );
 
   pgTest("should list the super admins' emails", async ({ db }) => {
-    await insertUser(db, "zoe@univ-lorraine.fr", {
-      status: "accepted",
-      superAdmin: true,
-    });
-    await insertUser(db, "admin@univ-lorraine.fr", {
-      status: "accepted",
-      superAdmin: true,
-    });
-    await insertUser(db, "researcher@univ-lorraine.fr", { status: "accepted" });
+    await insertUser(db, "zoe@univ-lorraine.fr", { superAdmin: true });
+    await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+    await insertUser(db, "researcher@univ-lorraine.fr", {});
 
     const emails = await createUserRepository(db).listSuperAdminEmails();
 

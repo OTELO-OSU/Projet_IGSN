@@ -14,24 +14,15 @@ import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
-import { createUserRepository } from "./repository.ts";
 
 const ADMIN_URL = "http://localhost:3001/";
 
 describe("admin user search routes", () => {
   const authHeader = { Authorization: "Bearer test-token" };
 
-  async function insertResearcher(
-    db: Parameters<typeof createApp>[0],
-    name: string,
-    email: string,
-  ) {
-    await createUserRepository(db).upsert({ email, name, firstname: null });
-  }
-
   pgTest("should search researchers by name", async ({ db }) => {
-    await insertResearcher(db, "Curie", "marie.curie@univ-lorraine.fr");
-    await insertResearcher(db, "Dupont", "pierre.dupont@univ-lorraine.fr");
+    await insertUser(db, "marie.curie@univ-lorraine.fr", { name: "Curie" });
+    await insertUser(db, "pierre.dupont@univ-lorraine.fr", { name: "Dupont" });
 
     const res = await testClient(createApp(db).app).admin.users.search.$get(
       { query: { search: "curie" } },
@@ -46,12 +37,12 @@ describe("admin user search routes", () => {
   pgTest(
     "should ignore the exclusion when the caller is not on that sample",
     async ({ db }) => {
-      const curie = await createUserRepository(db).upsert({
-        email: "marie.curie@univ-lorraine.fr",
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
         name: "Curie",
-        firstname: null,
       });
-      await insertResearcher(db, "Dupont", "pierre.dupont@univ-lorraine.fr");
+      await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
+        name: "Dupont",
+      });
       const sample = await insertSample(db, {
         name: "Basalte du Massif Central",
         nature: "thin_section",
@@ -110,7 +101,7 @@ describe("admin user search routes", () => {
   );
 
   pgTest("should exclude the caller from the results", async ({ db }) => {
-    await insertResearcher(db, "User", "another.user@univ-lorraine.fr");
+    await insertUser(db, "another.user@univ-lorraine.fr", { name: "User" });
 
     const res = await testClient(createApp(db).app).admin.users.search.$get(
       { query: { search: "user" } },
@@ -126,8 +117,8 @@ describe("admin user search routes", () => {
   pgTest(
     "should list the users by email, caller excluded, with no search term",
     async ({ db }) => {
-      await insertResearcher(db, "Zeller", "zeller@univ-lorraine.fr");
-      await insertResearcher(db, "Aubry", "aubry@univ-lorraine.fr");
+      await insertUser(db, "zeller@univ-lorraine.fr", { name: "Zeller" });
+      await insertUser(db, "aubry@univ-lorraine.fr", { name: "Aubry" });
 
       const res = await createApp(db).app.request("/admin/users/search", {
         headers: authHeader,
@@ -138,6 +129,32 @@ describe("admin user search routes", () => {
       expect(body.data.map((user) => user.email)).toEqual([
         "aubry@univ-lorraine.fr",
         "zeller@univ-lorraine.fr",
+      ]);
+    },
+  );
+
+  pgTest(
+    "should omit a rejected account from the search results",
+    async ({ db }) => {
+      await insertUser(db, "marie.curie@univ-lorraine.fr", { name: "Curie" });
+      await insertUser(db, "eve.curie@univ-lorraine.fr", {
+        name: "Curie-Joliot",
+        status: "rejected",
+      });
+      await insertUser(db, "irene.curie@univ-lorraine.fr", {
+        name: "Curie-Pending",
+        status: "pending",
+      });
+
+      const res = await testClient(createApp(db).app).admin.users.search.$get(
+        { query: { search: "curie" } },
+        { headers: authHeader },
+      );
+
+      const body = userIdentitiesResponseSchema.parse(await res.json());
+      expect(body.data.map((user) => user.email)).toEqual([
+        "marie.curie@univ-lorraine.fr",
+        "irene.curie@univ-lorraine.fr",
       ]);
     },
   );

@@ -4,8 +4,6 @@ import type { DB } from "../db.ts";
 
 import { type Transactional } from "../transaction.ts";
 
-// Inserts directly, since the api only ever provisions users from a token
-// (see src/user/repository.ts).
 export function insertUser(
   db: Transactional<DB>,
   email: string,
@@ -29,7 +27,7 @@ export function insertUser(
       name: overrides.name ?? null,
       firstname: overrides.firstname ?? null,
       orcid: overrides.orcid,
-      status: overrides.status,
+      status: overrides.status ?? "accepted",
       super_admin: overrides.superAdmin,
       created_at: overrides.createdAt,
       institutional_organization: overrides.institutionalOrganization ?? null,

@@ -69,7 +69,7 @@ can link to an existing institution account.
 
 | Person         | Institution login (SAML) | ORCID iD              |
 | -------------- | ------------------------ | --------------------- |
-| Marie Dupont   | `marie.dupont`           | `0000-0001-5109-3700` |
+| Marie Dupont   | `marie.dupont`           | `0000-0001-5109-370X` |
 | Jean Martin    | `jean.martin`            | `0000-0002-1694-2333` |
 | Sophie Bernard | `sophie.bernard`         | `0000-0002-1825-0097` |
 | Pierre Durand  | `pierre.durand`          | —                     |

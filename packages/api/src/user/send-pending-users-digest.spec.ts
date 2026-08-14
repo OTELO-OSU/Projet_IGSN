@@ -13,22 +13,18 @@ describe("sendPendingUsersDigest", () => {
   pgTest(
     "should mail the pending accounts digest to every super admin",
     async ({ db }) => {
-      await insertUser(db, "admin@univ-lorraine.fr", {
-        status: "accepted",
-        superAdmin: true,
-      });
-      await insertUser(db, "boss@univ-lorraine.fr", {
-        status: "accepted",
-        superAdmin: true,
-      });
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "boss@univ-lorraine.fr", { superAdmin: true });
       await insertUser(db, "marie.dupont@univ-lorraine.fr", {
         name: "Dupont",
         firstname: "Marie",
+        status: "pending",
         createdAt: new Date("2026-08-05T09:00:00Z"),
       });
       await insertUser(db, "jean.martin@univ-lorraine.fr", {
         name: "Martin",
         firstname: "Jean",
+        status: "pending",
         createdAt: new Date("2026-07-07T12:00:00Z"),
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
@@ -50,11 +46,8 @@ describe("sendPendingUsersDigest", () => {
   );
 
   pgTest("should send nothing when no account is pending", async ({ db }) => {
-    await insertUser(db, "admin@univ-lorraine.fr", {
-      status: "accepted",
-      superAdmin: true,
-    });
-    await insertUser(db, "researcher@univ-lorraine.fr", { status: "accepted" });
+    await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+    await insertUser(db, "researcher@univ-lorraine.fr", {});
     const sendMail = vi.fn().mockResolvedValue(undefined);
 
     await sendPendingUsersDigest(
@@ -70,7 +63,9 @@ describe("sendPendingUsersDigest", () => {
   pgTest(
     "should send nothing when no super admin can be reached",
     async ({ db }) => {
-      await insertUser(db, "jean.martin@univ-lorraine.fr");
+      await insertUser(db, "jean.martin@univ-lorraine.fr", {
+        status: "pending",
+      });
       const sendMail = vi.fn().mockResolvedValue(undefined);
 
       await sendPendingUsersDigest(
@@ -87,11 +82,10 @@ describe("sendPendingUsersDigest", () => {
   pgTest(
     "should log a refused send rather than crash the api",
     async ({ db }) => {
-      await insertUser(db, "admin@univ-lorraine.fr", {
-        status: "accepted",
-        superAdmin: true,
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "jean.martin@univ-lorraine.fr", {
+        status: "pending",
       });
-      await insertUser(db, "jean.martin@univ-lorraine.fr");
       const logged = vi.spyOn(console, "error").mockImplementation(() => {});
       const sendMail = vi.fn().mockRejectedValue(new Error("SMTP down"));
 
