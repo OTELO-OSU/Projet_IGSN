@@ -20,8 +20,6 @@ import {
 } from "./search-filter.ts";
 import { toSample } from "./to-sample.ts";
 
-// Planar, never `::geography`: a geodesic envelope bows its constant-latitude
-// edges poleward and drops results the user drew a rectangle around (ADR 0014).
 function withinBbox(
   bbox: NonNullable<ListSamplesQuery["bbox"]>,
 ): Expression<SqlBool> {
@@ -32,13 +30,19 @@ function withinBbox(
   return sql<SqlBool>`(${sql.join(envelopes, sql` OR `)})`;
 }
 
-// A scope predicate joins the filter array, so it applies to the count query
-// too: a total that counted other people's samples would lie about the dataset.
-function assignedTo(userId: string): Expression<SqlBool> {
+function assignedTo(
+  userId: string,
+  ownership: ListSamplesQuery["ownership"],
+): Expression<SqlBool> {
+  const role =
+    ownership === undefined
+      ? sql``
+      : sql`and user_sample.role ${ownership === "mine" ? sql`=` : sql`<>`} ${"owner"}`;
   return sql<SqlBool>`exists (
     select 1 from user_sample
      where user_sample.sample_id = sample.id
        and user_sample.user_id = ${userId}
+       ${role}
   )`;
 }
 
@@ -54,8 +58,6 @@ async function listSamplesWhere(
 ) {
   const { page, perPage, search, sort, order = "asc" } = params;
 
-  // A transaction of its own if the caller has none: the fuzzy threshold is set
-  // transaction-locally, and both queries must see the same one.
   return withTransaction(db, async (trx) => {
     await applyFuzzyThreshold(trx, search);
 
@@ -120,7 +122,10 @@ async function listWithOwners(
     true,
   );
   return {
-    data: data.map((sample) => ({ ...sample, owner: owners.get(sample.id)! })),
+    data: data.map((sample) => ({
+      ...sample,
+      owner: owners.get(sample.id) ?? null,
+    })),
     total,
   };
 }
@@ -130,7 +135,7 @@ export function listSamplesAssignedTo(
   params: ListSamplesQuery,
   userId: string,
 ): Promise<AdminListSamplesResult> {
-  return listWithOwners(db, params, [assignedTo(userId)]);
+  return listWithOwners(db, params, [assignedTo(userId, params.ownership)]);
 }
 
 export function listAllSamples(

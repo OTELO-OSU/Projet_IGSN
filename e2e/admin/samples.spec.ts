@@ -14,8 +14,6 @@ test.describe("samples", () => {
     const list = sampleListPage(page);
     await list.expectVisible();
     await list.expectColumns();
-    // Jean's rows first: once they are visible the list has resolved, so the
-    // absence assertions below cannot pass on a still-loading table.
     for (const sample of samples.filter((s) => s.owner === "jean")) {
       await list.expectSampleRowWithNature(sample.name, sample.nature);
     }
@@ -32,7 +30,6 @@ test.describe("samples", () => {
 
     const create = sampleCreatePage(page);
     await create.expectVisible();
-    // Unique per run so the new row is unambiguous on the throwaway stack.
     const name = `Basalte du Massif Central ${Date.now()}`;
     await create.fillName(name);
     await create.selectNature("Thin section");
@@ -60,6 +57,45 @@ test.describe("samples", () => {
     const edit = sampleEditPage(page);
     await edit.goto(samples[0]!.id);
     await edit.expectForbidden();
+  });
+
+  test("a researcher tells their own samples from the shared ones", async ({
+    page,
+    samples,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.camille);
+
+    const owned = samples.filter((sample) => sample.owner === "camille");
+    const shared = samples.filter((sample) =>
+      sample.collaborators.some(
+        (collaborator) => collaborator.researcher === "camille",
+      ),
+    );
+
+    const list = sampleListPage(page);
+    const expectOnly = async (
+      visible: typeof samples,
+      hidden: typeof samples,
+    ) => {
+      for (const sample of visible) {
+        await list.expectSampleRow(sample.name);
+      }
+      for (const sample of hidden) {
+        await list.expectNoSampleRow(sample.name);
+      }
+    };
+
+    await list.expectVisible();
+    await expectOnly([...owned, ...shared], []);
+
+    await list.filterByOwnership("Mine");
+    await expectOnly(owned, shared);
+
+    await list.filterByOwnership("Shared with me");
+    await expectOnly(shared, owned);
+
+    await list.filterByOwnership("All samples");
+    await expectOnly([...owned, ...shared], []);
   });
 
   test("the create form rejects a sample without a name", async ({ page }) => {

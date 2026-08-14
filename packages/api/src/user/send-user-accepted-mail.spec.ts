@@ -19,7 +19,7 @@ describe("sendUserAcceptedMail", () => {
     expect(sendMail).toHaveBeenCalledWith(
       expect.objectContaining({
         to: ["marie.dupont@univ-lorraine.fr"],
-        subject: "Your account has been approved",
+        subject: "Your account has been activated",
       }),
     );
   });

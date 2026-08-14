@@ -34,8 +34,6 @@ type Options = {
   failGet?: boolean;
 };
 
-// In-memory API: the PUT stores the new status, so the page reflects what the
-// server accepted rather than an optimistic guess.
 function fakeApi({
   status = "pending",
   name = "Durand",
@@ -125,32 +123,32 @@ describe("UserDetailPage", () => {
     const { screen } = await renderUserPage({ status: "pending" });
 
     await expect
-      .element(screen.getByRole("button", { name: "Accept" }))
+      .element(screen.getByRole("button", { name: "Activate", exact: true }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("button", { name: "Reject" }))
+      .element(screen.getByRole("button", { name: "Deactivate" }))
       .toBeVisible();
   });
 
-  it("should leave only Reject actionable on an accepted account", async () => {
+  it("should leave only Deactivate actionable on an active account", async () => {
     const { screen } = await renderUserPage({ status: "accepted" });
 
     await expect
-      .element(screen.getByRole("button", { name: "Reject" }))
+      .element(screen.getByRole("button", { name: "Deactivate" }))
       .toBeEnabled();
     await expect
-      .element(screen.getByRole("button", { name: "Accept" }))
+      .element(screen.getByRole("button", { name: "Activate", exact: true }))
       .toBeDisabled();
   });
 
-  it("should leave only Accept actionable on a rejected account", async () => {
+  it("should leave only Activate actionable on a disabled account", async () => {
     const { screen } = await renderUserPage({ status: "rejected" });
 
     await expect
-      .element(screen.getByRole("button", { name: "Accept" }))
+      .element(screen.getByRole("button", { name: "Activate", exact: true }))
       .toBeEnabled();
     await expect
-      .element(screen.getByRole("button", { name: "Reject" }))
+      .element(screen.getByRole("button", { name: "Deactivate" }))
       .toBeDisabled();
   });
 
@@ -171,12 +169,12 @@ describe("UserDetailPage", () => {
       .toHaveTextContent("Could not load the account");
   });
 
-  it("should accept a pending account and show the new status", async () => {
+  it("should activate a pending account and show the new status", async () => {
     const { screen, calls } = await renderUserPage({ status: "pending" });
 
-    await screen.getByRole("button", { name: "Accept" }).click();
+    await screen.getByRole("button", { name: "Activate", exact: true }).click();
 
-    await expect.element(screen.getByText("Accepted")).toBeVisible();
+    await expect.element(screen.getByText("Active")).toBeVisible();
     await expect
       .element(screen.getByText("Account updated"))
       .toBeInTheDocument();
@@ -186,7 +184,7 @@ describe("UserDetailPage", () => {
   it("should keep the status when the server refuses the change", async () => {
     const { screen } = await renderUserPage({ failPut: true });
 
-    await screen.getByRole("button", { name: "Accept" }).click();
+    await screen.getByRole("button", { name: "Activate", exact: true }).click();
 
     await expect
       .element(screen.getByText("Could not update the account"))

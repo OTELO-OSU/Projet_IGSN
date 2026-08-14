@@ -18,8 +18,8 @@ const pendingUser = (overrides: Partial<PendingUser> = {}): PendingUser => ({
 
 describe("pendingUsersDigest", () => {
   it.each([
-    { count: 1, subject: "1 user is waiting for validation" },
-    { count: 3, subject: "3 users are waiting for validation" },
+    { count: 1, subject: "1 user is waiting for activation" },
+    { count: 3, subject: "3 users are waiting for activation" },
   ])("should title the mail $subject", async ({ count, subject }) => {
     const pending = Array.from({ length: count }, (_, i) =>
       pendingUser({ email: `user${i}@univ-lorraine.fr` }),
@@ -46,7 +46,7 @@ describe("pendingUsersDigest", () => {
     );
 
     expect(digest.text).toBe(
-      `2 users are waiting for validation:
+      `2 users are waiting for activation:
 
 - Jean Martin (jean.martin@univ-lorraine.fr), waiting for 30 days
 - Marie Dupont (marie.dupont@univ-lorraine.fr), waiting for 1 day

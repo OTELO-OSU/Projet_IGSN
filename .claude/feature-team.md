@@ -19,7 +19,7 @@
 - One commit per changeset and never a squash: the developers commit their tasks and fix rounds, you commit the docs.
 - Conventional Commit messages (`<type>: <summary>`, `type` = `$TYPE`, `docs` for docs), respecting `attribution` in `.claude/settings.json`.
 - Never rewrite history, never push, never commit to `main`, collapsing the branch being the human's call.
-- Never switch, create, or merge a branch beyond step 2, the human owning the branch you were handed.
+- Never switch, create, or merge a branch beyond step 1, the human owning the branch you were handed.
 
 ### Unexpected complication
 
@@ -30,14 +30,17 @@
 
 ## Planning
 
-- Plan in plan mode, without the business analyst.
+- Plan in plan mode, dispatching `business-analyst` with the card before writing the plan, unless the ticket is obviously `S`.
+- Fold its type, size, refinements, edge cases and test suite into the plan, so the human approves the refined ticket, not a plan the BA revises afterwards.
+- Relay its `## Open questions` with `AskUserQuestion`, with its `## Cut` list so a wrong cut is reversible, and apply the answers to the plan before submitting it.
+- It never splits the ticket, so splitting its output across packages is yours, at step 2.
 - The human approves the plan before any teammate is spawned.
 
 ## Pipeline (after the plan is approved)
 
 ### 0. Size and route
 
-Size from the approved plan, before spawning anything.
+Take the size from the approved plan (the BA's, or yours when it was skipped), before spawning anything.
 
 | Size | Criteria                                                                                           | Chain                                         |
 | ---- | -------------------------------------------------------------------------------------------------- | --------------------------------------------- |
@@ -49,24 +52,17 @@ Size from the approved plan, before spawning anything.
 - Add `doc-specialist` only when the ticket changes user-visible behavior or a public contract.
 - No role walks the e2e tests as a persona, so do it yourself at the gate, whatever the size.
 - Re-size the moment the diff outgrows your criteria (a second package, a new entity, endpoint, migration, or auth surface) and run the chain you now owe, the only thing catching a wrong `S` that skipped the BA.
+- The plan's type sets `$TYPE`, and its refinements, edge cases and test suite are the task specs' backbone.
 - State the size and chain in one line before proceeding.
 
-### 1. Business analyst (skip for `S`)
-
-- On `S`, write the single task yourself from the plan.
-- Otherwise dispatch `business-analyst` with the approved plan as its card.
-- Relay its `## Open questions` with `AskUserQuestion` and feed the answers back, with its `## Cut` list so a wrong cut is reversible before code exists.
-- Its type sets `$TYPE`, its size overrides yours if larger, and its refinements, edge cases and test suite are the task specs' backbone.
-- It never splits the ticket, so splitting its output across packages is yours.
-
-### 2. Branch
+### 1. Branch
 
 - Everyone works in place in the main checkout, on the branch already checked out, since worktrees broke more than they isolated.
 - Cut `$TYPE/$SLUG` only when that branch is `main` or `master`.
 - `$BASE` is the commit the plan-approved hook recorded in `/tmp/_agents/<session-id>/_base`, what the reviewers diff against.
 - The hook also made the `tasks/` dir, and the session-cleanup hook drops both at session end.
 
-### 3. Tasks
+### 2. Tasks
 
 - Honour the BA's cuts: no task for dropped scope, no scaffolding.
 - One dev task per package touched, spec at `/tmp/_agents/<session-id>/tasks/TASK-00N.md` with its goal, refinements, edge cases and test suite, linked from a task-list entry.
@@ -74,30 +70,30 @@ Size from the approved plan, before spawning anything.
 - Name the package paths each task owns, splitting none across two tasks.
 - One task per reviewer depending on every dev task, and the `doc-specialist` task on all of them.
 
-### 4. Developers
+### 3. Developers
 
 - Spawn one `developer` per unblocked dev task, so the siblings run at once.
 - Each claims its task, implements it (TDD), marks it complete, and commits its own paths with an explicit pathspec, retrying a busy `index.lock`.
 - The review tasks unblock when the last dev task completes.
 
-### 5. Reviews, in parallel
+### 4. Reviews, in parallel
 
 - Spawn your chain's reviewers, giving each `$BASE` so it can diff the committed work (`git diff $BASE`).
 - Each returns `VERDICT: PASS|BLOCK` on its first line, reporting blocking findings only.
 - Relay them to the user as Conventional Comments.
 
-### 6. One fix round on BLOCK
+### 5. One fix round on BLOCK
 
 - Add a dev task carrying the blocking findings, and re-run only the reviewers that blocked.
 - The fix is the shortest diff clearing the finding, as its own commit on top, never a refactor around it.
 - One round only: a block that survives it stops the pipeline for the human.
 
-### 7. Docs, if your chain has them
+### 6. Docs, if your chain has them
 
 - It has no `Bash`, so dump the diff for it (`git diff $BASE > /tmp/_agents/<session-id>/tasks/DIFF.patch`) and commit its changeset yourself (`docs: <summary>`).
 - Point its spawn prompt at that path and the developers' `## Changes`, so it never greps for what changed.
 
-### 8. Commit gate, once
+### 7. Commit gate, once
 
 - Run `pnpm lint:check`, `pnpm fmt:check`, `pnpm test`.
 - Run `make test-e2e` when the ticket changed runtime code (`admin`, `frontend`, `api`, or what they consume) per `testing.md`, skipping it only with no runtime surface and saying so.
@@ -106,7 +102,7 @@ Size from the approved plan, before spawning anything.
 - A failing gate goes back to its developer, whose fix is another commit, since you never commit red.
 - Sandbox caveat: report a flaky api Postgres suite or e2e stack and let the user decide, rather than blocking forever.
 
-### 9. Summary
+### 8. Summary
 
 - The size and chain you ran.
 - What shipped: tests added, ADRs, docs.

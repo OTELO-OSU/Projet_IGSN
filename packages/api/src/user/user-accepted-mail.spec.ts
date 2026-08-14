@@ -11,7 +11,7 @@ describe("userAcceptedMail", () => {
       ADMIN_URL,
     );
 
-    expect(mail.subject).toBe("Your account has been approved");
+    expect(mail.subject).toBe("Your account has been activated");
     expect(mail.text).toContain("Hello Marie Dupont,");
     expect(mail.text).toContain(ADMIN_URL);
     expect(mail.html).toContain("Marie Dupont");

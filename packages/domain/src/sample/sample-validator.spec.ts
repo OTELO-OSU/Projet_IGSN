@@ -75,6 +75,12 @@ describe("listSamplesQuerySchema", () => {
     expect(listSamplesQuerySchema.parse({ sort: "name" }).sort).toBeUndefined();
   });
 
+  it("should drop an unknown ownership", () => {
+    expect(
+      listSamplesQuerySchema.parse({ ownership: "bogus" }).ownership,
+    ).toBeUndefined();
+  });
+
   it("should drop an unknown order", () => {
     const result = listSamplesQuerySchema.parse({
       sort: "status",

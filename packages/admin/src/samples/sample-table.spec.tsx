@@ -51,8 +51,6 @@ const sample: AdminSampleListItem = {
 };
 const samples = [sample];
 
-// Sorting is controlled by the caller (URL state in the app); the harness
-// holds it in local state so header toggles behave as in the real page.
 function renderTable(data: AdminSampleListItem[], onSortingChange = vi.fn()) {
   function Harness() {
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -166,10 +164,11 @@ describe("SampleTable", () => {
       .toBeInTheDocument();
   });
 
-  it("should render an empty owner cell for a nameless owner", async () => {
-    const screen = await renderTable([
-      { ...sample, owner: { name: null, firstname: null } },
-    ]);
+  it.each<[string, AdminSampleListItem["owner"]]>([
+    ["a nameless owner", { name: null, firstname: null }],
+    ["no owner", null],
+  ])("should render an empty owner cell for %s", async (_, owner) => {
+    const screen = await renderTable([{ ...sample, owner }]);
     await expect
       .element(screen.getByText("Basalte du Massif Central"))
       .toBeInTheDocument();
@@ -197,7 +196,6 @@ describe("SampleTable", () => {
 
   it("should navigate to the edit page when the row is clicked", async () => {
     const screen = await renderTable(samples);
-    // Click a non-link cell to prove the whole row is clickable.
     await screen.getByText("Thin section").click();
     await expect.element(screen.getByText("Edit page stub")).toBeVisible();
   });

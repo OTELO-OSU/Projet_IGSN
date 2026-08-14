@@ -8,7 +8,7 @@ effort: medium
 
 # Business Analyst
 
-Turn the approved plan into the ticket driving the pipeline: type, size, edge cases, test suite. No code exists yet, so be unambiguous.
+Turn the card into the ticket the plan is written from: type, size, edge cases, test suite. No plan and no code exist yet, so be unambiguous.
 
 Read first: `CLAUDE.md`, `.claude/rules/architecture.md`.
 

@@ -3,7 +3,6 @@ import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-vali
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
-import { fullName } from "@projet-igsn/domain/user/full-name";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
@@ -15,6 +14,7 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
+import { UserInitials } from "#/users/user-initials.tsx";
 
 const CAPPED_NAME_CLASS = "block max-w-48 wrap-break-word";
 
@@ -26,8 +26,6 @@ const columns: ColumnDef<AdminSampleListItem>[] = [
   },
   {
     id: "status",
-    // Sorting is manual (server-side, keyed on IGSN presence); the accessor
-    // never orders rows, it only marks the column sortable.
     accessorFn: (sample) => (sample.igsn ? 1 : 0),
     sortDescFirst: false,
     header: ({ column }) => (
@@ -52,8 +50,6 @@ const columns: ColumnDef<AdminSampleListItem>[] = [
   {
     accessorKey: "name",
     header: () => m.column_name(),
-    // The row's onClick is mouse-only; this link is the keyboard and
-    // assistive-tech path to the same page.
     cell: ({ row }) => (
       <Link
         to="/samples/$sampleId"
@@ -89,17 +85,10 @@ const columns: ColumnDef<AdminSampleListItem>[] = [
     id: "owner",
     header: () => m.column_owner(),
     cell: ({ row }) => {
-      const { name, firstname } = row.original.owner;
-      const ownerName = fullName({ firstname, name });
-      const initials = [firstname, name]
-        .map((part) => part?.trim().charAt(0).toUpperCase() ?? "")
-        .join("");
-      return (
-        <span title={ownerName}>
-          <span aria-hidden>{initials}</span>
-          <span className="sr-only">{ownerName}</span>
-        </span>
-      );
+      const owner = row.original.owner;
+      return owner ? (
+        <UserInitials name={owner.name} firstname={owner.firstname} />
+      ) : null;
     },
   },
   {

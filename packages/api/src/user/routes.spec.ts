@@ -151,8 +151,6 @@ describe("admin user search routes", () => {
   });
 });
 
-// requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization
-// header, and the bearer value stands for the user (see provisionUser).
 const NO_GROUPS = {
   institutionalOrganization: null,
   institutionalOsu: null,
@@ -365,7 +363,7 @@ describe("admin user routes", () => {
         expect(sendMail).toHaveBeenCalledWith(
           expect.objectContaining({
             to: [`${mailbox}@univ-lorraine.fr`],
-            subject: "Your account has been approved",
+            subject: "Your account has been activated",
           }),
         ),
       );

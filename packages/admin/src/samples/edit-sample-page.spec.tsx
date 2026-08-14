@@ -66,7 +66,6 @@ beforeEach(() => {
   sampleFetched = false;
 });
 
-// One file over the default limit of 5, like a sample imported before the cap.
 const overLimitAttachments: SampleAttachment[] = Array.from(
   { length: 6 },
   (_, i) => ({
@@ -77,8 +76,6 @@ const overLimitAttachments: SampleAttachment[] = Array.from(
   }),
 );
 
-// Default type and material are leaves so Save & Publish starts enabled (see
-// samplePublishBlockers).
 function fakeApi(
   published = false,
   material: string | null = "fossil",
@@ -178,8 +175,6 @@ function fakeApi(
           { status: 409 },
         );
       }
-      // The attachments payload carries {id, description} entries, not the
-      // full attachments.
       const { attachments: _attachments, ...body } = (await request.json()) as {
         attachments: unknown;
         name: string;
@@ -266,8 +261,6 @@ async function renderEditPage(
     calls,
     lockCalls,
     releaseLock,
-    // Stands in for the next poll: the interval is minutes long, and the state
-    // mapping is what matters, not the clock.
     poll: () => queryClient.refetchQueries({ queryKey: ["sample-lock", id] }),
   };
 }
@@ -426,7 +419,7 @@ describe("EditSamplePage", () => {
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
-      .toHaveTextContent(/account is not yet validated/i);
+      .toHaveTextContent(/account is not yet activated/i);
     await expect.element(tooltip).not.toHaveTextContent(/before publishing/i);
     await expect
       .element(screen.getByRole("button", { name: "Save as draft" }))
@@ -452,15 +445,13 @@ describe("EditSamplePage", () => {
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
-      .toHaveTextContent(/account is not yet validated/i);
+      .toHaveTextContent(/account is not yet activated/i);
     await expect.element(tooltip).not.toHaveTextContent(/material/i);
   });
 
   it("should offer no publishing until the account is known", async () => {
     callerUnknown = true;
     const { screen } = await renderEditPage();
-    // The sample has arrived, so the form would already be up: what still holds
-    // the page back is the unanswered account.
     await vi.waitFor(() => expect(sampleFetched).toBe(true));
     await new Promise((resolve) =>
       requestAnimationFrame(() => requestAnimationFrame(resolve)),
@@ -484,7 +475,7 @@ describe("EditSamplePage", () => {
       .toHaveTextContent(/set the material before publishing/i);
     await expect
       .element(tooltip)
-      .toHaveTextContent(/account is not yet validated/i);
+      .toHaveTextContent(/account is not yet activated/i);
   });
 
   it("should render the material cascade prefilled on the Sample type tab", async () => {
@@ -595,8 +586,6 @@ describe("EditSamplePage", () => {
     const { screen, calls } = await renderEditPage(true);
     const save = screen.getByRole("button", { name: "Publish updates" });
 
-    // The fixture is published with "Exists", so re-selecting that option clears
-    // the combobox (see Combobox), stripping the requirement.
     await screen.getByRole("tab", { name: "Physical description" }).click();
     const availability = screen.getByRole("combobox", {
       name: /availability/i,
@@ -642,8 +631,6 @@ describe("EditSamplePage", () => {
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/at most 5 attached files/i);
 
-    // The draft save stays live but noops, like any invalid field: the red
-    // file count carries the error.
     await save.click();
 
     await screen.getByRole("tab", { name: "Links" }).click();
