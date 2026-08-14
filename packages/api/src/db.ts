@@ -1,26 +1,21 @@
+import type { UserStatus } from "@projet-igsn/domain/user/model";
+
 import { Kysely, type ColumnType, type Generated } from "kysely";
 import { PostgresJSDialect } from "kysely-postgres-js";
 import postgres from "postgres";
 import { z } from "zod";
 
 type SampleTable = {
-  // UUIDv7 generated in the app, so it is a required value on insert.
   id: string;
   name: string;
   nature: string;
-  // Taxonomy path (e.g. "core.section"). Stored as ltree, which the driver
-  // reads and writes as text.
   type: string | null;
   material: string | null;
-  // Not part of the material tree, so plain text.
   texture: string | null;
   metamorphic_facies: string | null;
   collection_method: string | null;
   collection_method_description: string | null;
   specific_name: string | null;
-  // Sample description (ADR 0015). Collection dates are `date` columns:
-  // postgres.js parses them into UTC-midnight Date objects on read, while the
-  // app writes them as YYYY-MM-DD strings.
   collection_date_start: ColumnType<Date, string, string> | null;
   collection_date_end: ColumnType<Date, string, string> | null;
   oriented: boolean | null;
@@ -36,22 +31,15 @@ type SampleTable = {
   mass_unit: string | null;
   volume_value: number | null;
   volume_unit: string | null;
-  // A non-range value stores the same number/code in both bounds (min == max).
   numeric_age_min: number | null;
   numeric_age_max: number | null;
   numeric_age_unit: string | null;
   numeric_age_years_unit: string | null;
-  // Generated STORED, never inserted (like `geom`): the comparable age interval
-  // in annum, from the numeric age or the geological rank.
   annum_min: Generated<number | null>;
   annum_max: Generated<number | null>;
-  // Geological bounds are stored as their rank (1-based integer), not the ics
-  // code, so a range filter compares them directly.
   geological_age_min: number | null;
   geological_age_max: number | null;
   geological_unit: string | null;
-  // Location (ADR 0014). `location_type` (point/area), not `type`: that is the
-  // taxonomy path above.
   location_type: string | null;
   point_longitude: number | null;
   point_latitude: number | null;
@@ -70,8 +58,6 @@ type SampleTable = {
   locality_name: string | null;
   locality_description: string | null;
   geom: Generated<string | null>;
-  // Sample condition (stored like the description, ADR 0016). The storage
-  // conditions multi-select is a text array; null when not filled, never empty.
   packaging: string | null;
   storage_conditions: string[] | null;
   temperature_type: string | null;
@@ -90,8 +76,6 @@ type SampleTable = {
   asbestos_explanation: string | null;
   chemical_risk: boolean | null;
   chemical_risk_explanation: string | null;
-  // `sc_provenance_status` is the discriminant; each branch's fields are
-  // separate columns, shared `sc_collector_name` serves both.
   sc_provenance_status: string | null;
   sc_funder_organization: string | null;
   sc_research_program_name: string | null;
@@ -115,7 +99,6 @@ type SampleTable = {
   economic_resource_type_precision: string | null;
   economic_deposit_name: string | null;
   economic_deposit_description: string | null;
-  // Null until the sample is published; then derived from the id with generateIgsnSuffix.
   igsn: string | null;
   // ponytail: snapshot of the owner's groups at creation, kept even though the mock data derives the upper two from the labo, since real co-tutelle data will not be a clean tree
   institutional_organization: string | null;
@@ -132,7 +115,6 @@ type SampleEditLockTable = {
   expires_at: Date;
 };
 
-// Ids are app-generated UUIDv7, so ordering by id is creation order.
 type SampleLinkTable = {
   id: string;
   sample_id: string;
@@ -140,7 +122,6 @@ type SampleLinkTable = {
   description: string | null;
 };
 
-// Attached-file metadata (ADR 0017); the content lives on disk keyed by id.
 type SampleAttachmentTable = {
   id: string;
   sample_id: string;
@@ -149,19 +130,16 @@ type SampleAttachmentTable = {
   description: string | null;
 };
 
-// A researcher, provisioned from the verified token and keyed by email (ADR
-// 0019).
 type UserTable = {
   id: string;
   email: string;
   name: string | null;
   firstname: string | null;
-  // Self-declared ORCID iD, unique: the lookup key for ORCID logins (ADR 0020).
   orcid: string | null;
   institutional_organization: string | null;
   institutional_osu: string | null;
   institutional_laboratory: string | null;
-  status: Generated<string>;
+  status: Generated<UserStatus>;
   super_admin: Generated<boolean>;
   created_at: Generated<Date>;
 };

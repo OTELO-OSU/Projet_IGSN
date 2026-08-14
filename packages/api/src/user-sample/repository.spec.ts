@@ -93,6 +93,7 @@ describe("userSampleRepository", () => {
         firstname: null,
         orcid: null,
         role: "owner",
+        status: "accepted",
       },
       {
         id: contributor.id,
@@ -101,6 +102,7 @@ describe("userSampleRepository", () => {
         firstname: null,
         orcid: null,
         role: "contributor",
+        status: "accepted",
       },
     ]);
   });
@@ -170,6 +172,7 @@ describe("userSampleRepository", () => {
           firstname: null,
           orcid: null,
           role: "owner",
+          status: "accepted",
         },
       ]);
       const rows = await db
@@ -204,7 +207,34 @@ describe("userSampleRepository", () => {
         firstname: null,
         orcid: null,
         role: "owner",
+        status: "accepted",
       },
+    ]);
+  });
+
+  pgTest("should refuse a rejected account as collaborator", async ({ db }) => {
+    const owner = await insertUser(db, "owner@univ-lorraine.fr");
+    const invitee = await insertUser(db, "invitee@univ-lorraine.fr", {
+      status: "rejected",
+    });
+    const sample = await insertSample(db, draft);
+    const repository = createUserSampleRepository(db);
+    await repository.addOwner(sample.id, owner.id);
+
+    const result = await repository.addCollaborator(
+      sample.id,
+      invitee.id,
+      "contributor",
+    );
+
+    expect(result).toBe("user_not_invitable");
+    const rows = await db
+      .selectFrom("user_sample")
+      .selectAll()
+      .where("sample_id", "=", sample.id)
+      .execute();
+    expect(rows).toEqual([
+      { sample_id: sample.id, user_id: owner.id, role: "owner" },
     ]);
   });
 
@@ -230,6 +260,7 @@ describe("userSampleRepository", () => {
         firstname: null,
         orcid: null,
         role: "owner",
+        status: "accepted",
       },
     ]);
   });
@@ -307,6 +338,7 @@ describe("userSampleRepository", () => {
         firstname: null,
         orcid: null,
         role: "owner",
+        status: "accepted",
       },
     ]);
   });

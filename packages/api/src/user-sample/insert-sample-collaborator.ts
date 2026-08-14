@@ -23,6 +23,7 @@ export async function insertSampleCollaborator(
       "user.email",
       "user.name",
       "user.firstname",
+      "user.status",
       "user_sample.role as currentRole",
     ])
     .where("user.id", "=", userId)
@@ -30,7 +31,10 @@ export async function insertSampleCollaborator(
   if (!found) {
     return "unknown_user";
   }
-  const { currentRole, ...user } = found;
+  const { currentRole, status, ...user } = found;
+  if (status === "rejected") {
+    return "user_not_invitable";
+  }
   if (currentRole === "owner" || currentRole === role) {
     return "already_collaborator";
   }

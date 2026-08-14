@@ -19,8 +19,10 @@ Run this the first time infra is stood up, or when changing it.
    ```
 
 2. Point Cloudflare at the EIP. Create proxied (orange cloud) A records for
-   `igsn.$DOMAIN`, `igsn-admin.$DOMAIN`, `igsn-api.$DOMAIN`, `igsn-auth.$DOMAIN`,
-   and `igsn-idp.$DOMAIN`, and set SSL/TLS mode to **Full (strict)**:
+   `igsn.$DOMAIN`, `igsn-admin.$DOMAIN`, and `igsn-api.$DOMAIN`, and set SSL/TLS
+   mode to **Full (strict)**. On a zone set up before preprod dropped its own
+   auth stack, delete the leftover `igsn-auth.$DOMAIN` and `igsn-idp.$DOMAIN`
+   records:
 
    ```
    tofu -chdir=infra/preprod/tf output -raw public_ip
@@ -45,9 +47,9 @@ Run this the first time infra is stood up, or when changing it.
    # paste the private key   -> infra/preprod/certs/origin.key
    ```
 
-5. Create the host env file. Copy the example, set strong `DATABASE_PASSWORD`
-   and `KEYCLOAK_PASSWORD`, and fill `SMTP_HOST`, `SMTP_USER`, and
-   `SMTP_PASSWORD` from the provider dashboard (step 3):
+5. Create the host env file. Copy the example, set a strong `DATABASE_PASSWORD`,
+   and fill `SMTP_HOST`, `SMTP_USER`, and `SMTP_PASSWORD` from the provider
+   dashboard (step 3):
 
    ```
    cp infra/preprod/docker-compose.env.example infra/preprod/docker-compose.env

@@ -4,7 +4,6 @@ import type { DB } from "../db.ts";
 
 import { type Transactional } from "../transaction.ts";
 const SEARCH_LIMIT = 10;
-// The share dialog opens on this list, before anything is typed.
 const BROWSE_LIMIT = 20;
 
 export function searchUsers(
@@ -17,6 +16,7 @@ export function searchUsers(
     .selectFrom("user")
     .select(["id", "email", "name", "firstname", "orcid"])
     .where("id", "!=", callerId)
+    .where("status", "!=", "rejected")
     .$if(excludeCollaboratorsOf !== undefined, (qb) =>
       qb.where((eb) =>
         eb.not(

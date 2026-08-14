@@ -22,17 +22,12 @@ const USER_COLUMNS = [
   "institutional_laboratory as institutionalLaboratory",
 ] as const;
 
-// upsert provisions the caller from their verified token on every authenticated
-// request: email is the identity key, so this also adopts a row seeded for that
-// email and keeps the samples already assigned to it (ADR 0019).
 // ponytail: one write per admin request. Fine at a few researchers; read first
 // and write only on a change if the write volume ever matters.
 export function createUserRepository(db: Kysely<DB>): UserRepository {
   return {
     upsert: ({ email, name, firstname }) =>
       withTransaction(db, async (trx) => {
-        // status and super_admin are moderation state: the token never carries
-        // them, so the update on conflict must not touch them.
         const row = await trx
           .insertInto("user")
           .values({ id: uuidv7(), email, name, firstname })
@@ -52,8 +47,6 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
       institutionalLaboratory,
     }) =>
       withTransaction(db, async (trx) => {
-        // The object form of `and` drops the undefined filters and yields
-        // `1 = 1` when they are all absent.
         const matching = trx.selectFrom("user").where((eb) =>
           eb.and({
             status,
@@ -119,8 +112,6 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
       withTransaction(db, (trx) =>
         searchUsers(trx, query, callerId, excludeCollaboratorsOf),
       ),
-    // One guarded statement, not a catch on the unique violation: an aborted
-    // transaction would poison the caller's (no savepoints, transactions rule).
     // ponytail: a concurrent claim of the same orcid can still trip the unique
     // constraint into a 500; the constraint keeps it correct, retry shows 409.
     setOrcid: async (userId, orcid) => {
@@ -167,7 +158,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
         trx
           .selectFrom("user")
           .select(USER_COLUMNS)
-          .where("orcid", "=", orcid)
+          .where("orcid", "=", orcid.toUpperCase())
           .executeTakeFirst(),
       );
       return row && userSchema.parse(row);

@@ -1,4 +1,5 @@
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
+import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
@@ -8,6 +9,7 @@ import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { userEvent } from "vitest/browser";
 
+import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { fakeSample } from "../../test/fake-sample.ts";
 import { worker } from "../../test/msw.ts";
 import { ShareSampleButton } from "./share-sample-button.tsx";
@@ -34,41 +36,50 @@ vi.mock("react-oidc-context", () => ({
 
 const SAMPLE_ID = fakeSample.id;
 
-const curie: UserIdentity = {
+type Collaborator = UserIdentity & { status: UserStatus };
+
+const curie: Collaborator = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3401",
   email: "marie.curie@univ-lorraine.fr",
   name: "Curie",
   firstname: "Marie",
   orcid: null,
+  status: "accepted",
 };
-const dupont: UserIdentity = {
+const dupont: Collaborator = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3402",
   email: "pierre.dupont@univ-lorraine.fr",
   name: "Dupont",
   firstname: "Pierre",
   orcid: null,
+  status: "accepted",
 };
 
 const OWNER_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3400";
 
+type Owner = Omit<Collaborator, "id" | "orcid">;
+
+const OWNER: Owner = {
+  name: "Dupont",
+  firstname: "Marie",
+  email: OWNER_EMAIL,
+  status: "accepted",
+};
+
 function fakeApi({
   role = "owner" as UserSampleRole,
-  owner = {
-    name: "Dupont",
-    firstname: "Marie",
-    email: OWNER_EMAIL,
-  } as { name: string | null; firstname: string | null; email: string } | null,
-  contributors = [] as UserIdentity[],
-  editors = [] as UserIdentity[],
-  directory = [] as UserIdentity[],
+  owner = OWNER as Owner | null,
+  contributors = [] as Collaborator[],
+  editors = [] as Collaborator[],
+  directory = [] as Collaborator[],
 } = {}) {
-  // The api returns the owner, then the editors, then the contributors.
   let listed = [
     ...editors.map((user) => ({ ...user, role: "editor" })),
     ...contributors.map((user) => ({ ...user, role: "contributor" })),
   ];
   const calls: string[] = [];
   const invites: { userId: string; role: string }[] = [];
+  fakeCurrentUser({ email: OWNER_EMAIL });
   worker.use(
     http.get("*/samples/:id/collaborators", ({ request }) => {
       calls.push(`GET ${request.url}`);
@@ -230,6 +241,7 @@ describe("ShareSampleButton", () => {
         name: "Petit",
         firstname: "Jean",
         email: "jean.petit@univ-lorraine.fr",
+        status: "accepted",
       },
     });
 
@@ -537,6 +549,36 @@ describe("ShareSampleButton", () => {
       expect.stringMatching(/Marie Dupont.*Owner \/ Editor/),
       expect.stringMatching(/Pierre Dupont.*Editor/),
       expect.stringMatching(/Marie Curie.*Contributor/),
+    ]);
+  });
+
+  it.each([
+    ["pending", "Pending"],
+    ["rejected", "Disabled"],
+  ] as const)("should label a %s collaborator as %s", async (status, label) => {
+    const { screen } = await renderShareButton({
+      contributors: [{ ...curie, status }],
+    });
+
+    await openDialog(screen);
+
+    await expectCollaborators(screen, [
+      expect.stringContaining("Marie Dupont"),
+      expect.stringMatching(new RegExp(`Marie Curie.*${label}.*Contributor`)),
+    ]);
+  });
+
+  it("should not label the signed-in user's own row, since their own status is not news to them", async () => {
+    const { screen } = await renderShareButton({
+      owner: { ...OWNER, status: "pending" },
+      contributors: [{ ...curie, status: "pending" }],
+    });
+
+    await openDialog(screen);
+
+    await expectCollaborators(screen, [
+      expect.not.stringContaining("Pending"),
+      expect.stringContaining("Pending"),
     ]);
   });
 

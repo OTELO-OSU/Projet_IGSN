@@ -19,6 +19,7 @@ export function listSampleCollaborators(
       "user.name",
       "user.firstname",
       "user.orcid",
+      "user.status",
       "user_sample.role",
     ])
     .where("user_sample.sample_id", "=", sampleId)

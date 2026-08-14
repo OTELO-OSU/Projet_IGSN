@@ -66,6 +66,9 @@ db-seed-demo:								## Reset the dev Postgres to the 100-sample demo dataset (d
 mail-digest:								## Mail the pending-accounts digest now instead of waiting for 7:00; read it on http://localhost:1080 (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api digest:send
 
+db-psql:									## Open a psql shell on the local dev Postgres (dev stack must be up)
+	@docker compose -f docker-compose.dev.yml exec postgres psql -U igsn -d igsn
+
 db-reset:								## Fully reset the dev Postgres database, then re-run migrations (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml exec -T postgres \
 		psql -U igsn -d igsn -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"

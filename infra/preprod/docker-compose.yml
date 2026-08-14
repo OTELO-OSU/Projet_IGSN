@@ -73,47 +73,6 @@ services:
       migrate:
         condition: service_completed_successfully
 
-  # ponytail: H2 in-memory, so brokered users vanish on container recreate and
-  # re-provision on next login. Switch to `start` + Postgres if durable state matters.
-  # Unused by the apps while GaiaData is the SSO: kept as the rollback path, to
-  # remove with saml-idp once GaiaData login is proven.
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.6
-    restart: unless-stopped
-    command: start-dev --import-realm
-    environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: admin
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
-      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
-      KC_HOSTNAME: "https://igsn-auth.${DOMAIN}"
-      KC_PROXY_HEADERS: xforwarded
-      ADMIN_REDIRECT_URI: "https://igsn-admin.${DOMAIN}/*"
-      ADMIN_WEB_ORIGIN: "https://igsn-admin.${DOMAIN}"
-      SHIBBOLETH_SSO_URL: "https://igsn-idp.${DOMAIN}/simplesaml/saml2/idp/SSOService.php"
-      SHIBBOLETH_SLO_URL: "https://igsn-idp.${DOMAIN}/simplesaml/saml2/idp/SingleLogoutService.php"
-      ORCID_LOGOUT_URL: "https://igsn-auth.${DOMAIN}/realms/mock-orcid/protocol/openid-connect/logout"
-      ORCID_BROKER_REDIRECT_URI: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/orcid/endpoint"
-      ORCID_AUTHORIZATION_URL: "https://igsn-auth.${DOMAIN}/realms/mock-orcid/protocol/openid-connect/auth"
-      ORCID_TOKEN_URL: "http://localhost:8080/realms/mock-orcid/protocol/openid-connect/token"
-      ORCID_USERINFO_URL: "http://localhost:8080/realms/mock-orcid/protocol/openid-connect/userinfo"
-      ORCID_ISSUER: "https://igsn-auth.${DOMAIN}/realms/mock-orcid"
-      ORCID_JWKS_URL: "http://localhost:8080/realms/mock-orcid/protocol/openid-connect/certs"
-    volumes:
-      - ./keycloak:/opt/keycloak/data/import:ro
-
-  saml-idp:
-    image: kenchan0130/simplesamlphp
-    restart: unless-stopped
-    environment:
-      SIMPLESAMLPHP_SP_ENTITY_ID: "https://igsn-auth.${DOMAIN}/realms/igsn"
-      SIMPLESAMLPHP_SP_ASSERTION_CONSUMER_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/satosa/endpoint"
-      SIMPLESAMLPHP_SP_SINGLE_LOGOUT_SERVICE: "https://igsn-auth.${DOMAIN}/realms/igsn/broker/satosa/endpoint"
-      SIMPLESAMLPHP_IDP_BASE_URL: "https://igsn-idp.${DOMAIN}/simplesaml/"
-      KEYCLOAK_PASSWORD: ${KEYCLOAK_PASSWORD}
-    volumes:
-      - ./saml-idp/authsources.php:/var/www/simplesamlphp/config/authsources.php:ro
-      - ./saml-idp/apache-hardening.conf:/etc/apache2/conf-enabled/zzz-hardening.conf:ro
-
   admin:
     image: igsn-admin:preprod
     restart: unless-stopped
@@ -147,10 +106,6 @@ services:
         condition: service_healthy
       frontend:
         condition: service_healthy
-      keycloak:
-        condition: service_started
-      saml-idp:
-        condition: service_started
 
 volumes:
   pgdata:

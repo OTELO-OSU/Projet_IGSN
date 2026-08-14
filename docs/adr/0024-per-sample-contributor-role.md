@@ -50,3 +50,11 @@ Accepted. Supersedes ADR 0019's "still to come" paragraph (role column, adding a
 - Being added mails an invitation naming the inviter, sample, and role (since 2026-08-07); a re-add that changes nothing sends nothing.
 - An admin override remains open, as ADR 0019 left it.
 - The zero-owner case stays latent until user deletion (REQ-USER-01) ships; reassign ownership in the same transaction as the delete, or a contributor's admin list 500s.
+
+## Amendment 2026-08-14: invites gated on account status, and status disclosed to collaborators
+
+**A `rejected` account may not be invited, a `pending` one may.** A pending researcher is waiting on moderation, not refused, so shutting them out of a sample they are about to work on would cost the inviter a second pass once they are accepted. `searchUsers` filters `status != 'rejected'` on the shared query builder, so neither the termless browse nor the filtered search ever lists a rejected account to invite. `insertSampleCollaborator` selects `user.status` and returns `user_not_invitable` before its `currentRole` branches, so re-inviting or changing the role of an already-rejected collaborator is refused too. `POST /admin/samples/:id/collaborators` maps `user_not_invitable` to 403 alongside `role_change_forbidden`, before the invitation-mail block, so a refused invite mails nobody.
+
+**The collaborator list now discloses each collaborator's moderation `status`** (`sampleCollaboratorSchema`) to every collaborator on that sample, not just the owner. This widens the disclosure accepted above in "User search discloses name and email to any authenticated researcher": status joins name and email as visible within a sample's collaborator list. `superAdmin` stays undisclosed, and user search itself stays identity-only, since it removes the rejected rows rather than annotating them.
+
+**A collaborator rejected after being added keeps their `user_sample` row.** Nothing revokes it, a sibling to the consequence above that publishing silently revokes a contributor's write access. This is safe: `currentUser` 403s a rejected non-super-admin at the admin router root, so the stale row grants nothing; the admin UI only labels them.

@@ -27,8 +27,6 @@ type SeedUser = {
   orcid?: string;
   status: UserStatus;
   superAdmin: boolean;
-  // Must satisfy setInstitutionalGroupsSchema, or the seed writes affiliations
-  // the api itself would refuse.
   institutionalOrganization: string | null;
   institutionalOsu: string | null;
   institutionalLaboratory: string | null;
@@ -47,15 +45,13 @@ export const researcherKeySchema = z.enum([
 ]);
 export type ResearcherKey = z.infer<typeof researcherKeySchema>;
 
-// Everyone but theo carries institutional groups, so signing in lands on the
-// dashboard rather than on the groups gate.
 export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   marie: {
     id: "01980e2d-6f9b-7000-8000-000000000001",
     email: "marie.dupont@univ-lorraine.fr",
     name: "Dupont",
     firstname: "Marie",
-    orcid: "0000-0001-5109-3700",
+    orcid: "0000-0001-5109-370X",
     status: "accepted",
     superAdmin: false,
     institutionalOrganization: "04vfs2w97",
@@ -152,8 +148,6 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   },
 };
 
-// Upserts the mock researchers by email (a row may already exist from a real
-// sign-in, with another id).
 async function seedOwners(
   db: Kysely<DB>,
 ): Promise<Record<ResearcherKey, string>> {
@@ -181,9 +175,6 @@ async function seedOwners(
       oc.column("email").doUpdateSet((eb) => ({
         status: eb.ref("excluded.status"),
         super_admin: eb.ref("excluded.super_admin"),
-        // The api sets groups once and never again, so without this a previous
-        // run's groups would stick to theo and the first-login e2e would pass
-        // only on a virgin database.
         institutional_organization: eb.ref(
           "excluded.institutional_organization",
         ),
@@ -211,8 +202,6 @@ async function seedOwners(
   ) as Record<ResearcherKey, string>;
 }
 
-// Inserts directly rather than via the repository, whose `create` generates a
-// fresh uuid and would discard these static ids.
 export async function seed(
   db: Kysely<DB>,
   samples: SeedSample[],
@@ -281,7 +270,6 @@ export async function seed(
     )
     .execute();
 
-  // Matched by id, not by array position: RETURNING order is not guaranteed.
   const seedById = new Map(parsed.map((row) => [row.id, row]));
   return created.map((sample) => {
     const row = seedById.get(sample.id);
@@ -294,8 +282,6 @@ export async function seed(
   });
 }
 
-// created_at/updated_at are database defaults, so they are omitted; the rest
-// are optional because a draft seed row may not be classified or published.
 export const seedSampleSchema = sampleSchema
   .pick({
     id: true,
@@ -348,8 +334,6 @@ export type SeedSample = z.infer<typeof seedSampleSchema>;
 
 export type SeedCollaborator = NonNullable<SeedSample["collaborators"]>[number];
 
-// A seed row must hold the bar the API enforces on the same data, since seeding
-// bypasses the publish flow.
 export function parseSeedSample(sample: SeedSample): SeedSample {
   const parsed = seedSampleSchema.parse(sample);
   const {
@@ -371,8 +355,6 @@ export function parseSeedSample(sample: SeedSample): SeedSample {
   return parsed;
 }
 
-// The frontend detail E2E asserts the first published row's nature
-// (`hand_sample`).
 export const SEED_SAMPLES: SeedSample[] = [
   {
     id: "00000000-0000-7000-8000-000000000001",
@@ -382,8 +364,6 @@ export const SEED_SAMPLES: SeedSample[] = [
     type: "dredge",
     material: "rock.sedimentary",
     collectionMethod: "dredging.chain_bag",
-    // Camille is an invited editor here, so the E2E editor journey can sign in
-    // as one without being invited through the UI first.
     collaborators: [{ researcher: "camille", role: "editor" }],
   },
   {
@@ -436,8 +416,6 @@ export const SEED_SAMPLES: SeedSample[] = [
     description: {
       collectionDate: { start: "2025-06-15", end: "2025-06-15" },
     },
-    // A numeric age so the age-range facet E2E has one published sample to
-    // match; Granite 7 has none, so any age bound narrows to this one.
     age: {
       numericAgeMin: 2,
       numericAgeMax: 6,

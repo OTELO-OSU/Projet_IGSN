@@ -13,17 +13,14 @@ be a sibling `infra/prod/`.
   the host. Credentials live in the host `docker-compose.env`.
 - **Cloudflare** proxies the hostnames (orange cloud, SSL mode Full (strict)) and
   terminates TLS at its edge, re-originating HTTPS to the host.
-- **Auth** authenticates against the GaiaData test SSO. The dev throwaway
-  Keycloak plus the mock SAML IdP (see [ADR 0004](adr/0004-preprod-auth-stack.md)),
-  at `igsn-auth.$DOMAIN` (Keycloak) and `igsn-idp.$DOMAIN` (IdP), stay only as
-  the rollback path, to remove once GaiaData login is proven. `KEYCLOAK_PASSWORD`
-  in the host env file is the Keycloak admin password and the shared SAML-user
-  password.
+- **Auth** authenticates against the GaiaData test SSO, the only identity
+  provider preprod deploys. The throwaway Keycloak and mock SAML IdP that once
+  stood beside it as the rollback path are gone (see
+  [ADR 0004](adr/0004-preprod-auth-stack.md)); dev and e2e keep theirs.
 - **Caddy** ([Caddyfile](../infra/preprod/Caddyfile)) serves a Cloudflare Origin
   CA cert (mounted from `~/certs`) and proxies each host: `igsn.$DOMAIN` ->
-  frontend, `igsn-admin.$DOMAIN` -> admin, `igsn-api.$DOMAIN` -> api,
-  `igsn-auth.$DOMAIN` -> Keycloak, `igsn-idp.$DOMAIN` -> SAML IdP, plus security
-  headers. Hosts are flat single-level subdomains, not nested: the `*.$DOMAIN`
+  frontend, `igsn-admin.$DOMAIN` -> admin, `igsn-api.$DOMAIN` -> api, plus
+  security headers. Hosts are flat single-level subdomains, not nested: the `*.$DOMAIN`
   cert covers only one label deep. No Let's Encrypt: ACME can't validate behind
   the Cloudflare proxy. Caddy trusts every peer for the visitor's real IP
   (`trusted_proxies static 0.0.0.0/0`); this is only sound because `ec2.tf`

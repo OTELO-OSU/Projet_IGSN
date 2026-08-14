@@ -2,8 +2,10 @@
 
 ## Status
 
-Accepted. Extends [ADR 0003 (production auth)](0003-production-auth-keycloak.md),
-which governs true prod. This one covers preprod only.
+Superseded for preprod by the 2026-08-14 amendment below: preprod no longer
+deploys either service. Extends [ADR 0003 (production auth)](0003-production-auth-keycloak.md),
+which governs true prod. The decision below still describes the dev and e2e
+stacks, which keep both.
 
 ## Context
 
@@ -47,3 +49,23 @@ Preprod carries the dev realm's insecure-by-design traits (`sslRequired: none`, 
 **prod still follows ADR 0003** (external hardened Keycloak, real IdPs, no test user, no
 mock). If preprod ever needs durable Keycloak state, switch it from `start-dev` (H2) to
 `start` against Postgres.
+
+## Amendment 2026-08-14: preprod deploys no identity provider of its own
+
+GaiaData's test SSO is now preprod's only identity provider, so the throwaway
+Keycloak and the mock SimpleSAMLphp IdP are removed from
+`infra/preprod/docker-compose.yml`. `api` already verified against
+`https://sso-test.earth-data.fr/realms/gaia-data`, so both services were inert;
+they stood only as the rollback path this ADR described, and that path is gone.
+
+- The `igsn-auth.$DOMAIN` and `igsn-idp.$DOMAIN` Caddy sites, the `KEYCLOAK_PASSWORD`
+  env var, and the `scp` of `keycloak/`+`saml-idp/` in `deploy.sh` go with them.
+- `deploy.sh` runs `up -d --remove-orphans`, so the next deploy tears the two
+  containers off the host with no manual step.
+- **Dev and e2e keep both services and both directories**, so local auth testing
+  is unchanged. This is a deliberate divergence from
+  [infra-parity](../../.claude/rules/infra-parity.md): the rule mirrors a runtime
+  requirement into every stack, and here the requirement exists only outside
+  preprod.
+- Restoring preprod's own stack means restoring this ADR's decision, not writing
+  a new one.

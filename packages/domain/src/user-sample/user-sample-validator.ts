@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { userStatusSchema } from "../user/model.ts";
 import { userIdentitySchema } from "../user/user-validator.ts";
 import { userSampleRoleSchema } from "./model.ts";
 
@@ -16,6 +17,7 @@ export type AddCollaboratorBody = z.infer<typeof addCollaboratorBodySchema>;
 
 export const sampleCollaboratorSchema = userIdentitySchema.extend({
   role: userSampleRoleSchema,
+  status: userStatusSchema,
 });
 
 export type SampleCollaborator = z.infer<typeof sampleCollaboratorSchema>;

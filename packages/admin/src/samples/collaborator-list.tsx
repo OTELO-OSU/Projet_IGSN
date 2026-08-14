@@ -3,10 +3,12 @@ import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-
 import { fullName } from "@projet-igsn/domain/user/full-name";
 import { X } from "lucide-react";
 
+import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { m } from "#/paraglide/messages.js";
 import { collaboratorRoleLabel } from "#/samples/collaborator-role-label.ts";
 import { useCollaborators } from "#/samples/use-collaborators.ts";
 import { useRemoveCollaborator } from "#/samples/use-remove-collaborator.ts";
+import { UserStatusBadge } from "#/users/user-status-badge.tsx";
 
 export function CollaboratorList({
   sampleId,
@@ -17,6 +19,7 @@ export function CollaboratorList({
 }) {
   const collaborators = useCollaborators(sampleId);
   const removeCollaborator = useRemoveCollaborator(sampleId);
+  const currentUserEmail = useCurrentUser().data?.email;
   const users = collaborators.data ?? [];
 
   if (collaborators.isPending) {
@@ -56,6 +59,9 @@ export function CollaboratorList({
               {user.email}
             </span>
           </span>
+          {user.status !== "accepted" && user.email !== currentUserEmail && (
+            <UserStatusBadge status={user.status} />
+          )}
           <Badge variant="secondary">{collaboratorRoleLabel(user.role)}</Badge>
           {mayRemove &&
             (user.role === "owner" ? (
