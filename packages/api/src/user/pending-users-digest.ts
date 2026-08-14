@@ -54,7 +54,8 @@ const render = (
     __COLUMN_WAITED__: t("mail_digest_column_waited"),
     __ROWS__: rows,
     __CTA__: t("mail_digest_cta"),
-    __USERS_URL__: escapeHtml(usersUrl),
+    __LINK_FALLBACK__: t("mail_link_fallback"),
+    __URL__: escapeHtml(usersUrl),
   });
 
 export async function pendingUsersDigest(

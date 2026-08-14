@@ -41,6 +41,13 @@ Open the sample: ${SAMPLE_URL}
     expect(mail.html).toContain(SAMPLE_URL);
   });
 
+  it("should repeat the url as copyable text besides the button link", async () => {
+    const mail = await sampleInvitationMail(invitation);
+
+    expect(mail.html).toContain(`href="${SAMPLE_URL}"`);
+    expect(mail.html).toContain(`>${SAMPLE_URL}</a`);
+  });
+
   it("should tell an editor they may publish the sample", async () => {
     const mail = await sampleInvitationMail({ ...invitation, role: "editor" });
 

@@ -1,6 +1,7 @@
 {
   "mail_greeting": "Hello {{name}},",
   "mail_greeting_anonymous": "Hello,",
+  "mail_link_fallback": "If the button does not work, copy this link into your browser:",
   "mail_account_approved_subject": "Your account has been approved",
   "mail_account_approved_body": "Your account has been approved. You can now publish samples.",
   "mail_account_approved_cta": "Open the sample registry",

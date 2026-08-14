@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { HttpError } from "#/http-error.ts";
 import { m } from "#/paraglide/messages.js";
 
+import { CenteredLoader } from "./centered-loader.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
 import {
@@ -10,9 +11,6 @@ import {
   useCurrentUser,
 } from "./use-current-user.ts";
 
-// An ORCID session reaches the app only once the api resolves its orcid to a
-// linked account (ADR 0020), so there any load failure blocks; on Keycloak only
-// a 403 does, since a flaky call must not lock a legitimate user out.
 export function IdentityGate({
   isOrcid,
   onSignOut,
@@ -42,6 +40,6 @@ export function IdentityGate({
     );
   }
 
-  if (isOrcid && !data) return <p>{m.auth_loading()}</p>;
+  if (isOrcid && !data) return <CenteredLoader />;
   return children;
 }

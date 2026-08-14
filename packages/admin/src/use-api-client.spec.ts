@@ -11,8 +11,6 @@ vi.mock("./auth/oidc-config.ts", () => ({
   userManager: { signinSilent, signinRedirect },
 }));
 
-// Records the headers the wrapped fetch is called with, so tests assert on the
-// request shape without mocking the global fetch.
 function recordingFetch(): {
   fetch: typeof fetch;
   lastHeaders: () => Headers | undefined;
@@ -94,7 +92,10 @@ describe("withSessionRenewal", () => {
     await expect(withSessionRenewal(inner)("http://api/x")).rejects.toThrow(
       /session expired/i,
     );
-    expect(signinRedirect).toHaveBeenCalledTimes(1);
+    expect(signinRedirect).toHaveBeenCalledWith({
+      nonce: expect.any(String),
+      url_state: window.location.pathname + window.location.search,
+    });
   });
 
   it("should sign in interactively when the renewed token is still rejected", async () => {

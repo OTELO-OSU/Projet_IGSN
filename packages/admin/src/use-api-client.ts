@@ -1,6 +1,7 @@
 import { useAuth } from "react-oidc-context";
 
 import { userManager } from "./auth/oidc-config.ts";
+import { signIn } from "./auth/sign-in.ts";
 
 export function withAuthToken(
   fetchFn: typeof fetch,
@@ -13,10 +14,6 @@ export function withAuthToken(
   };
 }
 
-// Renews the session once on a 401 and retries with the fresh token, falling
-// back to an interactive sign-in when the renewal fails or the retry is still
-// rejected (GT-SSO REQ-TOKEN-01). Wrapping the shared client means every authed
-// call self-heals an expired token, not just /me.
 export function withSessionRenewal(fetchFn: typeof fetch): typeof fetch {
   return async (input, init) => {
     const res = await fetchFn(input, init);
@@ -31,7 +28,7 @@ export function withSessionRenewal(fetchFn: typeof fetch): typeof fetch {
       if (retry.status !== 401) return retry;
     }
 
-    void userManager.signinRedirect();
+    signIn(userManager);
     throw new Error("Session expired");
   };
 }
