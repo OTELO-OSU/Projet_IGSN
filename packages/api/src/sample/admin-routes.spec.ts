@@ -23,13 +23,9 @@ import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 
-// requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization
-// header.
 const authHeader = { Authorization: "Bearer test-token" };
 const authenticatedCallerEmail = "test-token@example.com";
 
-// Invalid payloads are sent through the raw request (the typed RPC client would
-// reject them at compile time).
 async function postSample(
   app: ReturnType<typeof createApp>["app"],
   body: unknown,
@@ -467,8 +463,7 @@ describe("admin sample routes", () => {
     pgTest(
       "should advance the version on a save and accept the next one carrying it",
       async ({ db }) => {
-        // Arrange: now() is the (single) transaction's timestamp for the whole
-        // test.
+        // Arrange
         const app = createApp(db).app;
         const sample = await createDraft(app);
         const before = new Date("2026-01-01T00:00:00.000Z");
@@ -782,8 +777,6 @@ describe("admin sample routes", () => {
         { param: { id: data.id } },
         { headers: authHeader },
       );
-      // A fixture the publish route refuses would leave a draft behind, and
-      // every lock assertion below would then hold vacuously.
       expect(published.status).toBe(200);
       return data;
     }
@@ -901,8 +894,7 @@ describe("admin sample routes", () => {
     pgTest(
       "rejects with 409 an edit clearing the facies of a published metamorphic sample",
       async ({ db }) => {
-        // Arrange: the facies is editable now, but clearing it introduces the
-        // metamorphic_facies_missing blocker, which the guard rejects.
+        // Arrange
         const client = testClient(createApp(db).app);
         const data = await createAndPublish(db, client, metamorphic);
         // Act
@@ -998,9 +990,7 @@ describe("admin sample routes", () => {
     pgTest(
       "lets an already-broken published sample be edited without re-blocking it",
       async ({ db }) => {
-        // Arrange: a null material has no editable prefix, so it stays wholly
-        // frozen; only reachable via DB tampering or a future publish
-        // constraint.
+        // Arrange
         const client = testClient(createApp(db).app);
         const data = await createAndPublish(db, client);
         await db
@@ -1032,7 +1022,6 @@ describe("admin sample routes", () => {
       },
     );
 
-    // These assert the ltree column, since that is where a silent loss shows.
     pgTest.for([
       [
         "persists a material refined below the frozen prefix",
@@ -1095,8 +1084,7 @@ describe("admin sample routes", () => {
     pgTest(
       "lets a completed material clear the blocker it already had",
       async ({ db }) => {
-        // Arrange: a published sample left incomplete at an unlocked node (only
-        // reachable via DB tampering), so material_incomplete pre-exists.
+        // Arrange
         const client = testClient(createApp(db).app);
         const data = await createAndPublish(db, client);
         await db
@@ -1513,8 +1501,6 @@ describe("admin sample routes", () => {
       expect(res.status).toBe(400);
     });
 
-    // The owner guard skips a malformed id rather than querying it, so the
-    // validator is what answers here, not a 403 or a failed uuid cast.
     pgTest("should reject a malformed sample id with 400", async ({ db }) => {
       const res = await createApp(db).app.request("/admin/samples/not-a-uuid", {
         headers: authHeader,
@@ -1625,8 +1611,6 @@ describe("admin sample routes", () => {
     );
   });
 
-  // The test client always authenticates as the single researcher test/setup.ts
-  // provisions, so another researcher's sample is inserted directly.
   describe("authorization", () => {
     async function insertOtherResearcherSample(
       db: Parameters<typeof createApp>[0],
@@ -2349,6 +2333,59 @@ describe("admin sample routes", () => {
         );
 
         expect(res.status).toBe(403);
+      },
+    );
+  });
+
+  describe("ownership filter", () => {
+    const draft = {
+      name: "Owned basalt",
+      nature: "thin_section" as const,
+      type: null,
+      collectionMethod: null,
+    };
+
+    pgTest.for([
+      [undefined, ["Foreign granite", "Owned basalt"]],
+      ["mine", ["Owned basalt"]],
+    ] as const)(
+      "should scope a super admin's list to the %s ownership",
+      async ([ownership, expected], { db }) => {
+        // Arrange
+        await provisionUser(db, "test-token", {
+          status: "accepted",
+          superAdmin: true,
+        });
+        const client = testClient(createApp(db).app);
+        await client.admin.samples.$post(
+          { json: draft },
+          { headers: authHeader },
+        );
+        const other = await insertUser(db, "other@univ-lorraine.fr");
+        const foreign = await insertSample(db, {
+          name: "Foreign granite",
+          nature: "rock_powder",
+          type: null,
+          collectionMethod: null,
+        });
+        await insertSampleOwner(db, foreign.id, other.id);
+        // Act
+        const res = await client.admin.samples.$get(
+          {
+            query: {
+              page: "1",
+              perPage: "10",
+              ...(ownership ? { ownership } : {}),
+            },
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        const body = adminListSamplesResponseSchema.parse(await res.json());
+        expect(body.data.map((sample) => sample.name).sort()).toEqual([
+          ...expected,
+        ]);
+        expect(body.meta.total).toBe(expected.length);
       },
     );
   });

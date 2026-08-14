@@ -12,7 +12,6 @@ export function sampleListPage(page: Page) {
     openSample: (name: string) => page.getByRole("link", { name }).click(),
     expectColumns: async () => {
       await expect(
-        // Exact: "Specific Name" also contains "Name".
         page.getByRole("columnheader", { name: "Name", exact: true }),
       ).toBeVisible();
       await expect(
@@ -25,18 +24,18 @@ export function sampleListPage(page: Page) {
         page.getByRole("columnheader", { name: "Last modified" }),
       ).toBeVisible();
     },
+    filterByOwnership: async (
+      choice: "All samples" | "Mine" | "Shared with me",
+    ) => {
+      await page.getByRole("combobox", { name: "Ownership" }).click();
+      await page.getByRole("option", { name: choice }).click();
+    },
     expectSampleRow: (name: string) =>
       expect(page.getByRole("cell", { name })).toBeVisible(),
-    // Passes on a not-yet-loaded list too, so assert a visible row (or the
-    // empty state) first to prove the list resolved.
     expectNoSampleRow: (name: string) =>
       expect(page.getByRole("cell", { name })).toBeHidden(),
-    // The empty row only renders once the query resolved, so it also rules out a
-    // list that is merely still loading.
     expectEmpty: () =>
       expect(page.getByRole("cell", { name: "No results" })).toBeVisible(),
-    // Assert the row shows both the sample name and its nature label in the same
-    // row, so a mismatched nature can't pass unnoticed.
     expectSampleRowWithNature: async (name: string, nature: string) => {
       const row = page
         .getByRole("row")

@@ -10,7 +10,7 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 
-import { userStatusLabel } from "./user-status-label.ts";
+import { UserStatusBadge } from "./user-status-badge.tsx";
 
 const columns: ColumnDef<User>[] = [
   {
@@ -39,7 +39,7 @@ const columns: ColumnDef<User>[] = [
   {
     accessorKey: "status",
     header: () => m.column_status(),
-    cell: ({ row }) => userStatusLabel(row.original.status),
+    cell: ({ row }) => <UserStatusBadge status={row.original.status} />,
   },
 ];
 

@@ -969,6 +969,6 @@
   "collection_origin_unknown_origin": "Unknown origin",
   "collection_origin_other": "Other",
   "user_status_pending": "Pending",
-  "user_status_accepted": "Accepted",
-  "user_status_rejected": "Rejected"
+  "user_status_accepted": "Active",
+  "user_status_rejected": "Disabled"
 }

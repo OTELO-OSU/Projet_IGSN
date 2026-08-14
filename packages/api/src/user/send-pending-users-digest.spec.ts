@@ -43,7 +43,7 @@ describe("sendPendingUsersDigest", () => {
       expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           to: ["admin@univ-lorraine.fr", "boss@univ-lorraine.fr"],
-          subject: "2 users are waiting for validation",
+          subject: "2 users are waiting for activation",
         }),
       );
     },

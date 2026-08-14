@@ -30,14 +30,14 @@ beforeEach(() => {
 });
 
 describe("AppLayout", () => {
-  it("should warn a pending user that their account awaits validation", async () => {
+  it("should warn a pending user that their account awaits activation", async () => {
     fakeCurrentUser({ status: "pending" });
 
     const screen = await renderLayout();
 
     await expect
       .element(screen.getByRole("status"))
-      .toHaveTextContent(/not yet validated/i);
+      .toHaveTextContent(/not yet activated/i);
     await expect.element(screen.getByText("Sample list")).toBeVisible();
   });
 

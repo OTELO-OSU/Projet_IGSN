@@ -1,3 +1,5 @@
+import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
+
 import { adminListSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
@@ -5,13 +7,12 @@ import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useSamples(params: {
-  page: number;
-  perPage: number;
-  sort?: "status";
-  order?: "asc" | "desc";
-  search?: string;
-}) {
+export function useSamples(
+  params: Pick<
+    ListSamplesQuery,
+    "page" | "perPage" | "sort" | "order" | "search" | "ownership"
+  >,
+) {
   const apiFetch = useApiClient();
   return useQuery({
     queryKey: ["samples", params],
@@ -24,6 +25,7 @@ export function useSamples(params: {
         url.searchParams.set("order", params.order ?? "asc");
       }
       if (params.search) url.searchParams.set("search", params.search);
+      if (params.ownership) url.searchParams.set("ownership", params.ownership);
 
       const res = await apiFetch(url);
       if (!res.ok) {
@@ -37,8 +39,6 @@ export function useSamples(params: {
       );
       return { data, total: meta.total };
     },
-    // Keep the current page on screen while the next one loads so paging
-    // doesn't flash "Loading..." and reset the pager to 1/1.
     placeholderData: keepPreviousData,
   });
 }

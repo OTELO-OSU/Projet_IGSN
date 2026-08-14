@@ -10,7 +10,7 @@ import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { m } from "#/paraglide/messages.js";
 import { useSetUserStatus } from "#/users/use-set-user-status.ts";
 import { useUser } from "#/users/use-user.ts";
-import { userStatusLabel } from "#/users/user-status-label.ts";
+import { UserStatusBadge } from "#/users/user-status-badge.tsx";
 
 export const Route = createFileRoute("/users/$userId")({
   component: () => (
@@ -51,7 +51,9 @@ function UserDetailPage() {
         <dt className="font-medium">{m.column_email()}</dt>
         <dd>{user.email}</dd>
         <dt className="font-medium">{m.column_status()}</dt>
-        <dd>{userStatusLabel(user.status)}</dd>
+        <dd>
+          <UserStatusBadge status={user.status} />
+        </dd>
         <dt className="font-medium">{m.field_institutional_organization()}</dt>
         <dd>
           {user.institutionalOrganization === null
@@ -78,7 +80,7 @@ function UserDetailPage() {
           disabled={acceptBlocked}
           onClick={() => setStatus.mutate("accepted")}
         >
-          {m.action_accept()}
+          {m.action_activate()}
         </Button>
         <Button
           type="button"
@@ -86,7 +88,7 @@ function UserDetailPage() {
           disabled={rejectBlocked}
           onClick={() => setStatus.mutate("rejected")}
         >
-          {m.action_reject()}
+          {m.action_deactivate()}
         </Button>
       </div>
     </>

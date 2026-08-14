@@ -34,7 +34,6 @@ const user = (index: number, status: "pending" | "accepted" | "rejected") => ({
   superAdmin: false,
 });
 
-// More than the smallest page size (10), so paging is a real second request.
 const USERS = [
   user(1, "pending"),
   user(2, "accepted"),
@@ -42,8 +41,6 @@ const USERS = [
   ...Array.from({ length: 9 }, (_, i) => user(i + 4, "accepted")),
 ];
 
-// In-memory API: /admin/users answers the filtered, paginated page the way the
-// server would, so the URL is what drives what the page shows.
 function fakeApi({ forbidden = false }: { forbidden?: boolean } = {}) {
   const requested: string[] = [];
   worker.use(
@@ -122,6 +119,20 @@ describe("UsersPage", () => {
       .toBeVisible();
   });
 
+  it.each([
+    ["pending", "Pending"],
+    ["accepted", "Active"],
+    ["rejected", "Disabled"],
+  ])("should label a %s account as %s", async (status, label) => {
+    fakeApi();
+
+    const { screen } = await renderUsersPage(`/users?status=${status}`);
+
+    await expect
+      .element(screen.getByRole("cell", { name: label }).first())
+      .toBeVisible();
+  });
+
   it("should restore a filter and page from the URL", async () => {
     const { requested } = fakeApi();
 
@@ -147,7 +158,7 @@ describe("UsersPage", () => {
       .toBeVisible();
 
     await screen.getByRole("combobox", { name: "Status" }).click();
-    await screen.getByRole("option", { name: "Rejected" }).click();
+    await screen.getByRole("option", { name: "Disabled" }).click();
 
     await expect
       .element(screen.getByRole("cell", { name: "user3@univ-lorraine.fr" }))
