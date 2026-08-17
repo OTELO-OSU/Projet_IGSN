@@ -75,7 +75,6 @@ describe("matchRanges", () => {
   it.each(["*", "** *"])(
     "should highlight nothing for the intentless query %j",
     (query) => {
-      // The API returns no sample for it either, so there is nothing to paint.
       expect(matchRanges("basalt core", query)).toEqual([]);
     },
   );
@@ -88,11 +87,7 @@ describe("matchRanges", () => {
     ["{", "Core {1}"],
     ["[", "Core [1]"],
     ["\\", "Core\\A"],
-    // "^" is absent on purpose: it carries the Unicode Diacritic property, so
-    // the accent-insensitive normalisation strips it from text and query alike.
     ["$", "Core$A"],
-    // Inert here: NFD (unlike unaccent) never folds them. Kept to mirror the
-    // API list.
     ["（", "Core（deep）"],
     ["＼", "Core＼A"],
   ])("should match the metacharacter %j literally", (query, text) => {
@@ -101,13 +96,10 @@ describe("matchRanges", () => {
   });
 
   it("should stay prompt on an adversarial wildcard query", () => {
-    // Uncapped this backtracks for ~100s in a JS RegExp and freezes the tab.
     expect(matchRanges(`${"a".repeat(60)}b`, "a*a*a*a*a*a*a*a*z")).toEqual([]);
   });
 
   it("should stay prompt over a whole page of pathological tokens", () => {
-    // A 200-character query over 50 rendered rows: 45s before adjacent
-    // wildcards collapsed.
     const query = "**z ".repeat(50);
     const started = performance.now();
 
@@ -121,7 +113,6 @@ describe("matchRanges", () => {
   it.each([
     ["bas*", "Basalt Core", [[0, 6]]],
     ["*powder", "Rock powder", [[5, 11]]],
-    // A wildcard stays inside one word, so this matches "Carotte" only.
     ["caro*te", "Carotte de Basalte", [[0, 7]]],
     ["gres", "Gres du Nord", [[0, 4]]],
     ["**z", "Quartz", [[0, 6]]],
@@ -130,8 +121,6 @@ describe("matchRanges", () => {
   });
 
   it("should stay prompt on a long name", () => {
-    // The cap bounds the query, not the haystack, and sample names have no
-    // length limit.
     const started = performance.now();
 
     expect(matchRanges("a".repeat(50_000), "**z")).toEqual([]);
@@ -140,7 +129,6 @@ describe("matchRanges", () => {
   });
 
   it("should highlight only within the matched prefix of a long name", () => {
-    // Past the cap there is nothing to paint, which is the tradeoff.
     expect(matchRanges(`${"a ".repeat(200)}basalt`, "basalt")).toEqual([]);
     expect(matchRanges(`basalt ${"a ".repeat(200)}`, "basalt")).toEqual([
       [0, 6],
@@ -152,7 +140,6 @@ describe("matchRanges", () => {
   });
 
   it("should stay prompt on a page of unanchored wildcard tokens", () => {
-    // Worst shape: no anchor, and "\S" makes a hyphenated name one long run.
     const query = "*a*z ".repeat(40);
     const started = performance.now();
 
@@ -164,7 +151,6 @@ describe("matchRanges", () => {
   });
 
   it("should return no range for a fuzzy-only match", () => {
-    // The API matched fuzzily, but the mistyped text is not in the result.
     expect(matchRanges("Fontainebleau", "fontenebleau")).toEqual([]);
   });
 });

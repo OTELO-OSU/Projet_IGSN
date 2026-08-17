@@ -14,12 +14,7 @@ const collectionDateText = ({
   return start === end ? from : `${from} - ${formatDate(new Date(end))}`;
 };
 
-// The description rows of the sample detail page; FieldRow drops the parts
-// the sample lacks (every part of a Description is optional; the parent hides
-// the whole section when the sample has none).
 export function DescriptionView({ description }: { description: Description }) {
-  // Size and mass unit codes are their own display labels; volume codes are
-  // not (cm3 renders as cm³), hence volumeUnitLabel.
   const measurements = [
     { label: m.sample_field_length(), measurement: description.length },
     { label: m.sample_field_width(), measurement: description.width },

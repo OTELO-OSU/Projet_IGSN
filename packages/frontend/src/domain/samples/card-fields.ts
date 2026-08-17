@@ -79,7 +79,6 @@ export function locationText(location: Location | null): string | null {
 
 type AllKeys<T> = T extends unknown ? keyof T : never;
 
-// Only one branch of the scientific-context union carries each of these.
 function contextText(
   sample: CardSample,
   key: AllKeys<ScientificContext>,

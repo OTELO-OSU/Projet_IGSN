@@ -17,7 +17,6 @@ function CaptureMap({ onMap }: { onMap: (map: L.Map) => void }) {
   return null;
 }
 
-// Leaflet draws a Rectangle as an SVG path in the overlay pane.
 const rectanglePaths = () =>
   document.querySelectorAll(".leaflet-overlay-pane path");
 

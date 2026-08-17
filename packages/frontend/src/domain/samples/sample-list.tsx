@@ -75,8 +75,6 @@ export function SampleList({
     <ul ref={listRef} className="grid gap-4 sm:grid-cols-2">
       {samples.map((sample) => {
         const { igsn, name, location, scientificContext } = sample;
-        // The public list only carries published samples, which always have an
-        // igsn.
         if (igsn === null) {
           return null;
         }

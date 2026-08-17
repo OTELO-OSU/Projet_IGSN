@@ -8,7 +8,6 @@ import { oceanSeaLabel } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
 
-// Exhaustive label map: a new datum fails to compile until it is translated.
 const VERTICAL_DATUM_LABELS: Record<VerticalDatum, () => string> = {
   msl: m.vertical_datum_msl,
   wgs84: m.vertical_datum_wgs84,
@@ -17,10 +16,6 @@ const VERTICAL_DATUM_LABELS: Record<VerticalDatum, () => string> = {
 
 type Elevation = NonNullable<NonNullable<Location["position"]>["elevation"]>;
 
-// "-2500 m (Mean sea level)" for a point (min === max), "100 - 200 m (...)"
-// for a range. Signed: negative is below the datum (bathymetry). Publish
-// blockers require a complete elevation, but the schema types the parts as
-// nullish, so each piece is rendered only when present (never a literal "null").
 const elevationText = ({ min, max, unit, datum }: Elevation): string => {
   const range =
     min != null && max != null && min !== max
@@ -31,9 +26,6 @@ const elevationText = ({ min, max, unit, datum }: Elevation): string => {
   return `${range}${unitText}${datumText}`.trim();
 };
 
-// The location rows of the sample detail page; FieldRow drops the parts the
-// sample lacks (every part of a Location is optional; the parent hides the
-// whole section when the sample has none).
 export function LocationView({ location }: { location: Location }) {
   const {
     position,
@@ -82,7 +74,6 @@ export function LocationView({ location }: { location: Location }) {
       />
       <FieldRow
         label={m.sample_field_region()}
-        // The leaf is optional ("ocean, unknown which"); fall back to the kind.
         value={
           region &&
           (region.kind === "continent"
@@ -96,7 +87,6 @@ export function LocationView({ location }: { location: Location }) {
       />
       <FieldRow
         label={m.sample_field_navigation_type()}
-        // Navigation types are language-neutral codes (their own label).
         value={navigationType}
       />
       <FieldRow label={m.sample_field_locality_name()} value={localityName} />
