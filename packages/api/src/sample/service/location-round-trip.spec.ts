@@ -53,8 +53,6 @@ describe("sample location persistence", () => {
   pgTest(
     "should round-trip a partial elevation (a draft with a lone bound)",
     async ({ db }) => {
-      // A draft may save an elevation before it is complete (completeness gates
-      // publish, not the draft); the lone bound must survive the round-trip.
       const location = {
         position: {
           type: "area" as const,

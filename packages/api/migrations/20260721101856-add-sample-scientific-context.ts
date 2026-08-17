@@ -1,10 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// Sample scientific context: flat nullable columns on sample, no side table,
-// the same storage pattern as the location (ADR 0014). `sc_provenance_status`
-// is the discriminant (recent_collection / historical_specimen); each branch's
-// fields are nullable columns, shared `sc_collector_name` serves both. All
-// vocabulary codes and free text are text; ROR identifiers are text too.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .alterTable("sample")

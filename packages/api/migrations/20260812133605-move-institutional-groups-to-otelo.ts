@@ -1,6 +1,5 @@
 import { type Kysely } from "kysely";
 
-// Codes the CSV export dropped, read off the laboratory.ts / osu.ts diff.
 const REMOVED_LABORATORIES = [
   "CRPG",
   "GEORESSOURCES",
@@ -10,8 +9,6 @@ const REMOVED_LABORATORIES = [
 ];
 const REMOVED_OSUS = ["OSUR"];
 
-// A row keeping a dropped code points at nothing, so it moves to a valid triple
-// in the new catalog, rather than being cleared.
 const GROUP = {
   institutional_organization: "02feahw73",
   institutional_osu: "OTELo",
@@ -43,6 +40,4 @@ export async function up(
   }
 }
 
-// The overwritten codes no longer exist in laboratory.ts or osu.ts, so there is
-// nothing to restore.
 export async function down(): Promise<void> {}

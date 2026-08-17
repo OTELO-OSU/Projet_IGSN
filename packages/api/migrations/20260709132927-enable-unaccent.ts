@@ -1,6 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// Diacritic-insensitive sample search (unaccent(col) ILIKE unaccent(pattern)).
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`CREATE EXTENSION IF NOT EXISTS unaccent`.execute(db);
 }

@@ -4,9 +4,6 @@ import { describe, expect } from "vitest";
 import { pgTest } from "../../tests/pg-test.ts";
 import { searchFilters } from "./search-filter.ts";
 
-// A query that builds a slightly different expression silently loses the
-// gin_trgm_ops indexes. Seqscan off: which index Postgres can use, not which it
-// would prefer on an empty table.
 describe("searchFilters", () => {
   pgTest.for([
     ["the wildcard/substring arm", "gres"],

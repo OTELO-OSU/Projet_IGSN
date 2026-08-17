@@ -1,9 +1,5 @@
 import type { Condition } from "@projet-igsn/domain/sample/condition/model";
 
-// Domain condition -> flat sample columns (same pattern as the description,
-// ADR 0016), shared by insert and
-// update. A null/absent condition writes null everywhere, so an update clears
-// what the input no longer carries.
 export function conditionColumns(condition: Condition | null | undefined) {
   return {
     packaging: condition?.packaging ?? null,

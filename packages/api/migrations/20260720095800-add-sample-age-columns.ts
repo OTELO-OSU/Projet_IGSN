@@ -1,10 +1,5 @@
 import { type Kysely } from "kysely";
 
-// Age is a flat sub-datum of the sample, like every other one: nullable columns
-// on the sample table (an empty age is all-null). A non-range value stores the
-// same number/code in both bounds (min == max), so search is uniform. Numeric
-// ages are approximate measurements, so double precision; codes and units are
-// text.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .alterTable("sample")

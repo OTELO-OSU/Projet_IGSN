@@ -26,8 +26,6 @@ describe("loadRateLimitConfig", () => {
     );
   });
 
-  // Spelling variants must not silently read as "untrusted": that would key
-  // every visitor on the proxy's own address, a site-wide budget.
   it.each(["true", "True", "TRUE", "1", "yes", "on"])(
     "should trust proxy headers when TRUST_PROXY_HEADERS is %s",
     (value) => {

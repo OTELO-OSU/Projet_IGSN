@@ -4,8 +4,6 @@ import { pgTest } from "./tests/pg-test.ts";
 import { withTransaction } from "./transaction.ts";
 
 describe("withTransaction", () => {
-  // The pgTest fixture `db` is itself a transaction, so this covers the reuse
-  // branch our repositories rely on: no nested transaction is opened.
   pgTest("should reuse the transaction it is already in", async ({ db }) => {
     // Act
     const received = await withTransaction(db, async (trx) => trx);

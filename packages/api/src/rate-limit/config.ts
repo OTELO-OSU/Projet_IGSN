@@ -10,13 +10,9 @@ export type RateLimitConfig = {
   trustProxyHeaders: boolean;
 };
 
-// Malformed values throw rather than falling back: a deploy typo must surface at
-// boot instead of silently serving the wrong policy.
 const flagSchema = (name: string, fallback: boolean) =>
   z.stringbool({ error: `${name} must be a boolean` }).default(fallback);
 
-// `|| undefined` rather than the raw value: docker-compose expands an unset
-// ${VAR} to "", and z.stringbool would reject "". Empty must mean unset.
 export function loadRateLimitConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): RateLimitConfig {

@@ -1,11 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// A sample's geographic location (ADR 0014), 1:1 with sample. The raw coordinate
-// columns are the CRUD source of truth; `geom` is a generated, GiST-indexed
-// geography derived from them for spatial search (point, area, or null for a
-// locality-only row). A dateline-crossing area (west > east) is built correctly
-// by ST_MakeEnvelope(...)::geography, which keeps the ≤180° interior. Written as
-// raw SQL: the generated geography column is beyond the Kysely schema builder.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`
     CREATE TABLE location (

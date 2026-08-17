@@ -13,8 +13,6 @@ import { MATERIAL_PATHS } from "@projet-igsn/domain/sample/material/classificati
 import { NATURES } from "@projet-igsn/domain/sample/nature";
 import { SAMPLE_TYPES } from "@projet-igsn/domain/sample/type/vocabulary";
 
-// One joined row of the legacy igsn_resource, with its lookups resolved to
-// their label strings by the SELECT in import-legacy.ts.
 export type LegacyRow = {
   name: string;
   igsn: string;
@@ -64,7 +62,6 @@ const MATERIAL_PATH_SET = new Set(MATERIAL_PATHS);
 const COLLECTION_METHOD_SET = new Set(COLLECTION_METHODS);
 const SAMPLE_TYPE_SET = new Set(SAMPLE_TYPES);
 
-// Trim free text to null when empty, matching the domain's freeText.min(1).
 function clean(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
@@ -95,8 +92,6 @@ function longestValidPrefix(path: string, valid: Set<string>): string | null {
   return null;
 }
 
-// Legacy classification (the rock-type tree) is rooted at the family
-// (Igneous, Metamorphic...) which lives under `rock.` in the new material tree.
 const ROCK_FAMILIES = new Set([
   "igneous",
   "metamorphic",
@@ -112,9 +107,7 @@ const MATERIAL_ROOT_BY_LEGACY: Record<string, string> = {
 };
 
 // Targets follow the domain expert's mapping table; the legacy values it leaves
-// undecided (MechanicallyBroken, Meta-Carbonate, Meta-Ultramafic: "record to
-// review") are absent here on purpose, so those rows keep skipping until
-// reviewed.
+// undecided are absent here on purpose, so those rows keep skipping until reviewed.
 const MATERIAL_SPECIALS: Record<string, string> = {
   "rock.metamorphic.calc_silicate":
     "rock.metamorphic.strongly_metamorphosed.calc_silicate_rock",
@@ -140,9 +133,6 @@ const MATERIAL_SPECIALS: Record<string, string> = {
   "rock.sedimentary.volcaniclastic": "rock.sedimentary.volcaniclastic_rock",
 };
 
-// The legacy `Xenolithic` root mirrors the igneous and metamorphic families, so
-// it roots at `rock.xenolithic_rock` and its inner family path goes through the
-// same MATERIAL_SPECIALS remaps before being re-prefixed.
 function classificationCandidate(classification: string): string {
   const path = slugPath(classification);
   const [root = "", ...rest] = path.split(".");
@@ -159,8 +149,6 @@ export function mapMaterial(
   classification: string | null,
   material: string | null,
 ): string | null {
-  // We never fall back to the coarse material_id root here: a bare "rock" would
-  // misrepresent a real classification.
   if (classification) {
     return longestValidPrefix(
       classificationCandidate(classification),
@@ -173,8 +161,6 @@ export function mapMaterial(
   return null;
 }
 
-// Skipped rows come in on a re-import once the tree or this script's mapping
-// supports the path.
 export function isKnownMaterialPath(
   classification: string | null,
   material: string | null,
@@ -195,15 +181,11 @@ export function mapCollectionMethod(
   return longestValidPrefix(slugPath(collectionMethod), COLLECTION_METHOD_SET);
 }
 
-// Flat legacy `type` labels that nest under `core` in the new tree but arrive
-// without the prefix, so slugging them yields a bare segment the tree lacks.
 const TYPE_SPECIALS: Record<string, string> = {
   cuttings: "core.cuttings",
   individual_sample_in_core: "core.individual_sample_in_core",
 };
 
-// Legacy resourceType is one flat label that in the new model is either a
-// `nature` (a physical form) or a `type` (a sampling taxonomy path).
 export function mapResourceType(resourceType: string | null): {
   type: string | null;
   nature: CreateSample["nature"];
@@ -221,13 +203,8 @@ export function mapResourceType(resourceType: string | null): {
   return { type, nature };
 }
 
-// The legacy DOI-typed related resources are 19 citation groups, not usable
-// verbatim: most rows carry the full citation instead of a DOI, five groups
-// increment the DOI by one per sample (only the first resolves), one truncates
-// it, and the Cabanes 1988 run points at unrelated articles. So no extraction:
-// each group's prefix maps to its DOI, hand-verified against doi.org and
-// Crossref on 2026-07-29. Dantas 2007, a thesis with no DOI, is absent on
-// purpose until the geologists decide.
+// Dantas 2007, a thesis with no DOI, is absent on purpose until the geologists
+// decide.
 const DOI_URL_BY_CITATION_PREFIX: [string, string][] = [
   ["Alard, O., Lorand, J.P., Reisberg", "10.1093/petrology/egr038"],
   ["Baptiste, V., Tommasi,A. (2014)", "10.5194/se-5-1-2014"],
@@ -278,8 +255,6 @@ const NAME_RE = /^\p{L}[\p{L} .'’-]*$/u;
 const isName = (token: string): boolean =>
   NAME_RE.test(token) && !/\bet\s*\.?\s*al\b/i.test(token);
 
-// A multi-word part before the comma means several people ("BRIOT Danielle,
-// CANTAGREL Jean-Marie"), not one name, so it is not a segment.
 const isNameSegment = (segment: string): boolean => {
   if (isName(segment)) return true;
   const [surname, firstname, ...rest] = segment.split(",");
@@ -319,7 +294,6 @@ export function parseCollector(collector: string | null): ParsedCollector {
     : { invalid: raw };
 }
 
-// The dump only ever carries these three spellings (checked in the data).
 const SIZE_UNIT_BY_LEGACY: Record<string, "cm" | "m"> = {
   cm: "cm",
   centimeter: "cm",
@@ -332,8 +306,6 @@ type ParsedSize =
   | { kind: "invalid"; raw: string };
 
 const positiveNumber = (part: string): number => {
-  // French decimal comma ("0,5"); replacing only the first keeps a
-  // double-comma part ("2,1,2") unreadable, as it should be.
   const value = Number(part.trim().replace(",", "."));
   return Number.isFinite(value) && value > 0 ? value : NaN;
 };
@@ -399,7 +371,6 @@ export function mapElevation(row: LegacyRow): Elevation | null {
   const bathyUnit = elevationUnit(row.bathy_unit);
   const bathy = parseNumber(row.bathy);
   if (bathyUnit && Number.isFinite(bathy)) {
-    // Bathymetry is a depth below sea level, so a negative elevation.
     return { min: -bathy, max: -bathy, unit: bathyUnit, datum: "msl" };
   }
   return null;
@@ -441,8 +412,6 @@ export function mapPosition(row: LegacyRow): Position | null {
   };
 }
 
-// Fold accents (é -> e) before stripping punctuation, so a legacy "Reunion"
-// matches the ICU label "Réunion" (and any other accented country name).
 const normalizeCountry = (name: string): string =>
   name
     .normalize("NFD")
@@ -451,9 +420,6 @@ const normalizeCountry = (name: string): string =>
     .replace(/&/g, "and")
     .replace(/[^a-z0-9]+/g, "");
 
-// Legacy names ICU's English label does not match: endonyms (Deutschland),
-// a former name (Swaziland -> Eswatini), or a different phrasing (Congo DRC,
-// St. Vincent).
 const COUNTRY_ALIASES: Record<string, Country> = {
   "Congo, The Democratic Republic Of The": "CD",
   Deutschland: "DE",
@@ -580,8 +546,6 @@ export function mapAge(row: LegacyRow): CreateSample["age"] | null {
 }
 
 export function mapScientificContext(row: LegacyRow): ScientificContext | null {
-  // An unreadable collector skips the row (see unmappableValues), so here it
-  // simply carries no collector.
   const collector = parseCollector(row.collector);
   const collectorName = "invalid" in collector ? null : collector.name;
   const collectorOrcid = "invalid" in collector ? null : collector.orcid;
@@ -607,9 +571,6 @@ export function mapScientificContext(row: LegacyRow): ScientificContext | null {
   };
 }
 
-// A value that does not normalize into the enum must not be stored (it would
-// defeat the enum), and we will not silently publish a sample that lost it, so
-// the sample is skipped whole and the offending value logged for review.
 export type SkipField =
   | "material"
   | "collection_method"
@@ -625,8 +586,6 @@ export type SkipField =
 
 export type SkipIssue = { field: SkipField; value: string };
 
-// Reuses the same normalizers/maps as the mapping, so it never drifts from what
-// the import would actually store.
 export function unmappableValues(row: LegacyRow): SkipIssue[] {
   const issues: SkipIssue[] = [];
   const norm = (value: string) => value.trim().toLowerCase();
@@ -694,8 +653,6 @@ export function unmappableValues(row: LegacyRow): SkipIssue[] {
   return issues;
 }
 
-// Several legacy rows can cite the same paper on one sample, so links dedupe
-// by url, first citation wins.
 function mapDoiLinks(values: string[]): CreateSampleLink[] {
   const byUrl = new Map<string, CreateSampleLink>();
   for (const value of values) {

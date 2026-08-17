@@ -24,9 +24,6 @@ import {
   unmappableValues,
 } from "./import-legacy-mapping.ts";
 
-// The old igsn_resource joined to its lookups and its 1:1 geological child, with
-// every label resolved and the scope filtered server-side: public, top-level
-// (no parent), and carrying an identifier we can store as the IGSN.
 const LEGACY_QUERY = `
   SELECT
     r.name,
@@ -93,8 +90,6 @@ const LEGACY_QUERY = `
 
 const BATCH_SIZE = 500;
 
-// Builds the read-only connection to the loaded legacy dump. Same server and
-// credentials as the app, a different database (loaded by the makefile target).
 function createLegacyDb() {
   return postgres({
     host: process.env.DATABASE_HOST,
@@ -106,9 +101,6 @@ function createLegacyDb() {
   });
 }
 
-// Maps one validated create payload to the flat sample columns, published with
-// its legacy IGSN. Mirrors insertSample's column composition, plus the
-// publication columns and history timestamps a fresh insert would default.
 function toSampleRow(
   row: LegacyRow,
   create: ReturnType<typeof createSampleSchema.parse>,
@@ -145,16 +137,10 @@ function toSampleRow(
 async function main() {
   const legacy = createLegacyDb();
   const db = createDb();
-  // On conflict, refresh every column from the new row except the identity
-  // (id) and the original creation time, so a rerun updates in place.
   const preserved = new Set(["id", "igsn", "created_at"]);
 
   const summary = { read: 0, imported: 0, users: 0, linked: 0, links: 0 };
-  // One row per skipped sample and reason (a sample may fail several fields),
-  // written to a CSV so the dropped values are easy to review and map later.
   const skipped: { igsn: string; reason: string; value: string }[] = [];
-  // DOI citations outside the reviewed groups: the sample imports without the
-  // link, and the citation is logged so it can be mapped on a later run.
   const droppedLinks: { igsn: string; value: string }[] = [];
 
   try {
@@ -162,8 +148,6 @@ async function main() {
     summary.read = rows.length;
 
     let batch: ReturnType<typeof toSampleRow>[] = [];
-    // The upsert returns the stored id (the old one on a rerun conflict, not
-    // the fresh uuid), which the owner links must point at.
     const sampleIdByIgsn = new Map<string, string>();
     const ownerByIgsn = new Map<string, LegacyOwner>();
     const linksByIgsn = new Map<
@@ -199,9 +183,6 @@ async function main() {
     };
 
     for (const row of rows) {
-      // The identifier becomes the sample's IGSN and its lookup key, so it must
-      // be a real IGSN (the read path parses it with the same schema). A row that
-      // is not is skipped rather than stored as an unreachable published sample.
       const igsn = igsnSchema.safeParse(row.igsn);
       if (!igsn.success) {
         skipped.push({
@@ -211,9 +192,6 @@ async function main() {
         });
         continue;
       }
-      // Any controlled value that does not normalize into its enum skips the
-      // whole sample (never stored outside the enum, never silently dropped);
-      // it comes in on a re-import once the mapping supports the value.
       const issues = unmappableValues(row);
       if (issues.length > 0) {
         for (const issue of issues) {
@@ -246,8 +224,6 @@ async function main() {
     }
     await flush();
 
-    // DOI links live in sample_link, keyed by the stored sample id, so they
-    // insert after the upsert; replaceSampleLinks keeps a rerun idempotent.
     for (const [igsn, links] of linksByIgsn) {
       const sampleId = sampleIdByIgsn.get(igsn);
       if (!sampleId) continue;
@@ -255,8 +231,6 @@ async function main() {
       summary.links += links.length;
     }
 
-    // Owners exist only through their samples: upsert each distinct email as a
-    // user, then link it to the samples it owned in the legacy base.
     const owners = new Map(
       [...ownerByIgsn.values()].map((owner) => [owner.email, owner]),
     );
@@ -297,8 +271,6 @@ async function main() {
     await db.destroy();
   }
 
-  // Every skip on stdout (igsn, reason, offending value); `make
-  // db-import-legacy` tees this to a file for review.
   for (const { igsn, reason, value } of skipped) {
     console.info(`skipped\t${igsn}\t${reason}\t${value}`);
   }

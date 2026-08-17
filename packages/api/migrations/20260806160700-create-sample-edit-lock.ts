@@ -1,8 +1,5 @@
 import { type Kysely } from "kysely";
 
-// The claim lives outside `sample`, so no query reading a sample can carry who
-// is editing it. One row per sample: the primary key is what makes the claim
-// exclusive.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("sample_edit_lock")

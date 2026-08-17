@@ -6,8 +6,6 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 
-// Expiry is derived here, at read time: an elapsed claim reads as no claim, so
-// nothing has to expire locks in the background.
 export async function getEditLock(
   db: Transactional<DB>,
   id: string,

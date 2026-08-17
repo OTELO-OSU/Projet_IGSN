@@ -1,17 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// `geom` becomes planar geometry (ADR 0014, amended): a geography envelope has
-// great-circle edges, so a wide search box bows poleward and silently drops
-// results, and past 180 degrees of width the match inverts. There is no in-place
-// path (ALTER COLUMN ... TYPE refuses it on a generated column, with or without
-// USING), so the column is dropped and re-added; nothing is lost, `geom` is
-// derived from the raw lon/lat columns.
-//
-// The inner CASE is required, do not simplify it: planar, a single envelope for a
-// dateline-crossing area (west > east) is its complement, spanning east..west the
-// wrong way round. Such an area is valid data, so it is stored as the two halves
-// split at 180. ST_Collect is IMMUTABLE, hence legal here, and yields a
-// MultiPolygon, which the generic geometry(Geometry, 4326) type accepts.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`
     ALTER TABLE sample

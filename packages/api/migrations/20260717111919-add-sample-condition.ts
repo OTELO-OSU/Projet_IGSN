@@ -1,10 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// Sample condition: flat nullable columns on sample, no side table, the same
-// storage pattern as the description (ADR 0016). Vocabulary codes are text;
-// numeric
-// readings are double precision paired with a text unit code; the storage
-// conditions multi-select is a text array.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .alterTable("sample")

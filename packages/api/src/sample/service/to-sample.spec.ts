@@ -111,7 +111,6 @@ const ageRow = {
   numeric_age_max: 12000,
   numeric_age_unit: "a",
   numeric_age_years_unit: "bp",
-  // Stored as ranks; toSample maps them back to ics codes.
   geological_age_min: 8,
   geological_age_max: 12,
   geological_unit: "Green Sandstone Fm",

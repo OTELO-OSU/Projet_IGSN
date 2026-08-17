@@ -7,10 +7,6 @@ import { listSamplesAssignedTo } from "../sample/service/list-sample.ts";
 import { type Transactional } from "../transaction.ts";
 import { insertUser } from "./insert-user.ts";
 
-// The only list exports are the scoped ones (no route may list unscoped), so
-// specs covering the query logic every scope shares (sorting, facets,
-// pagination) go through the owner scope rather than getting an unscoped
-// variant to leak.
 export async function listAsOwner(
   db: Transactional<DB>,
   params: ListSamplesQuery,

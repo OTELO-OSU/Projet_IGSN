@@ -6,9 +6,6 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 
-// Links live and die with their sample document: every save replaces them
-// wholesale (ADR 0017). Fresh UUIDv7 ids in array order keep reads, which
-// order by id, in the order the user entered.
 export async function replaceSampleLinks(
   db: Transactional<DB>,
   sampleId: string,

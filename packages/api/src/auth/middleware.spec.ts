@@ -7,8 +7,6 @@ import type { createApp } from "../app.ts";
 
 import { pgTest } from "../tests/pg-test.ts";
 
-// test/setup.ts stubs requireAuth suite-wide; this spec verifies the real
-// middleware, signature check included.
 vi.unmock("./middleware.ts");
 
 const KID = "test-key";
@@ -44,7 +42,6 @@ beforeAll(async () => {
 });
 
 beforeEach(() => {
-  // requireAuth fetches the realm JWKS over HTTP; serve the test key instead.
   vi.stubGlobal(
     "fetch",
     vi.fn(async () => Response.json(jwks)),
@@ -56,8 +53,6 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-// The header always claims KID so a token minted with another key exercises
-// the signature check, not just a kid lookup miss.
 async function mint(
   claims: Record<string, unknown>,
   key: webcrypto.CryptoKey = privateKey,
@@ -74,10 +69,6 @@ async function mint(
 
 const nowSeconds = () => Math.floor(Date.now() / 1000);
 
-// GaiaData tokens carry no aud claim, so the valid token has none either; azp
-// and typ are what Keycloak stamps on an access token issued to our client.
-// identity_provider is what currentUser needs downstream of this middleware:
-// without it the route refuses an otherwise valid token.
 const validClaims = () => ({
   iss: ISSUER,
   azp: CLIENT_ID,
@@ -90,8 +81,6 @@ const validClaims = () => ({
   identity_provider: "satosa",
 });
 
-// The middleware reads its env once, when it is imported, so each auth
-// configuration needs its own module graph.
 const getMe = async (
   db: Parameters<typeof createApp>[0],
   token: string,

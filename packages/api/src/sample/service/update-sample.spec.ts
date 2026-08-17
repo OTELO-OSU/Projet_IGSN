@@ -39,14 +39,14 @@ describe("updateSample", () => {
   );
 
   pgTest("should upsert then clear the age", async ({ db }) => {
-    // Arrange: create without an age.
+    // Arrange
     const created = await insertSample(db, {
       name: "Basalt 42",
       nature: "hand_sample",
       type: null,
     });
     expect(created.age).toBeNull();
-    // Act: add an age.
+    // Act
     const withAge = await updateSample(db, created.id, {
       name: "Basalt 42",
       nature: "hand_sample",
@@ -67,7 +67,7 @@ describe("updateSample", () => {
       numericAgeMax: 4.2,
       numericAgeUnit: "ga",
     });
-    // Act: clear the age with an explicit null.
+    // Act
     const cleared = await updateSample(db, created.id, {
       name: "Basalt 42",
       nature: "hand_sample",
@@ -89,8 +89,7 @@ describe("updateSample", () => {
   });
 
   pgTest("should bump updatedAt", async ({ db }) => {
-    // Arrange: back-date the row, since now() is frozen inside the test
-    // transaction and a plain before/after comparison would always pass.
+    // Arrange
     const backdated = new Date("2020-01-01T00:00:00.000Z");
     const created = await insertSample(db, {
       name: "Basalte du Massif Central",

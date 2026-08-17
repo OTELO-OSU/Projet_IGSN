@@ -1,5 +1,3 @@
-# Read with `tofu output -raw <name>` by infra/preprod/scripts/common.sh.
-
 output "aws_region" {
   value = var.aws_region
 }

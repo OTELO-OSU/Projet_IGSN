@@ -163,7 +163,6 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
               .case()
               .when("super_admin", "=", true)
               .then(eb.ref("status"))
-              // A first declaration is not a change a moderator already judged.
               .when("institutional_organization", "is", null)
               .then(eb.ref("status"))
               .else("pending" as const)

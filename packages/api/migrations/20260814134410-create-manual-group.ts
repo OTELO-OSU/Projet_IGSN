@@ -10,7 +10,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     )
     .execute();
 
-  // Two groups differing only by case are the same group to a researcher.
   await db.schema
     .createIndex("manual_group_name_unique")
     .on("manual_group")

@@ -28,15 +28,12 @@ const numericAge = (min: number, max: number, unit: NumericUnit = "ma") => ({
   numericAgeUnit: unit,
 });
 
-// Ranks 1..49; rank 4 is Miocene [5.333, 23.03] Ma, rank 8 Cretaceous Upper
-// [66, 100.5] Ma.
 const geologicalAge = (min: GeologicalAge, max: GeologicalAge) => ({
   ...emptyAge,
   geologicalAgeMin: min,
   geologicalAgeMax: max,
 });
 
-// now() is the transaction timestamp, identical for every insert.
 const backdate = (db: Transactional<DB>, id: string) =>
   db
     .updateTable("sample")
@@ -44,9 +41,6 @@ const backdate = (db: Transactional<DB>, id: string) =>
     .where("id", "=", id)
     .execute();
 
-// Exercised through listAsOwner (no unscoped export exists); the scope
-// predicates themselves have their own specs (list-samples-assigned-to.spec.ts,
-// and routes.spec.ts for the published one).
 describe("listSamples", () => {
   pgTest("should list samples most-recently-modified first", async ({ db }) => {
     // Arrange
@@ -98,8 +92,6 @@ describe("listSamples", () => {
       collectionMethod: null,
     });
     await publishSample(db, published.id);
-    // Backdate the draft so the updated_at tiebreak alone would put the
-    // published row first: the asc assertion then proves the status sort.
     await db
       .updateTable("sample")
       .set({ updated_at: new Date("2026-01-01T00:00:00.000Z") })
@@ -311,8 +303,7 @@ describe("listSamples", () => {
   pgTest(
     "should place same-value annum ages on the before-present axis by their years unit",
     async ({ db }) => {
-      // Arrange: on the before-present axis (present = 1950): 500 BCE = 2449,
-      // 500 CE = 1450, 500 BP = 500, 500 cal BP = 500.
+      // Arrange
       const eras = [
         ["Five hundred BCE", "bce"],
         ["Five hundred CE", "ce"],
@@ -348,7 +339,6 @@ describe("listSamples", () => {
         "Five hundred cal BP",
       ]);
 
-      // The BCE offset counts from present with no year zero (500 BCE = 2449 BP).
       const bce = await listAsOwner(db, {
         page: 1,
         perPage: 10,
@@ -527,8 +517,7 @@ describe("listSamples", () => {
   pgTest(
     "should match a geological range regardless of rank column order",
     async ({ db }) => {
-      // Arrange: young/old is derived by rank order, so the interval is
-      // [rank 4 young, rank 8 old] = [5.333, 100.5] Ma either way.
+      // Arrange
       await insertSample(db, {
         name: "Reversed",
         nature: "rock_powder",
@@ -615,8 +604,7 @@ describe("listSamples", () => {
   pgTest(
     "should match both stages adjacent to a query bound on their shared edge",
     async ({ db }) => {
-      // Arrange: 23.03 Ma is the shared boundary between rank 4 (its old edge)
-      // and rank 5 (its young edge).
+      // Arrange
       await insertSample(db, {
         name: "Below edge",
         nature: "rock_powder",
@@ -651,8 +639,7 @@ describe("listSamples", () => {
   pgTest(
     "should match a single-bound geological range by its one rank",
     async ({ db }) => {
-      // Arrange: LEAST/GREATEST skip the null max, so the interval is
-      // [66, 100.5] Ma from that one rank.
+      // Arrange
       await insertSample(db, {
         name: "Half-entered",
         nature: "rock_powder",
@@ -677,8 +664,7 @@ describe("listSamples", () => {
   pgTest(
     "should match the youngest rank at the present-day edge",
     async ({ db }) => {
-      // Arrange: rank 1 (Holocene) spans [0, 0.0117] Ma, the first entry of the
-      // ICS boundary table.
+      // Arrange
       await insertSample(db, {
         name: "Holocene",
         nature: "rock_powder",
@@ -701,8 +687,7 @@ describe("listSamples", () => {
   );
 
   pgTest("should match the oldest rank at its old edge", async ({ db }) => {
-    // Arrange: rank 49 (Hadean) spans [4031, 4567] Ma, the last entry of the ICS
-    // boundary table.
+    // Arrange
     await insertSample(db, {
       name: "Hadean",
       nature: "rock_powder",
@@ -724,8 +709,7 @@ describe("listSamples", () => {
   });
 
   pgTest("should match a mid-range rank at its point edges", async ({ db }) => {
-    // Arrange: rank 25 spans [423.0, 427.4] Ma, an entry in the middle of the
-    // ICS boundary table untouched by any other test in this file.
+    // Arrange
     await insertSample(db, {
       name: "Mid-range",
       nature: "rock_powder",
@@ -750,8 +734,6 @@ describe("listSamples", () => {
       ageUnit: "ma",
     });
     expect(old.total).toBe(1);
-    // A query just past either edge misses: proves the value isn't off by a
-    // neighbouring array entry.
     const miss = await listAsOwner(db, {
       page: 1,
       perPage: 10,
@@ -847,7 +829,7 @@ describe("listSamples", () => {
   pgTest(
     "should exclude a null-geom sample when a bbox is set",
     async ({ db }) => {
-      // Arrange: no location -> geom is null.
+      // Arrange
       await insertSample(db, {
         name: "No location",
         nature: "rock_powder",
@@ -998,8 +980,7 @@ describe("listSamples", () => {
   });
 
   pgTest("should order a search by relevance first", async ({ db }) => {
-    // Arrange: the exact match is the stale row, so the updated_at tiebreak
-    // alone would put the partial match first.
+    // Arrange
     const exact = await insertSample(db, {
       name: "Basalt",
       nature: "rock_powder",
@@ -1029,8 +1010,7 @@ describe("listSamples", () => {
   pgTest(
     "should break an equal-relevance search tie by recency",
     async ({ db }) => {
-      // Arrange: both score 1, and backdating the row that id-sorts first
-      // makes recency and id disagree.
+      // Arrange
       await insertSample(db, {
         name: "Basalt Core",
         nature: "rock_powder",
@@ -1083,8 +1063,6 @@ describe("listSamples", () => {
   });
 
   describe("fuzzy threshold", () => {
-    // The plural is not a substring of the name, so only the fuzzy arm can match
-    // it. It scores 0.833: above the 0.8 default, below a 0.9 override.
     const seedAchondrite = (db: Transactional<DB>) =>
       insertSample(db, {
         name: "Stony Achondrite",
@@ -1107,7 +1085,6 @@ describe("listSamples", () => {
 
     pgTest("should honour a stricter override", async ({ db }) => {
       await seedAchondrite(db);
-      // The threshold is read at import, so an override needs a fresh module.
       process.env.SAMPLE_SEARCH_FUZZY_THRESHOLD = "0.9";
       vi.resetModules();
       const { listAsOwner: listWithOverride } =
@@ -1123,7 +1100,6 @@ describe("listSamples", () => {
     });
 
     pgTest("should not tolerate a typo in a wildcard token", async ({ db }) => {
-      // Without the "*" this row matches fuzzily.
       await seedAchondrite(db);
 
       const { data } = await listAsOwner(db, {

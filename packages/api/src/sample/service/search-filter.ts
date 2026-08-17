@@ -10,28 +10,20 @@ import { fuzzyThreshold } from "./fuzzy-threshold.ts";
 
 const SEARCHED_COLUMNS = ["name", "specific_name"] as const;
 
-// One edit drops a 4-letter token under any useful threshold anyway.
 const FUZZY_MIN_LENGTH = 5;
 
-// regexp_replace replacement: a literal backslash, then the matched character.
 const ESCAPED_GROUP = "\\\\\\1";
 
-// Byte-for-byte the gin_trgm_ops index expression (migration 20260728092114):
-// any difference drops the query back to a sequential scan.
 function searchable(column: string) {
   return sql`immutable_unaccent(coalesce(${sql.ref(column)}, ''))`;
 }
 
-// Escaped after unaccent, never in JS: unaccent introduces metacharacters of
-// its own ("©" becomes "(C)"). See ADR 0018.
 function literalSegment(value: string) {
   return sql`regexp_replace(immutable_unaccent(${value}), '([^[:alnum:]])', ${ESCAPED_GROUP}, 'g')`;
 }
 
-// A scalar subquery, so the planner builds the pattern once, not per row.
 function tokenPattern(token: string) {
   const { segments, anchorStart, anchorEnd } = parseSearchToken(token);
-  // Doubled: a template literal would eat `\m` down to a bare `m`.
   const pieces = [
     ...(anchorStart ? [sql`'\\m'`] : []),
     ...segments.flatMap((segment, index) =>
@@ -44,7 +36,6 @@ function tokenPattern(token: string) {
   return sql`(SELECT ${sql.join(pieces, sql` || `)})`;
 }
 
-// A wildcard already expresses uncertainty, so it replaces typo tolerance.
 function isFuzzyToken(token: string): boolean {
   return token.length >= FUZZY_MIN_LENGTH && !token.includes("*");
 }
@@ -60,8 +51,6 @@ function matchesToken(token: string): Expression<SqlBool> {
     ...SEARCHED_COLUMNS.map(
       (column) => sql`${searchable(column)} ~* ${pattern}`,
     ),
-    // `%>` rather than word_similarity() > threshold: only the operator form
-    // is index-supported. Its threshold is the GUC set below.
     ...(isFuzzyToken(token)
       ? SEARCHED_COLUMNS.map(
           (column) =>
@@ -74,13 +63,9 @@ function matchesToken(token: string): Expression<SqlBool> {
 
 export function searchFilters(search: string): Expression<SqlBool>[] {
   const tokens = searchTokens(search);
-  // A search that trims to blanks or bare wildcards asked for something;
-  // answering with the whole registry would read as a filter silently dropped.
   return tokens.length === 0 ? [sql<SqlBool>`false`] : tokens.map(matchesToken);
 }
 
-// Transaction-local, so the GUC reverts on commit instead of leaking onto the
-// pooled connection.
 export async function applyFuzzyThreshold(
   trx: Transaction<DB>,
   search: string | undefined,
@@ -92,8 +77,6 @@ export async function applyFuzzyThreshold(
   );
 }
 
-// Absent when every token carries a wildcard: word_similarity would then be a
-// constant computed per row.
 export function relevanceScore(search: string): Expression<number> | undefined {
   const needle = searchTokens(search)
     .filter((token) => !token.includes("*"))

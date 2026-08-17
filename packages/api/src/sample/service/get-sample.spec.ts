@@ -72,8 +72,6 @@ describe("getSample", () => {
     expect(found).toEqual({ sample: created, role: null });
   });
 
-  // Distinct from a sample the caller holds no role on, so the route keeps
-  // answering 404 on an unknown id and 403 on someone else's.
   pgTest(
     "should return null when the sample does not exist",
     async ({ db }) => {

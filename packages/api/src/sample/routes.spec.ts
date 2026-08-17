@@ -11,8 +11,6 @@ import { provisionUser } from "../tests/provision-user.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
 
-// Publishing requires an accepted account (see samplePublishBlockers), so the
-// caller these specs seed with is provisioned as one.
 async function acceptedClient(db: Parameters<typeof createApp>[0]) {
   await provisionUser(db, "test-token", { status: "accepted" });
   return testClient(createApp(db).app);
@@ -32,9 +30,6 @@ async function createSample(
   },
 ) {
   const created = await client.admin.samples.$post(
-    // A leaf type, leaf material, a location, a collection date, a specific
-    // name and an availability are required to publish, so seed them all for the
-    // publish helper.
     {
       json: {
         name,
@@ -103,8 +98,6 @@ describe("public sample routes", () => {
     });
   });
 
-  // "GRES" hits the name, "facies" the specific name; igsn, the third searched
-  // column, needs the minted value and stays on its own below.
   pgTest.for(["GRES", "facies"])(
     "should filter published samples on %j, ignoring case and diacritics",
     async (search, { db }) => {
@@ -126,8 +119,7 @@ describe("public sample routes", () => {
   pgTest(
     "should filter published samples by a hierarchy facet",
     async ({ db }) => {
-      // Arrange: material is sediment.exogenous_detritic.clay, so it is under
-      // "sediment" but not under "rock".
+      // Arrange
       const client = await acceptedClient(db);
       const draft = await createSample(client, "Clay sample");
       await publishSample(client, draft.id);
@@ -188,7 +180,7 @@ describe("public sample routes", () => {
   pgTest.for(["granite", "granite core"])(
     "should return an empty list when %j matches nothing",
     async (search, { db }) => {
-      // Arrange: "core" alone would match, but every token must.
+      // Arrange
       const client = await acceptedClient(db);
       await createPublishedSample(client, "Basalt Core");
       // Act
@@ -198,9 +190,6 @@ describe("public sample routes", () => {
     },
   );
 
-  // The ASCII metacharacters, plus the fullwidth forms unaccent() folds back
-  // into them ("（" becomes "(", "©" becomes "(C)"). Unescaped, each is a silent
-  // wildcard or a 500 on a public endpoint.
   pgTest.for([
     ["%", "Recovery 100% core"],
     ["_", "Log_1 core"],
@@ -230,7 +219,6 @@ describe("public sample routes", () => {
     ["．", "Core．A"],
     ["＾", "Core＾A"],
     ["＄", "Core＄A"],
-    // Expands to "(C)": only escaping after unaccent covers the ")".
     ["©", "Core © 2026"],
     ["«", "Core «A»"],
     ["±", "Core ±1"],
@@ -258,7 +246,7 @@ describe("public sample routes", () => {
       const res = await client.samples.$get({
         query: { page: "1", perPage: "10", search },
       });
-      // Assert: an invalid regex would surface as an unhandled 500.
+      // Assert
       expect(res.status).toBe(200);
     },
   );
@@ -289,15 +277,10 @@ describe("public sample routes", () => {
     },
   );
 
-  // The starless side of a wildcard anchors to a word boundary, and a wildcard
-  // never spans a space. Each decoy carries the literal where an anchor must
-  // reject it: "Embassy" holds "bas" mid-word, "Textile" holds "te" at a word
-  // start, "Bicarbonate" holds "carb" mid-word.
   pgTest.for([
     ["bas*", "Basalt Core", "Embassy Deposit"],
     ["*te", "Carbonate Core", "Textile Block"],
     ["carb*ate", "Carbonate Core", "Bicarbonate Block"],
-    // Only the middle wildcard sits between two literals.
     ["*bas*ic*", "Metabasaltic Rock", "Granite Block"],
     ["bas* core", "Basalt Core", "Basalt Powder"],
   ] as const)(
@@ -317,8 +300,7 @@ describe("public sample routes", () => {
   pgTest.for(["*", "** *", "   "])(
     "should return no sample for the intentless search %j",
     async (search, { db }) => {
-      // Arrange: a query of blanks or bare wildcards states no term, so it
-      // matches nothing rather than the whole registry.
+      // Arrange
       const client = await acceptedClient(db);
       await createPublishedSample(client, "Basalt Core");
       await createPublishedSample(client, "Sandstone Block");
@@ -330,7 +312,7 @@ describe("public sample routes", () => {
   );
 
   pgTest("should tolerate a plural in a long token", async ({ db }) => {
-    // Arrange: not a substring, so only the fuzzy arm can match (0.833).
+    // Arrange
     const client = await acceptedClient(db);
     await createPublishedSample(client, "Stony Achondrite");
     await createPublishedSample(client, "Sandstone Block");
@@ -341,8 +323,6 @@ describe("public sample routes", () => {
   });
 
   pgTest("should reject a near-miss geological term", async ({ db }) => {
-    // 0.750 against "chondrites", so the 0.8 threshold keeps an opposite
-    // category out; the cost is "basalts"/"Basalt", also 0.750.
     const client = await acceptedClient(db);
     await createPublishedSample(client, "Chondrites Fragment");
     // Act
@@ -352,8 +332,7 @@ describe("public sample routes", () => {
   });
 
   pgTest("should keep a short token exact", async ({ db }) => {
-    // Arrange: "sane" scores 0.6, so only the length gate keeps it exact. The
-    // threshold is read at import, so a looser one needs a fresh module.
+    // Arrange
     process.env.SAMPLE_SEARCH_FUZZY_THRESHOLD = "0.5";
     vi.resetModules();
     const { createApp: createLooseApp } = await import("../app.ts");
@@ -380,7 +359,6 @@ describe("public sample routes", () => {
 
   pgTest.for([
     ["Grès de Fontainebleau", "gres"],
-    // Not a substring of the name: only the fuzzy arm would match this draft.
     ["Stony Achondrite", "achondrites"],
   ] as const)(
     "should never return the unpublished %j from a search",
@@ -412,7 +390,7 @@ describe("public sample routes", () => {
         latitude: 45,
       });
       await publishSample(client, outside.id);
-      // Act: raw request, bbox is a URL string the domain schema parses.
+      // Act
       const res = await app.request(
         "/samples?page=1&perPage=10&bbox=-10,40,10,50",
       );
@@ -495,7 +473,7 @@ describe("public sample routes", () => {
   );
 
   pgTest("should not expose an unpublished sample", async ({ db }) => {
-    // Arrange: a draft never gets an igsn, so it is unreachable by the public get.
+    // Arrange
     const client = await acceptedClient(db);
     await createSample(client, "Grès de Fontainebleau");
     // Act

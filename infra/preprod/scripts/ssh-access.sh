@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-# Temporary SSH access to the preprod host: opens the security group's :22 to
-# your current public IP. Assumes your key is already installed (run
-# `make preprod-ssh-send-key` once); your private key never leaves your laptop.
-#
-#   infra/preprod/scripts/ssh-access.sh connect  # open, ssh in, revoke on exit  (make preprod-ssh)
-#   infra/preprod/scripts/ssh-access.sh grant    # open :22, then: ssh ec2-user@<eip>
-#   infra/preprod/scripts/ssh-access.sh revoke   # close :22 again
 set -euo pipefail
 
 source "$(dirname "$0")/common.sh"

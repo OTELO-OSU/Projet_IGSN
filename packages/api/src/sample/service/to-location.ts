@@ -9,10 +9,6 @@ import type { DB } from "../../db.ts";
 
 type SampleRow = Selectable<DB["sample"]>;
 
-// Flat sample columns (snake_case) -> nested domain Location, validated at the
-// boundary. Absent fields are omitted rather than set to null, so a stored
-// location round-trips to the same minimal shape the client sent; null when
-// every part is absent, so a sample without one carries `location: null`.
 export function toLocation(row: SampleRow): Location | null {
   const position = toPosition(row);
   const region = toRegion(row);
@@ -31,10 +27,6 @@ export function toLocation(row: SampleRow): Location | null {
   return locationSchema.parse(location);
 }
 
-// Signed elevation range (min === max for a point), or omitted when absent. A
-// draft may hold a partial elevation (a lone bound, or bounds without a unit or
-// datum; completeness gates publish, not the draft), so any non-null part keeps
-// the elevation on round-trip.
 function toElevation(row: SampleRow) {
   if (
     row.elevation_min === null &&
@@ -85,9 +77,6 @@ function toRegion(row: SampleRow) {
   return null;
 }
 
-// Domain location -> flat sample columns (ADR 0014), shared by insert and
-// update. A null/absent location writes null everywhere, so an update clears
-// what the input no longer carries. `geom` is DB-generated and omitted.
 export function locationColumns(location: Location | null | undefined) {
   const position = location?.position ?? null;
   const point = position?.type === "point" ? position : null;

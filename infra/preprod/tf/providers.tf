@@ -12,9 +12,6 @@ terraform {
     }
   }
 
-  # Partial backend: pass bucket/key/region at init time, e.g.
-  #   tofu -chdir=infra/preprod/tf init -backend-config=backend.hcl
-  # State locking is S3-native (use_lockfile in the backend config); no DynamoDB.
   backend "s3" {}
 }
 

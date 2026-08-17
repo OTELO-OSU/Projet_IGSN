@@ -1,7 +1,5 @@
 import { type Kysely, type RawBuilder, sql } from "kysely";
 
-// Mirrors domain numericAgeToAnnum, plus the calendar offset only the stored
-// side needs: present is 1950 CE, and BCE has no year zero, hence the -1.
 const numericAgeToAnnum = (bound: "min" | "max") => sql`
   CASE numeric_age_unit
     WHEN 'ka' THEN numeric_age_${sql.raw(bound)} * 1e3
@@ -26,17 +24,11 @@ const ICS_BOUNDARIES_MA = `
   4031, 4567
 `;
 
-// sql.raw, not a bound array: Postgres takes no bind parameter in DDL. The 1e6
-// is the query side's own multiplication, so a stage edge compares equal in IEEE.
 const geologicalAgeToAnnum = (subscript: RawBuilder<number>) => sql`
   (ARRAY[${sql.raw(ICS_BOUNDARIES_MA)}]::double precision[])[${subscript}]
     * 1e6::double precision
 `;
 
-// annum_min is the youngest edge, annum_max the oldest. A generated expression
-// cannot be altered in place, hence dropping numeric_age_*_a to widen it.
-// COALESCE sits outside LEAST/GREATEST because those ignore NULLs: a single-bound
-// draft keeps its numeric value instead of falling through to the geological rank.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`
     ALTER TABLE sample
@@ -57,8 +49,6 @@ export async function up(db: Kysely<unknown>): Promise<void> {
   `.execute(db);
 }
 
-// Restores the previous column names, so the migration before this one can still
-// roll back (its own down drops numeric_age_*_a).
 export async function down(db: Kysely<unknown>): Promise<void> {
   await sql`
     ALTER TABLE sample

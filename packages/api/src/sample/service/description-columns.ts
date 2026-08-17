@@ -1,8 +1,5 @@
 import type { Description } from "@projet-igsn/domain/sample/description/model";
 
-// Domain description -> flat sample columns (ADR 0015), shared by insert and
-// update. A null/absent description writes null everywhere, so an update
-// clears what the input no longer carries.
 export function descriptionColumns(
   description: Description | null | undefined,
 ) {

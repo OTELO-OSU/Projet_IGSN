@@ -4,9 +4,6 @@ import { numericAgeToAnnum } from "@projet-igsn/domain/sample/age/numeric-age-to
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { type Expression, sql, type SqlBool } from "kysely";
 
-// The mapping is an allow-list (facet keys are fixed, never user input), so
-// column names are safe to embed as identifiers; values are always bound
-// parameters.
 export const FACET_COLUMN: Record<string, string> = {
   type: "type",
   material: "material",
@@ -30,22 +27,17 @@ function facetFilter(
 ): Expression<SqlBool> | undefined {
   const column = FACET_COLUMN[facet.key]!;
   switch (facet.kind) {
-    // Value is validated against the vocabulary, so the ltree cast is safe.
     case "hierarchy":
       return sql<SqlBool>`${sql.ref(column)} <@ ${value}::ltree`;
     case "enum":
       return sql<SqlBool>`${sql.ref(column)} = ${value}`;
     case "text":
       return sql<SqlBool>`immutable_unaccent(${sql.ref(column)}) ILIKE immutable_unaccent(${likePattern(value)})`;
-    // A numericRange facet drives the sidebar UI, but its filter compares
-    // dedicated annum columns, so it lives in numericAgeFilters below.
     case "numericRange":
       return undefined;
   }
 }
 
-// The bounds cross because this is an overlap, not a containment: "at least X
-// old" bites on the sample's oldest edge, "at most Y old" on its youngest.
 function numericAgeFilters(params: ListSamplesQuery): Expression<SqlBool>[] {
   const unit = params.ageUnit ?? "ma";
   return [
@@ -59,8 +51,6 @@ function numericAgeFilters(params: ListSamplesQuery): Expression<SqlBool>[] {
 }
 
 export function facetFilters(params: ListSamplesQuery): Expression<SqlBool>[] {
-  // Facet params are validated by the query schema; read them by the registry's
-  // (string) keys, which the typed ListSamplesQuery cannot be indexed by.
   const values: Record<string, unknown> = params;
 
   return [

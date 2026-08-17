@@ -37,8 +37,6 @@ export function createCurrentUserRoutes(
         };
         return c.json(currentUser);
       })
-      // The stored orcid becomes a sign-in credential (ADR 0020), so setting it
-      // is rights-granting (GaiaData REQ-CRIT-01).
       .put("/orcid", requireActiveSession, validateSetOrcidBody, async (c) => {
         const updated = await users.setOrcid(
           c.get("user").id,
@@ -76,7 +74,6 @@ export function createCurrentUserRoutes(
         };
         return c.json(body);
       })
-      // A published sample is attributed to the groups its owner belonged to.
       // TODO: block on a published sample attached to the group instead, once a
       // sample can carry one (ADR 0025).
       .delete("/manual-groups/:id", validateManualGroupIdParam, async (c) => {

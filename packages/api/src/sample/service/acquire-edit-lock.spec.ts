@@ -69,7 +69,6 @@ describe("acquireEditLock", () => {
   pgTest("should claim a lock whose expiry has passed", async ({ db }) => {
     const { sampleId, pierre, marie } = await arrange(db);
     await acquireEditLock(db, sampleId, pierre.id);
-    // No injectable clock: age the claim in the row itself.
     await db
       .updateTable("sample_edit_lock")
       .set({ expires_at: PAST })

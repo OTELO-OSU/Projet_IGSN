@@ -6,7 +6,6 @@ import type { KeycloakClaims } from "./middleware.ts";
 
 import { requireRole } from "./roles.ts";
 
-// The guard runs after requireAuth; simulate the verified claims it leaves.
 const appWithClaims = (claims?: KeycloakClaims) =>
   new Hono<{ Variables: { jwtPayload: KeycloakClaims } }>()
     .use(async (c, next) => {
