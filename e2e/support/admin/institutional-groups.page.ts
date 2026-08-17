@@ -1,12 +1,11 @@
 import { expect, type Page } from "@playwright/test";
 
+import { chooseOption } from "./choose-option.ts";
+
 const INTRO = "tell us which institution you belong to";
 
 export function institutionalGroupsPage(page: Page) {
-  const choose = async (field: string, option: string) => {
-    await page.getByRole("combobox", { name: field }).click();
-    await page.getByRole("option", { name: option }).click();
-  };
+  const choose = chooseOption(page);
 
   return {
     expectShown: () => expect(page.getByText(INTRO)).toBeVisible(),

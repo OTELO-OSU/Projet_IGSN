@@ -27,8 +27,10 @@ export function useSetInstitutionalGroups() {
         );
       }
     },
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
+    onSuccess: () => {
+      toast.success(m.settings_institution_saved());
+      return queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
     onError: () => toast.error(m.institutional_groups_error()),
   });
 }

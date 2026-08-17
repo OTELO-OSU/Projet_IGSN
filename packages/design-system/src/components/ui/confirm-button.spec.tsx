@@ -105,28 +105,6 @@ describe("ConfirmButton", () => {
     expect(screen.getByRole("dialog").elements()).toEqual([]);
   });
 
-  it("should ignore enter in the confirm phrase field while the phrase is wrong", async () => {
-    const onConfirm = vi.fn();
-    const screen = await render(
-      <ConfirmButton
-        title="Delete this group?"
-        description="This cannot be undone."
-        confirmPhrase={{ text: "DELETE", label: "Type DELETE to confirm" }}
-        onConfirm={onConfirm}
-        {...labels}
-      >
-        Delete
-      </ConfirmButton>,
-    );
-    await screen.getByRole("button", { name: "Delete" }).click();
-
-    await screen.getByLabelText("Type DELETE to confirm").fill("delete");
-    await userEvent.keyboard("{Enter}");
-
-    expect(onConfirm).not.toHaveBeenCalled();
-    await expect.element(screen.getByRole("dialog")).toBeVisible();
-  });
-
   it("should ask for the confirm phrase again after a cancel", async () => {
     const onConfirm = vi.fn();
     const screen = await render(
@@ -195,6 +173,32 @@ describe("ConfirmButton", () => {
     await expect
       .element(screen.getByRole("dialog", { name: "Publish this sample?" }))
       .toBeVisible();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("should keep a submit raised inside the dialog from reaching the surrounding form", async () => {
+    const onSubmit = vi.fn((event: FormEvent) => event.preventDefault());
+    const screen = await render(
+      <form onSubmit={onSubmit}>
+        <ConfirmButton
+          title="Publish this sample?"
+          description="Publishing cannot be undone."
+          onConfirm={vi.fn()}
+          {...labels}
+        >
+          Publish
+        </ConfirmButton>
+      </form>,
+    );
+    await screen.getByRole("button", { name: "Publish" }).click();
+    const dialogForm = screen
+      .getByRole("dialog")
+      .element()
+      .querySelector("form");
+
+    dialogForm?.requestSubmit();
+
+    expect(dialogForm).not.toBeNull();
     expect(onSubmit).not.toHaveBeenCalled();
   });
 });

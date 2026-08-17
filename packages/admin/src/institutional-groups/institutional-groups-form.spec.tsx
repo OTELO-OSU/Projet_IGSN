@@ -1,6 +1,7 @@
 import { vi } from "vitest";
 import { page } from "vitest/browser";
 
+import { CALLER_GROUPS } from "../../test/caller-groups.ts";
 import { render } from "../../test/render.tsx";
 import { InstitutionalGroupsForm } from "./institutional-groups-form.tsx";
 
@@ -8,7 +9,6 @@ vi.mock("react-oidc-context", () => ({
   useAuth: () => ({ user: { access_token: "tok" } }),
 }));
 
-// The organization list is long enough to scroll, so a pick searches first.
 const pick = async (field: RegExp, search: string, option: RegExp) => {
   await page.getByRole("combobox", { name: field }).click();
   await page.getByPlaceholder(/^Search/).fill(search);
@@ -58,6 +58,22 @@ describe("InstitutionalGroupsForm", () => {
 
     expect(
       page.getByRole("option", { name: /CNRS - INSU/ }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should ask no confirmation while the change misses a laboratory", async () => {
+    await render(<InstitutionalGroupsForm groups={CALLER_GROUPS} />);
+
+    await pick(/Organization/, "Orléans", /Université d'Orléans/);
+    await page.getByRole("button", { name: /save/i }).click();
+
+    await expect
+      .element(page.getByText(/make a selection to continue/i))
+      .toBeVisible();
+    expect(
+      page
+        .getByRole("heading", { name: /change your institution/i })
+        .elements(),
     ).toHaveLength(0);
   });
 

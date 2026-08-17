@@ -88,3 +88,23 @@ websocket, no polling, no cache invalidation added for this.
   super admin) means widening `canPublishSamples`'s and the ownership
   override's inputs; the `user` row already has room (a second boolean or a
   role enum), no schema rework expected.
+
+## Amendment 2026-08-17: a second path back to `pending`
+
+"`pending`... is not reachable again" above no longer holds. Ticket 115 made
+`PUT /admin/currentUser/institutional-groups` repeatable, and a change of the
+organisme / OSU / labo trio now resets the caller's own `status` to
+`pending`, since that trio is what a moderator judged when accepting them. A
+super admin keeps their `accepted` status: they moderate others, not
+themselves. Resubmitting the same trio updates no row, so an identical save
+leaves the status untouched, and a first declaration keeps it too: an account
+with no trio yet was never judged on one.
+
+No admin-facing path back to `pending` was added: `setUserStatusBodySchema`
+still excludes it, so a super admin can only move an account to `accepted`
+or `rejected`. The weekday `listPending` digest (`send-pending-users-digest`)
+already sweeps the `pending` status column, so an account demoted this way
+reaches the same super admins with no extra work. It reports and orders by
+`created_at`, so such an account shows its signup age, not the time since the
+change, and sorts above genuine newcomers; a re-pending timestamp is deferred
+until a moderator complains.

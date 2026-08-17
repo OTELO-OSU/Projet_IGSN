@@ -5,8 +5,22 @@ import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
+import { tokenEmail } from "../tests/provision-user.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
+const callerEmail = tokenEmail("test-token");
+
+const TRIO_A = {
+  institutionalOrganization: "04vfs2w97",
+  institutionalOsu: "OTELo",
+  institutionalLaboratory: "UMR7358",
+};
+
+const TRIO_B = {
+  institutionalOrganization: "02rx3b187",
+  institutionalOsu: "OSUG",
+  institutionalLaboratory: "UMR5275",
+};
 
 describe("currentUser routes", () => {
   pgTest("should return the caller's claims and orcid", async ({ db }) => {
@@ -87,8 +101,6 @@ describe("currentUser routes", () => {
     },
   );
 
-  // Invalid payloads go through the raw request: the typed RPC client would
-  // reject them at compile time.
   pgTest.for([
     { case: "a malformed orcid", body: { orcid: "not-an-orcid" } },
     { case: "a missing orcid field", body: {} },
@@ -170,15 +182,23 @@ describe("currentUser routes", () => {
       },
     },
   ])("should answer 400 on $case", async ({ json }, { db }) => {
+    // Arrange
+    await insertUser(db, callerEmail, { status: "accepted", ...TRIO_A });
+    const client = testClient(createApp(db).app);
     // Act
-    const res = await testClient(createApp(db).app).admin.currentUser[
-      "institutional-groups"
-    ].$put({ json }, { headers: authHeader });
+    const res = await client.admin.currentUser["institutional-groups"].$put(
+      { json },
+      { headers: authHeader },
+    );
     // Assert
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({
       error: "Invalid institutional groups",
     });
+    const me = await client.admin.currentUser.$get(undefined, {
+      headers: authHeader,
+    });
+    expect(await me.json()).toMatchObject({ ...TRIO_A, status: "accepted" });
   });
 
   pgTest(
@@ -201,42 +221,61 @@ describe("currentUser routes", () => {
     },
   );
 
+  pgTest.for([
+    {
+      case: "send the caller back to pending on a group change",
+      user: { status: "accepted" as const, ...TRIO_A },
+      json: TRIO_B,
+      expected: { ...TRIO_B, status: "pending" },
+    },
+    {
+      case: "keep the status when the submitted trio is unchanged",
+      user: { status: "accepted" as const, ...TRIO_A },
+      json: TRIO_A,
+      expected: { ...TRIO_A, status: "accepted" },
+    },
+    {
+      case: "keep the status on a first declaration",
+      user: { status: "accepted" as const },
+      json: TRIO_A,
+      expected: { ...TRIO_A, status: "accepted" },
+    },
+    {
+      case: "keep a super admin accepted on a group change",
+      user: { status: "accepted" as const, superAdmin: true, ...TRIO_A },
+      json: TRIO_B,
+      expected: { ...TRIO_B, status: "accepted" },
+    },
+  ])("should $case", async ({ user, json, expected }, { db }) => {
+    // Arrange
+    await insertUser(db, callerEmail, user);
+    const client = testClient(createApp(db).app);
+    // Act
+    const res = await client.admin.currentUser["institutional-groups"].$put(
+      { json },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(204);
+    const me = await client.admin.currentUser.$get(undefined, {
+      headers: authHeader,
+    });
+    expect(await me.json()).toMatchObject(expected);
+  });
+
   pgTest(
-    "should answer 409 and keep the stored groups on a second set",
+    "should answer 401 to a groups set when Keycloak reports the session revoked",
     async ({ db }) => {
       // Arrange
-      const client = testClient(createApp(db).app);
-      await client.admin.currentUser["institutional-groups"].$put(
-        {
-          json: {
-            institutionalOrganization: "04vfs2w97",
-            institutionalOsu: "OTELo",
-            institutionalLaboratory: "UMR7358",
-          },
-        },
-        { headers: authHeader },
+      vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
+        c.json({ error: "Unauthorized" }, 401),
       );
       // Act
-      const res = await client.admin.currentUser["institutional-groups"].$put(
-        {
-          json: {
-            institutionalOrganization: "02rx3b187",
-            institutionalOsu: "OSUG",
-            institutionalLaboratory: "UMR5275",
-          },
-        },
-        { headers: authHeader },
-      );
+      const res = await testClient(createApp(db).app).admin.currentUser[
+        "institutional-groups"
+      ].$put({ json: TRIO_A }, { headers: authHeader });
       // Assert
-      expect(res.status).toBe(409);
-      const me = await client.admin.currentUser.$get(undefined, {
-        headers: authHeader,
-      });
-      expect(await me.json()).toMatchObject({
-        institutionalOrganization: "04vfs2w97",
-        institutionalOsu: "OTELo",
-        institutionalLaboratory: "UMR7358",
-      });
+      expect(res.status).toBe(401);
     },
   );
 

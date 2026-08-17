@@ -77,7 +77,13 @@ function ConfirmBody({
   const [typed, setTyped] = useState("");
 
   return (
-    <form className="contents" onSubmit={(event) => event.preventDefault()}>
+    <form
+      className="contents"
+      onSubmit={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }}
+    >
       {confirmPhrase ? (
         <div className="grid gap-2">
           <Label htmlFor={inputId}>{confirmPhrase.label}</Label>

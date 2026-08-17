@@ -5,8 +5,6 @@ import { m } from "#/paraglide/messages.js";
 
 import { useSetOrcid } from "./use-set-orcid.ts";
 
-// Empty means "no ORCID": the field clears the stored value rather than
-// erroring, so a typo'd link can be removed.
 const isValid = (orcid: string) =>
   orcid.trim() === "" || orcidSchema.safeParse(orcid).success;
 
@@ -29,6 +27,7 @@ export function OrcidSettingsForm({ orcid }: { orcid: string | null }) {
   return (
     <form
       noValidate
+      aria-label={m.field_orcid()}
       onSubmit={(event) => {
         event.preventDefault();
         void form.handleSubmit();

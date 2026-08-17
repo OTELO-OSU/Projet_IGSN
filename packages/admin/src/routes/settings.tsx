@@ -24,7 +24,7 @@ function SettingsPage() {
           <h2 className="text-xl font-bold">
             {m.settings_institution_title()}
           </h2>
-          <InstitutionalGroupsForm groups={data} disabled />
+          <InstitutionalGroupsForm groups={data} />
           <p className="text-muted-foreground text-sm">
             {m.settings_institution_hint()}
           </p>
