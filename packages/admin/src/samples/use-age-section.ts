@@ -8,8 +8,6 @@ import { useSampleForm } from "#/samples/use-sample-form.ts";
 const isSet = (value: AgeFormValues[keyof AgeFormValues]) =>
   value != null && value !== "";
 
-// The toggle owns every field of the block and the mode owns only its bounds, so
-// a value hidden by either never survives as a saved one (ADR 0015 rule 2).
 export function useAgeSection(
   boundFields: [keyof AgeFormValues, keyof AgeFormValues],
   allFields: (keyof AgeFormValues)[] = boundFields,

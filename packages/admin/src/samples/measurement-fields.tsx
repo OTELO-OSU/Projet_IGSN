@@ -10,8 +10,6 @@ import { m } from "#/paraglide/messages.js";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// Size and mass units are language-neutral symbols (their own label); volume
-// units need the display map for superscripts (see volumeUnitLabel).
 const sizeUnitItems = toComboboxItems(SIZE_UNITS, (value) => value);
 const massUnitItems = toComboboxItems(MASS_UNITS, (value) => value);
 const volumeUnitItems = toComboboxItems(

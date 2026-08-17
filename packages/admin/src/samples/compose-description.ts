@@ -8,10 +8,6 @@ import {
   type MeasurementCandidate,
 } from "#/samples/compose-measurement.ts";
 
-// The Description tab's flat form draft, mirroring compose-location.ts: every
-// field holds its typed value or nullish when unset. The store always carries
-// the canonical range; the single-date/range mode is component state of
-// CollectionDatesField (single mode mirrors one input into both ends).
 export type DescriptionDraft = {
   collectionDateStart: string | undefined;
   collectionDateEnd: string | undefined;
@@ -30,12 +26,6 @@ export type DescriptionDraft = {
   volumeUnit: VolumeUnit | null | undefined;
 };
 
-// A description as composed from the draft, before descriptionSchema judges
-// it: the Description shape with possibly missing leaf values. Compose does
-// not decide completeness; the schema (via sampleDraftSchema) rejects a
-// half-filled pair on the offending field. Compose only excludes values hidden
-// behind the UI state (an explanation without oriented = yes), since an error
-// on a hidden field could never be fixed.
 type DescriptionCandidate = {
   collectionDate:
     | { start: string | undefined; end: string | undefined }
@@ -50,8 +40,6 @@ type DescriptionCandidate = {
   volume: MeasurementCandidate<VolumeUnit> | undefined;
 };
 
-// A single collection date arrives as the mirrored degenerate range
-// start === end (ADR 0015), so compose sees one shape for both modes.
 function composeCollectionDate(draft: DescriptionDraft) {
   return draft.collectionDateStart === undefined &&
     draft.collectionDateEnd === undefined
@@ -74,9 +62,6 @@ export function composeDescription(
   const description = {
     collectionDate: composeCollectionDate(draft),
     oriented,
-    // The explanation field is not rendered unless oriented is yes, so a value
-    // lingering after switching away is an unreachable leftover, not entered
-    // data.
     orientationExplanation: isOrientedYes(draft.oriented)
       ? draft.orientationExplanation?.trim() || undefined
       : undefined,
@@ -87,8 +72,6 @@ export function composeDescription(
     mass: composeMeasurement(draft.massValue, draft.massUnit),
     volume: composeMeasurement(draft.volumeValue, draft.volumeUnit),
   };
-  // All parts unset means no description at all; undefined values are dropped
-  // by JSON on the wire, so the stored shape stays minimal.
   return Object.values(description).some((part) => part !== undefined)
     ? description
     : null;

@@ -16,21 +16,15 @@ export default defineConfig({
     }),
   ],
   resolve: { tsconfigPaths: true },
-  // Serve the MSW worker script in tests only; the app build keeps public/.
   publicDir: path.resolve(__dirname, "test/public"),
   test: {
     browser: {
       provider: playwright(),
       enabled: true,
-      // Chromium only: headless Firefox drops trusted input events and stalls
-      // pages under parallel load, making interaction tests flaky.
       instances: [{ browser: "chromium" }],
     },
     globals: true,
     include: ["src/**/*.spec.{ts,tsx}"],
-    // Browser-mode interaction tests need headroom under full-suite parallel
-    // load (vitest default 5000); radix portals can additionally miss a click
-    // entirely there, and a retry on a fresh page recovers it.
     retry: 2,
     maxWorkers: 2,
     maxConcurrency: 4,

@@ -13,9 +13,6 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* Radix's scroll lock compensates for a scrollbar the stable gutter already
-   reserves, shifting the page by its width on every dialog. Outrank its own
-   `body[data-scroll-locked]` rule, injected later in the head. */
 html body[data-scroll-locked] {
   margin-right: 0 !important;
 }

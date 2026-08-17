@@ -3,9 +3,6 @@ import type { PublishBlocker } from "@projet-igsn/domain/sample/publication/samp
 import { m } from "#/paraglide/messages.js";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
-// Typed map from publish-blocker code to its translation (i18n rule, ADR 0005):
-// adding a PublishBlocker without its message fails to compile here, so the
-// publish tooltip always explains every constraint.
 const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   type_missing: m.publish_blocked_type_missing,
   type_incomplete: m.publish_blocked_type_incomplete,

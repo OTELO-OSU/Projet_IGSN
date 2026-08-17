@@ -62,8 +62,6 @@ const readings = [
   },
 ];
 
-// "No specific condition" contradicts every controlled condition, so whichever
-// side is checked drops the other from the list.
 const storageConditionItems = (selected: readonly string[]) => {
   const none = selected.includes("no_specific_condition");
   const controlled = selected.some(
@@ -125,8 +123,6 @@ export function SampleConditionFields() {
                       <field.NumberField label={reading.valueLabel()} />
                     )}
                   </form.AppField>
-                  {/* Nested, so a value left behind by a cleared category takes
-                      its unit with it: the whole reading is dropped on submit. */}
                   <form.Subscribe
                     selector={(state) =>
                       hasMeasurementValue(

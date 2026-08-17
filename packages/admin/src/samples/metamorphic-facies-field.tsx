@@ -6,9 +6,6 @@ import { m } from "#/paraglide/messages.js";
 import { metamorphicFaciesLabel } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// Metamorphic facies selector: shown only when the chosen material is
-// metamorphic (the vocabulary that applies then), which is exactly when the
-// facies is required to publish, hence the static "*" marker.
 export function MetamorphicFaciesField() {
   const form = useSampleForm();
   return (

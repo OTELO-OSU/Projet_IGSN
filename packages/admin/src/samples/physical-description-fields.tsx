@@ -16,9 +16,6 @@ export function PhysicalDescriptionFields() {
         <SampleDescriptionFields />
       </FormSection>
 
-      {/* Synthetic samples must not carry a location (ADR 0014), and an
-          undetermined material cannot be asked about one yet, so both cases
-          hide it. */}
       <form.Subscribe
         selector={(state) => {
           const requirement = locationRequirement(

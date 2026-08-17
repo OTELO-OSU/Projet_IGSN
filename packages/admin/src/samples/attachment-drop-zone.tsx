@@ -8,9 +8,6 @@ type AttachmentDropZoneProps = {
   onFiles: (files: File[]) => void;
 };
 
-// Drop several files at once, or pick them through the (visually hidden but
-// labelled) file input the Browse button drives — the keyboard and
-// screen-reader path.
 export function AttachmentDropZone({ onFiles }: AttachmentDropZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -56,7 +53,6 @@ export function AttachmentDropZone({ onFiles }: AttachmentDropZoneProps) {
         tabIndex={-1}
         onChange={(event) => {
           pick(event.target.files);
-          // Reset so picking the same file again re-triggers the change.
           event.target.value = "";
         }}
       />

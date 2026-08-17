@@ -25,8 +25,6 @@ export function useSetUserStatus(id: string) {
     },
     onSuccess: async () => {
       toast.success(m.user_status_success());
-      // Never ["currentUser"]: the moderator's own identity is session-scoped,
-      // and a moderated user only sees their new status on their next connection.
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["users"] }),
         queryClient.invalidateQueries({ queryKey: ["user", id] }),

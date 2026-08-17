@@ -1,7 +1,5 @@
 import { ForbiddenError, parseSampleResponse } from "./use-sample.ts";
 
-// The 200 body is parsed by the shared domain schema, covered by its own specs;
-// what matters here is which failure the page is told about.
 describe("parseSampleResponse", () => {
   it("should return null when the sample does not exist", async () => {
     const res = new Response(null, { status: 404 });

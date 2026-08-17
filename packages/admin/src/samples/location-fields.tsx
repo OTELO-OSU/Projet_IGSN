@@ -18,7 +18,6 @@ const typeItems = LOCATION_TYPES.map((value) => ({
 const isPositionRequired = (materialPath: string[]): boolean =>
   locationRequirement(composeHierarchyValue(materialPath)) === "required";
 
-// Every part is optional and independent (ADR 0014).
 export function LocationFields() {
   const form = useSampleForm();
   return (

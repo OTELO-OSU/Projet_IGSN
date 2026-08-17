@@ -2,12 +2,6 @@ import type { Age } from "@projet-igsn/domain/sample/age/model";
 
 import { numericUnitSchema } from "@projet-igsn/domain/sample/age/numeric-unit";
 
-// The Age block held in the form store, mirroring the domain `Age` shape so the
-// fields cast their own values (NumberField stores numbers, ComboboxField/
-// TextField store undefined when cleared). Nullish is tolerated everywhere so
-// an empty field can be null (default) or undefined (just cleared). A non-range
-// value stores the same number/code in both bounds (min == max). Mapped to/from
-// the domain Age here so the mapping is pure and unit-testable.
 export type AgeFormValues = {
   numericAgeMin: number | null | undefined;
   numericAgeMax: number | null | undefined;
@@ -28,9 +22,6 @@ export const EMPTY_AGE_FORM_VALUES: AgeFormValues = {
   geologicalUnit: null,
 };
 
-// Persisted age -> form values, for edit prefill. Geological bounds are rank
-// integers in the domain but strings in the string-keyed combobox, so stringify
-// them; the rest of the domain Age shape fits the form store.
 export function ageFormValues(age: Age | null | undefined): AgeFormValues {
   if (age == null) {
     return EMPTY_AGE_FORM_VALUES;
@@ -42,22 +33,12 @@ export function ageFormValues(age: Age | null | undefined): AgeFormValues {
   };
 }
 
-// The unit is only rendered once a bound holds a value, and the years reference
-// only once that unit is annum. The form gates and toAgeInput read these two
-// predicates, so a field is hidden and excluded on the very same condition and
-// the two cannot drift apart (ADR 0015 rule 2).
 export const hasNumericAgeValue = (values: AgeFormValues): boolean =>
   values.numericAgeMin != null || values.numericAgeMax != null;
 
 export const numericAgeUnitOf = (values: AgeFormValues): string | null =>
   hasNumericAgeValue(values) ? (values.numericAgeUnit ?? null) : null;
 
-// Form values -> domain age input, or null when the whole block is empty (so an
-// untouched Age tab stores no age). Fields hold numbers/strings/undefined;
-// normalize nullish to null, parse the string-keyed geological bounds back to
-// their rank integer, and trim free-text to a non-empty string (like sibling
-// free-text fields). The result is validated by createSampleSchema before it
-// leaves the form.
 export function toAgeInput(values: AgeFormValues): Age | null {
   const numericAgeUnit = numericAgeUnitOf(values);
   const age = {

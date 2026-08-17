@@ -38,7 +38,6 @@ describe("SampleDescriptionFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
-    // Single date is the default mode: one date input, no range bounds.
     await expect
       .element(screen.getByRole("group", { name: "Collection date *" }))
       .toBeVisible();
@@ -138,7 +137,6 @@ describe("SampleDescriptionFields", () => {
     await screen.getByLabelText("Start date").fill("2026-01-05");
     await screen.getByLabelText("End date").fill("2026-01-05");
 
-    // Both bounds carry the error: each field validates the pair.
     await expect
       .element(screen.getByRole("alert").first())
       .toHaveTextContent(/use the single date mode/i);
@@ -148,7 +146,6 @@ describe("SampleDescriptionFields", () => {
     await screen.getByRole("button", { name: "Create" }).click();
     expect(onSubmit).not.toHaveBeenCalled();
 
-    // Following the advice clears the error and submits the degenerate range.
     await screen.getByRole("switch", { name: "Date range" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -180,7 +177,6 @@ describe("SampleDescriptionFields", () => {
     await screen.getByRole("button", { name: "Create" }).click();
     expect(onSubmit).not.toHaveBeenCalled();
 
-    // Fixing either bound clears the error on both and the range submits.
     await screen.getByLabelText("End date").fill("2026-03-01");
     await expect.element(screen.getByRole("alert")).not.toBeInTheDocument();
     await screen.getByRole("button", { name: "Create" }).click();
@@ -235,13 +231,11 @@ describe("SampleDescriptionFields", () => {
     await screen.getByRole("option", { name: "cm³" }).click();
     await screen.getByLabelText("Volume", { exact: true }).fill("");
 
-    // By label, so the assertion holds whether or not the required marker is on.
     await expect
       .element(screen.getByLabelText("Volume unit"))
       .not.toBeInTheDocument();
     await expect.element(screen.getByRole("alert")).not.toBeInTheDocument();
 
-    // ADR 0015 rule 1: the selection is still there when the value comes back.
     await screen.getByLabelText("Volume", { exact: true }).fill("250");
     await expect
       .element(screen.getByRole("combobox", { name: "Volume unit *" }))
@@ -280,7 +274,6 @@ describe("SampleDescriptionFields", () => {
       .element(screen.getByLabelText("Orientation explanation"))
       .not.toBeInTheDocument();
 
-    // ADR 0015 rule 1: the text is still there when the answer comes back.
     await screen.getByRole("combobox", { name: "Oriented sample" }).click();
     await screen.getByRole("option", { name: "Yes" }).click();
     await expect
@@ -289,9 +282,6 @@ describe("SampleDescriptionFields", () => {
   });
 
   it("should clear an error left on a field whose condition stops holding", async () => {
-    // The form-level validator rebuilds the whole field-error map on every run,
-    // so an error on a field that no longer renders clears itself and cannot
-    // block the save from a control the user can no longer reach.
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
@@ -322,14 +312,12 @@ describe("SampleDescriptionFields", () => {
     await screen.getByRole("option", { name: "No" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
-    // ADR 0015 rule 2: the hidden explanation is not part of the save.
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({ description: { oriented: false } }),
       ),
     );
 
-    // Rule 3: the form resets on what was saved, so the leftover is gone.
     await screen.getByRole("combobox", { name: "Oriented sample" }).click();
     await screen.getByRole("option", { name: "Yes" }).click();
     await expect
@@ -349,7 +337,6 @@ describe("SampleDescriptionFields", () => {
       .element(screen.getByText("Select a unit for the entered value."))
       .toBeVisible();
 
-    // Selecting the unit clears the error and the measurement submits.
     await screen.getByRole("combobox", { name: "Mass unit" }).click();
     await screen.getByRole("option", { name: "kg", exact: true }).click();
     await screen.getByRole("button", { name: "Create" }).click();
@@ -402,7 +389,6 @@ describe("SampleDescriptionFields", () => {
     await screen.getByRole("option", { name: "kg", exact: true }).click();
     await screen.getByLabelText("Volume", { exact: true }).fill("250");
     await screen.getByRole("combobox", { name: "Volume unit" }).click();
-    // Volume options carry the display symbol, not the stored code.
     await screen.getByRole("option", { name: "cm³", exact: true }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 

@@ -29,8 +29,6 @@ export function SampleLinksFields() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  // Label height (text-sm leading-none) + the field's gap-2:
-                  // lines the icon up with the input, error text or not.
                   className="mt-[22px]"
                   disabled={isDisabled}
                   aria-label={m.action_remove_link({ index: index + 1 })}

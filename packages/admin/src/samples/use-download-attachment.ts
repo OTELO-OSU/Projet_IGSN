@@ -7,8 +7,6 @@ import { m } from "#/paraglide/messages.js";
 import { saveBlob } from "#/samples/save-blob.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-// A plain anchor cannot carry the bearer token, so the download fetches the
-// blob through the authed client and hands it to the browser as an object URL.
 export function useDownloadAttachment(sampleId: string) {
   const apiFetch = useApiClient();
   return async (attachment: SampleAttachment): Promise<void> => {

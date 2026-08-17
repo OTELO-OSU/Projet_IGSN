@@ -30,9 +30,8 @@ type UploadBatchItem = {
 
 const uploadResponseSchema = z.object({ data: sampleAttachmentSchema });
 
-// XHR instead of the shared fetch client: fetch cannot report request-body
-// progress, and a 100 MB video deserves a real progress bar. ponytail: no
-// silent-renewal retry on 401 here; the upload just fails in the recap.
+// ponytail: no silent-renewal retry on 401 here; the upload just fails in the
+// recap.
 function xhrUpload(
   url: string,
   token: string | undefined,
@@ -67,16 +66,6 @@ function xhrUpload(
   });
 }
 
-// Stages every attachment change locally (files to upload with their
-// description, saved attachments to delete, edited descriptions) so
-// cancelling the form leaves the server untouched. `commit` (called on form
-// submit, before the sample save) deletes the marked files, then uploads the
-// staged ones (that order frees a slot for a swap at the limit) in parallel behind
-// a progress dialog whose recap stays until the user closes it, then returns
-// the attachments payload for the sample update: every attachment to keep,
-// with its description. The API deletes whatever is not listed. A failed
-// upload stays staged, flagged for a retry on the next submit, and never
-// blocks saving the rest.
 export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const token = useAuth().user?.access_token;
   const apiFetch = useApiClient();
@@ -87,15 +76,9 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const [batch, setBatch] = useState<UploadBatchItem[]>([]);
   const [isDialogOpen, setDialogOpen] = useState(false);
 
-  // What the sample would carry once saved: a staged deletion frees a slot, a
-  // staged file takes one. This is the count the upload limit applies to.
   const keptCount = savedCount - deletions.length + pending.length;
 
   const addFiles = (files: File[]) => {
-    // The shared domain schema fronts the API's own check; any file type
-    // passes, only the size cap can reject. Checked at pick time so the
-    // user hears about it before submitting. Staging past the upload limit is
-    // allowed; the form's save noops until the count fits.
     const accepted = files.filter((file) => {
       const isValid = uploadSampleAttachmentSchema.safeParse({ file }).success;
       if (!isValid) toast.error(m.attachment_too_large({ name: file.name }));
@@ -168,21 +151,14 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
     );
     const uploaded = results.filter((result) => result !== null);
     if (uploaded.length > 0) {
-      // Keep the uploads visible even if the sample save then fails.
       await queryClient.invalidateQueries({ queryKey: ["samples"] });
     }
-    // The dialog stays open: the user confirms the recap.
     return uploaded;
   };
 
   const commit = async (
     saved: SampleAttachment[],
   ): Promise<UpdateSampleAttachment[]> => {
-    // Deletions land first, or the slots they free are still taken when the
-    // uploads reach the api and a swap at the limit is refused. The sample
-    // update's reconcile stays the source of truth for what remains, so a
-    // failed delete (or one already gone) is harmless and must not block the
-    // save.
     await Promise.all(
       deletions.map((id) =>
         apiFetch(
@@ -193,10 +169,6 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
         ).catch(() => null),
       ),
     );
-    // Consumed: the rows are gone and the payload below (built from the local
-    // `deletions`, not the state) already excludes them. Keeping the ids would
-    // discount slots that are free once the page refetches, and re-delete them
-    // on every later save.
     setDeletions([]);
     const uploaded = await uploadPending();
     return [

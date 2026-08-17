@@ -1,5 +1,3 @@
-// The upload hook talks XHR (fetch has no upload progress); this fake records
-// each instance and lets a test drive progress and completion by hand.
 export class FakeXhr {
   static instances: FakeXhr[] = [];
   upload: {
@@ -24,9 +22,6 @@ export class FakeXhr {
     this.body = body;
     FakeXhr.instances.push(this);
   }
-  // On success the upload hook parses the created attachment from the
-  // response, so a finished upload needs a valid body; the default builds one
-  // from the sent form data.
   finish(status = 201, responseText?: string) {
     this.upload.onprogress?.({ lengthComputable: true, loaded: 1, total: 2 });
     this.status = status;

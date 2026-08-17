@@ -51,8 +51,6 @@ describe("sampleDraftSchema", () => {
   });
 
   it("should drop a lingering location when the material forbids one", () => {
-    // The location tab hides for synthetic materials, so a location entered
-    // before the switch must be cleared, not block the save invisibly.
     const result = sampleDraftSchema.parse({
       ...draft,
       materialPath: toHierarchyPath("synthetic_rock_mineral"),
@@ -71,9 +69,6 @@ describe("sampleDraftSchema", () => {
   });
 
   it("should drop a lingering location when the material no longer determines its requirement", () => {
-    // The location section hides while the requirement is undetermined (the
-    // material was cleared), so a location entered before must be cleared,
-    // not block the save invisibly.
     const result = sampleDraftSchema.parse({
       ...draft,
       materialPath: [],

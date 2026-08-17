@@ -18,8 +18,6 @@ const unsupportedProviderSchema = z.object({
   reason: z.literal(UNSUPPORTED_IDENTITY_PROVIDER),
 });
 
-// A status change takes effect on the user's next connection (PO decision), so
-// the app must not flip a screen out from under them mid-session.
 export function useCurrentUser() {
   const token = useAuth().user?.access_token;
   const apiFetch = useApiClient();

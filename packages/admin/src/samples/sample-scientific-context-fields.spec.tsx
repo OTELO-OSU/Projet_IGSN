@@ -42,7 +42,6 @@ const pickProvenance = async (
   await screen.getByRole("option", { name: option }).click();
 };
 
-// Assumes the organization combobox is already open.
 const pickOrganization = async (
   screen: Awaited<ReturnType<typeof renderScientificContextSection>>,
   ror: string,

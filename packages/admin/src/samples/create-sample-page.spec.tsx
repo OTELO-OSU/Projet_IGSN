@@ -29,8 +29,6 @@ function fakeApi(failWrites = false) {
   let sample: Record<string, unknown> | null = null;
   const lockCalls: string[] = [];
   worker.use(
-    // The create page must never call these; a 500 would show up as a failure
-    // if it did.
     http.put("*/samples/:id/lock", () => {
       lockCalls.push("PUT");
       return new HttpResponse(null, { status: 500 });
@@ -102,9 +100,6 @@ async function renderCreatePage(failWrites = false) {
   return Object.assign(screen, { lockCalls });
 }
 
-// Tests run without the app CSS, so the whole page is one vertical flow; the
-// default 414x896 viewport leaves deep combobox options outside the viewport,
-// where Playwright cannot click them.
 beforeAll(() => page.viewport(1280, 1600));
 
 describe("CreateSamplePage", () => {

@@ -99,8 +99,6 @@ describe("NumericAgeFormSection", () => {
       .element(page.getByRole("combobox", { name: "Units" }))
       .not.toBeInTheDocument();
 
-    // ADR 0015 rule 1: the selection is still there when the value comes back;
-    // toAgeInput drops it from a save made without a value.
     await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
     await expect
       .element(page.getByRole("combobox", { name: "Units *" }))
@@ -121,8 +119,6 @@ describe("NumericAgeFormSection", () => {
     await expect
       .element(page.getByRole("combobox", { name: "Units" }))
       .not.toBeInTheDocument();
-    // The reference hangs on the unit, which hangs on the value: toAgeInput
-    // drops both without a value, so both must leave the form too.
     await expect
       .element(page.getByRole("combobox", { name: "Reference" }))
       .not.toBeInTheDocument();

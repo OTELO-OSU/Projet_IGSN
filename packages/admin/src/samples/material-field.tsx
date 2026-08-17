@@ -22,10 +22,6 @@ export function MaterialField() {
       placeholder={m.material_placeholder()}
       searchPlaceholder={m.material_search_placeholder()}
       emptyText={m.material_empty()}
-      // Texture and metamorphic facies depend on the material branch, so drop
-      // each only when it no longer applies to the new path (branch switch or
-      // leaving igneous/metamorphic), not when refining deeper within the same
-      // branch.
       onChange={() => {
         const { materialPath, texture, metamorphicFacies } = form.state.values;
         const material = composeHierarchyValue(materialPath ?? []);

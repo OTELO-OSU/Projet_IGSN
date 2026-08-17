@@ -1,4 +1,3 @@
-// Hands a blob to the browser as a named download.
 export function saveBlob(blob: Blob, name: string): void {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");

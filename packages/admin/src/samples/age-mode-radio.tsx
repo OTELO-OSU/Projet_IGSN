@@ -8,8 +8,6 @@ import { m } from "#/paraglide/messages.js";
 
 export type AgeMode = "fixed" | "range";
 
-// `label` names the group so assistive tech can tell the two blocks'
-// otherwise identically-labelled radios apart.
 export function AgeModeRadio({
   mode,
   onChange,

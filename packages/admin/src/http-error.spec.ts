@@ -21,7 +21,6 @@ describe("HttpError.fromResponse", () => {
     },
   );
 
-  // Absent, not 1s: an error with no header must keep the exponential backoff.
   it("should carry no delay when the response has no Retry-After", () => {
     expect(responded(503).retryAfterMs).toBeUndefined();
   });
@@ -41,7 +40,6 @@ describe("shouldRetry", () => {
     expect(shouldRetry(1, responded(429, "60"))).toBe(false);
   });
 
-  // A failed fetch throws a plain Error, with no status to judge it by.
   it("should retry a network failure", () => {
     expect(shouldRetry(0, new Error("fetch failed"))).toBe(true);
   });

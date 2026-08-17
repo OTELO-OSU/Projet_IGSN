@@ -6,8 +6,6 @@ import { m } from "#/paraglide/messages.js";
 import { geologicalAgeLabel } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// The combobox is string-keyed; the domain value is the rank integer, so the
-// item value is its string form (parsed back in toAgeInput).
 const geologicalAgeItems = GEOLOGICAL_AGES.map((age) => ({
   value: age.toString(),
   label: geologicalAgeLabel(age),
