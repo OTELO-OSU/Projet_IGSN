@@ -38,6 +38,7 @@ const base: Sample = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: null,
+  manualGroups: [],
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,

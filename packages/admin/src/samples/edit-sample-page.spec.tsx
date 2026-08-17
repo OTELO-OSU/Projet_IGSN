@@ -49,6 +49,16 @@ const PIERRE: LockHolder = {
   firstname: "Pierre",
 };
 
+const BASALT_TEAM = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000a1",
+  name: "Basalt team",
+};
+const FOSSIL_TEAM = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000a2",
+  name: "Fossil team",
+};
+const MANUAL_GROUPS = [BASALT_TEAM, FOSSIL_TEAM];
+
 const ATTACHMENT: SampleAttachment = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c33cc",
   name: "data.csv",
@@ -119,6 +129,7 @@ function fakeApi(
     economicDepositName: null,
     economicDepositDescription: null,
     ...economic,
+    manualGroups: [FOSSIL_TEAM],
     igsn: published ? IGSN : null,
     published,
     createdAt: "2026-06-01T00:00:00.000Z",
@@ -181,13 +192,21 @@ function fakeApi(
       };
       sample = { ...sample, ...body };
       calls.push(`PUT ${sample.name}`);
-      return HttpResponse.json({ data: sample, role });
+      return HttpResponse.json({
+        data: sample,
+        role,
+        manualGroupOptions: MANUAL_GROUPS,
+      });
     }),
     http.post("*/samples/:id/publish", () => {
       if (fail === "publish") return new HttpResponse(null, { status: 500 });
       sample = { ...sample, published: true, igsn: IGSN };
       calls.push("PUBLISH");
-      return HttpResponse.json({ data: sample, role });
+      return HttpResponse.json({
+        data: sample,
+        role,
+        manualGroupOptions: MANUAL_GROUPS,
+      });
     }),
     http.get("*/samples", () => {
       sampleFetched = true;
@@ -198,7 +217,11 @@ function fakeApi(
     }),
     http.get("*/samples/:id", () => {
       sampleFetched = true;
-      return HttpResponse.json({ data: sample, role });
+      return HttpResponse.json({
+        data: sample,
+        role,
+        manualGroupOptions: MANUAL_GROUPS,
+      });
     }),
     http.delete(
       "*/samples/:id/attachments/:attachmentId",
@@ -318,6 +341,20 @@ describe("EditSamplePage", () => {
     expect(
       screen.getByRole("button", { name: "Save & Publish" }).elements(),
     ).toHaveLength(0);
+  });
+
+  it("should show the attached manual groups checked but frozen to a contributor", async () => {
+    const { screen } = await renderEditPageAsContributor(false);
+
+    const attached = screen.getByRole("checkbox", { name: "Fossil team" });
+    await expect.element(attached).toBeChecked();
+    await expect.element(attached).toBeDisabled();
+    await expect
+      .element(screen.getByRole("checkbox", { name: "Basalt team" }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByText("You cannot change these groups."))
+      .toBeVisible();
   });
 
   it("should offer Save & Publish to an editor on a draft", async () => {

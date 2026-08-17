@@ -1,3 +1,4 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { Selectable } from "kysely";
 
 import { formatDate } from "@projet-igsn/domain/date/format-date";
@@ -125,6 +126,7 @@ export function toSample(
   row: Selectable<DB["sample"]>,
   links: Selectable<DB["sample_link"]>[] = [],
   attachments: Selectable<DB["sample_attachment"]>[] = [],
+  manualGroups: ManualGroup[] = [],
 ): Sample {
   const ageColumns = [
     row.numeric_age_min,
@@ -182,6 +184,7 @@ export function toSample(
     economicDepositName: row.economic_deposit_name,
     economicDepositDescription: row.economic_deposit_description,
     igsn: row.igsn,
+    manualGroups,
     institutionalOrganization: row.institutional_organization,
     institutionalOsu: row.institutional_osu,
     institutionalLaboratory: row.institutional_laboratory,

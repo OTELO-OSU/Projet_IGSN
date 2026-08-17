@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { igsnSchema } from "../igsn/model.ts";
 import { institutionalGroupsFields } from "../institutional-group/model.ts";
+import { manualGroupSchema } from "../manual-group/model.ts";
 import { ageSchema } from "./age/model.ts";
 import { updateSampleAttachmentSchema } from "./attachment/attachment-validator.ts";
 import { sampleAttachmentSchema } from "./attachment/model.ts";
@@ -54,6 +55,7 @@ export const sampleSchema = z.object({
   economicDepositName: nameSchema.nullable(),
   economicDepositDescription: nameSchema.nullable(),
   igsn: igsnSchema.nullable(),
+  manualGroups: z.array(manualGroupSchema).default([]),
   // ponytail: snapshot of the owner's groups at creation, never edited afterwards, so it stays out of createSampleSchema
   ...institutionalGroupsFields,
   published: z.boolean(),
@@ -90,6 +92,7 @@ export const createSampleSchema = z
     economicResourceTypePrecision: nameSchema.nullish(),
     economicDepositName: nameSchema.nullish(),
     economicDepositDescription: nameSchema.nullish(),
+    manualGroupIds: z.array(z.uuid()).optional(),
   })
   .superRefine((value, ctx) => {
     if (

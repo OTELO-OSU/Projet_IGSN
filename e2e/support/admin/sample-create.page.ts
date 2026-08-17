@@ -1,5 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
+import { expectNoManualGroupOffered } from "./manual-groups-field.ts";
+
 export function sampleCreatePage(page: Page) {
   return {
     expectVisible: () =>
@@ -11,6 +13,9 @@ export function sampleCreatePage(page: Page) {
       await page.getByRole("combobox", { name: /nature/i }).click();
       await page.getByRole("option", { name: label }).click();
     },
+    checkManualGroup: (name: string) =>
+      page.getByRole("checkbox", { name }).check(),
+    expectNoManualGroupOffered: () => expectNoManualGroupOffered(page),
     submit: () => page.getByRole("button", { name: "Create" }).click(),
     expectNameRequired: () =>
       expect(page.getByText("Name is required")).toBeVisible(),

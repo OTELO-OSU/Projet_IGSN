@@ -22,5 +22,8 @@ export async function getSample(
     .where("sample.id", "=", id)
     .executeTakeFirst();
   if (!row) return null;
-  return { sample: toSample(row, row.links, row.attachments), role: row.role };
+  return {
+    sample: toSample(row, row.links, row.attachments, row.manualGroups),
+    role: row.role,
+  };
 }

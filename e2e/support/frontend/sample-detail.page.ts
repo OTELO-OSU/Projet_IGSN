@@ -13,7 +13,6 @@ export function sampleDetailPage(page: Page) {
       await expect(page.getByText("Nature")).toBeVisible();
       await expect(page.getByText(label)).toBeVisible();
     },
-    // A DOI link opens in a new tab, its description alongside.
     expectDoiLink: async (url: string, description: string) => {
       const link = page.getByRole("link", { name: url });
       await expect(link).toBeVisible();
@@ -21,6 +20,10 @@ export function sampleDetailPage(page: Page) {
       await expect(link).toHaveAttribute("target", "_blank");
       await expect(page.getByText(description)).toBeVisible();
     },
+    expectManualGroup: (name: string) =>
+      expect(
+        page.getByRole("region", { name: "Groups" }).getByText(name),
+      ).toBeVisible(),
     expectAttachment: (name: string) =>
       expect(page.getByText(name, { exact: true })).toBeVisible(),
     attachmentDownloadHref: (name: string) =>

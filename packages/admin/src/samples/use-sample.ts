@@ -21,8 +21,22 @@ export async function parseSampleResponse(res: Response) {
   if (!res.ok) {
     throw HttpError.fromResponse(res, `Failed to load sample (${res.status})`);
   }
-  const { data, role } = adminSampleResponseSchema.parse(await res.json());
-  return { ...data, role };
+  const { data, role, manualGroupOptions } = adminSampleResponseSchema.parse(
+    await res.json(),
+  );
+  return {
+    ...data,
+    role,
+    // A group the owner has left is no longer attachable but stays attached
+    // until they detach it, so the form has to keep offering it.
+    manualGroupOptions: [
+      ...manualGroupOptions,
+      ...data.manualGroups.filter(
+        (group) => !manualGroupOptions.some((option) => option.id === group.id),
+      ),
+    ],
+    manualGroupIds: data.manualGroups.map((group) => group.id),
+  };
 }
 
 export function sampleQueryOptions(

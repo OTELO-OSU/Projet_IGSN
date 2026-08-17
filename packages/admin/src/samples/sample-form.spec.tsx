@@ -49,6 +49,16 @@ async function fillElevation(screen: Screen) {
   await screen.getByRole("option", { name: "Mean sea level" }).click();
 }
 
+const BASALT_TEAM = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000a1",
+  name: "Basalt team",
+};
+const FOSSIL_TEAM = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000a2",
+  name: "Fossil team",
+};
+const MANUAL_GROUPS = [BASALT_TEAM, FOSSIL_TEAM];
+
 describe("SampleForm", () => {
   it("should reject a blank name and not submit", async () => {
     const onSubmit = vi.fn();
@@ -75,6 +85,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -113,6 +124,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "core.section",
@@ -141,6 +153,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "dredge",
@@ -188,6 +201,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "core.half_round",
@@ -216,6 +230,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "core",
@@ -248,6 +263,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "dredge",
@@ -307,6 +323,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalt",
         nature: "thin_section",
         type: null,
@@ -361,6 +378,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Granite",
         nature: "thin_section",
         type: null,
@@ -417,6 +435,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Granite",
         nature: "thin_section",
         type: null,
@@ -472,6 +491,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Rock",
         nature: "thin_section",
         type: null,
@@ -524,6 +544,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Gneiss",
         nature: "thin_section",
         type: null,
@@ -591,6 +612,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Meta-granite",
         nature: "thin_section",
         type: null,
@@ -642,6 +664,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Rock",
         nature: "thin_section",
         type: null,
@@ -670,6 +693,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -706,6 +730,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -769,6 +794,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -797,6 +823,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -833,6 +860,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
@@ -1174,6 +1202,7 @@ describe("SampleForm", () => {
 
     await vi.waitFor(() =>
       expect(onPublish).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "dredge",
@@ -2158,6 +2187,30 @@ describe("SampleForm", () => {
       .element(screen.getByRole("combobox", { name: "Navigation type" }))
       .toBeVisible();
   });
+
+  it("should offer a checkbox per manual group, checking the attached ones", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        manualGroupOptions={MANUAL_GROUPS}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: null,
+          material: null,
+          manualGroupIds: [FOSSIL_TEAM.id],
+        }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("checkbox", { name: "Basalt team" }))
+      .not.toBeChecked();
+    await expect
+      .element(screen.getByRole("checkbox", { name: "Fossil team" }))
+      .toBeChecked();
+  });
 });
 
 const publishedFixture: CreateSample = {
@@ -2585,6 +2638,33 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("combobox", { name: /availability/i }))
       .toBeEnabled();
+  });
+
+  it("should freeze the manual groups on a published sample", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          published
+          manualGroupOptions={MANUAL_GROUPS}
+          defaultValues={{
+            ...publishedFixture,
+            manualGroupIds: [BASALT_TEAM.id],
+          }}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await expect
+      .element(screen.getByRole("checkbox", { name: "Basalt team" }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("checkbox", { name: "Fossil team" }))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByText("You cannot change these groups."))
+      .toBeVisible();
   });
 
   it("keeps the collector name editable on a published historical specimen", async () => {

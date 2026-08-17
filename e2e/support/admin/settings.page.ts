@@ -40,6 +40,31 @@ export function settingsPage(page: Page) {
       expect(
         page.getByRole("listitem").filter({ hasText: name }),
       ).toBeVisible(),
+    expectNoManualGroup: (name: string) =>
+      expect(page.getByRole("listitem").filter({ hasText: name })).toHaveCount(
+        0,
+      ),
+    expectManualGroupLeaveLocked: async (name: string) => {
+      await expect(
+        page.getByRole("button", { name: `Leave ${name}` }),
+      ).toBeDisabled();
+      await expect(
+        page
+          .getByRole("listitem")
+          .filter({ hasText: name })
+          .getByText(
+            "You cannot leave this group while you own a published sample attached to it.",
+          ),
+      ).toBeVisible();
+    },
+    leaveManualGroup: async (name: string) => {
+      const dialog = page.getByRole("dialog", {
+        name: "Leave this manual group?",
+      });
+      await page.getByRole("button", { name: `Leave ${name}` }).click();
+      await dialog.getByRole("button", { name: "Leave", exact: true }).click();
+      await expect(dialog).toBeHidden();
+    },
     expectNoManualGroupEditControl: async () => {
       await expect(
         page.getByRole("textbox", { name: "Group name" }),

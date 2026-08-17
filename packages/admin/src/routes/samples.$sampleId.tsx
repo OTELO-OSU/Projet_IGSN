@@ -112,6 +112,7 @@ function EditSamplePage() {
           (updateSample.isSuccess ? undefined : updateSample.variables) ??
           query.data
         }
+        manualGroupOptions={query.data.manualGroupOptions}
         sampleId={query.data.id}
         attachments={query.data.attachments}
         attachmentChanges={attachmentChanges}

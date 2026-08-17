@@ -468,9 +468,10 @@
   "manual_group_not_found": "This manual group does not exist",
   "manual_group_delete_action": "Delete this group",
   "manual_group_delete_title": "Delete this manual group?",
-  "manual_group_delete_description": "The group and its memberships are removed. The samples of its members are not affected.",
+  "manual_group_delete_description": "The group, its memberships, and its attachment to draft samples are removed.",
   "manual_group_deleted": "Manual group deleted",
   "manual_group_delete_error": "Could not delete the manual group",
+  "manual_group_delete_published": "This group cannot be deleted while a published sample is attached.",
   "action_delete": "Delete",
   "action_delete_confirm_phrase": "DELETE",
   "action_delete_confirm_phrase_label": "Type {phrase} to confirm",
@@ -491,11 +492,14 @@
   "manual_group_member_remove_error": "Could not detach the member",
   "settings_manual_groups_title": "Manual groups",
   "settings_manual_groups_empty": "You do not belong to any manual group.",
-  "manual_group_leave_locked": "You cannot leave a group while you own a published sample.",
+  "manual_group_leave_locked": "You cannot leave this group while you own a published sample attached to it.",
   "manual_group_leave_action": "Leave",
   "manual_group_leave_group": "Leave {name}",
   "manual_group_leave_title": "Leave this manual group?",
   "manual_group_leave_description": "You will no longer belong to {name}. An administrator has to associate you again.",
   "manual_group_left": "You left the group",
-  "manual_group_leave_error": "Could not leave the group"
+  "manual_group_leave_error": "Could not leave the group",
+  "section_manual_groups": "Manual groups",
+  "field_manual_groups": "Groups this sample belongs to",
+  "manual_groups_field_locked": "You cannot change these groups."
 }

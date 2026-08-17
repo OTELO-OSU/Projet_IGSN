@@ -1,3 +1,4 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 import type { User } from "@projet-igsn/domain/user/model";
 import type { ReactNode } from "react";
@@ -28,6 +29,7 @@ import {
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
+import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 
 import { m } from "#/paraglide/messages.js";
 import { AgeFields } from "#/samples/age-fields.tsx";
@@ -53,6 +55,7 @@ import {
 import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest-fields.tsx";
 import { availabilityLabel, natureLabel } from "#/samples/sample-labels.ts";
 import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
+import { SampleManualGroupsField } from "#/samples/sample-manual-groups-field.tsx";
 import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
 import { SampleSubmitButton } from "#/samples/sample-submit-button.tsx";
@@ -94,6 +97,7 @@ type SampleFormProps = {
   attachmentChanges?: SampleAttachmentChanges;
   publisher?: Pick<User, "status" | "superAdmin">;
   readOnlyReason?: string;
+  manualGroupOptions?: ManualGroup[];
 };
 
 export function SampleForm({
@@ -108,20 +112,26 @@ export function SampleForm({
   attachmentChanges,
   publisher,
   readOnlyReason,
+  manualGroupOptions = [],
 }: SampleFormProps) {
   const roleOnSample = useUserRoleOnSample(sampleId);
   const validate = validateDraft(
     published ? publishedSampleSchema : sampleDraftSchema,
   );
   const isReadOnly = readOnlyReason !== undefined;
+  const isFrozenByPublication = published
+    ? publishedSampleFrozenField(
+        defaultValues?.scientificContext?.provenanceStatus ?? null,
+        defaultValues?.material ?? null,
+      )
+    : () => false;
+  const areManualGroupsFrozen =
+    roleOnSample !== null && !isSampleOwner(roleOnSample);
   const isFieldFrozen = isReadOnly
     ? () => true
-    : published
-      ? publishedSampleFrozenField(
-          defaultValues?.scientificContext?.provenanceStatus ?? null,
-          defaultValues?.material ?? null,
-        )
-      : () => false;
+    : (name: string) =>
+        isFrozenByPublication(name) ||
+        (name === "manualGroupIds" && areManualGroupsFrozen);
   const defaultSubmit =
     primaryAction.kind === "submit"
       ? primaryAction.onSubmit
@@ -368,6 +378,10 @@ export function SampleForm({
                 )}
               </form.AppField>
             </FormSection>
+
+            <form.AppForm>
+              <SampleManualGroupsField options={manualGroupOptions} />
+            </form.AppForm>
           </TabsContent>
 
           <TabsContent value="type" className="grid gap-4">

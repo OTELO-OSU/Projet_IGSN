@@ -71,6 +71,7 @@ describe("listSamples", () => {
           institutionalOrganization: null,
           institutionalOsu: null,
           institutionalLaboratory: null,
+          manualGroups: [],
           published: true,
           createdAt: new Date(iso),
           updatedAt: new Date(iso),
@@ -90,39 +91,27 @@ describe("listSamples", () => {
     expect(url.searchParams.get("perPage")).toBe("50");
   });
 
-  it("should send the search term as a query param when provided", async () => {
+  it.each([
+    ["search", "granite"],
+    ["bbox", "-10,40,10,50"],
+  ])("should send %s as a query param when provided", async (param, value) => {
     const { fetch, lastUrl } = stubFetch({ data: [], meta: { total: 0 } });
 
-    await listSamples({ page: 1, perPage: 25, search: "granite" }, fetch);
+    await listSamples({ page: 1, perPage: 25, [param]: value }, fetch);
 
-    expect(new URL(lastUrl() ?? "").searchParams.get("search")).toBe("granite");
+    expect(new URL(lastUrl() ?? "").searchParams.get(param)).toBe(value);
   });
 
-  it("should omit the search param when not provided", async () => {
-    const { fetch, lastUrl } = stubFetch({ data: [], meta: { total: 0 } });
+  it.each(["search", "bbox"])(
+    "should omit the %s param when not provided",
+    async (param) => {
+      const { fetch, lastUrl } = stubFetch({ data: [], meta: { total: 0 } });
 
-    await listSamples({ page: 1, perPage: 25 }, fetch);
+      await listSamples({ page: 1, perPage: 25 }, fetch);
 
-    expect(new URL(lastUrl() ?? "").searchParams.has("search")).toBe(false);
-  });
-
-  it("should send the bbox as a query param when provided", async () => {
-    const { fetch, lastUrl } = stubFetch({ data: [], meta: { total: 0 } });
-
-    await listSamples({ page: 1, perPage: 25, bbox: "-10,40,10,50" }, fetch);
-
-    expect(new URL(lastUrl() ?? "").searchParams.get("bbox")).toBe(
-      "-10,40,10,50",
-    );
-  });
-
-  it("should omit the bbox param when not provided", async () => {
-    const { fetch, lastUrl } = stubFetch({ data: [], meta: { total: 0 } });
-
-    await listSamples({ page: 1, perPage: 25 }, fetch);
-
-    expect(new URL(lastUrl() ?? "").searchParams.has("bbox")).toBe(false);
-  });
+      expect(new URL(lastUrl() ?? "").searchParams.has(param)).toBe(false);
+    },
+  );
 
   it("should throw on a non-2xx response", async () => {
     const { fetch } = stubFetch({}, 500);

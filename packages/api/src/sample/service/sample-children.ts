@@ -14,6 +14,21 @@ export function sampleLinks(eb: ExpressionBuilder<DB, "sample">) {
   ).as("links");
 }
 
+export function sampleManualGroups(eb: ExpressionBuilder<DB, "sample">) {
+  return jsonArrayFrom(
+    eb
+      .selectFrom("sample_manual_group")
+      .innerJoin(
+        "manual_group",
+        "manual_group.id",
+        "sample_manual_group.group_id",
+      )
+      .select(["manual_group.id", "manual_group.name"])
+      .whereRef("sample_manual_group.sample_id", "=", "sample.id")
+      .orderBy("manual_group.name"),
+  ).as("manualGroups");
+}
+
 export function sampleAttachments(eb: ExpressionBuilder<DB, "sample">) {
   return jsonArrayFrom(
     eb

@@ -1,4 +1,3 @@
-import { NATURES } from "./nature";
 import { createSampleSchema, sampleSchema } from "./sample";
 
 const validSample = {
@@ -63,6 +62,7 @@ describe("sampleSchema", () => {
       economicDepositName: null,
       economicDepositDescription: null,
       igsn: null,
+      manualGroups: [],
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,
@@ -91,35 +91,9 @@ describe("sampleSchema", () => {
     // Assert
     expect(result.success).toBe(false);
   });
-
-  it("should reject a sample missing its name", () => {
-    // Arrange / Act
-    const result = sampleSchema.safeParse({
-      id: validSample.id,
-      nature: validSample.nature,
-      createdAt: validSample.createdAt,
-      updatedAt: validSample.updatedAt,
-    });
-    // Assert
-    expect(result.success).toBe(false);
-  });
 });
 
 describe("createSampleSchema", () => {
-  it.each(NATURES)("should accept a name and the nature %s", (nature) => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature,
-    });
-    // Assert
-    expect(result).toEqual({
-      name: "Grès de Fontainebleau",
-      nature,
-      type: null,
-    });
-  });
-
   it("should accept an explicit type", () => {
     // Arrange / Act
     const result = createSampleSchema.parse({

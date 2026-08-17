@@ -69,9 +69,14 @@ export type ManualGroupMembersResponse = z.infer<
   typeof manualGroupMembersResponseSchema
 >;
 
+export const myManualGroupSchema = manualGroupSchema.extend({
+  canLeave: z.boolean(),
+});
+
+export type MyManualGroup = z.infer<typeof myManualGroupSchema>;
+
 export const myManualGroupsResponseSchema = z.object({
-  data: z.array(manualGroupSchema),
-  meta: z.object({ canLeave: z.boolean() }),
+  data: z.array(myManualGroupSchema),
 });
 
 export type MyManualGroupsResponse = z.infer<

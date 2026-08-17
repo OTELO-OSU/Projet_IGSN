@@ -40,3 +40,15 @@ Accepted
 - Until then a member owning a published sample is locked into every group, including groups no published sample was ever attributed to.
 - The rule guards the self-service leave only: a super admin detaching a member, or deleting the group, drops the same rows with no check. Accepted, since a super admin curates the groups.
 - Assigning a sample to a manual group, filtering samples by group, and the Teams/Projects tag distinction are separate tickets.
+
+## Amendment (2026-08-17): attaching a sample to a manual group
+
+Ticket 119 delivered the sample-attachment follow-up this ADR deferred. This corrects the Consequences above: a sample is no longer never auto-attached, and the leave rule below replaces the temporary per-user one.
+
+- **A join table, `sample_manual_group(sample_id, group_id)`**, both columns FK-cascading. `sampleSchema` gained `manualGroups` (id + name); `createSampleSchema` gained `manualGroupIds`.
+- **Only the sample's owner may set or clear them.** `requireSampleAccess` already reports a super admin as `"owner"`; this ticket reuses that so a super admin can fix a misattribution, choosing only among the sample owner's own memberships, never the super admin's.
+- **The attachable set is the owner's current memberships plus whatever ids are already stored on the sample**, so a group the owner has since left round-trips on save instead of getting rejected forever. Submitting anything outside that set is 422; a non-owner (a contributor) changing the stored set is 403, resubmitting it unchanged is accepted.
+- **Publication freezes the field through the existing lock maps** in `published-field-lock.ts`, one entry (`manualGroupIds`), no new mechanism. It needs its own map, not the sample fields' one, only because the stored key is `manualGroups` (objects) while the payload key is `manualGroupIds`.
+- **Deleting a manual group with a published sample attached is refused 409** (`has_published_sample`). A group with only draft samples attached still detaches, through the same FK cascade.
+- **The per-user leave lock is gone**, replaced by a per-group `canLeave` flag on `GET /admin/currentUser/manual-groups` (the `meta` field is dropped): a caller can leave any group unless they own a published sample attached to _that_ group. `UserRepository.hasPublishedSample` is deleted along with it.
+- **The public sample page names the attached groups in their own section**, gated on a non-empty list, labelled "Groups": "manual" is admin jargon a public reader has no context for.

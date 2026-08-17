@@ -143,5 +143,6 @@
   "sample_section_institution": "Institution",
   "sample_field_institutional_organization": "Organization",
   "sample_field_institutional_osu": "OSU",
-  "sample_field_institutional_laboratory": "Laboratory"
+  "sample_field_institutional_laboratory": "Laboratory",
+  "sample_section_manual_groups": "Groups"
 }

@@ -26,6 +26,11 @@ export function useDeleteManualGroup(groupId: string) {
       toast.success(m.manual_group_deleted());
       void queryClient.invalidateQueries({ queryKey: ["manual-groups"] });
     },
-    onError: () => toast.error(m.manual_group_delete_error()),
+    onError: (error) =>
+      toast.error(
+        error instanceof HttpError && error.status === 409
+          ? m.manual_group_delete_published()
+          : m.manual_group_delete_error(),
+      ),
   });
 }

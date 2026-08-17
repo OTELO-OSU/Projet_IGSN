@@ -8,6 +8,7 @@ import type { DB } from "../../db.ts";
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
 import { replaceSampleLinks } from "./replace-sample-links.ts";
+import { replaceSampleManualGroups } from "./replace-sample-manual-groups.ts";
 import { sampleColumns } from "./sample-columns.ts";
 
 export async function insertSample(
@@ -27,5 +28,6 @@ export async function insertSample(
     .returning("id")
     .executeTakeFirstOrThrow();
   await replaceSampleLinks(db, row.id, input.links ?? []);
+  await replaceSampleManualGroups(db, row.id, input.manualGroupIds ?? []);
   return getSampleById(db, row.id);
 }

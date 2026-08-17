@@ -148,6 +148,7 @@ describe("toSample", () => {
       economicDepositName: null,
       economicDepositDescription: null,
       igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
+      manualGroups: [],
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,
@@ -241,25 +242,13 @@ describe("toSample", () => {
     expect(() => toSample({ ...ageRow, geological_age_min: 99 })).toThrow();
   });
 
-  it("should throw when the nature is not a known value", () => {
-    expect(() => toSample({ ...row, nature: "inconnu" })).toThrow();
-  });
-
-  it("should throw when the type is not a known taxonomy path", () => {
-    expect(() => toSample({ ...row, type: "half_round" })).toThrow();
-  });
-
-  it("should throw when the collection method is not a known taxonomy path", () => {
-    expect(() =>
-      toSample({ ...row, collection_method: "gravity_corer" }),
-    ).toThrow();
-  });
-
-  it("should throw when the name is empty", () => {
-    expect(() => toSample({ ...row, name: "" })).toThrow();
-  });
-
-  it("should throw when the id is not a uuid", () => {
-    expect(() => toSample({ ...row, id: "pas-un-uuid" })).toThrow();
+  it.each([
+    { nature: "inconnu" },
+    { type: "half_round" },
+    { collection_method: "gravity_corer" },
+    { name: "" },
+    { id: "pas-un-uuid" },
+  ])("should throw on the invalid row column %o", (invalid) => {
+    expect(() => toSample({ ...row, ...invalid })).toThrow();
   });
 });

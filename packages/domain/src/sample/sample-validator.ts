@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { manualGroupSchema } from "../manual-group/model.ts";
 import { userSampleRoleSchema } from "../user-sample/model.ts";
 import { userSchema } from "../user/model.ts";
 import { createSampleSchema, sampleSchema } from "./sample.ts";
@@ -103,6 +104,7 @@ export type AdminListSamplesResponse = z.infer<
 export const adminSampleResponseSchema = z.object({
   data: sampleSchema,
   role: userSampleRoleSchema,
+  manualGroupOptions: z.array(manualGroupSchema).default([]),
 });
 
 export type AdminSampleResponse = z.infer<typeof adminSampleResponseSchema>;

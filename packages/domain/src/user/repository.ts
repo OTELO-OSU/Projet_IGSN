@@ -32,7 +32,6 @@ export type UserRepository = {
   get(id: string): Promise<AdminUser | null>;
   listPending(): Promise<PendingUser[]>;
   listSuperAdminEmails(): Promise<string[]>;
-  hasPublishedSample(userId: string): Promise<boolean>;
   update(id: string, user: UpdateUser): Promise<UpdateUserResult>;
 };
 

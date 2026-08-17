@@ -15,5 +15,5 @@ export async function getPublishedSampleByIgsn(
     .where("published", "=", true)
     .executeTakeFirst();
   if (!row) return null;
-  return toSample(row, row.links, row.attachments);
+  return toSample(row, row.links, row.attachments, row.manualGroups);
 }

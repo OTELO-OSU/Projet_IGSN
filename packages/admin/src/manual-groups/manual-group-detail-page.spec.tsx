@@ -217,6 +217,25 @@ describe("ManualGroupDetailPage", () => {
     expect(calls).toEqual(["DELETE group"]);
   });
 
+  it("should explain a refused deletion when a published sample is attached", async () => {
+    fakeApi();
+    worker.use(
+      http.delete(
+        "*/admin/manual-groups/:id",
+        () => new HttpResponse(null, { status: 409 }),
+      ),
+    );
+
+    const { screen } = await renderDetailPage();
+    await screen.getByRole("button", { name: "Delete this group" }).click();
+    await screen.getByLabelText("Type DELETE to confirm").fill("DELETE");
+    await screen.getByRole("button", { name: "Delete", exact: true }).click();
+
+    await expect
+      .element(screen.getByText(/published sample is attached/i))
+      .toBeVisible();
+  });
+
   it("should render an error when the group does not exist", async () => {
     fakeApi();
     worker.use(

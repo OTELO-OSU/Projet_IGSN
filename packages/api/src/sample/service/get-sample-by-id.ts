@@ -13,5 +13,5 @@ export async function getSampleById(
   const row = await selectSample(db)
     .where("sample.id", "=", id)
     .executeTakeFirstOrThrow();
-  return toSample(row, row.links, row.attachments);
+  return toSample(row, row.links, row.attachments, row.manualGroups);
 }
