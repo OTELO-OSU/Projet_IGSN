@@ -13,9 +13,6 @@ import {
   type MeasurementCandidate,
 } from "#/samples/compose-measurement.ts";
 
-// The Condition tab's flat form draft, mirroring compose-description.ts: every
-// field holds its typed value or nullish when unset. The storage conditions
-// checkbox group holds an array, empty when nothing is checked.
 export type ConditionDraft = {
   packaging: Packaging | null | undefined;
   storageConditions: StorageCondition[];
@@ -31,9 +28,6 @@ export type ConditionDraft = {
   specificConditions: string | null | undefined;
 };
 
-// A condition as composed from the draft, before conditionSchema judges it:
-// the Condition shape with possibly missing leaf values (see
-// compose-description.ts for the candidate pattern).
 type ConditionCandidate = {
   packaging: Packaging | undefined;
   storageConditions: StorageCondition[] | undefined;
@@ -61,9 +55,6 @@ export const hasReadingType = <T extends string>(
 export function composeCondition(
   draft: ConditionDraft,
 ): ConditionCandidate | null {
-  // A reading's inputs are not rendered while its category is unset, so a value
-  // lingering after clearing the category is an unreachable leftover, not
-  // entered data: the whole reading is dropped (ADR 0015).
   const condition = {
     packaging: draft.packaging ?? undefined,
     storageConditions:
@@ -92,8 +83,6 @@ export function composeCondition(
       : undefined,
     specificConditions: draft.specificConditions?.trim() || undefined,
   };
-  // All parts unset means no condition at all; undefined values are dropped
-  // by JSON on the wire, so the stored shape stays minimal.
   return Object.values(condition).some((part) => part !== undefined)
     ? condition
     : null;

@@ -12,17 +12,9 @@ const READING_PATH =
 
 const LINK_PATH = /^links\.(\d+)\.(url|description)$/;
 
-// The generic wording names no range, so an out-of-range coordinate says which
-// axis and which bounds.
 const LONGITUDE_PATH = /^location\.position\.\w*longitude$/i;
 const LATITUDE_PATH = /^location\.position\.\w*latitude$/i;
 
-// Every HierarchySelectField in the form needs an entry here: the widget
-// registers one field per level (`name[depth]`), never the bare name, so an
-// issue on the domain value pins on the next level to refine (the combobox
-// after the deepest pick, the one the user must act on) or it would render
-// nowhere. That level is the number of picks, not of slots: clearing a level
-// leaves an `undefined` slot in place (see combobox-field.tsx).
 const HIERARCHY_PATHS = {
   type: "typePath",
   material: "materialPath",
@@ -36,10 +28,6 @@ type DraftContext = {
   location: Pick<LocationDraft, "type">;
 };
 
-// Elevation min/max both come from the single value input when the geometry is
-// a point (degenerate range); the collection date always maps to its range
-// bounds (in single mode the visible input is the start field, mirrored into
-// the end).
 const draftFieldName = (path: string, draft: DraftContext): string => {
   const locationType = draft.location.type;
   if (path.startsWith("location.position.elevation.min"))
@@ -59,7 +47,6 @@ const draftFieldName = (path: string, draft: DraftContext): string => {
   if (path === "location.region.kind") return "location.regionKind";
   if (path.startsWith("location.region."))
     return `location.${path.slice("location.region.".length)}`;
-  // Publish-blocker container paths pin on the field the user can act on.
   if (path === "location") return "location.type";
   if (path === "description.collectionDate")
     return "description.collectionDateStart";
@@ -96,7 +83,6 @@ type DraftIssue = {
   params?: unknown;
 };
 
-// Domain custom issues carry a machine code in params (see descriptionSchema).
 function issueMessage(path: string, issue: DraftIssue): string {
   const reason = (issue.params as { code?: string } | undefined)?.code;
   const blocker = publishBlockerSchema.safeParse(reason);
@@ -117,7 +103,6 @@ function issueMessage(path: string, issue: DraftIssue): string {
     if (LATITUDE_PATH.test(path)) return m.field_latitude_range();
   }
   if (path === "condition.humidity.percentage") {
-    // Outside the range refinement, only the 0-100 bounds remain.
     return m.field_humidity_percentage_bounds();
   }
   const measurement = MEASUREMENT_PATH.exec(path) ?? READING_PATH.exec(path);
@@ -127,13 +112,10 @@ function issueMessage(path: string, issue: DraftIssue): string {
       ? m.field_measurement_positive()
       : m.field_measurement_value_required();
   }
-  // Whatever the url fails on (blank, non-DOI), the fix is the same: a DOI.
   if (LINK_PATH.exec(path)?.[2] === "url") return m.field_doi_url_invalid();
   return m.field_invalid();
 }
 
-// Fields with a dedicated live validator (name, elevation integer...) show
-// their specific message first.
 export function sampleDraftFieldErrors(
   issues: ReadonlyArray<DraftIssue>,
   draft: DraftContext,
@@ -143,8 +125,6 @@ export function sampleDraftFieldErrors(
     const path = issue.path.join(".");
     const message = issueMessage(path, issue);
     fields[draftFieldName(path, draft)] ??= { message };
-    // The range order concerns the pair, so the error reads on both bounds
-    // (the domain pins it on start only).
     if (
       (issue.params as { code?: string } | undefined)?.code ===
       "collection_date_order"

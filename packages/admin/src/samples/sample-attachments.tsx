@@ -169,8 +169,6 @@ export function SampleAttachments({
 
   return (
     <FormSection title={m.section_attachments()}>
-      {/* Hidden, not disabled: the zone is a div with onDrop, which neither
-          `disabled` nor a fieldset can stop. */}
       {isDisabled ? null : <AttachmentDropZone onFiles={addFiles} />}
       <p
         className={cn(
@@ -196,8 +194,6 @@ export function SampleAttachments({
               status={staged.error ? m.attachment_upload_failed() : undefined}
               actions={
                 <>
-                  {/* Disabled, not hidden: keeps the row aligned with saved
-                      ones. The file is still on the user's disk. */}
                   <RowAction
                     icon={Download}
                     label={m.action_download_attachment({

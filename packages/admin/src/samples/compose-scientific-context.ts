@@ -2,11 +2,6 @@ import type { CollectionOrigin } from "@projet-igsn/domain/sample/scientific-con
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
-// The scientific-context block as the form holds it: one flat set of fields
-// for both provenance branches, every field nullish when unset (see
-// compose-condition.ts). Keys match the domain field names so a schema issue's
-// path maps straight onto the draft field (sample-draft-field-errors falls
-// back to the joined path).
 export type ScientificContextDraft = {
   provenanceStatus: ProvenanceStatus | undefined;
   funderOrganization: string | null | undefined;
@@ -26,9 +21,6 @@ export type ScientificContextDraft = {
   collectionContextDescription: string | null | undefined;
 };
 
-// A scientific context as composed from the draft, before the domain schema
-// judges it: the branch shape with possibly missing leaf values (undefined is
-// dropped by JSON on the wire; see compose-condition.ts for the pattern).
 type ScientificContextCandidate =
   | {
       provenanceStatus: "recent_collection";
@@ -53,12 +45,6 @@ type ScientificContextCandidate =
       collectionContextDescription: string | undefined;
     };
 
-// Draft -> domain scientific context, or null when no provenance status is
-// chosen (the whole block is then omitted from the payload). Only the active
-// branch's fields are emitted: the hidden branch keeps its values in the form
-// while editing, and this exclusion drops them on save (ADR 0015). Empty
-// fields drop to undefined so a blank draft field is absent, not an invalid
-// ""; trimming and non-empty validation are the domain schema's job (freeText).
 export function composeScientificContext(
   draft: ScientificContextDraft,
 ): ScientificContextCandidate | null {
@@ -95,7 +81,6 @@ export function composeScientificContext(
   return null;
 }
 
-// A saved scientific context, spread back into the flat draft.
 export function toScientificContextDraft(
   value: ScientificContext | null | undefined,
 ): ScientificContextDraft {

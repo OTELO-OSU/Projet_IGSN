@@ -8,8 +8,6 @@ import { AgeModeRadio } from "#/samples/age-mode-radio.tsx";
 import { useAgeSection } from "#/samples/use-age-section.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// The free-text lithostratigraphic unit is independent of the ICS time scale,
-// so it lives outside the toggle.
 export function GeologicalAgeFormSection() {
   const isDisabled = useIsFieldDisabled("age.geologicalAgeMin");
   const form = useSampleForm();

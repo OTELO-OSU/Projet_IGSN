@@ -11,8 +11,6 @@ const noop = () => {};
 const createAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Create", onSubmit }) as const;
 
-// A complete scientific context (historical branch: the fewest mandatory
-// fields), for the fixtures that must be publishable.
 const publishableScientificContext = {
   provenanceStatus: "historical_specimen",
   collectionCurator: "Georges Cuvier",
@@ -858,8 +856,6 @@ describe("SampleForm", () => {
   });
 
   it("should not keep a numeric age unit the mode switch left without a value", async () => {
-    // The unit is hidden without a value, and the domain rejects a unit that
-    // has none, so a leftover would block the save from an invisible field.
     const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
@@ -1083,8 +1079,6 @@ describe("SampleForm", () => {
   });
 
   it("should operate no age control on a read-only form", async () => {
-    // The toggle and the mode radio clear the age values when used, so a
-    // read-only form leaving them live would wipe what it must preserve.
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -1493,8 +1487,6 @@ describe("SampleForm", () => {
       .element(screen.getByRole("heading", { name: "Location" }))
       .not.toBeInTheDocument();
 
-    // The first material segment settles it (every rock completion requires
-    // a location), so the section appears.
     await screen.getByRole("tab", { name: "Sample type" }).click();
     await screen
       .getByRole("combobox", { name: "Material *", exact: true })
@@ -1687,7 +1679,6 @@ describe("SampleForm", () => {
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
     await screen.getByRole("option", { name: "Point" }).click();
-    // 200 is out of the longitude range; only the domain schema knows that.
     await screen.getByLabelText("Longitude *").fill("200");
     await screen.getByLabelText("Latitude *").fill("45");
     await screen.getByRole("button", { name: "Create" }).click();
@@ -1961,7 +1952,6 @@ describe("SampleForm", () => {
           name: "Lunar regolith",
           nature: "thin_section",
           type: "dredge",
-          // Returned extraterrestrial samples may omit an exact location.
           material: "extraterrestrial_rock.returned_samples.other",
           collectionMethod: null,
           collectionMethodDescription: null,
@@ -2075,8 +2065,6 @@ describe("SampleForm", () => {
   });
 
   it("should gate a published sample's save when an editable required field is cleared", async () => {
-    // A published sample's frozen fields cannot be edited, so the save can only
-    // be made unpublishable through an EDITABLE required field.
     const onSubmit = vi.fn();
     const screen = await render(
       <TooltipProvider>
@@ -2121,9 +2109,6 @@ describe("SampleForm", () => {
   });
 
   it("blocks saving a published sample that no longer holds the publishable bar", async () => {
-    // A published sample must stay publishable, so a blocker gates the save
-    // whatever field raises it, here an incomplete material ("rock", an
-    // internal node) on a sample published before the constraint existed.
     const onSubmit = vi.fn();
     const screen = await render(
       <TooltipProvider>
@@ -2189,8 +2174,6 @@ const publishedFixture: CreateSample = {
   scientificContext: publishableScientificContext,
 };
 
-// The recent-collection branch freezes other leaves than the historical one, and
-// carries a region the historical fixture has no reason to hold.
 const publishedRecentFixture: CreateSample = {
   ...publishedFixture,
   location: {
@@ -2364,7 +2347,6 @@ describe("SampleForm post-publication field lock", () => {
     );
 
     await screen.getByRole("tab", { name: "Sample type" }).click();
-    // Re-picking the selected option deselects it, leaving an incomplete path.
     await screen
       .getByRole("combobox", { name: "Felsic *", exact: true })
       .click();

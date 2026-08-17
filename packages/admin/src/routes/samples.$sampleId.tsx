@@ -35,8 +35,6 @@ function EditSamplePage() {
     sampleId,
     query.data != null && canUpdateSample(query.data.role, query.data),
   );
-  // Lives here, not in the (unmounting) Links tab, so staged files survive
-  // tab switches.
   const attachmentChanges = useAttachmentChanges(
     sampleId,
     query.data?.attachments.length ?? 0,
@@ -110,9 +108,6 @@ function EditSamplePage() {
 
       <SampleForm
         publisher={me.data}
-        // A rejected save must not cost the user their typing, and the form
-        // re-reads defaultValues once it is pristine (it resets itself on
-        // submit), so it is fed back what it just submitted.
         defaultValues={
           (updateSample.isSuccess ? undefined : updateSample.variables) ??
           query.data

@@ -7,11 +7,7 @@ import { useState } from "react";
 import { m } from "#/paraglide/messages.js";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// In single mode the one input mirrors into both ends of the degenerate range
-// (ADR 0015).
 export function CollectionDatesField() {
-  // The mode switch follows the dates it drives: toggling it writes
-  // collectionDateEnd, which would show an edit that the API's merge then drops.
   const isDateDisabled = useIsFieldDisabled("description.collectionDateStart");
   const form = useSampleForm();
   const [isRange, setIsRange] = useState(() => {
@@ -22,16 +18,12 @@ export function CollectionDatesField() {
 
   const toggleRange = (checked: boolean) => {
     setIsRange(checked);
-    // Collapsing a range keeps its start; the end mirrors it again so the
-    // store never carries a stale bound the single input cannot show.
     if (!checked) {
       form.setFieldValue(
         "description.collectionDateEnd",
         form.getFieldValue("description.collectionDateStart"),
       );
     }
-    // The identical-range errors belong to the mode that raised them; field
-    // meta outlives the unmounted inputs, so clear it or it would block submit.
     for (const name of [
       "description.collectionDateStart",
       "description.collectionDateEnd",
@@ -40,8 +32,6 @@ export function CollectionDatesField() {
     }
   };
 
-  // Equal bounds are valid domain data (the degenerate single date), so this
-  // is UI steering toward single mode, not schema validation.
   const identicalRange = () => {
     const start = form.getFieldValue("description.collectionDateStart");
     const end = form.getFieldValue("description.collectionDateEnd");
@@ -51,8 +41,6 @@ export function CollectionDatesField() {
   };
 
   return (
-    // A legend cannot share its line with the switch, so the group role +
-    // labelledby carries the "Collection date" name instead of a fieldset.
     <div
       role="group"
       aria-labelledby="collection-dates-label"

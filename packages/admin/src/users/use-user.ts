@@ -11,8 +11,6 @@ export function useUser(id: string) {
     queryKey: ["user", id],
     queryFn: async () => {
       const res = await apiFetch(new URL(`admin/users/${id}`, API_URL));
-      // A 404 resolves rather than throws: "no such user" is an answer the page
-      // renders, not a failure.
       if (res.status === 404) return null;
       if (!res.ok) {
         throw HttpError.fromResponse(

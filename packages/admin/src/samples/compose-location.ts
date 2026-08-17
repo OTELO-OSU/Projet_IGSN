@@ -5,11 +5,6 @@ import type { NavigationType } from "@projet-igsn/domain/sample/location/navigat
 import type { OceanSea } from "@projet-igsn/domain/sample/location/ocean-sea";
 import type { VerticalDatum } from "@projet-igsn/domain/sample/location/vertical-datum";
 
-// The Location tab's flat form draft: every field holds its typed value or
-// nullish when unset (the bound fields render nullish as empty, so the draft
-// never holds NaN or an "" sentinel). `composeLocation` composes it into a
-// location candidate for submit (locationSchema, via sampleDraftSchema,
-// judges completeness) and `toLocationDraft` fills it from a saved sample.
 export type LocationDraft = {
   type: "point" | "area" | null | undefined;
   longitude: number | undefined;
@@ -31,11 +26,6 @@ export type LocationDraft = {
   localityDescription: string | null | undefined;
 };
 
-// A location as composed from the draft, before locationSchema judges it: the
-// Location shape with possibly missing leaf values. Compose does not decide
-// completeness; the schema (via sampleDraftSchema) rejects partial data on the
-// offending field. Compose only excludes values hidden behind the UI state,
-// since a schema error on a field that is not rendered could never be fixed.
 type ElevationCandidate = {
   min: number | undefined;
   max: number | undefined;
@@ -101,7 +91,6 @@ function composePosition(draft: LocationDraft): LocationCandidate["position"] {
       type: "point",
       longitude: draft.longitude,
       latitude: draft.latitude,
-      // A point is the degenerate range where min === max (ADR 0014).
       elevation: composeElevation(
         draft.elevationValue,
         draft.elevationValue,
@@ -139,8 +128,6 @@ export function composeLocation(
 ): LocationCandidate | null {
   const position = composePosition(draft);
   const region = composeRegion(draft);
-  // The navigation type field is only shown once a geometry is chosen, so a
-  // lingering value without one is a hidden leftover, not data.
   const navigationType = position
     ? draft.navigationType || undefined
     : undefined;
@@ -153,8 +140,6 @@ export function composeLocation(
     localityName,
     localityDescription,
   };
-  // All parts unset means no location at all; undefined values are dropped by
-  // JSON on the wire, so the stored shape stays minimal.
   return Object.values(location).some((part) => part !== undefined)
     ? location
     : null;
@@ -176,8 +161,6 @@ export function toLocationDraft(
     eastLongitude: area?.eastLongitude,
     southLatitude: area?.southLatitude,
     northLatitude: area?.northLatitude,
-    // A point's single value is the degenerate range's min (=== max). The
-    // schema types the bounds as nullish; the draft holds `undefined` for unset.
     elevationValue: point ? (elevation?.min ?? undefined) : undefined,
     elevationMin: area ? (elevation?.min ?? undefined) : undefined,
     elevationMax: area ? (elevation?.max ?? undefined) : undefined,

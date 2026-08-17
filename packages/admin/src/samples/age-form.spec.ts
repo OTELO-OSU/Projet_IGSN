@@ -31,7 +31,6 @@ describe("toAgeInput", () => {
   });
 
   it("should normalize a cleared combobox (undefined) to null", () => {
-    // ComboboxField stores undefined, not "", when the selection is cleared.
     const result = toAgeInput({
       ...EMPTY_AGE_FORM_VALUES,
       numericAgeMin: 5,
@@ -42,8 +41,6 @@ describe("toAgeInput", () => {
   });
 
   it("should drop a unit left behind by cleared bounds", () => {
-    // The unit is not rendered without a value, so a leftover would fail the
-    // domain's numeric_unit_without_value on an invisible field (ADR 0015).
     expect(
       toAgeInput({
         ...EMPTY_AGE_FORM_VALUES,

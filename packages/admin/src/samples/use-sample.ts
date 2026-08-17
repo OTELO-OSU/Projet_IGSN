@@ -5,8 +5,6 @@ import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-// Never mapped to 401, which the api client would turn into a token renewal
-// then a sign-in redirect.
 export class ForbiddenError extends HttpError {
   constructor() {
     super(403, "Sample owned by another researcher");
@@ -14,8 +12,6 @@ export class ForbiddenError extends HttpError {
 }
 
 export async function parseSampleResponse(res: Response) {
-  // A 404 resolves rather than throws: "no such sample" is an answer the page
-  // renders, not a failure, so it is never retried either.
   if (res.status === 404) {
     return null;
   }

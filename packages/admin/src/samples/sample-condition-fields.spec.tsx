@@ -108,7 +108,6 @@ describe("SampleConditionFields", () => {
       .element(screen.getByLabelText("Pressure value"))
       .not.toBeInTheDocument();
 
-    // One control at a time: the category reveals the value, the value the unit.
     await screen
       .getByRole("combobox", { name: "Temperature", exact: true })
       .click();
@@ -125,7 +124,6 @@ describe("SampleConditionFields", () => {
       .element(screen.getByLabelText("Temperature unit"))
       .toBeVisible();
 
-    // The humidity percentage hangs off its type the same way.
     await screen.getByRole("combobox", { name: "Relative humidity" }).click();
     await screen
       .getByRole("option", { name: "Controlled (e.g. 40% ± 5%)" })
@@ -160,7 +158,6 @@ describe("SampleConditionFields", () => {
 
     await screen.getByLabelText("Pressure value").fill("");
 
-    // By label, so the assertion holds whether or not the required marker is on.
     await expect
       .element(screen.getByLabelText("Pressure unit"))
       .not.toBeInTheDocument();
@@ -216,7 +213,6 @@ describe("SampleConditionFields", () => {
     await screen.getByRole("button", { name: "Create" }).click();
     expect(onSubmit).not.toHaveBeenCalled();
 
-    // A percentage inside the range clears the error and submits.
     await screen.getByLabelText("Relative humidity in %").fill("5");
     await expect.element(screen.getByRole("alert")).not.toBeInTheDocument();
     await screen.getByRole("button", { name: "Create" }).click();
@@ -240,7 +236,6 @@ describe("SampleConditionFields", () => {
       .element(screen.getByRole("checkbox", { name: "Temperature controlled" }))
       .not.toBeInTheDocument();
 
-    // Unchecking it lists the controlled conditions again, unchecked.
     await screen
       .getByRole("checkbox", { name: "No specific condition" })
       .click();

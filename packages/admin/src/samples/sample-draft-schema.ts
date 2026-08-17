@@ -46,8 +46,6 @@ import {
   toSecurityDraft,
 } from "#/samples/compose-security.ts";
 
-// The key only gives the row a stable React identity across removals; the
-// compose step never reads it.
 export type LinkDraft = { key: string; url: string; description: string };
 
 export type SampleDraft = {
@@ -85,7 +83,6 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   condition: toConditionDraft(value?.condition),
   security: toSecurityDraft(value?.security),
   scientificContext: toScientificContextDraft(value?.scientificContext),
-  // Defaults to "exists" per the declaration flow; still required to publish.
   availability: value?.availability ?? "exists",
   age: ageFormValues(value?.age),
   links: (value?.links ?? []).map((link) => ({
@@ -96,8 +93,6 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   ...toEconomicInterestDraft(value),
 });
 
-// A row with any content is kept as-is, so a description without its url still
-// raises the schema error on the row's url field.
 const composeLinks = (links: LinkDraft[]) =>
   links
     .filter((link) => link.url.trim() || link.description.trim())
@@ -128,26 +123,17 @@ const composeCreateSample = (draft: SampleDraft) => {
     collectionMethodDescription:
       draft.collectionMethodDescription?.trim() || null,
     specificName: draft.specificName?.trim() || null,
-    // The location section hides when the material forbids a location
-    // (synthetic, ADR 0014) or does not determine its requirement yet, so a
-    // location entered before the switch is a hidden leftover: drop it rather
-    // than let the schema pin an error on fields the user cannot see (an
-    // unfixable, silent save failure).
     location: ["forbidden", "undetermined"].includes(
       locationRequirement(material),
     )
       ? null
       : composeLocation(draft.location),
-    // Omitted when the whole section is empty: the API clears the description
-    // columns for an absent description just like for a null one.
     ...(description ? { description } : {}),
     ...(condition ? { condition } : {}),
     ...(security ? { security } : {}),
     ...(scientificContext ? { scientificContext } : {}),
     ...(draft.availability ? { availability: draft.availability } : {}),
     ...(age ? { age } : {}),
-    // Omitted when empty: the API replaces links wholesale, and an absent key
-    // clears them just like an empty array.
     ...(links.length > 0 ? { links } : {}),
     ...(economic.economicInterest !== null ? economic : {}),
   };

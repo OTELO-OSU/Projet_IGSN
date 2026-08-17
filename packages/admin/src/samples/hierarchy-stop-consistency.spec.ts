@@ -14,10 +14,6 @@ import {
   SAMPLE_TYPES,
 } from "@projet-igsn/domain/sample/type/vocabulary";
 
-// Drift guard: the widget derives its "stop here" options from the tree
-// (canStopAtPath) while the publish gate reads the domain predicates. This spec
-// pins them together for every path of every vocabulary, so a stop the UI
-// offers is always one the domain accepts, and vice versa.
 describe("hierarchy stop consistency", () => {
   it.each([
     ["material", MATERIAL_HIERARCHY, MATERIAL_PATHS, isMaterialComplete],
@@ -26,7 +22,6 @@ describe("hierarchy stop consistency", () => {
       "collection method",
       COLLECTION_METHOD_HIERARCHY,
       COLLECTION_METHODS,
-      // Every collection-method node is a valid stop (no completeness gate).
       () => true,
     ],
   ] as const)(

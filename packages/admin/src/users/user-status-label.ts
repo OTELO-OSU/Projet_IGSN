@@ -3,5 +3,4 @@ import { createUserStatusLabel } from "@projet-igsn/domain/user/user-status-labe
 
 import { m } from "#/paraglide/messages.js";
 
-// The domain resolver bound to this app's paraglide catalog.
 export const userStatusLabel = createUserStatusLabel(m as unknown as Messages);

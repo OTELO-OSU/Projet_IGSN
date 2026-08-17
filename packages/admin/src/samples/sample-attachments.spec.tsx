@@ -32,11 +32,6 @@ type HarnessProps = {
   onCommit?: (payload: UpdateSampleAttachment[]) => void;
 };
 
-// The staging state lives in the hook (owned by the edit page); the Save
-// button stands in for the form submit, which uploads the staged files and
-// sends the committed payload with the sample update. Saving then narrows the
-// saved attachments to the ones the payload kept, standing in for the refetch
-// the page runs after a save (the edit page does not remount).
 function Harness({ attachments, onCommit }: HarnessProps) {
   const [saved, setSaved] = useState(attachments);
   const changes = useAttachmentChanges(SAMPLE_ID, saved.length);
@@ -98,7 +93,6 @@ describe("SampleAttachments", () => {
 
     await expect.element(screen.getByText("a.csv")).toBeVisible();
     await expect.element(screen.getByText("b.csv")).toBeVisible();
-    // Staged files carry a badge telling them apart from saved attachments.
     expect(screen.getByText("New").all()).toHaveLength(2);
     expect(FakeXhr.instances).toHaveLength(0);
   });
@@ -163,10 +157,8 @@ describe("SampleAttachments", () => {
     expect(FakeXhr.instances[0]!.url).toContain(
       `admin/samples/${SAMPLE_ID}/attachments`,
     );
-    // No way to dismiss the dialog while uploads are running.
     expect(screen.getByRole("button", { name: "Confirm" }).query()).toBeNull();
 
-    // The dialog stays open on the recap until the user confirms it.
     FakeXhr.instances.forEach((xhr) => xhr.finish());
     await expect.element(dialog).toHaveTextContent("Uploaded");
     await screen.getByRole("button", { name: "Confirm" }).click();
@@ -180,7 +172,6 @@ describe("SampleAttachments", () => {
     await screen.getByLabelText("Browse files").upload([file("a.csv")]);
     await screen.getByLabelText("Description of a.csv").fill("Raw data");
 
-    // Edited locally, nothing sent yet.
     expect(FakeXhr.instances).toHaveLength(0);
 
     await screen.getByRole("button", { name: "Save" }).click();
@@ -214,7 +205,6 @@ describe("SampleAttachments", () => {
     FakeXhr.instances[0]!.finish();
     FakeXhr.instances[1]!.finish(500);
 
-    // The dialog stays open with the recap until the user closes it.
     const dialog = screen.getByRole("dialog");
     await expect.element(dialog).toHaveTextContent("a.csv");
     await expect.element(dialog).toHaveTextContent("Uploaded");
@@ -222,12 +212,10 @@ describe("SampleAttachments", () => {
     await expect.element(dialog).toHaveTextContent("Could not upload.");
     await screen.getByRole("button", { name: "Confirm" }).click();
 
-    // The uploaded file left the staging list; the failed one stays, flagged.
     expect(screen.getByText("a.csv").query()).toBeNull();
     await expect.element(screen.getByText("b.csv")).toBeVisible();
     await expect.element(screen.getByText("Could not upload.")).toBeVisible();
 
-    // Saving again retries only the failed file.
     await screen.getByRole("button", { name: "Save" }).click();
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(3));
   });
@@ -278,8 +266,6 @@ describe("SampleAttachments", () => {
       .getByRole("button", { name: "Delete measurements.csv" })
       .click();
 
-    // Marked, flagged, but nothing sent and nothing committed yet: cancelling
-    // now would leave the server untouched.
     await expect
       .element(screen.getByText("Will be deleted on save."))
       .toBeVisible();
@@ -322,8 +308,6 @@ describe("SampleAttachments", () => {
   });
 
   it("should stage a file past the limit and turn the count red", async () => {
-    // Staging is never refused; the count marks the error and the form's
-    // save noops until the count fits.
     const screen = await renderAttachments(
       savedAttachments(DEFAULT_UPLOAD_LIMIT),
     );
@@ -346,11 +330,8 @@ describe("SampleAttachments", () => {
 
     await screen.getByRole("button", { name: "Delete saved-0.csv" }).click();
     await screen.getByLabelText("Browse files").upload([file("new.csv")]);
-    // exact: the "saved-N.csv" row buttons also contain "save".
     await screen.getByRole("button", { name: "Save", exact: true }).click();
 
-    // The staged deletion frees its slot on the server BEFORE the upload
-    // starts, so the api still has room and does not refuse the new file.
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
     expect(calledUrl(fetchSpy.mock.calls[0]![0])).toContain(
       `admin/samples/${SAMPLE_ID}/attachments/${saved[0]!.id}`,
@@ -359,7 +340,6 @@ describe("SampleAttachments", () => {
 
     FakeXhr.instances[0]!.finish();
 
-    // One save, and the sample keeps 5 files: the 4 survivors plus the new one.
     await vi.waitFor(() => expect(onCommit).toHaveBeenCalled());
     expect(onCommit.mock.calls[0]![0]).toHaveLength(DEFAULT_UPLOAD_LIMIT);
     await expect
@@ -378,11 +358,8 @@ describe("SampleAttachments", () => {
     await screen.getByRole("button", { name: "Delete saved-0.csv" }).click();
     await screen.getByRole("button", { name: "Save", exact: true }).click();
 
-    // The file is gone server-side, so the sample truly holds 4: counting the
-    // consumed deletion again would discount a slot that is already free.
     await expect.element(screen.getByText("4 of 5 files")).toBeVisible();
 
-    // And the next save no longer re-deletes what is already gone.
     await screen.getByLabelText("Browse files").upload([file("new.csv")]);
     await screen.getByRole("button", { name: "Save", exact: true }).click();
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));

@@ -4,11 +4,8 @@ import { NAVIGATION_TYPES } from "@projet-igsn/domain/sample/location/navigation
 import { m } from "#/paraglide/messages.js";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-// Navigation types are language-neutral codes (their own label).
 const navigationTypeItems = toComboboxItems(NAVIGATION_TYPES, (value) => value);
 
-// Navigation type qualifies how the coordinates were fixed, so it only applies
-// once a geometry (point or area) is chosen.
 export function LocationNavigationTypeField() {
   const form = useSampleForm();
   return (

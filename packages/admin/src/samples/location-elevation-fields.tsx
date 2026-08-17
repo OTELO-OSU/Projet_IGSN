@@ -10,7 +10,6 @@ import { useSampleForm } from "#/samples/use-sample-form.ts";
 const metaFields = [
   {
     key: "elevationUnit" as const,
-    // Elevation units are language-neutral symbols (their own label).
     items: toComboboxItems(ELEVATION_UNITS, (value) => value),
     label: m.field_elevation_unit,
     placeholder: m.elevation_unit_placeholder,
@@ -27,8 +26,6 @@ const metaFields = [
   },
 ];
 
-// Emits its fields as bare grid items: the parent owns the grid, since a point
-// lays them out next to the elevation and an area on their own row.
 export function LocationElevationFields() {
   const form = useSampleForm();
   return (

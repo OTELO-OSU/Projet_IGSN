@@ -6,8 +6,6 @@ import {
   frozenMaterialDepth,
 } from "@projet-igsn/domain/sample/publication/published-field-lock";
 
-// A hierarchy field registers one control per level, `name[depth]` (see the form
-// kit's HierarchySelectField).
 const HIERARCHY_LEVEL = /^(.+)\[(\d+)\]$/;
 
 export function publishedSampleFrozenField(

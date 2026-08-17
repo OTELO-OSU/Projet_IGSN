@@ -36,9 +36,6 @@ export function SampleAttachmentUploadDialog({
             {m.attachment_upload_dialog_description()}
           </DialogDescription>
         </DialogHeader>
-        {/* min-w-0 at every grid level: a grid child keeps its content width
-            otherwise, letting long file names push the status past the dialog
-            edge instead of ellipsizing. */}
         <ul className="grid min-w-0 gap-2">
           {changes.batch.map((item) => (
             <li

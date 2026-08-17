@@ -25,9 +25,6 @@ export function useUpdateSample(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateSample) => {
-      // Read at call time, never from a prop or a closure: the Save & Publish
-      // chain and the invalidation the attachment commit triggers mid-submit
-      // both land between the render and this call.
       const expectedUpdatedAt = queryClient.getQueryData(
         sampleQueryOptions(apiFetch, id).queryKey,
       )?.updatedAt;

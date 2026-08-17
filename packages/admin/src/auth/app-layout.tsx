@@ -40,8 +40,6 @@ const GROUPS_NAV = [
 const navLinkClass =
   "hover:bg-accent aria-[current=page]:bg-accent flex items-center gap-2 rounded-md p-2 text-sm [&>svg]:size-4 [&>svg]:shrink-0";
 
-// Each section owns when it is current: a prefix match is right for the group
-// lists but would light the sample link up on every route.
 function NavItem({
   to,
   search,

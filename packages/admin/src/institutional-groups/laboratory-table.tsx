@@ -11,7 +11,6 @@ import {
 import { m } from "#/paraglide/messages.js";
 
 const columns: ColumnDef<Laboratory>[] = [
-  // Acronyms repeat across laboratories, so the unique code carries the link.
   {
     accessorKey: "code",
     header: () => m.column_code(),

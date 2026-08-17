@@ -86,19 +86,12 @@ type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
   defaultValues?: CreateSample;
-  // Freezes the IGSN-identity and partial-frozen fields (ADR 0021), and gates
-  // the save on the publishable bar (stricter schema).
   published?: boolean;
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
-  // Uploads need a sample id, so creation (no id yet) hides the Links tab.
   sampleId?: string;
   attachments?: SampleAttachment[];
-  // Applied only when the form submits, so cancelling leaves the server
-  // untouched.
   attachmentChanges?: SampleAttachmentChanges;
-  // Optional: omitted means unknown, so it never blocks, the same convention
-  // as attachments in samplePublishBlockers.
   publisher?: Pick<User, "status" | "superAdmin">;
   readOnlyReason?: string;
 };
@@ -120,8 +113,6 @@ export function SampleForm({
   const validate = validateDraft(
     published ? publishedSampleSchema : sampleDraftSchema,
   );
-  // Which fields the publication freezes, from the stored provenance status:
-  // it is itself frozen, so reading the live form value would buy nothing.
   const isReadOnly = readOnlyReason !== undefined;
   const isFieldFrozen = isReadOnly
     ? () => true
@@ -143,8 +134,6 @@ export function SampleForm({
     onSubmitMeta: { onValid: defaultSubmit } as {
       onValid: ((value: CreateSample) => void) | undefined;
     },
-    // The live pass only flags touched fields, so typing in one input never
-    // lights up the rest of the form; submit flags everything.
     validators: {
       onChange: (context) => {
         const result = validate(context);
@@ -166,11 +155,7 @@ export function SampleForm({
     },
     onSubmit: async ({ value, meta, formApi }) => {
       const parsed = sampleDraftSchema.safeParse(value);
-      // Unreachable: the onSubmit validator gates. Kept as a typed narrow.
       if (!parsed.success) return;
-      // Attachments live outside the form state, so their limit cannot pin a
-      // field error: the save noops like any invalid field and the red file
-      // count says why.
       if ((attachmentChanges?.keptCount ?? attachments.length) > UPLOAD_LIMIT) {
         return;
       }
@@ -180,9 +165,6 @@ export function SampleForm({
       meta.onValid?.(
         committed ? { ...parsed.data, attachments: committed } : parsed.data,
       );
-      // Reset to what was submitted: leftovers the save dropped (a hidden
-      // geometry's coordinates, the other region kind's leaf) must not
-      // resurface when the user switches back after saving.
       formApi.reset(toSampleDraft(parsed.data));
     },
   });
@@ -216,8 +198,6 @@ export function SampleForm({
         age,
         scientificContext,
       }) => {
-        // Form state holds looser select strings; the runtime values match
-        // the domain, so cast to the fields samplePublishBlockers reads.
         const reasons = samplePublishBlockers(
           {
             type: composeHierarchyValue(typePath),
@@ -241,8 +221,6 @@ export function SampleForm({
         return reasons.length > 0 ? (
           <Tooltip>
             <TooltipTrigger asChild>
-              {/* The disabled button is not focusable, so the span carries
-                  the tooltip: hover and keyboard both reveal the reason. */}
               <span tabIndex={0}>{button}</span>
             </TooltipTrigger>
             <TooltipContent>
@@ -275,7 +253,6 @@ export function SampleForm({
       if (roleOnSample !== null && !isSampleEditor(roleOnSample)) {
         return null;
       }
-      // Save & Publish saves first, so unsaved edits are not a blocker here.
       return renderPublishGated((disabled) => (
         <ConfirmButton
           disabled={disabled}
@@ -472,8 +449,6 @@ export function SampleForm({
           ) : null}
         </Tabs>
 
-        {/* Outside the Tabs: the upload progress dialog must show on submit
-          whatever tab is active. */}
         {attachmentChanges ? (
           <SampleAttachmentUploadDialog changes={attachmentChanges} />
         ) : null}
