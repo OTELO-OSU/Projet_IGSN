@@ -2,6 +2,7 @@ import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { Kysely } from "kysely";
 
 import { userSchema } from "@projet-igsn/domain/user/model";
+import { sql } from "kysely";
 import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
@@ -149,22 +150,33 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
       );
       return row ? userSchema.parse(row) : null;
     },
-    // ponytail: one guarded statement, no read-then-write; the null guard in the where makes the first set win and answers 409 for the rest
     setInstitutionalGroups: async (userId, groups) => {
-      const row = await withTransaction(db, (trx) =>
+      const osu = groups.institutionalOsu ?? null;
+      await withTransaction(db, (trx) =>
         trx
           .updateTable("user")
-          .set({
+          .set((eb) => ({
             institutional_organization: groups.institutionalOrganization,
-            institutional_osu: groups.institutionalOsu ?? null,
+            institutional_osu: osu,
             institutional_laboratory: groups.institutionalLaboratory,
-          })
+            status: eb
+              .case()
+              .when("super_admin", "=", true)
+              .then(eb.ref("status"))
+              // A first declaration is not a change a moderator already judged.
+              .when("institutional_organization", "is", null)
+              .then(eb.ref("status"))
+              .else("pending" as const)
+              .end(),
+          }))
           .where("id", "=", userId)
-          .where("institutional_organization", "is", null)
-          .returning(USER_COLUMNS)
-          .executeTakeFirst(),
+          .where(
+            sql`(institutional_organization, institutional_osu, institutional_laboratory)`,
+            "is distinct from",
+            sql`(${groups.institutionalOrganization}, ${osu}, ${groups.institutionalLaboratory})`,
+          )
+          .execute(),
       );
-      return row ? userSchema.parse(row) : null;
     },
     findByOrcid: async (orcid) => {
       const row = await withTransaction(db, (trx) =>

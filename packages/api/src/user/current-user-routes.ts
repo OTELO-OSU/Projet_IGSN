@@ -14,7 +14,6 @@ import {
   validateSetOrcidBody,
 } from "./validator.ts";
 
-// Mounted under /admin, so requireAuth and currentUser already ran.
 export function createCurrentUserRoutes(
   users: UserRepository,
   manualGroups: ManualGroupRepository,
@@ -24,8 +23,6 @@ export function createCurrentUserRoutes(
       .get("/", (c) => {
         const claims = c.get("jwtPayload");
         const user = c.get("user");
-        // Typed from currentUserSchema so the admin SPA's parse cannot drift from what
-        // this returns.
         const currentUser: CurrentUser = {
           sub: claims.sub,
           username: claims.preferred_username,
@@ -41,7 +38,7 @@ export function createCurrentUserRoutes(
         return c.json(currentUser);
       })
       // The stored orcid becomes a sign-in credential (ADR 0020), so setting it
-      // is rights-granting: revalidate the session live (GaiaData REQ-CRIT-01).
+      // is rights-granting (GaiaData REQ-CRIT-01).
       .put("/orcid", requireActiveSession, validateSetOrcidBody, async (c) => {
         const updated = await users.setOrcid(
           c.get("user").id,
@@ -55,18 +52,15 @@ export function createCurrentUserRoutes(
         }
         return c.json({ orcid: updated.orcid });
       })
-      // ponytail: no requireActiveSession, unlike orcid: groups grant no rights and are not a login credential. Accepted ceiling: first-set-only until ticket 115, so a stolen token could misattribute an institution irreversibly onto every later sample
       .put(
         "/institutional-groups",
+        requireActiveSession,
         validateSetInstitutionalGroupsBody,
         async (c) => {
-          const updated = await users.setInstitutionalGroups(
+          await users.setInstitutionalGroups(
             c.get("user").id,
             c.req.valid("json"),
           );
-          if (!updated) {
-            return c.json({ error: "Institutional groups already set" }, 409);
-          }
           return c.body(null, 204);
         },
       )
@@ -82,8 +76,7 @@ export function createCurrentUserRoutes(
         };
         return c.json(body);
       })
-      // A published sample is attributed to the groups its owner belonged to,
-      // so leaving stays open only while the caller owns no published sample.
+      // A published sample is attributed to the groups its owner belonged to.
       // TODO: block on a published sample attached to the group instead, once a
       // sample can carry one (ADR 0025).
       .delete("/manual-groups/:id", validateManualGroupIdParam, async (c) => {

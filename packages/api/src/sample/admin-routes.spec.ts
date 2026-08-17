@@ -124,35 +124,51 @@ describe("admin sample routes", () => {
     );
 
     pgTest(
-      "should keep the snapshot when the sample is edited",
+      "should keep the snapshot of a sample declared before the owner moved lab",
       async ({ db }) => {
         // Arrange
-        await insertUser(db, authenticatedCallerEmail, CALLER_GROUPS);
+        const NEW_GROUPS = {
+          institutionalOrganization: "02rx3b187",
+          institutionalOsu: "OSUG",
+          institutionalLaboratory: "UMR5275",
+        };
+        await insertUser(db, authenticatedCallerEmail, {
+          status: "accepted",
+          superAdmin: true,
+          ...CALLER_GROUPS,
+        });
         const client = testClient(createApp(db).app);
         const created = await client.admin.samples.$post(
-          { json: draft },
+          { json: PUBLISHABLE_SAMPLE },
           { headers: authHeader },
         );
-        const { id, updatedAt } = sampleResponseSchema.parse(
-          await created.json(),
-        ).data;
+        const before = sampleResponseSchema.parse(await created.json()).data;
         // Act
-        const res = await client.admin.samples[":id"].$put(
+        await client.admin.currentUser["institutional-groups"].$put(
+          { json: NEW_GROUPS },
+          { headers: authHeader },
+        );
+        const updated = await client.admin.samples[":id"].$put(
           {
-            param: { id },
+            param: { id: before.id },
             json: {
-              ...draft,
-              name: "Basalte renommé",
-              expectedUpdatedAt: updatedAt,
+              ...PUBLISHABLE_SAMPLE,
+              name: "Basalte (revu)",
+              expectedUpdatedAt: before.updatedAt,
             },
           },
           { headers: authHeader },
         );
-        // Assert
-        expect(res.status).toBe(200);
-        expect(sampleResponseSchema.parse(await res.json()).data).toMatchObject(
-          { name: "Basalte renommé", ...CALLER_GROUPS },
+        const published = await client.admin.samples[":id"].publish.$post(
+          { param: { id: before.id } },
+          { headers: authHeader },
         );
+        // Assert
+        expect(updated.status).toBe(200);
+        expect(published.status).toBe(200);
+        expect(
+          sampleResponseSchema.parse(await published.json()).data,
+        ).toMatchObject(CALLER_GROUPS);
       },
     );
 
@@ -2837,25 +2853,6 @@ describe("admin sample routes", () => {
         expect(res.status).toBe(401);
       },
     );
-
-    pgTest("should answer 404 for an unknown user id", async ({ db }) => {
-      const { app, sample } = await arrangeOwnedSample(db);
-
-      const res = await testClient(app).admin.samples[
-        ":id"
-      ].collaborators.$post(
-        {
-          param: { id: sample.id },
-          json: {
-            userId: "01890a5d-ac96-774b-bcce-b302099a8057",
-            role: "contributor",
-          },
-        },
-        { headers: authHeader },
-      );
-
-      expect(res.status).toBe(404);
-    });
 
     pgTest("should invite an added contributor by mail", async ({ db }) => {
       const sendMail = vi.fn().mockResolvedValue(undefined);

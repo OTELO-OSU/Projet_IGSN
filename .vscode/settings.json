@@ -45,5 +45,6 @@
   },
   "files.readonlyInclude": {
     "**/routeTree.gen.ts": true
-  }
+  },
+  "remote.autoForwardPorts": false
 }

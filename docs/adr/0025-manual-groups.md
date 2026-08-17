@@ -23,7 +23,7 @@ Accepted
 
 **A member may leave a group unless they own a published sample**, checked server-side through `UserRepository.hasPublishedSample`, which matches the `owner` role only: contributing to someone else's published sample never locks the caller. The rule is per-user, not per-group, so one `canLeave` flag on `GET /admin/currentUser/manual-groups` covers every group the caller belongs to.
 
-**`requireActiveSession` guards the routes that change someone else's rights**: adding a member, removing a member, deleting a group. The self-service leave (`DELETE /admin/currentUser/manual-groups/:id`) omits it, matching `PUT /admin/currentUser/institutional-groups`: leaving revokes only the caller's own membership, grants nothing, and a super admin can restore it.
+**`requireActiveSession` guards the routes that change someone else's rights**: adding a member, removing a member, deleting a group. The self-service leave (`DELETE /admin/currentUser/manual-groups/:id`) omits it: leaving revokes only the caller's own membership, grants nothing, and a super admin can restore it. `PUT /admin/currentUser/institutional-groups` does carry it since ticket 115, a group change now costing the caller their `accepted` status (ADR 0023).
 
 **Deleting a group detaches its members through the `manual_group_member` FK cascade**, not an application-side loop.
 

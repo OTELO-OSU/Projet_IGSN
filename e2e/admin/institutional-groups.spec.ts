@@ -1,6 +1,7 @@
 import { institutionalGroupsListPage } from "../support/admin/institutional-groups-list.page";
 import { institutionalGroupsPage } from "../support/admin/institutional-groups.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
+import { settingsPage } from "../support/admin/settings.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { test } from "../support/db";
 
@@ -10,6 +11,7 @@ test.describe("institutional groups", () => {
   }) => {
     const groups = institutionalGroupsPage(page);
     const samples = sampleListPage(page);
+    const settings = settingsPage(page);
 
     await signInAsResearcher(page, RESEARCHERS.theo);
     await groups.expectShown();
@@ -23,12 +25,21 @@ test.describe("institutional groups", () => {
     await samples.expectVisible();
     await groups.expectNotShown();
 
-    // No sign-out and back in: navigating while the logout redirect is in
-    // flight aborts it.
     await page.reload();
 
     await samples.expectVisible();
     await groups.expectNotShown();
+
+    await settings.open();
+    await settings.setInstitution({
+      organization: "Université Grenoble Alpes",
+      osu: "Observatoire des Sciences de l’Univers de Grenoble",
+      laboratory: "ISTerre",
+    });
+
+    await page.reload();
+
+    await settings.expectInstitution("ISTerre");
   });
 
   test("a super admin browses the laboratories of an organization and their members", async ({
@@ -48,7 +59,6 @@ test.describe("institutional groups", () => {
 
     await lists.expectMember("nadia.leroy@univ-lorraine.fr");
 
-    // UNIDIA's code carries a space, so opening it covers the route encoding.
     await lists.openLaboratories();
     await lists.openLaboratory("UAR 2050");
     await lists.expectLaboratoryCode("UAR 2050");
