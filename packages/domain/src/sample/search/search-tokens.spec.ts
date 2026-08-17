@@ -46,8 +46,6 @@ describe("parseSearchToken", () => {
   ])(
     "should collapse the adjacent wildcards in %j",
     (token, segments, anchorStart, anchorEnd) => {
-      // "\S*\S*" backtracks: 50 rows against a 200-character "**z..." query
-      // measured 45s.
       expect(parseSearchToken(token)).toEqual({
         segments,
         anchorStart,
@@ -71,8 +69,6 @@ describe("parseSearchToken", () => {
   );
 
   it("should cap the wildcards and keep the extras literal", () => {
-    // Postgres runs a DFA, but the same split drives a JS RegExp, which
-    // backtracks: uncapped, "a*a*a*a*a*a*a*a*z" freezes the tab for 100s.
     const { segments } = parseSearchToken("a*a*a*a*a*a*a*a*z");
 
     expect(segments).toHaveLength(MAX_WILDCARDS + 1);

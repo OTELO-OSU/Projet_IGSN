@@ -145,8 +145,6 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
 }
 
 describe("mergePublishedEdit", () => {
-  // The merge is the only statement of post-publish mutability, so it must
-  // cover every CreateSample key: a field it forgets is silently dropped.
   it("returns every createSampleSchema key", () => {
     const merged = mergePublishedEdit(stored, incoming());
 
@@ -326,12 +324,10 @@ describe("mergePublishedEdit", () => {
 
   describe("material", () => {
     it.each([
-      // deeper within the unlocked igneous chemistry level
       [
         "rock.igneous.plutonic.felsic.granite",
         "rock.igneous.plutonic.felsic.granodiorite",
       ],
-      // completing a path published incomplete at an unlocked node
       [
         "sediment.exogenous_detritic",
         "sediment.exogenous_detritic.sand.medium_sand",
@@ -345,7 +341,6 @@ describe("mergePublishedEdit", () => {
     });
 
     it.each([
-      // a sibling above the frozen prefix (plutonic is frozen)
       [
         "rock.igneous.plutonic.felsic.granite",
         "rock.igneous.volcanic.felsic.rhyolite",
@@ -354,7 +349,6 @@ describe("mergePublishedEdit", () => {
         "rock.igneous.plutonic.felsic.granite",
         "rock.metamorphic.strongly_metamorphosed.gneiss",
       ],
-      // a wholly frozen stored path: nothing below it unlocks
       ["rock.igneous.plutonic", "rock.igneous.plutonic.felsic.granite"],
       ["rock.igneous.plutonic.felsic.granite", null],
     ])("keeps %s when the payload carries %s", (current, next) => {

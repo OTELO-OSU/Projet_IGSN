@@ -2,9 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { pathChildren } from "./children.ts";
 
-// A flat, ordered dot-path vocabulary with a segment reused under two parents
-// ("piece" under both "core" and "core.sub"), to prove children are matched by
-// full path, not bare segment.
 const paths = [
   "core",
   "core.piece",

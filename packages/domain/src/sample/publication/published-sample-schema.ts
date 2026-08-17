@@ -30,18 +30,11 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   collection_curator_missing: ["scientificContext", "collectionCurator"],
   collection_origin_missing: ["scientificContext", "collectionOrigin"],
   attachment_limit_exceeded: ["attachments"],
-  // No field carries the account status, and this schema never passes a
-  // publisher, so the blocker cannot be raised here: form-level path.
   user_not_verified: [],
 };
 
-// One bar for the first publish and for updates to a published sample; only
-// drafts keep createSampleSchema.
 export const publishedSampleSchema = createSampleSchema.superRefine(
   (value, ctx) => {
-    // `attachments` is deliberately left out: this schema is static and cannot
-    // know the deployment's upload limit, so the api PUT validator enforces the
-    // count with the configured value instead.
     const blockers = samplePublishBlockers(toPublishableFields(value));
     for (const blocker of blockers) {
       ctx.addIssue({

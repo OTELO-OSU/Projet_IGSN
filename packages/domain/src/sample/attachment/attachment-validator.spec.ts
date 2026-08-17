@@ -19,7 +19,6 @@ describe("uploadSampleAttachmentSchema", () => {
   });
 
   it.each([
-    // Any file type is accepted, extension or not.
     "report.pdf",
     "field-footage.mp4",
     "recording.wav",
@@ -44,11 +43,9 @@ describe("uploadSampleAttachmentSchema", () => {
   });
 
   it.each([
-    // A description never comes without its file.
     { description: "orphan description" },
     { file: file("report.pdf"), description: "" },
     { file: "not-a-file" },
-    // Unknown keys are rejected (strict object).
     { file: file("report.pdf"), label: "x" },
     {},
   ])("should reject invalid upload input #%#", (input) => {

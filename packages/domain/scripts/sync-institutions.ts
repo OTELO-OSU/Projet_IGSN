@@ -26,8 +26,6 @@ function readRows(
     { header: true, skipEmptyLines: true },
   );
 
-  // Papa reports a malformed row instead of throwing, and a silently merged row
-  // loses laboratories without anyone noticing, so the first one stops the run.
   const [failure] = errors;
   if (failure) {
     throw new Error(
@@ -44,8 +42,6 @@ function readRows(
   return data;
 }
 
-// A blank code reads as "no OSU" downstream instead of as a broken row, so it
-// stops the run like a duplicate does.
 function assertKeys(kind: string, values: readonly string[]): void {
   const seen = new Set<string>();
   for (const value of values) {
@@ -159,8 +155,6 @@ process.stderr.write(
   `wrote ${laboratories.length} laboratories and ${osus.length} OSUs\n`,
 );
 
-// The lists above were imported before being overwritten, so they still hold
-// what the previous export said.
 const removedLaboratories = LABORATORIES.filter(
   (previous) => !laboratories.some(({ code }) => code === previous.code),
 ).map(({ code }) => code);

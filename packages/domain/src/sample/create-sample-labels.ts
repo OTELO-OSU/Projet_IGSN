@@ -22,8 +22,6 @@ import { type Texture } from "./texture/vocabulary.ts";
 
 type MessageKey = keyof typeof Catalog;
 
-// Compile-time coverage for the flat vocabularies (input is a literal union):
-// a code whose translation is missing from the catalog fails to compile here.
 type AssertKeys<T extends MessageKey> = T;
 type _natureKeys = AssertKeys<`nature_${Nature}`>;
 type _textureKeys = AssertKeys<`texture_${Texture}`>;
@@ -46,8 +44,6 @@ type _collectionOriginKeys =
   AssertKeys<`collection_origin_${CollectionOrigin}`>;
 type _oceanSeaKeys = AssertKeys<`ocean_sea_${OceanSea}`>;
 
-// Minus the `$`-prefixed metadata entries, e.g. `$schema`, which paraglide does
-// not compile to a message.
 export type Messages = Record<
   Exclude<MessageKey, `$${string}`>,
   (() => string) | undefined
@@ -111,7 +107,5 @@ export function createSampleLabels(m: Messages): SampleLabels {
         m,
       ),
     ]),
-    // The value types differ per label (a code, a path, a rank integer), which
-    // Object.fromEntries cannot carry.
   ) as unknown as SampleLabels;
 }

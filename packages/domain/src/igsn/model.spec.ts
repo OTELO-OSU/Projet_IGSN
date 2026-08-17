@@ -15,9 +15,9 @@ describe("igsnSuffixSchema", () => {
 
   it.each([
     "",
-    "01K072TVWVFK5A1RRZ5MY4PPK", // 25 chars
-    "01K072TVWVFK5A1RRZ5MY4PPK99", // 27 chars
-    "01L072TVWVFK5A1RRZ5MY4PPK9", // L excluded from Crockford base32
+    "01K072TVWVFK5A1RRZ5MY4PPK",
+    "01K072TVWVFK5A1RRZ5MY4PPK99",
+    "01L072TVWVFK5A1RRZ5MY4PPK9",
     "01K072TVWVFK-A1RRZ5MY4PPK9",
   ])("should reject the invalid suffix %s", (input) => {
     // Arrange / Act
@@ -45,9 +45,9 @@ describe("igsnSuffixSchema", () => {
 
 describe("igsnSchema", () => {
   it.each([
-    "01K072TVWVFK5A1RRZ5MY4PPK9", // a suffix we minted
-    "CNRS0000012260", // legacy identifier
-    "TOAE0000000002", // legacy identifier (O is not Crockford base32)
+    "01K072TVWVFK5A1RRZ5MY4PPK9",
+    "CNRS0000012260",
+    "TOAE0000000002",
     "  CNRS0000012260  ",
     "cnrs0000012260",
   ])("should accept the stored IGSN %s", (input) => {
@@ -59,11 +59,11 @@ describe("igsnSchema", () => {
 
   it.each([
     "",
-    "abc", // neither a minted suffix nor a legacy identifier
-    "CNRS-000012260", // hyphen
-    "CNRS 0000012260", // space
-    "CNRS000001226", // only 9 digits
-    "ABCD0000000001", // right shape, wrong prefix
+    "abc",
+    "CNRS-000012260",
+    "CNRS 0000012260",
+    "CNRS000001226",
+    "ABCD0000000001",
   ])("should reject the invalid IGSN %s", (input) => {
     // Arrange / Act
     const result = igsnSchema.safeParse(input);

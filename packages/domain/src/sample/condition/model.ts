@@ -14,17 +14,15 @@ import { storageConditionSchema } from "./storage-condition.ts";
 import { temperatureTypeSchema } from "./temperature-type.ts";
 import { temperatureUnitSchema } from "./temperature-unit.ts";
 
-// A numeric reading is meaningful only once its category is chosen, so it
-// nests under the category (same seam as measurementSchema, ADR 0016).
 const temperatureSchema = z.object({
   type: temperatureTypeSchema,
-  // Sub-zero storage exists (freezing, liquid nitrogen): no positivity bound.
+  // Sub-zero storage exists (freezing, liquid nitrogen).
   measurement: measurementSchema(temperatureUnitSchema, z.number()).nullish(),
 });
 
 const humiditySchema = z.object({
   type: humidityTypeSchema,
-  // Always a relative-humidity percentage, so no unit to pick.
+  // Always a relative-humidity percentage.
   percentage: z.number().min(0).max(100).nullish(),
 });
 

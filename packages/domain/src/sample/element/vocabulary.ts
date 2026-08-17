@@ -1,10 +1,5 @@
 import { z } from "zod";
 
-// Chemical elements of economic interest, as lowercased chemical symbols: the
-// metal and metalloid set from the source vocabulary, not the full periodic
-// table. Non-metals, halogens, and noble gases are excluded; the source's
-// synthetic transuranic elements are kept as it lists them. Meaningful only for
-// a mineral_and_ore sample.
 export const ELEMENTS = [
   "li",
   "be",

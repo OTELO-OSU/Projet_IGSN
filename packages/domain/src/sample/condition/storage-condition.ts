@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-// Checkbox multi-select on the form; no_specific_condition excludes every
-// other entry (enforced by conditionSchema).
 export const STORAGE_CONDITIONS = [
   "no_specific_condition",
   "temperature_controlled",

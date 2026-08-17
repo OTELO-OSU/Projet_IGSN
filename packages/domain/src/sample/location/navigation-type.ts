@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-// Marine positioning method, from the SESAR navigation-type vocabulary. Stored
-// verbatim (language-neutral acronyms with slashes/colons), so the code is its
-// own label; deliberately not lower_snake_case like other vocabularies (ADR 0014).
 export const NAVIGATION_TYPES = [
   "ACOUSTIC_RANGING/GPS",
   "DGPS",

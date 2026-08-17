@@ -1,8 +1,6 @@
 import { type TreeNode } from "../../path/tree-node.ts";
 import { editableLeaves } from "./editable-leaves.ts";
 
-// Descendants of the `rock` root (MINDAT): igneous, metamorphic, the sedimentary
-// subtree, hydrothermal, unknown.
 export const rockTree = {
   igneous: {
     searchable: true,
@@ -21,9 +19,6 @@ export const rockTree = {
       "sulfide",
     ],
   },
-  // `carbonate` is an inner node in the sediment subtree; here it is a plain
-  // leaf, so a dotted override stops the walk (longest-suffix match) and keeps
-  // it frozen where the bare segment is editable.
   "hydrothermal.carbonate": { label: "carbonate" },
 
   xenolithic_rock: {
@@ -40,10 +35,6 @@ export const rockTree = {
     ],
   },
 
-  // Igneous subtree (screenshot): plutonic/volcanic (Niv.2), then chemistry
-  // (Niv.3, shared codes), then specific rocks (Niv.4). Each chemistry code
-  // recurs under both branches with different children, so a dotted
-  // `plutonic.*` / `volcanic.*` override carries that branch's choices.
   plutonic: {
     searchable: true,
     choices: ["felsic", "intermediate", "mafic", "ultramafic", "exotic"],
@@ -111,10 +102,6 @@ export const rockTree = {
     ],
   },
 
-  // The rock names (Niv.4) are the first editable level under the frozen
-  // chemistry, so each carries the mark; a code shared by two chemistry
-  // branches is listed once. `pyroxenite` and `hornblendite` are reused as
-  // strongly metamorphosed rocks (see metamorphic-subtree.ts).
   ...editableLeaves(
     "granite",
     "granodiorite",
@@ -148,9 +135,6 @@ export const rockTree = {
     "lamprophyre",
   ),
 
-  // The freeze stops below these two types: their children are the first
-  // editable level and carry the mark, so nothing deeper needs one. `other`
-  // recurs across those children and is listed once.
   clastic_sedimentary_rock: {
     choices: [
       "rudite",

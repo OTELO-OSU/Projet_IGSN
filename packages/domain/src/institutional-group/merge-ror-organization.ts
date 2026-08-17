@@ -2,8 +2,6 @@ import { z } from "zod";
 
 import { type Organization } from "./organization.ts";
 
-// The slice of a ROR v2 organization record the sync reads
-// (https://ror.readme.io/v2/docs/data-structure).
 export const rorRecordSchema = z.object({
   names: z.array(z.object({ value: z.string(), types: z.array(z.string()) })),
 });

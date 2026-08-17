@@ -104,7 +104,6 @@ describe("conditionSchema", () => {
     { type: "moderate", percentage: 29.9 },
     { type: "moderate", percentage: 50.1 },
     { type: "humid", percentage: 50 },
-    // Out of the 0-100 bound whatever the range.
     { type: "humid", percentage: 101 },
     { type: "dehydrated", percentage: -1 },
   ])("should reject a humidity percentage outside its range %o", (humidity) => {

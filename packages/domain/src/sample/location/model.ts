@@ -49,8 +49,7 @@ export const locationSchema = z
     localityName: freeTextSchema.nullish(),
     localityDescription: freeTextSchema.nullish(),
   })
-  // Longitude ordering is intentionally unchecked: west > east is a valid
-  // dateline-crossing area (ADR 0014).
+  // West > east is a valid dateline-crossing area (ADR 0014).
   .superRefine((location, ctx) => {
     const { position } = location;
     if (location.navigationType != null && !position) {

@@ -41,8 +41,6 @@ export const sampleSchema = z.object({
   location: locationSchema.nullable(),
   description: descriptionSchema.nullable(),
   condition: conditionSchema.nullable(),
-  // Defaulted so a payload predating the feature reads as "no context
-  // recorded".
   scientificContext: scientificContextSchema.nullable().default(null),
   age: ageSchema.nullable().default(null),
   links: z.array(sampleLinkSchema).default([]),
@@ -55,8 +53,6 @@ export const sampleSchema = z.object({
   economicResourceTypePrecision: nameSchema.nullable(),
   economicDepositName: nameSchema.nullable(),
   economicDepositDescription: nameSchema.nullable(),
-  // Lax schema: accepts both minted suffixes and legacy IGSNs imported from
-  // the old registry.
   igsn: igsnSchema.nullable(),
   // ponytail: snapshot of the owner's groups at creation, never edited afterwards, so it stays out of createSampleSchema
   ...institutionalGroupsFields,
@@ -86,8 +82,6 @@ export const createSampleSchema = z
     scientificContext: scientificContextSchema.nullish(),
     age: ageSchema.nullish(),
     links: z.array(createSampleLinkSchema).optional(),
-    // Attachment metadata, reconciled wholesale on update like links: an
-    // unlisted one is deleted with its content.
     attachments: z.array(updateSampleAttachmentSchema).optional(),
     security: securitySchema.nullish(),
     availability: availabilitySchema.nullish(),

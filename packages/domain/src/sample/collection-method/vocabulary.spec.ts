@@ -17,8 +17,8 @@ describe("collectionMethodSchema", () => {
 
   it.each([
     "",
-    "gravity_corer", // sub-value without its parent
-    "dredging.gravity_corer", // sub-value under the wrong parent
+    "gravity_corer",
+    "dredging.gravity_corer",
     "coring.unknown",
     "Coring",
   ])("should reject %s", (input) => {

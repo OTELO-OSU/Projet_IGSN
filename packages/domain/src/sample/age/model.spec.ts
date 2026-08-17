@@ -41,8 +41,6 @@ describe("ageSchema", () => {
     expect(result).toMatchObject({ success: true });
   });
 
-  // A half-entered range is a valid draft (completeness is a publish blocker,
-  // not a schema error), so editing one bound at a time is not rejected.
   it.each([
     { numericAgeMin: 100 },
     { numericAgeMax: 140 },
@@ -76,34 +74,24 @@ describe("ageSchema", () => {
   });
 
   it.each([
-    // inverted numeric range
     { numericAgeMin: 140, numericAgeMax: 100 },
-    // unit with no numeric value
     { numericAgeUnit: "ma" },
-    // years unit with no numeric value
     { numericAgeYearsUnit: "bp" },
-    // years unit with a non-annum unit
     {
       numericAgeMin: 120,
       numericAgeMax: 120,
       numericAgeUnit: "ma",
       numericAgeYearsUnit: "bp",
     },
-    // unknown numeric unit
     { numericAgeMin: 1, numericAgeMax: 1, numericAgeUnit: "my" },
-    // out-of-scale geological rank
     { geologicalAgeMin: 50 },
-    // blank geological unit
     { geologicalUnit: "   " },
-    // unknown field (strict)
     { foo: "bar" },
   ])("should reject an invalid age #%#", (input) => {
     const result = ageSchema.safeParse(input);
     expect(result.success).toBe(false);
   });
 
-  // The issue message is a stable code (not English prose) so the app can
-  // translate it. Guards the code the label map keys off.
   it.each<[Record<string, unknown>, string, AgeError]>([
     [
       { numericAgeMin: 2, numericAgeMax: 1 },

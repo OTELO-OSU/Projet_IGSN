@@ -59,16 +59,12 @@ describe("materialPathSchema", () => {
     "rock.igneous.plutonic.mafic.rhyolite",
     "sediment.nonexistent",
     "sediment.exogenous_detritic.silt.medium_sand",
-    // The lunar rock leaf is a dotted override: bare `rock`'s children must not
-    // expand under it, and igneous only lives under the rock root.
     "extraterrestrial_rock.returned_samples.lunar_sample.rock.igneous",
     "extraterrestrial_rock.ungrouped",
     "extraterrestrial_rock.meteorites.iron_meteorite",
     "rock.metamorphic.nonexistent",
     "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.granite",
     "rock.hydrothermal.nonexistent",
-    // hydrothermal.carbonate is a dotted-override leaf: the sediment carbonate
-    // node's children must not expand under it.
     "rock.hydrothermal.carbonate.grain_supported",
     "rock.xenolithic_rock.sedimentary",
     "rock.xenolithic_rock.xenolithic_rock",

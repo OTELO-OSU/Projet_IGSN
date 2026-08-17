@@ -12,9 +12,6 @@ export const humidityTypeSchema = z.enum(HUMIDITY_TYPES);
 
 export type HumidityType = z.infer<typeof humidityTypeSchema>;
 
-// The measured percentage must fall in the declared range ("<10%" cannot
-// carry 11). Adjacent ranges share their bound (30 fits both "10-30%" and
-// "30-50%"); "controlled" fixes no range, so any percentage fits.
 export function isHumidityPercentageInRange(
   type: HumidityType,
   percentage: number,

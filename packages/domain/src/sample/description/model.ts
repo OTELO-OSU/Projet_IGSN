@@ -7,7 +7,6 @@ import { massUnitSchema } from "./mass-unit.ts";
 import { sizeUnitSchema } from "./size-unit.ts";
 import { volumeUnitSchema } from "./volume-unit.ts";
 
-// A single collection date is the degenerate range start === end (ADR 0015).
 const collectionDateSchema = z.object({
   start: z.iso.date(),
   end: z.iso.date(),
@@ -19,8 +18,6 @@ export const descriptionSchema = z
     oriented: z.boolean().nullish(),
     orientationExplanation: freeTextSchema.nullish(),
     openDescription: freeTextSchema.nullish(),
-    // Each size dimension carries its own unit (a long axis in cm can pair
-    // with a thickness in mm).
     length: measurementSchema(sizeUnitSchema).nullish(),
     width: measurementSchema(sizeUnitSchema).nullish(),
     thickness: measurementSchema(sizeUnitSchema).nullish(),
@@ -28,10 +25,7 @@ export const descriptionSchema = z
     volume: measurementSchema(volumeUnitSchema).nullish(),
   })
   .superRefine((description, ctx) => {
-    // ISO dates order correctly as strings.
     const period = description.collectionDate;
-    // params.code lets consumers (the admin form) translate the issue without
-    // matching on the message text.
     if (period != null && period.start > period.end) {
       ctx.addIssue({
         code: "custom",
