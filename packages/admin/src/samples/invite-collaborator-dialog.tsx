@@ -30,7 +30,7 @@ import {
   collaboratorRoleLabel,
 } from "#/samples/collaborator-role-label.ts";
 import { useAddCollaborator } from "#/samples/use-add-collaborator.ts";
-import { UserField } from "#/samples/user-field.tsx";
+import { UserField } from "#/users/user-field.tsx";
 
 const ROLE_OPTIONS = collaboratorRoleSchema.options.toReversed();
 

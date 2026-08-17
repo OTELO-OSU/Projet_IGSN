@@ -1,3 +1,5 @@
+import type { MyManualGroupsResponse } from "@projet-igsn/domain/manual-group/manual-group-validator";
+import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
 import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
@@ -6,13 +8,17 @@ import { Hono } from "hono";
 import type { AuthenticatedEnv } from "../auth/current-user.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
+import { validateManualGroupIdParam } from "../manual-group/validator.ts";
 import {
   validateSetInstitutionalGroupsBody,
   validateSetOrcidBody,
 } from "./validator.ts";
 
 // Mounted under /admin, so requireAuth and currentUser already ran.
-export function createCurrentUserRoutes(users: UserRepository) {
+export function createCurrentUserRoutes(
+  users: UserRepository,
+  manualGroups: ManualGroupRepository,
+) {
   return (
     new Hono<AuthenticatedEnv>()
       .get("/", (c) => {
@@ -64,5 +70,29 @@ export function createCurrentUserRoutes(users: UserRepository) {
           return c.body(null, 204);
         },
       )
+      .get("/manual-groups", async (c) => {
+        const { id } = c.get("user");
+        const [data, published] = await Promise.all([
+          manualGroups.listForUser(id),
+          users.hasPublishedSample(id),
+        ]);
+        const body: MyManualGroupsResponse = {
+          data,
+          meta: { canLeave: !published },
+        };
+        return c.json(body);
+      })
+      // A published sample is attributed to the groups its owner belonged to,
+      // so leaving stays open only while the caller owns no published sample.
+      // TODO: block on a published sample attached to the group instead, once a
+      // sample can carry one (ADR 0025).
+      .delete("/manual-groups/:id", validateManualGroupIdParam, async (c) => {
+        const { id } = c.get("user");
+        if (await users.hasPublishedSample(id)) {
+          return c.json({ reason: "has_published_sample" }, 403);
+        }
+        await manualGroups.removeMember(c.req.valid("param").id, id);
+        return c.body(null, 204);
+      })
   );
 }

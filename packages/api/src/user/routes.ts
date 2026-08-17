@@ -25,12 +25,13 @@ export function createUserSearchRoutes(userRepository: UserRepository) {
     "/",
     validateSearchUsersQuery,
     async (c) => {
-      const { search, excludeCollaboratorsOf } = c.req.valid("query");
+      const { search, excludeCollaboratorsOf, status } = c.req.valid("query");
       const body: UserIdentitiesResponse = {
         data: await userRepository.search(
           search,
           c.get("user").id,
           excludeCollaboratorsOf,
+          status,
         ),
       };
       return c.json(body);

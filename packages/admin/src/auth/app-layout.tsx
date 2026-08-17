@@ -10,6 +10,7 @@ import {
   MountainIcon,
   TelescopeIcon,
   UsersIcon,
+  UsersRoundIcon,
 } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
@@ -125,6 +126,13 @@ export function AppLayout({
                     ))}
                   </ul>
                 </li>
+                <NavItem
+                  to="/manual-groups"
+                  search={listSearch}
+                  Icon={UsersRoundIcon}
+                  label={m.nav_manual_groups()}
+                  isCurrent={pathname.startsWith("/manual-groups")}
+                />
               </>
             )}
           </ul>

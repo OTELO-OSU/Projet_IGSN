@@ -150,7 +150,20 @@ type UserSampleTable = {
   role: "owner" | "editor" | "contributor";
 };
 
+type ManualGroupTable = {
+  id: string;
+  name: string;
+  created_at: Generated<Date>;
+};
+
+type ManualGroupMemberTable = {
+  group_id: string;
+  user_id: string;
+};
+
 export type DB = {
+  manual_group: ManualGroupTable;
+  manual_group_member: ManualGroupMemberTable;
   sample: SampleTable;
   sample_link: SampleLinkTable;
   sample_attachment: SampleAttachmentTable;

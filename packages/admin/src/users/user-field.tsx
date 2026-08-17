@@ -1,3 +1,4 @@
+import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
 import { useFieldContext } from "@projet-igsn/design-system/components/form/form-hook-contexts";
@@ -20,19 +21,24 @@ import { ChevronsUpDownIcon } from "lucide-react";
 import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
-import {
-  MIN_SEARCH_LENGTH,
-  useSearchUsers,
-} from "#/samples/use-search-users.ts";
+import { MIN_SEARCH_LENGTH, useSearchUsers } from "#/users/use-search-users.ts";
 
 const DEBOUNCE_MS = 300;
 
-export function UserField({ id, sampleId }: { id: string; sampleId: string }) {
+export function UserField({
+  id,
+  sampleId,
+  status,
+}: {
+  id: string;
+  sampleId?: string;
+  status?: UserStatus;
+}) {
   const field = useFieldContext<UserIdentity | null>();
   const [isOpen, setIsOpen] = useState(false);
   const [term, setTerm] = useState("");
   const [search] = useDebouncedValue(term, { wait: DEBOUNCE_MS });
-  const found = useSearchUsers(search, sampleId, { enabled: isOpen });
+  const found = useSearchUsers(search, sampleId, { enabled: isOpen, status });
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>

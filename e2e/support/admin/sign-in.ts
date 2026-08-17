@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import { type Browser, type Page } from "@playwright/test";
 
 import { adminPage } from "./admin.page";
 import { keycloakLoginPage } from "./keycloak-login.page";
@@ -29,4 +29,14 @@ export async function signInAsResearcher(page: Page, researcher: Researcher) {
   await shibbolethLoginPage(page).login(researcher.username, "password");
   await keycloakProfilePage(page).completeIfShown(researcher.email);
   await admin.expectSignedIn();
+}
+
+export async function signInAsResearcherInOwnSession(
+  browser: Browser,
+  researcher: Researcher,
+): Promise<Page> {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  await signInAsResearcher(page, researcher);
+  return page;
 }

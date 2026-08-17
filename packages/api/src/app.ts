@@ -9,6 +9,8 @@ import type { SendMail } from "./mail/send-mail.ts";
 
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
+import { createManualGroupRepository } from "./manual-group/repository.ts";
+import { createManualGroupRoutes } from "./manual-group/routes.ts";
 import { loadRateLimitConfig } from "./rate-limit/config.ts";
 import { rateLimit } from "./rate-limit/middleware.ts";
 import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
@@ -45,6 +47,7 @@ export function createApp(
   );
   const userRepository = createUserRepository(database);
   const userSampleRepository = createUserSampleRepository(database);
+  const manualGroupRepository = createManualGroupRepository(database);
 
   // It sits under the global cors below, so a 429 still carries the allow-origin
   // header the admin SPA needs to read it, and cors answers a preflight before
@@ -62,7 +65,14 @@ export function createApp(
     // currentUser, so a refused request costs no user upsert.
     .use("*", rateLimit(rateLimitConfig, "user"))
     .use("*", currentUser(userRepository))
-    .route("/currentUser", createCurrentUserRoutes(userRepository))
+    .route(
+      "/currentUser",
+      createCurrentUserRoutes(userRepository, manualGroupRepository),
+    )
+    .route(
+      "/manual-groups",
+      createManualGroupRoutes(manualGroupRepository, mail),
+    )
     .route(
       "/samples",
       createSampleAdminRoutes(

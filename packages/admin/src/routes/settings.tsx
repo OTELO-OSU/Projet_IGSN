@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { InstitutionalGroupsForm } from "#/institutional-groups/institutional-groups-form.tsx";
+import { MyManualGroups } from "#/manual-groups/my-manual-groups.tsx";
 import { m } from "#/paraglide/messages.js";
 import { OrcidSettingsForm } from "#/settings/orcid-settings-form.tsx";
 
@@ -27,6 +28,10 @@ function SettingsPage() {
           <p className="text-muted-foreground text-sm">
             {m.settings_institution_hint()}
           </p>
+          <h2 className="text-xl font-bold">
+            {m.settings_manual_groups_title()}
+          </h2>
+          <MyManualGroups />
         </>
       ) : (
         <p>{m.auth_loading()}</p>

@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 
 import { render } from "vitest-browser-react";
+import { userEvent } from "vitest/browser";
 
 import { ConfirmButton } from "./confirm-button.tsx";
 
@@ -49,6 +50,108 @@ describe("ConfirmButton", () => {
 
     expect(screen.getByRole("dialog").elements()).toEqual([]);
     expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("should keep the action locked until the exact confirm phrase is typed", async () => {
+    const onConfirm = vi.fn();
+    const screen = await render(
+      <ConfirmButton
+        title="Delete this group?"
+        description="This cannot be undone."
+        confirmPhrase={{ text: "DELETE", label: "Type DELETE to confirm" }}
+        onConfirm={onConfirm}
+        {...labels}
+      >
+        Delete
+      </ConfirmButton>,
+    );
+    await screen.getByRole("button", { name: "Delete" }).click();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Confirm" }))
+      .toBeDisabled();
+
+    await screen.getByLabelText("Type DELETE to confirm").fill("delete");
+
+    await expect
+      .element(screen.getByRole("button", { name: "Confirm" }))
+      .toBeDisabled();
+
+    await screen.getByLabelText("Type DELETE to confirm").fill("DELETE");
+    await screen.getByRole("button", { name: "Confirm" }).click();
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("should confirm when the user presses enter in the confirm phrase field", async () => {
+    const onConfirm = vi.fn();
+    const screen = await render(
+      <ConfirmButton
+        title="Delete this group?"
+        description="This cannot be undone."
+        confirmPhrase={{ text: "DELETE", label: "Type DELETE to confirm" }}
+        onConfirm={onConfirm}
+        {...labels}
+      >
+        Delete
+      </ConfirmButton>,
+    );
+    await screen.getByRole("button", { name: "Delete" }).click();
+
+    await screen.getByLabelText("Type DELETE to confirm").fill("DELETE");
+    await userEvent.keyboard("{Enter}");
+
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("dialog").elements()).toEqual([]);
+  });
+
+  it("should ignore enter in the confirm phrase field while the phrase is wrong", async () => {
+    const onConfirm = vi.fn();
+    const screen = await render(
+      <ConfirmButton
+        title="Delete this group?"
+        description="This cannot be undone."
+        confirmPhrase={{ text: "DELETE", label: "Type DELETE to confirm" }}
+        onConfirm={onConfirm}
+        {...labels}
+      >
+        Delete
+      </ConfirmButton>,
+    );
+    await screen.getByRole("button", { name: "Delete" }).click();
+
+    await screen.getByLabelText("Type DELETE to confirm").fill("delete");
+    await userEvent.keyboard("{Enter}");
+
+    expect(onConfirm).not.toHaveBeenCalled();
+    await expect.element(screen.getByRole("dialog")).toBeVisible();
+  });
+
+  it("should ask for the confirm phrase again after a cancel", async () => {
+    const onConfirm = vi.fn();
+    const screen = await render(
+      <ConfirmButton
+        title="Delete this group?"
+        description="This cannot be undone."
+        confirmPhrase={{ text: "DELETE", label: "Type DELETE to confirm" }}
+        onConfirm={onConfirm}
+        {...labels}
+      >
+        Delete
+      </ConfirmButton>,
+    );
+    await screen.getByRole("button", { name: "Delete" }).click();
+    await screen.getByLabelText("Type DELETE to confirm").fill("DELETE");
+    await screen.getByRole("button", { name: "Cancel" }).click();
+
+    await screen.getByRole("button", { name: "Delete" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Type DELETE to confirm"))
+      .toHaveValue("");
+    await expect
+      .element(screen.getByRole("button", { name: "Confirm" }))
+      .toBeDisabled();
   });
 
   it("should forward the button props to the trigger", async () => {
