@@ -12,25 +12,17 @@ function measurement(value: number | null, unit: string | null) {
   return value !== null && unit !== null ? { value, unit } : null;
 }
 
-// Absent parts are omitted rather than set to null, so a stored value
-// round-trips to the same minimal shape the client sent; null when every part
-// is absent.
 function prune(parts: Record<string, unknown>) {
   const kept = omitNull(parts);
   return Object.keys(kept).length > 0 ? kept : null;
 }
 
-// Keeps only the non-null entries; unlike prune it never collapses to null, so
-// a discriminated shape can keep a mandatory field (the provenance status)
-// alongside its optional siblings.
 function omitNull(parts: Record<string, unknown>) {
   return Object.fromEntries(
     Object.entries(parts).filter(([, part]) => part !== null),
   );
 }
 
-// Flat description columns -> nested domain description (ADR 0015); a sample
-// without one carries `description: null`.
 function toDescription(row: Selectable<DB["sample"]>) {
   return prune({
     collectionDate:
@@ -51,8 +43,6 @@ function toDescription(row: Selectable<DB["sample"]>) {
   });
 }
 
-// Flat condition columns -> nested domain condition (same storage pattern as
-// the description, ADR 0016).
 function toCondition(row: Selectable<DB["sample"]>) {
   return prune({
     packaging: row.packaging,
@@ -97,8 +87,6 @@ function toSecurity(row: Selectable<DB["sample"]>) {
   });
 }
 
-// Flat scientific-context columns -> nested domain scientific context (ADR 0014
-// storage pattern).
 function toScientificContext(row: Selectable<DB["sample"]>) {
   if (row.sc_provenance_status === "recent_collection") {
     return scientificContextSchema.parse({

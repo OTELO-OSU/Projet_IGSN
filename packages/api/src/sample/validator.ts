@@ -28,8 +28,6 @@ const igsnAttachmentParamsSchema = igsnParamSchema.extend({
 
 export const validateIdParam = validateUuidIdParam("Invalid sample id");
 
-// A malformed IGSN can match no sample; reject it up front rather than 500 on
-// the query.
 export const validateIgsnParam = validator("param", (value, c) => {
   const parsed = igsnParamSchema.safeParse(value);
   if (!parsed.success) {
@@ -54,8 +52,6 @@ function sampleBodyValidator<
     if (!parsed.success) {
       return c.json({ error: "Invalid sample" }, 400);
     }
-    // The limit is per deployment, so publishedSampleSchema (static) cannot own
-    // this check.
     if ((parsed.data.attachments?.length ?? 0) > uploadLimit) {
       return c.json({ error: "Too many attachments" }, 400);
     }
@@ -101,8 +97,6 @@ export const validateIgsnAttachmentParams = validator("param", (value, c) => {
   return parsed.data;
 });
 
-// Multipart upload: the domain schema caps the size before any byte reaches
-// storage; any file type is accepted (downloads never render inline).
 export const validateAttachmentUpload = validator("form", (value, c) => {
   const parsed = uploadSampleAttachmentSchema.safeParse(value);
   if (!parsed.success) {

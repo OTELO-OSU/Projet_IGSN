@@ -107,7 +107,7 @@ describe("insertSample", () => {
         geologicalUnit: "Green Sandstone Fm",
       },
     });
-    // Assert: read back through the list path.
+    // Assert
     const { data } = await listAsOwner(db, { page: 1, perPage: 10 });
     expect(data[0]?.age).toEqual({
       numericAgeMin: 12000,
@@ -138,7 +138,7 @@ describe("insertSample", () => {
       type: null,
       collectionMethod: null,
     });
-    // Assert: the version nibble of a v7 UUID is "7".
+    // Assert
     expect(created.id[14]).toBe("7");
   });
 

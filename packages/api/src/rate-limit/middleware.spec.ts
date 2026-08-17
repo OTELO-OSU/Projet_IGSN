@@ -14,7 +14,6 @@ const config = (overrides: Partial<RateLimitConfig> = {}): RateLimitConfig => ({
   ...overrides,
 });
 
-// Budgets are fixed policy, so a per-key budget is spent by actually calling.
 const spendBudget = async (
   request: () => Promise<Response> | Response,
   points: number,
@@ -29,8 +28,6 @@ const publicApp = (rateLimitConfig: RateLimitConfig) =>
     .use("*", rateLimit(rateLimitConfig, "ip"))
     .get("/samples", (c) => c.json({ ok: true }));
 
-// The user scope reads the sub the auth guard leaves behind, so the stub runs
-// first, as requireAuth does in app.ts.
 const adminApp = (rateLimitConfig: RateLimitConfig) =>
   new Hono<{ Variables: { jwtPayload: KeycloakClaims } }>()
     .use("*", async (c, next) => {
@@ -41,8 +38,6 @@ const adminApp = (rateLimitConfig: RateLimitConfig) =>
     .use("*", rateLimit(rateLimitConfig, "user"))
     .get("/admin/samples", (c) => c.json({ ok: true }));
 
-// The node adapter reads the peer address off the request socket, so a fake env
-// of that shape is what a real connection looks like to getConnInfo.
 const fromPeer = (
   app: ReturnType<typeof publicApp>,
   remoteAddress: string,

@@ -7,7 +7,6 @@ import { describe, expect, it } from "vitest";
 import { type AuthenticatedEnv } from "./current-user.ts";
 import { requireSuperAdmin } from "./require-super-admin.ts";
 
-// The guard runs after currentUser; simulate the caller it resolves.
 const appWithUser = (user?: User) =>
   new Hono<AuthenticatedEnv>()
     .use(async (c, next) => {

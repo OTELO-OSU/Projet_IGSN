@@ -1,7 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// "user" is a reserved word in Postgres. Kysely quotes every identifier, so the
-// builder is fine; hand-written sql fragments must spell it "user".
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("user")
@@ -14,10 +12,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     )
     .execute();
 
-  // ponytail: the composite primary key indexes (user_id, sample_id), which
-  // serves both reads we make (a user's samples, one user's access to one
-  // sample). No index on sample_id alone: nothing looks a sample's owners up yet,
-  // and the only cascade delete is the seed reset. Add one if either changes.
+  // ponytail: no index on sample_id alone: nothing looks a sample's owners up
+  // yet, and the only cascade delete is the seed reset. Add one if either changes.
   await db.schema
     .createTable("user_sample")
     .addColumn("user_id", "uuid", (col) =>

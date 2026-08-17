@@ -5,8 +5,6 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import postgres from "postgres";
 
-// Self-contained connection: migrations run as a one-off task with their own
-// client, independent of the app request-path pool.
 function createDb(): Kysely<unknown> {
   return new Kysely<unknown>({
     dialect: new PostgresJSDialect({
@@ -18,7 +16,6 @@ function createDb(): Kysely<unknown> {
         database: process.env.DATABASE_NAME,
         username: process.env.DATABASE_USER,
         password: process.env.DATABASE_PASSWORD,
-        // RDS can enforce TLS; opt in with DATABASE_SSL=require.
         ssl: process.env.DATABASE_SSL === "require" ? "require" : undefined,
       }),
     }),

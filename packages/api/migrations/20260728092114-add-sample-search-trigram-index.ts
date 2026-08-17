@@ -1,9 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// unaccent() is only STABLE (its dictionary resolves through search_path), so
-// Postgres refuses it in an index expression; immutable_unaccent pins the
-// dictionary, schema-qualified because CREATE INDEX restricts search_path.
-// These expressions must stay byte-for-byte what `search-filter.ts` builds.
 const SEARCHED_COLUMNS = ["name", "specific_name", "igsn"] as const;
 
 export async function up(db: Kysely<unknown>): Promise<void> {

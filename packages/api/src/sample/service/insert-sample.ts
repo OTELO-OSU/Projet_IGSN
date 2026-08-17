@@ -20,8 +20,6 @@ export async function insertSample(
     .values({
       id: uuidv7(),
       ...sampleColumns(input),
-      // Snapshotted here and not in sampleColumns: an update must never rewrite
-      // the affiliation a past declaration was made under.
       institutional_organization: groups?.institutionalOrganization ?? null,
       institutional_osu: groups?.institutionalOsu ?? null,
       institutional_laboratory: groups?.institutionalLaboratory ?? null,

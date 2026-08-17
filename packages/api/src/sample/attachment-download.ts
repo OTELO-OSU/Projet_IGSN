@@ -1,8 +1,5 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 
-// RFC 6266 headers: an ASCII fallback filename plus the UTF-8 filename*.
-// Always a plain download, never rendered inline: the media type is
-// client-declared at upload, so the browser must not execute it (svg, html).
 export function attachmentDownload(
   attachment: SampleAttachment,
   content: Uint8Array,

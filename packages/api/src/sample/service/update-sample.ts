@@ -21,7 +21,6 @@ export async function updateSample(
     .returning("id")
     .executeTakeFirst();
   if (!row) return null;
-  // PUT semantics, like every other field: absent links clear the links.
   await replaceSampleLinks(db, id, input.links ?? []);
   return getSampleById(db, id);
 }

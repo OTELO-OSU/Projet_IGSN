@@ -7,12 +7,10 @@ import { z } from "zod";
 
 import type { SampleAccessEnv } from "./require-sample-access.ts";
 
-// Requiring a lock instead would brick saving on a single failed lock call.
 export function requireEditLock(
   repository: SampleRepository,
 ): MiddlewareHandler<SampleAccessEnv> {
   return async (c, next) => {
-    // A malformed uuid matches no sample; let validateIdParam answer 400.
     const id = z.uuid().safeParse(c.req.param("id"));
     if (!id.success) {
       return next();

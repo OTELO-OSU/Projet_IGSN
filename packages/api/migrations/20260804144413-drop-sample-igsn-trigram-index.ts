@@ -1,7 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// Search matches igsn by equality only, served by the unique constraint's
-// index, so the trigram index is write cost for no read.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`DROP INDEX sample_igsn_trgm_idx`.execute(db);
 }

@@ -9,8 +9,6 @@ import { createApp } from "../app.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
 
-// requireAuth is stubbed suite-wide in test/setup.ts to gate on the Authorization
-// header.
 const authHeader = { Authorization: "Bearer test-token" };
 
 const csv = new TextEncoder().encode("col1,col2\n1,2\n");
@@ -24,8 +22,6 @@ type Client = ReturnType<
 >;
 type Db = Parameters<typeof createApp>[0];
 
-// Rows inserted straight into the table, bypassing the upload cap on purpose:
-// the legacy sample that already sits above the limit (no grandfathering).
 async function insertLegacyAttachments(
   db: Db,
   sampleId: string,
@@ -42,11 +38,8 @@ async function insertLegacyAttachments(
   return rows.map((row) => ({ id: row.id, description: null }));
 }
 
-// The real dev folder (gitignored), so uploaded blobs stay inspectable.
 const attachmentsDir = join(import.meta.dirname, "..", "..", "attachments");
 
-// Publishing requires an accepted account (see samplePublishBlockers), so the
-// caller these specs upload and publish with is provisioned as one.
 async function createTestApp(db: Parameters<typeof createApp>[0]) {
   await provisionUser(db, "test-token", { status: "accepted" });
   return testClient(createApp(db, { attachmentsDir }).app);
@@ -154,7 +147,6 @@ describe("admin attachment routes", () => {
     const client = await createTestApp(db);
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments.$post(
-      // Cast: the typed client rightly forbids this payload; the server must too.
       {
         param: { id: sample.id },
         form: { description: "orphan" } as unknown as { file: File },
@@ -172,7 +164,6 @@ describe("admin attachment routes", () => {
       const res = await client.admin.samples[":id"].attachments.$post(
         {
           param: { id: sample.id },
-          // A File built without a type reaches the server with "".
           form: { file: new File([csv], "data.csv") },
         },
         { headers: authHeader },
@@ -324,7 +315,6 @@ describe("admin attachment routes", () => {
     const sample = await createSample(client);
     const res = await client.admin.samples[":id"].attachments[
       ":attachmentId"
-      // Cast: the typed client rightly forbids this id; the server must too.
     ].$delete(
       { param: { id: sample.id, attachmentId: "not-a-uuid" } },
       { headers: authHeader },
@@ -504,7 +494,7 @@ describe("upload limit on save and publish", () => {
         },
         { headers: authHeader },
       );
-      // Assert: rejected before any reconcile, so the sample keeps them all.
+      // Assert
       expect(res.status).toBe(400);
       const read = await client.admin.samples[":id"].$get(
         { param: { id: sample.id } },
@@ -595,8 +585,7 @@ describe("public attachment download", () => {
   pgTest(
     "should not expose a draft sample's attachment by IGSN",
     async ({ db }) => {
-      // Arrange: an attachment on a draft, plus a published sample whose IGSN
-      // the request borrows; neither pairing may resolve.
+      // Arrange
       const client = await createTestApp(db);
       const draft = await createSample(client);
       const uploaded = await uploadAttachment(client, draft.id);

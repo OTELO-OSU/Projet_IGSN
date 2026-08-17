@@ -153,8 +153,6 @@ describe("mapMaterial", () => {
   });
 
   it("should drop a classification the new tree cannot place, not coarsen it to the material root", () => {
-    // Ore has no branch in the new tree; dropping is more honest than
-    // asserting a bare "rock" from the material_id.
     expect(mapMaterial("Ore>Oxide", "Ice")).toBe(null);
   });
 });
@@ -182,7 +180,7 @@ describe("isKnownMaterialPath", () => {
     ["Xenolithic>Metamorphic>Metasomatic", "Rock"], // leaf with no node and no remap
     ["Ore>Sulfide", "Rock"],
     [null, "Soil"], // material_id the new roots lack
-    [null, null], // no material signal at all
+    [null, null],
   ] as const)("should skip %s / %s", (classification, material) => {
     expect(isKnownMaterialPath(classification, material)).toBe(false);
   });
@@ -589,7 +587,6 @@ describe("unmappableValues", () => {
   });
 
   it("should not flag a DOI related resource outside the reviewed groups", () => {
-    // The link is dropped and logged (see droppedDoiLinks), never the sample.
     expect(
       unmappableValues(
         goodRow({

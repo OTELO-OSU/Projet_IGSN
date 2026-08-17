@@ -2,7 +2,6 @@ import { describe, expect, it, vi } from "vitest";
 
 const DEFAULT = 0.8;
 
-// The threshold is read at import, so each case needs a fresh module.
 async function importThreshold(value: string | undefined) {
   if (value === undefined) delete process.env.SAMPLE_SEARCH_FUZZY_THRESHOLD;
   else process.env.SAMPLE_SEARCH_FUZZY_THRESHOLD = value;

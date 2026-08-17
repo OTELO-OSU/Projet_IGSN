@@ -1,8 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// Sample description (ADR 0015): flat nullable columns on sample, no side
-// table. Dates are `date` (day-precise, no timezone); measurement values are
-// double precision paired with a text unit code.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .alterTable("sample")

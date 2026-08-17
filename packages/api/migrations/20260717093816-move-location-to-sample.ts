@@ -1,10 +1,5 @@
 import { type Kysely, sql } from "kysely";
 
-// Fold the 1:1 location table (ADR 0014) into sample. Location data is
-// dropped, not copied (acceptable at this stage). `type` is renamed
-// `location_type`: sample already has a `type` (taxonomy path). The generated,
-// GiST-indexed `geom` geography moves along for spatial search. Raw SQL: the
-// generated geography column is beyond the Kysely schema builder.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`DROP TABLE location`.execute(db);
   await sql`

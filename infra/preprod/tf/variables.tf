@@ -1,5 +1,3 @@
-# Env-specific values (no defaults) are set in env/<environment>.tfvars.
-
 variable "project" {
   type        = string
   description = "Project slug, used as a name prefix."

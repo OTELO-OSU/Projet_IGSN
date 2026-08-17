@@ -21,8 +21,6 @@ const input = {
   description: "Raw XRF measurements",
 };
 
-// The real dev folder (gitignored), not a temp dir: uploaded blobs stay
-// inspectable after a run. Blob names are uuid-prefixed, so tests never collide.
 const dir = join(import.meta.dirname, "..", "..", "attachments");
 
 async function arrange(db: Kysely<DB>) {
@@ -35,7 +33,6 @@ async function arrange(db: Kysely<DB>) {
   return { repository, sample };
 }
 
-// create also answers "limit_reached"/null; these cases stay under the cap.
 function stored(created: SampleAttachment | "limit_reached" | null) {
   if (created === null || created === "limit_reached") {
     throw new Error(`unexpected create result: ${created}`);
@@ -106,7 +103,7 @@ describe("sampleAttachmentRepository", () => {
       const { repository, sample } = await arrange(db);
       // Act
       const created = await repository.create(sample.id, input, content);
-      // Assert: blobs are grouped in a per-sample folder.
+      // Assert
       expect(await readdir(join(dir, sample.id))).toContain(
         `${stored(created).id}-measurements.csv`,
       );
@@ -120,7 +117,7 @@ describe("sampleAttachmentRepository", () => {
       // Act
       const first = await repository.create(sample.id, input, content);
       const second = await repository.create(sample.id, input, content);
-      // Assert: the uuid prefix keeps the blobs apart on disk.
+      // Assert
       expect(stored(second).id).not.toBe(stored(first).id);
       const files = await readdir(join(dir, sample.id));
       expect(files).toContain(`${stored(first).id}-measurements.csv`);
@@ -142,7 +139,7 @@ describe("sampleAttachmentRepository", () => {
 
   pgTest("should report an unknown removal as false", async ({ db }) => {
     const { repository, sample } = await arrange(db);
-    // Act / Assert: another sample's (here: no) attachment is not ours to drop.
+    // Act / Assert
     expect(
       await repository.remove(
         sample.id,
@@ -201,8 +198,7 @@ describe("sampleAttachmentRepository", () => {
       });
       const created = await repository.create(sample.id, input, content);
       const otherCreated = await repository.create(other.id, input, content);
-      // Act: reconciling `other` with the foreign id neither hijacks it nor
-      // keeps it; the foreign attachment simply is not other's to keep.
+      // Act
       await repository.reconcile(other.id, [
         { id: stored(created).id, description: "hijack" },
       ]);

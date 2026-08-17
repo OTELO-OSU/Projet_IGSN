@@ -8,9 +8,6 @@ import { pgTest } from "../tests/pg-test.ts";
 import { createUserRepository } from "../user/repository.ts";
 import { type AuthenticatedEnv, currentUser } from "./current-user.ts";
 
-// The stand-in for requireAuth sets the verified claims exactly as test/setup.ts
-// does, but per test: mounting createApp instead would inherit that suite-wide
-// stub, whose claims always carry an email.
 function appWithClaims(
   db: Parameters<typeof createUserRepository>[0],
   claims: KeycloakClaims,
@@ -131,8 +128,6 @@ describe("currentUser", () => {
     },
   );
 
-  // No row is written either, or the next such token would adopt this empty
-  // account.
   pgTest(
     "should answer 403 and provision nothing without an email claim",
     async ({ db }) => {
@@ -152,8 +147,6 @@ describe("currentUser", () => {
     },
   );
 
-  // preferred_username is the Keycloak shell account's own name, which real
-  // ORCID does not fill with the iD: only identity_provider_identity carries it.
   const orcidClaims: KeycloakClaims = {
     sub: "f:orcid:0000-0002-1825-0097",
     preferred_username: "e7c3a1f0-shell",
@@ -278,8 +271,6 @@ describe("currentUser", () => {
       const orcid = await appWithClaims(db, orcidClaims).request("/probe");
       // Assert
       expect(brokered.status).toBe(200);
-      // No reason, so this ORCID login passed the allow-list and failed on the
-      // missing local link instead.
       expect(await orcid.json()).toEqual({ error: "Forbidden" });
     },
   );

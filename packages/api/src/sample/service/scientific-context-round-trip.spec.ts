@@ -90,8 +90,6 @@ describe("sample scientific context persistence", () => {
         collectionCurator: "Georges Cuvier",
       },
     });
-    // The previous branch's columns are cleared, so no recent-collection field
-    // leaks into the historical shape.
     expect(updated?.scientificContext).toEqual({
       provenanceStatus: "historical_specimen",
       collectionCurator: "Georges Cuvier",

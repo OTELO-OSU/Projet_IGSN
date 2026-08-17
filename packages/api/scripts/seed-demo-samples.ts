@@ -5,15 +5,6 @@ import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffi
 
 import type { SeedSample } from "./seed.ts";
 
-// Demo dataset for the public frontend / admin walkthrough: 120 geologically
-// coherent samples covering every branch of the sample vocabularies, with a
-// location wherever the domain allows one. Authored without id/igsn/published;
-// those are injected by position in the map below (see seed-demo.ts). English
-// only (i18n testing rule). Kept separate from SEED_SAMPLES, which the E2E
-// suite asserts on. Owners spread over the researchers, luc excepted: he owns
-// nothing on any dataset, so signing in as him always shows the empty registry.
-// A few drafts belong to the pending researcher (theo); nadia (super admin) and
-// chloe (rejected) own nothing.
 type DemoRow = Omit<SeedSample, "id" | "igsn" | "published">;
 
 type Position = NonNullable<Location["position"]>;
@@ -40,7 +31,6 @@ const area = (
   elevation,
 });
 
-// Whole signed units: positive above the datum, negative below (bathymetry).
 const elev = (
   min: number,
   max: number,
@@ -52,8 +42,6 @@ const on = (start: string, end: string = start) => ({
   collectionDate: { start, end },
 });
 
-// A numeric age range in whole units (Ma by default); stratigraphic bounds stay
-// empty. Not annum, so no calendar reference is needed to publish.
 const numericAge = (
   min: number,
   max: number,
@@ -69,8 +57,6 @@ const numericAge = (
     geologicalUnit: null,
   }) as const;
 
-// A numeric age in annum (unit "a") counted from a calendar reference; the
-// years unit is only meaningful with annum, so this helper pairs them.
 const annumAge = (
   min: number,
   max: number,
@@ -86,8 +72,6 @@ const annumAge = (
     geologicalUnit: null,
   }) as const;
 
-// A stratigraphic age: an ICS rank range (youngest..oldest, see GEOLOGICAL_AGES)
-// plus an optional free-text lithostratigraphic unit. No numeric block.
 const geologicalAge = (
   min: GeologicalAge,
   max: GeologicalAge,
@@ -103,11 +87,7 @@ const geologicalAge = (
     geologicalUnit: unit,
   }) as const;
 
-// 90 complete, publishable rows. Each carries a leaf type, a leaf material,
-// texture/facies where the material calls for it, a location (unless the
-// material forbids/exempts it), a collection date and availability.
 const PUBLISHED: DemoRow[] = [
-  // Igneous, plutonic (texture from the plutonic set).
   {
     name: "Brittany Granite",
     owner: "marie",
@@ -219,7 +199,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2024-07-19"),
     availability: "exists",
   },
-  // Igneous, volcanic (texture from the volcanic set).
   {
     name: "Massif Central Basalt",
     owner: "sophie",
@@ -359,7 +338,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2025-03-11"),
     availability: "exists",
   },
-  // Metamorphic (facies required; two also carry a texture via meta_igneous).
   {
     name: "Carrara Marble",
     owner: "jean",
@@ -818,7 +796,6 @@ const PUBLISHED: DemoRow[] = [
     age: annumAge(1000, 3000, "bce"),
     availability: "exists",
   },
-  // Mineral (leaf root).
   {
     name: "Alpine Quartz Crystal",
     owner: "jean",
@@ -861,7 +838,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2024-10-22"),
     availability: "exists",
   },
-  // Fossil (leaf root).
   {
     name: "Normandy Ammonite",
     owner: "camille",
@@ -907,7 +883,6 @@ const PUBLISHED: DemoRow[] = [
     age: geologicalAge(8, 10),
     availability: "exists",
   },
-  // Synthetic (leaf root): location forbidden (ADR 0014).
   {
     name: "Synthetic Corundum",
     owner: "sophie",
@@ -928,7 +903,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2024-11-30"),
     availability: "exists",
   },
-  // Extraterrestrial meteorites (found on Earth: location required).
   {
     name: "Sahara Ordinary Chondrite",
     owner: "camille",
@@ -1006,7 +980,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2024-12-20"),
     availability: "exists",
   },
-  // Extraterrestrial returned samples (location optional; mission-collected).
   {
     name: "Apollo 15 Mare Basalt",
     owner: "camille",
@@ -1064,9 +1037,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2024-04-15"),
     availability: "exists",
   },
-  // Remaining coverage: legacy/unknown method, towed camera, sediment trap,
-  // suspended sediment, drilled basement, box corer; an area with an elevation
-  // range; a sample that no longer exists.
   {
     name: "Legacy Archive Basalt",
     owner: "camille",
@@ -1161,9 +1131,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2025-02-15"),
     availability: "exists",
   },
-  // Wider world spread: published, located rows in regions the map is otherwise
-  // sparse in (East Asia, SE Asia, Oceania, North Pacific, high northern
-  // latitudes), so bbox/map search has results outside Europe and the Atlantic.
   {
     name: "Sanbagawa Blueschist",
     owner: "marie",
@@ -1284,9 +1251,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2024-08-30"),
     availability: "exists",
   },
-  // Tight cluster in the Chaîne des Puys volcanic province (Auvergne, France),
-  // all within ~0.1 deg, so a small drawn box or a zoomed-in map returns several
-  // samples at once, exercising location search at close range.
   {
     name: "Puy de Dôme Trachyte",
     owner: "pierre",
@@ -1367,8 +1331,6 @@ const PUBLISHED: DemoRow[] = [
     description: on("2025-06-22"),
     availability: "exists",
   },
-  // Further world spread across still-sparse regions: the East African Rift,
-  // Greenland, the Himalaya, Patagonia, Central America, Korea, the SW Pacific.
   {
     name: "Afar Rift Basalt",
     owner: "pierre",
@@ -1476,9 +1438,6 @@ const PUBLISHED: DemoRow[] = [
   },
 ];
 
-// 30 work-in-progress drafts: name + nature always, the rest partial or
-// deliberately non-leaf. Each still passes createSampleSchema (draft bar). No
-// igsn, published = false.
 const DRAFTS: DemoRow[] = [
   {
     name: "Unclassified field sample 001",
@@ -1520,8 +1479,6 @@ const DRAFTS: DemoRow[] = [
     nature: "multiple_sample",
     location: { region: { kind: "continent", country: "FR" } },
   },
-  // Drafts of the pending researcher: an unverified account can declare but not
-  // publish, so the demo shows that state too.
   {
     name: "Cave locality note",
     owner: "theo",
@@ -1668,14 +1625,9 @@ const DRAFTS: DemoRow[] = [
   },
 ];
 
-// Deterministic UUIDv7-shaped id from the index (version nibble 7, variant 8),
-// distinct from SEED_SAMPLES ids. Index fits in the 12-hex node field.
 const demoId = (index: number): string =>
   `019f5b01-0000-7000-8000-${index.toString(16).padStart(12, "0")}`;
 
-// Publish requires a scientific context; published demo rows alternate the two
-// provenance branches so the walkthrough shows both. ROR ids from ORGANIZATIONS
-// (same as SEED_SAMPLES).
 const RECENT_CONTEXT: SeedSample["scientificContext"] = {
   provenanceStatus: "recent_collection",
   funderOrganization: "02feahw73",
@@ -1691,8 +1643,6 @@ const HISTORICAL_CONTEXT: SeedSample["scientificContext"] = {
   collectionOrigin: "scientific_expedition",
 };
 
-// The first PUBLISHED.length rows publish (igsn derived from the id as publish
-// does); the drafts follow with no igsn.
 export const DEMO_SAMPLES: SeedSample[] = [...PUBLISHED, ...DRAFTS].map(
   (row, index) => {
     const id = demoId(index);

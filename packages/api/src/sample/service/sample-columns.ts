@@ -8,7 +8,6 @@ import { securityColumns } from "./security-columns.ts";
 import { toAgeColumns } from "./to-age-columns.ts";
 import { locationColumns } from "./to-location.ts";
 
-// Fields listed explicitly: never spread request input into an insert or update.
 export const sampleColumns = (input: CreateSample) => ({
   name: input.name,
   nature: input.nature,

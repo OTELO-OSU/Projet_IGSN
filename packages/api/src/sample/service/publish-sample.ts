@@ -17,7 +17,6 @@ export async function publishSample(
     .set({
       published: true,
       igsn: generateIgsnSuffix(id),
-      // Captured once on first publish, preserved on any re-publish.
       publication_year: sql`coalesce(publication_year, extract(year from now())::int)`,
     })
     .where("id", "=", id)

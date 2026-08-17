@@ -16,9 +16,6 @@ const BUDGET = {
   user: AUTHENTICATED_USER_BUDGET,
 };
 
-// The key must come from the trust boundary, never from the client: a header is
-// only read when a reverse proxy we control sets it (trustProxyHeaders),
-// otherwise anyone rotating X-Real-IP would get an unlimited budget.
 function requestKey(
   c: Context<RateLimitEnv>,
   scope: RateLimitScope,
@@ -26,9 +23,6 @@ function requestKey(
 ): string {
   if (scope === "user") return c.get("jwtPayload")?.sub ?? "unknown";
   const forwarded = trustProxyHeaders ? c.req.header("X-Real-IP") : undefined;
-  // A proxy that forgets header_up X-Real-IP would otherwise collapse every
-  // caller behind it into one shared bucket, so the peer address still answers.
-  // c.env is undefined under hono/testing, where getConnInfo would throw.
   return (
     forwarded ??
     (c.env ? getConnInfo(c).remote.address : undefined) ??
@@ -52,8 +46,6 @@ export function rateLimit(
     try {
       await limiter.consume(requestKey(c, scope, config.trustProxyHeaders));
     } catch (rejected) {
-      // consume() rejects with a RateLimiterRes, which is not an Error, so
-      // anything else is a real failure and must not read as a 429.
       if (!(rejected instanceof RateLimiterRes)) throw rejected;
       const seconds = String(Math.ceil(rejected.msBeforeNext / 1000));
       return c.json({ error: "Too many requests" }, 429, {

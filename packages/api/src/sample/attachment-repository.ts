@@ -28,12 +28,6 @@ function toAttachment(
   });
 }
 
-// Metadata row in Postgres, content on disk at <sampleId>/<attachmentId>-<name>
-// (ADR 0017). Both ids are server-generated uuids and the appended original
-// name is allow-listed to [\w.-], so no user-controlled path segment ever
-// reaches the filesystem; the uuid prefix makes identical file names
-// collision-free and the readable name is debug sugar. Swapping the filesystem
-// for Ceph later only touches the fs calls here.
 export function createSampleAttachmentRepository(
   db: Kysely<DB>,
   storageDir: string,
@@ -78,9 +72,6 @@ export function createSampleAttachmentRepository(
           })
           .returningAll()
           .executeTakeFirstOrThrow();
-        // Blob write happens inside the transaction: a failed write rolls the
-        // row back. A commit failure can leave an orphan blob; harmless, as
-        // nothing references it.
         await mkdir(dirFor(sampleId), { recursive: true });
         await writeFile(pathFor(sampleId, row.id, row.name), content);
         return toAttachment(row);
@@ -94,9 +85,6 @@ export function createSampleAttachmentRepository(
           .selectAll()
           .where("sample_id", "=", sampleId)
           .execute();
-        // Blob removal happens inside the transaction, like create: a failed
-        // rm rolls the row deletions back; a commit failure can leave a blob
-        // deleted early, acceptable for rows the caller asked to drop.
         await Promise.all(
           existing.map(async (row) => {
             if (!keep.has(row.id)) {
@@ -121,8 +109,6 @@ export function createSampleAttachmentRepository(
 
     remove: (sampleId: string, attachmentId: string) =>
       withTransaction(db, async (trx) => {
-        // Blob removal inside the transaction, like reconcile: a failed rm
-        // rolls the row deletion back.
         const row = await trx
           .deleteFrom("sample_attachment")
           .where("id", "=", attachmentId)

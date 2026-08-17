@@ -1,8 +1,5 @@
 import { type Kysely } from "kysely";
 
-// Related DOI links and attached files, one-to-many with sample (ADR 0017).
-// url/name are NOT NULL: a description without its url/file cannot exist by
-// construction. Attachment content lives on disk keyed by the row id.
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .createTable("sample_link")

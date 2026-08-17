@@ -64,8 +64,6 @@ describe("app", () => {
     );
   });
 
-  // The lockout sits in currentUser, which wraps the whole /admin mount, so one
-  // check covers every authenticated route, read or write.
   describe("a rejected caller", () => {
     const authHeader = { Authorization: "Bearer test-token" };
     const rejectedEmail = "test-token@example.com";
@@ -215,8 +213,6 @@ describe("app", () => {
     );
   });
 
-  // The budgets are fixed (config.ts), so these exhaust the real tier rather
-  // than lowering it.
   describe("rate limiting", () => {
     beforeEach(() => {
       process.env.TRUST_PROXY_HEADERS = "true";
