@@ -25,13 +25,27 @@ vi.mock("react-oidc-context", () => ({
   }),
 }));
 
+const MANUAL_GROUPS = [
+  { id: "3f2504e0-4f89-41d3-9a0c-0305000000a1", name: "Basalt team" },
+];
+
 function fakeApi({
   orcid = null,
   conflict = false,
-}: { orcid?: string | null; conflict?: boolean } = {}) {
+  manualGroups = MANUAL_GROUPS,
+  canLeave = true,
+}: {
+  orcid?: string | null;
+  conflict?: boolean;
+  manualGroups?: { id: string; name: string }[];
+  canLeave?: boolean;
+} = {}) {
   const puts: unknown[] = [];
   let stored = orcid;
   worker.use(
+    http.get("*/admin/currentUser/manual-groups", () =>
+      HttpResponse.json({ data: manualGroups, meta: { canLeave } }),
+    ),
     http.put("*/admin/currentUser/orcid", async ({ request }) => {
       if (conflict) return new HttpResponse(null, { status: 409 });
       const body = (await request.json()) as { orcid: string | null };
@@ -118,6 +132,22 @@ describe("settings page", () => {
       .element(page.getByRole("alert"))
       .toHaveTextContent(/invalid orcid/i);
     expect(puts).toEqual([]);
+  });
+
+  it("should list the manual groups the user belongs to", async () => {
+    await renderSettingsPage();
+    await expect.element(page.getByText("Basalt team")).toBeVisible();
+    await expect
+      .element(page.getByRole("button", { name: "Leave Basalt team" }))
+      .toBeEnabled();
+  });
+
+  it("should refuse to leave a group while a published sample is held", async () => {
+    await renderSettingsPage({ canLeave: false });
+    await expect
+      .element(page.getByRole("button", { name: "Leave Basalt team" }))
+      .toBeDisabled();
+    await expect.element(page.getByText(/published sample/i)).toBeVisible();
   });
 
   it("should surface a conflict when another account holds the orcid", async () => {

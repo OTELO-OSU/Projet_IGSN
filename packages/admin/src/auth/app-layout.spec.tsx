@@ -41,11 +41,12 @@ describe("AppLayout", () => {
     await expect.element(screen.getByText("Sample list")).toBeVisible();
   });
 
-  it("should list both resources in the sidebar for a super admin", async () => {
+  it("should offer every admin destination to a super admin", async () => {
     fakeCurrentUser({ superAdmin: true });
 
     const screen = await renderLayout();
     const nav = screen.getByRole("navigation");
+    const groups = screen.getByRole("list", { name: "Institutional groups" });
 
     await expect
       .element(nav.getByRole("link", { name: "Samples" }))
@@ -53,14 +54,9 @@ describe("AppLayout", () => {
     await expect
       .element(nav.getByRole("link", { name: "Users" }))
       .toHaveAttribute("href", "/users");
-  });
-
-  it("should offer the three institutional group lists to a super admin", async () => {
-    fakeCurrentUser({ superAdmin: true });
-
-    const screen = await renderLayout();
-    const groups = screen.getByRole("list", { name: "Institutional groups" });
-
+    await expect
+      .element(nav.getByRole("link", { name: "Manual groups" }))
+      .toHaveAttribute("href", "/manual-groups");
     await expect
       .element(groups.getByRole("link", { name: "Organizations" }))
       .toHaveAttribute("href", "/institutional-groups/organizations");
@@ -88,6 +84,9 @@ describe("AppLayout", () => {
     expect(nav.getByRole("link", { name: "OSUs" }).elements()).toHaveLength(0);
     expect(
       nav.getByRole("link", { name: "Laboratories" }).elements(),
+    ).toHaveLength(0);
+    expect(
+      nav.getByRole("link", { name: "Manual groups" }).elements(),
     ).toHaveLength(0);
   });
 

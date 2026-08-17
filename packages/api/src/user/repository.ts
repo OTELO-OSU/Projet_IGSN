@@ -98,6 +98,19 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .execute();
         return rows.map(({ email }) => email);
       }),
+    hasPublishedSample: (userId) =>
+      withTransaction(db, async (trx) => {
+        const row = await trx
+          .selectFrom("user_sample")
+          .innerJoin("sample", "sample.id", "user_sample.sample_id")
+          .select("user_sample.user_id")
+          .where("user_sample.user_id", "=", userId)
+          .where("user_sample.role", "=", "owner")
+          .where("sample.published", "=", true)
+          .limit(1)
+          .executeTakeFirst();
+        return row !== undefined;
+      }),
     setStatus: (id, status) =>
       withTransaction(db, async (trx) => {
         const row = await trx
@@ -108,9 +121,9 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .executeTakeFirst();
         return row ? userSchema.parse(row) : null;
       }),
-    search: (query, callerId, excludeCollaboratorsOf) =>
+    search: (query, callerId, excludeCollaboratorsOf, status) =>
       withTransaction(db, (trx) =>
-        searchUsers(trx, query, callerId, excludeCollaboratorsOf),
+        searchUsers(trx, query, callerId, excludeCollaboratorsOf, status),
       ),
     // ponytail: a concurrent claim of the same orcid can still trip the unique
     // constraint into a 500; the constraint keeps it correct, retry shows 409.

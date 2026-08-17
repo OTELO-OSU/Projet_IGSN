@@ -1,3 +1,4 @@
+import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
 import type { DB } from "../db.ts";
@@ -11,12 +12,14 @@ export function searchUsers(
   query: string | undefined,
   callerId: string,
   excludeCollaboratorsOf?: string,
+  status?: UserStatus,
 ): Promise<UserIdentity[]> {
   const others = db
     .selectFrom("user")
     .select(["id", "email", "name", "firstname", "orcid"])
     .where("id", "!=", callerId)
     .where("status", "!=", "rejected")
+    .$if(status !== undefined, (qb) => qb.where("status", "=", status!))
     .$if(excludeCollaboratorsOf !== undefined, (qb) =>
       qb.where((eb) =>
         eb.not(

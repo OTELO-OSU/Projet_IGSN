@@ -20,6 +20,8 @@ export type Mail = {
   audience?: MailAudience;
 };
 
+export type RenderedMail = Omit<Mail, "to" | "audience">;
+
 export type SendMail = (mail: Mail) => Promise<void>;
 
 export function smtpTransportOptions(

@@ -1,5 +1,7 @@
 import type { ComponentProps } from "react";
 
+import { useId, useState } from "react";
+
 import { Button } from "./button.tsx";
 import {
   Dialog,
@@ -11,6 +13,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./dialog.tsx";
+import { Input } from "./input.tsx";
+import { Label } from "./label.tsx";
+
+type ConfirmPhrase = { text: string; label: string };
 
 type ConfirmButtonProps = ComponentProps<typeof Button> & {
   title: string;
@@ -18,6 +24,7 @@ type ConfirmButtonProps = ComponentProps<typeof Button> & {
   confirmLabel: string;
   cancelLabel: string;
   closeLabel: string;
+  confirmPhrase?: ConfirmPhrase;
   onConfirm: () => void;
 };
 
@@ -27,6 +34,7 @@ export function ConfirmButton({
   confirmLabel,
   cancelLabel,
   closeLabel,
+  confirmPhrase,
   onConfirm,
   children,
   ...buttonProps
@@ -43,14 +51,56 @@ export function ConfirmButton({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <DialogFooter showCloseButton closeLabel={cancelLabel}>
-          <DialogClose asChild>
-            <Button variant="destructive" onClick={onConfirm}>
-              {confirmLabel}
-            </Button>
-          </DialogClose>
-        </DialogFooter>
+        <ConfirmBody
+          confirmLabel={confirmLabel}
+          cancelLabel={cancelLabel}
+          confirmPhrase={confirmPhrase}
+          onConfirm={onConfirm}
+        />
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ConfirmBody({
+  confirmLabel,
+  cancelLabel,
+  confirmPhrase,
+  onConfirm,
+}: {
+  confirmLabel: string;
+  cancelLabel: string;
+  confirmPhrase?: ConfirmPhrase;
+  onConfirm: () => void;
+}) {
+  const inputId = useId();
+  const [typed, setTyped] = useState("");
+
+  return (
+    <form className="contents" onSubmit={(event) => event.preventDefault()}>
+      {confirmPhrase ? (
+        <div className="grid gap-2">
+          <Label htmlFor={inputId}>{confirmPhrase.label}</Label>
+          <Input
+            id={inputId}
+            autoComplete="off"
+            value={typed}
+            onChange={(event) => setTyped(event.target.value)}
+          />
+        </div>
+      ) : null}
+      <DialogFooter showCloseButton closeLabel={cancelLabel}>
+        <DialogClose asChild>
+          <Button
+            type="submit"
+            variant="destructive"
+            disabled={confirmPhrase ? typed !== confirmPhrase.text : false}
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </Button>
+        </DialogClose>
+      </DialogFooter>
+    </form>
   );
 }

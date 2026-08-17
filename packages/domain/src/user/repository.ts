@@ -1,5 +1,5 @@
 import type { SetInstitutionalGroups } from "../institutional-group/institutional-groups-validator.ts";
-import type { User } from "./model.ts";
+import type { User, UserStatus } from "./model.ts";
 import type {
   ListUsersQuery,
   SetUserStatusBody,
@@ -23,6 +23,7 @@ export type UserRepository = {
     query: string | undefined,
     callerId: string,
     excludeCollaboratorsOf?: string,
+    status?: UserStatus,
   ): Promise<UserIdentity[]>;
   // Resolves to null when another user already holds that ORCID.
   setOrcid(userId: string, orcid: string | null): Promise<User | null>;
@@ -37,6 +38,7 @@ export type UserRepository = {
   get(id: string): Promise<User | null>;
   listPending(): Promise<PendingUser[]>;
   listSuperAdminEmails(): Promise<string[]>;
+  hasPublishedSample(userId: string): Promise<boolean>;
   setStatus(id: string, status: UserDecision): Promise<User | null>;
 };
 

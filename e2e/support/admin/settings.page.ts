@@ -14,5 +14,17 @@ export function settingsPage(page: Page) {
       await page.getByRole("button", { name: "Save" }).click();
       await expect(page.getByText("ORCID iD saved")).toBeVisible();
     },
+    expectManualGroup: (name: string) =>
+      expect(
+        page.getByRole("listitem").filter({ hasText: name }),
+      ).toBeVisible(),
+    expectNoManualGroupEditControl: async () => {
+      await expect(
+        page.getByRole("textbox", { name: "Group name" }),
+      ).toBeHidden();
+      await expect(
+        page.getByRole("button", { name: "Associate a user" }),
+      ).toBeHidden();
+    },
   };
 }

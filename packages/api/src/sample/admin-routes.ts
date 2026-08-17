@@ -26,7 +26,8 @@ import type { SendMail } from "../mail/send-mail.ts";
 import type { SampleAccessEnv } from "./require-sample-access.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
-import { sendSampleInvitationMail } from "../user-sample/send-sample-invitation-mail.ts";
+import { trySendMail } from "../mail/try-send-mail.ts";
+import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
@@ -146,15 +147,18 @@ export function createSampleAdminRoutes(
         }
         if (mail && added !== "already_collaborator") {
           // ponytail: fire and forget; a retry queue if a lost invitation ever matters.
-          void sendSampleInvitationMail(
-            {
-              invitee: added.added,
-              inviter: c.get("user"),
-              role,
-              sampleName: sample.name,
-              sampleUrl: new URL(`/samples/${id}`, mail.adminUrl).toString(),
-            },
+          void trySendMail(
+            added.added.email,
+            () =>
+              sampleInvitationMail({
+                invitee: added.added,
+                inviter: c.get("user"),
+                role,
+                sampleName: sample.name,
+                sampleUrl: new URL(`/samples/${id}`, mail.adminUrl).toString(),
+              }),
             mail.sendMail,
+            "Could not mail the sample invitation",
           );
         }
         return c.body(null, 204);

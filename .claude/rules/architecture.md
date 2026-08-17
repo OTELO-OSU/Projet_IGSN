@@ -10,6 +10,7 @@
 
 ## Institutional groups
 
+- This is one of two group mechanisms: manual groups are super-admin-curated rows with explicit membership, unrelated to any catalog here; see ADR 0025.
 - Organisme / OSU / Labo is a graph, not a chain: many labos per organisme, a labo shared by several organismes (co-tutelle), an OSU in one or more organismes, derived from its labos, a labo in zero or one OSU.
 - `domain/institutional-group/filter-laboratories-by-org-and-osu.ts` is the single source of truth for a group's labos: the form offers that list, `institutional-groups-validator.ts` checks against it, and the admin `/institutional-groups/laboratories` list filters with it.
 - The admin group lists filter the static `domain` catalogs client-side, but their members come from `GET /admin/users`, filtered in SQL by `institutionalOrganization` / `institutionalOsu` / `institutionalLaboratory`.

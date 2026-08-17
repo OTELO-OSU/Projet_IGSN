@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsersIndexRouteImport } from './routes/users.index'
+import { Route as ManualGroupsIndexRouteImport } from './routes/manual-groups.index'
 import { Route as UsersUserIdRouteImport } from './routes/users.$userId'
 import { Route as SamplesCreateRouteImport } from './routes/samples.create'
 import { Route as SamplesSampleIdRouteImport } from './routes/samples.$sampleId'
+import { Route as ManualGroupsGroupIdRouteImport } from './routes/manual-groups.$groupId'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as InstitutionalGroupsOsusIndexRouteImport } from './routes/institutional-groups.osus.index'
 import { Route as InstitutionalGroupsOrganizationsIndexRouteImport } from './routes/institutional-groups.organizations.index'
@@ -38,6 +40,11 @@ const UsersIndexRoute = UsersIndexRouteImport.update({
   path: '/users/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ManualGroupsIndexRoute = ManualGroupsIndexRouteImport.update({
+  id: '/manual-groups/',
+  path: '/manual-groups/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsersUserIdRoute = UsersUserIdRouteImport.update({
   id: '/users/$userId',
   path: '/users/$userId',
@@ -51,6 +58,11 @@ const SamplesCreateRoute = SamplesCreateRouteImport.update({
 const SamplesSampleIdRoute = SamplesSampleIdRouteImport.update({
   id: '/samples/$sampleId',
   path: '/samples/$sampleId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManualGroupsGroupIdRoute = ManualGroupsGroupIdRouteImport.update({
+  id: '/manual-groups/$groupId',
+  path: '/manual-groups/$groupId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthCallbackRoute = AuthCallbackRouteImport.update({
@@ -99,9 +111,11 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/manual-groups/$groupId': typeof ManualGroupsGroupIdRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
   '/users/$userId': typeof UsersUserIdRoute
+  '/manual-groups/': typeof ManualGroupsIndexRoute
   '/users/': typeof UsersIndexRoute
   '/institutional-groups/laboratories/$code': typeof InstitutionalGroupsLaboratoriesCodeRoute
   '/institutional-groups/organizations/$ror': typeof InstitutionalGroupsOrganizationsRorRoute
@@ -114,9 +128,11 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/manual-groups/$groupId': typeof ManualGroupsGroupIdRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
   '/users/$userId': typeof UsersUserIdRoute
+  '/manual-groups': typeof ManualGroupsIndexRoute
   '/users': typeof UsersIndexRoute
   '/institutional-groups/laboratories/$code': typeof InstitutionalGroupsLaboratoriesCodeRoute
   '/institutional-groups/organizations/$ror': typeof InstitutionalGroupsOrganizationsRorRoute
@@ -130,9 +146,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRoute
   '/auth/callback': typeof AuthCallbackRoute
+  '/manual-groups/$groupId': typeof ManualGroupsGroupIdRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
   '/users/$userId': typeof UsersUserIdRoute
+  '/manual-groups/': typeof ManualGroupsIndexRoute
   '/users/': typeof UsersIndexRoute
   '/institutional-groups/laboratories/$code': typeof InstitutionalGroupsLaboratoriesCodeRoute
   '/institutional-groups/organizations/$ror': typeof InstitutionalGroupsOrganizationsRorRoute
@@ -147,9 +165,11 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/auth/callback'
+    | '/manual-groups/$groupId'
     | '/samples/$sampleId'
     | '/samples/create'
     | '/users/$userId'
+    | '/manual-groups/'
     | '/users/'
     | '/institutional-groups/laboratories/$code'
     | '/institutional-groups/organizations/$ror'
@@ -162,9 +182,11 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/auth/callback'
+    | '/manual-groups/$groupId'
     | '/samples/$sampleId'
     | '/samples/create'
     | '/users/$userId'
+    | '/manual-groups'
     | '/users'
     | '/institutional-groups/laboratories/$code'
     | '/institutional-groups/organizations/$ror'
@@ -177,9 +199,11 @@ export interface FileRouteTypes {
     | '/'
     | '/settings'
     | '/auth/callback'
+    | '/manual-groups/$groupId'
     | '/samples/$sampleId'
     | '/samples/create'
     | '/users/$userId'
+    | '/manual-groups/'
     | '/users/'
     | '/institutional-groups/laboratories/$code'
     | '/institutional-groups/organizations/$ror'
@@ -193,9 +217,11 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SettingsRoute: typeof SettingsRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
+  ManualGroupsGroupIdRoute: typeof ManualGroupsGroupIdRoute
   SamplesSampleIdRoute: typeof SamplesSampleIdRoute
   SamplesCreateRoute: typeof SamplesCreateRoute
   UsersUserIdRoute: typeof UsersUserIdRoute
+  ManualGroupsIndexRoute: typeof ManualGroupsIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
   InstitutionalGroupsLaboratoriesCodeRoute: typeof InstitutionalGroupsLaboratoriesCodeRoute
   InstitutionalGroupsOrganizationsRorRoute: typeof InstitutionalGroupsOrganizationsRorRoute
@@ -228,6 +254,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/manual-groups/': {
+      id: '/manual-groups/'
+      path: '/manual-groups'
+      fullPath: '/manual-groups/'
+      preLoaderRoute: typeof ManualGroupsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/users/$userId': {
       id: '/users/$userId'
       path: '/users/$userId'
@@ -247,6 +280,13 @@ declare module '@tanstack/react-router' {
       path: '/samples/$sampleId'
       fullPath: '/samples/$sampleId'
       preLoaderRoute: typeof SamplesSampleIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manual-groups/$groupId': {
+      id: '/manual-groups/$groupId'
+      path: '/manual-groups/$groupId'
+      fullPath: '/manual-groups/$groupId'
+      preLoaderRoute: typeof ManualGroupsGroupIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth/callback': {
@@ -305,9 +345,11 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettingsRoute: SettingsRoute,
   AuthCallbackRoute: AuthCallbackRoute,
+  ManualGroupsGroupIdRoute: ManualGroupsGroupIdRoute,
   SamplesSampleIdRoute: SamplesSampleIdRoute,
   SamplesCreateRoute: SamplesCreateRoute,
   UsersUserIdRoute: UsersUserIdRoute,
+  ManualGroupsIndexRoute: ManualGroupsIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
   InstitutionalGroupsLaboratoriesCodeRoute:
     InstitutionalGroupsLaboratoriesCodeRoute,

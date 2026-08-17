@@ -74,11 +74,11 @@ describe("admin user search routes", () => {
     },
   );
 
-  pgTest.for(["", "c"])(
-    "should reject the search term %s with 400",
-    async (search, { db }) => {
+  pgTest.for(["search=", "search=c", "status=rejected", "status=unknown"])(
+    "should reject the query %s with 400",
+    async (query, { db }) => {
       const res = await createApp(db).app.request(
-        `/admin/users/search?search=${search}`,
+        `/admin/users/search?${query}`,
         {
           headers: authHeader,
         },
@@ -155,6 +155,28 @@ describe("admin user search routes", () => {
       expect(body.data.map((user) => user.email)).toEqual([
         "marie.curie@univ-lorraine.fr",
         "irene.curie@univ-lorraine.fr",
+      ]);
+    },
+  );
+
+  pgTest(
+    "should keep only the accepted accounts when status is accepted",
+    async ({ db }) => {
+      await insertUser(db, "marie.curie@univ-lorraine.fr", { name: "Curie" });
+      await insertUser(db, "irene.curie@univ-lorraine.fr", {
+        name: "Curie-Pending",
+        status: "pending",
+      });
+
+      const res = await testClient(createApp(db).app).admin.users.search.$get(
+        { query: { search: "curie", status: "accepted" } },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(200);
+      const body = userIdentitiesResponseSchema.parse(await res.json());
+      expect(body.data.map((user) => user.email)).toEqual([
+        "marie.curie@univ-lorraine.fr",
       ]);
     },
   );
