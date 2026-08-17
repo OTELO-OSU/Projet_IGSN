@@ -1,11 +1,6 @@
 import { type TreeNode } from "../../path/tree-node.ts";
 import { editableLeaves } from "./editable-leaves.ts";
 
-// Descendants of the `sediment` root (screenshot "Sediment classification").
-// Every inner box is pink (mandatory, the default: no node is marked
-// `optional: true`). A published sediment is frozen down to its second level
-// only (ADR 0022), so its third level carries `frozenWhenPublished: false` and
-// nothing deeper needs a mark.
 export const sedimentTree = {
   exogenous_detritic: {
     choices: ["gravel", "sand", "silt", "clay", "heterogeneous"],
@@ -25,8 +20,6 @@ export const sedimentTree = {
     choices: ["boulder", "cobble", "pebble", "granule"],
   },
 
-  // Grain-size classes are distinct codes per host (a sand grade is not a silt
-  // grade); labels are the size word alone.
   sand: {
     frozenWhenPublished: false,
     choices: [
@@ -79,8 +72,6 @@ export const sedimentTree = {
   mud_supported: {
     choices: ["floatstone", "wackestone", "mudstone"],
   },
-  // `boundstone` is a childless leaf elsewhere; here it needs textural children,
-  // so override it only in the carbonate context (longest-suffix match).
   "carbonate.boundstone": {
     label: "boundstone",
     choices: ["frame", "baffle", "bind"],

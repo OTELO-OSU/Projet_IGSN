@@ -9,8 +9,7 @@ import {
 } from "../sample/sample-validator.ts";
 import { userSchema, userStatusSchema } from "./model.ts";
 
-// Identity fields only: collaborator search is served to any authenticated
-// user, so moderation state (status, superAdmin) stays out of it.
+// Collaborator search is served to any authenticated user.
 export const userIdentitySchema = userSchema.pick({
   id: true,
   email: true,
@@ -51,8 +50,7 @@ export const userResponseSchema = z.object({ data: userSchema });
 
 export type UserResponse = z.infer<typeof userResponseSchema>;
 
-// Moderation only ever sets a decision: "pending" is the initial state, not a
-// state an admin puts a user back into.
+// "pending" is the initial state, not a state an admin puts a user back into.
 export const setUserStatusBodySchema = z.strictObject({
   status: userStatusSchema.exclude(["pending"]),
 });

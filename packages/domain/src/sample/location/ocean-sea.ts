@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-// Ocean and sea codes (271), snake_case slugs of the supplied names (no ISO
-// standard exists). Labels are resolved per app via a generated i18n map (see
-// the admin/frontend messages), following the texture-label pattern.
 export const OCEAN_SEAS = [
   "adriatic_sea",
   "aegean_sea",

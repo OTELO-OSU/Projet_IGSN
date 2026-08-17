@@ -22,7 +22,6 @@ describe("sampleLinkSchema", () => {
   });
 
   it.each([
-    // Only DOI urls are accepted, in their canonical https://doi.org form.
     { ...validLink, url: "https://example.com/10.1594/IEDA.100252" },
     { ...validLink, url: "http://doi.org/10.1594/IEDA.100252" },
     { ...validLink, url: "https://doi.org/" },
@@ -62,11 +61,9 @@ describe("createSampleLinkSchema", () => {
   });
 
   it.each([
-    // A description never comes without its url.
     { description: "Related dataset" },
     { url: "https://example.com/paper", description: "Related dataset" },
     { url: "https://doi.org/10.1594/IEDA.100252", description: "" },
-    // Unknown keys are rejected (strict object).
     { url: "https://doi.org/10.1594/IEDA.100252", label: "x" },
   ])("should reject invalid create input #%#", (input) => {
     // Arrange / Act

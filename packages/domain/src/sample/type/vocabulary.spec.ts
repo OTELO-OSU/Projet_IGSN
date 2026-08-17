@@ -12,15 +12,12 @@ describe("sampleTypeSchema", () => {
     expect(sampleTypeSchema.safeParse("core").success).toBe(true);
   });
 
-  it.each([
-    "",
-    "half_round", // sub-value without its parent
-    "dredge.half_round", // sub-value under the wrong parent
-    "core.unknown",
-    "Core",
-  ])("should reject %s", (input) => {
-    expect(sampleTypeSchema.safeParse(input).success).toBe(false);
-  });
+  it.each(["", "half_round", "dredge.half_round", "core.unknown", "Core"])(
+    "should reject %s",
+    (input) => {
+      expect(sampleTypeSchema.safeParse(input).success).toBe(false);
+    },
+  );
 });
 
 describe("SAMPLE_TYPES", () => {
@@ -42,8 +39,6 @@ describe("SAMPLE_TYPES", () => {
   });
 
   it("should terminate core.core instead of recursing on the reused core segment", () => {
-    // `core` lists itself as a child; the dotted `core.core` override is a
-    // childless leaf, so expansion stops there instead of looping core.core.core.
     expect(SAMPLE_TYPES).toContain("core.core");
     expect(SAMPLE_TYPES).not.toContain("core.core.core");
   });

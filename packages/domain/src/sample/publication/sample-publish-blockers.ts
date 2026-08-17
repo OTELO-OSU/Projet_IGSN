@@ -12,8 +12,6 @@ import { faciesFor } from "../metamorphic-facies/vocabulary.ts";
 import { isSampleTypeComplete } from "../type/is-complete.ts";
 import { SAMPLE_TYPES } from "../type/vocabulary.ts";
 
-// Callers map this enum exhaustively (e.g. the admin publish tooltip), so a new
-// code fails to compile until it is handled and translated.
 export const publishBlockerSchema = z.enum([
   "type_missing",
   "type_incomplete",
@@ -54,9 +52,6 @@ export type PublishableFields = Pick<
   | "scientificContext"
 >;
 
-// A create payload holds `undefined` for an absent field, a stored sample holds
-// `null`, and samplePublishBlockers distinguishes the two (a missing type reads
-// as `type_missing`, an unrecognized one as `type_incomplete`).
 export function toPublishableFields(
   sample: Partial<PublishableFields>,
 ): PublishableFields {
@@ -72,19 +67,11 @@ export function toPublishableFields(
   };
 }
 
-// A value outside the vocabulary is treated as incomplete, never as publishable:
-// the type is only nominally validated (`SampleType`/`MaterialPath` are `string`),
-// so a malformed value must gate publication rather than slip through.
 export function samplePublishBlockers(
   sample: PublishableFields & {
-    // Only the length is read, so the api's saved `Sample["attachments"]` and
-    // the admin's post-save count both fit. Omitted means "unknown", never
-    // blocking.
     attachments?: { readonly length: number };
   },
   uploadLimit: number = DEFAULT_UPLOAD_LIMIT,
-  // Omitted means "unknown", never blocking, like attachments above: a caller
-  // with no publisher at hand gets the field blockers only.
   publisher?: Pick<User, "status" | "superAdmin">,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
@@ -117,8 +104,6 @@ export function samplePublishBlockers(
     blockers.push("metamorphic_facies_missing");
   }
 
-  // Evaluated only once the material is a complete path, so an incomplete
-  // material (which already blocks) does not also raise this (ADR 0014).
   if (
     materialComplete &&
     locationRequirement(sample.material) === "required" &&
@@ -131,7 +116,6 @@ export function samplePublishBlockers(
     blockers.push("collection_date_missing");
   }
 
-  // Stratigraphic ages carry no unit.
   const age = sample.age;
   const hasNumericValue =
     age != null && (age.numericAgeMin != null || age.numericAgeMax != null);
@@ -173,8 +157,6 @@ export function samplePublishBlockers(
     blockers.push("availability_missing");
   }
 
-  // The schema forbids an empty researchStructure array, so null checks cover
-  // "not filled" for the multi-select too.
   const context = sample.scientificContext;
   if (context == null) {
     blockers.push("scientific_context_missing");
@@ -195,14 +177,11 @@ export function samplePublishBlockers(
       blockers.push("collection_origin_missing");
   }
 
-  // A sample carrying more attachments than the deployment allows cannot be
-  // published until files are removed: no grandfathering for legacy samples.
   if (sample.attachments != null && sample.attachments.length > uploadLimit) {
     blockers.push("attachment_limit_exceeded");
   }
 
-  // Publishing is public: only a moderated-in account may do it, whatever the
-  // sample looks like.
+  // Publishing is public: only a moderated-in account may do it.
   if (publisher && !canPublishSamples(publisher)) {
     blockers.push("user_not_verified");
   }

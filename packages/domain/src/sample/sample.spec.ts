@@ -348,9 +348,7 @@ describe("createSampleSchema", () => {
   });
 
   it.each([
-    // A plutonic-only texture under a volcanic material.
     { material: "rock.igneous.volcanic.mafic.basalt", texture: "cumulate" },
-    // A volcanic-only texture under a plutonic material.
     { material: "rock.igneous.plutonic.felsic.granite", texture: "glassy" },
     { material: "rock.igneous", texture: "phaneritic" },
     { material: "rock.sedimentary.microbialite", texture: "phaneritic" },

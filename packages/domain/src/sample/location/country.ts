@@ -1,12 +1,5 @@
 import { z } from "zod";
 
-// ISO 3166-1 alpha-2 country codes, one per entry of the supplied country list
-// (240). Labels are resolved at render time via Intl.DisplayNames (see
-// country-label.ts), so no label map lives here. "AN" (Netherlands Antilles,
-// retired) is kept because the list includes it; ICU aliases it to a successor
-// ("Curaçao"), so country-label overrides its label back to "Netherlands
-// Antilles". "UK" is intentionally absent: "GB" is the ISO code for the
-// United Kingdom.
 export const COUNTRIES = [
   "AD",
   "AE",

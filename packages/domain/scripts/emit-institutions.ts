@@ -58,8 +58,6 @@ export const laboratoryCodeSchema = z.string().trim().min(1);
 `;
 }
 
-// A laboratory is the leaf of the organisme/OSU/laboratory trio, so losing it
-// clears the three columns and re-opens the group form at the next login.
 export function emitRemovedInstitutionsMigration({
   laboratories,
   osus,

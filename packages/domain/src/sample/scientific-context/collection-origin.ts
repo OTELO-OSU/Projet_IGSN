@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// How a historical collection was assembled. Codes, not labels (i18n rule);
 // `unknown_origin` is a real recorded answer, distinct from "not filled".
 export const COLLECTION_ORIGINS = [
   "scientific_expedition",

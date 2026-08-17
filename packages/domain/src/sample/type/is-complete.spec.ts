@@ -5,7 +5,7 @@ import { isSampleTypeComplete } from "./is-complete.ts";
 describe("isSampleTypeComplete", () => {
   it.each([
     "core.piece",
-    "core.core", // dotted override key: a childless leaf, so a valid stop
+    "core.core",
     "dredge",
     "individual_sample",
     "inapplicable",

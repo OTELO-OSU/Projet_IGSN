@@ -3,15 +3,6 @@ import { z } from "zod";
 import { expandPaths } from "../path/expand-paths.ts";
 import { type TreeNode } from "../path/tree-node.ts";
 
-// Hierarchical collection-method vocabulary, a segment-keyed tree like material
-// (see classification.ts). Every level is optional: any node is a valid stop, so
-// every non-leaf is marked `optional: true` and there is no completeness gate (a
-// collection method never blocks publication).
-//
-// A segment with no entry (blasting, giant...) is a childless leaf labelled by
-// its own code (see tree-node.ts), reusable under several parents (e.g. `giant`
-// under gravity and piston corers). Each self-child (`coring.coring`...) keeps a
-// dotted childless override so expandPaths stops there instead of cycling.
 const collectionMethodTree = {
   coring: {
     optional: true,
@@ -81,8 +72,6 @@ const collectionMethodTree = {
     choices: ["grab", "hov", "rov"],
   },
   "grab.grab": { label: "grab" },
-  // The remaining roots are plain-leaf collection methods; an entry exists only
-  // to flag them as searchable facet options (see sample/search/facets.ts).
   blasting: { searchable: true },
   camera_sled_camera_tow: { searchable: true },
   experimental_apparatus: { searchable: true },
@@ -96,13 +85,9 @@ const collectionMethodTree = {
 
 export type CollectionMethodSegment = keyof typeof collectionMethodTree;
 
-// Widen values to TreeNode for uniform reads, keeping the literal keys.
 export const COLLECTION_METHOD_TREE: Record<CollectionMethodSegment, TreeNode> =
   collectionMethodTree;
 
-// Entry points: the segments a collection method can start from. A root without
-// a tree entry is a plain leaf; a typo here surfaces in the apps' label-coverage
-// specs.
 export const COLLECTION_METHOD_ROOTS = [
   "blasting",
   "camera_sled_camera_tow",
@@ -123,14 +108,11 @@ export const COLLECTION_METHODS = expandPaths(
   COLLECTION_METHOD_ROOTS,
 );
 
-// The vocabulary as one self-describing bundle for HierarchySelectField.
 export const COLLECTION_METHOD_HIERARCHY = {
   roots: COLLECTION_METHOD_ROOTS,
   nodes: COLLECTION_METHOD_TREE,
 };
 
-// A validated dot-joined path. Not a literal union: the valid set is derived
-// from the tree at runtime and enforced by the schema, not the type.
 export type CollectionMethod = string;
 
 export const collectionMethodSchema = z

@@ -24,8 +24,6 @@ describe("frozenMaterialPrefix", () => {
       "sediment.exogenous_detritic.gravel.boulder",
       "sediment.exogenous_detritic",
     ],
-    // A published partial path still returns its own prefix, so it can be
-    // completed rather than being stuck incomplete.
     ["sediment.exogenous_detritic", "sediment.exogenous_detritic"],
     [
       "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.limestone",
@@ -36,15 +34,10 @@ describe("frozenMaterialPrefix", () => {
       "rock.metamorphic.strongly_metamorphosed.gneiss",
       "rock.metamorphic.strongly_metamorphosed",
     ],
-    // Editability follows the reused node: weakly_metamorphosed is frozen at its
-    // own level but inherits the plutonic chemistry unlock (ADR 0010, path is
-    // the identity).
     [
       "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
       "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic",
     ],
-    // The frozen head stops at the first editable level, whatever the depth of
-    // the stored path: `carbonate` and everything below it stays choosable.
     ["sediment.biogenic.carbonate.boundstone.frame", "sediment.biogenic"],
   ])("unlocks %s at %s", (material, expected) => {
     expect(MATERIAL_PATHS).toContain(material);
@@ -56,8 +49,6 @@ describe("frozenMaterialPrefix", () => {
     "rock.igneous",
     "sediment",
     "mineral",
-    // The `hydrothermal.carbonate` override resolves to a childless leaf, so the
-    // marked bare `carbonate` of the sediment subtree does not leak in here.
     "rock.hydrothermal.carbonate",
     "extraterrestrial_rock.returned_samples.lunar_sample.rock",
     "extraterrestrial_rock.meteorites.chondrites.carbonaceous_chondrites.ci",

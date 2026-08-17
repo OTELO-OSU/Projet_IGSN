@@ -11,8 +11,6 @@ import { MATERIAL_PATHS } from "./material/classification.ts";
 import { pathSegment } from "./path/segment.ts";
 import { SAMPLE_TYPES } from "./type/vocabulary.ts";
 
-// Build the app's paraglide `m` from the shared catalog: paraglide compiles
-// each key to a function returning its text, which is exactly this shape.
 const m = Object.fromEntries(
   Object.entries(catalog as Record<string, string>)
     .filter(([key]) => !key.startsWith("$"))
@@ -48,9 +46,6 @@ describe("typeLabel", () => {
   });
 });
 
-// The tree vocabularies take runtime string paths, so their key coverage is not
-// compile-checked (unlike the flat vocabularies, guarded by AssertKeys in
-// create-sample-labels.ts).
 describe("tree vocabulary label coverage", () => {
   it.each([
     ["material", MATERIAL_PATHS, materialPathLabel, "material"],
@@ -77,8 +72,6 @@ describe("tree vocabulary label coverage", () => {
     },
   );
 
-  // A node's childLabel names the level it opens; it is a code, not a path, so
-  // the walk above never covers it.
   it("should translate every economic-interest childLabel code", () => {
     const childLabels = Object.values(ECONOMIC_INTEREST_TREE)
       .map((node) => node.childLabel)

@@ -7,27 +7,16 @@ export type CreateSampleAttachment = {
   description: string | null;
 };
 
-// Rows and blob move together: create persists the metadata and the content,
-// reconcile drops both for unlisted attachments. Methods return null when the
-// sample or the attachment does not exist.
 export type SampleAttachmentRepository = {
-  // "limit_reached": the sample already holds the deployment's upload limit,
-  // so nothing was persisted.
   create(
     sampleId: string,
     input: CreateSampleAttachment,
     content: Uint8Array,
   ): Promise<SampleAttachment | "limit_reached" | null>;
-  // Reconciles the sample's attachments against the given list (the sample
-  // update payload): a listed attachment gets its description updated, an
-  // unlisted one is removed with its content. Unknown ids are ignored.
   reconcile(
     sampleId: string,
     attachments: UpdateSampleAttachment[],
   ): Promise<void>;
-  // Drops one attachment (row + content), false when the sample does not hold
-  // it. Lets a caller free a slot before uploading its replacement, which the
-  // wholesale reconcile of a sample update cannot do on its own.
   remove(sampleId: string, attachmentId: string): Promise<boolean>;
   getContent(
     sampleId: string,

@@ -37,8 +37,6 @@ describe("expandPaths", () => {
   });
 
   it("should resolve a node by its longest matching path suffix", () => {
-    // Under `b`, segment `c` gets a child `d` (via the dotted `b.c` override);
-    // the bare `c` key is a leaf, so `c` outside that context has none.
     const tree = {
       a: { choices: ["b"] },
       b: { choices: ["c"] },
@@ -56,9 +54,6 @@ describe("expandPaths", () => {
   });
 
   it("should resolve a segment reused under sibling parents to its own choices (rock.igneous.plutonic/volcanic.felsic)", () => {
-    // `felsic` sits under both plutonic and volcanic igneous rock, but each
-    // context refines to different rocks. The dotted overrides win over bare
-    // `felsic`, so the same segment resolves to different choices by parent.
     const tree = {
       rock: { choices: ["igneous"] },
       igneous: { choices: ["plutonic", "volcanic"] },

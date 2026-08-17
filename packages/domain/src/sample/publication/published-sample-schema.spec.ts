@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { publishedSampleSchema } from "./published-sample-schema.ts";
 
-// A payload that keeps the sample publishable (no blockers).
 const publishable = {
   name: "Basalt 42",
   nature: "hand_sample" as const,

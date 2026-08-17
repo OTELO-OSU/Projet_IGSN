@@ -5,7 +5,6 @@ import { resolvePathNode } from "./resolve-node.ts";
 const tree = {
   rock: { optional: false },
   igneous: { optional: true },
-  // Same segment, different node under a parent: reused-segment override.
   "sediment.igneous": { optional: false },
 };
 

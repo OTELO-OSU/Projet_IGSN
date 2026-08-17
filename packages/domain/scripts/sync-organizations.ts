@@ -17,13 +17,9 @@ const ORGANIZATIONS_PATH = join(
   "../src/institutional-group/organization.ts",
 );
 
-// Sending it is what exempts us from rate limiting when they re-enable the
-// check (https://ror.readme.io/v2/docs/rest-api).
 const clientId = process.env.ROR_CLIENT_ID;
 const headers = clientId ? { "Client-Id": clientId } : undefined;
 
-// One flaky request must not kill an annual sync: keep the curated row and log
-// the id instead of aborting.
 async function refresh(current: Organization): Promise<Organization> {
   process.stderr.write(`fetching ${current.ror}\n`);
   try {
@@ -47,7 +43,6 @@ async function refresh(current: Organization): Promise<Organization> {
   }
 }
 
-// Sequential on purpose: 140 requests once a year, no reason to hammer ROR.
 const merged: Organization[] = [];
 for (const current of ORGANIZATIONS) merged.push(await refresh(current));
 

@@ -1,11 +1,5 @@
 import { type TreeNode } from "../../path/tree-node.ts";
 
-// Descendants of the `extraterrestrial_rock` root (screenshot "Extraterrestrial
-// rocks classification").
-// Every parent is mandatory (the default: no node is marked `optional: true`).
-// Nothing here may change once published (ADR 0022), which is the default, so no
-// node carries `frozenWhenPublished: false` and childless leaves need no entry
-// at all.
 export const extraterrestrialRockTree = {
   returned_samples: {
     choices: ["lunar_sample", "asteroid", "other"],
@@ -17,8 +11,6 @@ export const extraterrestrialRockTree = {
   lunar_sample: {
     choices: ["rock", "soil", "core"],
   },
-  // `rock` is the material root elsewhere; here it is a childless leaf, so
-  // override it only in the lunar-sample context (longest-suffix match).
   "lunar_sample.rock": { label: "rock" },
 
   asteroid: {
@@ -159,9 +151,6 @@ export const extraterrestrialRockTree = {
     choices: ["main_group", "eagle_station_group", "ungrouped"],
   },
 
-  // These codes name an editable level elsewhere in the tree (`basalt` is an
-  // igneous leaf, `other` a leaf of editable branches), so a dotted override
-  // keeps them frozen in this context (longest-suffix match).
   "returned_samples.other": { label: "other" },
   "asteroid.other": { label: "other" },
   "martian_meteorite.other": { label: "other" },

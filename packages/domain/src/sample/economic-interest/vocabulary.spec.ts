@@ -30,11 +30,11 @@ describe("economicInterestSchema", () => {
 
   it.each([
     "",
-    "mineral_and_ore", // resource type without its yes answer
-    "yes.uranium", // sub-value without its full ancestry
-    "yes.non_metallic.uranium", // sub-value under the wrong parent
+    "mineral_and_ore",
+    "yes.uranium",
+    "yes.non_metallic.uranium",
     "yes.mineral_and_ore.unknown",
-    "no.mineral_and_ore", // no answer has no children
+    "no.mineral_and_ore",
     "Yes",
   ])("should reject %s", (input) => {
     expect(economicInterestSchema.safeParse(input).success).toBe(false);

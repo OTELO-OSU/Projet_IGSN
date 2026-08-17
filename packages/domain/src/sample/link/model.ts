@@ -2,8 +2,6 @@ import { z } from "zod";
 
 import { freeTextSchema } from "../free-text.ts";
 
-// Links on a sample are always DOIs, in their canonical https://doi.org form
-// (a DOI name is `10.<registrant>/<suffix>`).
 export const doiUrlSchema = z
   .string()
   .trim()

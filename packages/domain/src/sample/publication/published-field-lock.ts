@@ -65,7 +65,6 @@ export const FROZEN_FORM_FIELDS_BY_PROVENANCE: Record<
   ).flat(),
 };
 
-// Infinity: no material, or a wholly frozen one, so every level locks.
 export function frozenMaterialDepth(material: Sample["material"]): number {
   return frozenMaterialPrefix(material)?.split(".").length ?? Infinity;
 }
@@ -94,9 +93,6 @@ function mergeLocation(
   incoming: CreateSample["location"],
   material: Sample["material"],
 ): Location | null {
-  // The merged material also decides whether a location may exist at all: a
-  // synthetic sample derives it from the structure ROR (ADR 0014), so its
-  // editable leaves must not bring one back.
   if (locationRequirement(material) === "forbidden") return null;
   const payload: Location = { ...incoming };
   const merged = freezeLocked(
@@ -107,9 +103,6 @@ function mergeLocation(
     },
     LOCKED_LOCATION_FIELDS_TO_FORM_FIELDS,
   );
-  // The elevation is the one editable leaf inside the frozen position, and the
-  // navigation type records how those coordinates were fixed: both are
-  // meaningless without a frozen position, so they drop when there is none.
   const position = merged.position
     ? { ...merged.position, elevation: payload.position?.elevation ?? null }
     : null;
@@ -125,8 +118,6 @@ function mergeLocation(
   return { ...merged, position, navigationType };
 }
 
-// The coarse classification is the frozen citable identity, deeper levels stay
-// refinable (ADR 0022).
 function mergeMaterial(
   current: Sample["material"],
   incoming: CreateSample["material"],
@@ -153,12 +144,8 @@ function mergeScientificContext(
   incoming: CreateSample["scientificContext"],
 ): ScientificContext | null {
   if (current == null) {
-    // No frozen provenance to preserve: defensively keep null rather than adopt
-    // the payload's branch (a published sample always has one).
     return null;
   }
-  // The editable leaves are only trusted on the stored branch, so a payload
-  // that flips the provenance status reads as "no edit".
   if (current.provenanceStatus === "recent_collection") {
     if (incoming?.provenanceStatus !== "recent_collection") return current;
     const payload: RecentCollection = { ...incoming };
@@ -177,9 +164,6 @@ function mergeScientificContext(
   );
 }
 
-// texture and facies are editable, but only valid for their material's branch
-// (createSampleSchema refines them against it) and nothing re-validates the
-// merge output.
 function mergeMaterialDependent(
   current: Sample,
   incoming: CreateSample,
@@ -193,8 +177,6 @@ function mergeMaterialDependent(
   };
 }
 
-// The post-publish mass-assignment guard: frozen fields always come from
-// storage, never from the payload.
 export function mergePublishedEdit(
   current: Sample,
   incoming: CreateSample,
@@ -210,6 +192,5 @@ export function mergePublishedEdit(
       incoming.scientificContext,
     ),
   };
-  // freezeLocked runs on the fully merged candidate, so a lock entry always wins.
   return freezeLocked(merged, current, LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS);
 }
