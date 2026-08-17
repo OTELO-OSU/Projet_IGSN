@@ -19,8 +19,6 @@ type HierarchyFacetProps = {
   emptyText: string;
 };
 
-// One cascade level: a searchable combobox over the searchable children of its
-// parent. `useId` ties the label to the control.
 function FacetLevel({
   id,
   label,
@@ -56,10 +54,6 @@ function FacetLevel({
   );
 }
 
-// A hierarchical facet driven entirely by its dot-path value (from the URL): the
-// cascade of levels is derived, so there is no local state to keep in sync. Only
-// nodes flagged searchable are offered, filtered here before the cascade sees
-// them, so a level with no searchable children ends the cascade.
 export function HierarchyFacet({
   hierarchy,
   translate,

@@ -18,8 +18,6 @@ import "../styles.css";
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: ({ matches }) => {
-    // The router works on delocalized paths; the leaf match holds the current
-    // one.
     const path = matches.at(-1)?.pathname ?? "/";
     return {
       meta: [

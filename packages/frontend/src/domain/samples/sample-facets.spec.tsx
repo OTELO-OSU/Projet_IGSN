@@ -23,21 +23,17 @@ describe("SampleFacets", () => {
     const { screen, onChange } = await renderFacets();
 
     await screen.getByRole("combobox", { name: "Nature" }).click();
-    // Options render in the vocabulary order; the first is hand_sample.
     await screen.getByRole("option").first().click();
 
     expect(onChange).toHaveBeenCalledWith("nature", "hand_sample");
   });
 
   it("should reveal a child level once a hierarchy node is picked", async () => {
-    // With `type` set to the "core" branch, the cascade shows a second level.
     const { screen, onChange } = await renderFacets({ type: "core" });
 
-    // Index 0 is the Type root; index 1 is the revealed child level.
     await screen.getByRole("combobox").nth(1).click();
     await screen.getByRole("option").first().click();
 
-    // The first child of core is its self-child, composing to "core.core".
     expect(onChange).toHaveBeenCalledWith("type", "core.core");
   });
 

@@ -187,8 +187,6 @@ export function SampleView({
         />
       ),
     },
-    // Attachment downloads resolve by IGSN, so the section needs one; a public
-    // sample always has one, so the guard only narrows the type.
     igsn != null &&
       (links.length > 0 || attachments.length > 0) && {
         id: "links",
@@ -211,8 +209,6 @@ export function SampleView({
       </div>
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
-        {/* self-start keeps the nav its own height (a stretched flex child
-            never sticks). */}
         <nav
           aria-label={m.sample_section_sample()}
           className="sticky top-28 w-40 shrink-0 self-start"

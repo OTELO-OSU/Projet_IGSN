@@ -4,8 +4,6 @@ import { listSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-val
 
 import { apiFetch, baseApiUrl } from "#/api.ts";
 
-// Facet filters are passed opaquely: the key is the API query param (from the
-// facet registry), the value its selection. Undefined/empty entries are skipped.
 export type SampleFilters = Record<string, string | number | undefined>;
 
 export type ListSamplesParams = {
@@ -13,7 +11,6 @@ export type ListSamplesParams = {
   perPage: number;
   search?: string;
   filters?: SampleFilters;
-  // "west,south,east,north" degrees; the domain schema parses/validates it.
   bbox?: string;
 };
 export type ListSamplesResult = { data: Sample[]; total: number };

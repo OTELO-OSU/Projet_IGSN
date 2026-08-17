@@ -150,8 +150,7 @@ export function FitSelection({ bbox }: { bbox: string | undefined }) {
 }
 
 // ponytail: both paths (Shift+drag, two clicks) are mouse-only, no keyboard path
-// to a bbox (WCAG 2.1.1 gap). Accepted per product decision; add a keyboard
-// entry path if needed.
+// to a bbox (WCAG 2.1.1 gap). Add a keyboard entry path if needed.
 export function SearchLocationMap({
   value,
   drawing,
@@ -174,7 +173,7 @@ export function SearchLocationMap({
       className="z-0 h-full w-full rounded-md select-none"
     >
       {/* ponytail: OSM public tiles are a known ceiling, self-host if traffic
-          grows. The attribution is required by their usage policy. */}
+          grows. */}
       <TileLayer
         noWrap
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

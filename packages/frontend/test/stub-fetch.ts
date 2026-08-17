@@ -1,5 +1,3 @@
-// Test-only fetch stub: replies with `body` as JSON at `status`, and records
-// the last requested URL so specs can assert the path and query params.
 export function stubFetch(
   body: unknown,
   status = 200,

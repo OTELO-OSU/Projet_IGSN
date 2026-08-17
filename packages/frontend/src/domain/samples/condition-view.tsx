@@ -14,14 +14,9 @@ import {
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
-// A category with its optional numeric reading: "Frozen (-18 °C)", or just
-// the category label when no reading was recorded.
 const withReading = (label: string, reading: string | null): string =>
   reading == null ? label : `${label} (${reading})`;
 
-// The condition rows of the sample detail page; FieldRow drops the parts the
-// sample lacks (every part of a Condition is optional; the parent hides the
-// whole section when the sample has none).
 export function ConditionView({ condition }: { condition: Condition }) {
   const {
     packaging,

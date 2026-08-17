@@ -7,10 +7,6 @@ import { configDefaults, defineConfig } from "vitest/config";
 import { paraglideOptions } from "./src/i18n/paraglide";
 
 export default defineConfig({
-  // paraglide generates src/paraglide/* (gitignored) at config time; without it
-  // a clean checkout (CI) has no messages module and every importer fails to
-  // load. Resolve project/outdir absolutely: vitest runs from the monorepo root,
-  // so paraglideOptions' relative paths would resolve against the wrong cwd.
   plugins: [
     paraglideVitePlugin({
       ...paraglideOptions,
@@ -19,24 +15,16 @@ export default defineConfig({
     }),
     react(),
   ],
-  // lucide-react (and other deps) must resolve the same React instance as the
-  // renderer, or their useContext hooks see a null React.
   resolve: { dedupe: ["react"] },
-  // The `url` strategy pulls in urlpattern-polyfill; pre-bundle it so vitest
-  // doesn't re-optimize and reload mid-run (a documented flaky-test trigger).
   optimizeDeps: { include: ["@inlang/paraglide-js/urlpattern-polyfill"] },
   test: {
     browser: {
       provider: playwright(),
       enabled: true,
-      // Chromium only: headless Firefox drops trusted input events and stalls
-      // pages under parallel load, making interaction tests flaky.
       instances: [{ browser: "chromium" }],
     },
     globals: true,
     include: ["src/**/*.spec.{ts,tsx}"],
-    // The SSR specs need AsyncLocalStorage, which no browser has; they run in
-    // the frontend-node project instead (vitest.node.config.ts).
     exclude: [...configDefaults.exclude, "src/**/*.node.spec.ts"],
     maxWorkers: 2,
     maxConcurrency: 2,

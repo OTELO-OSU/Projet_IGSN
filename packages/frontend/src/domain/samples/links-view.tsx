@@ -7,9 +7,6 @@ import { Download } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 
-// The download href must be the browser-facing api URL even when rendered
-// during SSR: the SSR-side API_URL (see api.ts) is an internal host the
-// reader's browser cannot reach, and it would leak into the HTML.
 const publicApiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3002";
 
 const attachmentUrl = (igsn: string, attachmentId: string) =>
@@ -21,9 +18,6 @@ type LinksViewProps = {
   attachments: SampleAttachment[];
 };
 
-// The Links section of the sample detail page: the related DOI links, opening
-// in a new tab, then the attached files, each with a download button (the
-// public download route needs no auth, so a plain anchor does).
 export function LinksView({ igsn, links, attachments }: LinksViewProps) {
   return (
     <div className="mt-2 grid gap-6">
@@ -39,8 +33,6 @@ export function LinksView({ igsn, links, attachments }: LinksViewProps) {
                   {link.url}
                 </ExternalLink>
                 {link.description ? (
-                  // Block paragraph, line breaks preserved: descriptions are
-                  // entered in a textarea and can run long.
                   <p className="text-muted-foreground whitespace-pre-line">
                     {link.description}
                   </p>
@@ -77,8 +69,6 @@ export function LinksView({ igsn, links, attachments }: LinksViewProps) {
                   </Button>
                 </div>
                 {attachment.description ? (
-                  // Block paragraph, line breaks preserved: descriptions are
-                  // entered in a textarea and can run long.
                   <p className="text-muted-foreground whitespace-pre-line">
                     {attachment.description}
                   </p>

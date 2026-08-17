@@ -64,8 +64,6 @@ describe("apiFetch", () => {
   });
 });
 
-// Separate from the cases above: those run once an earlier test has built the
-// store, so they never take the cold path a restarted frontend serves first.
 describe("runWithClientIp on a cold store", () => {
   it("should keep each visitor's context when the first requests race", async () => {
     vi.resetModules();
@@ -86,8 +84,6 @@ describe("runWithClientIp on a cold store", () => {
   });
 });
 
-// The sample clients default to apiFetch, so an SSR page view is billed to the
-// visitor rather than to the frontend container.
 describe("sample clients on SSR", () => {
   afterEach(() => {
     vi.restoreAllMocks();

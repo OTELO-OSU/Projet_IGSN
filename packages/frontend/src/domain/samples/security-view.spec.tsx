@@ -44,7 +44,6 @@ describe("SecurityView", () => {
     await expect
       .element(screen.getByText("Radioactivity explanation"))
       .not.toBeInTheDocument();
-    // A hazard never answered is dropped entirely.
     await expect
       .element(screen.getByText("Chemical risk", { exact: true }))
       .not.toBeInTheDocument();

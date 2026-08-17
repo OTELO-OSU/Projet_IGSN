@@ -23,8 +23,6 @@ const FACET_LABEL: Record<string, () => string> = {
 
 export const facetLabel = (key: string): string => FACET_LABEL[key]?.() ?? key;
 
-// The vocabulary resolvers accept any string at runtime, and the facet cascade
-// only ever passes real codes, so the enum ones are widened here.
 const FACET_VALUE_LABEL: Record<string, (code: string) => string> = {
   type: typeLabel,
   material: materialPathLabel,

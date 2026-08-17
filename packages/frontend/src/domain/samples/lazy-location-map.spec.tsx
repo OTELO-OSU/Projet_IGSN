@@ -5,7 +5,6 @@ import { render } from "vitest-browser-react";
 
 import { LazyLocationMap } from "./lazy-location-map.tsx";
 
-// The generous timeout pays leaflet's real dynamic import.
 const leafletContainer = (box: Locator) =>
   vi.waitFor(
     () => {
@@ -16,10 +15,8 @@ const leafletContainer = (box: Locator) =>
     { timeout: 15_000 },
   );
 
-// ponytail: vitest.config.ts has no tailwind plugin, so h-full/h-100 never
-// compile and the map container measures 414x0, too small for a real click to
-// land: leaflet's event order is replayed by hand. Drop this for a real
-// locator.click({ position }) once the plugin is there.
+// ponytail: vitest.config.ts has no tailwind plugin, so leaflet's event order is
+// replayed by hand. Drop this for a real locator.click({ position }).
 function fireMouse(
   target: Element,
   type: string,

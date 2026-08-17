@@ -26,7 +26,6 @@ export const Route = createFileRoute("/samples/$igsn")({
 function SampleDetail() {
   const { igsn } = Route.useParams();
   const { data: sample } = useGetSampleByIgsn(igsn);
-  // The loader throws notFound() on a missing sample, so it is never null here.
   if (!sample) {
     return null;
   }

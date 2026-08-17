@@ -17,13 +17,8 @@ import { facetLabel, facetValueLabel } from "#/domain/samples/facet-labels.ts";
 import { numericUnitLabel } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
-// The current facet selections, keyed by API query param (from the registry).
 export type FacetValues = Record<string, string | number | undefined>;
 
-// The sidebar's visual grouping of facets into sections (design-driven, so it
-// lives here, not in the domain registry). Each facet key appears in exactly one
-// section; the sample-facets.spec drift-guard fails if the registry gains a key
-// that no section lists, so nothing silently disappears from the sidebar.
 export const FACET_SECTIONS: readonly {
   title: () => string;
   keys: readonly string[];
@@ -48,23 +43,15 @@ export const FACET_SECTIONS: readonly {
 
 type SampleFacetsProps = {
   values: FacetValues;
-  // Set one facet param; an undefined value clears it. The caller writes it to
-  // the URL and resets pagination.
   onChange: (key: string, value: string | number | undefined) => void;
   onClearAll: () => void;
 };
 
-// The faceted-filter sidebar. Presentational: it reads the current selections
-// and reports changes; the route owns the URL and the results query. Each facet
-// renders the control its kind calls for, driven by the facet registry so the
-// set stays configurable in one place.
 export function SampleFacets({
   values,
   onChange,
   onClearAll,
 }: SampleFacetsProps) {
-  // Uncontrolled text/number inputs seed from the URL on mount; bumping this key
-  // on "clear all" remounts them empty (the comboboxes reset from the URL).
   const [resetNonce, setResetNonce] = useState(0);
   const hasActive = facetParamKeys().some((key) => values[key] !== undefined);
 
@@ -153,8 +140,6 @@ export function SampleFacets({
   );
 }
 
-// A titled group of facets: an uppercase section heading over its controls, with
-// a divider from the previous section (via the parent `divide-y`).
 function FacetSection({
   title,
   children,
@@ -245,13 +230,10 @@ function RangeFacet({
   const minId = useId();
   const maxId = useId();
   const unitId = useId();
-  // Commit a bound on blur/Enter: parse the input, drop it when blank.
   const toBound = (raw: string): number | undefined =>
     raw.trim() === "" ? undefined : Number(raw);
 
   return (
-    // No fieldset/legend: the section heading already names this group, so a
-    // legend would just repeat "Age" over the bounds it labels.
     <div className="flex flex-col gap-2">
       <div className="space-y-1">
         <Label htmlFor={minId}>{m.facet_age_min()}</Label>
@@ -276,9 +258,6 @@ function RangeFacet({
         <Combobox
           id={unitId}
           items={unitItems}
-          // Ma is the default scale (matching the query builder's default when
-          // no unit is sent): the unit only scales the bounds, so there is no
-          // "any unit" and clearing snaps back to "ma".
           value={unit ?? "ma"}
           onChange={(picked) => onChangeUnit(picked || undefined)}
           placeholder={m.facet_any()}
