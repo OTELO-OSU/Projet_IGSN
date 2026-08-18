@@ -28,6 +28,7 @@ const MEMBERS = [
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
     institutionalLaboratory: "UMR7358",
+    manualGroups: [],
   },
   {
     id: "3f2504e0-4f89-41d3-9a0c-030500000002",
@@ -40,6 +41,7 @@ const MEMBERS = [
     institutionalOrganization: "02feahw73",
     institutionalOsu: "OSUG",
     institutionalLaboratory: "UMR5275",
+    manualGroups: [],
   },
 ];
 

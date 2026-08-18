@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_PAGE_SIZE } from "../sample/sample-validator.ts";
-import {
-  listUsersQuerySchema,
-  setUserStatusBodySchema,
-} from "./user-validator.ts";
+import { listUsersQuerySchema, updateUserSchema } from "./user-validator.ts";
 
 describe("listUsersQuerySchema", () => {
   it("should default an empty query", () => {
@@ -27,15 +24,12 @@ describe("listUsersQuerySchema", () => {
     ).toEqual({ page: 1, perPage: DEFAULT_PAGE_SIZE, status: undefined });
   });
 
-  it.each([
-    ["an empty value", ""],
-    ["an absent value", undefined],
-  ])("should read %s as no institutional filter", (_case, value) => {
+  it("should read an empty value as no institutional filter", () => {
     expect(
       listUsersQuerySchema.parse({
-        institutionalOrganization: value,
-        institutionalOsu: value,
-        institutionalLaboratory: value,
+        institutionalOrganization: "",
+        institutionalOsu: "",
+        institutionalLaboratory: "",
       }),
     ).toStrictEqual({
       page: 1,
@@ -47,28 +41,58 @@ describe("listUsersQuerySchema", () => {
   });
 });
 
-describe("setUserStatusBodySchema", () => {
-  it("should accept a decision", () => {
-    expect(setUserStatusBodySchema.parse({ status: "accepted" })).toEqual({
-      status: "accepted",
-    });
-  });
+const TRIO = {
+  institutionalOrganization: "04vfs2w97",
+  institutionalOsu: "OTELo",
+  institutionalLaboratory: "UMR7358",
+};
 
-  it("should refuse an unknown field", () => {
-    expect(
-      setUserStatusBodySchema.safeParse({
+const NO_TRIO = {
+  institutionalOrganization: null,
+  institutionalOsu: null,
+  institutionalLaboratory: null,
+};
+
+describe("updateUserSchema", () => {
+  it.each([
+    [
+      "a status, a whole institution and the picked groups",
+      {
         status: "accepted",
-        superAdmin: true,
-      }).success,
-    ).toBe(false);
+        ...TRIO,
+        manualGroupIds: ["3f2504e0-4f89-41d3-9a0c-0305000000a1"],
+      },
+    ],
+    [
+      "an account that declared no institution yet",
+      { status: "pending", ...NO_TRIO, manualGroupIds: [] },
+    ],
+  ])("should accept %s", (_case, body) => {
+    expect(updateUserSchema.safeParse(body).success).toBe(true);
   });
 
-  it("should refuse pending and anything outside the vocabulary", () => {
+  it.each([
+    ["an unknown field", { status: "accepted", ...TRIO, superAdmin: true }],
+    ["an institution left out of the payload", { status: "accepted" }],
+    [
+      "an organization without its laboratory",
+      {
+        status: "accepted",
+        ...NO_TRIO,
+        institutionalOrganization: "04vfs2w97",
+      },
+    ],
+    [
+      "a laboratory without its organization",
+      { status: "accepted", ...NO_TRIO, institutionalLaboratory: "UMR7358" },
+    ],
+    [
+      "a laboratory outside the organization",
+      { status: "accepted", ...TRIO, institutionalLaboratory: "UMR5275" },
+    ],
+  ])("should refuse %s", (_case, body) => {
     expect(
-      setUserStatusBodySchema.safeParse({ status: "pending" }).success,
+      updateUserSchema.safeParse({ ...body, manualGroupIds: [] }).success,
     ).toBe(false);
-    expect(setUserStatusBodySchema.safeParse({ status: "nope" }).success).toBe(
-      false,
-    );
   });
 });

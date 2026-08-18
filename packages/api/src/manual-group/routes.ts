@@ -12,8 +12,10 @@ import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireSuperAdmin } from "../auth/require-super-admin.ts";
-import { trySendMail } from "../mail/try-send-mail.ts";
-import { manualGroupInvitationMail } from "./manual-group-invitation-mail.ts";
+import {
+  logMembershipChange,
+  notifyManualGroupJoined,
+} from "./notify-manual-group-joined.ts";
 import {
   validateAddManualGroupMemberBody,
   validateListManualGroupsQuery,
@@ -24,10 +26,6 @@ import {
 
 const NOT_FOUND = { error: "Manual group not found" } as const;
 const NAME_TAKEN = { error: "Manual group name already taken" } as const;
-
-function logMembershipChange(actor: string, group: string, target: string) {
-  console.info("manual group membership changed", { actor, group, target });
-}
 
 export function createManualGroupRoutes(
   repository: ManualGroupRepository,
@@ -112,31 +110,15 @@ export function createManualGroupRoutes(
           return c.json(NOT_FOUND, 404);
         }
         const added = await repository.addMember(id, userId);
-        if (added === "unknown_user") {
-          return c.json({ error: "User not found" }, 404);
-        }
-        if (added === "user_not_invitable") {
-          return c.json({ error: "User is not accepted" }, 422);
-        }
         if (added === "already_member") {
           return c.body(null, 204);
         }
-        logMembershipChange(c.get("user").id, id, userId);
-        if (mail) {
-          // ponytail: fire and forget; a retry queue if a lost notification ever matters.
-          void trySendMail(
-            added.added.email,
-            () =>
-              manualGroupInvitationMail({
-                invitee: added.added,
-                inviter: c.get("user"),
-                groupName: group.name,
-                settingsUrl: new URL("/settings", mail.adminUrl).toString(),
-              }),
-            mail.sendMail,
-            "Could not mail the manual group invitation",
-          );
-        }
+        notifyManualGroupJoined({
+          actor: c.get("user"),
+          invitee: { id: userId, ...added.added },
+          groups: [group],
+          mail,
+        });
         return c.body(null, 204);
       },
     )

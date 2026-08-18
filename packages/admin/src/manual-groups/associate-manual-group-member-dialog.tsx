@@ -29,13 +29,13 @@ export function AssociateManualGroupMemberDialog({
   groupId: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const addMember = useAddManualGroupMember(groupId);
+  const addMember = useAddManualGroupMember();
   const form = useAppForm({
     defaultValues: { picked: null as UserIdentity | null },
     onSubmit: ({ value, formApi }) => {
       if (!value.picked) return;
       addMember.mutate(
-        { userId: value.picked.id },
+        { groupId, userId: value.picked.id },
         {
           onSuccess: () => {
             formApi.reset();

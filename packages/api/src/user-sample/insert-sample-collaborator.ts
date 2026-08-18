@@ -1,6 +1,8 @@
 import type { AddCollaboratorResult } from "@projet-igsn/domain/user-sample/repository";
 import type { CollaboratorRole } from "@projet-igsn/domain/user-sample/user-sample-validator";
 
+import { HTTPException } from "hono/http-exception";
+
 import type { DB } from "../db.ts";
 
 import { type Transactional } from "../transaction.ts";
@@ -29,17 +31,17 @@ export async function insertSampleCollaborator(
     .where("user.id", "=", userId)
     .executeTakeFirst();
   if (!found) {
-    return "unknown_user";
+    throw new HTTPException(404, { message: "User not found" });
   }
   const { currentRole, status, ...user } = found;
   if (status === "rejected") {
-    return "user_not_invitable";
+    throw new HTTPException(403, { message: "Forbidden" });
   }
   if (currentRole === "owner" || currentRole === role) {
     return "already_collaborator";
   }
   if (currentRole && !mayChangeRole) {
-    return "role_change_forbidden";
+    throw new HTTPException(403, { message: "Forbidden" });
   }
   await db
     .insertInto("user_sample")

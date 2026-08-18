@@ -39,8 +39,9 @@ we don't administer (ADR 0006 amendment); we cannot ask it to carry our
 role. `requireRole` (built in ADR 0006 as a `realm_access.roles` guard) stays
 unused for this reason and is the rejected alternative. The flag is never
 token-derived: no request claim sets it, and no endpoint accepts it as
-input (`setUserStatusBodySchema` only takes `status`). It can only change
-by direct database write.
+input (`updateUserSchema` is a `strictObject` carrying only the status, the
+institutional trio and the manual groups). It can only change by direct
+database write.
 
 **Super admin overrides ownership everywhere ownership is checked**:
 unscoped in the admin sample list (no `user_sample` filter) and in
@@ -100,9 +101,14 @@ themselves. Resubmitting the same trio updates no row, so an identical save
 leaves the status untouched, and a first declaration keeps it too: an account
 with no trio yet was never judged on one.
 
-No admin-facing path back to `pending` was added: `setUserStatusBodySchema`
-still excludes it, so a super admin can only move an account to `accepted`
-or `rejected`. The weekday `listPending` digest (`send-pending-users-digest`)
+No admin-facing path back to `pending` was added by ticket 115; this ticket
+adds one. `PUT /admin/users/:id` lets a super admin set another user's status
+and trio in one save, writing both through `UserRepository.update` rather than
+`setInstitutionalGroups`, so the `pending`-on-change case above never applies:
+the super admin's edit is itself the moderation, so it does not re-moderate its
+target. Only `settableUserStatuses` bounds the status, so a super admin can put
+an account back to `pending` only while it is still `pending`, never after a
+decision. The weekday `listPending` digest (`send-pending-users-digest`)
 already sweeps the `pending` status column, so an account demoted this way
 reaches the same super admins with no extra work. It reports and orders by
 `created_at`, so such an account shows its signup age, not the time since the

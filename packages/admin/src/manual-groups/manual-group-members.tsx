@@ -8,6 +8,7 @@ import {
   TableRow,
 } from "@projet-igsn/design-system/components/ui/table";
 import { fullName } from "@projet-igsn/domain/user/full-name";
+import { Link, useNavigate } from "@tanstack/react-router";
 
 import { m } from "#/paraglide/messages.js";
 import { UserStatusBadge } from "#/users/user-status-badge.tsx";
@@ -17,8 +18,9 @@ import { useManualGroupMembers } from "./use-manual-group-members.ts";
 import { useRemoveManualGroupMember } from "./use-remove-manual-group-member.ts";
 
 export function ManualGroupMembers({ groupId }: { groupId: string }) {
+  const navigate = useNavigate();
   const query = useManualGroupMembers(groupId);
-  const removeMember = useRemoveManualGroupMember(groupId);
+  const removeMember = useRemoveManualGroupMember();
 
   return (
     <>
@@ -52,13 +54,30 @@ export function ManualGroupMembers({ groupId }: { groupId: string }) {
               query.data.map((member) => {
                 const name = fullName(member) || member.email;
                 return (
-                  <TableRow key={member.id}>
-                    <TableCell>{name}</TableCell>
+                  <TableRow
+                    key={member.id}
+                    className="cursor-pointer"
+                    onClick={() =>
+                      void navigate({
+                        to: "/users/$userId",
+                        params: { userId: member.id },
+                      })
+                    }
+                  >
+                    <TableCell>
+                      <Link
+                        to="/users/$userId"
+                        params={{ userId: member.id }}
+                        className="hover:underline"
+                      >
+                        {name}
+                      </Link>
+                    </TableCell>
                     <TableCell>{member.email}</TableCell>
                     <TableCell>
                       <UserStatusBadge status={member.status} />
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={(event) => event.stopPropagation()}>
                       <ConfirmButton
                         variant="outline"
                         size="sm"
@@ -70,7 +89,9 @@ export function ManualGroupMembers({ groupId }: { groupId: string }) {
                         confirmLabel={m.manual_group_detach_action()}
                         cancelLabel={m.action_cancel()}
                         closeLabel={m.action_close()}
-                        onConfirm={() => removeMember.mutate(member.id)}
+                        onConfirm={() =>
+                          removeMember.mutate({ groupId, userId: member.id })
+                        }
                       >
                         {m.manual_group_detach_action()}
                       </ConfirmButton>

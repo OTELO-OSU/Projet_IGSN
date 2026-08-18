@@ -1,9 +1,9 @@
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@projet-igsn/design-system/components/ui/alert";
 import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@projet-igsn/design-system/components/ui/tooltip";
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { createFileRoute } from "@tanstack/react-router";
 import { Trash2Icon } from "lucide-react";
@@ -43,54 +43,46 @@ function ManualGroupDetailPage() {
 
   return (
     <>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-4">
         <h1 className="text-2xl font-bold">{query.data.name}</h1>
-        <RenameManualGroupDialog groupId={groupId} name={query.data.name} />
+        <div className="flex items-center gap-1">
+          <RenameManualGroupDialog groupId={groupId} name={query.data.name} />
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <ConfirmButton
+                variant="ghost"
+                size="icon"
+                aria-label={m.manual_group_delete_action()}
+                title={m.manual_group_delete_title()}
+                description={m.manual_group_delete_description()}
+                confirmLabel={m.action_delete()}
+                cancelLabel={m.action_cancel()}
+                closeLabel={m.action_close()}
+                confirmPhrase={{
+                  text: m.action_delete_confirm_phrase(),
+                  label: m.action_delete_confirm_phrase_label({
+                    phrase: m.action_delete_confirm_phrase(),
+                  }),
+                }}
+                onConfirm={() =>
+                  deleteGroup.mutate(undefined, {
+                    onSuccess: () =>
+                      void navigate({
+                        to: "/manual-groups",
+                        search: { page: 1, perPage: DEFAULT_PAGE_SIZE },
+                      }),
+                  })
+                }
+              >
+                <Trash2Icon aria-hidden />
+              </ConfirmButton>
+            </TooltipTrigger>
+            <TooltipContent>{m.manual_group_delete_action()}</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       <ManualGroupMembers groupId={groupId} />
-
-      <section className="grid gap-2">
-        <h2 className="text-xl font-bold">{m.manual_group_actions_title()}</h2>
-        <Alert
-          role="none"
-          variant="destructive"
-          className="border-destructive flex items-center justify-between gap-4"
-        >
-          <div>
-            <AlertTitle>{m.manual_group_delete_title()}</AlertTitle>
-            <AlertDescription>
-              {m.manual_group_delete_description()}
-            </AlertDescription>
-          </div>
-          <ConfirmButton
-            variant="ghost"
-            title={m.manual_group_delete_title()}
-            description={m.manual_group_delete_description()}
-            confirmLabel={m.action_delete()}
-            cancelLabel={m.action_cancel()}
-            closeLabel={m.action_close()}
-            confirmPhrase={{
-              text: m.action_delete_confirm_phrase(),
-              label: m.action_delete_confirm_phrase_label({
-                phrase: m.action_delete_confirm_phrase(),
-              }),
-            }}
-            onConfirm={() =>
-              deleteGroup.mutate(undefined, {
-                onSuccess: () =>
-                  void navigate({
-                    to: "/manual-groups",
-                    search: { page: 1, perPage: DEFAULT_PAGE_SIZE },
-                  }),
-              })
-            }
-          >
-            <Trash2Icon aria-hidden />
-            {m.manual_group_delete_action()}
-          </ConfirmButton>
-        </Alert>
-      </section>
     </>
   );
 }

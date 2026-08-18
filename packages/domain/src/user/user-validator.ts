@@ -1,15 +1,16 @@
 import { z } from "zod";
 
+import { optionalInstitutionalGroupIssues } from "../institutional-group/institutional-groups-validator.ts";
 import { laboratoryCodeSchema } from "../institutional-group/laboratory.ts";
 import { organizationRorSchema } from "../institutional-group/organization.ts";
 import { osuCodeSchema } from "../institutional-group/osu.ts";
+import { manualGroupSchema } from "../manual-group/model.ts";
 import {
   DEFAULT_PAGE_SIZE,
   pageSizeSchema,
 } from "../sample/sample-validator.ts";
 import { userSchema, userStatusSchema } from "./model.ts";
 
-// Collaborator search is served to any authenticated user.
 export const userIdentitySchema = userSchema.pick({
   id: true,
   email: true,
@@ -39,20 +40,41 @@ export const listUsersQuerySchema = z.object({
 
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 
+export const adminUserSchema = userSchema.extend({
+  manualGroups: z.array(manualGroupSchema),
+});
+
+export type AdminUser = z.infer<typeof adminUserSchema>;
+
+export const adminUserResponseSchema = z.object({ data: adminUserSchema });
+
+export type AdminUserResponse = z.infer<typeof adminUserResponseSchema>;
+
 export const listUsersResponseSchema = z.object({
-  data: z.array(userSchema),
+  data: z.array(adminUserSchema),
   meta: z.object({ total: z.number() }),
 });
 
 export type ListUsersResponse = z.infer<typeof listUsersResponseSchema>;
 
-export const userResponseSchema = z.object({ data: userSchema });
+// A full replace, so the institution carries no default: an omitted field is a
+// rejected payload, never a silently wiped institution.
+export const updateUserSchema = z
+  .strictObject({
+    status: userStatusSchema,
+    institutionalOrganization: organizationRorSchema.nullable(),
+    institutionalOsu: osuCodeSchema.nullable(),
+    institutionalLaboratory: laboratoryCodeSchema.nullable(),
+    manualGroupIds: z.array(z.uuid()),
+  })
+  .superRefine((user, ctx) => {
+    for (const issue of optionalInstitutionalGroupIssues(user)) {
+      ctx.addIssue({
+        code: "custom",
+        path: [issue.path],
+        message: issue.message,
+      });
+    }
+  });
 
-export type UserResponse = z.infer<typeof userResponseSchema>;
-
-// "pending" is the initial state, not a state an admin puts a user back into.
-export const setUserStatusBodySchema = z.strictObject({
-  status: userStatusSchema.exclude(["pending"]),
-});
-
-export type SetUserStatusBody = z.infer<typeof setUserStatusBodySchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;

@@ -12,6 +12,7 @@ type ComboboxFieldProps = {
   searchPlaceholder: string;
   emptyText: string;
   disabled?: boolean;
+  clearable?: boolean;
   requiredToPublish?: boolean;
 };
 

@@ -1,8 +1,8 @@
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type {
+  AdminUserResponse,
   ListUsersResponse,
   UserIdentitiesResponse,
-  UserResponse,
 } from "@projet-igsn/domain/user/user-validator";
 
 import { Hono } from "hono";
@@ -12,11 +12,15 @@ import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireSuperAdmin } from "../auth/require-super-admin.ts";
+import {
+  logMembershipChange,
+  notifyManualGroupJoined,
+} from "../manual-group/notify-manual-group-joined.ts";
 import { sendUserAcceptedMail } from "./send-user-accepted-mail.ts";
 import {
   validateListUsersQuery,
   validateSearchUsersQuery,
-  validateSetUserStatusBody,
+  validateUpdateUserBody,
   validateUserIdParam,
 } from "./validator.ts";
 
@@ -55,37 +59,46 @@ export function createUserRoutes(
       if (!user) {
         return c.json({ error: "User not found" }, 404);
       }
-      const body: UserResponse = { data: user };
+      const body: AdminUserResponse = { data: user };
       return c.json(body);
     })
     .put(
-      "/:id/status",
+      "/:id",
       requireActiveSession,
       validateUserIdParam,
-      validateSetUserStatusBody,
+      validateUpdateUserBody,
       async (c) => {
-        const previous = await repository.get(c.req.valid("param").id);
-        const user = await repository.setStatus(
-          c.req.valid("param").id,
-          c.req.valid("json").status,
-        );
-        if (!user) {
-          return c.json({ error: "User not found" }, 404);
+        const id = c.req.valid("param").id;
+        const { user, previousStatus, joinedGroups, leftGroupIds } =
+          await repository.update(id, c.req.valid("json"));
+
+        const actor = c.get("user");
+        if (previousStatus !== user.status) {
+          console.info("user status changed", {
+            actor: actor.id,
+            target: user.id,
+            status: user.status,
+          });
         }
-        console.info("user status changed", {
-          actor: c.get("user").id,
-          target: user.id,
-          status: user.status,
-        });
         if (
           mail &&
-          previous?.status !== "accepted" &&
+          previousStatus !== "accepted" &&
           user.status === "accepted"
         ) {
           // ponytail: fire and forget, so an unreachable SMTP cannot hold the response for nodemailer's two-minute default; a retry queue if a lost notification ever matters.
           void sendUserAcceptedMail(user, mail.sendMail, mail.adminUrl);
         }
-        const body: UserResponse = { data: user };
+        notifyManualGroupJoined({
+          actor,
+          invitee: user,
+          groups: joinedGroups,
+          mail,
+        });
+        for (const groupId of leftGroupIds) {
+          logMembershipChange(actor.id, groupId, user.id);
+        }
+
+        const body: AdminUserResponse = { data: user };
         return c.json(body);
       },
     );

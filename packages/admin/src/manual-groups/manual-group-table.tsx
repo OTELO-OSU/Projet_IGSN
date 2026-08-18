@@ -1,6 +1,5 @@
 import type { ManualGroupListItem } from "@projet-igsn/domain/manual-group/manual-group-validator";
 
-import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -24,11 +23,6 @@ const columns: ColumnDef<ManualGroupListItem>[] = [
         {row.original.name}
       </Link>
     ),
-  },
-  {
-    id: "tag",
-    header: () => m.column_tag(),
-    cell: () => <Badge variant="secondary">{m.manual_group_tag()}</Badge>,
   },
   {
     accessorKey: "memberCount",

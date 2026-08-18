@@ -1,8 +1,10 @@
 import type { SetInstitutionalGroups } from "../institutional-group/institutional-groups-validator.ts";
+import type { ManualGroup } from "../manual-group/model.ts";
 import type { User, UserStatus } from "./model.ts";
 import type {
+  AdminUser,
   ListUsersQuery,
-  SetUserStatusBody,
+  UpdateUser,
   UserIdentity,
 } from "./user-validator.ts";
 
@@ -26,12 +28,17 @@ export type UserRepository = {
     groups: SetInstitutionalGroups,
   ): Promise<void>;
   findByOrcid(orcid: string): Promise<User | undefined>;
-  list(query: ListUsersQuery): Promise<{ data: User[]; total: number }>;
-  get(id: string): Promise<User | null>;
+  list(query: ListUsersQuery): Promise<{ data: AdminUser[]; total: number }>;
+  get(id: string): Promise<AdminUser | null>;
   listPending(): Promise<PendingUser[]>;
   listSuperAdminEmails(): Promise<string[]>;
   hasPublishedSample(userId: string): Promise<boolean>;
-  setStatus(id: string, status: UserDecision): Promise<User | null>;
+  update(id: string, user: UpdateUser): Promise<UpdateUserResult>;
 };
 
-export type UserDecision = SetUserStatusBody["status"];
+export type UpdateUserResult = {
+  user: AdminUser;
+  previousStatus: UserStatus;
+  joinedGroups: ManualGroup[];
+  leftGroupIds: string[];
+};

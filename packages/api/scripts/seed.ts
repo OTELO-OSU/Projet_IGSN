@@ -148,6 +148,27 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   },
 };
 
+export const MOCK_MANUAL_GROUPS = [
+  { id: "01980e2d-6f9b-7000-9000-000000000001", name: "ANR CritMet" },
+  { id: "01980e2d-6f9b-7000-9000-000000000002", name: "ProfilLoire 2024" },
+  { id: "01980e2d-6f9b-7000-9000-000000000003", name: "OZCAR-RI" },
+  { id: "01980e2d-6f9b-7000-9000-000000000004", name: "ERC DeepTime" },
+  { id: "01980e2d-6f9b-7000-9000-000000000005", name: "ChronoAlpes" },
+  { id: "01980e2d-6f9b-7000-9000-000000000006", name: "MISTRALS PaleoMex" },
+  { id: "01980e2d-6f9b-7000-9000-000000000007", name: "TelluS SYSTER 2025" },
+  { id: "01980e2d-6f9b-7000-9000-000000000008", name: "GeoRift" },
+  { id: "01980e2d-6f9b-7000-9000-000000000009", name: "CarbOcean" },
+  { id: "01980e2d-6f9b-7000-9000-00000000000a", name: "Thesis Girard 2023" },
+];
+
+function seedManualGroups(db: Kysely<DB>): Promise<unknown> {
+  return db
+    .insertInto("manual_group")
+    .values(MOCK_MANUAL_GROUPS)
+    .onConflict((oc) => oc.doNothing())
+    .execute();
+}
+
 async function seedOwners(
   db: Kysely<DB>,
 ): Promise<Record<ResearcherKey, string>> {
@@ -212,6 +233,7 @@ export async function seed(
   > & { owner: ResearcherKey; collaborators: SeedCollaborator[] })[]
 > {
   const ownerIds = await seedOwners(db);
+  await seedManualGroups(db);
   const parsed = samples.map(parseSeedSample);
   const created = await db
     .insertInto("sample")

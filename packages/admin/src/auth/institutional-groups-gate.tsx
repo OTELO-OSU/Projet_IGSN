@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { m } from "#/paraglide/messages.js";
 
 import { InstitutionalGroupsForm } from "../institutional-groups/institutional-groups-form.tsx";
+import { useSetInstitutionalGroups } from "../institutional-groups/use-set-institutional-groups.ts";
 import { CenteredScreen } from "./centered-screen.tsx";
 import { SignOutButton } from "./sign-out-button.tsx";
 import { useCurrentUser } from "./use-current-user.ts";
@@ -15,6 +16,7 @@ export function InstitutionalGroupsGate({
   children?: ReactNode;
 }) {
   const { data } = useCurrentUser();
+  const setGroups = useSetInstitutionalGroups();
 
   // ponytail: no loading branch, like IdentityGate on Keycloak: an identity call still in flight or failed must not hold the app, and the gate closes as soon as the answer says groups are missing
   const isMissingGroups =
@@ -25,7 +27,7 @@ export function InstitutionalGroupsGate({
   if (isMissingGroups) {
     return (
       <CenteredScreen message={m.institutional_groups_intro()}>
-        <InstitutionalGroupsForm />
+        <InstitutionalGroupsForm save={setGroups} />
         <SignOutButton onSignOut={onSignOut} />
       </CenteredScreen>
     );

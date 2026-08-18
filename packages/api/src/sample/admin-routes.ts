@@ -136,15 +136,6 @@ export function createSampleAdminRoutes(
           role,
           { mayChangeRole: canManageCollaborators(c.get("role")) },
         );
-        if (added === "unknown_user") {
-          return c.json({ error: "User not found" }, 404);
-        }
-        if (
-          added === "role_change_forbidden" ||
-          added === "user_not_invitable"
-        ) {
-          return c.json({ error: "Forbidden" }, 403);
-        }
         if (mail && added !== "already_collaborator") {
           // ponytail: fire and forget; a retry queue if a lost invitation ever matters.
           void trySendMail(

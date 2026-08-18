@@ -137,13 +137,9 @@ describe("userSampleRepository", () => {
         mayChangeRole: true,
       });
 
-      const result = await repository.addCollaborator(
-        sample.id,
-        editor.id,
-        "contributor",
-      );
-
-      expect(result).toBe("role_change_forbidden");
+      await expect(
+        repository.addCollaborator(sample.id, editor.id, "contributor"),
+      ).rejects.toThrow();
       const stored = await repository.listCollaborators(sample.id);
       expect(stored.find((user) => user.id === editor.id)?.role).toBe("editor");
     },
@@ -186,19 +182,19 @@ describe("userSampleRepository", () => {
     },
   );
 
-  pgTest("should report an unknown user as unknown_user", async ({ db }) => {
+  pgTest("should refuse an unknown user as collaborator", async ({ db }) => {
     const owner = await insertUser(db, "owner@univ-lorraine.fr");
     const sample = await insertSample(db, draft);
     const repository = createUserSampleRepository(db);
     await repository.addOwner(sample.id, owner.id);
 
-    const result = await repository.addCollaborator(
-      sample.id,
-      "01890a5d-ac96-774b-bcce-b302099a8057",
-      "contributor",
-    );
-
-    expect(result).toBe("unknown_user");
+    await expect(
+      repository.addCollaborator(
+        sample.id,
+        "01890a5d-ac96-774b-bcce-b302099a8057",
+        "contributor",
+      ),
+    ).rejects.toThrow();
     expect(await repository.listCollaborators(sample.id)).toEqual([
       {
         id: owner.id,
@@ -221,13 +217,9 @@ describe("userSampleRepository", () => {
     const repository = createUserSampleRepository(db);
     await repository.addOwner(sample.id, owner.id);
 
-    const result = await repository.addCollaborator(
-      sample.id,
-      invitee.id,
-      "contributor",
-    );
-
-    expect(result).toBe("user_not_invitable");
+    await expect(
+      repository.addCollaborator(sample.id, invitee.id, "contributor"),
+    ).rejects.toThrow();
     const rows = await db
       .selectFrom("user_sample")
       .selectAll()

@@ -9,6 +9,8 @@ vi.mock("react-oidc-context", () => ({
   useAuth: () => ({ user: { access_token: "tok" } }),
 }));
 
+const save = { mutate: () => {}, isPending: false };
+
 const pick = async (field: RegExp, search: string, option: RegExp) => {
   await page.getByRole("combobox", { name: field }).click();
   await page.getByPlaceholder(/^Search/).fill(search);
@@ -17,7 +19,7 @@ const pick = async (field: RegExp, search: string, option: RegExp) => {
 
 describe("InstitutionalGroupsForm", () => {
   it("should offer only the OSUs of the picked organization", async () => {
-    await render(<InstitutionalGroupsForm />);
+    await render(<InstitutionalGroupsForm save={save} />);
 
     await pick(/Organization/, "Lorraine", /Université de Lorraine/);
     await page.getByRole("combobox", { name: /OSU/ }).click();
@@ -31,7 +33,7 @@ describe("InstitutionalGroupsForm", () => {
   });
 
   it("should narrow the laboratories to the OSU once one is picked", async () => {
-    await render(<InstitutionalGroupsForm />);
+    await render(<InstitutionalGroupsForm save={save} />);
     await pick(/Organization/, "Orléans", /Université d'Orléans/);
 
     await page.getByRole("combobox", { name: /Laboratory/ }).click();
@@ -51,7 +53,7 @@ describe("InstitutionalGroupsForm", () => {
   });
 
   it("should not offer an organization that has no laboratory", async () => {
-    await render(<InstitutionalGroupsForm />);
+    await render(<InstitutionalGroupsForm save={save} />);
 
     await page.getByRole("combobox", { name: /Organization/ }).click();
     await page.getByPlaceholder(/^Search/).fill("INSU");
@@ -62,7 +64,9 @@ describe("InstitutionalGroupsForm", () => {
   });
 
   it("should ask no confirmation while the change misses a laboratory", async () => {
-    await render(<InstitutionalGroupsForm groups={CALLER_GROUPS} />);
+    await render(
+      <InstitutionalGroupsForm groups={CALLER_GROUPS} save={save} />,
+    );
 
     await pick(/Organization/, "Orléans", /Université d'Orléans/);
     await page.getByRole("button", { name: /save/i }).click();
@@ -77,8 +81,22 @@ describe("InstitutionalGroupsForm", () => {
     ).toHaveLength(0);
   });
 
+  it("should confirm a completed change of a saved institution", async () => {
+    await render(
+      <InstitutionalGroupsForm groups={CALLER_GROUPS} save={save} />,
+    );
+
+    await pick(/Organization/, "Orléans", /Université d'Orléans/);
+    await pick(/Laboratory/, "ISTO", /\(ISTO\)/);
+    await page.getByRole("button", { name: /save/i }).click();
+
+    await expect
+      .element(page.getByRole("heading", { name: /change your institution/i }))
+      .toBeVisible();
+  });
+
   it("should clear the OSU and laboratory when the organization changes", async () => {
-    await render(<InstitutionalGroupsForm />);
+    await render(<InstitutionalGroupsForm save={save} />);
     await pick(/Organization/, "Lorraine", /Université de Lorraine/);
     await pick(/OSU/, "OTELo", /OTELo/);
     await pick(/Laboratory/, "CRPG", /CRPG/);
