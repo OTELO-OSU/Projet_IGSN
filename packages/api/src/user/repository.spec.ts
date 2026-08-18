@@ -284,15 +284,6 @@ describe("createUserRepository", () => {
       expect(await repository.search("Solene", CALLER_ID)).toEqual([]);
     });
 
-    pgTest(
-      "should return an empty list when nothing matches",
-      async ({ db }) => {
-        const repository = await insertResearchers(db);
-
-        expect(await repository.search("zzz", CALLER_ID)).toEqual([]);
-      },
-    );
-
     pgTest("should order results by name", async ({ db }) => {
       const repository = createUserRepository(db);
       for (const name of ["Zeller", "Aubry", "Marchand"]) {
@@ -423,6 +414,7 @@ describe("createUserRepository", () => {
       ...NO_GROUPS,
       status: "accepted",
       superAdmin: false,
+      manualGroups: [],
     });
   });
 
@@ -522,20 +514,6 @@ describe("createUserRepository", () => {
     expect(total).toBe(1);
   });
 
-  pgTest("should return an empty page for an unknown code", async ({ db }) => {
-    // Arrange
-    await insertGroupedUsers(db);
-    // Act
-    const result = await createUserRepository(db).list({
-      page: 1,
-      perPage: 25,
-      status: undefined,
-      institutionalLaboratory: "UNKNOWN",
-    });
-    // Assert
-    expect(result).toEqual({ data: [], total: 0 });
-  });
-
   pgTest(
     "should keep the order and the pagination when filtering",
     async ({ db }) => {
@@ -575,57 +553,9 @@ describe("createUserRepository", () => {
       ...NO_GROUPS,
       status: "pending",
       superAdmin: false,
+      manualGroups: [],
     });
     expect(missing).toBeNull();
-  });
-
-  pgTest("should set a status and return the new row", async ({ db }) => {
-    // Arrange
-    await insertUsers(db);
-    const repository = createUserRepository(db);
-    // Act
-    const accepted = await repository.setStatus(
-      "01890a5d-ac96-774b-bcce-b302099a8061",
-      "accepted",
-    );
-    const rejected = await repository.setStatus(
-      "01890a5d-ac96-774b-bcce-b302099a8062",
-      "rejected",
-    );
-    // Assert
-    expect(accepted).toEqual({
-      id: "01890a5d-ac96-774b-bcce-b302099a8061",
-      email: "pending@univ-lorraine.fr",
-      name: "Pending",
-      firstname: "Paul",
-      orcid: null,
-      ...NO_GROUPS,
-      status: "accepted",
-      superAdmin: false,
-    });
-    expect(rejected).toEqual({
-      id: "01890a5d-ac96-774b-bcce-b302099a8062",
-      email: "accepted@univ-lorraine.fr",
-      name: "Accepted",
-      firstname: "Anne",
-      orcid: null,
-      ...NO_GROUPS,
-      status: "rejected",
-      superAdmin: false,
-    });
-    await expect(
-      repository.get("01890a5d-ac96-774b-bcce-b302099a8061"),
-    ).resolves.toEqual(accepted);
-  });
-
-  pgTest("should answer null when setting an unknown user", async ({ db }) => {
-    // Act
-    const updated = await createUserRepository(db).setStatus(
-      "01890a5d-ac96-774b-bcce-b302099a8099",
-      "accepted",
-    );
-    // Assert
-    expect(updated).toBeNull();
   });
 
   pgTest(

@@ -27,6 +27,13 @@ Use [Kysely](https://kysely.dev/) as the DBAL, a type-safe SQL query builder rat
 - Never nest a real transaction: the postgres driver has no savepoints.
 - Have repository methods delegate to reusable functions taking the db or transaction (`Transactional<DB>`) as their first parameter, so they compose inside a caller's transaction and are tested directly.
 
+## Throw failures, never return them
+
+- A repository, service, or helper answering either its value or an error code forces every caller to narrow on strings, so throw instead.
+- Throw `HTTPException` from `hono/http-exception` with the status and message the endpoint owes the client, and `app.ts` `onError` renders it as an `{ error }` JSON body.
+- The throw rolls the surrounding transaction back too, so a refused write leaves nothing behind.
+- Return a code only for an outcome that is not a failure, such as `already_member` answering 204.
+
 ## Identifiers
 
 Generate primary-key UUIDs in the app with `uuid` v7 (`import { v7 as uuidv7 } from "uuid"`), never a database default.

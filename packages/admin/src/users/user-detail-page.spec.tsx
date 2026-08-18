@@ -26,12 +26,19 @@ vi.mock("react-oidc-context", () => ({
 
 const USER_ID = "3f2504e0-4f89-41d3-9a0c-030500000001";
 
+const BASALT = { id: "3f2504e0-4f89-41d3-9a0c-0305000000a1", name: "Basalt" };
+const METEORITE = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000a2",
+  name: "Meteorite",
+};
+
 type Options = {
   status?: "pending" | "accepted" | "rejected";
   name?: string | null;
   firstname?: string | null;
   failPut?: boolean;
   failGet?: boolean;
+  manualGroups?: { id: string; name: string }[];
 };
 
 function fakeApi({
@@ -40,6 +47,7 @@ function fakeApi({
   firstname = "Paul",
   failPut = false,
   failGet = false,
+  manualGroups = [BASALT],
 }: Options) {
   let user = {
     id: USER_ID,
@@ -49,9 +57,10 @@ function fakeApi({
     orcid: null,
     status,
     superAdmin: false,
+    manualGroups,
     ...CALLER_GROUPS,
   };
-  const calls: string[] = [];
+  const calls: unknown[] = [];
   worker.use(
     http.get("*/admin/currentUser", () =>
       HttpResponse.json({
@@ -63,13 +72,31 @@ function fakeApi({
         ...CALLER_GROUPS,
       }),
     ),
-    http.put("*/admin/users/:id/status", async ({ request }) => {
+    http.put("*/admin/users/:id", async ({ request }) => {
       if (failPut) return new HttpResponse(null, { status: 500 });
-      const body = (await request.json()) as { status: typeof status };
-      calls.push(`PUT ${body.status}`);
-      user = { ...user, status: body.status };
+      const body = (await request.json()) as {
+        status: typeof status;
+        manualGroupIds: string[];
+      };
+      calls.push(body);
+      user = {
+        ...user,
+        status: body.status,
+        manualGroups: [BASALT, METEORITE].filter((group) =>
+          body.manualGroupIds.includes(group.id),
+        ),
+      };
       return HttpResponse.json({ data: user });
     }),
+    http.get("*/admin/manual-groups", () =>
+      HttpResponse.json({
+        data: [BASALT, METEORITE].map((group) => ({
+          ...group,
+          memberCount: 1,
+        })),
+        meta: { total: 2 },
+      }),
+    ),
     http.get("*/admin/users/:id", () => {
       if (failGet) return new HttpResponse(null, { status: 500 });
       return HttpResponse.json({ data: user });
@@ -99,14 +126,29 @@ async function renderUserPage(options: Options = {}) {
 }
 
 describe("UserDetailPage", () => {
-  it("should show the account read-only, with no editable field", async () => {
+  it("should show the identity read-only, with no editable identity field", async () => {
     const { screen } = await renderUserPage();
 
     await expect
+      .element(screen.getByRole("heading", { name: "Paul Durand", level: 1 }))
+      .toBeVisible();
+    await expect
       .element(screen.getByText("paul.durand@univ-lorraine.fr"))
       .toBeVisible();
-    await expect.element(screen.getByText("Pending")).toBeVisible();
     expect(screen.getByRole("textbox").elements()).toHaveLength(0);
+  });
+
+  it("should title an account with no name with its email", async () => {
+    const { screen } = await renderUserPage({ name: null, firstname: null });
+
+    await expect
+      .element(
+        screen.getByRole("heading", {
+          name: "paul.durand@univ-lorraine.fr",
+          level: 1,
+        }),
+      )
+      .toBeVisible();
   });
 
   it("should show the institution the user belongs to", async () => {
@@ -119,46 +161,138 @@ describe("UserDetailPage", () => {
     await expect.element(screen.getByText(/\(CRPG\)/)).toBeVisible();
   });
 
-  it("should offer both decisions on a pending account", async () => {
-    const { screen } = await renderUserPage({ status: "pending" });
+  it.each([
+    ["an unmoderated", "pending", ["Pending", "Active", "Disabled"]],
+    ["an active", "accepted", ["Active", "Disabled"]],
+    ["a disabled", "rejected", ["Active", "Disabled"]],
+  ] as const)(
+    "should offer %s account the statuses it can be set to",
+    async (_case, status, offered) => {
+      const { screen } = await renderUserPage({ status });
+
+      await screen.getByRole("combobox", { name: "Status" }).click();
+      await expect
+        .element(screen.getByRole("option", { name: "Active" }))
+        .toBeVisible();
+
+      expect(
+        screen
+          .getByRole("option")
+          .elements()
+          .map((option) => option.textContent),
+      ).toEqual(offered);
+    },
+  );
+
+  it("should let an unvalidated account lose its groups but join none", async () => {
+    const { screen } = await renderUserPage();
 
     await expect
-      .element(screen.getByRole("button", { name: "Activate", exact: true }))
+      .element(
+        screen.getByText(
+          "Only a validated account can join a manual group, though its memberships can still be removed.",
+        ),
+      )
       .toBeVisible();
     await expect
-      .element(screen.getByRole("button", { name: "Deactivate" }))
+      .element(screen.getByRole("button", { name: `Detach ${BASALT.name}` }))
+      .toBeEnabled();
+
+    await screen.getByRole("combobox", { name: "Manual groups" }).click();
+
+    expect(
+      screen.getByRole("option", { name: METEORITE.name }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should show a membership the group catalog does not list", async () => {
+    const GNEISS = {
+      id: "3f2504e0-4f89-41d3-9a0c-0305000000a9",
+      name: "Gneiss",
+    };
+    const { screen } = await renderUserPage({
+      status: "accepted",
+      manualGroups: [GNEISS],
+    });
+
+    await expect
+      .element(screen.getByRole("button", { name: `Detach ${GNEISS.name}` }))
       .toBeVisible();
   });
 
-  it("should leave only Deactivate actionable on an active account", async () => {
+  it("should keep the status when the shown one is picked again", async () => {
     const { screen } = await renderUserPage({ status: "accepted" });
+    const status = screen.getByRole("combobox", { name: "Status" });
 
-    await expect
-      .element(screen.getByRole("button", { name: "Deactivate" }))
-      .toBeEnabled();
-    await expect
-      .element(screen.getByRole("button", { name: "Activate", exact: true }))
-      .toBeDisabled();
+    await status.click();
+    await screen.getByRole("option", { name: "Active" }).click();
+
+    await expect.element(status).toHaveTextContent("Active");
   });
 
-  it("should leave only Activate actionable on a disabled account", async () => {
-    const { screen } = await renderUserPage({ status: "rejected" });
+  it("should write nothing before the form is saved", async () => {
+    const { screen, calls } = await renderUserPage({ status: "accepted" });
+
+    await screen.getByRole("combobox", { name: "Manual groups" }).click();
+    await screen.getByRole("option", { name: METEORITE.name }).click();
 
     await expect
-      .element(screen.getByRole("button", { name: "Activate", exact: true }))
-      .toBeEnabled();
-    await expect
-      .element(screen.getByRole("button", { name: "Deactivate" }))
-      .toBeDisabled();
-  });
-
-  it("should name the missing parts of an incomplete account", async () => {
-    const { screen } = await renderUserPage({ name: null, firstname: null });
-
-    await expect
-      .element(screen.getByText("Not provided").first())
+      .element(screen.getByRole("button", { name: `Detach ${METEORITE.name}` }))
       .toBeVisible();
-    expect(screen.getByText("Not provided").elements()).toHaveLength(2);
+    expect(calls).toEqual([]);
+  });
+
+  it("should save the status, the institution and the groups in one request", async () => {
+    const { screen, calls } = await renderUserPage();
+
+    await screen.getByRole("combobox", { name: "Status" }).click();
+    await screen.getByRole("option", { name: "Active" }).click();
+    await screen.getByRole("combobox", { name: "Manual groups" }).click();
+    await screen.getByRole("option", { name: METEORITE.name }).click();
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await expect
+      .poll(() => calls)
+      .toEqual([
+        {
+          status: "accepted",
+          ...CALLER_GROUPS,
+          manualGroupIds: [BASALT.id, METEORITE.id],
+        },
+      ]);
+    await expect.element(screen.getByText("Account updated")).toBeVisible();
+  });
+
+  it("should detach a group by removing it from the picked ones", async () => {
+    const { screen, calls } = await renderUserPage({ status: "accepted" });
+
+    await screen.getByRole("button", { name: `Detach ${BASALT.name}` }).click();
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await expect
+      .poll(() => calls)
+      .toEqual([
+        {
+          status: "accepted",
+          ...CALLER_GROUPS,
+          manualGroupIds: [],
+        },
+      ]);
+  });
+
+  it("should keep the shown status when the server refuses the save", async () => {
+    const { screen } = await renderUserPage({ failPut: true });
+
+    await screen.getByRole("combobox", { name: "Status" }).click();
+    await screen.getByRole("option", { name: "Active" }).click();
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await expect
+      .element(screen.getByText("Could not update the account"))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Status" }))
+      .toHaveTextContent("Active");
   });
 
   it("should report a failed load as an account failure", async () => {
@@ -167,28 +301,5 @@ describe("UserDetailPage", () => {
     await expect
       .element(screen.getByRole("alert"))
       .toHaveTextContent("Could not load the account");
-  });
-
-  it("should activate a pending account and show the new status", async () => {
-    const { screen, calls } = await renderUserPage({ status: "pending" });
-
-    await screen.getByRole("button", { name: "Activate", exact: true }).click();
-
-    await expect.element(screen.getByText("Active")).toBeVisible();
-    await expect
-      .element(screen.getByText("Account updated"))
-      .toBeInTheDocument();
-    expect(calls).toEqual(["PUT accepted"]);
-  });
-
-  it("should keep the status when the server refuses the change", async () => {
-    const { screen } = await renderUserPage({ failPut: true });
-
-    await screen.getByRole("button", { name: "Activate", exact: true }).click();
-
-    await expect
-      .element(screen.getByText("Could not update the account"))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Pending")).toBeVisible();
   });
 });

@@ -5,12 +5,15 @@ import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
+import { invalidateUserAndGroups } from "#/users/invalidate-user-and-groups.ts";
 
-export function useRemoveManualGroupMember(groupId: string) {
+import { type ManualGroupMembership } from "./use-add-manual-group-member.ts";
+
+export function useRemoveManualGroupMember() {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async ({ groupId, userId }: ManualGroupMembership) => {
       const res = await apiFetch(
         new URL(`admin/manual-groups/${groupId}/members/${userId}`, API_URL),
         { method: "DELETE" },
@@ -22,9 +25,9 @@ export function useRemoveManualGroupMember(groupId: string) {
         );
       }
     },
-    onSuccess: () => {
+    onSuccess: async (_data, { userId }) => {
       toast.success(m.manual_group_member_removed());
-      return queryClient.invalidateQueries({ queryKey: ["manual-groups"] });
+      await invalidateUserAndGroups(queryClient, userId);
     },
     onError: () => toast.error(m.manual_group_member_remove_error()),
   });

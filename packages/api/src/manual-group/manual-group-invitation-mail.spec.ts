@@ -15,7 +15,7 @@ const invitation = {
     name: "Martin",
     firstname: "Jean",
   },
-  groupName: "Massif Central 2026",
+  groupNames: ["Massif Central 2026"],
   settingsUrl: SETTINGS_URL,
 };
 
@@ -45,4 +45,21 @@ Open my settings: ${SETTINGS_URL}
       );
     },
   );
+
+  it("should list every group in one mail when the user joined several", async () => {
+    const mail = await manualGroupInvitationMail({
+      ...invitation,
+      groupNames: ["Massif Central 2026", "Vosges 2027"],
+    });
+
+    expect(mail.subject).toBe("Jean Martin added you to 2 groups");
+    expect(mail.text).toBe(
+      `Hello Marie Dupont,
+
+Jean Martin added you to the groups "Massif Central 2026", "Vosges 2027". You can see the groups you belong to in your settings.
+
+Open my settings: ${SETTINGS_URL}
+`,
+    );
+  });
 });

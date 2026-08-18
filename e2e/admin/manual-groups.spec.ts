@@ -9,6 +9,8 @@ import {
   signInAsResearcher,
   signInAsResearcherInOwnSession,
 } from "../support/admin/sign-in";
+import { userPage } from "../support/admin/user.page";
+import { usersPage } from "../support/admin/users.page";
 import { test } from "../support/db";
 import { maildev } from "../support/maildev";
 
@@ -52,6 +54,35 @@ test.describe("manual groups", () => {
     await group.remove();
     await groups.expectVisible();
     await groups.expectNoGroupRow(renamed);
+  });
+
+  test("a super admin attaches a group from the account page", async ({
+    page,
+  }) => {
+    const groups = manualGroupsPage(page);
+    const group = manualGroupPage(page);
+    const users = usersPage(page);
+    const user = userPage(page);
+    const name = uniqueName("Team Dunite");
+
+    await signInAsResearcher(page, RESEARCHERS.nadia);
+    await groups.open();
+    await groups.create(name);
+
+    await users.open();
+    await users.expectVisible();
+    await users.openUser(RESEARCHERS.camille.email);
+    await user.expectVisible(RESEARCHERS.camille.email);
+
+    await user.associateGroup(name);
+    await user.expectGroup(name);
+
+    await users.open();
+    await users.expectGroup(RESEARCHERS.camille.email, name);
+
+    await groups.open();
+    await groups.openGroup(name);
+    await group.expectMember(RESEARCHERS.camille.email, "Active");
   });
 
   test("a super admin searches the manual groups by name", async ({ page }) => {

@@ -1,8 +1,10 @@
+import type { UpdateUser } from "@projet-igsn/domain/user/user-validator";
+
 import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
 import {
+  adminUserResponseSchema,
   listUsersResponseSchema,
   userIdentitiesResponseSchema,
-  userResponseSchema,
 } from "@projet-igsn/domain/user/user-validator";
 import { testClient } from "hono/testing";
 import { describe, expect, vi } from "vitest";
@@ -198,18 +200,78 @@ const NO_GROUPS = {
 
 const authHeader = { Authorization: "Bearer moderator" };
 
+const MASSIF = "01890a5d-ac96-774b-bcce-b302099a9001";
+const ALPES = "01890a5d-ac96-774b-bcce-b302099a9002";
+
+const PENDING_ID = "01890a5d-ac96-774b-bcce-b302099a8061";
+const ACCEPTED_ID = "01890a5d-ac96-774b-bcce-b302099a8062";
+
+type Institution = {
+  [K in
+    | "institutionalOrganization"
+    | "institutionalOsu"
+    | "institutionalLaboratory"]-?: NonNullable<UpdateUser[K]>;
+};
+
+const TRIO_A: Institution = {
+  institutionalOrganization: "04vfs2w97",
+  institutionalOsu: "OTELo",
+  institutionalLaboratory: "UMR7358",
+};
+
+const TRIO_B: Institution = {
+  institutionalOrganization: "02rx3b187",
+  institutionalOsu: "OSUG",
+  institutionalLaboratory: "UMR5275",
+};
+
+const update = (over: Partial<UpdateUser> = {}): UpdateUser => ({
+  status: "accepted",
+  ...TRIO_A,
+  manualGroupIds: [],
+  ...over,
+});
+
+const insertGroup = (
+  db: Parameters<typeof createApp>[0],
+  id: string,
+  name: string,
+) => db.insertInto("manual_group").values({ id, name }).execute();
+
+const insertMember = (
+  db: Parameters<typeof createApp>[0],
+  groupId: string,
+  userId: string,
+) =>
+  db
+    .insertInto("manual_group_member")
+    .values({ group_id: groupId, user_id: userId })
+    .execute();
+
+const readGroups = (db: Parameters<typeof createApp>[0], id: string) =>
+  db
+    .selectFrom("user")
+    .select([
+      "institutional_organization as institutionalOrganization",
+      "institutional_osu as institutionalOsu",
+      "institutional_laboratory as institutionalLaboratory",
+      "status",
+    ])
+    .where("id", "=", id)
+    .executeTakeFirstOrThrow();
+
 const insertResearchers = (db: Parameters<typeof createApp>[0]) =>
   db
     .insertInto("user")
     .values([
       {
-        id: "01890a5d-ac96-774b-bcce-b302099a8061",
+        id: PENDING_ID,
         email: "pending@univ-lorraine.fr",
         name: "Pending",
         firstname: "Paul",
       },
       {
-        id: "01890a5d-ac96-774b-bcce-b302099a8062",
+        id: ACCEPTED_ID,
         email: "accepted@univ-lorraine.fr",
         name: "Accepted",
         firstname: "Anne",
@@ -292,13 +354,13 @@ describe("admin user routes", () => {
     const client = await asSuperAdmin(db);
     // Act
     const res = await client.admin.users[":id"].$get(
-      { param: { id: "01890a5d-ac96-774b-bcce-b302099a8061" } },
+      { param: { id: PENDING_ID } },
       { headers: authHeader },
     );
     // Assert
     expect(res.status).toBe(200);
-    expect(userResponseSchema.parse(await res.json()).data).toEqual({
-      id: "01890a5d-ac96-774b-bcce-b302099a8061",
+    expect(adminUserResponseSchema.parse(await res.json()).data).toEqual({
+      id: PENDING_ID,
       email: "pending@univ-lorraine.fr",
       name: "Pending",
       firstname: "Paul",
@@ -306,7 +368,274 @@ describe("admin user routes", () => {
       ...NO_GROUPS,
       status: "pending",
       superAdmin: false,
+      manualGroups: [],
     });
+  });
+
+  pgTest(
+    "should carry each user's manual groups, name-ordered",
+    async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, ALPES, "Alpes 2026");
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await insertUser(db, "pierre.dupont@univ-lorraine.fr");
+      await insertMember(db, MASSIF, curie.id);
+      await insertMember(db, ALPES, curie.id);
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin.users.$get(
+        { query: { page: "1", perPage: "25" } },
+        { headers: authHeader },
+      );
+      // Assert
+      const body = listUsersResponseSchema.parse(await res.json());
+      expect(
+        body.data.map((user) => [
+          user.email,
+          user.manualGroups.map((group) => group.name),
+        ]),
+      ).toEqual([
+        ["marie.curie@univ-lorraine.fr", ["Alpes 2026", "Massif Central 2026"]],
+        ["moderator@example.com", []],
+        ["pierre.dupont@univ-lorraine.fr", []],
+      ]);
+    },
+  );
+
+  pgTest("should read one user's own manual groups", async ({ db }) => {
+    // Arrange
+    await insertGroup(db, MASSIF, "Massif Central 2026");
+    await insertGroup(db, ALPES, "Alpes 2026");
+    const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+    const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr");
+    await insertMember(db, MASSIF, curie.id);
+    await insertMember(db, ALPES, dupont.id);
+    const client = await asSuperAdmin(db);
+    // Act
+    const res = await client.admin.users[":id"].$get(
+      { param: { id: curie.id } },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    expect(
+      adminUserResponseSchema.parse(await res.json()).data.manualGroups,
+    ).toEqual([{ id: MASSIF, name: "Massif Central 2026" }]);
+  });
+
+  pgTest(
+    "should set the status, the institution and the groups in one request",
+    async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const target = await insertUser(db, "crpg@univ-lorraine.fr", {
+        status: "accepted",
+        ...TRIO_A,
+      });
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        {
+          param: { id: target.id },
+          json: update({ ...TRIO_B, manualGroupIds: [MASSIF] }),
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(adminUserResponseSchema.parse(await res.json()).data).toEqual({
+        id: target.id,
+        email: "crpg@univ-lorraine.fr",
+        name: null,
+        firstname: null,
+        orcid: null,
+        ...TRIO_B,
+        status: "accepted",
+        superAdmin: false,
+        manualGroups: [{ id: MASSIF, name: "Massif Central 2026" }],
+      });
+      await expect(readGroups(db, target.id)).resolves.toEqual({
+        ...TRIO_B,
+        status: "accepted",
+      });
+    },
+  );
+
+  pgTest("should detach the groups left out of the request", async ({ db }) => {
+    // Arrange
+    await insertGroup(db, MASSIF, "Massif Central 2026");
+    await insertGroup(db, ALPES, "Alpes 2026");
+    const target = await insertUser(db, "crpg@univ-lorraine.fr", {
+      status: "accepted",
+      ...TRIO_A,
+    });
+    await insertMember(db, MASSIF, target.id);
+    await insertMember(db, ALPES, target.id);
+    const client = await asSuperAdmin(db);
+    // Act
+    const res = await client.admin.users[":id"].$put(
+      {
+        param: { id: target.id },
+        json: update({ ...TRIO_A, manualGroupIds: [ALPES] }),
+      },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    expect(
+      adminUserResponseSchema.parse(await res.json()).data.manualGroups,
+    ).toEqual([{ id: ALPES, name: "Alpes 2026" }]);
+  });
+
+  pgTest("should keep an unmoderated account pending", async ({ db }) => {
+    // Arrange
+    await insertResearchers(db);
+    const client = await asSuperAdmin(db);
+    // Act
+    const res = await client.admin.users[":id"].$put(
+      {
+        param: { id: PENDING_ID },
+        json: update({ status: "pending" }),
+      },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    await expect(readGroups(db, PENDING_ID)).resolves.toEqual({
+      ...TRIO_A,
+      status: "pending",
+    });
+  });
+
+  pgTest(
+    "should answer 422 when putting a moderated account back to pending",
+    async ({ db }) => {
+      // Arrange
+      await insertResearchers(db);
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        {
+          param: { id: ACCEPTED_ID },
+          json: update({ status: "pending" }),
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(422);
+      await expect(readGroups(db, ACCEPTED_ID)).resolves.toEqual({
+        ...NO_GROUPS,
+        status: "accepted",
+      });
+    },
+  );
+
+  pgTest(
+    "should answer 422 when attaching a group to an account it does not accept",
+    async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertResearchers(db);
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        {
+          param: { id: PENDING_ID },
+          json: update({ status: "rejected", manualGroupIds: [MASSIF] }),
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(422);
+      await expect(readGroups(db, PENDING_ID)).resolves.toEqual({
+        ...NO_GROUPS,
+        status: "pending",
+      });
+    },
+  );
+
+  pgTest("should answer 404 for an unknown manual group", async ({ db }) => {
+    // Arrange
+    await insertResearchers(db);
+    const client = await asSuperAdmin(db);
+    // Act
+    const res = await client.admin.users[":id"].$put(
+      {
+        param: { id: PENDING_ID },
+        json: update({ manualGroupIds: [MASSIF] }),
+      },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(404);
+    await expect(readGroups(db, PENDING_ID)).resolves.toEqual({
+      ...NO_GROUPS,
+      status: "pending",
+    });
+  });
+
+  pgTest(
+    "should answer 400 when the OSU is outside the submitted organization",
+    async ({ db }) => {
+      // Arrange
+      const target = await insertUser(db, "crpg@univ-lorraine.fr", {
+        status: "accepted",
+        ...TRIO_A,
+      });
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        {
+          param: { id: target.id },
+          json: update({ ...TRIO_A, institutionalOsu: "OSUG" }),
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(400);
+      await expect(readGroups(db, target.id)).resolves.toEqual({
+        ...TRIO_A,
+        status: "accepted",
+      });
+    },
+  );
+
+  pgTest(
+    "should answer 400 when the institution is left out of the payload",
+    async ({ db }) => {
+      // Arrange
+      await insertResearchers(db);
+      await asSuperAdmin(db);
+      // Act
+      const res = await createApp(db).app.request(
+        `/admin/users/${ACCEPTED_ID}`,
+        {
+          method: "PUT",
+          headers: { ...authHeader, "content-type": "application/json" },
+          body: JSON.stringify({ status: "accepted", manualGroupIds: [] }),
+        },
+      );
+      // Assert
+      expect(res.status).toBe(400);
+      await expect(readGroups(db, ACCEPTED_ID)).resolves.toEqual({
+        ...NO_GROUPS,
+        status: "accepted",
+      });
+    },
+  );
+
+  pgTest("should answer 404 when updating an unknown user", async ({ db }) => {
+    // Arrange
+    const client = await asSuperAdmin(db);
+    // Act
+    const res = await client.admin.users[":id"].$put(
+      { param: { id: "01890a5d-ac96-774b-bcce-b302099a8099" }, json: update() },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(404);
+    expect(await res.json()).toEqual({ error: "User not found" });
   });
 
   pgTest("should answer 404 for an unknown user", async ({ db }) => {
@@ -332,41 +661,8 @@ describe("admin user routes", () => {
     expect(res.status).toBe(400);
   });
 
-  pgTest("should accept a pending user", async ({ db }) => {
-    // Arrange
-    await insertResearchers(db);
-    const client = await asSuperAdmin(db);
-    // Act
-    const res = await client.admin.users[":id"].status.$put(
-      {
-        param: { id: "01890a5d-ac96-774b-bcce-b302099a8061" },
-        json: { status: "accepted" },
-      },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    expect(userResponseSchema.parse(await res.json()).data).toEqual({
-      id: "01890a5d-ac96-774b-bcce-b302099a8061",
-      email: "pending@univ-lorraine.fr",
-      name: "Pending",
-      firstname: "Paul",
-      orcid: null,
-      ...NO_GROUPS,
-      status: "accepted",
-      superAdmin: false,
-    });
-    await expect(
-      db
-        .selectFrom("user")
-        .select("status")
-        .where("id", "=", "01890a5d-ac96-774b-bcce-b302099a8061")
-        .executeTakeFirstOrThrow(),
-    ).resolves.toEqual({ status: "accepted" });
-  });
-
   pgTest.for([
-    ["pending", "01890a5d-ac96-774b-bcce-b302099a8061", "pending"],
+    ["pending", PENDING_ID, "pending"],
     ["rejected", "01890a5d-ac96-774b-bcce-b302099a8063", "rejected"],
   ] as const)(
     "should notify the user accepted from %s",
@@ -392,8 +688,8 @@ describe("admin user routes", () => {
         createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
       );
       // Act
-      const res = await client.admin.users[":id"].status.$put(
-        { param: { id }, json: { status: "accepted" } },
+      const res = await client.admin.users[":id"].$put(
+        { param: { id }, json: update() },
         { headers: authHeader },
       );
       // Assert
@@ -410,16 +706,8 @@ describe("admin user routes", () => {
   );
 
   pgTest.for([
-    [
-      "a rejected pending user",
-      "01890a5d-ac96-774b-bcce-b302099a8061",
-      "rejected",
-    ],
-    [
-      "an already accepted user",
-      "01890a5d-ac96-774b-bcce-b302099a8062",
-      "accepted",
-    ],
+    ["a rejected pending user", PENDING_ID, "rejected"],
+    ["an already accepted user", ACCEPTED_ID, "accepted"],
   ] as const)("should not notify %s", async ([, id, status], { db }) => {
     // Arrange
     await insertResearchers(db);
@@ -432,13 +720,42 @@ describe("admin user routes", () => {
       createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
     );
     // Act
-    const res = await client.admin.users[":id"].status.$put(
-      { param: { id }, json: { status } },
+    const res = await client.admin.users[":id"].$put(
+      { param: { id }, json: update({ status }) },
       { headers: authHeader },
     );
     // Assert
     expect(res.status).toBe(200);
     expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  pgTest("should invite the user to a group it joins", async ({ db }) => {
+    // Arrange
+    await insertGroup(db, MASSIF, "Massif Central 2026");
+    await insertResearchers(db);
+    await provisionUser(db, "moderator", {
+      status: "accepted",
+      superAdmin: true,
+    });
+    const sendMail = vi.fn().mockResolvedValue(undefined);
+    const client = testClient(
+      createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+    );
+    // Act
+    const res = await client.admin.users[":id"].$put(
+      {
+        param: { id: ACCEPTED_ID },
+        json: update({ manualGroupIds: [MASSIF] }),
+      },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    await vi.waitFor(() =>
+      expect(sendMail).toHaveBeenCalledWith(
+        expect.objectContaining({ to: ["accepted@univ-lorraine.fr"] }),
+      ),
+    );
   });
 
   pgTest(
@@ -456,11 +773,8 @@ describe("admin user routes", () => {
         createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
       );
       // Act
-      const res = await client.admin.users[":id"].status.$put(
-        {
-          param: { id: "01890a5d-ac96-774b-bcce-b302099a8061" },
-          json: { status: "accepted" },
-        },
+      const res = await client.admin.users[":id"].$put(
+        { param: { id: PENDING_ID }, json: update() },
         { headers: authHeader },
       );
       // Assert
@@ -483,17 +797,14 @@ describe("admin user routes", () => {
         .spyOn(console, "info")
         .mockImplementation(() => undefined);
       // Act
-      await testClient(createApp(db).app).admin.users[":id"].status.$put(
-        {
-          param: { id: "01890a5d-ac96-774b-bcce-b302099a8061" },
-          json: { status: "accepted" },
-        },
+      await testClient(createApp(db).app).admin.users[":id"].$put(
+        { param: { id: PENDING_ID }, json: update() },
         { headers: authHeader },
       );
       // Assert
       expect(info).toHaveBeenCalledWith("user status changed", {
         actor: moderator.id,
-        target: "01890a5d-ac96-774b-bcce-b302099a8061",
+        target: PENDING_ID,
         status: "accepted",
       });
       info.mockRestore();
@@ -501,31 +812,31 @@ describe("admin user routes", () => {
   );
 
   pgTest(
-    "should reject an accepted user, keeping their samples",
+    "should trace a membership the account leaves with ids only",
     async ({ db }) => {
       // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
       await insertResearchers(db);
-      const client = await asSuperAdmin(db);
+      await insertMember(db, MASSIF, ACCEPTED_ID);
+      const moderator = await provisionUser(db, "moderator", {
+        status: "accepted",
+        superAdmin: true,
+      });
+      const info = vi
+        .spyOn(console, "info")
+        .mockImplementation(() => undefined);
       // Act
-      const res = await client.admin.users[":id"].status.$put(
-        {
-          param: { id: "01890a5d-ac96-774b-bcce-b302099a8062" },
-          json: { status: "rejected" },
-        },
+      await testClient(createApp(db).app).admin.users[":id"].$put(
+        { param: { id: ACCEPTED_ID }, json: update({ manualGroupIds: [] }) },
         { headers: authHeader },
       );
       // Assert
-      expect(res.status).toBe(200);
-      expect(userResponseSchema.parse(await res.json()).data).toEqual({
-        id: "01890a5d-ac96-774b-bcce-b302099a8062",
-        email: "accepted@univ-lorraine.fr",
-        name: "Accepted",
-        firstname: "Anne",
-        orcid: null,
-        ...NO_GROUPS,
-        status: "rejected",
-        superAdmin: false,
+      expect(info).toHaveBeenCalledWith("manual group membership changed", {
+        actor: moderator.id,
+        group: MASSIF,
+        target: ACCEPTED_ID,
       });
+      info.mockRestore();
     },
   );
 
@@ -537,68 +848,41 @@ describe("admin user routes", () => {
       await asSuperAdmin(db);
       // Act
       const res = await createApp(db).app.request(
-        "/admin/users/01890a5d-ac96-774b-bcce-b302099a8061/status",
+        `/admin/users/${PENDING_ID}`,
         {
           method: "PUT",
           headers: { "content-type": "application/json", ...authHeader },
-          body: JSON.stringify({ status: "pending" }),
+          body: JSON.stringify({ ...update(), status: "banned" }),
         },
       );
       // Assert
       expect(res.status).toBe(400);
-      await expect(
-        db
-          .selectFrom("user")
-          .select("status")
-          .where("id", "=", "01890a5d-ac96-774b-bcce-b302099a8061")
-          .executeTakeFirstOrThrow(),
-      ).resolves.toEqual({ status: "pending" });
+      await expect(readGroups(db, PENDING_ID)).resolves.toEqual({
+        ...NO_GROUPS,
+        status: "pending",
+      });
     },
   );
 
-  pgTest("should answer 404 when setting an unknown user", async ({ db }) => {
+  pgTest("should refuse an update on a revoked session", async ({ db }) => {
     // Arrange
+    await insertResearchers(db);
     const client = await asSuperAdmin(db);
+    vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
+      c.json({ error: "Unauthorized" }, 401),
+    );
     // Act
-    const res = await client.admin.users[":id"].status.$put(
-      {
-        param: { id: "01890a5d-ac96-774b-bcce-b302099a8099" },
-        json: { status: "accepted" },
-      },
+    const res = await client.admin.users[":id"].$put(
+      { param: { id: PENDING_ID }, json: update() },
       { headers: authHeader },
     );
     // Assert
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(401);
+    await expect(readGroups(db, PENDING_ID)).resolves.toEqual({
+      ...NO_GROUPS,
+      status: "pending",
+    });
   });
-
-  pgTest(
-    "should refuse a status change on a revoked session",
-    async ({ db }) => {
-      // Arrange
-      await insertResearchers(db);
-      const client = await asSuperAdmin(db);
-      vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
-        c.json({ error: "Unauthorized" }, 401),
-      );
-      // Act
-      const res = await client.admin.users[":id"].status.$put(
-        {
-          param: { id: "01890a5d-ac96-774b-bcce-b302099a8061" },
-          json: { status: "accepted" },
-        },
-        { headers: authHeader },
-      );
-      // Assert
-      expect(res.status).toBe(401);
-      await expect(
-        db
-          .selectFrom("user")
-          .select("status")
-          .where("id", "=", "01890a5d-ac96-774b-bcce-b302099a8061")
-          .executeTakeFirstOrThrow(),
-      ).resolves.toEqual({ status: "pending" });
-    },
-  );
 
   describe("authorization", () => {
     pgTest.for(["accepted", "pending"] as const)(
@@ -612,23 +896,28 @@ describe("admin user routes", () => {
           { query: { page: "1", perPage: "25" } },
           { headers: authHeader },
         );
-        const setStatus = await client.admin.users[":id"].status.$put(
-          {
-            param: { id: "01890a5d-ac96-774b-bcce-b302099a8061" },
-            json: { status: "accepted" },
-          },
+        const put = await client.admin.users[":id"].$put(
+          { param: { id: PENDING_ID }, json: update() },
           { headers: authHeader },
         );
         // Assert
-        expect([list.status, setStatus.status]).toEqual([403, 403]);
+        expect([list.status, put.status]).toEqual([403, 403]);
       },
     );
 
     pgTest("should answer 401 to an unauthenticated caller", async ({ db }) => {
       // Act
       const res = await createApp(db).app.request("/admin/users");
+      const put = await createApp(db).app.request(
+        `/admin/users/${PENDING_ID}`,
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(update()),
+        },
+      );
       // Assert
-      expect(res.status).toBe(401);
+      expect([res.status, put.status]).toEqual([401, 401]);
     });
   });
 });

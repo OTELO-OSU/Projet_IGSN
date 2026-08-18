@@ -95,7 +95,9 @@ export function createApp(
       }),
     )
     .onError((error, c) => {
-      if (error instanceof HTTPException) return error.getResponse();
+      if (error instanceof HTTPException) {
+        return c.json({ error: error.message }, error.status);
+      }
       console.error("unhandled api error", error);
       return c.json({ error: "Internal server error" }, 500);
     })

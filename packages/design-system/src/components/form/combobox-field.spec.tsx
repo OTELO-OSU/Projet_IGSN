@@ -10,7 +10,10 @@ const items = [
   { value: "thin_section", label: "Thin section" },
 ];
 
-function Harness({ disabled }: { disabled?: boolean } = {}) {
+function Harness({
+  disabled,
+  clearable,
+}: { disabled?: boolean; clearable?: boolean } = {}) {
   const form = useAppForm({
     defaultValues: { nature: "" },
     onSubmit: () => {},
@@ -37,6 +40,7 @@ function Harness({ disabled }: { disabled?: boolean } = {}) {
             searchPlaceholder="Search nature..."
             emptyText="No nature found"
             disabled={disabled}
+            clearable={clearable}
           />
         )}
       </form.AppField>
@@ -119,6 +123,18 @@ describe("ComboboxField", () => {
     await page.getByRole("option", { name: "Thin section" }).click();
 
     await expect.element(combobox).toHaveTextContent("Select a nature");
+  });
+
+  it("should keep the selection when the selected item is picked again and the vocabulary has no empty value", async () => {
+    await render(<Harness clearable={false} />);
+    const combobox = page.getByRole("combobox", { name: "Nature" });
+
+    await combobox.click();
+    await page.getByText("Thin section").click();
+    await combobox.click();
+    await page.getByRole("option", { name: "Thin section" }).click();
+
+    await expect.element(combobox).toHaveTextContent("Thin section");
   });
 
   it("should render a disabled control when disabled", async () => {

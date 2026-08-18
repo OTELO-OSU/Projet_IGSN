@@ -10,20 +10,21 @@ import { translator } from "../mail/i18n.ts";
 export type ManualGroupInvitation = {
   invitee: Pick<User, "email" | "name" | "firstname">;
   inviter: Pick<User, "email" | "name" | "firstname">;
-  groupName: string;
+  groupNames: string[];
   settingsUrl: string;
 };
 
 export async function manualGroupInvitationMail({
   invitee,
   inviter,
-  groupName,
+  groupNames,
   settingsUrl,
 }: ManualGroupInvitation): Promise<RenderedMail> {
   const t = translator();
   const params = {
     inviter: fullName(inviter) || inviter.email,
-    group: groupName,
+    groups: groupNames.map((name) => `"${name}"`).join(", "),
+    count: groupNames.length,
   };
   return ctaMail({
     recipient: invitee,

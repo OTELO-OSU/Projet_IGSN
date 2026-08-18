@@ -5,10 +5,7 @@ import type {
 } from "./user-sample-validator.ts";
 
 export type AddCollaboratorResult =
-  | "unknown_user"
   | "already_collaborator"
-  | "role_change_forbidden"
-  | "user_not_invitable"
   | { added: Pick<User, "email" | "name" | "firstname"> };
 
 export type UserSampleRepository = {

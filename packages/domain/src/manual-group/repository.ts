@@ -6,10 +6,7 @@ import type {
 } from "./manual-group-validator.ts";
 import type { ManualGroup } from "./model.ts";
 
-// Only an accepted account may be associated.
 export type AddManualGroupMemberResult =
-  | "unknown_user"
-  | "user_not_invitable"
   | "already_member"
   | { added: Pick<User, "email" | "name" | "firstname"> };
 

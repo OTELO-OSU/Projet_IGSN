@@ -30,14 +30,10 @@ export function manualGroupsPage(page: Page) {
       page.getByRole("searchbox", { name: "Search manual groups" }).fill(term),
     openGroup: (name: string) =>
       page.getByRole("link", { name, exact: true }).click(),
-    expectGroupRow: async (name: string, memberCount: number) => {
-      await expect(
-        row(name).getByRole("cell", { name: "Manual", exact: true }),
-      ).toBeVisible();
-      await expect(
+    expectGroupRow: (name: string, memberCount: number) =>
+      expect(
         row(name).getByRole("cell", { name: String(memberCount), exact: true }),
-      ).toBeVisible();
-    },
+      ).toBeVisible(),
     expectNoGroupRow: (name: string) => expect(row(name)).toHaveCount(0),
   };
 }

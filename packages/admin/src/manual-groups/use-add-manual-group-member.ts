@@ -1,5 +1,3 @@
-import type { AddManualGroupMemberBody } from "@projet-igsn/domain/manual-group/manual-group-validator";
-
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -7,18 +5,21 @@ import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
+import { invalidateUserAndGroups } from "#/users/invalidate-user-and-groups.ts";
 
-export function useAddManualGroupMember(groupId: string) {
+export type ManualGroupMembership = { groupId: string; userId: string };
+
+export function useAddManualGroupMember() {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: AddManualGroupMemberBody) => {
+    mutationFn: async ({ groupId, userId }: ManualGroupMembership) => {
       const res = await apiFetch(
         new URL(`admin/manual-groups/${groupId}/members`, API_URL),
         {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify(body),
+          body: JSON.stringify({ userId }),
         },
       );
       if (!res.ok) {
@@ -28,9 +29,9 @@ export function useAddManualGroupMember(groupId: string) {
         );
       }
     },
-    onSuccess: () => {
+    onSuccess: async (_data, { userId }) => {
       toast.success(m.manual_group_member_added());
-      return queryClient.invalidateQueries({ queryKey: ["manual-groups"] });
+      await invalidateUserAndGroups(queryClient, userId);
     },
     onError: (error) =>
       toast.error(

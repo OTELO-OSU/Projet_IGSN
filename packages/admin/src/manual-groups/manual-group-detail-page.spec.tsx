@@ -95,6 +95,14 @@ function fakeApi({ members = [curie], directory = [dupont] } = {}) {
         ),
       });
     }),
+    http.get("*/admin/users/:id", ({ params }) => {
+      const user = [...members, ...directory].find(
+        ({ id }) => id === params.id,
+      );
+      return user
+        ? HttpResponse.json({ data: { ...user, manualGroups: [] } })
+        : new HttpResponse(null, { status: 404 });
+    }),
   );
   return { calls };
 }
@@ -135,6 +143,17 @@ describe("ManualGroupDetailPage", () => {
     expect(screen.getByRole("option", { name: /Dupuis/ }).elements()).toEqual(
       [],
     );
+  });
+
+  it("should open a member's account from its row", async () => {
+    fakeApi();
+
+    const { screen, router } = await renderDetailPage();
+    await screen.getByRole("link", { name: "Marie Curie" }).click();
+
+    await expect
+      .poll(() => router.state.location.pathname)
+      .toBe(`/users/${curie.id}`);
   });
 
   it("should detach a member once the detach is confirmed", async () => {

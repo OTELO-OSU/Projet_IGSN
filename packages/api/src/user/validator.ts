@@ -4,7 +4,7 @@ import { userStatusSchema } from "@projet-igsn/domain/user/model";
 import { orcidSchema } from "@projet-igsn/domain/user/orcid";
 import {
   listUsersQuerySchema,
-  setUserStatusBodySchema,
+  updateUserSchema,
 } from "@projet-igsn/domain/user/user-validator";
 import { validator } from "hono/validator";
 import { z } from "zod";
@@ -56,10 +56,10 @@ export const validateListUsersQuery = validator("query", (value, c) => {
   return parsed.data;
 });
 
-export const validateSetUserStatusBody = validator("json", (value, c) => {
-  const parsed = setUserStatusBodySchema.safeParse(value);
+export const validateUpdateUserBody = validator("json", (value, c) => {
+  const parsed = updateUserSchema.safeParse(value);
   if (!parsed.success) {
-    return c.json({ error: "Invalid status" }, 400);
+    return c.json({ error: "Invalid user" }, 400);
   }
   return parsed.data;
 });

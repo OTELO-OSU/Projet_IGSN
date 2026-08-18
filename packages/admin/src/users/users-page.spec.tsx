@@ -24,7 +24,16 @@ vi.mock("react-oidc-context", () => ({
   }),
 }));
 
-const user = (index: number, status: "pending" | "accepted" | "rejected") => ({
+const manualGroup = (index: number) => ({
+  id: `3f2504e0-4f89-41d3-9a0c-0305000001${String(index).padStart(2, "0")}`,
+  name: `Group${index}`,
+});
+
+const user = (
+  index: number,
+  status: "pending" | "accepted" | "rejected",
+  manualGroups: { id: string; name: string }[] = [],
+) => ({
   id: `3f2504e0-4f89-41d3-9a0c-0305000000${String(index).padStart(2, "0")}`,
   email: `user${index}@univ-lorraine.fr`,
   name: `Name${index}`,
@@ -32,10 +41,11 @@ const user = (index: number, status: "pending" | "accepted" | "rejected") => ({
   orcid: null,
   status,
   superAdmin: false,
+  manualGroups,
 });
 
 const USERS = [
-  user(1, "pending"),
+  user(1, "pending", [1, 2, 3, 4].map(manualGroup)),
   user(2, "accepted"),
   user(3, "rejected"),
   ...Array.from({ length: 9 }, (_, i) => user(i + 4, "accepted")),
@@ -58,6 +68,9 @@ function fakeApi({ forbidden = false }: { forbidden?: boolean } = {}) {
       HttpResponse.json({
         data: USERS.find((candidate) => candidate.id === params.id),
       }),
+    ),
+    http.get("*/admin/manual-groups", () =>
+      HttpResponse.json({ data: [], meta: { total: 0 } }),
     ),
     http.get("*/admin/users", ({ request }) => {
       if (forbidden) {
@@ -119,17 +132,26 @@ describe("UsersPage", () => {
       .toBeVisible();
   });
 
-  it.each([
-    ["pending", "Pending"],
-    ["accepted", "Active"],
-    ["rejected", "Disabled"],
-  ])("should label a %s account as %s", async (status, label) => {
+  it("should cut the group column to the first three names", async () => {
     fakeApi();
 
-    const { screen } = await renderUsersPage(`/users?status=${status}`);
+    const { screen } = await renderUsersPage();
 
     await expect
-      .element(screen.getByRole("cell", { name: label }).first())
+      .element(screen.getByRole("cell", { name: "Group1, Group2, Group3 …" }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("cell", { name: /Group4/ }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should mark a user belonging to no group as not provided", async () => {
+    fakeApi();
+
+    const { screen } = await renderUsersPage("/users?status=rejected");
+
+    await expect
+      .element(screen.getByRole("cell", { name: "Not provided" }))
       .toBeVisible();
   });
 
