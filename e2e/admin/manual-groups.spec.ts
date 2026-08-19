@@ -1,4 +1,5 @@
 import { manualGroupPage } from "../support/admin/manual-group.page";
+import { waitForMyManualGroups } from "../support/admin/manual-groups-field";
 import { manualGroupsPage } from "../support/admin/manual-groups.page";
 import { sampleCreatePage } from "../support/admin/sample-create.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
@@ -12,6 +13,7 @@ import {
 import { userPage } from "../support/admin/user.page";
 import { usersPage } from "../support/admin/users.page";
 import { test } from "../support/db";
+import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { maildev } from "../support/maildev";
 
 const uniqueName = (name: string) => `${name} ${Date.now()}`;
@@ -147,10 +149,11 @@ test.describe("manual groups", () => {
     await groups.expectNoMenuEntry();
   });
 
-  test("a sample created by a manual group member belongs to no manual group", async ({
+  test("a manual group member publishes a sample under their group", async ({
     page,
     browser,
   }) => {
+    test.slow();
     const groups = manualGroupsPage(page);
     const group = manualGroupPage(page);
     const name = uniqueName("Team Gabbro");
@@ -179,17 +182,100 @@ test.describe("manual groups", () => {
     await create.expectVisible();
     await create.fillName(sampleName);
     await create.selectNature("Hand sample");
+    await create.checkManualGroup(name);
     await create.submit();
     await edit.expectName(sampleName);
 
+    await edit.fillPublishableFields();
+    await edit.publish();
+    await list.expectVisible();
+
+    await list.openSample(sampleName);
+    await edit.expectManualGroupFrozen(name);
+    const igsn = await edit.publicPageIgsn();
+
+    const detail = sampleDetailPage(memberPage);
+    await detail.goto(igsn);
+    await detail.expectSample(sampleName, igsn);
+    await detail.expectManualGroup(name);
+
     await memberPage.context().close();
+  });
 
-    await page.reload();
-    await group.expectVisible(name);
-    await group.expectMember(RESEARCHERS.jean.email, "Active");
-    await group.expectNothingAbout(sampleName);
+  test("a researcher in no manual group is offered none on their sample", async ({
+    page,
+  }) => {
+    const sampleName = uniqueName("Limestone block");
 
+    await signInAsResearcher(page, RESEARCHERS.luc);
+    const list = sampleListPage(page);
+    const create = sampleCreatePage(page);
+    const edit = sampleEditPage(page);
+
+    await list.expectVisible();
+    const groupsLoaded = waitForMyManualGroups(page);
+    await list.goToCreate();
+    await create.expectVisible();
+    await groupsLoaded;
+    await create.expectNoManualGroupOffered();
+
+    await create.fillName(sampleName);
+    await create.selectNature("Hand sample");
+    await create.submit();
+
+    await edit.expectName(sampleName);
+    await edit.expectNoManualGroupOffered();
+  });
+
+  test("a researcher owning a published sample leaves the group it is not attached to", async ({
+    page,
+    browser,
+  }) => {
+    test.slow();
+    const groups = manualGroupsPage(page);
+    const group = manualGroupPage(page);
+    const attached = uniqueName("Team Basalt");
+    const other = uniqueName("Team Tuff");
+    const sampleName = uniqueName("Basalt core");
+
+    await signInAsResearcher(page, RESEARCHERS.nadia);
     await groups.open();
-    await groups.expectGroupRow(name, 1);
+    for (const name of [attached, other]) {
+      await groups.create(name);
+      await groups.openGroup(name);
+      await group.associate("Martin", RESEARCHERS.jean.email);
+      await group.expectMember(RESEARCHERS.jean.email, "Active");
+      await groups.open();
+    }
+
+    const memberPage = await signInAsResearcherInOwnSession(
+      browser,
+      RESEARCHERS.jean,
+    );
+    const list = sampleListPage(memberPage);
+    const create = sampleCreatePage(memberPage);
+    const edit = sampleEditPage(memberPage);
+
+    await list.expectVisible();
+    await list.goToCreate();
+    await create.expectVisible();
+    await create.fillName(sampleName);
+    await create.selectNature("Hand sample");
+    await create.checkManualGroup(attached);
+    await create.submit();
+    await edit.expectName(sampleName);
+
+    await edit.fillPublishableFields();
+    await edit.publish();
+    await list.expectVisible();
+
+    const settings = settingsPage(memberPage);
+    await settings.open();
+    await settings.expectManualGroupLeaveLocked(attached);
+    await settings.leaveManualGroup(other);
+    await settings.expectManualGroup(attached);
+    await settings.expectNoManualGroup(other);
+
+    await memberPage.context().close();
   });
 });

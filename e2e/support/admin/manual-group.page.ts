@@ -33,8 +33,6 @@ export function manualGroupPage(page: Page) {
     expectMember: (email: string, status: string) =>
       expect(memberRow(email)).toContainText(status),
     expectNoMember: (email: string) => expect(memberRow(email)).toHaveCount(0),
-    expectNothingAbout: (text: string) =>
-      expect(page.getByText(text)).toBeHidden(),
     detach: async (name: string) => {
       await page.getByRole("button", { name: `Detach ${name}` }).click();
       await page

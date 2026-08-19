@@ -32,8 +32,11 @@ const draft: SampleDraft = {
   availability: "exists",
   age: EMPTY_AGE_FORM_VALUES,
   links: [],
+  manualGroupIds: [],
   ...toEconomicInterestDraft(undefined),
 };
+
+const MANUAL_GROUP_ID = "3f2504e0-4f89-41d3-9a0c-0305000000a1";
 
 describe("sampleDraftSchema", () => {
   it("should compose the draft and validate it like the API does", () => {
@@ -47,6 +50,7 @@ describe("sampleDraftSchema", () => {
       specificName: null,
       location: null,
       availability: "exists",
+      manualGroupIds: [],
     });
   });
 
@@ -105,6 +109,7 @@ describe("sampleDraftSchema", () => {
       specificName: null,
       location: null,
       availability: "exists",
+      manualGroupIds: [],
       description: {
         collectionDate: { start: "2026-01-05", end: "2026-01-05" },
         mass: { value: 1.2, unit: "kg" },
@@ -194,6 +199,23 @@ describe("sampleDraftSchema", () => {
     expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
       "links.1.url",
     ]);
+  });
+
+  it("should round-trip the manual group ids through the draft", () => {
+    expect(
+      sampleDraftSchema.parse({
+        ...draft,
+        manualGroupIds: [MANUAL_GROUP_ID],
+      }),
+    ).toMatchObject({ manualGroupIds: [MANUAL_GROUP_ID] });
+    expect(
+      toSampleDraft({
+        name: "Basalt 42",
+        nature: "thin_section",
+        type: null,
+        manualGroupIds: [MANUAL_GROUP_ID],
+      }).manualGroupIds,
+    ).toEqual([MANUAL_GROUP_ID]);
   });
 
   it("should round-trip saved links into the draft", () => {

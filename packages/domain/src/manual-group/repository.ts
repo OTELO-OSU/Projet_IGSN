@@ -3,6 +3,7 @@ import type {
   ListManualGroupsQuery,
   ManualGroupListItem,
   ManualGroupMember,
+  MyManualGroup,
 } from "./manual-group-validator.ts";
 import type { ManualGroup } from "./model.ts";
 
@@ -24,7 +25,7 @@ export type ManualGroupRepository = {
   get(id: string): Promise<ManualGroup | null>;
   create(name: string): Promise<CreateManualGroupResult>;
   rename(id: string, name: string): Promise<RenameManualGroupResult>;
-  remove(id: string): Promise<"removed" | "not_found">;
+  remove(id: string): Promise<"removed" | "not_found" | "has_published_sample">;
   listMembers(id: string): Promise<ManualGroupMember[]>;
   addMember(
     groupId: string,
@@ -34,5 +35,6 @@ export type ManualGroupRepository = {
     groupId: string,
     userId: string,
   ): Promise<"removed" | "not_found">;
-  listForUser(userId: string): Promise<ManualGroup[]>;
+  listForUser(userId: string): Promise<MyManualGroup[]>;
+  listForSampleOwner(sampleId: string): Promise<ManualGroup[]>;
 };

@@ -73,6 +73,7 @@ export function createApp(
         sampleRepository,
         sampleAttachmentRepository,
         userSampleRepository,
+        manualGroupRepository,
         mail,
       ),
     )

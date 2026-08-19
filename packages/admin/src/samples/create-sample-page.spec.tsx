@@ -25,10 +25,19 @@ vi.mock("react-oidc-context", () => ({
   }),
 }));
 
+const BASALT_TEAM = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000a1",
+  name: "Basalt team",
+  canLeave: true,
+};
+
 function fakeApi(failWrites = false) {
   let sample: Record<string, unknown> | null = null;
   const lockCalls: string[] = [];
   worker.use(
+    http.get("*/admin/currentUser/manual-groups", () =>
+      HttpResponse.json({ data: [BASALT_TEAM] }),
+    ),
     http.put("*/samples/:id/lock", () => {
       lockCalls.push("PUT");
       return new HttpResponse(null, { status: 500 });
@@ -77,11 +86,11 @@ function fakeApi(failWrites = false) {
       HttpResponse.json({ data: sample, role: "owner" }),
     ),
   );
-  return lockCalls;
+  return { lockCalls, created: () => sample };
 }
 
 async function renderCreatePage(failWrites = false) {
-  const lockCalls = fakeApi(failWrites);
+  const { lockCalls, created } = fakeApi(failWrites);
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -97,7 +106,7 @@ async function renderCreatePage(failWrites = false) {
       </QueryClientProvider>
     </StrictMode>,
   );
-  return Object.assign(screen, { lockCalls });
+  return Object.assign(screen, { lockCalls, created });
 }
 
 beforeAll(() => page.viewport(1280, 1600));
@@ -125,6 +134,22 @@ describe("CreateSamplePage", () => {
       .element(screen.getByRole("button", { name: "Create" }))
       .toBeVisible();
     expect(screen.lockCalls).toEqual([]);
+  });
+
+  it("should offer the groups the depositor belongs to and submit the checked one", async () => {
+    const screen = await renderCreatePage();
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: /nature/i }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("checkbox", { name: "Basalt team" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    expect(screen.created()).toMatchObject({
+      manualGroupIds: [BASALT_TEAM.id],
+    });
   });
 
   it("should show a toast after creation", async () => {

@@ -25,27 +25,28 @@ vi.mock("react-oidc-context", () => ({
   }),
 }));
 
-const MANUAL_GROUPS = [
-  { id: "3f2504e0-4f89-41d3-9a0c-0305000000a1", name: "Basalt team" },
-];
+const BASALT_TEAM = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000a1",
+  name: "Basalt team",
+  canLeave: true,
+};
+const MANUAL_GROUPS = [BASALT_TEAM];
 
 function fakeApi({
   orcid = null,
   conflict = false,
   manualGroups = MANUAL_GROUPS,
-  canLeave = true,
 }: {
   orcid?: string | null;
   conflict?: boolean;
-  manualGroups?: { id: string; name: string }[];
-  canLeave?: boolean;
+  manualGroups?: { id: string; name: string; canLeave: boolean }[];
 } = {}) {
   const puts: unknown[] = [];
   const groupPuts: unknown[] = [];
   let stored = orcid;
   worker.use(
     http.get("*/admin/currentUser/manual-groups", () =>
-      HttpResponse.json({ data: manualGroups, meta: { canLeave } }),
+      HttpResponse.json({ data: manualGroups }),
     ),
     http.put(
       "*/admin/currentUser/institutional-groups",
@@ -174,11 +175,23 @@ describe("settings page", () => {
       .toBeEnabled();
   });
 
-  it("should refuse to leave a group while a published sample is held", async () => {
-    await renderSettingsPage({ canLeave: false });
+  it("should refuse to leave only the group holding a published sample", async () => {
+    await renderSettingsPage({
+      manualGroups: [
+        { ...BASALT_TEAM, canLeave: false },
+        {
+          id: "3f2504e0-4f89-41d3-9a0c-0305000000a2",
+          name: "Fossil team",
+          canLeave: true,
+        },
+      ],
+    });
     await expect
       .element(page.getByRole("button", { name: "Leave Basalt team" }))
       .toBeDisabled();
+    await expect
+      .element(page.getByRole("button", { name: "Leave Fossil team" }))
+      .toBeEnabled();
     await expect.element(page.getByText(/published sample/i)).toBeVisible();
   });
 

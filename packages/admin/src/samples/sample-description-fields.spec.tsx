@@ -419,6 +419,7 @@ describe("SampleDescriptionFields", () => {
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,

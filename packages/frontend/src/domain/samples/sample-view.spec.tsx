@@ -44,6 +44,7 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   economicResourceTypePrecision: null,
   economicDepositName: null,
   economicDepositDescription: null,
+  manualGroups: [],
   published: true,
   createdAt: new Date("2024-01-01"),
   updatedAt: new Date("2024-01-01"),
@@ -371,6 +372,33 @@ describe("SampleView", () => {
 
     await expect
       .element(screen.getByRole("heading", { name: "Institution" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show the manual groups the sample belongs to as their own section", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          manualGroups: [
+            { id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302", name: "Volcano" },
+            { id: "3f2504e0-4f89-41d3-9a0c-0305e82c3303", name: "Deep sea" },
+          ],
+        })}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Groups" }))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("Volcano")).toBeInTheDocument();
+    await expect.element(screen.getByText("Deep sea")).toBeInTheDocument();
+  });
+
+  it("should omit the Groups section when the sample belongs to none", async () => {
+    const screen = await render(<SampleView sample={sample()} />);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Groups" }))
       .not.toBeInTheDocument();
   });
 

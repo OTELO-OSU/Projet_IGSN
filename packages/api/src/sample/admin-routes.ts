@@ -1,3 +1,4 @@
+import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
 import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/attachment/repository";
 import type {
   SampleEditLockResponse,
@@ -20,6 +21,7 @@ import { canGrantRole } from "@projet-igsn/domain/user-sample/can-grant-role";
 import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-manage-collaborators";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
+import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { Hono } from "hono";
 
 import type { SendMail } from "../mail/send-mail.ts";
@@ -43,10 +45,25 @@ import {
   validateUpdateSampleBody,
 } from "./validator.ts";
 
+const NOT_ATTACHABLE = {
+  error: "Manual group not attachable to this sample",
+} as const;
+
+function sameManualGroups(submitted: string[], stored: string[]) {
+  const asked = new Set(submitted);
+  return asked.size === stored.length && stored.every((id) => asked.has(id));
+}
+
+function hasUnattachable(submitted: string[], allowed: string[]) {
+  const attachable = new Set(allowed);
+  return submitted.some((id) => !attachable.has(id));
+}
+
 export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
   userSampleRepository: UserSampleRepository,
+  manualGroups: ManualGroupRepository,
   mail?: { sendMail: SendMail; adminUrl: string },
 ) {
   const accessibleSample = requireSampleAccess(repository);
@@ -86,7 +103,7 @@ export function createSampleAdminRoutes(
     })
     .use("/:id", accessibleSample)
     .use("/:id/*", accessibleSample)
-    .get("/:id", validateIdParam, (c) => {
+    .get("/:id", validateIdParam, async (c) => {
       const sample = c.get("sample");
       if (!sample) {
         return c.json({ error: "Sample not found" }, 404);
@@ -94,14 +111,25 @@ export function createSampleAdminRoutes(
       const body: AdminSampleResponse = {
         data: sample,
         role: c.get("role")!,
+        manualGroupOptions: isSampleOwner(c.get("role"))
+          ? await manualGroups.listForSampleOwner(sample.id)
+          : [],
       };
       return c.json(body);
     })
     .post("/", validateCreateSampleBody, async (c) => {
-      const sample = await repository.create(
-        c.req.valid("json"),
-        c.get("user"),
-      );
+      const input = c.req.valid("json");
+      const user = c.get("user");
+      const attachable = await manualGroups.listForUser(user.id);
+      if (
+        hasUnattachable(
+          input.manualGroupIds ?? [],
+          attachable.map((group) => group.id),
+        )
+      ) {
+        return c.json(NOT_ATTACHABLE, 422);
+      }
+      const sample = await repository.create(input, user);
       return c.json({ data: sample }, 201);
     })
     .get("/:id/collaborators", validateIdParam, async (c) => {
@@ -256,6 +284,21 @@ export function createSampleAdminRoutes(
               409,
             );
           }
+        }
+        const stored = current.manualGroups.map((group) => group.id);
+        const submitted = toPersist.manualGroupIds ?? stored;
+        if (isSampleOwner(c.get("role"))) {
+          const attachable = await manualGroups.listForSampleOwner(id);
+          if (
+            hasUnattachable(submitted, [
+              ...attachable.map((group) => group.id),
+              ...stored,
+            ])
+          ) {
+            return c.json(NOT_ATTACHABLE, 422);
+          }
+        } else if (!sameManualGroups(submitted, stored)) {
+          return c.json({ error: "Forbidden" }, 403);
         }
         await attachmentsRepository.reconcile(id, toPersist.attachments ?? []);
         const sample = await repository.update(id, toPersist);

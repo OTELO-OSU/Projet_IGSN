@@ -161,10 +161,16 @@ type ManualGroupMemberTable = {
   user_id: string;
 };
 
+type SampleManualGroupTable = {
+  sample_id: string;
+  group_id: string;
+};
+
 export type DB = {
   manual_group: ManualGroupTable;
   manual_group_member: ManualGroupMemberTable;
   sample: SampleTable;
+  sample_manual_group: SampleManualGroupTable;
   sample_link: SampleLinkTable;
   sample_attachment: SampleAttachmentTable;
   sample_edit_lock: SampleEditLockTable;

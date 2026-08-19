@@ -46,6 +46,7 @@ export function SampleView({
     institutionalOrganization,
     institutionalOsu,
     institutionalLaboratory,
+    manualGroups,
     location,
     security,
     availability,
@@ -160,6 +161,19 @@ export function SampleView({
             }
           />
         </FieldRows>
+      ),
+    },
+    manualGroups.length > 0 && {
+      id: "manual-groups",
+      title: m.sample_section_manual_groups(),
+      content: (
+        <ul className="mt-2 divide-y">
+          {manualGroups.map(({ id, name }) => (
+            <li key={id} className="px-4 py-3 font-medium">
+              {name}
+            </li>
+          ))}
+        </ul>
       ),
     },
     hasAge(age)

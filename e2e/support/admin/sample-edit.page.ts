@@ -1,8 +1,21 @@
 import { expect, type Page } from "@playwright/test";
 
 import { adminUrl } from "../urls";
+import { expectNoManualGroupOffered } from "./manual-groups-field.ts";
 
 export function sampleEditPage(page: Page) {
+  const openTab = (name: string) => page.getByRole("tab", { name }).click();
+  const pick = async (field: string, label: string) => {
+    const combobox = page.getByRole("combobox", { name: field });
+    await expect(async () => {
+      if ((await combobox.innerText()).trim() !== label) {
+        await combobox.click();
+        await page.getByRole("option", { name: label, exact: true }).click();
+      }
+      await expect(combobox).toHaveText(label, { timeout: 2_000 });
+    }).toPass({ timeout: 20_000 });
+  };
+
   return {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
@@ -15,8 +28,45 @@ export function sampleEditPage(page: Page) {
       expect(page.getByLabel(/name/i)).toHaveValue(name),
     goToList: () => page.getByRole("link", { name: "IGSN Admin" }).click(),
 
-    openLinksTab: () => page.getByRole("tab", { name: "Links" }).click(),
-    // Adds a row then fills it; `index` is the 1-based row the labels carry.
+    expectNoManualGroupOffered: () => expectNoManualGroupOffered(page),
+    expectManualGroupFrozen: async (name: string) => {
+      const checkbox = page.getByRole("checkbox", { name });
+      await expect(checkbox).toBeChecked();
+      await expect(checkbox).toBeDisabled();
+    },
+    publicPageIgsn: async () => {
+      const href = await page
+        .getByRole("link", { name: "View public page" })
+        .getAttribute("href");
+      const igsn = href?.split("/").at(-1);
+      if (!igsn) throw new Error("the published sample has no public page");
+      return igsn;
+    },
+
+    fillPublishableFields: async () => {
+      await pick("Type", "Dredge");
+      await openTab("Sample type");
+      await pick("Material", "Synthetic rock / mineral");
+      await openTab("Physical description");
+      await page
+        .getByRole("group", { name: /collection date/i })
+        .getByRole("textbox", { name: /^Date/ })
+        .fill("2025-06-15");
+      await pick("Availability", "Exists");
+      await openTab("Scientific context");
+      await pick("Provenance status", "Collection / historical specimen");
+      await page.getByLabel(/collection curator/i).fill("Paul Bernard");
+      await pick("Collection origin", "Scientific expedition");
+    },
+    publish: async () => {
+      await page.getByRole("button", { name: "Save & Publish" }).click();
+      await page
+        .getByRole("dialog", { name: "Publish sample" })
+        .getByRole("button", { name: "Confirm" })
+        .click();
+    },
+
+    openLinksTab: () => openTab("Links"),
     addLink: async (index: number, url: string, description: string) => {
       await page.getByRole("button", { name: "Add a link" }).click();
       await page.getByLabel(`DOI URL ${index}`).fill(url);
@@ -28,17 +78,10 @@ export function sampleEditPage(page: Page) {
         description,
       );
     },
-    // The labelled (visually hidden) file input behind the Browse button;
-    // several paths at once exercise the multi-file upload. Files are only
-    // staged here: they upload on save, behind the recap dialog.
     uploadAttachments: (paths: string[]) =>
       page.getByLabel("Browse files").setInputFiles(paths),
-    // Matches the description field of a staged or saved row; after a reload
-    // only a saved row can match, which is the persistence assertion.
     expectAttachment: (name: string) =>
       expect(page.getByLabel(`Description of ${name}`)).toBeVisible(),
-    // Saving with staged files opens the upload dialog; its Confirm button
-    // only renders once every upload settles, so clicking it waits them out.
     confirmUploads: async () => {
       await page.getByRole("button", { name: "Confirm" }).click();
       await expect(

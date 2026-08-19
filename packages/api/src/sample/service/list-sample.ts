@@ -12,7 +12,11 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import { facetFilters } from "./facet-filter.ts";
-import { sampleAttachments, sampleLinks } from "./sample-children.ts";
+import {
+  sampleAttachments,
+  sampleLinks,
+  sampleManualGroups,
+} from "./sample-children.ts";
 import {
   applyFuzzyThreshold,
   relevanceScore,
@@ -77,6 +81,7 @@ async function listSamplesWhere(
       .selectAll()
       .select(sampleLinks)
       .select(sampleAttachments)
+      .select(sampleManualGroups)
       .$if(withOwner, (qb) =>
         qb.select((eb) =>
           jsonObjectFrom(
@@ -103,7 +108,9 @@ async function listSamplesWhere(
       .executeTakeFirstOrThrow();
 
     return {
-      data: rows.map((row) => toSample(row, row.links, row.attachments)),
+      data: rows.map((row) =>
+        toSample(row, row.links, row.attachments, row.manualGroups),
+      ),
       owners: new Map(rows.map((row) => [row.id, row.owner])),
       total: Number(count),
     };

@@ -82,6 +82,9 @@ export function createManualGroupRoutes(
         if (removed === "not_found") {
           return c.json(NOT_FOUND, 404);
         }
+        if (removed === "has_published_sample") {
+          return c.json({ reason: "has_published_sample" }, 409);
+        }
         return c.body(null, 204);
       },
     )

@@ -4,6 +4,7 @@ import type { Kysely } from "kysely";
 import {
   manualGroupListItemSchema,
   manualGroupMemberSchema,
+  myManualGroupSchema,
 } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { manualGroupSchema } from "@projet-igsn/domain/manual-group/model";
 import { sql } from "kysely";
@@ -105,6 +106,17 @@ export function createManualGroupRepository(
       }),
     remove: (id) =>
       withTransaction(db, async (trx) => {
+        const published = await trx
+          .selectFrom("sample_manual_group")
+          .innerJoin("sample", "sample.id", "sample_manual_group.sample_id")
+          .select("sample.id")
+          .where("sample_manual_group.group_id", "=", id)
+          .where("sample.published", "=", true)
+          .limit(1)
+          .executeTakeFirst();
+        if (published) {
+          return "has_published_sample";
+        }
         const { numDeletedRows } = await trx
           .deleteFrom("manual_group")
           .where("id", "=", id)
@@ -149,8 +161,66 @@ export function createManualGroupRepository(
             "manual_group_member.group_id",
             "manual_group.id",
           )
-          .select(["manual_group.id", "manual_group.name"])
+          .select((eb) => [
+            "manual_group.id",
+            "manual_group.name",
+            eb
+              .not(
+                eb.exists(
+                  eb
+                    .selectFrom("sample_manual_group")
+                    .innerJoin(
+                      "sample",
+                      "sample.id",
+                      "sample_manual_group.sample_id",
+                    )
+                    .innerJoin(
+                      "user_sample",
+                      "user_sample.sample_id",
+                      "sample_manual_group.sample_id",
+                    )
+                    .select("sample.id")
+                    .whereRef(
+                      "sample_manual_group.group_id",
+                      "=",
+                      "manual_group.id",
+                    )
+                    .where("sample.published", "=", true)
+                    .where("user_sample.user_id", "=", userId)
+                    .where("user_sample.role", "=", "owner"),
+                ),
+              )
+              .as("canLeave"),
+          ])
           .where("manual_group_member.user_id", "=", userId)
+          .orderBy("manual_group.name", "asc")
+          .execute();
+        return rows.map((row) => myManualGroupSchema.parse(row));
+      }),
+    listForSampleOwner: (sampleId) =>
+      withTransaction(db, async (trx) => {
+        const rows = await trx
+          .selectFrom("manual_group")
+          .innerJoin(
+            "manual_group_member",
+            "manual_group_member.group_id",
+            "manual_group.id",
+          )
+          .select(["manual_group.id", "manual_group.name"])
+          .where((eb) =>
+            eb.exists(
+              eb
+                .selectFrom("user_sample")
+                .select("user_sample.user_id")
+                .whereRef(
+                  "user_sample.user_id",
+                  "=",
+                  "manual_group_member.user_id",
+                )
+                .where("user_sample.sample_id", "=", sampleId)
+                .where("user_sample.role", "=", "owner"),
+            ),
+          )
           .orderBy("manual_group.name", "asc")
           .execute();
         return rows.map((row) => manualGroupSchema.parse(row));

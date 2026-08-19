@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
+import { useMyManualGroups } from "#/manual-groups/use-my-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { useCreateSample } from "#/samples/use-create-sample.ts";
@@ -11,6 +12,7 @@ export const Route = createFileRoute("/samples/create")({
 function CreateSamplePage() {
   const navigate = useNavigate();
   const createSample = useCreateSample();
+  const myManualGroups = useMyManualGroups();
 
   return (
     <>
@@ -18,6 +20,7 @@ function CreateSamplePage() {
 
       <SampleForm
         isPending={createSample.isPending}
+        manualGroupOptions={myManualGroups.data?.data ?? []}
         onCancel={() => navigate({ to: "/" })}
         primaryAction={{
           kind: "submit",

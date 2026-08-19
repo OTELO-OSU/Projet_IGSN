@@ -72,6 +72,9 @@ const stored: Sample = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: "ABC123",
+  manualGroups: [
+    { id: "22222222-2222-2222-2222-222222222222", name: "Stored group" },
+  ],
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,
@@ -312,6 +315,18 @@ describe("mergePublishedEdit", () => {
       }),
     );
     expect(merged.scientificContext).toEqual(stored.scientificContext);
+  });
+
+  it("keeps the stored manual groups, ignoring the payload's ids", () => {
+    const merged = mergePublishedEdit(
+      stored,
+      incoming({
+        manualGroupIds: ["33333333-3333-3333-3333-333333333333"],
+      }),
+    );
+    expect(merged.manualGroupIds).toEqual([
+      "22222222-2222-2222-2222-222222222222",
+    ]);
   });
 
   it("carries links and attachments from the payload", () => {

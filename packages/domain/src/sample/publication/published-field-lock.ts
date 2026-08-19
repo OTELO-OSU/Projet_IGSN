@@ -13,6 +13,9 @@ const LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   nature: ["nature"],
   type: ["typePath"],
 } as const;
+const LOCKED_MANUAL_GROUP_FIELDS_TO_FORM_FIELDS = {
+  manualGroupIds: ["manualGroupIds"],
+} as const;
 const LOCKED_LOCATION_FIELDS_TO_FORM_FIELDS = {
   position: [
     "location.type",
@@ -48,6 +51,7 @@ const PROVENANCE_DISCRIMINANT_FORM_FIELD =
 
 export const FROZEN_FORM_FIELDS: readonly string[] = [
   ...Object.values(LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS).flat(),
+  ...Object.values(LOCKED_MANUAL_GROUP_FIELDS_TO_FORM_FIELDS).flat(),
   ...Object.values(LOCKED_LOCATION_FIELDS_TO_FORM_FIELDS).flat(),
   ...Object.values(LOCKED_DESCRIPTION_FIELDS_TO_FORM_FIELDS).flat(),
   PROVENANCE_DISCRIMINANT_FORM_FIELD,
@@ -192,5 +196,10 @@ export function mergePublishedEdit(
       incoming.scientificContext,
     ),
   };
-  return freezeLocked(merged, current, LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS);
+  const withGroups = freezeLocked(
+    merged,
+    { manualGroupIds: current.manualGroups.map((group) => group.id) },
+    LOCKED_MANUAL_GROUP_FIELDS_TO_FORM_FIELDS,
+  );
+  return freezeLocked(withGroups, current, LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS);
 }

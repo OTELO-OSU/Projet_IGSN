@@ -66,6 +66,7 @@ export type SampleDraft = {
   availability: CreateSample["availability"] | undefined;
   age: AgeFormValues;
   links: LinkDraft[];
+  manualGroupIds: string[];
 } & EconomicInterestDraft;
 
 export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
@@ -90,6 +91,7 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
     url: link.url,
     description: link.description ?? "",
   })),
+  manualGroupIds: value?.manualGroupIds ?? [],
   ...toEconomicInterestDraft(value),
 });
 
@@ -135,6 +137,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(draft.availability ? { availability: draft.availability } : {}),
     ...(age ? { age } : {}),
     ...(links.length > 0 ? { links } : {}),
+    manualGroupIds: draft.manualGroupIds,
     ...(economic.economicInterest !== null ? economic : {}),
   };
 };

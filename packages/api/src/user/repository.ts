@@ -120,19 +120,6 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .execute();
         return rows.map(({ email }) => email);
       }),
-    hasPublishedSample: (userId) =>
-      withTransaction(db, async (trx) => {
-        const row = await trx
-          .selectFrom("user_sample")
-          .innerJoin("sample", "sample.id", "user_sample.sample_id")
-          .select("user_sample.user_id")
-          .where("user_sample.user_id", "=", userId)
-          .where("user_sample.role", "=", "owner")
-          .where("sample.published", "=", true)
-          .limit(1)
-          .executeTakeFirst();
-        return row !== undefined;
-      }),
     update: (id, user) =>
       withTransaction(db, async (trx) => {
         const previous = await trx

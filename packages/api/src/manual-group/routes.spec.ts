@@ -1,6 +1,5 @@
 import type { Kysely } from "kysely";
 
-import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 import {
   listManualGroupsResponseSchema,
   manualGroupMembersResponseSchema,
@@ -14,6 +13,7 @@ import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
+import { publishSample } from "../sample/service/publish-sample.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
@@ -70,6 +70,40 @@ const countMembers = async (db: Db, groupId: string) => {
     .where("group_id", "=", groupId)
     .execute();
   return rows.length;
+};
+
+const insertSampleInGroup = async (
+  db: Db,
+  userId: string,
+  groupId?: string,
+  role: "owner" | "contributor" = "owner",
+) => {
+  const sample = await insertSample(db, {
+    name: "Basalte du Massif Central",
+    nature: "thin_section",
+    type: null,
+    collectionMethod: null,
+  });
+  await db
+    .insertInto("user_sample")
+    .values({ sample_id: sample.id, user_id: userId, role })
+    .execute();
+  if (groupId) {
+    await db
+      .insertInto("sample_manual_group")
+      .values({ sample_id: sample.id, group_id: groupId })
+      .execute();
+  }
+  return sample.id;
+};
+
+const attachedGroupIds = async (db: Db, sampleId: string) => {
+  const rows = await db
+    .selectFrom("sample_manual_group")
+    .select("group_id")
+    .where("sample_id", "=", sampleId)
+    .execute();
+  return rows.map((row) => row.group_id);
 };
 
 const groupName = (db: Db, id: string) =>
@@ -216,6 +250,54 @@ describe("admin manual group routes", () => {
           .where("id", "=", curie.id)
           .executeTakeFirstOrThrow(),
       ).resolves.toEqual({ email: "marie.curie@univ-lorraine.fr" });
+    },
+  );
+
+  pgTest(
+    "should delete a group attached to a draft sample, detaching it and keeping the sample",
+    async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      const sample = await insertSampleInGroup(db, curie.id, MASSIF);
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin["manual-groups"][":id"].$delete(
+        { param: { id: MASSIF } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(204);
+      expect(await attachedGroupIds(db, sample)).toEqual([]);
+      await expect(
+        db
+          .selectFrom("sample")
+          .select("id")
+          .where("id", "=", sample)
+          .executeTakeFirstOrThrow(),
+      ).resolves.toEqual({ id: sample });
+    },
+  );
+
+  pgTest(
+    "should answer 409 when deleting a group a published sample is attached to",
+    async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      const sample = await insertSampleInGroup(db, curie.id, MASSIF);
+      await publishSample(db, sample);
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin["manual-groups"][":id"].$delete(
+        { param: { id: MASSIF } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(409);
+      await expect(groupName(db, MASSIF)).resolves.toEqual({
+        name: "Massif Central 2026",
+      });
     },
   );
 
@@ -501,28 +583,6 @@ describe("admin manual group routes", () => {
 });
 
 describe("the caller's own manual groups", () => {
-  const publishSample = async (
-    db: Db,
-    userId: string,
-    role: "owner" | "contributor" = "owner",
-  ) => {
-    const sample = await insertSample(db, {
-      name: "Basalte du Massif Central",
-      nature: "thin_section",
-      type: null,
-      collectionMethod: null,
-    });
-    await db
-      .insertInto("user_sample")
-      .values({ sample_id: sample.id, user_id: userId, role })
-      .execute();
-    await db
-      .updateTable("sample")
-      .set({ published: true, igsn: generateIgsnSuffix(sample.id) })
-      .where("id", "=", sample.id)
-      .execute();
-  };
-
   pgTest("should list the caller's groups, leaving allowed", async ({ db }) => {
     // Arrange
     await insertGroup(db, MASSIF, "Massif Central 2026");
@@ -536,19 +596,23 @@ describe("the caller's own manual groups", () => {
     // Assert
     expect(res.status).toBe(200);
     expect(myManualGroupsResponseSchema.parse(await res.json())).toEqual({
-      data: [{ id: MASSIF, name: "Massif Central 2026" }],
-      meta: { canLeave: true },
+      data: [{ id: MASSIF, name: "Massif Central 2026", canLeave: true }],
     });
   });
 
   pgTest(
-    "should refuse leaving to a caller holding a published sample",
+    "should refuse leaving only the group holding the caller's published sample",
     async ({ db }) => {
       // Arrange
       await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, ALPES, "Alpes 2026");
       const researcher = await provisionUser(db, "researcher");
       await insertMember(db, MASSIF, researcher.id);
-      await publishSample(db, researcher.id);
+      await insertMember(db, ALPES, researcher.id);
+      await publishSample(
+        db,
+        await insertSampleInGroup(db, researcher.id, MASSIF),
+      );
       const client = testClient(createApp(db).app);
       // Act
       const res = await client.admin.currentUser["manual-groups"][
@@ -562,24 +626,40 @@ describe("the caller's own manual groups", () => {
         undefined,
         { headers: researcherHeader },
       );
-      expect(
-        myManualGroupsResponseSchema.parse(await mine.json()).meta,
-      ).toEqual({ canLeave: false });
+      expect(myManualGroupsResponseSchema.parse(await mine.json())).toEqual({
+        data: [
+          { id: ALPES, name: "Alpes 2026", canLeave: true },
+          { id: MASSIF, name: "Massif Central 2026", canLeave: false },
+        ],
+      });
     },
   );
 
   pgTest.for([
-    { case: "owns no published sample", role: null },
-    { case: "only contributes to a published sample", role: "contributor" },
+    { case: "owns no published sample", role: null, group: undefined },
+    {
+      case: "only contributes to a published sample of the group",
+      role: "contributor",
+      group: MASSIF,
+    },
+    {
+      case: "owns a published sample attached to another group",
+      role: "owner",
+      group: ALPES,
+    },
   ] as const)(
     "should let a caller who $case leave",
-    async ({ role }, { db }) => {
+    async ({ role, group }, { db }) => {
       // Arrange
       await insertGroup(db, MASSIF, "Massif Central 2026");
+      await insertGroup(db, ALPES, "Alpes 2026");
       const researcher = await provisionUser(db, "researcher");
       await insertMember(db, MASSIF, researcher.id);
       if (role) {
-        await publishSample(db, researcher.id, role);
+        await publishSample(
+          db,
+          await insertSampleInGroup(db, researcher.id, group, role),
+        );
       }
       // Act
       const res = await testClient(createApp(db).app).admin.currentUser[

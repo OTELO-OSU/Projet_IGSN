@@ -18,6 +18,7 @@
 - A submitted OSU MUST belong to the submitted organisme, so a co-tutelle user picking the other organisme records no OSU.
 - `osu.ts` and `laboratory.ts` are generated from the `sync-data/` CSV export by `domain/scripts/sync-institutions.ts`, shaped like `institutional-group/organization.ts`.
 - A sample snapshots the three codes at creation, never after, and they stay out of `createSampleSchema`.
+- A sample also carries manual groups its owner picks and edits, frozen once published, unlike the institutional codes snapshotted once at creation; see ADR 0025.
 
 ## Server-side sorting and filtering
 
