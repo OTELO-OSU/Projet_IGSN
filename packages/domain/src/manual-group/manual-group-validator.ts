@@ -61,6 +61,12 @@ export const manualGroupResponseSchema = z.object({ data: manualGroupSchema });
 
 export type ManualGroupResponse = z.infer<typeof manualGroupResponseSchema>;
 
+export const manualGroupsResponseSchema = z.object({
+  data: z.array(manualGroupSchema),
+});
+
+export type ManualGroupsResponse = z.infer<typeof manualGroupsResponseSchema>;
+
 export const manualGroupMembersResponseSchema = z.object({
   data: z.array(manualGroupMemberSchema),
 });

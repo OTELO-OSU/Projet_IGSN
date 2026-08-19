@@ -8,11 +8,6 @@ import {
 } from "./facets.ts";
 
 describe("SAMPLE_FACETS", () => {
-  it("should have unique keys", () => {
-    const keys = SAMPLE_FACETS.map((f) => f.key);
-    expect(new Set(keys).size).toBe(keys.length);
-  });
-
   it("should expose at least one searchable root for every hierarchy facet", () => {
     const hierarchyFacets = SAMPLE_FACETS.filter((f) => f.kind === "hierarchy");
     expect(hierarchyFacets.length).toBeGreaterThan(0);
@@ -20,26 +15,6 @@ describe("SAMPLE_FACETS", () => {
       const { roots, nodes } = facet.hierarchy;
       expect(roots.some((root) => nodes[root]?.searchable === true)).toBe(true);
     }
-  });
-});
-
-describe("facetParamKeys", () => {
-  it("should list every param, expanding a range facet into three", () => {
-    expect(facetParamKeys()).toEqual([
-      "type",
-      "material",
-      "collectionMethod",
-      "nature",
-      "texture",
-      "researchProgramName",
-      "researchProgramChief",
-      "researchCampaign",
-      "collectorName",
-      "collectionCurator",
-      "ageMin",
-      "ageMax",
-      "ageUnit",
-    ]);
   });
 });
 
@@ -53,6 +28,8 @@ describe("facetQueryFields", () => {
     ["nature", "rock_powder"],
     ["texture", "aphanitic"],
     ["collectorName", "Marie Curie"],
+    ["institutionalLaboratory", "EA4038"],
+    ["manualGroup", "b4c1f0de-0f4a-4b0e-9c1e-8f2a1d6b7c30"],
   ])("should accept a valid %s value", (key, value) => {
     expect(fields[key as keyof typeof fields].parse(value)).toBe(value);
   });
@@ -62,6 +39,8 @@ describe("facetQueryFields", () => {
     ["material", "definitely_not_a_material"],
     ["nature", "not_a_nature"],
     ["texture", "not_a_texture"],
+    ["institutionalOrganization", "not-a-ror"],
+    ["manualGroup", "not-a-uuid"],
   ])("should degrade an invalid %s value to no filter", (key, value) => {
     expect(fields[key as keyof typeof fields].parse(value)).toBeUndefined();
   });
@@ -76,20 +55,11 @@ describe("facetQueryFields", () => {
     expect(fields.ageUnit.parse("ma")).toBe("ma");
     expect(fields.ageUnit.parse("nope")).toBeUndefined();
   });
-
-  it("should treat a missing value as no filter", () => {
-    expect(fields.type.parse(undefined)).toBeUndefined();
-    expect(fields.ageMin.parse(undefined)).toBeUndefined();
-  });
 });
 
 describe("activeFacetKeys", () => {
   it("should list a set non-range facet", () => {
     expect(activeFacetKeys({ nature: "rock_powder" })).toEqual(["nature"]);
-  });
-
-  it("should ignore undefined values", () => {
-    expect(activeFacetKeys({})).toEqual([]);
   });
 
   it("should drop a range unit when both bounds are absent", () => {

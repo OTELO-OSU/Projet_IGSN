@@ -14,6 +14,7 @@ import { createApp } from "../app.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
+import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
@@ -227,9 +228,12 @@ describe("a sample's manual groups", () => {
     },
   );
 
-  pgTest(
-    "should let a contributor resubmit the stored groups",
-    async ({ db }) => {
+  pgTest.for([
+    { case: "resubmits the stored groups", manualGroupIds: [MASSIF] },
+    { case: "omits them", manualGroupIds: undefined },
+  ])(
+    "should keep the stored groups when a contributor $case",
+    async ({ manualGroupIds }, { db }) => {
       // Arrange
       const owner = await insertUser(db, "owner@univ-lorraine.fr");
       const caller = await provisionUser(db, "test-token", {
@@ -239,14 +243,7 @@ describe("a sample's manual groups", () => {
       await insertMember(db, MASSIF, owner.id);
       const sample = await insertSample(db, draft);
       await insertSampleOwner(db, sample.id, owner.id);
-      await db
-        .insertInto("user_sample")
-        .values({
-          sample_id: sample.id,
-          user_id: caller.id,
-          role: "contributor",
-        })
-        .execute();
+      await insertSampleCollaborator(db, sample.id, caller.id, "contributor");
       await attachGroup(db, sample.id, MASSIF);
       // Act
       const res = await testClient(createApp(db).app).admin.samples[":id"].$put(
@@ -255,7 +252,7 @@ describe("a sample's manual groups", () => {
           json: {
             ...draft,
             name: "Basalte relu",
-            manualGroupIds: [MASSIF],
+            ...(manualGroupIds ? { manualGroupIds } : {}),
             expectedUpdatedAt: sample.updatedAt,
           },
         },
@@ -282,14 +279,7 @@ describe("a sample's manual groups", () => {
       await insertMember(db, ALPES, owner.id);
       const sample = await insertSample(db, draft);
       await insertSampleOwner(db, sample.id, owner.id);
-      await db
-        .insertInto("user_sample")
-        .values({
-          sample_id: sample.id,
-          user_id: caller.id,
-          role: "contributor",
-        })
-        .execute();
+      await insertSampleCollaborator(db, sample.id, caller.id, "contributor");
       await attachGroup(db, sample.id, MASSIF);
       // Act
       const res = await testClient(createApp(db).app).admin.samples[":id"].$put(
@@ -405,47 +395,6 @@ describe("a sample's manual groups", () => {
     },
   );
   pgTest(
-    "should keep the stored groups when an update omits them",
-    async ({ db }) => {
-      // Arrange
-      const owner = await insertUser(db, "owner@univ-lorraine.fr");
-      const caller = await provisionUser(db, "test-token", {
-        status: "accepted",
-      });
-      await insertGroups(db);
-      await insertMember(db, MASSIF, owner.id);
-      const sample = await insertSample(db, draft);
-      await insertSampleOwner(db, sample.id, owner.id);
-      await db
-        .insertInto("user_sample")
-        .values({
-          sample_id: sample.id,
-          user_id: caller.id,
-          role: "contributor",
-        })
-        .execute();
-      await attachGroup(db, sample.id, MASSIF);
-      // Act
-      const res = await testClient(createApp(db).app).admin.samples[":id"].$put(
-        {
-          param: { id: sample.id },
-          json: {
-            ...draft,
-            name: "Basalte relu",
-            expectedUpdatedAt: sample.updatedAt,
-          },
-        },
-        { headers: authHeader },
-      );
-      // Assert
-      expect(res.status).toBe(200);
-      const { data } = await readSampleResponse(db, sample.id);
-      expect(data.manualGroups).toEqual([MASSIF_GROUP]);
-      expect(data.name).toBe("Basalte relu");
-    },
-  );
-
-  pgTest(
     "should offer no option to a collaborator who does not own the sample",
     async ({ db }) => {
       // Arrange
@@ -458,14 +407,7 @@ describe("a sample's manual groups", () => {
       await insertMember(db, ALPES, owner.id);
       const sample = await insertSample(db, draft);
       await insertSampleOwner(db, sample.id, owner.id);
-      await db
-        .insertInto("user_sample")
-        .values({
-          sample_id: sample.id,
-          user_id: caller.id,
-          role: "editor",
-        })
-        .execute();
+      await insertSampleCollaborator(db, sample.id, caller.id, "editor");
       await attachGroup(db, sample.id, MASSIF);
       // Act
       const { data, manualGroupOptions } = await readSampleResponse(

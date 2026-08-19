@@ -11,6 +11,8 @@ function published(samples: { name: string; igsn: string | null }[]) {
   return { basalt: igsnOf("Basalt 42"), granite: igsnOf("Granite 7") };
 }
 
+const GROUP_FACET = "Other group (team, project…)";
+
 test.describe("search facets", () => {
   test("a reader narrows results with a facet and can clear it", async ({
     page,
@@ -19,8 +21,6 @@ test.describe("search facets", () => {
     const { basalt, granite } = published(samples);
     const list = sampleListPage(page);
 
-    // Both published seed samples are igneous rocks, so the material facet URL
-    // lists the two and reveals the sidebar.
     await list.gotoWithSearch("material=rock.igneous");
     await list.expectResultCount(2);
     await list.expectSampleLink("Basalt 42", basalt);
@@ -31,8 +31,6 @@ test.describe("search facets", () => {
     await list.expectSampleLink("Basalt 42", basalt);
     await list.expectSampleAbsent("Granite 7");
 
-    // Clearing every filter leaves nothing to search, so the reader is sent back
-    // to the landing page to compose another query.
     await list.clearAllFilters();
     await list.expectLanding();
   });
@@ -60,8 +58,6 @@ test.describe("search facets", () => {
     await list.gotoWithSearch("material=rock.igneous");
     await list.expectResultCount(2);
 
-    // Choosing Volcanic under Igneous keeps only the basalt (Granite 7 is
-    // plutonic).
     await list.chooseFacetOption("Igneous", "Volcanic");
     await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);
@@ -75,7 +71,6 @@ test.describe("search facets", () => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);
 
-    // A box over France holds both published seed samples.
     await list.gotoWithSearch("bbox=-10,40,10,50");
     await list.expectFacetsVisible();
     await list.expectResultCount(2);
@@ -93,8 +88,6 @@ test.describe("search facets", () => {
     await list.gotoWithSearch("material=rock.igneous");
     await list.expectResultCount(2);
 
-    // Only Basalt 42 records this collector; Granite 7 is a historical specimen
-    // with a curator instead, so it drops out.
     await list.fillTextFacet("Collector", "Claire Martin", "collectorName");
     await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);
@@ -108,9 +101,52 @@ test.describe("search facets", () => {
     await list.gotoWithSearch("material=rock.igneous");
     await list.expectResultCount(2);
 
-    // Basalt 42 carries a 2-6 Ma age; Granite 7 has none, so any lower bound
-    // (default Ma) narrows to the dated sample.
     await list.fillAgeMin("1");
+    await list.expectResultCount(1);
+    await list.expectSampleLink("Basalt 42", basalt);
+    await list.expectSampleAbsent("Granite 7");
+  });
+
+  test("a reader narrows by the institutional facets", async ({
+    page,
+    samples,
+  }) => {
+    const { basalt } = published(samples);
+    const list = sampleListPage(page);
+
+    await list.gotoWithSearch("material=rock.igneous");
+    await list.expectResultCount(2);
+
+    await list.pickFacet(
+      "Organization",
+      "Université de Lorraine",
+      "institutionalOrganization",
+    );
+    await list.expectResultCount(2);
+    await list.expectFacetOptionAbsent(
+      "Laboratory",
+      "Institut des Sciences de la Terre (ISTerre)",
+    );
+
+    await list.pickFacet(
+      "Laboratory",
+      "GéoRessources (GEORESSOURCES)",
+      "institutionalLaboratory",
+    );
+    await list.expectResultCount(1);
+    await list.expectSampleLink("Basalt 42", basalt);
+    await list.expectSampleAbsent("Granite 7");
+  });
+
+  test("a reader narrows by an other group", async ({ page, samples }) => {
+    const { basalt } = published(samples);
+    const list = sampleListPage(page);
+
+    await list.gotoWithSearch("material=rock.igneous");
+    await list.expectResultCount(2);
+
+    await list.expectFacetOptionAbsent(GROUP_FACET, "OZCAR-RI");
+    await list.pickFacet(GROUP_FACET, "ANR CritMet", "manualGroup");
     await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);
     await list.expectSampleAbsent("Granite 7");

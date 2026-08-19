@@ -1,4 +1,10 @@
 import {
+  laboratoryLabel,
+  organizationLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
+
+import {
   collectionMethodLabel,
   materialPathLabel,
   natureLabel,
@@ -19,6 +25,10 @@ const FACET_LABEL: Record<string, () => string> = {
   collectorName: m.facet_collector_name,
   collectionCurator: m.facet_collection_curator,
   age: m.sample_section_age,
+  institutionalOrganization: m.sample_field_institutional_organization,
+  institutionalOsu: m.sample_field_institutional_osu,
+  institutionalLaboratory: m.sample_field_institutional_laboratory,
+  manualGroup: m.facet_manual_group,
 };
 
 export const facetLabel = (key: string): string => FACET_LABEL[key]?.() ?? key;
@@ -29,6 +39,9 @@ const FACET_VALUE_LABEL: Record<string, (code: string) => string> = {
   collectionMethod: collectionMethodLabel,
   nature: natureLabel as (code: string) => string,
   texture: textureLabel as (code: string) => string,
+  institutionalOrganization: organizationLabel,
+  institutionalOsu: osuLabel,
+  institutionalLaboratory: laboratoryLabel,
 };
 
 const identity = (code: string) => code;

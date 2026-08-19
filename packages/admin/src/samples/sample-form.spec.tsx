@@ -1221,116 +1221,65 @@ describe("SampleForm", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("should disable Save & Publish and explain in a tooltip when the material is missing", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          defaultValues={{
-            name: "Basalte du Massif Central",
-            nature: "thin_section",
-            type: "dredge",
-            material: null,
-            collectionMethod: null,
-            collectionMethodDescription: null,
-          }}
-          secondaryAction={{
-            kind: "submit",
-            label: "Save as draft",
-            onSubmit: noop,
-          }}
-          primaryAction={{
-            kind: "publish",
-            label: "Save & Publish",
-            onPublish: noop,
-          }}
-        />
-      </TooltipProvider>,
-    );
+  const publishGateBase = {
+    name: "Basalte du Massif Central",
+    nature: "thin_section",
+    collectionMethod: null,
+    collectionMethodDescription: null,
+  } as const;
 
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
-    await expect.element(publish).toBeDisabled();
+  it.each<[string, CreateSample, RegExp]>([
+    [
+      "the material is missing",
+      { ...publishGateBase, type: "dredge", material: null },
+      /set the material before publishing/i,
+    ],
+    [
+      "the type is missing",
+      { ...publishGateBase, type: null, material: "fossil" },
+      /set the sample type before publishing/i,
+    ],
+    [
+      "the collection date is missing",
+      {
+        ...publishGateBase,
+        type: "dredge",
+        material: "fossil",
+        location: { position: { type: "point", longitude: 3, latitude: 45 } },
+      },
+      /set the collection date before publishing/i,
+    ],
+    [
+      "a required location is missing",
+      { ...publishGateBase, type: "dredge", material: "fossil" },
+      /set the sample location/i,
+    ],
+  ])(
+    "should disable Save & Publish and explain in a tooltip when %s",
+    async (_case, defaultValues, message) => {
+      const screen = await render(
+        <TooltipProvider>
+          <SampleForm
+            onCancel={noop}
+            defaultValues={defaultValues}
+            primaryAction={{
+              kind: "publish",
+              label: "Save & Publish",
+              onPublish: noop,
+            }}
+          />
+        </TooltipProvider>,
+      );
 
-    publish.element().parentElement?.focus();
-    await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/set the material before publishing/i);
-  });
+      const publish = screen.getByRole("button", { name: "Save & Publish" });
+      await expect.element(publish).toBeDisabled();
 
-  it("should disable Save & Publish and explain in a tooltip when the type is missing", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          defaultValues={{
-            name: "Basalte du Massif Central",
-            nature: "thin_section",
-            type: null,
-            material: "fossil",
-            collectionMethod: null,
-            collectionMethodDescription: null,
-          }}
-          secondaryAction={{
-            kind: "submit",
-            label: "Save as draft",
-            onSubmit: noop,
-          }}
-          primaryAction={{
-            kind: "publish",
-            label: "Save & Publish",
-            onPublish: noop,
-          }}
-        />
-      </TooltipProvider>,
-    );
-
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
-    await expect.element(publish).toBeDisabled();
-
-    publish.element().parentElement?.focus();
-    await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/set the sample type before publishing/i);
-  });
-
-  it("should disable Save & Publish and explain in a tooltip when the collection date is missing", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          defaultValues={{
-            name: "Basalte du Massif Central",
-            nature: "thin_section",
-            type: "dredge",
-            material: "fossil",
-            collectionMethod: null,
-            collectionMethodDescription: null,
-            location: {
-              position: { type: "point", longitude: 3, latitude: 45 },
-            },
-          }}
-          secondaryAction={{
-            kind: "submit",
-            label: "Save as draft",
-            onSubmit: noop,
-          }}
-          primaryAction={{
-            kind: "publish",
-            label: "Save & Publish",
-            onPublish: noop,
-          }}
-        />
-      </TooltipProvider>,
-    );
-
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
-    await expect.element(publish).toBeDisabled();
-
-    publish.element().parentElement?.focus();
-    await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/set the collection date before publishing/i);
-  });
+      publish.element().parentElement?.focus();
+      await expect
+        .element(screen.getByRole("tooltip"))
+        .toHaveTextContent(message);
+    },
+  );
 
   it("should enable Save & Publish when the specific name is missing", async () => {
     const screen = await render(
@@ -1525,37 +1474,6 @@ describe("SampleForm", () => {
     await expect
       .element(screen.getByRole("heading", { name: "Location" }))
       .toBeVisible();
-  });
-
-  it("should block publish and explain when a required location is missing", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          defaultValues={{
-            name: "Basalte du Massif Central",
-            nature: "thin_section",
-            type: "dredge",
-            material: "fossil",
-            collectionMethod: null,
-            collectionMethodDescription: null,
-          }}
-          primaryAction={{
-            kind: "publish",
-            label: "Save & Publish",
-            onPublish: noop,
-          }}
-        />
-      </TooltipProvider>,
-    );
-
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
-    await expect.element(publish).toBeDisabled();
-
-    publish.element().parentElement?.focus();
-    await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/set the sample location/i);
   });
 
   it("should submit a point location entered on the Location tab", async () => {
@@ -2188,7 +2106,7 @@ describe("SampleForm", () => {
       .toBeVisible();
   });
 
-  it("should offer a checkbox per manual group, checking the attached ones", async () => {
+  it("should chip the attached manual group and offer the others", async () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -2205,11 +2123,16 @@ describe("SampleForm", () => {
     );
 
     await expect
-      .element(screen.getByRole("checkbox", { name: "Basalt team" }))
-      .not.toBeChecked();
+      .element(screen.getByRole("button", { name: "Detach Fossil team" }))
+      .toBeVisible();
+
+    await screen
+      .getByRole("combobox", { name: "Groups this sample belongs to" })
+      .click();
+
     await expect
-      .element(screen.getByRole("checkbox", { name: "Fossil team" }))
-      .toBeChecked();
+      .element(screen.getByRole("option", { name: "Basalt team" }))
+      .toBeVisible();
   });
 });
 
@@ -2657,10 +2580,12 @@ describe("SampleForm post-publication field lock", () => {
     );
 
     await expect
-      .element(screen.getByRole("checkbox", { name: "Basalt team" }))
+      .element(
+        screen.getByRole("combobox", { name: "Groups this sample belongs to" }),
+      )
       .toBeDisabled();
     await expect
-      .element(screen.getByRole("checkbox", { name: "Fossil team" }))
+      .element(screen.getByRole("button", { name: "Detach Basalt team" }))
       .toBeDisabled();
     await expect
       .element(screen.getByText("You cannot change these groups."))

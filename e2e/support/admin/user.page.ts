@@ -1,16 +1,13 @@
 import { expect, type Page } from "@playwright/test";
 
-export function userPage(page: Page) {
-  const groupsField = page.getByRole("combobox", { name: "Manual groups" });
+import { attachManualGroup } from "./manual-groups-field.ts";
 
+export function userPage(page: Page) {
   return {
     expectVisible: (email: string) =>
       expect(page.getByText(email)).toBeVisible(),
     associateGroup: async (name: string) => {
-      await groupsField.click();
-      await page.getByPlaceholder("Search by name").fill(name);
-      await page.getByRole("option", { name, exact: true }).click();
-      await page.keyboard.press("Escape");
+      await attachManualGroup(page, "Manual groups", name);
       await page.getByRole("button", { name: "Save" }).click();
     },
     expectGroup: (name: string) =>

@@ -35,6 +35,11 @@ export type ManualGroupRepository = {
     groupId: string,
     userId: string,
   ): Promise<"removed" | "not_found">;
+  leave(
+    groupId: string,
+    userId: string,
+  ): Promise<"left" | "not_member" | "has_published_sample">;
   listForUser(userId: string): Promise<MyManualGroup[]>;
   listForSampleOwner(sampleId: string): Promise<ManualGroup[]>;
+  listWithPublishedSample(): Promise<ManualGroup[]>;
 };

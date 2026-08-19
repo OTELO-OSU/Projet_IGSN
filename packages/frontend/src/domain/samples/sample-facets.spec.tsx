@@ -1,10 +1,15 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { render } from "vitest-browser-react";
 
 import { FACET_SECTIONS, SampleFacets } from "./sample-facets.tsx";
 
+const LORRAINE = "04vfs2w97";
+
 async function renderFacets(
   values: Record<string, string | number | undefined> = {},
+  manualGroups: ManualGroup[] = [],
 ) {
   const onChange = vi.fn();
   const onClearAll = vi.fn();
@@ -13,6 +18,7 @@ async function renderFacets(
       values={values}
       onChange={onChange}
       onClearAll={onClearAll}
+      manualGroups={manualGroups}
     />,
   );
   return { screen, onChange, onClearAll };
@@ -95,5 +101,46 @@ describe("SampleFacets", () => {
     (min.element() as HTMLElement).blur();
 
     expect(onChange).toHaveBeenCalledWith("ageMin", 10);
+  });
+
+  it("should offer only the laboratories of the picked organization", async () => {
+    const { screen } = await renderFacets({
+      institutionalOrganization: LORRAINE,
+    });
+
+    await screen.getByRole("combobox", { name: "Laboratory" }).click();
+
+    await expect
+      .element(screen.getByRole("option", { name: /GéoRessources/ }))
+      .toBeVisible();
+    expect(screen.getByRole("option", { name: /ISTerre/ }).elements()).toEqual(
+      [],
+    );
+  });
+
+  it("should keep a filtering value the narrowed list dropped visible and clearable", async () => {
+    const { screen, onChange } = await renderFacets({
+      institutionalLaboratory: "UMR7359",
+    });
+
+    const combobox = screen.getByRole("combobox", { name: "Laboratory" });
+    await expect.element(combobox).toHaveTextContent(/GéoRessources/);
+    await combobox.click();
+    await screen.getByRole("option", { name: /GéoRessources/ }).click();
+
+    expect(onChange).toHaveBeenCalledWith("institutionalLaboratory", undefined);
+  });
+
+  it("should report the picked manual group", async () => {
+    const group = {
+      id: "01980e2d-6f9b-7000-9000-000000000001",
+      name: "ANR CritMet",
+    };
+    const { screen, onChange } = await renderFacets({}, [group]);
+
+    await screen.getByRole("combobox", { name: /other group/i }).click();
+    await screen.getByRole("option", { name: group.name }).click();
+
+    expect(onChange).toHaveBeenCalledWith("manualGroup", group.id);
   });
 });

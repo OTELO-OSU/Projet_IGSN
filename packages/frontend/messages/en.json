@@ -144,5 +144,6 @@
   "sample_field_institutional_organization": "Organization",
   "sample_field_institutional_osu": "OSU",
   "sample_field_institutional_laboratory": "Laboratory",
-  "sample_section_manual_groups": "Groups"
+  "sample_section_manual_groups": "Groups",
+  "facet_manual_group": "Other group (team, project…)"
 }

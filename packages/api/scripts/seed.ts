@@ -30,6 +30,7 @@ type SeedUser = {
   institutionalOrganization: string | null;
   institutionalOsu: string | null;
   institutionalLaboratory: string | null;
+  manualGroups: string[];
 };
 
 export const researcherKeySchema = z.enum([
@@ -57,6 +58,10 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
     institutionalLaboratory: "UMR7358",
+    manualGroups: [
+      "01980e2d-6f9b-7000-9000-000000000001",
+      "01980e2d-6f9b-7000-9000-000000000003",
+    ],
   },
   jean: {
     id: "01980e2d-6f9b-7000-8000-000000000002",
@@ -68,6 +73,10 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
     institutionalLaboratory: "UMR7359",
+    manualGroups: [
+      "01980e2d-6f9b-7000-9000-000000000001",
+      "01980e2d-6f9b-7000-9000-000000000008",
+    ],
   },
   sophie: {
     id: "01980e2d-6f9b-7000-8000-000000000003",
@@ -79,6 +88,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalOrganization: "02rx3b187",
     institutionalOsu: "OSUG",
     institutionalLaboratory: "UMR5275",
+    manualGroups: ["01980e2d-6f9b-7000-9000-000000000005"],
   },
   pierre: {
     id: "01980e2d-6f9b-7000-8000-000000000004",
@@ -90,6 +100,10 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
     institutionalLaboratory: "UMR7358",
+    manualGroups: [
+      "01980e2d-6f9b-7000-9000-000000000002",
+      "01980e2d-6f9b-7000-9000-000000000004",
+    ],
   },
   camille: {
     id: "01980e2d-6f9b-7000-8000-000000000005",
@@ -101,6 +115,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalOrganization: "014zrew76",
     institutionalOsu: "OSUC",
     institutionalLaboratory: "UMR7327",
+    manualGroups: ["01980e2d-6f9b-7000-9000-000000000006"],
   },
   luc: {
     id: "01980e2d-6f9b-7000-8000-000000000006",
@@ -112,6 +127,9 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalOrganization: "05hnb7x64",
     institutionalOsu: null,
     institutionalLaboratory: "UMR7327",
+    // Stays group-free so the e2e can check the sample form offers no group:
+    // theo is group-free too, but has no institution to get past the wall.
+    manualGroups: [],
   },
   nadia: {
     id: "01980e2d-6f9b-7000-8000-000000000007",
@@ -123,6 +141,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
     institutionalLaboratory: "UMR7358",
+    manualGroups: ["01980e2d-6f9b-7000-9000-000000000003"],
   },
   theo: {
     id: "01980e2d-6f9b-7000-8000-000000000008",
@@ -134,6 +153,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalOrganization: null,
     institutionalOsu: null,
     institutionalLaboratory: null,
+    manualGroups: [],
   },
   chloe: {
     id: "01980e2d-6f9b-7000-8000-000000000009",
@@ -145,6 +165,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalOrganization: "04vfs2w97",
     institutionalOsu: "OTELo",
     institutionalLaboratory: "UMR7358",
+    manualGroups: ["01980e2d-6f9b-7000-9000-00000000000a"],
   },
 };
 
@@ -161,10 +182,25 @@ export const MOCK_MANUAL_GROUPS = [
   { id: "01980e2d-6f9b-7000-9000-00000000000a", name: "Thesis Girard 2023" },
 ];
 
-function seedManualGroups(db: Kysely<DB>): Promise<unknown> {
-  return db
+async function seedManualGroups(
+  db: Kysely<DB>,
+  ownerIds: Record<ResearcherKey, string>,
+): Promise<void> {
+  await db
     .insertInto("manual_group")
     .values(MOCK_MANUAL_GROUPS)
+    .onConflict((oc) => oc.doNothing())
+    .execute();
+  await db
+    .insertInto("manual_group_member")
+    .values(
+      researcherKeySchema.options.flatMap((researcher) =>
+        MOCK_RESEARCHERS[researcher].manualGroups.map((group_id) => ({
+          group_id,
+          user_id: ownerIds[researcher],
+        })),
+      ),
+    )
     .onConflict((oc) => oc.doNothing())
     .execute();
 }
@@ -182,6 +218,7 @@ async function seedOwners(
           institutionalOrganization,
           institutionalOsu,
           institutionalLaboratory,
+          manualGroups: _manualGroups,
           ...owner
         }) => ({
           ...owner,
@@ -233,7 +270,7 @@ export async function seed(
   > & { owner: ResearcherKey; collaborators: SeedCollaborator[] })[]
 > {
   const ownerIds = await seedOwners(db);
-  await seedManualGroups(db);
+  await seedManualGroups(db, ownerIds);
   const parsed = samples.map(parseSeedSample);
   const created = await db
     .insertInto("sample")
@@ -293,6 +330,19 @@ export async function seed(
     .execute();
 
   const seedById = new Map(parsed.map((row) => [row.id, row]));
+
+  const attached = created.flatMap((sample) =>
+    MOCK_RESEARCHERS[seedById.get(sample.id)!.owner].manualGroups.map(
+      (group_id) => ({
+        sample_id: sample.id,
+        group_id,
+      }),
+    ),
+  );
+  if (attached.length > 0) {
+    await db.insertInto("sample_manual_group").values(attached).execute();
+  }
+
   return created.map((sample) => {
     const row = seedById.get(sample.id);
     if (!row) throw new Error(`created sample ${sample.id} has no seed row`);

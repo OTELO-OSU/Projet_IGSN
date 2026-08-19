@@ -29,6 +29,11 @@ export function sampleListPage(page: Page) {
       await page.getByRole("option", { name: option }).click();
       await page.waitForURL(new RegExp(`[?&]${param}=`));
     },
+    expectFacetOptionAbsent: async (facet: string, option: string) => {
+      await page.getByRole("combobox", { name: facet }).click();
+      await expect(page.getByRole("option", { name: option })).toHaveCount(0);
+      await page.keyboard.press("Escape");
+    },
     chooseFacetOption: async (level: string, option: string) => {
       await page.getByRole("combobox", { name: level }).click();
       await page.getByRole("option", { name: option }).click();

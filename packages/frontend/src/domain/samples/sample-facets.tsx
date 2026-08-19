@@ -1,3 +1,5 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   Combobox,
@@ -6,6 +8,8 @@ import {
 import { Input } from "@projet-igsn/design-system/components/ui/input";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { SearchField } from "@projet-igsn/design-system/components/ui/search-field";
+import { filterLaboratoriesByOrgAndOsu } from "@projet-igsn/domain/institutional-group/filter-laboratories-by-org-and-osu";
+import { filterOsusByOrg } from "@projet-igsn/domain/institutional-group/filter-osus-by-org";
 import {
   facetParamKeys,
   SAMPLE_FACETS,
@@ -39,18 +43,63 @@ export const FACET_SECTIONS: readonly {
     ],
   },
   { title: m.sample_section_age, keys: ["age"] },
+  {
+    title: m.sample_section_institution,
+    keys: [
+      "institutionalOrganization",
+      "institutionalOsu",
+      "institutionalLaboratory",
+      "manualGroup",
+    ],
+  },
 ];
+
+const organizationOf = (values: FacetValues) =>
+  values.institutionalOrganization as string | undefined;
+
+const NARROWED_VALUES: Record<
+  string,
+  (values: FacetValues) => readonly string[]
+> = {
+  institutionalOsu: (values) => {
+    const organizationRor = organizationOf(values);
+    return organizationRor
+      ? filterOsusByOrg(organizationRor).map((osu) => osu.code)
+      : [];
+  },
+  institutionalLaboratory: (values) => {
+    const organizationRor = organizationOf(values);
+    return organizationRor
+      ? filterLaboratoriesByOrgAndOsu({
+          organizationRor,
+          osu: values.institutionalOsu as string | undefined,
+        }).map((laboratory) => laboratory.code)
+      : [];
+  },
+};
+
+function withSelected(
+  items: { value: string; label: string }[],
+  selected: string | undefined,
+  label: (code: string) => string,
+): { value: string; label: string }[] {
+  return selected && !items.some((item) => item.value === selected)
+    ? [...items, { value: selected, label: label(selected) }]
+    : items;
+}
 
 type SampleFacetsProps = {
   values: FacetValues;
   onChange: (key: string, value: string | number | undefined) => void;
   onClearAll: () => void;
+  manualGroups?: ManualGroup[];
 };
 
 export function SampleFacets({
   values,
   onChange,
   onClearAll,
+  manualGroups = [],
 }: SampleFacetsProps) {
   const [resetNonce, setResetNonce] = useState(0);
   const hasActive = facetParamKeys().some((key) => values[key] !== undefined);
@@ -75,15 +124,32 @@ export function SampleFacets({
           />
         );
       case "enum":
+      case "manualGroup": {
+        const selected = values[facet.key] as string | undefined;
+        const items = withSelected(
+          facet.kind === "manualGroup"
+            ? manualGroups.map((group) => ({
+                value: group.id,
+                label: group.name,
+              }))
+            : toComboboxItems(
+                NARROWED_VALUES[facet.key]?.(values) ?? facet.values,
+                facetValueLabel(facet.key),
+              ),
+          selected,
+          facetValueLabel(facet.key),
+        );
         return (
           <EnumFacet
             key={facet.key}
             label={label}
-            items={toComboboxItems(facet.values, facetValueLabel(facet.key))}
-            value={values[facet.key] as string | undefined}
+            items={items}
+            value={selected}
             onChange={(value) => onChange(facet.key, value)}
+            disabled={items.length === 0}
           />
         );
+      }
       case "text":
         return (
           <TextFacet
@@ -166,11 +232,13 @@ function EnumFacet({
   items,
   value,
   onChange,
+  disabled,
 }: {
   label: string;
   items: { value: string; label: string }[];
   value: string | undefined;
   onChange: (value: string | undefined) => void;
+  disabled?: boolean;
 }) {
   const id = useId();
   return (
@@ -181,6 +249,7 @@ function EnumFacet({
         items={items}
         value={value ?? ""}
         onChange={(picked) => onChange(picked || undefined)}
+        disabled={disabled}
         placeholder={m.facet_any()}
         searchPlaceholder={m.facet_search_placeholder()}
         emptyText={m.facet_empty()}

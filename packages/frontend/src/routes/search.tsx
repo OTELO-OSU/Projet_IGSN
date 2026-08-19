@@ -8,6 +8,10 @@ import type {
 import type { SearchParams } from "#/domain/samples/search-params.ts";
 
 import {
+  listManualGroupsQueryOptions,
+  useListManualGroups,
+} from "#/domain/manual-groups/hook/list-manual-groups.ts";
+import {
   listSamplesQueryOptions,
   useListSamples,
 } from "#/domain/samples/hook/list-samples.ts";
@@ -15,6 +19,7 @@ import { SampleFacets } from "#/domain/samples/sample-facets.tsx";
 import { SearchBanner } from "#/domain/samples/search-banner.tsx";
 import { SearchCompose } from "#/domain/samples/search-compose.tsx";
 import {
+  clearDependents,
   composeSeedFromParams,
   searchParamsSchema,
   searchQueryParams,
@@ -31,7 +36,10 @@ export const Route = createFileRoute("/search")({
   loader: ({ context, deps }) => {
     const params = searchQueryParams(deps);
     if (!params) throw redirect({ to: "/" });
-    return context.queryClient.ensureQueryData(listSamplesQueryOptions(params));
+    return Promise.all([
+      context.queryClient.ensureQueryData(listSamplesQueryOptions(params)),
+      context.queryClient.ensureQueryData(listManualGroupsQueryOptions()),
+    ]);
   },
   component: SearchPage,
 });
@@ -41,6 +49,7 @@ function SearchPage() {
   const navigate = Route.useNavigate();
   const seed = composeSeedFromParams(search);
   const params = searchQueryParams(search);
+  const { data: manualGroups } = useListManualGroups();
 
   return (
     <div>
@@ -68,10 +77,16 @@ function SearchPage() {
         <div className="relative grid gap-8 md:grid-cols-[24rem_1fr]">
           <SampleFacets
             values={search as SampleFilters}
+            manualGroups={manualGroups}
             onChange={(key, value) =>
               navigate({
                 resetScroll: false,
-                search: (prev) => ({ ...prev, [key]: value, page: 1 }),
+                search: (prev) => ({
+                  ...prev,
+                  [key]: value,
+                  ...clearDependents(key),
+                  page: 1,
+                }),
               })
             }
             onClearAll={() =>
