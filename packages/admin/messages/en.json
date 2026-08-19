@@ -431,6 +431,8 @@
   "column_ror": "ROR",
   "column_institutional_organizations": "Organizations",
   "filter_organizations_search": "Search organizations",
+  "filter_osus_search": "Search OSUs",
+  "filter_laboratories_search": "Search laboratories",
   "group_organizations_title": "Organizations",
   "group_osus_title": "OSUs",
   "group_laboratories_title": "Laboratories",
