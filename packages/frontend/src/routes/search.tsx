@@ -56,6 +56,7 @@ function SearchPage() {
                 ...prev,
                 q: next.q,
                 bbox: next.bbox,
+                engine: next.engine,
                 page: 1,
               }),
             })
