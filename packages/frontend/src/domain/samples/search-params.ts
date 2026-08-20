@@ -13,7 +13,11 @@ import type {
   ListSamplesParams,
   SampleFilters,
 } from "#/domain/samples/client/list-samples.ts";
-import type { SearchEngine } from "#/domain/samples/search-engine-tabs.tsx";
+
+import {
+  type SearchEngine,
+  searchEngineSchema,
+} from "#/domain/samples/search-engine-tabs.tsx";
 
 export const PER_PAGE = 10;
 
@@ -25,6 +29,7 @@ export const searchParamsSchema = z.object({
     .optional()
     .catch(undefined),
   bbox: z.string().optional().catch(undefined),
+  engine: searchEngineSchema.optional().catch(undefined),
   page: z.coerce.number().int().min(1).default(1).catch(1),
   perPage: pageSizeSchema(PER_PAGE).optional(),
   ...facetQueryFields(),
@@ -67,8 +72,12 @@ export function composeSeedFromParams(params: SearchParams): {
   if (params.q !== undefined) active.push("text");
   if (params.bbox !== undefined) active.push("location");
   if (active.length === 0) active.push("text");
+  const primary = params.engine;
   return {
-    active,
+    active:
+      primary && active.includes(primary)
+        ? [primary, ...active.filter((engine) => engine !== primary)]
+        : active,
     drafts: {
       q: params.q,
       bbox: hasValidBbox(params.bbox) ? params.bbox : undefined,

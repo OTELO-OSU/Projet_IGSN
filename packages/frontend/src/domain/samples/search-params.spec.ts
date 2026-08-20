@@ -33,6 +33,10 @@ describe("searchParamsSchema", () => {
     },
   );
 
+  it("should drop an unknown engine", () => {
+    expect(searchParamsSchema.parse({ engine: "nope" }).engine).toBeUndefined();
+  });
+
   it("should keep an empty param, which means its engine is open and unfilled", () => {
     expect(searchParamsSchema.parse({ q: "", bbox: "" })).toMatchObject({
       q: "",
@@ -148,6 +152,29 @@ describe("composeSeedFromParams", () => {
     ).toEqual({
       active: ["text", "location"],
       drafts: { q: "granite", bbox: "-10,40,10,50" },
+    });
+  });
+
+  it("should show the engine the reader searched from first", () => {
+    expect(
+      composeSeedFromParams({
+        q: "granite",
+        bbox: "-10,40,10,50",
+        engine: "location",
+        page: 1,
+      }),
+    ).toEqual({
+      active: ["location", "text"],
+      drafts: { q: "granite", bbox: "-10,40,10,50" },
+    });
+  });
+
+  it("should ignore an engine whose param the URL dropped", () => {
+    expect(
+      composeSeedFromParams({ q: "granite", engine: "location", page: 1 }),
+    ).toEqual({
+      active: ["text"],
+      drafts: { q: "granite", bbox: undefined },
     });
   });
 

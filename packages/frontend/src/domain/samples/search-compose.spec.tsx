@@ -2,6 +2,8 @@ import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
+import type { SearchEngine } from "./search-engine-tabs.tsx";
+
 import { SearchCompose } from "./search-compose.tsx";
 
 const noSeed = { q: undefined, bbox: undefined };
@@ -72,22 +74,39 @@ describe("SearchCompose", () => {
       .toHaveTextContent("Remove Location");
   });
 
-  it("should give the primary engine no remove control", async () => {
-    const screen = await render(
-      <SearchCompose
-        initialActive={["text", "location"]}
-        initialDrafts={noSeed}
-        onSearch={vi.fn()}
-      />,
-    );
+  it.each([
+    {
+      active: ["text", "location"] as SearchEngine[],
+      shrunk: false,
+      locked: "Terms",
+      removable: "Location",
+    },
+    {
+      active: ["location", "text"] as SearchEngine[],
+      shrunk: true,
+      locked: "Location",
+      removable: "Terms",
+    },
+  ])(
+    "should give the primary $locked engine no remove control",
+    async ({ active, shrunk, locked, removable }) => {
+      const screen = await render(
+        <SearchCompose
+          initialActive={active}
+          initialDrafts={{ q: "granite", bbox: "-10,40,10,50" }}
+          onSearch={vi.fn()}
+          shrunk={shrunk}
+        />,
+      );
 
-    await expect
-      .element(screen.getByRole("button", { name: "Remove Location" }))
-      .toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Remove Terms" }).query(),
-    ).toBeNull();
-  });
+      await expect
+        .element(screen.getByRole("button", { name: `Remove ${removable}` }))
+        .toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: `Remove ${locked}` }).query(),
+      ).toBeNull();
+    },
+  );
 
   it("should hide the add button when all engines are active and restore it on remove", async () => {
     const screen = await render(
@@ -131,6 +150,7 @@ describe("SearchCompose", () => {
     expect(onSearch).toHaveBeenCalledWith({
       q: "granite",
       bbox: "-10,40,10,50",
+      engine: "text",
       page: 1,
     });
   });
@@ -162,7 +182,11 @@ describe("SearchCompose", () => {
     await screen.getByRole("button", { name: "Remove Location" }).click();
     await screen.getByRole("button", { name: "Search", exact: true }).click();
 
-    expect(onSearch).toHaveBeenCalledWith({ q: "granite", page: 1 });
+    expect(onSearch).toHaveBeenCalledWith({
+      q: "granite",
+      engine: "text",
+      page: 1,
+    });
   });
 
   it("should still submit an engine added but not filled in yet", async () => {
@@ -184,6 +208,7 @@ describe("SearchCompose", () => {
     expect(onSearch).toHaveBeenCalledWith({
       q: "granite",
       bbox: "",
+      engine: "text",
       page: 1,
     });
   });
@@ -205,6 +230,7 @@ describe("SearchCompose", () => {
     expect(onSearch).toHaveBeenCalledWith({
       q: "",
       bbox: "-10,40,10,50",
+      engine: "text",
       page: 1,
     });
   });
@@ -239,7 +265,7 @@ describe("SearchCompose", () => {
     await screen.getByRole("searchbox", { name: "Search samples" }).fill("");
     await screen.getByRole("button", { name: "Search", exact: true }).click();
 
-    expect(onSearch).toHaveBeenCalledWith({ q: "", page: 1 });
+    expect(onSearch).toHaveBeenCalledWith({ q: "", engine: "text", page: 1 });
   });
 
   it("should drop the tabs but still offer adding an engine on the results page", async () => {
@@ -261,40 +287,24 @@ describe("SearchCompose", () => {
     expect(screen.getByRole("tab").query()).toBeNull();
   });
 
-  it("should keep an engine the results page was searched with", async () => {
+  it("should re-run the search at once when the results page drops an engine", async () => {
+    const onSearch = vi.fn();
     const screen = await render(
       <SearchCompose
         initialActive={["text", "location"]}
         initialDrafts={{ q: "granite", bbox: "-10,40,10,50" }}
-        onSearch={vi.fn()}
-        shrunk
-      />,
-    );
-
-    await expect
-      .element(screen.getByRole("group", { name: "Search area map" }))
-      .toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Remove Location" }).query(),
-    ).toBeNull();
-  });
-
-  it("should let the results page drop an engine it just added", async () => {
-    const onSearch = vi.fn();
-    const screen = await render(
-      <SearchCompose
-        initialActive={["text"]}
-        initialDrafts={{ q: "granite", bbox: undefined }}
         onSearch={onSearch}
         shrunk
       />,
     );
 
-    await screen.getByRole("button", { name: "Add location" }).click();
     await screen.getByRole("button", { name: "Remove Location" }).click();
-    await screen.getByRole("button", { name: "Search", exact: true }).click();
 
-    expect(onSearch).toHaveBeenCalledWith({ q: "granite", page: 1 });
+    expect(onSearch).toHaveBeenCalledWith({
+      q: "granite",
+      engine: "text",
+      page: 1,
+    });
   });
 
   it("should let the reader enlarge the results banner map", async () => {
@@ -349,6 +359,10 @@ describe("SearchCompose", () => {
 
     await screen.getByRole("button", { name: "Search", exact: true }).click();
 
-    expect(onSearch).toHaveBeenCalledWith({ bbox: "-10,40,10,50", page: 1 });
+    expect(onSearch).toHaveBeenCalledWith({
+      bbox: "-10,40,10,50",
+      engine: "location",
+      page: 1,
+    });
   });
 });

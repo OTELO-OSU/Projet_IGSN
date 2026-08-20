@@ -99,17 +99,26 @@ export function SearchCompose({
     );
   }
 
+  function search(next: Query[]) {
+    const params: SearchParams = { page: 1, engine: next[0]!.engine };
+    for (const { engine, value } of next) params[PARAM[engine]] = value;
+    onSearch(params);
+  }
+
+  function removeEngine(engine: SearchEngine) {
+    const next = queries.filter((query) => query.engine !== engine);
+    setQueries(next);
+    if (shrunk) search(next);
+  }
+
   function submit(event: React.FormEvent) {
     event.preventDefault();
-    const params: SearchParams = { page: 1 };
-    for (const { engine, value } of queries) params[PARAM[engine]] = value;
-    onSearch(params);
+    search(queries);
   }
 
   const open = queries.map((query) => query.engine);
   const hasMap = open.includes("location");
   const addable = ENGINES.filter((engine) => !open.includes(engine));
-  const lockedEngines = shrunk ? initialActive : [];
   const submitButton = (
     <Button
       type="submit"
@@ -157,12 +166,10 @@ export function SearchCompose({
                 />
               )}
             </div>
-            {index > 0 && !lockedEngines.includes(engine) ? (
+            {index > 0 ? (
               <RemoveEngineButton
                 engine={engine}
-                onRemove={() =>
-                  setQueries(queries.filter((query) => query.engine !== engine))
-                }
+                onRemove={() => removeEngine(engine)}
               />
             ) : null}
             {engine === "text" && !hasMap ? submitButton : null}
