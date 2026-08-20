@@ -15,8 +15,10 @@ be a sibling `infra/prod/`.
   terminates TLS at its edge, re-originating HTTPS to the host.
 - **Auth** authenticates against the GaiaData test SSO, the only identity
   provider preprod deploys. The throwaway Keycloak and mock SAML IdP that once
-  stood beside it as the rollback path are gone (see
-  [ADR 0004](adr/0004-preprod-auth-stack.md)); dev and e2e keep theirs.
+  stood beside it as the rollback path are gone; dev and e2e keep theirs, a
+  deliberate divergence from
+  [infra-parity](../.claude/rules/infra-parity.md) since the requirement
+  exists only outside preprod.
 - **Caddy** ([Caddyfile](../infra/preprod/Caddyfile)) serves a Cloudflare Origin
   CA cert (mounted from `~/certs`) and proxies each host: `igsn.$DOMAIN` ->
   frontend, `igsn-admin.$DOMAIN` -> admin, `igsn-api.$DOMAIN` -> api, plus
@@ -34,7 +36,7 @@ be a sibling `infra/prod/`.
   The whole thing can be disabled with `RATE_LIMIT_ENABLED=false` (see
   [docker-compose.env.example](../infra/preprod/docker-compose.env.example)).
   An empty value counts as unset; a malformed one fails the api at boot,
-  naming the variable. See [ADR 0020](adr/0020-api-rate-limiting.md).
+  naming the variable. See [ADR 0029](adr/0029-api-rate-limiting.md).
 - **Outbound mail** goes through a transactional-mail provider's SMTP
   endpoint, not AWS (the org blocks creating the IAM user/role SES auth
   requires). The api talks STARTTLS on 587 with the `SMTP_*` values from the

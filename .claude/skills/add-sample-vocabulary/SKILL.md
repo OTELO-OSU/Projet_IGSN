@@ -12,7 +12,6 @@ The human walkthrough for changing the form (including this recipe) is
 (`material/classification.ts`), `type` (`type/vocabulary.ts`), and
 `collectionMethod` (`collection-method/vocabulary.ts`). Each is a dot-joined path
 of `lower_snake_case` codes stored as Postgres `ltree` (ADR
-[0008](../../../docs/adr/0008-taxonomies-as-materialized-paths.md),
 [0010](../../../docs/adr/0010-ltree-material-classification.md),
 [0011](../../../docs/adr/0011-material-vocabulary-as-tree.md)). An ancestor path
 (`rock`, `coring`) is a valid partial value.
