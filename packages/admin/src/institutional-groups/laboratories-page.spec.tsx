@@ -221,4 +221,51 @@ describe("LaboratoriesPage", () => {
     await expect.element(screen.getByRole("alert")).toBeVisible();
     expect(requested).toHaveLength(0);
   });
+
+  it("should keep only the matching laboratories of the chosen organization", async () => {
+    fakeApi();
+    const { screen } = await renderLaboratories(
+      "/institutional-groups/laboratories?organization=04vfs2w97",
+    );
+
+    await screen
+      .getByRole("searchbox", { name: "Search laboratories" })
+      .fill("centre de recherche");
+
+    await expect
+      .poll(() =>
+        screen
+          .getByRole("cell", { name: "GEORESSOURCES", exact: true })
+          .elements(),
+      )
+      .toHaveLength(0);
+    await expect
+      .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("cell", { name: "CRAL", exact: true }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should match a laboratory by its acronym", async () => {
+    fakeApi();
+    const { screen } = await renderLaboratories(
+      "/institutional-groups/laboratories?organization=04vfs2w97",
+    );
+
+    await screen
+      .getByRole("searchbox", { name: "Search laboratories" })
+      .fill("CRPG");
+
+    await expect
+      .poll(() =>
+        screen
+          .getByRole("cell", { name: "GEORESSOURCES", exact: true })
+          .elements(),
+      )
+      .toHaveLength(0);
+    await expect
+      .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
+      .toBeVisible();
+  });
 });

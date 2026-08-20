@@ -66,4 +66,45 @@ describe("OsusPage", () => {
     await expect.element(screen.getByText(CNRS)).toBeVisible();
     await expect.element(screen.getByText(LORRAINE)).toBeVisible();
   });
+
+  it("should keep only the OSUs whose name matches the search and record it in the URL", async () => {
+    fakeApi();
+    const { screen, router } = await renderRoute("/institutional-groups/osus");
+
+    await screen
+      .getByRole("searchbox", { name: "Search OSUs" })
+      .fill("Grenoble");
+
+    await expect
+      .poll(() =>
+        screen.getByRole("cell", { name: "OTELo", exact: true }).elements(),
+      )
+      .toHaveLength(0);
+    await expect
+      .element(screen.getByRole("cell", { name: "OSUG", exact: true }))
+      .toBeVisible();
+    expect(router.state.location.search).toEqual({ search: "Grenoble" });
+  });
+
+  it.each([
+    { query: "OSUG", visible: "OSUG", hidden: "OMP" },
+    { query: "midi-pyrenees", visible: "OMP", hidden: "OSUG" },
+  ])(
+    "should match an OSU by its code or its unaccented name ($query)",
+    async ({ query, visible, hidden }) => {
+      fakeApi();
+      const { screen } = await renderRoute("/institutional-groups/osus");
+
+      await screen.getByRole("searchbox", { name: "Search OSUs" }).fill(query);
+
+      await expect
+        .poll(() =>
+          screen.getByRole("cell", { name: hidden, exact: true }).elements(),
+        )
+        .toHaveLength(0);
+      await expect
+        .element(screen.getByRole("cell", { name: visible, exact: true }))
+        .toBeVisible();
+    },
+  );
 });
