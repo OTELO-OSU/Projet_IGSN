@@ -2,6 +2,13 @@ import { z } from "zod";
 
 import type { TreeNode } from "../path/tree-node.ts";
 
+import { filterOrganizationsWithLaboratory } from "../../institutional-group/filter-organizations-with-laboratory.ts";
+import {
+  LABORATORIES,
+  laboratoryCodeSchema,
+} from "../../institutional-group/laboratory.ts";
+import { organizationRorSchema } from "../../institutional-group/organization.ts";
+import { OSUS, osuCodeSchema } from "../../institutional-group/osu.ts";
 import {
   NUMERIC_UNITS,
   type NumericUnit,
@@ -35,8 +42,9 @@ export type SampleFacet =
       hierarchy: SearchableHierarchy;
       schema: z.ZodTypeAny;
     }
-  | { key: string; kind: "enum"; values: readonly [string, ...string[]] }
+  | { key: string; kind: "enum"; values: readonly string[] }
   | { key: string; kind: "text" }
+  | { key: string; kind: "manualGroup" }
   | {
       key: string;
       kind: "numericRange";
@@ -70,6 +78,22 @@ export const SAMPLE_FACETS: readonly SampleFacet[] = [
   { key: "collectorName", kind: "text" },
   { key: "collectionCurator", kind: "text" },
   { key: "age", kind: "numericRange", units: NUMERIC_UNITS },
+  {
+    key: "institutionalOrganization",
+    kind: "enum",
+    values: filterOrganizationsWithLaboratory().map((o) => o.ror),
+  },
+  {
+    key: "institutionalOsu",
+    kind: "enum",
+    values: OSUS.map((o) => o.code),
+  },
+  {
+    key: "institutionalLaboratory",
+    kind: "enum",
+    values: LABORATORIES.map((l) => l.code),
+  },
+  { key: "manualGroup", kind: "manualGroup" },
 ];
 
 export function activeFacetKeys(values: Record<string, unknown>): string[] {
@@ -112,5 +136,9 @@ export function facetQueryFields() {
     ageMin: optionalFilter(z.coerce.number()),
     ageMax: optionalFilter(z.coerce.number()),
     ageUnit: optionalFilter(numericUnitSchema),
+    institutionalOrganization: optionalFilter(organizationRorSchema),
+    institutionalOsu: optionalFilter(osuCodeSchema),
+    institutionalLaboratory: optionalFilter(laboratoryCodeSchema),
+    manualGroup: optionalFilter(z.uuid()),
   };
 }

@@ -1,5 +1,6 @@
 import {
   PER_PAGE,
+  clearDependents,
   composeSeedFromParams,
   searchParamsSchema,
   searchQueryParams,
@@ -219,4 +220,17 @@ describe("composeSeedFromParams", () => {
       });
     },
   );
+});
+
+describe("clearDependents", () => {
+  it.each([
+    [
+      "institutionalOrganization",
+      { institutionalOsu: undefined, institutionalLaboratory: undefined },
+    ],
+    ["institutionalOsu", { institutionalLaboratory: undefined }],
+    ["nature", {}],
+  ])("should clear the facets narrower than %s", (key, expected) => {
+    expect(clearDependents(key)).toStrictEqual(expected);
+  });
 });

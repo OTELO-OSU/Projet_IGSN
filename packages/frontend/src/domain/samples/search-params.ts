@@ -37,6 +37,17 @@ export const searchParamsSchema = z.object({
 
 export type SearchParams = z.infer<typeof searchParamsSchema>;
 
+const NARROWER_FACETS: Record<string, readonly string[]> = {
+  institutionalOrganization: ["institutionalOsu", "institutionalLaboratory"],
+  institutionalOsu: ["institutionalLaboratory"],
+};
+
+export function clearDependents(key: string): Record<string, undefined> {
+  return Object.fromEntries(
+    (NARROWER_FACETS[key] ?? []).map((narrower) => [narrower, undefined]),
+  );
+}
+
 function hasValidBbox(bbox: string | undefined): boolean {
   return !!bbox && bboxSchema.safeParse(bbox).success;
 }

@@ -176,6 +176,96 @@ describe("listSamples", () => {
   });
 
   pgTest(
+    "should filter by the institutional codes snapshotted on the sample",
+    async ({ db }) => {
+      // Arrange
+      await insertSample(
+        db,
+        {
+          name: "Lorraine core",
+          nature: "rock_powder",
+          type: null,
+          collectionMethod: null,
+        },
+        {
+          institutionalOrganization: "04vfs2w97",
+          institutionalOsu: "OTELo",
+          institutionalLaboratory: "UMR7358",
+        },
+      );
+      await insertSample(
+        db,
+        {
+          name: "Grenoble core",
+          nature: "rock_powder",
+          type: null,
+          collectionMethod: null,
+        },
+        {
+          institutionalOrganization: "02rx3b187",
+          institutionalOsu: "OSUG",
+          institutionalLaboratory: "UMR5001",
+        },
+      );
+      // Act / Assert
+      const byOrganization = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        institutionalOrganization: "04vfs2w97",
+      });
+      expect(byOrganization.total).toBe(1);
+      expect(byOrganization.data.map((s) => s.name)).toEqual(["Lorraine core"]);
+
+      const byOsu = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        institutionalOsu: "OSUG",
+      });
+      expect(byOsu.total).toBe(1);
+      expect(byOsu.data.map((s) => s.name)).toEqual(["Grenoble core"]);
+
+      const byLaboratory = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        institutionalLaboratory: "UMR7358",
+      });
+      expect(byLaboratory.total).toBe(1);
+      expect(byLaboratory.data.map((s) => s.name)).toEqual(["Lorraine core"]);
+    },
+  );
+
+  pgTest("should filter by an attached manual group", async ({ db }) => {
+    // Arrange
+    const groupId = "01890a5d-ac96-774b-bcce-b302099a9001";
+    await db
+      .insertInto("manual_group")
+      .values({ id: groupId, name: "ANR CritMet" })
+      .execute();
+    await insertSample(db, {
+      name: "In the group",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+      manualGroupIds: [groupId],
+    });
+    await insertSample(db, {
+      name: "Outside the group",
+      nature: "rock_powder",
+      type: null,
+      collectionMethod: null,
+    });
+    // Act
+    const { data, total } = await listAsOwner(db, {
+      page: 1,
+      perPage: 10,
+      manualGroup: groupId,
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.name)).toEqual(["In the group"]);
+  });
+
+  pgTest(
     "should filter a text facet case- and accent-insensitively",
     async ({ db }) => {
       // Arrange

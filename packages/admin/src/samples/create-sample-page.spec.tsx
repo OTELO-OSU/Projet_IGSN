@@ -136,12 +136,15 @@ describe("CreateSamplePage", () => {
     expect(screen.lockCalls).toEqual([]);
   });
 
-  it("should offer the groups the depositor belongs to and submit the checked one", async () => {
+  it("should offer the groups the depositor belongs to and submit the picked one", async () => {
     const screen = await renderCreatePage();
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("checkbox", { name: "Basalt team" }).click();
+    await screen
+      .getByRole("combobox", { name: "Groups this sample belongs to" })
+      .click();
+    await screen.getByRole("option", { name: "Basalt team" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
     await expect

@@ -18,12 +18,18 @@ export function SampleManualGroupsField({
       {(field) =>
         options.length === 0 && field.state.value.length === 0 ? null : (
           <FormSection title={m.section_manual_groups()}>
-            <field.CheckboxGroupField
+            <field.MultiComboboxField
               label={m.field_manual_groups()}
               items={options.map((group) => ({
                 value: group.id,
                 label: group.name,
               }))}
+              placeholder={m.manual_group_placeholder()}
+              searchPlaceholder={m.manual_groups_search_placeholder()}
+              emptyText={m.manual_groups_empty()}
+              removeLabel={(label) =>
+                m.manual_group_detach_member({ name: label })
+              }
             />
             {isDisabled ? (
               <p className="text-muted-foreground text-sm">

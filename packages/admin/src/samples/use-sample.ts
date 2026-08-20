@@ -24,17 +24,18 @@ export async function parseSampleResponse(res: Response) {
   const { data, role, manualGroupOptions } = adminSampleResponseSchema.parse(
     await res.json(),
   );
+  const offered = new Map(
+    [...manualGroupOptions, ...data.manualGroups].map((group) => [
+      group.id,
+      group,
+    ]),
+  );
   return {
     ...data,
     role,
-    // A group the owner has left is no longer attachable but stays attached
-    // until they detach it, so the form has to keep offering it.
-    manualGroupOptions: [
-      ...manualGroupOptions,
-      ...data.manualGroups.filter(
-        (group) => !manualGroupOptions.some((option) => option.id === group.id),
-      ),
-    ],
+    manualGroupOptions: [...offered.values()].sort((a, b) =>
+      a.name.localeCompare(b.name),
+    ),
     manualGroupIds: data.manualGroups.map((group) => group.id),
   };
 }

@@ -15,6 +15,9 @@ export const FACET_COLUMN: Record<string, string> = {
   researchCampaign: "sc_research_campaign",
   collectorName: "sc_collector_name",
   collectionCurator: "sc_collection_curator",
+  institutionalOrganization: "institutional_organization",
+  institutionalOsu: "institutional_osu",
+  institutionalLaboratory: "institutional_laboratory",
 };
 
 function likePattern(value: string): string {
@@ -25,6 +28,13 @@ function facetFilter(
   facet: (typeof SAMPLE_FACETS)[number],
   value: string,
 ): Expression<SqlBool> | undefined {
+  if (facet.kind === "manualGroup") {
+    return sql<SqlBool>`exists (
+      select 1 from sample_manual_group
+       where sample_manual_group.sample_id = sample.id
+         and sample_manual_group.group_id = ${value}
+    )`;
+  }
   const column = FACET_COLUMN[facet.key]!;
   switch (facet.kind) {
     case "hierarchy":

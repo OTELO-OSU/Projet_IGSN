@@ -69,12 +69,10 @@ export function createCurrentUserRoutes(
     })
     .delete("/manual-groups/:id", validateManualGroupIdParam, async (c) => {
       const { id } = c.get("user");
-      const groupId = c.req.valid("param").id;
-      const mine = await manualGroups.listForUser(id);
-      if (mine.some((group) => group.id === groupId && !group.canLeave)) {
+      const left = await manualGroups.leave(c.req.valid("param").id, id);
+      if (left === "has_published_sample") {
         return c.json({ reason: "has_published_sample" }, 403);
       }
-      await manualGroups.removeMember(groupId, id);
       return c.body(null, 204);
     });
 }

@@ -343,35 +343,55 @@ describe("EditSamplePage", () => {
     ).toHaveLength(0);
   });
 
-  it("should show the attached manual groups checked but frozen to a contributor", async () => {
+  it("should chip the attached manual groups but freeze them to a contributor", async () => {
     const { screen } = await renderEditPageAsContributor(false);
 
-    const attached = screen.getByRole("checkbox", { name: "Fossil team" });
-    await expect.element(attached).toBeChecked();
-    await expect.element(attached).toBeDisabled();
     await expect
-      .element(screen.getByRole("checkbox", { name: "Basalt team" }))
+      .element(screen.getByRole("button", { name: "Detach Fossil team" }))
+      .toBeDisabled();
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Groups this sample belongs to" }),
+      )
       .toBeDisabled();
     await expect
       .element(screen.getByText("You cannot change these groups."))
       .toBeVisible();
   });
 
-  it("should offer Save & Publish to an editor on a draft", async () => {
-    const { screen } = await renderEditPageAsEditor(false);
+  it.each<[string, () => ReturnType<typeof renderEditPage>, string[]]>([
+    [
+      "an editor on a draft",
+      () => renderEditPageAsEditor(false),
+      ["Save & Publish"],
+    ],
+    [
+      "an editor on a published sample",
+      () => renderEditPageAsEditor(true),
+      ["Publish updates"],
+    ],
+    [
+      "the owner on a draft",
+      () => renderEditPage(),
+      ["Save as draft", "Save & Publish"],
+    ],
+    [
+      "the owner on a published sample",
+      () => renderEditPage(true),
+      ["Publish updates"],
+    ],
+  ])(
+    "should offer the save actions to %s",
+    async (_case, renderPage, buttons) => {
+      const { screen } = await renderPage();
 
-    await expect
-      .element(screen.getByRole("button", { name: "Save & Publish" }))
-      .toBeEnabled();
-  });
-
-  it("should let an editor save a published sample", async () => {
-    const { screen } = await renderEditPageAsEditor(true);
-
-    await expect
-      .element(screen.getByRole("button", { name: "Publish updates" }))
-      .toBeEnabled();
-  });
+      for (const name of buttons) {
+        await expect
+          .element(screen.getByRole("button", { name }))
+          .toBeEnabled();
+      }
+    },
+  );
 
   it("should leave no focusable publish tooltip behind for a contributor on a blocked draft", async () => {
     const { screen } = await renderEditPage(
@@ -415,24 +435,6 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("button", { name: "Share" }))
       .toBeVisible();
-  });
-
-  it("should let the owner save a published sample", async () => {
-    const { screen } = await renderEditPage(true);
-
-    await expect
-      .element(screen.getByRole("button", { name: "Publish updates" }))
-      .toBeEnabled();
-  });
-
-  it("should offer Save as draft and Save & Publish on a draft", async () => {
-    const { screen } = await renderEditPage();
-    await expect
-      .element(screen.getByRole("button", { name: "Save as draft" }))
-      .toBeEnabled();
-    await expect
-      .element(screen.getByRole("button", { name: "Save & Publish" }))
-      .toBeEnabled();
   });
 
   it("should disable Save & Publish and explain in a tooltip when the sample has no material", async () => {

@@ -120,14 +120,17 @@ export function createSampleAdminRoutes(
     .post("/", validateCreateSampleBody, async (c) => {
       const input = c.req.valid("json");
       const user = c.get("user");
-      const attachable = await manualGroups.listForUser(user.id);
-      if (
-        hasUnattachable(
-          input.manualGroupIds ?? [],
-          attachable.map((group) => group.id),
-        )
-      ) {
-        return c.json(NOT_ATTACHABLE, 422);
+      const submitted = input.manualGroupIds ?? [];
+      if (submitted.length > 0) {
+        const attachable = await manualGroups.listForUser(user.id);
+        if (
+          hasUnattachable(
+            submitted,
+            attachable.map((group) => group.id),
+          )
+        ) {
+          return c.json(NOT_ATTACHABLE, 422);
+        }
       }
       const sample = await repository.create(input, user);
       return c.json({ data: sample }, 201);
@@ -287,7 +290,10 @@ export function createSampleAdminRoutes(
         }
         const stored = current.manualGroups.map((group) => group.id);
         const submitted = toPersist.manualGroupIds ?? stored;
-        if (isSampleOwner(c.get("role"))) {
+        if (!sameManualGroups(submitted, stored)) {
+          if (!isSampleOwner(c.get("role"))) {
+            return c.json({ error: "Forbidden" }, 403);
+          }
           const attachable = await manualGroups.listForSampleOwner(id);
           if (
             hasUnattachable(submitted, [
@@ -297,8 +303,6 @@ export function createSampleAdminRoutes(
           ) {
             return c.json(NOT_ATTACHABLE, 422);
           }
-        } else if (!sameManualGroups(submitted, stored)) {
-          return c.json({ error: "Forbidden" }, 403);
         }
         await attachmentsRepository.reconcile(id, toPersist.attachments ?? []);
         const sample = await repository.update(id, toPersist);

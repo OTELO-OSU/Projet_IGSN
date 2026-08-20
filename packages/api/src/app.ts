@@ -9,6 +9,7 @@ import type { SendMail } from "./mail/send-mail.ts";
 
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
+import { createPublicManualGroupRoutes } from "./manual-group/public-routes.ts";
 import { createManualGroupRepository } from "./manual-group/repository.ts";
 import { createManualGroupRoutes } from "./manual-group/routes.ts";
 import { loadRateLimitConfig } from "./rate-limit/config.ts";
@@ -54,6 +55,10 @@ export function createApp(
       "/",
       createSampleRoutes(sampleRepository, sampleAttachmentRepository),
     );
+
+  const publicManualGroupRoutes = new Hono()
+    .use("*", rateLimit(rateLimitConfig, "ip"))
+    .route("/", createPublicManualGroupRoutes(manualGroupRepository));
 
   const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
@@ -104,6 +109,7 @@ export function createApp(
     })
     .get("/", (c) => c.json({ message: "OK" }))
     .route("/samples", publicSampleRoutes)
+    .route("/manual-groups", publicManualGroupRoutes)
     .route("/admin", adminRoutes);
 
   return { app };

@@ -29,11 +29,10 @@ export function sampleEditPage(page: Page) {
     goToList: () => page.getByRole("link", { name: "IGSN Admin" }).click(),
 
     expectNoManualGroupOffered: () => expectNoManualGroupOffered(page),
-    expectManualGroupFrozen: async (name: string) => {
-      const checkbox = page.getByRole("checkbox", { name });
-      await expect(checkbox).toBeChecked();
-      await expect(checkbox).toBeDisabled();
-    },
+    expectManualGroupFrozen: (name: string) =>
+      expect(
+        page.getByRole("button", { name: `Detach ${name}` }),
+      ).toBeDisabled(),
     publicPageIgsn: async () => {
       const href = await page
         .getByRole("link", { name: "View public page" })
