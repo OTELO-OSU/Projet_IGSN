@@ -9,6 +9,7 @@ import {
   DEFAULT_PAGE_SIZE,
   pageSizeSchema,
 } from "../sample/sample-validator.ts";
+import { managedGroupsSchema } from "./managed-groups.ts";
 import { userSchema, userStatusSchema } from "./model.ts";
 
 export const userIdentitySchema = userSchema.pick({
@@ -42,6 +43,7 @@ export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 
 export const adminUserSchema = userSchema.extend({
   manualGroups: z.array(manualGroupSchema),
+  managedGroups: managedGroupsSchema,
 });
 
 export type AdminUser = z.infer<typeof adminUserSchema>;
@@ -50,15 +52,19 @@ export const adminUserResponseSchema = z.object({ data: adminUserSchema });
 
 export type AdminUserResponse = z.infer<typeof adminUserResponseSchema>;
 
+export const listedUserSchema = adminUserSchema.omit({
+  managedGroups: true,
+});
+
+export type ListedUser = z.infer<typeof listedUserSchema>;
+
 export const listUsersResponseSchema = z.object({
-  data: z.array(adminUserSchema),
+  data: z.array(listedUserSchema),
   meta: z.object({ total: z.number() }),
 });
 
 export type ListUsersResponse = z.infer<typeof listUsersResponseSchema>;
 
-// A full replace, so the institution carries no default: an omitted field is a
-// rejected payload, never a silently wiped institution.
 export const updateUserSchema = z
   .strictObject({
     status: userStatusSchema,
@@ -66,6 +72,7 @@ export const updateUserSchema = z
     institutionalOsu: osuCodeSchema.nullable(),
     institutionalLaboratory: laboratoryCodeSchema.nullable(),
     manualGroupIds: z.array(z.uuid()),
+    managedGroups: managedGroupsSchema,
   })
   .superRefine((user, ctx) => {
     for (const issue of optionalInstitutionalGroupIssues(user)) {

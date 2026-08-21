@@ -4,6 +4,7 @@ import { describe, expect, vi } from "vitest";
 import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { insertUser } from "../tests/insert-user.ts";
+import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { tokenEmail } from "../tests/provision-user.ts";
 
@@ -37,6 +38,7 @@ describe("currentUser routes", () => {
       sub: "test-token",
       status: "pending",
       superAdmin: false,
+      managedLaboratories: [],
       email: "test-token@example.com",
       orcid: null,
       institutionalOrganization: null,
@@ -297,4 +299,51 @@ describe("currentUser routes", () => {
       expect(res.status).toBe(401);
     },
   );
+});
+
+describe("currentUser managed groups", () => {
+  pgTest(
+    "should ignore a stored code the catalog no longer knows",
+    async ({ db }) => {
+      // Arrange
+      const caller = await insertUser(db, callerEmail, { status: "accepted" });
+      await moderateInstitution(db, caller.id, {
+        kind: "osu",
+        code: "RETIRED-OSU",
+      });
+      const client = testClient(createApp(db).app);
+      // Act
+      const me = await client.admin.currentUser.$get(undefined, {
+        headers: authHeader,
+      });
+      const users = await client.admin.users.$get(
+        { query: { page: "1", perPage: "25" } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(me.status).toBe(200);
+      expect(await me.json()).toMatchObject({
+        managedLaboratories: [],
+      });
+      expect(users.status).toBe(403);
+    },
+  );
+
+  pgTest("should name the laboratories a caller manages", async ({ db }) => {
+    // Arrange
+    const caller = await insertUser(db, callerEmail);
+    await moderateInstitution(db, caller.id, {
+      kind: "laboratory",
+      code: "UMR7358",
+    });
+    // Act
+    const res = await testClient(createApp(db).app).admin.currentUser.$get(
+      undefined,
+      { headers: authHeader },
+    );
+    // Assert
+    expect(await res.json()).toMatchObject({
+      managedLaboratories: ["UMR7358"],
+    });
+  });
 });

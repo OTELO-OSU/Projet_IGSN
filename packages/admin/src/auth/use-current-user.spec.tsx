@@ -21,6 +21,7 @@ describe("useCurrentUser", () => {
           orcid: null,
           status: "accepted",
           superAdmin: false,
+          managedLaboratories: [],
         });
       }),
     );

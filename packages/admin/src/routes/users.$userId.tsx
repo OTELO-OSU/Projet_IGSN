@@ -1,7 +1,7 @@
 import { fullName } from "@projet-igsn/domain/user/full-name";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
+import { UserModerationOnly } from "#/auth/user-moderation-only.tsx";
 import { m } from "#/paraglide/messages.js";
 import { useUpdateUser } from "#/users/use-update-user.ts";
 import { useUser } from "#/users/use-user.ts";
@@ -9,9 +9,9 @@ import { UserForm } from "#/users/user-form.tsx";
 
 export const Route = createFileRoute("/users/$userId")({
   component: () => (
-    <SuperAdminOnly>
+    <UserModerationOnly>
       <UserDetailPage />
-    </SuperAdminOnly>
+    </UserModerationOnly>
   ),
 });
 

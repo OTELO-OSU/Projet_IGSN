@@ -8,7 +8,13 @@ import { shibbolethLoginPage } from "./shibboleth-login.page";
 export type Researcher = { username: string; email: string };
 
 export const RESEARCHERS = {
+  marie: { username: "marie.dupont", email: "marie.dupont@univ-lorraine.fr" },
   jean: { username: "jean.martin", email: "jean.martin@univ-lorraine.fr" },
+  sophie: {
+    username: "sophie.bernard",
+    email: "sophie.bernard@univ-lorraine.fr",
+  },
+  hugo: { username: "hugo.fournier", email: "hugo.fournier@univ-lorraine.fr" },
   pierre: {
     username: "pierre.durand",
     email: "pierre.durand@univ-lorraine.fr",

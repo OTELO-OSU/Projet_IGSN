@@ -15,6 +15,7 @@ const fakeIdentity = (status: number, body?: BodyInit) =>
             orcid: null,
             status: "accepted",
             superAdmin: false,
+            managedLaboratories: [],
           })
         : new HttpResponse(body ?? null, { status }),
     ),

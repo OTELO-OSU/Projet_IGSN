@@ -12,6 +12,7 @@ export const fakeCurrentUser = (overrides: Record<string, unknown> = {}) =>
         orcid: null,
         status: "accepted",
         superAdmin: false,
+        managedLaboratories: [],
         ...CALLER_GROUPS,
         ...overrides,
       }),

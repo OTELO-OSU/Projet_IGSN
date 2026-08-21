@@ -165,6 +165,7 @@ function fakeApi(
         orcid: null,
         status: callerStatus,
         superAdmin: false,
+        managedLaboratories: [],
         ...CALLER_GROUPS,
       });
     }),

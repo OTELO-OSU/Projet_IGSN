@@ -1,20 +1,13 @@
 import { Combobox } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
-import { filterOrganizationsWithLaboratory } from "@projet-igsn/domain/institutional-group/filter-organizations-with-laboratory";
 import { filterOsusByOrg } from "@projet-igsn/domain/institutional-group/filter-osus-by-org";
+import { osuLabel } from "@projet-igsn/domain/institutional-group/label";
+
 import {
-  organizationLabel,
-  osuLabel,
-} from "@projet-igsn/domain/institutional-group/label";
-
+  ORGANIZATION_ITEMS,
+  toItems,
+} from "#/institutional-groups/to-items.ts";
 import { m } from "#/paraglide/messages.js";
-
-const organizationItems = filterOrganizationsWithLaboratory().map(
-  ({ ror }) => ({
-    value: ror,
-    label: organizationLabel(ror),
-  }),
-);
 
 type FilterProps = {
   value: string | undefined;
@@ -30,7 +23,7 @@ export function OrganizationFilter({ value, onChange }: FilterProps) {
       <div className="min-w-0 flex-1">
         <Combobox
           id="organization-filter"
-          items={organizationItems}
+          items={ORGANIZATION_ITEMS}
           value={value ?? ""}
           onChange={(next) => onChange(next || undefined)}
           placeholder={m.organization_placeholder()}
@@ -58,10 +51,7 @@ export function OsuFilter({
           items={
             organization === undefined
               ? []
-              : filterOsusByOrg(organization).map(({ code }) => ({
-                  value: code,
-                  label: osuLabel(code),
-                }))
+              : toItems(filterOsusByOrg(organization), osuLabel)
           }
           value={value ?? ""}
           onChange={(next) => onChange(next || undefined)}

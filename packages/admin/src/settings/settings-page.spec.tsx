@@ -70,6 +70,7 @@ function fakeApi({
         orcid: stored,
         status: "accepted",
         superAdmin: false,
+        managedLaboratories: [],
         ...CALLER_GROUPS,
       }),
     ),

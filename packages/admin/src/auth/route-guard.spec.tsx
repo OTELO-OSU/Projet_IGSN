@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -15,26 +17,11 @@ import { render } from "vitest-browser-react";
 import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { worker } from "../../test/msw.ts";
 import { SuperAdminOnly } from "./super-admin-only.tsx";
+import { UserModerationOnly } from "./user-moderation-only.tsx";
 
 vi.mock("react-oidc-context", () => ({
   useAuth: () => ({ user: { access_token: "tok" } }),
 }));
-
-const rootRoute = createRootRoute({ component: () => <Outlet /> });
-const homeRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/",
-  component: () => <p>Home page</p>,
-});
-const guardedRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/guarded",
-  component: () => (
-    <SuperAdminOnly>
-      <p>Guarded page</p>
-    </SuperAdminOnly>
-  ),
-});
 
 const failIdentity = () =>
   worker.use(
@@ -52,7 +39,24 @@ const stallIdentity = () =>
     }),
   );
 
-async function renderGuarded() {
+async function renderGuarded(
+  Guard: (props: { children?: ReactNode }) => ReactNode,
+) {
+  const rootRoute = createRootRoute({ component: () => <Outlet /> });
+  const homeRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/",
+    component: () => <p>Home page</p>,
+  });
+  const guardedRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/guarded",
+    component: () => (
+      <Guard>
+        <p>Guarded page</p>
+      </Guard>
+    ),
+  });
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -70,29 +74,51 @@ async function renderGuarded() {
   return { screen, router };
 }
 
-describe("SuperAdminOnly", () => {
-  it("should render the guarded page for a super admin", async () => {
-    fakeCurrentUser({ superAdmin: true });
+describe("RouteGuard", () => {
+  it.each([
+    [
+      "a super admin under SuperAdminOnly",
+      SuperAdminOnly,
+      { superAdmin: true },
+    ],
+    [
+      "a super admin under UserModerationOnly",
+      UserModerationOnly,
+      { superAdmin: true },
+    ],
+    [
+      "a space manager under UserModerationOnly",
+      UserModerationOnly,
+      { managedLaboratories: ["UMR7358"] },
+    ],
+  ])("should render the guarded page for %s", async (_case, Guard, caller) => {
+    fakeCurrentUser(caller);
 
-    const { screen } = await renderGuarded();
+    const { screen } = await renderGuarded(Guard);
 
     await expect.element(screen.getByText("Guarded page")).toBeVisible();
   });
 
-  it("should send a user who is not a super admin back to the home page", async () => {
-    fakeCurrentUser({ superAdmin: false });
+  it.each([
+    ["is not a super admin", SuperAdminOnly],
+    ["moderates nothing", UserModerationOnly],
+  ])(
+    "should send a user who %s back to the home page",
+    async (_case, Guard) => {
+      fakeCurrentUser();
 
-    const { screen, router } = await renderGuarded();
+      const { screen, router } = await renderGuarded(Guard);
 
-    await expect.element(screen.getByText("Home page")).toBeVisible();
-    expect(screen.getByText("Guarded page").elements()).toHaveLength(0);
-    expect(router.state.location.pathname).toBe("/");
-  });
+      await expect.element(screen.getByText("Home page")).toBeVisible();
+      expect(screen.getByText("Guarded page").elements()).toHaveLength(0);
+      expect(router.state.location.pathname).toBe("/");
+    },
+  );
 
   it("should send a user back to the home page when the identity call fails", async () => {
     failIdentity();
 
-    const { screen, router } = await renderGuarded();
+    const { screen, router } = await renderGuarded(SuperAdminOnly);
 
     await expect.element(screen.getByText("Home page")).toBeVisible();
     expect(router.state.location.pathname).toBe("/");
@@ -101,7 +127,7 @@ describe("SuperAdminOnly", () => {
   it("should show nothing while the identity is still loading", async () => {
     stallIdentity();
 
-    const { screen, router } = await renderGuarded();
+    const { screen, router } = await renderGuarded(SuperAdminOnly);
 
     expect(screen.getByText("Guarded page").elements()).toHaveLength(0);
     expect(screen.getByText("Home page").elements()).toHaveLength(0);

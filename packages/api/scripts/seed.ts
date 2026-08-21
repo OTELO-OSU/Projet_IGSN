@@ -43,6 +43,7 @@ export const researcherKeySchema = z.enum([
   "nadia",
   "theo",
   "chloe",
+  "hugo",
 ]);
 export type ResearcherKey = z.infer<typeof researcherKeySchema>;
 
@@ -127,8 +128,6 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalOrganization: "05hnb7x64",
     institutionalOsu: null,
     institutionalLaboratory: "UMR7327",
-    // Stays group-free so the e2e can check the sample form offers no group:
-    // theo is group-free too, but has no institution to get past the wall.
     manualGroups: [],
   },
   nadia: {
@@ -167,6 +166,18 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
     institutionalLaboratory: "UMR7358",
     manualGroups: ["01980e2d-6f9b-7000-9000-00000000000a"],
   },
+  hugo: {
+    id: "01980e2d-6f9b-7000-8000-00000000000a",
+    email: "hugo.fournier@univ-lorraine.fr",
+    name: "Fournier",
+    firstname: "Hugo",
+    status: "pending",
+    superAdmin: false,
+    institutionalOrganization: "04vfs2w97",
+    institutionalOsu: "OTELo",
+    institutionalLaboratory: "UMR7359",
+    manualGroups: [],
+  },
 };
 
 export const MOCK_MANUAL_GROUPS = [
@@ -181,6 +192,17 @@ export const MOCK_MANUAL_GROUPS = [
   { id: "01980e2d-6f9b-7000-9000-000000000009", name: "CarbOcean" },
   { id: "01980e2d-6f9b-7000-9000-00000000000a", name: "Thesis Girard 2023" },
 ];
+
+async function seedManagedGroups(
+  db: Kysely<DB>,
+  ownerIds: Record<ResearcherKey, string>,
+): Promise<void> {
+  await db
+    .insertInto("user_managed_institutional_group")
+    .values({ user_id: ownerIds.marie, kind: "osu", code: "OTELo" })
+    .onConflict((oc) => oc.doNothing())
+    .execute();
+}
 
 async function seedManualGroups(
   db: Kysely<DB>,
@@ -271,6 +293,7 @@ export async function seed(
 > {
   const ownerIds = await seedOwners(db);
   await seedManualGroups(db, ownerIds);
+  await seedManagedGroups(db, ownerIds);
   const parsed = samples.map(parseSeedSample);
   const created = await db
     .insertInto("sample")

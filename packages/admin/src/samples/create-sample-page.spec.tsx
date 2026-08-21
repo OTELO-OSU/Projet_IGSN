@@ -53,6 +53,7 @@ function fakeApi(failWrites = false) {
         orcid: null,
         status: "accepted",
         superAdmin: false,
+        managedLaboratories: [],
         ...CALLER_GROUPS,
       }),
     ),

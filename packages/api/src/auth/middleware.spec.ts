@@ -112,6 +112,7 @@ describe("requireAuth", () => {
         orcid: null,
         status: "pending",
         superAdmin: false,
+        managedLaboratories: [],
         institutionalOrganization: null,
         institutionalOsu: null,
         institutionalLaboratory: null,

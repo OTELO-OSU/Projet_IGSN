@@ -26,7 +26,7 @@ ADR 0019 gave every researcher an owned space but no gate: any Keycloak account 
 UPDATE "user" SET status = 'accepted', super_admin = true WHERE email = '<email>';
 ```
 
-**`/admin/users` endpoints are super-admin-only**, guarded like every other admin route, and the status change additionally revalidates the live session (`requireActiveSession`, ADR 0006 REQ-CRIT-01) since it is a rights change.
+**`/admin/users` endpoints are super-admin-only**, until [ADR 0030](0030-scoped-user-moderation.md) widened them to a space manager scoped to the institutional groups it manages, guarded like every other admin route, and the status change additionally revalidates the live session (`requireActiveSession`, ADR 0006 REQ-CRIT-01) since it is a rights change.
 
 **Two paths lead back to `pending`.** A user changing their own organisme / OSU / labo trio resets their own status, that trio being what a moderator judged when accepting them; resubmitting the same trio, or declaring one for the first time, leaves the status untouched, and a super admin keeps `accepted`, since they moderate others rather than themselves. A super admin's `PUT /admin/users/:id` sets another user's status and trio in one save, writing both through `UserRepository.update` rather than `setInstitutionalGroups`, so that edit is itself the moderation and never re-pends its target; `settableUserStatuses` then bounds it to putting an account back to `pending` only while it is still `pending`, never after a decision.
 
@@ -38,4 +38,4 @@ UPDATE "user" SET status = 'accepted', super_admin = true WHERE email = '<email>
 - The super admin flag has no UI or endpoint to grant it: promoting a second super admin is the same manual `UPDATE`, recorded in [preprod-deploy.md](../preprod-deploy.md).
 - `requireRole`/`realm_access.roles` stays built but unused; revisit if GaiaData ever lets us manage a realm role for this registry.
 - The weekday `listPending` digest sweeps the `pending` column, so an account demoted by either path reaches the same super admins with no extra work. It reports and orders by `created_at`, so a demoted account shows its signup age and sorts above genuine newcomers; a re-pending timestamp is deferred until a moderator complains.
-- Adding a role beyond owner and super admin (a moderator who is not a full super admin) means widening `canPublishSamples`'s and the ownership override's inputs; the `user` row already has room for a second boolean or a role enum, so no schema rework is expected.
+- Adding a role beyond owner and super admin shipped as the space manager (ADR 0030), which widens `/admin/users` reach instead of `canPublishSamples` or the ownership override, and derives the role from a scope rather than a second boolean.
