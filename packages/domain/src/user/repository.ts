@@ -13,8 +13,17 @@ import type {
 
 export type UpsertUser = Pick<User, "email" | "name" | "firstname">;
 
-export type PendingUser = Pick<User, "email" | "name" | "firstname"> & {
+export type PendingUser = Pick<
+  User,
+  "email" | "name" | "firstname" | "institutionalLaboratory"
+> & {
   createdAt: Date;
+};
+
+export type SpaceManager = {
+  id: string;
+  email: string;
+  groups: ManagedGroups;
 };
 
 export type UserRepository = {
@@ -38,6 +47,7 @@ export type UserRepository = {
   get(id: string, scope: ModerationScope): Promise<AdminUser | null>;
   listPending(): Promise<PendingUser[]>;
   listSuperAdminEmails(): Promise<string[]>;
+  listSpaceManagers(): Promise<SpaceManager[]>;
   update(
     id: string,
     user: UpdateUser,

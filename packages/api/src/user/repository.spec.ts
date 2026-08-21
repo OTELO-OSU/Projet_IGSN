@@ -1,5 +1,8 @@
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
-import { superAdminScope } from "@projet-igsn/domain/user/moderation-scope";
+import {
+  managerScope,
+  superAdminScope,
+} from "@projet-igsn/domain/user/moderation-scope";
 import { describe, expect } from "vitest";
 
 import { insertSample } from "../sample/service/insert-sample.ts";
@@ -611,12 +614,14 @@ describe("createUserRepository", () => {
           name: "Oldest",
           firstname: "Olga",
           createdAt: new Date("2026-07-07T12:00:00Z"),
+          institutionalLaboratory: null,
         },
         {
           email: "recent@univ-lorraine.fr",
           name: "Recent",
           firstname: "Rose",
           createdAt: new Date("2026-08-05T09:00:00Z"),
+          institutionalLaboratory: null,
         },
       ]);
     },
@@ -631,6 +636,43 @@ describe("createUserRepository", () => {
 
     expect(emails).toEqual(["admin@univ-lorraine.fr", "zoe@univ-lorraine.fr"]);
   });
+
+  pgTest(
+    "should list the accepted non super admin users holding a scope",
+    async ({ db }) => {
+      // Arrange
+      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      await moderateInstitution(db, manager.id, {
+        kind: "laboratory",
+        code: "UMR7358",
+      });
+      await insertUser(db, "scopeless@univ-lorraine.fr");
+      const waiting = await insertUser(db, "waiting@univ-lorraine.fr", {
+        status: "pending",
+      });
+      await moderateInstitution(db, waiting.id, {
+        kind: "laboratory",
+        code: "UMR7358",
+      });
+      const admin = await insertUser(db, "admin@univ-lorraine.fr", {
+        superAdmin: true,
+      });
+      await moderateInstitution(db, admin.id, {
+        kind: "laboratory",
+        code: "UMR7358",
+      });
+      // Act
+      const managers = await createUserRepository(db).listSpaceManagers();
+      // Assert
+      expect(managers).toEqual([
+        {
+          id: manager.id,
+          email: "manager@univ-lorraine.fr",
+          groups: { ...NO_MANAGED_GROUPS, laboratories: ["UMR7358"] },
+        },
+      ]);
+    },
+  );
 });
 
 describe("moderation scope", () => {
@@ -641,12 +683,7 @@ describe("moderation scope", () => {
       institutionalLaboratory: "UMR7358",
     });
     const repository = createUserRepository(db);
-    const moderation = {
-      callerId: caller.id,
-      superAdmin: false,
-      managedLaboratories: [],
-      managedManualGroupIds: [],
-    };
+    const moderation = managerScope(caller.id, NO_MANAGED_GROUPS);
     // Act
     const listed = await repository.list({ page: 1, perPage: 25 }, moderation);
     const read = await repository.get(other.id, moderation);
