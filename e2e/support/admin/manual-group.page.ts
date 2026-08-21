@@ -40,6 +40,14 @@ export function manualGroupPage(page: Page) {
         .getByRole("button", { name: "Detach", exact: true })
         .click();
     },
+    expectNoEditControl: async () => {
+      await expect(
+        page.getByRole("button", { name: "Rename this group" }),
+      ).toHaveCount(0);
+      await expect(
+        page.getByRole("button", { name: "Delete this group" }),
+      ).toHaveCount(0);
+    },
     rename: async (name: string) => {
       const dialog = page.getByRole("dialog", {
         name: "Rename this manual group",

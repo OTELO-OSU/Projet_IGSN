@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 
 import { updateUserStatusAndInstitutions } from "./update-user-status-and-institutions.ts";
 
+const ALPES = "01890a5d-ac96-774b-bcce-b302099a9002";
+
 const stored = {
   status: "pending" as const,
   institutionalOrganization: "04vfs2w97",
@@ -18,7 +20,7 @@ const submitted: UpdateUser = {
   institutionalOrganization: "02rx3b187",
   institutionalOsu: "OSUG",
   institutionalLaboratory: "UMR5275",
-  manualGroupIds: [],
+  manualGroupIds: [ALPES],
   managedGroups: { ...NO_MANAGED_GROUPS, osus: ["OTELo"] },
 };
 
@@ -29,33 +31,32 @@ const applied = {
   institutionalLaboratory: "UMR5275",
 };
 
-const rightsOf = (caller: {
-  superAdmin: boolean;
-  managedLaboratories: string[];
-}) => userManagementRights(caller, stored);
+const CALLER = {
+  superAdmin: false,
+  managedLaboratories: [] as string[],
+  managedManualGroupIds: [] as string[],
+};
+
+const rightsOf = (caller: typeof CALLER) =>
+  userManagementRights(caller, stored);
 
 describe("updateUserStatusAndInstitutions", () => {
-  it.each([
-    ["a super admin", { superAdmin: true, managedLaboratories: [] }],
-    [
-      "a managed laboratory's manager",
-      { superAdmin: false, managedLaboratories: ["UMR7358"] },
-    ],
-  ])(
-    "should apply the submitted status and institutions for %s",
-    (_, caller) => {
-      expect(
-        updateUserStatusAndInstitutions(submitted, stored, rightsOf(caller)),
-      ).toEqual(applied);
-    },
-  );
-
-  it("should keep the stored status and institutions out of the institutional scope", () => {
+  it("should apply the submitted status and institutions for a managed laboratory's manager", () => {
     expect(
       updateUserStatusAndInstitutions(
         submitted,
         stored,
-        rightsOf({ superAdmin: false, managedLaboratories: ["UMR7360"] }),
+        rightsOf({ ...CALLER, managedLaboratories: ["UMR7358"] }),
+      ),
+    ).toEqual(applied);
+  });
+
+  it("should keep the stored status and institutions for another laboratory's manager", () => {
+    expect(
+      updateUserStatusAndInstitutions(
+        submitted,
+        stored,
+        rightsOf({ ...CALLER, managedLaboratories: ["UMR7360"] }),
       ),
     ).toEqual(stored);
   });

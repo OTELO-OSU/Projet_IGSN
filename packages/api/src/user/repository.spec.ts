@@ -645,6 +645,7 @@ describe("moderation scope", () => {
       callerId: caller.id,
       superAdmin: false,
       managedLaboratories: [],
+      managedManualGroupIds: [],
     };
     // Act
     const listed = await repository.list({ page: 1, perPage: 25 }, moderation);
@@ -670,6 +671,7 @@ describe("moderation scope", () => {
       organizations: [],
       osus: ["OTELo"],
       laboratories: ["UMR5275"],
+      manualGroupIds: [],
     });
   });
 });

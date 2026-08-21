@@ -4,7 +4,7 @@ Date: 2026-08-14
 
 ## Status
 
-Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a manual group, and the leave rule became per-group.
+Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a manual group, and the leave rule became per-group. Amended 2026-08-21: the published-sample rule now guards every detach, and a manual group manager curates its own groups (ADR 0030).
 
 ## Context
 
@@ -38,6 +38,6 @@ Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a
 - Security review: the endpoint serves any authenticated user and `userIdentitySchema` deliberately omits `status`, yet narrowing to accepted lets a caller infer who is pending by diffing against the unfiltered list. Inherent to filtering by a caller-chosen status, and accepted.
 - A member rejected after joining stays a member (explicit PO decision); their status shows in the members table.
 - A super admin cannot add themselves, `searchUsers` excluding the caller, but another super admin can add them.
-- The leave rule guards the self-service leave only: a super admin detaching a member drops the same rows with no check. Accepted, since a super admin curates the groups.
+- The published-sample rule guards every detach, `detachManualGroupMember` being the single path: the self-service leave answers 403, the group page and `PUT /admin/users/:id` answer 409.
 - The public sample page names the attached groups in their own section, gated on a non-empty list and labelled "Groups", since "manual" is admin jargon a public reader has no context for.
 - The Teams/Projects tag distinction stays a separate ticket; filtering published samples by group shipped as its own.

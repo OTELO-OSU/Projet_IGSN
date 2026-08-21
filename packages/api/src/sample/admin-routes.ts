@@ -49,7 +49,7 @@ const NOT_ATTACHABLE = {
   error: "Manual group not attachable to this sample",
 } as const;
 
-function sameManualGroups(submitted: string[], stored: string[]) {
+function sameGroupIds(submitted: string[], stored: string[]) {
   const asked = new Set(submitted);
   return asked.size === stored.length && stored.every((id) => asked.has(id));
 }
@@ -290,7 +290,7 @@ export function createSampleAdminRoutes(
         }
         const stored = current.manualGroups.map((group) => group.id);
         const submitted = toPersist.manualGroupIds ?? stored;
-        if (!sameManualGroups(submitted, stored)) {
+        if (!sameGroupIds(submitted, stored)) {
           if (!isSampleOwner(c.get("role"))) {
             return c.json({ error: "Forbidden" }, 403);
           }

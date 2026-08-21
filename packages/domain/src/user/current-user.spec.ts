@@ -11,6 +11,7 @@ describe("currentUserSchema", () => {
         status: "pending",
         superAdmin: false,
         managedLaboratories: [],
+        managedManualGroups: [],
       }),
     ).toEqual({
       sub: "f:saml-idp:jean.martin",
@@ -18,6 +19,7 @@ describe("currentUserSchema", () => {
       status: "pending",
       superAdmin: false,
       managedLaboratories: [],
+      managedManualGroups: [],
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,

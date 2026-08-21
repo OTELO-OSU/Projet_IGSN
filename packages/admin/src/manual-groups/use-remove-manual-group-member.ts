@@ -29,6 +29,11 @@ export function useRemoveManualGroupMember() {
       toast.success(m.manual_group_member_removed());
       await invalidateUserAndGroups(queryClient, userId);
     },
-    onError: () => toast.error(m.manual_group_member_remove_error()),
+    onError: (error) =>
+      toast.error(
+        error instanceof HttpError && error.status === 409
+          ? m.manual_group_detach_published()
+          : m.manual_group_member_remove_error(),
+      ),
   });
 }

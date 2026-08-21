@@ -1,3 +1,5 @@
+import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
+
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
@@ -49,11 +51,19 @@ const dupuis = {
   status: "pending",
 };
 
-function fakeApi({ members = [curie], directory = [dupont] } = {}) {
+function fakeApi({
+  members = [curie],
+  directory = [dupont],
+  caller = { superAdmin: true },
+}: {
+  members?: (typeof curie)[];
+  directory?: (typeof curie)[];
+  caller?: Partial<CurrentUser>;
+} = {}) {
   let group = { ...GROUP };
   let listed = [...members];
   const calls: string[] = [];
-  fakeCurrentUser({ superAdmin: true });
+  fakeCurrentUser(caller);
   worker.use(
     http.get("*/admin/manual-groups/:id/members", () =>
       HttpResponse.json({ data: listed }),
@@ -257,5 +267,21 @@ describe("ManualGroupDetailPage", () => {
     await expect
       .element(screen.getByRole("alert"))
       .toHaveTextContent("This manual group does not exist");
+  });
+
+  it("should offer no rename or delete to a manual group manager", async () => {
+    fakeApi({ caller: { managedManualGroups: [GROUP] } });
+
+    const { screen } = await renderDetailPage();
+
+    await expect
+      .element(screen.getByRole("cell", { name: curie.email }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Rename this group" }).elements(),
+    ).toEqual([]);
+    expect(
+      screen.getByRole("button", { name: "Delete this group" }).elements(),
+    ).toEqual([]);
   });
 });

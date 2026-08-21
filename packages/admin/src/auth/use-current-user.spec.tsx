@@ -22,6 +22,7 @@ describe("useCurrentUser", () => {
           status: "accepted",
           superAdmin: false,
           managedLaboratories: [],
+          managedManualGroups: [],
         });
       }),
     );

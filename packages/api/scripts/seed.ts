@@ -202,6 +202,16 @@ async function seedManagedGroups(
     .values({ user_id: ownerIds.marie, kind: "osu", code: "OTELo" })
     .onConflict((oc) => oc.doNothing())
     .execute();
+  await db
+    .insertInto("user_managed_manual_group")
+    .values(
+      MOCK_MANUAL_GROUPS.slice(0, 2).map(({ id }) => ({
+        user_id: ownerIds.pierre,
+        group_id: id,
+      })),
+    )
+    .onConflict((oc) => oc.doNothing())
+    .execute();
 }
 
 async function seedManualGroups(

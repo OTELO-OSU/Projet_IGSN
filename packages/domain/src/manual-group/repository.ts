@@ -21,6 +21,7 @@ export type RenameManualGroupResult =
 export type ManualGroupRepository = {
   list(
     query: ListManualGroupsQuery,
+    managedGroupIds: string[] | null,
   ): Promise<{ data: ManualGroupListItem[]; total: number }>;
   get(id: string): Promise<ManualGroup | null>;
   create(name: string): Promise<CreateManualGroupResult>;
@@ -34,12 +35,13 @@ export type ManualGroupRepository = {
   removeMember(
     groupId: string,
     userId: string,
-  ): Promise<"removed" | "not_found">;
+  ): Promise<"removed" | "not_found" | "has_published_sample">;
   leave(
     groupId: string,
     userId: string,
   ): Promise<"left" | "not_member" | "has_published_sample">;
   listForUser(userId: string): Promise<MyManualGroup[]>;
+  listByIds(ids: string[]): Promise<ManualGroup[]>;
   listForSampleOwner(sampleId: string): Promise<ManualGroup[]>;
   listWithPublishedSample(): Promise<ManualGroup[]>;
 };

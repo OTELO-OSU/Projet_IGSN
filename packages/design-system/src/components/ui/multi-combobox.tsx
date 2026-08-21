@@ -21,9 +21,7 @@ import {
   PopoverTrigger,
 } from "./popover.tsx";
 
-// How many unselected options to show before the user narrows with a query.
-// A flat list of ~100 (the elements) is unusable at once; typing filters the
-// rest in. ponytail: fixed cap, lift it to a prop if another caller needs one.
+// ponytail: fixed cap, lift it to a prop if another caller needs one.
 const UNSEARCHED_LIMIT = 10;
 
 type MultiComboboxProps = {
@@ -35,16 +33,13 @@ type MultiComboboxProps = {
   placeholder: string;
   searchPlaceholder: string;
   emptyText: string;
-  // Accessible name for a chip's remove button (icon-only), per item label.
   removeLabel: (label: string) => string;
+  lockedValues?: string[];
   disabled?: boolean;
   "aria-invalid"?: boolean;
   "aria-describedby"?: string;
 };
 
-// A multi-select autocomplete: picked values render as removable chips, an
-// autocomplete adds more. With no query only the first UNSEARCHED_LIMIT
-// unselected options show; a query filters the full unselected set by label.
 export function MultiCombobox({
   items,
   values,
@@ -55,6 +50,7 @@ export function MultiCombobox({
   searchPlaceholder,
   emptyText,
   removeLabel,
+  lockedValues,
   disabled,
   ...aria
 }: MultiComboboxProps) {
@@ -77,8 +73,6 @@ export function MultiCombobox({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      {/* The whole field anchors the dropdown, so it opens field-wide instead
-          of matching the (chip-squeezed) trigger button. */}
       <PopoverAnchor asChild>
         <div
           className={cn(
@@ -86,20 +80,29 @@ export function MultiCombobox({
             disabled && "opacity-50",
           )}
         >
-          {selected.map((item) => (
-            <Badge key={item.value} variant="secondary" className="gap-1 pr-1">
-              {item.label}
-              <button
-                type="button"
-                aria-label={removeLabel(item.label)}
-                disabled={disabled}
-                onClick={() => toggle(item.value)}
-                className="hover:bg-foreground/10 rounded-full disabled:pointer-events-none"
+          {selected.map((item) => {
+            const locked = lockedValues?.includes(item.value);
+            return (
+              <Badge
+                key={item.value}
+                variant="secondary"
+                className={locked ? undefined : "gap-1 pr-1"}
               >
-                <XIcon className="size-3" />
-              </button>
-            </Badge>
-          ))}
+                {item.label}
+                {locked ? null : (
+                  <button
+                    type="button"
+                    aria-label={removeLabel(item.label)}
+                    disabled={disabled}
+                    onClick={() => toggle(item.value)}
+                    className="hover:bg-foreground/10 rounded-full disabled:pointer-events-none"
+                  >
+                    <XIcon className="size-3" />
+                  </button>
+                )}
+              </Badge>
+            );
+          })}
           <PopoverTrigger asChild>
             <Button
               id={id}
@@ -119,7 +122,6 @@ export function MultiCombobox({
         </div>
       </PopoverAnchor>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-        {/* Manual filtering: cmdk's own would defeat the unsearched cap. */}
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}

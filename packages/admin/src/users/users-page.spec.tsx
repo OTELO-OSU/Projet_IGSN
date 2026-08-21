@@ -9,7 +9,7 @@ import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
-import { CALLER_GROUPS } from "../../test/caller-groups.ts";
+import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
@@ -53,18 +53,8 @@ const USERS = [
 
 function fakeApi({ forbidden = false }: { forbidden?: boolean } = {}) {
   const requested: string[] = [];
+  fakeCurrentUser({ superAdmin: true });
   worker.use(
-    http.get("*/admin/currentUser", () =>
-      HttpResponse.json({
-        sub: "s",
-        name: "Marie Dupont",
-        orcid: null,
-        status: "accepted",
-        superAdmin: true,
-        managedLaboratories: [],
-        ...CALLER_GROUPS,
-      }),
-    ),
     http.get("*/admin/users/:id", ({ params }) =>
       HttpResponse.json({
         data: USERS.find((candidate) => candidate.id === params.id),

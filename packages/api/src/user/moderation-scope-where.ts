@@ -8,12 +8,25 @@ export function moderationScopeWhere(
   scope: ModerationScope,
 ): Expression<SqlBool>[] {
   if (scope.superAdmin) return [];
-  const { callerId, managedLaboratories } = scope;
+  const { callerId, managedLaboratories, managedManualGroupIds } = scope;
+  const reach: Expression<SqlBool>[] = [];
+  if (managedLaboratories.length > 0) {
+    reach.push(eb("institutional_laboratory", "in", managedLaboratories));
+  }
+  if (managedManualGroupIds.length > 0) {
+    reach.push(
+      eb.exists(
+        eb
+          .selectFrom("manual_group_member")
+          .select("group_id")
+          .whereRef("manual_group_member.user_id", "=", "user.id")
+          .where("group_id", "in", managedManualGroupIds),
+      ),
+    );
+  }
 
   return [
-    managedLaboratories.length > 0
-      ? eb("institutional_laboratory", "in", managedLaboratories)
-      : eb.lit(false),
+    reach.length > 0 ? eb.or(reach) : eb.lit(false),
     eb("id", "!=", callerId),
     eb("super_admin", "=", false),
   ];

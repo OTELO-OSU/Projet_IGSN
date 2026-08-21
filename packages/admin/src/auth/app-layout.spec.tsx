@@ -68,6 +68,24 @@ describe("AppLayout", () => {
       .toHaveAttribute("href", "/institutional-groups/laboratories");
   });
 
+  it("should offer the manual groups to a manual group manager", async () => {
+    fakeCurrentUser({
+      managedManualGroups: [
+        { id: "3f2504e0-4f89-41d3-9a0c-0305000000a1", name: "Basalt team" },
+      ],
+    });
+
+    const screen = await renderLayout();
+    const nav = screen.getByRole("navigation");
+
+    await expect
+      .element(nav.getByRole("link", { name: "Manual groups" }))
+      .toHaveAttribute("href", "/manual-groups");
+    expect(
+      nav.getByRole("link", { name: "Laboratories" }).elements(),
+    ).toHaveLength(0);
+  });
+
   it("should list only the samples resource for a plain researcher", async () => {
     fakeCurrentUser();
 

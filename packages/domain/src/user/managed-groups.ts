@@ -42,6 +42,7 @@ export const managedGroupsSchema = z.strictObject({
     "laboratories",
     "unknown laboratory",
   ),
+  manualGroupIds: z.array(z.uuid()).transform((ids) => [...new Set(ids)]),
 });
 
 export type ManagedGroups = z.infer<typeof managedGroupsSchema>;
@@ -50,6 +51,7 @@ export const NO_MANAGED_GROUPS: ManagedGroups = {
   organizations: [],
   osus: [],
   laboratories: [],
+  manualGroupIds: [],
 };
 
 export const MANAGED_GROUP_KINDS = [
@@ -60,6 +62,7 @@ export const MANAGED_GROUP_KINDS = [
 
 export function knownManagedCodes(stored: ManagedGroups): ManagedGroups {
   return {
+    ...stored,
     organizations: stored.organizations.filter(isKnown("organizations")),
     osus: stored.osus.filter(isKnown("osus")),
     laboratories: stored.laboratories.filter(isKnown("laboratories")),

@@ -1,3 +1,5 @@
+import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
+
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 
@@ -27,10 +29,13 @@ const METEORITE = {
   memberCount: 5,
 };
 
-function fakeApi({ groups = [BASALT, METEORITE] } = {}) {
+function fakeApi({
+  groups = [BASALT, METEORITE],
+  caller = { superAdmin: true },
+}: { groups?: (typeof BASALT)[]; caller?: Partial<CurrentUser> } = {}) {
   let listed = [...groups];
   const requested: string[] = [];
-  fakeCurrentUser({ superAdmin: true });
+  fakeCurrentUser(caller);
   worker.use(
     http.post("*/admin/manual-groups", async ({ request }) => {
       const { name } = (await request.json()) as { name: string };
@@ -104,5 +109,18 @@ describe("ManualGroupsPage", () => {
     await expect
       .element(screen.getByRole("cell", { name: "No manual groups" }))
       .toBeVisible();
+  });
+
+  it("should offer no group creation to a manual group manager", async () => {
+    fakeApi({ groups: [BASALT], caller: { managedManualGroups: [BASALT] } });
+
+    const { screen } = await renderRoute("/manual-groups");
+
+    await expect
+      .element(screen.getByRole("cell", { name: "Basalt team" }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "New manual group" }).elements(),
+    ).toEqual([]);
   });
 });

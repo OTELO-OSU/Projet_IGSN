@@ -32,6 +32,11 @@ export function useUpdateUser(id: string) {
       toast.success(m.user_status_success());
       await invalidateUserAndGroups(queryClient, id);
     },
-    onError: () => toast.error(m.user_status_error()),
+    onError: (error) =>
+      toast.error(
+        error instanceof HttpError && error.status === 409
+          ? m.manual_group_detach_published()
+          : m.user_status_error(),
+      ),
   });
 }

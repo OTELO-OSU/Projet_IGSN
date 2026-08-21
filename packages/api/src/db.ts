@@ -172,6 +172,11 @@ type UserManagedInstitutionalGroupTable = {
   code: string;
 };
 
+type UserManagedManualGroupTable = {
+  user_id: string;
+  group_id: string;
+};
+
 export type DB = {
   manual_group: ManualGroupTable;
   manual_group_member: ManualGroupMemberTable;
@@ -182,6 +187,7 @@ export type DB = {
   sample_edit_lock: SampleEditLockTable;
   user: UserTable;
   user_managed_institutional_group: UserManagedInstitutionalGroupTable;
+  user_managed_manual_group: UserManagedManualGroupTable;
   user_sample: UserSampleTable;
 };
 

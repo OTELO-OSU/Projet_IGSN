@@ -33,6 +33,9 @@ export function createCurrentUserRoutes(
         status: user.status,
         superAdmin: user.superAdmin,
         managedLaboratories: managedLaboratoryCodes(managed),
+        managedManualGroups: await manualGroups.listByIds(
+          managed.manualGroupIds,
+        ),
         institutionalOrganization: user.institutionalOrganization,
         institutionalOsu: user.institutionalOsu,
         institutionalLaboratory: user.institutionalLaboratory,
