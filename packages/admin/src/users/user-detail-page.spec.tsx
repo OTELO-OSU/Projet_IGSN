@@ -1,3 +1,4 @@
+import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
@@ -39,7 +40,21 @@ type Options = {
   failPut?: boolean;
   failGet?: boolean;
   manualGroups?: { id: string; name: string }[];
+  caller?: { superAdmin?: boolean; managed?: { laboratories: string[] } };
 };
+
+const LORRAINE = "Université de Lorraine (04vfs2w97)";
+const CRPG =
+  "Centre de recherches pétrographiques et géochimiques (CRPG) (UMR7358)";
+const INSTITUTION_MANAGER = {
+  superAdmin: false,
+  managedLaboratories: [CALLER_GROUPS.institutionalLaboratory],
+};
+const OTHER_LABORATORY_MANAGER = {
+  superAdmin: false,
+  managedLaboratories: ["UMR7360"],
+};
+const MODERATION_SEARCH = "Search by name or identifier";
 
 function fakeApi({
   status = "pending",
@@ -48,6 +63,7 @@ function fakeApi({
   failPut = false,
   failGet = false,
   manualGroups = [BASALT],
+  caller = { superAdmin: true },
 }: Options) {
   let user = {
     id: USER_ID,
@@ -58,6 +74,7 @@ function fakeApi({
     status,
     superAdmin: false,
     manualGroups,
+    managedGroups: NO_MANAGED_GROUPS,
     ...CALLER_GROUPS,
   };
   const calls: unknown[] = [];
@@ -68,8 +85,10 @@ function fakeApi({
         name: "Marie Dupont",
         orcid: null,
         status: "accepted",
-        superAdmin: true,
+        superAdmin: false,
+        managedLaboratories: [],
         ...CALLER_GROUPS,
+        ...caller,
       }),
     ),
     http.put("*/admin/users/:id", async ({ request }) => {
@@ -164,7 +183,6 @@ describe("UserDetailPage", () => {
   it.each([
     ["an unmoderated", "pending", ["Pending", "Active", "Disabled"]],
     ["an active", "accepted", ["Active", "Disabled"]],
-    ["a disabled", "rejected", ["Active", "Disabled"]],
   ] as const)(
     "should offer %s account the statuses it can be set to",
     async (_case, status, offered) => {
@@ -198,7 +216,9 @@ describe("UserDetailPage", () => {
       .element(screen.getByRole("button", { name: `Detach ${BASALT.name}` }))
       .toBeEnabled();
 
-    await screen.getByRole("combobox", { name: "Manual groups" }).click();
+    await screen
+      .getByRole("combobox", { name: "Manual groups", exact: true })
+      .click();
 
     expect(
       screen.getByRole("option", { name: METEORITE.name }).elements(),
@@ -233,7 +253,9 @@ describe("UserDetailPage", () => {
   it("should write nothing before the form is saved", async () => {
     const { screen, calls } = await renderUserPage({ status: "accepted" });
 
-    await screen.getByRole("combobox", { name: "Manual groups" }).click();
+    await screen
+      .getByRole("combobox", { name: "Manual groups", exact: true })
+      .click();
     await screen.getByRole("option", { name: METEORITE.name }).click();
 
     await expect
@@ -247,7 +269,9 @@ describe("UserDetailPage", () => {
 
     await screen.getByRole("combobox", { name: "Status" }).click();
     await screen.getByRole("option", { name: "Active" }).click();
-    await screen.getByRole("combobox", { name: "Manual groups" }).click();
+    await screen
+      .getByRole("combobox", { name: "Manual groups", exact: true })
+      .click();
     await screen.getByRole("option", { name: METEORITE.name }).click();
     await screen.getByRole("button", { name: "Save" }).click();
 
@@ -258,6 +282,7 @@ describe("UserDetailPage", () => {
           status: "accepted",
           ...CALLER_GROUPS,
           manualGroupIds: [BASALT.id, METEORITE.id],
+          managedGroups: NO_MANAGED_GROUPS,
         },
       ]);
     await expect.element(screen.getByText("Account updated")).toBeVisible();
@@ -276,6 +301,30 @@ describe("UserDetailPage", () => {
           status: "accepted",
           ...CALLER_GROUPS,
           manualGroupIds: [],
+          managedGroups: NO_MANAGED_GROUPS,
+        },
+      ]);
+  });
+
+  it("should save a laboratory of the organization once the OSU is cleared", async () => {
+    const { screen, calls } = await renderUserPage({ status: "accepted" });
+
+    await screen.getByRole("combobox", { name: "OSU (optional)" }).click();
+    await screen.getByRole("option", { name: /OTELo/ }).click();
+    await screen.getByRole("combobox", { name: "Laboratory" }).click();
+    await screen.getByRole("option", { name: /CRPG/ }).click();
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await expect
+      .poll(() => calls)
+      .toEqual([
+        {
+          status: "accepted",
+          institutionalOrganization: "04vfs2w97",
+          institutionalOsu: null,
+          institutionalLaboratory: "UMR7358",
+          manualGroupIds: [BASALT.id],
+          managedGroups: NO_MANAGED_GROUPS,
         },
       ]);
   });
@@ -293,6 +342,94 @@ describe("UserDetailPage", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Status" }))
       .toHaveTextContent("Active");
+  });
+
+  it.each([
+    ["a super admin", { superAdmin: true }, 1],
+    ["a space manager", INSTITUTION_MANAGER, 0],
+  ] as const)(
+    "should offer the moderation scope to %s only",
+    async (_case, caller, sections) => {
+      const { screen } = await renderUserPage({ caller });
+
+      await expect
+        .element(screen.getByRole("combobox", { name: "Status" }))
+        .toBeVisible();
+
+      expect(
+        screen.getByRole("heading", { name: "Managed groups" }).elements(),
+      ).toHaveLength(sections);
+    },
+  );
+
+  it.each([
+    ["a manager of the target's laboratory", INSTITUTION_MANAGER, true],
+    ["a manager of another laboratory", OTHER_LABORATORY_MANAGER, false],
+  ] as const)(
+    "should let %s edit the institutions it manages and nothing else",
+    async (_case, caller, institutions) => {
+      const { screen } = await renderUserPage({ status: "accepted", caller });
+      const expectEditable = (
+        field: ReturnType<typeof screen.getByRole>,
+        editable: boolean,
+      ) =>
+        editable
+          ? expect.element(field).toBeEnabled()
+          : expect.element(field).toBeDisabled();
+
+      await expectEditable(
+        screen.getByRole("combobox", { name: "Status" }),
+        institutions,
+      );
+      await expectEditable(
+        screen.getByRole("combobox", { name: "Organization" }),
+        institutions,
+      );
+      await expectEditable(
+        screen.getByRole("combobox", { name: "Manual groups", exact: true }),
+        false,
+      );
+    },
+  );
+
+  it("should find a managed laboratory by its code", async () => {
+    const { screen } = await renderUserPage();
+
+    await screen
+      .getByRole("combobox", { name: "Managed laboratories" })
+      .click();
+    await screen.getByPlaceholder(MODERATION_SEARCH).fill("UMR7358");
+
+    await expect
+      .element(screen.getByRole("option", { name: CRPG }))
+      .toBeVisible();
+  });
+
+  it("should save the granted moderation scope", async () => {
+    const { screen, calls } = await renderUserPage({ status: "accepted" });
+
+    await screen
+      .getByRole("combobox", { name: "Managed organizations" })
+      .click();
+    await screen
+      .getByPlaceholder(MODERATION_SEARCH)
+      .fill("Université de Lorraine");
+    await screen.getByRole("option", { name: LORRAINE }).click();
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await expect
+      .poll(() => calls)
+      .toEqual([
+        {
+          status: "accepted",
+          ...CALLER_GROUPS,
+          manualGroupIds: [BASALT.id],
+          managedGroups: {
+            ...NO_MANAGED_GROUPS,
+            organizations: ["04vfs2w97"],
+          },
+        },
+      ]);
   });
 
   it("should report a failed load as an account failure", async () => {

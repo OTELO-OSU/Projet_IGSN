@@ -3,6 +3,7 @@ import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/rep
 import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
+import { managedLaboratoryCodes } from "@projet-igsn/domain/user/managed-laboratory-codes";
 import { Hono } from "hono";
 
 import type { AuthenticatedEnv } from "../auth/current-user.ts";
@@ -19,9 +20,10 @@ export function createCurrentUserRoutes(
   manualGroups: ManualGroupRepository,
 ) {
   return new Hono<AuthenticatedEnv>()
-    .get("/", (c) => {
+    .get("/", async (c) => {
       const claims = c.get("jwtPayload");
       const user = c.get("user");
+      const managed = await users.getModerationScope(user.id);
       const currentUser: CurrentUser = {
         sub: claims.sub,
         username: claims.preferred_username,
@@ -30,6 +32,7 @@ export function createCurrentUserRoutes(
         orcid: user.orcid,
         status: user.status,
         superAdmin: user.superAdmin,
+        managedLaboratories: managedLaboratoryCodes(managed),
         institutionalOrganization: user.institutionalOrganization,
         institutionalOsu: user.institutionalOsu,
         institutionalLaboratory: user.institutionalLaboratory,

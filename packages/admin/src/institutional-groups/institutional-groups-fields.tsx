@@ -2,27 +2,17 @@ import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-grou
 
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { filterLaboratoriesByOrgAndOsu } from "@projet-igsn/domain/institutional-group/filter-laboratories-by-org-and-osu";
-import { filterOrganizationsWithLaboratory } from "@projet-igsn/domain/institutional-group/filter-organizations-with-laboratory";
 import { filterOsusByOrg } from "@projet-igsn/domain/institutional-group/filter-osus-by-org";
 import {
   laboratoryLabel,
-  organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
 
+import {
+  ORGANIZATION_ITEMS,
+  toItems,
+} from "#/institutional-groups/to-items.ts";
 import { m } from "#/paraglide/messages.js";
-
-const toItems = (
-  entries: readonly { code: string }[],
-  label: (code: string) => string,
-) => entries.map(({ code }) => ({ value: code, label: label(code) }));
-
-const organizationItems = filterOrganizationsWithLaboratory().map(
-  ({ ror }) => ({
-    value: ror,
-    label: organizationLabel(ror),
-  }),
-);
 
 export function InstitutionalGroupsFields() {
   const form = useTypedAppFormContext({
@@ -44,7 +34,7 @@ export function InstitutionalGroupsFields() {
           <field.ComboboxField
             label={m.field_institutional_organization()}
             requiredToPublish
-            items={organizationItems}
+            items={ORGANIZATION_ITEMS}
             placeholder={m.organization_placeholder()}
             searchPlaceholder={m.organization_search_placeholder()}
             emptyText={m.organization_empty()}

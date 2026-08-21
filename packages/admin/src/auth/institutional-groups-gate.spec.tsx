@@ -18,6 +18,7 @@ const fakeIdentity = (groups: Record<string, string | null>) =>
         orcid: null,
         status: "accepted",
         superAdmin: false,
+        managedLaboratories: [],
         ...groups,
       }),
     ),

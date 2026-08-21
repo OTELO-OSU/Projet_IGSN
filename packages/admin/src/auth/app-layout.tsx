@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
+import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   Building2Icon,
@@ -99,15 +100,17 @@ export function AppLayout({
               label={m.nav_samples()}
               isCurrent={isSamplesSection}
             />
+            {me && canModerateUsers(me) && (
+              <NavItem
+                to="/users"
+                search={listSearch}
+                Icon={UsersIcon}
+                label={m.nav_users()}
+                isCurrent={isUsersSection}
+              />
+            )}
             {me?.superAdmin && (
               <>
-                <NavItem
-                  to="/users"
-                  search={listSearch}
-                  Icon={UsersIcon}
-                  label={m.nav_users()}
-                  isCurrent={isUsersSection}
-                />
                 <li>
                   <p id={GROUPS_NAV_ID} className="p-2 text-sm font-medium">
                     {m.nav_institutional_groups()}

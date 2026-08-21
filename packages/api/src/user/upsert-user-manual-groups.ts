@@ -12,8 +12,8 @@ export async function upsertUserManualGroups(
   userId: string,
   groupIds: string[],
   status: UserStatus,
+  mayEdit: boolean,
 ): Promise<{ joined: ManualGroup[]; leftIds: string[] }> {
-  const wanted = new Set(groupIds);
   const current = new Set(
     (
       await trx
@@ -23,6 +23,7 @@ export async function upsertUserManualGroups(
         .execute()
     ).map((row) => row.group_id),
   );
+  const wanted = mayEdit ? new Set(groupIds) : current;
   const joinedIds = [...wanted].filter((groupId) => !current.has(groupId));
   const leftIds = [...current].filter((groupId) => !wanted.has(groupId));
 

@@ -8,10 +8,11 @@ import type {
 import { Hono } from "hono";
 
 import type { AuthenticatedEnv } from "../auth/current-user.ts";
+import type { ModerationEnv } from "../auth/require-user-moderation.ts";
 import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
-import { requireSuperAdmin } from "../auth/require-super-admin.ts";
+import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import {
   logMembershipChange,
   notifyManualGroupJoined,
@@ -47,15 +48,21 @@ export function createUserRoutes(
   repository: UserRepository,
   mail?: { sendMail: SendMail; adminUrl: string },
 ) {
-  return new Hono<AuthenticatedEnv>()
-    .use("*", requireSuperAdmin)
+  return new Hono<ModerationEnv>()
+    .use("*", requireUserModeration(repository))
     .get("/", validateListUsersQuery, async (c) => {
-      const { data, total } = await repository.list(c.req.valid("query"));
+      const { data, total } = await repository.list(
+        c.req.valid("query"),
+        c.get("scope"),
+      );
       const body: ListUsersResponse = { data, meta: { total } };
       return c.json(body);
     })
     .get("/:id", validateUserIdParam, async (c) => {
-      const user = await repository.get(c.req.valid("param").id);
+      const user = await repository.get(
+        c.req.valid("param").id,
+        c.get("scope"),
+      );
       if (!user) {
         return c.json({ error: "User not found" }, 404);
       }
@@ -70,7 +77,7 @@ export function createUserRoutes(
       async (c) => {
         const id = c.req.valid("param").id;
         const { user, previousStatus, joinedGroups, leftGroupIds } =
-          await repository.update(id, c.req.valid("json"));
+          await repository.update(id, c.req.valid("json"), c.get("scope"));
 
         const actor = c.get("user");
         if (previousStatus !== user.status) {

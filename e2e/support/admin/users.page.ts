@@ -16,5 +16,7 @@ export function usersPage(page: Page) {
     openUser: (email: string) => row(email).getByRole("link").click(),
     expectGroup: (email: string, group: string) =>
       expect(row(email)).toContainText(group),
+    expectListed: (email: string) => expect(row(email)).toBeVisible(),
+    expectNotListed: (email: string) => expect(row(email)).toHaveCount(0),
   };
 }

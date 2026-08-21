@@ -4,12 +4,13 @@ export function filterLaboratoriesByOrgAndOsu({
   organizationRor,
   osu,
 }: {
-  organizationRor: string;
+  organizationRor?: string;
   osu?: string | null;
 }): Laboratory[] {
   return LABORATORIES.filter(
     (laboratory) =>
-      laboratory.organizationRors.includes(organizationRor) &&
+      (organizationRor == null ||
+        laboratory.organizationRors.includes(organizationRor)) &&
       (osu == null || laboratory.osu === osu),
   );
 }

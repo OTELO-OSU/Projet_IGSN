@@ -1,6 +1,8 @@
+import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
 import type { UpdateUser } from "@projet-igsn/domain/user/user-validator";
 
 import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
+import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import {
   adminUserResponseSchema,
   listUsersResponseSchema,
@@ -13,8 +15,9 @@ import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { insertUser } from "../tests/insert-user.ts";
+import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { pgTest } from "../tests/pg-test.ts";
-import { provisionUser } from "../tests/provision-user.ts";
+import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
 import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 
 const ADMIN_URL = "http://localhost:3001/";
@@ -229,6 +232,7 @@ const update = (over: Partial<UpdateUser> = {}): UpdateUser => ({
   status: "accepted",
   ...TRIO_A,
   manualGroupIds: [],
+  managedGroups: NO_MANAGED_GROUPS,
   ...over,
 });
 
@@ -280,15 +284,15 @@ const insertResearchers = (db: Parameters<typeof createApp>[0]) =>
     ])
     .execute();
 
-describe("admin user routes", () => {
-  const asSuperAdmin = async (db: Parameters<typeof createApp>[0]) => {
-    await provisionUser(db, "moderator", {
-      status: "accepted",
-      superAdmin: true,
-    });
-    return testClient(createApp(db).app);
-  };
+const asSuperAdmin = async (db: Parameters<typeof createApp>[0]) => {
+  await provisionUser(db, "moderator", {
+    status: "accepted",
+    superAdmin: true,
+  });
+  return testClient(createApp(db).app);
+};
 
+describe("admin user routes", () => {
   pgTest("should list every user with a total", async ({ db }) => {
     // Arrange
     await insertResearchers(db);
@@ -369,6 +373,7 @@ describe("admin user routes", () => {
       status: "pending",
       superAdmin: false,
       manualGroups: [],
+      managedGroups: NO_MANAGED_GROUPS,
     });
   });
 
@@ -454,6 +459,7 @@ describe("admin user routes", () => {
         status: "accepted",
         superAdmin: false,
         manualGroups: [{ id: MASSIF, name: "Massif Central 2026" }],
+        managedGroups: NO_MANAGED_GROUPS,
       });
       await expect(readGroups(db, target.id)).resolves.toEqual({
         ...TRIO_B,
@@ -920,4 +926,346 @@ describe("admin user routes", () => {
       expect([res.status, put.status]).toEqual([401, 401]);
     });
   });
+});
+
+const TRIO_C: Institution = {
+  institutionalOrganization: "04vfs2w97",
+  institutionalOsu: "OTELo",
+  institutionalLaboratory: "UMR7359",
+};
+
+const ORGANIZATION_WITHOUT_LABORATORY = "03fd77x13";
+
+type Db = Parameters<typeof createApp>[0];
+
+describe("space manager moderation", () => {
+  const asManager = async (
+    db: Db,
+    scope: { kind: "organization" | "osu" | "laboratory"; code: string },
+    overrides: Parameters<typeof insertUser>[2] = {},
+  ) => {
+    const manager = await insertUser(db, tokenEmail("moderator"), {
+      status: "accepted",
+      ...overrides,
+    });
+    await moderateInstitution(db, manager.id, scope);
+    return { manager, client: testClient(createApp(db).app) };
+  };
+
+  pgTest(
+    "should list only the users the institutional scope covers",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "inside@univ-lorraine.fr", {
+        institutionalOrganization: "04vfs2w97",
+        institutionalOsu: "OTELo",
+        institutionalLaboratory: "UMR7358",
+      });
+      await insertUser(db, "outside@univ-grenoble.fr", {
+        institutionalOrganization: "02rx3b187",
+        institutionalOsu: "OSUG",
+        institutionalLaboratory: "UMR5275",
+      });
+      const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
+      // Act
+      const res = await client.admin.users.$get(
+        { query: { page: "1", perPage: "25" } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      const body = listUsersResponseSchema.parse(await res.json());
+      expect(body.data.map((user) => user.email)).toEqual([
+        "inside@univ-lorraine.fr",
+      ]);
+      expect(body.meta.total).toBe(1);
+    },
+  );
+
+  pgTest(
+    "should list nothing when the scope resolves to no group",
+    async ({ db }) => {
+      // Arrange
+      await insertResearchers(db);
+      const { client } = await asManager(db, {
+        kind: "organization",
+        code: ORGANIZATION_WITHOUT_LABORATORY,
+      });
+      // Act
+      const res = await client.admin.users.$get(
+        { query: { page: "1", perPage: "25" } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      const body = listUsersResponseSchema.parse(await res.json());
+      expect(body).toEqual({ data: [], meta: { total: 0 } });
+    },
+  );
+
+  pgTest(
+    "should hide the caller and any super admin from the list",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "peer@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7358",
+      });
+      await insertUser(db, "boss@univ-lorraine.fr", {
+        superAdmin: true,
+        institutionalLaboratory: "UMR7358",
+      });
+      const { client } = await asManager(
+        db,
+        { kind: "osu", code: "OTELo" },
+        { institutionalLaboratory: "UMR7358" },
+      );
+      // Act
+      const res = await client.admin.users.$get(
+        { query: { page: "1", perPage: "25" } },
+        { headers: authHeader },
+      );
+      // Assert
+      const body = listUsersResponseSchema.parse(await res.json());
+      expect(body.data.map((user) => user.email)).toEqual([
+        "peer@univ-lorraine.fr",
+      ]);
+    },
+  );
+
+  pgTest("should narrow a status filter within the scope", async ({ db }) => {
+    // Arrange
+    await insertUser(db, "inside-pending@univ-lorraine.fr", {
+      status: "pending",
+      institutionalLaboratory: "UMR7358",
+    });
+    await insertUser(db, "inside-accepted@univ-lorraine.fr", {
+      institutionalLaboratory: "UMR7358",
+    });
+    await insertUser(db, "outside-pending@univ-grenoble.fr", {
+      status: "pending",
+      institutionalLaboratory: "UMR5275",
+    });
+    const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
+    // Act
+    const res = await client.admin.users.$get(
+      { query: { page: "1", perPage: "25", status: "pending" } },
+      { headers: authHeader },
+    );
+    // Assert
+    const body = listUsersResponseSchema.parse(await res.json());
+    expect(body.data.map((user) => user.email)).toEqual([
+      "inside-pending@univ-lorraine.fr",
+    ]);
+    expect(body.meta.total).toBe(1);
+  });
+
+  pgTest(
+    "should answer 403 to a manager whose account is not accepted",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "inside@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7358",
+      });
+      const { client } = await asManager(
+        db,
+        { kind: "osu", code: "OTELo" },
+        { status: "pending" },
+      );
+      // Act
+      const res = await client.admin.users.$get(
+        { query: { page: "1", perPage: "25" } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(403);
+    },
+  );
+
+  pgTest("should answer 404 reading an out-of-scope user", async ({ db }) => {
+    // Arrange
+    const outside = await insertUser(db, "outside@univ-grenoble.fr", {
+      institutionalLaboratory: "UMR5275",
+    });
+    const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
+    // Act
+    const res = await client.admin.users[":id"].$get(
+      { param: { id: outside.id } },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(404);
+  });
+
+  pgTest(
+    "should set the status and the institution of an in-scope user",
+    async ({ db }) => {
+      // Arrange
+      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+        status: "pending",
+        institutionalOrganization: "04vfs2w97",
+        institutionalOsu: "OTELo",
+        institutionalLaboratory: "UMR7358",
+      });
+      const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        {
+          param: { id: target.id },
+          json: update({ status: "accepted", ...TRIO_C }),
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(adminUserResponseSchema.parse(await res.json()).data).toEqual({
+        id: target.id,
+        email: "inside@univ-lorraine.fr",
+        name: null,
+        firstname: null,
+        orcid: null,
+        ...TRIO_C,
+        status: "accepted",
+        superAdmin: false,
+        manualGroups: [],
+        managedGroups: NO_MANAGED_GROUPS,
+      });
+    },
+  );
+
+  pgTest("should keep a membership a manager cannot detach", async ({ db }) => {
+    // Arrange
+    await insertGroup(db, MASSIF, "Massif Central 2026");
+    const target = await insertUser(db, "inside@univ-lorraine.fr", {
+      institutionalLaboratory: "UMR7358",
+    });
+    await insertMember(db, MASSIF, target.id);
+    const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
+    // Act
+    const res = await client.admin.users[":id"].$put(
+      { param: { id: target.id }, json: update({ manualGroupIds: [] }) },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    const { data } = adminUserResponseSchema.parse(await res.json());
+    expect(data.manualGroups).toEqual([
+      { id: MASSIF, name: "Massif Central 2026" },
+    ]);
+  });
+
+  pgTest.for<[string, ManagedGroups, string[]]>([
+    ["the managed groups", { ...NO_MANAGED_GROUPS, osus: ["OTELo"] }, []],
+    ["a membership", NO_MANAGED_GROUPS, [MASSIF]],
+  ])(
+    "should drop %s a manager may not alter and apply the rest",
+    async ([, managedGroups, manualGroupIds], { db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7358",
+      });
+      const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        {
+          param: { id: target.id },
+          json: update({ managedGroups, manualGroupIds }),
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      const { data } = adminUserResponseSchema.parse(await res.json());
+      expect(data.managedGroups).toEqual(NO_MANAGED_GROUPS);
+      expect(data.manualGroups).toEqual([]);
+      await expect(readGroups(db, target.id)).resolves.toEqual({
+        ...TRIO_A,
+        status: "accepted",
+      });
+    },
+  );
+
+  pgTest.for(["an out-of-scope user", "itself", "a super admin"] as const)(
+    "should answer 403 when a manager updates %s",
+    async (target, { db }) => {
+      // Arrange
+      const outside = await insertUser(db, "outside@univ-grenoble.fr", {
+        institutionalLaboratory: "UMR5275",
+      });
+      const boss = await insertUser(db, "boss@univ-lorraine.fr", {
+        superAdmin: true,
+        institutionalLaboratory: "UMR7358",
+      });
+      const { manager, client } = await asManager(
+        db,
+        { kind: "osu", code: "OTELo" },
+        { institutionalLaboratory: "UMR7358" },
+      );
+      const id = {
+        "an out-of-scope user": outside.id,
+        itself: manager.id,
+        "a super admin": boss.id,
+      }[target];
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        { param: { id }, json: update() },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(403);
+    },
+  );
+
+  pgTest(
+    "should let a super admin set a scope that round-trips",
+    async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7358",
+      });
+      const client = await asSuperAdmin(db);
+      const managedGroups = {
+        organizations: ["04vfs2w97"],
+        osus: ["OTELo"],
+        laboratories: ["UMR7358"],
+      };
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        { param: { id: target.id }, json: update({ managedGroups }) },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      const read = await client.admin.users[":id"].$get(
+        { param: { id: target.id } },
+        { headers: authHeader },
+      );
+      expect(
+        adminUserResponseSchema.parse(await read.json()).data.managedGroups,
+      ).toEqual(managedGroups);
+    },
+  );
+
+  pgTest(
+    "should move a user to an institution the manager does not manage",
+    async ({ db }) => {
+      // Arrange
+      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+        ...TRIO_A,
+      });
+      const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        { param: { id: target.id }, json: update(TRIO_B) },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      await expect(readGroups(db, target.id)).resolves.toEqual({
+        ...TRIO_B,
+        status: "accepted",
+      });
+    },
+  );
 });

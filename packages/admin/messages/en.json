@@ -503,5 +503,12 @@
   "manual_group_leave_error": "Could not leave the group",
   "section_manual_groups": "Manual groups",
   "field_manual_groups": "Groups this sample belongs to",
-  "manual_groups_field_locked": "You cannot change these groups."
+  "manual_groups_field_locked": "You cannot change these groups.",
+  "user_managed_groups_title": "Managed groups",
+  "user_managed_groups_cascade": "Institution rights cascade downwards: a managed organization grants every laboratory and every OSU it holds, and a managed OSU grants every laboratory it contains, one held by another organization included.",
+  "field_managed_organizations": "Managed organizations",
+  "field_managed_osus": "Managed OSUs",
+  "field_managed_laboratories": "Managed laboratories",
+  "managed_search_placeholder": "Search by name or identifier",
+  "managed_remove": "Remove {name}"
 }

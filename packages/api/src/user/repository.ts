@@ -1,18 +1,30 @@
+import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { ExpressionBuilder, Kysely } from "kysely";
 
+import {
+  knownManagedCodes,
+  NO_MANAGED_GROUPS,
+} from "@projet-igsn/domain/user/managed-groups";
 import { userSchema } from "@projet-igsn/domain/user/model";
 import { settableUserStatuses } from "@projet-igsn/domain/user/settable-user-statuses";
-import { adminUserSchema } from "@projet-igsn/domain/user/user-validator";
+import { userManagementRights } from "@projet-igsn/domain/user/user-management-rights";
+import {
+  adminUserSchema,
+  listedUserSchema,
+} from "@projet-igsn/domain/user/user-validator";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/postgres";
+import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/postgres";
 import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
 
 import { withTransaction } from "../transaction.ts";
+import { moderationScopeWhere } from "./moderation-scope-where.ts";
 import { searchUsers } from "./search-users.ts";
+import { updateUserStatusAndInstitutions } from "./update-user-status-and-institutions.ts";
+import { upsertUserManagedGroups } from "./upsert-user-managed-groups.ts";
 import { upsertUserManualGroups } from "./upsert-user-manual-groups.ts";
 
 const USER_COLUMNS = [
@@ -42,6 +54,26 @@ const manualGroups = (eb: ExpressionBuilder<DB, "user">) =>
       .orderBy("manual_group.name", "asc"),
   ).as("manualGroups");
 
+const managedCodes = (kind: DB["user_managed_institutional_group"]["kind"]) =>
+  sql<string[]>`coalesce((
+    select array_agg(code order by code)
+      from user_managed_institutional_group
+     where user_managed_institutional_group.user_id = "user".id
+       and user_managed_institutional_group.kind = ${kind}
+  ), '{}')`;
+
+const managedGroups = jsonBuildObject({
+  organizations: managedCodes("organization"),
+  osus: managedCodes("osu"),
+  laboratories: managedCodes("laboratory"),
+}).as("managedGroups");
+
+const toAdminUser = (row: { managedGroups: ManagedGroups }) =>
+  adminUserSchema.parse({
+    ...row,
+    managedGroups: knownManagedCodes(row.managedGroups),
+  });
+
 // ponytail: one write per admin request. Fine at a few researchers; read first
 // and write only on a change if the write volume ever matters.
 export function createUserRepository(db: Kysely<DB>): UserRepository {
@@ -58,23 +90,29 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .executeTakeFirstOrThrow();
         return userSchema.parse(row);
       }),
-    list: ({
-      page,
-      perPage,
-      status,
-      institutionalOrganization,
-      institutionalOsu,
-      institutionalLaboratory,
-    }) =>
+    list: (
+      {
+        page,
+        perPage,
+        status,
+        institutionalOrganization,
+        institutionalOsu,
+        institutionalLaboratory,
+      },
+      scope,
+    ) =>
       withTransaction(db, async (trx) => {
-        const matching = trx.selectFrom("user").where((eb) =>
-          eb.and({
-            status,
-            institutional_organization: institutionalOrganization,
-            institutional_osu: institutionalOsu,
-            institutional_laboratory: institutionalLaboratory,
-          }),
-        );
+        const matching = trx
+          .selectFrom("user")
+          .where((eb) =>
+            eb.and({
+              status,
+              institutional_organization: institutionalOrganization,
+              institutional_osu: institutionalOsu,
+              institutional_laboratory: institutionalLaboratory,
+            }),
+          )
+          .where((eb) => eb.and(moderationScopeWhere(eb, scope)));
         const rows = await matching
           .select(USER_COLUMNS)
           .select(manualGroups)
@@ -86,19 +124,31 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .select((eb) => eb.fn.countAll<number>().as("count"))
           .executeTakeFirstOrThrow();
         return {
-          data: rows.map((row) => adminUserSchema.parse(row)),
+          data: rows.map((row) => listedUserSchema.parse(row)),
           total: Number(count),
         };
       }),
-    get: (id) =>
+    get: (id, scope) =>
       withTransaction(db, async (trx) => {
         const row = await trx
           .selectFrom("user")
           .select(USER_COLUMNS)
           .select(manualGroups)
+          .select(managedGroups)
           .where("id", "=", id)
+          .where((eb) => eb.and(moderationScopeWhere(eb, scope)))
           .executeTakeFirst();
-        return row ? adminUserSchema.parse(row) : null;
+        return row ? toAdminUser(row) : null;
+      }),
+    getModerationScope: (userId) =>
+      withTransaction(db, async (trx) => {
+        const row = await trx
+          .selectFrom("user")
+          .select(managedGroups)
+          .where("id", "=", userId)
+          .where("status", "=", "accepted")
+          .executeTakeFirst();
+        return knownManagedCodes(row?.managedGroups ?? NO_MANAGED_GROUPS);
       }),
     listPending: () =>
       withTransaction(db, (trx) =>
@@ -120,17 +170,31 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .execute();
         return rows.map(({ email }) => email);
       }),
-    update: (id, user) =>
+    update: (id, submitted, scope) =>
       withTransaction(db, async (trx) => {
         const previous = await trx
           .selectFrom("user")
-          .select("status")
+          .select([
+            "status",
+            "institutional_organization as institutionalOrganization",
+            "institutional_osu as institutionalOsu",
+            "institutional_laboratory as institutionalLaboratory",
+          ])
           .where("id", "=", id)
+          .where((eb) => eb.and(moderationScopeWhere(eb, scope)))
           .forUpdate()
           .executeTakeFirst();
         if (!previous) {
-          throw new HTTPException(404, { message: "User not found" });
+          throw scope.superAdmin
+            ? new HTTPException(404, { message: "User not found" })
+            : new HTTPException(403, { message: "Forbidden" });
         }
+        const rights = userManagementRights(scope, previous);
+        const user = updateUserStatusAndInstitutions(
+          submitted,
+          previous,
+          rights,
+        );
         if (!settableUserStatuses(previous.status).includes(user.status)) {
           throw new HTTPException(422, { message: "Invalid status" });
         }
@@ -138,9 +202,13 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
         const { joined, leftIds } = await upsertUserManualGroups(
           trx,
           id,
-          user.manualGroupIds,
+          submitted.manualGroupIds,
           user.status,
+          rights.manualGroups,
         );
+        if (rights.managedGroups) {
+          await upsertUserManagedGroups(trx, id, submitted.managedGroups);
+        }
         await trx
           .updateTable("user")
           .set({
@@ -156,10 +224,11 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .selectFrom("user")
           .select(USER_COLUMNS)
           .select(manualGroups)
+          .select(managedGroups)
           .where("id", "=", id)
           .executeTakeFirstOrThrow();
         return {
-          user: adminUserSchema.parse(row),
+          user: toAdminUser(row),
           previousStatus: previous.status,
           joinedGroups: joined,
           leftGroupIds: leftIds,

@@ -33,35 +33,30 @@ describe("app", () => {
       expect(res.status).toBe(401);
     });
 
-    pgTest.for([
-      { seeded: { status: "accepted" } as const, superAdmin: false },
-      {
-        seeded: { status: "accepted", superAdmin: true } as const,
+    pgTest("should report the caller's moderation state", async ({ db }) => {
+      // Arrange
+      await insertUser(db, callerEmail, {
+        status: "accepted",
         superAdmin: true,
-      },
-    ])(
-      "should report the caller's moderation state ($seeded.status, super admin $superAdmin)",
-      async ({ seeded, superAdmin }, { db }) => {
-        // Arrange
-        await insertUser(db, callerEmail, seeded);
-        // Act
-        const res = await testClient(createApp(db).app).admin.currentUser.$get(
-          undefined,
-          { headers: authHeader },
-        );
-        // Assert
-        expect(await res.json()).toEqual({
-          sub: "test-token",
-          email: callerEmail,
-          orcid: null,
-          institutionalOrganization: null,
-          institutionalOsu: null,
-          institutionalLaboratory: null,
-          status: seeded.status,
-          superAdmin,
-        });
-      },
-    );
+      });
+      // Act
+      const res = await testClient(createApp(db).app).admin.currentUser.$get(
+        undefined,
+        { headers: authHeader },
+      );
+      // Assert
+      expect(await res.json()).toEqual({
+        sub: "test-token",
+        email: callerEmail,
+        orcid: null,
+        institutionalOrganization: null,
+        institutionalOsu: null,
+        institutionalLaboratory: null,
+        status: "accepted",
+        superAdmin: true,
+        managedLaboratories: [],
+      });
+    });
   });
 
   describe("a rejected caller", () => {

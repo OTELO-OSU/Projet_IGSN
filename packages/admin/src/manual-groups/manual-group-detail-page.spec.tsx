@@ -1,3 +1,4 @@
+import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 
@@ -100,7 +101,13 @@ function fakeApi({ members = [curie], directory = [dupont] } = {}) {
         ({ id }) => id === params.id,
       );
       return user
-        ? HttpResponse.json({ data: { ...user, manualGroups: [] } })
+        ? HttpResponse.json({
+            data: {
+              ...user,
+              manualGroups: [],
+              managedGroups: NO_MANAGED_GROUPS,
+            },
+          })
         : new HttpResponse(null, { status: 404 });
     }),
   );

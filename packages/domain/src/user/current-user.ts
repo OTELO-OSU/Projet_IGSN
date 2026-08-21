@@ -11,6 +11,7 @@ export const currentUserSchema = z.object({
   orcid: z.string().nullable(),
   status: userStatusSchema,
   superAdmin: z.boolean(),
+  managedLaboratories: z.array(z.string()),
   ...institutionalGroupsFields,
 });
 export type CurrentUser = z.infer<typeof currentUserSchema>;

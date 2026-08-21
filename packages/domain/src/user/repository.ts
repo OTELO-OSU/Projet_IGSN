@@ -1,8 +1,11 @@
 import type { SetInstitutionalGroups } from "../institutional-group/institutional-groups-validator.ts";
 import type { ManualGroup } from "../manual-group/model.ts";
+import type { ManagedGroups } from "./managed-groups.ts";
 import type { User, UserStatus } from "./model.ts";
+import type { ModerationScope } from "./moderation-scope.ts";
 import type {
   AdminUser,
+  ListedUser,
   ListUsersQuery,
   UpdateUser,
   UserIdentity,
@@ -28,11 +31,19 @@ export type UserRepository = {
     groups: SetInstitutionalGroups,
   ): Promise<void>;
   findByOrcid(orcid: string): Promise<User | undefined>;
-  list(query: ListUsersQuery): Promise<{ data: AdminUser[]; total: number }>;
-  get(id: string): Promise<AdminUser | null>;
+  list(
+    query: ListUsersQuery,
+    scope: ModerationScope,
+  ): Promise<{ data: ListedUser[]; total: number }>;
+  get(id: string, scope: ModerationScope): Promise<AdminUser | null>;
   listPending(): Promise<PendingUser[]>;
   listSuperAdminEmails(): Promise<string[]>;
-  update(id: string, user: UpdateUser): Promise<UpdateUserResult>;
+  update(
+    id: string,
+    user: UpdateUser,
+    scope: ModerationScope,
+  ): Promise<UpdateUserResult>;
+  getModerationScope(userId: string): Promise<ManagedGroups>;
 };
 
 export type UpdateUserResult = {

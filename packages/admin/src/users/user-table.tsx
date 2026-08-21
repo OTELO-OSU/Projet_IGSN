@@ -1,4 +1,4 @@
-import type { AdminUser } from "@projet-igsn/domain/user/user-validator";
+import type { ListedUser } from "@projet-igsn/domain/user/user-validator";
 
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -22,7 +22,7 @@ const groupSummary = (groups: { name: string }[]) => {
     : listed.join(", ");
 };
 
-const columns: ColumnDef<AdminUser>[] = [
+const columns: ColumnDef<ListedUser>[] = [
   {
     accessorKey: "name",
     header: () => m.column_name(),
@@ -58,7 +58,7 @@ const columns: ColumnDef<AdminUser>[] = [
   },
 ];
 
-export function UserTable({ users }: { users: AdminUser[] }) {
+export function UserTable({ users }: { users: ListedUser[] }) {
   const navigate = useNavigate();
   const table = useReactTable({
     data: users,

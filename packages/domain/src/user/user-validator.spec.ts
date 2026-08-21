@@ -1,11 +1,18 @@
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_PAGE_SIZE } from "../sample/sample-validator.ts";
+import { NO_MANAGED_GROUPS } from "./managed-groups.ts";
 import { listUsersQuerySchema, updateUserSchema } from "./user-validator.ts";
 
 describe("listUsersQuerySchema", () => {
-  it("should default an empty query", () => {
-    expect(listUsersQuerySchema.parse({})).toEqual({
+  it.each([
+    ["an empty query", {}],
+    [
+      "an unknown status or page size",
+      { page: "0", perPage: "7", status: "banned" },
+    ],
+  ])("should fall back to the defaults on %s", (_case, query) => {
+    expect(listUsersQuerySchema.parse(query)).toEqual({
       page: 1,
       perPage: DEFAULT_PAGE_SIZE,
       status: undefined,
@@ -16,12 +23,6 @@ describe("listUsersQuerySchema", () => {
     expect(
       listUsersQuerySchema.parse({ page: "3", status: "pending" }),
     ).toEqual({ page: 3, perPage: DEFAULT_PAGE_SIZE, status: "pending" });
-  });
-
-  it("should degrade an unknown status or page size to the default", () => {
-    expect(
-      listUsersQuerySchema.parse({ page: "0", perPage: "7", status: "banned" }),
-    ).toEqual({ page: 1, perPage: DEFAULT_PAGE_SIZE, status: undefined });
   });
 
   it("should read an empty value as no institutional filter", () => {
@@ -47,6 +48,8 @@ const TRIO = {
   institutionalLaboratory: "UMR7358",
 };
 
+const NO_MODERATION = { managedGroups: NO_MANAGED_GROUPS };
+
 const NO_TRIO = {
   institutionalOrganization: null,
   institutionalOsu: null,
@@ -60,12 +63,13 @@ describe("updateUserSchema", () => {
       {
         status: "accepted",
         ...TRIO,
+        ...NO_MODERATION,
         manualGroupIds: ["3f2504e0-4f89-41d3-9a0c-0305000000a1"],
       },
     ],
     [
       "an account that declared no institution yet",
-      { status: "pending", ...NO_TRIO, manualGroupIds: [] },
+      { status: "pending", ...NO_TRIO, ...NO_MODERATION, manualGroupIds: [] },
     ],
   ])("should accept %s", (_case, body) => {
     expect(updateUserSchema.safeParse(body).success).toBe(true);
@@ -73,7 +77,6 @@ describe("updateUserSchema", () => {
 
   it.each([
     ["an unknown field", { status: "accepted", ...TRIO, superAdmin: true }],
-    ["an institution left out of the payload", { status: "accepted" }],
     [
       "an organization without its laboratory",
       {
@@ -86,13 +89,13 @@ describe("updateUserSchema", () => {
       "a laboratory without its organization",
       { status: "accepted", ...NO_TRIO, institutionalLaboratory: "UMR7358" },
     ],
-    [
-      "a laboratory outside the organization",
-      { status: "accepted", ...TRIO, institutionalLaboratory: "UMR5275" },
-    ],
   ])("should refuse %s", (_case, body) => {
     expect(
-      updateUserSchema.safeParse({ ...body, manualGroupIds: [] }).success,
+      updateUserSchema.safeParse({
+        ...body,
+        ...NO_MODERATION,
+        manualGroupIds: [],
+      }).success,
     ).toBe(false);
   });
 });

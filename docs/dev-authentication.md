@@ -97,6 +97,13 @@ right away. Three more identities exercise moderation (ADR 0023):
 | Théo Roux    | `pending`                 | Owns drafts only; banner shown, publish disabled            |
 | Chloé Girard | `rejected`                | Locked out at sign-in; owns nothing                         |
 
+Marie Dupont, otherwise an ordinary researcher above, is also seeded as a
+space manager over the OTELo OSU (ADR 0030). Hugo Fournier is a `pending`
+account inside her scope (`institutionalOsu: "OTELo"`), for testing that
+moderation. Hugo has no entry in
+[`saml-idp/authsources.php`](../saml-idp/authsources.php): he is a seed
+fixture only, deliberately impossible to sign in as.
+
 - **SAML** users are defined in [`saml-idp/authsources.php`](../saml-idp/authsources.php).
   They release a French researcher profile (eduPersonPrincipalName, email, name), so
   brokered login completes without prompts. The broker skips signature validation in dev;

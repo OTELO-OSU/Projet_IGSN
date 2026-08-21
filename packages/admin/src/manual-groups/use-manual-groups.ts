@@ -7,7 +7,7 @@ import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useManualGroups(params: ListManualGroupsQuery) {
+export function useManualGroups(params: ListManualGroupsQuery, enabled = true) {
   const apiFetch = useApiClient();
   return useQuery({
     queryKey: ["manual-groups", params],
@@ -30,5 +30,6 @@ export function useManualGroups(params: ListManualGroupsQuery) {
       return { data, total: meta.total };
     },
     placeholderData: keepPreviousData,
+    enabled,
   });
 }

@@ -1,11 +1,16 @@
+import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
+import { superAdminScope } from "@projet-igsn/domain/user/moderation-scope";
 import { describe, expect } from "vitest";
 
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { insertUser } from "../tests/insert-user.ts";
+import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { createUserRepository } from "./repository.ts";
+
+const SUPER_ADMIN = superAdminScope("01890a5d-ac96-774b-bcce-b302099a8000");
 
 const NO_GROUPS = {
   institutionalOrganization: null,
@@ -20,39 +25,32 @@ const claims = {
 };
 
 describe("createUserRepository", () => {
-  pgTest("should create the user on first sight", async ({ db }) => {
-    // Act
-    const user = await createUserRepository(db).upsert(claims);
-    // Assert
-    expect(user).toEqual({
-      id: expect.any(String),
-      ...claims,
-      orcid: null,
-      ...NO_GROUPS,
-      status: "pending",
-      superAdmin: false,
-    });
-  });
-
-  pgTest("should store absent name parts as null", async ({ db }) => {
-    // Act
-    const user = await createUserRepository(db).upsert({
-      email: "no.name@univ-lorraine.fr",
-      name: null,
-      firstname: null,
-    });
-    // Assert
-    expect(user).toEqual({
-      id: expect.any(String),
-      email: "no.name@univ-lorraine.fr",
-      name: null,
-      firstname: null,
-      orcid: null,
-      ...NO_GROUPS,
-      status: "pending",
-      superAdmin: false,
-    });
-  });
+  pgTest.for([
+    { case: "the claims it carries", seen: claims },
+    {
+      case: "null for the absent name parts",
+      seen: {
+        email: "no.name@univ-lorraine.fr",
+        name: null,
+        firstname: null,
+      },
+    },
+  ])(
+    "should create the user on first sight with $case",
+    async ({ seen }, { db }) => {
+      // Act
+      const user = await createUserRepository(db).upsert(seen);
+      // Assert
+      expect(user).toEqual({
+        id: expect.any(String),
+        ...seen,
+        orcid: null,
+        ...NO_GROUPS,
+        status: "pending",
+        superAdmin: false,
+      });
+    },
+  );
 
   pgTest(
     "should keep the same id and refresh the name on the next sight",
@@ -393,11 +391,14 @@ describe("createUserRepository", () => {
     // Arrange
     await insertUsers(db);
     // Act
-    const { data, total } = await createUserRepository(db).list({
-      page: 1,
-      perPage: 25,
-      status: undefined,
-    });
+    const { data, total } = await createUserRepository(db).list(
+      {
+        page: 1,
+        perPage: 25,
+        status: undefined,
+      },
+      SUPER_ADMIN,
+    );
     // Assert
     expect(total).toBe(3);
     expect(data.map((user) => user.email)).toEqual([
@@ -422,11 +423,14 @@ describe("createUserRepository", () => {
     // Arrange
     await insertUsers(db);
     // Act
-    const { data, total } = await createUserRepository(db).list({
-      page: 1,
-      perPage: 25,
-      status: "pending",
-    });
+    const { data, total } = await createUserRepository(db).list(
+      {
+        page: 1,
+        perPage: 25,
+        status: "pending",
+      },
+      SUPER_ADMIN,
+    );
     // Assert
     expect(total).toBe(1);
     expect(data.map((user) => user.email)).toEqual([
@@ -438,11 +442,14 @@ describe("createUserRepository", () => {
     // Arrange
     await insertUsers(db);
     // Act
-    const { data, total } = await createUserRepository(db).list({
-      page: 2,
-      perPage: 2,
-      status: undefined,
-    });
+    const { data, total } = await createUserRepository(db).list(
+      {
+        page: 2,
+        perPage: 2,
+        status: undefined,
+      },
+      SUPER_ADMIN,
+    );
     // Assert
     expect(total).toBe(3);
     expect(data.map((user) => user.email)).toEqual([
@@ -487,12 +494,15 @@ describe("createUserRepository", () => {
       // Arrange
       await insertGroupedUsers(db);
       // Act
-      const { data, total } = await createUserRepository(db).list({
-        page: 1,
-        perPage: 25,
-        status: undefined,
-        ...filter,
-      });
+      const { data, total } = await createUserRepository(db).list(
+        {
+          page: 1,
+          perPage: 25,
+          status: undefined,
+          ...filter,
+        },
+        SUPER_ADMIN,
+      );
       // Assert
       expect(data.map((user) => user.email)).toEqual(expected);
       expect(total).toBe(expected.length);
@@ -503,12 +513,15 @@ describe("createUserRepository", () => {
     // Arrange
     await insertGroupedUsers(db);
     // Act
-    const { data, total } = await createUserRepository(db).list({
-      page: 1,
-      perPage: 25,
-      status: "accepted",
-      institutionalLaboratory: "UMR7358",
-    });
+    const { data, total } = await createUserRepository(db).list(
+      {
+        page: 1,
+        perPage: 25,
+        status: "accepted",
+        institutionalLaboratory: "UMR7358",
+      },
+      SUPER_ADMIN,
+    );
     // Assert
     expect(data.map((user) => user.email)).toEqual(["alice@univ-lorraine.fr"]);
     expect(total).toBe(1);
@@ -520,12 +533,15 @@ describe("createUserRepository", () => {
       // Arrange
       await insertGroupedUsers(db);
       // Act
-      const { data, total } = await createUserRepository(db).list({
-        page: 2,
-        perPage: 1,
-        status: undefined,
-        institutionalLaboratory: "UMR7358",
-      });
+      const { data, total } = await createUserRepository(db).list(
+        {
+          page: 2,
+          perPage: 1,
+          status: undefined,
+          institutionalLaboratory: "UMR7358",
+        },
+        SUPER_ADMIN,
+      );
       // Assert
       expect(data.map((user) => user.email)).toEqual([
         "bruno@univ-lorraine.fr",
@@ -539,9 +555,13 @@ describe("createUserRepository", () => {
     await insertUsers(db);
     const repository = createUserRepository(db);
     // Act
-    const found = await repository.get("01890a5d-ac96-774b-bcce-b302099a8061");
+    const found = await repository.get(
+      "01890a5d-ac96-774b-bcce-b302099a8061",
+      SUPER_ADMIN,
+    );
     const missing = await repository.get(
       "01890a5d-ac96-774b-bcce-b302099a8099",
+      SUPER_ADMIN,
     );
     // Assert
     expect(found).toEqual({
@@ -554,6 +574,7 @@ describe("createUserRepository", () => {
       status: "pending",
       superAdmin: false,
       manualGroups: [],
+      managedGroups: NO_MANAGED_GROUPS,
     });
     expect(missing).toBeNull();
   });
@@ -609,5 +630,46 @@ describe("createUserRepository", () => {
     const emails = await createUserRepository(db).listSuperAdminEmails();
 
     expect(emails).toEqual(["admin@univ-lorraine.fr", "zoe@univ-lorraine.fr"]);
+  });
+});
+
+describe("moderation scope", () => {
+  pgTest("should reach no user at all with an empty scope", async ({ db }) => {
+    // Arrange
+    const caller = await insertUser(db, "manager@univ-lorraine.fr");
+    const other = await insertUser(db, "peer@univ-lorraine.fr", {
+      institutionalLaboratory: "UMR7358",
+    });
+    const repository = createUserRepository(db);
+    const moderation = {
+      callerId: caller.id,
+      superAdmin: false,
+      managedLaboratories: [],
+    };
+    // Act
+    const listed = await repository.list({ page: 1, perPage: 25 }, moderation);
+    const read = await repository.get(other.id, moderation);
+    // Assert
+    expect(listed).toEqual({ data: [], total: 0 });
+    expect(read).toBeNull();
+  });
+
+  pgTest("should read the caller's own managed groups", async ({ db }) => {
+    // Arrange
+    const caller = await insertUser(db, "manager@univ-lorraine.fr");
+    await moderateInstitution(
+      db,
+      caller.id,
+      { kind: "osu", code: "OTELo" },
+      { kind: "laboratory", code: "UMR5275" },
+    );
+    // Act
+    const groups = await createUserRepository(db).getModerationScope(caller.id);
+    // Assert
+    expect(groups).toEqual({
+      organizations: [],
+      osus: ["OTELo"],
+      laboratories: ["UMR5275"],
+    });
   });
 });

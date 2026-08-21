@@ -61,6 +61,7 @@ function fakeApi({ forbidden = false }: { forbidden?: boolean } = {}) {
         orcid: null,
         status: "accepted",
         superAdmin: true,
+        managedLaboratories: [],
         ...CALLER_GROUPS,
       }),
     ),
