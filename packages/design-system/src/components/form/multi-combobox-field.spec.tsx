@@ -4,8 +4,6 @@ import { page } from "vitest/browser";
 
 import { useAppForm } from "./app-form.tsx";
 
-// Twelve items so the "first 10 unselected" cap hides the last two until typed.
-// Distinct, non-overlapping labels so substring name matching stays unambiguous.
 const items = [
   { value: "fe", label: "Iron" },
   { value: "cu", label: "Copper" },
@@ -23,11 +21,15 @@ const items = [
 
 function Harness({
   onSubmit = () => {},
+  selected = [],
+  lockedValues,
 }: {
   onSubmit?: (value: string[]) => void;
+  selected?: string[];
+  lockedValues?: string[];
 } = {}) {
   const form = useAppForm({
-    defaultValues: { elements: [] as string[] },
+    defaultValues: { elements: selected },
     onSubmit: ({ value }) => onSubmit(value.elements),
   });
   return (
@@ -46,6 +48,7 @@ function Harness({
             searchPlaceholder="Search elements..."
             emptyText="No element found"
             removeLabel={(label) => `Remove ${label}`}
+            lockedValues={lockedValues}
           />
         )}
       </form.AppField>
@@ -103,6 +106,17 @@ describe("MultiComboboxField", () => {
     await page.getByRole("button", { name: "Save" }).click();
 
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledWith([]));
+  });
+
+  it("should not offer to remove a locked value", async () => {
+    await render(<Harness selected={["fe", "cu"]} lockedValues={["fe"]} />);
+
+    await expect
+      .element(page.getByRole("button", { name: "Remove Iron" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(page.getByRole("button", { name: "Remove Copper" }))
+      .toBeEnabled();
   });
 
   it("should submit every picked value", async () => {

@@ -55,6 +55,7 @@ describe("app", () => {
         status: "accepted",
         superAdmin: true,
         managedLaboratories: [],
+        managedManualGroups: [],
       });
     });
   });

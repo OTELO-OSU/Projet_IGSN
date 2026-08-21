@@ -1,5 +1,5 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
-import type { Expression, Kysely } from "kysely";
+import type { Kysely } from "kysely";
 
 import {
   manualGroupListItemSchema,
@@ -7,13 +7,16 @@ import {
   myManualGroupSchema,
 } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { manualGroupSchema } from "@projet-igsn/domain/manual-group/model";
-import { expressionBuilder, sql } from "kysely";
+import { sql } from "kysely";
 import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
 
 import { type Transactional, withTransaction } from "../transaction.ts";
 import { addManualGroupMember } from "./add-manual-group-member.ts";
+import { detachManualGroupMember } from "./detach-manual-group-member.ts";
+import { manualGroupsByIds } from "./manual-groups-by-ids.ts";
+import { ownsPublishedSampleInGroup } from "./owns-published-sample-in-group.ts";
 
 const GROUP_COLUMNS = ["id", "name"] as const;
 
@@ -22,28 +25,6 @@ const publishedSampleGroups = (trx: Transactional<DB>) =>
     .selectFrom("sample_manual_group")
     .innerJoin("sample", "sample.id", "sample_manual_group.sample_id")
     .where("sample.published", "=", true);
-
-const ownsPublishedSampleInGroup = (
-  userId: string,
-  groupId: string | Expression<string>,
-) => {
-  const eb = expressionBuilder<DB, "manual_group">();
-  return eb.exists(
-    eb
-      .selectFrom("sample_manual_group")
-      .innerJoin("sample", "sample.id", "sample_manual_group.sample_id")
-      .innerJoin(
-        "user_sample",
-        "user_sample.sample_id",
-        "sample_manual_group.sample_id",
-      )
-      .select("sample.id")
-      .where("sample_manual_group.group_id", "=", groupId)
-      .where("sample.published", "=", true)
-      .where("user_sample.user_id", "=", userId)
-      .where("user_sample.role", "=", "owner"),
-  );
-};
 
 // ponytail: name-keyed advisory lock rather than catching the unique violation, which would poison a reused transaction (no savepoints).
 const lockName = (trx: Transactional<DB>, name: string) =>
@@ -55,10 +36,15 @@ export function createManualGroupRepository(
   db: Kysely<DB>,
 ): ManualGroupRepository {
   return {
-    list: ({ page, perPage, search }) =>
+    list: ({ page, perPage, search }, managedGroupIds) =>
       withTransaction(db, async (trx) => {
         const matching = trx
           .selectFrom("manual_group")
+          .$if(managedGroupIds !== null, (qb) =>
+            managedGroupIds!.length > 0
+              ? qb.where("id", "in", managedGroupIds!)
+              : qb.where((eb) => eb.lit(false)),
+          )
           .$if(Boolean(search), (qb) =>
             qb.where(
               "name",
@@ -170,31 +156,17 @@ export function createManualGroupRepository(
       withTransaction(db, (trx) => addManualGroupMember(trx, groupId, userId)),
     removeMember: (groupId, userId) =>
       withTransaction(db, async (trx) => {
-        const { numDeletedRows } = await trx
-          .deleteFrom("manual_group_member")
-          .where("group_id", "=", groupId)
-          .where("user_id", "=", userId)
-          .executeTakeFirst();
-        return numDeletedRows > 0n ? "removed" : "not_found";
+        const detached = await detachManualGroupMember(trx, groupId, userId);
+        return detached === "detached"
+          ? "removed"
+          : detached === "not_member"
+            ? "not_found"
+            : detached;
       }),
     leave: (groupId, userId) =>
       withTransaction(db, async (trx) => {
-        const { numDeletedRows } = await trx
-          .deleteFrom("manual_group_member")
-          .where("group_id", "=", groupId)
-          .where("user_id", "=", userId)
-          .where((eb) => eb.not(ownsPublishedSampleInGroup(userId, groupId)))
-          .executeTakeFirst();
-        if (numDeletedRows > 0n) {
-          return "left";
-        }
-        const member = await trx
-          .selectFrom("manual_group_member")
-          .select("group_id")
-          .where("group_id", "=", groupId)
-          .where("user_id", "=", userId)
-          .executeTakeFirst();
-        return member ? "has_published_sample" : "not_member";
+        const detached = await detachManualGroupMember(trx, groupId, userId);
+        return detached === "detached" ? "left" : detached;
       }),
     listForUser: (userId) =>
       withTransaction(db, async (trx) => {
@@ -219,6 +191,13 @@ export function createManualGroupRepository(
           .execute();
         return rows.map((row) => myManualGroupSchema.parse(row));
       }),
+    listByIds: (ids) =>
+      ids.length === 0
+        ? Promise.resolve([])
+        : withTransaction(db, async (trx) => {
+            const rows = await manualGroupsByIds(trx, ids);
+            return rows.map((row) => manualGroupSchema.parse(row));
+          }),
     listForSampleOwner: (sampleId) =>
       withTransaction(db, async (trx) => {
         const rows = await trx

@@ -1,3 +1,5 @@
+import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
+
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -11,6 +13,7 @@ import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
 import { CALLER_GROUPS } from "../../test/caller-groups.ts";
+import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
@@ -40,19 +43,28 @@ type Options = {
   failPut?: boolean;
   failGet?: boolean;
   manualGroups?: { id: string; name: string }[];
-  caller?: { superAdmin?: boolean; managed?: { laboratories: string[] } };
+  managedManualGroupIds?: string[];
+  caller?: Partial<CurrentUser>;
 };
 
+const OFF_CATALOG_ID = "3f2504e0-4f89-41d3-9a0c-0305000000ff";
 const LORRAINE = "Université de Lorraine (04vfs2w97)";
 const CRPG =
   "Centre de recherches pétrographiques et géochimiques (CRPG) (UMR7358)";
-const INSTITUTION_MANAGER = {
+const INSTITUTION_MANAGER: Partial<CurrentUser> = {
   superAdmin: false,
   managedLaboratories: [CALLER_GROUPS.institutionalLaboratory],
+  managedManualGroups: [],
 };
-const OTHER_LABORATORY_MANAGER = {
+const OTHER_LABORATORY_MANAGER: Partial<CurrentUser> = {
   superAdmin: false,
   managedLaboratories: ["UMR7360"],
+  managedManualGroups: [],
+};
+const GROUP_MANAGER: Partial<CurrentUser> = {
+  superAdmin: false,
+  managedLaboratories: [],
+  managedManualGroups: [METEORITE],
 };
 const MODERATION_SEARCH = "Search by name or identifier";
 
@@ -63,6 +75,7 @@ function fakeApi({
   failPut = false,
   failGet = false,
   manualGroups = [BASALT],
+  managedManualGroupIds = [],
   caller = { superAdmin: true },
 }: Options) {
   let user = {
@@ -74,23 +87,15 @@ function fakeApi({
     status,
     superAdmin: false,
     manualGroups,
-    managedGroups: NO_MANAGED_GROUPS,
+    managedGroups: {
+      ...NO_MANAGED_GROUPS,
+      manualGroupIds: managedManualGroupIds,
+    },
     ...CALLER_GROUPS,
   };
   const calls: unknown[] = [];
+  fakeCurrentUser(caller);
   worker.use(
-    http.get("*/admin/currentUser", () =>
-      HttpResponse.json({
-        sub: "s",
-        name: "Marie Dupont",
-        orcid: null,
-        status: "accepted",
-        superAdmin: false,
-        managedLaboratories: [],
-        ...CALLER_GROUPS,
-        ...caller,
-      }),
-    ),
     http.put("*/admin/users/:id", async ({ request }) => {
       if (failPut) return new HttpResponse(null, { status: 500 });
       const body = (await request.json()) as {
@@ -363,11 +368,12 @@ describe("UserDetailPage", () => {
   );
 
   it.each([
-    ["a manager of the target's laboratory", INSTITUTION_MANAGER, true],
-    ["a manager of another laboratory", OTHER_LABORATORY_MANAGER, false],
+    ["an institution manager", INSTITUTION_MANAGER, true, false],
+    ["a manual group manager", GROUP_MANAGER, false, true],
+    ["a manager of another laboratory", OTHER_LABORATORY_MANAGER, false, false],
   ] as const)(
-    "should let %s edit the institutions it manages and nothing else",
-    async (_case, caller, institutions) => {
+    "should let %s edit only the fields of the kind it manages",
+    async (_case, caller, institutions, groups) => {
       const { screen } = await renderUserPage({ status: "accepted", caller });
       const expectEditable = (
         field: ReturnType<typeof screen.getByRole>,
@@ -387,10 +393,29 @@ describe("UserDetailPage", () => {
       );
       await expectEditable(
         screen.getByRole("combobox", { name: "Manual groups", exact: true }),
-        false,
+        groups,
       );
     },
   );
+
+  it("should let a manual group manager toggle only the groups it manages", async () => {
+    const { screen } = await renderUserPage({
+      status: "accepted",
+      caller: GROUP_MANAGER,
+    });
+
+    await expect
+      .element(screen.getByRole("button", { name: `Detach ${BASALT.name}` }))
+      .not.toBeInTheDocument();
+
+    await screen
+      .getByRole("combobox", { name: "Manual groups", exact: true })
+      .click();
+
+    await expect
+      .element(screen.getByRole("option", { name: METEORITE.name }))
+      .toBeVisible();
+  });
 
   it("should find a managed laboratory by its code", async () => {
     const { screen } = await renderUserPage();
@@ -430,6 +455,17 @@ describe("UserDetailPage", () => {
           },
         },
       ]);
+  });
+
+  it("should keep a granted group the catalog does not offer removable", async () => {
+    const { screen } = await renderUserPage({
+      status: "accepted",
+      managedManualGroupIds: [OFF_CATALOG_ID],
+    });
+
+    await expect
+      .element(screen.getByRole("button", { name: `Remove ${OFF_CATALOG_ID}` }))
+      .toBeVisible();
   });
 
   it("should report a failed load as an account failure", async () => {

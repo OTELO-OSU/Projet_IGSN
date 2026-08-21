@@ -1,4 +1,6 @@
 import { managedGroupsSection } from "../support/admin/managed-groups.page";
+import { manualGroupPage } from "../support/admin/manual-group.page";
+import { manualGroupsPage } from "../support/admin/manual-groups.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { userPage } from "../support/admin/user.page";
@@ -107,9 +109,50 @@ test.describe("space manager", () => {
     const user = userPage(page);
 
     await signInAsResearcher(page, RESEARCHERS.marie);
-    await page.goto(OUT_OF_SCOPE_USER);
+    await page.goto(OUT_OF_SCOPE_USER, { waitUntil: "commit" });
 
     await user.expectNotFound();
+  });
+
+  test("a manual group manager edits only the groups it manages", async ({
+    page,
+  }) => {
+    const users = usersPage(page);
+    const user = userPage(page);
+
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await users.open();
+    await users.openUser(RESEARCHERS.jean.email);
+
+    await user.expectStatusReadOnly();
+    await user.expectInstitutionReadOnly();
+    await user.expectGroupLocked("GeoRift");
+
+    await user.associateGroup("ProfilLoire 2024");
+    await page.reload();
+
+    await user.expectGroup("ProfilLoire 2024");
+  });
+
+  test("a manual group manager curates the members of its own groups", async ({
+    page,
+  }) => {
+    const groups = manualGroupsPage(page);
+    const group = manualGroupPage(page);
+
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await groups.open();
+    await groups.expectVisible();
+
+    await groups.expectNoGroupRow("OZCAR-RI");
+    await groups.openGroup("ANR CritMet");
+    await group.expectNoEditControl();
+
+    await group.associate("Moreau", RESEARCHERS.luc.email);
+    await group.expectMember(RESEARCHERS.luc.email, "Active");
+
+    await group.detach("Luc Moreau");
+    await group.expectNoMember(RESEARCHERS.luc.email);
   });
 
   test("a space manager remains an ordinary researcher", async ({ page }) => {

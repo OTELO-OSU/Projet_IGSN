@@ -16,6 +16,7 @@ const fakeIdentity = (status: number, body?: BodyInit) =>
             status: "accepted",
             superAdmin: false,
             managedLaboratories: [],
+            managedManualGroups: [],
           })
         : new HttpResponse(body ?? null, { status }),
     ),

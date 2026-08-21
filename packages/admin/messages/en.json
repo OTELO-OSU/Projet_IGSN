@@ -490,6 +490,7 @@
   "manual_group_detach_member": "Detach {name}",
   "manual_group_detach_title": "Detach this member?",
   "manual_group_detach_description": "{name} will no longer belong to this group.",
+  "manual_group_detach_published": "This member cannot be detached while they own a published sample attached to the group.",
   "manual_group_member_removed": "Member detached",
   "manual_group_member_remove_error": "Could not detach the member",
   "settings_manual_groups_title": "Manual groups",
@@ -509,6 +510,7 @@
   "field_managed_organizations": "Managed organizations",
   "field_managed_osus": "Managed OSUs",
   "field_managed_laboratories": "Managed laboratories",
+  "field_managed_manual_groups": "Managed manual groups",
   "managed_search_placeholder": "Search by name or identifier",
   "managed_remove": "Remove {name}"
 }

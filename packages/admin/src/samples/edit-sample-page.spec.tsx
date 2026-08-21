@@ -166,6 +166,7 @@ function fakeApi(
         status: callerStatus,
         superAdmin: false,
         managedLaboratories: [],
+        managedManualGroups: [],
         ...CALLER_GROUPS,
       });
     }),
@@ -744,23 +745,6 @@ describe("EditSamplePage", () => {
       .element(screen.getByRole("heading", { name: "Samples" }))
       .toBeVisible();
     expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH"]);
-  });
-
-  it("should show a toast after saving", async () => {
-    const { screen } = await renderEditPage();
-    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
-    await screen.getByRole("button", { name: "Save as draft" }).click();
-
-    await expect
-      .element(screen.getByRole("region", { name: /notifications/i }))
-      .toHaveTextContent("Sample saved");
-  });
-
-  it("should show a toast after publishing", async () => {
-    const { screen } = await renderEditPage();
-    await screen.getByRole("button", { name: "Save & Publish" }).click();
-    await screen.getByRole("button", { name: "Confirm" }).click();
-
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Sample published");
@@ -786,7 +770,7 @@ describe("EditSamplePage", () => {
       .toHaveTextContent("Could not publish the sample. Please try again.");
   });
 
-  it("should stay on the page after Save as draft", async () => {
+  it("should stay on the page after Save as draft, with a toast", async () => {
     const { screen, calls } = await renderEditPage();
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
     await screen.getByRole("button", { name: "Save as draft" }).click();
@@ -797,6 +781,9 @@ describe("EditSamplePage", () => {
     await vi.waitFor(() =>
       expect(calls).toEqual(["PUT Grès de Fontainebleau"]),
     );
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Sample saved");
   });
 
   it("should upload files staged in the Links tab only when saving, before the save", async () => {

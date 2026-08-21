@@ -7,6 +7,7 @@ import { useAppForm } from "@projet-igsn/design-system/components/form/app-form"
 import { FieldDisabledProvider } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { canJoinManualGroup } from "@projet-igsn/domain/manual-group/can-join-manual-group";
+import { canManageManualGroup } from "@projet-igsn/domain/user/can-manage-manual-group";
 import { settableUserStatuses } from "@projet-igsn/domain/user/settable-user-statuses";
 import { userManagementRights } from "@projet-igsn/domain/user/user-management-rights";
 import { updateUserSchema } from "@projet-igsn/domain/user/user-validator";
@@ -50,14 +51,15 @@ export function UserForm({
   save: { mutate: (user: UpdateUser) => void; isPending: boolean };
 }) {
   const me = useCurrentUser().data;
-  const rights = userManagementRights(
-    {
-      superAdmin: me?.superAdmin === true,
-      managedLaboratories: me?.managedLaboratories ?? [],
-    },
-    user,
-  );
-  const catalog = useManualGroups(CATALOG_PAGE, rights.manualGroups);
+  const isSuperAdmin = me?.superAdmin === true;
+  const myManagedGroups = me?.managedManualGroups ?? [];
+  const caller = {
+    superAdmin: isSuperAdmin,
+    managedLaboratories: me?.managedLaboratories ?? [],
+    managedManualGroupIds: myManagedGroups.map((group) => group.id),
+  };
+  const rights = userManagementRights(caller, user);
+  const catalog = useManualGroups(CATALOG_PAGE, isSuperAdmin);
   const form = useAppForm({
     defaultValues: {
       status: user.status,
@@ -81,10 +83,14 @@ export function UserForm({
   const memberItems = user.manualGroups.map(toItem);
   const memberIds = new Set(memberItems.map((item) => item.value));
   const catalogItems = (catalog.data?.data ?? []).map(toItem);
+  const attachable = isSuperAdmin ? catalogItems : myManagedGroups.map(toItem);
   const groupItems = [
     ...memberItems,
-    ...catalogItems.filter((item) => !memberIds.has(item.value)),
+    ...attachable.filter((item) => !memberIds.has(item.value)),
   ];
+  const lockedGroupIds = memberItems
+    .map((item) => item.value)
+    .filter((id) => !canManageManualGroup(caller, id));
   const managedFields = [
     {
       name: "managedGroups.organizations",
@@ -109,6 +115,13 @@ export function UserForm({
       items: MANAGED_LABORATORY_ITEMS,
       placeholder: m.laboratory_placeholder(),
       emptyText: m.laboratory_empty(),
+    },
+    {
+      name: "managedGroups.manualGroupIds",
+      label: m.field_managed_manual_groups(),
+      items: withGranted(catalogItems, user.managedGroups.manualGroupIds),
+      placeholder: m.manual_group_placeholder(),
+      emptyText: m.manual_groups_empty(),
     },
   ] as const;
 
@@ -156,6 +169,7 @@ export function UserForm({
                 <field.MultiComboboxField
                   label={m.user_manual_groups_title()}
                   disabled={!rights.manualGroups}
+                  lockedValues={lockedGroupIds}
                   items={canJoinManualGroup(status) ? groupItems : memberItems}
                   placeholder={m.manual_group_placeholder()}
                   searchPlaceholder={m.manual_groups_search_placeholder()}

@@ -13,6 +13,9 @@ export function userPage(page: Page) {
     exact: true,
   });
 
+  const detachButton = (name: string) =>
+    page.getByRole("button", { name: `Detach ${name}` });
+
   const save = async () => {
     await page.getByRole("button", { name: "Save" }).click();
     await expect(page.getByText("Account updated")).toBeVisible();
@@ -25,11 +28,17 @@ export function userPage(page: Page) {
       await attachManualGroup(page, "Manual groups", name);
       await save();
     },
-    expectGroup: (name: string) =>
-      expect(
-        page.getByRole("button", { name: `Detach ${name}` }),
-      ).toBeVisible(),
+    expectGroup: (name: string) => expect(detachButton(name)).toBeVisible(),
     expectGroupsReadOnly: () => expect(groupsField).toBeDisabled(),
+    expectStatusReadOnly: () => expect(statusField).toBeDisabled(),
+    expectInstitutionReadOnly: () =>
+      expect(
+        page.getByRole("combobox", { name: "Organization" }),
+      ).toBeDisabled(),
+    expectGroupLocked: async (name: string) => {
+      await expect(page.getByText(name, { exact: true })).toBeVisible();
+      await expect(detachButton(name)).toHaveCount(0);
+    },
     save,
     setStatus: async (status: string) => {
       await chooseOption(page)("Status", status);

@@ -2,9 +2,11 @@ import type { ListManualGroupsQuery } from "@projet-igsn/domain/manual-group/man
 
 import { SearchField } from "@projet-igsn/design-system/components/ui/search-field";
 import { listManualGroupsQuerySchema } from "@projet-igsn/domain/manual-group/manual-group-validator";
+import { canAdminManualGroups } from "@projet-igsn/domain/user/can-admin-manual-groups";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
+import { RouteGuard } from "#/auth/route-guard.tsx";
+import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { CreateManualGroupDialog } from "#/manual-groups/create-manual-group-dialog.tsx";
 import { ManualGroupTable } from "#/manual-groups/manual-group-table.tsx";
 import { useManualGroups } from "#/manual-groups/use-manual-groups.ts";
@@ -14,13 +16,14 @@ import { m } from "#/paraglide/messages.js";
 export const Route = createFileRoute("/manual-groups/")({
   validateSearch: listManualGroupsQuerySchema,
   component: () => (
-    <SuperAdminOnly>
+    <RouteGuard allow={canAdminManualGroups}>
       <ManualGroupsPage />
-    </SuperAdminOnly>
+    </RouteGuard>
   ),
 });
 
 function ManualGroupsPage() {
+  const { data: me } = useCurrentUser();
   const { page, perPage, search } = Route.useSearch();
   const navigate = Route.useNavigate();
   const query = useManualGroups({ page, perPage, search });
@@ -35,7 +38,7 @@ function ManualGroupsPage() {
     <>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">{m.manual_groups_title()}</h1>
-        <CreateManualGroupDialog />
+        {me?.superAdmin && <CreateManualGroupDialog />}
       </div>
 
       <SearchField

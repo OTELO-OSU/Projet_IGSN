@@ -6,7 +6,11 @@ export type UserManagementRights = {
 };
 
 export function userManagementRights(
-  caller: { superAdmin: boolean; managedLaboratories: string[] },
+  caller: {
+    superAdmin: boolean;
+    managedLaboratories: string[];
+    managedManualGroupIds: string[];
+  },
   target: { institutionalLaboratory: string | null },
 ): UserManagementRights {
   const institutions =
@@ -16,7 +20,7 @@ export function userManagementRights(
   return {
     status: institutions,
     institutions,
-    manualGroups: caller.superAdmin,
+    manualGroups: caller.superAdmin || caller.managedManualGroupIds.length > 0,
     managedGroups: caller.superAdmin,
   };
 }

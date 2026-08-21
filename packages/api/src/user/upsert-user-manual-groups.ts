@@ -1,18 +1,35 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
+import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
 import type { Transaction } from "kysely";
 
 import { canJoinManualGroup } from "@projet-igsn/domain/manual-group/can-join-manual-group";
+import { canManageManualGroup } from "@projet-igsn/domain/user/can-manage-manual-group";
 import { HTTPException } from "hono/http-exception";
 
 import type { DB } from "../db.ts";
+
+import { detachManualGroupMember } from "../manual-group/detach-manual-group-member.ts";
+import { assertManualGroupsExist } from "../manual-group/manual-groups-by-ids.ts";
+
+const permittedGroupIds = (
+  submitted: string[],
+  current: Set<string>,
+  scope: ModerationScope,
+) => {
+  const manages = (id: string) => canManageManualGroup(scope, id);
+  return new Set([
+    ...[...current].filter((id) => !manages(id)),
+    ...submitted.filter(manages),
+  ]);
+};
 
 export async function upsertUserManualGroups(
   trx: Transaction<DB>,
   userId: string,
   groupIds: string[],
   status: UserStatus,
-  mayEdit: boolean,
+  scope: ModerationScope,
 ): Promise<{ joined: ManualGroup[]; leftIds: string[] }> {
   const current = new Set(
     (
@@ -23,30 +40,20 @@ export async function upsertUserManualGroups(
         .execute()
     ).map((row) => row.group_id),
   );
-  const wanted = mayEdit ? new Set(groupIds) : current;
+  const wanted = permittedGroupIds(groupIds, current, scope);
   const joinedIds = [...wanted].filter((groupId) => !current.has(groupId));
   const leftIds = [...current].filter((groupId) => !wanted.has(groupId));
 
-  const joined = joinedIds.length
-    ? await trx
-        .selectFrom("manual_group")
-        .select(["id", "name"])
-        .where("id", "in", joinedIds)
-        .execute()
-    : [];
-  if (joined.length !== joinedIds.length) {
-    throw new HTTPException(404, { message: "Manual group not found" });
-  }
+  const joined = await assertManualGroupsExist(trx, joinedIds);
   if (joined.length > 0 && !canJoinManualGroup(status)) {
     throw new HTTPException(422, { message: "User is not accepted" });
   }
 
-  if (leftIds.length) {
-    await trx
-      .deleteFrom("manual_group_member")
-      .where("user_id", "=", userId)
-      .where("group_id", "in", leftIds)
-      .execute();
+  for (const groupId of leftIds) {
+    const detached = await detachManualGroupMember(trx, groupId, userId);
+    if (detached === "has_published_sample") {
+      throw new HTTPException(409, { message: "has_published_sample" });
+    }
   }
   if (joinedIds.length) {
     await trx

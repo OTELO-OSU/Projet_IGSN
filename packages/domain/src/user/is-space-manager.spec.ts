@@ -5,9 +5,11 @@ import { NO_MANAGED_GROUPS } from "./managed-groups.ts";
 
 describe("isSpaceManager", () => {
   it.each([
-    ["an organization", { organizations: ["05hnb7x64"] }],
-    ["an OSU", { osus: ["OSUNA"] }],
-    ["a laboratory", { laboratories: ["UMR7327"] }],
+    ["an institutional group", { laboratories: ["UMR7327"] }],
+    [
+      "a manual group",
+      { manualGroupIds: ["3f2504e0-4f89-41d3-9a0c-0305000000a1"] },
+    ],
   ])("should make a space manager of a user moderating %s", (_case, groups) => {
     expect(isSpaceManager({ ...NO_MANAGED_GROUPS, ...groups })).toBe(true);
   });

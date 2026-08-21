@@ -5,6 +5,7 @@ import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { moderateInstitution } from "../tests/moderate-institution.ts";
+import { moderateManualGroup } from "../tests/moderate-manual-group.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { tokenEmail } from "../tests/provision-user.ts";
 
@@ -39,6 +40,7 @@ describe("currentUser routes", () => {
       status: "pending",
       superAdmin: false,
       managedLaboratories: [],
+      managedManualGroups: [],
       email: "test-token@example.com",
       orcid: null,
       institutionalOrganization: null,
@@ -324,6 +326,7 @@ describe("currentUser managed groups", () => {
       expect(me.status).toBe(200);
       expect(await me.json()).toMatchObject({
         managedLaboratories: [],
+        managedManualGroups: [],
       });
       expect(users.status).toBe(403);
     },
@@ -344,6 +347,23 @@ describe("currentUser managed groups", () => {
     // Assert
     expect(await res.json()).toMatchObject({
       managedLaboratories: ["UMR7358"],
+    });
+  });
+
+  pgTest("should name the manual groups a caller manages", async ({ db }) => {
+    // Arrange
+    const caller = await insertUser(db, callerEmail);
+    const group = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "Alpes" };
+    await db.insertInto("manual_group").values(group).execute();
+    await moderateManualGroup(db, caller.id, [group.id]);
+    // Act
+    const res = await testClient(createApp(db).app).admin.currentUser.$get(
+      undefined,
+      { headers: authHeader },
+    );
+    // Assert
+    expect(await res.json()).toMatchObject({
+      managedManualGroups: [group],
     });
   });
 });

@@ -70,7 +70,7 @@ export function createApp(
     )
     .route(
       "/manual-groups",
-      createManualGroupRoutes(manualGroupRepository, mail),
+      createManualGroupRoutes(manualGroupRepository, userRepository, mail),
     )
     .route(
       "/samples",

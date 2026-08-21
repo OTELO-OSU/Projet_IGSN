@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { managedGroupsSchema, NO_MANAGED_GROUPS } from "./managed-groups.ts";
 
 const BRGM = "05hnb7x64";
+const MANUAL_GROUP_ID = "3f2504e0-4f89-41d3-9a0c-0305000000a1";
 
 describe("managedGroupsSchema", () => {
   it.each([
@@ -36,11 +37,13 @@ describe("managedGroupsSchema", () => {
         organizations: [BRGM, BRGM],
         osus: ["OSUNA", "OSUNA"],
         laboratories: ["UMR7327", "UMR7327"],
+        manualGroupIds: [MANUAL_GROUP_ID, MANUAL_GROUP_ID],
       }),
     ).toEqual({
       organizations: [BRGM],
       osus: ["OSUNA"],
       laboratories: ["UMR7327"],
+      manualGroupIds: [MANUAL_GROUP_ID],
     });
   });
 });

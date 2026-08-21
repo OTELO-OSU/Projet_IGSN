@@ -71,6 +71,7 @@ function fakeApi({
         status: "accepted",
         superAdmin: false,
         managedLaboratories: [],
+        managedManualGroups: [],
         ...CALLER_GROUPS,
       }),
     ),

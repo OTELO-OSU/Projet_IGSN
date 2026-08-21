@@ -10,7 +10,7 @@ import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
-import { CALLER_GROUPS } from "../../test/caller-groups.ts";
+import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
@@ -32,6 +32,7 @@ const BASALT_TEAM = {
 };
 
 function fakeApi(failWrites = false) {
+  fakeCurrentUser({ sub: "user-1" });
   let sample: Record<string, unknown> | null = null;
   const lockCalls: string[] = [];
   worker.use(
@@ -45,17 +46,6 @@ function fakeApi(failWrites = false) {
     http.delete(
       "*/samples/:id/lock",
       () => new HttpResponse(null, { status: 204 }),
-    ),
-    http.get("*/admin/currentUser", () =>
-      HttpResponse.json({
-        sub: "user-1",
-        name: "Marie Dupont",
-        orcid: null,
-        status: "accepted",
-        superAdmin: false,
-        managedLaboratories: [],
-        ...CALLER_GROUPS,
-      }),
     ),
     http.post("*/samples", async ({ request }) => {
       if (failWrites) {
@@ -113,7 +103,7 @@ async function renderCreatePage(failWrites = false) {
 beforeAll(() => page.viewport(1280, 1600));
 
 describe("CreateSamplePage", () => {
-  it("should redirect to the new sample's edit page after creation", async () => {
+  it("should redirect to the new sample's edit page after creation, with a toast", async () => {
     const screen = await renderCreatePage();
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: /nature/i }).click();
@@ -126,6 +116,9 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByLabelText(/name/i))
       .toHaveValue("Basalte du Massif Central");
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Sample created");
   });
 
   it("should claim no edit lock: the sample has no id yet", async () => {
@@ -154,18 +147,6 @@ describe("CreateSamplePage", () => {
     expect(screen.created()).toMatchObject({
       manualGroupIds: [BASALT_TEAM.id],
     });
-  });
-
-  it("should show a toast after creation", async () => {
-    const screen = await renderCreatePage();
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox", { name: /nature/i }).click();
-    await screen.getByText("Thin section").click();
-    await screen.getByRole("button", { name: "Create" }).click();
-
-    await expect
-      .element(screen.getByRole("region", { name: /notifications/i }))
-      .toHaveTextContent("Sample created");
   });
 
   it("should create a metamorphic sample with no facies", async () => {

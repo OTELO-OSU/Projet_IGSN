@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
+import { canAdminManualGroups } from "@projet-igsn/domain/user/can-admin-manual-groups";
 import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
@@ -110,31 +111,31 @@ export function AppLayout({
               />
             )}
             {me?.superAdmin && (
-              <>
-                <li>
-                  <p id={GROUPS_NAV_ID} className="p-2 text-sm font-medium">
-                    {m.nav_institutional_groups()}
-                  </p>
-                  <ul aria-labelledby={GROUPS_NAV_ID} className="md:pl-3">
-                    {GROUPS_NAV.map(({ to, Icon, label }) => (
-                      <NavItem
-                        key={to}
-                        to={to}
-                        Icon={Icon}
-                        label={label()}
-                        isCurrent={pathname.startsWith(to)}
-                      />
-                    ))}
-                  </ul>
-                </li>
-                <NavItem
-                  to="/manual-groups"
-                  search={listSearch}
-                  Icon={UsersRoundIcon}
-                  label={m.nav_manual_groups()}
-                  isCurrent={pathname.startsWith("/manual-groups")}
-                />
-              </>
+              <li>
+                <p id={GROUPS_NAV_ID} className="p-2 text-sm font-medium">
+                  {m.nav_institutional_groups()}
+                </p>
+                <ul aria-labelledby={GROUPS_NAV_ID} className="md:pl-3">
+                  {GROUPS_NAV.map(({ to, Icon, label }) => (
+                    <NavItem
+                      key={to}
+                      to={to}
+                      Icon={Icon}
+                      label={label()}
+                      isCurrent={pathname.startsWith(to)}
+                    />
+                  ))}
+                </ul>
+              </li>
+            )}
+            {me && canAdminManualGroups(me) && (
+              <NavItem
+                to="/manual-groups"
+                search={listSearch}
+                Icon={UsersRoundIcon}
+                label={m.nav_manual_groups()}
+                isCurrent={pathname.startsWith("/manual-groups")}
+              />
             )}
           </ul>
         </nav>

@@ -32,6 +32,7 @@ export function requireUserModeration(
         callerId: user.id,
         superAdmin: false,
         managedLaboratories: managedLaboratoryCodes(groups),
+        managedManualGroupIds: groups.manualGroupIds,
       });
     }
     await next();

@@ -66,6 +66,11 @@ const managedGroups = jsonBuildObject({
   organizations: managedCodes("organization"),
   osus: managedCodes("osu"),
   laboratories: managedCodes("laboratory"),
+  manualGroupIds: sql<string[]>`coalesce((
+    select array_agg(group_id order by group_id)
+      from user_managed_manual_group
+     where user_managed_manual_group.user_id = "user".id
+  ), '{}')`,
 }).as("managedGroups");
 
 const toAdminUser = (row: { managedGroups: ManagedGroups }) =>
@@ -204,7 +209,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           id,
           submitted.manualGroupIds,
           user.status,
-          rights.manualGroups,
+          scope,
         );
         if (rights.managedGroups) {
           await upsertUserManagedGroups(trx, id, submitted.managedGroups);

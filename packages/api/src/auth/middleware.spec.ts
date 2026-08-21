@@ -113,6 +113,7 @@ describe("requireAuth", () => {
         status: "pending",
         superAdmin: false,
         managedLaboratories: [],
+        managedManualGroups: [],
         institutionalOrganization: null,
         institutionalOsu: null,
         institutionalLaboratory: null,

@@ -2,6 +2,7 @@ import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 import { page } from "vitest/browser";
 
+import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { worker } from "../../test/msw.ts";
 import { render } from "../../test/render.tsx";
 import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
@@ -9,20 +10,6 @@ import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
 vi.mock("react-oidc-context", () => ({
   useAuth: () => ({ user: { access_token: "tok" } }),
 }));
-
-const fakeIdentity = (groups: Record<string, string | null>) =>
-  worker.use(
-    http.get("*/admin/currentUser", () =>
-      HttpResponse.json({
-        sub: "s",
-        orcid: null,
-        status: "accepted",
-        superAdmin: false,
-        managedLaboratories: [],
-        ...groups,
-      }),
-    ),
-  );
 
 const renderGate = () =>
   render(
@@ -50,7 +37,7 @@ describe("InstitutionalGroupsGate", () => {
       },
     },
   ])("should hold a user with $rule on the form", async ({ groups }) => {
-    fakeIdentity(groups);
+    fakeCurrentUser(groups);
 
     const screen = await renderGate();
 
@@ -61,7 +48,7 @@ describe("InstitutionalGroupsGate", () => {
   });
 
   it("should show the app to a user with an organization and a laboratory", async () => {
-    fakeIdentity({
+    fakeCurrentUser({
       institutionalOrganization: "04vfs2w97",
       institutionalOsu: "OTELo",
       institutionalLaboratory: "UMR7358",
