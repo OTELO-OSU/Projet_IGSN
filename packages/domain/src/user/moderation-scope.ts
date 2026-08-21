@@ -1,3 +1,7 @@
+import type { ManagedGroups } from "./managed-groups.ts";
+
+import { managedLaboratoryCodes } from "./managed-laboratory-codes.ts";
+
 export type ModerationScope = {
   callerId: string;
   superAdmin: boolean;
@@ -10,4 +14,14 @@ export const superAdminScope = (callerId: string): ModerationScope => ({
   superAdmin: true,
   managedLaboratories: [],
   managedManualGroupIds: [],
+});
+
+export const managerScope = (
+  callerId: string,
+  groups: ManagedGroups,
+): ModerationScope => ({
+  callerId,
+  superAdmin: false,
+  managedLaboratories: managedLaboratoryCodes(groups),
+  managedManualGroupIds: groups.manualGroupIds,
 });

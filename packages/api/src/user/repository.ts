@@ -2,6 +2,7 @@ import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { ExpressionBuilder, Kysely } from "kysely";
 
+import { isSpaceManager } from "@projet-igsn/domain/user/is-space-manager";
 import {
   knownManagedCodes,
   NO_MANAGED_GROUPS,
@@ -159,12 +160,42 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
       withTransaction(db, (trx) =>
         trx
           .selectFrom("user")
-          .select(["email", "name", "firstname", "created_at as createdAt"])
+          .select([
+            "email",
+            "name",
+            "firstname",
+            "created_at as createdAt",
+            "institutional_laboratory as institutionalLaboratory",
+          ])
           .where("status", "=", "pending")
+          // TODO: hides a pending super admin from the super admins' own
+          // digest too, until the PO says whether a manager may moderate one.
+          .where("super_admin", "=", false)
           .orderBy("created_at", "asc")
           .orderBy("email", "asc")
           .execute(),
       ),
+    // ponytail: reads every accepted row to filter managers in JS, fine at a
+    // few hundred researchers; prefilter on the two managed tables in SQL if it
+    // grows, the catalog test staying in JS since it drops a retired code.
+    listSpaceManagers: () =>
+      withTransaction(db, async (trx) => {
+        const rows = await trx
+          .selectFrom("user")
+          .select(["id", "email"])
+          .select(managedGroups)
+          .where("status", "=", "accepted")
+          .where("super_admin", "=", false)
+          .orderBy("email", "asc")
+          .execute();
+        return rows
+          .map(({ id, email, managedGroups: groups }) => ({
+            id,
+            email,
+            groups: knownManagedCodes(groups),
+          }))
+          .filter(({ groups }) => isSpaceManager(groups));
+      }),
     listSuperAdminEmails: () =>
       withTransaction(db, async (trx) => {
         const rows = await trx
