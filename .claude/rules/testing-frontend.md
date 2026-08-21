@@ -16,6 +16,8 @@ Component tests run in Vitest browser mode; build locators from `page` the way a
 
 - A test that can only find an element by test id is testing a component the user cannot perceive: fix the markup, not the query.
 - Locators are lazy and auto-retrying, so assert through `expect.element` with no `findBy`/`getBy` split and no manual waiting.
+- Browser mode runs chromium only, with no `retry` mask: headless Firefox drops trusted input events under parallel load, and a retry reports a failing run as passing.
+- Cover a Firefox-specific bug with a Playwright e2e journey, never by reinstating the browser matrix.
 
 ```tsx
 test("should submit the declaration", async () => {

@@ -67,6 +67,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 40s
+    # Hot src/ is bind-mounted, not compose-watch synced: event-based sync silently drops files during bulk writes (a checkout or rebase), leaving the container on a stale mixed tree.
     volumes:
       - ./packages/frontend/src:/app/packages/frontend/src
       - ./packages/frontend/messages:/app/packages/frontend/messages

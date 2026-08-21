@@ -132,7 +132,7 @@ GaiaData (which has none yet). `aud` validation is opt-in via `OIDC_AUDIENCE`
 > so the fresh container re-imports it.
 
 In production the admin SPA points at an externally-managed Keycloak via
-`VITE_OIDC_AUTHORITY` / `VITE_OIDC_CLIENT_ID` (see [`auth.ts`](../packages/admin/src/auth.ts)).
+`VITE_OIDC_AUTHORITY` / `VITE_OIDC_CLIENT_ID` (see [`oidc-config.ts`](../packages/admin/src/auth/oidc-config.ts)).
 The realm files, the `test` user, and the mock IdPs here are **dev/e2e only and are never
 shipped** — the insecure-by-design bits (`sslRequired: none`, unsigned SAML, a local admin
 password) live only in that throwaway setup. Standing up the prod Keycloak is an ops task:
