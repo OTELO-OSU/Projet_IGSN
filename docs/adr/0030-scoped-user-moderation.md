@@ -22,7 +22,7 @@ Accepted. Amended 2026-08-21, 2026-08-24 and 2026-08-25, folded in below.
 - A managed organisme grants every laboratory it holds, so it grants its OSUs whole, including laboratories held only by another organisme.
 - The right derives from the group managed, never from the target's own organisme.
 
-**Reach lives only in SQL**, in `api/src/user/moderation-scope-where.ts`, threaded into `list`, `get`, and `update`'s `FOR UPDATE` pre-image so they cannot drift apart.
+**Reach lives only in SQL**, in `api/src/user/moderation-scope-where.ts`, threaded into `list`, `get`, `update`, and the institution-removal endpoint's `FOR UPDATE` pre-image so they cannot drift apart.
 
 - A super-admin scope runs unfiltered; a scope managing nothing compiles to a `false` literal, never a dropped `WHERE`.
 - The clause also excludes `id = callerId` and every `super_admin = true` row, so a manager never moderates a super admin (PO decision).
@@ -89,6 +89,7 @@ Accepted. Amended 2026-08-21, 2026-08-24 and 2026-08-25, folded in below.
 - ADR 0023 predicted a new role would widen `canPublishSamples` and the ownership override; this one widens `/admin/users` reach and, per sample in scope, the ownership override, leaving `canPublishSamples` alone, so a pending manager still publishes nothing.
 - Deleting a manual group, or a catalog regeneration dropping a code, silently demotes a manager, mirroring the "no email is sent" stance; the digest is the one mail a manager does receive.
 - The scope is derived, so `GET /admin/currentUser` and every manual group route re-read it: one query per call, plus a second naming the managed manual groups.
+- Removing a user's institution rides the same users list and institutional-group member tables, guards unchanged, and lands on `shouldRePendOnInstitutionsUpdate` (ADR 0023) for the resulting status; a manager removing a target's institution thereby moves that target out of its own reach, the same auto-demote stance as clearing a managed group.
 - The admin form silently discards a change a manager may not write, so a field it cannot edit must be disabled or the save looks lost.
 - A super admin can no longer detach a member owning a published sample of the group, which ADR 0025 had accepted.
 - A super admin's account is out of every manager's reach, but a sample it owns is not, sample reach reading the sample row.
