@@ -15,104 +15,116 @@ import {
 import { m } from "#/paraglide/messages.js";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
 import { UserInitials } from "#/users/user-initials.tsx";
+import { UserStatusBadge } from "#/users/user-status-badge.tsx";
 
 const CAPPED_NAME_CLASS = "block max-w-48 wrap-break-word";
 
-const columns: ColumnDef<AdminSampleListItem>[] = [
-  {
-    accessorKey: "igsn",
-    header: () => m.column_igsn(),
-    cell: ({ row }) => row.original.igsn,
-  },
-  {
-    id: "status",
-    accessorFn: (sample) => (sample.igsn ? 1 : 0),
-    sortDescFirst: false,
-    header: ({ column }) => (
-      <button
-        type="button"
-        onClick={column.getToggleSortingHandler()}
-        className="cursor-pointer"
-      >
-        {m.column_status()}
-        {{ asc: " ↑", desc: " ↓" }[column.getIsSorted() as string] ?? ""}
-      </button>
-    ),
-    cell: ({ row }) =>
-      row.original.igsn ? (
-        <Badge className="bg-green-100 text-green-800" variant="secondary">
-          {m.status_published()}
-        </Badge>
-      ) : (
-        <Badge variant="secondary">{m.status_draft()}</Badge>
-      ),
-  },
-  {
-    accessorKey: "name",
-    header: () => m.column_name(),
-    cell: ({ row }) => (
-      <Link
-        to="/samples/$sampleId"
-        params={{ sampleId: row.original.id }}
-        className={`${CAPPED_NAME_CLASS} hover:underline`}
-      >
-        {row.original.name}
-      </Link>
-    ),
-  },
-  {
-    accessorKey: "specificName",
-    header: () => m.column_specific_name(),
-    cell: ({ row }) =>
-      row.original.specificName ? (
-        <span className={CAPPED_NAME_CLASS}>{row.original.specificName}</span>
-      ) : null,
-  },
-  {
-    accessorKey: "nature",
-    header: () => m.column_nature(),
-    cell: ({ row }) => natureLabel(row.original.nature),
-  },
-  {
-    accessorKey: "collectionMethod",
-    header: () => m.column_collection_method(),
-    cell: ({ row }) =>
-      row.original.collectionMethod
-        ? collectionMethodLabel(row.original.collectionMethod)
-        : "",
-  },
-  {
-    id: "owner",
-    header: () => m.column_owner(),
-    cell: ({ row }) => {
-      const owner = row.original.owner;
-      return owner ? (
-        <UserInitials name={owner.name} firstname={owner.firstname} />
-      ) : null;
+function sampleColumns(
+  withOwnerStatus: boolean,
+): ColumnDef<AdminSampleListItem>[] {
+  return [
+    {
+      accessorKey: "igsn",
+      header: () => m.column_igsn(),
+      cell: ({ row }) => row.original.igsn,
     },
-  },
-  {
-    accessorKey: "updatedAt",
-    header: () => m.column_last_modified(),
-    cell: ({ row }) => formatDate(row.original.updatedAt),
-  },
-];
+    {
+      id: "status",
+      accessorFn: (sample) => (sample.igsn ? 1 : 0),
+      sortDescFirst: false,
+      header: ({ column }) => (
+        <button
+          type="button"
+          onClick={column.getToggleSortingHandler()}
+          className="cursor-pointer"
+        >
+          {m.column_status()}
+          {{ asc: " ↑", desc: " ↓" }[column.getIsSorted() as string] ?? ""}
+        </button>
+      ),
+      cell: ({ row }) =>
+        row.original.igsn ? (
+          <Badge className="bg-green-100 text-green-800" variant="secondary">
+            {m.status_published()}
+          </Badge>
+        ) : (
+          <Badge variant="secondary">{m.status_draft()}</Badge>
+        ),
+    },
+    {
+      accessorKey: "name",
+      header: () => m.column_name(),
+      cell: ({ row }) => (
+        <Link
+          to="/samples/$sampleId"
+          params={{ sampleId: row.original.id }}
+          className={`${CAPPED_NAME_CLASS} hover:underline`}
+        >
+          {row.original.name}
+        </Link>
+      ),
+    },
+    {
+      accessorKey: "specificName",
+      header: () => m.column_specific_name(),
+      cell: ({ row }) =>
+        row.original.specificName ? (
+          <span className={CAPPED_NAME_CLASS}>{row.original.specificName}</span>
+        ) : null,
+    },
+    {
+      accessorKey: "nature",
+      header: () => m.column_nature(),
+      cell: ({ row }) => natureLabel(row.original.nature),
+    },
+    {
+      accessorKey: "collectionMethod",
+      header: () => m.column_collection_method(),
+      cell: ({ row }) =>
+        row.original.collectionMethod
+          ? collectionMethodLabel(row.original.collectionMethod)
+          : "",
+    },
+    {
+      id: "owner",
+      header: () => m.column_owner(),
+      cell: ({ row }) => {
+        const owner = row.original.owner;
+        return owner ? (
+          <span className="flex items-center gap-1">
+            <UserInitials name={owner.name} firstname={owner.firstname} />
+            {withOwnerStatus && owner.status && (
+              <UserStatusBadge status={owner.status} />
+            )}
+          </span>
+        ) : null;
+      },
+    },
+    {
+      accessorKey: "updatedAt",
+      header: () => m.column_last_modified(),
+      cell: ({ row }) => formatDate(row.original.updatedAt),
+    },
+  ];
+}
 
 type SampleTableProps = {
   samples: AdminSampleListItem[];
   sorting: SortingState;
   onSortingChange: OnChangeFn<SortingState>;
+  withOwnerStatus?: boolean;
 };
 
 export function SampleTable({
   samples,
   sorting,
   onSortingChange,
+  withOwnerStatus = false,
 }: SampleTableProps) {
   const navigate = useNavigate();
   const table = useReactTable({
     data: samples,
-    columns,
+    columns: sampleColumns(withOwnerStatus),
     getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
     state: { sorting },

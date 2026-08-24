@@ -8,7 +8,7 @@ import { type Transactional } from "../../transaction.ts";
 import { insertSampleCollaborator } from "../../user-sample/insert-sample-collaborator.ts";
 import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
-import { listAllSamples, listSamplesAssignedTo } from "./list-sample.ts";
+import { listSamplesAssignedTo } from "./list-sample.ts";
 
 function insertSampleNamed(db: Transactional<DB>, name: string) {
   return insertSample(db, {
@@ -37,40 +37,6 @@ describe("listSamplesAssignedTo", () => {
     // Assert
     expect(data).toMatchObject([{ name: "Grès de Fontainebleau" }]);
     expect(total).toBe(1);
-  });
-
-  pgTest("should list nothing for an owner of nothing", async ({ db }) => {
-    // Arrange
-    const user = await insertUser(db, "newcomer@univ-lorraine.fr");
-    const other = await insertUser(db, "other@univ-lorraine.fr");
-    const foreign = await insertSampleNamed(db, "Grès de Fontainebleau");
-    await insertSampleOwner(db, foreign.id, other.id);
-    // Act
-    const result = await listSamplesAssignedTo(
-      db,
-      { page: 1, perPage: 10 },
-      user.id,
-    );
-    // Assert
-    expect(result).toEqual({ data: [], total: 0 });
-  });
-
-  pgTest("should list every sample whoever owns it", async ({ db }) => {
-    // Arrange
-    const marie = await insertUser(db, "marie@univ-lorraine.fr");
-    const other = await insertUser(db, "other@univ-lorraine.fr");
-    const owned = await insertSampleNamed(db, "Grès de Fontainebleau");
-    await insertSampleOwner(db, owned.id, marie.id);
-    const foreign = await insertSampleNamed(db, "Basalte du Massif Central");
-    await insertSampleOwner(db, foreign.id, other.id);
-    // Act
-    const { data, total } = await listAllSamples(db, { page: 1, perPage: 10 });
-    // Assert
-    expect(data.map((sample) => sample.name).sort()).toEqual([
-      "Basalte du Massif Central",
-      "Grès de Fontainebleau",
-    ]);
-    expect(total).toBe(2);
   });
 
   pgTest.for([
@@ -140,16 +106,9 @@ describe("listSamplesAssignedTo", () => {
         { ...params, ownership: "shared" },
         marie.id,
       );
-      const all = await listAllSamples(db, params);
       // Assert
       expect(mine).toEqual({ data: [], total: 0 });
       expect(shared).toEqual({ data: [], total: 0 });
-      expect(all).toEqual({
-        data: [
-          expect.objectContaining({ name: "Imported sandstone", owner: null }),
-        ],
-        total: 1,
-      });
     },
   );
 });

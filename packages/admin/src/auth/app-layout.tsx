@@ -4,12 +4,14 @@ import type { ReactNode } from "react";
 
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { canAdminManualGroups } from "@projet-igsn/domain/user/can-admin-manual-groups";
+import { canModerateSamples } from "@projet-igsn/domain/user/can-moderate-samples";
 import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
   Building2Icon,
   FlaskConicalIcon,
   MountainIcon,
+  ShieldCheckIcon,
   TelescopeIcon,
   UsersIcon,
   UsersRoundIcon,
@@ -22,6 +24,8 @@ import { SignOutButton } from "./sign-out-button.tsx";
 import { useCurrentUser } from "./use-current-user.ts";
 
 const listSearch = { page: 1, perPage: DEFAULT_PAGE_SIZE };
+
+const SAMPLE_MODERATION_PATH = "/samples/moderation";
 
 const GROUPS_NAV_ID = "nav-institutional-groups";
 
@@ -80,7 +84,8 @@ export function AppLayout({
   const { data: me } = useCurrentUser();
   const pathname = useLocation({ select: (location) => location.pathname });
   const isUsersSection = pathname.startsWith("/users");
-  const isSamplesSection = pathname === "/" || pathname.startsWith("/samples");
+  const isSampleModerationSection = pathname.startsWith(SAMPLE_MODERATION_PATH);
+  const isSamplesSection = pathname === "/" || pathname === "/samples/create";
 
   return (
     <div className="flex min-h-screen w-full flex-col md:flex-row">
@@ -101,6 +106,15 @@ export function AppLayout({
               label={m.nav_samples()}
               isCurrent={isSamplesSection}
             />
+            {me && canModerateSamples(me) && (
+              <NavItem
+                to={SAMPLE_MODERATION_PATH}
+                search={listSearch}
+                Icon={ShieldCheckIcon}
+                label={m.nav_sample_moderation()}
+                isCurrent={isSampleModerationSection}
+              />
+            )}
             {me && canModerateUsers(me) && (
               <NavItem
                 to="/users"

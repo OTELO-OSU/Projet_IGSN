@@ -14,6 +14,7 @@ import { createApp } from "../app.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
+import { attachGroup, draft } from "../tests/sample-fixtures.ts";
 import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
@@ -29,13 +30,6 @@ const ALPES = "01890a5d-ac96-774b-bcce-b302099a9002";
 const MASSIF_GROUP = { id: MASSIF, name: "Massif Central 2026" };
 const ALPES_GROUP = { id: ALPES, name: "Alpes 2026" };
 
-const draft = {
-  name: "Basalte du Massif Central",
-  nature: "thin_section" as const,
-  type: null,
-  collectionMethod: null,
-};
-
 const insertGroups = (db: Db) =>
   db.insertInto("manual_group").values([MASSIF_GROUP, ALPES_GROUP]).execute();
 
@@ -43,12 +37,6 @@ const insertMember = (db: Db, groupId: string, userId: string) =>
   db
     .insertInto("manual_group_member")
     .values({ group_id: groupId, user_id: userId })
-    .execute();
-
-const attachGroup = (db: Db, sampleId: string, groupId: string) =>
-  db
-    .insertInto("sample_manual_group")
-    .values({ sample_id: sampleId, group_id: groupId })
     .execute();
 
 const readSampleResponse = async (db: Db, id: string) => {

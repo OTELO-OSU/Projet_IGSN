@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsersIndexRouteImport } from './routes/users.index'
 import { Route as ManualGroupsIndexRouteImport } from './routes/manual-groups.index'
 import { Route as UsersUserIdRouteImport } from './routes/users.$userId'
+import { Route as SamplesModerationRouteImport } from './routes/samples.moderation'
 import { Route as SamplesCreateRouteImport } from './routes/samples.create'
 import { Route as SamplesSampleIdRouteImport } from './routes/samples.$sampleId'
 import { Route as ManualGroupsGroupIdRouteImport } from './routes/manual-groups.$groupId'
@@ -48,6 +49,11 @@ const ManualGroupsIndexRoute = ManualGroupsIndexRouteImport.update({
 const UsersUserIdRoute = UsersUserIdRouteImport.update({
   id: '/users/$userId',
   path: '/users/$userId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SamplesModerationRoute = SamplesModerationRouteImport.update({
+  id: '/samples/moderation',
+  path: '/samples/moderation',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SamplesCreateRoute = SamplesCreateRouteImport.update({
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/manual-groups/$groupId': typeof ManualGroupsGroupIdRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
+  '/samples/moderation': typeof SamplesModerationRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/manual-groups/': typeof ManualGroupsIndexRoute
   '/users/': typeof UsersIndexRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/manual-groups/$groupId': typeof ManualGroupsGroupIdRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
+  '/samples/moderation': typeof SamplesModerationRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/manual-groups': typeof ManualGroupsIndexRoute
   '/users': typeof UsersIndexRoute
@@ -149,6 +157,7 @@ export interface FileRoutesById {
   '/manual-groups/$groupId': typeof ManualGroupsGroupIdRoute
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
+  '/samples/moderation': typeof SamplesModerationRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/manual-groups/': typeof ManualGroupsIndexRoute
   '/users/': typeof UsersIndexRoute
@@ -168,6 +177,7 @@ export interface FileRouteTypes {
     | '/manual-groups/$groupId'
     | '/samples/$sampleId'
     | '/samples/create'
+    | '/samples/moderation'
     | '/users/$userId'
     | '/manual-groups/'
     | '/users/'
@@ -185,6 +195,7 @@ export interface FileRouteTypes {
     | '/manual-groups/$groupId'
     | '/samples/$sampleId'
     | '/samples/create'
+    | '/samples/moderation'
     | '/users/$userId'
     | '/manual-groups'
     | '/users'
@@ -202,6 +213,7 @@ export interface FileRouteTypes {
     | '/manual-groups/$groupId'
     | '/samples/$sampleId'
     | '/samples/create'
+    | '/samples/moderation'
     | '/users/$userId'
     | '/manual-groups/'
     | '/users/'
@@ -220,6 +232,7 @@ export interface RootRouteChildren {
   ManualGroupsGroupIdRoute: typeof ManualGroupsGroupIdRoute
   SamplesSampleIdRoute: typeof SamplesSampleIdRoute
   SamplesCreateRoute: typeof SamplesCreateRoute
+  SamplesModerationRoute: typeof SamplesModerationRoute
   UsersUserIdRoute: typeof UsersUserIdRoute
   ManualGroupsIndexRoute: typeof ManualGroupsIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
@@ -266,6 +279,13 @@ declare module '@tanstack/react-router' {
       path: '/users/$userId'
       fullPath: '/users/$userId'
       preLoaderRoute: typeof UsersUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/samples/moderation': {
+      id: '/samples/moderation'
+      path: '/samples/moderation'
+      fullPath: '/samples/moderation'
+      preLoaderRoute: typeof SamplesModerationRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/samples/create': {
@@ -348,6 +368,7 @@ const rootRouteChildren: RootRouteChildren = {
   ManualGroupsGroupIdRoute: ManualGroupsGroupIdRoute,
   SamplesSampleIdRoute: SamplesSampleIdRoute,
   SamplesCreateRoute: SamplesCreateRoute,
+  SamplesModerationRoute: SamplesModerationRoute,
   UsersUserIdRoute: UsersUserIdRoute,
   ManualGroupsIndexRoute: ManualGroupsIndexRoute,
   UsersIndexRoute: UsersIndexRoute,

@@ -1,5 +1,6 @@
 import type { UserSampleRole } from "../user-sample/model.ts";
 import type { User } from "../user/model.ts";
+import type { ModerationScope } from "../user/moderation-scope.ts";
 import type { SampleEditLock } from "./edit-lock.ts";
 import type {
   AdminSampleListItem,
@@ -22,9 +23,11 @@ export type SampleRepository = {
     params: ListSamplesQuery,
     userId: string,
   ): Promise<AdminListSamplesResult>;
-  listAllAsSuperAdmin(
+  listModerated(
     params: ListSamplesQuery,
+    scope: ModerationScope,
   ): Promise<AdminListSamplesResult>;
+  isModerated(id: string, scope: ModerationScope): Promise<boolean>;
   listPublished(params: ListSamplesQuery): Promise<ListSamplesResult>;
   get(
     id: string,

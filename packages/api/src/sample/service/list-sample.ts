@@ -3,6 +3,7 @@ import type {
   ListSamplesResult,
 } from "@projet-igsn/domain/sample/repository";
 import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
+import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
 
 import { splitBbox } from "@projet-igsn/domain/sample/split-bbox";
 import { type Expression, sql, type SqlBool } from "kysely";
@@ -12,6 +13,7 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import { facetFilters } from "./facet-filter.ts";
+import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
   sampleAttachments,
   sampleLinks,
@@ -88,7 +90,7 @@ async function listSamplesWhere(
             eb
               .selectFrom("user_sample")
               .innerJoin("user", "user.id", "user_sample.user_id")
-              .select(["user.name", "user.firstname"])
+              .select(["user.name", "user.firstname", "user.status"])
               .whereRef("user_sample.sample_id", "=", "sample.id")
               .where("user_sample.role", "=", "owner")
               .limit(1),
@@ -121,6 +123,7 @@ async function listWithOwners(
   db: Transactional<DB>,
   params: ListSamplesQuery,
   scope: Expression<SqlBool>[],
+  withOwnerStatus = false,
 ): Promise<AdminListSamplesResult> {
   const { data, owners, total } = await listSamplesWhere(
     db,
@@ -129,10 +132,17 @@ async function listWithOwners(
     true,
   );
   return {
-    data: data.map((sample) => ({
-      ...sample,
-      owner: owners.get(sample.id) ?? null,
-    })),
+    data: data.map((sample) => {
+      const owner = owners.get(sample.id) ?? null;
+      return {
+        ...sample,
+        owner:
+          owner &&
+          (withOwnerStatus
+            ? owner
+            : { name: owner.name, firstname: owner.firstname }),
+      };
+    }),
     total,
   };
 }
@@ -145,11 +155,12 @@ export function listSamplesAssignedTo(
   return listWithOwners(db, params, [assignedTo(userId, params.ownership)]);
 }
 
-export function listAllSamples(
+export function listModeratedSamples(
   db: Transactional<DB>,
   params: ListSamplesQuery,
+  scope: ModerationScope,
 ): Promise<AdminListSamplesResult> {
-  return listWithOwners(db, params, []);
+  return listWithOwners(db, params, [moderatedSampleWhere(scope)], true);
 }
 
 export async function listPublishedSamples(

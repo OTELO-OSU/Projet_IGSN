@@ -11,12 +11,9 @@ import {
 } from "@projet-igsn/design-system/components/ui/select";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { type SortingState } from "@tanstack/react-table";
 
-import { Pagination } from "#/pagination/pagination.tsx";
 import { m } from "#/paraglide/messages.js";
-import { SampleTable } from "#/samples/sample-table.tsx";
-import { useSamples } from "#/samples/use-samples.ts";
+import { SampleListPanel } from "#/samples/sample-list-panel.tsx";
 
 const searchSchema = listSamplesQuerySchema.pick({
   page: true,
@@ -43,19 +40,12 @@ const OWNERSHIP_LABEL: Record<Ownership, () => string> = {
 const ALL_OWNERSHIPS = "all";
 
 function SampleListPage() {
-  const { page, perPage, sort, order, search, ownership } = Route.useSearch();
+  const params = Route.useSearch();
+  const { search, ownership } = params;
   const navigate = Route.useNavigate();
-  const query = useSamples({ page, perPage, sort, order, search, ownership });
 
   const update = (next: Partial<SampleListSearch>) =>
     void navigate({ search: (prev) => ({ ...prev, ...next }) });
-
-  const total = query.data?.total ?? 0;
-  const pageCount = Math.max(1, Math.ceil(total / perPage));
-
-  const sorting: SortingState = sort
-    ? [{ id: sort, desc: order === "desc" }]
-    : [];
 
   return (
     <>
@@ -102,35 +92,7 @@ function SampleListPage() {
         </Select>
       </div>
 
-      {query.isPending ? (
-        <p>{m.samples_loading()}</p>
-      ) : query.isError ? (
-        <p role="alert">{m.samples_error()}</p>
-      ) : (
-        <SampleTable
-          samples={query.data.data}
-          sorting={sorting}
-          onSortingChange={(updater) => {
-            const next =
-              typeof updater === "function" ? updater(sorting) : updater;
-            update({
-              page: 1,
-              sort: next[0] ? "status" : undefined,
-              order: next[0]?.desc ? "desc" : "asc",
-            });
-          }}
-        />
-      )}
-
-      <Pagination
-        page={page}
-        pageCount={pageCount}
-        perPage={perPage}
-        onPageChange={(nextPage) => update({ page: nextPage })}
-        onPerPageChange={(nextPerPage) =>
-          update({ page: 1, perPage: nextPerPage })
-        }
-      />
+      <SampleListPanel params={params} update={update} />
     </>
   );
 }

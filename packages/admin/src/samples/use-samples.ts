@@ -12,12 +12,16 @@ export function useSamples(
     ListSamplesQuery,
     "page" | "perPage" | "sort" | "order" | "search" | "ownership"
   >,
+  moderated = false,
 ) {
   const apiFetch = useApiClient();
   return useQuery({
-    queryKey: ["samples", params],
+    queryKey: ["samples", { moderated, ...params }],
     queryFn: async () => {
-      const url = new URL("admin/samples", API_URL);
+      const url = new URL(
+        moderated ? "admin/samples/moderated" : "admin/samples",
+        API_URL,
+      );
       url.searchParams.set("page", String(params.page));
       url.searchParams.set("perPage", String(params.perPage));
       if (params.sort) {

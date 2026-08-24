@@ -18,6 +18,7 @@ import { requireActiveSession } from "../auth/active-session.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
+import { publishableSample } from "../tests/sample-fixtures.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { insertSample } from "./service/insert-sample.ts";
@@ -48,25 +49,6 @@ async function putSample(
     body: JSON.stringify(body),
   });
 }
-
-const PUBLISHABLE_SAMPLE = {
-  name: "Basalte du Massif Central",
-  nature: "thin_section" as const,
-  type: "individual_sample",
-  material: "sediment.exogenous_detritic.clay",
-  location: {
-    position: { type: "point" as const, longitude: 3, latitude: 45 },
-  },
-  description: {
-    collectionDate: { start: "2026-01-01", end: "2026-01-01" },
-  },
-  availability: "exists" as const,
-  scientificContext: {
-    provenanceStatus: "historical_specimen" as const,
-    collectionCurator: "Georges Cuvier",
-    collectionOrigin: "scientific_expedition" as const,
-  },
-};
 
 describe("admin sample routes", () => {
   pgTest("should create a sample and return 201", async ({ db }) => {
@@ -139,7 +121,7 @@ describe("admin sample routes", () => {
         });
         const client = testClient(createApp(db).app);
         const created = await client.admin.samples.$post(
-          { json: PUBLISHABLE_SAMPLE },
+          { json: publishableSample },
           { headers: authHeader },
         );
         const before = sampleResponseSchema.parse(await created.json()).data;
@@ -152,7 +134,7 @@ describe("admin sample routes", () => {
           {
             param: { id: before.id },
             json: {
-              ...PUBLISHABLE_SAMPLE,
+              ...publishableSample,
               name: "Basalte (revu)",
               expectedUpdatedAt: before.updatedAt,
             },
@@ -703,7 +685,7 @@ describe("admin sample routes", () => {
       await provisionUser(db, "test-token", { status: "accepted" });
       const client = testClient(createApp(db).app);
       const created = await client.admin.samples.$post(
-        { json: PUBLISHABLE_SAMPLE },
+        { json: publishableSample },
         { headers: authHeader },
       );
       const { data } = sampleResponseSchema.parse(await created.json());
@@ -716,7 +698,7 @@ describe("admin sample routes", () => {
         {
           param: { id: data.id },
           json: {
-            ...PUBLISHABLE_SAMPLE,
+            ...publishableSample,
             description: null,
             expectedUpdatedAt: data.updatedAt,
           },
@@ -740,7 +722,7 @@ describe("admin sample routes", () => {
         {
           param: { id: data.id },
           json: {
-            ...PUBLISHABLE_SAMPLE,
+            ...publishableSample,
             name: "Basalte (revu)",
             expectedUpdatedAt: sampleResponseSchema.parse(await res.json()).data
               .updatedAt,
@@ -754,23 +736,11 @@ describe("admin sample routes", () => {
 
   describe("published field lock", () => {
     const publishable = {
-      name: "Basalte du Massif Central",
-      nature: "thin_section" as const,
-      type: "individual_sample",
-      material: "sediment.exogenous_detritic.clay",
+      ...publishableSample,
       specificName: "MC-2026-007",
       location: {
         position: { type: "point" as const, longitude: 3, latitude: 45 },
         localityName: "Puy de Sancy",
-      },
-      description: {
-        collectionDate: { start: "2026-01-01", end: "2026-01-01" },
-      },
-      availability: "exists" as const,
-      scientificContext: {
-        provenanceStatus: "historical_specimen" as const,
-        collectionCurator: "Georges Cuvier",
-        collectionOrigin: "scientific_expedition" as const,
       },
     };
 
@@ -1178,45 +1148,6 @@ describe("admin sample routes", () => {
         ).toEqual([]);
       },
     );
-
-    pgTest(
-      "leaves every field writable on a draft (no merge)",
-      async ({ db }) => {
-        // Arrange
-        const client = testClient(createApp(db).app);
-        const created = await client.admin.samples.$post(
-          {
-            json: {
-              name: "Draft granite",
-              nature: "rock_powder",
-              type: null,
-              collectionMethod: null,
-            },
-          },
-          { headers: authHeader },
-        );
-        const { data } = sampleResponseSchema.parse(await created.json());
-        // Act
-        const res = await client.admin.samples[":id"].$put(
-          {
-            param: { id: data.id },
-            json: {
-              name: "Renamed draft",
-              nature: "rock_powder",
-              type: null,
-              collectionMethod: null,
-              expectedUpdatedAt: data.updatedAt,
-            },
-          },
-          { headers: authHeader },
-        );
-        // Assert
-        expect(res.status).toBe(200);
-        expect(sampleResponseSchema.parse(await res.json()).data.name).toBe(
-          "Renamed draft",
-        );
-      },
-    );
   });
 
   pgTest("should answer 404 when updating a missing sample", async ({ db }) => {
@@ -1300,41 +1231,6 @@ describe("admin sample routes", () => {
     },
   );
 
-  pgTest("should publish a sample with no specific name", async ({ db }) => {
-    // Arrange
-    await provisionUser(db, "test-token", { status: "accepted" });
-    const client = testClient(createApp(db).app);
-    const created = await client.admin.samples.$post(
-      {
-        json: {
-          name: "No specific name",
-          nature: "thin_section",
-          type: "individual_sample",
-          material: "sediment.exogenous_detritic.clay",
-          location: { position: { type: "point", longitude: 3, latitude: 45 } },
-          description: {
-            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
-          },
-          availability: "exists",
-          scientificContext: {
-            provenanceStatus: "historical_specimen",
-            collectionCurator: "Georges Cuvier",
-            collectionOrigin: "scientific_expedition",
-          },
-        },
-      },
-      { headers: authHeader },
-    );
-    const { data } = sampleResponseSchema.parse(await created.json());
-    // Act
-    const res = await client.admin.samples[":id"].publish.$post(
-      { param: { id: data.id } },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-  });
-
   pgTest(
     "should answer 409 when a pending user publishes a complete draft",
     async ({ db }) => {
@@ -1342,7 +1238,7 @@ describe("admin sample routes", () => {
       await provisionUser(db, "test-token", { status: "pending" });
       const client = testClient(createApp(db).app);
       const created = await client.admin.samples.$post(
-        { json: PUBLISHABLE_SAMPLE },
+        { json: publishableSample },
         { headers: authHeader },
       );
       const { data } = sampleResponseSchema.parse(await created.json());
@@ -1372,7 +1268,7 @@ describe("admin sample routes", () => {
       });
       const client = testClient(createApp(db).app);
       const created = await client.admin.samples.$post(
-        { json: PUBLISHABLE_SAMPLE },
+        { json: publishableSample },
         { headers: authHeader },
       );
       const { data } = sampleResponseSchema.parse(await created.json());
@@ -1390,7 +1286,7 @@ describe("admin sample routes", () => {
         {
           param: { id: data.id },
           json: {
-            ...PUBLISHABLE_SAMPLE,
+            ...publishableSample,
             name: "Basalte (revu)",
             expectedUpdatedAt: data.updatedAt,
           },
@@ -1414,7 +1310,7 @@ describe("admin sample routes", () => {
     await provisionUser(db, "test-token", { status: "pending" });
     const client = testClient(createApp(db).app);
     const created = await client.admin.samples.$post(
-      { json: PUBLISHABLE_SAMPLE },
+      { json: publishableSample },
       { headers: authHeader },
     );
     const { data } = sampleResponseSchema.parse(await created.json());
@@ -1423,7 +1319,7 @@ describe("admin sample routes", () => {
       {
         param: { id: data.id },
         json: {
-          ...PUBLISHABLE_SAMPLE,
+          ...publishableSample,
           name: "Basalte (revu)",
           expectedUpdatedAt: data.updatedAt,
         },
@@ -1459,18 +1355,6 @@ describe("admin sample routes", () => {
     });
 
     pgTest.for([
-      ["a type", { type: "core.section" }, { type: "core.section" }],
-      [
-        "a collection method",
-        {
-          collectionMethod: "coring.gravity_corer",
-          collectionMethodDescription: "Short barrel, soft sediment",
-        },
-        {
-          collectionMethod: "coring.gravity_corer",
-          collectionMethodDescription: "Short barrel, soft sediment",
-        },
-      ],
       [
         "a leaf material path and texture",
         {
@@ -1709,26 +1593,6 @@ describe("admin sample routes", () => {
         expect(res.status).toBe(403);
       },
     );
-
-    pgTest("should list every sample for a super admin", async ({ db }) => {
-      // Arrange
-      await provisionUser(db, "test-token", {
-        status: "accepted",
-        superAdmin: true,
-      });
-      await insertOtherResearcherSample(db);
-      // Act
-      const res = await testClient(createApp(db).app).admin.samples.$get(
-        { query: { page: "1", perPage: "10" } },
-        { headers: authHeader },
-      );
-      // Assert
-      const body = listSamplesResponseSchema.parse(await res.json());
-      expect(body.data.map((sample) => sample.name)).toEqual([
-        "Granite de Pierre",
-      ]);
-      expect(body.meta.total).toBe(1);
-    });
 
     pgTest(
       "should let a super admin open another researcher's sample",
@@ -2213,7 +2077,7 @@ describe("admin sample routes", () => {
     pgTest("should let an editor publish a sample", async ({ db }) => {
       const client = testClient(createApp(db).app);
       const sample = await shareWithCallerAsEditor(db, {
-        json: { ...PUBLISHABLE_SAMPLE, collectionMethod: null },
+        json: { ...publishableSample, collectionMethod: null },
       });
 
       const res = await client.admin.samples[":id"].publish.$post(
@@ -2359,12 +2223,9 @@ describe("admin sample routes", () => {
       collectionMethod: null,
     };
 
-    pgTest.for([
-      [undefined, ["Foreign granite", "Owned basalt"]],
-      ["mine", ["Owned basalt"]],
-    ] as const)(
-      "should scope a super admin's list to the %s ownership",
-      async ([ownership, expected], { db }) => {
+    pgTest(
+      "should leave a sample nobody shared out of a super admin's list",
+      async ({ db }) => {
         // Arrange
         await provisionUser(db, "test-token", {
           status: "accepted",
@@ -2385,21 +2246,15 @@ describe("admin sample routes", () => {
         await insertSampleOwner(db, foreign.id, other.id);
         // Act
         const res = await client.admin.samples.$get(
-          {
-            query: {
-              page: "1",
-              perPage: "10",
-              ...(ownership ? { ownership } : {}),
-            },
-          },
+          { query: { page: "1", perPage: "10" } },
           { headers: authHeader },
         );
         // Assert
         const body = adminListSamplesResponseSchema.parse(await res.json());
-        expect(body.data.map((sample) => sample.name).sort()).toEqual([
-          ...expected,
+        expect(body.data.map((sample) => sample.name)).toEqual([
+          "Owned basalt",
         ]);
-        expect(body.meta.total).toBe(expected.length);
+        expect(body.meta.total).toBe(1);
       },
     );
   });

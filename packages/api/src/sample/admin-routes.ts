@@ -8,10 +8,13 @@ import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   AdminListSamplesResponse,
   AdminSampleResponse,
+  ListSamplesQuery,
 } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
+import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import {
   samplePublishBlockers,
@@ -24,13 +27,16 @@ import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { Hono } from "hono";
 
+import type { ModerationEnv } from "../auth/require-user-moderation.ts";
 import type { SendMail } from "../mail/send-mail.ts";
 import type { SampleAccessEnv } from "./require-sample-access.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
+import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import { trySendMail } from "../mail/try-send-mail.ts";
 import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
+import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
 import { uploadLimit } from "./upload-limit.ts";
@@ -59,48 +65,67 @@ function hasUnattachable(submitted: string[], allowed: string[]) {
   return submitted.some((id) => !attachable.has(id));
 }
 
+function adminListQuery({
+  page,
+  perPage,
+  sort,
+  order,
+  search,
+  ownership,
+  ageMin,
+  ageMax,
+  ageUnit,
+}: ListSamplesQuery): ListSamplesQuery {
+  return {
+    page,
+    perPage,
+    sort,
+    order,
+    search,
+    ownership,
+    ageMin,
+    ageMax,
+    ageUnit,
+  };
+}
+
+type SampleAdminEnv = {
+  Variables: SampleAccessEnv["Variables"] & ModerationEnv["Variables"];
+};
+
 export function createSampleAdminRoutes(
   repository: SampleRepository,
   attachmentsRepository: SampleAttachmentRepository,
   userSampleRepository: UserSampleRepository,
   manualGroups: ManualGroupRepository,
+  users: UserRepository,
   mail?: { sendMail: SendMail; adminUrl: string },
 ) {
-  const accessibleSample = requireSampleAccess(repository);
+  const accessibleSample = requireSampleAccess(repository, users);
   const unlockedSample = requireEditLock(repository);
 
-  return new Hono<SampleAccessEnv>()
+  return new Hono<SampleAdminEnv>()
     .get("/", validateListQuery, async (c) => {
-      const {
-        page,
-        perPage,
-        sort,
-        order,
-        search,
-        ownership,
-        ageMin,
-        ageMax,
-        ageUnit,
-      } = c.req.valid("query");
-      const user = c.get("user");
-      const query = {
-        page,
-        perPage,
-        sort,
-        order,
-        search,
-        ownership,
-        ageMin,
-        ageMax,
-        ageUnit,
-      };
-      const { data, total } =
-        user.superAdmin && ownership === undefined
-          ? await repository.listAllAsSuperAdmin(query)
-          : await repository.listAssignedTo(query, user.id);
+      const { data, total } = await repository.listAssignedTo(
+        adminListQuery(c.req.valid("query")),
+        c.get("user").id,
+      );
       const body: AdminListSamplesResponse = { data, meta: { total } };
       return c.json(body);
     })
+    .get(
+      "/moderated",
+      requireUserModeration(users),
+      validateListQuery,
+      async (c) => {
+        const { data, total } = await repository.listModerated(
+          { ...adminListQuery(c.req.valid("query")), ownership: undefined },
+          c.get("scope"),
+        );
+        const body: AdminListSamplesResponse = { data, meta: { total } };
+        return c.json(body);
+      },
+    )
     .use("/:id", accessibleSample)
     .use("/:id/*", accessibleSample)
     .get("/:id", validateIdParam, async (c) => {
@@ -158,14 +183,14 @@ export function createSampleAdminRoutes(
         }
         const id = c.req.valid("param").id;
         const { userId, role } = c.req.valid("json");
-        if (!canGrantRole(c.get("role"), role)) {
+        if (!canGrantRole(c.get("shareRole"), role)) {
           return c.json({ error: "Forbidden" }, 403);
         }
         const added = await userSampleRepository.addCollaborator(
           id,
           userId,
           role,
-          { mayChangeRole: canManageCollaborators(c.get("role")) },
+          { mayChangeRole: canManageCollaborators(c.get("shareRole")) },
         );
         if (mail && added !== "already_collaborator") {
           // ponytail: fire and forget; a retry queue if a lost invitation ever matters.
@@ -194,7 +219,7 @@ export function createSampleAdminRoutes(
         if (!c.get("sample")) {
           return c.json({ error: "Not found" }, 404);
         }
-        if (!canManageCollaborators(c.get("role"))) {
+        if (!canManageCollaborators(c.get("shareRole"))) {
           return c.json({ error: "Forbidden" }, 403);
         }
         const { id, userId } = c.req.valid("param");
@@ -309,6 +334,18 @@ export function createSampleAdminRoutes(
         if (!sample) {
           return c.json({ error: "Not found" }, 404);
         }
+        if (mail && c.get("moderating")) {
+          const fields = changedSampleFields(current, toPersist);
+          if (fields.length > 0) {
+            // ponytail: fire and forget; a retry queue if a lost notification ever matters.
+            void notifySampleModerated({
+              userSamples: userSampleRepository,
+              mail,
+              sample,
+              fields,
+            });
+          }
+        }
         return c.json({ data: sample });
       },
     )
@@ -330,6 +367,15 @@ export function createSampleAdminRoutes(
         return c.json({ error: "Sample is not ready to publish" }, 409);
       }
       const published = await repository.publish(id);
+      if (mail && c.get("moderating")) {
+        // ponytail: fire and forget; a retry queue if a lost notification ever matters.
+        void notifySampleModerated({
+          userSamples: userSampleRepository,
+          mail,
+          sample,
+          fields: "published",
+        });
+      }
       return c.json({ data: published });
     })
     .post(

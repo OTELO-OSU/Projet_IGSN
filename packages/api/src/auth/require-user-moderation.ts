@@ -2,14 +2,11 @@ import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope"
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { MiddlewareHandler } from "hono";
 
-import { isSpaceManager } from "@projet-igsn/domain/user/is-space-manager";
-import {
-  managerScope,
-  superAdminScope,
-} from "@projet-igsn/domain/user/moderation-scope";
 import { HTTPException } from "hono/http-exception";
 
 import type { AuthenticatedEnv } from "./current-user.ts";
+
+import { getModerationScope } from "./moderation-scope.ts";
 
 export type ModerationEnv = {
   Variables: AuthenticatedEnv["Variables"] & { scope: ModerationScope };
@@ -20,18 +17,11 @@ export function requireUserModeration(
 ): MiddlewareHandler<ModerationEnv> {
   return async (c, next) => {
     const user = c.get("user");
-    if (!user) {
+    const scope = user ? await getModerationScope(users, user) : null;
+    if (!scope) {
       throw new HTTPException(403, { message: "Forbidden" });
     }
-    if (user.superAdmin) {
-      c.set("scope", superAdminScope(user.id));
-    } else {
-      const groups = await users.getModerationScope(user.id);
-      if (!isSpaceManager(groups)) {
-        throw new HTTPException(403, { message: "Forbidden" });
-      }
-      c.set("scope", managerScope(user.id, groups));
-    }
+    c.set("scope", scope);
     await next();
   };
 }

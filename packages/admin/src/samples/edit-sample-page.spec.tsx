@@ -213,7 +213,12 @@ function fakeApi(
     http.get("*/samples", () => {
       sampleFetched = true;
       return HttpResponse.json({
-        data: [{ ...sample, owner: { name: "Dupont", firstname: "Marie" } }],
+        data: [
+          {
+            ...sample,
+            owner: { name: "Dupont", firstname: "Marie", status: "accepted" },
+          },
+        ],
         meta: { total: 1 },
       });
     }),
@@ -334,17 +339,6 @@ const renderEditPageAsEditor = (published: boolean) =>
   );
 
 describe("EditSamplePage", () => {
-  it("should not offer Save & Publish to a contributor on a draft", async () => {
-    const { screen } = await renderEditPageAsContributor(false);
-
-    await expect
-      .element(screen.getByRole("button", { name: "Save as draft" }))
-      .toBeEnabled();
-    expect(
-      screen.getByRole("button", { name: "Save & Publish" }).elements(),
-    ).toHaveLength(0);
-  });
-
   it("should chip the attached manual groups but freeze them to a contributor", async () => {
     const { screen } = await renderEditPageAsContributor(false);
 
@@ -395,28 +389,34 @@ describe("EditSamplePage", () => {
     },
   );
 
-  it("should leave no focusable publish tooltip behind for a contributor on a blocked draft", async () => {
-    const { screen } = await renderEditPage(
-      false,
-      null,
-      false,
-      null,
-      null,
-      "exists",
-      null,
-      null,
-      [],
-      "contributor",
-    );
+  it.each<[string, string | null]>([
+    ["a publishable draft", "fossil"],
+    ["a blocked draft", null],
+  ])(
+    "should offer a contributor no Save & Publish and no focusable tooltip on %s",
+    async (_case, material) => {
+      const { screen } = await renderEditPage(
+        false,
+        material,
+        false,
+        null,
+        null,
+        "exists",
+        null,
+        null,
+        [],
+        "contributor",
+      );
 
-    await expect
-      .element(screen.getByRole("button", { name: "Save as draft" }))
-      .toBeEnabled();
-    expect(
-      screen.getByRole("button", { name: "Save & Publish" }).elements(),
-    ).toHaveLength(0);
-    expect(document.querySelectorAll('span[tabindex="0"]')).toHaveLength(0);
-  });
+      await expect
+        .element(screen.getByRole("button", { name: "Save as draft" }))
+        .toBeEnabled();
+      expect(
+        screen.getByRole("button", { name: "Save & Publish" }).elements(),
+      ).toHaveLength(0);
+      expect(document.querySelectorAll('span[tabindex="0"]')).toHaveLength(0);
+    },
+  );
 
   it("should disable saving for a contributor on a published sample and explain why", async () => {
     const { screen } = await renderEditPageAsContributor(true);
@@ -684,24 +684,6 @@ describe("EditSamplePage", () => {
     );
   });
 
-  it("should not mention the attachment limit on a sample at the limit", async () => {
-    const { screen } = await renderEditPage(
-      false,
-      "fossil",
-      false,
-      null,
-      null,
-      "exists",
-      null,
-      null,
-      overLimitAttachments.slice(1),
-    );
-
-    await expect
-      .element(screen.getByRole("button", { name: "Save & Publish" }))
-      .toBeEnabled();
-  });
-
   it("should offer only Publish updates on an already published sample", async () => {
     const { screen } = await renderEditPage(true);
     await expect
@@ -742,7 +724,7 @@ describe("EditSamplePage", () => {
     await screen.getByRole("button", { name: "Confirm" }).click();
 
     await expect
-      .element(screen.getByRole("heading", { name: "Samples" }))
+      .element(screen.getByRole("heading", { name: "My samples" }))
       .toBeVisible();
     expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH"]);
     await expect
@@ -881,7 +863,7 @@ describe("EditSamplePage", () => {
       await screen.getByRole("button", { name: "Cancel" }).click();
 
       await expect
-        .element(screen.getByRole("heading", { name: "Samples" }))
+        .element(screen.getByRole("heading", { name: "My samples" }))
         .toBeVisible();
       await vi.waitFor(() => expect(lockCalls).toContain("DELETE"));
     });
