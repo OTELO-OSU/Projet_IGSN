@@ -88,9 +88,11 @@ export function UserForm({
     ...memberItems,
     ...attachable.filter((item) => !memberIds.has(item.value)),
   ];
-  const lockedGroupIds = memberItems
-    .map((item) => item.value)
-    .filter((id) => !canManageManualGroup(caller, id));
+  const lockedGroupIds = user.manualGroups
+    .filter(
+      (group) => !group.canDetach || !canManageManualGroup(caller, group.id),
+    )
+    .map((group) => group.id);
   const managedFields = [
     {
       name: "managedGroups.organizations",

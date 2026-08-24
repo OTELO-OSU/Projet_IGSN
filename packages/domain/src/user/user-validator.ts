@@ -42,7 +42,7 @@ export const listUsersQuerySchema = z.object({
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 
 export const adminUserSchema = userSchema.extend({
-  manualGroups: z.array(manualGroupSchema),
+  manualGroups: z.array(manualGroupSchema.extend({ canDetach: z.boolean() })),
   managedGroups: managedGroupsSchema,
 });
 

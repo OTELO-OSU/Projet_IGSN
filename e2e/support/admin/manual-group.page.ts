@@ -6,6 +6,8 @@ export function manualGroupPage(page: Page) {
   const associateDialog = page.getByRole("dialog", {
     name: "Associate a user",
   });
+  const detachButton = (name: string) =>
+    page.getByRole("button", { name: `Detach ${name}` });
   const searchUser = async (search: string) => {
     await page.getByRole("button", { name: "Associate a user" }).click();
     await associateDialog.getByRole("combobox", { name: "User" }).click();
@@ -33,8 +35,10 @@ export function manualGroupPage(page: Page) {
     expectMember: (email: string, status: string) =>
       expect(memberRow(email)).toContainText(status),
     expectNoMember: (email: string) => expect(memberRow(email)).toHaveCount(0),
+    expectDetachDisabled: (name: string) =>
+      expect(detachButton(name)).toBeDisabled(),
     detach: async (name: string) => {
-      await page.getByRole("button", { name: `Detach ${name}` }).click();
+      await detachButton(name).click();
       await page
         .getByRole("dialog", { name: "Detach this member?" })
         .getByRole("button", { name: "Detach", exact: true })

@@ -21,6 +21,7 @@ import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
 
+import { canDetachFromGroup } from "../manual-group/can-detach-from-group.ts";
 import { withTransaction } from "../transaction.ts";
 import { moderationScopeWhere } from "./moderation-scope-where.ts";
 import { searchUsers } from "./search-users.ts";
@@ -50,7 +51,13 @@ const manualGroups = (eb: ExpressionBuilder<DB, "user">) =>
         "manual_group_member.group_id",
         "manual_group.id",
       )
-      .select(["manual_group.id", "manual_group.name"])
+      .select((inner) => [
+        "manual_group.id",
+        "manual_group.name",
+        canDetachFromGroup(eb.ref("user.id"), inner.ref("manual_group.id")).as(
+          "canDetach",
+        ),
+      ])
       .whereRef("manual_group_member.user_id", "=", "user.id")
       .orderBy("manual_group.name", "asc"),
   ).as("manualGroups");
@@ -270,10 +277,8 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           leftGroupIds: leftIds,
         };
       }),
-    search: (query, callerId, excludeCollaboratorsOf, status) =>
-      withTransaction(db, (trx) =>
-        searchUsers(trx, query, callerId, excludeCollaboratorsOf, status),
-      ),
+    search: (callerId, filters) =>
+      withTransaction(db, (trx) => searchUsers(trx, callerId, filters)),
     // ponytail: a concurrent claim of the same orcid can still trip the unique
     // constraint into a 500; the constraint keeps it correct, retry shows 409.
     setOrcid: async (userId, orcid) => {

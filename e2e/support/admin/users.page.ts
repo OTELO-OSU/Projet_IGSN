@@ -9,6 +9,7 @@ export function usersPage(page: Page) {
 
   return {
     open: () => menuEntry.click(),
+    expectNoMenuEntry: () => expect(menuEntry).toBeHidden(),
     expectVisible: () =>
       expect(
         page.getByRole("heading", { name: "Users", level: 1 }),

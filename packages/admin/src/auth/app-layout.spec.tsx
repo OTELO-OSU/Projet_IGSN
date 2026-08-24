@@ -81,6 +81,7 @@ describe("AppLayout", () => {
     await expect
       .element(nav.getByRole("link", { name: "Manual groups" }))
       .toHaveAttribute("href", "/manual-groups");
+    expect(nav.getByRole("link", { name: "Users" }).elements()).toHaveLength(0);
     expect(
       nav.getByRole("link", { name: "Laboratories" }).elements(),
     ).toHaveLength(0);

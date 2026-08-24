@@ -191,7 +191,7 @@ describe("createUserRepository", () => {
     pgTest("should find a researcher by family name", async ({ db }) => {
       const repository = await insertResearchers(db);
 
-      const found = await repository.search("cur", CALLER_ID);
+      const found = await repository.search(CALLER_ID, { search: "cur" });
 
       expect(found).toEqual([
         {
@@ -211,8 +211,8 @@ describe("createUserRepository", () => {
         superAdmin: true,
       });
 
-      const searched = await repository.search("curie", CALLER_ID);
-      const browsed = await repository.search(undefined, CALLER_ID);
+      const searched = await repository.search(CALLER_ID, { search: "curie" });
+      const browsed = await repository.search(CALLER_ID, {});
 
       expect(searched.map((user) => user.email)).toEqual([
         "admin.curie@univ-lorraine.fr",
@@ -239,7 +239,7 @@ describe("createUserRepository", () => {
           collectionMethod: null,
         });
         await insertSampleOwner(db, sample.id, owner.id);
-        const curie = await repository.search("curie", CALLER_ID);
+        const curie = await repository.search(CALLER_ID, { search: "curie" });
         await insertSampleCollaborator(
           db,
           sample.id,
@@ -247,8 +247,13 @@ describe("createUserRepository", () => {
           "contributor",
         );
 
-        const searched = await repository.search("univ", owner.id, sample.id);
-        const browsed = await repository.search(undefined, owner.id, sample.id);
+        const searched = await repository.search(owner.id, {
+          search: "univ",
+          excludeCollaboratorsOf: sample.id,
+        });
+        const browsed = await repository.search(owner.id, {
+          excludeCollaboratorsOf: sample.id,
+        });
 
         expect(searched.map((user) => user.email)).toEqual([
           "pierre.dupont@univ-lorraine.fr",
@@ -262,7 +267,9 @@ describe("createUserRepository", () => {
     pgTest("should find a researcher by email", async ({ db }) => {
       const repository = await insertResearchers(db);
 
-      const found = await repository.search("pierre.dupont@univ", CALLER_ID);
+      const found = await repository.search(CALLER_ID, {
+        search: "pierre.dupont@univ",
+      });
 
       expect(found.map((user) => user.name)).toEqual(["Dupont"]);
     });
@@ -270,7 +277,7 @@ describe("createUserRepository", () => {
     pgTest("should ignore case", async ({ db }) => {
       const repository = await insertResearchers(db);
 
-      const found = await repository.search("CURIE", CALLER_ID);
+      const found = await repository.search(CALLER_ID, { search: "CURIE" });
 
       expect(found.map((user) => user.name)).toEqual(["Curie"]);
     });
@@ -282,7 +289,9 @@ describe("createUserRepository", () => {
         firstname: "Solene",
       });
 
-      expect(await repository.search("Solene", CALLER_ID)).toEqual([]);
+      expect(await repository.search(CALLER_ID, { search: "Solene" })).toEqual(
+        [],
+      );
     });
 
     pgTest("should order results by name", async ({ db }) => {
@@ -293,7 +302,9 @@ describe("createUserRepository", () => {
         });
       }
 
-      const found = await repository.search("univ-lorraine", CALLER_ID);
+      const found = await repository.search(CALLER_ID, {
+        search: "univ-lorraine",
+      });
 
       expect(found.map((user) => user.name)).toEqual([
         "Aubry",
@@ -310,7 +321,7 @@ describe("createUserRepository", () => {
         });
       }
 
-      const found = await repository.search("geologue", CALLER_ID);
+      const found = await repository.search(CALLER_ID, { search: "geologue" });
 
       expect(found).toHaveLength(10);
     });
@@ -318,8 +329,10 @@ describe("createUserRepository", () => {
     pgTest("should treat wildcards as literal characters", async ({ db }) => {
       const repository = await insertResearchers(db);
 
-      expect(await repository.search("%", CALLER_ID)).toEqual([]);
-      expect(await repository.search("_urie", CALLER_ID)).toEqual([]);
+      expect(await repository.search(CALLER_ID, { search: "%" })).toEqual([]);
+      expect(await repository.search(CALLER_ID, { search: "_urie" })).toEqual(
+        [],
+      );
     });
 
     pgTest("should never return the caller", async ({ db }) => {
@@ -328,7 +341,7 @@ describe("createUserRepository", () => {
         name: "Caller",
       });
 
-      const found = await repository.search("caller", caller.id);
+      const found = await repository.search(caller.id, { search: "caller" });
 
       expect(found).toEqual([]);
     });
@@ -337,7 +350,7 @@ describe("createUserRepository", () => {
       pgTest("should order every researcher by email", async ({ db }) => {
         const repository = await insertResearchers(db);
 
-        const found = await repository.search(undefined, CALLER_ID);
+        const found = await repository.search(CALLER_ID, {});
 
         expect(found.map((user) => user.email)).toEqual([
           "marie.curie@univ-lorraine.fr",
@@ -355,7 +368,7 @@ describe("createUserRepository", () => {
           );
         }
 
-        const found = await repository.search(undefined, CALLER_ID);
+        const found = await repository.search(CALLER_ID, {});
 
         expect(found).toHaveLength(20);
         expect(found.at(-1)?.email).toBe("geologue19@univ-lorraine.fr");

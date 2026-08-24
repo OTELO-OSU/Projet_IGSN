@@ -8,6 +8,7 @@ import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { canManageManualGroup } from "@projet-igsn/domain/user/can-manage-manual-group";
 import { createFileRoute } from "@tanstack/react-router";
 import { Trash2Icon } from "lucide-react";
+import { z } from "zod";
 
 import { RouteGuard } from "#/auth/route-guard.tsx";
 import { useCurrentUser } from "#/auth/use-current-user.ts";
@@ -19,6 +20,9 @@ import { useManualGroup } from "#/manual-groups/use-manual-group.ts";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/manual-groups/$groupId")({
+  validateSearch: z.object({
+    search: z.string().optional().catch(undefined),
+  }),
   component: () => {
     const { groupId } = Route.useParams();
     return (
@@ -41,6 +45,7 @@ export const Route = createFileRoute("/manual-groups/$groupId")({
 
 function ManualGroupDetailPage() {
   const { groupId } = Route.useParams();
+  const { search } = Route.useSearch();
   const { data: me } = useCurrentUser();
   const navigate = Route.useNavigate();
   const query = useManualGroup(groupId);
@@ -100,7 +105,13 @@ function ManualGroupDetailPage() {
         )}
       </div>
 
-      <ManualGroupMembers groupId={groupId} />
+      <ManualGroupMembers
+        groupId={groupId}
+        search={search}
+        onSearch={(value) =>
+          void navigate({ search: { search: value || undefined } })
+        }
+      />
     </>
   );
 }

@@ -74,7 +74,13 @@ export function AssociateManualGroupMemberDialog({
               {m.field_manual_group_member()}
             </Label>
             <form.AppField name="picked">
-              {() => <UserField id={USER_FIELD_ID} status="accepted" />}
+              {() => (
+                <UserField
+                  id={USER_FIELD_ID}
+                  status="accepted"
+                  excludeMembersOf={groupId}
+                />
+              )}
             </form.AppField>
           </div>
           <DialogFooter>

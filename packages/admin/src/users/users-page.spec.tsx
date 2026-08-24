@@ -27,12 +27,13 @@ vi.mock("react-oidc-context", () => ({
 const manualGroup = (index: number) => ({
   id: `3f2504e0-4f89-41d3-9a0c-0305000001${String(index).padStart(2, "0")}`,
   name: `Group${index}`,
+  canDetach: true,
 });
 
 const user = (
   index: number,
   status: "pending" | "accepted" | "rejected",
-  manualGroups: { id: string; name: string }[] = [],
+  manualGroups: ReturnType<typeof manualGroup>[] = [],
 ) => ({
   id: `3f2504e0-4f89-41d3-9a0c-0305000000${String(index).padStart(2, "0")}`,
   email: `user${index}@univ-lorraine.fr`,

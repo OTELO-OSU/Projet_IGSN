@@ -32,6 +32,7 @@ const curie = {
   firstname: "Marie",
   orcid: null,
   status: "accepted",
+  canDetach: true,
 };
 const dupont = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3402",
@@ -40,6 +41,7 @@ const dupont = {
   firstname: "Pierre",
   orcid: null,
   status: "accepted",
+  canDetach: true,
 };
 
 const dupuis = {
@@ -49,6 +51,7 @@ const dupuis = {
   firstname: "Theo",
   orcid: null,
   status: "pending",
+  canDetach: true,
 };
 
 function fakeApi({
@@ -162,15 +165,18 @@ describe("ManualGroupDetailPage", () => {
     );
   });
 
-  it("should open a member's account from its row", async () => {
-    fakeApi();
+  it("should keep only the members matching the search", async () => {
+    fakeApi({ members: [curie, dupont] });
 
-    const { screen, router } = await renderDetailPage();
-    await screen.getByRole("link", { name: "Marie Curie" }).click();
+    const { screen } = await renderDetailPage();
+    await screen.getByPlaceholder("Filter by name or email").fill("dupont");
 
     await expect
-      .poll(() => router.state.location.pathname)
-      .toBe(`/users/${curie.id}`);
+      .element(screen.getByRole("cell", { name: dupont.email }))
+      .toBeVisible();
+    await expect
+      .poll(() => screen.getByRole("cell", { name: curie.email }).elements())
+      .toEqual([]);
   });
 
   it("should detach a member once the detach is confirmed", async () => {
@@ -267,6 +273,29 @@ describe("ManualGroupDetailPage", () => {
     await expect
       .element(screen.getByRole("alert"))
       .toHaveTextContent("This manual group does not exist");
+  });
+
+  it("should offer no detach of a member the api refuses to detach", async () => {
+    fakeApi({ members: [{ ...curie, canDetach: false }] });
+
+    const { screen } = await renderDetailPage();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Detach Marie Curie" }))
+      .toBeDisabled();
+  });
+
+  it("should not link a member to its user page", async () => {
+    fakeApi({ members: [curie] });
+
+    const { screen } = await renderDetailPage();
+
+    await expect
+      .element(screen.getByRole("cell", { name: "Marie Curie", exact: true }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Marie Curie" }).elements(),
+    ).toEqual([]);
   });
 
   it("should offer no rename or delete to a manual group manager", async () => {

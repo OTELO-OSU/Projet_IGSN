@@ -4,10 +4,6 @@ import { chooseOption } from "./choose-option.ts";
 import { attachManualGroup } from "./manual-groups-field.ts";
 
 export function userPage(page: Page) {
-  const groupsField = page.getByRole("combobox", {
-    name: "Manual groups",
-    exact: true,
-  });
   const statusField = page.getByRole("combobox", {
     name: "Status",
     exact: true,
@@ -29,12 +25,6 @@ export function userPage(page: Page) {
       await save();
     },
     expectGroup: (name: string) => expect(detachButton(name)).toBeVisible(),
-    expectGroupsReadOnly: () => expect(groupsField).toBeDisabled(),
-    expectStatusReadOnly: () => expect(statusField).toBeDisabled(),
-    expectInstitutionReadOnly: () =>
-      expect(
-        page.getByRole("combobox", { name: "Organization" }),
-      ).toBeDisabled(),
     expectGroupLocked: async (name: string) => {
       await expect(page.getByText(name, { exact: true })).toBeVisible();
       await expect(detachButton(name)).toHaveCount(0);

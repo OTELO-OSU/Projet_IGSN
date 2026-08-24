@@ -26,13 +26,18 @@ export type SpaceManager = {
   groups: ManagedGroups;
 };
 
+export type SearchUsersFilters = {
+  search?: string;
+  excludeCollaboratorsOf?: string;
+  status?: UserStatus;
+  excludeMembersOf?: string;
+};
+
 export type UserRepository = {
   upsert(input: UpsertUser): Promise<User>;
   search(
-    query: string | undefined,
     callerId: string,
-    excludeCollaboratorsOf?: string,
-    status?: UserStatus,
+    filters: SearchUsersFilters,
   ): Promise<UserIdentity[]>;
   setOrcid(userId: string, orcid: string | null): Promise<User | null>;
   setInstitutionalGroups(

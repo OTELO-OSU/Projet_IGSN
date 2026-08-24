@@ -11,6 +11,7 @@ import { adminUrl } from "../support/urls";
 const OTELO = "Observatoire Terre et Environnement de Lorraine (OTELo)";
 const GEORESSOURCES = "GéoRessources (GEORESSOURCES) (UMR7359)";
 const OUT_OF_SCOPE_USER = `${adminUrl}/users/01980e2d-6f9b-7000-8000-000000000003`;
+const JEAN_USER = `${adminUrl}/users/01980e2d-6f9b-7000-8000-000000000002`;
 
 test.describe("space manager", () => {
   test("a super admin grants a researcher its managed groups", async ({
@@ -88,7 +89,7 @@ test.describe("space manager", () => {
     await user.expectStatus("Active");
   });
 
-  test("a space manager neither grants the role nor edits memberships", async ({
+  test("a dual manager edits the manual groups it manages, not the role", async ({
     page,
   }) => {
     const users = usersPage(page);
@@ -100,7 +101,12 @@ test.describe("space manager", () => {
     await users.openUser(RESEARCHERS.jean.email);
 
     await managed.expectAbsent();
-    await user.expectGroupsReadOnly();
+    await user.expectGroupLocked("GeoRift");
+
+    await user.associateGroup("OZCAR-RI");
+    await page.reload();
+
+    await user.expectGroup("OZCAR-RI");
   });
 
   test("a space manager cannot reach a user outside its groups", async ({
@@ -114,24 +120,17 @@ test.describe("space manager", () => {
     await user.expectNotFound();
   });
 
-  test("a manual group manager edits only the groups it manages", async ({
-    page,
-  }) => {
+  test("a manual group manager reaches no user page", async ({ page }) => {
     const users = usersPage(page);
-    const user = userPage(page);
+    const samples = sampleListPage(page);
 
     await signInAsResearcher(page, RESEARCHERS.pierre);
-    await users.open();
-    await users.openUser(RESEARCHERS.jean.email);
 
-    await user.expectStatusReadOnly();
-    await user.expectInstitutionReadOnly();
-    await user.expectGroupLocked("GeoRift");
+    await users.expectNoMenuEntry();
 
-    await user.associateGroup("ProfilLoire 2024");
-    await page.reload();
+    await page.goto(JEAN_USER, { waitUntil: "commit" });
 
-    await user.expectGroup("ProfilLoire 2024");
+    await samples.expectVisible();
   });
 
   test("a manual group manager curates the members of its own groups", async ({
@@ -153,6 +152,19 @@ test.describe("space manager", () => {
 
     await group.detach("Luc Moreau");
     await group.expectNoMember(RESEARCHERS.luc.email);
+  });
+
+  test("a manual group manager cannot detach a member owning a published sample", async ({
+    page,
+  }) => {
+    const groups = manualGroupsPage(page);
+    const group = manualGroupPage(page);
+
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await groups.open();
+    await groups.openGroup("ProfilLoire 2024");
+
+    await group.expectDetachDisabled("Pierre Durand");
   });
 
   test("a space manager remains an ordinary researcher", async ({ page }) => {

@@ -5,7 +5,10 @@ import type {
   UserIdentitiesResponse,
 } from "@projet-igsn/domain/user/user-validator";
 
+import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
 import { Hono } from "hono";
+import { createMiddleware } from "hono/factory";
+import { HTTPException } from "hono/http-exception";
 
 import type { AuthenticatedEnv } from "../auth/current-user.ts";
 import type { ModerationEnv } from "../auth/require-user-moderation.ts";
@@ -25,18 +28,24 @@ import {
   validateUserIdParam,
 } from "./validator.ts";
 
+const requireUserModerator = createMiddleware<ModerationEnv>(
+  async (c, next) => {
+    if (!canModerateUsers(c.get("scope"))) {
+      throw new HTTPException(403, { message: "Forbidden" });
+    }
+    await next();
+  },
+);
+
 export function createUserSearchRoutes(userRepository: UserRepository) {
   return new Hono<AuthenticatedEnv>().get(
     "/",
     validateSearchUsersQuery,
     async (c) => {
-      const { search, excludeCollaboratorsOf, status } = c.req.valid("query");
       const body: UserIdentitiesResponse = {
         data: await userRepository.search(
-          search,
           c.get("user").id,
-          excludeCollaboratorsOf,
-          status,
+          c.req.valid("query"),
         ),
       };
       return c.json(body);
@@ -50,6 +59,7 @@ export function createUserRoutes(
 ) {
   return new Hono<ModerationEnv>()
     .use("*", requireUserModeration(repository))
+    .use("*", requireUserModerator)
     .get("/", validateListUsersQuery, async (c) => {
       const { data, total } = await repository.list(
         c.req.valid("query"),
