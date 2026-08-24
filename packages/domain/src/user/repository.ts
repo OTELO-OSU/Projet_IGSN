@@ -28,9 +28,11 @@ export type SpaceManager = {
 
 export type SearchUsersFilters = {
   search?: string;
+  ids?: string[];
   excludeCollaboratorsOf?: string;
   status?: UserStatus;
   excludeMembersOf?: string;
+  includeSelf?: boolean;
 };
 
 export type UserRepository = {

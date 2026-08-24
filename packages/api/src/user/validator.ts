@@ -1,4 +1,5 @@
 import { setInstitutionalGroupsSchema } from "@projet-igsn/domain/institutional-group/institutional-groups-validator";
+import { MAX_MANUAL_GROUP_MANAGERS } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
 import { userStatusSchema } from "@projet-igsn/domain/user/model";
 import { orcidSchema } from "@projet-igsn/domain/user/orcid";
@@ -13,9 +14,15 @@ import { validateUuidIdParam } from "../uuid-param.ts";
 
 const searchUsersQuerySchema = z.strictObject({
   search: z.string().trim().min(2).max(MAX_SEARCH_LENGTH).optional(),
+  ids: z
+    .string()
+    .transform((value) => value.split(","))
+    .pipe(z.array(z.uuid()).min(1).max(MAX_MANUAL_GROUP_MANAGERS))
+    .optional(),
   excludeCollaboratorsOf: z.uuid().optional(),
   status: userStatusSchema.exclude(["rejected"]).optional(),
   excludeMembersOf: z.uuid().optional(),
+  includeSelf: z.stringbool().optional(),
 });
 
 export const validateSearchUsersQuery = validator("query", (value, c) => {

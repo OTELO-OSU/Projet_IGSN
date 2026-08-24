@@ -12,16 +12,21 @@ export function searchUsers(
   callerId: string,
   {
     search,
+    ids,
     excludeCollaboratorsOf,
     status,
     excludeMembersOf,
+    includeSelf,
   }: SearchUsersFilters,
 ): Promise<UserIdentity[]> {
   const others = db
     .selectFrom("user")
     .select(["id", "email", "name", "firstname", "orcid"])
-    .where("id", "!=", callerId)
+    .$if(ids === undefined && !includeSelf, (qb) =>
+      qb.where("id", "!=", callerId),
+    )
     .where("status", "!=", "rejected")
+    .$if(ids !== undefined, (qb) => qb.where("id", "in", ids!))
     .$if(status !== undefined, (qb) => qb.where("status", "=", status!))
     .$if(excludeCollaboratorsOf !== undefined, (qb) =>
       qb.where((eb) =>

@@ -21,12 +21,15 @@ import {
   logMembershipChange,
   notifyManualGroupJoined,
 } from "./notify-manual-group-joined.ts";
+import { sendManualGroupRequest } from "./send-manual-group-request.ts";
 import {
   validateAddManualGroupMemberBody,
+  validateCreateManualGroupBody,
   validateListManualGroupsQuery,
   validateManualGroupIdParam,
   validateManualGroupMemberParams,
   validateManualGroupNameBody,
+  validateRequestManualGroupBody,
 } from "./validator.ts";
 
 const NOT_FOUND = { error: "Manual group not found" } as const;
@@ -55,14 +58,44 @@ export function createManualGroupRoutes(
       const body: ListManualGroupsResponse = { data, meta: { total } };
       return c.json(body);
     })
-    .post("/", requireSuperAdmin, validateManualGroupNameBody, async (c) => {
-      const created = await repository.create(c.req.valid("json").name);
-      if (created === "name_taken") {
-        return c.json(NAME_TAKEN, 409);
-      }
-      const body: ManualGroupResponse = { data: created.group };
-      return c.json(body, 201);
-    })
+    .post(
+      "/",
+      requireSuperAdmin,
+      requireActiveSession,
+      validateCreateManualGroupBody,
+      async (c) => {
+        const { name, managerIds } = c.req.valid("json");
+        const created = await repository.create(name, managerIds);
+        if (created === "name_taken") {
+          return c.json(NAME_TAKEN, 409);
+        }
+        const body: ManualGroupResponse = { data: created.group };
+        return c.json(body, 201);
+      },
+    )
+    .post(
+      "/requests",
+      requireActiveSession,
+      validateRequestManualGroupBody,
+      async (c) => {
+        const { name, managerIds } = c.req.valid("json");
+        const requester = c.get("user");
+        const wanted = [...new Set(managerIds)];
+        const managers = await users.search(requester.id, { ids: wanted });
+        if (managers.length !== wanted.length) {
+          return c.json({ error: "User not found" }, 404);
+        }
+        if (mail) {
+          // ponytail: fire and forget; a retry queue if a lost request ever matters.
+          void sendManualGroupRequest(
+            users,
+            { requester, name, managers },
+            mail,
+          );
+        }
+        return c.body(null, 204);
+      },
+    )
     .get("/:id", validateManualGroupIdParam, requireManagedGroup, async (c) => {
       const group = await repository.get(c.req.valid("param").id);
       if (!group) {

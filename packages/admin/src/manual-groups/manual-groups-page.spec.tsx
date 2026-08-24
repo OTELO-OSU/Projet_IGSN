@@ -29,14 +29,64 @@ const METEORITE = {
   memberCount: 5,
 };
 
+const JEAN = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000d1",
+  email: "jean.martin@example.org",
+  name: "Martin",
+  firstname: "Jean",
+  orcid: null,
+};
+
+const NAMELESS = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000d2",
+  email: "anonyme@example.org",
+  name: null,
+  firstname: null,
+  orcid: null,
+};
+
+const SELF = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000d4",
+  email: "marie.dupont@example.org",
+  name: "Dupont",
+  firstname: "Marie",
+  orcid: null,
+};
+
+const PENDING = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000d3",
+  email: "wait@example.org",
+  name: "Waiting",
+  firstname: "Willy",
+  orcid: null,
+};
+
 function fakeApi({
   groups = [BASALT, METEORITE],
   caller = { superAdmin: true },
 }: { groups?: (typeof BASALT)[]; caller?: Partial<CurrentUser> } = {}) {
   let listed = [...groups];
   const requested: string[] = [];
+  const requestedGroups: unknown[] = [];
   fakeCurrentUser(caller);
   worker.use(
+    http.get("*/admin/users/search", ({ request }) => {
+      const params = new URL(request.url).searchParams;
+      const ids = params.get("ids");
+      const pool = [
+        JEAN,
+        NAMELESS,
+        ...(params.get("status") === "accepted" ? [] : [PENDING]),
+        ...(params.get("includeSelf") === "true" ? [SELF] : []),
+      ];
+      return HttpResponse.json({
+        data: pool.filter((user) => !ids || ids.split(",").includes(user.id)),
+      });
+    }),
+    http.post("*/admin/manual-groups/requests", async ({ request }) => {
+      requestedGroups.push(await request.json());
+      return new HttpResponse(null, { status: 204 });
+    }),
     http.post("*/admin/manual-groups", async ({ request }) => {
       const { name } = (await request.json()) as { name: string };
       const created = {
@@ -60,7 +110,7 @@ function fakeApi({
       });
     }),
   );
-  return { requested };
+  return { requested, requestedGroups };
 }
 
 describe("ManualGroupsPage", () => {
@@ -111,16 +161,131 @@ describe("ManualGroupsPage", () => {
       .toBeVisible();
   });
 
-  it("should offer no group creation to a manual group manager", async () => {
-    fakeApi({ groups: [BASALT], caller: { managedManualGroups: [BASALT] } });
+  it.each([
+    {
+      persona: "a manual group manager",
+      caller: { managedManualGroups: [BASALT] },
+      offered: "Request a group",
+      withheld: "New manual group",
+    },
+    {
+      persona: "an institution manager",
+      caller: { managedLaboratories: ["UMR7358"] },
+      offered: "Request a group",
+      withheld: "New manual group",
+    },
+    {
+      persona: "a super admin",
+      caller: { superAdmin: true },
+      offered: "New manual group",
+      withheld: "Request a group",
+    },
+  ])("should offer $offered to $persona", async (persona) => {
+    fakeApi({ groups: [BASALT], caller: persona.caller });
 
     const { screen } = await renderRoute("/manual-groups");
 
     await expect
-      .element(screen.getByRole("cell", { name: "Basalt team" }))
+      .element(screen.getByRole("button", { name: persona.offered }))
       .toBeVisible();
     expect(
-      screen.getByRole("button", { name: "New manual group" }).elements(),
+      screen.getByRole("button", { name: persona.withheld }).elements(),
+    ).toEqual([]);
+  });
+
+  it("should send the requested name and managers to the super admins", async () => {
+    const { requestedGroups } = fakeApi({
+      groups: [BASALT],
+      caller: { managedManualGroups: [BASALT] },
+    });
+
+    const { screen } = await renderRoute("/manual-groups");
+    await screen.getByRole("button", { name: "Request a group" }).click();
+    await screen.getByLabelText("Group name").fill("Andesite lab");
+    await screen.getByRole("combobox", { name: "Managers" }).click();
+    await screen.getByRole("option", { name: "Jean Martin" }).click();
+    await screen.getByRole("button", { name: "Send the request" }).click();
+
+    await expect
+      .element(
+        screen.getByText("Request for Andesite lab sent to the super admins"),
+      )
+      .toBeVisible();
+    expect(requestedGroups).toEqual([
+      { name: "Andesite lab", managerIds: [JEAN.id] },
+    ]);
+  });
+
+  it.each([
+    ["a named manager", JEAN, "Jean Martin"],
+    ["a manager with no name", NAMELESS, NAMELESS.email],
+  ])(
+    "should open the create dialog prefilled from a request link naming %s",
+    async (_case, manager, label) => {
+      fakeApi();
+
+      const { screen } = await renderRoute(
+        `/manual-groups?requestedName=Andesite+lab&requestedManagerIds=${manager.id}`,
+      );
+
+      await expect
+        .element(screen.getByLabelText("Group name"))
+        .toHaveValue("Andesite lab");
+      await expect
+        .element(screen.getByRole("button", { name: `Remove ${label}` }))
+        .toBeVisible();
+    },
+  );
+
+  it("should refuse a request missing the name and the managers, on both fields", async () => {
+    const { requestedGroups } = fakeApi({
+      groups: [BASALT],
+      caller: { managedManualGroups: [BASALT] },
+    });
+
+    const { screen } = await renderRoute("/manual-groups");
+    await screen.getByRole("button", { name: "Request a group" }).click();
+    await screen.getByRole("button", { name: "Send the request" }).click();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Managers" }))
+      .toHaveAccessibleDescription("At least one manager is required");
+    await expect
+      .element(screen.getByLabelText("Group name"))
+      .toHaveAccessibleDescription("Group name is required");
+    expect(requestedGroups).toEqual([]);
+  });
+
+  it("should offer the requester itself as a manager", async () => {
+    fakeApi({
+      groups: [BASALT],
+      caller: { managedManualGroups: [BASALT] },
+    });
+
+    const { screen } = await renderRoute("/manual-groups");
+    await screen.getByRole("button", { name: "Request a group" }).click();
+    await screen.getByRole("combobox", { name: "Managers" }).click();
+
+    await expect
+      .element(screen.getByRole("option", { name: "Marie Dupont" }))
+      .toBeVisible();
+  });
+
+  it("should offer no pending account as a manager", async () => {
+    fakeApi({
+      groups: [BASALT],
+      caller: { managedManualGroups: [BASALT] },
+    });
+
+    const { screen } = await renderRoute("/manual-groups");
+    await screen.getByRole("button", { name: "Request a group" }).click();
+    await screen.getByRole("combobox", { name: "Managers" }).click();
+
+    await expect
+      .element(screen.getByRole("option", { name: "Jean Martin" }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("option", { name: "Willy Waiting" }).elements(),
     ).toEqual([]);
   });
 });

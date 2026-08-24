@@ -21,10 +21,12 @@ const items = [
 
 function Harness({
   onSubmit = () => {},
+  onSearch,
   selected = [],
   lockedValues,
 }: {
   onSubmit?: (value: string[]) => void;
+  onSearch?: (term: string) => void;
   selected?: string[];
   lockedValues?: string[];
 } = {}) {
@@ -49,6 +51,7 @@ function Harness({
             emptyText="No element found"
             removeLabel={(label) => `Remove ${label}`}
             lockedValues={lockedValues}
+            onSearch={onSearch}
           />
         )}
       </form.AppField>
@@ -79,6 +82,19 @@ describe("MultiComboboxField", () => {
 
     await expect
       .element(page.getByRole("option", { name: "Radon" }))
+      .toBeVisible();
+  });
+
+  it("should report the typed term and leave the items unfiltered when a search handler is given", async () => {
+    const onSearch = vi.fn();
+    await render(<Harness onSearch={onSearch} />);
+
+    await page.getByRole("combobox", { name: "Elements" }).click();
+    await page.getByPlaceholder("Search elements...").fill("Rad");
+
+    await vi.waitFor(() => expect(onSearch).toHaveBeenCalledWith("Rad"));
+    await expect
+      .element(page.getByRole("option", { name: "Carbon" }))
       .toBeVisible();
   });
 

@@ -1,7 +1,9 @@
 import {
   addManualGroupMemberBodySchema,
+  createManualGroupBodySchema,
   listManualGroupsQuerySchema,
   manualGroupNameBodySchema,
+  requestManualGroupBodySchema,
 } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { validator } from "hono/validator";
 import { z } from "zod";
@@ -51,3 +53,19 @@ export const validateAddManualGroupMemberBody = validator(
     return parsed.data;
   },
 );
+
+export const validateCreateManualGroupBody = validator("json", (value, c) => {
+  const parsed = createManualGroupBodySchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid manual group" }, 400);
+  }
+  return parsed.data;
+});
+
+export const validateRequestManualGroupBody = validator("json", (value, c) => {
+  const parsed = requestManualGroupBodySchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid manual group request" }, 400);
+  }
+  return parsed.data;
+});

@@ -15,12 +15,28 @@ import { m } from "#/paraglide/messages.js";
 import { ManualGroupForm } from "./manual-group-form.tsx";
 import { useCreateManualGroup } from "./use-create-manual-group.ts";
 
-export function CreateManualGroupDialog() {
-  const [isOpen, setIsOpen] = useState(false);
+export function CreateManualGroupDialog({
+  name,
+  managerIds = [],
+  defaultOpen = false,
+  onClose,
+}: {
+  name?: string;
+  managerIds?: string[];
+  defaultOpen?: boolean;
+  onClose?: () => void;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
   const createGroup = useCreateManualGroup();
+  const setOpen = (next: boolean) => {
+    setIsOpen(next);
+    if (!next) {
+      onClose?.();
+    }
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button type="button">
           <PlusIcon aria-hidden />
@@ -35,9 +51,11 @@ export function CreateManualGroupDialog() {
           </DialogDescription>
         </DialogHeader>
         <ManualGroupForm
+          name={name}
+          managerIds={managerIds}
           submitLabel={m.action_create()}
           onSave={(body) =>
-            createGroup.mutateAsync(body).then(() => setIsOpen(false))
+            createGroup.mutateAsync(body).then(() => setOpen(false))
           }
         />
       </DialogContent>

@@ -29,6 +29,7 @@ type MultiComboboxProps = {
   values: string[];
   onChange: (values: string[]) => void;
   onBlur?: () => void;
+  onSearch?: (term: string) => void;
   id?: string;
   placeholder: string;
   searchPlaceholder: string;
@@ -45,6 +46,7 @@ export function MultiCombobox({
   values,
   onChange,
   onBlur,
+  onSearch,
   id,
   placeholder,
   searchPlaceholder,
@@ -60,9 +62,11 @@ export function MultiCombobox({
   const selected = items.filter((item) => values.includes(item.value));
   const query = search.trim().toLowerCase();
   const unselected = items.filter((item) => !values.includes(item.value));
-  const visible = query
-    ? unselected.filter((item) => item.label.toLowerCase().includes(query))
-    : unselected.slice(0, UNSEARCHED_LIMIT);
+  const visible = onSearch
+    ? unselected
+    : query
+      ? unselected.filter((item) => item.label.toLowerCase().includes(query))
+      : unselected.slice(0, UNSEARCHED_LIMIT);
 
   const toggle = (value: string) =>
     onChange(
@@ -126,7 +130,10 @@ export function MultiCombobox({
           <CommandInput
             placeholder={searchPlaceholder}
             value={search}
-            onValueChange={setSearch}
+            onValueChange={(value) => {
+              setSearch(value);
+              onSearch?.(value);
+            }}
           />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>

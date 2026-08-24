@@ -57,8 +57,8 @@ export function RenameManualGroupDialog({
         <ManualGroupForm
           name={name}
           submitLabel={m.action_save()}
-          onSave={(body) =>
-            rename.mutateAsync(body).then(() => setIsOpen(false))
+          onSave={({ name: nextName }) =>
+            rename.mutateAsync({ name: nextName }).then(() => setIsOpen(false))
           }
         />
       </DialogContent>
