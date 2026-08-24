@@ -154,6 +154,20 @@ async function renderUserPage(options: Options = {}) {
   return { screen, calls };
 }
 
+const clearOrganization = async (
+  screen: Awaited<ReturnType<typeof renderUserPage>>["screen"],
+) => {
+  await screen
+    .getByRole("combobox", { name: "Organization *", exact: true })
+    .click();
+  await screen
+    .getByPlaceholder("Search organizations...")
+    .fill("Université de Lorraine");
+  await screen
+    .getByRole("option", { name: "Université de Lorraine", exact: true })
+    .click();
+};
+
 describe("UserDetailPage", () => {
   it("should show the identity read-only, with no editable identity field", async () => {
     const { screen } = await renderUserPage();
@@ -334,6 +348,46 @@ describe("UserDetailPage", () => {
           institutionalOrganization: "04vfs2w97",
           institutionalOsu: null,
           institutionalLaboratory: "UMR7358",
+          manualGroupIds: [BASALT.id],
+          managedGroups: NO_MANAGED_GROUPS,
+        },
+      ]);
+  });
+
+  it("should announce a pending account instead of a status once the institution is cleared", async () => {
+    const { screen } = await renderUserPage({ status: "accepted" });
+
+    await clearOrganization(screen);
+
+    await expect
+      .element(
+        screen.getByText(
+          "Removing the institution sends the account back to pending moderation.",
+        ),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("Pending", { exact: true }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("combobox", { name: "Status" }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should submit the stored status with the cleared institution", async () => {
+    const { screen, calls } = await renderUserPage({ status: "accepted" });
+
+    await clearOrganization(screen);
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await expect
+      .poll(() => calls)
+      .toEqual([
+        {
+          status: "accepted",
+          institutionalOrganization: null,
+          institutionalOsu: null,
+          institutionalLaboratory: null,
           manualGroupIds: [BASALT.id],
           managedGroups: NO_MANAGED_GROUPS,
         },

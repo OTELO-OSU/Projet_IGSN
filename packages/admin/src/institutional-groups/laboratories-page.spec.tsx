@@ -47,13 +47,18 @@ const MEMBERS = [
 
 function fakeApi() {
   const requested: string[] = [];
+  let members = MEMBERS;
   fakeCurrentUser({ superAdmin: true });
   worker.use(
+    http.delete("*/admin/users/:id/institutional-groups", ({ params }) => {
+      members = members.filter((member) => member.id !== params.id);
+      return new HttpResponse(null, { status: 204 });
+    }),
     http.get("*/admin/users", ({ request }) => {
       const url = new URL(request.url);
       requested.push(url.search);
       const laboratory = url.searchParams.get("institutionalLaboratory");
-      const matching = MEMBERS.filter(
+      const matching = members.filter(
         (member) => member.institutionalLaboratory === laboratory,
       );
       return HttpResponse.json({
@@ -210,6 +215,42 @@ describe("LaboratoriesPage", () => {
         .elements(),
     ).toHaveLength(0);
     expect(requested.at(-1)).toContain("institutionalLaboratory=UMR7358");
+  });
+
+  it("should drop a member from the laboratory once the removal is confirmed", async () => {
+    fakeApi();
+    const { screen } = await renderLaboratories(
+      "/institutional-groups/laboratories/UMR7358",
+    );
+    await expect
+      .element(
+        screen.getByRole("cell", { name: "crpg.member@univ-lorraine.fr" }),
+      )
+      .toBeVisible();
+
+    await screen
+      .getByRole("button", {
+        name: "Remove Claire Petrographer from their institution",
+      })
+      .click();
+    await screen
+      .getByRole("button", { name: "Remove from institution", exact: true })
+      .click();
+
+    await expect
+      .poll(() =>
+        screen
+          .getByRole("cell", { name: "crpg.member@univ-lorraine.fr" })
+          .elements(),
+      )
+      .toHaveLength(0);
+    await expect
+      .element(
+        screen.getByRole("heading", {
+          name: "Centre de recherches pétrographiques et géochimiques",
+        }),
+      )
+      .toBeVisible();
   });
 
   it("should say a laboratory is unknown and ask for no member", async () => {

@@ -10,6 +10,7 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 
+import { RemoveUserInstitutionButton } from "./remove-user-institution-button.tsx";
 import { UserStatusBadge } from "./user-status-badge.tsx";
 
 const MAX_LISTED_GROUPS = 3;
@@ -55,6 +56,14 @@ const columns: ColumnDef<ListedUser>[] = [
     accessorKey: "status",
     header: () => m.column_status(),
     cell: ({ row }) => <UserStatusBadge status={row.original.status} />,
+  },
+  {
+    id: "removeInstitution",
+    header: () => m.user_remove_institution_action(),
+    cell: ({ row }) =>
+      row.original.institutionalOrganization === null ? null : (
+        <RemoveUserInstitutionButton user={row.original} />
+      ),
   },
 ];
 

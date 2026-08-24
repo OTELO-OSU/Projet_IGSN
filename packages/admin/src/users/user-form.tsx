@@ -9,6 +9,7 @@ import { FormSection } from "@projet-igsn/design-system/components/form/form-sec
 import { canJoinManualGroup } from "@projet-igsn/domain/manual-group/can-join-manual-group";
 import { canManageManualGroup } from "@projet-igsn/domain/user/can-manage-manual-group";
 import { settableUserStatuses } from "@projet-igsn/domain/user/settable-user-statuses";
+import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { userManagementRights } from "@projet-igsn/domain/user/user-management-rights";
 import { updateUserSchema } from "@projet-igsn/domain/user/user-validator";
 
@@ -137,19 +138,37 @@ export function UserForm({
       }}
       className="grid w-full gap-4"
     >
-      <form.AppField name="status">
-        {(field) => (
-          <field.ComboboxField
-            label={m.column_status()}
-            clearable={false}
-            disabled={!rights.status}
-            items={statusItems}
-            placeholder={m.user_status_placeholder()}
-            searchPlaceholder={m.user_status_placeholder()}
-            emptyText={m.user_status_empty()}
-          />
-        )}
-      </form.AppField>
+      <form.Subscribe
+        selector={(state) => state.values.institutionalOrganization ?? null}
+      >
+        {(organization) =>
+          shouldRePendOnInstitutionsUpdate(user, organization) ? (
+            <div className="grid gap-2">
+              <span className="text-sm font-medium">{m.column_status()}</span>
+              <div>
+                <UserStatusBadge status="pending" />
+              </div>
+              <p className="text-muted-foreground text-sm">
+                {m.user_status_repends()}
+              </p>
+            </div>
+          ) : (
+            <form.AppField name="status">
+              {(field) => (
+                <field.ComboboxField
+                  label={m.column_status()}
+                  clearable={false}
+                  disabled={!rights.status}
+                  items={statusItems}
+                  placeholder={m.user_status_placeholder()}
+                  searchPlaceholder={m.user_status_placeholder()}
+                  emptyText={m.user_status_empty()}
+                />
+              )}
+            </form.AppField>
+          )
+        }
+      </form.Subscribe>
 
       <hr />
 
