@@ -60,6 +60,10 @@ export type UserRepository = {
     user: UpdateUser,
     scope: ModerationScope,
   ): Promise<UpdateUserResult>;
+  removeInstitutionalGroups(
+    id: string,
+    scope: ModerationScope,
+  ): Promise<{ previousStatus: UserStatus; status: UserStatus }>;
   getModerationScope(userId: string): Promise<ManagedGroups>;
 };
 
