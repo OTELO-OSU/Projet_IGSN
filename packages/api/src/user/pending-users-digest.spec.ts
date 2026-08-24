@@ -13,6 +13,7 @@ const pendingUser = (overrides: Partial<PendingUser> = {}): PendingUser => ({
   name: "Martin",
   firstname: "Jean",
   createdAt: new Date("2026-08-01T12:00:00Z"),
+  institutionalLaboratory: null,
   ...overrides,
 });
 

@@ -3,8 +3,10 @@ import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { MiddlewareHandler } from "hono";
 
 import { isSpaceManager } from "@projet-igsn/domain/user/is-space-manager";
-import { managedLaboratoryCodes } from "@projet-igsn/domain/user/managed-laboratory-codes";
-import { superAdminScope } from "@projet-igsn/domain/user/moderation-scope";
+import {
+  managerScope,
+  superAdminScope,
+} from "@projet-igsn/domain/user/moderation-scope";
 import { HTTPException } from "hono/http-exception";
 
 import type { AuthenticatedEnv } from "./current-user.ts";
@@ -28,12 +30,7 @@ export function requireUserModeration(
       if (!isSpaceManager(groups)) {
         throw new HTTPException(403, { message: "Forbidden" });
       }
-      c.set("scope", {
-        callerId: user.id,
-        superAdmin: false,
-        managedLaboratories: managedLaboratoryCodes(groups),
-        managedManualGroupIds: groups.manualGroupIds,
-      });
+      c.set("scope", managerScope(user.id, groups));
     }
     await next();
   };
