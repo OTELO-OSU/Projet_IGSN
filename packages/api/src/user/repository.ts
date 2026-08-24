@@ -8,7 +8,7 @@ import {
   NO_MANAGED_GROUPS,
 } from "@projet-igsn/domain/user/managed-groups";
 import { userSchema } from "@projet-igsn/domain/user/model";
-import { settableUserStatuses } from "@projet-igsn/domain/user/settable-user-statuses";
+import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { userManagementRights } from "@projet-igsn/domain/user/user-management-rights";
 import {
   adminUserSchema,
@@ -219,6 +219,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .selectFrom("user")
           .select([
             "status",
+            "super_admin as superAdmin",
             "institutional_organization as institutionalOrganization",
             "institutional_osu as institutionalOsu",
             "institutional_laboratory as institutionalLaboratory",
@@ -238,10 +239,6 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           previous,
           rights,
         );
-        if (!settableUserStatuses(previous.status).includes(user.status)) {
-          throw new HTTPException(422, { message: "Invalid status" });
-        }
-
         const { joined, leftIds } = await upsertUserManualGroups(
           trx,
           id,
@@ -276,6 +273,39 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           joinedGroups: joined,
           leftGroupIds: leftIds,
         };
+      }),
+    removeInstitutionalGroups: (id, scope) =>
+      withTransaction(db, async (trx) => {
+        const previous = await trx
+          .selectFrom("user")
+          .select([
+            "status",
+            "super_admin as superAdmin",
+            "institutional_organization as institutionalOrganization",
+          ])
+          .where("id", "=", id)
+          .where((eb) => eb.and(moderationScopeWhere(eb, scope)))
+          .forUpdate()
+          .executeTakeFirst();
+        if (!previous) {
+          throw scope.superAdmin
+            ? new HTTPException(404, { message: "User not found" })
+            : new HTTPException(403, { message: "Forbidden" });
+        }
+        const status = shouldRePendOnInstitutionsUpdate(previous, null)
+          ? "pending"
+          : previous.status;
+        await trx
+          .updateTable("user")
+          .set({
+            status,
+            institutional_organization: null,
+            institutional_osu: null,
+            institutional_laboratory: null,
+          })
+          .where("id", "=", id)
+          .execute();
+        return { previousStatus: previous.status, status };
       }),
     search: (callerId, filters) =>
       withTransaction(db, (trx) => searchUsers(trx, callerId, filters)),

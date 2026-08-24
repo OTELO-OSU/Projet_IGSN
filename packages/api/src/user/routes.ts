@@ -118,5 +118,23 @@ export function createUserRoutes(
         const body: AdminUserResponse = { data: user };
         return c.json(body);
       },
+    )
+    .delete(
+      "/:id/institutional-groups",
+      requireActiveSession,
+      validateUserIdParam,
+      async (c) => {
+        const id = c.req.valid("param").id;
+        const { previousStatus, status } =
+          await repository.removeInstitutionalGroups(id, c.get("scope"));
+        if (previousStatus !== status) {
+          console.info("user status changed", {
+            actor: c.get("user").id,
+            target: id,
+            status,
+          });
+        }
+        return c.body(null, 204);
+      },
     );
 }

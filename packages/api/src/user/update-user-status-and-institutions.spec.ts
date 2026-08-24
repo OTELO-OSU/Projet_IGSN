@@ -45,7 +45,7 @@ describe("updateUserStatusAndInstitutions", () => {
     expect(
       updateUserStatusAndInstitutions(
         submitted,
-        stored,
+        { ...stored, superAdmin: false },
         rightsOf({ ...CALLER, managedLaboratories: ["UMR7358"] }),
       ),
     ).toEqual(applied);
@@ -55,7 +55,7 @@ describe("updateUserStatusAndInstitutions", () => {
     expect(
       updateUserStatusAndInstitutions(
         submitted,
-        stored,
+        { ...stored, superAdmin: false },
         rightsOf({ ...CALLER, managedLaboratories: ["UMR7360"] }),
       ),
     ).toEqual(stored);
