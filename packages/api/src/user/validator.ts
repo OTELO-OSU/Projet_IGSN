@@ -15,6 +15,7 @@ const searchUsersQuerySchema = z.strictObject({
   search: z.string().trim().min(2).max(MAX_SEARCH_LENGTH).optional(),
   excludeCollaboratorsOf: z.uuid().optional(),
   status: userStatusSchema.exclude(["rejected"]).optional(),
+  excludeMembersOf: z.uuid().optional(),
 });
 
 export const validateSearchUsersQuery = validator("query", (value, c) => {

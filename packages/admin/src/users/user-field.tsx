@@ -29,16 +29,22 @@ export function UserField({
   id,
   sampleId,
   status,
+  excludeMembersOf,
 }: {
   id: string;
   sampleId?: string;
   status?: UserStatus;
+  excludeMembersOf?: string;
 }) {
   const field = useFieldContext<UserIdentity | null>();
   const [isOpen, setIsOpen] = useState(false);
   const [term, setTerm] = useState("");
   const [search] = useDebouncedValue(term, { wait: DEBOUNCE_MS });
-  const found = useSearchUsers(search, sampleId, { enabled: isOpen, status });
+  const found = useSearchUsers(search, sampleId, {
+    enabled: isOpen,
+    status,
+    excludeMembersOf,
+  });
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>

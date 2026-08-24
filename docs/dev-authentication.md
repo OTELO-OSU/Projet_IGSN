@@ -98,13 +98,14 @@ right away. Three more identities exercise moderation (ADR 0023):
 | Chloé Girard | `rejected`                | Locked out at sign-in; owns nothing                         |
 
 Marie Dupont, otherwise an ordinary researcher above, is also seeded as a
-space manager over the OTELo OSU (ADR 0030). Hugo Fournier is a `pending`
+space manager over the OTELo OSU and over the "OZCAR-RI" and "GeoRift" manual
+groups (ADR 0030), the dual-manager case. Hugo Fournier is a `pending`
 account inside her scope (`institutionalOsu: "OTELo"`), for testing that
 moderation. Pierre Durand is the other kind of space manager, managing the
-"ANR CritMet" and "ProfilLoire 2024" manual groups: he moderates their
-members' memberships only, never a status nor an institution, and curates those
-two groups at `/manual-groups`, where he may associate and detach a member but
-neither create, rename nor delete a group. Hugo has no entry in
+"ANR CritMet" and "ProfilLoire 2024" manual groups: he has no `/admin/users`
+access at all (ADR 0030), and instead curates those two groups at
+`/manual-groups`, where he may associate and detach a member but neither
+create, rename nor delete a group. Hugo has no entry in
 [`saml-idp/authsources.php`](../saml-idp/authsources.php): he is a seed
 fixture only, deliberately impossible to sign in as.
 

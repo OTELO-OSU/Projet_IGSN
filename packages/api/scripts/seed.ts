@@ -204,12 +204,15 @@ async function seedManagedGroups(
     .execute();
   await db
     .insertInto("user_managed_manual_group")
-    .values(
-      MOCK_MANUAL_GROUPS.slice(0, 2).map(({ id }) => ({
+    .values([
+      ...MOCK_MANUAL_GROUPS.slice(0, 2).map(({ id }) => ({
         user_id: ownerIds.pierre,
         group_id: id,
       })),
-    )
+      ...MOCK_MANUAL_GROUPS.filter(({ name }) =>
+        ["OZCAR-RI", "GeoRift"].includes(name),
+      ).map(({ id }) => ({ user_id: ownerIds.marie, group_id: id })),
+    ])
     .onConflict((oc) => oc.doNothing())
     .execute();
 }

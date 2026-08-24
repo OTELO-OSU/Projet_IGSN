@@ -1,4 +1,4 @@
-import type { UserStatus } from "@projet-igsn/domain/user/model";
+import type { SearchUsersFilters } from "@projet-igsn/domain/user/repository";
 import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
 import type { DB } from "../db.ts";
@@ -9,10 +9,13 @@ const BROWSE_LIMIT = 20;
 
 export function searchUsers(
   db: Transactional<DB>,
-  query: string | undefined,
   callerId: string,
-  excludeCollaboratorsOf?: string,
-  status?: UserStatus,
+  {
+    search,
+    excludeCollaboratorsOf,
+    status,
+    excludeMembersOf,
+  }: SearchUsersFilters,
 ): Promise<UserIdentity[]> {
   const others = db
     .selectFrom("user")
@@ -41,11 +44,24 @@ export function searchUsers(
           ),
         ),
       ),
+    )
+    .$if(excludeMembersOf !== undefined, (qb) =>
+      qb.where((eb) =>
+        eb.not(
+          eb.exists(
+            eb
+              .selectFrom("manual_group_member")
+              .select("manual_group_member.user_id")
+              .whereRef("manual_group_member.user_id", "=", "user.id")
+              .where("manual_group_member.group_id", "=", excludeMembersOf!),
+          ),
+        ),
+      ),
     );
-  if (query === undefined) {
+  if (search === undefined) {
     return others.orderBy("email").limit(BROWSE_LIMIT).execute();
   }
-  const pattern = `%${query.replace(/[\\%_]/g, "\\$&")}%`;
+  const pattern = `%${search.replace(/[\\%_]/g, "\\$&")}%`;
   return others
     .where((eb) =>
       eb.or([eb("name", "ilike", pattern), eb("email", "ilike", pattern)]),

@@ -337,9 +337,39 @@ describe("admin manual group routes", () => {
             firstname: "Marie",
             orcid: null,
             status: "pending",
+            canDetach: true,
           },
         ],
       });
+    },
+  );
+
+  pgTest(
+    "should mark a member owning a published sample of the group undetachable",
+    async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr");
+      await insertMember(db, MASSIF, curie.id);
+      await insertMember(db, MASSIF, dupont.id);
+      await publishSample(db, await insertSampleInGroup(db, curie.id, MASSIF));
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin["manual-groups"][":id"].members.$get(
+        { param: { id: MASSIF } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(
+        manualGroupMembersResponseSchema
+          .parse(await res.json())
+          .data.map(({ email, canDetach }) => [email, canDetach]),
+      ).toEqual([
+        ["marie.curie@univ-lorraine.fr", false],
+        ["pierre.dupont@univ-lorraine.fr", true],
+      ]);
     },
   );
 
@@ -600,6 +630,23 @@ describe("admin manual group routes", () => {
         meta: { total: 1 },
       });
     });
+
+    pgTest(
+      "should lose the role when the only managed group is deleted",
+      async ({ db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Massif Central 2026");
+        const client = await asGroupManager(db, [MASSIF]);
+        // Act
+        await db.deleteFrom("manual_group").where("id", "=", MASSIF).execute();
+        const res = await client.admin["manual-groups"].$get(
+          { query: { page: "1", perPage: "25" } },
+          { headers: managerHeader },
+        );
+        // Assert
+        expect(res.status).toBe(403);
+      },
+    );
 
     pgTest(
       "should read, associate and detach the members of a group it manages",

@@ -30,10 +30,15 @@ vi.mock("react-oidc-context", () => ({
 
 const USER_ID = "3f2504e0-4f89-41d3-9a0c-030500000001";
 
-const BASALT = { id: "3f2504e0-4f89-41d3-9a0c-0305000000a1", name: "Basalt" };
+const BASALT = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305000000a1",
+  name: "Basalt",
+  canDetach: true,
+};
 const METEORITE = {
   id: "3f2504e0-4f89-41d3-9a0c-0305000000a2",
   name: "Meteorite",
+  canDetach: true,
 };
 
 type Options = {
@@ -42,7 +47,7 @@ type Options = {
   firstname?: string | null;
   failPut?: boolean;
   failGet?: boolean;
-  manualGroups?: { id: string; name: string }[];
+  manualGroups?: { id: string; name: string; canDetach: boolean }[];
   managedManualGroupIds?: string[];
   caller?: Partial<CurrentUser>;
 };
@@ -61,9 +66,9 @@ const OTHER_LABORATORY_MANAGER: Partial<CurrentUser> = {
   managedLaboratories: ["UMR7360"],
   managedManualGroups: [],
 };
-const GROUP_MANAGER: Partial<CurrentUser> = {
+const DUAL_MANAGER: Partial<CurrentUser> = {
   superAdmin: false,
-  managedLaboratories: [],
+  managedLaboratories: [CALLER_GROUPS.institutionalLaboratory],
   managedManualGroups: [METEORITE],
 };
 const MODERATION_SEARCH = "Search by name or identifier";
@@ -234,6 +239,7 @@ describe("UserDetailPage", () => {
     const GNEISS = {
       id: "3f2504e0-4f89-41d3-9a0c-0305000000a9",
       name: "Gneiss",
+      canDetach: true,
     };
     const { screen } = await renderUserPage({
       status: "accepted",
@@ -369,7 +375,7 @@ describe("UserDetailPage", () => {
 
   it.each([
     ["an institution manager", INSTITUTION_MANAGER, true, false],
-    ["a manual group manager", GROUP_MANAGER, false, true],
+    ["a manager of both kinds", DUAL_MANAGER, true, true],
     ["a manager of another laboratory", OTHER_LABORATORY_MANAGER, false, false],
   ] as const)(
     "should let %s edit only the fields of the kind it manages",
@@ -398,10 +404,10 @@ describe("UserDetailPage", () => {
     },
   );
 
-  it("should let a manual group manager toggle only the groups it manages", async () => {
+  it("should let a manager toggle only the manual groups it manages", async () => {
     const { screen } = await renderUserPage({
       status: "accepted",
-      caller: GROUP_MANAGER,
+      caller: DUAL_MANAGER,
     });
 
     await expect
@@ -415,6 +421,18 @@ describe("UserDetailPage", () => {
     await expect
       .element(screen.getByRole("option", { name: METEORITE.name }))
       .toBeVisible();
+  });
+
+  it("should lock a membership the api refuses to detach", async () => {
+    const { screen } = await renderUserPage({
+      status: "accepted",
+      manualGroups: [{ ...BASALT, canDetach: false }],
+    });
+
+    await expect.element(screen.getByText(BASALT.name)).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: `Detach ${BASALT.name}` }).elements(),
+    ).toEqual([]);
   });
 
   it("should find a managed laboratory by its code", async () => {

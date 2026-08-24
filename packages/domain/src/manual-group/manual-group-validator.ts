@@ -44,6 +44,7 @@ export type ManualGroupListItem = z.infer<typeof manualGroupListItemSchema>;
 
 export const manualGroupMemberSchema = userIdentitySchema.extend({
   status: userStatusSchema,
+  canDetach: z.boolean(),
 });
 
 export type ManualGroupMember = z.infer<typeof manualGroupMemberSchema>;

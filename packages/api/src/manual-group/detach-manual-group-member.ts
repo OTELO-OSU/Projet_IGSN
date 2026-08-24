@@ -1,7 +1,7 @@
 import type { DB } from "../db.ts";
 
 import { type Transactional } from "../transaction.ts";
-import { ownsPublishedSampleInGroup } from "./owns-published-sample-in-group.ts";
+import { canDetachFromGroup } from "./can-detach-from-group.ts";
 
 export type DetachResult = "detached" | "not_member" | "has_published_sample";
 
@@ -14,7 +14,7 @@ export async function detachManualGroupMember(
     .deleteFrom("manual_group_member")
     .where("group_id", "=", groupId)
     .where("user_id", "=", userId)
-    .where((eb) => eb.not(ownsPublishedSampleInGroup(userId, groupId)))
+    .where(canDetachFromGroup(userId, groupId))
     .executeTakeFirst();
   if (numDeletedRows > 0n) {
     return "detached";

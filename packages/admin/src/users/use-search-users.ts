@@ -12,13 +12,21 @@ export const MIN_SEARCH_LENGTH = 2;
 export function useSearchUsers(
   search: string,
   excludeCollaboratorsOf?: string,
-  { enabled = true, status }: { enabled?: boolean; status?: UserStatus } = {},
+  {
+    enabled = true,
+    status,
+    excludeMembersOf,
+  }: {
+    enabled?: boolean;
+    status?: UserStatus;
+    excludeMembersOf?: string;
+  } = {},
 ) {
   const apiFetch = useApiClient();
   const term = search.length >= MIN_SEARCH_LENGTH ? search : "";
   return useQuery({
     enabled,
-    queryKey: ["users", term, excludeCollaboratorsOf, status],
+    queryKey: ["users", term, excludeCollaboratorsOf, status, excludeMembersOf],
     queryFn: async () => {
       const url = new URL("admin/users/search", API_URL);
       if (term !== "") {
@@ -29,6 +37,9 @@ export function useSearchUsers(
       }
       if (status !== undefined) {
         url.searchParams.set("status", status);
+      }
+      if (excludeMembersOf !== undefined) {
+        url.searchParams.set("excludeMembersOf", excludeMembersOf);
       }
       const res = await apiFetch(url);
       if (!res.ok) {

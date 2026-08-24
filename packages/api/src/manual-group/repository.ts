@@ -14,9 +14,9 @@ import type { DB } from "../db.ts";
 
 import { type Transactional, withTransaction } from "../transaction.ts";
 import { addManualGroupMember } from "./add-manual-group-member.ts";
+import { canDetachFromGroup } from "./can-detach-from-group.ts";
 import { detachManualGroupMember } from "./detach-manual-group-member.ts";
 import { manualGroupsByIds } from "./manual-groups-by-ids.ts";
-import { ownsPublishedSampleInGroup } from "./owns-published-sample-in-group.ts";
 
 const GROUP_COLUMNS = ["id", "name"] as const;
 
@@ -139,13 +139,16 @@ export function createManualGroupRepository(
         const rows = await trx
           .selectFrom("manual_group_member")
           .innerJoin("user", "user.id", "manual_group_member.user_id")
-          .select([
+          .select((eb) => [
             "user.id",
             "user.email",
             "user.name",
             "user.firstname",
             "user.orcid",
             "user.status",
+            canDetachFromGroup(eb.ref("manual_group_member.user_id"), id).as(
+              "canDetach",
+            ),
           ])
           .where("manual_group_member.group_id", "=", id)
           .orderBy("user.email", "asc")
@@ -180,11 +183,9 @@ export function createManualGroupRepository(
           .select((eb) => [
             "manual_group.id",
             "manual_group.name",
-            eb
-              .not(
-                ownsPublishedSampleInGroup(userId, eb.ref("manual_group.id")),
-              )
-              .as("canLeave"),
+            canDetachFromGroup(userId, eb.ref("manual_group.id")).as(
+              "canLeave",
+            ),
           ])
           .where("manual_group_member.user_id", "=", userId)
           .orderBy("manual_group.name", "asc")
