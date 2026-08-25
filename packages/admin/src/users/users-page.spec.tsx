@@ -143,14 +143,31 @@ describe("UsersPage", () => {
     ).toHaveLength(0);
   });
 
-  it("should mark a user belonging to no group as not provided", async () => {
+  it("should list the institution of a user", async () => {
+    fakeApi();
+
+    const { screen } = await renderUsersPage();
+
+    await expect
+      .element(
+        screen.getByRole("cell", {
+          name: "Université de Lorraine Observatoire Terre et Environnement de Lorraine (OTELo) Centre de recherches pétrographiques et géochimiques (CRPG)",
+        }),
+      )
+      .toBeVisible();
+  });
+
+  it("should mark a user with no institution and no group as not provided", async () => {
     fakeApi();
 
     const { screen } = await renderUsersPage("/users?status=rejected");
 
     await expect
-      .element(screen.getByRole("cell", { name: "Not provided" }))
+      .element(screen.getByRole("cell", { name: "user3@univ-lorraine.fr" }))
       .toBeVisible();
+    expect(
+      screen.getByRole("cell", { name: "Not provided" }).elements(),
+    ).toHaveLength(2);
   });
 
   it("should restore a filter and page from the URL", async () => {

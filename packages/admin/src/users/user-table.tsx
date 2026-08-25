@@ -1,6 +1,11 @@
 import type { ListedUser } from "@projet-igsn/domain/user/user-validator";
 
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
+import {
+  laboratoryLabel,
+  organizationLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
 import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -47,6 +52,32 @@ const columns: ColumnDef<ListedUser>[] = [
     accessorKey: "email",
     header: () => m.column_email(),
     cell: ({ row }) => row.original.email,
+  },
+  {
+    id: "institution",
+    header: () => m.column_institutional_group(),
+    cell: ({ row }) => {
+      const {
+        institutionalOrganization,
+        institutionalOsu,
+        institutionalLaboratory,
+      } = row.original;
+      const labels = [
+        institutionalOrganization &&
+          organizationLabel(institutionalOrganization),
+        institutionalOsu && osuLabel(institutionalOsu),
+        institutionalLaboratory && laboratoryLabel(institutionalLaboratory),
+      ].filter(Boolean);
+      return labels.length === 0 ? (
+        m.user_value_missing()
+      ) : (
+        <ul>
+          {labels.map((label) => (
+            <li key={label}>{label}</li>
+          ))}
+        </ul>
+      );
+    },
   },
   {
     accessorKey: "manualGroups",

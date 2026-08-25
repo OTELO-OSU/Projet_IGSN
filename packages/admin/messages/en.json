@@ -55,6 +55,7 @@
   "column_firstname": "First name",
   "column_email": "Email",
   "column_institutional_osu": "OSU",
+  "column_institutional_group": "Institution",
   "column_manual_groups": "Groups",
   "samples_title": "My samples",
   "sample_moderation_title": "Sample moderation",
