@@ -33,6 +33,7 @@ function requestKey(
 export function rateLimit(
   config: RateLimitConfig,
   scope: RateLimitScope,
+  budget: { points: number; duration: number } = BUDGET[scope],
 ): MiddlewareHandler<RateLimitEnv> {
   if (!config.enabled) {
     return createMiddleware<RateLimitEnv>((_c, next) => next());
@@ -40,7 +41,7 @@ export function rateLimit(
 
   // ponytail: in-process counters, one replica only; RateLimiterRedis when the
   // api scales out.
-  const limiter = new RateLimiterMemory(BUDGET[scope]);
+  const limiter = new RateLimiterMemory(budget);
 
   return createMiddleware<RateLimitEnv>(async (c, next) => {
     try {

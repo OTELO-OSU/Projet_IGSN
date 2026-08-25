@@ -2380,10 +2380,11 @@ describe("admin sample routes", () => {
     };
     const colleagueHeader = { Authorization: "Bearer colleague" };
     const ADMIN_URL = "http://localhost:3001/";
+    const FRONTEND_URL = "http://localhost:3000";
 
     async function arrangeOwnedSample(
       db: Parameters<typeof createApp>[0],
-      mail?: { sendMail: SendMail; adminUrl: string },
+      mail?: { sendMail: SendMail; adminUrl: string; frontendUrl: string },
     ) {
       const app = createApp(db, { mail }).app;
       const owner = await insertUser(db, authenticatedCallerEmail);
@@ -2714,6 +2715,7 @@ describe("admin sample routes", () => {
       const { app, sample, colleague } = await arrangeOwnedSample(db, {
         sendMail,
         adminUrl: ADMIN_URL,
+        frontendUrl: FRONTEND_URL,
       });
 
       const res = await testClient(app).admin.samples[
@@ -2746,6 +2748,7 @@ describe("admin sample routes", () => {
       const { app, sample, colleague } = await arrangeOwnedSample(db, {
         sendMail,
         adminUrl: ADMIN_URL,
+        frontendUrl: FRONTEND_URL,
       });
       const client = testClient(app);
       await client.admin.samples[":id"].collaborators.$post(
@@ -2777,6 +2780,7 @@ describe("admin sample routes", () => {
         const { app, sample } = await arrangeOwnedSample(db, {
           sendMail,
           adminUrl: ADMIN_URL,
+          frontendUrl: FRONTEND_URL,
         });
         const invitee = await insertUser(db, "invitee@example.com", {
           status: "rejected",
@@ -2802,6 +2806,7 @@ describe("admin sample routes", () => {
       const { app, sample } = await arrangeOwnedSample(db, {
         sendMail,
         adminUrl: ADMIN_URL,
+        frontendUrl: FRONTEND_URL,
       });
 
       const res = await testClient(app).admin.samples[
@@ -2829,6 +2834,7 @@ describe("admin sample routes", () => {
         const { app, sample, colleague } = await arrangeOwnedSample(db, {
           sendMail,
           adminUrl: ADMIN_URL,
+          frontendUrl: FRONTEND_URL,
         });
         const client = testClient(app);
 

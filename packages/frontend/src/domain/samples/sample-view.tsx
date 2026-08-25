@@ -5,10 +5,12 @@ import {
   organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
+import { fullName } from "@projet-igsn/domain/user/full-name";
 
 import { AgeView, hasAge } from "#/domain/samples/age-view.tsx";
 import { BreadcrumbFieldRow } from "#/domain/samples/breadcrumb-field-row.tsx";
 import { ConditionView } from "#/domain/samples/condition-view.tsx";
+import { ContactOwnerDialog } from "#/domain/samples/contact-owner-dialog.tsx";
 import { DescriptionView } from "#/domain/samples/description-view.tsx";
 import { EconomicInterestView } from "#/domain/samples/economic-interest-view.tsx";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
@@ -47,6 +49,7 @@ export function SampleView({
     institutionalOsu,
     institutionalLaboratory,
     manualGroups,
+    owner,
     location,
     security,
     availability,
@@ -225,7 +228,7 @@ export function SampleView({
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
         <nav
           aria-label={m.sample_section_sample()}
-          className="sticky top-28 w-40 shrink-0 self-start"
+          className="sticky top-28 hidden w-40 shrink-0 self-start md:block"
         >
           <ul className="grid gap-2">
             {sections.map(({ id, title }) => (
@@ -263,6 +266,18 @@ export function SampleView({
               {content}
             </section>
           ))}
+
+          <div className="mt-8 flex flex-wrap items-center gap-4">
+            {owner && publicationYear ? (
+              <p className="text-muted-foreground">
+                {m.sample_declared_by({
+                  year: publicationYear,
+                  owner: fullName(owner),
+                })}
+              </p>
+            ) : null}
+            {igsn != null ? <ContactOwnerDialog igsn={igsn} /> : null}
+          </div>
         </div>
       </div>
     </div>

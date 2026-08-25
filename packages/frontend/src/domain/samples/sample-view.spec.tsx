@@ -1,8 +1,9 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
-import { render } from "vitest-browser-react";
-
+import { renderWithRouter } from "../../../test/render-with-router.tsx";
 import { SampleView } from "./sample-view.tsx";
+
+const render = (ui: React.ReactNode) => renderWithRouter(ui);
 
 const emptyAge = {
   numericAgeMin: null,
@@ -45,6 +46,7 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   economicDepositName: null,
   economicDepositDescription: null,
   manualGroups: [],
+  owner: null,
   published: true,
   createdAt: new Date("2024-01-01"),
   updatedAt: new Date("2024-01-01"),
@@ -615,6 +617,40 @@ describe("SampleView", () => {
 
     await expect.element(screen.getByText("Region")).toBeInTheDocument();
     await expect.element(screen.getByText(expected)).toBeInTheDocument();
+  });
+
+  it("should show who declared the sample and when, next to a button opening the contact form", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          owner: { firstname: "Ada", name: "Lovelace" },
+          publicationYear: 2026,
+        })}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("Declared in 2026 by Ada Lovelace"))
+      .toBeInTheDocument();
+    await screen
+      .getByRole("button", { name: "Contact the record owner" })
+      .click();
+    await expect
+      .element(screen.getByRole("dialog", { name: "Contact the record owner" }))
+      .toBeInTheDocument();
+  });
+
+  it("should keep the contact button but omit the declaration line when the owner is unknown", async () => {
+    const screen = await render(
+      <SampleView sample={sample({ owner: null, publicationYear: 2026 })} />,
+    );
+
+    await expect
+      .element(screen.getByText(/^Declared in/))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("button", { name: "Contact the record owner" }))
+      .toBeInTheDocument();
   });
 
   it("should show the locality name and description", async () => {

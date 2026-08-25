@@ -501,21 +501,26 @@ describe("public sample routes", () => {
     expect(res.status).toBe(400);
   });
 
-  pgTest("should expose no owner on the public reads", async ({ db }) => {
-    const client = await acceptedClient(db);
-    const published = await createPublishedSample(client, "Basalte public");
+  pgTest(
+    "should expose the owner's name but never their email on the public reads",
+    async ({ db }) => {
+      const client = await acceptedClient(db);
+      const published = await createPublishedSample(client, "Basalte public");
 
-    const list = await client.samples.$get({
-      query: { page: "1", perPage: "10" },
-    });
-    const one = await client.samples[":igsn"].$get({
-      param: { igsn: published.igsn! },
-    });
+      const list = await client.samples.$get({
+        query: { page: "1", perPage: "10" },
+      });
+      const one = await client.samples[":igsn"].$get({
+        param: { igsn: published.igsn! },
+      });
 
-    const listBody = (await list.json()) as { data: Record<string, unknown>[] };
-    const oneBody = (await one.json()) as { data: Record<string, unknown> };
-    expect(listBody.data[0]).not.toHaveProperty("owner");
-    expect(oneBody.data).not.toHaveProperty("owner");
-    expect(JSON.stringify(oneBody)).not.toContain("@example.com");
-  });
+      const listBody = (await list.json()) as {
+        data: Record<string, unknown>[];
+      };
+      const oneBody = (await one.json()) as { data: Record<string, unknown> };
+      expect(listBody.data[0]!.owner).toBeNull();
+      expect(oneBody.data.owner).toEqual({ name: "User", firstname: "Test" });
+      expect(JSON.stringify(oneBody)).not.toContain("@example.com");
+    },
+  );
 });

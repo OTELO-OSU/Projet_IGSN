@@ -2,7 +2,12 @@ import { type APIRequestContext, expect } from "@playwright/test";
 
 const maildevUrl = process.env.MAILDEV_URL ?? "http://localhost:11080";
 
-type Mail = { subject: string; text: string; to: { address: string }[] };
+type Mail = {
+  subject: string;
+  text: string;
+  to: { address: string }[];
+  replyTo?: { address: string }[];
+};
 
 export function maildev(request: APIRequestContext) {
   const mailsTo = async (recipient: string): Promise<Mail[]> => {
@@ -14,7 +19,12 @@ export function maildev(request: APIRequestContext) {
   };
 
   return {
-    expectMail: async (recipient: string, subject: string, link: string) => {
+    expectMail: async (
+      recipient: string,
+      subject: string,
+      contents: string[],
+      replyTo?: string,
+    ) => {
       await expect
         .poll(async () =>
           (await mailsTo(recipient)).map((mail) => mail.subject),
@@ -23,7 +33,12 @@ export function maildev(request: APIRequestContext) {
       const [mail] = (await mailsTo(recipient)).filter(
         (candidate) => candidate.subject === subject,
       );
-      expect(mail?.text).toContain(link);
+      for (const content of contents) {
+        expect(mail?.text).toContain(content);
+      }
+      if (replyTo !== undefined) {
+        expect(mail?.replyTo?.map(({ address }) => address)).toContain(replyTo);
+      }
     },
   };
 }

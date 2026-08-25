@@ -2,6 +2,7 @@ import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { uploadSampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
+  contactSampleOwnerBodySchema,
   listSamplesQuerySchema,
   updateSampleBodySchema,
 } from "@projet-igsn/domain/sample/sample-validator";
@@ -64,6 +65,14 @@ export const validateCreateSampleBody = sampleBodyValidator(createSampleSchema);
 export const validateUpdateSampleBody = sampleBodyValidator(
   updateSampleBodySchema,
 );
+
+export const validateContactBody = validator("json", (value, c) => {
+  const parsed = contactSampleOwnerBodySchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid contact request" }, 400);
+  }
+  return parsed.data;
+});
 
 export const validateAddCollaboratorBody = validator("json", (value, c) => {
   const parsed = addCollaboratorBodySchema.safeParse(value);

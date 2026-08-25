@@ -17,6 +17,7 @@ export type Mail = {
   subject: string;
   text: string;
   html: string;
+  replyTo?: string;
   audience?: MailAudience;
 };
 
@@ -54,13 +55,14 @@ export function mailFrom(
 
 export function createSendMail(env: NodeJS.ProcessEnv = process.env): SendMail {
   const transport = nodemailer.createTransport(smtpTransportOptions(env));
-  return async ({ to, subject, text, html, audience }) => {
+  return async ({ to, subject, text, html, replyTo, audience }) => {
     await transport.sendMail({
       from: mailFrom(env, audience),
       to,
       subject,
       text,
       html,
+      replyTo,
     });
   };
 }

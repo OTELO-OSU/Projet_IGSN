@@ -72,6 +72,7 @@ const stored: Sample = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: "ABC123",
+  owner: null,
   manualGroups: [
     { id: "22222222-2222-2222-2222-222222222222", name: "Stored group" },
   ],

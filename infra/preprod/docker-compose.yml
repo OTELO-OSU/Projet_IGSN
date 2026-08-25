@@ -46,6 +46,7 @@ services:
       PORT: "8080"
       CORS_ORIGINS: "https://igsn-admin.${DOMAIN},https://igsn.${DOMAIN}"
       ADMIN_URL: "https://igsn-admin.${DOMAIN}"
+      FRONTEND_URL: "https://igsn.${DOMAIN}"
       DATABASE_HOST: postgres
       DATABASE_PORT: "5432"
       DATABASE_NAME: ${DATABASE_NAME}

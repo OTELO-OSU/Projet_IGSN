@@ -16,7 +16,12 @@ export default defineConfig({
     react(),
   ],
   resolve: { dedupe: ["react"] },
-  optimizeDeps: { include: ["@inlang/paraglide-js/urlpattern-polyfill"] },
+  optimizeDeps: {
+    include: [
+      "@inlang/paraglide-js/urlpattern-polyfill",
+      "@tanstack/react-query",
+    ],
+  },
   test: {
     browser: {
       provider: playwright(),

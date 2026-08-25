@@ -141,6 +141,7 @@ describe("toSample", () => {
       attachments: [],
       security: null,
       availability: "exists",
+      owner: null,
       publicationYear: null,
       economicInterest: null,
       economicInterestElements: [],

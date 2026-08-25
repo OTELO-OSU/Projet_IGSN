@@ -1,3 +1,4 @@
+import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import {
   HeadContent,
@@ -75,6 +76,7 @@ function RootLayout() {
       <main className="w-full flex-1">
         <Outlet />
       </main>
+      <Toaster />
 
       <footer className="bg-muted/30 mt-16 border-t">
         <div className="flex flex-col gap-8 px-6 py-10 md:flex-row md:items-center md:justify-between">

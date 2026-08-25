@@ -12,7 +12,10 @@ import { requireAuth } from "./auth/middleware.ts";
 import { createPublicManualGroupRoutes } from "./manual-group/public-routes.ts";
 import { createManualGroupRepository } from "./manual-group/repository.ts";
 import { createManualGroupRoutes } from "./manual-group/routes.ts";
-import { loadRateLimitConfig } from "./rate-limit/config.ts";
+import {
+  CONTACT_MAIL_IP_BUDGET,
+  loadRateLimitConfig,
+} from "./rate-limit/config.ts";
 import { rateLimit } from "./rate-limit/middleware.ts";
 import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
@@ -30,7 +33,7 @@ export function createApp(
     mail,
   }: {
     attachmentsDir?: string;
-    mail?: { sendMail: SendMail; adminUrl: string };
+    mail?: { sendMail: SendMail; adminUrl: string; frontendUrl: string };
   } = {},
 ) {
   const corsOrigins = (process.env.CORS_ORIGINS ?? "")
@@ -51,9 +54,18 @@ export function createApp(
 
   const publicSampleRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
+    .use(
+      "/:igsn/contact",
+      rateLimit(rateLimitConfig, "ip", CONTACT_MAIL_IP_BUDGET),
+    )
     .route(
       "/",
-      createSampleRoutes(sampleRepository, sampleAttachmentRepository),
+      createSampleRoutes(
+        sampleRepository,
+        sampleAttachmentRepository,
+        userSampleRepository,
+        mail,
+      ),
     );
 
   const publicManualGroupRoutes = new Hono()
