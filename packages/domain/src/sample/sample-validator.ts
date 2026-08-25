@@ -87,7 +87,10 @@ export const sampleResponseSchema = z.object({ data: sampleSchema });
 export type SampleResponse = z.infer<typeof sampleResponseSchema>;
 
 export const adminSampleListItemSchema = sampleSchema.extend({
-  owner: userSchema.pick({ name: true, firstname: true }).nullable(),
+  owner: userSchema
+    .pick({ name: true, firstname: true })
+    .extend({ status: userSchema.shape.status.optional() })
+    .nullable(),
 });
 
 export type AdminSampleListItem = z.infer<typeof adminSampleListItemSchema>;

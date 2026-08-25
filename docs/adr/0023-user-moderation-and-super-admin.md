@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted. Amended 2026-08-24, folded in below.
 
 ## Context
 
@@ -18,7 +18,7 @@ ADR 0019 gave every researcher an owned space but no gate: any Keycloak account 
 
 **Super admin is a local DB boolean (`user.super_admin`), not a Keycloak realm role.** The realm is GaiaData's, shared with other service providers we do not administer, so we cannot ask it to carry our role; `requireRole` (built in ADR 0006) stays unused for this reason and is the rejected alternative. The flag is never token-derived: no request claim sets it and no endpoint accepts it as input (`updateUserSchema` is a `strictObject` carrying only the status, the institutional trio and the manual groups), so it can only change by direct database write.
 
-**Super admin overrides ownership everywhere ownership is checked**, unscoped in the admin sample list and in `requireSampleAccess`, which lets a super admin's request through whatever role the share table holds for them.
+**Super admin overrides ownership in `requireSampleAccess`**, which lets its request through whatever role the share table holds for it. `GET /admin/samples` stays per-assignment for every role, a global reach living in the moderation list `GET /admin/samples/moderated` ([ADR 0030](0030-scoped-user-moderation.md)).
 
 **First super admin is a one-off manual write, per environment.** An env-var seed (`SUPER_ADMIN_EMAILS`) was rejected as a standing input the app would keep validating and reconciling on every boot, for a step that happens once per environment. Instead, run once against each environment's database after that person's first sign-in, their row having to exist already:
 
@@ -26,7 +26,7 @@ ADR 0019 gave every researcher an owned space but no gate: any Keycloak account 
 UPDATE "user" SET status = 'accepted', super_admin = true WHERE email = '<email>';
 ```
 
-**`/admin/users` endpoints are super-admin-only**, until [ADR 0030](0030-scoped-user-moderation.md) widened them to a space manager scoped to the groups it manages, guarded like every other admin route, and the status change additionally revalidates the live session (`requireActiveSession`, ADR 0006 REQ-CRIT-01) since it is a rights change.
+**`/admin/users` endpoints are super-admin-only**, widened by [ADR 0030](0030-scoped-user-moderation.md) to a space manager scoped to the groups it manages. They are guarded like every other admin route, and the status change additionally revalidates the live session (`requireActiveSession`, ADR 0006 REQ-CRIT-01) since it is a rights change.
 
 **Two paths lead back to `pending`.** A user changing their own organisme / OSU / labo trio resets their own status, that trio being what a moderator judged when accepting them; resubmitting the same trio, or declaring one for the first time, leaves the status untouched, and a super admin keeps `accepted`, since they moderate others rather than themselves. A super admin's `PUT /admin/users/:id` sets another user's status and trio in one save, writing both through `UserRepository.update` rather than `setInstitutionalGroups`, so that edit is itself the moderation and never re-pends its target; `settableUserStatuses` then bounds it to putting an account back to `pending` only while it is still `pending`, never after a decision.
 
@@ -38,4 +38,5 @@ UPDATE "user" SET status = 'accepted', super_admin = true WHERE email = '<email>
 - The super admin flag has no UI or endpoint to grant it: promoting a second super admin is the same manual `UPDATE`, recorded in [preprod-deploy.md](../preprod-deploy.md).
 - `requireRole`/`realm_access.roles` stays built but unused; revisit if GaiaData ever lets us manage a realm role for this registry.
 - The weekday `listPending` digest sweeps the `pending` column, so an account demoted by either path reaches the same recipients with no extra work. It reports and orders by `created_at`, so a demoted account shows its signup age and sorts above genuine newcomers; a re-pending timestamp is deferred until a moderator complains.
-- Adding a role beyond owner and super admin shipped as the space manager (ADR 0030), which widens `/admin/users` reach instead of `canPublishSamples` or the ownership override, and derives the role from a scope rather than a second boolean. ADR 0030 also widened this digest's recipients beyond super admins.
+- Adding a role beyond owner and super admin shipped as the space manager (ADR 0030), derived from a scope rather than a second boolean.
+- It widens `/admin/users` reach, the digest recipients and, per sample in scope, the ownership override, never `canPublishSamples`.

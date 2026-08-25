@@ -12,6 +12,7 @@
     "sync-institutions": "node scripts/sync-institutions.ts"
   },
   "dependencies": {
+    "json-diff-ts": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

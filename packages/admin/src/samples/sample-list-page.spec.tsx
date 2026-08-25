@@ -20,7 +20,7 @@ vi.mock("react-oidc-context", () => ({
 const listSample = (index: number, ownership: "mine" | "shared") => ({
   ...fakeSample,
   id: `3f2504e0-4f89-41d3-9a0c-0305000000${String(index).padStart(2, "0")}`,
-  owner: { name: "Curie", firstname: "Marie" },
+  owner: { name: "Curie", firstname: "Marie", status: "accepted" },
   name: `Sample ${index} ${ownership}`,
 });
 

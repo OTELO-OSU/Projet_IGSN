@@ -1,11 +1,14 @@
 import { managedGroupsSection } from "../support/admin/managed-groups.page";
 import { manualGroupPage } from "../support/admin/manual-group.page";
 import { manualGroupsPage } from "../support/admin/manual-groups.page";
+import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
+import { sampleModerationPage } from "../support/admin/sample-moderation.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { userPage } from "../support/admin/user.page";
 import { usersPage } from "../support/admin/users.page";
 import { test } from "../support/db";
+import { maildev } from "../support/maildev";
 import { adminUrl } from "../support/urls";
 
 const OTELO = "Observatoire Terre et Environnement de Lorraine (OTELo)";
@@ -173,5 +176,34 @@ test.describe("space manager", () => {
     await signInAsResearcher(page, RESEARCHERS.marie);
 
     await samples.expectVisible();
+  });
+
+  test("a space manager edits a sample of the groups it manages", async ({
+    page,
+    request,
+    samples,
+  }) => {
+    const moderation = sampleModerationPage(page);
+    const edit = sampleEditPage(page);
+    const target = samples.find(
+      (sample) => sample.owner === "jean" && !sample.published,
+    );
+    if (!target) throw new Error("no draft sample owned by Jean was seeded");
+
+    await signInAsResearcher(page, RESEARCHERS.marie);
+    await moderation.open();
+    await moderation.expectVisible();
+    await moderation.expectSampleRowWithOwnerStatus(target.name, "Active");
+
+    await moderation.openSample(target.name);
+    await edit.expectVisible();
+    await edit.fillSpecificName(`MC-${Date.now()}`);
+    await edit.saveDraft();
+
+    await maildev(request).expectMail(
+      RESEARCHERS.jean.email,
+      `The sample "${target.name}" was edited by a moderator`,
+      `/samples/${target.id}`,
+    );
   });
 });

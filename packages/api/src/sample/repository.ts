@@ -10,8 +10,9 @@ import { getEditLock } from "./service/get-edit-lock.ts";
 import { getPublishedSampleByIgsn } from "./service/get-published-sample-by-igsn.ts";
 import { getSample } from "./service/get-sample.ts";
 import { insertSample } from "./service/insert-sample.ts";
+import { isSampleModerated } from "./service/is-sample-moderated.ts";
 import {
-  listAllSamples,
+  listModeratedSamples,
   listPublishedSamples,
   listSamplesAssignedTo,
 } from "./service/list-sample.ts";
@@ -23,8 +24,10 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
   return {
     listAssignedTo: (params, userId) =>
       withTransaction(db, (trx) => listSamplesAssignedTo(trx, params, userId)),
-    listAllAsSuperAdmin: (params) =>
-      withTransaction(db, (trx) => listAllSamples(trx, params)),
+    listModerated: (params, scope) =>
+      withTransaction(db, (trx) => listModeratedSamples(trx, params, scope)),
+    isModerated: (id, scope) =>
+      withTransaction(db, (trx) => isSampleModerated(trx, id, scope)),
     listPublished: (params) =>
       withTransaction(db, (trx) => listPublishedSamples(trx, params)),
     get: (id, userId) =>

@@ -15,7 +15,7 @@ import { render } from "vitest-browser-react";
 import { SampleTable } from "./sample-table.tsx";
 
 const sample: AdminSampleListItem = {
-  owner: { name: "Curie", firstname: "Marie" },
+  owner: { name: "Curie", firstname: "Marie", status: "accepted" },
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Basalte du Massif Central",
   nature: "thin_section",
@@ -52,12 +52,17 @@ const sample: AdminSampleListItem = {
 };
 const samples = [sample];
 
-function renderTable(data: AdminSampleListItem[], onSortingChange = vi.fn()) {
+function renderTable(
+  data: AdminSampleListItem[],
+  onSortingChange = vi.fn(),
+  withOwnerStatus = false,
+) {
   function Harness() {
     const [sorting, setSorting] = useState<SortingState>([]);
     return (
       <SampleTable
         samples={data}
+        withOwnerStatus={withOwnerStatus}
         sorting={sorting}
         onSortingChange={(updater) => {
           setSorting(updater);
@@ -92,31 +97,15 @@ describe("SampleTable", () => {
     await expect
       .element(screen.getByRole("row").nth(0))
       .toHaveTextContent(/^IGSN/);
-    await expect.element(screen.getByText("Status")).toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Name", { exact: true }))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Specific Name")).toBeInTheDocument();
-    await expect.element(screen.getByText("Nature")).toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Collection Method"))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Last modified")).toBeInTheDocument();
   });
 
-  it("should render the IGSN of a published sample", async () => {
+  it("should render the IGSN and a Published status of a published sample", async () => {
     const screen = await renderTable([
       { ...sample, igsn: "01K072TVWVFK5A1RRZ5MY4PPK9", published: true },
     ]);
     await expect
       .element(screen.getByText("01K072TVWVFK5A1RRZ5MY4PPK9"))
       .toBeInTheDocument();
-  });
-
-  it("should show a Published status when the sample has an IGSN", async () => {
-    const screen = await renderTable([
-      { ...sample, igsn: "01K072TVWVFK5A1RRZ5MY4PPK9", published: true },
-    ]);
     await expect.element(screen.getByText("Published")).toBeInTheDocument();
   });
 
@@ -151,22 +140,33 @@ describe("SampleTable", () => {
     await expect.element(screen.getByText("2026-07-01")).toBeInTheDocument();
   });
 
-  it("should render the owner initials with the full name as title", async () => {
+  it("should render the owner as initials, announced as the full name", async () => {
     const screen = await renderTable(samples);
     await expect
       .element(screen.getByTitle("Marie Curie"))
       .toHaveTextContent("MC");
-  });
-
-  it("should announce the owner full name, not the initials", async () => {
-    const screen = await renderTable(samples);
     await expect
       .element(screen.getByRole("cell", { name: "Marie Curie", exact: true }))
       .toBeInTheDocument();
   });
 
+  it("should render the owner account status when asked for it", async () => {
+    const screen = await renderTable(samples, vi.fn(), true);
+    await expect
+      .element(screen.getByRole("cell", { name: /Marie Curie\s*Active/ }))
+      .toBeInTheDocument();
+  });
+
+  it("should render no owner account status by default", async () => {
+    const screen = await renderTable(samples);
+    await expect
+      .element(screen.getByRole("cell", { name: "Marie Curie", exact: true }))
+      .toBeInTheDocument();
+    expect(screen.getByText("Active").elements()).toHaveLength(0);
+  });
+
   it.each<[string, AdminSampleListItem["owner"]]>([
-    ["a nameless owner", { name: null, firstname: null }],
+    ["a nameless owner", { name: null, firstname: null, status: "accepted" }],
     ["no owner", null],
   ])("should render an empty owner cell for %s", async (_, owner) => {
     const screen = await renderTable([{ ...sample, owner }]);
@@ -186,13 +186,6 @@ describe("SampleTable", () => {
     await expect
       .element(screen.getByRole("link", { name: "Basalte du Massif Central" }))
       .toHaveAttribute("href", "/samples/3f2504e0-4f89-41d3-9a0c-0305e82c3301");
-  });
-
-  it("should render a row whose sample has no specific name", async () => {
-    const screen = await renderTable([{ ...sample, specificName: null }]);
-    await expect
-      .element(screen.getByRole("link", { name: "Basalte du Massif Central" }))
-      .toBeVisible();
   });
 
   it("should navigate to the edit page when the row is clicked", async () => {

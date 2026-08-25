@@ -105,7 +105,12 @@ moderation. Pierre Durand is the other kind of space manager, managing the
 "ANR CritMet" and "ProfilLoire 2024" manual groups: he has no `/admin/users`
 access at all (ADR 0030), and instead curates those two groups at
 `/manual-groups`, where he may associate and detach a member but neither
-create, rename nor delete a group. Hugo has no entry in
+create, rename nor delete a group. Both Marie and Pierre also see a
+"Sample moderation" entry at `/samples/moderation`, listing and letting them
+edit the drafts and published samples in their reach: for Marie, samples
+snapshotted with the OTELo OSU; for Pierre, samples carrying one of his two
+manual groups. That reach is read from the sample's own row, not its owner's,
+so it is unrelated to which users each of them moderates. Hugo has no entry in
 [`saml-idp/authsources.php`](../saml-idp/authsources.php): he is a seed
 fixture only, deliberately impossible to sign in as.
 

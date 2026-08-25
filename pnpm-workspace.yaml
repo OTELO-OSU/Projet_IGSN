@@ -78,6 +78,7 @@ catalog:
   "@types/mjml": ^5.0.0
   papaparse: ^5.5.4
   "@types/papaparse": ^5.5.2
+  json-diff-ts: ^4.10.4
 
 catalogMode: strict
 

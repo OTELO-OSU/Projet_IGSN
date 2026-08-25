@@ -6,8 +6,17 @@ import { AppLayout } from "./app-layout.tsx";
 
 let pathname = "/";
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ to, children }: { to: string; children?: React.ReactNode }) => (
-    <a href={to}>{children}</a>
+  Link: ({
+    to,
+    children,
+    ...props
+  }: {
+    to: string;
+    children?: React.ReactNode;
+  }) => (
+    <a href={to} {...props}>
+      {children}
+    </a>
   ),
   useLocation: ({
     select,
@@ -49,8 +58,11 @@ describe("AppLayout", () => {
     const groups = screen.getByRole("list", { name: "Institutional groups" });
 
     await expect
-      .element(nav.getByRole("link", { name: "Samples" }))
+      .element(nav.getByRole("link", { name: "My samples" }))
       .toHaveAttribute("href", "/");
+    await expect
+      .element(nav.getByRole("link", { name: "Sample moderation" }))
+      .toHaveAttribute("href", "/samples/moderation");
     await expect
       .element(nav.getByRole("link", { name: "Users" }))
       .toHaveAttribute("href", "/users");
@@ -81,6 +93,9 @@ describe("AppLayout", () => {
     await expect
       .element(nav.getByRole("link", { name: "Manual groups" }))
       .toHaveAttribute("href", "/manual-groups");
+    await expect
+      .element(nav.getByRole("link", { name: "Sample moderation" }))
+      .toHaveAttribute("href", "/samples/moderation");
     expect(nav.getByRole("link", { name: "Users" }).elements()).toHaveLength(0);
     expect(
       nav.getByRole("link", { name: "Laboratories" }).elements(),
@@ -94,8 +109,11 @@ describe("AppLayout", () => {
     const nav = screen.getByRole("navigation");
 
     await expect
-      .element(nav.getByRole("link", { name: "Samples" }))
+      .element(nav.getByRole("link", { name: "My samples" }))
       .toBeVisible();
+    expect(
+      nav.getByRole("link", { name: "Sample moderation" }).elements(),
+    ).toHaveLength(0);
     expect(nav.getByRole("link", { name: "Users" }).elements()).toHaveLength(0);
     expect(
       nav.getByRole("link", { name: "Organizations" }).elements(),

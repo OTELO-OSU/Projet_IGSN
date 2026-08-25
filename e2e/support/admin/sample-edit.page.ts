@@ -26,6 +26,10 @@ export function sampleEditPage(page: Page) {
       ).toBeVisible(),
     expectName: (name: string) =>
       expect(page.getByLabel(/name/i)).toHaveValue(name),
+    fillSpecificName: async (value: string) => {
+      await openTab("Sample type");
+      await page.getByLabel("Specific Name").fill(value);
+    },
     goToList: () => page.getByRole("link", { name: "IGSN Admin" }).click(),
 
     expectNoManualGroupOffered: () => expectNoManualGroupOffered(page),

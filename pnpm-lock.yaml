@@ -123,6 +123,9 @@ catalogs:
     i18next:
       specifier: ^26.3.6
       version: 26.3.6
+    json-diff-ts:
+      specifier: ^4.10.4
+      version: 4.10.4
     kysely:
       specifier: ^0.29.4
       version: 0.29.4
@@ -494,6 +497,9 @@ importers:
 
   packages/domain:
     dependencies:
+      json-diff-ts:
+        specifier: 'catalog:'
+        version: 4.10.4
       zod:
         specifier: 'catalog:'
         version: 4.4.3
@@ -3943,6 +3949,9 @@ packages:
     resolution: {integrity: sha512-/sM3dO2FOzXjKQhJuo0Q173wf2KOo8t4I8vHy6lF9poUp7bKT0/NHE8fPX23PwfhnykfqnC2xRxOnVw5XuGIaA==}
     engines: {node: '>=6'}
     hasBin: true
+
+  json-diff-ts@4.10.4:
+    resolution: {integrity: sha512-/Ipg6migsLtNQQz+I3jm+hnPGZx4x47cVXTr4tgvxepQJKIB5iDmyguxicZ/59wIg3OlGgIGwIMftn+LqT8lNQ==}
 
   json-parse-even-better-errors@2.3.1:
     resolution: {integrity: sha512-xyFwyhro/JEof6Ghe2iz2NcXoj2sloNsWr/XsERDK/oiPCfaNhl5ONfp+jQdAZRQQ0IJWNzH9zIZF7li91kh2w==}
@@ -8794,6 +8803,8 @@ snapshots:
       argparse: 2.0.1
 
   jsesc@3.1.0: {}
+
+  json-diff-ts@4.10.4: {}
 
   json-parse-even-better-errors@2.3.1: {}
 
