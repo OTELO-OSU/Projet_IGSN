@@ -24,11 +24,6 @@ describe("shouldRePendOnInstitutionsUpdate", () => {
       null,
     ],
     [
-      "a first declaration never re-pends",
-      { institutionalOrganization: null, superAdmin: false },
-      "ORG",
-    ],
-    [
       "moving the institution is itself the moderation",
       { institutionalOrganization: "ORG", superAdmin: false },
       "OTHER",

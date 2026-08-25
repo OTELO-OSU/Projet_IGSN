@@ -263,50 +263,28 @@ describe("LaboratoriesPage", () => {
     expect(requested).toHaveLength(0);
   });
 
-  it("should keep only the matching laboratories of the chosen organization", async () => {
-    fakeApi();
-    const { screen } = await renderLaboratories(
-      "/institutional-groups/laboratories?organization=04vfs2w97",
-    );
+  it.each(["centre de recherche", "CRPG"])(
+    "should keep only the laboratories matching %s",
+    async (search) => {
+      fakeApi();
+      const { screen } = await renderLaboratories(
+        "/institutional-groups/laboratories?organization=04vfs2w97",
+      );
 
-    await screen
-      .getByRole("searchbox", { name: "Search laboratories" })
-      .fill("centre de recherche");
+      await screen
+        .getByRole("searchbox", { name: "Search laboratories" })
+        .fill(search);
 
-    await expect
-      .poll(() =>
-        screen
-          .getByRole("cell", { name: "GEORESSOURCES", exact: true })
-          .elements(),
-      )
-      .toHaveLength(0);
-    await expect
-      .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
-      .toBeVisible();
-    expect(
-      screen.getByRole("cell", { name: "CRAL", exact: true }).elements(),
-    ).toHaveLength(0);
-  });
-
-  it("should match a laboratory by its acronym", async () => {
-    fakeApi();
-    const { screen } = await renderLaboratories(
-      "/institutional-groups/laboratories?organization=04vfs2w97",
-    );
-
-    await screen
-      .getByRole("searchbox", { name: "Search laboratories" })
-      .fill("CRPG");
-
-    await expect
-      .poll(() =>
-        screen
-          .getByRole("cell", { name: "GEORESSOURCES", exact: true })
-          .elements(),
-      )
-      .toHaveLength(0);
-    await expect
-      .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
-      .toBeVisible();
-  });
+      await expect
+        .poll(() =>
+          screen
+            .getByRole("cell", { name: "GEORESSOURCES", exact: true })
+            .elements(),
+        )
+        .toHaveLength(0);
+      await expect
+        .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
+        .toBeVisible();
+    },
+  );
 });

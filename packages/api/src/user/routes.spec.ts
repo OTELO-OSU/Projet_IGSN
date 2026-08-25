@@ -148,31 +148,22 @@ describe("admin user search routes", () => {
     expect(body.data.map((user) => user.email)).toEqual(emails);
   });
 
-  pgTest(
-    "should reject a malformed excluded sample id with 400",
-    async ({ db }) => {
-      const res = await createApp(db).app.request(
-        "/admin/users/search?excludeCollaboratorsOf=not-a-uuid",
-        { headers: authHeader },
-      );
+  pgTest.for([
+    "search=",
+    "search=c",
+    "status=rejected",
+    "status=unknown",
+    "excludeCollaboratorsOf=not-a-uuid",
+  ])("should reject the query %s with 400", async (query, { db }) => {
+    const res = await createApp(db).app.request(
+      `/admin/users/search?${query}`,
+      {
+        headers: authHeader,
+      },
+    );
 
-      expect(res.status).toBe(400);
-    },
-  );
-
-  pgTest.for(["search=", "search=c", "status=rejected", "status=unknown"])(
-    "should reject the query %s with 400",
-    async (query, { db }) => {
-      const res = await createApp(db).app.request(
-        `/admin/users/search?${query}`,
-        {
-          headers: authHeader,
-        },
-      );
-
-      expect(res.status).toBe(400);
-    },
-  );
+    expect(res.status).toBe(400);
+  });
 
   pgTest(
     "should reject a search term past the length ceiling with 400",
