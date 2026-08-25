@@ -79,7 +79,6 @@ export function UserForm({
     validators: {
       onSubmit: ({ value }) => validateUser({ value: composeUser(value) }),
     },
-    // The server derives the status (a cleared institution re-pends), so the form restarts from what it saved.
     onSubmit: ({ value, formApi }) =>
       save.mutate(composeUser(value), {
         onSuccess: (saved) => formApi.reset(toDraft(saved)),

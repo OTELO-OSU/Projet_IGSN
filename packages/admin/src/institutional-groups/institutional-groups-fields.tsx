@@ -14,7 +14,6 @@ import {
 } from "#/institutional-groups/to-items.ts";
 import { m } from "#/paraglide/messages.js";
 
-// An optional institution is still all-or-nothing: the laboratory becomes required once an organization is picked.
 export function InstitutionalGroupsFields({
   optional = false,
 }: {
