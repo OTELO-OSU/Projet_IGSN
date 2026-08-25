@@ -14,6 +14,7 @@ type MultiComboboxFieldProps = {
   searchPlaceholder: string;
   emptyText: string;
   removeLabel: (label: string) => string;
+  onSearch?: (term: string) => void;
   lockedValues?: string[];
   disabled?: boolean;
   requiredToPublish?: boolean;

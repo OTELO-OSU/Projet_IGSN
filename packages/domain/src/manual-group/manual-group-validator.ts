@@ -15,6 +15,22 @@ export const manualGroupNameBodySchema = z.strictObject({
 
 export type ManualGroupNameBody = z.infer<typeof manualGroupNameBodySchema>;
 
+export const MAX_MANUAL_GROUP_MANAGERS = 20;
+
+export const createManualGroupBodySchema = manualGroupNameBodySchema.extend({
+  managerIds: z.array(z.uuid()).max(MAX_MANUAL_GROUP_MANAGERS).default([]),
+});
+
+export type CreateManualGroupBody = z.infer<typeof createManualGroupBodySchema>;
+
+export const requestManualGroupBodySchema = manualGroupNameBodySchema.extend({
+  managerIds: z.array(z.uuid()).min(1).max(MAX_MANUAL_GROUP_MANAGERS),
+});
+
+export type RequestManualGroupBody = z.infer<
+  typeof requestManualGroupBodySchema
+>;
+
 export const addManualGroupMemberBodySchema = z.strictObject({
   userId: z.uuid(),
 });

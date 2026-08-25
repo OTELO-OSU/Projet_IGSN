@@ -1,4 +1,4 @@
-import type { ManualGroupNameBody } from "@projet-igsn/domain/manual-group/manual-group-validator";
+import type { CreateManualGroupBody } from "@projet-igsn/domain/manual-group/manual-group-validator";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -14,7 +14,7 @@ export function useCreateManualGroup() {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (body: ManualGroupNameBody) => {
+    mutationFn: async (body: CreateManualGroupBody) => {
       const res = await apiFetch(new URL("admin/manual-groups", API_URL), {
         method: "POST",
         headers: { "content-type": "application/json" },

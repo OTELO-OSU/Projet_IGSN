@@ -99,6 +99,54 @@ describe("admin user search routes", () => {
     },
   );
 
+  pgTest.for([
+    {
+      case: "only the requested identities",
+      query: (ids: Record<string, string>) => `ids=${ids.curie},${ids.dupont}`,
+      emails: [
+        "marie.curie@univ-lorraine.fr",
+        "pierre.dupont@univ-lorraine.fr",
+      ],
+    },
+    {
+      case: "the caller among the requested identities",
+      query: (ids: Record<string, string>) => `ids=${ids.caller},${ids.curie}`,
+      emails: ["marie.curie@univ-lorraine.fr", tokenEmail("test-token")],
+    },
+    {
+      case: "the caller when includeSelf is set",
+      query: () => "includeSelf=true",
+      emails: [
+        "jean.martin@univ-lorraine.fr",
+        "marie.curie@univ-lorraine.fr",
+        "pierre.dupont@univ-lorraine.fr",
+        tokenEmail("test-token"),
+      ],
+    },
+  ])("should return $case", async ({ query, emails }, { db }) => {
+    const caller = await provisionUser(db, "test-token");
+    const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+      name: "Curie",
+    });
+    const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
+      name: "Dupont",
+    });
+    await insertUser(db, "jean.martin@univ-lorraine.fr", { name: "Martin" });
+
+    const res = await createApp(db).app.request(
+      `/admin/users/search?${query({
+        caller: caller.id,
+        curie: curie.id,
+        dupont: dupont.id,
+      })}`,
+      { headers: authHeader },
+    );
+
+    expect(res.status).toBe(200);
+    const body = userIdentitiesResponseSchema.parse(await res.json());
+    expect(body.data.map((user) => user.email)).toEqual(emails);
+  });
+
   pgTest(
     "should reject a malformed excluded sample id with 400",
     async ({ db }) => {

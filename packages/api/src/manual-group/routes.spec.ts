@@ -12,6 +12,7 @@ import { describe, expect, vi } from "vitest";
 import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
+import { requireActiveSession } from "../auth/active-session.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
 import { insertUser } from "../tests/insert-user.ts";
@@ -152,7 +153,7 @@ describe("admin manual group routes", () => {
     const client = await asSuperAdmin(db);
     // Act
     const res = await client.admin["manual-groups"].$post(
-      { json: { name: "Massif Central 2026" } },
+      { json: { name: "Massif Central 2026", managerIds: [] } },
       { headers: authHeader },
     );
     // Assert
@@ -172,7 +173,7 @@ describe("admin manual group routes", () => {
       const client = await asSuperAdmin(db);
       // Act
       const res = await client.admin["manual-groups"].$post(
-        { json: { name: "massif central 2026" } },
+        { json: { name: "massif central 2026", managerIds: [] } },
         { headers: authHeader },
       );
       // Assert
@@ -182,6 +183,72 @@ describe("admin manual group routes", () => {
       ).toHaveLength(1);
     },
   );
+
+  pgTest(
+    "should let the picked managers moderate the group it creates",
+    async ({ db }) => {
+      // Arrange
+      const curie = await provisionUser(db, "manager", { status: "accepted" });
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin["manual-groups"].$post(
+        { json: { name: "Massif Central 2026", managerIds: [curie.id] } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(201);
+      const { data } = manualGroupResponseSchema.parse(await res.json());
+      const theirs = await client.admin["manual-groups"].$get(
+        { query: { page: "1", perPage: "25" } },
+        { headers: managerHeader },
+      );
+      expect(listManualGroupsResponseSchema.parse(await theirs.json())).toEqual(
+        {
+          data: [{ id: data.id, name: "Massif Central 2026", memberCount: 0 }],
+          meta: { total: 1 },
+        },
+      );
+    },
+  );
+
+  pgTest.for([
+    ["an unknown user id", null, 404],
+    ["a user who is not accepted", "pending", 422],
+  ] as const)(
+    "should refuse the creation when a picked manager is %s",
+    async ([, status, expected], { db }) => {
+      // Arrange
+      const managerId = status
+        ? (await insertUser(db, "marie.curie@univ-lorraine.fr", { status })).id
+        : UNKNOWN;
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin["manual-groups"].$post(
+        { json: { name: "Massif Central 2026", managerIds: [managerId] } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(expected);
+    },
+  );
+
+  pgTest("should refuse a creation on a revoked session", async ({ db }) => {
+    // Arrange
+    const client = await asSuperAdmin(db);
+    vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
+      c.json({ error: "Unauthorized" }, 401),
+    );
+    // Act
+    const res = await client.admin["manual-groups"].$post(
+      { json: { name: "Massif Central 2026", managerIds: [] } },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(401);
+    expect(await db.selectFrom("manual_group").select("id").execute()).toEqual(
+      [],
+    );
+  });
 
   pgTest("should read one group", async ({ db }) => {
     // Arrange
@@ -729,7 +796,7 @@ describe("admin manual group routes", () => {
         // Act
         const responses = await Promise.all([
           client.admin["manual-groups"].$post(
-            { json: { name: "Alpes 2026" } },
+            { json: { name: "Alpes 2026", managerIds: [] } },
             { headers: managerHeader },
           ),
           client.admin["manual-groups"][":id"].$put(
@@ -764,7 +831,7 @@ describe("admin manual group routes", () => {
           { headers: authHeader },
         );
         const create = await client.admin["manual-groups"].$post(
-          { json: { name: "Alpes 2026" } },
+          { json: { name: "Alpes 2026", managerIds: [] } },
           { headers: authHeader },
         );
         // Assert
@@ -881,4 +948,148 @@ describe("the caller's own manual groups", () => {
     // Assert
     expect(res.status).toBe(401);
   });
+});
+
+describe("manual group creation requests", () => {
+  const asSpaceManagerWithMail = async (
+    db: Db,
+    sendMail = vi.fn().mockResolvedValue(undefined),
+  ) => {
+    await insertGroup(db, MASSIF, "Massif Central 2026");
+    const manager = await provisionUser(db, "manager", { status: "accepted" });
+    await moderateManualGroup(db, manager.id, [MASSIF]);
+    const client = testClient(
+      createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+    );
+    return { client, sendMail, manager };
+  };
+
+  const insertSuperAdmins = (db: Db) =>
+    Promise.all([
+      insertUser(db, "root@univ-lorraine.fr", { superAdmin: true }),
+      insertUser(db, "boss@univ-lorraine.fr", { superAdmin: true }),
+    ]);
+
+  pgTest(
+    "should mail the requested group and managers to every super admin, and to no one else",
+    async ({ db }) => {
+      // Arrange
+      await insertSuperAdmins(db);
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+        name: "Curie",
+        firstname: "Marie",
+      });
+      const { client, sendMail } = await asSpaceManagerWithMail(db);
+      // Act
+      const res = await client.admin["manual-groups"].requests.$post(
+        { json: { name: "Vosges 2027", managerIds: [curie.id] } },
+        { headers: managerHeader },
+      );
+      // Assert
+      expect(res.status).toBe(204);
+      await vi.waitFor(() =>
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({
+            to: ["boss@univ-lorraine.fr", "root@univ-lorraine.fr"],
+            audience: "admin",
+            subject: 'Test User requests the manual group "Vosges 2027"',
+            text: expect.stringContaining(
+              "Marie Curie (marie.curie@univ-lorraine.fr)",
+            ) as unknown as string,
+          }),
+        ),
+      );
+      expect(sendMail).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  pgTest.for([
+    { case: "an empty name", body: { name: "  ", managerIds: [UNKNOWN] } },
+    {
+      case: "an empty manager list",
+      body: { name: "Vosges 2027", managerIds: [] },
+    },
+  ])("should answer 400 on $case", async ({ body }, { db }) => {
+    // Arrange
+    await insertSuperAdmins(db);
+    const { client, sendMail } = await asSpaceManagerWithMail(db);
+    // Act
+    const res = await client.admin["manual-groups"].requests.$post(
+      { json: body },
+      { headers: managerHeader },
+    );
+    // Assert
+    expect(res.status).toBe(400);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  pgTest("should answer 401 to an unauthenticated caller", async ({ db }) => {
+    // Act
+    const res = await createApp(db).app.request(
+      "/admin/manual-groups/requests",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: "Vosges 2027", managerIds: [UNKNOWN] }),
+      },
+    );
+    // Assert
+    expect(res.status).toBe(401);
+  });
+
+  pgTest("should answer 404 on an unknown named manager", async ({ db }) => {
+    // Arrange
+    await insertSuperAdmins(db);
+    const { client, sendMail } = await asSpaceManagerWithMail(db);
+    // Act
+    const res = await client.admin["manual-groups"].requests.$post(
+      { json: { name: "Vosges 2027", managerIds: [UNKNOWN] } },
+      { headers: managerHeader },
+    );
+    // Assert
+    expect(res.status).toBe(404);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  pgTest("should answer 403 to a user managing nothing", async ({ db }) => {
+    // Arrange
+    const curie = await provisionUser(db, "researcher", {
+      status: "accepted",
+    });
+    const { client, sendMail } = await asSpaceManagerWithMail(db);
+    // Act
+    const res = await client.admin["manual-groups"].requests.$post(
+      { json: { name: "Vosges 2027", managerIds: [curie.id] } },
+      { headers: researcherHeader },
+    );
+    // Assert
+    expect(res.status).toBe(403);
+    expect(sendMail).not.toHaveBeenCalled();
+  });
+
+  pgTest.for([
+    { case: "the request mail cannot be sent", superAdmins: true, mails: 1 },
+    { case: "no super admin can be notified", superAdmins: false, mails: 0 },
+  ])(
+    "should answer 204 and log when $case",
+    async ({ superAdmins, mails }, { db }) => {
+      // Arrange
+      const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+      if (superAdmins) await insertSuperAdmins(db);
+      const { client, sendMail, manager } = await asSpaceManagerWithMail(
+        db,
+        vi.fn().mockRejectedValue(new Error("SMTP down")),
+      );
+      // Act
+      const res = await client.admin["manual-groups"].requests.$post(
+        { json: { name: "Vosges 2027", managerIds: [manager.id] } },
+        { headers: managerHeader },
+      );
+      // Assert
+      expect(res.status).toBe(204);
+      await vi.waitFor(() => expect(logged).toHaveBeenCalled());
+      expect(sendMail).toHaveBeenCalledTimes(mails);
+      logged.mockRestore();
+    },
+  );
 });

@@ -16,6 +16,7 @@ import { type Transactional, withTransaction } from "../transaction.ts";
 import { addManualGroupMember } from "./add-manual-group-member.ts";
 import { canDetachFromGroup } from "./can-detach-from-group.ts";
 import { detachManualGroupMember } from "./detach-manual-group-member.ts";
+import { grantManualGroupManagers } from "./grant-manual-group-managers.ts";
 import { manualGroupsByIds } from "./manual-groups-by-ids.ts";
 
 const GROUP_COLUMNS = ["id", "name"] as const;
@@ -87,7 +88,7 @@ export function createManualGroupRepository(
           .executeTakeFirst();
         return row ? manualGroupSchema.parse(row) : null;
       }),
-    create: (name) =>
+    create: (name, managerIds) =>
       withTransaction(db, async (trx) => {
         await lockName(trx, name);
         const row = await trx
@@ -96,7 +97,11 @@ export function createManualGroupRepository(
           .onConflict((oc) => oc.doNothing())
           .returning(GROUP_COLUMNS)
           .executeTakeFirst();
-        return row ? { group: manualGroupSchema.parse(row) } : "name_taken";
+        if (!row) {
+          return "name_taken";
+        }
+        await grantManualGroupManagers(trx, row.id, managerIds);
+        return { group: manualGroupSchema.parse(row) };
       }),
     rename: (id, name) =>
       withTransaction(db, async (trx) => {

@@ -14,23 +14,39 @@ export function useSearchUsers(
   excludeCollaboratorsOf?: string,
   {
     enabled = true,
+    ids,
     status,
     excludeMembersOf,
+    includeSelf,
   }: {
     enabled?: boolean;
+    ids?: string[];
     status?: UserStatus;
     excludeMembersOf?: string;
+    includeSelf?: boolean;
   } = {},
 ) {
   const apiFetch = useApiClient();
   const term = search.length >= MIN_SEARCH_LENGTH ? search : "";
+  const searchedIds = ids && [...ids].sort();
   return useQuery({
     enabled,
-    queryKey: ["users", term, excludeCollaboratorsOf, status, excludeMembersOf],
+    queryKey: [
+      "users",
+      term,
+      excludeCollaboratorsOf,
+      status,
+      excludeMembersOf,
+      searchedIds,
+      includeSelf,
+    ],
     queryFn: async () => {
       const url = new URL("admin/users/search", API_URL);
       if (term !== "") {
         url.searchParams.set("search", term);
+      }
+      if (searchedIds !== undefined) {
+        url.searchParams.set("ids", searchedIds.join(","));
       }
       if (excludeCollaboratorsOf !== undefined) {
         url.searchParams.set("excludeCollaboratorsOf", excludeCollaboratorsOf);
@@ -40,6 +56,9 @@ export function useSearchUsers(
       }
       if (excludeMembersOf !== undefined) {
         url.searchParams.set("excludeMembersOf", excludeMembersOf);
+      }
+      if (includeSelf) {
+        url.searchParams.set("includeSelf", "true");
       }
       const res = await apiFetch(url);
       if (!res.ok) {

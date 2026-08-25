@@ -24,7 +24,7 @@ export type ManualGroupRepository = {
     managedGroupIds: string[] | null,
   ): Promise<{ data: ManualGroupListItem[]; total: number }>;
   get(id: string): Promise<ManualGroup | null>;
-  create(name: string): Promise<CreateManualGroupResult>;
+  create(name: string, managerIds: string[]): Promise<CreateManualGroupResult>;
   rename(id: string, name: string): Promise<RenameManualGroupResult>;
   remove(id: string): Promise<"removed" | "not_found" | "has_published_sample">;
   listMembers(id: string): Promise<ManualGroupMember[]>;
