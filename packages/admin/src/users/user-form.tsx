@@ -178,7 +178,7 @@ export function UserForm({
       <FormSection title={m.settings_institution_title()}>
         <FieldDisabledProvider value={() => !rights.institutions}>
           <form.AppForm>
-            <InstitutionalGroupsFields />
+            <InstitutionalGroupsFields optional />
           </form.AppForm>
         </FieldDisabledProvider>
       </FormSection>

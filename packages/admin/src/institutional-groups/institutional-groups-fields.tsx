@@ -14,7 +14,12 @@ import {
 } from "#/institutional-groups/to-items.ts";
 import { m } from "#/paraglide/messages.js";
 
-export function InstitutionalGroupsFields() {
+// An optional institution is still all-or-nothing: the laboratory becomes required once an organization is picked.
+export function InstitutionalGroupsFields({
+  optional = false,
+}: {
+  optional?: boolean;
+}) {
   const form = useTypedAppFormContext({
     defaultValues: {} as InstitutionalGroups,
   });
@@ -33,7 +38,7 @@ export function InstitutionalGroupsFields() {
         {(field) => (
           <field.ComboboxField
             label={m.field_institutional_organization()}
-            requiredToPublish
+            requiredToPublish={!optional}
             items={ORGANIZATION_ITEMS}
             placeholder={m.organization_placeholder()}
             searchPlaceholder={m.organization_search_placeholder()}
@@ -56,7 +61,7 @@ export function InstitutionalGroupsFields() {
                 <field.ComboboxField
                   label={m.field_institutional_osu()}
                   items={
-                    ror === null ? [] : toItems(filterOsusByOrg(ror), osuLabel)
+                    ror == null ? [] : toItems(filterOsusByOrg(ror), osuLabel)
                   }
                   placeholder={m.osu_placeholder()}
                   searchPlaceholder={m.osu_search_placeholder()}
@@ -69,9 +74,9 @@ export function InstitutionalGroupsFields() {
               {(field) => (
                 <field.ComboboxField
                   label={m.field_institutional_laboratory()}
-                  requiredToPublish
+                  requiredToPublish={!optional || ror != null}
                   items={
-                    ror === null
+                    ror == null
                       ? []
                       : toItems(
                           filterLaboratoriesByOrgAndOsu({

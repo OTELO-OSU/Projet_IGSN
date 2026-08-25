@@ -158,7 +158,7 @@ const clearOrganization = async (
   screen: Awaited<ReturnType<typeof renderUserPage>>["screen"],
 ) => {
   await screen
-    .getByRole("combobox", { name: "Organization *", exact: true })
+    .getByRole("combobox", { name: "Organization", exact: true })
     .click();
   await screen
     .getByPlaceholder("Search organizations...")
@@ -169,6 +169,29 @@ const clearOrganization = async (
 };
 
 describe("UserDetailPage", () => {
+  it("should require a laboratory only while an organization is set", async () => {
+    const { screen } = await renderUserPage();
+
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Organization", exact: true }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Laboratory *", exact: true }),
+      )
+      .toBeVisible();
+
+    await clearOrganization(screen);
+
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Laboratory", exact: true }),
+      )
+      .toBeVisible();
+  });
+
   it("should show the identity read-only, with no editable identity field", async () => {
     const { screen } = await renderUserPage();
 
