@@ -2,9 +2,8 @@ import type { ListedUser } from "@projet-igsn/domain/user/user-validator";
 
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import {
-  laboratoryLabel,
-  organizationLabel,
-  osuLabel,
+  laboratoryShortLabel,
+  organizationShortLabel,
 } from "@projet-igsn/domain/institutional-group/label";
 import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -64,9 +63,10 @@ const columns: ColumnDef<ListedUser>[] = [
       } = row.original;
       const labels = [
         institutionalOrganization &&
-          organizationLabel(institutionalOrganization),
-        institutionalOsu && osuLabel(institutionalOsu),
-        institutionalLaboratory && laboratoryLabel(institutionalLaboratory),
+          organizationShortLabel(institutionalOrganization),
+        institutionalOsu,
+        institutionalLaboratory &&
+          laboratoryShortLabel(institutionalLaboratory),
       ].filter(Boolean);
       return labels.length === 0 ? (
         m.user_value_missing()

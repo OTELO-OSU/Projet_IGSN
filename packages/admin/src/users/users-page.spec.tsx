@@ -151,7 +151,7 @@ describe("UsersPage", () => {
     await expect
       .element(
         screen.getByRole("cell", {
-          name: "Université de Lorraine Observatoire Terre et Environnement de Lorraine (OTELo) Centre de recherches pétrographiques et géochimiques (CRPG)",
+          name: "Université de Lorraine OTELo CRPG",
         }),
       )
       .toBeVisible();
