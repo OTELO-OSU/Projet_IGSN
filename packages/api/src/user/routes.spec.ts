@@ -8,6 +8,7 @@ import {
   listUsersResponseSchema,
   userIdentitiesResponseSchema,
 } from "@projet-igsn/domain/user/user-validator";
+import { type Context } from "hono";
 import { testClient } from "hono/testing";
 import { describe, expect, vi } from "vitest";
 
@@ -147,31 +148,22 @@ describe("admin user search routes", () => {
     expect(body.data.map((user) => user.email)).toEqual(emails);
   });
 
-  pgTest(
-    "should reject a malformed excluded sample id with 400",
-    async ({ db }) => {
-      const res = await createApp(db).app.request(
-        "/admin/users/search?excludeCollaboratorsOf=not-a-uuid",
-        { headers: authHeader },
-      );
+  pgTest.for([
+    "search=",
+    "search=c",
+    "status=rejected",
+    "status=unknown",
+    "excludeCollaboratorsOf=not-a-uuid",
+  ])("should reject the query %s with 400", async (query, { db }) => {
+    const res = await createApp(db).app.request(
+      `/admin/users/search?${query}`,
+      {
+        headers: authHeader,
+      },
+    );
 
-      expect(res.status).toBe(400);
-    },
-  );
-
-  pgTest.for(["search=", "search=c", "status=rejected", "status=unknown"])(
-    "should reject the query %s with 400",
-    async (query, { db }) => {
-      const res = await createApp(db).app.request(
-        `/admin/users/search?${query}`,
-        {
-          headers: authHeader,
-        },
-      );
-
-      expect(res.status).toBe(400);
-    },
-  );
+    expect(res.status).toBe(400);
+  });
 
   pgTest(
     "should reject a search term past the length ceiling with 400",
@@ -753,6 +745,92 @@ describe("admin user routes", () => {
     expect(await res.json()).toEqual({ error: "User not found" });
   });
 
+  pgTest(
+    "should re-pend the account whose institution the update clears",
+    async ({ db }) => {
+      // Arrange
+      const target = await insertUser(db, "crpg@univ-lorraine.fr", {
+        status: "accepted",
+        ...TRIO_A,
+      });
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin.users[":id"].$put(
+        {
+          param: { id: target.id },
+          json: update({ status: "accepted", ...NO_GROUPS }),
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(adminUserResponseSchema.parse(await res.json()).data.status).toBe(
+        "pending",
+      );
+      await expect(readGroups(db, target.id)).resolves.toEqual({
+        ...NO_GROUPS,
+        status: "pending",
+      });
+    },
+  );
+
+  pgTest(
+    "should strip the institution and re-pend the account",
+    async ({ db }) => {
+      // Arrange
+      const target = await insertUser(db, "crpg@univ-lorraine.fr", {
+        status: "accepted",
+        ...TRIO_A,
+      });
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin.users[":id"][
+        "institutional-groups"
+      ].$delete({ param: { id: target.id } }, { headers: authHeader });
+      // Assert
+      expect(res.status).toBe(204);
+      await expect(readGroups(db, target.id)).resolves.toEqual({
+        ...NO_GROUPS,
+        status: "pending",
+      });
+    },
+  );
+
+  pgTest(
+    "should keep the status of an account already without institution",
+    async ({ db }) => {
+      // Arrange
+      await insertResearchers(db);
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin.users[":id"][
+        "institutional-groups"
+      ].$delete({ param: { id: ACCEPTED_ID } }, { headers: authHeader });
+      // Assert
+      expect(res.status).toBe(204);
+      await expect(readGroups(db, ACCEPTED_ID)).resolves.toEqual({
+        ...NO_GROUPS,
+        status: "accepted",
+      });
+    },
+  );
+
+  pgTest(
+    "should answer 404 stripping the institution of an unknown user",
+    async ({ db }) => {
+      // Arrange
+      await asSuperAdmin(db);
+      // Act
+      const res = await createApp(db).app.request(
+        "/admin/users/01890a5d-ac96-774b-bcce-b302099a8099/institutional-groups",
+        { method: "DELETE", headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({ error: "User not found" });
+    },
+  );
+
   pgTest("should answer 404 for an unknown user", async ({ db }) => {
     // Arrange
     const client = await asSuperAdmin(db);
@@ -1023,16 +1101,21 @@ describe("admin user routes", () => {
     // Arrange
     await insertResearchers(db);
     const client = await asSuperAdmin(db);
-    vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
-      c.json({ error: "Unauthorized" }, 401),
-    );
+    const revoked = async (c: Context) =>
+      c.json({ error: "Unauthorized" }, 401);
+    vi.mocked(requireActiveSession)
+      .mockImplementationOnce(revoked)
+      .mockImplementationOnce(revoked);
     // Act
     const res = await client.admin.users[":id"].$put(
       { param: { id: PENDING_ID }, json: update() },
       { headers: authHeader },
     );
+    const removal = await client.admin.users[":id"][
+      "institutional-groups"
+    ].$delete({ param: { id: PENDING_ID } }, { headers: authHeader });
     // Assert
-    expect(res.status).toBe(401);
+    expect([res.status, removal.status]).toEqual([401, 401]);
     await expect(readGroups(db, PENDING_ID)).resolves.toEqual({
       ...NO_GROUPS,
       status: "pending",
@@ -1055,8 +1138,13 @@ describe("admin user routes", () => {
           { param: { id: PENDING_ID }, json: update() },
           { headers: authHeader },
         );
+        const removal = await client.admin.users[":id"][
+          "institutional-groups"
+        ].$delete({ param: { id: PENDING_ID } }, { headers: authHeader });
         // Assert
-        expect([list.status, put.status]).toEqual([403, 403]);
+        expect([list.status, put.status, removal.status]).toEqual([
+          403, 403, 403,
+        ]);
       },
     );
 
@@ -1071,8 +1159,12 @@ describe("admin user routes", () => {
           body: JSON.stringify(update()),
         },
       );
+      const removal = await createApp(db).app.request(
+        `/admin/users/${PENDING_ID}/institutional-groups`,
+        { method: "DELETE" },
+      );
       // Assert
-      expect([res.status, put.status]).toEqual([401, 401]);
+      expect([res.status, put.status, removal.status]).toEqual([401, 401, 401]);
     });
   });
 });
@@ -1397,6 +1489,50 @@ describe("space manager moderation", () => {
       expect(data.manualGroups).toEqual([]);
       await expect(readGroups(db, target.id)).resolves.toEqual({
         ...TRIO_A,
+        status: "accepted",
+      });
+    },
+  );
+
+  pgTest(
+    "should strip the institution of an in-scope user and re-pend it",
+    async ({ db }) => {
+      // Arrange
+      const target = await insertUser(db, "inside@univ-lorraine.fr", {
+        status: "accepted",
+        ...TRIO_A,
+      });
+      const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
+      // Act
+      const res = await client.admin.users[":id"][
+        "institutional-groups"
+      ].$delete({ param: { id: target.id } }, { headers: authHeader });
+      // Assert
+      expect(res.status).toBe(204);
+      await expect(readGroups(db, target.id)).resolves.toEqual({
+        ...NO_GROUPS,
+        status: "pending",
+      });
+    },
+  );
+
+  pgTest(
+    "should answer 403 stripping the institution of an out-of-scope user",
+    async ({ db }) => {
+      // Arrange
+      const outside = await insertUser(db, "outside@univ-grenoble.fr", {
+        status: "accepted",
+        ...TRIO_B,
+      });
+      const { client } = await asManager(db, { kind: "osu", code: "OTELo" });
+      // Act
+      const res = await client.admin.users[":id"][
+        "institutional-groups"
+      ].$delete({ param: { id: outside.id } }, { headers: authHeader });
+      // Assert
+      expect(res.status).toBe(403);
+      await expect(readGroups(db, outside.id)).resolves.toEqual({
+        ...TRIO_B,
         status: "accepted",
       });
     },

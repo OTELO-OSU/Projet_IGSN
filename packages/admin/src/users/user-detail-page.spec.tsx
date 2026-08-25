@@ -1,6 +1,7 @@
 import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
 
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
+import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
@@ -106,11 +107,19 @@ function fakeApi({
       const body = (await request.json()) as {
         status: typeof status;
         manualGroupIds: string[];
-      };
+      } & typeof CALLER_GROUPS;
       calls.push(body);
       user = {
         ...user,
-        status: body.status,
+        institutionalOrganization: body.institutionalOrganization,
+        institutionalOsu: body.institutionalOsu,
+        institutionalLaboratory: body.institutionalLaboratory,
+        status: shouldRePendOnInstitutionsUpdate(
+          user,
+          body.institutionalOrganization,
+        )
+          ? "pending"
+          : body.status,
         manualGroups: [BASALT, METEORITE].filter((group) =>
           body.manualGroupIds.includes(group.id),
         ),
@@ -154,7 +163,44 @@ async function renderUserPage(options: Options = {}) {
   return { screen, calls };
 }
 
+const clearOrganization = async (
+  screen: Awaited<ReturnType<typeof renderUserPage>>["screen"],
+) => {
+  await screen
+    .getByRole("combobox", { name: "Organization", exact: true })
+    .click();
+  await screen
+    .getByPlaceholder("Search organizations...")
+    .fill("Université de Lorraine");
+  await screen
+    .getByRole("option", { name: "Université de Lorraine", exact: true })
+    .click();
+};
+
 describe("UserDetailPage", () => {
+  it("should require a laboratory only while an organization is set", async () => {
+    const { screen } = await renderUserPage();
+
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Organization", exact: true }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Laboratory *", exact: true }),
+      )
+      .toBeVisible();
+
+    await clearOrganization(screen);
+
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Laboratory", exact: true }),
+      )
+      .toBeVisible();
+  });
+
   it("should show the identity read-only, with no editable identity field", async () => {
     const { screen } = await renderUserPage();
 
@@ -338,6 +384,57 @@ describe("UserDetailPage", () => {
           managedGroups: NO_MANAGED_GROUPS,
         },
       ]);
+  });
+
+  it("should announce a pending account instead of a status once the institution is cleared", async () => {
+    const { screen } = await renderUserPage({ status: "accepted" });
+
+    await clearOrganization(screen);
+
+    await expect
+      .element(
+        screen.getByText(
+          "Removing the institution sends the account back to pending moderation.",
+        ),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("Pending", { exact: true }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("combobox", { name: "Status" }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should submit the stored status with the cleared institution", async () => {
+    const { screen, calls } = await renderUserPage({ status: "accepted" });
+
+    await clearOrganization(screen);
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await expect
+      .poll(() => calls)
+      .toEqual([
+        {
+          status: "accepted",
+          institutionalOrganization: null,
+          institutionalOsu: null,
+          institutionalLaboratory: null,
+          manualGroupIds: [BASALT.id],
+          managedGroups: NO_MANAGED_GROUPS,
+        },
+      ]);
+  });
+
+  it("should show the account pending once the save clears its institution", async () => {
+    const { screen } = await renderUserPage({ status: "accepted" });
+
+    await clearOrganization(screen);
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Status" }))
+      .toHaveTextContent("Pending");
   });
 
   it("should keep the shown status when the server refuses the save", async () => {

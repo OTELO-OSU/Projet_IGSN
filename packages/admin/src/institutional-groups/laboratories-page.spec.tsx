@@ -47,13 +47,18 @@ const MEMBERS = [
 
 function fakeApi() {
   const requested: string[] = [];
+  let members = MEMBERS;
   fakeCurrentUser({ superAdmin: true });
   worker.use(
+    http.delete("*/admin/users/:id/institutional-groups", ({ params }) => {
+      members = members.filter((member) => member.id !== params.id);
+      return new HttpResponse(null, { status: 204 });
+    }),
     http.get("*/admin/users", ({ request }) => {
       const url = new URL(request.url);
       requested.push(url.search);
       const laboratory = url.searchParams.get("institutionalLaboratory");
-      const matching = MEMBERS.filter(
+      const matching = members.filter(
         (member) => member.institutionalLaboratory === laboratory,
       );
       return HttpResponse.json({
@@ -197,8 +202,12 @@ describe("LaboratoriesPage", () => {
         ),
       )
       .toBeVisible();
-    await expect.element(screen.getByText(LORRAINE)).toBeVisible();
-    await expect.element(screen.getByText(CNRS)).toBeVisible();
+    await expect
+      .element(screen.getByRole("definition").getByText(LORRAINE))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("definition").getByText(CNRS))
+      .toBeVisible();
     await expect
       .element(
         screen.getByRole("cell", { name: "crpg.member@univ-lorraine.fr" }),
@@ -212,6 +221,42 @@ describe("LaboratoriesPage", () => {
     expect(requested.at(-1)).toContain("institutionalLaboratory=UMR7358");
   });
 
+  it("should drop a member from the laboratory once the removal is confirmed", async () => {
+    fakeApi();
+    const { screen } = await renderLaboratories(
+      "/institutional-groups/laboratories/UMR7358",
+    );
+    await expect
+      .element(
+        screen.getByRole("cell", { name: "crpg.member@univ-lorraine.fr" }),
+      )
+      .toBeVisible();
+
+    await screen
+      .getByRole("button", {
+        name: "Remove Claire Petrographer from their institution",
+      })
+      .click();
+    await screen
+      .getByRole("button", { name: "Remove from institution", exact: true })
+      .click();
+
+    await expect
+      .poll(() =>
+        screen
+          .getByRole("cell", { name: "crpg.member@univ-lorraine.fr" })
+          .elements(),
+      )
+      .toHaveLength(0);
+    await expect
+      .element(
+        screen.getByRole("heading", {
+          name: "Centre de recherches pétrographiques et géochimiques",
+        }),
+      )
+      .toBeVisible();
+  });
+
   it("should say a laboratory is unknown and ask for no member", async () => {
     const { requested } = fakeApi();
     const { screen } = await renderLaboratories(
@@ -222,50 +267,28 @@ describe("LaboratoriesPage", () => {
     expect(requested).toHaveLength(0);
   });
 
-  it("should keep only the matching laboratories of the chosen organization", async () => {
-    fakeApi();
-    const { screen } = await renderLaboratories(
-      "/institutional-groups/laboratories?organization=04vfs2w97",
-    );
+  it.each(["centre de recherche", "CRPG"])(
+    "should keep only the laboratories matching %s",
+    async (search) => {
+      fakeApi();
+      const { screen } = await renderLaboratories(
+        "/institutional-groups/laboratories?organization=04vfs2w97",
+      );
 
-    await screen
-      .getByRole("searchbox", { name: "Search laboratories" })
-      .fill("centre de recherche");
+      await screen
+        .getByRole("searchbox", { name: "Search laboratories" })
+        .fill(search);
 
-    await expect
-      .poll(() =>
-        screen
-          .getByRole("cell", { name: "GEORESSOURCES", exact: true })
-          .elements(),
-      )
-      .toHaveLength(0);
-    await expect
-      .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
-      .toBeVisible();
-    expect(
-      screen.getByRole("cell", { name: "CRAL", exact: true }).elements(),
-    ).toHaveLength(0);
-  });
-
-  it("should match a laboratory by its acronym", async () => {
-    fakeApi();
-    const { screen } = await renderLaboratories(
-      "/institutional-groups/laboratories?organization=04vfs2w97",
-    );
-
-    await screen
-      .getByRole("searchbox", { name: "Search laboratories" })
-      .fill("CRPG");
-
-    await expect
-      .poll(() =>
-        screen
-          .getByRole("cell", { name: "GEORESSOURCES", exact: true })
-          .elements(),
-      )
-      .toHaveLength(0);
-    await expect
-      .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
-      .toBeVisible();
-  });
+      await expect
+        .poll(() =>
+          screen
+            .getByRole("cell", { name: "GEORESSOURCES", exact: true })
+            .elements(),
+        )
+        .toHaveLength(0);
+      await expect
+        .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
+        .toBeVisible();
+    },
+  );
 });

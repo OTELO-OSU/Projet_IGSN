@@ -2,6 +2,7 @@ import type {
   AdminUser,
   UpdateUser,
 } from "@projet-igsn/domain/user/user-validator";
+import type { UseMutationResult } from "@tanstack/react-query";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { FieldDisabledProvider } from "@projet-igsn/design-system/components/form/field-disabled-context";
@@ -9,6 +10,7 @@ import { FormSection } from "@projet-igsn/design-system/components/form/form-sec
 import { canJoinManualGroup } from "@projet-igsn/domain/manual-group/can-join-manual-group";
 import { canManageManualGroup } from "@projet-igsn/domain/user/can-manage-manual-group";
 import { settableUserStatuses } from "@projet-igsn/domain/user/settable-user-statuses";
+import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { userManagementRights } from "@projet-igsn/domain/user/user-management-rights";
 import { updateUserSchema } from "@projet-igsn/domain/user/user-validator";
 
@@ -36,6 +38,15 @@ const toItem = (group: { id: string; name: string }) => ({
 
 const validateUser = institutionalGroupsFieldErrors(updateUserSchema);
 
+const toDraft = (user: AdminUser) => ({
+  status: user.status,
+  institutionalOrganization: user.institutionalOrganization,
+  institutionalOsu: user.institutionalOsu,
+  institutionalLaboratory: user.institutionalLaboratory,
+  manualGroupIds: user.manualGroups.map((group) => group.id),
+  managedGroups: user.managedGroups,
+});
+
 const composeUser = (draft: UpdateUser): UpdateUser => ({
   ...draft,
   institutionalOrganization: draft.institutionalOrganization ?? null,
@@ -48,7 +59,10 @@ export function UserForm({
   save,
 }: {
   user: AdminUser;
-  save: { mutate: (user: UpdateUser) => void; isPending: boolean };
+  save: Pick<
+    UseMutationResult<AdminUser, Error, UpdateUser>,
+    "mutate" | "isPending"
+  >;
 }) {
   const me = useCurrentUser().data;
   const isSuperAdmin = me?.superAdmin === true;
@@ -61,18 +75,14 @@ export function UserForm({
   const rights = userManagementRights(caller, user);
   const catalog = useManualGroups(CATALOG_PAGE, isSuperAdmin);
   const form = useAppForm({
-    defaultValues: {
-      status: user.status,
-      institutionalOrganization: user.institutionalOrganization,
-      institutionalOsu: user.institutionalOsu,
-      institutionalLaboratory: user.institutionalLaboratory,
-      manualGroupIds: user.manualGroups.map((group) => group.id),
-      managedGroups: user.managedGroups,
-    },
+    defaultValues: toDraft(user),
     validators: {
       onSubmit: ({ value }) => validateUser({ value: composeUser(value) }),
     },
-    onSubmit: ({ value }) => save.mutate(composeUser(value)),
+    onSubmit: ({ value, formApi }) =>
+      save.mutate(composeUser(value), {
+        onSuccess: (saved) => formApi.reset(toDraft(saved)),
+      }),
   });
 
   const statusItems = settableUserStatuses(user.status).map((status) => ({
@@ -127,6 +137,31 @@ export function UserForm({
     },
   ] as const;
 
+  const statusField = (
+    <form.AppField name="status">
+      {(field) => (
+        <field.ComboboxField
+          label={m.column_status()}
+          clearable={false}
+          disabled={!rights.status}
+          items={statusItems}
+          placeholder={m.user_status_placeholder()}
+          searchPlaceholder={m.user_status_placeholder()}
+          emptyText={m.user_status_empty()}
+        />
+      )}
+    </form.AppField>
+  );
+  const rePendNotice = (
+    <div className="grid gap-2">
+      <span className="text-sm font-medium">{m.column_status()}</span>
+      <div>
+        <UserStatusBadge status="pending" />
+      </div>
+      <p className="text-muted-foreground text-sm">{m.user_status_repends()}</p>
+    </div>
+  );
+
   return (
     <form
       noValidate
@@ -137,26 +172,22 @@ export function UserForm({
       }}
       className="grid w-full gap-4"
     >
-      <form.AppField name="status">
-        {(field) => (
-          <field.ComboboxField
-            label={m.column_status()}
-            clearable={false}
-            disabled={!rights.status}
-            items={statusItems}
-            placeholder={m.user_status_placeholder()}
-            searchPlaceholder={m.user_status_placeholder()}
-            emptyText={m.user_status_empty()}
-          />
-        )}
-      </form.AppField>
+      <form.Subscribe
+        selector={(state) => state.values.institutionalOrganization ?? null}
+      >
+        {(organization) =>
+          shouldRePendOnInstitutionsUpdate(user, organization)
+            ? rePendNotice
+            : statusField
+        }
+      </form.Subscribe>
 
       <hr />
 
       <FormSection title={m.settings_institution_title()}>
         <FieldDisabledProvider value={() => !rights.institutions}>
           <form.AppForm>
-            <InstitutionalGroupsFields />
+            <InstitutionalGroupsFields optional />
           </form.AppForm>
         </FieldDisabledProvider>
       </FormSection>

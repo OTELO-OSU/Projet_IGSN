@@ -15,6 +15,11 @@ export function organizationLabel(ror: string): string {
   return labelByRor.get(ror) ?? ror;
 }
 
+export function organizationShortLabel(ror: string): string {
+  const organization = ORGANIZATIONS.find((candidate) => candidate.ror === ror);
+  return organization?.acronym ?? organization?.name ?? ror;
+}
+
 export function osuLabel(code: string): string {
   const osu = OSUS.find((candidate) => candidate.code === code);
   return osu ? `${osu.name} (${osu.code})` : code;
@@ -23,4 +28,10 @@ export function osuLabel(code: string): string {
 export function laboratoryLabel(code: string): string {
   const laboratory = LABORATORIES.find((candidate) => candidate.code === code);
   return laboratory ? `${laboratory.name} (${laboratory.acronym})` : code;
+}
+
+export function laboratoryShortLabel(code: string): string {
+  return (
+    LABORATORIES.find((candidate) => candidate.code === code)?.acronym ?? code
+  );
 }

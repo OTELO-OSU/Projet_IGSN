@@ -9,6 +9,7 @@ import { StrictMode } from "react";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 
+import { CALLER_GROUPS } from "../../test/caller-groups.ts";
 import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { worker } from "../../test/msw.ts";
 import { routeTree } from "../routeTree.gen.ts";
@@ -47,15 +48,20 @@ const user = (
 
 const USERS = [
   user(1, "pending", [1, 2, 3, 4].map(manualGroup)),
-  user(2, "accepted"),
+  { ...user(2, "accepted"), ...CALLER_GROUPS },
   user(3, "rejected"),
   ...Array.from({ length: 9 }, (_, i) => user(i + 4, "accepted")),
 ];
 
 function fakeApi({ forbidden = false }: { forbidden?: boolean } = {}) {
   const requested: string[] = [];
+  const deleted: string[] = [];
   fakeCurrentUser({ superAdmin: true });
   worker.use(
+    http.delete("*/admin/users/:id/institutional-groups", ({ params }) => {
+      deleted.push(String(params.id));
+      return new HttpResponse(null, { status: 204 });
+    }),
     http.get("*/admin/users/:id", ({ params }) =>
       HttpResponse.json({
         data: USERS.find((candidate) => candidate.id === params.id),
@@ -82,7 +88,7 @@ function fakeApi({ forbidden = false }: { forbidden?: boolean } = {}) {
       });
     }),
   );
-  return { requested };
+  return { requested, deleted };
 }
 
 async function renderUsersPage(url = "/users") {
@@ -137,14 +143,31 @@ describe("UsersPage", () => {
     ).toHaveLength(0);
   });
 
-  it("should mark a user belonging to no group as not provided", async () => {
+  it("should list the institution of a user", async () => {
+    fakeApi();
+
+    const { screen } = await renderUsersPage();
+
+    await expect
+      .element(
+        screen.getByRole("cell", {
+          name: "Université de Lorraine OTELo CRPG",
+        }),
+      )
+      .toBeVisible();
+  });
+
+  it("should mark a user with no institution and no group as not provided", async () => {
     fakeApi();
 
     const { screen } = await renderUsersPage("/users?status=rejected");
 
     await expect
-      .element(screen.getByRole("cell", { name: "Not provided" }))
+      .element(screen.getByRole("cell", { name: "user3@univ-lorraine.fr" }))
       .toBeVisible();
+    expect(
+      screen.getByRole("cell", { name: "Not provided" }).elements(),
+    ).toHaveLength(2);
   });
 
   it("should restore a filter and page from the URL", async () => {
@@ -210,6 +233,51 @@ describe("UsersPage", () => {
     await expect
       .poll(() => router.state.location.pathname)
       .toBe("/users/3f2504e0-4f89-41d3-9a0c-030500000001");
+  });
+
+  it("should remove the institution of a row without opening the account", async () => {
+    const { deleted } = fakeApi();
+
+    const { screen, router } = await renderUsersPage();
+    await screen
+      .getByRole("button", {
+        name: "Remove First2 Name2 from their institution",
+      })
+      .click();
+    await screen
+      .getByRole("button", { name: "Remove from institution", exact: true })
+      .click();
+
+    await expect
+      .element(
+        screen.getByText(
+          "Institution removed, account back to pending moderation",
+        ),
+      )
+      .toBeVisible();
+    expect(deleted).toEqual(["3f2504e0-4f89-41d3-9a0c-030500000002"]);
+    expect(router.state.location.pathname).toBe("/users");
+  });
+
+  it("should offer no removal on an account with no institution", async () => {
+    fakeApi();
+
+    const { screen } = await renderUsersPage();
+
+    await expect
+      .element(
+        screen.getByRole("button", {
+          name: "Remove First2 Name2 from their institution",
+        }),
+      )
+      .toBeVisible();
+    expect(
+      screen
+        .getByRole("button", {
+          name: "Remove First1 Name1 from their institution",
+        })
+        .elements(),
+    ).toHaveLength(0);
   });
 
   it("should render an error and no user data when the api refuses", async () => {
