@@ -1,6 +1,7 @@
 import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
 
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
+import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
@@ -106,11 +107,19 @@ function fakeApi({
       const body = (await request.json()) as {
         status: typeof status;
         manualGroupIds: string[];
-      };
+      } & typeof CALLER_GROUPS;
       calls.push(body);
       user = {
         ...user,
-        status: body.status,
+        institutionalOrganization: body.institutionalOrganization,
+        institutionalOsu: body.institutionalOsu,
+        institutionalLaboratory: body.institutionalLaboratory,
+        status: shouldRePendOnInstitutionsUpdate(
+          user,
+          body.institutionalOrganization,
+        )
+          ? "pending"
+          : body.status,
         manualGroups: [BASALT, METEORITE].filter((group) =>
           body.manualGroupIds.includes(group.id),
         ),
@@ -415,6 +424,17 @@ describe("UserDetailPage", () => {
           managedGroups: NO_MANAGED_GROUPS,
         },
       ]);
+  });
+
+  it("should show the account pending once the save clears its institution", async () => {
+    const { screen } = await renderUserPage({ status: "accepted" });
+
+    await clearOrganization(screen);
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Status" }))
+      .toHaveTextContent("Pending");
   });
 
   it("should keep the shown status when the server refuses the save", async () => {

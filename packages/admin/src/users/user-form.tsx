@@ -2,6 +2,7 @@ import type {
   AdminUser,
   UpdateUser,
 } from "@projet-igsn/domain/user/user-validator";
+import type { UseMutationResult } from "@tanstack/react-query";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { FieldDisabledProvider } from "@projet-igsn/design-system/components/form/field-disabled-context";
@@ -37,6 +38,15 @@ const toItem = (group: { id: string; name: string }) => ({
 
 const validateUser = institutionalGroupsFieldErrors(updateUserSchema);
 
+const toDraft = (user: AdminUser) => ({
+  status: user.status,
+  institutionalOrganization: user.institutionalOrganization,
+  institutionalOsu: user.institutionalOsu,
+  institutionalLaboratory: user.institutionalLaboratory,
+  manualGroupIds: user.manualGroups.map((group) => group.id),
+  managedGroups: user.managedGroups,
+});
+
 const composeUser = (draft: UpdateUser): UpdateUser => ({
   ...draft,
   institutionalOrganization: draft.institutionalOrganization ?? null,
@@ -49,7 +59,10 @@ export function UserForm({
   save,
 }: {
   user: AdminUser;
-  save: { mutate: (user: UpdateUser) => void; isPending: boolean };
+  save: Pick<
+    UseMutationResult<AdminUser, Error, UpdateUser>,
+    "mutate" | "isPending"
+  >;
 }) {
   const me = useCurrentUser().data;
   const isSuperAdmin = me?.superAdmin === true;
@@ -62,18 +75,15 @@ export function UserForm({
   const rights = userManagementRights(caller, user);
   const catalog = useManualGroups(CATALOG_PAGE, isSuperAdmin);
   const form = useAppForm({
-    defaultValues: {
-      status: user.status,
-      institutionalOrganization: user.institutionalOrganization,
-      institutionalOsu: user.institutionalOsu,
-      institutionalLaboratory: user.institutionalLaboratory,
-      manualGroupIds: user.manualGroups.map((group) => group.id),
-      managedGroups: user.managedGroups,
-    },
+    defaultValues: toDraft(user),
     validators: {
       onSubmit: ({ value }) => validateUser({ value: composeUser(value) }),
     },
-    onSubmit: ({ value }) => save.mutate(composeUser(value)),
+    // The server derives the status (a cleared institution re-pends), so the form restarts from what it saved.
+    onSubmit: ({ value, formApi }) =>
+      save.mutate(composeUser(value), {
+        onSuccess: (saved) => formApi.reset(toDraft(saved)),
+      }),
   });
 
   const statusItems = settableUserStatuses(user.status).map((status) => ({
