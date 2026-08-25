@@ -1,10 +1,10 @@
 import type { ExpressionBuilder } from "kysely";
 
-import { jsonArrayFrom } from "kysely/helpers/postgres";
+import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres";
 
 import type { DB } from "../../db.ts";
 
-export function sampleLinks(eb: ExpressionBuilder<DB, "sample">) {
+export function sampleLinksQuery(eb: ExpressionBuilder<DB, "sample">) {
   return jsonArrayFrom(
     eb
       .selectFrom("sample_link")
@@ -14,7 +14,7 @@ export function sampleLinks(eb: ExpressionBuilder<DB, "sample">) {
   ).as("links");
 }
 
-export function sampleManualGroups(eb: ExpressionBuilder<DB, "sample">) {
+export function sampleManualGroupsQuery(eb: ExpressionBuilder<DB, "sample">) {
   return jsonArrayFrom(
     eb
       .selectFrom("sample_manual_group")
@@ -29,7 +29,19 @@ export function sampleManualGroups(eb: ExpressionBuilder<DB, "sample">) {
   ).as("manualGroups");
 }
 
-export function sampleAttachments(eb: ExpressionBuilder<DB, "sample">) {
+export function sampleOwnerQuery(eb: ExpressionBuilder<DB, "sample">) {
+  return jsonObjectFrom(
+    eb
+      .selectFrom("user_sample")
+      .innerJoin("user", "user.id", "user_sample.user_id")
+      .select(["user.name", "user.firstname", "user.status"])
+      .whereRef("user_sample.sample_id", "=", "sample.id")
+      .where("user_sample.role", "=", "owner")
+      .limit(1),
+  ).as("owner");
+}
+
+export function sampleAttachmentsQuery(eb: ExpressionBuilder<DB, "sample">) {
   return jsonArrayFrom(
     eb
       .selectFrom("sample_attachment")

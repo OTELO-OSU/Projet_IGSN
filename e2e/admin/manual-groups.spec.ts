@@ -43,7 +43,7 @@ test.describe("manual groups", () => {
     await maildev(request).expectMail(
       RESEARCHERS.jean.email,
       `Nadia Leroy added you to the group "${name}"`,
-      "/settings",
+      ["/settings"],
     );
 
     await group.detach("Jean Martin");

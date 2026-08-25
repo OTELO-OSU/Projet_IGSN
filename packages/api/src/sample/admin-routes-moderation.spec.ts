@@ -31,6 +31,7 @@ type Db = Kysely<DB>;
 const authHeader = { Authorization: "Bearer test-token" };
 const ownerHeader = { Authorization: "Bearer owner" };
 const ADMIN_URL = "https://admin.example.test/";
+const FRONTEND_URL = "http://localhost:3000";
 
 const IN_REACH = "UMR7358";
 const OUT_OF_REACH = "UMR5275";
@@ -67,7 +68,13 @@ async function arrangeManager(
     name: "Hutton",
     firstname: "James",
   });
-  return { app: createApp(db, { mail }).app, manager, owner };
+  return {
+    app: createApp(db, {
+      mail: mail && { ...mail, frontendUrl: FRONTEND_URL },
+    }).app,
+    manager,
+    owner,
+  };
 }
 
 const listModerated = (app: ReturnType<typeof createApp>["app"]) =>
@@ -390,7 +397,7 @@ describe("the moderation mail", () => {
       });
       const owner = await insertUser(db, "owner@example.com");
       const app = createApp(db, {
-        mail: { sendMail, adminUrl: ADMIN_URL },
+        mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
       }).app;
       const sample = await ownedSample(db, owner.id, draft);
       // Act
@@ -419,7 +426,9 @@ describe("the moderation mail", () => {
     // Arrange
     const sendMail = vi.fn().mockResolvedValue(undefined);
     const owner = await provisionUser(db, "owner", { status: "accepted" });
-    const app = createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app;
+    const app = createApp(db, {
+      mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+    }).app;
     const sample = await ownedSample(db, owner.id, draft, IN_REACH);
     // Act
     const res = await testClient(app).admin.samples[":id"].$put(

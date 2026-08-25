@@ -62,6 +62,7 @@ describe("sampleSchema", () => {
       economicDepositName: null,
       economicDepositDescription: null,
       igsn: null,
+      owner: null,
       manualGroups: [],
       institutionalOrganization: null,
       institutionalOsu: null,

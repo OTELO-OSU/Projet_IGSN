@@ -1,16 +1,9 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
-import {
-  RouterProvider,
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-} from "@tanstack/react-router";
 import { vi } from "vitest";
-import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
+import { renderWithRouter } from "../../../test/render-with-router.tsx";
 import { SearchResultsView } from "./search-results-view.tsx";
 
 const sample = {
@@ -25,22 +18,7 @@ function renderView(
   given: Omit<ViewProps, "onFieldsChange"> & Partial<ViewProps>,
 ) {
   const props: ViewProps = { onFieldsChange: vi.fn(), ...given };
-  const rootRoute = createRootRoute();
-  const indexRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/",
-    component: () => <SearchResultsView {...props} />,
-  });
-  const sampleRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/samples/$igsn",
-    component: () => null,
-  });
-  const router = createRouter({
-    routeTree: rootRoute.addChildren([indexRoute, sampleRoute]),
-    history: createMemoryHistory({ initialEntries: ["/"] }),
-  });
-  return render(<RouterProvider router={router} />);
+  return renderWithRouter(<SearchResultsView {...props} />, ["/samples/$igsn"]);
 }
 
 describe("SearchResultsView", () => {

@@ -295,6 +295,8 @@ async function seedOwners(
   ) as Record<ResearcherKey, string>;
 }
 
+const SEED_PUBLICATION_YEAR = 2025;
+
 export async function seed(
   db: Kysely<DB>,
   samples: SeedSample[],
@@ -327,6 +329,7 @@ export async function seed(
           ...rest
         }) => ({
           ...rest,
+          publication_year: rest.published ? SEED_PUBLICATION_YEAR : null,
           material: material ?? null,
           collection_method: collectionMethod ?? null,
           collection_method_description: collectionMethodDescription ?? null,

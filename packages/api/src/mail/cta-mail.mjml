@@ -12,6 +12,7 @@
         <mj-text font-size="18px" font-weight="bold">__TITLE__</mj-text>
         <mj-text>__GREETING__</mj-text>
         <mj-text>__BODY__</mj-text>
+        __QUOTE__
         <mj-button
           href="__URL__"
           background-color="#1d4ed8"

@@ -1,14 +1,6 @@
-import {
-  RouterProvider,
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-} from "@tanstack/react-router";
-import { render } from "vitest-browser-react";
-
 import type { CardSample } from "./card-fields.ts";
 
+import { renderWithRouter } from "../../../test/render-with-router.tsx";
 import { SampleList } from "./sample-list.tsx";
 
 function sampleItem(overrides: Partial<CardSample> = {}): CardSample {
@@ -38,22 +30,9 @@ const samples = [
 ];
 
 function renderSampleList(items: CardSample[] = samples, fields?: string[]) {
-  const rootRoute = createRootRoute();
-  const indexRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/",
-    component: () => <SampleList samples={items} fields={fields} />,
-  });
-  const sampleRoute = createRoute({
-    getParentRoute: () => rootRoute,
-    path: "/samples/$igsn",
-    component: () => null,
-  });
-  const router = createRouter({
-    routeTree: rootRoute.addChildren([indexRoute, sampleRoute]),
-    history: createMemoryHistory({ initialEntries: ["/"] }),
-  });
-  return render(<RouterProvider router={router} />);
+  return renderWithRouter(<SampleList samples={items} fields={fields} />, [
+    "/samples/$igsn",
+  ]);
 }
 
 function cardLines(card: Element): (string | null)[] {

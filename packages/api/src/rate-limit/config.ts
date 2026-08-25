@@ -4,6 +4,8 @@ export type RateLimitScope = "ip" | "user";
 
 export const PUBLIC_IP_BUDGET = { points: 50, duration: 60 } as const;
 export const AUTHENTICATED_USER_BUDGET = { points: 100, duration: 60 } as const;
+// the contact endpoint relays visitor-authored mail to owners, so it gets a far tighter budget than the public reads
+export const CONTACT_MAIL_IP_BUDGET = { points: 5, duration: 3600 } as const;
 
 export type RateLimitConfig = {
   enabled: boolean;

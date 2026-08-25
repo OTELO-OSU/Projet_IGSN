@@ -7,6 +7,7 @@ import { withTransaction } from "../transaction.ts";
 import { deleteSampleCollaborator } from "./delete-sample-collaborator.ts";
 import { insertSampleCollaborator } from "./insert-sample-collaborator.ts";
 import { insertSampleOwner } from "./insert-sample-owner.ts";
+import { listContactRecipients } from "./list-contact-recipients.ts";
 import { listSampleCollaborators } from "./list-sample-collaborators.ts";
 
 export function createUserSampleRepository(
@@ -25,5 +26,7 @@ export function createUserSampleRepository(
       ),
     listCollaborators: (sampleId) =>
       withTransaction(db, (trx) => listSampleCollaborators(trx, sampleId)),
+    listContactRecipients: (sample) =>
+      withTransaction(db, (trx) => listContactRecipients(trx, sample)),
   };
 }

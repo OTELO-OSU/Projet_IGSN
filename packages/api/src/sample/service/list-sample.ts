@@ -7,7 +7,6 @@ import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope"
 
 import { splitBbox } from "@projet-igsn/domain/sample/split-bbox";
 import { type Expression, sql, type SqlBool } from "kysely";
-import { jsonObjectFrom } from "kysely/helpers/postgres";
 
 import type { DB } from "../../db.ts";
 
@@ -15,10 +14,11 @@ import { type Transactional, withTransaction } from "../../transaction.ts";
 import { facetFilters } from "./facet-filter.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
-  sampleAttachments,
-  sampleLinks,
-  sampleManualGroups,
-} from "./sample-children.ts";
+  sampleAttachmentsQuery,
+  sampleLinksQuery,
+  sampleManualGroupsQuery,
+  sampleOwnerQuery,
+} from "./sample-children-query.ts";
 import {
   applyFuzzyThreshold,
   relevanceScore,
@@ -81,22 +81,10 @@ async function listSamplesWhere(
     const relevance = search === undefined ? undefined : relevanceScore(search);
     const rows = await matching()
       .selectAll()
-      .select(sampleLinks)
-      .select(sampleAttachments)
-      .select(sampleManualGroups)
-      .$if(withOwner, (qb) =>
-        qb.select((eb) =>
-          jsonObjectFrom(
-            eb
-              .selectFrom("user_sample")
-              .innerJoin("user", "user.id", "user_sample.user_id")
-              .select(["user.name", "user.firstname", "user.status"])
-              .whereRef("user_sample.sample_id", "=", "sample.id")
-              .where("user_sample.role", "=", "owner")
-              .limit(1),
-          ).as("owner"),
-        ),
-      )
+      .select(sampleLinksQuery)
+      .select(sampleAttachmentsQuery)
+      .select(sampleManualGroupsQuery)
+      .$if(withOwner, (qb) => qb.select(sampleOwnerQuery))
       .$if(sort === "status", (qb) => qb.orderBy(sql`igsn is not null`, order))
       .$call((qb) => (relevance ? qb.orderBy(relevance, "desc") : qb))
       .orderBy("updated_at", "desc")

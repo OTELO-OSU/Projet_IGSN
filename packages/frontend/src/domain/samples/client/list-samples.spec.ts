@@ -72,6 +72,7 @@ describe("listSamples", () => {
           institutionalOsu: null,
           institutionalLaboratory: null,
           manualGroups: [],
+          owner: null,
           published: true,
           createdAt: new Date(iso),
           updatedAt: new Date(iso),

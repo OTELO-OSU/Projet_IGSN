@@ -13,6 +13,17 @@ export const updateSampleBodySchema = createSampleSchema.extend({
 
 export type UpdateSampleBody = z.infer<typeof updateSampleBodySchema>;
 
+export const contactSampleOwnerBodySchema = z.strictObject({
+  name: z.string().trim().min(1),
+  firstname: z.string().trim().min(1),
+  email: z.email(),
+  message: z.string().trim().min(1).max(5000),
+});
+
+export type ContactSampleOwnerBody = z.infer<
+  typeof contactSampleOwnerBodySchema
+>;
+
 export const sampleConflictSchema = z.object({
   error: z.string(),
   reason: z.enum(["stale", "unpublishable", "locked"]),

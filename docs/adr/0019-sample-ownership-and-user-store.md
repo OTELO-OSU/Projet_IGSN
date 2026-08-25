@@ -4,7 +4,7 @@ Date: 2026-07-27
 
 ## Status
 
-Accepted, then extended twice. ADR 0024 added the `role` column and the collaborator sharing and removal this ADR deferred. ADR 0023 added moderation status, the user-management UI whose absence the Context below describes, and a super admin reaching every sample regardless of `user_sample`, so "a sample nobody owns is forbidden to everyone" no longer holds for that role.
+Accepted, then extended twice. ADR 0024 added the `role` column and the collaborator sharing and removal this ADR deferred. ADR 0023 added moderation status, the user-management UI whose absence the Context below describes, and a super admin reaching every sample regardless of `user_sample`, so "a sample nobody owns is forbidden to everyone" no longer holds for that role. The contact-sample-owner feature later amended "public routes are untouched": the public sample detail now names the owner (name and first name, never the email) and lets a visitor email them through the api.
 
 ## Context
 

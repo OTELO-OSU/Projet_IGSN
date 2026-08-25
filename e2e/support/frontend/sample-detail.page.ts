@@ -20,6 +20,35 @@ export function sampleDetailPage(page: Page) {
       await expect(link).toHaveAttribute("target", "_blank");
       await expect(page.getByText(description)).toBeVisible();
     },
+    expectDeclaredBy: (owner: string) =>
+      expect(
+        page.getByText(new RegExp(`Declared in \\d{4} by ${owner}`)),
+      ).toBeVisible(),
+    expectNoHorizontalOverflow: () =>
+      expect
+        .poll(() =>
+          page.evaluate(
+            () => document.documentElement.scrollWidth - window.innerWidth,
+          ),
+        )
+        .toBeLessThanOrEqual(0),
+    // ponytail: hydration scrolls back to top ~1s after load and swallows the first tap, so retry until the dialog opens
+    openContactForm: () =>
+      expect(async () => {
+        await page
+          .getByRole("button", { name: "Contact the record owner" })
+          .click();
+        await expect(
+          page.getByRole("dialog", { name: "Contact the record owner" }),
+        ).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 20_000 }),
+    // ponytail: the toast is asserted first, since it auto-dismisses a few seconds after the dialog closes
+    expectContactSent: async () => {
+      await expect(
+        page.getByText("Your message has been sent to the record owner."),
+      ).toBeVisible();
+      await expect(page.getByRole("dialog")).not.toBeVisible();
+    },
     expectManualGroup: (name: string) =>
       expect(
         page.getByRole("region", { name: "Groups" }).getByText(name),

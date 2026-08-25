@@ -145,5 +145,20 @@
   "sample_field_institutional_osu": "OSU",
   "sample_field_institutional_laboratory": "Laboratory",
   "sample_section_manual_groups": "Groups",
-  "facet_manual_group": "Other group (team, project…)"
+  "facet_manual_group": "Other group (team, project…)",
+  "sample_declared_by": "Declared in {year} by {owner}",
+  "sample_contact_owner": "Contact the record owner",
+  "action_close": "Close",
+  "contact_title": "Contact the record owner",
+  "contact_field_name": "Name",
+  "contact_field_firstname": "First name",
+  "contact_field_email": "Email address",
+  "contact_field_message": "Message",
+  "contact_field_required": "This field is required.",
+  "contact_field_email_invalid": "Please enter a valid email address.",
+  "contact_field_too_long": "This text is too long.",
+  "contact_submit": "Send",
+  "contact_success": "Your message has been sent to the record owner.",
+  "contact_no_recipient": "The owner of this record cannot be contacted.",
+  "contact_error": "Something went wrong. Please try again."
 }

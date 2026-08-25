@@ -21,6 +21,7 @@ import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 
 const ADMIN_URL = "http://localhost:3001/";
+const FRONTEND_URL = "http://localhost:3000";
 
 const MASSIF = "01890a5d-ac96-774b-bcce-b302099a9001";
 const ALPES = "01890a5d-ac96-774b-bcce-b302099a9002";
@@ -53,7 +54,9 @@ const asSuperAdminWithMail = async (db: Db) => {
   await provisionSuperAdmin(db);
   const sendMail = vi.fn().mockResolvedValue(undefined);
   const client = testClient(
-    createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+    createApp(db, {
+      mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+    }).app,
   );
   return { client, sendMail };
 };

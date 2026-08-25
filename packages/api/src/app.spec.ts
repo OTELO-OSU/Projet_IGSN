@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect } from "vitest";
 import { createApp } from "./app.ts";
 import {
   AUTHENTICATED_USER_BUDGET,
+  CONTACT_MAIL_IP_BUDGET,
   PUBLIC_IP_BUDGET,
 } from "./rate-limit/config.ts";
 import { insertSample } from "./sample/service/insert-sample.ts";
@@ -238,6 +239,35 @@ describe("app", () => {
       expect((await from("10.0.0.1")).status).toBe(429);
       expect((await from("10.0.0.2")).status).toBe(200);
     });
+
+    pgTest(
+      "should throttle the contact endpoint far below the public budget, per client IP",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const contactFrom = (ip: string) =>
+          app.request("/samples/0123456789ABCDEFGHJKMNPQRS/contact", {
+            method: "POST",
+            headers: { "X-Real-IP": ip, "content-type": "application/json" },
+            body: JSON.stringify({
+              name: "Lovelace",
+              firstname: "Ada",
+              email: "ada@example.org",
+              message: "May I study this sample?",
+            }),
+          });
+
+        await spend(
+          () => contactFrom("10.0.0.3"),
+          CONTACT_MAIL_IP_BUDGET.points,
+        );
+        expect((await contactFrom("10.0.0.3")).status).toBe(429);
+        expect((await contactFrom("10.0.0.4")).status).not.toBe(429);
+        const read = await app.request("/samples", {
+          headers: { "X-Real-IP": "10.0.0.3" },
+        });
+        expect(read.status).toBe(200);
+      },
+    );
 
     pgTest(
       "should limit an admin route per authenticated user",

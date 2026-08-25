@@ -35,6 +35,8 @@ const generateRsaKeyPair = () =>
   );
 
 beforeAll(async () => {
+  // ponytail: pre-evaluates the app module graph (mjml is slow), since the first per-test dynamic import otherwise blows the test timeout
+  await import("../app.ts");
   const pair = await generateRsaKeyPair();
   privateKey = pair.privateKey;
   const publicJwk = await crypto.subtle.exportKey("jwk", pair.publicKey);

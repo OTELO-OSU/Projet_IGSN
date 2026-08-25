@@ -3,6 +3,7 @@ import { z } from "zod";
 import { igsnSchema } from "../igsn/model.ts";
 import { institutionalGroupsFields } from "../institutional-group/model.ts";
 import { manualGroupSchema } from "../manual-group/model.ts";
+import { userSchema } from "../user/model.ts";
 import { ageSchema } from "./age/model.ts";
 import { updateSampleAttachmentSchema } from "./attachment/attachment-validator.ts";
 import { sampleAttachmentSchema } from "./attachment/model.ts";
@@ -55,6 +56,10 @@ export const sampleSchema = z.object({
   economicDepositName: nameSchema.nullable(),
   economicDepositDescription: nameSchema.nullable(),
   igsn: igsnSchema.nullable(),
+  owner: userSchema
+    .pick({ name: true, firstname: true })
+    .nullable()
+    .default(null),
   manualGroups: z.array(manualGroupSchema).default([]),
   // ponytail: snapshot of the owner's groups at creation, never edited afterwards, so it stays out of createSampleSchema
   ...institutionalGroupsFields,
@@ -65,8 +70,6 @@ export const sampleSchema = z.object({
 
 export type Sample = z.infer<typeof sampleSchema>;
 
-// material is optional at creation: a draft can be saved before it is
-// classified.
 export const createSampleSchema = z
   .strictObject({
     name: nameSchema,

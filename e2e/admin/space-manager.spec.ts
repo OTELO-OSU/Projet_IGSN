@@ -203,7 +203,7 @@ test.describe("space manager", () => {
     await maildev(request).expectMail(
       RESEARCHERS.jean.email,
       `The sample "${target.name}" was edited by a moderator`,
-      `/samples/${target.id}`,
+      [`/samples/${target.id}`],
     );
   });
 });

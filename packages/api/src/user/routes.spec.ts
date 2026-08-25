@@ -24,6 +24,7 @@ import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
 import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 
 const ADMIN_URL = "http://localhost:3001/";
+const FRONTEND_URL = "http://localhost:3000";
 
 describe("admin user search routes", () => {
   const authHeader = { Authorization: "Bearer test-token" };
@@ -878,7 +879,9 @@ describe("admin user routes", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
       const client = testClient(
-        createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+        createApp(db, {
+          mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+        }).app,
       );
       // Act
       const res = await client.admin.users[":id"].$put(
@@ -910,7 +913,9 @@ describe("admin user routes", () => {
     });
     const sendMail = vi.fn().mockResolvedValue(undefined);
     const client = testClient(
-      createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+      createApp(db, {
+        mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+      }).app,
     );
     // Act
     const res = await client.admin.users[":id"].$put(
@@ -932,7 +937,9 @@ describe("admin user routes", () => {
     });
     const sendMail = vi.fn().mockResolvedValue(undefined);
     const client = testClient(
-      createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+      createApp(db, {
+        mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+      }).app,
     );
     // Act
     const res = await client.admin.users[":id"].$put(
@@ -963,7 +970,9 @@ describe("admin user routes", () => {
       const logged = vi.spyOn(console, "error").mockImplementation(() => {});
       const sendMail = vi.fn().mockRejectedValue(new Error("SMTP down"));
       const client = testClient(
-        createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+        createApp(db, {
+          mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+        }).app,
       );
       // Act
       const res = await client.admin.users[":id"].$put(
