@@ -1,6 +1,7 @@
 import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
+import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
-import type { ExpressionBuilder, Kysely } from "kysely";
+import type { ExpressionBuilder, Kysely, Transaction } from "kysely";
 
 import { isSpaceManager } from "@projet-igsn/domain/user/is-space-manager";
 import {
@@ -89,6 +90,32 @@ const toAdminUser = (row: { managedGroups: ManagedGroups }) =>
 
 // ponytail: one write per admin request. Fine at a few researchers; read first
 // and write only on a change if the write volume ever matters.
+const lockUserInScope = async (
+  trx: Transaction<DB>,
+  id: string,
+  scope: ModerationScope,
+) => {
+  const row = await trx
+    .selectFrom("user")
+    .select([
+      "status",
+      "super_admin as superAdmin",
+      "institutional_organization as institutionalOrganization",
+      "institutional_osu as institutionalOsu",
+      "institutional_laboratory as institutionalLaboratory",
+    ])
+    .where("id", "=", id)
+    .where((eb) => eb.and(moderationScopeWhere(eb, scope)))
+    .forUpdate()
+    .executeTakeFirst();
+  if (!row) {
+    throw scope.superAdmin
+      ? new HTTPException(404, { message: "User not found" })
+      : new HTTPException(403, { message: "Forbidden" });
+  }
+  return row;
+};
+
 export function createUserRepository(db: Kysely<DB>): UserRepository {
   return {
     upsert: ({ email, name, firstname }) =>
@@ -215,24 +242,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
       }),
     update: (id, submitted, scope) =>
       withTransaction(db, async (trx) => {
-        const previous = await trx
-          .selectFrom("user")
-          .select([
-            "status",
-            "super_admin as superAdmin",
-            "institutional_organization as institutionalOrganization",
-            "institutional_osu as institutionalOsu",
-            "institutional_laboratory as institutionalLaboratory",
-          ])
-          .where("id", "=", id)
-          .where((eb) => eb.and(moderationScopeWhere(eb, scope)))
-          .forUpdate()
-          .executeTakeFirst();
-        if (!previous) {
-          throw scope.superAdmin
-            ? new HTTPException(404, { message: "User not found" })
-            : new HTTPException(403, { message: "Forbidden" });
-        }
+        const previous = await lockUserInScope(trx, id, scope);
         const rights = userManagementRights(scope, previous);
         const user = updateUserStatusAndInstitutions(
           submitted,
@@ -276,22 +286,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
       }),
     removeInstitutionalGroups: (id, scope) =>
       withTransaction(db, async (trx) => {
-        const previous = await trx
-          .selectFrom("user")
-          .select([
-            "status",
-            "super_admin as superAdmin",
-            "institutional_organization as institutionalOrganization",
-          ])
-          .where("id", "=", id)
-          .where((eb) => eb.and(moderationScopeWhere(eb, scope)))
-          .forUpdate()
-          .executeTakeFirst();
-        if (!previous) {
-          throw scope.superAdmin
-            ? new HTTPException(404, { message: "User not found" })
-            : new HTTPException(403, { message: "Forbidden" });
-        }
+        const previous = await lockUserInScope(trx, id, scope);
         const status = shouldRePendOnInstitutionsUpdate(previous, null)
           ? "pending"
           : previous.status;

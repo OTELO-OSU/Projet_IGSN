@@ -1,3 +1,4 @@
+import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type {
   AdminUserResponse,
@@ -36,6 +37,17 @@ const requireUserModerator = createMiddleware<ModerationEnv>(
     await next();
   },
 );
+
+const logStatusChange = (
+  actor: string,
+  target: string,
+  previous: UserStatus,
+  status: UserStatus,
+) => {
+  if (previous !== status) {
+    console.info("user status changed", { actor, target, status });
+  }
+};
 
 export function createUserSearchRoutes(userRepository: UserRepository) {
   return new Hono<AuthenticatedEnv>().get(
@@ -90,13 +102,7 @@ export function createUserRoutes(
           await repository.update(id, c.req.valid("json"), c.get("scope"));
 
         const actor = c.get("user");
-        if (previousStatus !== user.status) {
-          console.info("user status changed", {
-            actor: actor.id,
-            target: user.id,
-            status: user.status,
-          });
-        }
+        logStatusChange(actor.id, user.id, previousStatus, user.status);
         if (
           mail &&
           previousStatus !== "accepted" &&
@@ -127,13 +133,7 @@ export function createUserRoutes(
         const id = c.req.valid("param").id;
         const { previousStatus, status } =
           await repository.removeInstitutionalGroups(id, c.get("scope"));
-        if (previousStatus !== status) {
-          console.info("user status changed", {
-            actor: c.get("user").id,
-            target: id,
-            status,
-          });
-        }
+        logStatusChange(c.get("user").id, id, previousStatus, status);
         return c.body(null, 204);
       },
     );

@@ -8,6 +8,7 @@ import {
   listUsersResponseSchema,
   userIdentitiesResponseSchema,
 } from "@projet-igsn/domain/user/user-validator";
+import { type Context } from "hono";
 import { testClient } from "hono/testing";
 import { describe, expect, vi } from "vitest";
 
@@ -1109,13 +1110,11 @@ describe("admin user routes", () => {
     // Arrange
     await insertResearchers(db);
     const client = await asSuperAdmin(db);
+    const revoked = async (c: Context) =>
+      c.json({ error: "Unauthorized" }, 401);
     vi.mocked(requireActiveSession)
-      .mockImplementationOnce(async (c) =>
-        c.json({ error: "Unauthorized" }, 401),
-      )
-      .mockImplementationOnce(async (c) =>
-        c.json({ error: "Unauthorized" }, 401),
-      );
+      .mockImplementationOnce(revoked)
+      .mockImplementationOnce(revoked);
     // Act
     const res = await client.admin.users[":id"].$put(
       { param: { id: PENDING_ID }, json: update() },

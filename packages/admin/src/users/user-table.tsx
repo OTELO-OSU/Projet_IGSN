@@ -1,6 +1,7 @@
 import type { ListedUser } from "@projet-igsn/domain/user/user-validator";
 
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
+import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
@@ -61,9 +62,9 @@ const columns: ColumnDef<ListedUser>[] = [
     id: "removeInstitution",
     header: () => m.user_remove_institution_action(),
     cell: ({ row }) =>
-      row.original.institutionalOrganization === null ? null : (
+      shouldRePendOnInstitutionsUpdate(row.original, null) ? (
         <RemoveUserInstitutionButton user={row.original} />
-      ),
+      ) : null,
   },
 ];
 

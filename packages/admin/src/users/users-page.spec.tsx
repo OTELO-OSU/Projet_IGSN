@@ -35,7 +35,6 @@ const user = (
   index: number,
   status: "pending" | "accepted" | "rejected",
   manualGroups: ReturnType<typeof manualGroup>[] = [],
-  institution: Partial<typeof CALLER_GROUPS> = {},
 ) => ({
   id: `3f2504e0-4f89-41d3-9a0c-0305000000${String(index).padStart(2, "0")}`,
   email: `user${index}@univ-lorraine.fr`,
@@ -45,12 +44,11 @@ const user = (
   status,
   superAdmin: false,
   manualGroups,
-  ...institution,
 });
 
 const USERS = [
   user(1, "pending", [1, 2, 3, 4].map(manualGroup)),
-  user(2, "accepted", [], CALLER_GROUPS),
+  { ...user(2, "accepted"), ...CALLER_GROUPS },
   user(3, "rejected"),
   ...Array.from({ length: 9 }, (_, i) => user(i + 4, "accepted")),
 ];
