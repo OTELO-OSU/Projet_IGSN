@@ -26,6 +26,44 @@ export const toComboboxItems = <Value extends string>(
   label: (value: Value) => string,
 ): ComboboxItem[] => values.map((value) => ({ value, label: label(value) }));
 
+type ComboboxTriggerProps = {
+  id?: string;
+  open: boolean;
+  disabled?: boolean;
+  onBlur?: () => void;
+  children: ReactNode;
+  "aria-invalid"?: boolean;
+  "aria-describedby"?: string;
+};
+
+export function ComboboxTrigger({
+  id,
+  open,
+  disabled,
+  onBlur,
+  children,
+  ...aria
+}: ComboboxTriggerProps) {
+  return (
+    <PopoverTrigger asChild>
+      <Button
+        id={id}
+        type="button"
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        disabled={disabled}
+        onBlur={onBlur}
+        className="w-full min-w-0 justify-between font-normal"
+        {...aria}
+      >
+        <span className="truncate">{children}</span>
+        <ChevronsUpDownIcon className="opacity-50" />
+      </Button>
+    </PopoverTrigger>
+  );
+}
+
 type ComboboxProps = {
   items: ComboboxItem[];
   value: string;
@@ -59,24 +97,15 @@ export function Combobox({
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          id={id}
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          disabled={disabled}
-          onBlur={onBlur}
-          className="w-full justify-between font-normal"
-          {...aria}
-        >
-          <span className="truncate">
-            {selected ? (selected.display ?? selected.label) : placeholder}
-          </span>
-          <ChevronsUpDownIcon className="opacity-50" />
-        </Button>
-      </PopoverTrigger>
+      <ComboboxTrigger
+        id={id}
+        open={open}
+        disabled={disabled}
+        onBlur={onBlur}
+        {...aria}
+      >
+        {selected ? (selected.display ?? selected.label) : placeholder}
+      </ComboboxTrigger>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
         <Command>
           <CommandInput placeholder={searchPlaceholder} />

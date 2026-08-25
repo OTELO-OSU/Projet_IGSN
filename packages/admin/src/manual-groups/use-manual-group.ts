@@ -5,9 +5,10 @@ import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useManualGroup(groupId: string) {
+export function useManualGroup(groupId: string, enabled = true) {
   const apiFetch = useApiClient();
   return useQuery({
+    enabled,
     queryKey: ["manual-groups", groupId],
     queryFn: async () => {
       const res = await apiFetch(

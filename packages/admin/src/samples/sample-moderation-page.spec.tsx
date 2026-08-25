@@ -32,18 +32,40 @@ const MODERATED = [
   },
 ];
 
+const JAMES = {
+  id: "3f2504e0-4f89-41d3-9a0c-030500000010",
+  email: "james@hutton.example",
+  name: "Hutton",
+  firstname: "James",
+  orcid: null,
+};
+
+const OFF_PAGE_GROUP = {
+  id: "3f2504e0-4f89-41d3-9a0c-030500000020",
+  name: "Basalt survey",
+};
+
 function fakeApi() {
+  const requested: string[] = [];
   worker.use(
-    http.get("*/admin/samples/moderated", () =>
-      HttpResponse.json({
+    http.get("*/admin/samples/moderated", ({ request }) => {
+      requested.push(new URL(request.url).search);
+      return HttpResponse.json({
         data: MODERATED,
         meta: { total: MODERATED.length },
-      }),
-    ),
+      });
+    }),
     http.get("*/admin/samples", () =>
       HttpResponse.json({ data: [], meta: { total: 0 } }),
     ),
+    http.get("*/admin/manual-groups", () =>
+      HttpResponse.json({ data: [], meta: { total: 0 } }),
+    ),
+    http.get("*/admin/users/search", () =>
+      HttpResponse.json({ data: [JAMES] }),
+    ),
   );
+  return { requested };
 }
 
 describe("SampleModerationPage", () => {
@@ -65,6 +87,71 @@ describe("SampleModerationPage", () => {
     await expect
       .element(screen.getByRole("cell", { name: /Hugo Fournier\s*Pending/ }))
       .toBeVisible();
+  });
+
+  it("should send the picked institution to the api on the first page", async () => {
+    fakeCurrentUser({ managedLaboratories: ["UMR7359"] });
+    const { requested } = fakeApi();
+
+    const { screen } = await renderRoute("/samples/moderation");
+    await screen.getByRole("combobox", { name: "Institution" }).click();
+    await screen.getByLabelText("Search institutions").fill("GéoRessources");
+    await screen
+      .getByRole("button", { name: "GéoRessources (GEORESSOURCES)" })
+      .first()
+      .click();
+
+    await expect
+      .poll(() => requested.at(-1))
+      .toContain("institution=laboratory%3AUMR7359");
+    expect(requested.at(-1)).toContain("page=1");
+  });
+
+  it("should drop the researcher name once the url no longer carries the owner", async () => {
+    fakeCurrentUser({ managedLaboratories: ["UMR7359"] });
+    fakeApi();
+
+    const { screen, router } = await renderRoute("/samples/moderation");
+    const researcher = screen.getByRole("combobox", { name: "Researcher" });
+    await researcher.click();
+    await screen.getByPlaceholder("Search by name or email").fill("Hut");
+    await screen.getByRole("option", { name: /James Hutton/ }).click();
+    await expect.element(researcher).toHaveTextContent("James Hutton");
+
+    router.history.back();
+
+    await expect.element(researcher).toHaveTextContent("Any researcher");
+  });
+
+  it("should name the researcher the url carries on a cold load", async () => {
+    fakeCurrentUser({ managedLaboratories: ["UMR7359"] });
+    fakeApi();
+
+    const { screen } = await renderRoute(
+      `/samples/moderation?ownerId=${JAMES.id}`,
+    );
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Researcher" }))
+      .toHaveTextContent("James Hutton");
+  });
+
+  it("should name the picked manual group the catalog page does not carry", async () => {
+    fakeCurrentUser({ managedLaboratories: ["UMR7359"] });
+    fakeApi();
+    worker.use(
+      http.get(`*/admin/manual-groups/${OFF_PAGE_GROUP.id}`, () =>
+        HttpResponse.json({ data: OFF_PAGE_GROUP }),
+      ),
+    );
+
+    const { screen } = await renderRoute(
+      `/samples/moderation?manualGroup=${OFF_PAGE_GROUP.id}`,
+    );
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Manual group" }))
+      .toHaveTextContent("Basalt survey");
   });
 
   it("should send a plain researcher back to their own samples", async () => {

@@ -1,16 +1,11 @@
-import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
-
 import { type SortingState } from "@tanstack/react-table";
+
+import type { SampleListParams } from "#/samples/use-samples.ts";
 
 import { Pagination } from "#/pagination/pagination.tsx";
 import { m } from "#/paraglide/messages.js";
 import { SampleTable } from "#/samples/sample-table.tsx";
 import { useSamples } from "#/samples/use-samples.ts";
-
-type SampleListParams = Pick<
-  ListSamplesQuery,
-  "page" | "perPage" | "sort" | "order" | "search" | "ownership"
->;
 
 type SampleListPanelProps = {
   params: SampleListParams;

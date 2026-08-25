@@ -41,8 +41,15 @@ const MANAGED_GROUP = {
   name: "Massif Central 2026",
 };
 
-const groups = (laboratory: string | null) => ({
-  institutionalOrganization: null,
+const REQUESTED_ORGANIZATION = "04vfs2w97";
+const CO_TUTELLE_ORGANIZATION = "02feahw73";
+const OTHER_ORGANIZATION = "02rx3b187";
+
+const groups = (
+  laboratory: string | null,
+  organization: string | null = null,
+) => ({
+  institutionalOrganization: organization,
   institutionalOsu: null,
   institutionalLaboratory: laboratory,
 });
@@ -52,8 +59,13 @@ async function ownedSample(
   ownerId: string,
   input: CreateSample,
   laboratory: string | null = null,
+  organization: string | null = null,
 ) {
-  const sample = await insertSample(db, input, groups(laboratory));
+  const sample = await insertSample(
+    db,
+    input,
+    groups(laboratory, organization),
+  );
   await insertSampleOwner(db, sample.id, ownerId);
   return sample;
 }
@@ -77,10 +89,23 @@ async function arrangeManager(
   };
 }
 
-const listModerated = (app: ReturnType<typeof createApp>["app"]) =>
-  app.request("/admin/samples/moderated?page=1&perPage=25", {
+const listModerated = (app: ReturnType<typeof createApp>["app"], filter = "") =>
+  app.request(`/admin/samples/moderated?page=1&perPage=25${filter}`, {
     headers: authHeader,
   });
+
+async function arrangeSuperAdmin(db: Db) {
+  await provisionUser(db, "test-token", {
+    status: "accepted",
+    superAdmin: true,
+  });
+  return createApp(db).app;
+}
+
+async function listedIds(res: Response) {
+  const { data, meta } = adminListSamplesResponseSchema.parse(await res.json());
+  return { ids: data.map((sample) => sample.id), total: meta.total };
+}
 
 describe("moderated sample list", () => {
   pgTest(
@@ -202,6 +227,109 @@ describe("moderated sample list", () => {
     // Assert
     expect(res.status).toBe(403);
   });
+});
+
+describe("filters on the moderated sample list", () => {
+  pgTest(
+    "should keep only the samples the requested user owns",
+    async ({ db }) => {
+      // Arrange
+      const app = await arrangeSuperAdmin(db);
+      const hutton = await insertUser(db, "hutton@example.com");
+      const lyell = await insertUser(db, "lyell@example.com");
+      const owned = await ownedSample(db, hutton.id, {
+        ...draft,
+        name: "Owned by Hutton",
+      });
+      const shared = await ownedSample(db, lyell.id, {
+        ...draft,
+        name: "Owned by Lyell",
+      });
+      await insertSampleCollaborator(db, shared.id, hutton.id, "editor");
+      // Act
+      const res = await listModerated(app, `&ownerId=${hutton.id}`);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await listedIds(res)).toEqual({ ids: [owned.id], total: 1 });
+    },
+  );
+
+  pgTest(
+    "should keep only the samples linked to the requested manual group",
+    async ({ db }) => {
+      // Arrange
+      const app = await arrangeSuperAdmin(db);
+      const owner = await insertUser(db, "owner@example.com");
+      await db.insertInto("manual_group").values(MANAGED_GROUP).execute();
+      const grouped = await ownedSample(db, owner.id, {
+        ...draft,
+        name: "In the group",
+      });
+      await attachGroup(db, grouped.id, MANAGED_GROUP.id);
+      await ownedSample(db, owner.id, { ...draft, name: "In no group" });
+      // Act
+      const res = await listModerated(app, `&manualGroup=${MANAGED_GROUP.id}`);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await listedIds(res)).toEqual({ ids: [grouped.id], total: 1 });
+    },
+  );
+
+  pgTest(
+    "should keep a sample whose laboratory belongs to the requested organisme though it snapshotted another co-tutelle organisme",
+    async ({ db }) => {
+      // Arrange
+      const app = await arrangeSuperAdmin(db);
+      const owner = await insertUser(db, "owner@example.com");
+      const cotutelle = await ownedSample(
+        db,
+        owner.id,
+        { ...draft, name: "Co-tutelle laboratory" },
+        IN_REACH,
+        CO_TUTELLE_ORGANIZATION,
+      );
+      await ownedSample(
+        db,
+        owner.id,
+        { ...draft, name: "Another organisme" },
+        OUT_OF_REACH,
+        OTHER_ORGANIZATION,
+      );
+      // Act
+      const res = await listModerated(
+        app,
+        `&institution=organization:${REQUESTED_ORGANIZATION}`,
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await listedIds(res)).toEqual({ ids: [cotutelle.id], total: 1 });
+    },
+  );
+
+  pgTest(
+    "should keep a filtered list inside the caller's moderation scope",
+    async ({ db }) => {
+      // Arrange
+      const { app, owner } = await arrangeManager(db);
+      const inReach = await ownedSample(
+        db,
+        owner.id,
+        { ...draft, name: "In reach" },
+        IN_REACH,
+      );
+      await ownedSample(
+        db,
+        owner.id,
+        { ...draft, name: "Out of reach" },
+        OUT_OF_REACH,
+      );
+      // Act
+      const res = await listModerated(app, `&ownerId=${owner.id}`);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await listedIds(res)).toEqual({ ids: [inReach.id], total: 1 });
+    },
+  );
 });
 
 describe("access to a moderated sample", () => {

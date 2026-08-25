@@ -12,6 +12,7 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
 import { facetFilters } from "./facet-filter.ts";
+import { institutionSampleWhere } from "./institution-sample-where.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
   sampleAttachmentsQuery,
@@ -116,7 +117,15 @@ async function listWithOwners(
   const { data, owners, total } = await listSamplesWhere(
     db,
     params,
-    scope,
+    [
+      ...scope,
+      ...(params.institution === undefined
+        ? []
+        : [institutionSampleWhere(params.institution)]),
+      ...(params.ownerId === undefined
+        ? []
+        : [assignedTo(params.ownerId, "mine")]),
+    ],
     true,
   );
   return {

@@ -18,5 +18,17 @@ export function sampleModerationPage(page: Page) {
         sampleRow(page, name).getByRole("cell", { name: status }),
       ).toBeVisible(),
     openSample: (name: string) => page.getByRole("link", { name }).click(),
+    filterByInstitution: async (query: string, institution: string) => {
+      await page.getByRole("combobox", { name: "Institution" }).click();
+      await page.getByLabel("Search institutions").fill(query);
+      await page
+        .getByRole("button", { name: institution, exact: true })
+        .first()
+        .click();
+    },
+    expectSampleRow: (name: string) =>
+      expect(sampleRow(page, name)).toBeVisible(),
+    expectNoSampleRow: (name: string) =>
+      expect(sampleRow(page, name)).toHaveCount(0),
   };
 }
