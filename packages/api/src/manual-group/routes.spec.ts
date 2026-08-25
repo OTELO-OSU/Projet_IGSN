@@ -962,7 +962,9 @@ describe("manual group creation requests", () => {
     const manager = await provisionUser(db, "manager", { status: "accepted" });
     await moderateManualGroup(db, manager.id, [MASSIF]);
     const client = testClient(
-      createApp(db, { mail: { sendMail, adminUrl: ADMIN_URL } }).app,
+      createApp(db, {
+        mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+      }).app,
     );
     return { client, sendMail, manager };
   };
