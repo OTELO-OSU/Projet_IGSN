@@ -202,8 +202,12 @@ describe("LaboratoriesPage", () => {
         ),
       )
       .toBeVisible();
-    await expect.element(screen.getByText(LORRAINE)).toBeVisible();
-    await expect.element(screen.getByText(CNRS)).toBeVisible();
+    await expect
+      .element(screen.getByRole("definition").getByText(LORRAINE))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("definition").getByText(CNRS))
+      .toBeVisible();
     await expect
       .element(
         screen.getByRole("cell", { name: "crpg.member@univ-lorraine.fr" }),
