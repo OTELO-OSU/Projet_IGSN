@@ -160,6 +160,7 @@ function fakeApi(
     http.get("*/admin/currentUser", async () => {
       if (callerUnknown) await new Promise(() => {});
       return HttpResponse.json({
+        id: "3f2504e0-4f89-41d3-9a0c-0305000000f4",
         sub: "user-1",
         name: "Marie Dupont",
         orcid: null,
