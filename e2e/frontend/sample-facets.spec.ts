@@ -151,4 +151,18 @@ test.describe("search facets", () => {
     await list.expectSampleLink("Basalt 42", basalt);
     await list.expectSampleAbsent("Granite 7");
   });
+
+  test("a reader narrows by a contributor", async ({ page, samples }) => {
+    const { basalt } = published(samples);
+    const list = sampleListPage(page);
+
+    await list.gotoWithSearch("material=rock.igneous");
+    await list.expectResultCount(2);
+
+    await list.expectFacetOptionAbsent("Contributor", "Camille Petit");
+    await list.pickFacet("Contributor", "Jean Martin", "contributor");
+    await list.expectResultCount(1);
+    await list.expectSampleLink("Basalt 42", basalt);
+    await list.expectSampleAbsent("Granite 7");
+  });
 });
