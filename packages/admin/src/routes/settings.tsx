@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
-import { FRONTEND_URL } from "#/frontend-url.ts";
+import { frontendSearchUrl } from "#/frontend-url.ts";
 import { InstitutionalGroupsForm } from "#/institutional-groups/institutional-groups-form.tsx";
 import { useSetInstitutionalGroups } from "#/institutional-groups/use-set-institutional-groups.ts";
 import { MyManualGroups } from "#/manual-groups/my-manual-groups.tsx";
@@ -35,9 +35,8 @@ function SettingsPage() {
                 {m.settings_my_samples_hint()}
               </p>
               <ShareLink
-                id="my-samples-link"
                 label={m.settings_my_samples_link()}
-                link={`${FRONTEND_URL}/search?contributor=${data.id}`}
+                link={frontendSearchUrl({ contributor: data.id })}
               />
               <h2 className="text-xl font-bold">
                 {m.settings_group_samples_title()}

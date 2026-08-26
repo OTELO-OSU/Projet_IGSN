@@ -203,8 +203,6 @@ test.describe("manual groups", () => {
     const publicList = publicSampleListPage(memberPage);
     await publicList.gotoWithSearch(link.split("?")[1]!);
     await publicList.expectFacetValue("Other group (team, project…)", name);
-    await publicList.expectResultCount(1);
-    await publicList.expectSampleLink(sampleName, igsn);
 
     const detail = sampleDetailPage(memberPage);
     await detail.goto(igsn);

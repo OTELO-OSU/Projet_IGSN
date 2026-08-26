@@ -13,7 +13,7 @@ import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 
 describe("public user routes", () => {
   pgTest(
-    "should list only accepted users linked to a published sample",
+    "should list accepted users linked to a published sample, plus the included accepted one",
     async ({ db }) => {
       // Arrange
       const publisher = await insertUser(db, "marie.curie@univ-lorraine.fr", {
@@ -48,44 +48,25 @@ describe("public user routes", () => {
         drafter.id,
         "contributor",
       );
-      // Act
-      const res = await testClient(createApp(db).app).users.$get({
-        query: {},
-      });
-      // Assert
-      expect(res.status).toBe(200);
-      expect(publicUsersResponseSchema.parse(await res.json())).toEqual({
-        data: [{ id: publisher.id, name: "Curie", firstname: "Marie" }],
-      });
-    },
-  );
-
-  pgTest(
-    "should append the included user only when accepted",
-    async ({ db }) => {
-      // Arrange
-      const accepted = await insertUser(db, "jean.martin@univ-lorraine.fr", {
-        name: "Martin",
-        firstname: "Jean",
-      });
-      const pending = await insertUser(db, "luc.martin@univ-lorraine.fr", {
-        name: "Martin",
-        firstname: "Luc",
-        status: "pending",
-      });
       const client = testClient(createApp(db).app);
+      const marie = { id: publisher.id, name: "Curie", firstname: "Marie" };
       // Act
-      const withAccepted = await client.users.$get({
-        query: { include: accepted.id },
+      const res = await client.users.$get({ query: {} });
+      const withDrafter = await client.users.$get({
+        query: { include: drafter.id },
       });
       const withPending = await client.users.$get({
         query: { include: pending.id },
       });
       // Assert
-      expect(await withAccepted.json()).toEqual({
-        data: [{ id: accepted.id, name: "Martin", firstname: "Jean" }],
+      expect(res.status).toBe(200);
+      expect(publicUsersResponseSchema.parse(await res.json())).toEqual({
+        data: [marie],
       });
-      expect(await withPending.json()).toEqual({ data: [] });
+      expect(await withDrafter.json()).toEqual({
+        data: [marie, { id: drafter.id, name: "Curie", firstname: "Pierre" }],
+      });
+      expect(await withPending.json()).toEqual({ data: [marie] });
     },
   );
 });

@@ -4,7 +4,7 @@ import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-toke
 import { userStatusSchema } from "@projet-igsn/domain/user/model";
 import { orcidSchema } from "@projet-igsn/domain/user/orcid";
 import {
-  listContributorsQuerySchema,
+  listPublicUsersQuerySchema,
   listUsersQuerySchema,
   updateUserSchema,
 } from "@projet-igsn/domain/user/user-validator";
@@ -65,8 +65,8 @@ export const validateListUsersQuery = validator("query", (value, c) => {
   return parsed.data;
 });
 
-export const validateListContributorsQuery = validator("query", (value, c) => {
-  const parsed = listContributorsQuerySchema.safeParse(value);
+export const validateListPublicUsersQuery = validator("query", (value, c) => {
+  const parsed = listPublicUsersQuerySchema.safeParse(value);
   if (!parsed.success) {
     return c.json({ error: "Invalid query parameters" }, 400);
   }

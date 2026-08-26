@@ -20,6 +20,13 @@ export const FACET_COLUMN: Record<string, string> = {
   institutionalLaboratory: "institutional_laboratory",
 };
 
+// A `linked` facet matches through a link table carrying `sample_id`; same
+// allow-list rule as FACET_COLUMN.
+export const FACET_JOIN: Record<string, { table: string; column: string }> = {
+  manualGroup: { table: "sample_manual_group", column: "group_id" },
+  contributor: { table: "user_sample", column: "user_id" },
+};
+
 function likePattern(value: string): string {
   return `%${value.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
 }
@@ -28,18 +35,12 @@ function facetFilter(
   facet: (typeof SAMPLE_FACETS)[number],
   value: string,
 ): Expression<SqlBool> | undefined {
-  if (facet.kind === "manualGroup") {
+  if (facet.kind === "linked") {
+    const { table, column } = FACET_JOIN[facet.key]!;
     return sql<SqlBool>`exists (
-      select 1 from sample_manual_group
-       where sample_manual_group.sample_id = sample.id
-         and sample_manual_group.group_id = ${value}
-    )`;
-  }
-  if (facet.kind === "contributor") {
-    return sql<SqlBool>`exists (
-      select 1 from user_sample
-       where user_sample.sample_id = sample.id
-         and user_sample.user_id = ${value}
+      select 1 from ${sql.table(table)}
+       where ${sql.ref(`${table}.sample_id`)} = sample.id
+         and ${sql.ref(`${table}.${column}`)} = ${value}
     )`;
   }
   const column = FACET_COLUMN[facet.key]!;

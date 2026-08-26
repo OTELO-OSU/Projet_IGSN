@@ -1,13 +1,14 @@
 import { Combobox } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
-import { useState } from "react";
+import { useId, useState } from "react";
 
-import { FRONTEND_URL } from "#/frontend-url.ts";
+import { frontendSearchUrl } from "#/frontend-url.ts";
 import { useMyManualGroups } from "#/manual-groups/use-my-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 import { ShareLink } from "#/settings/share-link.tsx";
 
 export function GroupSamplesLink() {
+  const id = useId();
   const query = useMyManualGroups();
   const groups = query.data?.data ?? [];
   const [groupId, setGroupId] = useState("");
@@ -15,12 +16,12 @@ export function GroupSamplesLink() {
   return (
     <>
       <div className="flex min-w-0 items-center gap-2">
-        <Label htmlFor="group-samples-group" className="shrink-0">
+        <Label htmlFor={id} className="shrink-0">
           {m.settings_group_samples_group()}
         </Label>
         <div className="min-w-0 flex-1">
           <Combobox
-            id="group-samples-group"
+            id={id}
             items={groups.map((group) => ({
               value: group.id,
               label: group.name,
@@ -36,9 +37,8 @@ export function GroupSamplesLink() {
       </div>
       {groupId && (
         <ShareLink
-          id="group-samples-link"
           label={m.settings_group_samples_link()}
-          link={`${FRONTEND_URL}/search?manualGroup=${groupId}`}
+          link={frontendSearchUrl({ manualGroup: groupId })}
         />
       )}
     </>

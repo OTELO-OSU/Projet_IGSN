@@ -44,7 +44,7 @@ export const publicUsersResponseSchema = z.object({
 
 export type PublicUsersResponse = z.infer<typeof publicUsersResponseSchema>;
 
-export const listContributorsQuerySchema = z.object({
+export const listPublicUsersQuerySchema = z.object({
   include: z.uuid().optional().catch(undefined),
 });
 

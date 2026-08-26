@@ -44,8 +44,7 @@ export type SampleFacet =
     }
   | { key: string; kind: "enum"; values: readonly string[] }
   | { key: string; kind: "text" }
-  | { key: string; kind: "manualGroup" }
-  | { key: string; kind: "contributor" }
+  | { key: string; kind: "linked" }
   | {
       key: string;
       kind: "numericRange";
@@ -94,8 +93,8 @@ export const SAMPLE_FACETS: readonly SampleFacet[] = [
     kind: "enum",
     values: LABORATORIES.map((l) => l.code),
   },
-  { key: "manualGroup", kind: "manualGroup" },
-  { key: "contributor", kind: "contributor" },
+  { key: "manualGroup", kind: "linked" },
+  { key: "contributor", kind: "linked" },
 ];
 
 export function activeFacetKeys(values: Record<string, unknown>): string[] {

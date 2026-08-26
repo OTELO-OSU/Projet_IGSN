@@ -140,8 +140,7 @@ export function SampleFacets({
           />
         );
       case "enum":
-      case "contributor":
-      case "manualGroup": {
+      case "linked": {
         const selected = values[facet.key] as string | undefined;
         const items = withSelected(
           facet.kind === "enum"

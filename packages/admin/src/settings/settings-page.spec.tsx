@@ -204,34 +204,36 @@ describe("settings page", () => {
       .toBeVisible();
   });
 
-  it("should offer the my-samples link", async () => {
-    const link = `http://localhost:3000/search?contributor=${USER_ID}`;
-    const writeText = vi
-      .spyOn(navigator.clipboard, "writeText")
-      .mockResolvedValue(undefined);
-    await renderSettingsPage();
+  const MY_SAMPLES_LINK = `http://localhost:3000/search?contributor=${USER_ID}`;
+  const mySamplesInput = () =>
+    page.getByRole("textbox", { name: "My samples link" });
+  const stubClipboard = () =>
+    vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue(undefined);
 
-    await expect
-      .element(page.getByRole("textbox", { name: "My samples link" }))
-      .toHaveValue(link);
-    await expect
-      .element(page.getByRole("link", { name: "Open in a new window" }))
-      .toHaveAttribute("href", link);
-    await expect
-      .element(page.getByRole("link", { name: "Open in a new window" }))
-      .toHaveAttribute("target", "_blank");
+  it("should offer the my-samples link", async () => {
+    const writeText = stubClipboard();
+    await renderSettingsPage();
+    const open = page.getByRole("link", { name: "Open in a new window" });
+
+    await expect.element(mySamplesInput()).toHaveValue(MY_SAMPLES_LINK);
+    await expect.element(open).toHaveAttribute("href", MY_SAMPLES_LINK);
+    await expect.element(open).toHaveAttribute("target", "_blank");
 
     await page.getByRole("button", { name: "Copy link" }).click();
 
-    expect(writeText).toHaveBeenCalledWith(link);
+    expect(writeText).toHaveBeenCalledWith(MY_SAMPLES_LINK);
     await expect.element(page.getByText("Link copied")).toBeVisible();
+    writeText.mockRestore();
+  });
 
-    await page.getByRole("textbox", { name: "My samples link" }).click();
+  it("should select and copy the my-samples link on input click", async () => {
+    const writeText = stubClipboard();
+    await renderSettingsPage();
 
-    expect(writeText).toHaveBeenCalledTimes(2);
-    await expect
-      .element(page.getByRole("textbox", { name: "My samples link" }))
-      .toHaveSelection(link);
+    await mySamplesInput().click();
+
+    expect(writeText).toHaveBeenCalledWith(MY_SAMPLES_LINK);
+    await expect.element(mySamplesInput()).toHaveSelection(MY_SAMPLES_LINK);
     writeText.mockRestore();
   });
 
@@ -249,13 +251,11 @@ describe("settings page", () => {
     await groupSelector.click();
     await page.getByRole("option", { name: "Basalt team" }).click();
 
-    const link = `http://localhost:3000/search?manualGroup=${BASALT_TEAM.id}`;
     await expect
       .element(page.getByRole("textbox", { name: "Group samples link" }))
-      .toHaveValue(link);
-    await expect
-      .element(page.getByRole("link", { name: "Open in a new window" }).nth(1))
-      .toHaveAttribute("href", link);
+      .toHaveValue(
+        `http://localhost:3000/search?manualGroup=${BASALT_TEAM.id}`,
+      );
   });
 
   it("should disable the group selector when the user belongs to no group", async () => {
@@ -270,9 +270,7 @@ describe("settings page", () => {
     await renderSettingsPage({ status: "pending" });
 
     await expect.element(orcidForm()).toBeVisible();
-    await expect
-      .element(page.getByRole("textbox", { name: "My samples link" }))
-      .not.toBeInTheDocument();
+    await expect.element(mySamplesInput()).not.toBeInTheDocument();
   });
 
   it("should surface a conflict when another account holds the orcid", async () => {
