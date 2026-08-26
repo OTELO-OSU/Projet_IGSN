@@ -30,6 +30,26 @@ export type UserIdentitiesResponse = z.infer<
   typeof userIdentitiesResponseSchema
 >;
 
+export const publicUserSchema = userSchema.pick({
+  id: true,
+  name: true,
+  firstname: true,
+});
+
+export type PublicUser = z.infer<typeof publicUserSchema>;
+
+export const publicUsersResponseSchema = z.object({
+  data: z.array(publicUserSchema),
+});
+
+export type PublicUsersResponse = z.infer<typeof publicUsersResponseSchema>;
+
+export const listContributorsQuerySchema = z.object({
+  include: z.uuid().optional().catch(undefined),
+});
+
+export type ListContributorsQuery = z.infer<typeof listContributorsQuerySchema>;
+
 export const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1).catch(1),
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
