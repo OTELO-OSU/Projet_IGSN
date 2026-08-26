@@ -69,4 +69,15 @@ describe("public user routes", () => {
       expect(await withPending.json()).toEqual({ data: [marie] });
     },
   );
+
+  pgTest(
+    "should ignore a malformed include instead of failing",
+    async ({ db }) => {
+      // Act
+      const res = await createApp(db).app.request("/users?include=not-a-uuid");
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({ data: [] });
+    },
+  );
 });
