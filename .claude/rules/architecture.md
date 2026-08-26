@@ -12,7 +12,9 @@
 
 - This is one of two group mechanisms: manual groups are super-admin-curated rows with explicit membership, unrelated to any catalog here; see ADR 0025.
 - Organisme / OSU / Labo is a graph, not a chain: many labos per organisme, a labo shared by several organismes (co-tutelle), an OSU in one or more organismes, derived from its labos, a labo in zero or one OSU.
-- `domain/institutional-group/filter-laboratories-by-org-and-osu.ts` is the single source of truth for a group's labos: the form offers that list, `institutional-groups-validator.ts` checks against it, and the admin `/institutional-groups/laboratories` list filters with it.
+- `domain/institutional-group/filter-laboratories-by-org-and-osu.ts` is the single source of truth for a group's labos: the form offers that list, `institutional-groups-validator.ts` checks against it, the admin `/institutional-groups/laboratories` list filters with it, and `institution-laboratory-codes.ts` resolves an admin moderation institution filter through it.
+- `user/managed-laboratory-codes.ts` is deliberately not that path: its organisme -> OSU widening reaches other organismes' laboratories, which is right for a manager's own reach but wrong for the moderation institution filter.
+- An OSU spans several organismes, so the moderation institution filter names the organisme too (`osu:<ror>/<code>`) and resolves to that organisme's labos alone.
 - The admin group lists filter the static `domain` catalogs client-side, but their members come from `GET /admin/users`, filtered in SQL by `institutionalOrganization` / `institutionalOsu` / `institutionalLaboratory`; that same response also carries each user's manual groups (`AdminUser.manualGroups`), unrelated to this catalog.
 - The OSU only narrows, so no OSU means any labo of the organisme, OSU-bound included.
 - A submitted OSU MUST belong to the submitted organisme, so a co-tutelle user picking the other organisme records no OSU.
@@ -27,6 +29,7 @@
 - Declare the sort/filter params in the list query schema in `domain`, pass them through the repository, and keep them in the URL app-side.
 - Public sample-list filters are driven by the `SAMPLE_FACETS` registry (`domain/sample/search/facets.ts`) as single source of truth; to add or extend one, see the `add-search-facet` skill.
 - The free-text global search box is a separate mechanism (`domain/sample/search/search-tokens.ts`), not a facet; see ADR 0018.
+- The admin sample lists accept `ownerId` / `institution` / `manualGroup` on `listSamplesQuerySchema`, ANDed inside the caller's moderation scope; the three `institutional*` facet params stay dropped there, one param one meaning.
 
 ## Publish constraints
 

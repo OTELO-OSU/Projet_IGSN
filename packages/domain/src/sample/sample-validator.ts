@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { institutionFilterSchema } from "../institutional-group/institution-filter.ts";
 import { manualGroupSchema } from "../manual-group/model.ts";
 import { userSampleRoleSchema } from "../user-sample/model.ts";
 import { userSchema } from "../user/model.ts";
@@ -80,6 +81,8 @@ export const listSamplesQuerySchema = z.object({
     .optional()
     .catch(undefined),
   ownership: z.enum(["mine", "shared"]).optional().catch(undefined),
+  ownerId: z.uuid().optional().catch(undefined),
+  institution: institutionFilterSchema.optional().catch(undefined),
   ...facetQueryFields(),
   bbox: bboxSchema.optional().catch(undefined),
 });

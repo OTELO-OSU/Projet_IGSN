@@ -7,13 +7,28 @@ import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useSamples(
-  params: Pick<
-    ListSamplesQuery,
-    "page" | "perPage" | "sort" | "order" | "search" | "ownership"
-  >,
-  moderated = false,
-) {
+export type SampleListParams = Pick<
+  ListSamplesQuery,
+  | "page"
+  | "perPage"
+  | "sort"
+  | "order"
+  | "search"
+  | "ownership"
+  | "ownerId"
+  | "institution"
+  | "manualGroup"
+>;
+
+const OPTIONAL_PARAMS = [
+  "search",
+  "ownership",
+  "ownerId",
+  "institution",
+  "manualGroup",
+] as const;
+
+export function useSamples(params: SampleListParams, moderated = false) {
   const apiFetch = useApiClient();
   return useQuery({
     queryKey: ["samples", { moderated, ...params }],
@@ -28,8 +43,10 @@ export function useSamples(
         url.searchParams.set("sort", params.sort);
         url.searchParams.set("order", params.order ?? "asc");
       }
-      if (params.search) url.searchParams.set("search", params.search);
-      if (params.ownership) url.searchParams.set("ownership", params.ownership);
+      for (const key of OPTIONAL_PARAMS) {
+        const value = params[key];
+        if (value) url.searchParams.set(key, value);
+      }
 
       const res = await apiFetch(url);
       if (!res.ok) {
