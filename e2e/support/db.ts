@@ -31,6 +31,15 @@ function resetAndSeed(): SeededSample[] {
   return JSON.parse(lastLine) as SeededSample[];
 }
 
+export function published(samples: SeededSample[]) {
+  const igsnOf = (name: string) => {
+    const igsn = samples.find((s) => s.name === name)?.igsn;
+    if (!igsn) throw new Error(`seed must publish "${name}"`);
+    return igsn;
+  };
+  return { basalt: igsnOf("Basalt 42"), granite: igsnOf("Granite 7") };
+}
+
 export const test = base.extend<{ samples: SeededSample[] }>({
   samples: [
     // Playwright requires the destructuring pattern for the fixtures arg; this

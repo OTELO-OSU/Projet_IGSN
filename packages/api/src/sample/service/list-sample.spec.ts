@@ -9,6 +9,8 @@ import type { Transactional } from "../../transaction.ts";
 import { insertUser } from "../../tests/insert-user.ts";
 import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
+import { insertSampleCollaborator } from "../../user-sample/insert-sample-collaborator.ts";
+import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
 import { listPublishedSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
@@ -270,10 +272,13 @@ describe("listSamples", () => {
   pgTest("should filter by a linked user whatever the role", async ({ db }) => {
     // Arrange
     const user = await insertUser(db, "marie.curie@univ-lorraine.fr");
-    const names = ["Owned", "Edited", "Contributed", "Unlinked"];
-    const roles = ["owner", "editor", "contributor"] as const;
-    const samples: { id: string }[] = [];
-    for (const name of names) {
+    const linked = [
+      ["Owned", "owner"],
+      ["Edited", "editor"],
+      ["Contributed", "contributor"],
+      ["Unlinked", null],
+    ] as const;
+    for (const [name, role] of linked) {
       const sample = await insertSample(db, {
         name,
         nature: "rock_powder",
@@ -281,18 +286,10 @@ describe("listSamples", () => {
         collectionMethod: null,
       });
       await publishSample(db, sample.id);
-      samples.push(sample);
+      if (role === "owner") await insertSampleOwner(db, sample.id, user.id);
+      else if (role)
+        await insertSampleCollaborator(db, sample.id, user.id, role);
     }
-    await db
-      .insertInto("user_sample")
-      .values(
-        roles.map((role, index) => ({
-          user_id: user.id,
-          sample_id: samples[index]!.id,
-          role,
-        })),
-      )
-      .execute();
     // Act
     const { data, total } = await listPublishedSamples(db, {
       page: 1,

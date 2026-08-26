@@ -48,8 +48,6 @@ export const listContributorsQuerySchema = z.object({
   include: z.uuid().optional().catch(undefined),
 });
 
-export type ListContributorsQuery = z.infer<typeof listContributorsQuerySchema>;
-
 export const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1).catch(1),
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),

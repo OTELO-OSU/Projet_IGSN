@@ -4,6 +4,7 @@ import type { PublicUser } from "@projet-igsn/domain/user/user-validator";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   Combobox,
+  type ComboboxItem,
   toComboboxItems,
 } from "@projet-igsn/design-system/components/ui/combobox";
 import { Input } from "@projet-igsn/design-system/components/ui/input";
@@ -110,6 +111,16 @@ export function SampleFacets({
   const hasActive = facetParamKeys().some((key) => values[key] !== undefined);
 
   const byKey = new Map(SAMPLE_FACETS.map((facet) => [facet.key, facet]));
+  const fetchedItems: Record<string, ComboboxItem[]> = {
+    manualGroup: manualGroups.map((group) => ({
+      value: group.id,
+      label: group.name,
+    })),
+    contributor: contributors.map((user) => ({
+      value: user.id,
+      label: fullName(user),
+    })),
+  };
 
   function renderFacet(facet: (typeof SAMPLE_FACETS)[number]): ReactNode {
     const label = facetLabel(facet.key);
@@ -133,20 +144,12 @@ export function SampleFacets({
       case "manualGroup": {
         const selected = values[facet.key] as string | undefined;
         const items = withSelected(
-          facet.kind === "manualGroup"
-            ? manualGroups.map((group) => ({
-                value: group.id,
-                label: group.name,
-              }))
-            : facet.kind === "contributor"
-              ? contributors.map((user) => ({
-                  value: user.id,
-                  label: fullName(user),
-                }))
-              : toComboboxItems(
-                  NARROWED_VALUES[facet.key]?.(values) ?? facet.values,
-                  facetValueLabel(facet.key),
-                ),
+          facet.kind === "enum"
+            ? toComboboxItems(
+                NARROWED_VALUES[facet.key]?.(values) ?? facet.values,
+                facetValueLabel(facet.key),
+              )
+            : (fetchedItems[facet.key] ?? []),
           selected,
           facetValueLabel(facet.key),
         );

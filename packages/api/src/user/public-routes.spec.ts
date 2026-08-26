@@ -2,33 +2,14 @@ import { publicUsersResponseSchema } from "@projet-igsn/domain/user/user-validat
 import { testClient } from "hono/testing";
 import { describe, expect } from "vitest";
 
-import type { DB } from "../db.ts";
-import type { Transactional } from "../transaction.ts";
-
 import { createApp } from "../app.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
-
-const link = (
-  db: Transactional<DB>,
-  userId: string,
-  sampleId: string,
-  role: DB["user_sample"]["role"],
-) =>
-  db
-    .insertInto("user_sample")
-    .values({ user_id: userId, sample_id: sampleId, role })
-    .execute();
-
-const draft = (db: Transactional<DB>, name: string) =>
-  insertSample(db, {
-    name,
-    nature: "rock_powder",
-    type: null,
-    collectionMethod: null,
-  });
+import { draft } from "../tests/sample-fixtures.ts";
+import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
+import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 
 describe("public user routes", () => {
   pgTest(
@@ -48,14 +29,25 @@ describe("public user routes", () => {
         firstname: "Irene",
         status: "pending",
       });
-      const published = await draft(db, "Published sample");
+      const published = await insertSample(db, {
+        ...draft,
+        name: "Published sample",
+      });
       await publishSample(db, published.id);
-      const pendingSample = await draft(db, "Pending owner sample");
+      const pendingSample = await insertSample(db, {
+        ...draft,
+        name: "Pending owner sample",
+      });
       await publishSample(db, pendingSample.id);
-      const draftOnly = await draft(db, "Draft sample");
-      await link(db, publisher.id, published.id, "owner");
-      await link(db, pending.id, pendingSample.id, "owner");
-      await link(db, drafter.id, draftOnly.id, "contributor");
+      const draftOnly = await insertSample(db, { ...draft, name: "Draft" });
+      await insertSampleOwner(db, published.id, publisher.id);
+      await insertSampleOwner(db, pendingSample.id, pending.id);
+      await insertSampleCollaborator(
+        db,
+        draftOnly.id,
+        drafter.id,
+        "contributor",
+      );
       // Act
       const res = await testClient(createApp(db).app).users.$get({
         query: {},

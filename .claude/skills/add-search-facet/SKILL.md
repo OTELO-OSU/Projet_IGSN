@@ -61,8 +61,8 @@ is missing, that is a domain/API change first (see the `add-domain-entity` and
    `FACET_COLUMN`. This map is an allow-list (keys are fixed, never user input),
    so the column name is safe as an identifier while values stay bound
    parameters. Skip this for a `numericRange` facet, which filters through its
-   own builder, or a `manualGroup` facet, whose join is written directly in
-   `facetFilter()`.
+   own builder, or a `manualGroup` / `contributor` facet, whose join is written
+   directly in `facetFilter()`.
 
 4. **Endpoint-backed options (rare)**: a facet whose values aren't a static
    catalog (`manualGroup`, `contributor`) fetches them instead of reading the
@@ -73,8 +73,8 @@ is missing, that is a domain/API change first (see the `add-domain-entity` and
 5. **Labels** (`frontend/domain/samples/facet-labels.ts`): add a `facetLabel`
    case (reuse a `sample_field_*` message where one exists, else a `facet_*`
    key). For a `hierarchy` or `enum` facet, add a `facetValueLabel` case
-   resolving option codes; `text`, `numericRange` and `manualGroup` need none,
-   their label riding on the value itself.
+   resolving option codes; `text`, `numericRange`, `manualGroup` and
+   `contributor` need none, their label riding on the value itself.
 
 6. **i18n**: add any new `facet_*` keys to the message catalogs. Shared enum
    text lives in `domain`; app-only copy in the app catalog (see the i18n rule).

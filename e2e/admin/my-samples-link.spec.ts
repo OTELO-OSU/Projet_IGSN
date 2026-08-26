@@ -1,6 +1,6 @@
 import { settingsPage } from "../support/admin/settings.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
-import { expect, test } from "../support/db";
+import { expect, published, test } from "../support/db";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 import { frontendUrl } from "../support/urls";
 
@@ -9,8 +9,7 @@ test.describe("my samples link", () => {
     page,
     samples,
   }) => {
-    const basalt = samples.find((sample) => sample.name === "Basalt 42")?.igsn;
-    if (!basalt) throw new Error('seed must publish "Basalt 42"');
+    const { basalt } = published(samples);
 
     await signInAsResearcher(page, RESEARCHERS.jean);
     const settings = settingsPage(page);
