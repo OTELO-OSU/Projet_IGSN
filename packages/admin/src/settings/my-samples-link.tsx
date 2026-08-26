@@ -24,7 +24,16 @@ export function MySamplesLink({ userId }: { userId: string }) {
       <Label htmlFor="my-samples-link" className="shrink-0">
         {m.settings_my_samples_link()}
       </Label>
-      <Input id="my-samples-link" readOnly value={link} className="flex-1" />
+      <Input
+        id="my-samples-link"
+        readOnly
+        value={link}
+        className="flex-1"
+        onClick={(event) => {
+          event.currentTarget.select();
+          void copyLink();
+        }}
+      />
       <Button
         type="button"
         variant="outline"

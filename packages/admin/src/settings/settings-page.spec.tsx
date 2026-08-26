@@ -223,6 +223,13 @@ describe("settings page", () => {
 
     expect(writeText).toHaveBeenCalledWith(link);
     await expect.element(page.getByText("Link copied")).toBeVisible();
+
+    await page.getByRole("textbox", { name: "My samples link" }).click();
+
+    expect(writeText).toHaveBeenCalledTimes(2);
+    await expect
+      .element(page.getByRole("textbox", { name: "My samples link" }))
+      .toHaveSelection(link);
     writeText.mockRestore();
   });
 
