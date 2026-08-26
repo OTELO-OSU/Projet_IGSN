@@ -9,6 +9,7 @@ export const fakeCurrentUser = (overrides: Partial<CurrentUser> = {}) =>
   worker.use(
     http.get("*/admin/currentUser", () =>
       HttpResponse.json({
+        id: "3f2504e0-4f89-41d3-9a0c-0305000000f1",
         sub: "s",
         name: "Marie Dupont",
         orcid: null,

@@ -25,6 +25,8 @@ vi.mock("react-oidc-context", () => ({
   }),
 }));
 
+const USER_ID = "3f2504e0-4f89-41d3-9a0c-0305000000b7";
+
 const BASALT_TEAM = {
   id: "3f2504e0-4f89-41d3-9a0c-0305000000a1",
   name: "Basalt team",
@@ -36,10 +38,12 @@ function fakeApi({
   orcid = null,
   conflict = false,
   manualGroups = MANUAL_GROUPS,
+  status = "accepted",
 }: {
   orcid?: string | null;
   conflict?: boolean;
   manualGroups?: { id: string; name: string; canLeave: boolean }[];
+  status?: "pending" | "accepted";
 } = {}) {
   const puts: unknown[] = [];
   const groupPuts: unknown[] = [];
@@ -64,11 +68,12 @@ function fakeApi({
     }),
     http.get("*/admin/currentUser", () =>
       HttpResponse.json({
+        id: USER_ID,
         sub: "s",
         name: "Marie Dupont",
         email: "marie.dupont@univ-lorraine.fr",
         orcid: stored,
-        status: "accepted",
+        status,
         superAdmin: false,
         managedLaboratories: [],
         managedManualGroups: [],
@@ -194,7 +199,49 @@ describe("settings page", () => {
     await expect
       .element(page.getByRole("button", { name: "Leave Fossil team" }))
       .toBeEnabled();
-    await expect.element(page.getByText(/published sample/i)).toBeVisible();
+    await expect
+      .element(page.getByText(/you cannot leave this group/i))
+      .toBeVisible();
+  });
+
+  it("should offer the my-samples link", async () => {
+    const link = `http://localhost:3000/search?contributor=${USER_ID}`;
+    const writeText = vi
+      .spyOn(navigator.clipboard, "writeText")
+      .mockResolvedValue(undefined);
+    await renderSettingsPage();
+
+    await expect
+      .element(page.getByRole("textbox", { name: "My samples link" }))
+      .toHaveValue(link);
+    await expect
+      .element(page.getByRole("link", { name: "Open in a new window" }))
+      .toHaveAttribute("href", link);
+    await expect
+      .element(page.getByRole("link", { name: "Open in a new window" }))
+      .toHaveAttribute("target", "_blank");
+
+    await page.getByRole("button", { name: "Copy link" }).click();
+
+    expect(writeText).toHaveBeenCalledWith(link);
+    await expect.element(page.getByText("Link copied")).toBeVisible();
+
+    await page.getByRole("textbox", { name: "My samples link" }).click();
+
+    expect(writeText).toHaveBeenCalledTimes(2);
+    await expect
+      .element(page.getByRole("textbox", { name: "My samples link" }))
+      .toHaveSelection(link);
+    writeText.mockRestore();
+  });
+
+  it("should hide the my-samples link from a pending user", async () => {
+    await renderSettingsPage({ status: "pending" });
+
+    await expect.element(orcidForm()).toBeVisible();
+    await expect
+      .element(page.getByRole("textbox", { name: "My samples link" }))
+      .not.toBeInTheDocument();
   });
 
   it("should surface a conflict when another account holds the orcid", async () => {

@@ -160,6 +160,7 @@ function fakeApi(
     http.get("*/admin/currentUser", async () => {
       if (callerUnknown) await new Promise(() => {});
       return HttpResponse.json({
+        id: "3f2504e0-4f89-41d3-9a0c-0305000000f4",
         sub: "user-1",
         name: "Marie Dupont",
         orcid: null,
@@ -519,40 +520,32 @@ describe("EditSamplePage", () => {
       .toHaveTextContent(/account is not yet activated/i);
   });
 
-  it("should render the material cascade prefilled on the Sample type tab", async () => {
-    const { screen } = await renderEditPage(false, "rock.igneous");
-    await screen.getByRole("tab", { name: "Sample type" }).click();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Rock *", exact: true }))
-      .toHaveTextContent("Igneous");
-  });
-
-  it("should render the metamorphic facies prefilled on the Sample type tab", async () => {
-    const { screen } = await renderEditPage(
-      false,
+  it.each<[string, string, string | null, string | null, string]>([
+    ["Rock *", "rock.igneous", null, null, "Igneous"],
+    [
+      "Metamorphic facies *",
       "rock.metamorphic.strongly_metamorphosed.gneiss",
-      false,
       "amphibolite",
-    );
-    await screen.getByRole("tab", { name: "Sample type" }).click();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Metamorphic facies *" }))
-      .toHaveTextContent("Amphibolite facies");
-  });
-
-  it("should render the igneous texture prefilled on the Sample type tab", async () => {
-    const { screen } = await renderEditPage(
-      false,
-      "rock.igneous.plutonic",
-      false,
       null,
-      "phaneritic",
-    );
-    await screen.getByRole("tab", { name: "Sample type" }).click();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Texture" }))
-      .toHaveTextContent("Phaneritic");
-  });
+      "Amphibolite facies",
+    ],
+    ["Texture", "rock.igneous.plutonic", null, "phaneritic", "Phaneritic"],
+  ])(
+    "should render %s prefilled on the Sample type tab",
+    async (combobox, material, facies, texture, expected) => {
+      const { screen } = await renderEditPage(
+        false,
+        material,
+        false,
+        facies,
+        texture,
+      );
+      await screen.getByRole("tab", { name: "Sample type" }).click();
+      await expect
+        .element(screen.getByRole("combobox", { name: combobox, exact: true }))
+        .toHaveTextContent(expected);
+    },
+  );
 
   it("should prefill availability from the saved sample instead of resetting it to Exists", async () => {
     const { screen } = await renderEditPage(

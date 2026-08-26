@@ -6,9 +6,13 @@ import { describe, expect, vi } from "vitest";
 import type { DB } from "../../db.ts";
 import type { Transactional } from "../../transaction.ts";
 
+import { insertUser } from "../../tests/insert-user.ts";
 import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
+import { insertSampleCollaborator } from "../../user-sample/insert-sample-collaborator.ts";
+import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
+import { listPublishedSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
 const emptyAge = {
@@ -263,6 +267,42 @@ describe("listSamples", () => {
     // Assert
     expect(total).toBe(1);
     expect(data.map((s) => s.name)).toEqual(["In the group"]);
+  });
+
+  pgTest("should filter by a linked user whatever the role", async ({ db }) => {
+    // Arrange
+    const user = await insertUser(db, "marie.curie@univ-lorraine.fr");
+    const linked = [
+      ["Owned", "owner"],
+      ["Edited", "editor"],
+      ["Contributed", "contributor"],
+      ["Unlinked", null],
+    ] as const;
+    for (const [name, role] of linked) {
+      const sample = await insertSample(db, {
+        name,
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      await publishSample(db, sample.id);
+      if (role === "owner") await insertSampleOwner(db, sample.id, user.id);
+      else if (role)
+        await insertSampleCollaborator(db, sample.id, user.id, role);
+    }
+    // Act
+    const { data, total } = await listPublishedSamples(db, {
+      page: 1,
+      perPage: 10,
+      contributor: user.id,
+    });
+    // Assert
+    expect(total).toBe(3);
+    expect(data.map((sample) => sample.name).sort()).toEqual([
+      "Contributed",
+      "Edited",
+      "Owned",
+    ]);
   });
 
   pgTest(
@@ -629,9 +669,12 @@ describe("listSamples", () => {
     },
   );
 
-  pgTest(
-    "should apply an open upper bound to a geological-only sample",
-    async ({ db }) => {
+  pgTest.for([
+    { bound: { ageMin: 70 }, expected: "Cretaceous" },
+    { bound: { ageMax: 50 }, expected: "Miocene" },
+  ])(
+    "should apply an open bound $bound to a geological-only sample",
+    async ({ bound, expected }, { db }) => {
       // Arrange
       await insertSample(db, {
         name: "Miocene",
@@ -651,43 +694,12 @@ describe("listSamples", () => {
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
-        ageMin: 70,
         ageUnit: "ma",
+        ...bound,
       });
       // Assert
       expect(total).toBe(1);
-      expect(data.map((s) => s.name)).toEqual(["Cretaceous"]);
-    },
-  );
-
-  pgTest(
-    "should apply an open lower bound to a geological-only sample",
-    async ({ db }) => {
-      // Arrange
-      await insertSample(db, {
-        name: "Miocene",
-        nature: "rock_powder",
-        type: null,
-        collectionMethod: null,
-        age: geologicalAge(4, 4),
-      });
-      await insertSample(db, {
-        name: "Cretaceous",
-        nature: "rock_powder",
-        type: null,
-        collectionMethod: null,
-        age: geologicalAge(8, 8),
-      });
-      // Act
-      const { data, total } = await listAsOwner(db, {
-        page: 1,
-        perPage: 10,
-        ageMax: 50,
-        ageUnit: "ma",
-      });
-      // Assert
-      expect(total).toBe(1);
-      expect(data.map((s) => s.name)).toEqual(["Miocene"]);
+      expect(data.map((s) => s.name)).toEqual([expected]);
     },
   );
 
@@ -751,51 +763,37 @@ describe("listSamples", () => {
     },
   );
 
-  pgTest(
-    "should match the youngest rank at the present-day edge",
-    async ({ db }) => {
-      // Arrange
-      await insertSample(db, {
-        name: "Holocene",
-        nature: "rock_powder",
-        type: null,
-        collectionMethod: null,
-        age: geologicalAge(1, 1),
-      });
-      // Act
-      const { data, total } = await listAsOwner(db, {
-        page: 1,
-        perPage: 10,
-        ageMin: 0,
-        ageMax: 0,
-        ageUnit: "ma",
-      });
-      // Assert
-      expect(total).toBe(1);
-      expect(data.map((s) => s.name)).toEqual(["Holocene"]);
+  pgTest.for([
+    {
+      case: "the youngest rank at the present-day edge",
+      age: geologicalAge(1, 1),
+      edge: 0,
     },
-  );
-
-  pgTest("should match the oldest rank at its old edge", async ({ db }) => {
+    {
+      case: "the oldest rank at its old edge",
+      age: geologicalAge(49, 49),
+      edge: 4567,
+    },
+  ])("should match $case", async ({ age, edge }, { db }) => {
     // Arrange
     await insertSample(db, {
-      name: "Hadean",
+      name: "Edge",
       nature: "rock_powder",
       type: null,
       collectionMethod: null,
-      age: geologicalAge(49, 49),
+      age,
     });
     // Act
     const { data, total } = await listAsOwner(db, {
       page: 1,
       perPage: 10,
-      ageMin: 4567,
-      ageMax: 4567,
+      ageMin: edge,
+      ageMax: edge,
       ageUnit: "ma",
     });
     // Assert
     expect(total).toBe(1);
-    expect(data.map((s) => s.name)).toEqual(["Hadean"]);
+    expect(data.map((s) => s.name)).toEqual(["Edge"]);
   });
 
   pgTest("should match a mid-range rank at its point edges", async ({ db }) => {

@@ -16,6 +16,7 @@ describe("useCurrentUser", () => {
       http.get("*/admin/currentUser", ({ request }) => {
         tokens.push(request.headers.get("Authorization"));
         return HttpResponse.json({
+          id: "3f2504e0-4f89-41d3-9a0c-0305000000f2",
           sub: "s",
           name: "Marie Dupont",
           orcid: null,

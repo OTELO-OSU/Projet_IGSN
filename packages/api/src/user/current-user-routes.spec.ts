@@ -36,6 +36,7 @@ describe("currentUser routes", () => {
     // Assert
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
+      id: expect.any(String),
       sub: "test-token",
       status: "pending",
       superAdmin: false,

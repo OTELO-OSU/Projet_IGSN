@@ -35,6 +35,13 @@ function facetFilter(
          and sample_manual_group.group_id = ${value}
     )`;
   }
+  if (facet.kind === "contributor") {
+    return sql<SqlBool>`exists (
+      select 1 from user_sample
+       where user_sample.sample_id = sample.id
+         and user_sample.user_id = ${value}
+    )`;
+  }
   const column = FACET_COLUMN[facet.key]!;
   switch (facet.kind) {
     case "hierarchy":

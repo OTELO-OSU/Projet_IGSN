@@ -29,6 +29,8 @@ export function sampleListPage(page: Page) {
       await page.getByRole("option", { name: option }).click();
       await page.waitForURL(new RegExp(`[?&]${param}=`));
     },
+    expectFacetValue: (facet: string, value: string) =>
+      expect(page.getByRole("combobox", { name: facet })).toHaveText(value),
     expectFacetOptionAbsent: async (facet: string, option: string) => {
       await page.getByRole("combobox", { name: facet }).click();
       await expect(page.getByRole("option", { name: option })).toHaveCount(0);

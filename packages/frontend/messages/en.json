@@ -146,6 +146,7 @@
   "sample_field_institutional_laboratory": "Laboratory",
   "sample_section_manual_groups": "Groups",
   "facet_manual_group": "Other group (team, project…)",
+  "facet_contributor": "Contributor",
   "sample_declared_by": "Declared in {year} by {owner}",
   "sample_contact_owner": "Contact the record owner",
   "action_close": "Close",

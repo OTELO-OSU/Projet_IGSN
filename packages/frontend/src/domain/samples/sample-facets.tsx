@@ -1,8 +1,10 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+import type { PublicUser } from "@projet-igsn/domain/user/user-validator";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
   Combobox,
+  type ComboboxItem,
   toComboboxItems,
 } from "@projet-igsn/design-system/components/ui/combobox";
 import { Input } from "@projet-igsn/design-system/components/ui/input";
@@ -14,6 +16,7 @@ import {
   facetParamKeys,
   SAMPLE_FACETS,
 } from "@projet-igsn/domain/sample/search/facets";
+import { fullName } from "@projet-igsn/domain/user/full-name";
 import { type ReactNode, useId, useState } from "react";
 
 import { HierarchyFacet } from "#/domain/samples/facet-hierarchy.tsx";
@@ -35,6 +38,7 @@ export const FACET_SECTIONS: readonly {
   {
     title: m.facet_section_author,
     keys: [
+      "contributor",
       "researchProgramName",
       "researchProgramChief",
       "researchCampaign",
@@ -93,6 +97,7 @@ type SampleFacetsProps = {
   onChange: (key: string, value: string | number | undefined) => void;
   onClearAll: () => void;
   manualGroups?: ManualGroup[];
+  contributors?: PublicUser[];
 };
 
 export function SampleFacets({
@@ -100,11 +105,22 @@ export function SampleFacets({
   onChange,
   onClearAll,
   manualGroups = [],
+  contributors = [],
 }: SampleFacetsProps) {
   const [resetNonce, setResetNonce] = useState(0);
   const hasActive = facetParamKeys().some((key) => values[key] !== undefined);
 
   const byKey = new Map(SAMPLE_FACETS.map((facet) => [facet.key, facet]));
+  const fetchedItems: Record<string, ComboboxItem[]> = {
+    manualGroup: manualGroups.map((group) => ({
+      value: group.id,
+      label: group.name,
+    })),
+    contributor: contributors.map((user) => ({
+      value: user.id,
+      label: fullName(user),
+    })),
+  };
 
   function renderFacet(facet: (typeof SAMPLE_FACETS)[number]): ReactNode {
     const label = facetLabel(facet.key);
@@ -124,18 +140,16 @@ export function SampleFacets({
           />
         );
       case "enum":
+      case "contributor":
       case "manualGroup": {
         const selected = values[facet.key] as string | undefined;
         const items = withSelected(
-          facet.kind === "manualGroup"
-            ? manualGroups.map((group) => ({
-                value: group.id,
-                label: group.name,
-              }))
-            : toComboboxItems(
+          facet.kind === "enum"
+            ? toComboboxItems(
                 NARROWED_VALUES[facet.key]?.(values) ?? facet.values,
                 facetValueLabel(facet.key),
-              ),
+              )
+            : (fetchedItems[facet.key] ?? []),
           selected,
           facetValueLabel(facet.key),
         );

@@ -23,6 +23,7 @@ import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createCurrentUserRoutes } from "./user/current-user-routes.ts";
+import { createPublicUserRoutes } from "./user/public-routes.ts";
 import { createUserRepository } from "./user/repository.ts";
 import { createUserRoutes, createUserSearchRoutes } from "./user/routes.ts";
 
@@ -71,6 +72,10 @@ export function createApp(
   const publicManualGroupRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
     .route("/", createPublicManualGroupRoutes(manualGroupRepository));
+
+  const publicUserRoutes = new Hono()
+    .use("*", rateLimit(rateLimitConfig, "ip"))
+    .route("/", createPublicUserRoutes(userRepository));
 
   const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
@@ -123,6 +128,7 @@ export function createApp(
     .get("/", (c) => c.json({ message: "OK" }))
     .route("/samples", publicSampleRoutes)
     .route("/manual-groups", publicManualGroupRoutes)
+    .route("/users", publicUserRoutes)
     .route("/admin", adminRoutes);
 
   return { app };

@@ -107,6 +107,7 @@ describe("requireAuth", () => {
 
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({
+        id: expect.any(String),
         sub: "user-1",
         username: "marie",
         name: "Marie Dupont",
@@ -136,12 +137,15 @@ describe("requireAuth", () => {
     },
   );
 
-  pgTest(
-    "should reject a token with the wrong audience when OIDC_AUDIENCE is set",
-    async ({ db }) => {
+  pgTest.for([
+    { case: "with the wrong audience", claims: { aud: "someone-else" } },
+    { case: "without audience", claims: {} },
+  ])(
+    "should reject a token $case when OIDC_AUDIENCE is set",
+    async ({ claims }, { db }) => {
       const res = await getMe(
         db,
-        await mint({ ...validClaims(), aud: "someone-else" }),
+        await mint({ ...validClaims(), ...claims }),
         AUDIENCE,
       );
 
@@ -149,63 +153,21 @@ describe("requireAuth", () => {
     },
   );
 
-  pgTest(
-    "should reject a token without audience when OIDC_AUDIENCE is set",
-    async ({ db }) => {
-      const res = await getMe(db, await mint(validClaims()), AUDIENCE);
-
-      expect(res.status).toBe(401);
+  pgTest.for([
+    { case: "issued to another client", claims: { azp: "another-client" } },
+    {
+      case: "carrying no azp or typ",
+      claims: { azp: undefined, typ: undefined },
     },
-  );
-
-  pgTest("should reject a token issued to another client", async ({ db }) => {
-    const res = await getMe(
-      db,
-      await mint({ ...validClaims(), azp: "another-client" }),
-    );
-
-    expect(res.status).toBe(401);
-  });
-
-  pgTest("should reject a token carrying no azp or typ", async ({ db }) => {
-    const { azp: _azp, typ: _typ, ...claims } = validClaims();
-
-    const res = await getMe(db, await mint(claims));
-
-    expect(res.status).toBe(401);
-  });
-
-  pgTest("should reject an ID token replayed as a bearer", async ({ db }) => {
-    const res = await getMe(db, await mint({ ...validClaims(), typ: "ID" }));
-
-    expect(res.status).toBe(401);
-  });
-
-  pgTest("should reject a token carrying no exp", async ({ db }) => {
-    const { exp: _exp, ...claims } = validClaims();
-
-    const res = await getMe(db, await mint(claims));
-
-    expect(res.status).toBe(401);
-  });
-
-  pgTest("should reject a token with the wrong issuer", async ({ db }) => {
-    const res = await getMe(
-      db,
-      await mint({
-        ...validClaims(),
-        iss: "http://evil.example.test/realms/igsn",
-      }),
-    );
-
-    expect(res.status).toBe(401);
-  });
-
-  pgTest("should reject an expired token", async ({ db }) => {
-    const res = await getMe(
-      db,
-      await mint({ ...validClaims(), exp: nowSeconds() - 10 }),
-    );
+    { case: "replayed from an ID token", claims: { typ: "ID" } },
+    { case: "carrying no exp", claims: { exp: undefined } },
+    {
+      case: "with the wrong issuer",
+      claims: { iss: "http://evil.example.test/realms/igsn" },
+    },
+    { case: "expired", claims: { exp: nowSeconds() - 10 } },
+  ])("should reject a token $case", async ({ claims }, { db }) => {
+    const res = await getMe(db, await mint({ ...validClaims(), ...claims }));
 
     expect(res.status).toBe(401);
   });

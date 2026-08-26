@@ -45,6 +45,7 @@ export type SampleFacet =
   | { key: string; kind: "enum"; values: readonly string[] }
   | { key: string; kind: "text" }
   | { key: string; kind: "manualGroup" }
+  | { key: string; kind: "contributor" }
   | {
       key: string;
       kind: "numericRange";
@@ -94,6 +95,7 @@ export const SAMPLE_FACETS: readonly SampleFacet[] = [
     values: LABORATORIES.map((l) => l.code),
   },
   { key: "manualGroup", kind: "manualGroup" },
+  { key: "contributor", kind: "contributor" },
 ];
 
 export function activeFacetKeys(values: Record<string, unknown>): string[] {
@@ -140,5 +142,6 @@ export function facetQueryFields() {
     institutionalOsu: optionalFilter(osuCodeSchema),
     institutionalLaboratory: optionalFilter(laboratoryCodeSchema),
     manualGroup: optionalFilter(z.uuid()),
+    contributor: optionalFilter(z.uuid()),
   };
 }

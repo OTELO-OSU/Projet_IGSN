@@ -5,6 +5,7 @@ import { manualGroupSchema } from "../manual-group/model.ts";
 import { userStatusSchema } from "./model.ts";
 
 export const currentUserSchema = z.object({
+  id: z.uuid(),
   sub: z.string(),
   username: z.string().optional(),
   name: z.string().optional(),

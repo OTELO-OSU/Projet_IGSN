@@ -14,6 +14,7 @@ import { userManagementRights } from "@projet-igsn/domain/user/user-management-r
 import {
   adminUserSchema,
   listedUserSchema,
+  publicUserSchema,
 } from "@projet-igsn/domain/user/user-validator";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
@@ -190,6 +191,30 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .executeTakeFirst();
         return knownManagedCodes(row?.managedGroups ?? NO_MANAGED_GROUPS);
       }),
+    listContributors: (include) =>
+      withTransaction(db, async (trx) => {
+        const rows = await trx
+          .selectFrom("user")
+          .select(["id", "name", "firstname"])
+          .where("status", "=", "accepted")
+          .where((eb) =>
+            eb.or([
+              eb.exists(
+                eb
+                  .selectFrom("user_sample")
+                  .innerJoin("sample", "sample.id", "user_sample.sample_id")
+                  .select("sample.id")
+                  .where("sample.published", "=", true)
+                  .whereRef("user_sample.user_id", "=", "user.id"),
+              ),
+              ...(include ? [eb("user.id", "=", include)] : []),
+            ]),
+          )
+          .orderBy("name", "asc")
+          .orderBy("firstname", "asc")
+          .execute();
+        return rows.map((row) => publicUserSchema.parse(row));
+      }),
     listPending: () =>
       withTransaction(db, (trx) =>
         trx
@@ -210,8 +235,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .execute(),
       ),
     // ponytail: reads every accepted row to filter managers in JS, fine at a
-    // few hundred researchers; prefilter on the two managed tables in SQL if it
-    // grows, the catalog test staying in JS since it drops a retired code.
+    // few hundred researchers; prefilter on the two managed tables in SQL if it grows.
     listSpaceManagers: () =>
       withTransaction(db, async (trx) => {
         const rows = await trx

@@ -29,6 +29,12 @@ Follow TDD (spec first).
   matches via an `EXISTS` join on `sample_manual_group` written directly in
   `facetFilter()`, and its options come from the public `GET /manual-groups`
   endpoint rather than the registry's `values`.
+- `contributor`: the linked-user filter. Not a column filter either; it
+  matches via an `EXISTS` join on `user_sample` (any role) written directly in
+  `facetFilter()`, and its options come from the public `GET /users` endpoint
+  (`?include=<uuid>` appends one accepted user with no published sample yet,
+  e.g. the signed-in user sharing their own link) rather than the registry's
+  `values`.
 
 ## Steps
 
@@ -55,20 +61,20 @@ is missing, that is a domain/API change first (see the `add-domain-entity` and
    `FACET_COLUMN`. This map is an allow-list (keys are fixed, never user input),
    so the column name is safe as an identifier while values stay bound
    parameters. Skip this for a `numericRange` facet, which filters through its
-   own builder, or a `manualGroup` facet, whose join is written directly in
-   `facetFilter()`.
+   own builder, or a `manualGroup` / `contributor` facet, whose join is written
+   directly in `facetFilter()`.
 
 4. **Endpoint-backed options (rare)**: a facet whose values aren't a static
-   catalog (`manualGroup`) fetches them instead of reading the registry's
-   `values`: add a repository method, a rate-limited public route, and a
-   frontend client/hook, then pass the fetched list into `SampleFacets` as a
-   prop the way `manualGroups` does.
+   catalog (`manualGroup`, `contributor`) fetches them instead of reading the
+   registry's `values`: add a repository method, a rate-limited public route,
+   and a frontend client/hook, then pass the fetched list into `SampleFacets`
+   as a prop the way `manualGroups`/`contributors` does.
 
 5. **Labels** (`frontend/domain/samples/facet-labels.ts`): add a `facetLabel`
    case (reuse a `sample_field_*` message where one exists, else a `facet_*`
    key). For a `hierarchy` or `enum` facet, add a `facetValueLabel` case
-   resolving option codes; `text`, `numericRange` and `manualGroup` need none,
-   their label riding on the value itself.
+   resolving option codes; `text`, `numericRange`, `manualGroup` and
+   `contributor` need none, their label riding on the value itself.
 
 6. **i18n**: add any new `facet_*` keys to the message catalogs. Shared enum
    text lives in `domain`; app-only copy in the app catalog (see the i18n rule).

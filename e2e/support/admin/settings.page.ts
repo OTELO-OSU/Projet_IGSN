@@ -10,6 +10,8 @@ export function settingsPage(page: Page) {
         page.getByRole("heading", { name: "Settings" }),
       ).toBeVisible();
     },
+    mySamplesLink: () =>
+      page.getByRole("textbox", { name: "My samples link" }).inputValue(),
     setOrcid: async (orcid: string) => {
       const form = page.getByRole("form", { name: "ORCID iD" });
       await form.getByLabel("ORCID iD").fill(orcid);

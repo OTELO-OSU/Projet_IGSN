@@ -11,6 +11,7 @@ const fakeIdentity = (status: number, body?: BodyInit) =>
     http.get("*/admin/currentUser", () =>
       status === 200
         ? HttpResponse.json({
+            id: "3f2504e0-4f89-41d3-9a0c-0305000000f3",
             sub: "s",
             orcid: null,
             status: "accepted",

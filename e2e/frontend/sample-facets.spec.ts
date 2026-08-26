@@ -1,15 +1,6 @@
-import { test } from "../support/db";
+import { published, test } from "../support/db";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 import { natureLabel } from "../support/nature-label";
-
-function published(samples: { name: string; igsn: string | null }[]) {
-  const igsnOf = (name: string) => {
-    const igsn = samples.find((s) => s.name === name)?.igsn;
-    if (!igsn) throw new Error(`seed must publish "${name}"`);
-    return igsn;
-  };
-  return { basalt: igsnOf("Basalt 42"), granite: igsnOf("Granite 7") };
-}
 
 const GROUP_FACET = "Other group (team, project…)";
 
@@ -147,6 +138,20 @@ test.describe("search facets", () => {
 
     await list.expectFacetOptionAbsent(GROUP_FACET, "OZCAR-RI");
     await list.pickFacet(GROUP_FACET, "ANR CritMet", "manualGroup");
+    await list.expectResultCount(1);
+    await list.expectSampleLink("Basalt 42", basalt);
+    await list.expectSampleAbsent("Granite 7");
+  });
+
+  test("a reader narrows by a contributor", async ({ page, samples }) => {
+    const { basalt } = published(samples);
+    const list = sampleListPage(page);
+
+    await list.gotoWithSearch("material=rock.igneous");
+    await list.expectResultCount(2);
+
+    await list.expectFacetOptionAbsent("Contributor", "Camille Petit");
+    await list.pickFacet("Contributor", "Jean Martin", "contributor");
     await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);
     await list.expectSampleAbsent("Granite 7");
