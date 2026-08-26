@@ -2,11 +2,13 @@ import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type {
   AdminUserResponse,
+  InstitutionalGroupCountsResponse,
   ListUsersResponse,
   UserIdentitiesResponse,
 } from "@projet-igsn/domain/user/user-validator";
 
 import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
+import { superAdminScope } from "@projet-igsn/domain/user/moderation-scope";
 import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
@@ -16,6 +18,7 @@ import type { ModerationEnv } from "../auth/require-user-moderation.ts";
 import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
+import { requireSuperAdmin } from "../auth/require-super-admin.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import {
   logMembershipChange,
@@ -65,6 +68,19 @@ export function createUserSearchRoutes(userRepository: UserRepository) {
   );
 }
 
+export function createUserInstitutionalCountsRoutes(
+  userRepository: UserRepository,
+) {
+  return new Hono<AuthenticatedEnv>().get("/", requireSuperAdmin, async (c) => {
+    const body: InstitutionalGroupCountsResponse = {
+      data: await userRepository.countByInstitutionalGroup(
+        superAdminScope(c.get("user").id),
+      ),
+    };
+    return c.json(body);
+  });
+}
+
 export function createUserRoutes(
   repository: UserRepository,
   mail?: { sendMail: SendMail; adminUrl: string },
@@ -108,7 +124,7 @@ export function createUserRoutes(
           previousStatus !== "accepted" &&
           user.status === "accepted"
         ) {
-          // ponytail: fire and forget, so an unreachable SMTP cannot hold the response for nodemailer's two-minute default; a retry queue if a lost notification ever matters.
+          // ponytail: fire and forget; a retry queue if a lost notification ever matters.
           void sendUserAcceptedMail(user, mail.sendMail, mail.adminUrl);
         }
         notifyManualGroupJoined({

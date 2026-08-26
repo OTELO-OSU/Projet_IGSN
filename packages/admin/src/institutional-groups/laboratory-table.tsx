@@ -8,9 +8,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import { membersColumn } from "#/institutional-groups/members-column.ts";
 import { m } from "#/paraglide/messages.js";
 
-const columns: ColumnDef<Laboratory>[] = [
+const laboratoryColumns = (
+  counts: Record<string, number>,
+): ColumnDef<Laboratory>[] => [
   {
     accessorKey: "code",
     header: () => m.column_code(),
@@ -34,17 +37,20 @@ const columns: ColumnDef<Laboratory>[] = [
     header: () => m.column_name(),
     cell: ({ row }) => row.original.name,
   },
+  membersColumn(counts, (row) => row.code),
 ];
 
 export function LaboratoryTable({
   laboratories,
+  memberCounts,
 }: {
   laboratories: Laboratory[];
+  memberCounts: Record<string, number>;
 }) {
   const navigate = useNavigate();
   const table = useReactTable({
     data: laboratories,
-    columns,
+    columns: laboratoryColumns(memberCounts),
     getCoreRowModel: getCoreRowModel(),
   });
 

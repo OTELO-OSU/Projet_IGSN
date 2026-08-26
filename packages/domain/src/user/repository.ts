@@ -5,6 +5,7 @@ import type { User, UserStatus } from "./model.ts";
 import type { ModerationScope } from "./moderation-scope.ts";
 import type {
   AdminUser,
+  InstitutionalGroupCounts,
   ListedUser,
   ListUsersQuery,
   PublicUser,
@@ -54,6 +55,9 @@ export type UserRepository = {
   ): Promise<{ data: ListedUser[]; total: number }>;
   get(id: string, scope: ModerationScope): Promise<AdminUser | null>;
   listPublicUsers(include?: string): Promise<PublicUser[]>;
+  countByInstitutionalGroup(
+    scope: ModerationScope,
+  ): Promise<InstitutionalGroupCounts>;
   listPending(): Promise<PendingUser[]>;
   listSuperAdminEmails(): Promise<string[]>;
   listSpaceManagers(): Promise<SpaceManager[]>;

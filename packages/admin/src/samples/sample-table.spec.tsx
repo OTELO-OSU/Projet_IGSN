@@ -1,5 +1,6 @@
 import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 
+import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import {
   RouterProvider,
   createMemoryHistory,
@@ -88,7 +89,11 @@ function renderTable(
     routeTree: rootRoute.addChildren([indexRoute, editRoute]),
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
-  return render(<RouterProvider router={router} />);
+  return render(
+    <TooltipProvider>
+      <RouterProvider router={router} />
+    </TooltipProvider>,
+  );
 }
 
 describe("SampleTable", () => {
@@ -127,6 +132,48 @@ describe("SampleTable", () => {
     expect(onSortingChange).toHaveBeenLastCalledWith([
       { id: "status", desc: true },
     ]);
+  });
+
+  it.each<[number, string, string]>([
+    [0, "Status", "none"],
+    [1, "Status ↑", "ascending"],
+    [2, "Status ↓", "descending"],
+  ])(
+    "should announce the sort direction on the status column header after %i click(s)",
+    async (clicks, name, direction) => {
+      const screen = await renderTable(samples);
+
+      for (let click = 0; click < clicks; click++) {
+        await screen.getByRole("button", { name: /^Status/ }).click();
+      }
+
+      await expect
+        .element(screen.getByRole("columnheader", { name }))
+        .toHaveAttribute("aria-sort", direction);
+    },
+  );
+
+  it.each(["IGSN", "Owner"])(
+    "should announce no sort state on the %s column header, which cannot sort",
+    async (name) => {
+      const screen = await renderTable(samples);
+
+      await expect
+        .element(screen.getByRole("columnheader", { name }))
+        .not.toHaveAttribute("aria-sort");
+    },
+  );
+
+  it("should expose the full name of a truncated cell in a tooltip", async () => {
+    const screen = await renderTable(samples);
+
+    await screen
+      .getByRole("link", { name: "Basalte du Massif Central" })
+      .hover();
+
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent("Basalte du Massif Central");
   });
 
   it("should render a sample row with the last-modified date as yyyy-mm-dd", async () => {

@@ -435,6 +435,38 @@ describe("createUserRepository", () => {
     });
   });
 
+  pgTest.for([
+    { case: "the last name", search: "ccept" },
+    { case: "the first name", search: "anne" },
+    { case: "the email", search: "accepted@" },
+  ])("should filter on a search matching $case", async ({ search }, { db }) => {
+    // Arrange
+    await insertUsers(db);
+    // Act
+    const { data, total } = await createUserRepository(db).list(
+      { page: 1, perPage: 25, search },
+      SUPER_ADMIN,
+    );
+    // Assert
+    expect(data.map((user) => user.email)).toEqual([
+      "accepted@univ-lorraine.fr",
+    ]);
+    expect(total).toBe(1);
+  });
+
+  pgTest("should match a searched wildcard literally", async ({ db }) => {
+    // Arrange
+    await insertUsers(db);
+    // Act
+    const { data, total } = await createUserRepository(db).list(
+      { page: 1, perPage: 25, search: "%" },
+      SUPER_ADMIN,
+    );
+    // Assert
+    expect(data).toEqual([]);
+    expect(total).toBe(0);
+  });
+
   pgTest("should filter on a status, total included", async ({ db }) => {
     // Arrange
     await insertUsers(db);
@@ -522,6 +554,34 @@ describe("createUserRepository", () => {
       // Assert
       expect(data.map((user) => user.email)).toEqual(expected);
       expect(total).toBe(expected.length);
+    },
+  );
+
+  pgTest(
+    "should return only the members of the requested manual group",
+    async ({ db }) => {
+      // Arrange
+      const groupId = "01890a5d-ac96-774b-bcce-b302099a8100";
+      await db
+        .insertInto("manual_group")
+        .values({ id: groupId, name: "Massif Central 2026" })
+        .execute();
+      const member = await insertUser(db, "alice@univ-lorraine.fr");
+      await insertUser(db, "bruno@univ-lorraine.fr");
+      await db
+        .insertInto("manual_group_member")
+        .values({ group_id: groupId, user_id: member.id })
+        .execute();
+      // Act
+      const { data, total } = await createUserRepository(db).list(
+        { page: 1, perPage: 25, manualGroup: groupId },
+        SUPER_ADMIN,
+      );
+      // Assert
+      expect(data.map((user) => user.email)).toEqual([
+        "alice@univ-lorraine.fr",
+      ]);
+      expect(total).toBe(1);
     },
   );
 

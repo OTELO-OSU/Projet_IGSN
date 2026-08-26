@@ -11,9 +11,12 @@ export function institutionalGroupsListPage(page: Page) {
     expectLaboratories: () =>
       expect(page.getByRole("heading", { name: "Laboratories" })).toBeVisible(),
     filterByOrganization: async (organization: string) => {
-      await page.getByRole("combobox", { name: "Organization" }).click();
-      await page.getByPlaceholder("Search organizations...").fill(organization);
-      await page.getByRole("option", { name: organization }).click();
+      await page.getByRole("combobox", { name: "Institution" }).click();
+      await page.getByLabel("Search institutions").fill(organization);
+      await page
+        .getByRole("button", { name: organization, exact: true })
+        .first()
+        .click();
     },
     expectLaboratoryRow: (acronym: string) =>
       expect(

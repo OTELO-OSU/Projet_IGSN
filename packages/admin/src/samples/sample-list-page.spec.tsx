@@ -53,6 +53,11 @@ function fakeApi() {
 
 type Screen = Awaited<ReturnType<typeof renderRoute>>["screen"];
 
+async function addFilter(screen: Screen, name: string) {
+  await screen.getByRole("button", { name: "Add a filter" }).click();
+  await screen.getByRole("dialog").getByRole("button", { name }).click();
+}
+
 describe("SampleListPage", () => {
   it("should ask the server for the chosen ownership and reset to page 1", async () => {
     const { requested } = fakeApi();
@@ -124,4 +129,75 @@ describe("SampleListPage", () => {
 
     await expect.poll(() => requested.at(-1)).toContain("ownership=mine");
   });
+
+  it.each<[string, (screen: Screen) => Promise<void>, string, object]>([
+    [
+      "nature",
+      async (screen) => {
+        await addFilter(screen, "Nature");
+        await screen.getByRole("combobox", { name: "Nature" }).click();
+        await screen.getByRole("option", { name: "Thin section" }).click();
+      },
+      "nature=thin_section",
+      { nature: "thin_section" },
+    ],
+    [
+      "collection method",
+      async (screen) => {
+        await addFilter(screen, "Collection Method");
+        await screen
+          .getByRole("combobox", { name: "Collection Method" })
+          .click();
+        await screen
+          .getByRole("dialog")
+          .getByRole("button", { name: "Manual", exact: true })
+          .click();
+      },
+      "collectionMethod=manual",
+      { collectionMethod: "manual" },
+    ],
+    [
+      "nested collection method",
+      async (screen) => {
+        await addFilter(screen, "Collection Method");
+        await screen
+          .getByRole("combobox", { name: "Collection Method" })
+          .click();
+        const tree = screen.getByRole("dialog");
+        await tree.getByRole("button", { name: "Show Coring" }).click();
+        await tree
+          .getByRole("button", { name: "Coring", exact: true })
+          .nth(1)
+          .click();
+      },
+      "collectionMethod=coring.coring",
+      { collectionMethod: "coring.coring" },
+    ],
+    [
+      "status",
+      async (screen) => {
+        await addFilter(screen, "Status");
+        await screen.getByRole("combobox", { name: "Status" }).click();
+        await screen.getByRole("option", { name: "Published" }).click();
+      },
+      "status=published",
+      { status: "published" },
+    ],
+  ])(
+    "should ask the server for the chosen %s, keep it in the URL and reset to page 1",
+    async (_, act, query, expected) => {
+      const { requested } = fakeApi();
+      const { screen, router } = await renderRoute("/?page=2&perPage=10");
+      await expect
+        .element(screen.getByRole("cell", { name: "Sample 11 mine" }))
+        .toBeVisible();
+
+      await act(screen);
+
+      await expect.poll(() => requested.at(-1)).toContain(query);
+      await expect
+        .poll(() => router.state.location.search)
+        .toMatchObject({ page: 1, ...expected });
+    },
+  );
 });

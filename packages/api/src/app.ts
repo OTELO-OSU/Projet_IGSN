@@ -25,7 +25,11 @@ import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createCurrentUserRoutes } from "./user/current-user-routes.ts";
 import { createPublicUserRoutes } from "./user/public-routes.ts";
 import { createUserRepository } from "./user/repository.ts";
-import { createUserRoutes, createUserSearchRoutes } from "./user/routes.ts";
+import {
+  createUserInstitutionalCountsRoutes,
+  createUserRoutes,
+  createUserSearchRoutes,
+} from "./user/routes.ts";
 
 export function createApp(
   database: Kysely<DB>,
@@ -101,6 +105,10 @@ export function createApp(
       ),
     )
     .route("/users/search", createUserSearchRoutes(userRepository))
+    .route(
+      "/users/institutional-counts",
+      createUserInstitutionalCountsRoutes(userRepository),
+    )
     .route("/users", createUserRoutes(userRepository, mail));
 
   const app = new Hono<AuthenticatedEnv>()

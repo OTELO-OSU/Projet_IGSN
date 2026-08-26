@@ -125,6 +125,40 @@ describe("listSamples", () => {
     ]);
   });
 
+  pgTest.for([
+    ["draft", "Draft sample"],
+    ["published", "Published sample"],
+  ] as const)(
+    "should keep only the %s samples",
+    async ([status, expected], { db }) => {
+      // Arrange
+      await insertSample(db, {
+        name: "Draft sample",
+        nature: "rock_powder",
+        type: "individual_sample",
+        material: "sediment",
+        collectionMethod: null,
+      });
+      const published = await insertSample(db, {
+        name: "Published sample",
+        nature: "thin_section",
+        type: "individual_sample",
+        material: "sediment",
+        collectionMethod: null,
+      });
+      await publishSample(db, published.id);
+      // Act
+      const { data, total } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        status,
+      });
+      // Assert
+      expect(data.map((sample) => sample.name)).toEqual([expected]);
+      expect(total).toBe(1);
+    },
+  );
+
   pgTest(
     "should filter a hierarchy facet at or under the picked node",
     async ({ db }) => {

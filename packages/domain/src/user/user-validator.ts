@@ -9,6 +9,7 @@ import {
   DEFAULT_PAGE_SIZE,
   pageSizeSchema,
 } from "../sample/sample-validator.ts";
+import { MAX_SEARCH_LENGTH } from "../sample/search/search-tokens.ts";
 import { managedGroupsSchema } from "./managed-groups.ts";
 import { userSchema, userStatusSchema } from "./model.ts";
 
@@ -52,12 +53,38 @@ export const listUsersQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1).catch(1),
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
   status: userStatusSchema.optional().catch(undefined),
+  search: z
+    .string()
+    .trim()
+    .min(1)
+    .max(MAX_SEARCH_LENGTH)
+    .optional()
+    .catch(undefined),
   institutionalOrganization: organizationRorSchema.optional().catch(undefined),
   institutionalOsu: osuCodeSchema.optional().catch(undefined),
   institutionalLaboratory: laboratoryCodeSchema.optional().catch(undefined),
+  manualGroup: z.uuid().optional().catch(undefined),
 });
 
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
+
+export const institutionalGroupCountsSchema = z.object({
+  organizations: z.record(z.string(), z.number()),
+  osus: z.record(z.string(), z.number()),
+  laboratories: z.record(z.string(), z.number()),
+});
+
+export type InstitutionalGroupCounts = z.infer<
+  typeof institutionalGroupCountsSchema
+>;
+
+export const institutionalGroupCountsResponseSchema = z.object({
+  data: institutionalGroupCountsSchema,
+});
+
+export type InstitutionalGroupCountsResponse = z.infer<
+  typeof institutionalGroupCountsResponseSchema
+>;
 
 export const adminUserSchema = userSchema.extend({
   manualGroups: z.array(manualGroupSchema.extend({ canDetach: z.boolean() })),

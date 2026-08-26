@@ -66,33 +66,13 @@ function hasUnattachable(submitted: string[], allowed: string[]) {
 }
 
 function adminListQuery({
-  page,
-  perPage,
-  sort,
-  order,
-  search,
-  ownership,
-  ownerId,
-  institution,
-  manualGroup,
-  ageMin,
-  ageMax,
-  ageUnit,
+  institutionalOrganization: _organization,
+  institutionalOsu: _osu,
+  institutionalLaboratory: _laboratory,
+  bbox: _bbox,
+  ...rest
 }: ListSamplesQuery): ListSamplesQuery {
-  return {
-    page,
-    perPage,
-    sort,
-    order,
-    search,
-    ownership,
-    ownerId,
-    institution,
-    manualGroup,
-    ageMin,
-    ageMax,
-    ageUnit,
-  };
+  return rest;
 }
 
 type SampleAdminEnv = {
@@ -295,8 +275,7 @@ export function createSampleAdminRoutes(
           return c.json({ error: "Forbidden" }, 403);
         }
         const { expectedUpdatedAt, ...input } = c.req.valid("json");
-        // ponytail: this read and the write are not one transaction, so a
-        // few-ms window remains.
+        // ponytail: this read and the write are not one transaction.
         if (expectedUpdatedAt.getTime() !== current.updatedAt.getTime()) {
           return c.json(
             { error: "Sample changed since it was loaded", reason: "stale" },
@@ -364,9 +343,7 @@ export function createSampleAdminRoutes(
       if (!isSampleEditor(c.get("role"))) {
         return c.json({ error: "Forbidden" }, 403);
       }
-      // ponytail: the guard's read and publish are separate transactions, so a
-      // concurrent change to material in between is not guarded at the DB
-      // level. Read and publish in one txn if that race matters.
+      // ponytail: the guard's read and publish are separate transactions. Read and publish in one txn if that race matters.
       if (
         samplePublishBlockers(sample, uploadLimit, c.get("user")).length > 0
       ) {

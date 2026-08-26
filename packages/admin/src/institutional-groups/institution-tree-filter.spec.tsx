@@ -15,10 +15,14 @@ const CHIZE = "Centre d'études biologiques de Chizé (CEBC)";
 const STANDALONE = "Standalone Research Units";
 const SEARCH_LABEL = "Search institutions";
 
-async function openFilter() {
+async function openFilter(withLaboratories = true) {
   const onChange = vi.fn();
   const screen = await render(
-    <InstitutionTreeFilter value={undefined} onChange={onChange} />,
+    <InstitutionTreeFilter
+      value={undefined}
+      onChange={onChange}
+      withLaboratories={withLaboratories}
+    />,
   );
   await screen.getByRole("combobox").click();
   return { screen, onChange };
@@ -39,6 +43,26 @@ describe("InstitutionTreeFilter", () => {
     await expect
       .element(screen.getByRole("button", { name: MIO, exact: true }))
       .toBeVisible();
+  });
+
+  it("should offer the selectable OSUs alone when laboratories are off", async () => {
+    const { screen } = await openFilter(false);
+
+    await screen.getByRole("button", { name: `Show ${AMU}` }).click();
+
+    await expect
+      .element(screen.getByRole("button", { name: PYTHEAS, exact: true }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("button", { name: MIO, exact: true }).elements(),
+    ).toHaveLength(0);
+
+    await screen.getByLabelText(SEARCH_LABEL).fill(LA_ROCHELLE);
+
+    expect(screen.getByText(STANDALONE).elements()).toHaveLength(0);
+    expect(
+      screen.getByRole("button", { name: CHIZE, exact: true }).elements(),
+    ).toHaveLength(0);
   });
 
   it("should keep a matching laboratory with its OSU and organization, and drop the rest", async () => {

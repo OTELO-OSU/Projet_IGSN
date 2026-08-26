@@ -81,6 +81,7 @@ export const listSamplesQuerySchema = z.object({
     .optional()
     .catch(undefined),
   ownership: z.enum(["mine", "shared"]).optional().catch(undefined),
+  status: z.enum(["draft", "published"]).optional().catch(undefined),
   ownerId: z.uuid().optional().catch(undefined),
   institution: institutionFilterSchema.optional().catch(undefined),
   ...facetQueryFields(),

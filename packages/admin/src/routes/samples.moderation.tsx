@@ -1,16 +1,18 @@
 import type { z } from "zod";
 
 import { Label } from "@projet-igsn/design-system/components/ui/label";
-import { SearchField } from "@projet-igsn/design-system/components/ui/search-field";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { canModerateSamples } from "@projet-igsn/domain/user/can-moderate-samples";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { RouteGuard } from "#/auth/route-guard.tsx";
-import { InstitutionTreeFilter } from "#/institutional-groups/institution-tree-filter.tsx";
+import { ListHeader } from "#/filters/list-header.tsx";
+import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
+import { institutionFilterEntry } from "#/institutional-groups/institution-tree-filter.tsx";
+import { manualGroupFilterEntry } from "#/manual-groups/manual-group-filter.tsx";
 import { m } from "#/paraglide/messages.js";
+import { sampleFilterEntries } from "#/samples/sample-filters.tsx";
 import { SampleListPanel } from "#/samples/sample-list-panel.tsx";
-import { SampleManualGroupFilter } from "#/samples/sample-manual-group-filter.tsx";
 import { SampleOwnerFilter } from "#/samples/sample-owner-filter.tsx";
 
 const searchSchema = listSamplesQuerySchema.pick({
@@ -22,6 +24,9 @@ const searchSchema = listSamplesQuerySchema.pick({
   ownerId: true,
   institution: true,
   manualGroup: true,
+  nature: true,
+  collectionMethod: true,
+  status: true,
 });
 
 export const Route = createFileRoute("/samples/moderation")({
@@ -44,47 +49,48 @@ function SampleModerationPage() {
 
   return (
     <>
-      <h1 className="text-2xl font-bold">{m.sample_moderation_title()}</h1>
-
-      <div className="grid grid-cols-4 items-end gap-4">
-        <SearchField
-          defaultValue={params.search}
-          label={m.samples_search_label()}
-          placeholder={m.samples_search_placeholder()}
-          onSearch={(value) => update({ page: 1, search: value || undefined })}
-        />
-
-        <div className="grid min-w-0 gap-1.5">
-          <Label htmlFor="owner-filter">{m.filter_researcher_label()}</Label>
-          <SampleOwnerFilter
-            id="owner-filter"
-            value={params.ownerId}
-            onChange={(ownerId) => update({ page: 1, ownerId })}
-          />
-        </div>
-
-        <div className="grid min-w-0 gap-1.5">
-          <Label htmlFor="institution-filter">
-            {m.filter_institution_label()}
-          </Label>
-          <InstitutionTreeFilter
-            id="institution-filter"
-            value={params.institution}
-            onChange={(institution) => update({ page: 1, institution })}
-          />
-        </div>
-
-        <div className="grid min-w-0 gap-1.5">
-          <Label htmlFor="manual-group-filter">
-            {m.filter_manual_group_label()}
-          </Label>
-          <SampleManualGroupFilter
-            id="manual-group-filter"
-            value={params.manualGroup}
-            onChange={(manualGroup) => update({ page: 1, manualGroup })}
-          />
-        </div>
-      </div>
+      <ListHeader
+        title={m.sample_moderation_title()}
+        filters={[
+          searchFilterEntry({
+            label: m.samples_search_label(),
+            placeholder: m.samples_search_placeholder(),
+            defaultValue: params.search,
+            className: "sm:col-span-2",
+            onSearch: (value) =>
+              update({ page: 1, search: value || undefined }),
+          }),
+          {
+            name: "ownerId",
+            label: m.filter_researcher_label(),
+            cell: (
+              <>
+                <Label htmlFor="owner-filter">
+                  {m.filter_researcher_label()}
+                </Label>
+                <SampleOwnerFilter
+                  id="owner-filter"
+                  value={params.ownerId}
+                  onChange={(ownerId) => update({ page: 1, ownerId })}
+                />
+              </>
+            ),
+          },
+          institutionFilterEntry({
+            value: params.institution,
+            onChange: (institution) => update({ page: 1, institution }),
+          }),
+          manualGroupFilterEntry({
+            value: params.manualGroup,
+            onChange: (manualGroup) => update({ page: 1, manualGroup }),
+            onRemove: () => update({ page: 1, manualGroup: undefined }),
+          }),
+          ...sampleFilterEntries({
+            values: params,
+            onChange: (next) => update({ page: 1, ...next }),
+          }),
+        ]}
+      />
 
       <SampleListPanel params={params} update={update} moderated />
     </>

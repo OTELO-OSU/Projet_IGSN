@@ -23,8 +23,10 @@ import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
 
+import { likePattern } from "../like-pattern.ts";
 import { canDetachFromGroup } from "../manual-group/can-detach-from-group.ts";
 import { withTransaction } from "../transaction.ts";
+import { countUsersByInstitutionalGroup } from "./count-users-by-institutional-group.ts";
 import { moderationScopeWhere } from "./moderation-scope-where.ts";
 import { searchUsers } from "./search-users.ts";
 import { updateUserStatusAndInstitutions } from "./update-user-status-and-institutions.ts";
@@ -89,8 +91,7 @@ const toAdminUser = (row: { managedGroups: ManagedGroups }) =>
     managedGroups: knownManagedCodes(row.managedGroups),
   });
 
-// ponytail: one write per admin request. Fine at a few researchers; read first
-// and write only on a change if the write volume ever matters.
+// ponytail: one write per admin request; read first and write only on a change if the write volume ever matters.
 const lockUserInScope = async (
   trx: Transaction<DB>,
   id: string,
@@ -136,9 +137,11 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
         page,
         perPage,
         status,
+        search,
         institutionalOrganization,
         institutionalOsu,
         institutionalLaboratory,
+        manualGroup,
       },
       scope,
     ) =>
@@ -153,7 +156,27 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
               institutional_laboratory: institutionalLaboratory,
             }),
           )
-          .where((eb) => eb.and(moderationScopeWhere(eb, scope)));
+          .where((eb) => eb.and(moderationScopeWhere(eb, scope)))
+          .$if(search !== undefined, (qb) =>
+            qb.where((eb) =>
+              eb.or(
+                (["name", "firstname", "email"] as const).map((column) =>
+                  eb(column, "ilike", likePattern(search!)),
+                ),
+              ),
+            ),
+          )
+          .$if(manualGroup !== undefined, (qb) =>
+            qb.where((eb) =>
+              eb.exists(
+                eb
+                  .selectFrom("manual_group_member")
+                  .select("manual_group_member.user_id")
+                  .whereRef("manual_group_member.user_id", "=", "user.id")
+                  .where("manual_group_member.group_id", "=", manualGroup!),
+              ),
+            ),
+          );
         const rows = await matching
           .select(USER_COLUMNS)
           .select(manualGroups)
@@ -169,6 +192,8 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           total: Number(count),
         };
       }),
+    countByInstitutionalGroup: (scope) =>
+      countUsersByInstitutionalGroup(db, scope),
     get: (id, scope) =>
       withTransaction(db, async (trx) => {
         const row = await trx
@@ -234,8 +259,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .orderBy("email", "asc")
           .execute(),
       ),
-    // ponytail: reads every accepted row to filter managers in JS, fine at a
-    // few hundred researchers; prefilter on the two managed tables in SQL if it grows.
+    // ponytail: reads every accepted row to filter managers in JS; prefilter on the two managed tables in SQL if it grows.
     listSpaceManagers: () =>
       withTransaction(db, async (trx) => {
         const rows = await trx
@@ -328,8 +352,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
       }),
     search: (callerId, filters) =>
       withTransaction(db, (trx) => searchUsers(trx, callerId, filters)),
-    // ponytail: a concurrent claim of the same orcid can still trip the unique
-    // constraint into a 500; the constraint keeps it correct, retry shows 409.
+    // ponytail: a concurrent claim of the same orcid can still trip the unique constraint into a 500.
     setOrcid: async (userId, orcid) => {
       const row = await withTransaction(db, (trx) =>
         trx

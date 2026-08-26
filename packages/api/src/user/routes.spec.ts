@@ -5,6 +5,7 @@ import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-toke
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import {
   adminUserResponseSchema,
+  institutionalGroupCountsResponseSchema,
   listUsersResponseSchema,
   userIdentitiesResponseSchema,
 } from "@projet-igsn/domain/user/user-validator";
@@ -1753,4 +1754,56 @@ describe("space manager moderation", () => {
       expect(res.status).toBe(404);
     },
   );
+});
+
+describe("admin institutional counts route", () => {
+  pgTest(
+    "should count the users per organisme, OSU and laboratory",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "alice@univ-lorraine.fr", {
+        institutionalOrganization: "04vfs2w97",
+        institutionalOsu: "OTELo",
+        institutionalLaboratory: "UMR7358",
+      });
+      await insertUser(db, "bruno@univ-lorraine.fr", {
+        institutionalOrganization: "04vfs2w97",
+        institutionalLaboratory: "UMR7358",
+      });
+      await insertUser(db, "carla@univ-grenoble.fr", {
+        institutionalOrganization: "02rx3b187",
+        institutionalOsu: "OSUG",
+        institutionalLaboratory: "UMR5275",
+      });
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin.users["institutional-counts"].$get(
+        {},
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      const body = institutionalGroupCountsResponseSchema.parse(
+        await res.json(),
+      );
+      expect(body.data).toEqual({
+        organizations: { "04vfs2w97": 2, "02rx3b187": 1 },
+        osus: { OTELo: 1, OSUG: 1 },
+        laboratories: { UMR7358: 2, UMR5275: 1 },
+      });
+    },
+  );
+
+  pgTest("should refuse a caller who is not a super admin", async ({ db }) => {
+    // Arrange
+    await provisionUser(db, "moderator", { status: "accepted" });
+    const client = testClient(createApp(db).app);
+    // Act
+    const res = await client.admin.users["institutional-counts"].$get(
+      {},
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(403);
+  });
 });

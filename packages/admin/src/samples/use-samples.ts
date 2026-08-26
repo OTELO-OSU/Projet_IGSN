@@ -18,15 +18,10 @@ export type SampleListParams = Pick<
   | "ownerId"
   | "institution"
   | "manualGroup"
+  | "nature"
+  | "collectionMethod"
+  | "status"
 >;
-
-const OPTIONAL_PARAMS = [
-  "search",
-  "ownership",
-  "ownerId",
-  "institution",
-  "manualGroup",
-] as const;
 
 export function useSamples(params: SampleListParams, moderated = false) {
   const apiFetch = useApiClient();
@@ -37,15 +32,15 @@ export function useSamples(params: SampleListParams, moderated = false) {
         moderated ? "admin/samples/moderated" : "admin/samples",
         API_URL,
       );
-      url.searchParams.set("page", String(params.page));
-      url.searchParams.set("perPage", String(params.perPage));
-      if (params.sort) {
-        url.searchParams.set("sort", params.sort);
-        url.searchParams.set("order", params.order ?? "asc");
+      const { page, perPage, sort, order, ...filters } = params;
+      url.searchParams.set("page", String(page));
+      url.searchParams.set("perPage", String(perPage));
+      if (sort) {
+        url.searchParams.set("sort", sort);
+        url.searchParams.set("order", order ?? "asc");
       }
-      for (const key of OPTIONAL_PARAMS) {
-        const value = params[key];
-        if (value) url.searchParams.set(key, value);
+      for (const [key, value] of Object.entries(filters)) {
+        if (value) url.searchParams.set(key, String(value));
       }
 
       const res = await apiFetch(url);

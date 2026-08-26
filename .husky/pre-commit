@@ -1,6 +1,5 @@
 make generate
 
-pnpm lint:apply
-pnpm fmt:apply
+make lint-staged
 
 git update-index --again
