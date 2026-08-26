@@ -38,10 +38,12 @@ function fakeApi({
   orcid = null,
   conflict = false,
   manualGroups = MANUAL_GROUPS,
+  status = "accepted",
 }: {
   orcid?: string | null;
   conflict?: boolean;
   manualGroups?: { id: string; name: string; canLeave: boolean }[];
+  status?: "pending" | "accepted";
 } = {}) {
   const puts: unknown[] = [];
   const groupPuts: unknown[] = [];
@@ -71,7 +73,7 @@ function fakeApi({
         name: "Marie Dupont",
         email: "marie.dupont@univ-lorraine.fr",
         orcid: stored,
-        status: "accepted",
+        status,
         superAdmin: false,
         managedLaboratories: [],
         managedManualGroups: [],
@@ -231,6 +233,15 @@ describe("settings page", () => {
       .element(page.getByRole("textbox", { name: "My samples link" }))
       .toHaveSelection(link);
     writeText.mockRestore();
+  });
+
+  it("should hide the my-samples link from a pending user", async () => {
+    await renderSettingsPage({ status: "pending" });
+
+    await expect.element(orcidForm()).toBeVisible();
+    await expect
+      .element(page.getByRole("textbox", { name: "My samples link" }))
+      .not.toBeInTheDocument();
   });
 
   it("should surface a conflict when another account holds the orcid", async () => {

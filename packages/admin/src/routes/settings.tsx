@@ -24,11 +24,17 @@ function SettingsPage() {
       ) : data ? (
         <>
           <OrcidSettingsForm orcid={data.orcid} />
-          <h2 className="text-xl font-bold">{m.settings_my_samples_title()}</h2>
-          <p className="text-muted-foreground text-sm">
-            {m.settings_my_samples_hint()}
-          </p>
-          <MySamplesLink userId={data.id} />
+          {data.status === "accepted" && (
+            <>
+              <h2 className="text-xl font-bold">
+                {m.settings_my_samples_title()}
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                {m.settings_my_samples_hint()}
+              </p>
+              <MySamplesLink userId={data.id} />
+            </>
+          )}
           <h2 className="text-xl font-bold">
             {m.settings_institution_title()}
           </h2>
