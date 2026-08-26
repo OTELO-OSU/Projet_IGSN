@@ -1,4 +1,5 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+import type { PublicUser } from "@projet-igsn/domain/user/user-validator";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import {
@@ -14,6 +15,7 @@ import {
   facetParamKeys,
   SAMPLE_FACETS,
 } from "@projet-igsn/domain/sample/search/facets";
+import { fullName } from "@projet-igsn/domain/user/full-name";
 import { type ReactNode, useId, useState } from "react";
 
 import { HierarchyFacet } from "#/domain/samples/facet-hierarchy.tsx";
@@ -35,6 +37,7 @@ export const FACET_SECTIONS: readonly {
   {
     title: m.facet_section_author,
     keys: [
+      "contributor",
       "researchProgramName",
       "researchProgramChief",
       "researchCampaign",
@@ -93,6 +96,7 @@ type SampleFacetsProps = {
   onChange: (key: string, value: string | number | undefined) => void;
   onClearAll: () => void;
   manualGroups?: ManualGroup[];
+  contributors?: PublicUser[];
 };
 
 export function SampleFacets({
@@ -100,6 +104,7 @@ export function SampleFacets({
   onChange,
   onClearAll,
   manualGroups = [],
+  contributors = [],
 }: SampleFacetsProps) {
   const [resetNonce, setResetNonce] = useState(0);
   const hasActive = facetParamKeys().some((key) => values[key] !== undefined);
@@ -124,6 +129,7 @@ export function SampleFacets({
           />
         );
       case "enum":
+      case "contributor":
       case "manualGroup": {
         const selected = values[facet.key] as string | undefined;
         const items = withSelected(
@@ -132,10 +138,15 @@ export function SampleFacets({
                 value: group.id,
                 label: group.name,
               }))
-            : toComboboxItems(
-                NARROWED_VALUES[facet.key]?.(values) ?? facet.values,
-                facetValueLabel(facet.key),
-              ),
+            : facet.kind === "contributor"
+              ? contributors.map((user) => ({
+                  value: user.id,
+                  label: fullName(user),
+                }))
+              : toComboboxItems(
+                  NARROWED_VALUES[facet.key]?.(values) ?? facet.values,
+                  facetValueLabel(facet.key),
+                ),
           selected,
           facetValueLabel(facet.key),
         );

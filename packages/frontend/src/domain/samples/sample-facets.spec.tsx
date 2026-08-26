@@ -1,4 +1,5 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+import type { PublicUser } from "@projet-igsn/domain/user/user-validator";
 
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { render } from "vitest-browser-react";
@@ -10,6 +11,7 @@ const LORRAINE = "04vfs2w97";
 async function renderFacets(
   values: Record<string, string | number | undefined> = {},
   manualGroups: ManualGroup[] = [],
+  contributors: PublicUser[] = [],
 ) {
   const onChange = vi.fn();
   const onClearAll = vi.fn();
@@ -19,6 +21,7 @@ async function renderFacets(
       onChange={onChange}
       onClearAll={onClearAll}
       manualGroups={manualGroups}
+      contributors={contributors}
     />,
   );
   return { screen, onChange, onClearAll };
@@ -142,5 +145,19 @@ describe("SampleFacets", () => {
     await screen.getByRole("option", { name: group.name }).click();
 
     expect(onChange).toHaveBeenCalledWith("manualGroup", group.id);
+  });
+
+  it("should report the picked contributor", async () => {
+    const contributor = {
+      id: "01980e2d-6f9b-7000-9000-000000000002",
+      name: "Dupont",
+      firstname: "Marie",
+    };
+    const { screen, onChange } = await renderFacets({}, [], [contributor]);
+
+    await screen.getByRole("combobox", { name: /contributor/i }).click();
+    await screen.getByRole("option", { name: "Marie Dupont" }).click();
+
+    expect(onChange).toHaveBeenCalledWith("contributor", contributor.id);
   });
 });
