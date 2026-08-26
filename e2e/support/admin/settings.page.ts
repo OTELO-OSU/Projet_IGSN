@@ -12,6 +12,12 @@ export function settingsPage(page: Page) {
     },
     mySamplesLink: () =>
       page.getByRole("textbox", { name: "My samples link" }).inputValue(),
+    groupSamplesLink: async (name: string) => {
+      await chooseOption(page)("Group", name);
+      return page
+        .getByRole("textbox", { name: "Group samples link" })
+        .inputValue();
+    },
     setOrcid: async (orcid: string) => {
       const form = page.getByRole("form", { name: "ORCID iD" });
       await form.getByLabel("ORCID iD").fill(orcid);

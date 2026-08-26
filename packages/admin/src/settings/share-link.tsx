@@ -4,28 +4,33 @@ import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import { CopyIcon, ExternalLinkIcon } from "lucide-react";
 
-import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 
-export function MySamplesLink({ userId }: { userId: string }) {
-  const link = `${FRONTEND_URL}/search?contributor=${userId}`;
-
+export function ShareLink({
+  id,
+  label,
+  link,
+}: {
+  id: string;
+  label: string;
+  link: string;
+}) {
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(link);
-      toast.success(m.settings_my_samples_copied());
+      toast.success(m.settings_link_copied());
     } catch {
-      toast.error(m.settings_my_samples_copy_error());
+      toast.error(m.settings_link_copy_error());
     }
   };
 
   return (
     <div className="flex items-center gap-2">
-      <Label htmlFor="my-samples-link" className="shrink-0">
-        {m.settings_my_samples_link()}
+      <Label htmlFor={id} className="shrink-0">
+        {label}
       </Label>
       <Input
-        id="my-samples-link"
+        id={id}
         readOnly
         value={link}
         className="flex-1"

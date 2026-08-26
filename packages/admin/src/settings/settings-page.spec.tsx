@@ -235,6 +235,37 @@ describe("settings page", () => {
     writeText.mockRestore();
   });
 
+  it("should offer the group samples link once a group is picked", async () => {
+    await renderSettingsPage();
+    const groupSelector = page.getByRole("combobox", {
+      name: "Group",
+      exact: true,
+    });
+    await expect.element(groupSelector).toBeEnabled();
+    await expect
+      .element(page.getByRole("textbox", { name: "Group samples link" }))
+      .not.toBeInTheDocument();
+
+    await groupSelector.click();
+    await page.getByRole("option", { name: "Basalt team" }).click();
+
+    const link = `http://localhost:3000/search?manualGroup=${BASALT_TEAM.id}`;
+    await expect
+      .element(page.getByRole("textbox", { name: "Group samples link" }))
+      .toHaveValue(link);
+    await expect
+      .element(page.getByRole("link", { name: "Open in a new window" }).nth(1))
+      .toHaveAttribute("href", link);
+  });
+
+  it("should disable the group selector when the user belongs to no group", async () => {
+    await renderSettingsPage({ manualGroups: [] });
+
+    await expect
+      .element(page.getByRole("combobox", { name: "Group", exact: true }))
+      .toBeDisabled();
+  });
+
   it("should hide the my-samples link from a pending user", async () => {
     await renderSettingsPage({ status: "pending" });
 
