@@ -235,8 +235,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .execute(),
       ),
     // ponytail: reads every accepted row to filter managers in JS, fine at a
-    // few hundred researchers; prefilter on the two managed tables in SQL if it
-    // grows, the catalog test staying in JS since it drops a retired code.
+    // few hundred researchers; prefilter on the two managed tables in SQL if it grows.
     listSpaceManagers: () =>
       withTransaction(db, async (trx) => {
         const rows = await trx
