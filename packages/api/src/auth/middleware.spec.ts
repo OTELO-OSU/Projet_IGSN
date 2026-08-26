@@ -107,6 +107,7 @@ describe("requireAuth", () => {
 
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual({
+        id: expect.any(String),
         sub: "user-1",
         username: "marie",
         name: "Marie Dupont",

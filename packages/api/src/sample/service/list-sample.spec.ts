@@ -6,9 +6,11 @@ import { describe, expect, vi } from "vitest";
 import type { DB } from "../../db.ts";
 import type { Transactional } from "../../transaction.ts";
 
+import { insertUser } from "../../tests/insert-user.ts";
 import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { insertSample } from "./insert-sample.ts";
+import { listPublishedSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
 const emptyAge = {
@@ -263,6 +265,47 @@ describe("listSamples", () => {
     // Assert
     expect(total).toBe(1);
     expect(data.map((s) => s.name)).toEqual(["In the group"]);
+  });
+
+  pgTest("should filter by a linked user whatever the role", async ({ db }) => {
+    // Arrange
+    const user = await insertUser(db, "marie.curie@univ-lorraine.fr");
+    const names = ["Owned", "Edited", "Contributed", "Unlinked"];
+    const roles = ["owner", "editor", "contributor"] as const;
+    const samples: { id: string }[] = [];
+    for (const name of names) {
+      const sample = await insertSample(db, {
+        name,
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+      });
+      await publishSample(db, sample.id);
+      samples.push(sample);
+    }
+    await db
+      .insertInto("user_sample")
+      .values(
+        roles.map((role, index) => ({
+          user_id: user.id,
+          sample_id: samples[index]!.id,
+          role,
+        })),
+      )
+      .execute();
+    // Act
+    const { data, total } = await listPublishedSamples(db, {
+      page: 1,
+      perPage: 10,
+      contributor: user.id,
+    });
+    // Assert
+    expect(total).toBe(3);
+    expect(data.map((sample) => sample.name).sort()).toEqual([
+      "Contributed",
+      "Edited",
+      "Owned",
+    ]);
   });
 
   pgTest(

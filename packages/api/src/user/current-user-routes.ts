@@ -25,6 +25,7 @@ export function createCurrentUserRoutes(
       const user = c.get("user");
       const managed = await users.getModerationScope(user.id);
       const currentUser: CurrentUser = {
+        id: user.id,
         sub: claims.sub,
         username: claims.preferred_username,
         name: claims.name,

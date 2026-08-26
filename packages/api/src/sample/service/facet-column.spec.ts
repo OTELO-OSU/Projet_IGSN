@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { FACET_COLUMN } from "./facet-filter.ts";
 
-const COLUMN_LESS_KINDS = ["numericRange", "manualGroup"];
+const COLUMN_LESS_KINDS = ["numericRange", "manualGroup", "contributor"];
 
 describe("FACET_COLUMN", () => {
   it("should map every column-backed facet to a column", () => {

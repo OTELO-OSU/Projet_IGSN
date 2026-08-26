@@ -47,6 +47,7 @@ describe("app", () => {
       );
       // Assert
       expect(await res.json()).toEqual({
+        id: expect.any(String),
         sub: "test-token",
         email: callerEmail,
         orcid: null,
