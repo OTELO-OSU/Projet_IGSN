@@ -65,9 +65,13 @@ export const validateListUsersQuery = validator("query", (value, c) => {
   return parsed.data;
 });
 
-export const validateListContributorsQuery = validator("query", (value) =>
-  listContributorsQuerySchema.parse(value),
-);
+export const validateListContributorsQuery = validator("query", (value, c) => {
+  const parsed = listContributorsQuerySchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid query parameters" }, 400);
+  }
+  return parsed.data;
+});
 
 export const validateUpdateUserBody = validator("json", (value, c) => {
   const parsed = updateUserSchema.safeParse(value);
