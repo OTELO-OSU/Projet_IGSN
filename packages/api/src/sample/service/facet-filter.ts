@@ -20,8 +20,6 @@ export const FACET_COLUMN: Record<string, string> = {
   institutionalLaboratory: "institutional_laboratory",
 };
 
-// A `linked` facet matches through a link table carrying `sample_id`; same
-// allow-list rule as FACET_COLUMN.
 export const FACET_JOIN: Record<string, { table: string; column: string }> = {
   manualGroup: { table: "sample_manual_group", column: "group_id" },
   contributor: { table: "user_sample", column: "user_id" },
