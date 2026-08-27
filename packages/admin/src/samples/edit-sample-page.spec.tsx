@@ -395,6 +395,11 @@ describe("EditSamplePage", () => {
       () => renderEditPage("published"),
       ["Publish updates"],
     ],
+    [
+      "the owner on a withdrawn sample",
+      () => renderEditPage("withdrawn"),
+      ["Save changes"],
+    ],
   ])(
     "should offer the save actions to %s",
     async (_case, renderPage, buttons) => {

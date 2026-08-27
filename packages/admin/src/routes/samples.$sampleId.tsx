@@ -95,10 +95,7 @@ function EditSamplePage() {
             </p>
           ) : null}
         </div>
-        <div className="flex items-center gap-2">
-          <ShareSampleButton sampleId={sampleId} />
-          <SampleStatusButton sampleId={sampleId} status={query.data.status} />
-        </div>
+        <ShareSampleButton sampleId={sampleId} />
       </div>
 
       {lockedMessage ? (
@@ -129,12 +126,18 @@ function EditSamplePage() {
         isPending={isPending}
         status={query.data.status}
         readOnlyReason={lockedMessage ?? rejection}
+        statusAction={
+          <SampleStatusButton sampleId={sampleId} status={query.data.status} />
+        }
         onCancel={() => navigate({ to: "/" })}
         secondaryAction={{
           kind: "submit",
-          label: wasPublished
-            ? m.action_publish_updates()
-            : m.action_save_draft(),
+          label:
+            query.data.status === "withdrawn"
+              ? m.action_save_changes()
+              : wasPublished
+                ? m.action_publish_updates()
+                : m.action_save_draft(),
           onSubmit: (value) => updateSample.mutate(value),
         }}
         primaryAction={

@@ -105,6 +105,8 @@ type SampleFormProps = {
   status?: SampleStatus;
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
+  /** The withdraw / republish toggle, rendered after the save action. */
+  statusAction?: ReactNode;
   sampleId?: string;
   attachments?: SampleAttachment[];
   attachmentChanges?: SampleAttachmentChanges;
@@ -120,6 +122,7 @@ export function SampleForm({
   status = "draft",
   primaryAction,
   secondaryAction,
+  statusAction,
   sampleId,
   attachments = [],
   attachmentChanges,
@@ -495,6 +498,7 @@ export function SampleForm({
             {m.action_cancel()}
           </Button>
           {secondaryAction ? renderAction(secondaryAction, "outline") : null}
+          {statusAction}
           {renderAction(primaryAction)}
         </div>
       </form>
