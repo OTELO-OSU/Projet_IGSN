@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
+import { frontendSearchUrl } from "#/frontend-url.ts";
 import { InstitutionalGroupsForm } from "#/institutional-groups/institutional-groups-form.tsx";
 import { useSetInstitutionalGroups } from "#/institutional-groups/use-set-institutional-groups.ts";
 import { MyManualGroups } from "#/manual-groups/my-manual-groups.tsx";
 import { m } from "#/paraglide/messages.js";
-import { MySamplesLink } from "#/settings/my-samples-link.tsx";
+import { GroupSamplesLink } from "#/settings/group-samples-link.tsx";
 import { OrcidSettingsForm } from "#/settings/orcid-settings-form.tsx";
+import { ShareLink } from "#/settings/share-link.tsx";
 
 export const Route = createFileRoute("/settings")({
   component: SettingsPage,
@@ -32,7 +34,17 @@ function SettingsPage() {
               <p className="text-muted-foreground text-sm">
                 {m.settings_my_samples_hint()}
               </p>
-              <MySamplesLink userId={data.id} />
+              <ShareLink
+                label={m.settings_my_samples_link()}
+                link={frontendSearchUrl({ contributor: data.id })}
+              />
+              <h2 className="text-xl font-bold">
+                {m.settings_group_samples_title()}
+              </h2>
+              <p className="text-muted-foreground text-sm">
+                {m.settings_group_samples_hint()}
+              </p>
+              <GroupSamplesLink />
             </>
           )}
           <h2 className="text-xl font-bold">

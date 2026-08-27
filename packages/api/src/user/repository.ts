@@ -191,7 +191,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .executeTakeFirst();
         return knownManagedCodes(row?.managedGroups ?? NO_MANAGED_GROUPS);
       }),
-    listContributors: (include) =>
+    listPublicUsers: (include) =>
       withTransaction(db, async (trx) => {
         const rows = await trx
           .selectFrom("user")

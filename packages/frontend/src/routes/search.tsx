@@ -27,9 +27,9 @@ import {
 import { SearchResultsView } from "#/domain/samples/search-results-view.tsx";
 import { useCardFields } from "#/domain/samples/use-card-fields.ts";
 import {
-  listContributorsQueryOptions,
-  useListContributors,
-} from "#/domain/users/hook/list-contributors.ts";
+  listPublicUsersQueryOptions,
+  useListPublicUsers,
+} from "#/domain/users/hook/list-public-users.ts";
 import { m } from "#/paraglide/messages.js";
 
 const FACET_KEYS = facetParamKeys();
@@ -44,7 +44,7 @@ export const Route = createFileRoute("/search")({
       context.queryClient.ensureQueryData(listSamplesQueryOptions(params)),
       context.queryClient.ensureQueryData(listManualGroupsQueryOptions()),
       context.queryClient.ensureQueryData(
-        listContributorsQueryOptions(deps.contributor),
+        listPublicUsersQueryOptions(deps.contributor),
       ),
     ]);
   },
@@ -57,7 +57,7 @@ function SearchPage() {
   const seed = composeSeedFromParams(search);
   const params = searchQueryParams(search);
   const { data: manualGroups } = useListManualGroups();
-  const { data: contributors } = useListContributors(search.contributor);
+  const { data: contributors } = useListPublicUsers(search.contributor);
 
   return (
     <div>

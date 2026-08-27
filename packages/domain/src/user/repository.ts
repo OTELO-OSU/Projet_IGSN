@@ -53,7 +53,7 @@ export type UserRepository = {
     scope: ModerationScope,
   ): Promise<{ data: ListedUser[]; total: number }>;
   get(id: string, scope: ModerationScope): Promise<AdminUser | null>;
-  listContributors(include?: string): Promise<PublicUser[]>;
+  listPublicUsers(include?: string): Promise<PublicUser[]>;
   listPending(): Promise<PendingUser[]>;
   listSuperAdminEmails(): Promise<string[]>;
   listSpaceManagers(): Promise<SpaceManager[]>;

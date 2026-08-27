@@ -4,7 +4,7 @@ import { publicUsersResponseSchema } from "@projet-igsn/domain/user/user-validat
 
 import { apiFetch, baseApiUrl } from "#/api.ts";
 
-export async function listContributors(
+export async function listPublicUsers(
   include?: string,
   fetchFn: typeof fetch = apiFetch,
 ): Promise<PublicUser[]> {
@@ -14,7 +14,7 @@ export async function listContributors(
   }
   const res = await fetchFn(url);
   if (!res.ok) {
-    throw new Error(`Failed to load contributors (${res.status})`);
+    throw new Error(`Failed to load users (${res.status})`);
   }
   const { data } = publicUsersResponseSchema.parse(await res.json());
   return data;

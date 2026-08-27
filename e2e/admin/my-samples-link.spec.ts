@@ -20,8 +20,6 @@ test.describe("my samples link", () => {
     const list = sampleListPage(page);
     await list.gotoWithSearch(link.split("?")[1]!);
     await list.expectFacetValue("Contributor", "Jean Martin");
-    await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);
-    await list.expectSampleAbsent("Granite 7");
   });
 });

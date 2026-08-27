@@ -12,9 +12,11 @@ import {
 } from "../support/admin/sign-in";
 import { userPage } from "../support/admin/user.page";
 import { usersPage } from "../support/admin/users.page";
-import { test } from "../support/db";
+import { expect, test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
+import { sampleListPage as publicSampleListPage } from "../support/frontend/sample-list.page";
 import { maildev } from "../support/maildev";
+import { frontendUrl } from "../support/urls";
 
 const uniqueName = (name: string) => `${name} ${Date.now()}`;
 
@@ -193,6 +195,14 @@ test.describe("manual groups", () => {
     await list.openSample(sampleName);
     await edit.expectManualGroupFrozen(name);
     const igsn = await edit.publicPageIgsn();
+
+    await settings.open();
+    const link = await settings.groupSamplesLink(name);
+    expect(link).toContain(`${frontendUrl}/search?manualGroup=`);
+
+    const publicList = publicSampleListPage(memberPage);
+    await publicList.gotoWithSearch(link.split("?")[1]!);
+    await publicList.expectFacetValue("Other group (team, project…)", name);
 
     const detail = sampleDetailPage(memberPage);
     await detail.goto(igsn);

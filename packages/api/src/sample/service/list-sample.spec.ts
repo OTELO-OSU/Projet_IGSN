@@ -9,8 +9,7 @@ import type { Transactional } from "../../transaction.ts";
 import { insertUser } from "../../tests/insert-user.ts";
 import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
-import { insertSampleCollaborator } from "../../user-sample/insert-sample-collaborator.ts";
-import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
+import { draft } from "../../tests/sample-fixtures.ts";
 import { insertSample } from "./insert-sample.ts";
 import { listPublishedSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
@@ -279,16 +278,13 @@ describe("listSamples", () => {
       ["Unlinked", null],
     ] as const;
     for (const [name, role] of linked) {
-      const sample = await insertSample(db, {
-        name,
-        nature: "rock_powder",
-        type: null,
-        collectionMethod: null,
-      });
+      const sample = await insertSample(db, { ...draft, name });
       await publishSample(db, sample.id);
-      if (role === "owner") await insertSampleOwner(db, sample.id, user.id);
-      else if (role)
-        await insertSampleCollaborator(db, sample.id, user.id, role);
+      if (role)
+        await db
+          .insertInto("user_sample")
+          .values({ sample_id: sample.id, user_id: user.id, role })
+          .execute();
     }
     // Act
     const { data, total } = await listPublishedSamples(db, {
