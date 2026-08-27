@@ -88,10 +88,18 @@ const overLimitAttachments: SampleAttachment[] = Array.from(
   }),
 );
 
+type FailMode =
+  | "save"
+  | "publish"
+  | "stale"
+  | "locked"
+  | "delete-locked"
+  | false;
+
 function fakeApi(
   status: SampleStatus = "draft",
   material: string | null = "fossil",
-  fail: "save" | "publish" | "stale" | "locked" | false = false,
+  fail: FailMode = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
   availability: "exists" | "no_longer_exists" = "exists",
@@ -250,6 +258,17 @@ function fakeApi(
       "*/samples/:id/attachments/:attachmentId",
       () => new HttpResponse(null, { status: 204 }),
     ),
+    http.delete("*/samples/:id", () => {
+      if (fail === "delete-locked") {
+        calls.push("DELETE 409");
+        return HttpResponse.json(
+          { error: "Sample is being edited by another collaborator" },
+          { status: 409 },
+        );
+      }
+      calls.push("DELETE");
+      return new HttpResponse(null, { status: 204 });
+    }),
   );
   return {
     id: sample.id,
@@ -264,7 +283,7 @@ function fakeApi(
 async function renderEditPage(
   status: SampleStatus = "draft",
   material: string | null = "fossil",
-  fail: "save" | "publish" | "stale" | "locked" | false = false,
+  fail: FailMode = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
   availability: "exists" | "no_longer_exists" = "exists",
@@ -342,6 +361,8 @@ const renderEditPageAsContributor = (status: SampleStatus) =>
     [],
     "contributor",
   );
+
+type EditPageScreen = Awaited<ReturnType<typeof renderEditPage>>["screen"];
 
 const renderEditPageAsEditor = (status: SampleStatus) =>
   renderEditPage(
@@ -1024,5 +1045,73 @@ describe("EditSamplePage", () => {
     await vi.waitFor(() =>
       expect(calls).toEqual(["PUT Basalte du Massif Central"]),
     );
+  });
+
+  describe("deleting a draft", () => {
+    const deleteButton = (screen: EditPageScreen) =>
+      screen.getByRole("button", { name: "Delete this draft", exact: true });
+
+    const fillConfirmation = (screen: EditPageScreen, phrase: string) =>
+      screen.getByLabelText("Type DELETE to confirm").fill(phrase);
+
+    const confirmButton = (screen: EditPageScreen) =>
+      screen
+        .getByRole("dialog", { name: "Delete this draft?" })
+        .getByRole("button", { name: "Delete", exact: true });
+
+    it("should offer Delete to the owner of a draft", async () => {
+      const { screen } = await renderEditPage();
+
+      await expect.element(deleteButton(screen)).toBeEnabled();
+    });
+
+    it.each<[string, () => ReturnType<typeof renderEditPage>]>([
+      ["a contributor on a draft", () => renderEditPageAsContributor("draft")],
+      ["the owner of a published sample", () => renderEditPage("published")],
+    ])("should offer no Delete to %s", async (_case, renderPage) => {
+      const { screen } = await renderPage();
+
+      await expect
+        .element(screen.getByRole("button", { name: "Share" }))
+        .toBeVisible();
+      expect(deleteButton(screen).elements()).toHaveLength(0);
+    });
+
+    it("should delete the draft and land on the list", async () => {
+      const { screen, calls } = await renderEditPage();
+      await deleteButton(screen).click();
+
+      await fillConfirmation(screen, "DELETE");
+      await confirmButton(screen).click();
+
+      await expect
+        .element(screen.getByRole("heading", { name: "My samples" }))
+        .toBeVisible();
+      expect(calls).toEqual(["DELETE"]);
+      await expect
+        .element(screen.getByRole("region", { name: /notifications/i }))
+        .toHaveTextContent("Draft deleted");
+    });
+
+    it("should keep the draft and explain when another collaborator is editing", async () => {
+      const { screen, calls } = await renderEditPage(
+        "draft",
+        "fossil",
+        "delete-locked",
+      );
+      await deleteButton(screen).click();
+      await fillConfirmation(screen, "DELETE");
+      await confirmButton(screen).click();
+
+      await expect
+        .element(screen.getByRole("region", { name: /notifications/i }))
+        .toHaveTextContent(
+          "Another collaborator is editing this sample, so it cannot be deleted.",
+        );
+      await expect
+        .element(screen.getByRole("heading", { name: "Edit sample" }))
+        .toBeVisible();
+      expect(calls).toEqual(["DELETE 409"]);
+    });
   });
 });

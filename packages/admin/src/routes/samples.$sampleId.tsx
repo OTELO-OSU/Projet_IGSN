@@ -4,10 +4,17 @@ import {
   Alert,
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
+import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@projet-igsn/design-system/components/ui/tooltip";
+import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { InfoIcon } from "lucide-react";
+import { InfoIcon, Trash2Icon } from "lucide-react";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { FRONTEND_URL } from "#/frontend-url.ts";
@@ -16,6 +23,7 @@ import { RepublishButton } from "#/samples/republish-button.tsx";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
+import { useDeleteSample } from "#/samples/use-delete-sample.ts";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
 import { useSampleEditLock } from "#/samples/use-sample-edit-lock.ts";
 import { ForbiddenError, useSample } from "#/samples/use-sample.ts";
@@ -43,6 +51,7 @@ function EditSamplePage() {
   const updateSample = useUpdateSample(sampleId);
   const publishSample = usePublishSample(sampleId);
   const setStatus = useSetSampleStatus(sampleId);
+  const deleteSample = useDeleteSample(sampleId);
   const { heldByOther } = useSampleEditLock(
     sampleId,
     query.data != null && canUpdateSample(query.data.role, query.data),
@@ -91,7 +100,40 @@ function EditSamplePage() {
     <>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
+            {canDeleteSample(query.data.role, query.data) && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ConfirmButton
+                    variant="ghost"
+                    size="icon"
+                    aria-label={m.sample_delete_action()}
+                    disabled={deleteSample.isPending || heldByOther != null}
+                    title={m.sample_delete_title()}
+                    description={m.sample_delete_description()}
+                    confirmLabel={m.action_delete()}
+                    cancelLabel={m.action_cancel()}
+                    closeLabel={m.action_close()}
+                    confirmPhrase={{
+                      text: m.action_delete_confirm_phrase(),
+                      label: m.action_delete_confirm_phrase_label({
+                        phrase: m.action_delete_confirm_phrase(),
+                      }),
+                    }}
+                    onConfirm={() =>
+                      deleteSample.mutate(undefined, {
+                        onSuccess: () => void navigate({ to: "/" }),
+                      })
+                    }
+                  >
+                    <Trash2Icon aria-hidden />
+                  </ConfirmButton>
+                </TooltipTrigger>
+                <TooltipContent>{m.sample_delete_action()}</TooltipContent>
+              </Tooltip>
+            )}
+          </div>
           {query.data.igsn ? (
             <p
               aria-label={m.field_igsn()}

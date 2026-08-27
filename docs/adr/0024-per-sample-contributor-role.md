@@ -35,7 +35,7 @@ Accepted. Supersedes ADR 0019's "still to come" paragraph (role column, adding a
 
 **User search discloses name, email and moderation status to any authenticated researcher.** `GET /admin/users?search=` is the only way to find an account to grant against, and its guard lives on the sample routes, not the user directory. The PO accepted this as bounded, a directory lookup behind OIDC login rather than open enumeration, mitigated by a 2-character minimum and a max length on a term, 10 results per filtered query, 20 per termless browse (the caller excluded), and the per-user `/admin` rate limit (ADR 0029). Status is disclosed in the collaborator list (`sampleCollaboratorSchema`) to every collaborator on that sample, not just the owner; `superAdmin` stays undisclosed, and user search itself stays identity-only, removing the rejected rows rather than annotating them.
 
-**Delete-draft is a follow-up.** The card lists it as an editor right, but no role can delete a draft, the product having no such route.
+**An editor deletes a draft, never a published sample.** `canDeleteSample` grants it to the owner and the editors on a draft alone, moderators in reach included since moderation acts as `editor` (ADR 0030), a published sample answering 403 since its IGSN is public, and `DELETE /admin/samples/:id` sits behind `requireActiveSession` and `unlockedSample` like the other critical writes, so a draft another collaborator is editing answers 409.
 
 ## Consequences
 

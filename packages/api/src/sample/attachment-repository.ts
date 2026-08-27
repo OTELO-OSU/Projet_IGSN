@@ -120,6 +120,9 @@ export function createSampleAttachmentRepository(
         return true;
       }),
 
+    removeAll: (sampleId: string) =>
+      rm(dirFor(sampleId), { recursive: true, force: true }),
+
     getContent: (sampleId: string, attachmentId: string) =>
       withTransaction(db, async (trx) => {
         const row = await trx

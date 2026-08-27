@@ -46,6 +46,7 @@ export type SampleRepository = {
     id: string,
     status: SetSampleStatusBody["status"],
   ): Promise<Sample | null>;
+  remove(id: string): Promise<void>;
   getEditLock(id: string): Promise<SampleEditLock | null>;
   acquireEditLock(id: string, userId: string): Promise<SampleEditLock | null>;
   releaseEditLock(id: string, userId: string): Promise<void>;
