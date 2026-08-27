@@ -70,6 +70,18 @@ export function sampleEditPage(page: Page) {
       await pick("Collection origin", "Scientific expedition");
     },
     publish: () => confirmStatusChange("Save & Publish", "Publish sample"),
+    publishAsWithdrawn: async () => {
+      await page
+        .getByRole("button", { name: "More publishing options" })
+        .click();
+      await page
+        .getByRole("menuitem", { name: "Publish as withdrawn" })
+        .click();
+      await page
+        .getByRole("dialog", { name: "Publish sample as withdrawn" })
+        .getByRole("button", { name: "Confirm" })
+        .click();
+    },
 
     withdraw: () => confirmStatusChange("Withdraw", "Withdraw sample"),
     republish: () => confirmStatusChange("Republish", "Republish sample"),

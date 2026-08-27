@@ -75,6 +75,10 @@ export const validateContactBody = validator("json", (value, c) => {
   return parsed.data;
 });
 
+/** Parsed by hand from `?status=` so the hc client keeps its bodiless, query-less `publish.$post` signature. */
+export const publishStatusSchema =
+  setSampleStatusBodySchema.shape.status.optional();
+
 export const validateStatusBody = validator("json", (value, c) => {
   const parsed = setSampleStatusBodySchema.safeParse(value);
   if (!parsed.success) {

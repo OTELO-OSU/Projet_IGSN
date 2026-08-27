@@ -127,6 +127,35 @@ test.describe("samples", () => {
     await edit.expectStatusAction("Withdraw");
   });
 
+  test("a researcher publishes a new sample straight as withdrawn", async ({
+    page,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    const list = sampleListPage(page);
+    await list.goToCreate();
+
+    const create = sampleCreatePage(page);
+    const name = `Withdrawn on arrival ${Date.now()}`;
+    await create.fillName(name);
+    await create.selectNature("Thin section");
+    await create.submit();
+
+    const edit = sampleEditPage(page);
+    await edit.expectName(name);
+    await edit.fillPublishableFields();
+    await edit.publishAsWithdrawn();
+    await list.expectVisible();
+
+    await list.openSample(name);
+    await edit.expectWithdrawnHint();
+    await edit.expectStatusAction("Republish");
+    const igsn = await edit.publicPageIgsn();
+
+    const detail = sampleDetailPage(page);
+    await detail.goto(igsn);
+    await detail.expectWithdrawnNotice();
+  });
+
   test("the create form rejects a sample without a name", async ({ page }) => {
     await signInAsResearcher(page, RESEARCHERS.camille);
 

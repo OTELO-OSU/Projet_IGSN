@@ -1,5 +1,6 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 import type { ReactNode } from "react";
 
@@ -46,6 +47,7 @@ import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
+import { PublishMenu } from "#/samples/publish-menu.tsx";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
 import { SampleAttachments } from "#/samples/sample-attachments.tsx";
@@ -86,7 +88,14 @@ const validateDraft =
 
 export type SampleFormAction =
   | { kind: "submit"; label: string; onSubmit: (value: CreateSample) => void }
-  | { kind: "publish"; label: string; onPublish: (value: CreateSample) => void }
+  | {
+      kind: "publish";
+      label: string;
+      onPublish: (
+        value: CreateSample,
+        status: SetSampleStatusBody["status"],
+      ) => void;
+    }
   | { kind: "link"; label: string; href: string };
 
 type SampleFormProps = {
@@ -268,20 +277,29 @@ export function SampleForm({
       if (roleOnSample !== null && !isSampleEditor(roleOnSample)) {
         return null;
       }
+      const publish = (status: SetSampleStatusBody["status"]) =>
+        void form.handleSubmit({
+          onValid: (value) => action.onPublish(value, status),
+        });
       return renderPublishGated((disabled) => (
-        <ConfirmButton
-          disabled={disabled}
-          title={m.publish_sample_title()}
-          description={m.publish_sample_warning()}
-          confirmLabel={m.action_confirm()}
-          cancelLabel={m.action_cancel()}
-          closeLabel={m.action_close()}
-          onConfirm={() =>
-            void form.handleSubmit({ onValid: action.onPublish })
-          }
-        >
-          {action.label}
-        </ConfirmButton>
+        <div className="flex">
+          <ConfirmButton
+            className="rounded-r-none"
+            disabled={disabled}
+            title={m.publish_sample_title()}
+            description={m.publish_sample_warning()}
+            confirmLabel={m.action_confirm()}
+            cancelLabel={m.action_cancel()}
+            closeLabel={m.action_close()}
+            onConfirm={() => publish("published")}
+          >
+            {action.label}
+          </ConfirmButton>
+          <PublishMenu
+            disabled={disabled}
+            onPublishWithdrawn={() => publish("withdrawn")}
+          />
+        </div>
       ));
     }
     // ponytail: a native submit button routes through the form's default meta

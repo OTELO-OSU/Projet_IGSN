@@ -1209,6 +1209,53 @@ describe("admin sample routes", () => {
     expect(await res.json()).toMatchObject({ data: { id: data.id } });
   });
 
+  pgTest("should publish a sample straight as withdrawn", async ({ db }) => {
+    // Arrange
+    await provisionUser(db, "test-token", { status: "accepted" });
+    const { app } = createApp(db);
+    const client = testClient(app);
+    const created = await client.admin.samples.$post(
+      { json: publishable },
+      { headers: authHeader },
+    );
+    const { data } = sampleResponseSchema.parse(await created.json());
+    // Act
+    const res = await app.request(
+      `/admin/samples/${data.id}/publish?status=withdrawn`,
+      { method: "POST", headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    const published = sampleResponseSchema.parse(await res.json()).data;
+    expect(published.status).toBe("withdrawn");
+    expect(published.igsn).not.toBeNull();
+    const publicPage = await client.samples[":igsn"].$get({
+      param: { igsn: published.igsn! },
+    });
+    expect(await publicPage.json()).toMatchObject({
+      data: { status: "withdrawn" },
+    });
+  });
+
+  pgTest("should answer 400 on an unknown publish status", async ({ db }) => {
+    // Arrange
+    await provisionUser(db, "test-token", { status: "accepted" });
+    const { app } = createApp(db);
+    const client = testClient(app);
+    const created = await client.admin.samples.$post(
+      { json: publishable },
+      { headers: authHeader },
+    );
+    const { data } = sampleResponseSchema.parse(await created.json());
+    // Act
+    const res = await app.request(
+      `/admin/samples/${data.id}/publish?status=draft`,
+      { method: "POST", headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(400);
+  });
+
   pgTest.for([
     ["no material", { name: "Unclassified draft", material: undefined }],
     ["an internal-node material", { name: "Rock draft", material: "rock" }],

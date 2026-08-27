@@ -147,10 +147,10 @@ function EditSamplePage() {
             : {
                 kind: "publish",
                 label: m.action_save_publish(),
-                onPublish: (value) =>
+                onPublish: (value, status) =>
                   updateSample.mutate(value, {
                     onSuccess: () =>
-                      publishSample.mutate(undefined, {
+                      publishSample.mutate(status, {
                         onSuccess: () => navigate({ to: "/" }),
                       }),
                   }),

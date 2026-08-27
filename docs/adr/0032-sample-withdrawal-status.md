@@ -12,7 +12,7 @@ A published sample keeps a permanent IGSN, but an owner may want it out of publi
 
 ## Decision
 
-**`sample.status` is an enum, `draft | published | withdrawn`, replacing the `published` boolean.** A sample never returns to `draft`: `draft -> published <-> withdrawn`. Withdrawing and republishing never re-mint the IGSN and never touch `publicationYear`.
+**`sample.status` is an enum, `draft | published | withdrawn`, replacing the `published` boolean.** A sample never returns to `draft`: `draft -> published <-> withdrawn`, and a draft may also publish straight to `withdrawn` (`POST /admin/samples/:id/publish?status=withdrawn`, offered discreetly behind the Save & Publish chevron), minting the IGSN without ever being public. Withdrawing and republishing never re-mint the IGSN and never touch `publicationYear`.
 
 **Two predicates replace the old single boolean, picked by what the site actually needs:**
 

@@ -43,7 +43,8 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
       }),
     update: (id, input) =>
       withTransaction(db, (trx) => updateSample(trx, id, input)),
-    publish: (id) => withTransaction(db, (trx) => publishSample(trx, id)),
+    publish: (id, status) =>
+      withTransaction(db, (trx) => publishSample(trx, id, status)),
     setStatus: (id, status) =>
       withTransaction(db, (trx) => setSampleStatus(trx, id, status)),
     getEditLock: (id) => withTransaction(db, (trx) => getEditLock(trx, id)),

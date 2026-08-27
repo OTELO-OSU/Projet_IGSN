@@ -1204,22 +1204,25 @@ describe("SampleForm", () => {
     await screen.getByRole("button", { name: "Confirm" }).click();
 
     await vi.waitFor(() =>
-      expect(onPublish).toHaveBeenCalledWith({
-        manualGroupIds: [],
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: "dredge",
-        material: "fossil",
-        collectionMethod: null,
-        collectionMethodDescription: null,
-        specificName: "MC-2026-007",
-        location: { position: { type: "point", longitude: 3, latitude: 45 } },
-        description: {
-          collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+      expect(onPublish).toHaveBeenCalledWith(
+        {
+          manualGroupIds: [],
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+          specificName: "MC-2026-007",
+          location: { position: { type: "point", longitude: 3, latitude: 45 } },
+          description: {
+            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+          },
+          availability: "exists",
+          scientificContext: publishableScientificContext,
         },
-        availability: "exists",
-        scientificContext: publishableScientificContext,
-      }),
+        "published",
+      ),
     );
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -1277,7 +1280,7 @@ describe("SampleForm", () => {
       const publish = screen.getByRole("button", { name: "Save & Publish" });
       await expect.element(publish).toBeDisabled();
 
-      publish.element().parentElement?.focus();
+      publish.element().closest<HTMLElement>("[tabindex]")?.focus();
       await expect
         .element(screen.getByRole("tooltip"))
         .toHaveTextContent(message);

@@ -42,6 +42,7 @@ import { requireEditLock } from "./require-edit-lock.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
+  publishStatusSchema,
   validateAddCollaboratorBody,
   validateAttachmentParams,
   validateAttachmentUpload,
@@ -346,6 +347,10 @@ export function createSampleAdminRoutes(
       if (!isSampleEditor(c.get("role"))) {
         return c.json({ error: "Forbidden" }, 403);
       }
+      const status = publishStatusSchema.safeParse(c.req.query("status"));
+      if (!status.success) {
+        return c.json({ error: "Invalid publish status" }, 400);
+      }
       if (hasPermanentIgsn(sample)) {
         return c.json({ error: "Sample is already published" }, 409);
       }
@@ -355,7 +360,7 @@ export function createSampleAdminRoutes(
       ) {
         return c.json({ error: "Sample is not ready to publish" }, 409);
       }
-      const published = await repository.publish(id);
+      const published = await repository.publish(id, status.data);
       if (mail && c.get("moderating")) {
         // ponytail: fire and forget; a retry queue if a lost notification ever matters.
         void notifySampleModerated({

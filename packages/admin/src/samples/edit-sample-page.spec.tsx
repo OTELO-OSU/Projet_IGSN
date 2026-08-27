@@ -203,10 +203,13 @@ function fakeApi(
         manualGroupOptions: MANUAL_GROUPS,
       });
     }),
-    http.post("*/samples/:id/publish", () => {
+    http.post("*/samples/:id/publish", ({ request }) => {
       if (fail === "publish") return new HttpResponse(null, { status: 500 });
-      sample = { ...sample, status: "published", igsn: IGSN };
-      calls.push("PUBLISH");
+      const status = new URL(request.url).searchParams.get(
+        "status",
+      ) as SampleStatus;
+      sample = { ...sample, status, igsn: IGSN };
+      calls.push(`PUBLISH ${status}`);
       return HttpResponse.json({
         data: sample,
         role,
@@ -439,7 +442,7 @@ describe("EditSamplePage", () => {
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeDisabled();
 
-    save.element().parentElement?.focus();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(
@@ -496,8 +499,11 @@ describe("EditSamplePage", () => {
     const { screen } = await renderEditPage("draft", null);
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
+    await expect
+      .element(screen.getByRole("button", { name: "More publishing options" }))
+      .toBeDisabled();
 
-    publish.element().parentElement?.focus();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/set the material before publishing/i);
@@ -509,7 +515,7 @@ describe("EditSamplePage", () => {
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
 
-    publish.element().parentElement?.focus();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
@@ -535,7 +541,7 @@ describe("EditSamplePage", () => {
 
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
-    publish.element().parentElement?.focus();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
@@ -562,7 +568,7 @@ describe("EditSamplePage", () => {
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
 
-    publish.element().parentElement?.focus();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
@@ -680,7 +686,7 @@ describe("EditSamplePage", () => {
     await screen.getByRole("option", { name: "Exists", exact: true }).click();
     await expect.element(availability).not.toHaveTextContent("Exists");
     await expect.element(save).toBeDisabled();
-    save.element().parentElement?.focus();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(
@@ -712,10 +718,12 @@ describe("EditSamplePage", () => {
     const save = screen.getByRole("button", { name: "Save as draft" });
 
     await expect.element(publish).toBeDisabled();
-    publish.element().parentElement?.focus();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/at most 5 attached files/i);
+    publish.element().closest<HTMLElement>("[tabindex]")?.blur();
+    await expect.element(screen.getByRole("tooltip")).not.toBeInTheDocument();
 
     await save.click();
 
@@ -771,10 +779,37 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("heading", { name: "My samples" }))
       .toBeVisible();
-    expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH"]);
+    expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH published"]);
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Sample published");
+  });
+
+  it("should publish straight as withdrawn from the publish menu", async () => {
+    const { screen, calls } = await renderEditPage();
+    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen
+      .getByRole("button", { name: "More publishing options" })
+      .click();
+    await screen
+      .getByRole("menuitem", { name: "Publish as withdrawn" })
+      .click();
+
+    await expect
+      .element(
+        screen.getByRole("dialog", { name: "Publish sample as withdrawn" }),
+      )
+      .toHaveTextContent(/stay out of search results/i);
+
+    await screen.getByRole("button", { name: "Confirm" }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "My samples" }))
+      .toBeVisible();
+    expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH withdrawn"]);
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Sample published as withdrawn");
   });
 
   it("should show an error toast when saving fails", async () => {
@@ -847,7 +882,7 @@ describe("EditSamplePage", () => {
       await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
       const save = screen.getByRole("button", { name: "Publish updates" });
       await expect.element(save).toBeDisabled();
-      save.element().parentElement?.focus();
+      save.element().closest<HTMLElement>("[tabindex]")?.focus();
       await expect
         .element(screen.getByRole("tooltip"))
         .toHaveTextContent("Pierre Martin");

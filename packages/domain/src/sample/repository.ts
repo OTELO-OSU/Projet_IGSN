@@ -37,7 +37,11 @@ export type SampleRepository = {
   getPublicByIgsn(igsn: string): Promise<Sample | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
   update(id: string, input: CreateSample): Promise<Sample | null>;
-  publish(id: string): Promise<Sample | null>;
+  /** `status` defaults to `published`; `withdrawn` mints the IGSN while keeping the sample out of public view. */
+  publish(
+    id: string,
+    status?: SetSampleStatusBody["status"],
+  ): Promise<Sample | null>;
   setStatus(
     id: string,
     status: SetSampleStatusBody["status"],
