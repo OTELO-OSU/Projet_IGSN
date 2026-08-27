@@ -465,24 +465,40 @@ describe("EditSamplePage", () => {
       .toBeVisible();
 
     expect(
-      screen.getByRole("button", { name: /withdraw|republish/i }).elements(),
+      screen
+        .getByRole("button", { name: /withdraw|republish|more actions/i })
+        .elements(),
     ).toHaveLength(0);
   });
 
-  it.each<[SampleStatus, string, string]>([
-    ["published", "Withdraw", "withdrawn"],
-    ["withdrawn", "Republish", "published"],
-  ])(
-    "should set the status of a %s sample when the change is confirmed",
-    async (status, label, sent) => {
-      const { screen, calls } = await renderEditPage(status);
+  it("should save the edits, then withdraw a published sample from the save button menu", async () => {
+    const { screen, calls } = await renderEditPage("published");
 
-      await screen.getByRole("button", { name: label, exact: true }).click();
-      await screen.getByRole("button", { name: "Confirm" }).click();
+    await screen.getByRole("button", { name: "More actions" }).click();
+    await screen.getByRole("menuitem", { name: "Save & Withdraw" }).click();
+    await expect
+      .element(screen.getByRole("dialog", { name: "Withdraw sample" }))
+      .toHaveTextContent(/your changes are saved/i);
+    await screen.getByRole("button", { name: "Confirm" }).click();
 
-      await vi.waitFor(() => expect(calls).toEqual([`STATUS ${sent}`]));
-    },
-  );
+    await vi.waitFor(() =>
+      expect(calls).toEqual([
+        "PUT Basalte du Massif Central",
+        "STATUS withdrawn",
+      ]),
+    );
+  });
+
+  it("should republish a withdrawn sample when the change is confirmed", async () => {
+    const { screen, calls } = await renderEditPage("withdrawn");
+
+    await screen
+      .getByRole("button", { name: "Republish", exact: true })
+      .click();
+    await screen.getByRole("button", { name: "Confirm" }).click();
+
+    await vi.waitFor(() => expect(calls).toEqual(["STATUS published"]));
+  });
 
   it("should tell the editor a withdrawn sample is out of public view", async () => {
     const { screen } = await renderEditPage("withdrawn");

@@ -1,3 +1,5 @@
+import type { ComponentProps } from "react";
+
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { ConfirmDialog } from "@projet-igsn/design-system/components/ui/confirm-button";
 import { DialogTrigger } from "@projet-igsn/design-system/components/ui/dialog";
@@ -11,30 +13,43 @@ import { ChevronDownIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 
-/** The discreet chevron next to Save & Publish, hiding the publish-as-withdrawn path. */
-export function PublishMenu({
+/** A discreet chevron attached to a main button, hiding one confirmed action in its menu. */
+export function ConfirmMenuButton({
+  label,
   disabled,
-  onPublishWithdrawn,
+  variant,
+  className,
+  itemLabel,
+  title,
+  description,
+  onConfirm,
 }: {
-  disabled: boolean;
-  onPublishWithdrawn: () => void;
+  label: string;
+  disabled?: boolean;
+  variant?: ComponentProps<typeof Button>["variant"];
+  className?: string;
+  itemLabel: string;
+  title: string;
+  description: string;
+  onConfirm: () => void;
 }) {
   return (
     <ConfirmDialog
-      title={m.publish_withdrawn_sample_title()}
-      description={m.publish_withdrawn_sample_warning()}
+      title={title}
+      description={description}
       confirmLabel={m.action_confirm()}
       cancelLabel={m.action_cancel()}
       closeLabel={m.action_close()}
-      onConfirm={onPublishWithdrawn}
+      onConfirm={onConfirm}
     >
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             type="button"
             size="icon"
-            aria-label={m.action_publish_options()}
-            className="border-l-primary-foreground/30 rounded-l-none border-l"
+            variant={variant}
+            aria-label={label}
+            className={className}
             disabled={disabled}
           >
             <ChevronDownIcon />
@@ -42,7 +57,7 @@ export function PublishMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DialogTrigger asChild>
-            <DropdownMenuItem>{m.action_publish_withdrawn()}</DropdownMenuItem>
+            <DropdownMenuItem>{itemLabel}</DropdownMenuItem>
           </DialogTrigger>
         </DropdownMenuContent>
       </DropdownMenu>

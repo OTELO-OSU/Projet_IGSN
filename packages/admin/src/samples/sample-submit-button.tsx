@@ -17,6 +17,7 @@ type SampleSubmitButtonProps = {
   label: string;
   disabled?: boolean;
   variant?: ComponentProps<typeof Button>["variant"];
+  className?: string;
   sampleId?: string;
   status: SampleStatus;
   blockedReason?: string;
@@ -26,6 +27,7 @@ export function SampleSubmitButton({
   label,
   disabled,
   variant,
+  className,
   sampleId,
   status,
   blockedReason,
@@ -41,6 +43,7 @@ export function SampleSubmitButton({
     <form.SubmitButton
       label={label}
       variant={variant}
+      className={className}
       disabled={disabled || reason !== undefined}
     />
   );

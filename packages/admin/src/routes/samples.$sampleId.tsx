@@ -10,13 +10,14 @@ import { InfoIcon } from "lucide-react";
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
+import { RepublishButton } from "#/samples/republish-button.tsx";
 import { SampleForm } from "#/samples/sample-form.tsx";
-import { SampleStatusButton } from "#/samples/sample-status-button.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
 import { useSampleEditLock } from "#/samples/use-sample-edit-lock.ts";
 import { ForbiddenError, useSample } from "#/samples/use-sample.ts";
+import { useSetSampleStatus } from "#/samples/use-set-sample-status.ts";
 import {
   SampleConflictError,
   useUpdateSample,
@@ -33,6 +34,7 @@ function EditSamplePage() {
   const query = useSample(sampleId);
   const updateSample = useUpdateSample(sampleId);
   const publishSample = usePublishSample(sampleId);
+  const setStatus = useSetSampleStatus(sampleId);
   const { heldByOther } = useSampleEditLock(
     sampleId,
     query.data != null && canUpdateSample(query.data.role, query.data),
@@ -59,7 +61,8 @@ function EditSamplePage() {
   }
 
   const wasPublished = hasPermanentIgsn(query.data);
-  const isPending = updateSample.isPending || publishSample.isPending;
+  const isPending =
+    updateSample.isPending || publishSample.isPending || setStatus.isPending;
   const conflict =
     updateSample.error instanceof SampleConflictError
       ? updateSample.error.reason
@@ -127,7 +130,9 @@ function EditSamplePage() {
         status={query.data.status}
         readOnlyReason={lockedMessage ?? rejection}
         statusAction={
-          <SampleStatusButton sampleId={sampleId} status={query.data.status} />
+          query.data.status === "withdrawn" ? (
+            <RepublishButton sampleId={sampleId} />
+          ) : undefined
         }
         onCancel={() => navigate({ to: "/" })}
         secondaryAction={{
@@ -139,6 +144,19 @@ function EditSamplePage() {
                 ? m.action_publish_updates()
                 : m.action_save_draft(),
           onSubmit: (value) => updateSample.mutate(value),
+          menu:
+            query.data.status === "published"
+              ? {
+                  label: m.action_status_options(),
+                  itemLabel: m.action_save_withdraw(),
+                  title: m.withdraw_sample_title(),
+                  description: m.withdraw_sample_warning(),
+                  onConfirm: (value) =>
+                    updateSample.mutate(value, {
+                      onSuccess: () => setStatus.mutate("withdrawn"),
+                    }),
+                }
+              : undefined,
         }}
         primaryAction={
           wasPublished && query.data.igsn

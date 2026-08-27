@@ -2038,7 +2038,7 @@ describe("SampleForm", () => {
     await screen.getByRole("option", { name: "Exists", exact: true }).click();
 
     await expect.element(save).toBeDisabled();
-    save.element().parentElement?.focus();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/whether the sample still exists/i);
@@ -2076,7 +2076,7 @@ describe("SampleForm", () => {
 
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeDisabled();
-    save.element().parentElement?.focus();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/classify the material down to a specific type/i);
@@ -2349,7 +2349,7 @@ describe("SampleForm post-publication field lock", () => {
 
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeDisabled();
-    save.element().parentElement?.focus();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/classify the material down to a specific type/i);

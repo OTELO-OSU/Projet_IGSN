@@ -83,7 +83,21 @@ export function sampleEditPage(page: Page) {
         .click();
     },
 
-    withdraw: () => confirmStatusChange("Withdraw", "Withdraw sample"),
+    withdraw: async () => {
+      await page.getByRole("button", { name: "More actions" }).click();
+      await page.getByRole("menuitem", { name: "Save & Withdraw" }).click();
+      await page
+        .getByRole("dialog", { name: "Withdraw sample" })
+        .getByRole("button", { name: "Confirm" })
+        .click();
+    },
+    expectWithdrawInMenu: async () => {
+      await page.getByRole("button", { name: "More actions" }).click();
+      await expect(
+        page.getByRole("menuitem", { name: "Save & Withdraw" }),
+      ).toBeVisible();
+      await page.keyboard.press("Escape");
+    },
     republish: () => confirmStatusChange("Republish", "Republish sample"),
     expectStatusAction: (name: string) =>
       expect(page.getByRole("button", { name })).toBeVisible(),

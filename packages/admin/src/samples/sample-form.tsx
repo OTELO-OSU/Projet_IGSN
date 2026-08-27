@@ -43,11 +43,11 @@ import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
 import { composeScientificContext } from "#/samples/compose-scientific-context.ts";
+import { ConfirmMenuButton } from "#/samples/confirm-menu-button.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
-import { PublishMenu } from "#/samples/publish-menu.tsx";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
 import { SampleAttachments } from "#/samples/sample-attachments.tsx";
@@ -86,8 +86,22 @@ const validateDraft =
       : { fields: sampleDraftFieldErrors(parsed.error.issues, value) };
   };
 
+/** One confirmed action hidden in a chevron attached to the submit button, run on the validated form value (save & ...). */
+export type SampleSubmitMenu = {
+  label: string;
+  itemLabel: string;
+  title: string;
+  description: string;
+  onConfirm: (value: CreateSample) => void;
+};
+
 export type SampleFormAction =
-  | { kind: "submit"; label: string; onSubmit: (value: CreateSample) => void }
+  | {
+      kind: "submit";
+      label: string;
+      onSubmit: (value: CreateSample) => void;
+      menu?: SampleSubmitMenu;
+    }
   | {
       kind: "publish";
       label: string;
@@ -298,9 +312,14 @@ export function SampleForm({
           >
             {action.label}
           </ConfirmButton>
-          <PublishMenu
+          <ConfirmMenuButton
+            label={m.action_publish_options()}
+            className="border-l-primary-foreground/30 rounded-l-none border-l"
             disabled={disabled}
-            onPublishWithdrawn={() => publish("withdrawn")}
+            itemLabel={m.action_publish_withdrawn()}
+            title={m.publish_withdrawn_sample_title()}
+            description={m.publish_withdrawn_sample_warning()}
+            onConfirm={() => publish("withdrawn")}
           />
         </div>
       ));
@@ -308,16 +327,37 @@ export function SampleForm({
     // ponytail: a native submit button routes through the form's default meta
     // (defaultSubmit), so only one submit-kind action is supported at a time.
     // No caller needs two; add explicit per-button meta if that ever changes.
+    const menu =
+      action.menu && (roleOnSample === null || isSampleEditor(roleOnSample))
+        ? action.menu
+        : undefined;
     const submitButton = (disabled: boolean) => (
       <form.AppForm>
-        <SampleSubmitButton
-          label={action.label}
-          variant={variant}
-          disabled={disabled}
-          sampleId={sampleId}
-          status={status}
-          blockedReason={readOnlyReason}
-        />
+        <div className="flex">
+          <SampleSubmitButton
+            label={action.label}
+            variant={variant}
+            className={menu ? "rounded-r-none" : undefined}
+            disabled={disabled}
+            sampleId={sampleId}
+            status={status}
+            blockedReason={readOnlyReason}
+          />
+          {menu ? (
+            <ConfirmMenuButton
+              label={menu.label}
+              variant={variant}
+              className="-ml-px rounded-l-none"
+              disabled={disabled}
+              itemLabel={menu.itemLabel}
+              title={menu.title}
+              description={menu.description}
+              onConfirm={() =>
+                void form.handleSubmit({ onValid: menu.onConfirm })
+              }
+            />
+          ) : null}
+        </div>
       </form.AppForm>
     );
     return wasPublished

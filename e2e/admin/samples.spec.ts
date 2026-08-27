@@ -124,7 +124,7 @@ test.describe("samples", () => {
 
     await edit.goto(sample.id);
     await edit.republish();
-    await edit.expectStatusAction("Withdraw");
+    await edit.expectWithdrawInMenu();
   });
 
   test("a researcher publishes a new sample straight as withdrawn", async ({
