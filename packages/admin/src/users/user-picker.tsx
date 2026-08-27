@@ -52,7 +52,7 @@ export function UserPicker({
           <span className="text-muted-foreground">{placeholder}</span>
         )}
       </ComboboxTrigger>
-      <PopoverContent className="w-96 min-w-[var(--radix-popover-trigger-width)] p-0">
+      <PopoverContent className="w-96 max-w-[calc(100vw-2rem)] min-w-[var(--radix-popover-trigger-width)] p-0">
         <Command shouldFilter={false} label={m.share_search_placeholder()}>
           <CommandInput
             placeholder={m.share_search_placeholder()}

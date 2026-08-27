@@ -12,6 +12,7 @@ import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
 
+import { likePattern } from "../like-pattern.ts";
 import { type Transactional, withTransaction } from "../transaction.ts";
 import { addManualGroupMember } from "./add-manual-group-member.ts";
 import { canDetachFromGroup } from "./can-detach-from-group.ts";
@@ -27,7 +28,7 @@ const publishedSampleGroups = (trx: Transactional<DB>) =>
     .innerJoin("sample", "sample.id", "sample_manual_group.sample_id")
     .where("sample.published", "=", true);
 
-// ponytail: name-keyed advisory lock rather than catching the unique violation, which would poison a reused transaction (no savepoints).
+// ponytail: name-keyed advisory lock rather than catching the unique violation.
 const lockName = (trx: Transactional<DB>, name: string) =>
   sql`select pg_advisory_xact_lock(hashtext(${name.toLowerCase()}))`.execute(
     trx,
@@ -47,11 +48,7 @@ export function createManualGroupRepository(
               : qb.where((eb) => eb.lit(false)),
           )
           .$if(Boolean(search), (qb) =>
-            qb.where(
-              "name",
-              "ilike",
-              `%${search!.replace(/[\\%_]/g, "\\$&")}%`,
-            ),
+            qb.where("name", "ilike", likePattern(search!)),
           );
         const rows = await matching
           .select((eb) => [

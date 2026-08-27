@@ -1,7 +1,13 @@
 import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
+import type { ReactNode } from "react";
 
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@projet-igsn/design-system/components/ui/tooltip";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
@@ -17,7 +23,20 @@ import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
 import { UserInitials } from "#/users/user-initials.tsx";
 import { UserStatusBadge } from "#/users/user-status-badge.tsx";
 
-const CAPPED_NAME_CLASS = "block max-w-48 wrap-break-word";
+function TruncatedCell({
+  text,
+  children,
+}: {
+  text: string;
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent>{text}</TooltipContent>
+    </Tooltip>
+  );
+}
 
 function sampleColumns(
   withOwnerStatus: boolean,
@@ -27,10 +46,12 @@ function sampleColumns(
       accessorKey: "igsn",
       header: () => m.column_igsn(),
       cell: ({ row }) => row.original.igsn,
+      meta: { className: "w-64" },
     },
     {
       id: "status",
       accessorFn: (sample) => (sample.igsn ? 1 : 0),
+      enableSorting: true,
       sortDescFirst: false,
       header: ({ column }) => (
         <button
@@ -50,32 +71,40 @@ function sampleColumns(
         ) : (
           <Badge variant="secondary">{m.status_draft()}</Badge>
         ),
+      meta: { className: "w-28" },
     },
     {
       accessorKey: "name",
       header: () => m.column_name(),
       cell: ({ row }) => (
-        <Link
-          to="/samples/$sampleId"
-          params={{ sampleId: row.original.id }}
-          className={`${CAPPED_NAME_CLASS} hover:underline`}
-        >
-          {row.original.name}
-        </Link>
+        <TruncatedCell text={row.original.name}>
+          <Link
+            to="/samples/$sampleId"
+            params={{ sampleId: row.original.id }}
+            className="block truncate hover:underline"
+          >
+            {row.original.name}
+          </Link>
+        </TruncatedCell>
       ),
+      meta: { className: "w-48" },
     },
     {
       accessorKey: "specificName",
       header: () => m.column_specific_name(),
       cell: ({ row }) =>
         row.original.specificName ? (
-          <span className={CAPPED_NAME_CLASS}>{row.original.specificName}</span>
+          <TruncatedCell text={row.original.specificName}>
+            <span className="block truncate">{row.original.specificName}</span>
+          </TruncatedCell>
         ) : null,
+      meta: { className: "w-40" },
     },
     {
       accessorKey: "nature",
       header: () => m.column_nature(),
       cell: ({ row }) => natureLabel(row.original.nature),
+      meta: { className: "w-36" },
     },
     {
       accessorKey: "collectionMethod",
@@ -84,6 +113,7 @@ function sampleColumns(
         row.original.collectionMethod
           ? collectionMethodLabel(row.original.collectionMethod)
           : "",
+      meta: { className: "w-40" },
     },
     {
       id: "owner",
@@ -99,11 +129,13 @@ function sampleColumns(
           </span>
         ) : null;
       },
+      meta: { className: "w-32" },
     },
     {
       accessorKey: "updatedAt",
       header: () => m.column_last_modified(),
       cell: ({ row }) => formatDate(row.original.updatedAt),
+      meta: { className: "w-32" },
     },
   ];
 }
@@ -134,6 +166,7 @@ export function SampleTable({
   return (
     <DataTable
       table={table}
+      className="table-fixed"
       emptyLabel={m.samples_empty()}
       onRowClick={(sample) =>
         void navigate({

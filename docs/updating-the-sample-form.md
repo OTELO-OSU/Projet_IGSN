@@ -99,7 +99,7 @@ So a path like `rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic
 
 **`optional: true`** marks a node where stopping is a complete, publishable answer on its own. Without it, a node that has children must be refined deeper before the sample can be published. Leaves are always valid stops.
 
-**`searchable: true`** offers the node as an option in the public search filter for that tree (the sidebar cascade on the sample list). It changes nothing in the declaration form: a value is always selectable there, searchable or not. There is no inheritance, so flag every node the filter should offer, at each level; a node without the flag stays absent from the filter even if its parent carries it. A plain leaf that would otherwise need no entry gets one just for the flag:
+**`searchable: true`** offers the node as an option in the public search filter for that tree (the sidebar cascade on the sample list). It changes nothing in the declaration form: a value is always selectable there, searchable or not. It changes nothing in the admin collection-method filter either, which offers every level regardless of the flag. There is no inheritance, so flag every node the filter should offer, at each level; a node without the flag stays absent from the filter even if its parent carries it. A plain leaf that would otherwise need no entry gets one just for the flag:
 
 ```ts
 // packages/domain/src/sample/material/classification.ts

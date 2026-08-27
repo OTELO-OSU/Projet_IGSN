@@ -4,6 +4,8 @@ import { numericAgeToAnnum } from "@projet-igsn/domain/sample/age/numeric-age-to
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { type Expression, sql, type SqlBool } from "kysely";
 
+import { likePattern } from "../../like-pattern.ts";
+
 export const FACET_COLUMN: Record<string, string> = {
   type: "type",
   material: "material",
@@ -24,10 +26,6 @@ export const FACET_JOIN: Record<string, { table: string; column: string }> = {
   manualGroup: { table: "sample_manual_group", column: "group_id" },
   contributor: { table: "user_sample", column: "user_id" },
 };
-
-function likePattern(value: string): string {
-  return `%${value.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
-}
 
 function facetFilter(
   facet: (typeof SAMPLE_FACETS)[number],

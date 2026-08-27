@@ -16,6 +16,12 @@ lint: generate
 	@pnpm lint:apply
 	@pnpm fmt:apply
 
+STAGED = git --no-pager diff --cached --name-only --diff-filter=ACMR
+
+lint-staged:
+	@($(STAGED) | grep -E '\.(ts|tsx)$$' | xargs -r pnpm oxlint --fix)
+	@($(STAGED) | grep -E '\.(js|json|ts|tsx|md)$$' | xargs -r pnpm oxfmt)
+
 test:
 	@pnpm test
 
@@ -94,7 +100,6 @@ material-tree:							## Dump the full material tree, indented by depth
 material-tree-json:						## Dump the material vocabulary structure as JSON
 	@pnpm -F @projet-igsn/domain material-tree:json
 
-# mtime, not `git diff`: both outputs are gitignored, so git has no baseline
 CATALOGS = packages/admin/src/paraglide/messages.js packages/frontend/src/paraglide/messages.js
 ROUTE_TREES = packages/admin/src/routeTree.gen.ts packages/frontend/src/routeTree.gen.ts
 
@@ -104,7 +109,6 @@ generate: $(CATALOGS) $(ROUTE_TREES)	## Recompile the i18n catalogs and route tr
 $(CATALOGS) &: $(wildcard packages/*/messages/*.json packages/*/project.inlang/settings.json)
 	@pnpm -r --parallel run compile-i18n
 
-# Dir mtimes track the route set; tsr may skip the output, so stamp it
 $(ROUTE_TREES) &: $(shell find packages/*/src/routes -type d)
 	@pnpm -r --parallel run generate-routes
 	@touch $(ROUTE_TREES)

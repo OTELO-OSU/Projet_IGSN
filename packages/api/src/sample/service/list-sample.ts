@@ -53,6 +53,12 @@ function assignedTo(
   )`;
 }
 
+function hasStatus(
+  status: NonNullable<ListSamplesQuery["status"]>,
+): Expression<SqlBool> {
+  return sql<SqlBool>`igsn is ${status === "published" ? sql`not null` : sql`null`}`;
+}
+
 function isPublished(): Expression<SqlBool> {
   return sql<SqlBool>`published = true`;
 }
@@ -72,6 +78,7 @@ async function listSamplesWhere(
       ...(search === undefined ? [] : searchFilters(search)),
       ...(params.bbox === undefined ? [] : [withinBbox(params.bbox)]),
       ...facetFilters(params),
+      ...(params.status === undefined ? [] : [hasStatus(params.status)]),
       ...scope,
     ];
     const matching = () =>

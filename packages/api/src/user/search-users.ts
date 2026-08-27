@@ -3,6 +3,7 @@ import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
 import type { DB } from "../db.ts";
 
+import { likePattern } from "../like-pattern.ts";
 import { type Transactional } from "../transaction.ts";
 const SEARCH_LIMIT = 10;
 const BROWSE_LIMIT = 20;
@@ -66,7 +67,7 @@ export function searchUsers(
   if (search === undefined) {
     return others.orderBy("email").limit(BROWSE_LIMIT).execute();
   }
-  const pattern = `%${search.replace(/[\\%_]/g, "\\$&")}%`;
+  const pattern = likePattern(search);
   return others
     .where((eb) =>
       eb.or([eb("name", "ilike", pattern), eb("email", "ilike", pattern)]),

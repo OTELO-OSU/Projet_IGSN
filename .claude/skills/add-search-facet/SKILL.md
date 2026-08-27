@@ -52,7 +52,8 @@ is missing, that is a domain/API change first (see the `add-domain-entity` and
    `searchable: true` in its `vocabulary.ts` (see the `TreeNode` shape in
    `sample/path/tree-node.ts`). There is no inheritance; flag every node the
    cascade should offer, at each level. See the `add-sample-vocabulary` skill
-   for the tree shape.
+   for the tree shape. This flag is the public facet's policy alone; the
+   admin collection-method filter ignores it and offers every level.
 
 3. **API column** (`api/sample/service/facet-filter.ts`): add the facet key to
    `FACET_COLUMN`. This map is an allow-list (keys are fixed, never user input),

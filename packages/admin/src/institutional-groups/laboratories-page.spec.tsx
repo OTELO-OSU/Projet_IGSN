@@ -50,6 +50,11 @@ function fakeApi() {
   let members = MEMBERS;
   fakeCurrentUser({ superAdmin: true });
   worker.use(
+    http.get("*/admin/users/institutional-counts", () =>
+      HttpResponse.json({
+        data: { organizations: {}, osus: {}, laboratories: { UMR7358: 3 } },
+      }),
+    ),
     http.delete("*/admin/users/:id/institutional-groups", ({ params }) => {
       members = members.filter((member) => member.id !== params.id);
       return new HttpResponse(null, { status: 204 });
@@ -73,24 +78,16 @@ function fakeApi() {
 const renderLaboratories = (url = "/institutional-groups/laboratories") =>
   renderRoute(url);
 
-const chooseOption = async (
+const searchInstitution = async (
   screen: Awaited<ReturnType<typeof renderLaboratories>>["screen"],
-  {
-    filter,
-    search,
-    option,
-  }: { filter: string; search: string; option: string },
+  term: string,
 ) => {
-  await screen.getByRole("combobox", { name: filter }).click();
-  await screen.getByPlaceholder(search).fill(option);
-  await screen.getByRole("option", { name: option }).click();
+  await screen.getByRole("combobox", { name: "Institution" }).click();
+  await screen.getByLabelText("Search institutions").fill(term);
 };
 
-const ORGANIZATION_FILTER = "Organization";
-const ORGANIZATION_SEARCH = "Search organizations...";
-const OSU_FILTER = "OSU";
-const OSU_SEARCH = "Search OSUs...";
 const LORRAINE = "Université de Lorraine";
+const ORLEANS = "Université d'Orléans";
 const CNRS = "Centre National de la Recherche Scientifique (CNRS)";
 const OSUC = "OSUC (OSUC)";
 
@@ -99,11 +96,8 @@ describe("LaboratoriesPage", () => {
     fakeApi();
     const { screen, router } = await renderLaboratories();
 
-    await chooseOption(screen, {
-      filter: ORGANIZATION_FILTER,
-      search: ORGANIZATION_SEARCH,
-      option: LORRAINE,
-    });
+    await searchInstitution(screen, LORRAINE);
+    await screen.getByRole("button", { name: LORRAINE, exact: true }).click();
 
     await expect
       .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
@@ -119,21 +113,19 @@ describe("LaboratoriesPage", () => {
     ).toHaveLength(0);
     await expect
       .poll(() => router.state.location.search)
-      .toEqual({ organization: "04vfs2w97" });
+      .toEqual({ institution: "organization:04vfs2w97" });
   });
 
   it("should narrow the laboratories further with an OSU", async () => {
     fakeApi();
-    const { screen } = await renderLaboratories(
-      "/institutional-groups/laboratories?organization=014zrew76",
-    );
+    const { screen, router } = await renderLaboratories();
 
-    await chooseOption(screen, {
-      filter: OSU_FILTER,
-      search: OSU_SEARCH,
-      option: OSUC,
-    });
+    await searchInstitution(screen, ORLEANS);
+    await screen.getByRole("button", { name: OSUC, exact: true }).click();
 
+    await expect
+      .poll(() => router.state.location.search)
+      .toEqual({ institution: "osu:014zrew76/OSUC" });
     await expect
       .element(screen.getByRole("cell", { name: "ISTO", exact: true }))
       .toBeVisible();
@@ -145,37 +137,23 @@ describe("LaboratoriesPage", () => {
     ).toHaveLength(0);
   });
 
-  it("should drop the OSU when the organization changes", async () => {
+  it("should show the member count of every laboratory, zero included", async () => {
     fakeApi();
-    const { screen, router } = await renderLaboratories(
-      "/institutional-groups/laboratories?organization=014zrew76&osu=OSUC",
-    );
-
-    await chooseOption(screen, {
-      filter: ORGANIZATION_FILTER,
-      search: ORGANIZATION_SEARCH,
-      option: LORRAINE,
-    });
+    const { screen } = await renderLaboratories();
 
     await expect
-      .poll(() => router.state.location.search)
-      .toEqual({ organization: "04vfs2w97" });
-    await expect
-      .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
-      .toBeVisible();
-  });
-
-  it("should ignore an OSU that comes without an organization", async () => {
-    fakeApi();
-    const { screen } = await renderLaboratories(
-      "/institutional-groups/laboratories?osu=OSUC",
-    );
-
-    await expect
-      .element(screen.getByRole("cell", { name: "ISTO", exact: true }))
+      .element(
+        screen
+          .getByRole("row", { name: /CRPG/ })
+          .getByRole("cell", { name: "3", exact: true }),
+      )
       .toBeVisible();
     await expect
-      .element(screen.getByRole("cell", { name: "CRPG", exact: true }))
+      .element(
+        screen
+          .getByRole("row", { name: /GEORESSOURCES/ })
+          .getByRole("cell", { name: "0", exact: true }),
+      )
       .toBeVisible();
   });
 
@@ -272,7 +250,7 @@ describe("LaboratoriesPage", () => {
     async (search) => {
       fakeApi();
       const { screen } = await renderLaboratories(
-        "/institutional-groups/laboratories?organization=04vfs2w97",
+        "/institutional-groups/laboratories?institution=organization:04vfs2w97",
       );
 
       await screen

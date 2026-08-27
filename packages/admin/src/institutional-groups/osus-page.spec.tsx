@@ -19,6 +19,11 @@ vi.mock("react-oidc-context", () => ({
 function fakeApi() {
   fakeCurrentUser({ superAdmin: true });
   worker.use(
+    http.get("*/admin/users/institutional-counts", () =>
+      HttpResponse.json({
+        data: { organizations: {}, osus: {}, laboratories: {} },
+      }),
+    ),
     http.get("*/admin/users", () =>
       HttpResponse.json({ data: [], meta: { total: 0 } }),
     ),

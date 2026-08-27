@@ -8,9 +8,12 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import { membersColumn } from "#/institutional-groups/members-column.ts";
 import { m } from "#/paraglide/messages.js";
 
-const columns: ColumnDef<Organization>[] = [
+const organizationColumns = (
+  counts: Record<string, number>,
+): ColumnDef<Organization>[] => [
   {
     accessorKey: "ror",
     header: () => m.column_ror(),
@@ -34,17 +37,20 @@ const columns: ColumnDef<Organization>[] = [
     header: () => m.column_acronym(),
     cell: ({ row }) => row.original.acronym,
   },
+  membersColumn(counts, (row) => row.ror),
 ];
 
 export function OrganizationTable({
   organizations,
+  memberCounts,
 }: {
   organizations: Organization[];
+  memberCounts: Record<string, number>;
 }) {
   const navigate = useNavigate();
   const table = useReactTable({
     data: organizations,
-    columns,
+    columns: organizationColumns(memberCounts),
     getCoreRowModel: getCoreRowModel(),
   });
 

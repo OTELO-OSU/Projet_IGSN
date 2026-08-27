@@ -15,7 +15,7 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { fullName } from "@projet-igsn/domain/user/full-name";
 
-import { matchesSearch } from "#/institutional-groups/matches-search.ts";
+import { matchesSearch } from "#/filters/matches-search.ts";
 import { m } from "#/paraglide/messages.js";
 import { UserStatusBadge } from "#/users/user-status-badge.tsx";
 

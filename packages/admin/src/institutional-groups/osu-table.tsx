@@ -9,9 +9,10 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import { membersColumn } from "#/institutional-groups/members-column.ts";
 import { m } from "#/paraglide/messages.js";
 
-const columns: ColumnDef<Osu>[] = [
+const osuColumns = (counts: Record<string, number>): ColumnDef<Osu>[] => [
   {
     accessorKey: "code",
     header: () => m.column_code(),
@@ -41,13 +42,20 @@ const columns: ColumnDef<Osu>[] = [
       </ul>
     ),
   },
+  membersColumn(counts, (row) => row.code),
 ];
 
-export function OsuTable({ osus }: { osus: Osu[] }) {
+export function OsuTable({
+  osus,
+  memberCounts,
+}: {
+  osus: Osu[];
+  memberCounts: Record<string, number>;
+}) {
   const navigate = useNavigate();
   const table = useReactTable({
     data: osus,
-    columns,
+    columns: osuColumns(memberCounts),
     getCoreRowModel: getCoreRowModel(),
   });
 

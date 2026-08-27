@@ -68,7 +68,10 @@ function fakeApi({ forbidden = false }: { forbidden?: boolean } = {}) {
       }),
     ),
     http.get("*/admin/manual-groups", () =>
-      HttpResponse.json({ data: [], meta: { total: 0 } }),
+      HttpResponse.json({
+        data: [{ ...manualGroup(1), memberCount: 0 }],
+        meta: { total: 1 },
+      }),
     ),
     http.get("*/admin/users", ({ request }) => {
       if (forbidden) {
@@ -204,6 +207,56 @@ describe("UsersPage", () => {
     await expect
       .poll(() => router.state.location.search)
       .toMatchObject({ page: 1, status: "rejected" });
+  });
+
+  it("should ask the server for the searched users on page 1", async () => {
+    const { requested } = fakeApi();
+    const { screen } = await renderUsersPage("/users?page=2&perPage=10");
+
+    await screen.getByLabelText("Search users").fill("curie");
+
+    await expect.poll(() => requested.at(-1)).toContain("search=curie");
+    expect(requested.at(-1)).toContain("page=1");
+  });
+
+  it("should map the picked institution onto the institutional params", async () => {
+    const { requested } = fakeApi();
+    const { screen } = await renderUsersPage();
+
+    await screen.getByRole("button", { name: "Add a filter" }).click();
+    await screen
+      .getByRole("dialog")
+      .getByRole("button", { name: "Institution" })
+      .click();
+    await screen.getByRole("combobox", { name: "Institution" }).click();
+    await screen
+      .getByLabelText("Search institutions")
+      .fill("Université d'Orléans");
+    await screen
+      .getByRole("button", { name: "OSUC (OSUC)", exact: true })
+      .click();
+
+    await expect
+      .poll(() => requested.at(-1))
+      .toContain("institutionalOrganization=014zrew76");
+    expect(requested.at(-1)).toContain("institutionalOsu=OSUC");
+  });
+
+  it("should ask the server for the picked manual group", async () => {
+    const { requested } = fakeApi();
+    const { screen } = await renderUsersPage();
+
+    await screen.getByRole("button", { name: "Add a filter" }).click();
+    await screen
+      .getByRole("dialog")
+      .getByRole("button", { name: "Manual group" })
+      .click();
+    await screen.getByRole("combobox", { name: "Manual group" }).click();
+    await screen.getByRole("option", { name: "Group1" }).click();
+
+    await expect
+      .poll(() => requested.at(-1))
+      .toContain(`manualGroup=${manualGroup(1).id}`);
   });
 
   it("should page through the list from the server", async () => {

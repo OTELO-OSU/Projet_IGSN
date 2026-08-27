@@ -307,6 +307,30 @@ describe("filters on the moderated sample list", () => {
   );
 
   pgTest(
+    "should keep only the published samples when the status filter asks for them",
+    async ({ db }) => {
+      // Arrange
+      const app = await arrangeSuperAdmin(db);
+      const owner = await insertUser(db, "owner@example.com");
+      const published = await ownedSample(db, owner.id, {
+        ...draft,
+        name: "Published",
+      });
+      await db
+        .updateTable("sample")
+        .set({ igsn: "01K072TVWVFK5A1RRZ5MY4PPK9", published: true })
+        .where("id", "=", published.id)
+        .execute();
+      await ownedSample(db, owner.id, { ...draft, name: "Still a draft" });
+      // Act
+      const res = await listModerated(app, "&status=published");
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await listedIds(res)).toEqual({ ids: [published.id], total: 1 });
+    },
+  );
+
+  pgTest(
     "should keep a filtered list inside the caller's moderation scope",
     async ({ db }) => {
       // Arrange

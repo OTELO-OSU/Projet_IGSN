@@ -6,17 +6,11 @@ import {
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
 
-import { matchesSearch } from "#/institutional-groups/matches-search.ts";
+import type { TreeFilterNode } from "#/filters/tree-filter-node.ts";
+
 import { m } from "#/paraglide/messages.js";
 
-export type InstitutionNode = {
-  key: string;
-  label: string;
-  value?: string;
-  children: InstitutionNode[];
-};
-
-export const INSTITUTION_TREE: InstitutionNode[] = buildInstitutionTree().map(
+export const INSTITUTION_TREE: TreeFilterNode[] = buildInstitutionTree().map(
   ({ ror, osus }) => ({
     key: ror,
     label: organizationLabel(ror),
@@ -45,13 +39,11 @@ export const INSTITUTION_TREE: InstitutionNode[] = buildInstitutionTree().map(
   }),
 );
 
-export function filterNodes(
-  nodes: InstitutionNode[],
-  search: string,
-): InstitutionNode[] {
-  return nodes.flatMap((node) => {
-    if (matchesSearch(node.label, search)) return [node];
-    const children = filterNodes(node.children, search);
-    return children.length === 0 ? [] : [{ ...node, children }];
-  });
-}
+export const ORGANIZATION_TREE: TreeFilterNode[] = INSTITUTION_TREE.map(
+  (organization) => ({
+    ...organization,
+    children: organization.children
+      .filter((osu) => osu.value !== undefined)
+      .map((osu) => ({ ...osu, children: [] })),
+  }),
+);
