@@ -6,7 +6,7 @@ export type SeededSample = {
   name: string;
   nature: string;
   igsn: string | null;
-  published: boolean;
+  status: "draft" | "published" | "withdrawn";
   owner: string;
   collaborators: { researcher: string; role: "editor" | "contributor" }[];
 };
@@ -30,6 +30,13 @@ export function published(samples: SeededSample[]) {
     return igsn;
   };
   return { basalt: igsnOf("Basalt 42"), granite: igsnOf("Granite 7") };
+}
+
+export function withdrawn(samples: SeededSample[]) {
+  const sample = samples.find((s) => s.status === "withdrawn");
+  if (!sample?.igsn)
+    throw new Error("seed must withdraw a sample with an igsn");
+  return { igsn: sample.igsn, name: sample.name };
 }
 
 export const test = base.extend<{ samples: SeededSample[] }>({

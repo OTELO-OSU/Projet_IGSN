@@ -229,7 +229,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
                   .selectFrom("user_sample")
                   .innerJoin("sample", "sample.id", "user_sample.sample_id")
                   .select("sample.id")
-                  .where("sample.published", "=", true)
+                  .where("sample.status", "=", "published")
                   .whereRef("user_sample.user_id", "=", "user.id"),
               ),
               ...(include ? [eb("user.id", "=", include)] : []),

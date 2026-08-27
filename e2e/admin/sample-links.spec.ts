@@ -13,7 +13,7 @@ test.describe("sample links", () => {
     samples,
   }) => {
     const draft = samples.find(
-      (sample) => !sample.published && sample.owner === "pierre",
+      (sample) => sample.status === "draft" && sample.owner === "pierre",
     );
     if (!draft) throw new Error("seed must include a draft sample for pierre");
 

@@ -67,7 +67,7 @@ function fakeApi(failWrites = false) {
         economicDepositDescription: null,
         ...((await request.json()) as Record<string, unknown>),
         igsn: null,
-        published: false,
+        status: "draft",
         createdAt: "2026-07-06T00:00:00.000Z",
         updatedAt: "2026-07-06T00:00:00.000Z",
       };

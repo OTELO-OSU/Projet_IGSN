@@ -16,6 +16,14 @@ export function sampleEditPage(page: Page) {
     }).toPass({ timeout: 20_000 });
   };
 
+  const confirmStatusChange = async (action: string, dialog: string) => {
+    await page.getByRole("button", { name: action }).click();
+    await page
+      .getByRole("dialog", { name: dialog })
+      .getByRole("button", { name: "Confirm" })
+      .click();
+  };
+
   return {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
@@ -61,13 +69,16 @@ export function sampleEditPage(page: Page) {
       await page.getByLabel(/collection curator/i).fill("Paul Bernard");
       await pick("Collection origin", "Scientific expedition");
     },
-    publish: async () => {
-      await page.getByRole("button", { name: "Save & Publish" }).click();
-      await page
-        .getByRole("dialog", { name: "Publish sample" })
-        .getByRole("button", { name: "Confirm" })
-        .click();
-    },
+    publish: () => confirmStatusChange("Save & Publish", "Publish sample"),
+
+    withdraw: () => confirmStatusChange("Withdraw", "Withdraw sample"),
+    republish: () => confirmStatusChange("Republish", "Republish sample"),
+    expectStatusAction: (name: string) =>
+      expect(page.getByRole("button", { name })).toBeVisible(),
+    expectWithdrawnHint: () =>
+      expect(
+        page.getByText("This sample is withdrawn from public view."),
+      ).toBeVisible(),
 
     openLinksTab: () => openTab("Links"),
     addLink: async (index: number, url: string, description: string) => {

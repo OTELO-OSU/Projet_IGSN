@@ -4,7 +4,12 @@ import { institutionFilterSchema } from "../institutional-group/institution-filt
 import { manualGroupSchema } from "../manual-group/model.ts";
 import { userSampleRoleSchema } from "../user-sample/model.ts";
 import { userSchema } from "../user/model.ts";
-import { createSampleSchema, sampleSchema } from "./sample.ts";
+import { withdrawnSampleSchema } from "./publication/withdrawn-sample.ts";
+import {
+  createSampleSchema,
+  sampleSchema,
+  sampleStatusSchema,
+} from "./sample.ts";
 import { facetQueryFields } from "./search/facets.ts";
 import { MAX_SEARCH_LENGTH } from "./search/search-tokens.ts";
 
@@ -81,7 +86,7 @@ export const listSamplesQuerySchema = z.object({
     .optional()
     .catch(undefined),
   ownership: z.enum(["mine", "shared"]).optional().catch(undefined),
-  status: z.enum(["draft", "published"]).optional().catch(undefined),
+  status: sampleStatusSchema.optional().catch(undefined),
   ownerId: z.uuid().optional().catch(undefined),
   institution: institutionFilterSchema.optional().catch(undefined),
   ...facetQueryFields(),
@@ -100,6 +105,23 @@ export type ListSamplesResponse = z.infer<typeof listSamplesResponseSchema>;
 export const sampleResponseSchema = z.object({ data: sampleSchema });
 
 export type SampleResponse = z.infer<typeof sampleResponseSchema>;
+
+export const publicSampleResponseSchema = z.object({
+  data: z.discriminatedUnion("status", [
+    sampleSchema.extend({ status: z.literal("published") }),
+    withdrawnSampleSchema,
+  ]),
+});
+
+export type PublicSampleResponse = z.infer<typeof publicSampleResponseSchema>;
+
+export type PublicSample = PublicSampleResponse["data"];
+
+export const setSampleStatusBodySchema = z.strictObject({
+  status: z.enum(["published", "withdrawn"]),
+});
+
+export type SetSampleStatusBody = z.infer<typeof setSampleStatusBodySchema>;
 
 export const adminSampleListItemSchema = sampleSchema.extend({
   owner: userSchema

@@ -15,7 +15,7 @@ export async function publishSample(
   const row = await db
     .updateTable("sample")
     .set({
-      published: true,
+      status: "published",
       igsn: generateIgsnSuffix(id),
       publication_year: sql`coalesce(publication_year, extract(year from now())::int)`,
     })

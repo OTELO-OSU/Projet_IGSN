@@ -100,6 +100,7 @@ export function sampleFilterEntries({
           items={[
             { value: "draft", label: m.status_draft() },
             { value: "published", label: m.status_published() },
+            { value: "withdrawn", label: m.status_withdrawn() },
           ]}
           value={values.status}
           onChange={(next) =>

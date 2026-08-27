@@ -56,11 +56,11 @@ function assignedTo(
 function hasStatus(
   status: NonNullable<ListSamplesQuery["status"]>,
 ): Expression<SqlBool> {
-  return sql<SqlBool>`igsn is ${status === "published" ? sql`not null` : sql`null`}`;
+  return sql<SqlBool>`status = ${status}`;
 }
 
 function isPublished(): Expression<SqlBool> {
-  return sql<SqlBool>`published = true`;
+  return sql<SqlBool>`status = 'published'`;
 }
 
 async function listSamplesWhere(
@@ -93,7 +93,7 @@ async function listSamplesWhere(
       .select(sampleAttachmentsQuery)
       .select(sampleManualGroupsQuery)
       .$if(withOwner, (qb) => qb.select(sampleOwnerQuery))
-      .$if(sort === "status", (qb) => qb.orderBy(sql`igsn is not null`, order))
+      .$if(sort === "status", (qb) => qb.orderBy("status", order))
       .$call((qb) => (relevance ? qb.orderBy(relevance, "desc") : qb))
       .orderBy("updated_at", "desc")
       .orderBy("id", "desc")

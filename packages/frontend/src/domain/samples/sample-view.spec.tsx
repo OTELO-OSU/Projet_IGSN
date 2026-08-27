@@ -47,7 +47,7 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   economicDepositDescription: null,
   manualGroups: [],
   owner: null,
-  published: true,
+  status: "published",
   createdAt: new Date("2024-01-01"),
   updatedAt: new Date("2024-01-01"),
   ...overrides,

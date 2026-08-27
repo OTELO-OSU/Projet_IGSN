@@ -4,6 +4,7 @@ import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
   contactSampleOwnerBodySchema,
   listSamplesQuerySchema,
+  setSampleStatusBodySchema,
   updateSampleBodySchema,
 } from "@projet-igsn/domain/sample/sample-validator";
 import { addCollaboratorBodySchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
@@ -70,6 +71,14 @@ export const validateContactBody = validator("json", (value, c) => {
   const parsed = contactSampleOwnerBodySchema.safeParse(value);
   if (!parsed.success) {
     return c.json({ error: "Invalid contact request" }, 400);
+  }
+  return parsed.data;
+});
+
+export const validateStatusBody = validator("json", (value, c) => {
+  const parsed = setSampleStatusBodySchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid sample status" }, 400);
   }
   return parsed.data;
 });

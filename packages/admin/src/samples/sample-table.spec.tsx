@@ -1,3 +1,4 @@
+import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
@@ -47,7 +48,7 @@ const sample: AdminSampleListItem = {
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,
-  published: false,
+  status: "draft",
   createdAt: new Date("2026-06-01T00:00:00.000Z"),
   updatedAt: new Date("2026-07-01T10:00:00.000Z"),
 };
@@ -104,19 +105,22 @@ describe("SampleTable", () => {
       .toHaveTextContent(/^IGSN/);
   });
 
-  it("should render the IGSN and a Published status of a published sample", async () => {
+  it("should render the IGSN of a published sample", async () => {
     const screen = await renderTable([
-      { ...sample, igsn: "01K072TVWVFK5A1RRZ5MY4PPK9", published: true },
+      { ...sample, igsn: "01K072TVWVFK5A1RRZ5MY4PPK9", status: "published" },
     ]);
     await expect
       .element(screen.getByText("01K072TVWVFK5A1RRZ5MY4PPK9"))
       .toBeInTheDocument();
-    await expect.element(screen.getByText("Published")).toBeInTheDocument();
   });
 
-  it("should show a Draft status when the sample has no IGSN", async () => {
-    const screen = await renderTable(samples);
-    await expect.element(screen.getByText("Draft")).toBeInTheDocument();
+  it.each<[SampleStatus, string]>([
+    ["draft", "Draft"],
+    ["published", "Published"],
+    ["withdrawn", "Withdrawn"],
+  ])("should badge a %s sample as %s", async (status, label) => {
+    const screen = await renderTable([{ ...sample, status }]);
+    await expect.element(screen.getByText(label)).toBeInTheDocument();
   });
 
   it("should request an asc then desc status sort when the header is clicked", async () => {

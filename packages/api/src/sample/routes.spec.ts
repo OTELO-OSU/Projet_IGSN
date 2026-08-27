@@ -8,6 +8,7 @@ import { describe, expect, vi } from "vitest";
 import { createApp } from "../app.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
+import { setSampleStatus } from "./service/set-sample-status.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
 
@@ -86,6 +87,8 @@ describe("public sample routes", () => {
     const draft = await createSample(client, "Grès de Fontainebleau");
     await publishSample(client, draft.id);
     await createSample(client, "Basalte du Massif Central");
+    const retired = await createPublishedSample(client, "Rhyolite retirée");
+    await setSampleStatus(db, retired.id, "withdrawn");
     // Act
     const res = await client.samples.$get({
       query: { page: "1", perPage: "10" },
@@ -93,7 +96,7 @@ describe("public sample routes", () => {
     // Assert
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({
-      data: [{ name: "Grès de Fontainebleau", published: true }],
+      data: [{ name: "Grès de Fontainebleau", status: "published" }],
       meta: { total: 1 },
     });
   });
@@ -468,6 +471,35 @@ describe("public sample routes", () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toMatchObject({
         data: { igsn: published.igsn, name: "Basalte du Massif Central" },
+      });
+    },
+  );
+
+  pgTest(
+    "should reduce a withdrawn sample to its public whitelist",
+    async ({ db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      const published = await createPublishedSample(client, "Rhyolite retirée");
+      await setSampleStatus(db, published.id, "withdrawn");
+      // Act
+      const res = await client.samples[":igsn"].$get({
+        param: { igsn: published.igsn! },
+      });
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual({
+        data: {
+          status: "withdrawn",
+          igsn: published.igsn,
+          name: "Rhyolite retirée",
+          nature: "rock_powder",
+          type: "individual_sample",
+          material: "sediment.exogenous_detritic.clay",
+          location: { region: null, localityName: null },
+          collectorName: null,
+          collectionCurator: "Georges Cuvier",
+        },
       });
     },
   );

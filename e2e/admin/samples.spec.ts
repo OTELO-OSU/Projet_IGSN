@@ -3,6 +3,7 @@ import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { test } from "../support/db";
+import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 
 test.describe("samples", () => {
   test("a researcher browses the samples they declared", async ({
@@ -96,6 +97,34 @@ test.describe("samples", () => {
 
     await list.filterByOwnership("All samples");
     await expectOnly([...owned, ...shared], []);
+  });
+
+  test("an owner withdraws a published sample and republishes it", async ({
+    page,
+    samples,
+  }) => {
+    const sample = samples.find((candidate) => candidate.name === "Basalt 42");
+    if (!sample?.igsn) {
+      throw new Error("seed must include the published Basalt 42 sample");
+    }
+
+    await signInAsResearcher(page, RESEARCHERS.jean);
+    const list = sampleListPage(page);
+    await list.openSample(sample.name);
+
+    const edit = sampleEditPage(page);
+    await edit.expectVisible();
+    await edit.withdraw();
+    await edit.expectWithdrawnHint();
+    await edit.expectStatusAction("Republish");
+
+    const detail = sampleDetailPage(page);
+    await detail.goto(sample.igsn);
+    await detail.expectWithdrawnNotice();
+
+    await edit.goto(sample.id);
+    await edit.republish();
+    await edit.expectStatusAction("Withdraw");
   });
 
   test("the create form rejects a sample without a name", async ({ page }) => {

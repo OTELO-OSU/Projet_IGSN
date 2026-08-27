@@ -318,7 +318,7 @@ describe("filters on the moderated sample list", () => {
       });
       await db
         .updateTable("sample")
-        .set({ igsn: "01K072TVWVFK5A1RRZ5MY4PPK9", published: true })
+        .set({ igsn: "01K072TVWVFK5A1RRZ5MY4PPK9", status: "published" })
         .where("id", "=", published.id)
         .execute();
       await ownedSample(db, owner.id, { ...draft, name: "Still a draft" });

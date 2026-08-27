@@ -2,6 +2,7 @@ import {
   Alert,
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
+import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { InfoIcon } from "lucide-react";
@@ -10,6 +11,7 @@ import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { SampleForm } from "#/samples/sample-form.tsx";
+import { SampleStatusButton } from "#/samples/sample-status-button.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
@@ -56,7 +58,7 @@ function EditSamplePage() {
     return <p role="alert">{m.sample_not_found()}</p>;
   }
 
-  const isPublished = query.data.published;
+  const wasPublished = hasPermanentIgsn(query.data);
   const isPending = updateSample.isPending || publishSample.isPending;
   const conflict =
     updateSample.error instanceof SampleConflictError
@@ -79,7 +81,7 @@ function EditSamplePage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
-          {isPublished && query.data.igsn ? (
+          {wasPublished && query.data.igsn ? (
             <p
               aria-label={m.field_igsn()}
               className="text-muted-foreground text-sm"
@@ -87,8 +89,16 @@ function EditSamplePage() {
               {query.data.igsn}
             </p>
           ) : null}
+          {query.data.status === "withdrawn" ? (
+            <p role="status" className="text-muted-foreground text-sm">
+              {m.sample_withdrawn_hint()}
+            </p>
+          ) : null}
         </div>
-        <ShareSampleButton sampleId={sampleId} />
+        <div className="flex items-center gap-2">
+          <ShareSampleButton sampleId={sampleId} />
+          <SampleStatusButton sampleId={sampleId} status={query.data.status} />
+        </div>
       </div>
 
       {lockedMessage ? (
@@ -117,18 +127,18 @@ function EditSamplePage() {
         attachments={query.data.attachments}
         attachmentChanges={attachmentChanges}
         isPending={isPending}
-        published={isPublished}
+        status={query.data.status}
         readOnlyReason={lockedMessage ?? rejection}
         onCancel={() => navigate({ to: "/" })}
         secondaryAction={{
           kind: "submit",
-          label: isPublished
+          label: wasPublished
             ? m.action_publish_updates()
             : m.action_save_draft(),
           onSubmit: (value) => updateSample.mutate(value),
         }}
         primaryAction={
-          isPublished && query.data.igsn
+          wasPublished && query.data.igsn
             ? {
                 kind: "link",
                 label: m.action_view_public_page(),

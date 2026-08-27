@@ -5,11 +5,13 @@ import { describe, expect } from "vitest";
 import { createApp } from "../app.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
+import { setSampleStatus } from "../sample/service/set-sample-status.ts";
 import { pgTest } from "../tests/pg-test.ts";
 
 const PUBLISHED = "01890a5d-ac96-774b-bcce-b302099a9001";
 const DRAFT_ONLY = "01890a5d-ac96-774b-bcce-b302099a9002";
 const EMPTY = "01890a5d-ac96-774b-bcce-b302099a9003";
+const WITHDRAWN_ONLY = "01890a5d-ac96-774b-bcce-b302099a9004";
 
 describe("public manual group routes", () => {
   pgTest(
@@ -22,6 +24,7 @@ describe("public manual group routes", () => {
           { id: PUBLISHED, name: "ANR CritMet" },
           { id: DRAFT_ONLY, name: "ProfilLoire 2024" },
           { id: EMPTY, name: "OZCAR-RI" },
+          { id: WITHDRAWN_ONLY, name: "Zone Atelier Moselle" },
         ])
         .execute();
       const published = await insertSample(db, {
@@ -39,6 +42,15 @@ describe("public manual group routes", () => {
         collectionMethod: null,
         manualGroupIds: [DRAFT_ONLY],
       });
+      const withdrawn = await insertSample(db, {
+        name: "Withdrawn sample",
+        nature: "rock_powder",
+        type: null,
+        collectionMethod: null,
+        manualGroupIds: [WITHDRAWN_ONLY],
+      });
+      await publishSample(db, withdrawn.id);
+      await setSampleStatus(db, withdrawn.id, "withdrawn");
       // Act
       const res = await testClient(createApp(db).app)["manual-groups"].$get();
       // Assert

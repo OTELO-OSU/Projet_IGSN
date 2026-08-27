@@ -153,10 +153,10 @@ describe("insertSample", () => {
     // Assert
     const row = await db
       .selectFrom("sample")
-      .select(["igsn", "published"])
+      .select(["igsn", "status"])
       .where("id", "=", created.id)
       .executeTakeFirstOrThrow();
-    expect(row).toEqual({ igsn: null, published: false });
+    expect(row).toEqual({ igsn: null, status: "draft" });
   });
 
   pgTest("should reject publishing without an igsn", async ({ db }) => {
@@ -171,7 +171,7 @@ describe("insertSample", () => {
     await expect(
       db
         .updateTable("sample")
-        .set({ published: true })
+        .set({ status: "published" })
         .where("id", "=", created.id)
         .execute(),
     ).rejects.toThrow();

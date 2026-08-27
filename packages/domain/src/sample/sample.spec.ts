@@ -25,7 +25,7 @@ const validSample = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: null,
-  published: false,
+  status: "draft",
   createdAt: "2026-07-02T10:00:00.000Z",
   updatedAt: "2026-07-02T10:00:00.000Z",
 };
@@ -67,7 +67,7 @@ describe("sampleSchema", () => {
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,
-      published: false,
+      status: "draft",
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
       updatedAt: new Date("2026-07-02T10:00:00.000Z"),
     });
@@ -78,7 +78,7 @@ describe("sampleSchema", () => {
     { ...validSample, name: "   " },
     { ...validSample, nature: "Thin section" },
     { ...validSample, id: "not-a-uuid" },
-    { ...validSample, published: "yes" },
+    { ...validSample, status: "archived" },
     { ...validSample, igsn: "not-an-igsn" },
     { ...validSample, type: "half_round" },
     { ...validSample, collectionMethod: "gravity_corer" },

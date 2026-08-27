@@ -23,11 +23,15 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { availabilitySchema } from "@projet-igsn/domain/sample/availability/availability";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
+import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import {
   type PublishableFields,
   samplePublishBlockers,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
-import { type CreateSample } from "@projet-igsn/domain/sample/sample";
+import {
+  type CreateSample,
+  type SampleStatus,
+} from "@projet-igsn/domain/sample/sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 
@@ -89,7 +93,7 @@ type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
   defaultValues?: CreateSample;
-  published?: boolean;
+  status?: SampleStatus;
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
   sampleId?: string;
@@ -104,7 +108,7 @@ export function SampleForm({
   onCancel,
   isPending,
   defaultValues,
-  published = false,
+  status = "draft",
   primaryAction,
   secondaryAction,
   sampleId,
@@ -115,11 +119,12 @@ export function SampleForm({
   manualGroupOptions = [],
 }: SampleFormProps) {
   const roleOnSample = useUserRoleOnSample(sampleId);
+  const wasPublished = hasPermanentIgsn({ status });
   const validate = validateDraft(
-    published ? publishedSampleSchema : sampleDraftSchema,
+    wasPublished ? publishedSampleSchema : sampleDraftSchema,
   );
   const isReadOnly = readOnlyReason !== undefined;
-  const isFrozenByPublication = published
+  const isFrozenByPublication = wasPublished
     ? publishedSampleFrozenField(
         defaultValues?.scientificContext?.provenanceStatus ?? null,
         defaultValues?.material ?? null,
@@ -289,12 +294,12 @@ export function SampleForm({
           variant={variant}
           disabled={disabled}
           sampleId={sampleId}
-          published={published}
+          status={status}
           blockedReason={readOnlyReason}
         />
       </form.AppForm>
     );
-    return published
+    return wasPublished
       ? renderPublishGated(submitButton)
       : submitButton(isReadOnly || (isPending ?? false));
   };

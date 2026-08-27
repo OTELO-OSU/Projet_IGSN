@@ -1,4 +1,7 @@
-import type { CreateSample } from "@projet-igsn/domain/sample/sample";
+import type {
+  CreateSample,
+  SampleStatus,
+} from "@projet-igsn/domain/sample/sample";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import { vi } from "vitest";
@@ -2017,7 +2020,7 @@ describe("SampleForm", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
         />
@@ -2061,7 +2064,7 @@ describe("SampleForm", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={{ ...publishedFixture, material: "rock" }}
           primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
         />
@@ -2179,7 +2182,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2200,7 +2203,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2220,41 +2223,54 @@ describe("SampleForm post-publication field lock", () => {
       .toBeDisabled();
   });
 
-  it.each([
+  it.each<{
+    name: string;
+    status: SampleStatus;
+    material: string;
+    disabled: string[];
+    enabled: string[];
+  }>([
     {
       name: "locks the material levels down to the frozen prefix and opens the rest",
-      published: true,
+      status: "published",
       material: "rock.igneous.plutonic.felsic.granite",
       disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
       enabled: ["Felsic *"],
     },
     {
       name: "opens the next level of a published sample stopped at an unlocked node",
-      published: true,
+      status: "published",
       material: "sediment.exogenous_detritic",
       disabled: ["Material *", "Sediment *"],
       enabled: ["Exogenous detritic *"],
     },
     {
       name: "locks every material level when nothing in the path unlocks",
-      published: true,
+      status: "published",
       material: "rock.igneous.plutonic",
       disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
       enabled: [],
     },
     {
+      name: "locks a withdrawn sample's material levels like a published one",
+      status: "withdrawn",
+      material: "rock.igneous.plutonic.felsic.granite",
+      disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
+      enabled: ["Felsic *"],
+    },
+    {
       name: "keeps every material level editable on a draft",
-      published: false,
+      status: "draft",
       material: "rock.igneous.plutonic.felsic.granite",
       disabled: [],
       enabled: ["Material *", "Rock *", "Igneous *", "Plutonic *", "Felsic *"],
     },
-  ])("$name", async ({ published, material, disabled, enabled }) => {
+  ])("$name", async ({ status, material, disabled, enabled }) => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published={published}
+          status={status}
           defaultValues={{ ...publishedFixture, material }}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2280,7 +2296,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
         />
@@ -2311,7 +2327,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{
             kind: "submit",
@@ -2341,7 +2357,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2370,7 +2386,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2395,7 +2411,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit }}
         />
@@ -2438,7 +2454,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={{
             ...publishedFixture,
             material: "rock.igneous.plutonic",
@@ -2465,7 +2481,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={{
             ...publishedFixture,
             material: "rock.metamorphic.strongly_metamorphosed.gneiss",
@@ -2492,7 +2508,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedRecentFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2538,7 +2554,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedRecentFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2568,7 +2584,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           manualGroupOptions={MANUAL_GROUPS}
           defaultValues={{
             ...publishedFixture,
@@ -2597,7 +2613,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />

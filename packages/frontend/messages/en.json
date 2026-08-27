@@ -145,6 +145,8 @@
   "sample_field_institutional_osu": "OSU",
   "sample_field_institutional_laboratory": "Laboratory",
   "sample_section_manual_groups": "Groups",
+  "sample_section_private": "Private sample",
+  "sample_withdrawn_notice": "This sample is private. For more information, please contact the owner of the sample listing.",
   "facet_manual_group": "Other group (team, project…)",
   "facet_contributor": "Contributor",
   "sample_declared_by": "Declared in {year} by {owner}",

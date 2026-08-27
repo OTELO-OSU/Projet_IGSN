@@ -5,6 +5,7 @@ import { describe, expect } from "vitest";
 import { createApp } from "../app.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
+import { setSampleStatus } from "../sample/service/set-sample-status.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { draft } from "../tests/sample-fixtures.ts";
@@ -39,9 +40,20 @@ describe("public user routes", () => {
         name: "Pending owner sample",
       });
       await publishSample(db, pendingSample.id);
+      const withdrawer = await insertUser(db, "eve.curie@univ-lorraine.fr", {
+        name: "Curie",
+        firstname: "Eve",
+      });
+      const withdrawnSample = await insertSample(db, {
+        ...draft,
+        name: "Withdrawn sample",
+      });
+      await publishSample(db, withdrawnSample.id);
+      await setSampleStatus(db, withdrawnSample.id, "withdrawn");
       const draftOnly = await insertSample(db, { ...draft, name: "Draft" });
       await insertSampleOwner(db, published.id, publisher.id);
       await insertSampleOwner(db, pendingSample.id, pending.id);
+      await insertSampleOwner(db, withdrawnSample.id, withdrawer.id);
       await insertSampleCollaborator(
         db,
         draftOnly.id,

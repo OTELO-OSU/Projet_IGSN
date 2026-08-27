@@ -13,6 +13,7 @@ import { draft } from "../../tests/sample-fixtures.ts";
 import { insertSample } from "./insert-sample.ts";
 import { listPublishedSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
+import { setSampleStatus } from "./set-sample-status.ts";
 
 const emptyAge = {
   numericAgeMin: null,
@@ -78,9 +79,9 @@ describe("listSamples", () => {
     ]);
   });
 
-  pgTest("should sort by status through IGSN presence", async ({ db }) => {
+  pgTest("should sort by status alphabetically", async ({ db }) => {
     // Arrange
-    const draft = await insertSample(db, {
+    await insertSample(db, {
       name: "Draft sample",
       nature: "rock_powder",
       type: "individual_sample",
@@ -95,11 +96,15 @@ describe("listSamples", () => {
       collectionMethod: null,
     });
     await publishSample(db, published.id);
-    await db
-      .updateTable("sample")
-      .set({ updated_at: new Date("2026-01-01T00:00:00.000Z") })
-      .where("id", "=", draft.id)
-      .execute();
+    const withdrawn = await insertSample(db, {
+      name: "Withdrawn sample",
+      nature: "thin_section",
+      type: "individual_sample",
+      material: "sediment",
+      collectionMethod: null,
+    });
+    await publishSample(db, withdrawn.id);
+    await setSampleStatus(db, withdrawn.id, "withdrawn");
 
     // Act / Assert
     const asc = await listAsOwner(db, {
@@ -111,6 +116,7 @@ describe("listSamples", () => {
     expect(asc.data.map((sample) => sample.name)).toEqual([
       "Draft sample",
       "Published sample",
+      "Withdrawn sample",
     ]);
 
     const desc = await listAsOwner(db, {
@@ -120,6 +126,7 @@ describe("listSamples", () => {
       order: "desc",
     });
     expect(desc.data.map((sample) => sample.name)).toEqual([
+      "Withdrawn sample",
       "Published sample",
       "Draft sample",
     ]);
@@ -128,6 +135,7 @@ describe("listSamples", () => {
   pgTest.for([
     ["draft", "Draft sample"],
     ["published", "Published sample"],
+    ["withdrawn", "Withdrawn sample"],
   ] as const)(
     "should keep only the %s samples",
     async ([status, expected], { db }) => {
@@ -147,6 +155,15 @@ describe("listSamples", () => {
         collectionMethod: null,
       });
       await publishSample(db, published.id);
+      const withdrawn = await insertSample(db, {
+        name: "Withdrawn sample",
+        nature: "thin_section",
+        type: "individual_sample",
+        material: "sediment",
+        collectionMethod: null,
+      });
+      await publishSample(db, withdrawn.id);
+      await setSampleStatus(db, withdrawn.id, "withdrawn");
       // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,

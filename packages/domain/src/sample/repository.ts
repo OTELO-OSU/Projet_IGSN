@@ -5,6 +5,7 @@ import type { SampleEditLock } from "./edit-lock.ts";
 import type {
   AdminSampleListItem,
   ListSamplesQuery,
+  SetSampleStatusBody,
 } from "./sample-validator.ts";
 import type { CreateSample, Sample } from "./sample.ts";
 
@@ -33,10 +34,14 @@ export type SampleRepository = {
     id: string,
     userId: string,
   ): Promise<{ sample: Sample; role: UserSampleRole | null } | null>;
-  getPublishedByIgsn(igsn: string): Promise<Sample | null>;
+  getPublicByIgsn(igsn: string): Promise<Sample | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
   update(id: string, input: CreateSample): Promise<Sample | null>;
   publish(id: string): Promise<Sample | null>;
+  setStatus(
+    id: string,
+    status: SetSampleStatusBody["status"],
+  ): Promise<Sample | null>;
   getEditLock(id: string): Promise<SampleEditLock | null>;
   acquireEditLock(id: string, userId: string): Promise<SampleEditLock | null>;
   releaseEditLock(id: string, userId: string): Promise<void>;
