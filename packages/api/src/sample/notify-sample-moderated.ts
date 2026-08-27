@@ -20,7 +20,7 @@ export async function notifySampleModerated({
   userSamples: UserSampleRepository;
   mail: { sendMail: SendMail; adminUrl: string };
   sample: Pick<Sample, "id" | "name">;
-  fields: SampleMailField[] | "published";
+  fields: SampleMailField[] | "published" | "withdrawn";
 }): Promise<void> {
   try {
     const owner = (await userSamples.listCollaborators(sample.id)).find(

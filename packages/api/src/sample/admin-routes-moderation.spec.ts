@@ -539,6 +539,40 @@ describe("the moderation mail", () => {
   });
 
   pgTest(
+    "should mail the owner on a moderated publish as withdrawn",
+    async ({ db }) => {
+      // Arrange
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const { app, owner } = await arrangeManager(db, {
+        sendMail,
+        adminUrl: ADMIN_URL,
+      });
+      const sample = await ownedSample(
+        db,
+        owner.id,
+        publishableSample,
+        IN_REACH,
+      );
+      // Act
+      const res = await app.request(
+        `/admin/samples/${sample.id}/publish?status=withdrawn`,
+        { method: "POST", headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      await vi.waitFor(() =>
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({
+            to: ["owner@example.com"],
+            subject: expect.stringContaining("published as withdrawn"),
+          }),
+        ),
+      );
+      expect(sendMail.mock.calls[0]?.[0].text).toContain("out of public view");
+    },
+  );
+
+  pgTest(
     "should mail the owner when a super admin edits a sample it does not own",
     async ({ db }) => {
       // Arrange

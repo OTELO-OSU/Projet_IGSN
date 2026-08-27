@@ -367,7 +367,7 @@ export function createSampleAdminRoutes(
           userSamples: userSampleRepository,
           mail,
           sample,
-          fields: "published",
+          fields: status.data ?? "published",
         });
       }
       return c.json({ data: published });
