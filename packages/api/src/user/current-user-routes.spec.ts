@@ -18,6 +18,9 @@ const TRIO_A = {
   institutionalLaboratory: "UMR7358",
 };
 
+const ADMIN_URL = "http://localhost:3001/";
+const FRONTEND_URL = "http://localhost:3000";
+
 const TRIO_B = {
   institutionalOrganization: "02rx3b187",
   institutionalOsu: "OSUG",
@@ -281,6 +284,44 @@ describe("currentUser routes", () => {
       ].$put({ json: TRIO_A }, { headers: authHeader });
       // Assert
       expect(res.status).toBe(401);
+    },
+  );
+
+  pgTest(
+    "should mail the super admins the groups a self-service re-pending orphans",
+    async ({ db }) => {
+      // Arrange
+      const caller = await insertUser(db, callerEmail, {
+        status: "accepted",
+        ...TRIO_A,
+      });
+      const groupId = crypto.randomUUID();
+      await db
+        .insertInto("manual_group")
+        .values({ id: groupId, name: "Massif central" })
+        .execute();
+      await moderateManualGroup(db, caller.id, [groupId]);
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const client = testClient(
+        createApp(db, {
+          mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+        }).app,
+      );
+      // Act
+      const res = await client.admin.currentUser["institutional-groups"].$put(
+        { json: TRIO_B },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(204);
+      await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
+      expect(sendMail.mock.calls[0]?.[0].to).toEqual([
+        "admin@univ-lorraine.fr",
+      ]);
+      expect(sendMail.mock.calls[0]?.[0].text).toContain(
+        `/manual-groups/${groupId}`,
+      );
     },
   );
 

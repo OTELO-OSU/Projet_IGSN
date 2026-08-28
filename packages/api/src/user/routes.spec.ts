@@ -24,6 +24,8 @@ import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
 import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 
+type Db = Parameters<typeof createApp>[0];
+
 const ADMIN_URL = "http://localhost:3001/";
 const FRONTEND_URL = "http://localhost:3000";
 
@@ -1132,6 +1134,140 @@ describe("admin user routes", () => {
     });
   });
 
+  describe("groups left without an active manager", () => {
+    const MANAGED = {
+      organizations: [],
+      osus: [],
+      laboratories: ["UMR7358"],
+      manualGroupIds: [MASSIF],
+    };
+
+    const asSuperAdminWithMail = async (db: Db) => {
+      await provisionUser(db, "moderator", {
+        status: "accepted",
+        superAdmin: true,
+      });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const client = testClient(
+        createApp(db, {
+          mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+        }).app,
+      );
+      return { client, sendMail };
+    };
+
+    pgTest(
+      "should mail every super admin once per group the rejection orphans",
+      async ({ db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertResearchers(db);
+        await moderateManualGroup(db, ACCEPTED_ID, [MASSIF]);
+        await moderateInstitution(db, ACCEPTED_ID, {
+          kind: "laboratory",
+          code: "UMR7358",
+        });
+        const { client, sendMail } = await asSuperAdminWithMail(db);
+        // Act
+        const res = await client.admin.users[":id"].$put(
+          {
+            param: { id: ACCEPTED_ID },
+            json: update({ status: "rejected", managedGroups: MANAGED }),
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(2));
+        expect(sendMail.mock.calls.map(([sent]) => sent.to)).toEqual([
+          ["moderator@example.com"],
+          ["moderator@example.com"],
+        ]);
+        const sent = sendMail.mock.calls.map(([mail]) => mail.text).join("\n");
+        expect(sent).toContain(`/manual-groups/${MASSIF}`);
+        expect(sent).toContain("/institutional-groups/laboratories/UMR7358");
+      },
+    );
+
+    pgTest(
+      "should send nothing when another accepted manager remains",
+      async ({ db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertResearchers(db);
+        await moderateManualGroup(db, ACCEPTED_ID, [MASSIF]);
+        await moderateInstitution(db, ACCEPTED_ID, {
+          kind: "laboratory",
+          code: "UMR7358",
+        });
+        const peer = await insertUser(db, "peer@univ-lorraine.fr");
+        await moderateManualGroup(db, peer.id, [MASSIF]);
+        await moderateInstitution(db, peer.id, {
+          kind: "laboratory",
+          code: "UMR7358",
+        });
+        const { client, sendMail } = await asSuperAdminWithMail(db);
+        // Act
+        const res = await client.admin.users[":id"].$put(
+          {
+            param: { id: ACCEPTED_ID },
+            json: update({ status: "rejected", managedGroups: MANAGED }),
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        expect(sendMail).not.toHaveBeenCalled();
+      },
+    );
+
+    pgTest(
+      "should send nothing when the status stays accepted",
+      async ({ db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertResearchers(db);
+        await moderateManualGroup(db, ACCEPTED_ID, [MASSIF]);
+        const { client, sendMail } = await asSuperAdminWithMail(db);
+        // Act
+        const res = await client.admin.users[":id"].$put(
+          {
+            param: { id: ACCEPTED_ID },
+            json: update({ status: "accepted", managedGroups: MANAGED }),
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        expect(sendMail).not.toHaveBeenCalled();
+      },
+    );
+
+    pgTest(
+      "should mail the orphaned groups when clearing the institutions re-pends the account",
+      async ({ db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Massif Central 2026");
+        const manager = await insertUser(db, "manager@univ-lorraine.fr", {
+          status: "accepted",
+          ...TRIO_A,
+        });
+        await moderateManualGroup(db, manager.id, [MASSIF]);
+        const { client, sendMail } = await asSuperAdminWithMail(db);
+        // Act
+        const res = await client.admin.users[":id"][
+          "institutional-groups"
+        ].$delete({ param: { id: manager.id } }, { headers: authHeader });
+        // Assert
+        expect(res.status).toBe(204);
+        await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
+        expect(sendMail.mock.calls[0]?.[0].text).toContain(
+          `/manual-groups/${MASSIF}`,
+        );
+      },
+    );
+  });
+
   describe("authorization", () => {
     pgTest.for(["accepted", "pending"] as const)(
       "should answer 403 to a %s user who is not super admin",
@@ -1186,8 +1322,6 @@ const TRIO_C: Institution = {
 };
 
 const ORGANIZATION_WITHOUT_LABORATORY = "03fd77x13";
-
-type Db = Parameters<typeof createApp>[0];
 
 describe("space manager moderation", () => {
   const asManager = async (

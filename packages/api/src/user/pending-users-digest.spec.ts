@@ -1,3 +1,4 @@
+import type { OrphanedGroup } from "@projet-igsn/domain/user/orphaned-group";
 import type { PendingUser } from "@projet-igsn/domain/user/repository";
 
 import { describe, expect, it } from "vitest";
@@ -7,6 +8,15 @@ import { pendingUsersDigest } from "./pending-users-digest.ts";
 const now = new Date("2026-08-06T12:00:00Z");
 
 const USERS_URL = "http://localhost:3001/users";
+const ADMIN_URL = "http://localhost:3001/";
+const URLS = { usersUrl: USERS_URL, adminUrl: ADMIN_URL };
+
+const MASSIF = "01890a5d-ac96-774b-bcce-b302099a9001";
+
+const ORPHAN_GROUPS: OrphanedGroup[] = [
+  { kind: "manual", id: MASSIF, name: "Massif Central 2026" },
+  { kind: "laboratory", code: "UMR7358", name: "GeoRessources" },
+];
 
 const pendingUser = (overrides: Partial<PendingUser> = {}): PendingUser => ({
   email: "jean.martin@univ-lorraine.fr",
@@ -26,7 +36,7 @@ describe("pendingUsersDigest", () => {
       pendingUser({ email: `user${i}@univ-lorraine.fr` }),
     );
 
-    const digest = await pendingUsersDigest(pending, USERS_URL, now);
+    const digest = await pendingUsersDigest(pending, [], URLS, now);
 
     expect(digest.subject).toBe(subject);
   });
@@ -42,7 +52,8 @@ describe("pendingUsersDigest", () => {
           createdAt: new Date("2026-08-05T09:00:00Z"),
         }),
       ],
-      USERS_URL,
+      [],
+      URLS,
       now,
     );
 
@@ -68,7 +79,8 @@ Moderate these accounts: http://localhost:3001/users
     async ({ createdAt, waited }) => {
       const digest = await pendingUsersDigest(
         [pendingUser({ createdAt: new Date(createdAt) })],
-        USERS_URL,
+        [],
+        URLS,
         now,
       );
 
@@ -88,7 +100,8 @@ Moderate these accounts: http://localhost:3001/users
             createdAt: new Date("2026-08-05T09:00:00Z"),
           }),
         ],
-        USERS_URL,
+        [],
+        URLS,
         now,
       )
     ).html;
@@ -103,7 +116,7 @@ Moderate these accounts: http://localhost:3001/users
   });
 
   it("should repeat the url as copyable text besides the button link", async () => {
-    const digest = await pendingUsersDigest([pendingUser()], USERS_URL, now);
+    const digest = await pendingUsersDigest([pendingUser()], [], URLS, now);
 
     expect(digest.html).toContain(`href="${USERS_URL}"`);
     expect(digest.html).toContain(`>${USERS_URL}</a`);
@@ -113,7 +126,8 @@ Moderate these accounts: http://localhost:3001/users
     const html = (
       await pendingUsersDigest(
         [pendingUser({ name: "<script>alert(1)</script>" })],
-        USERS_URL,
+        [],
+        URLS,
         now,
       )
     ).html;
@@ -125,12 +139,55 @@ Moderate these accounts: http://localhost:3001/users
   it("should fall back to the email when the account has no name", async () => {
     const digest = await pendingUsersDigest(
       [pendingUser({ name: null, firstname: null })],
-      USERS_URL,
+      [],
+      URLS,
       now,
     );
 
     expect(digest.text).toContain(
       "- jean.martin@univ-lorraine.fr, waiting for 5 days",
     );
+  });
+
+  it("should title the mail after the orphan groups when nothing is pending", async () => {
+    const digest = await pendingUsersDigest([], ORPHAN_GROUPS, URLS, now);
+
+    expect(digest.subject).toBe("2 groups have no active manager");
+  });
+
+  it("should list each orphan group linked to its page", async () => {
+    const digest = await pendingUsersDigest([], ORPHAN_GROUPS, URLS, now);
+
+    expect(digest.text).toContain(
+      `- Massif Central 2026: http://localhost:3001/manual-groups/${MASSIF}`,
+    );
+    expect(digest.text).toContain(
+      "- GeoRessources: http://localhost:3001/institutional-groups/laboratories/UMR7358",
+    );
+    expect(digest.html).toContain(
+      `href="http://localhost:3001/manual-groups/${MASSIF}"`,
+    );
+    expect(digest.html).toContain(
+      'href="http://localhost:3001/institutional-groups/laboratories/UMR7358"',
+    );
+  });
+
+  it("should leave the pending table out when nothing is pending", async () => {
+    const digest = await pendingUsersDigest([], ORPHAN_GROUPS, URLS, now);
+
+    expect(digest.html).not.toContain("Waiting for");
+    expect(digest.text).not.toContain("waiting for");
+  });
+
+  it("should escape markup coming from a group name", async () => {
+    const digest = await pendingUsersDigest(
+      [],
+      [{ kind: "manual", id: MASSIF, name: "<script>alert(1)</script>" }],
+      URLS,
+      now,
+    );
+
+    expect(digest.html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(digest.html).not.toContain("<script>alert(1)</script>");
   });
 });

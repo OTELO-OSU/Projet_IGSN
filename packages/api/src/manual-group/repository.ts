@@ -1,5 +1,5 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
-import type { Kysely } from "kysely";
+import type { ExpressionBuilder, Kysely } from "kysely";
 
 import {
   manualGroupListItemSchema,
@@ -7,6 +7,8 @@ import {
   myManualGroupSchema,
 } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { manualGroupSchema } from "@projet-igsn/domain/manual-group/model";
+import { groupManagerSchema } from "@projet-igsn/domain/user/user-validator";
+import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
 import { v7 as uuidv7 } from "uuid";
 
@@ -21,6 +23,24 @@ import { grantManualGroupManagers } from "./grant-manual-group-managers.ts";
 import { manualGroupsByIds } from "./manual-groups-by-ids.ts";
 
 const GROUP_COLUMNS = ["id", "name"] as const;
+
+const hasActiveManager = (eb: ExpressionBuilder<DB, "manual_group">) =>
+  eb.exists(
+    eb
+      .selectFrom("user_managed_manual_group")
+      .innerJoin("user", "user.id", "user_managed_manual_group.user_id")
+      .select("user.id")
+      .whereRef("user_managed_manual_group.group_id", "=", "manual_group.id")
+      .where("user.status", "=", "accepted"),
+  );
+
+const activeManagerCount = (eb: ExpressionBuilder<DB, "manual_group">) =>
+  eb
+    .selectFrom("user_managed_manual_group")
+    .innerJoin("user", "user.id", "user_managed_manual_group.user_id")
+    .whereRef("user_managed_manual_group.group_id", "=", "manual_group.id")
+    .where("user.status", "=", "accepted")
+    .select((count) => count.fn.countAll().as("count"));
 
 const sampleGroups = (trx: Transactional<DB>) =>
   trx
@@ -37,7 +57,7 @@ export function createManualGroupRepository(
   db: Kysely<DB>,
 ): ManualGroupRepository {
   return {
-    list: ({ page, perPage, search }, managedGroupIds) =>
+    list: ({ page, perPage, search, noManager }, managedGroupIds) =>
       withTransaction(db, async (trx) => {
         const matching = trx
           .selectFrom("manual_group")
@@ -48,6 +68,9 @@ export function createManualGroupRepository(
           )
           .$if(Boolean(search), (qb) =>
             qb.where("name", "ilike", likePattern(search!)),
+          )
+          .$if(noManager === true, (qb) =>
+            qb.where((eb) => eb.not(hasActiveManager(eb))),
           );
         const rows = await matching
           .select((eb) => [
@@ -57,6 +80,7 @@ export function createManualGroupRepository(
               .whereRef("manual_group_member.group_id", "=", "manual_group.id")
               .select((count) => count.fn.countAll().as("count"))
               .as("memberCount"),
+            activeManagerCount(eb).as("managerCount"),
           ])
           .orderBy("name", "asc")
           .limit(perPage)
@@ -70,6 +94,7 @@ export function createManualGroupRepository(
             manualGroupListItemSchema.parse({
               ...row,
               memberCount: Number(row.memberCount),
+              managerCount: Number(row.managerCount),
             }),
           ),
           total: Number(count),
@@ -172,6 +197,49 @@ export function createManualGroupRepository(
       withTransaction(db, async (trx) => {
         const detached = await detachManualGroupMember(trx, groupId, userId);
         return detached === "detached" ? "left" : detached;
+      }),
+    listManagers: (id) =>
+      withTransaction(db, async (trx) => {
+        const rows = await trx
+          .selectFrom("user_managed_manual_group")
+          .innerJoin("user", "user.id", "user_managed_manual_group.user_id")
+          .select([
+            "user.id",
+            "user.email",
+            "user.name",
+            "user.firstname",
+            "user.orcid",
+            "user.status",
+          ])
+          .where("user_managed_manual_group.group_id", "=", id)
+          .orderBy("user.email", "asc")
+          .execute();
+        return rows.map((row) => groupManagerSchema.parse(row));
+      }),
+    addManager: (groupId, userId) =>
+      withTransaction(db, (trx) =>
+        grantManualGroupManagers(trx, groupId, [userId]),
+      ),
+    removeManager: (groupId, userId) =>
+      withTransaction(db, async (trx) => {
+        const { numDeletedRows } = await trx
+          .deleteFrom("user_managed_manual_group")
+          .where("group_id", "=", groupId)
+          .where("user_id", "=", userId)
+          .executeTakeFirst();
+        if (numDeletedRows === 0n) {
+          throw new HTTPException(404, { message: "Manager not found" });
+        }
+      }),
+    listWithoutActiveManager: () =>
+      withTransaction(db, async (trx) => {
+        const rows = await trx
+          .selectFrom("manual_group")
+          .select(GROUP_COLUMNS)
+          .where((eb) => eb.not(hasActiveManager(eb)))
+          .orderBy("name", "asc")
+          .execute();
+        return rows.map((row) => manualGroupSchema.parse(row));
       }),
     listForUser: (userId) =>
       withTransaction(db, async (trx) => {

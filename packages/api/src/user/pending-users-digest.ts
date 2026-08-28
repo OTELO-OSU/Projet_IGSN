@@ -1,3 +1,4 @@
+import type { OrphanedGroup } from "@projet-igsn/domain/user/orphaned-group";
 import type { PendingUser } from "@projet-igsn/domain/user/repository";
 
 import { fullName } from "@projet-igsn/domain/user/full-name";
@@ -8,6 +9,7 @@ import type { Translator } from "../mail/i18n.ts";
 import { escapeHtml } from "../mail/escape-html.ts";
 import { translator } from "../mail/i18n.ts";
 import { renderMjml } from "../mail/render-mjml.ts";
+import { groupPageUrl } from "./group-page-url.ts";
 
 const HOUR_MS = 60 * 60 * 1000;
 
@@ -15,6 +17,8 @@ const TEMPLATE = readFileSync(
   new URL("./pending-users-digest.mjml", import.meta.url),
   "utf8",
 );
+
+export type DigestUrls = { usersUrl: string; adminUrl: string };
 
 function waitedFor(t: Translator, since: Date, now: Date): string {
   const hours = Math.floor((now.getTime() - since.getTime()) / HOUR_MS);
@@ -41,39 +45,76 @@ const accountRow = (t: Translator, user: PendingUser, now: Date) =>
     "</tr>",
   ].join("");
 
-const render = (
+const pendingSection = (t: Translator, rows: string) =>
+  rows === ""
+    ? ""
+    : [
+        '<mj-table cellpadding="8">',
+        '<tr style="text-align: left; border-bottom: 1px solid #e5e7eb">',
+        `<th>${t("mail_digest_column_name")}</th>`,
+        `<th>${t("mail_digest_column_email")}</th>`,
+        `<th>${t("mail_digest_column_waited")}</th>`,
+        "</tr>",
+        rows,
+        "</mj-table>",
+      ].join("");
+
+const groupsSection = (
   t: Translator,
-  title: string,
-  rows: string,
-  usersUrl: string,
-): Promise<string> =>
-  renderMjml(TEMPLATE, {
-    __TITLE__: title,
-    __COLUMN_NAME__: t("mail_digest_column_name"),
-    __COLUMN_EMAIL__: t("mail_digest_column_email"),
-    __COLUMN_WAITED__: t("mail_digest_column_waited"),
-    __ROWS__: rows,
-    __CTA__: t("mail_digest_cta"),
-    __LINK_FALLBACK__: t("mail_link_fallback"),
-    __URL__: escapeHtml(usersUrl),
-  });
+  groups: OrphanedGroup[],
+  adminUrl: string,
+) =>
+  groups.length === 0
+    ? ""
+    : [
+        `<mj-text font-weight="bold" padding="16px 0 0">${escapeHtml(t("mail_digest_groups_title"))}</mj-text>`,
+        ...groups.map((group) => {
+          const url = escapeHtml(groupPageUrl(group, adminUrl));
+          return `<mj-text padding="4px 0 0"><a href="${url}" style="color: #1d4ed8">${escapeHtml(group.name)}</a></mj-text>`;
+        }),
+      ].join("");
+
+const groupLines = (t: Translator, groups: OrphanedGroup[], adminUrl: string) =>
+  [
+    `${t("mail_digest_groups_title")}:`,
+    ...groups.map((group) =>
+      t("mail_digest_group_line", {
+        group: group.name,
+        url: groupPageUrl(group, adminUrl),
+      }),
+    ),
+  ].join("\n");
 
 export async function pendingUsersDigest(
   pending: PendingUser[],
-  usersUrl: string,
+  orphanGroups: OrphanedGroup[],
+  { usersUrl, adminUrl }: DigestUrls,
   now: Date,
 ): Promise<{ subject: string; text: string; html: string }> {
   const t = translator();
-  const subject = t("mail_digest_subject", { count: pending.length });
-  const lines = pending.map((user) => accountLine(t, user, now)).join("\n");
+  const subject =
+    pending.length > 0
+      ? t("mail_digest_subject", { count: pending.length })
+      : t("mail_digest_groups_subject", { count: orphanGroups.length });
+  const blocks = [
+    pending.length > 0
+      ? pending.map((user) => accountLine(t, user, now)).join("\n")
+      : null,
+    orphanGroups.length > 0 ? groupLines(t, orphanGroups, adminUrl) : null,
+  ].filter((block) => block !== null);
   return {
     subject,
-    text: `${subject}:\n\n${lines}\n\n${t("mail_digest_cta")}: ${usersUrl}\n`,
-    html: await render(
-      t,
-      subject,
-      pending.map((user) => accountRow(t, user, now)).join(""),
-      usersUrl,
-    ),
+    text: `${subject}:\n\n${blocks.join("\n\n")}\n\n${t("mail_digest_cta")}: ${usersUrl}\n`,
+    html: await renderMjml(TEMPLATE, {
+      __TITLE__: escapeHtml(subject),
+      __PENDING_SECTION__: pendingSection(
+        t,
+        pending.map((user) => accountRow(t, user, now)).join(""),
+      ),
+      __GROUPS_SECTION__: groupsSection(t, orphanGroups, adminUrl),
+      __CTA__: t("mail_digest_cta"),
+      __LINK_FALLBACK__: t("mail_link_fallback"),
+      __URL__: escapeHtml(usersUrl),
+    }),
   };
 }

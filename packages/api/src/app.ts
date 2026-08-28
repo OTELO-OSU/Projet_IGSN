@@ -9,6 +9,8 @@ import type { SendMail } from "./mail/send-mail.ts";
 
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
+import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
+import { createInstitutionalGroupRoutes } from "./institutional-group/routes.ts";
 import { createPublicManualGroupRoutes } from "./manual-group/public-routes.ts";
 import { createManualGroupRepository } from "./manual-group/repository.ts";
 import { createManualGroupRoutes } from "./manual-group/routes.ts";
@@ -56,6 +58,8 @@ export function createApp(
   const userRepository = createUserRepository(database);
   const userSampleRepository = createUserSampleRepository(database);
   const manualGroupRepository = createManualGroupRepository(database);
+  const institutionalGroupRepository =
+    createInstitutionalGroupRepository(database);
 
   const publicSampleRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
@@ -87,7 +91,11 @@ export function createApp(
     .use("*", currentUser(userRepository))
     .route(
       "/currentUser",
-      createCurrentUserRoutes(userRepository, manualGroupRepository),
+      createCurrentUserRoutes(userRepository, manualGroupRepository, mail),
+    )
+    .route(
+      "/institutional-groups",
+      createInstitutionalGroupRoutes(institutionalGroupRepository),
     )
     .route(
       "/manual-groups",

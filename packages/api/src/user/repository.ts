@@ -1,4 +1,5 @@
 import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
+import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { ExpressionBuilder, Kysely, Transaction } from "kysely";
@@ -28,6 +29,7 @@ import { canDetachFromGroup } from "../manual-group/can-detach-from-group.ts";
 import { withTransaction } from "../transaction.ts";
 import { countUsersByInstitutionalGroup } from "./count-users-by-institutional-group.ts";
 import { moderationScopeWhere } from "./moderation-scope-where.ts";
+import { orphanedGroupsOfUser } from "./orphaned-groups-of-user.ts";
 import { searchUsers } from "./search-users.ts";
 import { updateUserStatusAndInstitutions } from "./update-user-status-and-institutions.ts";
 import { upsertUserManagedGroups } from "./upsert-user-managed-groups.ts";
@@ -84,6 +86,16 @@ const managedGroups = jsonBuildObject({
      where user_managed_manual_group.user_id = "user".id
   ), '{}')`,
 }).as("managedGroups");
+
+const orphanedGroupsOnLeavingAccepted = (
+  trx: Transaction<DB>,
+  id: string,
+  previousStatus: UserStatus,
+  status: UserStatus,
+) =>
+  previousStatus === "accepted" && status !== "accepted"
+    ? orphanedGroupsOfUser(trx, id)
+    : Promise.resolve([]);
 
 const toAdminUser = (row: { managedGroups: ManagedGroups }) =>
   adminUserSchema.parse({
@@ -330,6 +342,12 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           previousStatus: previous.status,
           joinedGroups: joined,
           leftGroupIds: leftIds,
+          orphanedGroups: await orphanedGroupsOnLeavingAccepted(
+            trx,
+            id,
+            previous.status,
+            user.status,
+          ),
         };
       }),
     removeInstitutionalGroups: (id, scope) =>
@@ -348,7 +366,16 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           })
           .where("id", "=", id)
           .execute();
-        return { previousStatus: previous.status, status };
+        return {
+          previousStatus: previous.status,
+          status,
+          orphanedGroups: await orphanedGroupsOnLeavingAccepted(
+            trx,
+            id,
+            previous.status,
+            status,
+          ),
+        };
       }),
     search: (callerId, filters) =>
       withTransaction(db, (trx) => searchUsers(trx, callerId, filters)),
@@ -375,10 +402,16 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
       );
       return row ? userSchema.parse(row) : null;
     },
-    setInstitutionalGroups: async (userId, groups) => {
+    setInstitutionalGroups: (userId, groups) => {
       const osu = groups.institutionalOsu ?? null;
-      await withTransaction(db, (trx) =>
-        trx
+      return withTransaction(db, async (trx) => {
+        const previous = await trx
+          .selectFrom("user")
+          .select("status")
+          .where("id", "=", userId)
+          .forUpdate()
+          .executeTakeFirst();
+        const updated = await trx
           .updateTable("user")
           .set((eb) => ({
             institutional_organization: groups.institutionalOrganization,
@@ -399,8 +432,20 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
             "is distinct from",
             sql`(${groups.institutionalOrganization}, ${osu}, ${groups.institutionalLaboratory})`,
           )
-          .execute(),
-      );
+          .returning("status")
+          .executeTakeFirst();
+        return {
+          orphanedGroups:
+            previous && updated
+              ? await orphanedGroupsOnLeavingAccepted(
+                  trx,
+                  userId,
+                  previous.status,
+                  updated.status,
+                )
+              : [],
+        };
+      });
     },
     findByOrcid: async (orcid) => {
       const row = await withTransaction(db, (trx) =>
