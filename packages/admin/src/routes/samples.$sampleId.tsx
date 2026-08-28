@@ -4,7 +4,6 @@ import {
   Alert,
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
-import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -69,7 +68,6 @@ function EditSamplePage() {
     return <p role="alert">{m.sample_not_found()}</p>;
   }
 
-  const wasPublished = hasPermanentIgsn(query.data);
   const mayToggleStatus = isSampleEditor(query.data.role);
   const isPending =
     updateSample.isPending || publishSample.isPending || setStatus.isPending;
@@ -94,7 +92,7 @@ function EditSamplePage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
-          {wasPublished && query.data.igsn ? (
+          {query.data.igsn ? (
             <p
               aria-label={m.field_igsn()}
               className="text-muted-foreground text-sm"
@@ -167,7 +165,7 @@ function EditSamplePage() {
               : undefined,
         }}
         primaryAction={
-          wasPublished && query.data.igsn
+          query.data.igsn
             ? {
                 kind: "link",
                 label: m.action_view_public_page(),
