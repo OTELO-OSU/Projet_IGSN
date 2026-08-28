@@ -129,7 +129,7 @@ function EditSamplePage() {
                     }}
                     onConfirm={() =>
                       deleteSample.mutate(undefined, {
-                        onSuccess: () => void navigate({ to: "/" }),
+                        onSuccess: () => void navigate({ to: listRoute }),
                       })
                     }
                   >
