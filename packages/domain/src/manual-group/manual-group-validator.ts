@@ -48,12 +48,14 @@ export const listManualGroupsQuerySchema = z.object({
     .transform((value) => value.slice(0, MAX_SEARCH_LENGTH))
     .optional()
     .catch(undefined),
+  noManager: z.stringbool().optional().catch(undefined),
 });
 
 export type ListManualGroupsQuery = z.infer<typeof listManualGroupsQuerySchema>;
 
 export const manualGroupListItemSchema = manualGroupSchema.extend({
   memberCount: z.number(),
+  managerCount: z.number(),
 });
 
 export type ManualGroupListItem = z.infer<typeof manualGroupListItemSchema>;

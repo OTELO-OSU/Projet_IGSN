@@ -31,6 +31,22 @@ export type UserIdentitiesResponse = z.infer<
   typeof userIdentitiesResponseSchema
 >;
 
+export const groupManagerSchema = userIdentitySchema.extend({
+  status: userStatusSchema,
+});
+
+export type GroupManager = z.infer<typeof groupManagerSchema>;
+
+export const groupManagersResponseSchema = z.object({
+  data: z.array(groupManagerSchema),
+});
+
+export type GroupManagersResponse = z.infer<typeof groupManagersResponseSchema>;
+
+export const addGroupManagerBodySchema = z.strictObject({ userId: z.uuid() });
+
+export type AddGroupManagerBody = z.infer<typeof addGroupManagerBodySchema>;
+
 export const publicUserSchema = userSchema.pick({
   id: true,
   name: true,
