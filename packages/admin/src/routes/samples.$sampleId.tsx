@@ -173,7 +173,7 @@ function EditSamplePage() {
       ) : null}
 
       <SampleForm
-        publisher={me.data}
+        currentUser={me.data}
         defaultValues={
           (updateSample.isSuccess ? undefined : updateSample.variables) ??
           query.data

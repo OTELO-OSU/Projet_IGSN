@@ -2201,6 +2201,28 @@ describe("SampleForm post-publication field lock", () => {
       .toBeDisabled();
   });
 
+  it("keeps the identity fields editable for a super admin on a published sample", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          status="published"
+          currentUser={{ status: "accepted", superAdmin: true }}
+          defaultValues={publishedFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Nature" }))
+      .toBeEnabled();
+  });
+
   it("keeps editable fields interactive on a published sample", async () => {
     const screen = await render(
       <TooltipProvider>
