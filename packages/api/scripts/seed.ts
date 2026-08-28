@@ -1,3 +1,4 @@
+import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { Kysely, Selectable } from "kysely";
 
@@ -21,18 +22,13 @@ import { scientificContextColumns } from "../src/sample/service/scientific-conte
 import { toAgeColumns } from "../src/sample/service/to-age-columns.ts";
 import { locationColumns } from "../src/sample/service/to-location.ts";
 
-type SeedUser = {
-  id: string;
+type SeedUser = SampleOwner & {
   email: string;
   name: string;
   firstname: string;
   orcid?: string;
   status: UserStatus;
   superAdmin: boolean;
-  institutionalOrganization: string | null;
-  institutionalOsu: string | null;
-  institutionalLaboratory: string | null;
-  manualGroups: string[];
 };
 
 export const researcherKeySchema = z.enum([
@@ -242,6 +238,15 @@ async function seedManualGroups(
     .execute();
 }
 
+export async function seedMockUsers(
+  db: Kysely<DB>,
+): Promise<Record<ResearcherKey, string>> {
+  const ownerIds = await seedOwners(db);
+  await seedManualGroups(db, ownerIds);
+  await seedManagedGroups(db, ownerIds);
+  return ownerIds;
+}
+
 async function seedOwners(
   db: Kysely<DB>,
 ): Promise<Record<ResearcherKey, string>> {
@@ -299,19 +304,15 @@ async function seedOwners(
 
 const SEED_PUBLICATION_YEAR = 2025;
 
-export async function seed(
+export async function insertSamples(
   db: Kysely<DB>,
-  samples: SeedSample[],
-): Promise<
-  (Pick<
-    Selectable<DB["sample"]>,
-    "id" | "name" | "nature" | "igsn" | "status"
-  > & { owner: ResearcherKey; collaborators: SeedCollaborator[] })[]
-> {
-  const ownerIds = await seedOwners(db);
-  await seedManualGroups(db, ownerIds);
-  await seedManagedGroups(db, ownerIds);
-  const parsed = samples.map(parseSeedSample);
+  rows: OwnedSampleRow[],
+): Promise<CreatedSample[]> {
+  const parsed = rows.map(({ owner, collaborators, ...row }) => ({
+    ...parseSampleRow(row),
+    owner,
+    collaborators,
+  }));
   const created = await db
     .insertInto("sample")
     .values(
@@ -343,11 +344,9 @@ export async function seed(
           ...locationColumns(location),
           ...descriptionColumns(description),
           ...scientificContextColumns(scientificContext),
-          institutional_organization:
-            MOCK_RESEARCHERS[owner].institutionalOrganization,
-          institutional_osu: MOCK_RESEARCHERS[owner].institutionalOsu,
-          institutional_laboratory:
-            MOCK_RESEARCHERS[owner].institutionalLaboratory,
+          institutional_organization: owner.institutionalOrganization,
+          institutional_osu: owner.institutionalOsu,
+          institutional_laboratory: owner.institutionalLaboratory,
         }),
       ),
     )
@@ -358,34 +357,51 @@ export async function seed(
     .insertInto("user_sample")
     .values(
       parsed.flatMap((row) => [
-        {
+        { sample_id: row.id, user_id: row.owner.id, role: "owner" as const },
+        ...(row.collaborators ?? []).map(({ userId, role }) => ({
           sample_id: row.id,
-          user_id: ownerIds[row.owner],
-          role: "owner" as const,
-        },
-        ...(row.collaborators ?? []).map(({ researcher, role }) => ({
-          sample_id: row.id,
-          user_id: ownerIds[researcher],
+          user_id: userId,
           role,
         })),
       ]),
     )
     .execute();
 
-  const seedById = new Map(parsed.map((row) => [row.id, row]));
-
-  const attached = created.flatMap((sample) =>
-    MOCK_RESEARCHERS[seedById.get(sample.id)!.owner].manualGroups.map(
-      (group_id) => ({
-        sample_id: sample.id,
-        group_id,
-      }),
-    ),
+  const attached = parsed.flatMap((row) =>
+    row.owner.manualGroups.map((group_id) => ({
+      sample_id: row.id,
+      group_id,
+    })),
   );
   if (attached.length > 0) {
     await db.insertInto("sample_manual_group").values(attached).execute();
   }
 
+  return created;
+}
+
+export async function seed(
+  db: Kysely<DB>,
+  samples: SeedSample[],
+): Promise<
+  (CreatedSample & {
+    owner: ResearcherKey;
+    collaborators: SeedCollaborator[];
+  })[]
+> {
+  const ownerIds = await seedMockUsers(db);
+  const created = await insertSamples(
+    db,
+    samples.map(({ owner, collaborators, ...row }) => ({
+      ...row,
+      owner: { ...MOCK_RESEARCHERS[owner], id: ownerIds[owner] },
+      collaborators: collaborators?.map(({ researcher, role }) => ({
+        userId: ownerIds[researcher],
+        role,
+      })),
+    })),
+  );
+  const seedById = new Map(samples.map((row) => [row.id, row]));
   return created.map((sample) => {
     const row = seedById.get(sample.id);
     if (!row) throw new Error(`created sample ${sample.id} has no seed row`);
@@ -397,7 +413,7 @@ export async function seed(
   });
 }
 
-export const seedSampleSchema = sampleSchema
+export const sampleRowSchema = sampleSchema
   .pick({
     id: true,
     name: true,
@@ -433,33 +449,47 @@ export const seedSampleSchema = sampleSchema
   })
   .extend({
     status: sampleStatusSchema.default("draft"),
-    owner: researcherKeySchema,
-    collaborators: z
-      .array(
-        z.object({
-          researcher: researcherKeySchema,
-          role: collaboratorRoleSchema,
-        }),
-      )
-      .optional(),
   });
+
+export type SampleRow = z.input<typeof sampleRowSchema>;
+
+export type SampleOwner = InstitutionalGroups & {
+  id: string;
+  manualGroups: string[];
+};
+
+export type OwnedSampleRow = SampleRow & {
+  owner: SampleOwner;
+  collaborators?: {
+    userId: string;
+    role: z.infer<typeof collaboratorRoleSchema>;
+  }[];
+};
+
+type CreatedSample = Pick<
+  Selectable<DB["sample"]>,
+  "id" | "name" | "nature" | "igsn" | "status"
+>;
+
+const seedSampleSchema = sampleRowSchema.extend({
+  owner: researcherKeySchema,
+  collaborators: z
+    .array(
+      z.object({
+        researcher: researcherKeySchema,
+        role: collaboratorRoleSchema,
+      }),
+    )
+    .optional(),
+});
 
 export type SeedSample = z.input<typeof seedSampleSchema>;
 
 export type SeedCollaborator = NonNullable<SeedSample["collaborators"]>[number];
 
-export function parseSeedSample(
-  sample: SeedSample,
-): z.output<typeof seedSampleSchema> {
-  const parsed = seedSampleSchema.parse(sample);
-  const {
-    id: _id,
-    igsn: _igsn,
-    owner: _owner,
-    collaborators: _collaborators,
-    status,
-    ...create
-  } = parsed;
+function parseSampleRow(row: SampleRow): z.output<typeof sampleRowSchema> {
+  const parsed = sampleRowSchema.parse(row);
+  const { id: _id, igsn: _igsn, status, ...create } = parsed;
   const wasPublished = hasPermanentIgsn({ status });
   const result = (
     wasPublished ? publishedSampleSchema : createSampleSchema
