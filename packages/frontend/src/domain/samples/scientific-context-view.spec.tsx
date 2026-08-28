@@ -9,7 +9,7 @@ describe("ScientificContextView", () => {
       <ScientificContextView
         scientificContext={{
           provenanceStatus: "recent_collection",
-          funderOrganization: "03fd77x13",
+          funderOrganizations: ["03fd77x13", "02cte4b68"],
           researchProgramName: "Deep Earth Sampling",
           researchProgramChief: "Marie Curie",
           researchProgramChiefOrcid: "0000-0002-1825-0097",
@@ -32,7 +32,7 @@ describe("ScientificContextView", () => {
       .element(screen.getByText("Recent collection"))
       .toBeInTheDocument();
 
-    for (const ror of ["03fd77x13", "043htjv09", "00z54nq84"]) {
+    for (const ror of ["03fd77x13", "02cte4b68", "043htjv09", "00z54nq84"]) {
       await expect
         .element(screen.getByRole("link", { name: organizationLabel(ror) }))
         .toHaveAttribute("href", `https://ror.org/${ror}`);
@@ -72,7 +72,7 @@ describe("ScientificContextView", () => {
       .element(screen.getByText("Alfred Curator"))
       .toBeInTheDocument();
     await expect
-      .element(screen.getByText("Funder organization"))
+      .element(screen.getByText("Funder organizations"))
       .not.toBeInTheDocument();
   });
 
@@ -88,7 +88,7 @@ describe("ScientificContextView", () => {
 
     await expect.element(screen.getByText("Only the name")).toBeInTheDocument();
     await expect
-      .element(screen.getByText("Funder organization"))
+      .element(screen.getByText("Funder organizations"))
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByText("Collector name"))

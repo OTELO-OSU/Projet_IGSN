@@ -58,7 +58,7 @@ describe("publishedSampleSchema", () => {
         ...publishable,
         scientificContext: {
           provenanceStatus: "recent_collection" as const,
-          funderOrganization: "02feahw73",
+          funderOrganizations: ["02feahw73"],
           researchProgramName: "Deep Biosphere Survey",
           researchProgramChief: "Marie Curie",
           collectorName: "Pierre Curie",

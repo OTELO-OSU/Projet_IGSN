@@ -4,7 +4,7 @@ import { scientificContextSchema } from "./model.ts";
 
 const recentCollection = {
   provenanceStatus: "recent_collection",
-  funderOrganization: "02feahw73",
+  funderOrganizations: ["02feahw73", "04kdfz702"],
   researchProgramName: "Deep Biosphere Survey",
   researchProgramChief: "Marie Curie",
   researchProgramChiefOrcid: "0000-0002-1825-0097",
@@ -69,7 +69,14 @@ describe("scientificContextSchema", () => {
       case: "invalid ROR funder",
       input: {
         provenanceStatus: "recent_collection",
-        funderOrganization: "nope",
+        funderOrganizations: ["nope"],
+      },
+    },
+    {
+      case: "duplicate funder organizations",
+      input: {
+        provenanceStatus: "recent_collection",
+        funderOrganizations: ["02feahw73", "02feahw73"],
       },
     },
     {

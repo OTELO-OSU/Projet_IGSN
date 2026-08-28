@@ -20,7 +20,7 @@ const base: Sample = {
   condition: null,
   scientificContext: {
     provenanceStatus: "recent_collection",
-    funderOrganization: "02feahw73",
+    funderOrganizations: ["02feahw73"],
     researchProgramName: "Deep Biosphere Survey",
     researchProgramChief: "Marie Curie",
     researchStructure: ["04kdfz702"],
@@ -376,7 +376,7 @@ describe("samplePublishBlockers", () => {
         scientificContext: { provenanceStatus: "recent_collection" },
       }),
     ).toEqual([
-      "funder_organization_missing",
+      "funder_organizations_missing",
       "research_program_name_missing",
       "research_program_chief_missing",
       "research_structure_missing",
@@ -390,7 +390,7 @@ describe("samplePublishBlockers", () => {
         ...base,
         scientificContext: {
           provenanceStatus: "recent_collection",
-          funderOrganization: "02feahw73",
+          funderOrganizations: ["02feahw73"],
           researchProgramName: "Deep Biosphere Survey",
           researchProgramChief: "Marie Curie",
         },

@@ -18,7 +18,7 @@ describe("sample scientific context persistence", () => {
     async ({ db }) => {
       const scientificContext = {
         provenanceStatus: "recent_collection" as const,
-        funderOrganization: "02feahw73",
+        funderOrganizations: ["02feahw73", "04kdfz702"],
         researchProgramName: "Deep Biosphere Survey",
         researchProgramChief: "Marie Curie",
         researchProgramChiefOrcid: "0000-0002-1825-0097",

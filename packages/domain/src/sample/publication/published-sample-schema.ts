@@ -22,7 +22,7 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   elevation_incomplete: ["location", "position", "elevation"],
   availability_missing: ["availability"],
   scientific_context_missing: ["scientificContext", "provenanceStatus"],
-  funder_organization_missing: ["scientificContext", "funderOrganization"],
+  funder_organizations_missing: ["scientificContext", "funderOrganizations"],
   research_program_name_missing: ["scientificContext", "researchProgramName"],
   research_program_chief_missing: ["scientificContext", "researchProgramChief"],
   research_structure_missing: ["scientificContext", "researchStructure"],

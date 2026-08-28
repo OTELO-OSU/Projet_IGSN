@@ -27,6 +27,19 @@ function OrgLink({ ror }: { ror: string }) {
   );
 }
 
+function orgLinks(rors: string[] | null | undefined) {
+  if (!rors?.length) return null;
+  return (
+    <ul className="flex flex-col gap-1">
+      {rors.map((ror) => (
+        <li key={ror}>
+          <OrgLink ror={ror} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function OrcidLink({ orcid }: { orcid: string }) {
   return (
     <ExternalLink href={`https://orcid.org/${orcid}`}>{orcid}</ExternalLink>
@@ -37,12 +50,8 @@ function RecentCollectionRows({ context }: { context: RecentCollection }) {
   return (
     <>
       <FieldRow
-        label={m.sample_field_funder_organization()}
-        value={
-          context.funderOrganization && (
-            <OrgLink ror={context.funderOrganization} />
-          )
-        }
+        label={m.sample_field_funder_organizations()}
+        value={orgLinks(context.funderOrganizations)}
       />
       <FieldRow
         label={m.sample_field_research_program_name()}
@@ -62,17 +71,7 @@ function RecentCollectionRows({ context }: { context: RecentCollection }) {
       />
       <FieldRow
         label={m.sample_field_research_structure()}
-        value={
-          context.researchStructure?.length ? (
-            <ul className="flex flex-col gap-1">
-              {context.researchStructure.map((ror) => (
-                <li key={ror}>
-                  <OrgLink ror={ror} />
-                </li>
-              ))}
-            </ul>
-          ) : null
-        }
+        value={orgLinks(context.researchStructure)}
       />
       <FieldRow
         label={m.sample_field_collector_name()}

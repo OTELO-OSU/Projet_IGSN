@@ -1511,7 +1511,7 @@ const demoId = (index: number): string =>
 
 const RECENT_CONTEXT: SampleRow["scientificContext"] = {
   provenanceStatus: "recent_collection",
-  funderOrganization: "02feahw73",
+  funderOrganizations: ["02feahw73"],
   researchProgramName: "Solid Earth Demo Survey",
   researchProgramChief: "Jean Dupont",
   researchStructure: ["02rx3b187"],

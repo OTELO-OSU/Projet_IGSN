@@ -49,7 +49,7 @@
   "sample_field_economic_deposit_description": "Deposit description",
   "sample_section_scientific_context": "Scientific context",
   "sample_field_provenance_status": "Provenance status",
-  "sample_field_funder_organization": "Funder organization",
+  "sample_field_funder_organizations": "Funder organizations",
   "sample_field_research_program_name": "Name of the research programme",
   "sample_field_research_program_chief": "Research programme chief",
   "sample_field_research_program_chief_orcid": "Research programme chief ORCID",

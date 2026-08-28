@@ -2171,7 +2171,7 @@ const publishedRecentFixture: CreateSample = {
   },
   scientificContext: {
     provenanceStatus: "recent_collection",
-    funderOrganization: "03fd77x13",
+    funderOrganizations: ["03fd77x13"],
     researchProgramName: "GEOSAMPLE",
     researchProgramChief: "Marie Tharp",
     researchProgramChiefOrcid: "0000-0002-1825-0097",
@@ -2537,7 +2537,7 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("combobox", { name: "Provenance status *" }))
       .toBeDisabled();
     await expect
-      .element(screen.getByRole("combobox", { name: "Funder organization *" }))
+      .element(screen.getByRole("combobox", { name: "Funder organizations *" }))
       .toBeDisabled();
     await expect
       .element(screen.getByLabelText("Name of the research programme *"))

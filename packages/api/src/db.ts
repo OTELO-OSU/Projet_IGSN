@@ -78,7 +78,7 @@ type SampleTable = {
   chemical_risk: boolean | null;
   chemical_risk_explanation: string | null;
   sc_provenance_status: string | null;
-  sc_funder_organization: string | null;
+  sc_funder_organizations: string[] | null;
   sc_research_program_name: string | null;
   sc_research_program_chief: string | null;
   sc_research_program_chief_orcid: string | null;

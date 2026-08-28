@@ -4,7 +4,7 @@ import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-con
 
 export type ScientificContextDraft = {
   provenanceStatus: ProvenanceStatus | undefined;
-  funderOrganization: string | null | undefined;
+  funderOrganizations: string[];
   researchProgramName: string | null | undefined;
   researchProgramChief: string | null | undefined;
   researchProgramChiefOrcid: string | null | undefined;
@@ -24,7 +24,7 @@ export type ScientificContextDraft = {
 type ScientificContextCandidate =
   | {
       provenanceStatus: "recent_collection";
-      funderOrganization: string | undefined;
+      funderOrganizations: string[] | undefined;
       researchProgramName: string | undefined;
       researchProgramChief: string | undefined;
       researchProgramChiefOrcid: string | undefined;
@@ -45,20 +45,19 @@ type ScientificContextCandidate =
       collectionContextDescription: string | undefined;
     };
 
+const nonEmpty = (rors: string[]) => (rors.length > 0 ? rors : undefined);
+
 export function composeScientificContext(
   draft: ScientificContextDraft,
 ): ScientificContextCandidate | null {
   if (draft.provenanceStatus === "recent_collection") {
     return {
       provenanceStatus: "recent_collection",
-      funderOrganization: draft.funderOrganization || undefined,
+      funderOrganizations: nonEmpty(draft.funderOrganizations),
       researchProgramName: draft.researchProgramName || undefined,
       researchProgramChief: draft.researchProgramChief || undefined,
       researchProgramChiefOrcid: draft.researchProgramChiefOrcid || undefined,
-      researchStructure:
-        draft.researchStructure.length > 0
-          ? draft.researchStructure
-          : undefined,
+      researchStructure: nonEmpty(draft.researchStructure),
       collectorName: draft.collectorName || undefined,
       collectorOrcid: draft.collectorOrcid || undefined,
       researchCampaign: draft.researchCampaign || undefined,
@@ -90,7 +89,7 @@ export function toScientificContextDraft(
     value?.provenanceStatus === "historical_specimen" ? value : undefined;
   return {
     provenanceStatus: value?.provenanceStatus,
-    funderOrganization: recent?.funderOrganization ?? undefined,
+    funderOrganizations: recent?.funderOrganizations ?? [],
     researchProgramName: recent?.researchProgramName ?? undefined,
     researchProgramChief: recent?.researchProgramChief ?? undefined,
     researchProgramChiefOrcid: recent?.researchProgramChiefOrcid ?? undefined,

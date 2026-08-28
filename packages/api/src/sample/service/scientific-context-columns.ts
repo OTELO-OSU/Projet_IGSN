@@ -9,7 +9,7 @@ export function scientificContextColumns(
     context?.provenanceStatus === "historical_specimen" ? context : null;
   return {
     sc_provenance_status: context?.provenanceStatus ?? null,
-    sc_funder_organization: recent?.funderOrganization ?? null,
+    sc_funder_organizations: recent?.funderOrganizations ?? null,
     sc_research_program_name: recent?.researchProgramName ?? null,
     sc_research_program_chief: recent?.researchProgramChief ?? null,
     sc_research_program_chief_orcid: recent?.researchProgramChiefOrcid ?? null,
