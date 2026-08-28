@@ -25,6 +25,7 @@
 - A sample snapshots the three codes at creation, never after, and they stay out of `createSampleSchema`.
 - A sample also carries manual groups its owner picks and edits, frozen once published; see ADR 0025.
 - Moderation reach reads the sample's own codes and groups (`api/src/sample/service/moderated-sample-where.ts`), but the user row for a user (`api/src/user/moderation-scope-where.ts`); see ADR 0030.
+- `api/src/institutional-group/` is that entity's first repository (managers, active-manager counts); `api/src/user/orphaned-groups-of-user.ts` and the two repositories' `listWithoutActiveManager` methods are the single "who still manages this group" queries, shared by the orphan-group mail, the pending-users digest recap and the group lists; see ADR 0030.
 
 ## Server-side sorting and filtering
 

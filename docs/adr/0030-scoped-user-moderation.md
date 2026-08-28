@@ -4,7 +4,7 @@ Date: 2026-08-20
 
 ## Status
 
-Accepted. Amended 2026-08-21, 2026-08-24 and 2026-08-25, folded in below.
+Accepted. Amended 2026-08-21, 2026-08-24, 2026-08-25 and 2026-08-28, folded in below.
 
 ## Context
 
@@ -72,6 +72,14 @@ Accepted. Amended 2026-08-21, 2026-08-24 and 2026-08-25, folded in below.
 
 **`currentUser` carries `managedLaboratories` and `managedManualGroups`**, not a `spaceManager` boolean: the admin form needs the expanded reach to disable fields per target, and the group names to offer attachable groups. The expansion stays server-side, in `managedLaboratoryCodes`.
 
+**A manager is active only when its row has `status = 'accepted'`, and only a direct assignment counts**: a laboratory whose organisme has a manager is still without an active manager. Pending and rejected rows both count as inactive.
+
+**Managers are listed and curated from the group page**, a super admin only: `GET|POST /admin/manual-groups/:id/managers`, `DELETE /admin/manual-groups/:id/managers/:userId`, and the same trio at `/admin/institutional-groups/:kind/:code/managers`, plus `GET /admin/institutional-groups/manager-counts`. `requireSuperAdmin` gates all of them, since a manager must not grant peers; `requireActiveSession` additionally gates every mutation. `api/src/institutional-group/` is that entity's first repository.
+
+**A status change leaving `accepted` mails every super admin, one mail per group left without an active manager**, naming the group and linking to its page. This revises the earlier "silently demotes ... no email is sent" stance and the Consequences bullet below it: the digest is no longer the one mail a manager's own demotion triggers, since the group itself now gets a mail regardless of who is demoted.
+
+**The weekday digest carries a recap of groups without an active manager, for super admins only.** It lists every manual group without one (they are curated, so all are listed) and every organisme / OSU / laboratory without one, but only when at least one user row records that code (an institutional group with no recorded member stays off the recap). The digest is sent when either the pending list or this recap is non-empty; a space manager still receives only its pending-only mail, never the recap.
+
 ## Alternatives rejected
 
 - A `space_manager` boolean column with its own non-empty-scope invariant: duplicates what the scope already expresses.
@@ -87,7 +95,7 @@ Accepted. Amended 2026-08-21, 2026-08-24 and 2026-08-25, folded in below.
 ## Consequences
 
 - ADR 0023 predicted a new role would widen `canPublishSamples` and the ownership override; this one widens `/admin/users` reach and, per sample in scope, the ownership override, leaving `canPublishSamples` alone, so a pending manager still publishes nothing.
-- Deleting a manual group, or a catalog regeneration dropping a code, silently demotes a manager, mirroring the "no email is sent" stance; the digest is the one mail a manager does receive.
+- Deleting a manual group, or a catalog regeneration dropping a code, silently demotes a manager; a status change leaving `accepted` mails every super admin per orphaned group instead (2026-08-28 amendment), and the digest recap catches what that mail misses (a manager removed by hand from the user page, a group created without one).
 - The scope is derived, so `GET /admin/currentUser` and every manual group route re-read it: one query per call, plus a second naming the managed manual groups.
 - Removing a user's institution rides the same users list and institutional-group member tables, guards unchanged, and lands on `shouldRePendOnInstitutionsUpdate` (ADR 0023) for the resulting status; a manager removing a target's institution thereby moves that target out of its own reach, the same auto-demote stance as clearing a managed group.
 - The admin form silently discards a change a manager may not write, so a field it cannot edit must be disabled or the save looks lost.
