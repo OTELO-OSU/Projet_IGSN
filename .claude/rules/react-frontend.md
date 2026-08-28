@@ -67,7 +67,9 @@ Each entity gets one react-query hook per operation (`useSamples`, `useCreateSam
 
 - calls `api` directly through the authed client from `useApiClient`
 - builds the request from the domain types
-- parses the response with the domain Zod schema at the boundary, never trusting the shape of network data
+- types the response with the domain response type and never re-parses it at runtime, the api owning that schema
+- throws on a non-2xx before reading the body, through `apiJson` in `frontend/src/api.ts` or `HttpError.fromResponse` in `admin/src/http-error.ts`
+- keeps `safeParse` only where the shape decides a branch (an error discriminator) or validates a form
 
 ## Data tables
 

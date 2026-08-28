@@ -38,47 +38,7 @@ describe("listSamples", () => {
 
     const result = await listSamples({ page: 1, perPage: 25 }, fetch);
 
-    expect(result).toEqual({
-      total: 7,
-      data: [
-        {
-          id: sampleJson.id,
-          name: "Basalt 42",
-          nature: "hand_sample",
-          type: null,
-          material: "rock.igneous",
-          texture: null,
-          metamorphicFacies: null,
-          collectionMethod: null,
-          collectionMethodDescription: null,
-          specificName: "BAS-42-001",
-          location: null,
-          description: null,
-          condition: null,
-          scientificContext: null,
-          age: null,
-          links: [],
-          attachments: [],
-          security: null,
-          availability: "exists",
-          publicationYear: 2026,
-          economicInterest: null,
-          economicInterestElements: [],
-          economicResourceTypePrecision: null,
-          economicDepositName: null,
-          economicDepositDescription: null,
-          igsn: "0123456789ABCDEFGHJKMNPQRS",
-          institutionalOrganization: null,
-          institutionalOsu: null,
-          institutionalLaboratory: null,
-          manualGroups: [],
-          owner: null,
-          status: "published",
-          createdAt: new Date(iso),
-          updatedAt: new Date(iso),
-        },
-      ],
-    });
+    expect(result).toEqual({ total: 7, data: [sampleJson] });
   });
 
   it("should send page and perPage as query params", async () => {
@@ -114,19 +74,23 @@ describe("listSamples", () => {
     },
   );
 
-  it("should throw on a non-2xx response", async () => {
-    const { fetch } = stubFetch({}, 500);
+  it("should throw with the status and the response body on a non-2xx response", async () => {
+    const { fetch } = stubFetch({ error: "boom" }, 500);
 
     await expect(listSamples({ page: 1, perPage: 25 }, fetch)).rejects.toThrow(
-      /500/,
+      'Failed to load samples (500): {"error":"boom"}',
     );
   });
 
-  it("should throw when the response shape is invalid", async () => {
-    const { fetch } = stubFetch({ data: [{ id: "not-a-uuid" }] });
+  it("should return a sample missing an optional field instead of throwing", async () => {
+    const { availability: _availability, ...withoutAvailability } = sampleJson;
+    const { fetch } = stubFetch({
+      data: [withoutAvailability],
+      meta: { total: 1 },
+    });
 
-    await expect(
-      listSamples({ page: 1, perPage: 25 }, fetch),
-    ).rejects.toThrow();
+    const result = await listSamples({ page: 1, perPage: 25 }, fetch);
+
+    expect(result).toEqual({ total: 1, data: [withoutAvailability] });
   });
 });

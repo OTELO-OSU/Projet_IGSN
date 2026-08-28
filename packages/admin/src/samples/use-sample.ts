@@ -1,4 +1,5 @@
-import { adminSampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
+import type { AdminSampleResponse } from "@projet-igsn/domain/sample/sample-validator";
+
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -11,7 +12,7 @@ export class ForbiddenError extends HttpError {
   }
 }
 
-export async function parseSampleResponse(res: Response) {
+export async function toSampleQueryData(res: Response) {
   if (res.status === 404) {
     return null;
   }
@@ -21,9 +22,8 @@ export async function parseSampleResponse(res: Response) {
   if (!res.ok) {
     throw HttpError.fromResponse(res, `Failed to load sample (${res.status})`);
   }
-  const { data, role, manualGroupOptions } = adminSampleResponseSchema.parse(
-    await res.json(),
-  );
+  const { data, role, manualGroupOptions } =
+    (await res.json()) as AdminSampleResponse;
   const offered = new Map(
     [...manualGroupOptions, ...data.manualGroups].map((group) => [
       group.id,
@@ -47,7 +47,7 @@ export function sampleQueryOptions(
   return queryOptions({
     queryKey: ["samples", id],
     queryFn: async () =>
-      parseSampleResponse(
+      toSampleQueryData(
         await apiFetch(new URL(`admin/samples/${id}`, API_URL)),
       ),
     enabled: id !== undefined,

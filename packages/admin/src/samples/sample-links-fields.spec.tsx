@@ -13,7 +13,11 @@ const SAMPLE_ID = fakeSample.id;
 beforeAll(() => {
   worker.use(
     http.get("*/samples/:id", () =>
-      HttpResponse.json({ data: fakeSample, role: "owner" }),
+      HttpResponse.json({
+        data: fakeSample,
+        role: "owner",
+        manualGroupOptions: [],
+      }),
     ),
   );
 });

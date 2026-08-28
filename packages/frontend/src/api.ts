@@ -14,3 +14,12 @@ export const apiFetch: typeof fetch = async (input, init) => {
   headers.set("X-Real-IP", ip);
   return fetch(input, { ...init, headers });
 };
+
+// ponytail: the cast claims Date for createdAt/updatedAt where JSON carries a string, safe while the frontend reads neither
+export async function apiJson<T>(res: Response, what: string): Promise<T> {
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`Failed to load ${what} (${res.status}): ${body}`);
+  }
+  return (await res.json()) as T;
+}

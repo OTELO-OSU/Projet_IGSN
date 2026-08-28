@@ -116,6 +116,12 @@ function fakeApi(
   let lockHolder = holder;
   let sample = {
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+    owner: null,
+    institutionalOrganization: null,
+    institutionalOsu: null,
+    institutionalLaboratory: null,
+    age: null,
+    links: [],
     attachments,
     name: "Basalte du Massif Central",
     nature: "thin_section",

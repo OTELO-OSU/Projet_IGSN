@@ -1,6 +1,6 @@
 import type { UserStatus } from "@projet-igsn/domain/user/model";
+import type { UserIdentitiesResponse } from "@projet-igsn/domain/user/user-validator";
 
-import { userIdentitiesResponseSchema } from "@projet-igsn/domain/user/user-validator";
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -67,7 +67,7 @@ export function useSearchUsers(
           `Failed to search researchers (${res.status})`,
         );
       }
-      return userIdentitiesResponseSchema.parse(await res.json()).data;
+      return ((await res.json()) as UserIdentitiesResponse).data;
     },
   });
 }

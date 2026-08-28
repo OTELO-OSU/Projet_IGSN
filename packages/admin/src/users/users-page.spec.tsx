@@ -44,6 +44,9 @@ const user = (
   status,
   superAdmin: false,
   manualGroups,
+  institutionalOrganization: null,
+  institutionalOsu: null,
+  institutionalLaboratory: null,
 });
 
 const USERS = [

@@ -1,11 +1,11 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
-import type { SampleConflict } from "@projet-igsn/domain/sample/sample-validator";
+import type {
+  SampleConflict,
+  SampleResponse,
+} from "@projet-igsn/domain/sample/sample-validator";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
-import {
-  sampleConflictSchema,
-  sampleResponseSchema,
-} from "@projet-igsn/domain/sample/sample-validator";
+import { sampleConflictSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -44,7 +44,7 @@ export function useUpdateSample(id: string) {
               `Failed to update sample (${res.status})`,
             );
       }
-      return sampleResponseSchema.parse(await res.json()).data;
+      return ((await res.json()) as SampleResponse).data;
     },
     onSuccess: () => {
       toast.success(m.edit_sample_success());

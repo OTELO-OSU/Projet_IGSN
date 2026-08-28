@@ -1,6 +1,8 @@
-import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
+import type {
+  AdminListSamplesResponse,
+  ListSamplesQuery,
+} from "@projet-igsn/domain/sample/sample-validator";
 
-import { adminListSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -50,9 +52,8 @@ export function useSamples(params: SampleListParams, moderated = false) {
           `Failed to load samples (${res.status})`,
         );
       }
-      const { data, meta } = adminListSamplesResponseSchema.parse(
-        await res.json(),
-      );
+      // ponytail: the cast claims Date on createdAt/updatedAt where JSON carries a string, so a reader of those fields converts.
+      const { data, meta } = (await res.json()) as AdminListSamplesResponse;
       return { data, total: meta.total };
     },
     placeholderData: keepPreviousData,

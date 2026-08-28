@@ -1,6 +1,8 @@
-import type { ListUsersQuery } from "@projet-igsn/domain/user/user-validator";
+import type {
+  ListUsersQuery,
+  ListUsersResponse,
+} from "@projet-igsn/domain/user/user-validator";
 
-import { listUsersResponseSchema } from "@projet-igsn/domain/user/user-validator";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -24,7 +26,7 @@ export function useUsers(params: ListUsersQuery) {
           `Failed to load users (${res.status})`,
         );
       }
-      const { data, meta } = listUsersResponseSchema.parse(await res.json());
+      const { data, meta } = (await res.json()) as ListUsersResponse;
       return { data, total: meta.total };
     },
     placeholderData: keepPreviousData,

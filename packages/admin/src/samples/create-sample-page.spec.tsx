@@ -53,6 +53,15 @@ function fakeApi(failWrites = false) {
       }
       sample = {
         id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        owner: null,
+        manualGroups: [],
+        institutionalOrganization: null,
+        institutionalOsu: null,
+        institutionalLaboratory: null,
+        scientificContext: null,
+        age: null,
+        links: [],
+        attachments: [],
         texture: null,
         metamorphicFacies: null,
         description: null,
@@ -74,7 +83,11 @@ function fakeApi(failWrites = false) {
       return HttpResponse.json({ data: sample }, { status: 201 });
     }),
     http.get("*/samples/:id", () =>
-      HttpResponse.json({ data: sample, role: "owner" }),
+      HttpResponse.json({
+        data: sample,
+        role: "owner",
+        manualGroupOptions: [],
+      }),
     ),
   );
   return { lockCalls, created: () => sample };

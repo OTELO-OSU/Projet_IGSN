@@ -31,10 +31,4 @@ describe("listPublicUsers", () => {
 
     await expect(listPublicUsers(undefined, fetch)).rejects.toThrow(/500/);
   });
-
-  it("should throw when the response shape is invalid", async () => {
-    const { fetch } = stubFetch({ data: [{ id: "not-a-uuid", name: "x" }] });
-
-    await expect(listPublicUsers(undefined, fetch)).rejects.toThrow();
-  });
 });

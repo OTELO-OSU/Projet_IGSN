@@ -1,4 +1,5 @@
-import { adminUserResponseSchema } from "@projet-igsn/domain/user/user-validator";
+import type { AdminUserResponse } from "@projet-igsn/domain/user/user-validator";
+
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -18,7 +19,7 @@ export function useUser(id: string) {
           `Failed to load user (${res.status})`,
         );
       }
-      return adminUserResponseSchema.parse(await res.json()).data;
+      return ((await res.json()) as AdminUserResponse).data;
     },
   });
 }

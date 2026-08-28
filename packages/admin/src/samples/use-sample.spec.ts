@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 
-import { parseSampleResponse } from "./use-sample.ts";
+import { toSampleQueryData } from "./use-sample.ts";
 
 const BASALT = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3311",
@@ -25,6 +25,10 @@ const sample = {
   location: null,
   description: null,
   condition: null,
+  scientificContext: null,
+  age: null,
+  links: [],
+  attachments: [],
   security: null,
   availability: "exists",
   publicationYear: null,
@@ -33,6 +37,8 @@ const sample = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: null,
+  owner: null,
+  economicInterestElements: [],
   manualGroups: [LEFT_BEHIND],
   institutionalOrganization: null,
   institutionalOsu: null,
@@ -44,7 +50,7 @@ const sample = {
 
 it("should keep offering a group the owner has left while the sample is in it", async () => {
   // Act
-  const parsed = await parseSampleResponse(
+  const queryData = await toSampleQueryData(
     Response.json({
       data: sample,
       role: "owner",
@@ -52,6 +58,6 @@ it("should keep offering a group the owner has left while the sample is in it", 
     }),
   );
   // Assert
-  expect(parsed?.manualGroupOptions).toEqual([BASALT, LEFT_BEHIND]);
-  expect(parsed?.manualGroupIds).toEqual([LEFT_BEHIND.id]);
+  expect(queryData?.manualGroupOptions).toEqual([BASALT, LEFT_BEHIND]);
+  expect(queryData?.manualGroupIds).toEqual([LEFT_BEHIND.id]);
 });

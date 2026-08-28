@@ -1,6 +1,8 @@
-import type { ListManualGroupsQuery } from "@projet-igsn/domain/manual-group/manual-group-validator";
+import type {
+  ListManualGroupsQuery,
+  ListManualGroupsResponse,
+} from "@projet-igsn/domain/manual-group/manual-group-validator";
 
-import { listManualGroupsResponseSchema } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -24,9 +26,7 @@ export function useManualGroups(params: ListManualGroupsQuery, enabled = true) {
           `Failed to load manual groups (${res.status})`,
         );
       }
-      const { data, meta } = listManualGroupsResponseSchema.parse(
-        await res.json(),
-      );
+      const { data, meta } = (await res.json()) as ListManualGroupsResponse;
       return { data, total: meta.total };
     },
     placeholderData: keepPreviousData,

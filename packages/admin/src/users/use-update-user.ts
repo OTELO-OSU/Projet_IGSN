@@ -1,7 +1,9 @@
-import type { UpdateUser } from "@projet-igsn/domain/user/user-validator";
+import type {
+  AdminUserResponse,
+  UpdateUser,
+} from "@projet-igsn/domain/user/user-validator";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
-import { adminUserResponseSchema } from "@projet-igsn/domain/user/user-validator";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -26,7 +28,7 @@ export function useUpdateUser(id: string) {
           `Failed to update the account (${res.status})`,
         );
       }
-      return adminUserResponseSchema.parse(await res.json()).data;
+      return ((await res.json()) as AdminUserResponse).data;
     },
     onSuccess: async () => {
       toast.success(m.user_status_success());

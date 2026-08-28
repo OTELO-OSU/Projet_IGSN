@@ -1,8 +1,9 @@
-import type { PublicSample } from "@projet-igsn/domain/sample/sample-validator";
+import type {
+  PublicSample,
+  PublicSampleResponse,
+} from "@projet-igsn/domain/sample/sample-validator";
 
-import { publicSampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
-
-import { apiFetch, baseApiUrl } from "#/api.ts";
+import { apiFetch, apiJson, baseApiUrl } from "#/api.ts";
 
 export async function getSampleByIgsn(
   igsn: string,
@@ -12,9 +13,6 @@ export async function getSampleByIgsn(
   if (res.status === 404) {
     return null;
   }
-  if (!res.ok) {
-    throw new Error(`Failed to load sample (${res.status})`);
-  }
-  const { data } = publicSampleResponseSchema.parse(await res.json());
+  const { data } = await apiJson<PublicSampleResponse>(res, "sample");
   return data;
 }

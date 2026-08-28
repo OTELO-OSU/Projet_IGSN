@@ -1,4 +1,5 @@
-import { sampleCollaboratorsResponseSchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
+
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -19,7 +20,7 @@ export function useCollaborators(sampleId: string) {
           `Failed to load collaborators (${res.status})`,
         );
       }
-      return sampleCollaboratorsResponseSchema.parse(await res.json()).data;
+      return ((await res.json()) as SampleCollaboratorsResponse).data;
     },
   });
 }

@@ -128,7 +128,7 @@ function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
     {
       accessorKey: "updatedAt",
       header: () => m.column_last_modified(),
-      cell: ({ row }) => formatDate(row.original.updatedAt),
+      cell: ({ row }) => formatDate(new Date(row.original.updatedAt)),
       meta: { className: "w-32" },
     },
   ];

@@ -1,7 +1,9 @@
-import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
+import type {
+  SampleResponse,
+  SetSampleStatusBody,
+} from "@projet-igsn/domain/sample/sample-validator";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
-import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -19,7 +21,7 @@ export function usePublishSample(id: string) {
       if (!res.ok) {
         throw new Error(`Failed to publish sample (${res.status})`);
       }
-      return sampleResponseSchema.parse(await res.json()).data;
+      return ((await res.json()) as SampleResponse).data;
     },
     onSuccess: (_sample, status) => {
       toast.success(

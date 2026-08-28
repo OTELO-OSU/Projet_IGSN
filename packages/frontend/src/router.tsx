@@ -1,6 +1,7 @@
 import { createRouter as createTanStackRouter } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 
+import { ErrorView } from "./error-view.tsx";
 import { getContext } from "./integrations/tanstack-query/root-provider";
 import { deLocalizeUrl, localizeUrl } from "./paraglide/runtime.js";
 import { routeTree } from "./routeTree.gen.ts";
@@ -14,6 +15,7 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
+    defaultErrorComponent: ErrorView,
     rewrite: {
       input: ({ url }) => deLocalizeUrl(url),
       output: ({ url }) => localizeUrl(url),

@@ -1,8 +1,9 @@
-import type { PublicUser } from "@projet-igsn/domain/user/user-validator";
+import type {
+  PublicUser,
+  PublicUsersResponse,
+} from "@projet-igsn/domain/user/user-validator";
 
-import { publicUsersResponseSchema } from "@projet-igsn/domain/user/user-validator";
-
-import { apiFetch, baseApiUrl } from "#/api.ts";
+import { apiFetch, apiJson, baseApiUrl } from "#/api.ts";
 
 export async function listPublicUsers(
   include?: string,
@@ -13,9 +14,6 @@ export async function listPublicUsers(
     url.searchParams.set("include", include);
   }
   const res = await fetchFn(url);
-  if (!res.ok) {
-    throw new Error(`Failed to load users (${res.status})`);
-  }
-  const { data } = publicUsersResponseSchema.parse(await res.json());
+  const { data } = await apiJson<PublicUsersResponse>(res, "users");
   return data;
 }

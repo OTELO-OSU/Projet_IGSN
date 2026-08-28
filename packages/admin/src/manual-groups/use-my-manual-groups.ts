@@ -1,4 +1,5 @@
-import { myManualGroupsResponseSchema } from "@projet-igsn/domain/manual-group/manual-group-validator";
+import type { MyManualGroupsResponse } from "@projet-igsn/domain/manual-group/manual-group-validator";
+
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -19,7 +20,7 @@ export function useMyManualGroups() {
           `Failed to load your manual groups (${res.status})`,
         );
       }
-      return myManualGroupsResponseSchema.parse(await res.json());
+      return (await res.json()) as MyManualGroupsResponse;
     },
   });
 }

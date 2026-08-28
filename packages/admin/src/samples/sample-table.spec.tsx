@@ -191,6 +191,13 @@ describe("SampleTable", () => {
     await expect.element(screen.getByText("2026-07-01")).toBeInTheDocument();
   });
 
+  it("should render the last-modified date of a row carrying the api's ISO string", async () => {
+    const screen = await renderTable([
+      { ...sample, updatedAt: "2026-07-01T10:00:00.000Z" as unknown as Date },
+    ]);
+    await expect.element(screen.getByText("2026-07-01")).toBeInTheDocument();
+  });
+
   it("should render the owner as initials, announced as the full name", async () => {
     const screen = await renderTable(samples);
     await expect

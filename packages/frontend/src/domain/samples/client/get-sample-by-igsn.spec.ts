@@ -40,42 +40,7 @@ describe("getSampleByIgsn", () => {
     const result = await getSampleByIgsn(igsn, fetch);
 
     expect(new URL(lastUrl() ?? "").pathname).toBe(`/samples/${igsn}`);
-    expect(result).toEqual({
-      id: sampleJson.id,
-      name: "Basalt 42",
-      nature: "hand_sample",
-      type: null,
-      material: "rock.igneous",
-      texture: null,
-      metamorphicFacies: null,
-      collectionMethod: null,
-      collectionMethodDescription: null,
-      specificName: "BAS-42-001",
-      location: null,
-      description: null,
-      condition: null,
-      scientificContext: null,
-      age: null,
-      links: [],
-      attachments: [],
-      security: null,
-      availability: "exists",
-      publicationYear: 2026,
-      economicInterest: null,
-      economicInterestElements: [],
-      economicResourceTypePrecision: null,
-      economicDepositName: null,
-      economicDepositDescription: null,
-      igsn,
-      institutionalOrganization: null,
-      institutionalOsu: null,
-      institutionalLaboratory: null,
-      manualGroups: [],
-      owner: null,
-      status: "published",
-      createdAt: new Date(iso),
-      updatedAt: new Date(iso),
-    });
+    expect(result).toEqual(sampleJson);
   });
 
   it("should return null on a 404", async () => {
@@ -88,11 +53,5 @@ describe("getSampleByIgsn", () => {
     const { fetch } = stubFetch({}, 500);
 
     await expect(getSampleByIgsn(igsn, fetch)).rejects.toThrow(/500/);
-  });
-
-  it("should throw when the response shape is invalid", async () => {
-    const { fetch } = stubFetch({ data: { id: "not-a-uuid" } });
-
-    await expect(getSampleByIgsn(igsn, fetch)).rejects.toThrow();
   });
 });

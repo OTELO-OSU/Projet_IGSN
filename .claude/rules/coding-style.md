@@ -51,7 +51,8 @@ paths:
 
 ## Input validation with Zod
 
-- Validate all external data (user input, API responses, file content) at the boundary.
+- Validate all external data (user input, file content, request bodies) at the trust boundary, which is `api`.
+- Never re-validate an `api` response in `frontend`/`admin`: the api owns that schema, and a second parse turns drift into a crash instead of a blank field.
 - Infer types from the schema.
 - Fail fast with clear errors.
 
@@ -67,7 +68,7 @@ paths:
 - Magic numbers: use named constants.
 - Long functions (>50 lines): split into focused pieces.
 - Large files (>800 lines): extract modules.
-- `console.log` in production code: use a logging library.
+- `console.log` in production code: use a logging library, the apps' react-query `onError` `console.error` being the one browser-side exception.
 - Hidden side effects: return every change (a `Promise` if async).
 - Code testable only through mocks: the logic is too coupled to its I/O.
 

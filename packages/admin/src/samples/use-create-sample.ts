@@ -1,7 +1,7 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
+import type { SampleResponse } from "@projet-igsn/domain/sample/sample-validator";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
-import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
@@ -21,7 +21,7 @@ export function useCreateSample() {
       if (!res.ok) {
         throw new Error(`Failed to create sample (${res.status})`);
       }
-      return sampleResponseSchema.parse(await res.json()).data;
+      return ((await res.json()) as SampleResponse).data;
     },
     onSuccess: () => {
       toast.success(m.create_sample_success());

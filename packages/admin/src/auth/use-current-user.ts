@@ -1,4 +1,5 @@
-import { currentUserSchema } from "@projet-igsn/domain/user/current-user";
+import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
+
 import { UNSUPPORTED_IDENTITY_PROVIDER } from "@projet-igsn/domain/user/unsupported-identity-provider";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "react-oidc-context";
@@ -33,7 +34,7 @@ export function useCurrentUser() {
         }
         throw HttpError.fromResponse(res, `API responded ${res.status}`);
       }
-      return currentUserSchema.parse(await res.json());
+      return (await res.json()) as CurrentUser;
     },
     enabled: Boolean(token),
     staleTime: Infinity,

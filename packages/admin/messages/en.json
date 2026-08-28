@@ -592,5 +592,7 @@
   "field_managed_laboratories": "Managed laboratories",
   "field_managed_manual_groups": "Managed manual groups",
   "managed_search_placeholder": "Search by name or identifier",
-  "managed_remove": "Remove {name}"
+  "managed_remove": "Remove {name}",
+  "app_error_title": "Something went wrong",
+  "app_error_message": "The page could not be displayed."
 }

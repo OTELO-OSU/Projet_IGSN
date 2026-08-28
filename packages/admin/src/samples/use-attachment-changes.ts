@@ -5,11 +5,9 @@ import {
   type UpdateSampleAttachment,
   uploadSampleAttachmentSchema,
 } from "@projet-igsn/domain/sample/attachment/attachment-validator";
-import { sampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/model";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useAuth } from "react-oidc-context";
-import { z } from "zod";
 
 import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
@@ -27,8 +25,6 @@ type UploadBatchItem = {
   progress: number;
   status: "uploading" | "uploaded" | "failed";
 };
-
-const uploadResponseSchema = z.object({ data: sampleAttachmentSchema });
 
 // ponytail: no silent-renewal retry on 401 here; the upload just fails in the
 // recap.
@@ -53,7 +49,9 @@ function xhrUpload(
         if (xhr.status < 200 || xhr.status >= 300) {
           throw new Error(`Upload failed (${xhr.status})`);
         }
-        resolve(uploadResponseSchema.parse(JSON.parse(xhr.responseText)).data);
+        resolve(
+          (JSON.parse(xhr.responseText) as { data: SampleAttachment }).data,
+        );
       } catch (error: unknown) {
         reject(error instanceof Error ? error : new Error("Upload failed"));
       }

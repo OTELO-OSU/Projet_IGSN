@@ -1,6 +1,7 @@
-import type { InstitutionalGroupCounts } from "@projet-igsn/domain/user/user-validator";
-
-import { institutionalGroupCountsResponseSchema } from "@projet-igsn/domain/user/user-validator";
+import type {
+  InstitutionalGroupCounts,
+  InstitutionalGroupCountsResponse,
+} from "@projet-igsn/domain/user/user-validator";
 
 import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
@@ -17,8 +18,6 @@ export async function getInstitutionalGroupCounts(
       `Failed to load the institutional group member counts (${res.status})`,
     );
   }
-  const { data } = institutionalGroupCountsResponseSchema.parse(
-    await res.json(),
-  );
+  const { data } = (await res.json()) as InstitutionalGroupCountsResponse;
   return data;
 }

@@ -1,8 +1,7 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { ListSamplesResponse } from "@projet-igsn/domain/sample/sample-validator";
 
-import { listSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
-
-import { apiFetch, baseApiUrl } from "#/api.ts";
+import { apiFetch, apiJson, baseApiUrl } from "#/api.ts";
 
 export type SampleFilters = Record<string, string | number | undefined>;
 
@@ -31,9 +30,6 @@ export async function listSamples(
   }
 
   const res = await fetchFn(url);
-  if (!res.ok) {
-    throw new Error(`Failed to load samples (${res.status})`);
-  }
-  const { data, meta } = listSamplesResponseSchema.parse(await res.json());
+  const { data, meta } = await apiJson<ListSamplesResponse>(res, "samples");
   return { data, total: meta.total };
 }
