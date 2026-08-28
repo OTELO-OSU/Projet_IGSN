@@ -71,6 +71,7 @@ const ATTACHMENT: SampleAttachment = {
 let callerStatus: "pending" | "accepted" = "accepted";
 let callerUnknown = false;
 let callerManagedLaboratories: string[] = [];
+let callerManaged = false;
 let editPageSearch = "";
 let sampleFetched = false;
 
@@ -78,6 +79,7 @@ beforeEach(() => {
   callerStatus = "accepted";
   callerUnknown = false;
   callerManagedLaboratories = [];
+  callerManaged = false;
   editPageSearch = "";
   sampleFetched = false;
 });
@@ -255,6 +257,7 @@ function fakeApi(
       return HttpResponse.json({
         data: sample,
         role,
+        managed: callerManaged,
         manualGroupOptions: MANUAL_GROUPS,
       });
     }),
@@ -493,7 +496,9 @@ describe("EditSamplePage", () => {
 
     expect(
       screen
-        .getByRole("button", { name: /withdraw|republish|more actions/i })
+        .getByRole("button", {
+          name: /withdraw|republish|tombstone|more actions/i,
+        })
         .elements(),
     ).toHaveLength(0);
   });
@@ -529,6 +534,80 @@ describe("EditSamplePage", () => {
 
     await vi.waitFor(() => expect(calls).toEqual(["STATUS published"]));
   });
+
+  it.each<SampleStatus>(["published", "withdrawn"])(
+    "should save the edits, then tombstone a %s sample for a space manager",
+    async (status) => {
+      callerManaged = true;
+      const { screen, calls } = await renderEditPage(status);
+
+      await screen.getByRole("button", { name: "More actions" }).click();
+      await screen.getByRole("menuitem", { name: "Save & Tombstone" }).click();
+      await expect
+        .element(screen.getByRole("dialog", { name: "Tombstone sample" }))
+        .toHaveTextContent(
+          /the sample disappears for everyone but its space managers/i,
+        );
+      await screen.getByRole("button", { name: "Confirm" }).click();
+
+      await vi.waitFor(() =>
+        expect(calls).toEqual([
+          "PUT Basalte du Massif Central",
+          "STATUS tombstone",
+        ]),
+      );
+      await expect
+        .element(screen.getByRole("heading", { name: "My samples" }))
+        .toBeVisible();
+    },
+  );
+
+  it("should offer no tombstone action to an editor who does not manage the sample", async () => {
+    const { screen } = await renderEditPageAsEditor("published");
+
+    await screen.getByRole("button", { name: "More actions" }).click();
+
+    await expect
+      .element(screen.getByRole("menuitem", { name: "Save & Withdraw" }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("menuitem", { name: "Save & Tombstone" }).elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should hold a tombstoned sample read-only, unshared and unlocked", async () => {
+    callerManaged = true;
+    const { screen, lockCalls } = await renderEditPage("tombstone");
+
+    await expect
+      .element(screen.getByRole("status"))
+      .toHaveTextContent(
+        "This sample is a tombstone, hidden from everyone but its space managers.",
+      );
+    await expect.element(screen.getByLabelText("Name")).toBeDisabled();
+    expect(
+      screen
+        .getByRole("button", { name: /save|share|more actions/i })
+        .elements(),
+    ).toHaveLength(0);
+    expect(lockCalls).toEqual([]);
+  });
+
+  it.each<[string, string]>([
+    ["Republish", "STATUS published"],
+    ["Restore as withdrawn", "STATUS withdrawn"],
+  ])(
+    "should restore a tombstoned sample with %s",
+    async (button, expectedCall) => {
+      callerManaged = true;
+      const { screen, calls } = await renderEditPage("tombstone");
+
+      await screen.getByRole("button", { name: button, exact: true }).click();
+      await screen.getByRole("button", { name: "Confirm" }).click();
+
+      await vi.waitFor(() => expect(calls).toEqual([expectedCall]));
+    },
+  );
 
   it("should disable Save & Publish and explain in a tooltip when the sample has no material", async () => {
     const { screen } = await renderEditPage("draft", null);

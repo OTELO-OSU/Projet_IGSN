@@ -1,4 +1,7 @@
-import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
+import type {
+  CreateSample,
+  SampleStatus,
+} from "@projet-igsn/domain/sample/sample";
 
 import {
   Alert,
@@ -23,6 +26,7 @@ import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { RepublishButton } from "#/samples/republish-button.tsx";
 import { RequestSampleDeletionDialog } from "#/samples/request-sample-deletion-dialog.tsx";
+import { RestoreWithdrawnButton } from "#/samples/restore-withdrawn-button.tsx";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
@@ -36,7 +40,7 @@ import {
   useUpdateSample,
 } from "#/samples/use-update-sample.ts";
 
-const SAVE_LABEL: Record<SampleStatus, () => string> = {
+const SAVE_LABEL: Record<Exclude<SampleStatus, "tombstone">, () => string> = {
   draft: m.action_save_draft,
   published: m.action_publish_updates,
   withdrawn: m.action_save_changes,
@@ -62,7 +66,9 @@ function EditSamplePage() {
   const deleteSample = useDeleteSample(sampleId);
   const { heldByOther } = useSampleEditLock(
     sampleId,
-    query.data != null && canUpdateSample(query.data.role, query.data),
+    query.data != null &&
+      query.data.status !== "tombstone" &&
+      canUpdateSample(query.data.role, query.data),
   );
   const attachmentChanges = useAttachmentChanges(
     sampleId,
@@ -85,6 +91,9 @@ function EditSamplePage() {
     return <p role="alert">{m.sample_not_found()}</p>;
   }
 
+  const status = query.data.status;
+  const managed = query.data.managed;
+  const isTombstone = status === "tombstone";
   const mayToggleStatus = isSampleEditor(query.data.role);
   const isPending =
     updateSample.isPending || publishSample.isPending || setStatus.isPending;
@@ -102,6 +111,41 @@ function EditSamplePage() {
       ? m.edit_sample_locked()
       : conflict === "stale"
         ? m.edit_sample_stale()
+        : undefined;
+  const publicHint = isTombstone
+    ? m.sample_tombstone_hint()
+    : status === "withdrawn"
+      ? m.sample_withdrawn_hint()
+      : undefined;
+  const withdrawItem = {
+    label: m.action_save_withdraw(),
+    title: m.withdraw_sample_title(),
+    description: m.withdraw_sample_warning(),
+    onConfirm: (value: CreateSample) =>
+      updateSample.mutate(value, {
+        onSuccess: () => setStatus.mutate("withdrawn"),
+      }),
+  };
+  const tombstoneItem = {
+    label: m.action_save_tombstone(),
+    title: m.tombstone_sample_title(),
+    description: m.tombstone_sample_warning(),
+    onConfirm: (value: CreateSample) =>
+      updateSample.mutate(value, {
+        onSuccess: () =>
+          setStatus.mutate("tombstone", {
+            onSuccess: () => void navigate({ to: listRoute }),
+          }),
+      }),
+  };
+  const statusMenu =
+    status === "published" && mayToggleStatus
+      ? {
+          label: m.action_status_options(),
+          items: managed ? [withdrawItem, tombstoneItem] : [withdrawItem],
+        }
+      : status === "withdrawn" && managed
+        ? { label: m.action_status_options(), items: [tombstoneItem] }
         : undefined;
 
   return (
@@ -156,13 +200,13 @@ function EditSamplePage() {
               {query.data.igsn}
             </p>
           ) : null}
-          {query.data.status === "withdrawn" ? (
+          {publicHint ? (
             <p role="status" className="text-muted-foreground text-sm">
-              {m.sample_withdrawn_hint()}
+              {publicHint}
             </p>
           ) : null}
         </div>
-        <ShareSampleButton sampleId={sampleId} />
+        {isTombstone ? null : <ShareSampleButton sampleId={sampleId} />}
       </div>
 
       {lockedMessage ? (
@@ -191,10 +235,23 @@ function EditSamplePage() {
         attachments={query.data.attachments}
         attachmentChanges={attachmentChanges}
         isPending={isPending}
-        status={query.data.status}
-        readOnlyReason={lockedMessage ?? rejection}
+        status={status}
+        readOnlyReason={
+          isTombstone ? m.sample_tombstone_hint() : (lockedMessage ?? rejection)
+        }
         statusAction={
-          query.data.status === "withdrawn" && mayToggleStatus ? (
+          isTombstone ? (
+            <>
+              <RepublishButton
+                disabled={isPending}
+                onConfirm={() => setStatus.mutate("published")}
+              />
+              <RestoreWithdrawnButton
+                disabled={isPending}
+                onConfirm={() => setStatus.mutate("withdrawn")}
+              />
+            </>
+          ) : status === "withdrawn" && mayToggleStatus ? (
             <RepublishButton
               disabled={isPending}
               onConfirm={() => setStatus.mutate("published")}
@@ -202,42 +259,36 @@ function EditSamplePage() {
           ) : undefined
         }
         onCancel={() => navigate({ to: listRoute })}
-        secondaryAction={{
-          kind: "submit",
-          label: SAVE_LABEL[query.data.status](),
-          onSubmit: (value) => updateSample.mutate(value),
-          menu:
-            query.data.status === "published" && mayToggleStatus
+        secondaryAction={
+          isTombstone
+            ? undefined
+            : {
+                kind: "submit",
+                label: SAVE_LABEL[status](),
+                onSubmit: (value) => updateSample.mutate(value),
+                menu: statusMenu,
+              }
+        }
+        primaryAction={
+          isTombstone
+            ? undefined
+            : query.data.igsn
               ? {
-                  label: m.action_status_options(),
-                  itemLabel: m.action_save_withdraw(),
-                  title: m.withdraw_sample_title(),
-                  description: m.withdraw_sample_warning(),
-                  onConfirm: (value) =>
+                  kind: "link",
+                  label: m.action_view_public_page(),
+                  href: `${FRONTEND_URL}/samples/${query.data.igsn}`,
+                }
+              : {
+                  kind: "publish",
+                  label: m.action_save_publish(),
+                  onPublish: (value, publishStatus) =>
                     updateSample.mutate(value, {
-                      onSuccess: () => setStatus.mutate("withdrawn"),
+                      onSuccess: () =>
+                        publishSample.mutate(publishStatus, {
+                          onSuccess: () => navigate({ to: listRoute }),
+                        }),
                     }),
                 }
-              : undefined,
-        }}
-        primaryAction={
-          query.data.igsn
-            ? {
-                kind: "link",
-                label: m.action_view_public_page(),
-                href: `${FRONTEND_URL}/samples/${query.data.igsn}`,
-              }
-            : {
-                kind: "publish",
-                label: m.action_save_publish(),
-                onPublish: (value, status) =>
-                  updateSample.mutate(value, {
-                    onSuccess: () =>
-                      publishSample.mutate(status, {
-                        onSuccess: () => navigate({ to: listRoute }),
-                      }),
-                  }),
-              }
         }
       />
     </>

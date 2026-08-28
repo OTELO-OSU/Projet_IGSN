@@ -21,9 +21,8 @@ export async function parseSampleResponse(res: Response) {
   if (!res.ok) {
     throw HttpError.fromResponse(res, `Failed to load sample (${res.status})`);
   }
-  const { data, role, manualGroupOptions } = adminSampleResponseSchema.parse(
-    await res.json(),
-  );
+  const { data, role, managed, manualGroupOptions } =
+    adminSampleResponseSchema.parse(await res.json());
   const offered = new Map(
     [...manualGroupOptions, ...data.manualGroups].map((group) => [
       group.id,
@@ -33,6 +32,7 @@ export async function parseSampleResponse(res: Response) {
   return {
     ...data,
     role,
+    managed,
     manualGroupOptions: [...offered.values()].sort((a, b) =>
       a.name.localeCompare(b.name),
     ),

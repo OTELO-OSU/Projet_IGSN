@@ -89,7 +89,11 @@ const validateDraft =
 
 export type SampleSubmitMenu = {
   label: string;
-  itemLabel: string;
+  items: SampleSubmitMenuItem[];
+};
+
+export type SampleSubmitMenuItem = {
+  label: string;
   title: string;
   description: string;
   onConfirm: (value: CreateSample) => void;
@@ -117,7 +121,7 @@ type SampleFormProps = {
   isPending?: boolean;
   defaultValues?: CreateSample;
   status?: SampleStatus;
-  primaryAction: SampleFormAction;
+  primaryAction?: SampleFormAction;
   secondaryAction?: SampleFormAction;
   statusAction?: ReactNode;
   sampleId?: string;
@@ -166,7 +170,7 @@ export function SampleForm({
         isFrozenByPublication(name) ||
         (name === "manualGroupIds" && areManualGroupsFrozen);
   const defaultSubmit =
-    primaryAction.kind === "submit"
+    primaryAction?.kind === "submit"
       ? primaryAction.onSubmit
       : secondaryAction?.kind === "submit"
         ? secondaryAction.onSubmit
@@ -318,10 +322,14 @@ export function SampleForm({
             label={m.action_publish_options()}
             className="border-l-primary-foreground/30 rounded-l-none border-l"
             disabled={disabled}
-            itemLabel={m.action_publish_withdrawn()}
-            title={m.publish_withdrawn_sample_title()}
-            description={m.publish_withdrawn_sample_warning()}
-            onConfirm={() => publish("withdrawn")}
+            items={[
+              {
+                label: m.action_publish_withdrawn(),
+                title: m.publish_withdrawn_sample_title(),
+                description: m.publish_withdrawn_sample_warning(),
+                onConfirm: () => publish("withdrawn"),
+              },
+            ]}
           />
         </div>
       ));
@@ -347,12 +355,11 @@ export function SampleForm({
               variant={variant}
               className="-ml-px rounded-l-none"
               disabled={disabled}
-              itemLabel={menu.itemLabel}
-              title={menu.title}
-              description={menu.description}
-              onConfirm={() =>
-                void form.handleSubmit({ onValid: menu.onConfirm })
-              }
+              items={menu.items.map((item) => ({
+                ...item,
+                onConfirm: () =>
+                  void form.handleSubmit({ onValid: item.onConfirm }),
+              }))}
             />
           ) : null}
         </div>
@@ -535,7 +542,7 @@ export function SampleForm({
           </Button>
           {secondaryAction ? renderAction(secondaryAction, "outline") : null}
           {statusAction}
-          {renderAction(primaryAction)}
+          {primaryAction ? renderAction(primaryAction) : null}
         </div>
       </form>
     </FieldDisabledProvider>

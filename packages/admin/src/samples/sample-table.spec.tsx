@@ -118,6 +118,7 @@ describe("SampleTable", () => {
     ["draft", "Draft"],
     ["published", "Published"],
     ["withdrawn", "Withdrawn"],
+    ["tombstone", "Tombstone"],
   ])("should badge a %s sample as %s", async (status, label) => {
     const screen = await renderTable([{ ...sample, status }]);
     await expect.element(screen.getByText(label)).toBeInTheDocument();
