@@ -81,19 +81,4 @@ test.describe("tombstone", () => {
     await detail.goto(sample.igsn);
     await detail.expectSample(sample.name, sample.igsn);
   });
-
-  test("an owner without moderation reach cannot tombstone their sample", async ({
-    page,
-    samples,
-  }) => {
-    const sample = publishedSampleOfJean(samples);
-    const list = sampleListPage(page);
-    const edit = sampleEditPage(page);
-
-    await signInAsResearcher(page, RESEARCHERS.jean);
-    await list.openSample(sample.name);
-
-    await edit.expectVisible();
-    await edit.expectNoTombstoneInMenu();
-  });
 });

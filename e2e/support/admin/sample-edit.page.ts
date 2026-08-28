@@ -177,16 +177,6 @@ export function sampleEditPage(page: Page) {
       ).toBeVisible();
       await page.keyboard.press("Escape");
     },
-    expectNoTombstoneInMenu: async () => {
-      await openActionsMenu();
-      await expect(
-        page.getByRole("menuitem", { name: "Save & Withdraw" }),
-      ).toBeVisible();
-      await expect(
-        page.getByRole("menuitem", { name: "Save & Tombstone" }),
-      ).toHaveCount(0);
-      await page.keyboard.press("Escape");
-    },
     restoreAsWithdrawn: () =>
       confirmStatusChange(
         "Restore as withdrawn",

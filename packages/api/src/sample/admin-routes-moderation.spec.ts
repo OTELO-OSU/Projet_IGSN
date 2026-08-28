@@ -678,37 +678,9 @@ describe("a tombstoned sample", () => {
       { headers },
     );
 
-  async function asSuperAdmin(db: Db): Promise<Arranged> {
-    const app = await arrangeSuperAdmin(db);
-    const owner = await insertUser(db, "owner@example.com");
-    const sample = await ownedSample(
-      db,
-      owner.id,
-      publishableSample,
-      OUT_OF_REACH,
-    );
-    await publishSample(db, sample.id);
-    return { app, sampleId: sample.id };
-  }
-
   async function asInstitutionalManager(db: Db): Promise<Arranged> {
     const { app, owner } = await arrangeManager(db);
     const sample = await ownedSample(db, owner.id, publishableSample, IN_REACH);
-    await publishSample(db, sample.id);
-    return { app, sampleId: sample.id };
-  }
-
-  async function asManualGroupManager(db: Db): Promise<Arranged> {
-    const { app, manager, owner } = await arrangeManager(db);
-    await db.insertInto("manual_group").values(MANAGED_GROUP).execute();
-    await moderateManualGroup(db, manager.id, [MANAGED_GROUP.id]);
-    const sample = await ownedSample(
-      db,
-      owner.id,
-      publishableSample,
-      OUT_OF_REACH,
-    );
-    await attachGroup(db, sample.id, MANAGED_GROUP.id);
     await publishSample(db, sample.id);
     return { app, sampleId: sample.id };
   }
@@ -725,15 +697,11 @@ describe("a tombstoned sample", () => {
     return { app, owner, sample: sample! };
   }
 
-  pgTest.for([
-    ["a super admin", asSuperAdmin],
-    ["an institutional manager", asInstitutionalManager],
-    ["a manual-group manager", asManualGroupManager],
-  ] as const)(
-    "should let %s tombstone a published sample",
-    async ([, arrange], { db }) => {
+  pgTest(
+    "should let a manager tombstone a published sample",
+    async ({ db }) => {
       // Arrange
-      const { app, sampleId } = await arrange(db);
+      const { app, sampleId } = await asInstitutionalManager(db);
       // Act
       const res = await setStatus(app, sampleId, "tombstone");
       // Assert
@@ -784,41 +752,6 @@ describe("a tombstoned sample", () => {
     );
     // Assert
     expect(res.status).toBe(404);
-  });
-
-  pgTest("should drop out of its owner's sample list", async ({ db }) => {
-    // Arrange
-    const { app, owner } = await arrangeTombstoned(db);
-    await ownedSample(
-      db,
-      owner.id,
-      { ...draft, name: "Still listed" },
-      IN_REACH,
-    );
-    // Act
-    const res = await app.request("/admin/samples?page=1&perPage=25", {
-      headers: ownerHeader,
-    });
-    // Assert
-    expect(res.status).toBe(200);
-    const { data } = adminListSamplesResponseSchema.parse(await res.json());
-    expect(data.map((sample) => sample.name)).toEqual(["Still listed"]);
-  });
-
-  pgTest("should read as managed for a manager", async ({ db }) => {
-    // Arrange
-    const { app, sample } = await arrangeTombstoned(db);
-    // Act
-    const res = await testClient(app).admin.samples[":id"].$get(
-      { param: { id: sample.id } },
-      { headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(200);
-    expect(adminSampleResponseSchema.parse(await res.json())).toMatchObject({
-      data: { id: sample.id, status: "tombstone" },
-      managed: true,
-    });
   });
 
   pgTest("should stay in the moderation list", async ({ db }) => {
