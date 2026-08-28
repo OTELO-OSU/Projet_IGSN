@@ -1,5 +1,6 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 import type { ReactNode } from "react";
 
@@ -23,11 +24,15 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { availabilitySchema } from "@projet-igsn/domain/sample/availability/availability";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
+import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import {
   type PublishableFields,
   samplePublishBlockers,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
-import { type CreateSample } from "@projet-igsn/domain/sample/sample";
+import {
+  type CreateSample,
+  type SampleStatus,
+} from "@projet-igsn/domain/sample/sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 
@@ -38,6 +43,7 @@ import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
 import { composeScientificContext } from "#/samples/compose-scientific-context.ts";
+import { ConfirmMenuButton } from "#/samples/confirm-menu-button.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
@@ -80,18 +86,41 @@ const validateDraft =
       : { fields: sampleDraftFieldErrors(parsed.error.issues, value) };
   };
 
+/** One confirmed action hidden in a chevron attached to the submit button, run on the validated form value (save & ...). */
+export type SampleSubmitMenu = {
+  label: string;
+  itemLabel: string;
+  title: string;
+  description: string;
+  onConfirm: (value: CreateSample) => void;
+};
+
 export type SampleFormAction =
-  | { kind: "submit"; label: string; onSubmit: (value: CreateSample) => void }
-  | { kind: "publish"; label: string; onPublish: (value: CreateSample) => void }
+  | {
+      kind: "submit";
+      label: string;
+      onSubmit: (value: CreateSample) => void;
+      menu?: SampleSubmitMenu;
+    }
+  | {
+      kind: "publish";
+      label: string;
+      onPublish: (
+        value: CreateSample,
+        status: SetSampleStatusBody["status"],
+      ) => void;
+    }
   | { kind: "link"; label: string; href: string };
 
 type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
   defaultValues?: CreateSample;
-  published?: boolean;
+  status?: SampleStatus;
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
+  /** The withdraw / republish toggle, rendered after the save action. */
+  statusAction?: ReactNode;
   sampleId?: string;
   attachments?: SampleAttachment[];
   attachmentChanges?: SampleAttachmentChanges;
@@ -104,9 +133,10 @@ export function SampleForm({
   onCancel,
   isPending,
   defaultValues,
-  published = false,
+  status = "draft",
   primaryAction,
   secondaryAction,
+  statusAction,
   sampleId,
   attachments = [],
   attachmentChanges,
@@ -115,11 +145,12 @@ export function SampleForm({
   manualGroupOptions = [],
 }: SampleFormProps) {
   const roleOnSample = useUserRoleOnSample(sampleId);
+  const wasPublished = hasPermanentIgsn({ status });
   const validate = validateDraft(
-    published ? publishedSampleSchema : sampleDraftSchema,
+    wasPublished ? publishedSampleSchema : sampleDraftSchema,
   );
   const isReadOnly = readOnlyReason !== undefined;
-  const isFrozenByPublication = published
+  const isFrozenByPublication = wasPublished
     ? publishedSampleFrozenField(
         defaultValues?.scientificContext?.provenanceStatus ?? null,
         defaultValues?.material ?? null,
@@ -263,38 +294,70 @@ export function SampleForm({
       if (roleOnSample !== null && !isSampleEditor(roleOnSample)) {
         return null;
       }
+      const publish = (status: SetSampleStatusBody["status"]) =>
+        void form.handleSubmit({
+          onValid: (value) => action.onPublish(value, status),
+        });
       return renderPublishGated((disabled) => (
-        <ConfirmButton
-          disabled={disabled}
-          title={m.publish_sample_title()}
-          description={m.publish_sample_warning()}
-          confirmLabel={m.action_confirm()}
-          cancelLabel={m.action_cancel()}
-          closeLabel={m.action_close()}
-          onConfirm={() =>
-            void form.handleSubmit({ onValid: action.onPublish })
-          }
-        >
-          {action.label}
-        </ConfirmButton>
+        <div className="flex">
+          <ConfirmButton
+            className="rounded-r-none"
+            disabled={disabled}
+            title={m.publish_sample_title()}
+            description={m.publish_sample_warning()}
+            confirmLabel={m.action_confirm()}
+            cancelLabel={m.action_cancel()}
+            closeLabel={m.action_close()}
+            onConfirm={() => publish("published")}
+          >
+            {action.label}
+          </ConfirmButton>
+          <ConfirmMenuButton
+            label={m.action_publish_options()}
+            className="border-l-primary-foreground/30 rounded-l-none border-l"
+            disabled={disabled}
+            itemLabel={m.action_publish_withdrawn()}
+            title={m.publish_withdrawn_sample_title()}
+            description={m.publish_withdrawn_sample_warning()}
+            onConfirm={() => publish("withdrawn")}
+          />
+        </div>
       ));
     }
     // ponytail: a native submit button routes through the form's default meta
     // (defaultSubmit), so only one submit-kind action is supported at a time.
     // No caller needs two; add explicit per-button meta if that ever changes.
+    const menu = action.menu;
     const submitButton = (disabled: boolean) => (
       <form.AppForm>
-        <SampleSubmitButton
-          label={action.label}
-          variant={variant}
-          disabled={disabled}
-          sampleId={sampleId}
-          published={published}
-          blockedReason={readOnlyReason}
-        />
+        <div className="flex">
+          <SampleSubmitButton
+            label={action.label}
+            variant={variant}
+            className={menu ? "rounded-r-none" : undefined}
+            disabled={disabled}
+            sampleId={sampleId}
+            status={status}
+            blockedReason={readOnlyReason}
+          />
+          {menu ? (
+            <ConfirmMenuButton
+              label={menu.label}
+              variant={variant}
+              className="-ml-px rounded-l-none"
+              disabled={disabled}
+              itemLabel={menu.itemLabel}
+              title={menu.title}
+              description={menu.description}
+              onConfirm={() =>
+                void form.handleSubmit({ onValid: menu.onConfirm })
+              }
+            />
+          ) : null}
+        </div>
       </form.AppForm>
     );
-    return published
+    return wasPublished
       ? renderPublishGated(submitButton)
       : submitButton(isReadOnly || (isPending ?? false));
   };
@@ -472,6 +535,7 @@ export function SampleForm({
             {m.action_cancel()}
           </Button>
           {secondaryAction ? renderAction(secondaryAction, "outline") : null}
+          {statusAction}
           {renderAction(primaryAction)}
         </div>
       </form>

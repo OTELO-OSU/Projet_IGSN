@@ -7,10 +7,12 @@ export function SubmitButton({
   label,
   disabled,
   variant,
+  className,
 }: {
   label: string;
   disabled?: boolean;
   variant?: ComponentProps<typeof Button>["variant"];
+  className?: string;
 }) {
   const form = useFormContext();
   return (
@@ -19,6 +21,7 @@ export function SubmitButton({
         <Button
           type="submit"
           variant={variant}
+          className={className}
           disabled={disabled || isSubmitting}
         >
           {label}

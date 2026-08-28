@@ -1,4 +1,5 @@
 import type { SampleMailField } from "@projet-igsn/domain/sample/changed-sample-fields";
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 
 import type { RenderedMail } from "../mail/send-mail.ts";
@@ -8,7 +9,7 @@ import { translator } from "../mail/i18n.ts";
 
 export type SampleModeratedEdit = {
   owner: Pick<User, "email" | "name" | "firstname">;
-  fields: SampleMailField[] | "published";
+  fields: SampleMailField[] | SetSampleStatusBody["status"];
   sampleName: string;
   sampleUrl: string;
 };
@@ -20,14 +21,13 @@ export async function sampleModeratedMail({
   sampleUrl,
 }: SampleModeratedEdit): Promise<RenderedMail> {
   const t = translator();
-  const published = fields === "published";
   const params = {
     sample: sampleName,
-    fields: published
-      ? ""
-      : fields.map((field) => t(`mail_sample_field_${field}`)).join(", "),
+    fields: Array.isArray(fields)
+      ? fields.map((field) => t(`mail_sample_field_${field}`)).join(", ")
+      : "",
   };
-  const key = published ? "published" : "moderated";
+  const key = Array.isArray(fields) ? "moderated" : fields;
   return ctaMail({
     recipient: owner,
     subject: t(`mail_sample_${key}_subject`, params),

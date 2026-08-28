@@ -5,6 +5,7 @@ import type { User } from "@projet-igsn/domain/user/model";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { MiddlewareHandler } from "hono";
 
+import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canPublishSamples } from "@projet-igsn/domain/user/can-publish-samples";
 import { z } from "zod";
@@ -54,7 +55,8 @@ export function requireSampleAccess(
     }
     if (
       c.req.method !== "GET" &&
-      found?.sample.published &&
+      found &&
+      hasPermanentIgsn(found.sample) &&
       !canPublishSamples(user)
     ) {
       return c.json({ error: "Forbidden" }, 403);

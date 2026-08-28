@@ -8,6 +8,7 @@ import { describe, expect } from "vitest";
 import { createApp } from "../app.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser, tokenEmail } from "../tests/provision-user.ts";
+import { setSampleStatus } from "./service/set-sample-status.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
 
@@ -555,7 +556,7 @@ describe("public attachment download", () => {
       { headers: authHeader },
     );
     const { igsn } = sampleResponseSchema.parse(await published.json()).data;
-    return { igsn: igsn!, attachmentId: data.id };
+    return { igsn: igsn!, attachmentId: data.id, sampleId: sample.id };
   }
 
   pgTest("should download a published sample's attachment", async ({ db }) => {
@@ -581,6 +582,23 @@ describe("public attachment download", () => {
     );
     expect(res.status).toBe(404);
   });
+
+  pgTest(
+    "should not expose a withdrawn sample's attachment by IGSN",
+    async ({ db }) => {
+      // Arrange
+      const client = await createTestApp(db);
+      const { igsn, attachmentId, sampleId } =
+        await publishWithAttachment(client);
+      await setSampleStatus(db, sampleId, "withdrawn");
+      // Act
+      const res = await client.samples[":igsn"].attachments[
+        ":attachmentId"
+      ].$get({ param: { igsn, attachmentId } });
+      // Assert
+      expect(res.status).toBe(404);
+    },
+  );
 
   pgTest(
     "should not expose a draft sample's attachment by IGSN",

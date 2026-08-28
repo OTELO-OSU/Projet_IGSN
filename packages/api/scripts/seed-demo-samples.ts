@@ -5,7 +5,7 @@ import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffi
 
 import type { SeedSample } from "./seed.ts";
 
-type DemoRow = Omit<SeedSample, "id" | "igsn" | "published">;
+type DemoRow = Omit<SeedSample, "id" | "igsn" | "status">;
 
 type Position = NonNullable<Location["position"]>;
 type Elevation = NonNullable<Position["elevation"]>;
@@ -1650,7 +1650,7 @@ export const DEMO_SAMPLES: SeedSample[] = [...PUBLISHED, ...DRAFTS].map(
     return {
       ...row,
       id,
-      published,
+      status: published ? "published" : "draft",
       ...(published
         ? {
             igsn: generateIgsnSuffix(id),

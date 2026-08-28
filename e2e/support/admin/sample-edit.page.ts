@@ -16,6 +16,16 @@ export function sampleEditPage(page: Page) {
     }).toPass({ timeout: 20_000 });
   };
 
+  const confirm = (dialog: string) =>
+    page
+      .getByRole("dialog", { name: dialog })
+      .getByRole("button", { name: "Confirm" })
+      .click();
+  const confirmStatusChange = async (action: string, dialog: string) => {
+    await page.getByRole("button", { name: action }).click();
+    await confirm(dialog);
+  };
+
   return {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
@@ -61,13 +71,36 @@ export function sampleEditPage(page: Page) {
       await page.getByLabel(/collection curator/i).fill("Paul Bernard");
       await pick("Collection origin", "Scientific expedition");
     },
-    publish: async () => {
-      await page.getByRole("button", { name: "Save & Publish" }).click();
+    publish: () => confirmStatusChange("Save & Publish", "Publish sample"),
+    publishAsWithdrawn: async () => {
       await page
-        .getByRole("dialog", { name: "Publish sample" })
-        .getByRole("button", { name: "Confirm" })
+        .getByRole("button", { name: "More publishing options" })
         .click();
+      await page
+        .getByRole("menuitem", { name: "Publish as withdrawn" })
+        .click();
+      await confirm("Publish sample as withdrawn");
     },
+
+    withdraw: async () => {
+      await page.getByRole("button", { name: "More actions" }).click();
+      await page.getByRole("menuitem", { name: "Save & Withdraw" }).click();
+      await confirm("Withdraw sample");
+    },
+    expectWithdrawInMenu: async () => {
+      await page.getByRole("button", { name: "More actions" }).click();
+      await expect(
+        page.getByRole("menuitem", { name: "Save & Withdraw" }),
+      ).toBeVisible();
+      await page.keyboard.press("Escape");
+    },
+    republish: () => confirmStatusChange("Republish", "Republish sample"),
+    expectStatusAction: (name: string) =>
+      expect(page.getByRole("button", { name })).toBeVisible(),
+    expectWithdrawnHint: () =>
+      expect(
+        page.getByText("This sample is withdrawn from public view."),
+      ).toBeVisible(),
 
     openLinksTab: () => openTab("Links"),
     addLink: async (index: number, url: string, description: string) => {

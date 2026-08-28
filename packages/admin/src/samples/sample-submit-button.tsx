@@ -1,4 +1,5 @@
 import type { Button } from "@projet-igsn/design-system/components/ui/button";
+import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { ComponentProps } from "react";
 
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
@@ -16,8 +17,9 @@ type SampleSubmitButtonProps = {
   label: string;
   disabled?: boolean;
   variant?: ComponentProps<typeof Button>["variant"];
+  className?: string;
   sampleId?: string;
-  published: boolean;
+  status: SampleStatus;
   blockedReason?: string;
 };
 
@@ -25,21 +27,23 @@ export function SampleSubmitButton({
   label,
   disabled,
   variant,
+  className,
   sampleId,
-  published,
+  status,
   blockedReason,
 }: SampleSubmitButtonProps) {
   const form = useTypedAppFormContext({ defaultValues: {} });
   const roleOnSample = useUserRoleOnSample(sampleId);
   const reason =
     blockedReason ??
-    (roleOnSample !== null && !canUpdateSample(roleOnSample, { published })
+    (roleOnSample !== null && !canUpdateSample(roleOnSample, { status })
       ? m.save_blocked_not_editor()
       : undefined);
   const button = (
     <form.SubmitButton
       label={label}
       variant={variant}
+      className={className}
       disabled={disabled || reason !== undefined}
     />
   );

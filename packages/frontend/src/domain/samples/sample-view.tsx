@@ -16,6 +16,7 @@ import { EconomicInterestView } from "#/domain/samples/economic-interest-view.ts
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { LinksView } from "#/domain/samples/links-view.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
+import { SampleHero } from "#/domain/samples/sample-hero.tsx";
 import {
   availabilityLabel,
   collectionMethodLabel,
@@ -26,6 +27,7 @@ import {
   typeLabel,
 } from "#/domain/samples/sample-labels.ts";
 import { ScientificContextView } from "#/domain/samples/scientific-context-view.tsx";
+import { SectionHeading } from "#/domain/samples/section-heading.tsx";
 import { SecurityView } from "#/domain/samples/security-view.tsx";
 import { useActiveSection } from "#/domain/samples/use-active-section.ts";
 import { m } from "#/paraglide/messages.js";
@@ -218,12 +220,7 @@ export function SampleView({
 
   return (
     <div>
-      <div className="bg-sky-700 text-white">
-        <div className="mx-auto max-w-6xl px-6 py-14">
-          <h1 className="text-4xl font-bold sm:text-5xl">{name}</h1>
-          <p className="mt-2 text-lg text-sky-100">{igsn}</p>
-        </div>
-      </div>
+      <SampleHero name={name} igsn={igsn} />
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
         <nav
@@ -257,12 +254,7 @@ export function SampleView({
               aria-labelledby={`${id}-heading`}
               className="mt-8 scroll-mt-32 first:mt-0"
             >
-              <h2
-                id={`${id}-heading`}
-                className="rounded-md bg-sky-50 px-4 py-3 text-lg font-semibold text-sky-900"
-              >
-                {title}
-              </h2>
+              <SectionHeading id={`${id}-heading`}>{title}</SectionHeading>
               {content}
             </section>
           ))}

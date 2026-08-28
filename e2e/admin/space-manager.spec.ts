@@ -186,7 +186,7 @@ test.describe("space manager", () => {
     const moderation = sampleModerationPage(page);
     const edit = sampleEditPage(page);
     const target = samples.find(
-      (sample) => sample.owner === "jean" && !sample.published,
+      (sample) => sample.owner === "jean" && sample.status === "draft",
     );
     if (!target) throw new Error("no draft sample owned by Jean was seeded");
 

@@ -7,14 +7,14 @@ import { sampleOwnerQuery } from "./sample-children-query.ts";
 import { selectSample } from "./select-sample.ts";
 import { toSample } from "./to-sample.ts";
 
-export async function getPublishedSampleByIgsn(
+export async function getPublicSampleByIgsn(
   db: Transactional<DB>,
   igsn: string,
 ): Promise<Sample | null> {
   const row = await selectSample(db)
     .select(sampleOwnerQuery)
     .where("igsn", "=", igsn)
-    .where("published", "=", true)
+    .where("status", "<>", "draft")
     .executeTakeFirst();
   if (!row) return null;
   return {

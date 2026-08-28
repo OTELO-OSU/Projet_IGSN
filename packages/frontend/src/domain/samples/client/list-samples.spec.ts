@@ -27,7 +27,7 @@ const sampleJson = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: "0123456789ABCDEFGHJKMNPQRS",
-  published: true,
+  status: "published",
   createdAt: iso,
   updatedAt: iso,
 };
@@ -73,7 +73,7 @@ describe("listSamples", () => {
           institutionalLaboratory: null,
           manualGroups: [],
           owner: null,
-          published: true,
+          status: "published",
           createdAt: new Date(iso),
           updatedAt: new Date(iso),
         },

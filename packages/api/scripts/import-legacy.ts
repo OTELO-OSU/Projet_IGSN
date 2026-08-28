@@ -127,7 +127,7 @@ function toSampleRow(
     ...toAgeColumns(create.age),
     ...securityColumns(create.security),
     ...economicInterestColumns(create),
-    published: true,
+    status: "published" as const,
     publication_year: publishedAt.getUTCFullYear(),
     created_at: publishedAt,
     updated_at: row.last_modified,

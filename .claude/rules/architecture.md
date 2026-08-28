@@ -38,6 +38,10 @@
 
 ## Publish constraints
 
+A sample's `status` (`draft | published | withdrawn`) drives two separate predicates: `status <> 'draft'` (`hasPermanentIgsn` in `domain/sample/publication/has-permanent-igsn.ts`, inline in SQL) gates IGSN permanence (frozen fields, contributor edit rights, manual-group deletion/detach), `status = 'published'` gates public visibility (search, contributor facet, manual-group facet); see ADR 0032.
+
+`domain/sample/publication/withdrawn-sample.ts` (`toWithdrawnSample`) is the only place that redacts a withdrawn sample, a field-by-field whitelist so a new `Sample` field stays private by default, and `public-sample.ts` (`toPublicSample`) picks it by status for the public `GET /samples/:igsn`; see ADR 0032.
+
 Why a sample cannot be published lives in ONE place, `domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`).
 
 - The api publish guard and the admin publish tooltip both derive from it.

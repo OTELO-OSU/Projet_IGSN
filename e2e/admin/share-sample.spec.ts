@@ -12,7 +12,7 @@ test.describe("share a sample", () => {
     samples,
   }) => {
     const draft = samples.find(
-      (sample) => !sample.published && sample.owner === "camille",
+      (sample) => sample.status === "draft" && sample.owner === "camille",
     );
     if (!draft) throw new Error("seed must include a draft sample for camille");
 
@@ -37,8 +37,6 @@ test.describe("share a sample", () => {
     await share.expectCollaboratorRole(COLLEAGUE, "Editor");
 
     await share.close();
-    // The add must not bounce the owner back to the list (a 401 from the
-    // live-session guard would); the dialog reopens on the saved collaborator.
     await edit.expectVisible();
     await share.open();
     await share.expectCollaborator(COLLEAGUE);

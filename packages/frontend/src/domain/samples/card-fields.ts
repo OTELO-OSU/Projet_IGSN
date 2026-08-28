@@ -68,7 +68,9 @@ export function materialText(sample: CardSample): string | null {
   ]);
 }
 
-export function locationText(location: Location | null): string | null {
+export function locationText(
+  location: Pick<Location, "region" | "localityName"> | null,
+): string | null {
   const region = location?.region;
   const regionName =
     region?.kind === "continent"

@@ -22,7 +22,8 @@ test.describe("contact the record owner", () => {
     samples,
   }) => {
     const sample = samples.find(
-      (candidate) => candidate.published && candidate.owner === "jean",
+      (candidate) =>
+        candidate.status === "published" && candidate.owner === "jean",
     );
     if (!sample || sample.igsn === null) {
       throw new Error("seed must include a published sample owned by jean");

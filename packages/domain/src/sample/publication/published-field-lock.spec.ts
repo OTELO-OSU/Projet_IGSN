@@ -79,7 +79,7 @@ const stored: Sample = {
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,
-  published: true,
+  status: "published",
   createdAt: new Date("2020-01-01"),
   updatedAt: new Date("2020-01-01"),
 };

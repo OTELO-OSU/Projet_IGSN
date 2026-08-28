@@ -4,7 +4,7 @@ import { expressionBuilder } from "kysely";
 
 import type { DB } from "../db.ts";
 
-function ownsPublishedSampleInGroup(
+function ownsIgsnBearingSampleInGroup(
   userId: string | Expression<string>,
   groupId: string | Expression<string>,
 ) {
@@ -20,7 +20,7 @@ function ownsPublishedSampleInGroup(
       )
       .select("sample.id")
       .where("sample_manual_group.group_id", "=", groupId)
-      .where("sample.published", "=", true)
+      .where("sample.status", "<>", "draft")
       .where("user_sample.user_id", "=", userId)
       .where("user_sample.role", "=", "owner"),
   );
@@ -31,6 +31,6 @@ export function canDetachFromGroup(
   groupId: string | Expression<string>,
 ) {
   return expressionBuilder<DB, never>().not(
-    ownsPublishedSampleInGroup(userId, groupId),
+    ownsIgsnBearingSampleInGroup(userId, groupId),
   );
 }

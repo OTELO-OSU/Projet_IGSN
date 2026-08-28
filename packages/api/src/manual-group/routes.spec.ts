@@ -15,6 +15,7 @@ import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { insertSample } from "../sample/service/insert-sample.ts";
 import { publishSample } from "../sample/service/publish-sample.ts";
+import { setSampleStatus } from "../sample/service/set-sample-status.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { moderateManualGroup } from "../tests/moderate-manual-group.ts";
 import { pgTest } from "../tests/pg-test.ts";
@@ -357,14 +358,17 @@ describe("admin manual group routes", () => {
     },
   );
 
-  pgTest(
-    "should answer 409 when deleting a group a published sample is attached to",
-    async ({ db }) => {
+  pgTest.for(["published", "withdrawn"] as const)(
+    "should answer 409 when deleting a group a %s sample is attached to",
+    async (status, { db }) => {
       // Arrange
       await insertGroup(db, MASSIF, "Massif Central 2026");
       const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
       const sample = await insertSampleInGroup(db, curie.id, MASSIF);
       await publishSample(db, sample);
+      if (status === "withdrawn") {
+        await setSampleStatus(db, sample, "withdrawn");
+      }
       const client = await asSuperAdmin(db);
       // Act
       const res = await client.admin["manual-groups"][":id"].$delete(

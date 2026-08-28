@@ -1,4 +1,5 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 import { sql } from "kysely";
@@ -11,11 +12,12 @@ import { getSampleById } from "./get-sample-by-id.ts";
 export async function publishSample(
   db: Transactional<DB>,
   id: string,
+  status: SetSampleStatusBody["status"] = "published",
 ): Promise<Sample | null> {
   const row = await db
     .updateTable("sample")
     .set({
-      published: true,
+      status,
       igsn: generateIgsnSuffix(id),
       publication_year: sql`coalesce(publication_year, extract(year from now())::int)`,
     })

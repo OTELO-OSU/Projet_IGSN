@@ -15,7 +15,9 @@ test.describe("sample list", () => {
     page,
     samples,
   }) => {
-    const target = samples.find((s) => s.published && s.igsn !== null);
+    const target = samples.find(
+      (s) => s.status === "published" && s.igsn !== null,
+    );
     if (!target?.igsn) {
       throw new Error("seed must include a published sample");
     }

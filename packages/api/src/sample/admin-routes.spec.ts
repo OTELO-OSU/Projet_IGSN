@@ -1,3 +1,4 @@
+import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
 
 import { sampleEditLockResponseSchema } from "@projet-igsn/domain/sample/edit-lock";
@@ -23,9 +24,50 @@ import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
+import { setSampleStatus } from "./service/set-sample-status.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
 const authenticatedCallerEmail = "test-token@example.com";
+
+const publishable = {
+  ...publishableSample,
+  specificName: "MC-2026-007",
+  location: {
+    position: { type: "point" as const, longitude: 3, latitude: 45 },
+    localityName: "Puy de Sancy",
+  },
+};
+
+type Client = ReturnType<
+  typeof testClient<ReturnType<typeof createApp>["app"]>
+>;
+
+async function createSample(
+  db: Parameters<typeof provisionUser>[0],
+  client: Client,
+  json: typeof publishableSample = publishable,
+) {
+  await provisionUser(db, "test-token", { status: "accepted" });
+  const created = await client.admin.samples.$post(
+    { json },
+    { headers: authHeader },
+  );
+  return sampleResponseSchema.parse(await created.json()).data;
+}
+
+async function createAndPublish(
+  db: Parameters<typeof provisionUser>[0],
+  client: Client,
+  json = publishable,
+) {
+  const { id } = await createSample(db, client, json);
+  const published = await client.admin.samples[":id"].publish.$post(
+    { param: { id } },
+    { headers: authHeader },
+  );
+  expect(published.status).toBe(200);
+  return sampleResponseSchema.parse(await published.json()).data;
+}
 
 async function postSample(
   app: ReturnType<typeof createApp>["app"],
@@ -735,38 +777,6 @@ describe("admin sample routes", () => {
   );
 
   describe("published field lock", () => {
-    const publishable = {
-      ...publishableSample,
-      specificName: "MC-2026-007",
-      location: {
-        position: { type: "point" as const, longitude: 3, latitude: 45 },
-        localityName: "Puy de Sancy",
-      },
-    };
-
-    type Client = ReturnType<
-      typeof testClient<ReturnType<typeof createApp>["app"]>
-    >;
-
-    async function createAndPublish(
-      db: Parameters<typeof provisionUser>[0],
-      client: Client,
-      json = publishable,
-    ) {
-      await provisionUser(db, "test-token", { status: "accepted" });
-      const created = await client.admin.samples.$post(
-        { json },
-        { headers: authHeader },
-      );
-      const { data } = sampleResponseSchema.parse(await created.json());
-      const published = await client.admin.samples[":id"].publish.$post(
-        { param: { id: data.id } },
-        { headers: authHeader },
-      );
-      expect(published.status).toBe(200);
-      return data;
-    }
-
     pgTest(
       "ignores a frozen-field change and keeps the stored value",
       async ({ db }) => {
@@ -1207,6 +1217,43 @@ describe("admin sample routes", () => {
     expect(await res.json()).toMatchObject({ data: { id: data.id } });
   });
 
+  pgTest("should publish a sample straight as withdrawn", async ({ db }) => {
+    // Arrange
+    const { app } = createApp(db);
+    const client = testClient(app);
+    const data = await createSample(db, client);
+    // Act
+    const res = await app.request(
+      `/admin/samples/${data.id}/publish?status=withdrawn`,
+      { method: "POST", headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(200);
+    const published = sampleResponseSchema.parse(await res.json()).data;
+    expect(published.status).toBe("withdrawn");
+    expect(published.igsn).not.toBeNull();
+    const publicPage = await client.samples[":igsn"].$get({
+      param: { igsn: published.igsn! },
+    });
+    expect(await publicPage.json()).toMatchObject({
+      data: { status: "withdrawn" },
+    });
+  });
+
+  pgTest("should answer 400 on an unknown publish status", async ({ db }) => {
+    // Arrange
+    const { app } = createApp(db);
+    const client = testClient(app);
+    const data = await createSample(db, client);
+    // Act
+    const res = await app.request(
+      `/admin/samples/${data.id}/publish?status=draft`,
+      { method: "POST", headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(400);
+  });
+
   pgTest.for([
     ["no material", { name: "Unclassified draft", material: undefined }],
     ["an internal-node material", { name: "Rock draft", material: "rock" }],
@@ -1254,7 +1301,7 @@ describe("admin sample routes", () => {
         { headers: authHeader },
       );
       expect(await kept.json()).toMatchObject({
-        data: { published: false, igsn: null },
+        data: { status: "draft", igsn: null },
       });
     },
   );
@@ -1344,6 +1391,100 @@ describe("admin sample routes", () => {
       expect(res.status).toBe(404);
     },
   );
+
+  describe("status", () => {
+    async function arrangePublished(db: Parameters<typeof createApp>[0]) {
+      const client = testClient(createApp(db).app);
+      return { client, sample: await createAndPublish(db, client) };
+    }
+
+    const setStatus = (
+      client: Client,
+      id: string,
+      status: "published" | "withdrawn",
+    ) =>
+      client.admin.samples[":id"].status.$put(
+        { param: { id }, json: { status } },
+        { headers: authHeader },
+      );
+
+    pgTest(
+      "should withdraw then republish a sample, keeping its igsn",
+      async ({ db }) => {
+        // Arrange
+        const { client, sample } = await arrangePublished(db);
+        // Act
+        const withdrawn = await setStatus(client, sample.id, "withdrawn");
+        const republished = await setStatus(client, sample.id, "published");
+        // Assert
+        expect(withdrawn.status).toBe(200);
+        expect(await withdrawn.json()).toMatchObject({
+          data: { status: "withdrawn", igsn: sample.igsn },
+        });
+        expect(republished.status).toBe(200);
+        expect(await republished.json()).toMatchObject({
+          data: { status: "published", igsn: sample.igsn },
+        });
+      },
+    );
+
+    pgTest(
+      "should answer 409 when changing the status of a draft",
+      async ({ db }) => {
+        // Arrange
+        const client = testClient(createApp(db).app);
+        const data = await createSample(db, client, publishableSample);
+        // Act
+        const res = await setStatus(client, data.id, "withdrawn");
+        // Assert
+        expect(res.status).toBe(409);
+      },
+    );
+
+    pgTest("should answer 404 for an unknown sample", async ({ db }) => {
+      // Arrange
+      await provisionUser(db, "test-token", { status: "accepted" });
+      const client = testClient(createApp(db).app);
+      // Act
+      const res = await setStatus(
+        client,
+        "01890a5d-ac96-774b-bcce-b302099a8057",
+        "withdrawn",
+      );
+      // Assert
+      expect(res.status).toBe(404);
+    });
+
+    pgTest("should reject an unknown status with 400", async ({ db }) => {
+      // Arrange
+      const { client, sample } = await arrangePublished(db);
+      // Act
+      const res = await client.admin.samples[":id"].status.$put(
+        {
+          param: { id: sample.id },
+          json: { status: "draft" as "published" },
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(400);
+    });
+
+    pgTest(
+      "should answer 409 when publishing an already published sample",
+      async ({ db }) => {
+        // Arrange
+        const { client, sample } = await arrangePublished(db);
+        // Act
+        const res = await client.admin.samples[":id"].publish.$post(
+          { param: { id: sample.id } },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(409);
+      },
+    );
+  });
 
   describe("validation", () => {
     pgTest("should reject an empty name with 400", async ({ db }) => {
@@ -1829,15 +1970,18 @@ describe("admin sample routes", () => {
 
     async function shareWithCaller(
       db: Parameters<typeof createApp>[0],
-      { published }: { published: boolean } = { published: false },
+      { status }: { status: SampleStatus } = { status: "draft" },
     ) {
       const owner = await insertUser(db, "owner@univ-lorraine.fr");
       const caller = await insertUser(db, authenticatedCallerEmail);
       const sample = await insertSample(db, draft);
       await insertSampleOwner(db, sample.id, owner.id);
       await insertContributor(db, sample.id, caller.id);
-      if (published) {
+      if (status !== "draft") {
         await publishSample(db, sample.id);
+      }
+      if (status === "withdrawn") {
+        await setSampleStatus(db, sample.id, status);
       }
       return sample;
     }
@@ -1907,15 +2051,15 @@ describe("admin sample routes", () => {
         { headers: authHeader },
       );
       expect(await kept.json()).toMatchObject({
-        data: { published: false, igsn: null },
+        data: { status: "draft", igsn: null },
       });
     });
 
-    pgTest(
-      "should answer 403 when a contributor updates a published sample",
-      async ({ db }) => {
+    pgTest.for(["published", "withdrawn"] as const)(
+      "should answer 403 when a contributor updates a %s sample",
+      async (status, { db }) => {
         const client = testClient(createApp(db).app);
-        const sample = await shareWithCaller(db, { published: true });
+        const sample = await shareWithCaller(db, { status });
 
         const res = await client.admin.samples[":id"].$put(
           {
@@ -1935,8 +2079,23 @@ describe("admin sample routes", () => {
           { headers: authHeader },
         );
         expect(await kept.json()).toMatchObject({
-          data: { name: "Basalte partagé", published: true },
+          data: { name: "Basalte partagé", status },
         });
+      },
+    );
+
+    pgTest(
+      "should answer 403 when a contributor changes the status",
+      async ({ db }) => {
+        const client = testClient(createApp(db).app);
+        const sample = await shareWithCaller(db, { status: "published" });
+
+        const res = await client.admin.samples[":id"].status.$put(
+          { param: { id: sample.id }, json: { status: "withdrawn" } },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(403);
       },
     );
 
@@ -1944,7 +2103,7 @@ describe("admin sample routes", () => {
       "should answer 403, never name the lock holder, when a contributor updates a published sample another user is editing",
       async ({ db }) => {
         const client = testClient(createApp(db).app);
-        const sample = await shareWithCaller(db, { published: true });
+        const sample = await shareWithCaller(db, { status: "published" });
         const pierre = await insertUser(db, "pierre@univ-lorraine.fr");
         await acquireEditLock(db, sample.id, pierre.id);
 
@@ -1965,7 +2124,7 @@ describe("admin sample routes", () => {
       "should answer 403 when a contributor uploads to a published sample",
       async ({ db }) => {
         const client = testClient(createApp(db).app);
-        const sample = await shareWithCaller(db, { published: true });
+        const sample = await shareWithCaller(db, { status: "published" });
 
         const res = await client.admin.samples[":id"].attachments.$post(
           {
@@ -1984,7 +2143,7 @@ describe("admin sample routes", () => {
     pgTest(
       "should answer 403 when a contributor deletes an attachment of a published sample",
       async ({ db }) => {
-        const sample = await shareWithCaller(db, { published: true });
+        const sample = await shareWithCaller(db, { status: "published" });
 
         const res = await createApp(db).app.request(
           `/admin/samples/${sample.id}/attachments/01890a5d-ac96-774b-bcce-b302099a8059`,
@@ -2054,10 +2213,10 @@ describe("admin sample routes", () => {
       db: Parameters<typeof createApp>[0],
       {
         json = draft,
-        published = false,
+        status = "draft",
       }: {
         json?: Parameters<typeof insertSample>[1];
-        published?: boolean;
+        status?: SampleStatus;
       } = {},
     ) {
       const owner = await insertUser(db, "owner@univ-lorraine.fr");
@@ -2068,7 +2227,7 @@ describe("admin sample routes", () => {
         .insertInto("user_sample")
         .values({ sample_id: sample.id, user_id: caller.id, role: "editor" })
         .execute();
-      if (published) {
+      if (status !== "draft") {
         await publishSample(db, sample.id);
       }
       return sample;
@@ -2090,7 +2249,9 @@ describe("admin sample routes", () => {
         { param: { id: sample.id } },
         { headers: authHeader },
       );
-      expect(await read.json()).toMatchObject({ data: { published: true } });
+      expect(await read.json()).toMatchObject({
+        data: { status: "published" },
+      });
     });
 
     pgTest(
@@ -2152,7 +2313,7 @@ describe("admin sample routes", () => {
 
     pgTest("should let an editor update a published sample", async ({ db }) => {
       const client = testClient(createApp(db).app);
-      const sample = await shareWithCallerAsEditor(db, { published: true });
+      const sample = await shareWithCallerAsEditor(db, { status: "published" });
       const read = await client.admin.samples[":id"].$get(
         { param: { id: sample.id } },
         { headers: authHeader },

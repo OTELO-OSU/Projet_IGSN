@@ -1,4 +1,7 @@
-import type { CreateSample } from "@projet-igsn/domain/sample/sample";
+import type {
+  CreateSample,
+  SampleStatus,
+} from "@projet-igsn/domain/sample/sample";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import { vi } from "vitest";
@@ -1201,22 +1204,25 @@ describe("SampleForm", () => {
     await screen.getByRole("button", { name: "Confirm" }).click();
 
     await vi.waitFor(() =>
-      expect(onPublish).toHaveBeenCalledWith({
-        manualGroupIds: [],
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: "dredge",
-        material: "fossil",
-        collectionMethod: null,
-        collectionMethodDescription: null,
-        specificName: "MC-2026-007",
-        location: { position: { type: "point", longitude: 3, latitude: 45 } },
-        description: {
-          collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+      expect(onPublish).toHaveBeenCalledWith(
+        {
+          manualGroupIds: [],
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: "dredge",
+          material: "fossil",
+          collectionMethod: null,
+          collectionMethodDescription: null,
+          specificName: "MC-2026-007",
+          location: { position: { type: "point", longitude: 3, latitude: 45 } },
+          description: {
+            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+          },
+          availability: "exists",
+          scientificContext: publishableScientificContext,
         },
-        availability: "exists",
-        scientificContext: publishableScientificContext,
-      }),
+        "published",
+      ),
     );
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -1274,7 +1280,7 @@ describe("SampleForm", () => {
       const publish = screen.getByRole("button", { name: "Save & Publish" });
       await expect.element(publish).toBeDisabled();
 
-      publish.element().parentElement?.focus();
+      publish.element().closest<HTMLElement>("[tabindex]")?.focus();
       await expect
         .element(screen.getByRole("tooltip"))
         .toHaveTextContent(message);
@@ -2017,7 +2023,7 @@ describe("SampleForm", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
         />
@@ -2032,7 +2038,7 @@ describe("SampleForm", () => {
     await screen.getByRole("option", { name: "Exists", exact: true }).click();
 
     await expect.element(save).toBeDisabled();
-    save.element().parentElement?.focus();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/whether the sample still exists/i);
@@ -2061,7 +2067,7 @@ describe("SampleForm", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={{ ...publishedFixture, material: "rock" }}
           primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
         />
@@ -2070,7 +2076,7 @@ describe("SampleForm", () => {
 
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeDisabled();
-    save.element().parentElement?.focus();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/classify the material down to a specific type/i);
@@ -2179,7 +2185,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2200,7 +2206,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2220,41 +2226,54 @@ describe("SampleForm post-publication field lock", () => {
       .toBeDisabled();
   });
 
-  it.each([
+  it.each<{
+    name: string;
+    status: SampleStatus;
+    material: string;
+    disabled: string[];
+    enabled: string[];
+  }>([
     {
       name: "locks the material levels down to the frozen prefix and opens the rest",
-      published: true,
+      status: "published",
       material: "rock.igneous.plutonic.felsic.granite",
       disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
       enabled: ["Felsic *"],
     },
     {
       name: "opens the next level of a published sample stopped at an unlocked node",
-      published: true,
+      status: "published",
       material: "sediment.exogenous_detritic",
       disabled: ["Material *", "Sediment *"],
       enabled: ["Exogenous detritic *"],
     },
     {
       name: "locks every material level when nothing in the path unlocks",
-      published: true,
+      status: "published",
       material: "rock.igneous.plutonic",
       disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
       enabled: [],
     },
     {
+      name: "locks a withdrawn sample's material levels like a published one",
+      status: "withdrawn",
+      material: "rock.igneous.plutonic.felsic.granite",
+      disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
+      enabled: ["Felsic *"],
+    },
+    {
       name: "keeps every material level editable on a draft",
-      published: false,
+      status: "draft",
       material: "rock.igneous.plutonic.felsic.granite",
       disabled: [],
       enabled: ["Material *", "Rock *", "Igneous *", "Plutonic *", "Felsic *"],
     },
-  ])("$name", async ({ published, material, disabled, enabled }) => {
+  ])("$name", async ({ status, material, disabled, enabled }) => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published={published}
+          status={status}
           defaultValues={{ ...publishedFixture, material }}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2280,7 +2299,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
         />
@@ -2311,7 +2330,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{
             kind: "submit",
@@ -2330,7 +2349,7 @@ describe("SampleForm post-publication field lock", () => {
 
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeDisabled();
-    save.element().parentElement?.focus();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/classify the material down to a specific type/i);
@@ -2341,7 +2360,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2370,7 +2389,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2395,7 +2414,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit }}
         />
@@ -2438,7 +2457,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={{
             ...publishedFixture,
             material: "rock.igneous.plutonic",
@@ -2465,7 +2484,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={{
             ...publishedFixture,
             material: "rock.metamorphic.strongly_metamorphosed.gneiss",
@@ -2492,7 +2511,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedRecentFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2538,7 +2557,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedRecentFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
@@ -2568,7 +2587,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           manualGroupOptions={MANUAL_GROUPS}
           defaultValues={{
             ...publishedFixture,
@@ -2597,7 +2616,7 @@ describe("SampleForm post-publication field lock", () => {
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
-          published
+          status="published"
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />

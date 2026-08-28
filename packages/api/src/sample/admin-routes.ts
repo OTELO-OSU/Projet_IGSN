@@ -15,6 +15,7 @@ import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sampl
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
 import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
+import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import {
   samplePublishBlockers,
@@ -41,6 +42,7 @@ import { requireEditLock } from "./require-edit-lock.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
+  publishStatusSchema,
   validateAddCollaboratorBody,
   validateAttachmentParams,
   validateAttachmentUpload,
@@ -48,6 +50,7 @@ import {
   validateCreateSampleBody,
   validateIdParam,
   validateListQuery,
+  validateStatusBody,
   validateUpdateSampleBody,
 } from "./validator.ts";
 
@@ -282,10 +285,11 @@ export function createSampleAdminRoutes(
             409,
           );
         }
-        const toPersist = current.published
+        const wasPublished = hasPermanentIgsn(current);
+        const toPersist = wasPublished
           ? mergePublishedEdit(current, input)
           : input;
-        if (current.published) {
+        if (wasPublished) {
           const existing = samplePublishBlockers(toPublishableFields(current));
           const after = samplePublishBlockers(toPublishableFields(toPersist));
           if (after.some((blocker) => !existing.includes(blocker))) {
@@ -343,24 +347,54 @@ export function createSampleAdminRoutes(
       if (!isSampleEditor(c.get("role"))) {
         return c.json({ error: "Forbidden" }, 403);
       }
+      const status = publishStatusSchema.safeParse(c.req.query("status"));
+      if (!status.success) {
+        return c.json({ error: "Invalid publish status" }, 400);
+      }
+      if (hasPermanentIgsn(sample)) {
+        return c.json({ error: "Sample is already published" }, 409);
+      }
       // ponytail: the guard's read and publish are separate transactions. Read and publish in one txn if that race matters.
       if (
         samplePublishBlockers(sample, uploadLimit, c.get("user")).length > 0
       ) {
         return c.json({ error: "Sample is not ready to publish" }, 409);
       }
-      const published = await repository.publish(id);
+      const published = await repository.publish(id, status.data);
       if (mail && c.get("moderating")) {
         // ponytail: fire and forget; a retry queue if a lost notification ever matters.
         void notifySampleModerated({
           userSamples: userSampleRepository,
           mail,
           sample,
-          fields: "published",
+          fields: status.data,
         });
       }
       return c.json({ data: published });
     })
+    .put(
+      "/:id/status",
+      validateIdParam,
+      validateStatusBody,
+      unlockedSample,
+      async (c) => {
+        const sample = c.get("sample");
+        if (!sample) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (!isSampleEditor(c.get("role"))) {
+          return c.json({ error: "Forbidden" }, 403);
+        }
+        if (!hasPermanentIgsn(sample)) {
+          return c.json({ error: "Sample is not published" }, 409);
+        }
+        const updated = await repository.setStatus(
+          c.req.valid("param").id,
+          c.req.valid("json").status,
+        );
+        return c.json({ data: updated });
+      },
+    )
     .post(
       "/:id/attachments",
       validateIdParam,

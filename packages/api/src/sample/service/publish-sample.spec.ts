@@ -30,11 +30,11 @@ describe("publishSample", () => {
 
       const row = await db
         .selectFrom("sample")
-        .select(["published", "igsn"])
+        .select(["status", "igsn"])
         .where("id", "=", created.id)
         .executeTakeFirstOrThrow();
       expect(row).toEqual({
-        published: true,
+        status: "published",
         igsn: generateIgsnSuffix(created.id),
       });
     },
@@ -131,11 +131,11 @@ describe("publishSample", () => {
     // Assert
     const row = await db
       .selectFrom("sample")
-      .select(["published", "igsn"])
+      .select(["status", "igsn"])
       .where("id", "=", created.id)
       .executeTakeFirstOrThrow();
     expect(row).toEqual({
-      published: true,
+      status: "published",
       igsn: generateIgsnSuffix(created.id),
     });
     expect(republished).toMatchObject({ id: created.id });

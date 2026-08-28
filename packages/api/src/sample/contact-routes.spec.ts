@@ -17,6 +17,7 @@ import { pgTest } from "../tests/pg-test.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
+import { setSampleStatus } from "./service/set-sample-status.ts";
 
 type Db = Kysely<DB>;
 
@@ -131,6 +132,21 @@ describe("POST /samples/:igsn/contact", () => {
       expect(sent.subject).toContain(draft.name);
       expect(sent.text).toContain(visitor.message);
       expect(sent.text).toContain(`${FRONTEND_URL}/samples/${sample.igsn}`);
+    },
+  );
+
+  pgTest(
+    "should still mail the owner of a withdrawn sample",
+    async ({ db }) => {
+      // Arrange
+      const { sendMail, contact } = arrangeApp(db);
+      const { sample, email } = await arrangeInstitutionalOwner(db);
+      await setSampleStatus(db, sample.id, "withdrawn");
+      // Act
+      const res = await contact(sample.igsn!);
+      // Assert
+      expect(res.status).toBe(204);
+      expect(sendMail.mock.lastCall![0].to).toEqual([email]);
     },
   );
 

@@ -2,10 +2,12 @@ import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { Kysely, Selectable } from "kysely";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
+import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { publishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import {
   createSampleSchema,
   sampleSchema,
+  sampleStatusSchema,
 } from "@projet-igsn/domain/sample/sample";
 import { collaboratorRoleSchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import { fileURLToPath } from "node:url";
@@ -303,7 +305,7 @@ export async function seed(
 ): Promise<
   (Pick<
     Selectable<DB["sample"]>,
-    "id" | "name" | "nature" | "igsn" | "published"
+    "id" | "name" | "nature" | "igsn" | "status"
   > & { owner: ResearcherKey; collaborators: SeedCollaborator[] })[]
 > {
   const ownerIds = await seedOwners(db);
@@ -329,7 +331,9 @@ export async function seed(
           ...rest
         }) => ({
           ...rest,
-          publication_year: rest.published ? SEED_PUBLICATION_YEAR : null,
+          publication_year: hasPermanentIgsn(rest)
+            ? SEED_PUBLICATION_YEAR
+            : null,
           material: material ?? null,
           collection_method: collectionMethod ?? null,
           collection_method_description: collectionMethodDescription ?? null,
@@ -347,7 +351,7 @@ export async function seed(
         }),
       ),
     )
-    .returning(["id", "name", "nature", "igsn", "published"])
+    .returning(["id", "name", "nature", "igsn", "status"])
     .execute();
 
   await db
@@ -411,7 +415,6 @@ export const seedSampleSchema = sampleSchema
     scientificContext: true,
     age: true,
     igsn: true,
-    published: true,
   })
   .partial({
     type: true,
@@ -427,9 +430,9 @@ export const seedSampleSchema = sampleSchema
     scientificContext: true,
     age: true,
     igsn: true,
-    published: true,
   })
   .extend({
+    status: sampleStatusSchema.default("draft"),
     owner: researcherKeySchema,
     collaborators: z
       .array(
@@ -441,26 +444,29 @@ export const seedSampleSchema = sampleSchema
       .optional(),
   });
 
-export type SeedSample = z.infer<typeof seedSampleSchema>;
+export type SeedSample = z.input<typeof seedSampleSchema>;
 
 export type SeedCollaborator = NonNullable<SeedSample["collaborators"]>[number];
 
-export function parseSeedSample(sample: SeedSample): SeedSample {
+export function parseSeedSample(
+  sample: SeedSample,
+): z.output<typeof seedSampleSchema> {
   const parsed = seedSampleSchema.parse(sample);
   const {
     id: _id,
     igsn: _igsn,
     owner: _owner,
     collaborators: _collaborators,
-    published,
+    status,
     ...create
   } = parsed;
+  const wasPublished = hasPermanentIgsn({ status });
   const result = (
-    published ? publishedSampleSchema : createSampleSchema
+    wasPublished ? publishedSampleSchema : createSampleSchema
   ).safeParse(create);
   if (!result.success) {
     throw new Error(
-      `seed row "${parsed.name}" fails its ${published ? "published" : "draft"} schema: ${result.error.message}`,
+      `seed row "${parsed.name}" fails its ${wasPublished ? "published" : "draft"} schema: ${result.error.message}`,
     );
   }
   return parsed;
@@ -546,7 +552,7 @@ export const SEED_SAMPLES: SeedSample[] = [
       collectorName: "Claire Martin",
     },
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69"),
-    published: true,
+    status: "published",
   },
   {
     id: "01890a5d-ac96-774b-bcce-b302099a8057",
@@ -570,7 +576,35 @@ export const SEED_SAMPLES: SeedSample[] = [
       collectionContextDescription: "Armorican Massif reference collection",
     },
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),
-    published: true,
+    status: "published",
+  },
+  {
+    id: "01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a70",
+    name: "Rhyolite 11",
+    owner: "jean",
+    nature: "hand_sample",
+    type: "core.half_round",
+    material: "rock.igneous.volcanic.felsic.rhyolite",
+    collectionMethod: "blasting",
+    location: {
+      region: { kind: "continent", country: "FR" },
+      localityName: "Mont-Dore",
+      position: { type: "point", longitude: 2.81, latitude: 45.57 },
+    },
+    description: {
+      collectionDate: { start: "2025-07-01", end: "2025-07-01" },
+    },
+    availability: "exists",
+    scientificContext: {
+      provenanceStatus: "recent_collection",
+      funderOrganization: "02feahw73",
+      researchProgramName: "Chaîne des Puys Survey",
+      researchProgramChief: "Jean Dupont",
+      researchStructure: ["02rx3b187"],
+      collectorName: "Claire Martin",
+    },
+    igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a70"),
+    status: "withdrawn",
   },
   {
     id: "00000000-0000-7000-8000-000000000006",

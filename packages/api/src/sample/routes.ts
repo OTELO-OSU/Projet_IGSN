@@ -2,10 +2,11 @@ import type { SampleAttachmentRepository } from "@projet-igsn/domain/sample/atta
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   ListSamplesResponse,
-  SampleResponse,
+  PublicSampleResponse,
 } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 
+import { toPublicSample } from "@projet-igsn/domain/sample/publication/public-sample";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -34,13 +35,13 @@ export function createSampleRoutes(
       return c.json(body);
     })
     .get("/:igsn", validateIgsnParam, async (c) => {
-      const sample = await repository.getPublishedByIgsn(
+      const sample = await repository.getPublicByIgsn(
         c.req.valid("param").igsn,
       );
       if (!sample) {
         return c.json({ error: "Sample not found" }, 404);
       }
-      const body: SampleResponse = { data: sample };
+      const body: PublicSampleResponse = { data: toPublicSample(sample) };
       return c.json(body);
     })
     .post(
@@ -52,7 +53,7 @@ export function createSampleRoutes(
           throw new HTTPException(500, { message: "Mail is not configured" });
         }
         const { igsn } = c.req.valid("param");
-        const sample = await repository.getPublishedByIgsn(igsn);
+        const sample = await repository.getPublicByIgsn(igsn);
         if (!sample) {
           return c.json({ error: "Sample not found" }, 404);
         }
@@ -82,8 +83,8 @@ export function createSampleRoutes(
       validateIgsnAttachmentParams,
       async (c) => {
         const { igsn, attachmentId } = c.req.valid("param");
-        const sample = await repository.getPublishedByIgsn(igsn);
-        if (!sample) {
+        const sample = await repository.getPublicByIgsn(igsn);
+        if (!sample || sample.status !== "published") {
           return c.json({ error: "Sample not found" }, 404);
         }
         const found = await attachmentsRepository.getContent(

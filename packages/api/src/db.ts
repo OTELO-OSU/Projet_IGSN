@@ -1,3 +1,4 @@
+import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 
 import { Kysely, type ColumnType, type Generated } from "kysely";
@@ -104,7 +105,7 @@ type SampleTable = {
   institutional_organization: string | null;
   institutional_osu: string | null;
   institutional_laboratory: string | null;
-  published: Generated<boolean>;
+  status: Generated<SampleStatus>;
   created_at: Generated<Date>;
   updated_at: Generated<Date>;
 };

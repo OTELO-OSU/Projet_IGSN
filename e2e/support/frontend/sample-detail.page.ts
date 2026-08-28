@@ -9,6 +9,19 @@ export function sampleDetailPage(page: Page) {
       await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
       await expect(page.getByText(igsn)).toBeVisible();
     },
+    expectWithdrawnNotice: () =>
+      expect(
+        page.getByText(
+          "This sample is private. For more information, please contact the owner of the sample listing.",
+        ),
+      ).toBeVisible(),
+    expectNoSection: (title: string) =>
+      expect(page.getByRole("heading", { name: title })).toHaveCount(0),
+    expectNoIndex: () =>
+      expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+        "content",
+        "noindex",
+      ),
     expectNature: async (label: string) => {
       await expect(page.getByText("Nature")).toBeVisible();
       await expect(page.getByText(label)).toBeVisible();

@@ -1,4 +1,6 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -87,7 +89,7 @@ const overLimitAttachments: SampleAttachment[] = Array.from(
 );
 
 function fakeApi(
-  published = false,
+  status: SampleStatus = "draft",
   material: string | null = "fossil",
   fail: "save" | "publish" | "stale" | "locked" | false = false,
   metamorphicFacies: string | null = null,
@@ -122,7 +124,7 @@ function fakeApi(
       collectionOrigin: "scientific_expedition",
     },
     availability,
-    publicationYear: published ? 2026 : null,
+    publicationYear: status === "draft" ? null : 2026,
     economicInterest: null,
     economicInterestElements: [],
     economicResourceTypePrecision: null,
@@ -130,8 +132,8 @@ function fakeApi(
     economicDepositDescription: null,
     ...economic,
     manualGroups: [FOSSIL_TEAM],
-    igsn: published ? IGSN : null,
-    published,
+    igsn: status === "draft" ? null : IGSN,
+    status,
     createdAt: "2026-06-01T00:00:00.000Z",
     updatedAt: "2026-07-01T10:00:00.000Z",
   };
@@ -201,10 +203,23 @@ function fakeApi(
         manualGroupOptions: MANUAL_GROUPS,
       });
     }),
-    http.post("*/samples/:id/publish", () => {
+    http.post("*/samples/:id/publish", ({ request }) => {
       if (fail === "publish") return new HttpResponse(null, { status: 500 });
-      sample = { ...sample, published: true, igsn: IGSN };
-      calls.push("PUBLISH");
+      const status = new URL(request.url).searchParams.get(
+        "status",
+      ) as SampleStatus;
+      sample = { ...sample, status, igsn: IGSN };
+      calls.push(`PUBLISH ${status}`);
+      return HttpResponse.json({
+        data: sample,
+        role,
+        manualGroupOptions: MANUAL_GROUPS,
+      });
+    }),
+    http.put("*/samples/:id/status", async ({ request }) => {
+      const body = (await request.json()) as SetSampleStatusBody;
+      sample = { ...sample, status: body.status };
+      calls.push(`STATUS ${body.status}`);
       return HttpResponse.json({
         data: sample,
         role,
@@ -247,7 +262,7 @@ function fakeApi(
 }
 
 async function renderEditPage(
-  published = false,
+  status: SampleStatus = "draft",
   material: string | null = "fossil",
   fail: "save" | "publish" | "stale" | "locked" | false = false,
   metamorphicFacies: string | null = null,
@@ -260,7 +275,7 @@ async function renderEditPage(
   holder: LockHolder | null = null,
 ) {
   const { id, calls, lockCalls, releaseLock } = fakeApi(
-    published,
+    status,
     material,
     fail,
     metamorphicFacies,
@@ -296,9 +311,12 @@ async function renderEditPage(
   };
 }
 
-const renderEditPageLockedBy = (holder: LockHolder, published = false) =>
+const renderEditPageLockedBy = (
+  holder: LockHolder,
+  status: SampleStatus = "draft",
+) =>
   renderEditPage(
-    published,
+    status,
     "fossil",
     false,
     null,
@@ -311,9 +329,9 @@ const renderEditPageLockedBy = (holder: LockHolder, published = false) =>
     holder,
   );
 
-const renderEditPageAsContributor = (published: boolean) =>
+const renderEditPageAsContributor = (status: SampleStatus) =>
   renderEditPage(
-    published,
+    status,
     "fossil",
     false,
     null,
@@ -325,9 +343,9 @@ const renderEditPageAsContributor = (published: boolean) =>
     "contributor",
   );
 
-const renderEditPageAsEditor = (published: boolean) =>
+const renderEditPageAsEditor = (status: SampleStatus) =>
   renderEditPage(
-    published,
+    status,
     "fossil",
     false,
     null,
@@ -341,7 +359,7 @@ const renderEditPageAsEditor = (published: boolean) =>
 
 describe("EditSamplePage", () => {
   it("should chip the attached manual groups but freeze them to a contributor", async () => {
-    const { screen } = await renderEditPageAsContributor(false);
+    const { screen } = await renderEditPageAsContributor("draft");
 
     await expect
       .element(screen.getByRole("button", { name: "Detach Fossil team" }))
@@ -359,12 +377,12 @@ describe("EditSamplePage", () => {
   it.each<[string, () => ReturnType<typeof renderEditPage>, string[]]>([
     [
       "an editor on a draft",
-      () => renderEditPageAsEditor(false),
+      () => renderEditPageAsEditor("draft"),
       ["Save & Publish"],
     ],
     [
       "an editor on a published sample",
-      () => renderEditPageAsEditor(true),
+      () => renderEditPageAsEditor("published"),
       ["Publish updates"],
     ],
     [
@@ -374,8 +392,13 @@ describe("EditSamplePage", () => {
     ],
     [
       "the owner on a published sample",
-      () => renderEditPage(true),
+      () => renderEditPage("published"),
       ["Publish updates"],
+    ],
+    [
+      "the owner on a withdrawn sample",
+      () => renderEditPage("withdrawn"),
+      ["Save changes"],
     ],
   ])(
     "should offer the save actions to %s",
@@ -397,7 +420,7 @@ describe("EditSamplePage", () => {
     "should offer a contributor no Save & Publish and no focusable tooltip on %s",
     async (_case, material) => {
       const { screen } = await renderEditPage(
-        false,
+        "draft",
         material,
         false,
         null,
@@ -420,16 +443,64 @@ describe("EditSamplePage", () => {
   );
 
   it("should disable saving for a contributor on a published sample and explain why", async () => {
-    const { screen } = await renderEditPageAsContributor(true);
+    const { screen } = await renderEditPageAsContributor("published");
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeDisabled();
 
-    save.element().parentElement?.focus();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(
         /only the owner or an editor can update a published sample/i,
       );
+  });
+
+  it.each<[string, () => ReturnType<typeof renderEditPage>]>([
+    ["a draft", () => renderEditPage("draft")],
+    ["a contributor", () => renderEditPageAsContributor("published")],
+  ])("should offer no status toggle on %s", async (_case, renderPage) => {
+    const { screen } = await renderPage();
+    await expect
+      .element(screen.getByRole("button", { name: "Share" }))
+      .toBeVisible();
+
+    expect(
+      screen
+        .getByRole("button", { name: /withdraw|republish|more actions/i })
+        .elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should save the edits, then withdraw a published sample from the save button menu", async () => {
+    const { screen, calls } = await renderEditPage("published");
+
+    await screen.getByRole("button", { name: "More actions" }).click();
+    await screen.getByRole("menuitem", { name: "Save & Withdraw" }).click();
+    await expect
+      .element(screen.getByRole("dialog", { name: "Withdraw sample" }))
+      .toHaveTextContent(/your changes are saved/i);
+    await screen.getByRole("button", { name: "Confirm" }).click();
+
+    await vi.waitFor(() =>
+      expect(calls).toEqual([
+        "PUT Basalte du Massif Central",
+        "STATUS withdrawn",
+      ]),
+    );
+  });
+
+  it("should republish a withdrawn sample when the change is confirmed", async () => {
+    const { screen, calls } = await renderEditPage("withdrawn");
+    await expect
+      .element(screen.getByRole("status"))
+      .toHaveTextContent("This sample is withdrawn from public view.");
+
+    await screen
+      .getByRole("button", { name: "Republish", exact: true })
+      .click();
+    await screen.getByRole("button", { name: "Confirm" }).click();
+
+    await vi.waitFor(() => expect(calls).toEqual(["STATUS published"]));
   });
 
   it("should offer Share to the owner next to the title", async () => {
@@ -441,11 +512,14 @@ describe("EditSamplePage", () => {
   });
 
   it("should disable Save & Publish and explain in a tooltip when the sample has no material", async () => {
-    const { screen } = await renderEditPage(false, null);
+    const { screen } = await renderEditPage("draft", null);
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
+    await expect
+      .element(screen.getByRole("button", { name: "More publishing options" }))
+      .toBeDisabled();
 
-    publish.element().parentElement?.focus();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/set the material before publishing/i);
@@ -457,7 +531,7 @@ describe("EditSamplePage", () => {
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
 
-    publish.element().parentElement?.focus();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
@@ -470,7 +544,7 @@ describe("EditSamplePage", () => {
 
   it("should drop the material reason once a pending account completes the cascade", async () => {
     callerStatus = "pending";
-    const { screen } = await renderEditPage(false, "rock.igneous.volcanic");
+    const { screen } = await renderEditPage("draft", "rock.igneous.volcanic");
     await screen.getByRole("tab", { name: "Sample type" }).click();
     await screen
       .getByRole("combobox", { name: "Volcanic *", exact: true })
@@ -483,7 +557,7 @@ describe("EditSamplePage", () => {
 
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
-    publish.element().parentElement?.focus();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
@@ -506,11 +580,11 @@ describe("EditSamplePage", () => {
 
   it("should list the missing fields and the account reason together", async () => {
     callerStatus = "pending";
-    const { screen } = await renderEditPage(false, null);
+    const { screen } = await renderEditPage("draft", null);
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
 
-    publish.element().parentElement?.focus();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
@@ -534,7 +608,7 @@ describe("EditSamplePage", () => {
     "should render %s prefilled on the Sample type tab",
     async (combobox, material, facies, texture, expected) => {
       const { screen } = await renderEditPage(
-        false,
+        "draft",
         material,
         false,
         facies,
@@ -549,7 +623,7 @@ describe("EditSamplePage", () => {
 
   it("should prefill availability from the saved sample instead of resetting it to Exists", async () => {
     const { screen } = await renderEditPage(
-      false,
+      "draft",
       "fossil",
       false,
       null,
@@ -564,7 +638,7 @@ describe("EditSamplePage", () => {
 
   it("should prefill a declared security hazard from the saved sample", async () => {
     const { screen } = await renderEditPage(
-      false,
+      "draft",
       "fossil",
       false,
       null,
@@ -583,7 +657,7 @@ describe("EditSamplePage", () => {
 
   it("should prefill the economic interest and deposit name from the saved sample", async () => {
     const { screen } = await renderEditPage(
-      false,
+      "draft",
       "fossil",
       false,
       null,
@@ -612,12 +686,12 @@ describe("EditSamplePage", () => {
   });
 
   it("should show the IGSN of a published sample under the title", async () => {
-    const { screen } = await renderEditPage(true);
+    const { screen } = await renderEditPage("published");
     await expect.element(screen.getByLabelText("IGSN")).toHaveTextContent(IGSN);
   });
 
   it("should refuse Publish updates that would make the sample unpublishable", async () => {
-    const { screen, calls } = await renderEditPage(true);
+    const { screen, calls } = await renderEditPage("published");
     const save = screen.getByRole("button", { name: "Publish updates" });
 
     await screen.getByRole("tab", { name: "Physical description" }).click();
@@ -628,7 +702,7 @@ describe("EditSamplePage", () => {
     await screen.getByRole("option", { name: "Exists", exact: true }).click();
     await expect.element(availability).not.toHaveTextContent("Exists");
     await expect.element(save).toBeDisabled();
-    save.element().parentElement?.focus();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(
@@ -646,7 +720,7 @@ describe("EditSamplePage", () => {
 
   it("should refuse publishing a sample carrying more files than the limit", async () => {
     const { screen, calls } = await renderEditPage(
-      false,
+      "draft",
       "fossil",
       false,
       null,
@@ -660,10 +734,12 @@ describe("EditSamplePage", () => {
     const save = screen.getByRole("button", { name: "Save as draft" });
 
     await expect.element(publish).toBeDisabled();
-    publish.element().parentElement?.focus();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/at most 5 attached files/i);
+    publish.element().closest<HTMLElement>("[tabindex]")?.blur();
+    await expect.element(screen.getByRole("tooltip")).not.toBeInTheDocument();
 
     await save.click();
 
@@ -678,7 +754,7 @@ describe("EditSamplePage", () => {
   });
 
   it("should offer only Publish updates on an already published sample", async () => {
-    const { screen } = await renderEditPage(true);
+    const { screen } = await renderEditPage("published");
     await expect
       .element(screen.getByRole("button", { name: "Publish updates" }))
       .toBeVisible();
@@ -691,7 +767,7 @@ describe("EditSamplePage", () => {
   });
 
   it("should link to the public page once published", async () => {
-    const { screen } = await renderEditPage(true);
+    const { screen } = await renderEditPage("published");
     await expect
       .element(screen.getByRole("link", { name: "View public page" }))
       .toHaveAttribute("href", `http://localhost:3000/samples/${IGSN}`);
@@ -707,26 +783,53 @@ describe("EditSamplePage", () => {
       .not.toBeInTheDocument();
   });
 
-  it("should save the edits, then publish, and warn it is irreversible", async () => {
+  it("should save the edits, then publish, and warn the IGSN is permanent", async () => {
     const { screen, calls } = await renderEditPage();
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
     await screen.getByRole("button", { name: "Save & Publish" }).click();
 
-    await expect.element(screen.getByText(/irreversible/i)).toBeVisible();
+    await expect.element(screen.getByText(/the IGSN stays/i)).toBeVisible();
 
     await screen.getByRole("button", { name: "Confirm" }).click();
 
     await expect
       .element(screen.getByRole("heading", { name: "My samples" }))
       .toBeVisible();
-    expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH"]);
+    expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH published"]);
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Sample published");
   });
 
+  it("should publish straight as withdrawn from the publish menu", async () => {
+    const { screen, calls } = await renderEditPage();
+    await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
+    await screen
+      .getByRole("button", { name: "More publishing options" })
+      .click();
+    await screen
+      .getByRole("menuitem", { name: "Publish as withdrawn" })
+      .click();
+
+    await expect
+      .element(
+        screen.getByRole("dialog", { name: "Publish sample as withdrawn" }),
+      )
+      .toHaveTextContent(/stay out of search results/i);
+
+    await screen.getByRole("button", { name: "Confirm" }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "My samples" }))
+      .toBeVisible();
+    expect(calls).toEqual(["PUT Grès de Fontainebleau", "PUBLISH withdrawn"]);
+    await expect
+      .element(screen.getByRole("region", { name: /notifications/i }))
+      .toHaveTextContent("Sample published as withdrawn");
+  });
+
   it("should show an error toast when saving fails", async () => {
-    const { screen } = await renderEditPage(false, "fossil", "save");
+    const { screen } = await renderEditPage("draft", "fossil", "save");
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
     await screen.getByRole("button", { name: "Save as draft" }).click();
 
@@ -736,7 +839,7 @@ describe("EditSamplePage", () => {
   });
 
   it("should show an error toast when publishing fails", async () => {
-    const { screen } = await renderEditPage(false, "fossil", "publish");
+    const { screen } = await renderEditPage("draft", "fossil", "publish");
     await screen.getByRole("button", { name: "Save & Publish" }).click();
     await screen.getByRole("button", { name: "Confirm" }).click();
 
@@ -787,7 +890,7 @@ describe("EditSamplePage", () => {
 
   describe("edit lock", () => {
     it("should name the holder and disable the form when another user holds the lock", async () => {
-      const { screen } = await renderEditPageLockedBy(PIERRE, true);
+      const { screen } = await renderEditPageLockedBy(PIERRE, "published");
 
       await expect
         .element(screen.getByRole("status"))
@@ -795,7 +898,7 @@ describe("EditSamplePage", () => {
       await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
       const save = screen.getByRole("button", { name: "Publish updates" });
       await expect.element(save).toBeDisabled();
-      save.element().parentElement?.focus();
+      save.element().closest<HTMLElement>("[tabindex]")?.focus();
       await expect
         .element(screen.getByRole("tooltip"))
         .toHaveTextContent("Pierre Martin");
@@ -862,7 +965,8 @@ describe("EditSamplePage", () => {
     });
 
     it("should not claim a lock for a caller who cannot update the sample", async () => {
-      const { screen, lockCalls } = await renderEditPageAsContributor(true);
+      const { screen, lockCalls } =
+        await renderEditPageAsContributor("published");
 
       await expect
         .element(screen.getByRole("button", { name: "Publish updates" }))
@@ -871,7 +975,7 @@ describe("EditSamplePage", () => {
     });
 
     it("should keep the age controls editable on an unlocked published sample", async () => {
-      const { screen } = await renderEditPage(true);
+      const { screen } = await renderEditPage("published");
 
       await screen.getByRole("tab", { name: "Physical description" }).click();
       await expect
@@ -886,7 +990,7 @@ describe("EditSamplePage", () => {
   ] as const)(
     "should keep the typed input and hold the form read-only when the save is refused as %s",
     async (reason, message) => {
-      const { screen } = await renderEditPage(false, "fossil", reason);
+      const { screen } = await renderEditPage("draft", "fossil", reason);
       const name = screen.getByLabelText(/name/i);
       await name.fill("Grès de Fontainebleau");
       await screen.getByRole("button", { name: "Save as draft" }).click();

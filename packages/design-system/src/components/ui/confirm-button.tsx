@@ -1,4 +1,4 @@
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 import { useId, useState } from "react";
 
@@ -18,7 +18,7 @@ import { Label } from "./label.tsx";
 
 type ConfirmPhrase = { text: string; label: string };
 
-type ConfirmButtonProps = ComponentProps<typeof Button> & {
+type ConfirmDialogProps = {
   title: string;
   description: string;
   confirmLabel: string;
@@ -26,7 +26,11 @@ type ConfirmButtonProps = ComponentProps<typeof Button> & {
   closeLabel: string;
   confirmPhrase?: ConfirmPhrase;
   onConfirm: () => void;
+  children: ReactNode;
 };
+
+type ConfirmButtonProps = ComponentProps<typeof Button> &
+  Omit<ConfirmDialogProps, "children">;
 
 export function ConfirmButton({
   title,
@@ -40,12 +44,38 @@ export function ConfirmButton({
   ...buttonProps
 }: ConfirmButtonProps) {
   return (
-    <Dialog>
+    <ConfirmDialog
+      title={title}
+      description={description}
+      confirmLabel={confirmLabel}
+      cancelLabel={cancelLabel}
+      closeLabel={closeLabel}
+      confirmPhrase={confirmPhrase}
+      onConfirm={onConfirm}
+    >
       <DialogTrigger asChild>
         <Button type="button" {...buttonProps}>
           {children}
         </Button>
       </DialogTrigger>
+    </ConfirmDialog>
+  );
+}
+
+/** A confirm dialog whose trigger the caller renders as `children` (a `DialogTrigger`, possibly nested in a menu). */
+export function ConfirmDialog({
+  title,
+  description,
+  confirmLabel,
+  cancelLabel,
+  closeLabel,
+  confirmPhrase,
+  onConfirm,
+  children,
+}: ConfirmDialogProps) {
+  return (
+    <Dialog>
+      {children}
       <DialogContent closeLabel={closeLabel}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

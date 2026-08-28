@@ -7,7 +7,7 @@ import { withTransaction } from "../transaction.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { getEditLock } from "./service/get-edit-lock.ts";
-import { getPublishedSampleByIgsn } from "./service/get-published-sample-by-igsn.ts";
+import { getPublicSampleByIgsn } from "./service/get-public-sample-by-igsn.ts";
 import { getSample } from "./service/get-sample.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { isSampleModerated } from "./service/is-sample-moderated.ts";
@@ -18,6 +18,7 @@ import {
 } from "./service/list-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import { releaseEditLock } from "./service/release-edit-lock.ts";
+import { setSampleStatus } from "./service/set-sample-status.ts";
 import { updateSample } from "./service/update-sample.ts";
 
 export function createSampleRepository(db: Kysely<DB>): SampleRepository {
@@ -32,8 +33,8 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
       withTransaction(db, (trx) => listPublishedSamples(trx, params)),
     get: (id, userId) =>
       withTransaction(db, (trx) => getSample(trx, id, userId)),
-    getPublishedByIgsn: (igsn) =>
-      withTransaction(db, (trx) => getPublishedSampleByIgsn(trx, igsn)),
+    getPublicByIgsn: (igsn) =>
+      withTransaction(db, (trx) => getPublicSampleByIgsn(trx, igsn)),
     create: (input, owner) =>
       withTransaction(db, async (trx) => {
         const sample = await insertSample(trx, input, owner);
@@ -42,7 +43,10 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
       }),
     update: (id, input) =>
       withTransaction(db, (trx) => updateSample(trx, id, input)),
-    publish: (id) => withTransaction(db, (trx) => publishSample(trx, id)),
+    publish: (id, status) =>
+      withTransaction(db, (trx) => publishSample(trx, id, status)),
+    setStatus: (id, status) =>
+      withTransaction(db, (trx) => setSampleStatus(trx, id, status)),
     getEditLock: (id) => withTransaction(db, (trx) => getEditLock(trx, id)),
     acquireEditLock: (id, userId) =>
       withTransaction(db, (trx) => acquireEditLock(trx, id, userId)),

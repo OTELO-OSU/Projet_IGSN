@@ -1,21 +1,21 @@
+import type { SampleStatus } from "../sample/sample.ts";
 import type { UserSampleRole } from "./model.ts";
 
 import { canUpdateSample } from "./can-update-sample.ts";
 
 describe("canUpdateSample", () => {
   it.each([
-    ["owner", false, true],
-    ["owner", true, true],
-    ["editor", false, true],
-    ["editor", true, true],
-    ["contributor", false, true],
-    ["contributor", true, false],
-    [null, false, false],
-    [null, true, false],
-  ] as [UserSampleRole | null, boolean, boolean][])(
-    "should answer, for the %s on a sample published=%s, %s",
-    (role, published, expected) => {
-      expect(canUpdateSample(role, { published })).toBe(expected);
+    ["owner", "draft", true],
+    ["owner", "withdrawn", true],
+    ["editor", "published", true],
+    ["contributor", "draft", true],
+    ["contributor", "published", false],
+    ["contributor", "withdrawn", false],
+    [null, "draft", false],
+  ] as [UserSampleRole | null, SampleStatus, boolean][])(
+    "should answer, for the %s on a %s sample, %s",
+    (role, status, expected) => {
+      expect(canUpdateSample(role, { status })).toBe(expected);
     },
   );
 });

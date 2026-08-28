@@ -13,13 +13,11 @@ test.describe("sample links on the public page", () => {
     page,
     samples,
   }) => {
-    const published = samples.find((sample) => sample.published);
+    const published = samples.find((sample) => sample.status === "published");
     if (!published || published.igsn === null) {
       throw new Error("seed must include a published sample with an igsn");
     }
 
-    // Arrange through the admin: an editor adds a DOI link and a file to the
-    // published sample.
     await signInAsResearcher(page, RESEARCHERS.jean);
     const list = sampleListPage(page);
     await list.openSample(published.name);
@@ -30,13 +28,11 @@ test.describe("sample links on the public page", () => {
       "https://doi.org/10.5880/GFZ.2026.001",
       "Field measurements dataset",
     );
-    // Staged on pick, uploaded by the save behind the recap dialog.
     await edit.uploadAttachments([fixture("test.txt")]);
     await edit.publishUpdates();
     await edit.confirmUploads();
     await edit.expectAttachment("test.txt");
 
-    // The reader finds them on the public detail page.
     const detail = sampleDetailPage(page);
     await detail.goto(published.igsn);
     await detail.expectDoiLink(
@@ -45,7 +41,6 @@ test.describe("sample links on the public page", () => {
     );
     await detail.expectAttachment("test.txt");
 
-    // The download button serves the uploaded content, unauthenticated.
     const href = await detail.attachmentDownloadHref("test.txt");
     expect(href).not.toBeNull();
     const download = await page.request.get(href!);

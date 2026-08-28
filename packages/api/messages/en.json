@@ -36,6 +36,8 @@
   "mail_sample_moderated_body": "A moderator edited the sample \"{{sample}}\" you own. The information changed: {{fields}}.",
   "mail_sample_published_subject": "The sample \"{{sample}}\" was published by a moderator",
   "mail_sample_published_body": "A moderator published the sample \"{{sample}}\" you own. It now carries an IGSN, and its main information can no longer be changed.",
+  "mail_sample_withdrawn_subject": "The sample \"{{sample}}\" was published as withdrawn by a moderator",
+  "mail_sample_withdrawn_body": "A moderator published the sample \"{{sample}}\" you own as withdrawn. It now carries an IGSN and its main information can no longer be changed, but it stays out of public view until it is republished.",
   "mail_sample_moderated_cta": "Open the sample",
   "mail_sample_field_name": "Name",
   "mail_sample_field_nature": "Nature",

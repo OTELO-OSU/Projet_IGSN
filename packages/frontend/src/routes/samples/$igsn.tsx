@@ -5,6 +5,7 @@ import {
   useGetSampleByIgsn,
 } from "#/domain/samples/hook/get-sample-by-igsn.ts";
 import { SampleView } from "#/domain/samples/sample-view.tsx";
+import { WithdrawnSampleView } from "#/domain/samples/withdrawn-sample-view.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/samples/$igsn")({
@@ -15,10 +16,15 @@ export const Route = createFileRoute("/samples/$igsn")({
     if (!sample) {
       throw notFound();
     }
-    return { title: sample.name };
+    return { title: sample.name, withdrawn: sample.status === "withdrawn" };
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: loaderData?.title ?? m.app_title() }],
+    meta: [
+      { title: loaderData?.title ?? m.app_title() },
+      ...(loaderData?.withdrawn
+        ? [{ name: "robots", content: "noindex" }]
+        : []),
+    ],
   }),
   component: SampleDetail,
 });
@@ -30,5 +36,9 @@ function SampleDetail() {
     return null;
   }
 
-  return <SampleView sample={sample} />;
+  return sample.status === "withdrawn" ? (
+    <WithdrawnSampleView sample={sample} />
+  ) : (
+    <SampleView sample={sample} />
+  );
 }

@@ -22,11 +22,10 @@ import { manualGroupsByIds } from "./manual-groups-by-ids.ts";
 
 const GROUP_COLUMNS = ["id", "name"] as const;
 
-const publishedSampleGroups = (trx: Transactional<DB>) =>
+const sampleGroups = (trx: Transactional<DB>) =>
   trx
     .selectFrom("sample_manual_group")
-    .innerJoin("sample", "sample.id", "sample_manual_group.sample_id")
-    .where("sample.published", "=", true);
+    .innerJoin("sample", "sample.id", "sample_manual_group.sample_id");
 
 // ponytail: name-keyed advisory lock rather than catching the unique violation.
 const lockName = (trx: Transactional<DB>, name: string) =>
@@ -122,12 +121,13 @@ export function createManualGroupRepository(
       }),
     remove: (id) =>
       withTransaction(db, async (trx) => {
-        const published = await publishedSampleGroups(trx)
+        const withIgsn = await sampleGroups(trx)
           .select("sample.id")
+          .where("sample.status", "<>", "draft")
           .where("sample_manual_group.group_id", "=", id)
           .limit(1)
           .executeTakeFirst();
-        if (published) {
+        if (withIgsn) {
           return "has_published_sample";
         }
         const { numDeletedRows } = await trx
@@ -237,7 +237,9 @@ export function createManualGroupRepository(
           .where(
             "id",
             "in",
-            publishedSampleGroups(trx).select("sample_manual_group.group_id"),
+            sampleGroups(trx)
+              .select("sample_manual_group.group_id")
+              .where("sample.status", "=", "published"),
           )
           .orderBy("name", "asc")
           .execute();

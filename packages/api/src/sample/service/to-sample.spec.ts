@@ -100,7 +100,7 @@ const row = {
   institutional_organization: null,
   institutional_osu: null,
   institutional_laboratory: null,
-  published: false,
+  status: "draft" as const,
   created_at: new Date("2026-01-01T00:00:00.000Z"),
   updated_at: new Date("2026-06-01T00:00:00.000Z"),
 };
@@ -153,7 +153,7 @@ describe("toSample", () => {
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,
-      published: false,
+      status: "draft",
       createdAt: new Date("2026-01-01T00:00:00.000Z"),
       updatedAt: new Date("2026-06-01T00:00:00.000Z"),
     });

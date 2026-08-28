@@ -188,7 +188,7 @@ export function toSample(
     institutionalOrganization: row.institutional_organization,
     institutionalOsu: row.institutional_osu,
     institutionalLaboratory: row.institutional_laboratory,
-    published: row.published,
+    status: row.status,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   });

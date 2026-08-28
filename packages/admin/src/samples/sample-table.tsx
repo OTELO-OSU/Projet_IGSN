@@ -1,7 +1,6 @@
 import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 import type { ReactNode } from "react";
 
-import { Badge } from "@projet-igsn/design-system/components/ui/badge";
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import {
   Tooltip,
@@ -20,6 +19,7 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
+import { SampleStatusBadge } from "#/samples/sample-status-badge.tsx";
 import { UserInitials } from "#/users/user-initials.tsx";
 import { UserStatusBadge } from "#/users/user-status-badge.tsx";
 
@@ -49,8 +49,7 @@ function sampleColumns(
       meta: { className: "w-64" },
     },
     {
-      id: "status",
-      accessorFn: (sample) => (sample.igsn ? 1 : 0),
+      accessorKey: "status",
       enableSorting: true,
       sortDescFirst: false,
       header: ({ column }) => (
@@ -63,14 +62,7 @@ function sampleColumns(
           {{ asc: " ↑", desc: " ↓" }[column.getIsSorted() as string] ?? ""}
         </button>
       ),
-      cell: ({ row }) =>
-        row.original.igsn ? (
-          <Badge className="bg-green-100 text-green-800" variant="secondary">
-            {m.status_published()}
-          </Badge>
-        ) : (
-          <Badge variant="secondary">{m.status_draft()}</Badge>
-        ),
+      cell: ({ row }) => <SampleStatusBadge status={row.original.status} />,
       meta: { className: "w-28" },
     },
     {

@@ -29,6 +29,10 @@ import { sampleTypeSchema } from "./type/vocabulary.ts";
 
 export const nameSchema = z.string().trim().min(1);
 
+export const sampleStatusSchema = z.enum(["draft", "published", "withdrawn"]);
+
+export type SampleStatus = z.infer<typeof sampleStatusSchema>;
+
 export const sampleSchema = z.object({
   id: z.uuid(),
   name: nameSchema,
@@ -63,7 +67,7 @@ export const sampleSchema = z.object({
   manualGroups: z.array(manualGroupSchema).default([]),
   // ponytail: snapshot of the owner's groups at creation, never edited afterwards, so it stays out of createSampleSchema
   ...institutionalGroupsFields,
-  published: z.boolean(),
+  status: sampleStatusSchema,
   createdAt: z.coerce.date(),
   updatedAt: z.coerce.date(),
 });
