@@ -57,14 +57,14 @@ const samples = [sample];
 function renderTable(
   data: AdminSampleListItem[],
   onSortingChange = vi.fn(),
-  withOwnerStatus = false,
+  moderated = false,
 ) {
   function Harness() {
     const [sorting, setSorting] = useState<SortingState>([]);
     return (
       <SampleTable
         samples={data}
-        withOwnerStatus={withOwnerStatus}
+        moderated={moderated}
         sorting={sorting}
         onSortingChange={(updater) => {
           setSorting(updater);
@@ -237,6 +237,16 @@ describe("SampleTable", () => {
     await expect
       .element(screen.getByRole("link", { name: "Basalte du Massif Central" }))
       .toHaveAttribute("href", "/samples/3f2504e0-4f89-41d3-9a0c-0305e82c3301");
+  });
+
+  it("should send a moderated sample's edit page back to the moderation list", async () => {
+    const screen = await renderTable(samples, vi.fn(), true);
+    await expect
+      .element(screen.getByRole("link", { name: "Basalte du Massif Central" }))
+      .toHaveAttribute(
+        "href",
+        "/samples/3f2504e0-4f89-41d3-9a0c-0305e82c3301?from=moderation",
+      );
   });
 
   it("should navigate to the edit page when the row is clicked", async () => {

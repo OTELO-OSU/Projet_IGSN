@@ -35,7 +35,7 @@ export function SampleListPanel({
       ) : (
         <SampleTable
           samples={query.data.data}
-          withOwnerStatus={moderated}
+          moderated={moderated}
           sorting={sorting}
           onSortingChange={(updater) => {
             const next =

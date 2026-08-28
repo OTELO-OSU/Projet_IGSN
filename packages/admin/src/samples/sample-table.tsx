@@ -38,9 +38,10 @@ function TruncatedCell({
   );
 }
 
-function sampleColumns(
-  withOwnerStatus: boolean,
-): ColumnDef<AdminSampleListItem>[] {
+const editSampleSearch = (moderated: boolean) =>
+  moderated ? { from: "moderation" as const } : {};
+
+function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
   return [
     {
       accessorKey: "igsn",
@@ -73,6 +74,7 @@ function sampleColumns(
           <Link
             to="/samples/$sampleId"
             params={{ sampleId: row.original.id }}
+            search={editSampleSearch(moderated)}
             className="block truncate hover:underline"
           >
             {row.original.name}
@@ -115,7 +117,7 @@ function sampleColumns(
         return owner ? (
           <span className="flex items-center gap-1">
             <UserInitials name={owner.name} firstname={owner.firstname} />
-            {withOwnerStatus && owner.status && (
+            {moderated && owner.status && (
               <UserStatusBadge status={owner.status} />
             )}
           </span>
@@ -136,19 +138,19 @@ type SampleTableProps = {
   samples: AdminSampleListItem[];
   sorting: SortingState;
   onSortingChange: OnChangeFn<SortingState>;
-  withOwnerStatus?: boolean;
+  moderated?: boolean;
 };
 
 export function SampleTable({
   samples,
   sorting,
   onSortingChange,
-  withOwnerStatus = false,
+  moderated = false,
 }: SampleTableProps) {
   const navigate = useNavigate();
   const table = useReactTable({
     data: samples,
-    columns: sampleColumns(withOwnerStatus),
+    columns: sampleColumns(moderated),
     getCoreRowModel: getCoreRowModel(),
     manualSorting: true,
     state: { sorting },
@@ -164,6 +166,7 @@ export function SampleTable({
         void navigate({
           to: "/samples/$sampleId",
           params: { sampleId: sample.id },
+          search: editSampleSearch(moderated),
         })
       }
     />

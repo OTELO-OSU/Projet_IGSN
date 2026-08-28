@@ -15,6 +15,7 @@ import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-samp
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { InfoIcon, Trash2Icon } from "lucide-react";
+import { z } from "zod";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { FRONTEND_URL } from "#/frontend-url.ts";
@@ -40,11 +41,16 @@ const SAVE_LABEL: Record<SampleStatus, () => string> = {
 };
 
 export const Route = createFileRoute("/samples/$sampleId")({
+  validateSearch: z.object({
+    from: z.literal("moderation").optional().catch(undefined),
+  }),
   component: EditSamplePage,
 });
 
 function EditSamplePage() {
   const { sampleId } = Route.useParams();
+  const { from } = Route.useSearch();
+  const listRoute = from === "moderation" ? "/samples/moderation" : "/";
   const me = useCurrentUser();
   const navigate = useNavigate();
   const query = useSample(sampleId);
@@ -187,7 +193,7 @@ function EditSamplePage() {
             />
           ) : undefined
         }
-        onCancel={() => navigate({ to: "/" })}
+        onCancel={() => navigate({ to: listRoute })}
         secondaryAction={{
           kind: "submit",
           label: SAVE_LABEL[query.data.status](),
@@ -220,7 +226,7 @@ function EditSamplePage() {
                   updateSample.mutate(value, {
                     onSuccess: () =>
                       publishSample.mutate(status, {
-                        onSuccess: () => navigate({ to: "/" }),
+                        onSuccess: () => navigate({ to: listRoute }),
                       }),
                   }),
               }
