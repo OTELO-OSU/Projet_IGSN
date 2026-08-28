@@ -49,15 +49,18 @@ export function SampleScientificContextFields() {
           if (provenanceStatus === "recent_collection") {
             return (
               <>
-                <form.AppField name="scientificContext.funderOrganization">
+                <form.AppField name="scientificContext.funderOrganizations">
                   {(field) => (
-                    <field.ComboboxField
-                      label={m.field_funder_organization()}
+                    <field.MultiComboboxField
+                      label={m.field_funder_organizations()}
                       requiredToPublish
                       items={organizationItems}
                       placeholder={m.organization_placeholder()}
                       searchPlaceholder={m.organization_search_placeholder()}
                       emptyText={m.organization_empty()}
+                      removeLabel={(label) =>
+                        m.funder_organizations_remove({ label })
+                      }
                     />
                   )}
                 </form.AppField>

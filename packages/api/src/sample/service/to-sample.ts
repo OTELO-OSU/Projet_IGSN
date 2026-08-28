@@ -93,7 +93,7 @@ function toScientificContext(row: Selectable<DB["sample"]>) {
     return scientificContextSchema.parse({
       provenanceStatus: "recent_collection",
       ...omitNull({
-        funderOrganization: row.sc_funder_organization,
+        funderOrganizations: row.sc_funder_organizations,
         researchProgramName: row.sc_research_program_name,
         researchProgramChief: row.sc_research_program_chief,
         researchProgramChiefOrcid: row.sc_research_program_chief_orcid,

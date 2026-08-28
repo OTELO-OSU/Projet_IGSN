@@ -27,7 +27,7 @@ export const publishBlockerSchema = z.enum([
   "elevation_incomplete",
   "availability_missing",
   "scientific_context_missing",
-  "funder_organization_missing",
+  "funder_organizations_missing",
   "research_program_name_missing",
   "research_program_chief_missing",
   "research_structure_missing",
@@ -161,8 +161,8 @@ export function samplePublishBlockers(
   if (context == null) {
     blockers.push("scientific_context_missing");
   } else if (context.provenanceStatus === "recent_collection") {
-    if (context.funderOrganization == null)
-      blockers.push("funder_organization_missing");
+    if (context.funderOrganizations == null)
+      blockers.push("funder_organizations_missing");
     if (context.researchProgramName == null)
       blockers.push("research_program_name_missing");
     if (context.researchProgramChief == null)
@@ -181,7 +181,6 @@ export function samplePublishBlockers(
     blockers.push("attachment_limit_exceeded");
   }
 
-  // Publishing is public: only a moderated-in account may do it.
   if (publisher && !canPublishSamples(publisher)) {
     blockers.push("user_not_verified");
   }

@@ -5,33 +5,28 @@ import { orcidSchema } from "../../user/orcid.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { collectionOriginSchema } from "./collection-origin.ts";
 
-const recentCollectionSchema = z
-  .object({
-    provenanceStatus: z.literal("recent_collection"),
-    funderOrganization: organizationRorSchema.nullish(),
-    researchProgramName: freeTextSchema.nullish(),
-    researchProgramChief: freeTextSchema.nullish(),
-    researchProgramChiefOrcid: orcidSchema.nullish(),
-    researchStructure: z.array(organizationRorSchema).min(1).nullish(),
-    collectorName: freeTextSchema.nullish(),
-    collectorOrcid: orcidSchema.nullish(),
-    researchCampaign: freeTextSchema.nullish(),
-    funding: freeTextSchema.nullish(),
-    researchProgramDescription: freeTextSchema.nullish(),
-    fieldName: freeTextSchema.nullish(),
-    missionDescription: freeTextSchema.nullish(),
-  })
-  .superRefine((context, ctx) => {
-    const structures = context.researchStructure;
-    if (structures != null && new Set(structures).size !== structures.length) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["researchStructure"],
-        message: "research structures must be unique",
-        params: { code: "research_structure_duplicate" },
-      });
-    }
-  });
+const uniqueRorArraySchema = (code: string) =>
+  z
+    .array(organizationRorSchema)
+    .min(1)
+    .refine((rors) => new Set(rors).size === rors.length, { params: { code } })
+    .nullish();
+
+const recentCollectionSchema = z.object({
+  provenanceStatus: z.literal("recent_collection"),
+  funderOrganizations: uniqueRorArraySchema("funder_organizations_duplicate"),
+  researchProgramName: freeTextSchema.nullish(),
+  researchProgramChief: freeTextSchema.nullish(),
+  researchProgramChiefOrcid: orcidSchema.nullish(),
+  researchStructure: uniqueRorArraySchema("research_structure_duplicate"),
+  collectorName: freeTextSchema.nullish(),
+  collectorOrcid: orcidSchema.nullish(),
+  researchCampaign: freeTextSchema.nullish(),
+  funding: freeTextSchema.nullish(),
+  researchProgramDescription: freeTextSchema.nullish(),
+  fieldName: freeTextSchema.nullish(),
+  missionDescription: freeTextSchema.nullish(),
+});
 
 const historicalSpecimenSchema = z.object({
   provenanceStatus: z.literal("historical_specimen"),

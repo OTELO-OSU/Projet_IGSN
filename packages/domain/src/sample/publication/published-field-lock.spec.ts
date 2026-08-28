@@ -47,7 +47,7 @@ const stored: Sample = {
   condition: null,
   scientificContext: {
     provenanceStatus: "recent_collection",
-    funderOrganization: "https://ror.org/00stored",
+    funderOrganizations: ["https://ror.org/00stored"],
     researchProgramName: "Stored program",
     researchProgramChief: "Stored chief",
     researchProgramChiefOrcid: "0000-0002-1825-0097",
@@ -121,7 +121,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     condition: null,
     scientificContext: {
       provenanceStatus: "recent_collection",
-      funderOrganization: "https://ror.org/00edited",
+      funderOrganizations: ["https://ror.org/00edited"],
       researchProgramName: "Edited program",
       researchProgramChief: "Edited chief",
       researchProgramChiefOrcid: "0000-0001-5109-3700",
@@ -292,7 +292,7 @@ describe("mergePublishedEdit", () => {
     const merged = mergePublishedEdit(stored, incoming());
     expect(merged.scientificContext).toMatchObject({
       provenanceStatus: "recent_collection",
-      funderOrganization: "https://ror.org/00stored",
+      funderOrganizations: ["https://ror.org/00stored"],
       researchProgramName: "Stored program",
       researchProgramChief: "Stored chief",
       collectorName: "Stored collector",

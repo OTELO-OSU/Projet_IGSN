@@ -33,7 +33,7 @@ const LOCKED_DESCRIPTION_FIELDS_TO_FORM_FIELDS = {
   ],
 } as const;
 const LOCKED_RECENT_COLLECTION_FIELDS_TO_FORM_FIELDS = {
-  funderOrganization: ["scientificContext.funderOrganization"],
+  funderOrganizations: ["scientificContext.funderOrganizations"],
   researchProgramName: ["scientificContext.researchProgramName"],
   researchProgramChief: ["scientificContext.researchProgramChief"],
   researchProgramChiefOrcid: ["scientificContext.researchProgramChiefOrcid"],

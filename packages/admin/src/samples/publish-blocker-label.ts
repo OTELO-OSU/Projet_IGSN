@@ -20,7 +20,7 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   elevation_incomplete: m.publish_blocked_elevation_incomplete,
   availability_missing: m.publish_blocked_availability_missing,
   scientific_context_missing: m.publish_blocked_scientific_context_missing,
-  funder_organization_missing: m.publish_blocked_funder_organization_missing,
+  funder_organizations_missing: m.publish_blocked_funder_organizations_missing,
   research_program_name_missing:
     m.publish_blocked_research_program_name_missing,
   research_program_chief_missing:

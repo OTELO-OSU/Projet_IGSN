@@ -72,9 +72,10 @@ describe("SampleScientificContextFields", () => {
 
     await pickProvenance(screen, "Recent collection");
     await screen
-      .getByRole("combobox", { name: "Funder organization *" })
+      .getByRole("combobox", { name: "Funder organizations *" })
       .click();
     await pickOrganization(screen, "02feahw73");
+    await pickOrganization(screen, "04kdfz702");
     await screen
       .getByLabelText("Name of the research programme *")
       .fill("Deep Biosphere Survey");
@@ -93,7 +94,7 @@ describe("SampleScientificContextFields", () => {
         expect.objectContaining({
           scientificContext: {
             provenanceStatus: "recent_collection",
-            funderOrganization: "02feahw73",
+            funderOrganizations: ["02feahw73", "04kdfz702"],
             researchProgramName: "Deep Biosphere Survey",
             researchStructure: ["04kdfz702", "05hnb7x64"],
             collectorName: "Pierre Curie",

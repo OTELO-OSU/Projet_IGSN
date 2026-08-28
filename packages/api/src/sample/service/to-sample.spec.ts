@@ -74,7 +74,7 @@ const row = {
   chemical_risk: null,
   chemical_risk_explanation: null,
   sc_provenance_status: null,
-  sc_funder_organization: null,
+  sc_funder_organizations: null,
   sc_research_program_name: null,
   sc_research_program_chief: null,
   sc_research_program_chief_orcid: null,
