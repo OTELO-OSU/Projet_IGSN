@@ -54,6 +54,7 @@ What a published sample may still change lives in ONE place too, the lock maps a
 - A field with an entry is frozen and one without is editable, so freezing a new field is one entry.
 - Only a leaf whose lock depends on a frozen sibling is hand-written in the merge helpers.
 - Add no parallel classification record and no second list of field names; see ADR 0021.
+- A super admin bypasses every lock: `domain/user/can-edit-frozen-sample-fields.ts` (`canEditFrozenSampleFields`) is read both by the api's `mergePublishedEdit` call and by the admin form's `publishedSampleFrozenField` resolver, so a super admin edits everything on a published sample except the IGSN, which stays out of `createSampleSchema`.
 
 `material` is the one field with no entry, because which of its levels lock depends on the stored path.
 

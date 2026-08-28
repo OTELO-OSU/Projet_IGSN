@@ -70,11 +70,15 @@ const ATTACHMENT: SampleAttachment = {
 
 let callerStatus: "pending" | "accepted" = "accepted";
 let callerUnknown = false;
+let callerManagedLaboratories: string[] = [];
+let editPageSearch = "";
 let sampleFetched = false;
 
 beforeEach(() => {
   callerStatus = "accepted";
   callerUnknown = false;
+  callerManagedLaboratories = [];
+  editPageSearch = "";
   sampleFetched = false;
 });
 
@@ -176,7 +180,7 @@ function fakeApi(
         orcid: null,
         status: callerStatus,
         superAdmin: false,
-        managedLaboratories: [],
+        managedLaboratories: callerManagedLaboratories,
         managedManualGroups: [],
         ...CALLER_GROUPS,
       });
@@ -312,7 +316,9 @@ async function renderEditPage(
   const router = createRouter({
     routeTree,
     context: { queryClient },
-    history: createMemoryHistory({ initialEntries: [`/samples/${id}`] }),
+    history: createMemoryHistory({
+      initialEntries: [`/samples/${id}${editPageSearch}`],
+    }),
   });
   const screen = await render(
     <StrictMode>
@@ -983,6 +989,18 @@ describe("EditSamplePage", () => {
         .element(screen.getByRole("heading", { name: "My samples" }))
         .toBeVisible();
       await vi.waitFor(() => expect(lockCalls).toContain("DELETE"));
+    });
+
+    it("should return to the moderation list on cancel when opened from it", async () => {
+      callerManagedLaboratories = ["UMR7359"];
+      editPageSearch = "?from=moderation";
+      const { screen } = await renderEditPage();
+
+      await screen.getByRole("button", { name: "Cancel" }).click();
+
+      await expect
+        .element(screen.getByRole("heading", { name: "Sample moderation" }))
+        .toBeVisible();
     });
 
     it("should not claim a lock for a caller who cannot update the sample", async () => {

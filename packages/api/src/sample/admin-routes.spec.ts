@@ -55,8 +55,9 @@ async function createSample(
   db: Parameters<typeof provisionUser>[0],
   client: Client,
   json: typeof publishableSample = publishable,
+  moderation: Parameters<typeof provisionUser>[2] = { status: "accepted" },
 ) {
-  await provisionUser(db, "test-token", { status: "accepted" });
+  await provisionUser(db, "test-token", moderation);
   const created = await client.admin.samples.$post(
     { json },
     { headers: authHeader },
@@ -68,8 +69,9 @@ async function createAndPublish(
   db: Parameters<typeof provisionUser>[0],
   client: Client,
   json = publishable,
+  moderation?: Parameters<typeof provisionUser>[2],
 ) {
-  const { id } = await createSample(db, client, json);
+  const { id } = await createSample(db, client, json, moderation);
   const published = await client.admin.samples[":id"].publish.$post(
     { param: { id } },
     { headers: authHeader },
@@ -810,6 +812,35 @@ describe("admin sample routes", () => {
         expect(kept.name).toBe("Basalte du Massif Central");
         expect(kept.material).toBe("sediment.exogenous_detritic.clay");
         expect(kept.specificName).toBe("MC-EDIT-1");
+      },
+    );
+
+    pgTest(
+      "lets a super admin change the frozen fields of a published sample",
+      async ({ db }) => {
+        // Arrange
+        const client = testClient(createApp(db).app);
+        const data = await createAndPublish(db, client, publishable, {
+          status: "accepted",
+          superAdmin: true,
+        });
+        // Act
+        const res = await client.admin.samples[":id"].$put(
+          {
+            param: { id: data.id },
+            json: {
+              ...igneous,
+              name: "Renamed basalt",
+              expectedUpdatedAt: data.updatedAt,
+            },
+          },
+          { headers: authHeader },
+        );
+        // Assert
+        expect(res.status).toBe(200);
+        const edited = sampleResponseSchema.parse(await res.json()).data;
+        expect(edited.name).toBe("Renamed basalt");
+        expect(edited.material).toBe(igneous.material);
       },
     );
 

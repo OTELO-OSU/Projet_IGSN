@@ -27,6 +27,7 @@ import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-mana
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
+import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
 import { Hono } from "hono";
 
 import type { ModerationEnv } from "../auth/require-user-moderation.ts";
@@ -287,9 +288,10 @@ export function createSampleAdminRoutes(
           );
         }
         const wasPublished = hasPermanentIgsn(current);
-        const toPersist = wasPublished
-          ? mergePublishedEdit(current, input)
-          : input;
+        const toPersist =
+          wasPublished && !canEditFrozenSampleFields(c.get("user"))
+            ? mergePublishedEdit(current, input)
+            : input;
         if (wasPublished) {
           const existing = samplePublishBlockers(toPublishableFields(current));
           const after = samplePublishBlockers(toPublishableFields(toPersist));

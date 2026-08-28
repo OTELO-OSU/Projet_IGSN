@@ -35,6 +35,7 @@ import {
 } from "@projet-igsn/domain/sample/sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
+import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
 
 import { m } from "#/paraglide/messages.js";
 import { AgeFields } from "#/samples/age-fields.tsx";
@@ -124,7 +125,7 @@ type SampleFormProps = {
   sampleId?: string;
   attachments?: SampleAttachment[];
   attachmentChanges?: SampleAttachmentChanges;
-  publisher?: Pick<User, "status" | "superAdmin">;
+  currentUser?: Pick<User, "status" | "superAdmin">;
   readOnlyReason?: string;
   manualGroupOptions?: ManualGroup[];
 };
@@ -140,7 +141,7 @@ export function SampleForm({
   sampleId,
   attachments = [],
   attachmentChanges,
-  publisher,
+  currentUser,
   readOnlyReason,
   manualGroupOptions = [],
 }: SampleFormProps) {
@@ -150,12 +151,15 @@ export function SampleForm({
     wasPublished ? publishedSampleSchema : sampleDraftSchema,
   );
   const isReadOnly = readOnlyReason !== undefined;
-  const isFrozenByPublication = wasPublished
-    ? publishedSampleFrozenField(
-        defaultValues?.scientificContext?.provenanceStatus ?? null,
-        defaultValues?.material ?? null,
-      )
-    : () => false;
+  const bypassesLocks =
+    currentUser !== undefined && canEditFrozenSampleFields(currentUser);
+  const isFrozenByPublication =
+    wasPublished && !bypassesLocks
+      ? publishedSampleFrozenField(
+          defaultValues?.scientificContext?.provenanceStatus ?? null,
+          defaultValues?.material ?? null,
+        )
+      : () => false;
   const areManualGroupsFrozen =
     roleOnSample !== null && !isSampleOwner(roleOnSample);
   const isFieldFrozen = isReadOnly
@@ -254,7 +258,7 @@ export function SampleForm({
             },
           } as PublishableFields & { attachments: { length: number } },
           UPLOAD_LIMIT,
-          publisher,
+          currentUser,
         ).map(publishBlockerLabel);
         const button = renderButton(
           isReadOnly || isPending || !canSubmit || reasons.length > 0,

@@ -4,7 +4,7 @@ Date: 2026-07-29
 
 ## Status
 
-Accepted. ADR 0022 unfroze the deeper material levels: `material` has no lock-map entry, its frozen levels being derived from the stored path.
+Accepted. ADR 0022 unfroze the deeper material levels: `material` has no lock-map entry, its frozen levels being derived from the stored path. A super admin (`canEditFrozenSampleFields`, `domain/user/can-edit-frozen-sample-fields.ts`) bypasses every lock in this document except the IGSN, which stays out of `createSampleSchema` entirely.
 
 ## Context
 
