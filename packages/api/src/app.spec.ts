@@ -5,12 +5,15 @@ import { createApp } from "./app.ts";
 import {
   AUTHENTICATED_USER_BUDGET,
   CONTACT_MAIL_IP_BUDGET,
+  MAIL_REQUEST_USER_BUDGET,
   PUBLIC_IP_BUDGET,
 } from "./rate-limit/config.ts";
 import { insertSample } from "./sample/service/insert-sample.ts";
 import { insertUser } from "./tests/insert-user.ts";
 import { pgTest } from "./tests/pg-test.ts";
 import { insertSampleOwner } from "./user-sample/insert-sample-owner.ts";
+
+const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a9999";
 
 describe("app", () => {
   describe("GET /", () => {
@@ -282,6 +285,29 @@ describe("app", () => {
         await spend(() => from("user-1"), AUTHENTICATED_USER_BUDGET.points);
         expect((await from("user-1")).status).toBe(429);
         expect((await from("user-2")).status).toBe(200);
+      },
+    );
+
+    pgTest(
+      "should throttle the deletion request far below the authenticated budget, per user",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const requestFrom = (token: string) =>
+          app.request(`/admin/samples/${UNKNOWN_ID}/deletion-request`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "content-type": "application/json",
+            },
+            body: JSON.stringify({ reason: "It was destroyed." }),
+          });
+
+        await spend(
+          () => requestFrom("user-3"),
+          MAIL_REQUEST_USER_BUDGET.points,
+        );
+        expect((await requestFrom("user-3")).status).toBe(429);
+        expect((await requestFrom("user-4")).status).not.toBe(429);
       },
     );
 

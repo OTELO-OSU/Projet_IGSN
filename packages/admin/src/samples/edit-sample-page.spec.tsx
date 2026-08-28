@@ -530,14 +530,6 @@ describe("EditSamplePage", () => {
     await vi.waitFor(() => expect(calls).toEqual(["STATUS published"]));
   });
 
-  it("should offer Share to the owner next to the title", async () => {
-    const { screen } = await renderEditPage();
-
-    await expect
-      .element(screen.getByRole("button", { name: "Share" }))
-      .toBeVisible();
-  });
-
   it("should disable Save & Publish and explain in a tooltip when the sample has no material", async () => {
     const { screen } = await renderEditPage("draft", null);
     const publish = screen.getByRole("button", { name: "Save & Publish" });
@@ -1130,6 +1122,32 @@ describe("EditSamplePage", () => {
         .element(screen.getByRole("heading", { name: "Edit sample" }))
         .toBeVisible();
       expect(calls).toEqual(["DELETE 409"]);
+    });
+  });
+
+  describe("requesting the deletion of a published sample", () => {
+    const requestButton = (screen: EditPageScreen) =>
+      screen.getByRole("button", { name: "Request deletion" });
+
+    it("should offer the request to the owner of a published sample", async () => {
+      const { screen } = await renderEditPage("published");
+
+      await expect.element(requestButton(screen)).toBeEnabled();
+    });
+
+    it.each<[string, () => ReturnType<typeof renderEditPage>]>([
+      ["the owner of a draft", () => renderEditPage()],
+      [
+        "an editor on a published sample",
+        () => renderEditPageAsEditor("published"),
+      ],
+    ])("should offer no request to %s", async (_case, renderPage) => {
+      const { screen } = await renderPage();
+
+      await expect
+        .element(screen.getByRole("button", { name: "Share" }))
+        .toBeVisible();
+      expect(requestButton(screen).elements()).toHaveLength(0);
     });
   });
 });

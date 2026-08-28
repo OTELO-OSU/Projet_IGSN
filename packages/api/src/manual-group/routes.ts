@@ -17,11 +17,12 @@ import type { SendMail } from "../mail/send-mail.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireSuperAdmin } from "../auth/require-super-admin.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
+import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
+import { manualGroupRequestMail } from "./manual-group-request-mail.ts";
 import {
   logMembershipChange,
   notifyManualGroupJoined,
 } from "./notify-manual-group-joined.ts";
-import { sendManualGroupRequest } from "./send-manual-group-request.ts";
 import {
   validateAddManualGroupMemberBody,
   validateCreateManualGroupBody,
@@ -87,10 +88,17 @@ export function createManualGroupRoutes(
         }
         if (mail) {
           // ponytail: fire and forget; a retry queue if a lost request ever matters.
-          void sendManualGroupRequest(
+          void notifySuperAdmins(
             users,
-            { requester, name, managers },
-            mail,
+            () =>
+              manualGroupRequestMail({
+                requester,
+                name,
+                managers,
+                adminUrl: mail.adminUrl,
+              }),
+            mail.sendMail,
+            "Could not mail the manual group creation request",
           );
         }
         return c.body(null, 204);

@@ -40,6 +40,14 @@ export function sampleEditPage(page: Page) {
     await deleteDialog.getByLabel("Type DELETE to confirm").fill(phrase);
   };
 
+  const requestDeletionButton = page.getByRole("button", {
+    name: "Request deletion",
+    exact: true,
+  });
+  const requestDeletionDialog = page.getByRole("dialog", {
+    name: "Request the deletion of this sample",
+  });
+
   return {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
@@ -69,6 +77,38 @@ export function sampleEditPage(page: Page) {
       await expect(deleteDialog).toBeHidden();
     },
     expectNoDeleteAction: () => expect(deleteButton).toHaveCount(0),
+
+    requestDeletion: async (reason: string) => {
+      await requestDeletionButton.click();
+      await requestDeletionDialog
+        .getByLabel("Why do you want to delete this sample?")
+        .fill(reason);
+      await requestDeletionDialog
+        .getByRole("button", { name: "Submit request" })
+        .click();
+      await expect(requestDeletionDialog).toBeHidden();
+    },
+    expectDeletionRequestSent: () =>
+      expect(
+        page.getByText(
+          "Your request was sent to the super admin and is being processed.",
+        ),
+      ).toBeVisible(),
+    expectDeletionRequestRefused: async () => {
+      await requestDeletionButton.click();
+      await requestDeletionDialog
+        .getByRole("button", { name: "Submit request" })
+        .click();
+      await expect(
+        requestDeletionDialog.getByText(
+          "Explain why this sample should be deleted.",
+        ),
+      ).toBeVisible();
+      await requestDeletionDialog
+        .getByRole("button", { name: "Cancel" })
+        .click();
+      await expect(requestDeletionDialog).toBeHidden();
+    },
 
     expectNoManualGroupOffered: () => expectNoManualGroupOffered(page),
     expectManualGroupFrozen: (name: string) =>
