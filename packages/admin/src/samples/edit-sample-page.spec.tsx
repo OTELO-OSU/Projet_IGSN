@@ -491,6 +491,9 @@ describe("EditSamplePage", () => {
 
   it("should republish a withdrawn sample when the change is confirmed", async () => {
     const { screen, calls } = await renderEditPage("withdrawn");
+    await expect
+      .element(screen.getByRole("status"))
+      .toHaveTextContent("This sample is withdrawn from public view.");
 
     await screen
       .getByRole("button", { name: "Republish", exact: true })
@@ -498,14 +501,6 @@ describe("EditSamplePage", () => {
     await screen.getByRole("button", { name: "Confirm" }).click();
 
     await vi.waitFor(() => expect(calls).toEqual(["STATUS published"]));
-  });
-
-  it("should tell the editor a withdrawn sample is out of public view", async () => {
-    const { screen } = await renderEditPage("withdrawn");
-
-    await expect
-      .element(screen.getByRole("status"))
-      .toHaveTextContent("This sample is withdrawn from public view.");
   });
 
   it("should offer Share to the owner next to the title", async () => {

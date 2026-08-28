@@ -16,12 +16,14 @@ export function sampleEditPage(page: Page) {
     }).toPass({ timeout: 20_000 });
   };
 
-  const confirmStatusChange = async (action: string, dialog: string) => {
-    await page.getByRole("button", { name: action }).click();
-    await page
+  const confirm = (dialog: string) =>
+    page
       .getByRole("dialog", { name: dialog })
       .getByRole("button", { name: "Confirm" })
       .click();
+  const confirmStatusChange = async (action: string, dialog: string) => {
+    await page.getByRole("button", { name: action }).click();
+    await confirm(dialog);
   };
 
   return {
@@ -77,19 +79,13 @@ export function sampleEditPage(page: Page) {
       await page
         .getByRole("menuitem", { name: "Publish as withdrawn" })
         .click();
-      await page
-        .getByRole("dialog", { name: "Publish sample as withdrawn" })
-        .getByRole("button", { name: "Confirm" })
-        .click();
+      await confirm("Publish sample as withdrawn");
     },
 
     withdraw: async () => {
       await page.getByRole("button", { name: "More actions" }).click();
       await page.getByRole("menuitem", { name: "Save & Withdraw" }).click();
-      await page
-        .getByRole("dialog", { name: "Withdraw sample" })
-        .getByRole("button", { name: "Confirm" })
-        .click();
+      await confirm("Withdraw sample");
     },
     expectWithdrawInMenu: async () => {
       await page.getByRole("button", { name: "More actions" }).click();

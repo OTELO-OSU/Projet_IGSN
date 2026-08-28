@@ -1,9 +1,12 @@
+import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
+
 import {
   Alert,
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
+import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { InfoIcon } from "lucide-react";
 
@@ -22,6 +25,12 @@ import {
   SampleConflictError,
   useUpdateSample,
 } from "#/samples/use-update-sample.ts";
+
+const SAVE_LABEL: Record<SampleStatus, () => string> = {
+  draft: m.action_save_draft,
+  published: m.action_publish_updates,
+  withdrawn: m.action_save_changes,
+};
 
 export const Route = createFileRoute("/samples/$sampleId")({
   component: EditSamplePage,
@@ -61,6 +70,7 @@ function EditSamplePage() {
   }
 
   const wasPublished = hasPermanentIgsn(query.data);
+  const mayToggleStatus = isSampleEditor(query.data.role);
   const isPending =
     updateSample.isPending || publishSample.isPending || setStatus.isPending;
   const conflict =
@@ -130,22 +140,20 @@ function EditSamplePage() {
         status={query.data.status}
         readOnlyReason={lockedMessage ?? rejection}
         statusAction={
-          query.data.status === "withdrawn" ? (
-            <RepublishButton sampleId={sampleId} />
+          query.data.status === "withdrawn" && mayToggleStatus ? (
+            <RepublishButton
+              disabled={isPending}
+              onConfirm={() => setStatus.mutate("published")}
+            />
           ) : undefined
         }
         onCancel={() => navigate({ to: "/" })}
         secondaryAction={{
           kind: "submit",
-          label:
-            query.data.status === "withdrawn"
-              ? m.action_save_changes()
-              : wasPublished
-                ? m.action_publish_updates()
-                : m.action_save_draft(),
+          label: SAVE_LABEL[query.data.status](),
           onSubmit: (value) => updateSample.mutate(value),
           menu:
-            query.data.status === "published"
+            query.data.status === "published" && mayToggleStatus
               ? {
                   label: m.action_status_options(),
                   itemLabel: m.action_save_withdraw(),

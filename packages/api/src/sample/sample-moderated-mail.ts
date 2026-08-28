@@ -1,4 +1,5 @@
 import type { SampleMailField } from "@projet-igsn/domain/sample/changed-sample-fields";
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 
 import type { RenderedMail } from "../mail/send-mail.ts";
@@ -8,7 +9,7 @@ import { translator } from "../mail/i18n.ts";
 
 export type SampleModeratedEdit = {
   owner: Pick<User, "email" | "name" | "firstname">;
-  fields: SampleMailField[] | "published" | "withdrawn";
+  fields: SampleMailField[] | SetSampleStatusBody["status"];
   sampleName: string;
   sampleUrl: string;
 };

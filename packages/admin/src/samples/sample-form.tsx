@@ -327,10 +327,7 @@ export function SampleForm({
     // ponytail: a native submit button routes through the form's default meta
     // (defaultSubmit), so only one submit-kind action is supported at a time.
     // No caller needs two; add explicit per-button meta if that ever changes.
-    const menu =
-      action.menu && (roleOnSample === null || isSampleEditor(roleOnSample))
-        ? action.menu
-        : undefined;
+    const menu = action.menu;
     const submitButton = (disabled: boolean) => (
       <form.AppForm>
         <div className="flex">

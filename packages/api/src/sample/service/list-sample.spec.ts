@@ -45,6 +45,23 @@ const backdate = (db: Transactional<DB>, id: string) =>
     .where("id", "=", id)
     .execute();
 
+async function insertOneSamplePerStatus(db: Transactional<DB>) {
+  const sample = (name: string) =>
+    insertSample(db, {
+      name,
+      nature: "thin_section",
+      type: "individual_sample",
+      material: "sediment",
+      collectionMethod: null,
+    });
+  await sample("Draft sample");
+  const published = await sample("Published sample");
+  await publishSample(db, published.id);
+  const withdrawn = await sample("Withdrawn sample");
+  await publishSample(db, withdrawn.id);
+  await setSampleStatus(db, withdrawn.id, "withdrawn");
+}
+
 describe("listSamples", () => {
   pgTest("should list samples most-recently-modified first", async ({ db }) => {
     // Arrange
@@ -81,30 +98,7 @@ describe("listSamples", () => {
 
   pgTest("should sort by status alphabetically", async ({ db }) => {
     // Arrange
-    await insertSample(db, {
-      name: "Draft sample",
-      nature: "rock_powder",
-      type: "individual_sample",
-      material: "sediment",
-      collectionMethod: null,
-    });
-    const published = await insertSample(db, {
-      name: "Published sample",
-      nature: "thin_section",
-      type: "individual_sample",
-      material: "sediment",
-      collectionMethod: null,
-    });
-    await publishSample(db, published.id);
-    const withdrawn = await insertSample(db, {
-      name: "Withdrawn sample",
-      nature: "thin_section",
-      type: "individual_sample",
-      material: "sediment",
-      collectionMethod: null,
-    });
-    await publishSample(db, withdrawn.id);
-    await setSampleStatus(db, withdrawn.id, "withdrawn");
+    await insertOneSamplePerStatus(db);
 
     // Act / Assert
     const asc = await listAsOwner(db, {
@@ -140,30 +134,7 @@ describe("listSamples", () => {
     "should keep only the %s samples",
     async ([status, expected], { db }) => {
       // Arrange
-      await insertSample(db, {
-        name: "Draft sample",
-        nature: "rock_powder",
-        type: "individual_sample",
-        material: "sediment",
-        collectionMethod: null,
-      });
-      const published = await insertSample(db, {
-        name: "Published sample",
-        nature: "thin_section",
-        type: "individual_sample",
-        material: "sediment",
-        collectionMethod: null,
-      });
-      await publishSample(db, published.id);
-      const withdrawn = await insertSample(db, {
-        name: "Withdrawn sample",
-        nature: "thin_section",
-        type: "individual_sample",
-        material: "sediment",
-        collectionMethod: null,
-      });
-      await publishSample(db, withdrawn.id);
-      await setSampleStatus(db, withdrawn.id, "withdrawn");
+      await insertOneSamplePerStatus(db);
       // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,

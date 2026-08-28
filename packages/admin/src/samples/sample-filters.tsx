@@ -8,6 +8,7 @@ import {
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { COLLECTION_METHOD_HIERARCHY } from "@projet-igsn/domain/sample/collection-method/vocabulary";
 import { NATURES } from "@projet-igsn/domain/sample/nature";
+import { sampleStatusSchema } from "@projet-igsn/domain/sample/sample";
 import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 
 import type { FilterEntry } from "#/filters/list-header.tsx";
@@ -17,6 +18,7 @@ import { TreeFilter } from "#/filters/tree-filter.tsx";
 import { m } from "#/paraglide/messages.js";
 import { COLLECTION_METHOD_TREE } from "#/samples/collection-method-tree-nodes.ts";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
+import { SAMPLE_STATUS } from "#/samples/sample-status-badge.tsx";
 
 type SampleFilterValues = Pick<
   ListSamplesQuery,
@@ -97,11 +99,10 @@ export function sampleFilterEntries({
           id="status-filter"
           label={m.column_status()}
           anyLabel={m.samples_status_all()}
-          items={[
-            { value: "draft", label: m.status_draft() },
-            { value: "published", label: m.status_published() },
-            { value: "withdrawn", label: m.status_withdrawn() },
-          ]}
+          items={sampleStatusSchema.options.map((value) => ({
+            value,
+            label: SAMPLE_STATUS[value].label(),
+          }))}
           value={values.status}
           onChange={(next) =>
             onChange({

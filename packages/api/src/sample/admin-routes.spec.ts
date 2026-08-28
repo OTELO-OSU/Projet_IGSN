@@ -42,19 +42,27 @@ type Client = ReturnType<
   typeof testClient<ReturnType<typeof createApp>["app"]>
 >;
 
-async function createAndPublish(
+async function createSample(
   db: Parameters<typeof provisionUser>[0],
   client: Client,
-  json = publishable,
+  json: typeof publishableSample = publishable,
 ) {
   await provisionUser(db, "test-token", { status: "accepted" });
   const created = await client.admin.samples.$post(
     { json },
     { headers: authHeader },
   );
-  const { data } = sampleResponseSchema.parse(await created.json());
+  return sampleResponseSchema.parse(await created.json()).data;
+}
+
+async function createAndPublish(
+  db: Parameters<typeof provisionUser>[0],
+  client: Client,
+  json = publishable,
+) {
+  const { id } = await createSample(db, client, json);
   const published = await client.admin.samples[":id"].publish.$post(
-    { param: { id: data.id } },
+    { param: { id } },
     { headers: authHeader },
   );
   expect(published.status).toBe(200);
@@ -1211,14 +1219,9 @@ describe("admin sample routes", () => {
 
   pgTest("should publish a sample straight as withdrawn", async ({ db }) => {
     // Arrange
-    await provisionUser(db, "test-token", { status: "accepted" });
     const { app } = createApp(db);
     const client = testClient(app);
-    const created = await client.admin.samples.$post(
-      { json: publishable },
-      { headers: authHeader },
-    );
-    const { data } = sampleResponseSchema.parse(await created.json());
+    const data = await createSample(db, client);
     // Act
     const res = await app.request(
       `/admin/samples/${data.id}/publish?status=withdrawn`,
@@ -1239,14 +1242,9 @@ describe("admin sample routes", () => {
 
   pgTest("should answer 400 on an unknown publish status", async ({ db }) => {
     // Arrange
-    await provisionUser(db, "test-token", { status: "accepted" });
     const { app } = createApp(db);
     const client = testClient(app);
-    const created = await client.admin.samples.$post(
-      { json: publishable },
-      { headers: authHeader },
-    );
-    const { data } = sampleResponseSchema.parse(await created.json());
+    const data = await createSample(db, client);
     // Act
     const res = await app.request(
       `/admin/samples/${data.id}/publish?status=draft`,
@@ -1434,13 +1432,8 @@ describe("admin sample routes", () => {
       "should answer 409 when changing the status of a draft",
       async ({ db }) => {
         // Arrange
-        await provisionUser(db, "test-token", { status: "accepted" });
         const client = testClient(createApp(db).app);
-        const created = await client.admin.samples.$post(
-          { json: publishableSample },
-          { headers: authHeader },
-        );
-        const { data } = sampleResponseSchema.parse(await created.json());
+        const data = await createSample(db, client, publishableSample);
         // Act
         const res = await setStatus(client, data.id, "withdrawn");
         // Assert
