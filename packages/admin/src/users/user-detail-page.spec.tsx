@@ -131,6 +131,7 @@ function fakeApi({
         data: [BASALT, METEORITE].map((group) => ({
           ...group,
           memberCount: 1,
+          managerCount: 1,
         })),
         meta: { total: 2 },
       }),

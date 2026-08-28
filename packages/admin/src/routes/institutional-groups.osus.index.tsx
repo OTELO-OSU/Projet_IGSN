@@ -10,6 +10,8 @@ import { matchesSearch } from "#/filters/matches-search.ts";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
 import { OrganizationFilter } from "#/institutional-groups/group-filters.tsx";
 import { OsuTable } from "#/institutional-groups/osu-table.tsx";
+import { useInstitutionalGroupManagerCounts } from "#/institutional-groups/use-institutional-group-manager-counts.ts";
+import { noManagerFilterEntry } from "#/managers/no-manager-filter-entry.tsx";
 import { m } from "#/paraglide/messages.js";
 import { useGetInstitutionalGroupCounts } from "#/users/hook/get-institutional-group-counts.ts";
 
@@ -17,6 +19,7 @@ export const Route = createFileRoute("/institutional-groups/osus/")({
   validateSearch: z.object({
     organization: z.string().optional().catch(undefined),
     search: z.string().optional().catch(undefined),
+    noManager: z.boolean().optional().catch(undefined),
   }),
   component: () => (
     <SuperAdminOnly>
@@ -26,14 +29,19 @@ export const Route = createFileRoute("/institutional-groups/osus/")({
 });
 
 function OsusPage() {
-  const { organization, search } = Route.useSearch();
+  const { organization, search, noManager } = Route.useSearch();
   const navigate = Route.useNavigate();
   const counts = useGetInstitutionalGroupCounts();
+  const managerCounts = useInstitutionalGroupManagerCounts();
+  const managers = managerCounts.data?.osus ?? {};
 
   const inOrganization = organization ? filterOsusByOrg(organization) : OSUS;
-  const osus = search
+  const matching = search
     ? inOrganization.filter((osu) => matchesSearch(osuLabel(osu.code), search))
     : [...inOrganization];
+  const osus = noManager
+    ? matching.filter((osu) => (managers[osu.code] ?? 0) === 0)
+    : matching;
 
   return (
     <>
@@ -64,10 +72,24 @@ function OsusPage() {
               />
             ),
           },
+          noManagerFilterEntry({
+            checked: noManager === true,
+            onChange: (checked) =>
+              void navigate({
+                search: (prev) => ({
+                  ...prev,
+                  noManager: checked || undefined,
+                }),
+              }),
+          }),
         ]}
       />
 
-      <OsuTable osus={osus} memberCounts={counts.data?.osus ?? {}} />
+      <OsuTable
+        osus={osus}
+        memberCounts={counts.data?.osus ?? {}}
+        managerCounts={managers}
+      />
     </>
   );
 }

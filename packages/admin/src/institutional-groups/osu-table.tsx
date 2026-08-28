@@ -9,10 +9,14 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import { managersColumn } from "#/institutional-groups/managers-column.tsx";
 import { membersColumn } from "#/institutional-groups/members-column.ts";
 import { m } from "#/paraglide/messages.js";
 
-const osuColumns = (counts: Record<string, number>): ColumnDef<Osu>[] => [
+const osuColumns = (
+  memberCounts: Record<string, number>,
+  managerCounts: Record<string, number>,
+): ColumnDef<Osu>[] => [
   {
     accessorKey: "code",
     header: () => m.column_code(),
@@ -42,20 +46,23 @@ const osuColumns = (counts: Record<string, number>): ColumnDef<Osu>[] => [
       </ul>
     ),
   },
-  membersColumn(counts, (row) => row.code),
+  membersColumn(memberCounts, (row) => row.code),
+  managersColumn(managerCounts, (row) => row.code),
 ];
 
 export function OsuTable({
   osus,
   memberCounts,
+  managerCounts,
 }: {
   osus: Osu[];
   memberCounts: Record<string, number>;
+  managerCounts: Record<string, number>;
 }) {
   const navigate = useNavigate();
   const table = useReactTable({
     data: osus,
-    columns: osuColumns(memberCounts),
+    columns: osuColumns(memberCounts, managerCounts),
     getCoreRowModel: getCoreRowModel(),
   });
 

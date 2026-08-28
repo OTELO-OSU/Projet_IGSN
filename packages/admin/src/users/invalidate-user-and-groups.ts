@@ -8,5 +8,8 @@ export const invalidateUserAndGroups = (
     queryClient.invalidateQueries({ queryKey: ["users"] }),
     queryClient.invalidateQueries({ queryKey: ["user", userId] }),
     queryClient.invalidateQueries({ queryKey: ["manual-groups"] }),
+    queryClient.invalidateQueries({
+      queryKey: ["institutional-group-manager-counts"],
+    }),
     queryClient.invalidateQueries({ queryKey: ["currentUser"] }),
   ]);

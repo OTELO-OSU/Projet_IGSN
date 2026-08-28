@@ -13,6 +13,7 @@ import { z } from "zod";
 import { RouteGuard } from "#/auth/route-guard.tsx";
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { HttpError } from "#/http-error.ts";
+import { ManualGroupManagers } from "#/manual-groups/manual-group-managers.tsx";
 import { ManualGroupMembers } from "#/manual-groups/manual-group-members.tsx";
 import { RenameManualGroupDialog } from "#/manual-groups/rename-manual-group-dialog.tsx";
 import { useDeleteManualGroup } from "#/manual-groups/use-delete-manual-group.ts";
@@ -104,6 +105,8 @@ function ManualGroupDetailPage() {
           </div>
         )}
       </div>
+
+      {me?.superAdmin && <ManualGroupManagers groupId={groupId} />}
 
       <ManualGroupMembers
         groupId={groupId}

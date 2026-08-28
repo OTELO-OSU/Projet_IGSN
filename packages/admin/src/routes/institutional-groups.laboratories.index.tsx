@@ -11,6 +11,8 @@ import { matchesSearch } from "#/filters/matches-search.ts";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
 import { institutionFilterEntry } from "#/institutional-groups/institution-tree-filter.tsx";
 import { LaboratoryTable } from "#/institutional-groups/laboratory-table.tsx";
+import { useInstitutionalGroupManagerCounts } from "#/institutional-groups/use-institutional-group-manager-counts.ts";
+import { noManagerFilterEntry } from "#/managers/no-manager-filter-entry.tsx";
 import { m } from "#/paraglide/messages.js";
 import { useGetInstitutionalGroupCounts } from "#/users/hook/get-institutional-group-counts.ts";
 
@@ -18,6 +20,7 @@ export const Route = createFileRoute("/institutional-groups/laboratories/")({
   validateSearch: z.object({
     institution: institutionFilterSchema.optional().catch(undefined),
     search: z.string().optional().catch(undefined),
+    noManager: z.boolean().optional().catch(undefined),
   }),
   component: () => (
     <SuperAdminOnly>
@@ -27,18 +30,23 @@ export const Route = createFileRoute("/institutional-groups/laboratories/")({
 });
 
 function LaboratoriesPage() {
-  const { institution, search } = Route.useSearch();
+  const { institution, search, noManager } = Route.useSearch();
   const navigate = Route.useNavigate();
   const counts = useGetInstitutionalGroupCounts();
+  const managerCounts = useInstitutionalGroupManagerCounts();
+  const managers = managerCounts.data?.laboratories ?? {};
 
   const inGroup = institution
     ? institutionLaboratories(institution)
     : LABORATORIES;
-  const laboratories = search
+  const matching = search
     ? inGroup.filter((laboratory) =>
         matchesSearch(laboratoryLabel(laboratory.code), search),
       )
     : [...inGroup];
+  const laboratories = noManager
+    ? matching.filter((laboratory) => (managers[laboratory.code] ?? 0) === 0)
+    : matching;
 
   return (
     <>
@@ -63,12 +71,23 @@ function LaboratoriesPage() {
                 search: (prev) => ({ ...prev, institution: next }),
               }),
           }),
+          noManagerFilterEntry({
+            checked: noManager === true,
+            onChange: (checked) =>
+              void navigate({
+                search: (prev) => ({
+                  ...prev,
+                  noManager: checked || undefined,
+                }),
+              }),
+          }),
         ]}
       />
 
       <LaboratoryTable
         laboratories={laboratories}
         memberCounts={counts.data?.laboratories ?? {}}
+        managerCounts={managers}
       />
     </>
   );

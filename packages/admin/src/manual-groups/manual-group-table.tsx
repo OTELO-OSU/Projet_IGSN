@@ -8,6 +8,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import { ManagerCount } from "#/managers/manager-count.tsx";
 import { m } from "#/paraglide/messages.js";
 
 const columns: ColumnDef<ManualGroupListItem>[] = [
@@ -28,6 +29,11 @@ const columns: ColumnDef<ManualGroupListItem>[] = [
     accessorKey: "memberCount",
     header: () => m.column_members(),
     cell: ({ row }) => row.original.memberCount,
+  },
+  {
+    accessorKey: "managerCount",
+    header: () => m.column_managers(),
+    cell: ({ row }) => <ManagerCount count={row.original.managerCount} />,
   },
 ];
 

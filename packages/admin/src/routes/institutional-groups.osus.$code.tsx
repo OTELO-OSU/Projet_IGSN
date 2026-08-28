@@ -5,6 +5,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { GroupMembers } from "#/institutional-groups/group-members.tsx";
+import { InstitutionalGroupManagers } from "#/institutional-groups/institutional-group-managers.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute("/institutional-groups/osus/$code")({
@@ -44,6 +45,8 @@ function OsuDetailPage() {
           </ul>
         </dd>
       </dl>
+
+      <InstitutionalGroupManagers kind="osu" code={osu.code} />
 
       <GroupMembers
         filter={{ institutionalOsu: osu.code }}
