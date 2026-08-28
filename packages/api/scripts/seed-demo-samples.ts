@@ -3,9 +3,9 @@ import type { Location } from "@projet-igsn/domain/sample/location/model";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 
-import type { SeedSample } from "./seed.ts";
+import type { SampleRow } from "./seed.ts";
 
-type DemoRow = Omit<SeedSample, "id" | "igsn" | "status">;
+type DemoRow = Omit<SampleRow, "id" | "igsn" | "status">;
 
 type Position = NonNullable<Location["position"]>;
 type Elevation = NonNullable<Position["elevation"]>;
@@ -90,7 +90,6 @@ const geologicalAge = (
 const PUBLISHED: DemoRow[] = [
   {
     name: "Brittany Granite",
-    owner: "marie",
     nature: "thin_section",
     type: "core.piece",
     material: "rock.igneous.plutonic.felsic.granite",
@@ -108,7 +107,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Corsica Granodiorite",
-    owner: "jean",
     nature: "rock_chips",
     type: "core.slab",
     material: "rock.igneous.plutonic.felsic.granodiorite",
@@ -124,7 +122,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Aar Massif Tonalite",
-    owner: "sophie",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.plutonic.felsic.tonalite",
@@ -139,7 +136,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Bushveld Gabbro",
-    owner: "pierre",
     nature: "polished_section",
     type: "core.piece",
     material: "rock.igneous.plutonic.mafic.gabbro",
@@ -155,7 +151,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Harz Norite",
-    owner: "camille",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.plutonic.mafic.norite",
@@ -170,7 +165,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Oman Ophiolite Peridotite",
-    owner: "marie",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.plutonic.ultramafic.peridotite",
@@ -186,7 +180,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Oslo Rift Syenite",
-    owner: "jean",
     nature: "thin_section",
     type: "core.section",
     material: "rock.igneous.plutonic.intermediate.syenite",
@@ -201,7 +194,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Massif Central Basalt",
-    owner: "sophie",
     nature: "hand_sample",
     type: "core.half_round",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -217,7 +209,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Reykjanes Ridge Basalt",
-    owner: "pierre",
     nature: "rock_chips",
     type: "dredge",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -235,7 +226,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Etna Trachyte",
-    owner: "camille",
     nature: "thin_section",
     type: "individual_sample",
     material: "rock.igneous.volcanic.intermediate.trachyte",
@@ -250,7 +240,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Yellowstone Rhyolite",
-    owner: "marie",
     nature: "rock_chips",
     type: "individual_sample",
     material: "rock.igneous.volcanic.felsic.rhyolite",
@@ -265,7 +254,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Andean Andesite",
-    owner: "jean",
     nature: "thin_section",
     type: "individual_sample",
     material: "rock.igneous.volcanic.intermediate.andesite",
@@ -280,7 +268,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Barberton Komatiite",
-    owner: "sophie",
     nature: "polished_section",
     type: "individual_sample",
     material: "rock.igneous.volcanic.ultramafic.komatiite",
@@ -295,7 +282,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Canary Phonolite",
-    owner: "pierre",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.volcanic.intermediate.phonolite",
@@ -310,7 +296,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Deccan Picrite",
-    owner: "camille",
     nature: "rock_chips",
     type: "individual_sample",
     material: "rock.igneous.volcanic.ultramafic.picrite",
@@ -325,7 +310,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Kimberley Kimberlite",
-    owner: "marie",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.volcanic.exotic.kimberlite",
@@ -340,7 +324,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Carrara Marble",
-    owner: "jean",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.metamorphic.strongly_metamorphosed.marble",
@@ -356,7 +339,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Alpine Mica Schist",
-    owner: "sophie",
     nature: "thin_section",
     type: "core.piece",
     material: "rock.metamorphic.strongly_metamorphosed.mica_schist",
@@ -371,7 +353,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Lofoten Gneiss",
-    owner: "pierre",
     nature: "polished_section",
     type: "individual_sample",
     material: "rock.metamorphic.strongly_metamorphosed.gneiss",
@@ -386,7 +367,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Western Gneiss Eclogite",
-    owner: "camille",
     nature: "thin_section",
     type: "core.piece",
     material: "rock.metamorphic.strongly_metamorphosed.eclogite",
@@ -401,7 +381,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Franciscan Blueschist",
-    owner: "marie",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.metamorphic.strongly_metamorphosed.glaucophanite",
@@ -416,7 +395,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Highland Quartzite",
-    owner: "jean",
     nature: "rock_chips",
     type: "individual_sample",
     material: "rock.metamorphic.strongly_metamorphosed.quartzite",
@@ -431,7 +409,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Welsh Slate Series",
-    owner: "sophie",
     nature: "thick_section",
     type: "serie_of_sample",
     material: "rock.metamorphic.strongly_metamorphosed.slate",
@@ -446,7 +423,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Lapland Granulite",
-    owner: "pierre",
     nature: "thin_section",
     type: "individual_sample",
     material: "rock.metamorphic.strongly_metamorphosed.granulite",
@@ -461,7 +437,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Ivrea Amphibolite",
-    owner: "camille",
     nature: "polished_section",
     type: "core.section",
     material: "rock.metamorphic.strongly_metamorphosed.amphibolite",
@@ -476,7 +451,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Zermatt Metabasalt",
-    owner: "marie",
     nature: "thin_section",
     type: "individual_sample",
     material:
@@ -493,7 +467,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Aosta Metagranite",
-    owner: "jean",
     nature: "thin_section",
     type: "individual_sample",
     material:
@@ -510,7 +483,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Fontainebleau Sandstone",
-    owner: "sophie",
     nature: "rock_powder",
     type: "individual_sample",
     material: "rock.sedimentary.clastic_sedimentary_rock.sandstone",
@@ -524,7 +496,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Jura Limestone",
-    owner: "pierre",
     nature: "rock_chips",
     type: "individual_sample",
     material:
@@ -539,7 +510,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Dolomites Dolostone",
-    owner: "camille",
     nature: "hand_sample",
     type: "individual_sample",
     material:
@@ -554,7 +524,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Franconian Chert",
-    owner: "marie",
     nature: "rock_chips",
     type: "individual_sample",
     material:
@@ -569,7 +538,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Paris Basin Gypsum",
-    owner: "jean",
     nature: "hand_sample",
     type: "individual_sample",
     material:
@@ -584,7 +552,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Ruhr Coal Core",
-    owner: "sophie",
     nature: "sample_fragment",
     type: "core.whole_round",
     material:
@@ -600,7 +567,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "North Sea Mudstone Core",
-    owner: "pierre",
     nature: "sample_fragment",
     type: "core.section",
     material: "rock.sedimentary.clastic_sedimentary_rock.mudstone",
@@ -616,7 +582,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "TAG Sulfide Chimney",
-    owner: "camille",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.hydrothermal.sulfide",
@@ -632,7 +597,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Rainbow Hydrothermal Breccia",
-    owner: "marie",
     nature: "rock_chips",
     type: "individual_sample",
     material: "rock.hydrothermal.breccia",
@@ -647,7 +611,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Lost City Carbonate",
-    owner: "jean",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.hydrothermal.carbonate",
@@ -662,7 +625,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Pacific Abyssal Clay",
-    owner: "sophie",
     nature: "separated_materials",
     type: "core.section",
     material: "sediment.exogenous_detritic.clay",
@@ -679,7 +641,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Loire Sand",
-    owner: "pierre",
     nature: "rock_powder",
     type: "individual_sample",
     material: "sediment.exogenous_detritic.sand.medium_sand",
@@ -693,7 +654,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Rhine Gravel",
-    owner: "camille",
     nature: "multiple_sample",
     type: "individual_sample",
     material: "sediment.exogenous_detritic.gravel.pebble",
@@ -707,7 +667,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Champagne Loess Silt",
-    owner: "marie",
     nature: "rock_powder",
     type: "individual_sample",
     material: "sediment.exogenous_detritic.silt.medium_silt",
@@ -722,7 +681,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Vesuvius Volcanic Ash",
-    owner: "jean",
     nature: "rock_powder",
     type: "individual_sample",
     material: "sediment.volcano_detritic.ash.glass",
@@ -737,7 +695,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Bahamas Carbonate Ooze",
-    owner: "sophie",
     nature: "sample_fragment",
     type: "core.section",
     material: "sediment.biogenic.carbonate.mud_supported.mudstone",
@@ -752,7 +709,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Southern Ocean Diatom Ooze",
-    owner: "pierre",
     nature: "separated_materials",
     type: "core.section",
     material: "sediment.biogenic.siliceous.diatoms",
@@ -767,7 +723,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Irish Bog Peat",
-    owner: "camille",
     nature: "sample_fragment",
     type: "individual_sample",
     material: "sediment.biogenic.organic_rich.peat",
@@ -782,7 +737,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Red Sea Evaporitic Precipitate",
-    owner: "marie",
     nature: "rock_powder",
     type: "individual_sample",
     material: "sediment.physico_chemical.precipitates.evaporitic",
@@ -798,7 +752,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Alpine Quartz Crystal",
-    owner: "jean",
     nature: "hand_sample",
     type: "individual_sample",
     material: "mineral",
@@ -812,7 +765,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Rio Tinto Pyrite",
-    owner: "sophie",
     nature: "polished_section",
     type: "individual_sample",
     material: "mineral",
@@ -826,7 +778,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Minas Gerais Beryl",
-    owner: "pierre",
     nature: "hand_sample",
     type: "individual_sample",
     material: "mineral",
@@ -840,7 +791,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Normandy Ammonite",
-    owner: "camille",
     nature: "hand_sample",
     type: "individual_sample",
     material: "fossil",
@@ -855,7 +805,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Bohemian Trilobite",
-    owner: "marie",
     nature: "hand_sample",
     type: "individual_sample",
     material: "fossil",
@@ -870,7 +819,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Dorset Belemnite",
-    owner: "jean",
     nature: "hand_sample",
     type: "individual_sample",
     material: "fossil",
@@ -885,7 +833,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Synthetic Corundum",
-    owner: "sophie",
     nature: "inapplicable",
     type: "inapplicable",
     material: "synthetic_rock_mineral",
@@ -895,7 +842,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Synthetic Forsterite",
-    owner: "pierre",
     nature: "thin_section",
     type: "inapplicable",
     material: "synthetic_rock_mineral",
@@ -905,7 +851,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Sahara Ordinary Chondrite",
-    owner: "camille",
     nature: "hand_sample",
     type: "individual_sample",
     material:
@@ -920,7 +865,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Victoria CM Chondrite",
-    owner: "marie",
     nature: "thin_section",
     type: "individual_sample",
     material:
@@ -935,7 +879,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Canyon Diablo Iron Meteorite",
-    owner: "jean",
     nature: "polished_section",
     type: "individual_sample",
     material:
@@ -950,7 +893,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "NWA Shergottite",
-    owner: "sophie",
     nature: "thin_section",
     type: "individual_sample",
     material:
@@ -966,7 +908,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Antarctic Lunar Meteorite",
-    owner: "pierre",
     nature: "thin_section",
     type: "individual_sample",
     material:
@@ -982,7 +923,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Apollo 15 Mare Basalt",
-    owner: "camille",
     nature: "hand_sample",
     type: "individual_sample",
     material: "extraterrestrial_rock.returned_samples.lunar_sample.rock",
@@ -994,7 +934,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Apollo 17 Lunar Soil",
-    owner: "marie",
     nature: "separated_materials",
     type: "individual_sample",
     material: "extraterrestrial_rock.returned_samples.lunar_sample.soil",
@@ -1005,7 +944,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Hayabusa2 Ryugu Grain",
-    owner: "jean",
     nature: "sample_fragment",
     type: "individual_sample",
     material: "extraterrestrial_rock.returned_samples.asteroid.ryugu",
@@ -1017,7 +955,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "OSIRIS-REx Bennu Grain",
-    owner: "sophie",
     nature: "sample_fragment",
     type: "individual_sample",
     material: "extraterrestrial_rock.returned_samples.asteroid.bennu",
@@ -1028,7 +965,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Hayabusa Itokawa Grain",
-    owner: "pierre",
     nature: "sample_fragment",
     type: "individual_sample",
     material: "extraterrestrial_rock.returned_samples.asteroid.itokawa",
@@ -1039,7 +975,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Legacy Archive Basalt",
-    owner: "camille",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1054,7 +989,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Camera-Tow Ridge Basalt",
-    owner: "marie",
     nature: "rock_chips",
     type: "dredge",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1071,7 +1005,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Sediment Trap Particulate",
-    owner: "jean",
     nature: "separated_materials",
     type: "individual_sample",
     material: "sediment.biogenic.siliceous.diatoms",
@@ -1086,7 +1019,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Rhone Suspended Sediment",
-    owner: "sophie",
     nature: "residue",
     type: "individual_sample",
     material: "sediment.exogenous_detritic.silt.fine_silt",
@@ -1100,7 +1032,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "IODP Basement Gabbro",
-    owner: "pierre",
     nature: "thin_section",
     type: "core.whole_round",
     material: "rock.igneous.plutonic.mafic.gabbro",
@@ -1118,7 +1049,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Biscay Shelf Sand Boxcore",
-    owner: "camille",
     nature: "sem_mount",
     type: "core.piece",
     material: "sediment.exogenous_detritic.sand.fine_sand",
@@ -1133,7 +1063,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Sanbagawa Blueschist",
-    owner: "marie",
     nature: "thin_section",
     type: "individual_sample",
     material: "rock.metamorphic.strongly_metamorphosed.glaucophanite",
@@ -1148,7 +1077,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Otago Schist",
-    owner: "jean",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.metamorphic.strongly_metamorphosed.mica_schist",
@@ -1163,7 +1091,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Kilauea Basalt",
-    owner: "sophie",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1178,7 +1105,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Acasta Gneiss",
-    owner: "pierre",
     nature: "thin_section",
     type: "core.piece",
     material: "rock.metamorphic.strongly_metamorphosed.gneiss",
@@ -1193,7 +1119,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Dabie Shan Eclogite",
-    owner: "camille",
     nature: "thin_section",
     type: "core.piece",
     material: "rock.metamorphic.strongly_metamorphosed.eclogite",
@@ -1208,7 +1133,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Toba Rhyolitic Tuff",
-    owner: "marie",
     nature: "rock_chips",
     type: "individual_sample",
     material: "rock.igneous.volcanic.felsic.rhyolite",
@@ -1223,7 +1147,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Krafla Basalt",
-    owner: "jean",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1238,7 +1161,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Siberian Traps Basalt",
-    owner: "sophie",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1253,7 +1175,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Puy de Dôme Trachyte",
-    owner: "pierre",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.volcanic.intermediate.trachyte",
@@ -1269,7 +1190,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Puy de Côme Basalt",
-    owner: "camille",
     nature: "rock_chips",
     type: "individual_sample",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1285,7 +1205,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Puy Pariou Basalt",
-    owner: "marie",
     nature: "thin_section",
     type: "individual_sample",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1301,7 +1220,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Puy de la Vache Scoria",
-    owner: "jean",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1317,7 +1235,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Puy Chopine Domite",
-    owner: "sophie",
     nature: "thin_section",
     type: "individual_sample",
     material: "rock.igneous.volcanic.intermediate.trachyte",
@@ -1333,7 +1250,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Afar Rift Basalt",
-    owner: "pierre",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1348,7 +1264,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Isua Amphibolite",
-    owner: "camille",
     nature: "thin_section",
     type: "core.piece",
     material: "rock.metamorphic.strongly_metamorphosed.amphibolite",
@@ -1363,7 +1278,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Himalayan Gneiss",
-    owner: "marie",
     nature: "thin_section",
     type: "individual_sample",
     material: "rock.metamorphic.strongly_metamorphosed.gneiss",
@@ -1378,7 +1292,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Patagonian Plateau Basalt",
-    owner: "jean",
     nature: "rock_chips",
     type: "individual_sample",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1393,7 +1306,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Popocatépetl Andesite",
-    owner: "sophie",
     nature: "thin_section",
     type: "individual_sample",
     material: "rock.igneous.volcanic.intermediate.andesite",
@@ -1408,7 +1320,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Jeju Island Basalt",
-    owner: "pierre",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.volcanic.mafic.basalt",
@@ -1423,7 +1334,6 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Papuan Ophiolite Peridotite",
-    owner: "camille",
     nature: "hand_sample",
     type: "individual_sample",
     material: "rock.igneous.plutonic.ultramafic.peridotite",
@@ -1441,33 +1351,28 @@ const PUBLISHED: DemoRow[] = [
 const DRAFTS: DemoRow[] = [
   {
     name: "Unclassified field sample 001",
-    owner: "marie",
     nature: "hand_sample",
   },
   {
     name: "Volcano flank sample (classification pending)",
-    owner: "jean",
     nature: "rock_chips",
     material: "rock.igneous.volcanic",
     texture: "aphanitic",
   },
   {
     name: "Metamorphic outcrop (facies TBD)",
-    owner: "sophie",
     nature: "thin_section",
     material: "rock.metamorphic",
     metamorphicFacies: "greenschist",
   },
   {
     name: "Sediment core top (unlogged)",
-    owner: "pierre",
     nature: "sample_fragment",
     material: "sediment",
     type: "core",
   },
   {
     name: "Quarry block awaiting section",
-    owner: "camille",
     nature: "hand_sample",
     material: "rock.igneous.plutonic",
     texture: "phaneritic",
@@ -1475,136 +1380,114 @@ const DRAFTS: DemoRow[] = [
   },
   {
     name: "Regional survey point",
-    owner: "marie",
     nature: "multiple_sample",
     location: { region: { kind: "continent", country: "FR" } },
   },
   {
     name: "Cave locality note",
-    owner: "theo",
     nature: "hand_sample",
     location: { localityName: "Vercors karst network" },
   },
   {
     name: "Point-only draft",
-    owner: "theo",
     nature: "rock_powder",
     location: { position: point(3.0, 45.0) },
   },
   {
     name: "Partial elevation record",
-    owner: "pierre",
     nature: "hand_sample",
     location: { position: point(2.0, 46.0, { min: -100 }) },
   },
   {
     name: "Unclassified mineral",
-    owner: "theo",
     nature: "hand_sample",
     material: "mineral",
   },
   {
     name: "Coring campaign (unclassified)",
-    owner: "marie",
     nature: "separated_materials",
     collectionMethod: "coring",
   },
-  { name: "Legacy residue", owner: "jean", nature: "residue" },
+  { name: "Legacy residue", nature: "residue" },
   {
     name: "Rock of unknown type",
-    owner: "sophie",
     nature: "hand_sample",
     material: "rock",
   },
   {
     name: "Schist draft (no facies yet)",
-    owner: "pierre",
     nature: "thin_section",
     material: "rock.metamorphic.strongly_metamorphosed.schist",
   },
   {
     name: "Ash deposit draft",
-    owner: "camille",
     nature: "rock_powder",
     material: "sediment.volcano_detritic.ash",
   },
   {
     name: "Fossil pending study",
-    owner: "marie",
     nature: "hand_sample",
     material: "fossil",
   },
   {
     name: "Extraterrestrial sample (unclassified)",
-    owner: "jean",
     nature: "hand_sample",
     material: "extraterrestrial_rock",
   },
   {
     name: "Area-location draft",
-    owner: "sophie",
     nature: "hand_sample",
     location: { position: area(-1.0, 1.0, 44.0, 46.0) },
   },
   {
     name: "Locality-description draft",
-    owner: "pierre",
     nature: "hand_sample",
     location: { localityDescription: "Near the old mine entrance" },
   },
   {
     name: "Clastic sedimentary draft",
-    owner: "camille",
     nature: "rock_chips",
     material: "rock.sedimentary.clastic_sedimentary_rock",
   },
   {
     name: "Collection-date-only draft",
-    owner: "marie",
     nature: "hand_sample",
     description: on("2024-03-03"),
   },
   {
     name: "Felsic pluton draft",
-    owner: "jean",
     nature: "hand_sample",
     material: "rock.igneous.plutonic.felsic",
     collectionMethod: "manual",
   },
   {
     name: "Hydrothermal vent draft",
-    owner: "sophie",
     nature: "hand_sample",
     material: "rock.hydrothermal",
   },
   {
     name: "Dredge haul draft",
-    owner: "pierre",
     nature: "rock_chips",
     type: "dredge",
     material: "rock.igneous.volcanic.mafic",
   },
   {
     name: "Synthetic phase draft",
-    owner: "camille",
     nature: "hand_sample",
     material: "synthetic_rock_mineral",
   },
   {
     name: "Sample series draft",
-    owner: "marie",
     nature: "multiple_sample",
     type: "serie_of_sample",
   },
   {
     name: "Meteorite draft (chondrite?)",
-    owner: "jean",
     nature: "sample_fragment",
     material: "extraterrestrial_rock.meteorites.chondrites",
   },
   {
     name: "Navigated point draft",
-    owner: "sophie",
     nature: "hand_sample",
     location: {
       position: point(-20.0, 50.0),
@@ -1614,13 +1497,11 @@ const DRAFTS: DemoRow[] = [
   },
   {
     name: "Inapplicable-nature draft",
-    owner: "pierre",
     nature: "inapplicable",
     material: "mineral",
   },
   {
     name: "Draft awaiting everything",
-    owner: "camille",
     nature: "thick_section",
   },
 ];
@@ -1628,7 +1509,7 @@ const DRAFTS: DemoRow[] = [
 const demoId = (index: number): string =>
   `019f5b01-0000-7000-8000-${index.toString(16).padStart(12, "0")}`;
 
-const RECENT_CONTEXT: SeedSample["scientificContext"] = {
+const RECENT_CONTEXT: SampleRow["scientificContext"] = {
   provenanceStatus: "recent_collection",
   funderOrganization: "02feahw73",
   researchProgramName: "Solid Earth Demo Survey",
@@ -1637,13 +1518,13 @@ const RECENT_CONTEXT: SeedSample["scientificContext"] = {
   collectorName: "Claire Martin",
 };
 
-const HISTORICAL_CONTEXT: SeedSample["scientificContext"] = {
+const HISTORICAL_CONTEXT: SampleRow["scientificContext"] = {
   provenanceStatus: "historical_specimen",
   collectionCurator: "Paul Bernard",
   collectionOrigin: "scientific_expedition",
 };
 
-export const DEMO_SAMPLES: SeedSample[] = [...PUBLISHED, ...DRAFTS].map(
+export const DEMO_SAMPLES: SampleRow[] = [...PUBLISHED, ...DRAFTS].map(
   (row, index) => {
     const id = demoId(index);
     const published = index < PUBLISHED.length;

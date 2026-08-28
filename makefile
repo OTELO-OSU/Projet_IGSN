@@ -66,8 +66,8 @@ db-migrate:								## Run migrations on the local dev Postgres (dev stack must b
 db-seed:									## Seed the local dev Postgres with sample data (dev stack must be up, migrations applied)
 	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api seed
 
-db-seed-demo:								## Reset the dev Postgres to the 100-sample demo dataset (dev stack must be up, migrations applied)
-	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api seed:demo
+db-seed-demo:								## Reset the dev Postgres to the demo dataset and its mock researchers (dev stack must be up, migrations applied)
+	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api seed:demo --with-users
 
 mail-digest:								## Mail the pending-accounts digest now instead of waiting for 7:00; read it on http://localhost:1080 (dev stack must be up)
 	@docker compose -f docker-compose.dev.yml exec -T api pnpm -F @projet-igsn/api digest:send
@@ -79,6 +79,8 @@ db-reset:								## Fully reset the dev Postgres database, then re-run migration
 	@docker compose -f docker-compose.dev.yml exec -T postgres \
 		psql -U igsn -d igsn -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 	@docker compose -f docker-compose.dev.yml run --rm api pnpm -F @projet-igsn/api migrate
+
+db-reset-demo: db-reset db-seed-demo							## Reset the dev Postgres and reseed it with the demo dataset (dev stack must be up)
 
 DUMP ?= bdd-igsn.sql
 IMPORT_LOG ?= import-legacy.log
