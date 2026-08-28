@@ -84,8 +84,12 @@ export const validateRequestDeletionBody = validator("json", (value, c) => {
   return parsed.data;
 });
 
-export const publishStatusSchema =
-  setSampleStatusBodySchema.shape.status.default("published");
+/** Parsed by hand from `?status=` so the hc client keeps its bodiless, query-less `publish.$post` signature. */
+export const publishStatusSchema = setSampleStatusBodySchema.shape.status
+  .exclude(["tombstone"])
+  .default("published");
+
+export type PublishStatus = z.infer<typeof publishStatusSchema>;
 
 export const validateStatusBody = validator("json", (value, c) => {
   const parsed = setSampleStatusBodySchema.safeParse(value);

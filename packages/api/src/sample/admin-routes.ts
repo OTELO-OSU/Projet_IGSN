@@ -131,6 +131,7 @@ export function createSampleAdminRoutes(
       const body: AdminSampleResponse = {
         data: sample,
         role: c.get("role")!,
+        managed: c.get("managed"),
         manualGroupOptions: isSampleOwner(c.get("role"))
           ? await manualGroups.listForSampleOwner(sample.id)
           : [],
@@ -447,9 +448,16 @@ export function createSampleAdminRoutes(
         if (!hasPermanentIgsn(sample)) {
           return c.json({ error: "Sample is not published" }, 409);
         }
+        const status = c.req.valid("json").status;
+        if (
+          (status === "tombstone" || sample.status === "tombstone") &&
+          !c.get("managed")
+        ) {
+          return c.json({ error: "Forbidden" }, 403);
+        }
         const updated = await repository.setStatus(
           c.req.valid("param").id,
-          c.req.valid("json").status,
+          status,
         );
         return c.json({ data: updated });
       },

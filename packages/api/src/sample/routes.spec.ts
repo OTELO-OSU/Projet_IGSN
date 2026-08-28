@@ -504,6 +504,19 @@ describe("public sample routes", () => {
     },
   );
 
+  pgTest("should answer 404 for a tombstoned sample", async ({ db }) => {
+    // Arrange
+    const client = await acceptedClient(db);
+    const published = await createPublishedSample(client, "Erased rhyolite");
+    await setSampleStatus(db, published.id, "tombstone");
+    // Act
+    const res = await client.samples[":igsn"].$get({
+      param: { igsn: published.igsn! },
+    });
+    // Assert
+    expect(res.status).toBe(404);
+  });
+
   pgTest("should not expose an unpublished sample", async ({ db }) => {
     // Arrange
     const client = await acceptedClient(db);

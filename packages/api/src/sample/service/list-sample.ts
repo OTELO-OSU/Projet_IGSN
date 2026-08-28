@@ -5,6 +5,7 @@ import type {
 import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
 import type { ModerationScope } from "@projet-igsn/domain/user/moderation-scope";
 
+import { sampleStatusSchema } from "@projet-igsn/domain/sample/sample";
 import { splitBbox } from "@projet-igsn/domain/sample/split-bbox";
 import { type Expression, sql, type SqlBool } from "kysely";
 
@@ -63,6 +64,14 @@ function isPublished(): Expression<SqlBool> {
   return sql<SqlBool>`status = 'published'`;
 }
 
+function isNotTombstone(): Expression<SqlBool> {
+  return sql<SqlBool>`status <> 'tombstone'`;
+}
+
+const lifecycleOrder = sql`array_position(${sql.val(
+  sampleStatusSchema.options,
+)}::text[], status)`;
+
 async function listSamplesWhere(
   db: Transactional<DB>,
   params: ListSamplesQuery,
@@ -93,7 +102,7 @@ async function listSamplesWhere(
       .select(sampleAttachmentsQuery)
       .select(sampleManualGroupsQuery)
       .$if(withOwner, (qb) => qb.select(sampleOwnerQuery))
-      .$if(sort === "status", (qb) => qb.orderBy("status", order))
+      .$if(sort === "status", (qb) => qb.orderBy(lifecycleOrder, order))
       .$call((qb) => (relevance ? qb.orderBy(relevance, "desc") : qb))
       .orderBy("updated_at", "desc")
       .orderBy("id", "desc")
@@ -156,7 +165,10 @@ export function listSamplesAssignedTo(
   params: ListSamplesQuery,
   userId: string,
 ): Promise<AdminListSamplesResult> {
-  return listWithOwners(db, params, [assignedTo(userId, params.ownership)]);
+  return listWithOwners(db, params, [
+    assignedTo(userId, params.ownership),
+    isNotTombstone(),
+  ]);
 }
 
 export function listModeratedSamples(

@@ -20,6 +20,7 @@ export type SampleAccessEnv = {
     role: UserSampleRole | null;
     shareRole: UserSampleRole | null;
     moderating: boolean;
+    managed: boolean;
   };
 };
 
@@ -44,13 +45,20 @@ export function requireSampleAccess(
     }
     const user = c.get("user");
     const found = await repository.get(id.data, user.id);
-    let moderating = false;
-    if (found && !isSampleOwner(found.role)) {
-      moderating =
-        user.superAdmin ||
-        (await inModerationReach(repository, users, user, found.sample.id));
-      if (!moderating && found.role === null) {
-        return c.json({ error: "Forbidden" }, 403);
+    const managed =
+      found !== null &&
+      (user.superAdmin ||
+        (await inModerationReach(repository, users, user, found.sample.id)));
+    const moderating = managed && !isSampleOwner(found?.role ?? null);
+    if (found && !managed && found.role === null) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+    if (found?.sample.status === "tombstone") {
+      if (!managed) {
+        return c.json({ error: "Sample not found" }, 404);
+      }
+      if (c.req.method !== "GET" && !c.req.path.endsWith("/status")) {
+        return c.json({ error: "Sample is tombstoned" }, 409);
       }
     }
     if (
@@ -66,6 +74,7 @@ export function requireSampleAccess(
       found && user.superAdmin ? "owner" : (found?.role ?? null);
     c.set("sample", found?.sample);
     c.set("moderating", moderating);
+    c.set("managed", managed);
     c.set("shareRole", shareRole);
     c.set(
       "role",

@@ -14,7 +14,7 @@ export async function getPublicSampleByIgsn(
   const row = await selectSample(db)
     .select(sampleOwnerQuery)
     .where("igsn", "=", igsn)
-    .where("status", "<>", "draft")
+    .where("status", "in", ["published", "withdrawn"])
     .executeTakeFirst();
   if (!row) return null;
   return {
