@@ -6,6 +6,7 @@ import type { DB } from "../db.ts";
 import { withTransaction } from "../transaction.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
+import { deleteSample } from "./service/delete-sample.ts";
 import { getEditLock } from "./service/get-edit-lock.ts";
 import { getPublicSampleByIgsn } from "./service/get-public-sample-by-igsn.ts";
 import { getSample } from "./service/get-sample.ts";
@@ -47,6 +48,7 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
       withTransaction(db, (trx) => publishSample(trx, id, status)),
     setStatus: (id, status) =>
       withTransaction(db, (trx) => setSampleStatus(trx, id, status)),
+    remove: (id) => withTransaction(db, (trx) => deleteSample(trx, id)),
     getEditLock: (id) => withTransaction(db, (trx) => getEditLock(trx, id)),
     acquireEditLock: (id, userId) =>
       withTransaction(db, (trx) => acquireEditLock(trx, id, userId)),

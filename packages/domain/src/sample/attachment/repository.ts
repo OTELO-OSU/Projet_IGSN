@@ -18,6 +18,7 @@ export type SampleAttachmentRepository = {
     attachments: UpdateSampleAttachment[],
   ): Promise<void>;
   remove(sampleId: string, attachmentId: string): Promise<boolean>;
+  removeAll(sampleId: string): Promise<void>;
   getContent(
     sampleId: string,
     attachmentId: string,

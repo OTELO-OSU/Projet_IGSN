@@ -168,4 +168,43 @@ test.describe("samples", () => {
     await create.expectNameRequired();
     await create.expectVisible();
   });
+
+  test("a researcher deletes their own draft, but never a published sample", async ({
+    page,
+    samples,
+  }) => {
+    const draft = samples.find(
+      (sample) => sample.status === "draft" && sample.owner === "jean",
+    );
+    const published = samples.find(
+      (sample) => sample.status === "published" && sample.owner === "jean",
+    );
+    if (!draft || !published) {
+      throw new Error("seed must give jean a draft and a published sample");
+    }
+
+    await signInAsResearcher(page, RESEARCHERS.jean);
+    const list = sampleListPage(page);
+    const edit = sampleEditPage(page);
+
+    await list.openSample(draft.name);
+    await edit.expectVisible();
+    await edit.expectDeleteRefused();
+    await edit.goToList();
+    await list.expectSampleRow(draft.name);
+
+    await list.openSample(draft.name);
+    await edit.expectVisible();
+    await edit.deleteDraft();
+
+    await list.expectVisible();
+    await list.expectNoSampleRow(draft.name);
+    await edit.goto(draft.id);
+    await edit.expectNotFound();
+
+    await edit.goToList();
+    await list.openSample(published.name);
+    await edit.expectVisible();
+    await edit.expectNoDeleteAction();
+  });
 });

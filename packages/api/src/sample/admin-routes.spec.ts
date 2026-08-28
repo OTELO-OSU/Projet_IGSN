@@ -9,6 +9,7 @@ import {
   sampleResponseSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
 import { testClient } from "hono/testing";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect } from "vitest";
 
@@ -17,14 +18,22 @@ import type { SendMail } from "../mail/send-mail.ts";
 import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { insertUser } from "../tests/insert-user.ts";
+import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
-import { publishableSample } from "../tests/sample-fixtures.ts";
+import { readSample } from "../tests/read-sample.ts";
+import {
+  attachGroup,
+  draft,
+  publishableSample,
+} from "../tests/sample-fixtures.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
+
+const attachmentsDir = join(import.meta.dirname, "..", "..", "attachments");
 
 const authHeader = { Authorization: "Bearer test-token" };
 const authenticatedCallerEmail = "test-token@example.com";
@@ -463,12 +472,6 @@ describe("admin sample routes", () => {
       "should leave the attachments untouched when it rejects a stale save",
       async ({ db }) => {
         // Arrange
-        const attachmentsDir = join(
-          import.meta.dirname,
-          "..",
-          "..",
-          "attachments",
-        );
         const app = createApp(db, { attachmentsDir }).app;
         const sample = await createDraft(app);
         const form = new FormData();
@@ -1117,12 +1120,6 @@ describe("admin sample routes", () => {
       "reconciles attachments to the payload set on a published edit",
       async ({ db }) => {
         // Arrange
-        const attachmentsDir = join(
-          import.meta.dirname,
-          "..",
-          "..",
-          "attachments",
-        );
         const client = testClient(createApp(db, { attachmentsDir }).app);
         const data = await createAndPublish(db, client);
         const csv = new File(
@@ -3163,6 +3160,213 @@ describe("admin sample routes", () => {
         );
 
         expect(res.status).toBe(401);
+      },
+    );
+  });
+
+  describe("delete a sample", () => {
+    const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a8060";
+    const IN_REACH = "UMR7358";
+    const GROUP = {
+      id: "01890a5d-ac96-774b-bcce-b302099a9001",
+      name: "Massif Central 2026",
+    };
+
+    async function arrangeDeletableSample(
+      db: Parameters<typeof createApp>[0],
+      {
+        role = "owner",
+        status = "draft",
+      }: {
+        role?: "owner" | "contributor" | "moderator";
+        status?: SampleStatus;
+      } = {},
+    ) {
+      const caller = await insertUser(db, authenticatedCallerEmail);
+      const owner =
+        role === "owner"
+          ? caller
+          : await insertUser(db, "owner@univ-lorraine.fr");
+      const sample = await insertSample(db, draft, {
+        institutionalOrganization: null,
+        institutionalOsu: null,
+        institutionalLaboratory: role === "moderator" ? IN_REACH : null,
+      });
+      await insertSampleOwner(db, sample.id, owner.id);
+      if (role === "contributor") {
+        await db
+          .insertInto("user_sample")
+          .values({ sample_id: sample.id, user_id: caller.id, role })
+          .execute();
+      }
+      if (role === "moderator") {
+        await moderateInstitution(db, caller.id, {
+          kind: "laboratory",
+          code: IN_REACH,
+        });
+      }
+      if (status !== "draft") {
+        await publishSample(db, sample.id, status);
+      }
+      return { caller, sample };
+    }
+
+    const deleteSample = (
+      app: ReturnType<typeof createApp>["app"],
+      id: string,
+    ) =>
+      app.request(`/admin/samples/${id}`, {
+        method: "DELETE",
+        headers: authHeader,
+      });
+
+    pgTest("should let the owner delete a draft sample", async ({ db }) => {
+      const { sample } = await arrangeDeletableSample(db);
+
+      const res = await deleteSample(createApp(db).app, sample.id);
+
+      expect(res.status).toBe(204);
+      expect(await readSample(db, sample.id)).toBeNull();
+    });
+
+    pgTest(
+      "should leave no attachment, link, collaborator, group or lock row behind, nor its stored files",
+      async ({ db }) => {
+        const app = createApp(db, { attachmentsDir }).app;
+        const { caller, sample } = await arrangeDeletableSample(db);
+        const form = new FormData();
+        form.set("file", new File(["1,2\n"], "m.csv", { type: "text/csv" }));
+        await app.request(`/admin/samples/${sample.id}/attachments`, {
+          method: "POST",
+          headers: authHeader,
+          body: form,
+        });
+        await db
+          .insertInto("sample_link")
+          .values({
+            id: crypto.randomUUID(),
+            sample_id: sample.id,
+            url: "https://doi.org/10.1234/basalte",
+            description: null,
+          })
+          .execute();
+        await db.insertInto("manual_group").values(GROUP).execute();
+        await attachGroup(db, sample.id, GROUP.id);
+        await acquireEditLock(db, sample.id, caller.id);
+
+        const res = await deleteSample(app, sample.id);
+
+        expect(res.status).toBe(204);
+        expect({
+          attachments: await db
+            .selectFrom("sample_attachment")
+            .select("id")
+            .where("sample_id", "=", sample.id)
+            .execute(),
+          links: await db
+            .selectFrom("sample_link")
+            .select("id")
+            .where("sample_id", "=", sample.id)
+            .execute(),
+          collaborators: await db
+            .selectFrom("user_sample")
+            .select("user_id")
+            .where("sample_id", "=", sample.id)
+            .execute(),
+          groups: await db
+            .selectFrom("sample_manual_group")
+            .select("group_id")
+            .where("sample_id", "=", sample.id)
+            .execute(),
+          locks: await db
+            .selectFrom("sample_edit_lock")
+            .select("user_id")
+            .where("sample_id", "=", sample.id)
+            .execute(),
+        }).toEqual({
+          attachments: [],
+          links: [],
+          collaborators: [],
+          groups: [],
+          locks: [],
+        });
+        expect(existsSync(join(attachmentsDir, sample.id))).toBe(false);
+      },
+    );
+
+    pgTest.for([
+      {
+        case: "a contributor deletes a draft sample",
+        role: "contributor" as const,
+        status: "draft" as const,
+      },
+      {
+        case: "the owner deletes a published sample",
+        role: "owner" as const,
+        status: "published" as const,
+      },
+      {
+        case: "the owner deletes a withdrawn sample",
+        role: "owner" as const,
+        status: "withdrawn" as const,
+      },
+    ])("should answer 403 when $case", async ({ role, status }, { db }) => {
+      const { sample } = await arrangeDeletableSample(db, { role, status });
+
+      const res = await deleteSample(createApp(db).app, sample.id);
+
+      expect(res.status).toBe(403);
+      expect(await readSample(db, sample.id)).not.toBeNull();
+    });
+
+    pgTest(
+      "should let a moderator in reach delete a draft sample they do not collaborate on",
+      async ({ db }) => {
+        const { sample } = await arrangeDeletableSample(db, {
+          role: "moderator",
+        });
+
+        const res = await deleteSample(createApp(db).app, sample.id);
+
+        expect(res.status).toBe(204);
+        expect(await readSample(db, sample.id)).toBeNull();
+      },
+    );
+
+    pgTest("should answer 404 for an unknown sample", async ({ db }) => {
+      await insertUser(db, authenticatedCallerEmail);
+
+      const res = await deleteSample(createApp(db).app, UNKNOWN_ID);
+
+      expect(res.status).toBe(404);
+    });
+
+    pgTest(
+      "should answer 401 when the session is no longer active",
+      async ({ db }) => {
+        const { sample } = await arrangeDeletableSample(db);
+        vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
+          c.json({ error: "Unauthorized" }, 401),
+        );
+
+        const res = await deleteSample(createApp(db).app, sample.id);
+
+        expect(res.status).toBe(401);
+        expect(await readSample(db, sample.id)).not.toBeNull();
+      },
+    );
+
+    pgTest(
+      "should answer 409 when another collaborator holds the edit lock",
+      async ({ db }) => {
+        const { sample } = await arrangeDeletableSample(db);
+        const pierre = await insertUser(db, "pierre@univ-lorraine.fr");
+        await acquireEditLock(db, sample.id, pierre.id);
+
+        const res = await deleteSample(createApp(db).app, sample.id);
+
+        expect(res.status).toBe(409);
+        expect(await readSample(db, sample.id)).not.toBeNull();
       },
     );
   });

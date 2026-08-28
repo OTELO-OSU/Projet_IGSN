@@ -26,6 +26,20 @@ export function sampleEditPage(page: Page) {
     await confirm(dialog);
   };
 
+  const deleteButton = page.getByRole("button", {
+    name: "Delete this draft",
+    exact: true,
+  });
+  const deleteDialog = page.getByRole("dialog", { name: "Delete this draft?" });
+  const confirmButton = deleteDialog.getByRole("button", {
+    name: "Delete",
+    exact: true,
+  });
+  const openDialogAndType = async (phrase: string) => {
+    await deleteButton.click();
+    await deleteDialog.getByLabel("Type DELETE to confirm").fill(phrase);
+  };
+
   return {
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
@@ -41,6 +55,20 @@ export function sampleEditPage(page: Page) {
       await page.getByLabel("Specific Name").fill(value);
     },
     goToList: () => page.getByRole("link", { name: "IGSN Admin" }).click(),
+
+    expectNotFound: () =>
+      expect(page.getByText("Sample not found")).toBeVisible(),
+    deleteDraft: async () => {
+      await openDialogAndType("DELETE");
+      await confirmButton.click();
+    },
+    expectDeleteRefused: async () => {
+      await openDialogAndType("delete");
+      await expect(confirmButton).toBeDisabled();
+      await deleteDialog.getByRole("button", { name: "Cancel" }).click();
+      await expect(deleteDialog).toBeHidden();
+    },
+    expectNoDeleteAction: () => expect(deleteButton).toHaveCount(0),
 
     expectNoManualGroupOffered: () => expectNoManualGroupOffered(page),
     expectManualGroupFrozen: (name: string) =>

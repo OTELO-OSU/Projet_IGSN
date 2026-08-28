@@ -21,6 +21,7 @@ import {
   samplePublishBlockers,
   toPublishableFields,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canGrantRole } from "@projet-igsn/domain/user-sample/can-grant-role";
 import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-manage-collaborators";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
@@ -336,6 +337,25 @@ export function createSampleAdminRoutes(
           }
         }
         return c.json({ data: sample });
+      },
+    )
+    .delete(
+      "/:id",
+      requireActiveSession,
+      validateIdParam,
+      unlockedSample,
+      async (c) => {
+        const sample = c.get("sample");
+        if (!sample) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (!canDeleteSample(c.get("role"), sample)) {
+          return c.json({ error: "Forbidden" }, 403);
+        }
+        const id = c.req.valid("param").id;
+        await repository.remove(id);
+        await attachmentsRepository.removeAll(id);
+        return c.body(null, 204);
       },
     )
     .post("/:id/publish", validateIdParam, unlockedSample, async (c) => {
