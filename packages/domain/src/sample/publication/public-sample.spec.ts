@@ -1,4 +1,4 @@
-import type { Sample } from "../sample.ts";
+import type { Sample, SampleStatus } from "../sample.ts";
 
 import { toPublicSample } from "./public-sample.ts";
 import { toWithdrawnSample } from "./withdrawn-sample.ts";
@@ -18,4 +18,11 @@ describe("toPublicSample", () => {
     const withdrawn = { ...sample, status: "withdrawn" } as Sample;
     expect(toPublicSample(withdrawn)).toEqual(toWithdrawnSample(withdrawn));
   });
+
+  it.each(["draft", "tombstone"] as SampleStatus[])(
+    "should refuse a public view of a %s sample",
+    (status) => {
+      expect(() => toPublicSample({ ...sample, status })).toThrow();
+    },
+  );
 });

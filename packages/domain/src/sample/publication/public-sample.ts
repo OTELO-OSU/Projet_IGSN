@@ -11,5 +11,7 @@ export function toPublicSample(sample: Sample): PublicSample {
       return toWithdrawnSample(sample);
     case "draft":
       throw new Error("A draft sample has no public view");
+    case "tombstone":
+      throw new Error("A tombstoned sample has no public view");
   }
 }

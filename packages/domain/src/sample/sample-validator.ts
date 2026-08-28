@@ -126,7 +126,7 @@ export type PublicSampleResponse = z.infer<typeof publicSampleResponseSchema>;
 export type PublicSample = PublicSampleResponse["data"];
 
 export const setSampleStatusBodySchema = z.strictObject({
-  status: z.enum(["published", "withdrawn"]),
+  status: z.enum(["published", "withdrawn", "tombstone"]),
 });
 
 export type SetSampleStatusBody = z.infer<typeof setSampleStatusBodySchema>;
@@ -152,6 +152,7 @@ export type AdminListSamplesResponse = z.infer<
 export const adminSampleResponseSchema = z.object({
   data: sampleSchema,
   role: userSampleRoleSchema,
+  managed: z.boolean().default(false),
   manualGroupOptions: z.array(manualGroupSchema).default([]),
 });
 
