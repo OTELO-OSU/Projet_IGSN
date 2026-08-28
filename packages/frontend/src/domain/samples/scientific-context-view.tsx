@@ -27,16 +27,27 @@ function OrgLink({ ror }: { ror: string }) {
   );
 }
 
-function orgLinks(rors: string[] | null | undefined) {
+function OrgLinksRow({
+  label,
+  rors,
+}: {
+  label: string;
+  rors: string[] | null | undefined;
+}) {
   if (!rors?.length) return null;
   return (
-    <ul className="flex flex-col gap-1">
-      {rors.map((ror) => (
-        <li key={ror}>
-          <OrgLink ror={ror} />
-        </li>
-      ))}
-    </ul>
+    <FieldRow
+      label={label}
+      value={
+        <ul className="flex flex-col gap-1">
+          {rors.map((ror) => (
+            <li key={ror}>
+              <OrgLink ror={ror} />
+            </li>
+          ))}
+        </ul>
+      }
+    />
   );
 }
 
@@ -49,9 +60,9 @@ function OrcidLink({ orcid }: { orcid: string }) {
 function RecentCollectionRows({ context }: { context: RecentCollection }) {
   return (
     <>
-      <FieldRow
+      <OrgLinksRow
         label={m.sample_field_funder_organizations()}
-        value={orgLinks(context.funderOrganizations)}
+        rors={context.funderOrganizations}
       />
       <FieldRow
         label={m.sample_field_research_program_name()}
@@ -69,9 +80,9 @@ function RecentCollectionRows({ context }: { context: RecentCollection }) {
           )
         }
       />
-      <FieldRow
+      <OrgLinksRow
         label={m.sample_field_research_structure()}
-        value={orgLinks(context.researchStructure)}
+        rors={context.researchStructure}
       />
       <FieldRow
         label={m.sample_field_collector_name()}
