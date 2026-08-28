@@ -2,6 +2,7 @@ import type {
   CreateSample,
   SampleStatus,
 } from "@projet-igsn/domain/sample/sample";
+import type { ComponentProps } from "react";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import { vi } from "vitest";
@@ -2180,17 +2181,24 @@ const publishedRecentFixture: CreateSample = {
 };
 
 describe("SampleForm post-publication field lock", () => {
-  it("disables the identity fields on a published sample", async () => {
-    const screen = await render(
+  function renderPublished(
+    currentUser?: ComponentProps<typeof SampleForm>["currentUser"],
+  ) {
+    return render(
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
           status="published"
+          currentUser={currentUser}
           defaultValues={publishedFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
       </TooltipProvider>,
     );
+  }
+
+  it("disables the identity fields on a published sample", async () => {
+    const screen = await renderPublished();
 
     await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
     await expect
@@ -2202,17 +2210,10 @@ describe("SampleForm post-publication field lock", () => {
   });
 
   it("keeps the identity fields editable for a super admin on a published sample", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          status="published"
-          currentUser={{ status: "accepted", superAdmin: true }}
-          defaultValues={publishedFixture}
-          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
-        />
-      </TooltipProvider>,
-    );
+    const screen = await renderPublished({
+      status: "accepted",
+      superAdmin: true,
+    });
 
     await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
     await expect
@@ -2224,16 +2225,7 @@ describe("SampleForm post-publication field lock", () => {
   });
 
   it("keeps editable fields interactive on a published sample", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          status="published"
-          defaultValues={publishedFixture}
-          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
-        />
-      </TooltipProvider>,
-    );
+    const screen = await renderPublished();
 
     await expect
       .element(screen.getByRole("combobox", { name: "Collection Method" }))

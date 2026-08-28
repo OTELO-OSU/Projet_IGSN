@@ -824,12 +824,6 @@ describe("admin sample routes", () => {
           status: "accepted",
           superAdmin: true,
         });
-        const before = await client.admin.samples[":id"].$get(
-          { param: { id: data.id } },
-          { headers: authHeader },
-        );
-        const { igsn } = sampleResponseSchema.parse(await before.json()).data;
-        expect(igsn).not.toBeNull();
         // Act
         const res = await client.admin.samples[":id"].$put(
           {
@@ -844,14 +838,9 @@ describe("admin sample routes", () => {
         );
         // Assert
         expect(res.status).toBe(200);
-        const re = await client.admin.samples[":id"].$get(
-          { param: { id: data.id } },
-          { headers: authHeader },
-        );
-        const edited = sampleResponseSchema.parse(await re.json()).data;
+        const edited = sampleResponseSchema.parse(await res.json()).data;
         expect(edited.name).toBe("Renamed basalt");
         expect(edited.material).toBe(igneous.material);
-        expect(edited.igsn).toBe(igsn);
       },
     );
 

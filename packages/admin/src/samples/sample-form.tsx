@@ -151,8 +151,10 @@ export function SampleForm({
     wasPublished ? publishedSampleSchema : sampleDraftSchema,
   );
   const isReadOnly = readOnlyReason !== undefined;
+  const bypassesLocks =
+    currentUser !== undefined && canEditFrozenSampleFields(currentUser);
   const isFrozenByPublication =
-    wasPublished && !(currentUser && canEditFrozenSampleFields(currentUser))
+    wasPublished && !bypassesLocks
       ? publishedSampleFrozenField(
           defaultValues?.scientificContext?.provenanceStatus ?? null,
           defaultValues?.material ?? null,
