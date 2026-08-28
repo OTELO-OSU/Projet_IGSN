@@ -15,10 +15,12 @@ test.describe("samples", () => {
     const list = sampleListPage(page);
     await list.expectVisible();
     await list.expectColumns();
-    for (const sample of samples.filter((s) => s.owner === "jean")) {
+    const mine = (s: (typeof samples)[number]) =>
+      s.owner === "jean" && s.status !== "tombstone";
+    for (const sample of samples.filter(mine)) {
       await list.expectSampleRowWithNature(sample.name, sample.nature);
     }
-    for (const sample of samples.filter((s) => s.owner !== "jean")) {
+    for (const sample of samples.filter((s) => !mine(s))) {
       await list.expectNoSampleRow(sample.name);
     }
   });

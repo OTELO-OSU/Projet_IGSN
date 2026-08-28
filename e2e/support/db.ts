@@ -6,7 +6,7 @@ export type SeededSample = {
   name: string;
   nature: string;
   igsn: string | null;
-  status: "draft" | "published" | "withdrawn";
+  status: "draft" | "published" | "withdrawn" | "tombstone";
   owner: string;
   collaborators: { researcher: string; role: "editor" | "contributor" }[];
 };
@@ -36,6 +36,13 @@ export function withdrawn(samples: SeededSample[]) {
   const sample = samples.find((s) => s.status === "withdrawn");
   if (!sample?.igsn)
     throw new Error("seed must withdraw a sample with an igsn");
+  return { igsn: sample.igsn, name: sample.name };
+}
+
+export function tombstone(samples: SeededSample[]) {
+  const sample = samples.find((s) => s.status === "tombstone");
+  if (!sample?.igsn)
+    throw new Error("seed must tombstone a sample with an igsn");
   return { igsn: sample.igsn, name: sample.name };
 }
 
