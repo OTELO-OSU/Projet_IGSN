@@ -60,7 +60,7 @@ function fakeApi(failWrites = false) {
         security: null,
         availability: null,
         publicationYear: null,
-        economicInterest: null,
+        resourceType: null,
         economicInterestElements: [],
         economicResourceTypePrecision: null,
         economicDepositName: null,

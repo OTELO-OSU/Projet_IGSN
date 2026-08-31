@@ -3,12 +3,7 @@ import { z } from "zod";
 import { expandPaths } from "../path/expand-paths.ts";
 import { type TreeNode } from "../path/tree-node.ts";
 
-const economicInterestTree = {
-  yes: {
-    optional: true,
-    childLabel: "resource_type",
-    choices: ["mineral_and_ore", "non_metallic", "hydrocarbon", "alternative"],
-  },
+const resourceTypeTree = {
   mineral_and_ore: {
     optional: true,
     childLabel: "ore_deposit_type",
@@ -96,27 +91,30 @@ const economicInterestTree = {
   },
 } satisfies Record<string, TreeNode>;
 
-export type EconomicInterestSegment = keyof typeof economicInterestTree;
+export type ResourceTypeSegment = keyof typeof resourceTypeTree;
 
-export const ECONOMIC_INTEREST_TREE: Record<EconomicInterestSegment, TreeNode> =
-  economicInterestTree;
+export const RESOURCE_TYPE_TREE: Record<ResourceTypeSegment, TreeNode> =
+  resourceTypeTree;
 
-export const ECONOMIC_INTEREST_ROOTS = ["yes", "no", "unknown"] as const;
+export const RESOURCE_TYPE_ROOTS = [
+  "mineral_and_ore",
+  "non_metallic",
+  "hydrocarbon",
+  "alternative",
+] as const;
 
-export const ECONOMIC_INTEREST_PATHS = expandPaths(
-  ECONOMIC_INTEREST_TREE,
-  ECONOMIC_INTEREST_ROOTS,
+export const RESOURCE_TYPE_PATHS = expandPaths(
+  RESOURCE_TYPE_TREE,
+  RESOURCE_TYPE_ROOTS,
 );
 
-export const ECONOMIC_INTEREST_HIERARCHY = {
-  roots: ECONOMIC_INTEREST_ROOTS,
-  nodes: ECONOMIC_INTEREST_TREE,
+export const RESOURCE_TYPE_HIERARCHY = {
+  roots: RESOURCE_TYPE_ROOTS,
+  nodes: RESOURCE_TYPE_TREE,
 };
 
-export type EconomicInterest = string;
+export type ResourceType = string;
 
-export const economicInterestSchema = z
+export const resourceTypeSchema = z
   .string()
-  .refine((path): path is EconomicInterest =>
-    ECONOMIC_INTEREST_PATHS.includes(path),
-  );
+  .refine((path): path is ResourceType => RESOURCE_TYPE_PATHS.includes(path));

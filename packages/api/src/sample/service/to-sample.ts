@@ -178,7 +178,7 @@ export function toSample(
     security: toSecurity(row),
     availability: row.availability,
     publicationYear: row.publication_year,
-    economicInterest: row.economic_interest,
+    resourceType: row.resource_type,
     economicInterestElements: row.economic_interest_elements ?? [],
     economicResourceTypePrecision: row.economic_resource_type_precision,
     economicDepositName: row.economic_deposit_name,

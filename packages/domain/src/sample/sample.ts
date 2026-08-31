@@ -11,7 +11,6 @@ import { availabilitySchema } from "./availability/availability.ts";
 import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
 import { conditionSchema } from "./condition/model.ts";
 import { descriptionSchema } from "./description/model.ts";
-import { economicInterestSchema } from "./economic-interest/vocabulary.ts";
 import { elementSchema } from "./element/vocabulary.ts";
 import { createSampleLinkSchema, sampleLinkSchema } from "./link/model.ts";
 import { locationRequirement } from "./location/location-requirement.ts";
@@ -22,6 +21,7 @@ import {
   metamorphicFaciesSchema,
 } from "./metamorphic-facies/vocabulary.ts";
 import { natureSchema } from "./nature.ts";
+import { resourceTypeSchema } from "./resource-type/vocabulary.ts";
 import { scientificContextSchema } from "./scientific-context/model.ts";
 import { securitySchema } from "./security/model.ts";
 import { textureSchema, texturesFor } from "./texture/vocabulary.ts";
@@ -54,7 +54,7 @@ export const sampleSchema = z.object({
   security: securitySchema.nullable(),
   availability: availabilitySchema.nullable(),
   publicationYear: z.number().int().positive().nullable(),
-  economicInterest: economicInterestSchema.nullable(),
+  resourceType: resourceTypeSchema.nullable(),
   economicInterestElements: z.array(elementSchema).default([]),
   economicResourceTypePrecision: nameSchema.nullable(),
   economicDepositName: nameSchema.nullable(),
@@ -94,7 +94,7 @@ export const createSampleSchema = z
     attachments: z.array(updateSampleAttachmentSchema).optional(),
     security: securitySchema.nullish(),
     availability: availabilitySchema.nullish(),
-    economicInterest: economicInterestSchema.nullish(),
+    resourceType: resourceTypeSchema.nullish(),
     economicInterestElements: z.array(elementSchema).optional(),
     economicResourceTypePrecision: nameSchema.nullish(),
     economicDepositName: nameSchema.nullish(),

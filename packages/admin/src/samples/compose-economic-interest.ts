@@ -2,11 +2,13 @@ import {
   composeHierarchyValue,
   toHierarchyPath,
 } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
-import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
+import { allowsResourceType } from "@projet-igsn/domain/sample/resource-type/allows-resource-type";
+import { allowsResourceTypeElements } from "@projet-igsn/domain/sample/resource-type/allows-resource-type-elements";
+import { hasEconomicInterest } from "@projet-igsn/domain/sample/resource-type/has-economic-interest";
 import { type CreateSample } from "@projet-igsn/domain/sample/sample";
 
 export type EconomicInterestDraft = {
-  economicInterestPath: string[];
+  resourceTypePath: string[];
   economicInterestElements: string[];
   economicResourceTypePrecision: string | null | undefined;
   economicDepositName: string | null | undefined;
@@ -15,7 +17,7 @@ export type EconomicInterestDraft = {
 
 type EconomicInterestValue = Pick<
   CreateSample,
-  | "economicInterest"
+  | "resourceType"
   | "economicInterestElements"
   | "economicResourceTypePrecision"
   | "economicDepositName"
@@ -23,7 +25,7 @@ type EconomicInterestValue = Pick<
 >;
 
 type EconomicInterestComposed = {
-  economicInterest: string | null;
+  resourceType: string | null;
   economicInterestElements: string[];
   economicResourceTypePrecision: string | null;
   economicDepositName: string | null;
@@ -32,29 +34,29 @@ type EconomicInterestComposed = {
 
 export function composeEconomicInterest(
   draft: EconomicInterestDraft,
-): EconomicInterestComposed {
-  const economicInterest = composeHierarchyValue(draft.economicInterestPath);
-  const detail = (value: string | null | undefined): string | null =>
-    isPathAtOrUnder(economicInterest, "yes") ? value?.trim() || null : null;
-  return {
-    economicInterest,
-    economicInterestElements: isPathAtOrUnder(
-      economicInterest,
-      "yes.mineral_and_ore",
-    )
+  material: string | null,
+): EconomicInterestComposed | null {
+  if (!allowsResourceType(material)) return null;
+  const resourceType = composeHierarchyValue(draft.resourceTypePath);
+  const composed = {
+    resourceType,
+    economicInterestElements: allowsResourceTypeElements(resourceType)
       ? draft.economicInterestElements
       : [],
-    economicResourceTypePrecision: detail(draft.economicResourceTypePrecision),
-    economicDepositName: detail(draft.economicDepositName),
-    economicDepositDescription: detail(draft.economicDepositDescription),
+    economicResourceTypePrecision:
+      draft.economicResourceTypePrecision?.trim() || null,
+    economicDepositName: draft.economicDepositName?.trim() || null,
+    economicDepositDescription:
+      draft.economicDepositDescription?.trim() || null,
   };
+  return hasEconomicInterest(composed) ? composed : null;
 }
 
 export function toEconomicInterestDraft(
   value?: EconomicInterestValue,
 ): EconomicInterestDraft {
   return {
-    economicInterestPath: toHierarchyPath(value?.economicInterest ?? null),
+    resourceTypePath: toHierarchyPath(value?.resourceType ?? null),
     economicInterestElements: value?.economicInterestElements ?? [],
     economicResourceTypePrecision: value?.economicResourceTypePrecision,
     economicDepositName: value?.economicDepositName,

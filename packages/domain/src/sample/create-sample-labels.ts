@@ -53,7 +53,7 @@ export type SampleLabels = {
   materialPathLabel: (path: string) => string;
   typeLabel: (path: string) => string;
   collectionMethodLabel: (path: string) => string;
-  economicInterestLabel: (path: string) => string;
+  resourceTypeLabel: (path: string) => string;
   elementLabel: (element: Element) => string;
   textureLabel: (texture: Texture) => string;
   metamorphicFaciesLabel: (facies: MetamorphicFacies) => string;
@@ -77,7 +77,7 @@ const LABEL_KEY = {
   materialPathLabel: ["material", "path"],
   typeLabel: ["type", "path"],
   collectionMethodLabel: ["collection_method", "path"],
-  economicInterestLabel: ["economic_interest", "path"],
+  resourceTypeLabel: ["resource_type", "path"],
   elementLabel: ["element", "code"],
   textureLabel: ["texture", "code"],
   metamorphicFaciesLabel: ["metamorphic_facies", "code"],

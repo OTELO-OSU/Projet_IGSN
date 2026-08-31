@@ -33,7 +33,7 @@ const withdrawn: Sample = {
   security: { radioactivity: true, radioactivityExplanation: "handle gloved" },
   availability: "exists",
   publicationYear: 2026,
-  economicInterest: "no",
+  resourceType: "mineral_and_ore",
   economicInterestElements: [],
   economicResourceTypePrecision: null,
   economicDepositName: null,

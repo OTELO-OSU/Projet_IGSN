@@ -2,7 +2,7 @@ import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { conditionColumns } from "./condition-columns.ts";
 import { descriptionColumns } from "./description-columns.ts";
-import { economicInterestColumns } from "./economic-interest-columns.ts";
+import { resourceTypeColumns } from "./resource-type-columns.ts";
 import { scientificContextColumns } from "./scientific-context-columns.ts";
 import { securityColumns } from "./security-columns.ts";
 import { toAgeColumns } from "./to-age-columns.ts";
@@ -25,5 +25,5 @@ export const sampleColumns = (input: CreateSample) => ({
   ...scientificContextColumns(input.scientificContext),
   ...toAgeColumns(input.age),
   ...securityColumns(input.security),
-  ...economicInterestColumns(input),
+  ...resourceTypeColumns(input),
 });

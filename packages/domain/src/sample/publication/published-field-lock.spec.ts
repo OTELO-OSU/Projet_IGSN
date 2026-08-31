@@ -66,7 +66,7 @@ const stored: Sample = {
   security: null,
   availability: "exists",
   publicationYear: 2020,
-  economicInterest: "no",
+  resourceType: "mineral_and_ore",
   economicInterestElements: [],
   economicResourceTypePrecision: null,
   economicDepositName: null,
@@ -139,7 +139,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     attachments: [],
     security: null,
     availability: "no_longer_exists",
-    economicInterest: "yes",
+    resourceType: "hydrocarbon",
     economicInterestElements: [],
     economicResourceTypePrecision: null,
     economicDepositName: null,
@@ -165,7 +165,7 @@ describe("mergePublishedEdit", () => {
     expect(merged.availability).toBe("no_longer_exists");
     expect(merged.collectionMethod).toBe("dredging");
     expect(merged.specificName).toBe("edited specific");
-    expect(merged.economicInterest).toBe("yes");
+    expect(merged.resourceType).toBe("hydrocarbon");
   });
 
   it("keeps whole-frozen fields from storage, ignoring the payload", () => {
