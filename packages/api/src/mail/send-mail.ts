@@ -59,7 +59,7 @@ export function createSendMail(env: NodeJS.ProcessEnv = process.env): SendMail {
     await transport.sendMail({
       from: mailFrom(env, audience),
       to,
-      subject,
+      subject: `[IGSN-admin] ${subject}`,
       text,
       html,
       replyTo,

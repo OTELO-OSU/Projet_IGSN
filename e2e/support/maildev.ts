@@ -25,13 +25,14 @@ export function maildev(request: APIRequestContext) {
       contents: string[],
       replyTo?: string,
     ) => {
+      const prefixed = `[IGSN-admin] ${subject}`;
       await expect
         .poll(async () =>
           (await mailsTo(recipient)).map((mail) => mail.subject),
         )
-        .toContain(subject);
+        .toContain(prefixed);
       const [mail] = (await mailsTo(recipient)).filter(
-        (candidate) => candidate.subject === subject,
+        (candidate) => candidate.subject === prefixed,
       );
       for (const content of contents) {
         expect(mail?.text).toContain(content);

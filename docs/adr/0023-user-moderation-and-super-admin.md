@@ -37,7 +37,7 @@ UPDATE "user" SET status = 'accepted', super_admin = true WHERE email = '<email>
 - No email is sent on any status change (out of scope), so a moderated user only learns their status by loading the app.
 - The super admin flag has no UI or endpoint to grant it: promoting a second super admin is the same manual `UPDATE`, recorded in [preprod-deploy.md](../preprod-deploy.md).
 - `requireRole`/`realm_access.roles` stays built but unused; revisit if GaiaData ever lets us manage a realm role for this registry.
-- The weekday `listPending` digest sweeps the `pending` column, so an account demoted by any of the paths reaches the same recipients with no extra work. It reports and orders by `created_at`, so a demoted account shows its signup age and sorts above genuine newcomers; a re-pending timestamp is deferred until a moderator complains.
+- The weekly `listPending` digest sweeps the `pending` column, so an account demoted by any of the paths reaches the same recipients with no extra work. It reports and orders by `created_at`, so a demoted account shows its signup age and sorts above genuine newcomers; a re-pending timestamp is deferred until a moderator complains.
 - Adding a role beyond owner and super admin shipped as the space manager (ADR 0030), derived from a scope rather than a second boolean.
 - It widens `/admin/users` reach, the digest recipients and, per sample in scope, the ownership override, never `canPublishSamples`.
-- A re-pended trio-less account has no laboratory, so it is out of every space manager's reach and digest, and appears only in the super admins' weekday digest; no mail is sent on removal.
+- A re-pended trio-less account has no laboratory, so it is out of every space manager's reach and digest, and appears only in the super admins' weekly digest; no mail is sent on removal.

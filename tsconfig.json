@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.base.json",
-  "include": ["vitest.config.ts", "playwright.config.ts"],
+  "include": ["vitest.config.ts", "playwright.config.ts", "e2e/**/*.ts"],
   "compilerOptions": {
     "types": ["vitest/globals", "node"]
   }

@@ -45,7 +45,7 @@ Accepted. Amended 2026-08-21, 2026-08-24, 2026-08-25 and 2026-08-28, folded in b
 - A manager may move a user out of its own reach, mirroring the auto-demote stance.
 - The SQL clause matches that gate: a dual manager's user pages hold its managed laboratories alone, a member reached only through a group being curated from the group page.
 
-**The weekday pending-accounts digest follows that same `status` right**, filtered in JS through `userManagementRights`, `listPending` reading every pending row unscoped.
+**The weekly pending-accounts digest follows that same `status` right**, filtered in JS through `userManagementRights`, `listPending` reading every pending row unscoped.
 
 - An institution manager is mailed only the pending users its `status` right covers, and a manual group manager, holding none, is never mailed.
 - `listPending` excludes `super_admin = true` for every recipient, matching the reach clause, so a pending super admin, which only a partial manual `UPDATE` creates, reaches no digest and still accepts itself.
@@ -78,7 +78,7 @@ Accepted. Amended 2026-08-21, 2026-08-24, 2026-08-25 and 2026-08-28, folded in b
 
 **A status change leaving `accepted` mails every super admin, one mail per group left without an active manager**, naming the group and linking to its page. This revises the earlier "silently demotes ... no email is sent" stance and the Consequences bullet below it: the digest is no longer the one mail a manager's own demotion triggers, since the group itself now gets a mail regardless of who is demoted.
 
-**The weekday digest carries a recap of groups without an active manager, for super admins only.** It lists every manual group without one (they are curated, so all are listed) and every organisme / OSU / laboratory without one, but only when at least one user row records that code (an institutional group with no recorded member stays off the recap). The digest is sent when either the pending list or this recap is non-empty; a space manager still receives only its pending-only mail, never the recap.
+**The weekly digest carries a recap of groups without an active manager, for super admins only.** It lists every manual group without one (they are curated, so all are listed) and every organisme / OSU / laboratory without one, but only when at least one user row records that code (an institutional group with no recorded member stays off the recap). The digest is sent when either the pending list or this recap is non-empty; a space manager still receives only its pending-only mail, never the recap.
 
 ## Alternatives rejected
 
