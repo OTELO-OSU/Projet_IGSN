@@ -4,6 +4,7 @@ import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
   contactSampleOwnerBodySchema,
   listSamplesQuerySchema,
+  publishStatusSchema,
   requestSampleDeletionBodySchema,
   setSampleStatusBodySchema,
   updateSampleBodySchema,
@@ -84,8 +85,8 @@ export const validateRequestDeletionBody = validator("json", (value, c) => {
   return parsed.data;
 });
 
-export const publishStatusSchema =
-  setSampleStatusBodySchema.shape.status.default("published");
+export const publishStatusQuerySchema =
+  publishStatusSchema.default("published");
 
 export const validateStatusBody = validator("json", (value, c) => {
   const parsed = setSampleStatusBodySchema.safeParse(value);

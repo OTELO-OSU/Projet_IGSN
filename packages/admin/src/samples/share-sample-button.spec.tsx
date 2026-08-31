@@ -125,7 +125,7 @@ function fakeApi({
       });
     }),
     http.get("*/samples/:id", () =>
-      HttpResponse.json({ data: fakeSample, role }),
+      HttpResponse.json({ data: fakeSample, role, managed: false }),
     ),
   );
   return { calls, invites };

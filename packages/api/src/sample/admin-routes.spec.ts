@@ -1,4 +1,5 @@
 import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { SampleCollaboratorsResponse } from "@projet-igsn/domain/user-sample/user-sample-validator";
 
 import { sampleEditLockResponseSchema } from "@projet-igsn/domain/sample/edit-lock";
@@ -1268,19 +1269,22 @@ describe("admin sample routes", () => {
     });
   });
 
-  pgTest("should answer 400 on an unknown publish status", async ({ db }) => {
-    // Arrange
-    const { app } = createApp(db);
-    const client = testClient(app);
-    const data = await createSample(db, client);
-    // Act
-    const res = await app.request(
-      `/admin/samples/${data.id}/publish?status=draft`,
-      { method: "POST", headers: authHeader },
-    );
-    // Assert
-    expect(res.status).toBe(400);
-  });
+  pgTest.for(["draft", "tombstone"] as const)(
+    "should answer 400 when publishing straight as %s",
+    async (status, { db }) => {
+      // Arrange
+      const { app } = createApp(db);
+      const client = testClient(app);
+      const data = await createSample(db, client);
+      // Act
+      const res = await app.request(
+        `/admin/samples/${data.id}/publish?status=${status}`,
+        { method: "POST", headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(400);
+    },
+  );
 
   pgTest.for([
     ["no material", { name: "Unclassified draft", material: undefined }],
@@ -1429,7 +1433,7 @@ describe("admin sample routes", () => {
     const setStatus = (
       client: Client,
       id: string,
-      status: "published" | "withdrawn",
+      status: SetSampleStatusBody["status"],
     ) =>
       client.admin.samples[":id"].status.$put(
         { param: { id }, json: { status } },
@@ -3237,7 +3241,8 @@ describe("admin sample routes", () => {
         });
       }
       if (status !== "draft") {
-        await publishSample(db, sample.id, status);
+        await publishSample(db, sample.id);
+        await setSampleStatus(db, sample.id, status);
       }
       return { caller, sample };
     }

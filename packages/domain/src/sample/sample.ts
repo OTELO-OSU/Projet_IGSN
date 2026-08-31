@@ -29,7 +29,12 @@ import { sampleTypeSchema } from "./type/vocabulary.ts";
 
 export const nameSchema = z.string().trim().min(1);
 
-export const sampleStatusSchema = z.enum(["draft", "published", "withdrawn"]);
+export const sampleStatusSchema = z.enum([
+  "draft",
+  "published",
+  "withdrawn",
+  "tombstone",
+]);
 
 export type SampleStatus = z.infer<typeof sampleStatusSchema>;
 

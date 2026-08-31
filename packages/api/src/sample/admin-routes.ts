@@ -25,6 +25,7 @@ import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-samp
 import { canGrantRole } from "@projet-igsn/domain/user-sample/can-grant-role";
 import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-manage-collaborators";
 import { canRequestSampleDeletion } from "@projet-igsn/domain/user-sample/can-request-sample-deletion";
+import { canSetSampleStatus } from "@projet-igsn/domain/user-sample/can-set-sample-status";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
@@ -47,7 +48,7 @@ import { requireSampleAccess } from "./require-sample-access.ts";
 import { sampleDeletionRequestMail } from "./sample-deletion-request-mail.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
-  publishStatusSchema,
+  publishStatusQuerySchema,
   validateAddCollaboratorBody,
   validateAttachmentParams,
   validateAttachmentUpload,
@@ -131,6 +132,7 @@ export function createSampleAdminRoutes(
       const body: AdminSampleResponse = {
         data: sample,
         role: c.get("role")!,
+        managed: c.get("managed"),
         manualGroupOptions: isSampleOwner(c.get("role"))
           ? await manualGroups.listForSampleOwner(sample.id)
           : [],
@@ -406,7 +408,7 @@ export function createSampleAdminRoutes(
       if (!isSampleEditor(c.get("role"))) {
         return c.json({ error: "Forbidden" }, 403);
       }
-      const status = publishStatusSchema.safeParse(c.req.query("status"));
+      const status = publishStatusQuerySchema.safeParse(c.req.query("status"));
       if (!status.success) {
         return c.json({ error: "Invalid publish status" }, 400);
       }
@@ -441,15 +443,18 @@ export function createSampleAdminRoutes(
         if (!sample) {
           return c.json({ error: "Not found" }, 404);
         }
-        if (!isSampleEditor(c.get("role"))) {
-          return c.json({ error: "Forbidden" }, 403);
-        }
         if (!hasPermanentIgsn(sample)) {
           return c.json({ error: "Sample is not published" }, 409);
         }
+        const status = c.req.valid("json").status;
+        if (
+          !canSetSampleStatus(c.get("role"), c.get("managed"), sample, status)
+        ) {
+          return c.json({ error: "Forbidden" }, 403);
+        }
         const updated = await repository.setStatus(
           c.req.valid("param").id,
-          c.req.valid("json").status,
+          status,
         );
         return c.json({ data: updated });
       },

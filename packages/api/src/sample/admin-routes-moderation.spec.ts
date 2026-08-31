@@ -1,4 +1,5 @@
-import type { CreateSample } from "@projet-igsn/domain/sample/sample";
+import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
+import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { Kysely } from "kysely";
 
 import {
@@ -25,6 +26,8 @@ import {
 import { insertSampleCollaborator } from "../user-sample/insert-sample-collaborator.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
+import { publishSample } from "./service/publish-sample.ts";
+import { setSampleStatus } from "./service/set-sample-status.ts";
 
 type Db = Kysely<DB>;
 
@@ -89,7 +92,9 @@ async function arrangeManager(
   };
 }
 
-const listModerated = (app: ReturnType<typeof createApp>["app"], filter = "") =>
+type App = ReturnType<typeof createApp>["app"];
+
+const listModerated = (app: App, filter = "") =>
   app.request(`/admin/samples/moderated?page=1&perPage=25${filter}`, {
     headers: authHeader,
   });
@@ -657,6 +662,180 @@ describe("the moderation mail", () => {
       // Assert
       expect(res.status).toBe(200);
       expect(sendMail).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe("a tombstoned sample", () => {
+  const setStatus = (
+    app: App,
+    id: string,
+    status: SetSampleStatusBody["status"],
+    headers: Record<string, string> = authHeader,
+  ) =>
+    testClient(app).admin.samples[":id"].status.$put(
+      { param: { id }, json: { status } },
+      { headers },
+    );
+
+  async function arrangeManaged(
+    db: Db,
+    status: SetSampleStatusBody["status"] = "published",
+  ) {
+    const { app, owner } = await arrangeManager(db);
+    const created = await ownedSample(
+      db,
+      owner.id,
+      publishableSample,
+      IN_REACH,
+    );
+    await publishSample(db, created.id);
+    const sample = await setSampleStatus(db, created.id, status);
+    return { app, owner, sample: sample! };
+  }
+
+  pgTest(
+    "should let a manager tombstone a published sample",
+    async ({ db }) => {
+      // Arrange
+      const { app, sample } = await arrangeManaged(db);
+      // Act
+      const res = await setStatus(app, sample.id, "tombstone");
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ data: { status: "tombstone" } });
+    },
+  );
+
+  pgTest(
+    "should answer 403 when an owner with no management reach tombstones",
+    async ({ db }) => {
+      // Arrange
+      const { app, sample } = await arrangeManaged(db);
+      // Act
+      const res = await setStatus(app, sample.id, "tombstone", ownerHeader);
+      // Assert
+      expect(res.status).toBe(403);
+    },
+  );
+
+  pgTest.for(["published", "withdrawn"] as const)(
+    "should let a manager restore a tombstoned sample as %s",
+    async (status, { db }) => {
+      // Arrange
+      const { app, sample } = await arrangeManaged(db, "tombstone");
+      // Act
+      const res = await setStatus(app, sample.id, status);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(await res.json()).toMatchObject({ data: { status } });
+    },
+  );
+
+  pgTest("should answer 404 to a caller out of reach", async ({ db }) => {
+    // Arrange
+    const { app, sample } = await arrangeManaged(db, "tombstone");
+    // Act
+    const res = await testClient(app).admin.samples[":id"].$get(
+      { param: { id: sample.id } },
+      { headers: ownerHeader },
+    );
+    // Assert
+    expect(res.status).toBe(404);
+  });
+
+  pgTest("should stay in the moderation list", async ({ db }) => {
+    // Arrange
+    const { app, sample } = await arrangeManaged(db, "tombstone");
+    // Act
+    const res = await listModerated(app);
+    // Assert
+    expect(res.status).toBe(200);
+    expect(await listedIds(res)).toEqual({ ids: [sample.id], total: 1 });
+  });
+
+  pgTest.for([
+    [
+      "an update",
+      (app: App, sample: Sample) =>
+        testClient(app).admin.samples[":id"].$put(
+          {
+            param: { id: sample.id },
+            json: {
+              ...publishableSample,
+              expectedUpdatedAt: sample.updatedAt,
+            },
+          },
+          { headers: authHeader },
+        ),
+    ],
+    [
+      "a collaborator invitation",
+      (app: App, sample: Sample, inviteeId: string) =>
+        testClient(app).admin.samples[":id"].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: inviteeId, role: "editor" },
+          },
+          { headers: authHeader },
+        ),
+    ],
+  ] as const)(
+    "should answer 409 to %s from a manager",
+    async ([, write], { db }) => {
+      // Arrange
+      const { app, sample } = await arrangeManaged(db, "tombstone");
+      const invitee = await insertUser(db, "invitee@example.com");
+      // Act
+      const res = await write(app, sample, invitee.id);
+      // Assert
+      expect(res.status).toBe(409);
+    },
+  );
+
+  pgTest(
+    "should keep the owner role of an owner who manages their own sample",
+    async ({ db }) => {
+      // Arrange
+      const { app, manager } = await arrangeManager(db);
+      const sample = await ownedSample(
+        db,
+        manager.id,
+        publishableSample,
+        IN_REACH,
+      );
+      // Act
+      const res = await testClient(app).admin.samples[":id"].$get(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(adminSampleResponseSchema.parse(await res.json())).toMatchObject({
+        managed: true,
+        role: "owner",
+      });
+    },
+  );
+
+  pgTest.for([
+    ["an in-reach manager", authHeader, true],
+    ["an owner with no management reach", ownerHeader, false],
+  ] as const)(
+    "should report the management reach of %s",
+    async ([, headers, managed], { db }) => {
+      // Arrange
+      const { app, sample } = await arrangeManaged(db);
+      // Act
+      const res = await testClient(app).admin.samples[":id"].$get(
+        { param: { id: sample.id } },
+        { headers },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(adminSampleResponseSchema.parse(await res.json())).toMatchObject({
+        managed,
+      });
     },
   );
 });

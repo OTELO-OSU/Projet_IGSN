@@ -2,7 +2,6 @@ import type { ComponentProps } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { ConfirmDialog } from "@projet-igsn/design-system/components/ui/confirm-button";
-import { DialogTrigger } from "@projet-igsn/design-system/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,38 +9,34 @@ import {
   DropdownMenuTrigger,
 } from "@projet-igsn/design-system/components/ui/dropdown-menu";
 import { ChevronDownIcon } from "lucide-react";
+import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 
-/** A discreet chevron attached to a main button, hiding one confirmed action in its menu. */
+export type ConfirmMenuItem = {
+  label: string;
+  title: string;
+  description: string;
+  onConfirm: () => void;
+};
+
 export function ConfirmMenuButton({
   label,
   disabled,
   variant,
   className,
-  itemLabel,
-  title,
-  description,
-  onConfirm,
+  items,
 }: {
   label: string;
   disabled?: boolean;
   variant?: ComponentProps<typeof Button>["variant"];
   className?: string;
-  itemLabel: string;
-  title: string;
-  description: string;
-  onConfirm: () => void;
+  items: ConfirmMenuItem[];
 }) {
+  const [pending, setPending] = useState<ConfirmMenuItem>();
+
   return (
-    <ConfirmDialog
-      title={title}
-      description={description}
-      confirmLabel={m.action_confirm()}
-      cancelLabel={m.action_cancel()}
-      closeLabel={m.action_close()}
-      onConfirm={onConfirm}
-    >
+    <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -56,11 +51,28 @@ export function ConfirmMenuButton({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DialogTrigger asChild>
-            <DropdownMenuItem>{itemLabel}</DropdownMenuItem>
-          </DialogTrigger>
+          {items.map((item) => (
+            <DropdownMenuItem
+              key={item.label}
+              onSelect={() => setPending(item)}
+            >
+              {item.label}
+            </DropdownMenuItem>
+          ))}
         </DropdownMenuContent>
       </DropdownMenu>
-    </ConfirmDialog>
+      {pending ? (
+        <ConfirmDialog
+          open
+          onOpenChange={() => setPending(undefined)}
+          title={pending.title}
+          description={pending.description}
+          confirmLabel={m.action_confirm()}
+          cancelLabel={m.action_cancel()}
+          closeLabel={m.action_close()}
+          onConfirm={pending.onConfirm}
+        />
+      ) : null}
+    </>
   );
 }

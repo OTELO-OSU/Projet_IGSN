@@ -1,4 +1,4 @@
-import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
+import type { PublishStatus } from "@projet-igsn/domain/sample/sample-validator";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import { sampleResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
@@ -12,7 +12,7 @@ export function usePublishSample(id: string) {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (status: SetSampleStatusBody["status"]) => {
+    mutationFn: async (status: PublishStatus) => {
       const url = new URL(`admin/samples/${id}/publish`, API_URL);
       url.searchParams.set("status", status);
       const res = await apiFetch(url, { method: "POST" });

@@ -2,7 +2,7 @@ import { sampleCreatePage } from "../support/admin/sample-create.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
-import { test } from "../support/db";
+import { sampleNamed, test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 
 test.describe("samples", () => {
@@ -15,10 +15,12 @@ test.describe("samples", () => {
     const list = sampleListPage(page);
     await list.expectVisible();
     await list.expectColumns();
-    for (const sample of samples.filter((s) => s.owner === "jean")) {
+    const mine = (s: (typeof samples)[number]) =>
+      s.owner === "jean" && s.status !== "tombstone";
+    for (const sample of samples.filter(mine)) {
       await list.expectSampleRowWithNature(sample.name, sample.nature);
     }
-    for (const sample of samples.filter((s) => s.owner !== "jean")) {
+    for (const sample of samples.filter((s) => !mine(s))) {
       await list.expectNoSampleRow(sample.name);
     }
   });
@@ -103,10 +105,7 @@ test.describe("samples", () => {
     page,
     samples,
   }) => {
-    const sample = samples.find((candidate) => candidate.name === "Basalt 42");
-    if (!sample?.igsn) {
-      throw new Error("seed must include the published Basalt 42 sample");
-    }
+    const sample = sampleNamed(samples, "Basalt 42");
 
     await signInAsResearcher(page, RESEARCHERS.jean);
     const list = sampleListPage(page);
@@ -114,7 +113,7 @@ test.describe("samples", () => {
 
     const edit = sampleEditPage(page);
     await edit.expectVisible();
-    await edit.withdraw();
+    await edit.saveAnd("Withdraw");
     await edit.expectWithdrawnHint();
     await edit.expectStatusAction("Republish");
 
@@ -124,7 +123,7 @@ test.describe("samples", () => {
 
     await edit.goto(sample.id);
     await edit.republish();
-    await edit.expectWithdrawInMenu();
+    await edit.expectSaveMenuItem("Withdraw");
   });
 
   test("a researcher publishes a new sample straight as withdrawn", async ({

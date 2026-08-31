@@ -17,6 +17,10 @@ export const SAMPLE_STATUS: Record<
     className: "bg-amber-100 text-amber-800",
     label: m.status_withdrawn,
   },
+  tombstone: {
+    className: "bg-gray-200 text-gray-800",
+    label: m.status_tombstone,
+  },
 };
 
 export function SampleStatusBadge({ status }: { status: SampleStatus }) {

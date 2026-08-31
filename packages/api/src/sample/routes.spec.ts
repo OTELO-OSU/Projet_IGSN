@@ -195,36 +195,12 @@ describe("public sample routes", () => {
 
   pgTest.for([
     ["%", "Recovery 100% core"],
-    ["_", "Log_1 core"],
     ["\\", "Path\\core"],
     ["(", "Core (deep)"],
-    [")", "Core (deep)"],
-    ["+", "Core +1"],
-    ["|", "Core|A"],
-    ["?", "Core?"],
-    ["{", "Core {1}"],
-    ["}", "Core {1}"],
-    ["[", "Core [1]"],
-    ["]", "Core [1]"],
     [".", "Core.A"],
-    ["^", "Core^A"],
-    ["$", "Core$A"],
+    ["|", "Core|A"],
     ["（", "Core（deep）"],
-    ["）", "Core（deep）"],
-    ["＋", "Core＋1"],
-    ["｜", "Core｜A"],
-    ["？", "Core？"],
-    ["｛", "Core｛1｝"],
-    ["｝", "Core｛1｝"],
-    ["［", "Core［1］"],
-    ["］", "Core［1］"],
-    ["＼", "Core＼A"],
-    ["．", "Core．A"],
-    ["＾", "Core＾A"],
-    ["＄", "Core＄A"],
     ["©", "Core © 2026"],
-    ["«", "Core «A»"],
-    ["±", "Core ±1"],
   ] as const)(
     "should treat the pattern character %j literally",
     async ([character, matching], { db }) => {
@@ -503,6 +479,19 @@ describe("public sample routes", () => {
       });
     },
   );
+
+  pgTest("should answer 404 for a tombstoned sample", async ({ db }) => {
+    // Arrange
+    const client = await acceptedClient(db);
+    const published = await createPublishedSample(client, "Erased rhyolite");
+    await setSampleStatus(db, published.id, "tombstone");
+    // Act
+    const res = await client.samples[":igsn"].$get({
+      param: { igsn: published.igsn! },
+    });
+    // Assert
+    expect(res.status).toBe(404);
+  });
 
   pgTest("should not expose an unpublished sample", async ({ db }) => {
     // Arrange

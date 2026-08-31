@@ -74,7 +74,7 @@ function fakeApi(failWrites = false) {
       return HttpResponse.json({ data: sample }, { status: 201 });
     }),
     http.get("*/samples/:id", () =>
-      HttpResponse.json({ data: sample, role: "owner" }),
+      HttpResponse.json({ data: sample, role: "owner", managed: false }),
     ),
   );
   return { lockCalls, created: () => sample };

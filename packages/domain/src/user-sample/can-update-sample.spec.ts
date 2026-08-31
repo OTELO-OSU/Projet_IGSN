@@ -7,10 +7,10 @@ describe("canUpdateSample", () => {
   it.each([
     ["owner", "draft", true],
     ["owner", "withdrawn", true],
+    ["owner", "tombstone", false],
     ["editor", "published", true],
     ["contributor", "draft", true],
     ["contributor", "published", false],
-    ["contributor", "withdrawn", false],
     [null, "draft", false],
   ] as [UserSampleRole | null, SampleStatus, boolean][])(
     "should answer, for the %s on a %s sample, %s",

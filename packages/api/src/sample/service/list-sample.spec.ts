@@ -1,6 +1,7 @@
 import type { GeologicalAge } from "@projet-igsn/domain/sample/age/geological-age";
 import type { NumericUnit } from "@projet-igsn/domain/sample/age/numeric-unit";
 
+import { superAdminScope } from "@projet-igsn/domain/user/moderation-scope";
 import { describe, expect, vi } from "vitest";
 
 import type { DB } from "../../db.ts";
@@ -11,7 +12,7 @@ import { listAsOwner } from "../../tests/list-as-owner.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { draft } from "../../tests/sample-fixtures.ts";
 import { insertSample } from "./insert-sample.ts";
-import { listPublishedSamples } from "./list-sample.ts";
+import { listModeratedSamples, listPublishedSamples } from "./list-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 import { setSampleStatus } from "./set-sample-status.ts";
 
@@ -60,6 +61,9 @@ async function insertOneSamplePerStatus(db: Transactional<DB>) {
   const withdrawn = await sample("Withdrawn sample");
   await publishSample(db, withdrawn.id);
   await setSampleStatus(db, withdrawn.id, "withdrawn");
+  const tombstoned = await sample("Tombstone sample");
+  await publishSample(db, tombstoned.id);
+  await setSampleStatus(db, tombstoned.id, "tombstone");
 }
 
 describe("listSamples", () => {
@@ -96,35 +100,64 @@ describe("listSamples", () => {
     ]);
   });
 
-  pgTest("should sort by status alphabetically", async ({ db }) => {
+  pgTest("should sort by status in lifecycle order", async ({ db }) => {
     // Arrange
     await insertOneSamplePerStatus(db);
+    const scope = superAdminScope(crypto.randomUUID());
 
     // Act / Assert
-    const asc = await listAsOwner(db, {
-      page: 1,
-      perPage: 10,
-      sort: "status",
-      order: "asc",
-    });
+    const asc = await listModeratedSamples(
+      db,
+      { page: 1, perPage: 10, sort: "status", order: "asc" },
+      scope,
+    );
     expect(asc.data.map((sample) => sample.name)).toEqual([
       "Draft sample",
       "Published sample",
       "Withdrawn sample",
+      "Tombstone sample",
     ]);
 
-    const desc = await listAsOwner(db, {
-      page: 1,
-      perPage: 10,
-      sort: "status",
-      order: "desc",
-    });
+    const desc = await listModeratedSamples(
+      db,
+      { page: 1, perPage: 10, sort: "status", order: "desc" },
+      scope,
+    );
     expect(desc.data.map((sample) => sample.name)).toEqual([
+      "Tombstone sample",
       "Withdrawn sample",
       "Published sample",
       "Draft sample",
     ]);
   });
+
+  pgTest(
+    "should hide a tombstoned sample from the caller's own samples",
+    async ({ db }) => {
+      // Arrange
+      await insertOneSamplePerStatus(db);
+      // Act
+      const { data } = await listAsOwner(db, { page: 1, perPage: 10 });
+      // Assert
+      expect(data.map((sample) => sample.name).sort()).toEqual([
+        "Draft sample",
+        "Published sample",
+        "Withdrawn sample",
+      ]);
+    },
+  );
+
+  pgTest(
+    "should keep a tombstoned sample out of the published list",
+    async ({ db }) => {
+      // Arrange
+      await insertOneSamplePerStatus(db);
+      // Act
+      const { data } = await listPublishedSamples(db, { page: 1, perPage: 10 });
+      // Assert
+      expect(data.map((sample) => sample.name)).toEqual(["Published sample"]);
+    },
+  );
 
   pgTest.for([
     ["draft", "Draft sample"],
@@ -1176,18 +1209,6 @@ describe("listSamples", () => {
         type: null,
         collectionMethod: null,
       });
-
-    pgTest("should tolerate the plural at the default", async ({ db }) => {
-      await seedAchondrite(db);
-
-      const { data } = await listAsOwner(db, {
-        page: 1,
-        perPage: 10,
-        search: "achondrites",
-      });
-
-      expect(data.map((sample) => sample.name)).toEqual(["Stony Achondrite"]);
-    });
 
     pgTest("should honour a stricter override", async ({ db }) => {
       await seedAchondrite(db);

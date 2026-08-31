@@ -3,6 +3,8 @@ import { expect, type Page } from "@playwright/test";
 import { adminUrl } from "../urls";
 import { expectNoManualGroupOffered } from "./manual-groups-field.ts";
 
+type SaveMenuAction = "Withdraw" | "Tombstone";
+
 export function sampleEditPage(page: Page) {
   const openTab = (name: string) => page.getByRole("tab", { name }).click();
   const pick = async (field: string, label: string) => {
@@ -25,6 +27,9 @@ export function sampleEditPage(page: Page) {
     await page.getByRole("button", { name: action }).click();
     await confirm(dialog);
   };
+
+  const openActionsMenu = () =>
+    page.getByRole("button", { name: "More actions" }).click();
 
   const deleteButton = page.getByRole("button", {
     name: "Delete this draft",
@@ -150,18 +155,23 @@ export function sampleEditPage(page: Page) {
       await confirm("Publish sample as withdrawn");
     },
 
-    withdraw: async () => {
-      await page.getByRole("button", { name: "More actions" }).click();
-      await page.getByRole("menuitem", { name: "Save & Withdraw" }).click();
-      await confirm("Withdraw sample");
+    saveAnd: async (action: SaveMenuAction) => {
+      await openActionsMenu();
+      await page.getByRole("menuitem", { name: `Save & ${action}` }).click();
+      await confirm(`${action} sample`);
     },
-    expectWithdrawInMenu: async () => {
-      await page.getByRole("button", { name: "More actions" }).click();
+    expectSaveMenuItem: async (action: SaveMenuAction) => {
+      await openActionsMenu();
       await expect(
-        page.getByRole("menuitem", { name: "Save & Withdraw" }),
+        page.getByRole("menuitem", { name: `Save & ${action}` }),
       ).toBeVisible();
       await page.keyboard.press("Escape");
     },
+    restoreAsWithdrawn: () =>
+      confirmStatusChange(
+        "Restore as withdrawn",
+        "Restore sample as withdrawn",
+      ),
     republish: () => confirmStatusChange("Republish", "Republish sample"),
     expectStatusAction: (name: string) =>
       expect(page.getByRole("button", { name })).toBeVisible(),

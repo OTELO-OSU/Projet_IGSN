@@ -1,6 +1,6 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
-import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
+import type { PublishStatus } from "@projet-igsn/domain/sample/sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 import type { ReactNode } from "react";
 
@@ -44,7 +44,10 @@ import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
 import { composeScientificContext } from "#/samples/compose-scientific-context.ts";
-import { ConfirmMenuButton } from "#/samples/confirm-menu-button.tsx";
+import {
+  ConfirmMenuButton,
+  type ConfirmMenuItem,
+} from "#/samples/confirm-menu-button.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
@@ -89,9 +92,10 @@ const validateDraft =
 
 export type SampleSubmitMenu = {
   label: string;
-  itemLabel: string;
-  title: string;
-  description: string;
+  items: SampleSubmitMenuItem[];
+};
+
+export type SampleSubmitMenuItem = Omit<ConfirmMenuItem, "onConfirm"> & {
   onConfirm: (value: CreateSample) => void;
 };
 
@@ -105,19 +109,16 @@ export type SampleFormAction =
   | {
       kind: "publish";
       label: string;
-      onPublish: (
-        value: CreateSample,
-        status: SetSampleStatusBody["status"],
-      ) => void;
+      onPublish: (value: CreateSample, status: PublishStatus) => void;
     }
   | { kind: "link"; label: string; href: string };
 
-type SampleFormProps = {
+export type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
   defaultValues?: CreateSample;
   status?: SampleStatus;
-  primaryAction: SampleFormAction;
+  primaryAction?: SampleFormAction;
   secondaryAction?: SampleFormAction;
   statusAction?: ReactNode;
   sampleId?: string;
@@ -166,7 +167,7 @@ export function SampleForm({
         isFrozenByPublication(name) ||
         (name === "manualGroupIds" && areManualGroupsFrozen);
   const defaultSubmit =
-    primaryAction.kind === "submit"
+    primaryAction?.kind === "submit"
       ? primaryAction.onSubmit
       : secondaryAction?.kind === "submit"
         ? secondaryAction.onSubmit
@@ -296,7 +297,7 @@ export function SampleForm({
       if (roleOnSample !== null && !isSampleEditor(roleOnSample)) {
         return null;
       }
-      const publish = (status: SetSampleStatusBody["status"]) =>
+      const publish = (status: PublishStatus) =>
         void form.handleSubmit({
           onValid: (value) => action.onPublish(value, status),
         });
@@ -318,10 +319,14 @@ export function SampleForm({
             label={m.action_publish_options()}
             className="border-l-primary-foreground/30 rounded-l-none border-l"
             disabled={disabled}
-            itemLabel={m.action_publish_withdrawn()}
-            title={m.publish_withdrawn_sample_title()}
-            description={m.publish_withdrawn_sample_warning()}
-            onConfirm={() => publish("withdrawn")}
+            items={[
+              {
+                label: m.action_publish_withdrawn(),
+                title: m.publish_withdrawn_sample_title(),
+                description: m.publish_withdrawn_sample_warning(),
+                onConfirm: () => publish("withdrawn"),
+              },
+            ]}
           />
         </div>
       ));
@@ -347,12 +352,11 @@ export function SampleForm({
               variant={variant}
               className="-ml-px rounded-l-none"
               disabled={disabled}
-              itemLabel={menu.itemLabel}
-              title={menu.title}
-              description={menu.description}
-              onConfirm={() =>
-                void form.handleSubmit({ onValid: menu.onConfirm })
-              }
+              items={menu.items.map((item) => ({
+                ...item,
+                onConfirm: () =>
+                  void form.handleSubmit({ onValid: item.onConfirm }),
+              }))}
             />
           ) : null}
         </div>
@@ -535,7 +539,7 @@ export function SampleForm({
           </Button>
           {secondaryAction ? renderAction(secondaryAction, "outline") : null}
           {statusAction}
-          {renderAction(primaryAction)}
+          {primaryAction ? renderAction(primaryAction) : null}
         </div>
       </form>
     </FieldDisabledProvider>

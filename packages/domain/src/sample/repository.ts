@@ -5,6 +5,7 @@ import type { SampleEditLock } from "./edit-lock.ts";
 import type {
   AdminSampleListItem,
   ListSamplesQuery,
+  PublishStatus,
   SetSampleStatusBody,
 } from "./sample-validator.ts";
 import type { CreateSample, Sample } from "./sample.ts";
@@ -38,10 +39,7 @@ export type SampleRepository = {
   create(input: CreateSample, owner: User): Promise<Sample>;
   update(id: string, input: CreateSample): Promise<Sample | null>;
   /** `withdrawn` mints the IGSN while keeping the sample out of public view. */
-  publish(
-    id: string,
-    status: SetSampleStatusBody["status"],
-  ): Promise<Sample | null>;
+  publish(id: string, status: PublishStatus): Promise<Sample | null>;
   setStatus(
     id: string,
     status: SetSampleStatusBody["status"],
