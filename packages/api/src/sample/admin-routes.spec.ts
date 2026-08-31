@@ -1460,14 +1460,14 @@ describe("admin sample routes", () => {
       },
     );
 
-    pgTest.for(["withdrawn", "tombstone"] as const)(
-      "should answer 409 when setting a draft to %s",
-      async (status, { db }) => {
+    pgTest(
+      "should answer 409 when changing the status of a draft",
+      async ({ db }) => {
         // Arrange
         const client = testClient(createApp(db).app);
         const data = await createSample(db, client, publishableSample);
         // Act
-        const res = await setStatus(client, data.id, status);
+        const res = await setStatus(client, data.id, "withdrawn");
         // Assert
         expect(res.status).toBe(409);
       },

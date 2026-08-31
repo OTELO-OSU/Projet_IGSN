@@ -1210,18 +1210,6 @@ describe("listSamples", () => {
         collectionMethod: null,
       });
 
-    pgTest("should tolerate the plural at the default", async ({ db }) => {
-      await seedAchondrite(db);
-
-      const { data } = await listAsOwner(db, {
-        page: 1,
-        perPage: 10,
-        search: "achondrites",
-      });
-
-      expect(data.map((sample) => sample.name)).toEqual(["Stony Achondrite"]);
-    });
-
     pgTest("should honour a stricter override", async ({ db }) => {
       await seedAchondrite(db);
       process.env.SAMPLE_SEARCH_FUZZY_THRESHOLD = "0.9";

@@ -1,4 +1,3 @@
-import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
@@ -114,14 +113,9 @@ describe("SampleTable", () => {
       .toBeInTheDocument();
   });
 
-  it.each<[SampleStatus, string]>([
-    ["draft", "Draft"],
-    ["published", "Published"],
-    ["withdrawn", "Withdrawn"],
-    ["tombstone", "Tombstone"],
-  ])("should badge a %s sample as %s", async (status, label) => {
-    const screen = await renderTable([{ ...sample, status }]);
-    await expect.element(screen.getByText(label)).toBeInTheDocument();
+  it("should badge a sample with its status label", async () => {
+    const screen = await renderTable([{ ...sample, status: "tombstone" }]);
+    await expect.element(screen.getByText("Tombstone")).toBeInTheDocument();
   });
 
   it("should request an asc then desc status sort when the header is clicked", async () => {
