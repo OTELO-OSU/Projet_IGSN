@@ -11,6 +11,7 @@ import {
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
+import { canRequestSampleDeletion } from "@projet-igsn/domain/user-sample/can-request-sample-deletion";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
@@ -21,6 +22,7 @@ import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { RepublishButton } from "#/samples/republish-button.tsx";
+import { RequestSampleDeletionDialog } from "#/samples/request-sample-deletion-dialog.tsx";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
@@ -139,6 +141,12 @@ function EditSamplePage() {
                 <TooltipContent>{m.sample_delete_action()}</TooltipContent>
               </Tooltip>
             )}
+            {me.data != null &&
+              canRequestSampleDeletion(
+                query.data.role,
+                query.data,
+                me.data,
+              ) && <RequestSampleDeletionDialog sampleId={sampleId} />}
           </div>
           {query.data.igsn ? (
             <p

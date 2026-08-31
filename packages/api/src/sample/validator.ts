@@ -4,6 +4,7 @@ import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
   contactSampleOwnerBodySchema,
   listSamplesQuerySchema,
+  requestSampleDeletionBodySchema,
   setSampleStatusBodySchema,
   updateSampleBodySchema,
 } from "@projet-igsn/domain/sample/sample-validator";
@@ -75,7 +76,14 @@ export const validateContactBody = validator("json", (value, c) => {
   return parsed.data;
 });
 
-/** Parsed by hand from `?status=` so the hc client keeps its bodiless, query-less `publish.$post` signature. */
+export const validateRequestDeletionBody = validator("json", (value, c) => {
+  const parsed = requestSampleDeletionBodySchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid deletion request" }, 400);
+  }
+  return parsed.data;
+});
+
 export const publishStatusSchema =
   setSampleStatusBodySchema.shape.status.default("published");
 

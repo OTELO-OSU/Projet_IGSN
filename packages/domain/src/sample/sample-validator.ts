@@ -30,6 +30,14 @@ export type ContactSampleOwnerBody = z.infer<
   typeof contactSampleOwnerBodySchema
 >;
 
+export const requestSampleDeletionBodySchema = z.strictObject({
+  reason: z.string().trim().min(1).max(5000),
+});
+
+export type RequestSampleDeletionBody = z.infer<
+  typeof requestSampleDeletionBodySchema
+>;
+
 export const sampleConflictSchema = z.object({
   error: z.string(),
   reason: z.enum(["stale", "unpublishable", "locked"]),

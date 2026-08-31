@@ -24,6 +24,7 @@ import {
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canGrantRole } from "@projet-igsn/domain/user-sample/can-grant-role";
 import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-manage-collaborators";
+import { canRequestSampleDeletion } from "@projet-igsn/domain/user-sample/can-request-sample-deletion";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
@@ -36,12 +37,14 @@ import type { SampleAccessEnv } from "./require-sample-access.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
+import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
 import { trySendMail } from "../mail/try-send-mail.ts";
 import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
+import { sampleDeletionRequestMail } from "./sample-deletion-request-mail.ts";
 import { uploadLimit } from "./upload-limit.ts";
 import {
   publishStatusSchema,
@@ -52,6 +55,7 @@ import {
   validateCreateSampleBody,
   validateIdParam,
   validateListQuery,
+  validateRequestDeletionBody,
   validateStatusBody,
   validateUpdateSampleBody,
 } from "./validator.ts";
@@ -357,6 +361,39 @@ export function createSampleAdminRoutes(
         const id = c.req.valid("param").id;
         await repository.remove(id);
         await attachmentsRepository.removeAll(id);
+        return c.body(null, 204);
+      },
+    )
+    .post(
+      "/:id/deletion-request",
+      requireActiveSession,
+      validateIdParam,
+      validateRequestDeletionBody,
+      async (c) => {
+        const sample = c.get("sample");
+        if (!sample) {
+          return c.json({ error: "Sample not found" }, 404);
+        }
+        const requester = c.get("user");
+        if (!canRequestSampleDeletion(c.get("role"), sample, requester)) {
+          return c.json({ error: "Forbidden" }, 403);
+        }
+        if (mail) {
+          const { reason } = c.req.valid("json");
+          // ponytail: fire and forget; a retry queue if a lost request ever matters.
+          void notifySuperAdmins(
+            users,
+            () =>
+              sampleDeletionRequestMail({
+                requester,
+                sample,
+                reason,
+                adminUrl: mail.adminUrl,
+              }),
+            mail.sendMail,
+            "Could not mail the sample deletion request",
+          );
+        }
         return c.body(null, 204);
       },
     )
