@@ -11,14 +11,7 @@
     <mj-section background-color="#ffffff" padding="24px">
       <mj-column>
         <mj-text font-size="18px" font-weight="bold">__TITLE__</mj-text>
-        <mj-table cellpadding="8">
-          <tr style="text-align: left; border-bottom: 1px solid #e5e7eb">
-            <th>__COLUMN_NAME__</th>
-            <th>__COLUMN_EMAIL__</th>
-            <th>__COLUMN_WAITED__</th>
-          </tr>
-          __ROWS__
-        </mj-table>
+        __PENDING_SECTION__ __GROUPS_SECTION__
         <mj-button
           href="__URL__"
           background-color="#1d4ed8"

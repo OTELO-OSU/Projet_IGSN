@@ -1,4 +1,5 @@
 import type { User } from "../user/model.ts";
+import type { GroupManager } from "../user/user-validator.ts";
 import type {
   ListManualGroupsQuery,
   ManualGroupListItem,
@@ -40,6 +41,10 @@ export type ManualGroupRepository = {
     groupId: string,
     userId: string,
   ): Promise<"left" | "not_member" | "has_published_sample">;
+  listManagers(id: string): Promise<GroupManager[]>;
+  addManager(groupId: string, userId: string): Promise<void>;
+  removeManager(groupId: string, userId: string): Promise<void>;
+  listWithoutActiveManager(): Promise<ManualGroup[]>;
   listForUser(userId: string): Promise<MyManualGroup[]>;
   listByIds(ids: string[]): Promise<ManualGroup[]>;
   listForSampleOwner(sampleId: string): Promise<ManualGroup[]>;

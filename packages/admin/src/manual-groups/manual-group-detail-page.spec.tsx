@@ -44,6 +44,24 @@ const dupont = {
   canDetach: true,
 };
 
+const pasteur = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305e82c3404",
+  email: "louis.pasteur@univ-lorraine.fr",
+  name: "Pasteur",
+  firstname: "Louis",
+  orcid: null,
+  status: "accepted",
+};
+
+const rejectedManager = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305e82c3405",
+  email: "ada.lovelace@univ-lorraine.fr",
+  name: "Lovelace",
+  firstname: "Ada",
+  orcid: null,
+  status: "rejected",
+};
+
 const dupuis = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3403",
   email: "theo.dupuis@univ-lorraine.fr",
@@ -56,18 +74,38 @@ const dupuis = {
 
 function fakeApi({
   members = [curie],
+  managers = [pasteur],
   directory = [dupont],
   caller = { superAdmin: true },
 }: {
   members?: (typeof curie)[];
+  managers?: (typeof pasteur)[];
   directory?: (typeof curie)[];
   caller?: Partial<CurrentUser>;
 } = {}) {
   let group = { ...GROUP };
   let listed = [...members];
+  let listedManagers = [...managers];
   const calls: string[] = [];
+  const managerBodies: unknown[] = [];
   fakeCurrentUser(caller);
   worker.use(
+    http.get("*/admin/manual-groups/:id/managers", () =>
+      HttpResponse.json({ data: listedManagers }),
+    ),
+    http.post("*/admin/manual-groups/:id/managers", async ({ request }) => {
+      const body = (await request.json()) as { userId: string };
+      managerBodies.push(body);
+      const picked = directory.find((user) => user.id === body.userId);
+      if (picked) listedManagers = [...listedManagers, picked];
+      return new HttpResponse(null, { status: 204 });
+    }),
+    http.delete("*/admin/manual-groups/:id/managers/:userId", ({ params }) => {
+      listedManagers = listedManagers.filter(
+        (user) => user.id !== params.userId,
+      );
+      return new HttpResponse(null, { status: 204 });
+    }),
     http.get("*/admin/manual-groups/:id/members", () =>
       HttpResponse.json({ data: listed }),
     ),
@@ -124,12 +162,84 @@ function fakeApi({
         : new HttpResponse(null, { status: 404 });
     }),
   );
-  return { calls };
+  return { calls, managerBodies };
 }
 
 const renderDetailPage = () => renderRoute(`/manual-groups/${GROUP.id}`);
 
 describe("ManualGroupDetailPage", () => {
+  it("should list the managers of the group with their status", async () => {
+    fakeApi({ managers: [pasteur, rejectedManager] });
+
+    const { screen } = await renderDetailPage();
+
+    await expect
+      .element(
+        screen
+          .getByRole("row", { name: /Louis Pasteur/ })
+          .getByRole("cell", { name: "Active" }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen
+          .getByRole("row", { name: /Ada Lovelace/ })
+          .getByRole("cell", { name: "Disabled" }),
+      )
+      .toBeVisible();
+  });
+
+  it("should add the picked user to the managers", async () => {
+    const { managerBodies } = fakeApi();
+
+    const { screen } = await renderDetailPage();
+    await screen.getByRole("button", { name: "Add a manager" }).click();
+    await screen.getByRole("combobox", { name: "User" }).click();
+    await screen
+      .getByRole("combobox", { name: "Search by name or email" })
+      .fill("dup");
+    await screen.getByRole("option", { name: /Dupont/ }).click();
+    await screen.getByRole("button", { name: "Add", exact: true }).click();
+
+    await expect
+      .element(
+        screen
+          .getByRole("row", { name: /Pierre Dupont/ })
+          .getByRole("cell", { name: dupont.email }),
+      )
+      .toBeVisible();
+    expect(managerBodies).toEqual([{ userId: dupont.id }]);
+  });
+
+  it("should remove a manager once the removal is confirmed", async () => {
+    fakeApi();
+
+    const { screen } = await renderDetailPage();
+    await expect
+      .element(screen.getByRole("cell", { name: pasteur.email }))
+      .toBeVisible();
+
+    await screen.getByRole("button", { name: "Remove Louis Pasteur" }).click();
+    await screen.getByRole("button", { name: "Remove", exact: true }).click();
+
+    await expect
+      .poll(() => screen.getByRole("cell", { name: pasteur.email }).elements())
+      .toHaveLength(0);
+  });
+
+  it("should offer no managers section to a manual group manager", async () => {
+    fakeApi({ caller: { managedManualGroups: [GROUP] } });
+
+    const { screen } = await renderDetailPage();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Members" }))
+      .toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Managers" }).elements(),
+    ).toEqual([]);
+  });
+
   it("should add the picked user to the members", async () => {
     fakeApi();
 

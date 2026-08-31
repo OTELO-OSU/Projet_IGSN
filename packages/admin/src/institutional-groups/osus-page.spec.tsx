@@ -24,6 +24,14 @@ function fakeApi() {
         data: { organizations: {}, osus: {}, laboratories: {} },
       }),
     ),
+    http.get("*/admin/institutional-groups/manager-counts", () =>
+      HttpResponse.json({
+        data: { organizations: {}, osus: {}, laboratories: {} },
+      }),
+    ),
+    http.get("*/admin/institutional-groups/:kind/:code/managers", () =>
+      HttpResponse.json({ data: [] }),
+    ),
     http.get("*/admin/users", () =>
       HttpResponse.json({ data: [], meta: { total: 0 } }),
     ),

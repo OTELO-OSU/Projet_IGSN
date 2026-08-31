@@ -4,7 +4,7 @@ Date: 2026-08-14
 
 ## Status
 
-Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a manual group, and the leave rule became per-group. Amended 2026-08-21: the published-sample rule now guards every detach, and a manual group manager curates its own groups (ADR 0030).
+Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a manual group, and the leave rule became per-group. Amended 2026-08-21: the published-sample rule now guards every detach, and a manual group manager curates its own groups (ADR 0030). Amended 2026-08-28: the group list carries `managerCount` and a `noManager` filter, and a super admin curates a group's managers from the group page (ADR 0030).
 
 ## Context
 

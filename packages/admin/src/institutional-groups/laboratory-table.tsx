@@ -8,11 +8,13 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 
+import { managersColumn } from "#/institutional-groups/managers-column.tsx";
 import { membersColumn } from "#/institutional-groups/members-column.ts";
 import { m } from "#/paraglide/messages.js";
 
 const laboratoryColumns = (
-  counts: Record<string, number>,
+  memberCounts: Record<string, number>,
+  managerCounts: Record<string, number>,
 ): ColumnDef<Laboratory>[] => [
   {
     accessorKey: "code",
@@ -37,20 +39,23 @@ const laboratoryColumns = (
     header: () => m.column_name(),
     cell: ({ row }) => row.original.name,
   },
-  membersColumn(counts, (row) => row.code),
+  membersColumn(memberCounts, (row) => row.code),
+  managersColumn(managerCounts, (row) => row.code),
 ];
 
 export function LaboratoryTable({
   laboratories,
   memberCounts,
+  managerCounts,
 }: {
   laboratories: Laboratory[];
   memberCounts: Record<string, number>;
+  managerCounts: Record<string, number>;
 }) {
   const navigate = useNavigate();
   const table = useReactTable({
     data: laboratories,
-    columns: laboratoryColumns(memberCounts),
+    columns: laboratoryColumns(memberCounts, managerCounts),
     getCoreRowModel: getCoreRowModel(),
   });
 

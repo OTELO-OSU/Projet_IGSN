@@ -22,11 +22,13 @@ const BASALT = {
   id: "3f2504e0-4f89-41d3-9a0c-0305000000a1",
   name: "Basalt team",
   memberCount: 2,
+  managerCount: 1,
 };
 const METEORITE = {
   id: "3f2504e0-4f89-41d3-9a0c-0305000000a2",
   name: "Meteorite crew",
   memberCount: 5,
+  managerCount: 0,
 };
 
 const JEAN = {
@@ -93,6 +95,7 @@ function fakeApi({
         id: "3f2504e0-4f89-41d3-9a0c-0305000000b1",
         name,
         memberCount: 0,
+        managerCount: 0,
       };
       listed = [...listed, created];
       return HttpResponse.json({ data: created }, { status: 201 });
@@ -101,8 +104,11 @@ function fakeApi({
       const url = new URL(request.url);
       requested.push(url.search);
       const search = (url.searchParams.get("search") ?? "").toLowerCase();
-      const matching = listed.filter((group) =>
-        group.name.toLowerCase().includes(search),
+      const noManager = url.searchParams.get("noManager") === "true";
+      const matching = listed.filter(
+        (group) =>
+          group.name.toLowerCase().includes(search) &&
+          (!noManager || group.managerCount === 0),
       );
       return HttpResponse.json({
         data: matching,
@@ -136,6 +142,51 @@ describe("ManualGroupsPage", () => {
       .poll(() => router.state.location.search)
       .toMatchObject({ page: 1, search: "Meteorite" });
     expect(requested.at(-1)).toContain("search=Meteorite");
+  });
+
+  it("should show the active manager count of every group, zero warned", async () => {
+    fakeApi();
+
+    const { screen } = await renderRoute("/manual-groups");
+
+    await expect
+      .element(
+        screen
+          .getByRole("row", { name: /Basalt team/ })
+          .getByRole("cell", { name: "1", exact: true }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen
+          .getByRole("row", { name: /Meteorite crew/ })
+          .getByRole("cell", { name: "0 (no active manager)" }),
+      )
+      .toBeVisible();
+  });
+
+  it("should ask the api for the groups without active manager and record the filter in the URL", async () => {
+    const { requested } = fakeApi();
+
+    const { screen, router } = await renderRoute("/manual-groups");
+    await screen.getByRole("button", { name: "Add a filter" }).click();
+    await screen
+      .getByRole("button", { name: "Without active manager" })
+      .click();
+    await screen
+      .getByRole("switch", { name: "Without active manager" })
+      .click();
+
+    await expect
+      .element(screen.getByRole("cell", { name: "Meteorite crew" }))
+      .toBeVisible();
+    await expect
+      .poll(() => screen.getByRole("cell", { name: "Basalt team" }).elements())
+      .toHaveLength(0);
+    await expect
+      .poll(() => router.state.location.search)
+      .toMatchObject({ noManager: true });
+    expect(requested.at(-1)).toContain("noManager=true");
   });
 
   it("should add the created group to the list", async () => {

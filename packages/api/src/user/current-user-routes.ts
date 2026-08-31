@@ -7,9 +7,11 @@ import { managedLaboratoryCodes } from "@projet-igsn/domain/user/managed-laborat
 import { Hono } from "hono";
 
 import type { AuthenticatedEnv } from "../auth/current-user.ts";
+import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { validateManualGroupIdParam } from "../manual-group/validator.ts";
+import { sendGroupsWithoutManagerMail } from "./send-groups-without-manager-mail.ts";
 import {
   validateSetInstitutionalGroupsBody,
   validateSetOrcidBody,
@@ -18,6 +20,7 @@ import {
 export function createCurrentUserRoutes(
   users: UserRepository,
   manualGroups: ManualGroupRepository,
+  mail?: { sendMail: SendMail; adminUrl: string },
 ) {
   return new Hono<AuthenticatedEnv>()
     .get("/", async (c) => {
@@ -61,10 +64,13 @@ export function createCurrentUserRoutes(
       requireActiveSession,
       validateSetInstitutionalGroupsBody,
       async (c) => {
-        await users.setInstitutionalGroups(
+        const { orphanedGroups } = await users.setInstitutionalGroups(
           c.get("user").id,
           c.req.valid("json"),
         );
+        if (mail && orphanedGroups.length > 0) {
+          void sendGroupsWithoutManagerMail(users, orphanedGroups, mail);
+        }
         return c.body(null, 204);
       },
     )

@@ -4,6 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { GroupMembers } from "#/institutional-groups/group-members.tsx";
+import { InstitutionalGroupManagers } from "#/institutional-groups/institutional-group-managers.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute(
@@ -37,6 +38,8 @@ function OrganizationDetailPage() {
         <dt className="font-medium">{m.column_ror()}</dt>
         <dd>{organization.ror}</dd>
       </dl>
+
+      <InstitutionalGroupManagers kind="organization" code={organization.ror} />
 
       <GroupMembers
         filter={{ institutionalOrganization: organization.ror }}

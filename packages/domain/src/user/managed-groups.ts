@@ -1,29 +1,18 @@
 import { z } from "zod";
 
-import {
-  LABORATORIES,
-  laboratoryCodeSchema,
-} from "../institutional-group/laboratory.ts";
-import {
-  ORGANIZATIONS,
-  organizationRorSchema,
-} from "../institutional-group/organization.ts";
-import { OSUS, osuCodeSchema } from "../institutional-group/osu.ts";
+import type { InstitutionalGroupKind } from "../institutional-group/model.ts";
 
-const CATALOG = {
-  organizations: new Set(ORGANIZATIONS.map(({ ror }) => ror)),
-  osus: new Set(OSUS.map(({ code }) => code)),
-  laboratories: new Set(LABORATORIES.map(({ code }) => code)),
-};
+import { laboratoryCodeSchema } from "../institutional-group/laboratory.ts";
+import { isKnownInstitutionalCode } from "../institutional-group/model.ts";
+import { organizationRorSchema } from "../institutional-group/organization.ts";
+import { osuCodeSchema } from "../institutional-group/osu.ts";
 
-type ManagedKind = keyof typeof CATALOG;
-
-const isKnown = (kind: ManagedKind) => (code: string) =>
-  CATALOG[kind].has(code);
+const isKnown = (kind: InstitutionalGroupKind) => (code: string) =>
+  isKnownInstitutionalCode(kind, code);
 
 const knownCodes = (
   code: z.ZodType<string>,
-  kind: ManagedKind,
+  kind: InstitutionalGroupKind,
   message: string,
 ) =>
   z
@@ -33,13 +22,13 @@ const knownCodes = (
 export const managedGroupsSchema = z.strictObject({
   organizations: knownCodes(
     organizationRorSchema,
-    "organizations",
+    "organization",
     "unknown organization",
   ),
-  osus: knownCodes(osuCodeSchema, "osus", "unknown OSU"),
+  osus: knownCodes(osuCodeSchema, "osu", "unknown OSU"),
   laboratories: knownCodes(
     laboratoryCodeSchema,
-    "laboratories",
+    "laboratory",
     "unknown laboratory",
   ),
   manualGroupIds: z.array(z.uuid()).transform((ids) => [...new Set(ids)]),
@@ -63,8 +52,8 @@ export const MANAGED_GROUP_KINDS = [
 export function knownManagedCodes(stored: ManagedGroups): ManagedGroups {
   return {
     ...stored,
-    organizations: stored.organizations.filter(isKnown("organizations")),
-    osus: stored.osus.filter(isKnown("osus")),
-    laboratories: stored.laboratories.filter(isKnown("laboratories")),
+    organizations: stored.organizations.filter(isKnown("organization")),
+    osus: stored.osus.filter(isKnown("osu")),
+    laboratories: stored.laboratories.filter(isKnown("laboratory")),
   };
 }

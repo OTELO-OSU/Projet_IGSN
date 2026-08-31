@@ -6,6 +6,7 @@ import {
   manualGroupResponseSchema,
   myManualGroupsResponseSchema,
 } from "@projet-igsn/domain/manual-group/manual-group-validator";
+import { groupManagersResponseSchema } from "@projet-igsn/domain/user/user-validator";
 import { testClient } from "hono/testing";
 import { describe, expect, vi } from "vitest";
 
@@ -75,6 +76,27 @@ const addMember = (client: Client, groupId: string, userId: string) =>
     { param: { id: groupId }, json: { userId } },
     { headers: authHeader },
   );
+
+const addManager = (client: Client, groupId: string, userId: string) =>
+  client.admin["manual-groups"][":id"].managers.$post(
+    { param: { id: groupId }, json: { userId } },
+    { headers: authHeader },
+  );
+
+const removeManager = (client: Client, groupId: string, userId: string) =>
+  client.admin["manual-groups"][":id"].managers[":userId"].$delete(
+    { param: { id: groupId, userId } },
+    { headers: authHeader },
+  );
+
+const managerIds = async (db: Db, groupId: string) => {
+  const rows = await db
+    .selectFrom("user_managed_manual_group")
+    .select("user_id")
+    .where("group_id", "=", groupId)
+    .execute();
+  return rows.map((row) => row.user_id);
+};
 
 const countMembers = async (db: Db, groupId: string) => {
   const rows = await db
@@ -146,7 +168,14 @@ describe("admin manual group routes", () => {
       // Assert
       expect(res.status).toBe(200);
       expect(listManualGroupsResponseSchema.parse(await res.json())).toEqual({
-        data: [{ id: MASSIF, name: "Massif Central 2026", memberCount: 2 }],
+        data: [
+          {
+            id: MASSIF,
+            name: "Massif Central 2026",
+            memberCount: 2,
+            managerCount: 0,
+          },
+        ],
         meta: { total: 1 },
       });
     },
@@ -208,7 +237,14 @@ describe("admin manual group routes", () => {
       );
       expect(listManualGroupsResponseSchema.parse(await theirs.json())).toEqual(
         {
-          data: [{ id: data.id, name: "Massif Central 2026", memberCount: 0 }],
+          data: [
+            {
+              id: data.id,
+              name: "Massif Central 2026",
+              memberCount: 0,
+              managerCount: 1,
+            },
+          ],
           meta: { total: 1 },
         },
       );
@@ -621,10 +657,16 @@ describe("admin manual group routes", () => {
           { param: { id: UNKNOWN, userId: curie.id } },
           { headers: authHeader },
         ),
+        client.admin["manual-groups"][":id"].managers.$get(
+          { param },
+          { headers: authHeader },
+        ),
+        addManager(client, UNKNOWN, curie.id),
+        removeManager(client, UNKNOWN, curie.id),
       ]);
       // Assert
       expect(responses.map(({ status }) => status)).toEqual([
-        404, 404, 404, 404, 404, 404,
+        404, 404, 404, 404, 404, 404, 404, 404, 404,
       ]);
     });
   });
@@ -700,7 +742,14 @@ describe("admin manual group routes", () => {
       // Assert
       expect(res.status).toBe(200);
       expect(listManualGroupsResponseSchema.parse(await res.json())).toEqual({
-        data: [{ id: MASSIF, name: "Massif Central 2026", memberCount: 0 }],
+        data: [
+          {
+            id: MASSIF,
+            name: "Massif Central 2026",
+            memberCount: 0,
+            managerCount: 1,
+          },
+        ],
         meta: { total: 1 },
       });
     });
@@ -820,6 +869,215 @@ describe("admin manual group routes", () => {
         await expect(groupName(db, MASSIF)).resolves.toEqual({
           name: "Massif Central 2026",
         });
+      },
+    );
+  });
+
+  describe("managers", () => {
+    pgTest("should list the managers with their status", async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
+        status: "rejected",
+      });
+      await moderateManualGroup(db, curie.id, [MASSIF]);
+      await moderateManualGroup(db, dupont.id, [MASSIF]);
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin["manual-groups"][":id"].managers.$get(
+        { param: { id: MASSIF } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(
+        groupManagersResponseSchema
+          .parse(await res.json())
+          .data.map(({ email, status }) => ({ email, status })),
+      ).toEqual([
+        { email: "marie.curie@univ-lorraine.fr", status: "accepted" },
+        { email: "pierre.dupont@univ-lorraine.fr", status: "rejected" },
+      ]);
+    });
+
+    pgTest("should add a manager", async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await addManager(client, MASSIF, curie.id);
+      // Assert
+      expect(res.status).toBe(204);
+      expect(await managerIds(db, MASSIF)).toEqual([curie.id]);
+    });
+
+    pgTest("should accept adding a manager twice", async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await moderateManualGroup(db, curie.id, [MASSIF]);
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await addManager(client, MASSIF, curie.id);
+      // Assert
+      expect(res.status).toBe(204);
+      expect(await managerIds(db, MASSIF)).toEqual([curie.id]);
+    });
+
+    pgTest(
+      "should answer 422 adding a manager who is not accepted",
+      async ({ db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Massif Central 2026");
+        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+          status: "pending",
+        });
+        const client = await asSuperAdmin(db);
+        // Act
+        const res = await addManager(client, MASSIF, curie.id);
+        // Assert
+        expect(res.status).toBe(422);
+        expect(await managerIds(db, MASSIF)).toEqual([]);
+      },
+    );
+
+    pgTest("should answer 404 adding an unknown user", async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await addManager(client, MASSIF, UNKNOWN);
+      // Assert
+      expect(res.status).toBe(404);
+    });
+
+    pgTest("should remove a manager", async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      await moderateManualGroup(db, curie.id, [MASSIF]);
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await removeManager(client, MASSIF, curie.id);
+      // Assert
+      expect(res.status).toBe(204);
+      expect(await managerIds(db, MASSIF)).toEqual([]);
+    });
+
+    pgTest(
+      "should answer 404 removing a user who manages nothing",
+      async ({ db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Massif Central 2026");
+        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+        const client = await asSuperAdmin(db);
+        // Act
+        const res = await removeManager(client, MASSIF, curie.id);
+        // Assert
+        expect(res.status).toBe(404);
+      },
+    );
+
+    pgTest("should count the accepted managers only", async ({ db }) => {
+      // Arrange
+      await insertGroup(db, MASSIF, "Massif Central 2026");
+      const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+      const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
+        status: "rejected",
+      });
+      await moderateManualGroup(db, curie.id, [MASSIF]);
+      await moderateManualGroup(db, dupont.id, [MASSIF]);
+      const client = await asSuperAdmin(db);
+      // Act
+      const res = await client.admin["manual-groups"].$get(
+        { query: { page: "1", perPage: "25" } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(
+        listManualGroupsResponseSchema.parse(await res.json()).data,
+      ).toEqual([
+        {
+          id: MASSIF,
+          name: "Massif Central 2026",
+          memberCount: 0,
+          managerCount: 1,
+        },
+      ]);
+    });
+
+    pgTest(
+      "should keep only the groups without accepted manager on noManager",
+      async ({ db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Massif Central 2026");
+        await insertGroup(db, ALPES, "Alpes 2026");
+        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+        const dupont = await insertUser(db, "pierre.dupont@univ-lorraine.fr", {
+          status: "rejected",
+        });
+        await moderateManualGroup(db, curie.id, [MASSIF]);
+        await moderateManualGroup(db, dupont.id, [ALPES]);
+        await asSuperAdmin(db);
+        // Act
+        const res = await createApp(db).app.request(
+          "/admin/manual-groups?page=1&perPage=25&noManager=true",
+          { headers: authHeader },
+        );
+        // Assert
+        const body = listManualGroupsResponseSchema.parse(await res.json());
+        expect(body.data.map(({ name }) => name)).toEqual(["Alpes 2026"]);
+        expect(body.meta.total).toBe(1);
+      },
+    );
+
+    pgTest(
+      "should answer 403 to the manager of that very group",
+      async ({ db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Massif Central 2026");
+        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+        const client = await asGroupManager(db, [MASSIF]);
+        const param = { id: MASSIF };
+        // Act
+        const responses = await Promise.all([
+          client.admin["manual-groups"][":id"].managers.$get(
+            { param },
+            { headers: managerHeader },
+          ),
+          client.admin["manual-groups"][":id"].managers.$post(
+            { param, json: { userId: curie.id } },
+            { headers: managerHeader },
+          ),
+          client.admin["manual-groups"][":id"].managers[":userId"].$delete(
+            { param: { id: MASSIF, userId: curie.id } },
+            { headers: managerHeader },
+          ),
+        ]);
+        // Assert
+        expect(responses.map(({ status }) => status)).toEqual([403, 403, 403]);
+      },
+    );
+
+    pgTest.for(["post", "delete"] as const)(
+      "should answer 401 to a %s on a revoked session",
+      async (method, { db }) => {
+        // Arrange
+        await insertGroup(db, MASSIF, "Massif Central 2026");
+        const curie = await insertUser(db, "marie.curie@univ-lorraine.fr");
+        const client = await asSuperAdmin(db);
+        vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
+          c.json({ error: "Unauthorized" }, 401),
+        );
+        // Act
+        const res =
+          method === "post"
+            ? await addManager(client, MASSIF, curie.id)
+            : await removeManager(client, MASSIF, curie.id);
+        // Assert
+        expect(res.status).toBe(401);
       },
     );
   });

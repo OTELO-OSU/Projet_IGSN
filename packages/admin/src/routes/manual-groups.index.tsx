@@ -7,6 +7,7 @@ import { RouteGuard } from "#/auth/route-guard.tsx";
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
+import { noManagerFilterEntry } from "#/managers/no-manager-filter-entry.tsx";
 import { CreateManualGroupDialog } from "#/manual-groups/create-manual-group-dialog.tsx";
 import { ManualGroupTable } from "#/manual-groups/manual-group-table.tsx";
 import { RequestManualGroupDialog } from "#/manual-groups/request-manual-group-dialog.tsx";
@@ -15,6 +16,7 @@ import { Pagination } from "#/pagination/pagination.tsx";
 import { m } from "#/paraglide/messages.js";
 
 const manualGroupsSearchSchema = listManualGroupsQuerySchema.extend({
+  noManager: z.boolean().optional().catch(undefined),
   requestedName: z.string().optional().catch(undefined),
   requestedManagerIds: z
     .string()
@@ -36,10 +38,16 @@ export const Route = createFileRoute("/manual-groups/")({
 
 function ManualGroupsPage() {
   const { data: me } = useCurrentUser();
-  const { page, perPage, search, requestedName, requestedManagerIds } =
-    Route.useSearch();
+  const {
+    page,
+    perPage,
+    search,
+    noManager,
+    requestedName,
+    requestedManagerIds,
+  } = Route.useSearch();
   const navigate = Route.useNavigate();
-  const query = useManualGroups({ page, perPage, search });
+  const query = useManualGroups({ page, perPage, search, noManager });
 
   const update = (next: Partial<ManualGroupsSearch>) =>
     void navigate({ search: (prev) => ({ ...prev, ...next }) });
@@ -78,6 +86,11 @@ function ManualGroupsPage() {
             className: "col-span-full",
             onSearch: (value) =>
               update({ page: 1, search: value || undefined }),
+          }),
+          noManagerFilterEntry({
+            checked: noManager === true,
+            onChange: (checked) =>
+              update({ page: 1, noManager: checked || undefined }),
           }),
         ]}
       />

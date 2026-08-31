@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { createInstitutionalGroupRepository } from "../institutional-group/repository.ts";
+import { createManualGroupRepository } from "../manual-group/repository.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { moderateManualGroup } from "../tests/moderate-manual-group.ts";
@@ -7,9 +9,15 @@ import { pgTest } from "../tests/pg-test.ts";
 import { createUserRepository } from "./repository.ts";
 import { sendPendingUsersDigest } from "./send-pending-users-digest.ts";
 
+const repositories = (db: Parameters<typeof createUserRepository>[0]) => ({
+  users: createUserRepository(db),
+  manualGroups: createManualGroupRepository(db),
+  institutionalGroups: createInstitutionalGroupRepository(db),
+});
+
 const now = new Date("2026-08-06T12:00:00Z");
 
-const USERS_URL = "http://localhost:3001/users";
+const ADMIN_URL = "http://localhost:3001/";
 
 describe("sendPendingUsersDigest", () => {
   pgTest(
@@ -31,12 +39,7 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
 
-      await sendPendingUsersDigest(
-        createUserRepository(db),
-        sendMail,
-        USERS_URL,
-        now,
-      );
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
 
       expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -47,20 +50,18 @@ describe("sendPendingUsersDigest", () => {
     },
   );
 
-  pgTest("should send nothing when no account is pending", async ({ db }) => {
-    await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
-    await insertUser(db, "researcher@univ-lorraine.fr", {});
-    const sendMail = vi.fn().mockResolvedValue(undefined);
+  pgTest(
+    "should send nothing when nothing is pending and no group is orphan",
+    async ({ db }) => {
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "researcher@univ-lorraine.fr", {});
+      const sendMail = vi.fn().mockResolvedValue(undefined);
 
-    await sendPendingUsersDigest(
-      createUserRepository(db),
-      sendMail,
-      USERS_URL,
-      now,
-    );
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
 
-    expect(sendMail).not.toHaveBeenCalled();
-  });
+      expect(sendMail).not.toHaveBeenCalled();
+    },
+  );
 
   pgTest(
     "should send nothing when no super admin can be reached",
@@ -70,12 +71,7 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
 
-      await sendPendingUsersDigest(
-        createUserRepository(db),
-        sendMail,
-        USERS_URL,
-        now,
-      );
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
 
       expect(sendMail).not.toHaveBeenCalled();
     },
@@ -92,12 +88,7 @@ describe("sendPendingUsersDigest", () => {
       const sendMail = vi.fn().mockRejectedValue(new Error("SMTP down"));
 
       await expect(
-        sendPendingUsersDigest(
-          createUserRepository(db),
-          sendMail,
-          USERS_URL,
-          now,
-        ),
+        sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now),
       ).resolves.toBeUndefined();
 
       expect(logged).toHaveBeenCalled();
@@ -112,12 +103,18 @@ describe("sendPendingUsersDigest", () => {
     await expect(
       sendPendingUsersDigest(
         {
-          listPending: () => Promise.reject(new Error("database down")),
-          listSuperAdminEmails: () => Promise.resolve([]),
-          listSpaceManagers: () => Promise.resolve([]),
+          users: {
+            listPending: () => Promise.reject(new Error("database down")),
+            listSuperAdminEmails: () => Promise.resolve([]),
+            listSpaceManagers: () => Promise.resolve([]),
+          },
+          manualGroups: { listWithoutActiveManager: () => Promise.resolve([]) },
+          institutionalGroups: {
+            listWithoutActiveManager: () => Promise.resolve([]),
+          },
         },
         sendMail,
-        USERS_URL,
+        ADMIN_URL,
         now,
       ),
     ).resolves.toBeUndefined();
@@ -157,12 +154,7 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
       // Act
-      await sendPendingUsersDigest(
-        createUserRepository(db),
-        sendMail,
-        USERS_URL,
-        now,
-      );
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
       // Assert
       expect(sendMail).toHaveBeenCalledTimes(2);
       expect(sendMail).toHaveBeenCalledWith(
@@ -203,12 +195,7 @@ describe("sendPendingUsersDigest", () => {
       .execute();
     const sendMail = vi.fn().mockResolvedValue(undefined);
     // Act
-    await sendPendingUsersDigest(
-      createUserRepository(db),
-      sendMail,
-      USERS_URL,
-      now,
-    );
+    await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
     // Assert
     expect(sendMail).toHaveBeenCalledTimes(1);
     expect(sendMail).toHaveBeenCalledWith(
@@ -232,17 +219,146 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
       // Act
-      await sendPendingUsersDigest(
-        createUserRepository(db),
-        sendMail,
-        USERS_URL,
-        now,
-      );
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
       // Assert
       expect(sendMail).toHaveBeenCalledTimes(1);
       expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({ to: ["admin@univ-lorraine.fr"] }),
       );
+    },
+  );
+
+  pgTest(
+    "should mail the super admins the orphan groups when nothing is pending",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      const groupId = crypto.randomUUID();
+      await db
+        .insertInto("manual_group")
+        .values({ id: groupId, name: "Massif central" })
+        .execute();
+      await insertUser(db, "member@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7358",
+      });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      // Act
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
+      // Assert
+      expect(sendMail).toHaveBeenCalledTimes(1);
+      const mail = sendMail.mock.calls[0]?.[0];
+      expect(mail.to).toEqual(["admin@univ-lorraine.fr"]);
+      expect(mail.subject).toBe("2 groups have no active manager");
+      expect(mail.text).toContain(`/manual-groups/${groupId}`);
+      expect(mail.text).toContain("/institutional-groups/laboratories/UMR7358");
+    },
+  );
+
+  pgTest(
+    "should list an institutional group only when a user row records it",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "member@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7358",
+      });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      // Act
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
+      // Assert
+      const text = sendMail.mock.calls[0]?.[0].text;
+      expect(text).toContain("/institutional-groups/laboratories/UMR7358");
+      expect(text).not.toContain("/institutional-groups/laboratories/UMR5275");
+    },
+  );
+
+  pgTest.for([
+    {
+      kind: "organization" as const,
+      code: "04vfs2w97",
+      member: { institutionalOrganization: "04vfs2w97" },
+      path: "/institutional-groups/organizations/04vfs2w97",
+    },
+    {
+      kind: "osu" as const,
+      code: "OTELo",
+      member: { institutionalOsu: "OTELo" },
+      path: "/institutional-groups/osus/OTELo",
+    },
+    {
+      kind: "laboratory" as const,
+      code: "UMR7358",
+      member: { institutionalLaboratory: "UMR7358" },
+      path: "/institutional-groups/laboratories/UMR7358",
+    },
+  ])(
+    "should recap a $kind whose only manager is not accepted",
+    async ({ kind, code, member, path }, { db }) => {
+      // Arrange
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "member@univ-lorraine.fr", member);
+      const manager = await insertUser(db, "manager@univ-lorraine.fr", {
+        status: "rejected",
+      });
+      await moderateInstitution(db, manager.id, { kind, code });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      // Act
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
+      // Assert
+      expect(sendMail.mock.calls[0]?.[0].text).toContain(path);
+    },
+  );
+
+  pgTest(
+    "should keep a group with an accepted manager out of the recap",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "member@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7358",
+      });
+      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      await moderateInstitution(db, manager.id, {
+        kind: "laboratory",
+        code: "UMR7358",
+      });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      // Act
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
+      // Assert
+      expect(sendMail).not.toHaveBeenCalled();
+    },
+  );
+
+  pgTest(
+    "should keep the orphan groups out of a space manager's digest",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      await moderateInstitution(db, manager.id, {
+        kind: "laboratory",
+        code: "UMR7358",
+      });
+      await insertUser(db, "waiting@univ-lorraine.fr", {
+        status: "pending",
+        institutionalLaboratory: "UMR7358",
+      });
+      const groupId = crypto.randomUUID();
+      await db
+        .insertInto("manual_group")
+        .values({ id: groupId, name: "Massif central" })
+        .execute();
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      // Act
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
+      // Assert
+      expect(sendMail).toHaveBeenCalledTimes(2);
+      expect(sendMail.mock.calls[0]?.[0].text).toContain("Massif central");
+      expect(sendMail.mock.calls[1]?.[0].to).toEqual([
+        "manager@univ-lorraine.fr",
+      ]);
+      expect(sendMail.mock.calls[1]?.[0].text).not.toContain("Massif central");
     },
   );
 });

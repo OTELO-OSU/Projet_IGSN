@@ -5,6 +5,7 @@ import type {
 } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
+import type { GroupManagersResponse } from "@projet-igsn/domain/user/user-validator";
 
 import { canManageManualGroup } from "@projet-igsn/domain/user/can-manage-manual-group";
 import { Hono } from "hono";
@@ -14,6 +15,7 @@ import { HTTPException } from "hono/http-exception";
 import type { ModerationEnv } from "../auth/require-user-moderation.ts";
 import type { SendMail } from "../mail/send-mail.ts";
 
+import { validateAddGroupManagerBody } from "../add-group-manager-body.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireSuperAdmin } from "../auth/require-super-admin.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
@@ -35,6 +37,9 @@ import {
 
 const NOT_FOUND = { error: "Manual group not found" } as const;
 const NAME_TAKEN = { error: "Manual group name already taken" } as const;
+
+const logManagementChange = (actor: string, group: string, target: string) =>
+  console.info("manual group management changed", { actor, group, target });
 
 const requireManagedGroup = createMiddleware<ModerationEnv>(async (c, next) => {
   if (!canManageManualGroup(c.get("scope"), c.req.param("id")!)) {
@@ -145,6 +150,55 @@ export function createManualGroupRoutes(
         if (removed === "has_published_sample") {
           return c.json({ reason: "has_published_sample" }, 409);
         }
+        return c.body(null, 204);
+      },
+    )
+    .get(
+      "/:id/managers",
+      requireSuperAdmin,
+      validateManualGroupIdParam,
+      async (c) => {
+        const { id } = c.req.valid("param");
+        const [group, managers] = await Promise.all([
+          repository.get(id),
+          repository.listManagers(id),
+        ]);
+        if (!group) {
+          return c.json(NOT_FOUND, 404);
+        }
+        const body: GroupManagersResponse = { data: managers };
+        return c.json(body);
+      },
+    )
+    .post(
+      "/:id/managers",
+      requireSuperAdmin,
+      requireActiveSession,
+      validateManualGroupIdParam,
+      validateAddGroupManagerBody,
+      async (c) => {
+        const { id } = c.req.valid("param");
+        const { userId } = c.req.valid("json");
+        if (!(await repository.get(id))) {
+          return c.json(NOT_FOUND, 404);
+        }
+        await repository.addManager(id, userId);
+        logManagementChange(c.get("user").id, id, userId);
+        return c.body(null, 204);
+      },
+    )
+    .delete(
+      "/:id/managers/:userId",
+      requireSuperAdmin,
+      requireActiveSession,
+      validateManualGroupMemberParams,
+      async (c) => {
+        const { id, userId } = c.req.valid("param");
+        if (!(await repository.get(id))) {
+          return c.json(NOT_FOUND, 404);
+        }
+        await repository.removeManager(id, userId);
+        logManagementChange(c.get("user").id, id, userId);
         return c.body(null, 204);
       },
     )

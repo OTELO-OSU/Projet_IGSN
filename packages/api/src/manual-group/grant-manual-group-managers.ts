@@ -28,5 +28,6 @@ export async function grantManualGroupManagers(
   await trx
     .insertInto("user_managed_manual_group")
     .values(wanted.map((userId) => ({ user_id: userId, group_id: groupId })))
+    .onConflict((oc) => oc.doNothing())
     .execute();
 }

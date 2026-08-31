@@ -3,6 +3,7 @@ import type { ManualGroup } from "../manual-group/model.ts";
 import type { ManagedGroups } from "./managed-groups.ts";
 import type { User, UserStatus } from "./model.ts";
 import type { ModerationScope } from "./moderation-scope.ts";
+import type { OrphanedGroup } from "./orphaned-group.ts";
 import type {
   AdminUser,
   InstitutionalGroupCounts,
@@ -47,7 +48,7 @@ export type UserRepository = {
   setInstitutionalGroups(
     userId: string,
     groups: SetInstitutionalGroups,
-  ): Promise<void>;
+  ): Promise<{ orphanedGroups: OrphanedGroup[] }>;
   findByOrcid(orcid: string): Promise<User | undefined>;
   list(
     query: ListUsersQuery,
@@ -69,7 +70,11 @@ export type UserRepository = {
   removeInstitutionalGroups(
     id: string,
     scope: ModerationScope,
-  ): Promise<{ previousStatus: UserStatus; status: UserStatus }>;
+  ): Promise<{
+    previousStatus: UserStatus;
+    status: UserStatus;
+    orphanedGroups: OrphanedGroup[];
+  }>;
   getModerationScope(userId: string): Promise<ManagedGroups>;
 };
 
@@ -78,4 +83,5 @@ export type UpdateUserResult = {
   previousStatus: UserStatus;
   joinedGroups: ManualGroup[];
   leftGroupIds: string[];
+  orphanedGroups: OrphanedGroup[];
 };

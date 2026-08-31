@@ -24,6 +24,7 @@ import {
   logMembershipChange,
   notifyManualGroupJoined,
 } from "../manual-group/notify-manual-group-joined.ts";
+import { sendGroupsWithoutManagerMail } from "./send-groups-without-manager-mail.ts";
 import { sendUserAcceptedMail } from "./send-user-accepted-mail.ts";
 import {
   validateListUsersQuery,
@@ -114,8 +115,13 @@ export function createUserRoutes(
       validateUpdateUserBody,
       async (c) => {
         const id = c.req.valid("param").id;
-        const { user, previousStatus, joinedGroups, leftGroupIds } =
-          await repository.update(id, c.req.valid("json"), c.get("scope"));
+        const {
+          user,
+          previousStatus,
+          joinedGroups,
+          leftGroupIds,
+          orphanedGroups,
+        } = await repository.update(id, c.req.valid("json"), c.get("scope"));
 
         const actor = c.get("user");
         logStatusChange(actor.id, user.id, previousStatus, user.status);
@@ -126,6 +132,10 @@ export function createUserRoutes(
         ) {
           // ponytail: fire and forget; a retry queue if a lost notification ever matters.
           void sendUserAcceptedMail(user, mail.sendMail, mail.adminUrl);
+        }
+        if (mail && orphanedGroups.length > 0) {
+          // ponytail: fire and forget; a retry queue if a lost notification ever matters.
+          void sendGroupsWithoutManagerMail(repository, orphanedGroups, mail);
         }
         notifyManualGroupJoined({
           actor,
@@ -147,9 +157,12 @@ export function createUserRoutes(
       validateUserIdParam,
       async (c) => {
         const id = c.req.valid("param").id;
-        const { previousStatus, status } =
+        const { previousStatus, status, orphanedGroups } =
           await repository.removeInstitutionalGroups(id, c.get("scope"));
         logStatusChange(c.get("user").id, id, previousStatus, status);
+        if (mail && orphanedGroups.length > 0) {
+          void sendGroupsWithoutManagerMail(repository, orphanedGroups, mail);
+        }
         return c.body(null, 204);
       },
     );

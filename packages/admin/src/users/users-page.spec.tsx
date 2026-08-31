@@ -69,7 +69,7 @@ function fakeApi({ forbidden = false }: { forbidden?: boolean } = {}) {
     ),
     http.get("*/admin/manual-groups", () =>
       HttpResponse.json({
-        data: [{ ...manualGroup(1), memberCount: 0 }],
+        data: [{ ...manualGroup(1), memberCount: 0, managerCount: 1 }],
         meta: { total: 1 },
       }),
     ),

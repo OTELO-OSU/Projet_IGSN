@@ -8,6 +8,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { GroupMembers } from "#/institutional-groups/group-members.tsx";
+import { InstitutionalGroupManagers } from "#/institutional-groups/institutional-group-managers.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export const Route = createFileRoute(
@@ -57,6 +58,8 @@ function LaboratoryDetailPage() {
           </ul>
         </dd>
       </dl>
+
+      <InstitutionalGroupManagers kind="laboratory" code={laboratory.code} />
 
       <GroupMembers
         filter={{ institutionalLaboratory: laboratory.code }}

@@ -45,15 +45,55 @@ const MEMBERS = [
   },
 ];
 
+const PASTEUR = {
+  id: "3f2504e0-4f89-41d3-9a0c-030500000011",
+  email: "louis.pasteur@univ-lorraine.fr",
+  name: "Pasteur",
+  firstname: "Louis",
+  orcid: null,
+  status: "accepted",
+};
+
+const CANDIDATE = {
+  id: "3f2504e0-4f89-41d3-9a0c-030500000012",
+  email: "ada.lovelace@univ-lorraine.fr",
+  name: "Lovelace",
+  firstname: "Ada",
+  orcid: null,
+  status: "accepted",
+};
+
 function fakeApi() {
   const requested: string[] = [];
   let members = MEMBERS;
+  let managers = [PASTEUR];
+  const managerRequests: { url: string; body: unknown }[] = [];
   fakeCurrentUser({ superAdmin: true });
   worker.use(
     http.get("*/admin/users/institutional-counts", () =>
       HttpResponse.json({
         data: { organizations: {}, osus: {}, laboratories: { UMR7358: 3 } },
       }),
+    ),
+    http.get("*/admin/institutional-groups/manager-counts", () =>
+      HttpResponse.json({
+        data: { organizations: {}, osus: {}, laboratories: { UMR7358: 1 } },
+      }),
+    ),
+    http.get("*/admin/institutional-groups/:kind/:code/managers", () =>
+      HttpResponse.json({ data: managers }),
+    ),
+    http.post(
+      "*/admin/institutional-groups/:kind/:code/managers",
+      async ({ request }) => {
+        const body = (await request.json()) as { userId: string };
+        managerRequests.push({ url: new URL(request.url).pathname, body });
+        if (body.userId === CANDIDATE.id) managers = [...managers, CANDIDATE];
+        return new HttpResponse(null, { status: 204 });
+      },
+    ),
+    http.get("*/admin/users/search", () =>
+      HttpResponse.json({ data: [CANDIDATE] }),
     ),
     http.delete("*/admin/users/:id/institutional-groups", ({ params }) => {
       members = members.filter((member) => member.id !== params.id);
@@ -72,7 +112,7 @@ function fakeApi() {
       });
     }),
   );
-  return { requested };
+  return { requested, managerRequests };
 }
 
 const renderLaboratories = (url = "/institutional-groups/laboratories") =>
@@ -231,6 +271,73 @@ describe("LaboratoriesPage", () => {
         screen.getByRole("heading", {
           name: "Centre de recherches pétrographiques et géochimiques",
         }),
+      )
+      .toBeVisible();
+  });
+
+  it("should list the managers of a laboratory on its detail page", async () => {
+    fakeApi();
+    const { screen } = await renderLaboratories(
+      "/institutional-groups/laboratories/UMR7358",
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Managers" }))
+      .toBeVisible();
+    await expect
+      .element(
+        screen
+          .getByRole("row", { name: /Louis Pasteur/ })
+          .getByRole("cell", { name: PASTEUR.email }),
+      )
+      .toBeVisible();
+  });
+
+  it("should add a manager to the laboratory", async () => {
+    const { managerRequests } = fakeApi();
+    const { screen } = await renderLaboratories(
+      "/institutional-groups/laboratories/UMR7358",
+    );
+
+    await screen.getByRole("button", { name: "Add a manager" }).click();
+    await screen.getByRole("combobox", { name: "User" }).click();
+    await screen
+      .getByRole("combobox", { name: "Search by name or email" })
+      .fill("lov");
+    await screen.getByRole("option", { name: /Lovelace/ }).click();
+    await screen.getByRole("button", { name: "Add", exact: true }).click();
+
+    await expect
+      .element(
+        screen
+          .getByRole("row", { name: /Ada Lovelace/ })
+          .getByRole("cell", { name: CANDIDATE.email }),
+      )
+      .toBeVisible();
+    expect(managerRequests).toEqual([
+      {
+        url: "/admin/institutional-groups/laboratory/UMR7358/managers",
+        body: { userId: CANDIDATE.id },
+      },
+    ]);
+  });
+
+  it("should show the active manager count of every laboratory, zero warned", async () => {
+    fakeApi();
+    const { screen } = await renderLaboratories();
+
+    await expect
+      .element(
+        screen
+          .getByRole("row", { name: /CRPG/ })
+          .getByRole("cell", { name: "1", exact: true }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen
+          .getByRole("row", { name: /GEORESSOURCES/ })
+          .getByRole("cell", { name: "0 (no active manager)" }),
       )
       .toBeVisible();
   });

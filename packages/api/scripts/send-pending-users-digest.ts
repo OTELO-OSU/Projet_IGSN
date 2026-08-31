@@ -1,13 +1,19 @@
 import { appUrl } from "../src/app-url.ts";
 import { createDb } from "../src/db.ts";
+import { createInstitutionalGroupRepository } from "../src/institutional-group/repository.ts";
 import { createSendMail } from "../src/mail/send-mail.ts";
+import { createManualGroupRepository } from "../src/manual-group/repository.ts";
 import { createUserRepository } from "../src/user/repository.ts";
 import { sendPendingUsersDigest } from "../src/user/send-pending-users-digest.ts";
 
 const db = createDb();
 await sendPendingUsersDigest(
-  createUserRepository(db),
+  {
+    users: createUserRepository(db),
+    manualGroups: createManualGroupRepository(db),
+    institutionalGroups: createInstitutionalGroupRepository(db),
+  },
   createSendMail(),
-  new URL("/users", appUrl("ADMIN_URL")).toString(),
+  appUrl("ADMIN_URL"),
 );
 await db.destroy();
