@@ -131,7 +131,7 @@ describe("mailFrom", () => {
 });
 
 describe("createSendMail", () => {
-  it("should post the mail from the configured sender", async () => {
+  it("should post the mail from the configured sender, subject prefixed", async () => {
     const sendMail = createSendMail({
       SMTP_HOST: "maildev",
       SMTP_PORT: "1025",
@@ -149,7 +149,7 @@ describe("createSendMail", () => {
     expect(sentMail).toHaveBeenCalledWith({
       from: { name: "No-reply", address: "postmaster@igsn.localhost" },
       to: ["admin@univ-lorraine.fr", "boss@univ-lorraine.fr"],
-      subject: "2 users are waiting for validation",
+      subject: "[IGSN-admin] 2 users are waiting for validation",
       text: "2 users are waiting for validation",
       html: "<p>2 users are waiting for validation</p>",
     });
