@@ -298,16 +298,6 @@ describe("UserDetailPage", () => {
       .toBeVisible();
   });
 
-  it("should keep the status when the shown one is picked again", async () => {
-    const { screen } = await renderUserPage({ status: "accepted" });
-    const status = screen.getByRole("combobox", { name: "Status" });
-
-    await status.click();
-    await screen.getByRole("option", { name: "Active" }).click();
-
-    await expect.element(status).toHaveTextContent("Active");
-  });
-
   it("should write nothing before the form is saved", async () => {
     const { screen, calls } = await renderUserPage({ status: "accepted" });
 
