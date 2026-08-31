@@ -89,7 +89,7 @@ export async function pendingUsersDigest(
   adminUrl: string,
   now: Date,
 ): Promise<{ subject: string; text: string; html: string }> {
-  const usersUrl = new URL("/users", adminUrl).toString();
+  const usersUrl = new URL("users", adminUrl).toString();
   const t = translator();
   const subject =
     pending.length > 0

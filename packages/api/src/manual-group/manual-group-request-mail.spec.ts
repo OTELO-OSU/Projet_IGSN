@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { manualGroupRequestMail } from "./manual-group-request-mail.ts";
 
-const ADMIN_URL = "http://localhost:3001/";
+const ADMIN_URL = "http://localhost:3001/admin/";
 
 const CURIE = {
   id: "01890a5d-ac96-774b-bcce-b302099a9001",
@@ -30,7 +30,7 @@ const request = {
 };
 
 const ctaUrl = (name: string) =>
-  `http://localhost:3001/manual-groups?requestedName=${name}&requestedManagerIds=${CURIE.id}%2C${DUPONT.id}`;
+  `http://localhost:3001/admin/manual-groups?requestedName=${name}&requestedManagerIds=${CURIE.id}%2C${DUPONT.id}`;
 
 describe("manualGroupRequestMail", () => {
   it.each([

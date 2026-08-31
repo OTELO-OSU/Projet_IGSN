@@ -18,11 +18,11 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
-      "redirectUris": ["${ADMIN_REDIRECT_URI:http://localhost:3001/*}"],
-      "webOrigins": ["${ADMIN_WEB_ORIGIN:http://localhost:3001}"],
+      "redirectUris": ["${ADMIN_REDIRECT_URI:http://localhost:3000/admin/*}"],
+      "webOrigins": ["${ADMIN_WEB_ORIGIN:http://localhost:3000}"],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "${ADMIN_REDIRECT_URI:http://localhost:3001/*}"
+        "post.logout.redirect.uris": "${ADMIN_REDIRECT_URI:http://localhost:3000/admin/*}"
       },
       "protocolMappers": [
         {

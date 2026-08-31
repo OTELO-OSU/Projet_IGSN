@@ -40,7 +40,7 @@ export function notifyManualGroupJoined({
         invitee,
         inviter: actor,
         groupNames: groups.map((group) => group.name),
-        settingsUrl: new URL("/settings", mail.adminUrl).toString(),
+        settingsUrl: new URL("settings", mail.adminUrl).toString(),
       }),
     mail.sendMail,
     "Could not mail the manual group invitation",

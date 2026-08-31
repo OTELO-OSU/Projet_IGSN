@@ -13,7 +13,7 @@ describe("listManualGroups", () => {
 
     const groups = await listManualGroups(fetch);
 
-    expect(new URL(lastUrl() ?? "").pathname).toBe("/manual-groups");
+    expect(new URL(lastUrl() ?? "").pathname).toBe("/api/manual-groups");
     expect(groups).toEqual([group]);
   });
 

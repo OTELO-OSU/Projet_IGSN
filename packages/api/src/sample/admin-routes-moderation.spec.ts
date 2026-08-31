@@ -33,7 +33,7 @@ type Db = Kysely<DB>;
 
 const authHeader = { Authorization: "Bearer test-token" };
 const ownerHeader = { Authorization: "Bearer owner" };
-const ADMIN_URL = "https://admin.example.test/";
+const ADMIN_URL = "https://admin.example.test/admin/";
 const FRONTEND_URL = "http://localhost:3000";
 
 const IN_REACH = "UMR7358";

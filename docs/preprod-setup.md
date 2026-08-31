@@ -18,11 +18,10 @@ Run this the first time infra is stood up, or when changing it.
    make preprod-tofu-apply
    ```
 
-2. Point Cloudflare at the EIP. Create proxied (orange cloud) A records for
-   `igsn.$DOMAIN`, `igsn-admin.$DOMAIN`, and `igsn-api.$DOMAIN`, and set SSL/TLS
-   mode to **Full (strict)**. On a zone set up before preprod dropped its own
-   auth stack, delete the leftover `igsn-auth.$DOMAIN` and `igsn-idp.$DOMAIN`
-   records:
+2. Point Cloudflare at the EIP. Create a proxied (orange cloud) A record for
+   `igsn.$DOMAIN`, and set SSL/TLS mode to **Full (strict)**. On a zone set up
+   before preprod dropped its own auth stack, delete the leftover
+   `igsn-auth.$DOMAIN` and `igsn-idp.$DOMAIN` records:
 
    ```
    tofu -chdir=infra/preprod/tf output -raw public_ip

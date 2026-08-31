@@ -33,6 +33,6 @@ export async function sampleDeletionRequestMail({
     body: t("mail_sample_deletion_request_body", params),
     quote: reason,
     cta: t("mail_sample_deletion_request_cta"),
-    url: new URL(`/samples/${sample.id}`, adminUrl).toString(),
+    url: new URL(`samples/${sample.id}`, adminUrl).toString(),
   });
 }

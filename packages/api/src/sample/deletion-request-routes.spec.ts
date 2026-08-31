@@ -19,7 +19,7 @@ import { publishSample } from "./service/publish-sample.ts";
 
 type Db = Kysely<DB>;
 
-const ADMIN_URL = "http://localhost:3001";
+const ADMIN_URL = "http://localhost:3001/admin/";
 const FRONTEND_URL = "http://localhost:3000";
 
 const authHeader = { Authorization: "Bearer test-token" };
@@ -97,7 +97,7 @@ describe("POST /admin/samples/:id/deletion-request", () => {
       ]);
       expect(sent.audience).toBe("admin");
       expect(sent.text).toContain(sample.igsn);
-      expect(sent.text).toContain(`${ADMIN_URL}/samples/${sample.id}`);
+      expect(sent.text).toContain(`${ADMIN_URL}samples/${sample.id}`);
       expect(sent.text).toContain(REASON);
     },
   );

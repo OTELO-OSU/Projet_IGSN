@@ -2584,7 +2584,7 @@ describe("admin sample routes", () => {
       collectionMethod: null,
     };
     const colleagueHeader = { Authorization: "Bearer colleague" };
-    const ADMIN_URL = "http://localhost:3001/";
+    const ADMIN_URL = "http://localhost:3001/admin/";
     const FRONTEND_URL = "http://localhost:3000";
 
     async function arrangeOwnedSample(

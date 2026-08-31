@@ -11,10 +11,18 @@ export function signIn(starter: SignInStarter): void {
   });
 }
 
-export function safeReturnPath(urlState: string | undefined): string {
-  return urlState?.startsWith("/") &&
-    !urlState.startsWith("//") &&
-    !urlState.startsWith("/auth/callback")
-    ? urlState
+function stripBase(path: string, base: string): string {
+  return `${path}/`.startsWith(base) ? `/${path.slice(base.length)}` : path;
+}
+
+export function safeReturnPath(
+  urlState: string | undefined,
+  base: string = import.meta.env.BASE_URL,
+): string {
+  const path = urlState === undefined ? "" : stripBase(urlState, base);
+  return path.startsWith("/") &&
+    !path.startsWith("//") &&
+    !path.startsWith("/auth/callback")
+    ? path
     : "/";
 }

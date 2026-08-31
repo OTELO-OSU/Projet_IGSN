@@ -62,8 +62,8 @@ routes. Each entity is a folder in both.
 
 - `pnpm test packages/domain` and `pnpm test packages/api` both green.
 - The route is reachable: start `pnpm --filter @projet-igsn/api dev` and confirm
-  it responds on http://localhost:3002, or assert it through `testClient` in the
-  routes spec.
+  it responds on http://localhost:3000/api, or assert it through `testClient` in
+  the routes spec.
 - Invalid payloads are rejected by the schema, not just the happy path.
 
 Not done until the tests pass and you have seen the output.

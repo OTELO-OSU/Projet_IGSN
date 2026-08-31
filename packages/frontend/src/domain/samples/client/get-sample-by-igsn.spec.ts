@@ -40,7 +40,7 @@ describe("getSampleByIgsn", () => {
 
     const result = await getSampleByIgsn(igsn, fetch);
 
-    expect(new URL(lastUrl() ?? "").pathname).toBe(`/samples/${igsn}`);
+    expect(new URL(lastUrl() ?? "").pathname).toBe(`/api/samples/${igsn}`);
     expect(result).toEqual({
       id: sampleJson.id,
       name: "Basalt 42",

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { groupWithoutManagerMail } from "./group-without-manager-mail.ts";
 
-const ADMIN_URL = "http://localhost:3001/";
+const ADMIN_URL = "http://localhost:3001/admin/";
 
 const MASSIF: OrphanedGroup = {
   kind: "manual",
@@ -31,7 +31,7 @@ describe("groupWithoutManagerMail", () => {
   it.each([
     {
       group: MASSIF,
-      url: "http://localhost:3001/manual-groups/01890a5d-ac96-774b-bcce-b302099a9001",
+      url: "http://localhost:3001/admin/manual-groups/01890a5d-ac96-774b-bcce-b302099a9001",
     },
     {
       group: {
@@ -39,11 +39,11 @@ describe("groupWithoutManagerMail", () => {
         code: "04vfs2w97",
         name: "Université de Lorraine",
       },
-      url: "http://localhost:3001/institutional-groups/organizations/04vfs2w97",
+      url: "http://localhost:3001/admin/institutional-groups/organizations/04vfs2w97",
     },
     {
       group: { kind: "osu" as const, code: "OTELo", name: "OTELo" },
-      url: "http://localhost:3001/institutional-groups/osus/OTELo",
+      url: "http://localhost:3001/admin/institutional-groups/osus/OTELo",
     },
     {
       group: {
@@ -51,7 +51,7 @@ describe("groupWithoutManagerMail", () => {
         code: "UMR7358",
         name: "GeoRessources",
       },
-      url: "http://localhost:3001/institutional-groups/laboratories/UMR7358",
+      url: "http://localhost:3001/admin/institutional-groups/laboratories/UMR7358",
     },
   ])("should link a $group.kind group to its page", async ({ group, url }) => {
     const mail = await groupWithoutManagerMail(group, ADMIN_URL);

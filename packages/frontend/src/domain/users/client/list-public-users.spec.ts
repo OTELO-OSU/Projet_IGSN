@@ -14,7 +14,7 @@ describe("listPublicUsers", () => {
 
     const contributors = await listPublicUsers(undefined, fetch);
 
-    expect(new URL(lastUrl() ?? "").pathname).toBe("/users");
+    expect(new URL(lastUrl() ?? "").pathname).toBe("/api/users");
     expect(contributors).toEqual([user]);
   });
 

@@ -55,9 +55,10 @@ Run every package together in Docker with live file watching:
 make dev
 ```
 
-This builds and starts `frontend` (http://localhost:3000), `admin` (http://localhost:3001)
-and `api` (http://localhost:3002) via [docker-compose.dev.yml](docker-compose.dev.yml).
-Source changes sync into the containers automatically.
+This builds and starts `frontend`, `admin` and `api` behind one Caddy origin at
+http://localhost:3000 (`frontend` at `/`, `admin` at `/admin`, `api` at `/api`) via
+[docker-compose.dev.yml](docker-compose.dev.yml). Source changes sync into the
+containers automatically.
 
 ## Design system
 

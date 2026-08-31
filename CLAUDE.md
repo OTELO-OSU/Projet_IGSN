@@ -47,7 +47,6 @@
 
 ## Services (dev)
 
-- `admin`: http://localhost:3001
-- `api`: http://localhost:3002
-- `frontend`: http://localhost:3000
+- One origin, http://localhost:3000: `frontend` at `/`, `admin` at `/admin`, `api` at `/api`.
+- `keycloak`: http://localhost:8080
 - `maildev` (mail sink UI): http://localhost:1080

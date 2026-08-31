@@ -24,7 +24,7 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: ["currentUser"],
     queryFn: async () => {
-      const res = await apiFetch(`${API_URL}/admin/currentUser`);
+      const res = await apiFetch(new URL("admin/currentUser", API_URL));
       if (!res.ok) {
         const body: unknown =
           res.status === 403 ? await res.json().catch(() => null) : null;

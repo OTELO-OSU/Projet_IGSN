@@ -1,7 +1,7 @@
 default: help
 
 E2E_COMPOSE = docker compose -p igsn-e2e -f docker-compose.e2e.yml
-E2E_URL = ADMIN_URL=http://localhost:4001 FRONTEND_URL=http://localhost:4000
+E2E_URL = ADMIN_URL=http://localhost:4000/admin FRONTEND_URL=http://localhost:4000
 E2E_UP = trap '$(E2E_COMPOSE) down -v' EXIT; \
 	$(E2E_COMPOSE) up -d --build --wait --wait-timeout 300
 

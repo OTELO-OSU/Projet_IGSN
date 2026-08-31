@@ -17,7 +17,9 @@ describe("contactSampleOwner", () => {
 
     await contactSampleOwner(igsn, body, fetch);
 
-    expect(new URL(lastUrl() ?? "").pathname).toBe(`/samples/${igsn}/contact`);
+    expect(new URL(lastUrl() ?? "").pathname).toBe(
+      `/api/samples/${igsn}/contact`,
+    );
     expect(lastInit()?.method).toBe("POST");
     expect(lastInit()?.body).toBe(JSON.stringify(body));
   });
