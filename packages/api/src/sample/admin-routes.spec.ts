@@ -3241,7 +3241,8 @@ describe("admin sample routes", () => {
         });
       }
       if (status !== "draft") {
-        await publishSample(db, sample.id, status);
+        await publishSample(db, sample.id);
+        await setSampleStatus(db, sample.id, status);
       }
       return { caller, sample };
     }

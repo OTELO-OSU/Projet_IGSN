@@ -56,7 +56,7 @@ What a published sample may still change lives in ONE place too, the lock maps a
 - Only a leaf whose lock depends on a frozen sibling is hand-written in the merge helpers.
 - Add no parallel classification record and no second list of field names; see ADR 0021.
 - A super admin bypasses every lock: `domain/user/can-edit-frozen-sample-fields.ts` (`canEditFrozenSampleFields`) is read both by the api's `mergePublishedEdit` call and by the admin form's `publishedSampleFrozenField` resolver, so a super admin edits everything on a published sample except the IGSN, which stays out of `createSampleSchema`.
-- A `tombstone` sample is visible only to a super admin or an in-reach space manager, and its only allowed change is its own status (`published | withdrawn <-> tombstone`, never `draft`), guarded in `api/src/sample/require-sample-access.ts`; see ADR 0033.
+- A `tombstone` sample is visible only to a super admin or an in-reach space manager (`api/src/sample/require-sample-access.ts`), `canUpdateSample` refuses it, and who may move a sample between its permanent statuses (`published | withdrawn <-> tombstone`, never `draft`) is `domain/user-sample/can-set-sample-status.ts`, read by the api status route and the admin status menu; see ADR 0033.
 
 `material` is the one field with no entry, because which of its levels lock depends on the stored path.
 

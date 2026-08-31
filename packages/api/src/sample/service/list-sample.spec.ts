@@ -62,7 +62,8 @@ async function insertOneSamplePerStatus(db: Transactional<DB>) {
   await publishSample(db, withdrawn.id);
   await setSampleStatus(db, withdrawn.id, "withdrawn");
   const tombstoned = await sample("Tombstone sample");
-  await publishSample(db, tombstoned.id, "tombstone");
+  await publishSample(db, tombstoned.id);
+  await setSampleStatus(db, tombstoned.id, "tombstone");
 }
 
 describe("listSamples", () => {

@@ -14,7 +14,7 @@ A published or withdrawn sample keeps a permanent IGSN (ADR 0032), so it cannot 
 
 **`sample.status` gains a fourth value, `tombstone`.** Transitions are `published | withdrawn <-> tombstone`, never from or to `draft`: `setSampleStatusBodySchema` accepts `tombstone` but `publishStatusSchema` (draft's own publish endpoint) excludes it.
 
-**Entering or leaving `tombstone` is gated on management reach, not the editor role.** `PUT /admin/samples/:id/status` refuses the change (403) unless the caller is a super admin or an in-reach space manager (ADR 0030's scope), computed as `managed` by `require-sample-access.ts` for every found sample, owner included; `moderating` stays `managed && !owner`.
+**Entering or leaving `tombstone` is gated on management reach, not the editor role.** `PUT /admin/samples/:id/status` refuses the change (403) unless the caller is a super admin or an in-reach space manager (ADR 0030's scope), computed as `managed` by `require-sample-access.ts` for every found sample, owner included; `moderating` stays `managed && !owner`. The rule itself is `domain/user-sample/can-set-sample-status.ts`, so the admin offers only the transitions the api accepts.
 
 **A tombstoned sample is invisible to everyone but its managers, as a 404.** A caller with no access to the sample at all still gets the usual 403 first, so a stranger cannot distinguish a tombstone from an existing-but-forbidden sample; only a caller who could otherwise see it, but lacks management reach, is turned away with 404. `require-sample-access.ts` also answers 409 to every non-GET but the status endpoint itself, since nothing but a restore may touch a tombstone.
 

@@ -131,6 +131,12 @@ export const setSampleStatusBodySchema = z.strictObject({
 
 export type SetSampleStatusBody = z.infer<typeof setSampleStatusBodySchema>;
 
+/** A tombstone is only reached from a permanent status. */
+export const publishStatusSchema =
+  setSampleStatusBodySchema.shape.status.exclude(["tombstone"]);
+
+export type PublishStatus = z.infer<typeof publishStatusSchema>;
+
 export const adminSampleListItemSchema = sampleSchema.extend({
   owner: userSchema
     .pick({ name: true, firstname: true })
@@ -152,7 +158,7 @@ export type AdminListSamplesResponse = z.infer<
 export const adminSampleResponseSchema = z.object({
   data: sampleSchema,
   role: userSampleRoleSchema,
-  managed: z.boolean().default(false),
+  managed: z.boolean(),
   manualGroupOptions: z.array(manualGroupSchema).default([]),
 });
 

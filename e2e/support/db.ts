@@ -23,28 +23,29 @@ function resetAndSeed(): SeededSample[] {
   return JSON.parse(lastLine) as SeededSample[];
 }
 
+export function sampleNamed(samples: SeededSample[], name: string) {
+  const sample = samples.find((s) => s.name === name);
+  if (!sample?.igsn) throw new Error(`seed must publish "${name}"`);
+  return { ...sample, igsn: sample.igsn };
+}
+
 export function published(samples: SeededSample[]) {
-  const igsnOf = (name: string) => {
-    const igsn = samples.find((s) => s.name === name)?.igsn;
-    if (!igsn) throw new Error(`seed must publish "${name}"`);
-    return igsn;
+  return {
+    basalt: sampleNamed(samples, "Basalt 42").igsn,
+    granite: sampleNamed(samples, "Granite 7").igsn,
   };
-  return { basalt: igsnOf("Basalt 42"), granite: igsnOf("Granite 7") };
 }
 
-export function withdrawn(samples: SeededSample[]) {
-  const sample = samples.find((s) => s.status === "withdrawn");
-  if (!sample?.igsn)
-    throw new Error("seed must withdraw a sample with an igsn");
-  return { igsn: sample.igsn, name: sample.name };
-}
+const sampleWithStatus =
+  (status: SeededSample["status"]) => (samples: SeededSample[]) => {
+    const sample = samples.find((s) => s.status === status);
+    if (!sample?.igsn)
+      throw new Error(`seed must hold a ${status} sample with an igsn`);
+    return { igsn: sample.igsn, name: sample.name };
+  };
 
-export function tombstone(samples: SeededSample[]) {
-  const sample = samples.find((s) => s.status === "tombstone");
-  if (!sample?.igsn)
-    throw new Error("seed must tombstone a sample with an igsn");
-  return { igsn: sample.igsn, name: sample.name };
-}
+export const withdrawn = sampleWithStatus("withdrawn");
+export const tombstone = sampleWithStatus("tombstone");
 
 export const test = base.extend<{ samples: SeededSample[] }>({
   samples: [

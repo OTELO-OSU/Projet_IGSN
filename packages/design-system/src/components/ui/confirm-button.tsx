@@ -64,7 +64,6 @@ export function ConfirmButton({
   );
 }
 
-/** A confirm dialog whose trigger the caller renders as `children` (a `DialogTrigger`, possibly nested in a menu). */
 export function ConfirmDialog({
   title,
   description,

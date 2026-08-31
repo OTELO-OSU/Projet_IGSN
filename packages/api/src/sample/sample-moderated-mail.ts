@@ -1,8 +1,8 @@
 import type { SampleMailField } from "@projet-igsn/domain/sample/changed-sample-fields";
+import type { PublishStatus } from "@projet-igsn/domain/sample/sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 
 import type { RenderedMail } from "../mail/send-mail.ts";
-import type { PublishStatus } from "./validator.ts";
 
 import { ctaMail } from "../mail/cta-mail.ts";
 import { translator } from "../mail/i18n.ts";

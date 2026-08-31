@@ -6,19 +6,8 @@ import {
   signInAsResearcher,
   signInAsResearcherInOwnSession,
 } from "../support/admin/sign-in";
-import { type SeededSample, test, tombstone } from "../support/db";
+import { sampleNamed, test, tombstone } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
-
-function publishedSampleOfJean(samples: SeededSample[]) {
-  const sample = samples.find(
-    (candidate) =>
-      candidate.owner === "jean" && candidate.status === "published",
-  );
-  if (!sample?.igsn) {
-    throw new Error("seed must give jean a published sample with an igsn");
-  }
-  return { id: sample.id, name: sample.name, igsn: sample.igsn };
-}
 
 test.describe("tombstone", () => {
   test("a space manager tombstones a published sample of the labs it manages", async ({
@@ -27,7 +16,7 @@ test.describe("tombstone", () => {
     samples,
   }) => {
     test.slow();
-    const sample = publishedSampleOfJean(samples);
+    const sample = sampleNamed(samples, "Basalt 42");
     const moderation = sampleModerationPage(page);
     const edit = sampleEditPage(page);
 
@@ -37,7 +26,7 @@ test.describe("tombstone", () => {
     await moderation.openSample(sample.name);
 
     await edit.expectVisible();
-    await edit.tombstone();
+    await edit.saveAnd("Tombstone");
     await moderation.expectVisible();
 
     const ownerPage = await signInAsResearcherInOwnSession(
@@ -69,12 +58,10 @@ test.describe("tombstone", () => {
     await moderation.open();
     await moderation.openSample(sample.name);
 
-    await edit.expectTombstoneHint();
-    await edit.expectNoSaveAction();
     await edit.restoreAsWithdrawn();
 
     await edit.expectWithdrawnHint();
-    await edit.expectTombstoneInMenu();
+    await edit.expectSaveMenuItem("Tombstone");
     await edit.republish();
 
     const detail = sampleDetailPage(page);

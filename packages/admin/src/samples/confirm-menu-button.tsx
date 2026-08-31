@@ -20,7 +20,6 @@ export type ConfirmMenuItem = {
   onConfirm: () => void;
 };
 
-/** A discreet chevron attached to a main button, hiding confirmed actions in its menu. */
 export function ConfirmMenuButton({
   label,
   disabled,

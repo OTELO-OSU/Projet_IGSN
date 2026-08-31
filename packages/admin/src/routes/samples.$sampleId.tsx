@@ -1,7 +1,8 @@
+import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type {
-  CreateSample,
-  SampleStatus,
-} from "@projet-igsn/domain/sample/sample";
+  PublishStatus,
+  SetSampleStatusBody,
+} from "@projet-igsn/domain/sample/sample-validator";
 
 import {
   Alert,
@@ -15,8 +16,8 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canRequestSampleDeletion } from "@projet-igsn/domain/user-sample/can-request-sample-deletion";
+import { canSetSampleStatus } from "@projet-igsn/domain/user-sample/can-set-sample-status";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
-import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { InfoIcon, Trash2Icon } from "lucide-react";
 import { z } from "zod";
@@ -24,10 +25,13 @@ import { z } from "zod";
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
-import { RepublishButton } from "#/samples/republish-button.tsx";
 import { RequestSampleDeletionDialog } from "#/samples/request-sample-deletion-dialog.tsx";
-import { RestoreWithdrawnButton } from "#/samples/restore-withdrawn-button.tsx";
-import { SampleForm } from "#/samples/sample-form.tsx";
+import {
+  SampleForm,
+  type SampleFormProps,
+  type SampleSubmitMenuItem,
+} from "#/samples/sample-form.tsx";
+import { SetStatusButton } from "#/samples/set-status-button.tsx";
 import { ShareSampleButton } from "#/samples/share-sample-button.tsx";
 import { useAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { useDeleteSample } from "#/samples/use-delete-sample.ts";
@@ -44,6 +48,11 @@ const SAVE_LABEL: Record<Exclude<SampleStatus, "tombstone">, () => string> = {
   draft: m.action_save_draft,
   published: m.action_publish_updates,
   withdrawn: m.action_save_changes,
+};
+
+const PUBLIC_HINT: Partial<Record<SampleStatus, () => string>> = {
+  withdrawn: m.sample_withdrawn_hint,
+  tombstone: m.sample_tombstone_hint,
 };
 
 export const Route = createFileRoute("/samples/$sampleId")({
@@ -66,9 +75,7 @@ function EditSamplePage() {
   const deleteSample = useDeleteSample(sampleId);
   const { heldByOther } = useSampleEditLock(
     sampleId,
-    query.data != null &&
-      query.data.status !== "tombstone" &&
-      canUpdateSample(query.data.role, query.data),
+    query.data != null && canUpdateSample(query.data.role, query.data),
   );
   const attachmentChanges = useAttachmentChanges(
     sampleId,
@@ -91,10 +98,10 @@ function EditSamplePage() {
     return <p role="alert">{m.sample_not_found()}</p>;
   }
 
-  const status = query.data.status;
-  const managed = query.data.managed;
+  const { role, managed, status } = query.data;
   const isTombstone = status === "tombstone";
-  const mayToggleStatus = isSampleEditor(query.data.role);
+  const can = (to: SetSampleStatusBody["status"]) =>
+    canSetSampleStatus(role, managed, { status }, to);
   const isPending =
     updateSample.isPending || publishSample.isPending || setStatus.isPending;
   const conflict =
@@ -112,25 +119,28 @@ function EditSamplePage() {
       : conflict === "stale"
         ? m.edit_sample_stale()
         : undefined;
-  const publicHint = isTombstone
-    ? m.sample_tombstone_hint()
-    : status === "withdrawn"
-      ? m.sample_withdrawn_hint()
-      : undefined;
-  const withdrawItem = {
+  const publicHint = PUBLIC_HINT[status]?.();
+  const restoreButton = (to: PublishStatus) => (
+    <SetStatusButton
+      status={to}
+      disabled={isPending}
+      onConfirm={() => setStatus.mutate(to)}
+    />
+  );
+  const withdrawItem: SampleSubmitMenuItem = {
     label: m.action_save_withdraw(),
     title: m.withdraw_sample_title(),
     description: m.withdraw_sample_warning(),
-    onConfirm: (value: CreateSample) =>
+    onConfirm: (value) =>
       updateSample.mutate(value, {
         onSuccess: () => setStatus.mutate("withdrawn"),
       }),
   };
-  const tombstoneItem = {
+  const tombstoneItem: SampleSubmitMenuItem = {
     label: m.action_save_tombstone(),
     title: m.tombstone_sample_title(),
     description: m.tombstone_sample_warning(),
-    onConfirm: (value: CreateSample) =>
+    onConfirm: (value) =>
       updateSample.mutate(value, {
         onSuccess: () =>
           setStatus.mutate("tombstone", {
@@ -138,15 +148,55 @@ function EditSamplePage() {
           }),
       }),
   };
-  const statusMenu =
-    status === "published" && mayToggleStatus
-      ? {
-          label: m.action_status_options(),
-          items: managed ? [withdrawItem, tombstoneItem] : [withdrawItem],
-        }
-      : status === "withdrawn" && managed
-        ? { label: m.action_status_options(), items: [tombstoneItem] }
-        : undefined;
+  const statusItems = [
+    ...(status === "published" && can("withdrawn") ? [withdrawItem] : []),
+    ...(can("tombstone") ? [tombstoneItem] : []),
+  ];
+  const formActions: Pick<
+    SampleFormProps,
+    "readOnlyReason" | "statusAction" | "secondaryAction" | "primaryAction"
+  > = isTombstone
+    ? {
+        readOnlyReason: publicHint,
+        statusAction: (
+          <>
+            {restoreButton("published")}
+            {restoreButton("withdrawn")}
+          </>
+        ),
+      }
+    : {
+        readOnlyReason: lockedMessage ?? rejection,
+        statusAction:
+          status === "withdrawn" && can("published")
+            ? restoreButton("published")
+            : undefined,
+        secondaryAction: {
+          kind: "submit",
+          label: SAVE_LABEL[status](),
+          onSubmit: (value) => updateSample.mutate(value),
+          menu: statusItems.length
+            ? { label: m.action_status_options(), items: statusItems }
+            : undefined,
+        },
+        primaryAction: query.data.igsn
+          ? {
+              kind: "link",
+              label: m.action_view_public_page(),
+              href: `${FRONTEND_URL}/samples/${query.data.igsn}`,
+            }
+          : {
+              kind: "publish",
+              label: m.action_save_publish(),
+              onPublish: (value, publishStatus) =>
+                updateSample.mutate(value, {
+                  onSuccess: () =>
+                    publishSample.mutate(publishStatus, {
+                      onSuccess: () => navigate({ to: listRoute }),
+                    }),
+                }),
+            },
+      };
 
   return (
     <>
@@ -236,60 +286,8 @@ function EditSamplePage() {
         attachmentChanges={attachmentChanges}
         isPending={isPending}
         status={status}
-        readOnlyReason={
-          isTombstone ? m.sample_tombstone_hint() : (lockedMessage ?? rejection)
-        }
-        statusAction={
-          isTombstone ? (
-            <>
-              <RepublishButton
-                disabled={isPending}
-                onConfirm={() => setStatus.mutate("published")}
-              />
-              <RestoreWithdrawnButton
-                disabled={isPending}
-                onConfirm={() => setStatus.mutate("withdrawn")}
-              />
-            </>
-          ) : status === "withdrawn" && mayToggleStatus ? (
-            <RepublishButton
-              disabled={isPending}
-              onConfirm={() => setStatus.mutate("published")}
-            />
-          ) : undefined
-        }
         onCancel={() => navigate({ to: listRoute })}
-        secondaryAction={
-          isTombstone
-            ? undefined
-            : {
-                kind: "submit",
-                label: SAVE_LABEL[status](),
-                onSubmit: (value) => updateSample.mutate(value),
-                menu: statusMenu,
-              }
-        }
-        primaryAction={
-          isTombstone
-            ? undefined
-            : query.data.igsn
-              ? {
-                  kind: "link",
-                  label: m.action_view_public_page(),
-                  href: `${FRONTEND_URL}/samples/${query.data.igsn}`,
-                }
-              : {
-                  kind: "publish",
-                  label: m.action_save_publish(),
-                  onPublish: (value, publishStatus) =>
-                    updateSample.mutate(value, {
-                      onSuccess: () =>
-                        publishSample.mutate(publishStatus, {
-                          onSuccess: () => navigate({ to: listRoute }),
-                        }),
-                    }),
-                }
-        }
+        {...formActions}
       />
     </>
   );

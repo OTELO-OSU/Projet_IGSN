@@ -27,6 +27,7 @@ import { insertSampleCollaborator } from "../user-sample/insert-sample-collabora
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
+import { setSampleStatus } from "./service/set-sample-status.ts";
 
 type Db = Kysely<DB>;
 
@@ -91,7 +92,9 @@ async function arrangeManager(
   };
 }
 
-const listModerated = (app: ReturnType<typeof createApp>["app"], filter = "") =>
+type App = ReturnType<typeof createApp>["app"];
+
+const listModerated = (app: App, filter = "") =>
   app.request(`/admin/samples/moderated?page=1&perPage=25${filter}`, {
     headers: authHeader,
   });
@@ -664,9 +667,6 @@ describe("the moderation mail", () => {
 });
 
 describe("a tombstoned sample", () => {
-  type App = ReturnType<typeof createApp>["app"];
-  type Arranged = { app: App; sampleId: string };
-
   const setStatus = (
     app: App,
     id: string,
@@ -678,14 +678,10 @@ describe("a tombstoned sample", () => {
       { headers },
     );
 
-  async function asInstitutionalManager(db: Db): Promise<Arranged> {
-    const { app, owner } = await arrangeManager(db);
-    const sample = await ownedSample(db, owner.id, publishableSample, IN_REACH);
-    await publishSample(db, sample.id);
-    return { app, sampleId: sample.id };
-  }
-
-  async function arrangeTombstoned(db: Db) {
+  async function arrangeManaged(
+    db: Db,
+    status: SetSampleStatusBody["status"] = "published",
+  ) {
     const { app, owner } = await arrangeManager(db);
     const created = await ownedSample(
       db,
@@ -693,7 +689,8 @@ describe("a tombstoned sample", () => {
       publishableSample,
       IN_REACH,
     );
-    const sample = await publishSample(db, created.id, "tombstone");
+    await publishSample(db, created.id);
+    const sample = await setSampleStatus(db, created.id, status);
     return { app, owner, sample: sample! };
   }
 
@@ -701,9 +698,9 @@ describe("a tombstoned sample", () => {
     "should let a manager tombstone a published sample",
     async ({ db }) => {
       // Arrange
-      const { app, sampleId } = await asInstitutionalManager(db);
+      const { app, sample } = await arrangeManaged(db);
       // Act
-      const res = await setStatus(app, sampleId, "tombstone");
+      const res = await setStatus(app, sample.id, "tombstone");
       // Assert
       expect(res.status).toBe(200);
       expect(await res.json()).toMatchObject({ data: { status: "tombstone" } });
@@ -714,14 +711,7 @@ describe("a tombstoned sample", () => {
     "should answer 403 when an owner with no management reach tombstones",
     async ({ db }) => {
       // Arrange
-      const { app, owner } = await arrangeManager(db);
-      const sample = await ownedSample(
-        db,
-        owner.id,
-        publishableSample,
-        IN_REACH,
-      );
-      await publishSample(db, sample.id);
+      const { app, sample } = await arrangeManaged(db);
       // Act
       const res = await setStatus(app, sample.id, "tombstone", ownerHeader);
       // Assert
@@ -733,7 +723,7 @@ describe("a tombstoned sample", () => {
     "should let a manager restore a tombstoned sample as %s",
     async (status, { db }) => {
       // Arrange
-      const { app, sample } = await arrangeTombstoned(db);
+      const { app, sample } = await arrangeManaged(db, "tombstone");
       // Act
       const res = await setStatus(app, sample.id, status);
       // Assert
@@ -744,7 +734,7 @@ describe("a tombstoned sample", () => {
 
   pgTest("should answer 404 to a caller out of reach", async ({ db }) => {
     // Arrange
-    const { app, sample } = await arrangeTombstoned(db);
+    const { app, sample } = await arrangeManaged(db, "tombstone");
     // Act
     const res = await testClient(app).admin.samples[":id"].$get(
       { param: { id: sample.id } },
@@ -756,7 +746,7 @@ describe("a tombstoned sample", () => {
 
   pgTest("should stay in the moderation list", async ({ db }) => {
     // Arrange
-    const { app, sample } = await arrangeTombstoned(db);
+    const { app, sample } = await arrangeManaged(db, "tombstone");
     // Act
     const res = await listModerated(app);
     // Assert
@@ -794,7 +784,7 @@ describe("a tombstoned sample", () => {
     "should answer 409 to %s from a manager",
     async ([, write], { db }) => {
       // Arrange
-      const { app, sample } = await arrangeTombstoned(db);
+      const { app, sample } = await arrangeManaged(db, "tombstone");
       const invitee = await insertUser(db, "invitee@example.com");
       // Act
       const res = await write(app, sample, invitee.id);
@@ -835,13 +825,7 @@ describe("a tombstoned sample", () => {
     "should report the management reach of %s",
     async ([, headers, managed], { db }) => {
       // Arrange
-      const { app, owner } = await arrangeManager(db);
-      const sample = await ownedSample(
-        db,
-        owner.id,
-        publishableSample,
-        IN_REACH,
-      );
+      const { app, sample } = await arrangeManaged(db);
       // Act
       const res = await testClient(app).admin.samples[":id"].$get(
         { param: { id: sample.id } },

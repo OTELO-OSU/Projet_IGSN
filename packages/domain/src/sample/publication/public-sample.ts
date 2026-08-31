@@ -10,8 +10,7 @@ export function toPublicSample(sample: Sample): PublicSample {
     case "withdrawn":
       return toWithdrawnSample(sample);
     case "draft":
-      throw new Error("A draft sample has no public view");
     case "tombstone":
-      throw new Error("A tombstoned sample has no public view");
+      throw new Error(`A ${sample.status} sample has no public view`);
   }
 }

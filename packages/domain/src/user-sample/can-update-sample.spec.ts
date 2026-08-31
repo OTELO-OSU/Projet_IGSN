@@ -7,6 +7,7 @@ describe("canUpdateSample", () => {
   it.each([
     ["owner", "draft", true],
     ["owner", "withdrawn", true],
+    ["owner", "tombstone", false],
     ["editor", "published", true],
     ["contributor", "draft", true],
     ["contributor", "published", false],

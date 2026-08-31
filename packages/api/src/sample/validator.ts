@@ -4,6 +4,7 @@ import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
   contactSampleOwnerBodySchema,
   listSamplesQuerySchema,
+  publishStatusSchema,
   requestSampleDeletionBodySchema,
   setSampleStatusBodySchema,
   updateSampleBodySchema,
@@ -84,12 +85,8 @@ export const validateRequestDeletionBody = validator("json", (value, c) => {
   return parsed.data;
 });
 
-/** Parsed by hand from `?status=` so the hc client keeps its bodiless, query-less `publish.$post` signature. */
-export const publishStatusSchema = setSampleStatusBodySchema.shape.status
-  .exclude(["tombstone"])
-  .default("published");
-
-export type PublishStatus = z.infer<typeof publishStatusSchema>;
+export const publishStatusQuerySchema =
+  publishStatusSchema.default("published");
 
 export const validateStatusBody = validator("json", (value, c) => {
   const parsed = setSampleStatusBodySchema.safeParse(value);

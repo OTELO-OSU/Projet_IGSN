@@ -3,6 +3,8 @@ import { expect, type Page } from "@playwright/test";
 import { adminUrl } from "../urls";
 import { expectNoManualGroupOffered } from "./manual-groups-field.ts";
 
+type SaveMenuAction = "Withdraw" | "Tombstone";
+
 export function sampleEditPage(page: Page) {
   const openTab = (name: string) => page.getByRole("tab", { name }).click();
   const pick = async (field: string, label: string) => {
@@ -153,27 +155,15 @@ export function sampleEditPage(page: Page) {
       await confirm("Publish sample as withdrawn");
     },
 
-    withdraw: async () => {
+    saveAnd: async (action: SaveMenuAction) => {
       await openActionsMenu();
-      await page.getByRole("menuitem", { name: "Save & Withdraw" }).click();
-      await confirm("Withdraw sample");
+      await page.getByRole("menuitem", { name: `Save & ${action}` }).click();
+      await confirm(`${action} sample`);
     },
-    expectWithdrawInMenu: async () => {
+    expectSaveMenuItem: async (action: SaveMenuAction) => {
       await openActionsMenu();
       await expect(
-        page.getByRole("menuitem", { name: "Save & Withdraw" }),
-      ).toBeVisible();
-      await page.keyboard.press("Escape");
-    },
-    tombstone: async () => {
-      await openActionsMenu();
-      await page.getByRole("menuitem", { name: "Save & Tombstone" }).click();
-      await confirm("Tombstone sample");
-    },
-    expectTombstoneInMenu: async () => {
-      await openActionsMenu();
-      await expect(
-        page.getByRole("menuitem", { name: "Save & Tombstone" }),
+        page.getByRole("menuitem", { name: `Save & ${action}` }),
       ).toBeVisible();
       await page.keyboard.press("Escape");
     },
@@ -182,14 +172,6 @@ export function sampleEditPage(page: Page) {
         "Restore as withdrawn",
         "Restore sample as withdrawn",
       ),
-    expectTombstoneHint: () =>
-      expect(
-        page.getByText(
-          "This sample is a tombstone, hidden from everyone but its space managers. Restore it to change anything else.",
-        ),
-      ).toBeVisible(),
-    expectNoSaveAction: () =>
-      expect(page.getByRole("button", { name: /^Save/ })).toHaveCount(0),
     republish: () => confirmStatusChange("Republish", "Republish sample"),
     expectStatusAction: (name: string) =>
       expect(page.getByRole("button", { name })).toBeVisible(),

@@ -48,6 +48,7 @@ it("should keep offering a group the owner has left while the sample is in it", 
     Response.json({
       data: sample,
       role: "owner",
+      managed: false,
       manualGroupOptions: [BASALT],
     }),
   );
