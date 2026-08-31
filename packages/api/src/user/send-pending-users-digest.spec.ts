@@ -17,9 +17,7 @@ const repositories = (db: Parameters<typeof createUserRepository>[0]) => ({
 
 const now = new Date("2026-08-06T12:00:00Z");
 
-const USERS_URL = "http://localhost:3001/users";
 const ADMIN_URL = "http://localhost:3001/";
-const URLS = { usersUrl: USERS_URL, adminUrl: ADMIN_URL };
 
 describe("sendPendingUsersDigest", () => {
   pgTest(
@@ -41,7 +39,7 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
 
-      await sendPendingUsersDigest(repositories(db), sendMail, URLS, now);
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
 
       expect(sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -59,7 +57,7 @@ describe("sendPendingUsersDigest", () => {
       await insertUser(db, "researcher@univ-lorraine.fr", {});
       const sendMail = vi.fn().mockResolvedValue(undefined);
 
-      await sendPendingUsersDigest(repositories(db), sendMail, URLS, now);
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
 
       expect(sendMail).not.toHaveBeenCalled();
     },
@@ -73,7 +71,7 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
 
-      await sendPendingUsersDigest(repositories(db), sendMail, URLS, now);
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
 
       expect(sendMail).not.toHaveBeenCalled();
     },
@@ -90,7 +88,7 @@ describe("sendPendingUsersDigest", () => {
       const sendMail = vi.fn().mockRejectedValue(new Error("SMTP down"));
 
       await expect(
-        sendPendingUsersDigest(repositories(db), sendMail, URLS, now),
+        sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now),
       ).resolves.toBeUndefined();
 
       expect(logged).toHaveBeenCalled();
@@ -116,7 +114,7 @@ describe("sendPendingUsersDigest", () => {
           },
         },
         sendMail,
-        URLS,
+        ADMIN_URL,
         now,
       ),
     ).resolves.toBeUndefined();
@@ -156,7 +154,7 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
       // Act
-      await sendPendingUsersDigest(repositories(db), sendMail, URLS, now);
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
       // Assert
       expect(sendMail).toHaveBeenCalledTimes(2);
       expect(sendMail).toHaveBeenCalledWith(
@@ -197,7 +195,7 @@ describe("sendPendingUsersDigest", () => {
       .execute();
     const sendMail = vi.fn().mockResolvedValue(undefined);
     // Act
-    await sendPendingUsersDigest(repositories(db), sendMail, URLS, now);
+    await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
     // Assert
     expect(sendMail).toHaveBeenCalledTimes(1);
     expect(sendMail).toHaveBeenCalledWith(
@@ -221,7 +219,7 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
       // Act
-      await sendPendingUsersDigest(repositories(db), sendMail, URLS, now);
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
       // Assert
       expect(sendMail).toHaveBeenCalledTimes(1);
       expect(sendMail).toHaveBeenCalledWith(
@@ -245,7 +243,7 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
       // Act
-      await sendPendingUsersDigest(repositories(db), sendMail, URLS, now);
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
       // Assert
       expect(sendMail).toHaveBeenCalledTimes(1);
       const mail = sendMail.mock.calls[0]?.[0];
@@ -266,7 +264,7 @@ describe("sendPendingUsersDigest", () => {
       });
       const sendMail = vi.fn().mockResolvedValue(undefined);
       // Act
-      await sendPendingUsersDigest(repositories(db), sendMail, URLS, now);
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
       // Assert
       const text = sendMail.mock.calls[0]?.[0].text;
       expect(text).toContain("/institutional-groups/laboratories/UMR7358");
@@ -295,7 +293,7 @@ describe("sendPendingUsersDigest", () => {
         .execute();
       const sendMail = vi.fn().mockResolvedValue(undefined);
       // Act
-      await sendPendingUsersDigest(repositories(db), sendMail, URLS, now);
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
       // Assert
       expect(sendMail).toHaveBeenCalledTimes(2);
       expect(sendMail.mock.calls[0]?.[0].text).toContain("Massif central");

@@ -6,6 +6,7 @@ import type { InstitutionalGroupRepository } from "@projet-igsn/domain/instituti
 import type { InstitutionalGroupCounts } from "@projet-igsn/domain/user/user-validator";
 import type { ExpressionBuilder, Kysely } from "kysely";
 
+import { institutionalGroupKindSchema } from "@projet-igsn/domain/institutional-group/model";
 import { canJoinManualGroup } from "@projet-igsn/domain/manual-group/can-join-manual-group";
 import { groupManagerSchema } from "@projet-igsn/domain/user/user-validator";
 import { HTTPException } from "hono/http-exception";
@@ -14,25 +15,16 @@ import type { DB } from "../db.ts";
 
 import { withTransaction } from "../transaction.ts";
 
-const RECORDED_KINDS = [
-  ["organization", "institutional_organization"],
-  ["osu", "institutional_osu"],
-  ["laboratory", "institutional_laboratory"],
-] as const;
-
-const COUNT_KEYS: Record<
-  InstitutionalGroupKind,
-  keyof InstitutionalGroupCounts
-> = {
-  organization: "organizations",
-  osu: "osus",
-  laboratory: "laboratories",
-};
+const KINDS = {
+  organization: ["institutional_organization", "organizations"],
+  osu: ["institutional_osu", "osus"],
+  laboratory: ["institutional_laboratory", "laboratories"],
+} as const;
 
 const hasActiveManager = (
   eb: ExpressionBuilder<DB, "user">,
   kind: InstitutionalGroupKind,
-  column: (typeof RECORDED_KINDS)[number][1],
+  column: (typeof KINDS)[InstitutionalGroupKind][0],
 ) =>
   eb.exists(
     eb
@@ -128,14 +120,15 @@ export function createInstitutionalGroupRepository(
           laboratories: {},
         };
         for (const { kind, code, count } of rows) {
-          counts[COUNT_KEYS[kind]][code] = Number(count);
+          counts[KINDS[kind][1]][code] = Number(count);
         }
         return counts;
       }),
     listWithoutActiveManager: () =>
       withTransaction(db, async (trx) => {
         const perKind = await Promise.all(
-          RECORDED_KINDS.map(async ([kind, column]) => {
+          institutionalGroupKindSchema.options.map(async (kind) => {
+            const [column] = KINDS[kind];
             const rows = await trx
               .selectFrom("user")
               .select(`${column} as code`)

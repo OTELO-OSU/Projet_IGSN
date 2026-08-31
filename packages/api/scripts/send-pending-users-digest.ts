@@ -7,7 +7,6 @@ import { createUserRepository } from "../src/user/repository.ts";
 import { sendPendingUsersDigest } from "../src/user/send-pending-users-digest.ts";
 
 const db = createDb();
-const adminUrl = appUrl("ADMIN_URL");
 await sendPendingUsersDigest(
   {
     users: createUserRepository(db),
@@ -15,6 +14,6 @@ await sendPendingUsersDigest(
     institutionalGroups: createInstitutionalGroupRepository(db),
   },
   createSendMail(),
-  { usersUrl: new URL("/users", adminUrl).toString(), adminUrl },
+  appUrl("ADMIN_URL"),
 );
 await db.destroy();

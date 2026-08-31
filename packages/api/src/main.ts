@@ -23,7 +23,7 @@ schedulePendingUsersDigest(() => {
       institutionalGroups: createInstitutionalGroupRepository(db),
     },
     sendMail,
-    { usersUrl: new URL("/users", adminUrl).toString(), adminUrl },
+    adminUrl,
   );
 });
 

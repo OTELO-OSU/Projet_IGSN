@@ -18,8 +18,6 @@ const TEMPLATE = readFileSync(
   "utf8",
 );
 
-export type DigestUrls = { usersUrl: string; adminUrl: string };
-
 function waitedFor(t: Translator, since: Date, now: Date): string {
   const hours = Math.floor((now.getTime() - since.getTime()) / HOUR_MS);
   if (hours < 1) return t("mail_digest_waited_under_hour");
@@ -88,9 +86,10 @@ const groupLines = (t: Translator, groups: OrphanedGroup[], adminUrl: string) =>
 export async function pendingUsersDigest(
   pending: PendingUser[],
   orphanGroups: OrphanedGroup[],
-  { usersUrl, adminUrl }: DigestUrls,
+  adminUrl: string,
   now: Date,
 ): Promise<{ subject: string; text: string; html: string }> {
+  const usersUrl = new URL("/users", adminUrl).toString();
   const t = translator();
   const subject =
     pending.length > 0

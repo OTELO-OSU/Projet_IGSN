@@ -10,7 +10,6 @@ import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
 import { userManagementRights } from "@projet-igsn/domain/user/user-management-rights";
 
 import type { SendMail } from "../mail/send-mail.ts";
-import type { DigestUrls } from "./pending-users-digest.ts";
 
 import { institutionalGroupLabel } from "../institutional-group/institutional-group-label.ts";
 import { pendingUsersDigest } from "./pending-users-digest.ts";
@@ -32,7 +31,7 @@ export type DigestRepositories = {
 export async function sendPendingUsersDigest(
   { users, manualGroups, institutionalGroups }: DigestRepositories,
   sendMail: SendMail,
-  urls: DigestUrls,
+  adminUrl: string,
   now: Date = new Date(),
 ): Promise<void> {
   const mail = async (
@@ -44,7 +43,7 @@ export async function sendPendingUsersDigest(
       await sendMail({
         to,
         audience: "admin",
-        ...(await pendingUsersDigest(pending, orphanGroups, urls, now)),
+        ...(await pendingUsersDigest(pending, orphanGroups, adminUrl, now)),
       });
     } catch (error: unknown) {
       console.error(FAILURE, error);

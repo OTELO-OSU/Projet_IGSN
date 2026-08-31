@@ -9,7 +9,6 @@ const now = new Date("2026-08-06T12:00:00Z");
 
 const USERS_URL = "http://localhost:3001/users";
 const ADMIN_URL = "http://localhost:3001/";
-const URLS = { usersUrl: USERS_URL, adminUrl: ADMIN_URL };
 
 const MASSIF = "01890a5d-ac96-774b-bcce-b302099a9001";
 
@@ -36,7 +35,7 @@ describe("pendingUsersDigest", () => {
       pendingUser({ email: `user${i}@univ-lorraine.fr` }),
     );
 
-    const digest = await pendingUsersDigest(pending, [], URLS, now);
+    const digest = await pendingUsersDigest(pending, [], ADMIN_URL, now);
 
     expect(digest.subject).toBe(subject);
   });
@@ -53,7 +52,7 @@ describe("pendingUsersDigest", () => {
         }),
       ],
       [],
-      URLS,
+      ADMIN_URL,
       now,
     );
 
@@ -80,7 +79,7 @@ Moderate these accounts: http://localhost:3001/users
       const digest = await pendingUsersDigest(
         [pendingUser({ createdAt: new Date(createdAt) })],
         [],
-        URLS,
+        ADMIN_URL,
         now,
       );
 
@@ -101,7 +100,7 @@ Moderate these accounts: http://localhost:3001/users
           }),
         ],
         [],
-        URLS,
+        ADMIN_URL,
         now,
       )
     ).html;
@@ -116,7 +115,12 @@ Moderate these accounts: http://localhost:3001/users
   });
 
   it("should repeat the url as copyable text besides the button link", async () => {
-    const digest = await pendingUsersDigest([pendingUser()], [], URLS, now);
+    const digest = await pendingUsersDigest(
+      [pendingUser()],
+      [],
+      ADMIN_URL,
+      now,
+    );
 
     expect(digest.html).toContain(`href="${USERS_URL}"`);
     expect(digest.html).toContain(`>${USERS_URL}</a`);
@@ -127,7 +131,7 @@ Moderate these accounts: http://localhost:3001/users
       await pendingUsersDigest(
         [pendingUser({ name: "<script>alert(1)</script>" })],
         [],
-        URLS,
+        ADMIN_URL,
         now,
       )
     ).html;
@@ -140,7 +144,7 @@ Moderate these accounts: http://localhost:3001/users
     const digest = await pendingUsersDigest(
       [pendingUser({ name: null, firstname: null })],
       [],
-      URLS,
+      ADMIN_URL,
       now,
     );
 
@@ -150,13 +154,13 @@ Moderate these accounts: http://localhost:3001/users
   });
 
   it("should title the mail after the orphan groups when nothing is pending", async () => {
-    const digest = await pendingUsersDigest([], ORPHAN_GROUPS, URLS, now);
+    const digest = await pendingUsersDigest([], ORPHAN_GROUPS, ADMIN_URL, now);
 
     expect(digest.subject).toBe("2 groups have no active manager");
   });
 
   it("should list each orphan group linked to its page", async () => {
-    const digest = await pendingUsersDigest([], ORPHAN_GROUPS, URLS, now);
+    const digest = await pendingUsersDigest([], ORPHAN_GROUPS, ADMIN_URL, now);
 
     expect(digest.text).toContain(
       `- Massif Central 2026: http://localhost:3001/manual-groups/${MASSIF}`,
@@ -173,7 +177,7 @@ Moderate these accounts: http://localhost:3001/users
   });
 
   it("should leave the pending table out when nothing is pending", async () => {
-    const digest = await pendingUsersDigest([], ORPHAN_GROUPS, URLS, now);
+    const digest = await pendingUsersDigest([], ORPHAN_GROUPS, ADMIN_URL, now);
 
     expect(digest.html).not.toContain("Waiting for");
     expect(digest.text).not.toContain("waiting for");
@@ -183,7 +187,7 @@ Moderate these accounts: http://localhost:3001/users
     const digest = await pendingUsersDigest(
       [],
       [{ kind: "manual", id: MASSIF, name: "<script>alert(1)</script>" }],
-      URLS,
+      ADMIN_URL,
       now,
     );
 

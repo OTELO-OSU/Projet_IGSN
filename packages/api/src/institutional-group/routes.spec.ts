@@ -1,8 +1,10 @@
 import type { InstitutionalGroupRef } from "@projet-igsn/domain/institutional-group/model";
 import type { Kysely } from "kysely";
 
-import { institutionalGroupCountsResponseSchema } from "@projet-igsn/domain/user/user-validator";
-import { groupManagersResponseSchema } from "@projet-igsn/domain/user/user-validator";
+import {
+  groupManagersResponseSchema,
+  institutionalGroupCountsResponseSchema,
+} from "@projet-igsn/domain/user/user-validator";
 import { testClient } from "hono/testing";
 import { describe, expect, vi } from "vitest";
 
