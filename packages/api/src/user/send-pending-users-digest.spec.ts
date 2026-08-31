@@ -272,6 +272,64 @@ describe("sendPendingUsersDigest", () => {
     },
   );
 
+  pgTest.for([
+    {
+      kind: "organization" as const,
+      code: "04vfs2w97",
+      member: { institutionalOrganization: "04vfs2w97" },
+      path: "/institutional-groups/organizations/04vfs2w97",
+    },
+    {
+      kind: "osu" as const,
+      code: "OTELo",
+      member: { institutionalOsu: "OTELo" },
+      path: "/institutional-groups/osus/OTELo",
+    },
+    {
+      kind: "laboratory" as const,
+      code: "UMR7358",
+      member: { institutionalLaboratory: "UMR7358" },
+      path: "/institutional-groups/laboratories/UMR7358",
+    },
+  ])(
+    "should recap a $kind whose only manager is not accepted",
+    async ({ kind, code, member, path }, { db }) => {
+      // Arrange
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "member@univ-lorraine.fr", member);
+      const manager = await insertUser(db, "manager@univ-lorraine.fr", {
+        status: "rejected",
+      });
+      await moderateInstitution(db, manager.id, { kind, code });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      // Act
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
+      // Assert
+      expect(sendMail.mock.calls[0]?.[0].text).toContain(path);
+    },
+  );
+
+  pgTest(
+    "should keep a group with an accepted manager out of the recap",
+    async ({ db }) => {
+      // Arrange
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "member@univ-lorraine.fr", {
+        institutionalLaboratory: "UMR7358",
+      });
+      const manager = await insertUser(db, "manager@univ-lorraine.fr");
+      await moderateInstitution(db, manager.id, {
+        kind: "laboratory",
+        code: "UMR7358",
+      });
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      // Act
+      await sendPendingUsersDigest(repositories(db), sendMail, ADMIN_URL, now);
+      // Assert
+      expect(sendMail).not.toHaveBeenCalled();
+    },
+  );
+
   pgTest(
     "should keep the orphan groups out of a space manager's digest",
     async ({ db }) => {
