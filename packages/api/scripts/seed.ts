@@ -199,8 +199,8 @@ async function seedManagedGroups(
     .insertInto("user_managed_institutional_group")
     .values([
       { user_id: ownerIds.marie, kind: "osu", code: "OTELo" },
-      { user_id: ownerIds.luc, kind: "organization", code: "04vfs2w97" },
-      { user_id: ownerIds.luc, kind: "laboratory", code: "UMR7327" },
+      { user_id: ownerIds.sophie, kind: "organization", code: "04vfs2w97" },
+      { user_id: ownerIds.sophie, kind: "laboratory", code: "UMR7327" },
       { user_id: ownerIds.camille, kind: "osu", code: "OSUC" },
     ])
     .onConflict((oc) => oc.doNothing())
