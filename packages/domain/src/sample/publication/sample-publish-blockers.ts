@@ -5,7 +5,8 @@ import type { Sample } from "../sample.ts";
 
 import { canPublishSamples } from "../../user/can-publish-samples.ts";
 import { DEFAULT_UPLOAD_LIMIT } from "../attachment/attachment-validator.ts";
-import { locationRequirement } from "../location/location-requirement.ts";
+import { allowsLocation } from "../location/allows-location.ts";
+import { verticalValues } from "../location/vertical-values.ts";
 import { MATERIAL_PATHS } from "../material/classification.ts";
 import { isMaterialComplete } from "../material/is-complete.ts";
 import { faciesFor } from "../metamorphic-facies/vocabulary.ts";
@@ -24,7 +25,7 @@ export const publishBlockerSchema = z.enum([
   "numeric_age_reference_missing",
   "numeric_age_range_incomplete",
   "geological_age_range_incomplete",
-  "elevation_incomplete",
+  "vertical_position_incomplete",
   "availability_missing",
   "scientific_context_missing",
   "funder_organizations_missing",
@@ -106,7 +107,7 @@ export function samplePublishBlockers(
 
   if (
     materialComplete &&
-    locationRequirement(sample.material) === "required" &&
+    allowsLocation(sample.material) &&
     !sample.location?.position
   ) {
     blockers.push("location_position_missing");
@@ -142,15 +143,15 @@ export function samplePublishBlockers(
     }
   }
 
-  const elevation = sample.location?.position?.elevation;
-  if (
-    elevation != null &&
-    (elevation.min == null ||
-      elevation.max == null ||
-      elevation.unit == null ||
-      elevation.datum == null)
-  ) {
-    blockers.push("elevation_incomplete");
+  const position = sample.location?.position ?? null;
+  if (position?.vertical != null) {
+    const { reference } = position.vertical;
+    if (
+      reference == null ||
+      verticalValues(position).some((value) => value == null)
+    ) {
+      blockers.push("vertical_position_incomplete");
+    }
   }
 
   if (sample.availability == null) {

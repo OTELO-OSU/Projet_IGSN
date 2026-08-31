@@ -506,123 +506,158 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
-  it("should show a point location with its coordinates, elevation and navigation type", async () => {
+  it.each<[string, NonNullable<Sample["location"]>, string[]]>([
+    [
+      "point",
+      {
+        position: {
+          type: "point",
+          longitude: -149.83,
+          latitude: -17.53,
+          vertical: { position: 2500, reference: "bathymetry", system: "msl" },
+        },
+        navigationType: "GPS",
+      },
+      [
+        "Latitude",
+        "-17.53",
+        "Longitude",
+        "-149.83",
+        "2500 m",
+        "Bathymetry",
+        "MSL height (EPSG:5714) - Mean sea level",
+        "GPS",
+      ],
+    ],
+    [
+      "area",
+      {
+        position: {
+          type: "area",
+          westLongitude: -5.5,
+          eastLongitude: 10.25,
+          southLatitude: 41.5,
+          northLatitude: 51.5,
+          vertical: {
+            min: 100,
+            max: 200,
+            reference: "elevation",
+            system: "ngf_ign69",
+          },
+        },
+      },
+      [
+        "West longitude",
+        "-5.5",
+        "East longitude",
+        "10.25",
+        "South latitude",
+        "41.5",
+        "North latitude",
+        "51.5",
+        "100 - 200 m",
+        "Elevation",
+        "NGF-IGN69 height (EPSG:5720) - Metropolitan France",
+      ],
+    ],
+    [
+      "line",
+      {
+        position: {
+          type: "line",
+          startLongitude: 2.35,
+          startLatitude: 48.85,
+          endLongitude: 4.83,
+          endLatitude: 45.76,
+          vertical: {
+            start: 10,
+            end: 40,
+            reference: "core_depth",
+            system: "local",
+          },
+        },
+      },
+      [
+        "Start longitude",
+        "2.35",
+        "Start latitude",
+        "48.85",
+        "End longitude",
+        "4.83",
+        "End latitude",
+        "45.76",
+        "10 -> 40 m",
+        "Core depth",
+        "Local or user-defined vertical datum",
+      ],
+    ],
+  ])(
+    "should show a %s location with its coordinates and vertical position",
+    async (_type, location, texts) => {
+      const screen = await render(<SampleView sample={sample({ location })} />);
+
+      await expect
+        .element(screen.getByRole("heading", { name: "Location" }))
+        .toBeInTheDocument();
+      for (const text of texts) {
+        await expect
+          .element(screen.getByText(text, { exact: true }))
+          .toBeInTheDocument();
+      }
+    },
+  );
+
+  it("should show the filled endpoint alone when a line carries a single vertical value", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
           location: {
             position: {
-              type: "point",
-              longitude: -149.83,
-              latitude: -17.53,
-              elevation: { min: -2500, max: -2500, unit: "m", datum: "msl" },
+              type: "line",
+              startLongitude: 2.35,
+              startLatitude: 48.85,
+              endLongitude: 4.83,
+              endLatitude: 45.76,
+              vertical: { start: null, end: 40 },
             },
-            navigationType: "GPS",
+          },
+        })}
+      />,
+    );
+
+    await expect.element(screen.getByText("40 m")).toBeInTheDocument();
+  });
+
+  it("should show no vertical row when the location carries no vertical data", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          location: {
+            position: { type: "point", longitude: -149.83, latitude: -17.53 },
           },
         })}
       />,
     );
 
     await expect
-      .element(screen.getByRole("heading", { name: "Location" }))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Latitude")).toBeInTheDocument();
-    await expect
-      .element(screen.getByText("-17.53", { exact: true }))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Longitude")).toBeInTheDocument();
-    await expect
-      .element(screen.getByText("-149.83", { exact: true }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("-2500 m (Mean sea level)"))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("GPS", { exact: true }))
-      .toBeInTheDocument();
+      .element(screen.getByText("Vertical position"))
+      .not.toBeInTheDocument();
   });
 
-  it("should show an area location with its bounds and elevation range", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          location: {
-            position: {
-              type: "area",
-              westLongitude: -5.5,
-              eastLongitude: 10.25,
-              southLatitude: 41.5,
-              northLatitude: 51.5,
-              elevation: { min: 100, max: 200, unit: "m", datum: "wgs84" },
-            },
-          },
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByText("West longitude"))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("-5.5", { exact: true }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("East longitude"))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("10.25", { exact: true }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("South latitude"))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("41.5", { exact: true }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("North latitude"))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("51.5", { exact: true }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("100 - 200 m (WGS84 ellipsoid)"))
-      .toBeInTheDocument();
-  });
-
-  it("should show the region as a localized country name", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          location: { region: { kind: "continent", country: "FR" } },
-        })}
-      />,
-    );
-
-    await expect.element(screen.getByText("Region")).toBeInTheDocument();
-    await expect.element(screen.getByText("France")).toBeInTheDocument();
-  });
-
-  it("should show the region as an ocean name", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          location: { region: { kind: "ocean", oceanSea: "pacific_ocean" } },
-        })}
-      />,
-    );
-
-    await expect.element(screen.getByText("Region")).toBeInTheDocument();
-    await expect.element(screen.getByText("Pacific Ocean")).toBeInTheDocument();
-  });
-
-  it.each<[string, { kind: "continent" } | { kind: "ocean" }, string]>([
+  it.each<[string, NonNullable<Sample["location"]>["region"], string]>([
+    ["a country region", { kind: "continent", country: "FR" }, "France"],
+    [
+      "an ocean region",
+      { kind: "ocean", oceanSea: "pacific_ocean" },
+      "Pacific Ocean",
+    ],
     [
       "a leafless continent region",
       { kind: "continent" },
       "Continent / country",
     ],
     ["a leafless ocean region", { kind: "ocean" }, "Ocean / sea"],
-  ])("should show %s as its kind label", async (_label, region, expected) => {
+  ])("should show %s as its label", async (_label, region, expected) => {
     const screen = await render(
       <SampleView sample={sample({ location: { region } })} />,
     );

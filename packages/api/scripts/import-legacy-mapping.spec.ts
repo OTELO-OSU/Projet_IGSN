@@ -9,7 +9,7 @@ import {
   mapCollectionMethod,
   mapCountry,
   mapDoiLink,
-  mapElevation,
+  mapVertical,
   mapMaterial,
   mapResourceType,
   mapSize,
@@ -159,27 +159,27 @@ describe("mapMaterial", () => {
 
 describe("isKnownMaterialPath", () => {
   it.each([
-    ["Igneous>Plutonic>Felsic", "Rock"], // whole path is a supported node
-    ["Igneous>Plutonic", "Rock"], // incomplete but a valid prefix of complete paths
-    ["Metamorphic", "Rock"], // genuinely coarse at the source
-    ["Metamorphic>Gneiss", "Rock"], // legacy leaf remapped to its node in the new tree
-    ["Sedimentary>Siliciclastic", "Rock"], // legacy leaf remapped to its node in the new tree
-    ["Xenolithic>Igneous>Plutonic>Ultramafic", "Rock"], // rooted under rock.xenolithic_rock
-    ["Xenolithic>Metamorphic>Gneiss", "Rock"], // xenolithic + remapped metamorphic leaf
-    [null, "Rock"], // coarse root, source knew only "Rock"
+    ["Igneous>Plutonic>Felsic", "Rock"],
+    ["Igneous>Plutonic", "Rock"],
+    ["Metamorphic", "Rock"],
+    ["Metamorphic>Gneiss", "Rock"],
+    ["Sedimentary>Siliciclastic", "Rock"],
+    ["Xenolithic>Igneous>Plutonic>Ultramafic", "Rock"],
+    ["Xenolithic>Metamorphic>Gneiss", "Rock"],
+    [null, "Rock"],
   ] as const)("should import %s / %s", (classification, material) => {
     expect(isKnownMaterialPath(classification, material)).toBe(true);
   });
 
   it.each([
-    ["Metamorphic>Granoblastite", "Rock"], // rock.metamorphic.granoblastite is not a supported path
-    ["Metamorphic>MechanicallyBroken", "Rock"], // record to review, deliberately unmapped
-    ["Metamorphic>Meta-Carbonate", "Rock"], // record to review, deliberately unmapped
-    ["Metamorphic>Meta-Ultramafic", "Rock"], // record to review, deliberately unmapped
-    ["Igneous>Volcanic>NotAThing", "Rock"], // fabricated leaf
-    ["Xenolithic>Metamorphic>Metasomatic", "Rock"], // leaf with no node and no remap
+    ["Metamorphic>Granoblastite", "Rock"],
+    ["Metamorphic>MechanicallyBroken", "Rock"],
+    ["Metamorphic>Meta-Carbonate", "Rock"],
+    ["Metamorphic>Meta-Ultramafic", "Rock"],
+    ["Igneous>Volcanic>NotAThing", "Rock"],
+    ["Xenolithic>Metamorphic>Metasomatic", "Rock"],
     ["Ore>Sulfide", "Rock"],
-    [null, "Soil"], // material_id the new roots lack
+    [null, "Soil"],
     [null, null],
   ] as const)("should skip %s / %s", (classification, material) => {
     expect(isKnownMaterialPath(classification, material)).toBe(false);
@@ -188,13 +188,13 @@ describe("isKnownMaterialPath", () => {
 
 describe("mapCountry", () => {
   it.each([
-    ["France", "FR"], // ICU label matches directly
-    ["Reunion", "RE"], // accent folded from ICU "Réunion"
-    ["Deutschland", "DE"], // endonym alias
-    ["Italia", "IT"], // endonym alias
-    ["Slovenija", "SI"], // endonym alias
-    ["Swaziland", "SZ"], // former name of Eswatini
-    ["Turkey", "TR"], // ICU label is "Türkiye"
+    ["France", "FR"],
+    ["Reunion", "RE"],
+    ["Deutschland", "DE"],
+    ["Italia", "IT"],
+    ["Slovenija", "SI"],
+    ["Swaziland", "SZ"],
+    ["Turkey", "TR"],
     ["Congo, The Democratic Republic Of The", "CD"],
     ["Saint Vincent And The Grenadines", "VC"],
   ] as const)("should map %s to %s", (name, code) => {
@@ -339,57 +339,83 @@ describe("mapSize", () => {
   );
 });
 
-describe("mapElevation", () => {
-  it("should keep land elevation positive", () => {
-    expect(
-      mapElevation(legacyRow({ elevation: "120", elevation_unit: "m" })),
-    ).toEqual({
-      min: 120,
-      max: 120,
-      unit: "m",
-      datum: null,
-    });
-  });
+describe("mapVertical", () => {
+  it.each([
+    ["m", "1200", 1200],
+    ["km", "1.2", 1200],
+  ])(
+    "should convert a land elevation in %s to metres",
+    (elevation_unit, elevation, expected) => {
+      expect(
+        mapVertical(legacyRow({ elevation, elevation_unit }), "area"),
+      ).toEqual({ min: expected, max: expected, reference: "elevation" });
+    },
+  );
 
-  it("should store bathymetry as a negative elevation at mean sea level", () => {
-    expect(mapElevation(legacyRow({ bathy: "2000", bathy_unit: "m" }))).toEqual(
-      {
-        min: -2000,
-        max: -2000,
-        unit: "m",
-        datum: "msl",
-      },
-    );
-  });
-
-  it("should keep decimal precision", () => {
+  it("should map a land elevation range keeping decimal precision", () => {
     expect(
-      mapElevation(
+      mapVertical(
         legacyRow({
           elevation: "1200.5",
           elevation_end: "1300.25",
           elevation_unit: "m",
         }),
+        "area",
       ),
-    ).toEqual({
-      min: 1200.5,
-      max: 1300.25,
-      unit: "m",
-      datum: null,
-    });
+    ).toEqual({ min: 1200.5, max: 1300.25, reference: "elevation" });
+  });
+
+  it("should fold a land elevation range to its low bound for a point", () => {
     expect(
-      mapElevation(legacyRow({ bathy: "1200.5", bathy_unit: "m" })),
-    ).toEqual({
-      min: -1200.5,
-      max: -1200.5,
-      unit: "m",
-      datum: "msl",
-    });
+      mapVertical(
+        legacyRow({
+          elevation: "1200.5",
+          elevation_end: "1300.25",
+          elevation_unit: "m",
+        }),
+        "point",
+      ),
+    ).toEqual({ position: 1200.5, reference: "elevation" });
+  });
+
+  it.each([
+    ["point", { position: 1200, reference: "bathymetry", system: "msl" }],
+    ["area", { min: 1200, max: 1200, reference: "bathymetry", system: "msl" }],
+  ] as const)(
+    "should map bathymetry as a positive position in metres below mean sea level for a %s",
+    (type, expected) => {
+      expect(
+        mapVertical(legacyRow({ bathy: "1.2", bathy_unit: "km" }), type),
+      ).toEqual(expected);
+    },
+  );
+
+  it.each([
+    [
+      "a land elevation below sea level",
+      { elevation: "-395", elevation_unit: "m" },
+      { min: 395, max: 395, reference: "bathymetry" },
+    ],
+    [
+      "a land elevation range straddling sea level",
+      { elevation: "-50", elevation_end: "100", elevation_unit: "m" },
+      { min: 0, max: 100, reference: "other" },
+    ],
+    [
+      "a negative bathymetry",
+      { bathy: "-1200", bathy_unit: "m" },
+      { min: 1200, max: 1200, reference: "bathymetry", system: "msl" },
+    ],
+  ])("should map %s as a positive distance", (_label, row, expected) => {
+    expect(mapVertical(legacyRow(row), "area")).toEqual(expected);
   });
 
   it("should drop an unknown elevation unit", () => {
     expect(
-      mapElevation(legacyRow({ elevation: "5", elevation_unit: "Outcrop" })),
+      mapVertical(
+        legacyRow({ elevation: "5", elevation_unit: "Outcrop" }),
+        "point",
+      ),
     ).toBe(null);
   });
 });

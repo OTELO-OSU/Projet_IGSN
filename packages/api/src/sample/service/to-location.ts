@@ -27,21 +27,17 @@ export function toLocation(row: SampleRow): Location | null {
   return locationSchema.parse(location);
 }
 
-function toElevation(row: SampleRow) {
+function toVertical<T extends object>(row: SampleRow, values: T) {
   if (
-    row.elevation_min === null &&
-    row.elevation_max === null &&
-    row.elevation_unit === null &&
-    row.vertical_datum === null
+    row.vertical_reference === null &&
+    row.vertical_reference_system === null &&
+    Object.values(values).every((value) => value === null)
   )
-    return {};
+    return undefined;
   return {
-    elevation: {
-      min: row.elevation_min,
-      max: row.elevation_max,
-      unit: row.elevation_unit,
-      datum: row.vertical_datum,
-    },
+    ...values,
+    reference: row.vertical_reference,
+    system: row.vertical_reference_system,
   };
 }
 
@@ -51,7 +47,7 @@ function toPosition(row: SampleRow) {
       type: "point",
       longitude: row.point_longitude,
       latitude: row.point_latitude,
-      ...toElevation(row),
+      vertical: toVertical(row, { position: row.vertical_position }),
     };
   }
   if (row.location_type === "area") {
@@ -61,7 +57,23 @@ function toPosition(row: SampleRow) {
       eastLongitude: row.area_east_longitude,
       southLatitude: row.area_south_latitude,
       northLatitude: row.area_north_latitude,
-      ...toElevation(row),
+      vertical: toVertical(row, {
+        min: row.vertical_position_min,
+        max: row.vertical_position_max,
+      }),
+    };
+  }
+  if (row.location_type === "line") {
+    return {
+      type: "line",
+      startLongitude: row.line_start_longitude,
+      startLatitude: row.line_start_latitude,
+      endLongitude: row.line_end_longitude,
+      endLatitude: row.line_end_latitude,
+      vertical: toVertical(row, {
+        start: row.line_start_vertical_position,
+        end: row.line_end_vertical_position,
+      }),
     };
   }
   return null;
@@ -81,7 +93,8 @@ export function locationColumns(location: Location | null | undefined) {
   const position = location?.position ?? null;
   const point = position?.type === "point" ? position : null;
   const area = position?.type === "area" ? position : null;
-  const elevation = position?.elevation ?? null;
+  const line = position?.type === "line" ? position : null;
+  const vertical = position?.vertical ?? null;
   const region = location?.region ?? null;
   return {
     location_type: position?.type ?? null,
@@ -91,10 +104,17 @@ export function locationColumns(location: Location | null | undefined) {
     area_east_longitude: area?.eastLongitude ?? null,
     area_south_latitude: area?.southLatitude ?? null,
     area_north_latitude: area?.northLatitude ?? null,
-    elevation_min: elevation?.min ?? null,
-    elevation_max: elevation?.max ?? null,
-    elevation_unit: elevation?.unit ?? null,
-    vertical_datum: elevation?.datum ?? null,
+    line_start_longitude: line?.startLongitude ?? null,
+    line_start_latitude: line?.startLatitude ?? null,
+    line_end_longitude: line?.endLongitude ?? null,
+    line_end_latitude: line?.endLatitude ?? null,
+    vertical_position: point?.vertical?.position ?? null,
+    vertical_position_min: area?.vertical?.min ?? null,
+    vertical_position_max: area?.vertical?.max ?? null,
+    line_start_vertical_position: line?.vertical?.start ?? null,
+    line_end_vertical_position: line?.vertical?.end ?? null,
+    vertical_reference: vertical?.reference ?? null,
+    vertical_reference_system: vertical?.system ?? null,
     navigation_type: location?.navigationType ?? null,
     region_kind: region?.kind ?? null,
     country: region?.kind === "continent" ? region.country : null,

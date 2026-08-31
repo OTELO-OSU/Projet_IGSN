@@ -389,17 +389,6 @@ describe("createSampleSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("should accept a create payload with a location", () => {
-    const result = createSampleSchema.safeParse({
-      name: "Basalt 42",
-      nature: "hand_sample",
-      location: {
-        position: { type: "point", longitude: 2.35, latitude: 48.85 },
-      },
-    });
-    expect(result).toMatchObject({ success: true });
-  });
-
   it("should accept a synthetic material without a location", () => {
     const result = createSampleSchema.safeParse({
       name: "Synthetic 1",
@@ -409,11 +398,14 @@ describe("createSampleSchema", () => {
     expect(result).toMatchObject({ success: true });
   });
 
-  it("should reject a synthetic material carrying a location", () => {
+  it.each([
+    "synthetic_rock_mineral",
+    "extraterrestrial_rock.returned_samples.lunar_sample",
+  ])("should reject a %s material carrying a location", (material) => {
     const result = createSampleSchema.safeParse({
       name: "Synthetic 1",
       nature: "hand_sample",
-      material: "synthetic_rock_mineral",
+      material,
       location: { position: { type: "point", longitude: 0, latitude: 0 } },
     });
     expect(result.success).toBe(false);

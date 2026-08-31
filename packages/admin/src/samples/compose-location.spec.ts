@@ -18,16 +18,16 @@ describe("composeLocation", () => {
     expect(composeLocation(draft({}))).toBeNull();
   });
 
-  it("should compose a point position with elevation", () => {
+  it("should compose a point position with its vertical position", () => {
     expect(
       composeLocation(
         draft({
           type: "point",
           longitude: 3.5,
           latitude: -45,
-          elevationValue: -1200,
-          elevationUnit: "m",
-          elevationDatum: "msl",
+          verticalPosition: 1200,
+          verticalReference: "bathymetry",
+          verticalReferenceSystem: "msl",
         }),
       ),
     ).toEqual({
@@ -35,7 +35,7 @@ describe("composeLocation", () => {
         type: "point",
         longitude: 3.5,
         latitude: -45,
-        elevation: { min: -1200, max: -1200, unit: "m", datum: "msl" },
+        vertical: { position: 1200, reference: "bathymetry", system: "msl" },
       },
     });
   });
@@ -115,14 +115,14 @@ describe("composeLocation", () => {
     });
   });
 
-  it("should keep an entered elevation missing its unit and datum for the schema to reject", () => {
+  it("should keep a vertical position missing its reference and system for the schema to reject", () => {
     expect(
       composeLocation(
         draft({
           type: "point",
           longitude: 0,
           latitude: 0,
-          elevationValue: 100,
+          verticalPosition: 100,
         }),
       ),
     ).toEqual({
@@ -130,20 +130,20 @@ describe("composeLocation", () => {
         type: "point",
         longitude: 0,
         latitude: 0,
-        elevation: { min: 100, max: 100 },
+        vertical: { position: 100 },
       },
     });
   });
 
-  it("should keep a unit and datum entered without bounds", () => {
+  it("should keep a reference and system entered without a value", () => {
     expect(
       composeLocation(
         draft({
           type: "point",
           longitude: 0,
           latitude: 0,
-          elevationUnit: "m",
-          elevationDatum: "msl",
+          verticalReference: "depth_below_ground",
+          verticalReferenceSystem: "msl",
         }),
       ),
     ).toEqual({
@@ -151,7 +151,7 @@ describe("composeLocation", () => {
         type: "point",
         longitude: 0,
         latitude: 0,
-        elevation: { unit: "m", datum: "msl" },
+        vertical: { reference: "depth_below_ground", system: "msl" },
       },
     });
   });
@@ -159,11 +159,10 @@ describe("composeLocation", () => {
 
 describe("toLocationDraft", () => {
   it("should return a draft with every field unset for a null location", () => {
-    expect(
-      Object.values(toLocationDraft(null)).every(
-        (value) => value === undefined,
-      ),
-    ).toBe(true);
+    const set = Object.entries(toLocationDraft(null)).filter(
+      ([, value]) => value !== undefined,
+    );
+    expect(set).toEqual([]);
   });
 
   it.each<Location>([
@@ -172,7 +171,7 @@ describe("toLocationDraft", () => {
         type: "point",
         longitude: 3.5,
         latitude: -45,
-        elevation: { min: -1200, max: -1200, unit: "m", datum: "msl" },
+        vertical: { position: 1200, reference: "bathymetry", system: "msl" },
       },
       region: { kind: "continent", country: "FR" },
       navigationType: "GPS",
@@ -185,9 +184,29 @@ describe("toLocationDraft", () => {
         eastLongitude: 2,
         southLatitude: 3,
         northLatitude: 4,
-        elevation: { min: -100, max: 0, unit: "km", datum: "wgs84" },
+        vertical: {
+          min: 100,
+          max: 800,
+          reference: "depth_below_ground",
+          system: "evrf2019",
+        },
       },
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
+    },
+    {
+      position: {
+        type: "line",
+        startLongitude: 1,
+        startLatitude: 2,
+        endLongitude: 3,
+        endLatitude: 4,
+        vertical: {
+          start: 10,
+          end: 90,
+          reference: "core_depth",
+          system: "local",
+        },
+      },
     },
   ])("should round-trip through the draft", (location) => {
     expect(composeLocation(toLocationDraft(location))).toEqual(location);

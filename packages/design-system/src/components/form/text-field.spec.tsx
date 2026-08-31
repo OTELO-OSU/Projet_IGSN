@@ -112,7 +112,7 @@ describe("TextField", () => {
       .toHaveAttribute("aria-describedby", "name-hint");
   });
 
-  it("should describe the input by the hint and the error once invalid", async () => {
+  it("should replace the hint with the error once invalid", async () => {
     await render(<Harness label="Sample name" hint="Up to 200 characters." />);
 
     const input = page.getByLabelText("Sample name");
@@ -121,10 +121,13 @@ describe("TextField", () => {
 
     await expect
       .element(input)
-      .toHaveAttribute("aria-describedby", "name-hint name-error");
+      .toHaveAttribute("aria-describedby", "name-error");
     await expect
       .element(page.getByRole("alert"))
       .toHaveTextContent("Name is required");
+    await expect
+      .element(page.getByText("Up to 200 characters."))
+      .not.toBeInTheDocument();
   });
 
   it("should render no hint element and describe by the error alone without a hint", async () => {

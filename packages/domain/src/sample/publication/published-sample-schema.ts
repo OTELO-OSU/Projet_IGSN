@@ -19,7 +19,12 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   numeric_age_reference_missing: ["age", "numericAgeYearsUnit"],
   numeric_age_range_incomplete: ["age"],
   geological_age_range_incomplete: ["age"],
-  elevation_incomplete: ["location", "position", "elevation"],
+  vertical_position_incomplete: [
+    "location",
+    "position",
+    "vertical",
+    "reference",
+  ],
   availability_missing: ["availability"],
   scientific_context_missing: ["scientificContext", "provenanceStatus"],
   funder_organizations_missing: ["scientificContext", "funderOrganizations"],

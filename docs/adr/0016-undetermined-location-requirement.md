@@ -1,6 +1,6 @@
-# 0016. Undetermined location requirement hides the location section
+# 0016. Location shown by default, hidden only for a refused material
 
-Date: 2026-07-17
+Date: 2026-07-17, amended 2026-08-31
 
 ## Status
 
@@ -15,13 +15,18 @@ Accepted. Amends the material-driven requirement table of ADR 0014.
 
 The user could therefore edit a location before the material said how to validate it, and the form's required marker disagreed with the publish tooltip.
 
+### 2026-08-31 amendment
+
+The original fix added a fourth state, `undetermined`, for a material path that does not settle the answer yet, so the location hid until the first material segment was picked. In practice that traded one bug for another: entering a location, then picking a material that resolved to `undetermined` or `forbidden`, silently dropped it.
+
 ## Decision
 
-Add a fourth state, `undetermined`: the possibly partial material path does not settle the requirement yet. It is returned for a null material and for any strict prefix of the returned-samples path. Other partial paths already settle the answer, every completion of `rock` requiring a location, and keep returning it.
+The gate is inverted instead of refined further. `locationRequirement`'s four states (`required`/`optional`/`forbidden`/`undetermined`) collapse into one predicate, `allowsLocation(material)` (`domain/sample/location/allows-location.ts`): the location shows by default, for any material including none chosen yet, and hides only for a material `allowsLocation` refuses (a synthetic material, or an extraterrestrial "returned sample").
 
-The admin form shows the location section only for `required` and `optional`. `forbidden` and `undetermined` both hide it, and the compose step drops a lingering location in both cases (ADR 0015). `createSampleSchema` and `samplePublishBlockers` are unchanged.
+The location also moved out of the Physical description tab into its own Location tab in the admin sample form, so hiding it hides a whole tab rather than a section.
 
 ## Consequences
 
-- A new sample asks no location question until the first material segment is picked.
-- Clearing the material back to empty drops an already entered location on save, as switching to a synthetic material always did.
+- A new sample shows the Location tab immediately, with no material question gating it.
+- `optional` and `undetermined` no longer exist: a material either allows a location or refuses one.
+- Entering a location then picking a refusing material still drops it on save (ADR 0015), but the reverse case this ADR originally introduced `undetermined` for, an as-yet-unresolved material silently hiding an entered location, cannot happen: the location is visible unless the material actively refuses it.

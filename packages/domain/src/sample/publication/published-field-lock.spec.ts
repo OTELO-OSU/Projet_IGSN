@@ -26,7 +26,7 @@ const stored: Sample = {
       type: "point",
       longitude: 1,
       latitude: 2,
-      elevation: { min: 10, max: 10, unit: "m", datum: "msl" },
+      vertical: { position: 10, reference: "elevation", system: "ngf_ign69" },
     },
     region: { kind: "continent", country: "FR" },
     navigationType: "GPS",
@@ -100,7 +100,11 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
         type: "point",
         longitude: 50,
         latitude: 60,
-        elevation: { min: 99, max: 99, unit: "m", datum: "msl" },
+        vertical: {
+          position: 99,
+          reference: "elevation",
+          system: "ngf_ign69",
+        },
       },
       region: { kind: "ocean", oceanSea: null },
       navigationType: "LBL",
@@ -203,28 +207,40 @@ describe("mergePublishedEdit", () => {
     expect(merged.texture).toBeNull();
   });
 
-  it("keeps a synthetic sample without a location, which its material forbids", () => {
-    const synthetic: Sample = {
-      ...stored,
-      material: "synthetic_rock_mineral",
-      location: null,
-    };
+  it.each([
+    "synthetic_rock_mineral",
+    "extraterrestrial_rock.returned_samples.lunar_sample",
+  ])(
+    "keeps a %s sample without a location, which its material forbids",
+    (material) => {
+      const refused: Sample = { ...stored, material, location: null };
+      const merged = mergePublishedEdit(
+        refused,
+        incoming({
+          material,
+          location: {
+            position: null,
+            region: null,
+            navigationType: null,
+            localityName: "smuggled locality",
+            localityDescription: null,
+          },
+        }),
+      );
+      expect(merged.location).toBeNull();
+    },
+  );
+
+  it("keeps the location a published sample stored before its material forbade one", () => {
+    const material = "extraterrestrial_rock.returned_samples.lunar_sample";
     const merged = mergePublishedEdit(
-      synthetic,
-      incoming({
-        location: {
-          position: null,
-          region: null,
-          navigationType: null,
-          localityName: "smuggled locality",
-          localityDescription: null,
-        },
-      }),
+      { ...stored, material },
+      incoming({ material, location: null }),
     );
-    expect(merged.location).toBeNull();
+    expect(merged.location).toEqual(stored.location);
   });
 
-  it("keeps frozen location coords/type/region but takes editable locality and elevation", () => {
+  it("keeps frozen location coords/type/region but takes editable locality and vertical position", () => {
     const merged = mergePublishedEdit(stored, incoming());
     expect(merged.location?.position).toMatchObject({
       type: "point",
@@ -238,11 +254,64 @@ describe("mergePublishedEdit", () => {
     expect(merged.location?.localityName).toBe("edited locality");
     expect(merged.location?.localityDescription).toBe("edited locality detail");
     expect(merged.location?.navigationType).toBe("LBL");
-    expect(merged.location?.position?.elevation).toEqual({
-      min: 99,
-      max: 99,
-      unit: "m",
-      datum: "msl",
+    expect(merged.location?.position?.vertical).toEqual({
+      position: 99,
+      reference: "elevation",
+      system: "ngf_ign69",
+    });
+  });
+
+  it("keeps the frozen endpoints of a published line but takes its vertical values", () => {
+    const storedLine: Sample = {
+      ...stored,
+      location: {
+        position: {
+          type: "line",
+          startLongitude: 1,
+          startLatitude: 2,
+          endLongitude: 3,
+          endLatitude: 4,
+          vertical: {
+            start: 10,
+            end: 20,
+            reference: "core_depth",
+            system: "local",
+          },
+        },
+      },
+    };
+    const merged = mergePublishedEdit(
+      storedLine,
+      incoming({
+        location: {
+          position: {
+            type: "line",
+            startLongitude: 50,
+            startLatitude: 51,
+            endLongitude: 52,
+            endLatitude: 53,
+            vertical: {
+              start: 99,
+              end: 98,
+              reference: "core_depth",
+              system: "local",
+            },
+          },
+        },
+      }),
+    );
+    expect(merged.location?.position).toEqual({
+      type: "line",
+      startLongitude: 1,
+      startLatitude: 2,
+      endLongitude: 3,
+      endLatitude: 4,
+      vertical: {
+        start: 99,
+        end: 98,
+        reference: "core_depth",
+        system: "local",
+      },
     });
   });
 

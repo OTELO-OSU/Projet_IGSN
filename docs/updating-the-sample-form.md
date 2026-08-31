@@ -232,7 +232,7 @@ Read it as: **having an entry means it can no longer change.** `mergePublishedEd
 
 One field of your own object, not the whole object? Its map is the one for that object: `description.collectionDate` goes in `LOCKED_DESCRIPTION_FIELDS_TO_FORM_FIELDS`, not in the sample map. The scientific context has one map per provenance branch.
 
-**Freezes only under a condition?** A map cannot say "frozen unless...", so those few cases are written by hand in the merge helper below the maps (elevation stays editable inside a frozen position, for instance). Follow the nearest existing case and add a spec for yours.
+**Freezes only under a condition?** A map cannot say "frozen unless...", so those few cases are written by hand in the merge helper below the maps (a vertical position stays editable inside a frozen coordinate, for instance). Follow the nearest existing case and add a spec for yours.
 
 One thing the map cannot do for you: **nothing forces the decision.** Forget your new field and it is silently editable. Say in the PR which side you chose, and cover it with a test in [published-field-lock.spec.ts](../packages/domain/src/sample/publication/published-field-lock.spec.ts).
 
@@ -300,7 +300,7 @@ Two things that must go with any hide:
 - **A matching exclusion in `composeCreateSample`, on the same condition.** A hidden field keeps its value in the form store (so switching back restores it), but on save the compose step must drop it. Read the display condition and the compose exclusion off one shared helper, not two expressions that happen to agree: a coincidental pairing drifts the moment either side changes on its own. Miss the exclusion entirely and a hidden value reaches validation and fails silently: the save errors with no message the user can see or fix.
 - **Toggle the required marker with `withRequired`** if the field is a conditional publish requirement, so the trailing `*` appears exactly when the requirement holds. A field only ever rendered while its requirement holds can pass a bare `requiredToPublish` instead: there is no moment it is shown and not required, so nothing needs toggling.
 
-A requirement driven by another field (for example `locationRequirement(material)`) lives in `domain`, so the form and the publish tooltip always agree.
+A requirement driven by another field (for example `allowsLocation(material)`) lives in `domain`, so the form and the publish tooltip always agree.
 
 ## Verify
 

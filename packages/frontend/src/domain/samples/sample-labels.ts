@@ -13,6 +13,8 @@ export const {
   metamorphicFaciesLabel,
   natureLabel,
   oceanSeaLabel,
+  verticalReferenceLabel,
+  verticalReferenceSystemLabel,
   packagingLabel,
   storageConditionLabel,
   temperatureTypeLabel,

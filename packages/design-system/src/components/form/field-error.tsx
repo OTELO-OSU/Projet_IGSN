@@ -9,12 +9,6 @@ type FieldErrorState = {
   };
 };
 
-// `waitForTouch` picks the derivation policy, which differs by design: a
-// combobox requirement raised by a sibling change (a unit once its value is
-// entered) stays hidden until the user acts on the field, falling back to
-// submit-sourced errors since a field unmounted at submit time (on a hidden
-// tab) is never marked touched; the text-like fields show errors immediately,
-// so a range bound's sibling error appears while the pair is being edited.
 export function useFieldError({
   waitForTouch = false,
   hintId,
@@ -28,9 +22,7 @@ export function useFieldError({
     errorId,
     ariaProps: {
       "aria-invalid": error ? true : undefined,
-      "aria-describedby":
-        [hintId, error ? errorId : undefined].filter(Boolean).join(" ") ||
-        undefined,
+      "aria-describedby": (error ? errorId : hintId) ?? undefined,
     },
   };
 }

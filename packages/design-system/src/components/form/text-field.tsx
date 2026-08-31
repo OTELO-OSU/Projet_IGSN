@@ -13,14 +13,11 @@ const toNumber = (text: string): number | undefined => {
   return text === "" || Number.isNaN(value) ? undefined : value;
 };
 
-// `number` turns it into a numeric input owning the string/number conversion;
-// plain text fields store the text itself.
 export function TextField({
   label,
   multiline = false,
   number = false,
   disabled = false,
-  // Marks the label with a trailing "*"; never the native required attribute,
   // a draft must save without the value.
   requiredToPublish = false,
   hint,
@@ -39,20 +36,13 @@ export function TextField({
   const [isBadInput, setIsBadInput] = useState(false);
   const Control = multiline ? Textarea : Input;
   return (
-    <div className="grid gap-2">
+    <div className="grid content-start gap-2">
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
       </Label>
-      {hint ? (
-        <p id={hintId} className="text-muted-foreground text-sm">
-          {hint}
-        </p>
-      ) : null}
       <Control
         id={field.name}
         {...(number ? { type: "number", step: "any" } : {})}
-        // A number feeds React's number-input path unstringified, which keeps
-        // intermediate text like "3." while typing.
         value={isBadInput ? "" : (field.state.value ?? "")}
         disabled={isDisabled}
         onBlur={() => {
@@ -71,7 +61,13 @@ export function TextField({
         }}
         {...ariaProps}
       />
-      <FieldError error={error} errorId={errorId} />
+      {error ? (
+        <FieldError error={error} errorId={errorId} />
+      ) : hint ? (
+        <p id={hintId} className="text-muted-foreground text-sm">
+          {hint}
+        </p>
+      ) : null}
     </div>
   );
 }

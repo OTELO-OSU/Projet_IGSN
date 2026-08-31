@@ -1,6 +1,5 @@
 import type { Country } from "@projet-igsn/domain/sample/location/country";
 import type { LocationType } from "@projet-igsn/domain/sample/location/location-type";
-import type { VerticalDatum } from "@projet-igsn/domain/sample/location/vertical-datum";
 
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
 
@@ -11,12 +10,7 @@ export type RegionKind = "continent" | "ocean";
 const LOCATION_TYPE_LABELS: Record<LocationType, () => string> = {
   point: m.location_type_point,
   area: m.location_type_area,
-};
-
-const VERTICAL_DATUM_LABELS: Record<VerticalDatum, () => string> = {
-  msl: m.vertical_datum_msl,
-  wgs84: m.vertical_datum_wgs84,
-  grs80: m.vertical_datum_grs80,
+  line: m.location_type_line,
 };
 
 const REGION_KIND_LABELS: Record<RegionKind, () => string> = {
@@ -26,10 +20,6 @@ const REGION_KIND_LABELS: Record<RegionKind, () => string> = {
 
 export function locationTypeLabel(type: LocationType): string {
   return LOCATION_TYPE_LABELS[type]();
-}
-
-export function verticalDatumLabel(datum: VerticalDatum): string {
-  return VERTICAL_DATUM_LABELS[datum]();
 }
 
 export function regionKindLabel(kind: RegionKind): string {
