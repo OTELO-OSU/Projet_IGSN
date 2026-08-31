@@ -660,7 +660,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     availability: "exists",
     scientificContext: {
       provenanceStatus: "recent_collection",
-      funderOrganization: "02feahw73",
+      funderOrganizations: ["02feahw73"],
       researchProgramName: "Chaîne des Puys Survey",
       researchProgramChief: "Jean Dupont",
       researchStructure: ["02rx3b187"],
