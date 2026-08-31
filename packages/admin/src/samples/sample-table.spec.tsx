@@ -38,7 +38,7 @@ const sample: AdminSampleListItem = {
   security: null,
   availability: "exists",
   publicationYear: null,
-  economicInterest: null,
+  resourceType: null,
   economicInterestElements: [],
   economicResourceTypePrecision: null,
   economicDepositName: null,

@@ -3,10 +3,10 @@ import { render } from "vitest-browser-react";
 import { EconomicInterestView } from "./economic-interest-view.tsx";
 
 describe("EconomicInterestView", () => {
-  it("should render the answer path as a breadcrumb labelled by its field", async () => {
+  it("should render the resource type path as a breadcrumb labelled by its field", async () => {
     const screen = await render(
       <EconomicInterestView
-        economicInterest="yes.mineral_and_ore.porphyry"
+        resourceType="mineral_and_ore.porphyry"
         economicInterestElements={[]}
         economicResourceTypePrecision={null}
         economicDepositName={null}
@@ -14,10 +14,7 @@ describe("EconomicInterestView", () => {
       />,
     );
 
-    const path = screen.getByRole("list", { name: "Economic interest" });
-    await expect
-      .element(path.getByText("Yes", { exact: true }))
-      .toBeInTheDocument();
+    const path = screen.getByRole("list", { name: "Resource type" });
     await expect
       .element(path.getByText("Mineral and Ore Resources"))
       .toBeInTheDocument();
@@ -32,7 +29,7 @@ describe("EconomicInterestView", () => {
   it("should render the elements and the free-text details", async () => {
     const screen = await render(
       <EconomicInterestView
-        economicInterest="yes.mineral_and_ore"
+        resourceType="mineral_and_ore"
         economicInterestElements={["cu", "au"]}
         economicResourceTypePrecision="copper-gold"
         economicDepositName="Chuquicamata"
@@ -54,19 +51,17 @@ describe("EconomicInterestView", () => {
   it("should omit the rows the sample has no value for", async () => {
     const screen = await render(
       <EconomicInterestView
-        economicInterest="no"
+        resourceType={null}
         economicInterestElements={[]}
-        economicResourceTypePrecision={null}
+        economicResourceTypePrecision="copper-gold"
         economicDepositName={null}
         economicDepositDescription={null}
       />,
     );
 
+    await expect.element(screen.getByText("copper-gold")).toBeInTheDocument();
     await expect
-      .element(screen.getByRole("list", { name: "Economic interest" }))
-      .toHaveTextContent("No");
-    await expect
-      .element(screen.getByText("Chemical elements of interest"))
+      .element(screen.getByText("Resource type", { exact: true }))
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByText("Deposit name"))

@@ -40,7 +40,7 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   security: null,
   availability: null,
   publicationYear: null,
-  economicInterest: null,
+  resourceType: null,
   economicInterestElements: [],
   economicResourceTypePrecision: null,
   economicDepositName: null,
@@ -328,7 +328,7 @@ describe("SampleView", () => {
     const screen = await render(
       <SampleView
         sample={sample({
-          economicInterest: "yes.mineral_and_ore",
+          resourceType: "mineral_and_ore",
           economicDepositName: "Chuquicamata",
         })}
       />,
@@ -340,6 +340,18 @@ describe("SampleView", () => {
       )
       .toBeInTheDocument();
     await expect.element(screen.getByText("Chuquicamata")).toBeInTheDocument();
+  });
+
+  it("should show the economic interest section when only a detail field is set", async () => {
+    const screen = await render(
+      <SampleView sample={sample({ economicDepositName: "Chuquicamata" })} />,
+    );
+
+    await expect
+      .element(
+        screen.getByRole("heading", { level: 2, name: "Economic interest" }),
+      )
+      .toBeInTheDocument();
   });
 
   it("should omit the Economic interest section when unanswered", async () => {

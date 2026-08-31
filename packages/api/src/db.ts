@@ -95,7 +95,7 @@ type SampleTable = {
   sc_collection_context_description: string | null;
   availability: string | null;
   publication_year: number | null;
-  economic_interest: string | null;
+  resource_type: string | null;
   economic_interest_elements: string[] | null;
   economic_resource_type_precision: string | null;
   economic_deposit_name: string | null;

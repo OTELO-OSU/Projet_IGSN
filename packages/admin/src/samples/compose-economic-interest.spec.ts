@@ -15,37 +15,36 @@ const draft = (
 });
 
 describe("composeEconomicInterest", () => {
-  it("should compose a full mineral_and_ore block", () => {
+  it.each([
+    ["an ineligible material", "fossil"],
+    ["no material", null],
+  ])("should send no economic block for %s", (_case, material) => {
     expect(
       composeEconomicInterest(
         draft({
-          economicInterestPath: toHierarchyPath("yes.mineral_and_ore.uranium"),
-          economicInterestElements: ["u", "fe"],
+          resourceTypePath: toHierarchyPath("mineral_and_ore"),
+          economicInterestElements: ["fe"],
           economicResourceTypePrecision: "high-grade ore",
-          economicDepositName: "Cigar Lake",
-          economicDepositDescription: "Unconformity-related",
+          economicDepositName: "Ruhr",
+          economicDepositDescription: "Coal basin",
         }),
+        material,
       ),
-    ).toEqual({
-      economicInterest: "yes.mineral_and_ore.uranium",
-      economicInterestElements: ["u", "fe"],
-      economicResourceTypePrecision: "high-grade ore",
-      economicDepositName: "Cigar Lake",
-      economicDepositDescription: "Unconformity-related",
-    });
+    ).toBeNull();
   });
 
-  it("should drop the elements outside mineral_and_ore but keep the detail", () => {
+  it("should send no economic block when nothing is entered", () => {
+    expect(composeEconomicInterest(draft({}), "sediment")).toBeNull();
+  });
+
+  it("should keep the detail when no resource type is chosen", () => {
     expect(
       composeEconomicInterest(
-        draft({
-          economicInterestPath: toHierarchyPath("yes.hydrocarbon.coal"),
-          economicInterestElements: ["fe"],
-          economicDepositName: "Ruhr",
-        }),
+        draft({ economicDepositName: "Ruhr" }),
+        "sediment",
       ),
     ).toEqual({
-      economicInterest: "yes.hydrocarbon.coal",
+      resourceType: null,
       economicInterestElements: [],
       economicResourceTypePrecision: null,
       economicDepositName: "Ruhr",
@@ -53,20 +52,21 @@ describe("composeEconomicInterest", () => {
     });
   });
 
-  it("should drop every detail when the answer is not yes", () => {
+  it("should drop the elements outside mineral_and_ore but keep the detail", () => {
     expect(
       composeEconomicInterest(
         draft({
-          economicInterestPath: toHierarchyPath("no"),
+          resourceTypePath: toHierarchyPath("hydrocarbon.coal"),
           economicInterestElements: ["fe"],
           economicDepositName: "Ruhr",
         }),
+        "sediment",
       ),
     ).toEqual({
-      economicInterest: "no",
+      resourceType: "hydrocarbon.coal",
       economicInterestElements: [],
       economicResourceTypePrecision: null,
-      economicDepositName: null,
+      economicDepositName: "Ruhr",
       economicDepositDescription: null,
     });
   });
@@ -75,28 +75,19 @@ describe("composeEconomicInterest", () => {
     expect(
       composeEconomicInterest(
         draft({
-          economicInterestPath: toHierarchyPath("yes"),
+          resourceTypePath: toHierarchyPath("hydrocarbon"),
           economicDepositName: "   ",
         }),
-      ).economicDepositName,
+        "sediment",
+      )?.economicDepositName,
     ).toBeNull();
-  });
-
-  it("should map an empty draft to a null answer", () => {
-    expect(composeEconomicInterest(draft({}))).toEqual({
-      economicInterest: null,
-      economicInterestElements: [],
-      economicResourceTypePrecision: null,
-      economicDepositName: null,
-      economicDepositDescription: null,
-    });
   });
 });
 
 describe("toEconomicInterestDraft", () => {
   it("should return an empty draft for no value", () => {
     expect(toEconomicInterestDraft(undefined)).toEqual({
-      economicInterestPath: [],
+      resourceTypePath: [],
       economicInterestElements: [],
       economicResourceTypePrecision: undefined,
       economicDepositName: undefined,
@@ -108,15 +99,16 @@ describe("toEconomicInterestDraft", () => {
     expect(
       composeEconomicInterest(
         toEconomicInterestDraft({
-          economicInterest: "yes.mineral_and_ore.uranium.sandstone",
+          resourceType: "mineral_and_ore.uranium.sandstone",
           economicInterestElements: ["u", "fe"],
           economicResourceTypePrecision: "high-grade ore",
           economicDepositName: "Cigar Lake",
           economicDepositDescription: "Unconformity-related",
         }),
+        "rock.sedimentary",
       ),
     ).toEqual({
-      economicInterest: "yes.mineral_and_ore.uranium.sandstone",
+      resourceType: "mineral_and_ore.uranium.sandstone",
       economicInterestElements: ["u", "fe"],
       economicResourceTypePrecision: "high-grade ore",
       economicDepositName: "Cigar Lake",

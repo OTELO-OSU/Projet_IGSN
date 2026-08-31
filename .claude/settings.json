@@ -4,6 +4,7 @@
     "ENABLE_LSP_TOOL": "1",
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
   },
+  "outputStyle": "concise",
   "attribution": {
     "commit": "",
     "pr": ""

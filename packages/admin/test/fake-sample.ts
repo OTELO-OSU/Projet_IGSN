@@ -19,7 +19,7 @@ export const fakeSample = {
   links: [],
   attachments: [],
   publicationYear: null,
-  economicInterest: null,
+  resourceType: null,
   economicInterestElements: [],
   economicResourceTypePrecision: null,
   economicDepositName: null,

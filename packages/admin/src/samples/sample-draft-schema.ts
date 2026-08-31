@@ -111,7 +111,7 @@ const composeCreateSample = (draft: SampleDraft) => {
   const security = composeSecurity(draft.security);
   const scientificContext = composeScientificContext(draft.scientificContext);
   const links = composeLinks(draft.links);
-  const economic = composeEconomicInterest(draft);
+  const economic = composeEconomicInterest(draft, material);
   return {
     name: draft.name,
     nature: draft.nature,
@@ -138,7 +138,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(age ? { age } : {}),
     ...(links.length > 0 ? { links } : {}),
     manualGroupIds: draft.manualGroupIds,
-    ...(economic.economicInterest !== null ? economic : {}),
+    ...economic,
   };
 };
 

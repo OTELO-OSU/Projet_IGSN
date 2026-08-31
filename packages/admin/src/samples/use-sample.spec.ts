@@ -28,7 +28,7 @@ const sample = {
   security: null,
   availability: "exists",
   publicationYear: null,
-  economicInterest: null,
+  resourceType: null,
   economicResourceTypePrecision: null,
   economicDepositName: null,
   economicDepositDescription: null,

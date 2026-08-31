@@ -137,7 +137,7 @@ function fakeApi(
     },
     availability,
     publicationYear: status === "draft" ? null : 2026,
-    economicInterest: null,
+    resourceType: null,
     economicInterestElements: [],
     economicResourceTypePrecision: null,
     economicDepositName: null,
@@ -674,21 +674,21 @@ describe("EditSamplePage", () => {
       .toHaveValue("3.2 kBq alpha");
   });
 
-  it("should prefill the economic interest and deposit name from the saved sample", async () => {
+  it("should prefill the resource type and deposit name from the saved sample", async () => {
     const { screen } = await renderEditPage(
       "draft",
-      "fossil",
+      "sediment",
       false,
       null,
       null,
       "exists",
       null,
-      { economicInterest: "yes", economicDepositName: "Grande Mine" },
+      { resourceType: "hydrocarbon", economicDepositName: "Grande Mine" },
     );
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Sample type" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: "Economic interest" }))
-      .toHaveTextContent("Yes");
+      .element(screen.getByRole("combobox", { name: "Resource type" }))
+      .toHaveTextContent("Hydrocarbon Resources");
     await expect
       .element(screen.getByLabelText("Deposit name"))
       .toHaveValue("Grande Mine");

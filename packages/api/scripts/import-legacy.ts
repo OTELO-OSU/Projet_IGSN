@@ -9,8 +9,8 @@ import type { DB } from "../src/db.ts";
 import { createDb } from "../src/db.ts";
 import { conditionColumns } from "../src/sample/service/condition-columns.ts";
 import { descriptionColumns } from "../src/sample/service/description-columns.ts";
-import { economicInterestColumns } from "../src/sample/service/economic-interest-columns.ts";
 import { replaceSampleLinks } from "../src/sample/service/replace-sample-links.ts";
+import { resourceTypeColumns } from "../src/sample/service/resource-type-columns.ts";
 import { scientificContextColumns } from "../src/sample/service/scientific-context-columns.ts";
 import { securityColumns } from "../src/sample/service/security-columns.ts";
 import { toAgeColumns } from "../src/sample/service/to-age-columns.ts";
@@ -126,7 +126,7 @@ function toSampleRow(
     ...scientificContextColumns(create.scientificContext),
     ...toAgeColumns(create.age),
     ...securityColumns(create.security),
-    ...economicInterestColumns(create),
+    ...resourceTypeColumns(create),
     status: "published" as const,
     publication_year: publishedAt.getUTCFullYear(),
     created_at: publishedAt,

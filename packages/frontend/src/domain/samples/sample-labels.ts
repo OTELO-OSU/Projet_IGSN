@@ -20,7 +20,7 @@ export const {
   lightLabel,
   pressureTypeLabel,
   availabilityLabel,
-  economicInterestLabel,
+  resourceTypeLabel,
   elementLabel,
   numericUnitLabel,
   yearsUnitLabel,

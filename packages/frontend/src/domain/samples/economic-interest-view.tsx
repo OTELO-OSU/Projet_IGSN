@@ -3,13 +3,13 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 import { BreadcrumbFieldRow } from "#/domain/samples/breadcrumb-field-row.tsx";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import {
-  economicInterestLabel,
   elementLabel,
+  resourceTypeLabel,
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
 export type EconomicInterestViewProps = {
-  economicInterest: NonNullable<Sample["economicInterest"]>;
+  resourceType: Sample["resourceType"];
   economicInterestElements: Sample["economicInterestElements"];
   economicResourceTypePrecision: Sample["economicResourceTypePrecision"];
   economicDepositName: Sample["economicDepositName"];
@@ -17,7 +17,7 @@ export type EconomicInterestViewProps = {
 };
 
 export function EconomicInterestView({
-  economicInterest,
+  resourceType,
   economicInterestElements,
   economicResourceTypePrecision,
   economicDepositName,
@@ -26,10 +26,10 @@ export function EconomicInterestView({
   return (
     <FieldRows>
       <BreadcrumbFieldRow
-        id="sample-field-economic-interest"
-        label={m.sample_field_economic_interest()}
-        path={economicInterest}
-        pathLabel={economicInterestLabel}
+        id="sample-field-resource-type"
+        label={m.sample_field_resource_type()}
+        path={resourceType}
+        pathLabel={resourceTypeLabel}
       />
       <FieldRow
         label={m.sample_field_economic_interest_elements()}

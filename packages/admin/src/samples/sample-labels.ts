@@ -9,7 +9,7 @@ export const {
   materialPathLabel,
   typeLabel,
   collectionMethodLabel,
-  economicInterestLabel,
+  resourceTypeLabel,
   elementLabel,
   textureLabel,
   metamorphicFaciesLabel,

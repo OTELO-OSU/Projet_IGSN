@@ -19,7 +19,7 @@ const validSample = {
   security: null,
   availability: "exists",
   publicationYear: null,
-  economicInterest: null,
+  resourceType: null,
   economicInterestElements: [],
   economicResourceTypePrecision: null,
   economicDepositName: null,
@@ -56,7 +56,7 @@ describe("sampleSchema", () => {
       security: null,
       availability: "exists",
       publicationYear: null,
-      economicInterest: null,
+      resourceType: null,
       economicInterestElements: [],
       economicResourceTypePrecision: null,
       economicDepositName: null,
@@ -204,12 +204,12 @@ describe("createSampleSchema", () => {
     ]);
   });
 
-  it("should accept an explicit economic interest", () => {
+  it("should accept an explicit resource type", () => {
     // Arrange / Act
     const result = createSampleSchema.parse({
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
-      economicInterest: "yes.mineral_and_ore.uranium.sandstone",
+      resourceType: "mineral_and_ore.uranium.sandstone",
       economicInterestElements: ["u", "fe"],
       economicResourceTypePrecision: "high-grade ore",
       economicDepositName: "Cigar Lake",
@@ -217,7 +217,7 @@ describe("createSampleSchema", () => {
     });
     // Assert
     expect(result).toMatchObject({
-      economicInterest: "yes.mineral_and_ore.uranium.sandstone",
+      resourceType: "mineral_and_ore.uranium.sandstone",
       economicInterestElements: ["u", "fe"],
       economicResourceTypePrecision: "high-grade ore",
       economicDepositName: "Cigar Lake",
@@ -225,12 +225,12 @@ describe("createSampleSchema", () => {
     });
   });
 
-  it("should reject an unknown economic interest path", () => {
+  it("should reject an unknown resource type path", () => {
     // Arrange / Act
     const result = createSampleSchema.safeParse({
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
-      economicInterest: "yes.mineral_and_ore.unobtanium",
+      resourceType: "mineral_and_ore.unobtanium",
     });
     // Assert
     expect(result.success).toBe(false);

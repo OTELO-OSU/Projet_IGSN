@@ -87,7 +87,6 @@ const validateDraft =
       : { fields: sampleDraftFieldErrors(parsed.error.issues, value) };
   };
 
-/** One confirmed action hidden in a chevron attached to the submit button, run on the validated form value (save & ...). */
 export type SampleSubmitMenu = {
   label: string;
   itemLabel: string;
@@ -120,7 +119,6 @@ type SampleFormProps = {
   status?: SampleStatus;
   primaryAction: SampleFormAction;
   secondaryAction?: SampleFormAction;
-  /** The withdraw / republish toggle, rendered after the save action. */
   statusAction?: ReactNode;
   sampleId?: string;
   attachments?: SampleAttachment[];
@@ -328,9 +326,8 @@ export function SampleForm({
         </div>
       ));
     }
-    // ponytail: a native submit button routes through the form's default meta
-    // (defaultSubmit), so only one submit-kind action is supported at a time.
-    // No caller needs two; add explicit per-button meta if that ever changes.
+    // ponytail: only one submit-kind action is supported at a time.
+    // add explicit per-button meta if that ever changes.
     const menu = action.menu;
     const submitButton = (disabled: boolean) => (
       <form.AppForm>
@@ -464,6 +461,10 @@ export function SampleForm({
               </form.AppForm>
             </FormSection>
 
+            <form.AppForm>
+              <SampleEconomicInterestFields />
+            </form.AppForm>
+
             <form.AppField name="specificName">
               {(field) => <field.TextField label={m.field_specific_name()} />}
             </form.AppField>
@@ -496,12 +497,6 @@ export function SampleForm({
             <FormSection title={m.section_security()}>
               <form.AppForm>
                 <SampleSecurityFields />
-              </form.AppForm>
-            </FormSection>
-
-            <FormSection title={m.section_economic_interest()}>
-              <form.AppForm>
-                <SampleEconomicInterestFields />
               </form.AppForm>
             </FormSection>
           </TabsContent>

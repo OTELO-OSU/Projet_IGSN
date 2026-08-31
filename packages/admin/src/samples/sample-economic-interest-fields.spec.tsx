@@ -1,43 +1,146 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
-import { vi } from "vitest";
+import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
+import { toHierarchyPath } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { describe, expect, it, vi } from "vitest";
+import { render } from "vitest-browser-react";
+import { page } from "vitest/browser";
 
-import { render } from "../../test/render.tsx";
-import { SampleForm } from "./sample-form.tsx";
+import {
+  type EconomicInterestDraft,
+  toEconomicInterestDraft,
+} from "#/samples/compose-economic-interest.ts";
+import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest-fields.tsx";
+import { SampleForm } from "#/samples/sample-form.tsx";
+
+import { render as renderWithClient } from "../../test/render.tsx";
+
+function Harness({
+  material = "sediment",
+  values,
+}: {
+  material?: string | null;
+  values?: Partial<EconomicInterestDraft>;
+} = {}) {
+  const form = useAppForm({
+    defaultValues: {
+      materialPath: toHierarchyPath(material),
+      ...toEconomicInterestDraft(undefined),
+      ...values,
+    },
+    onSubmit: () => {},
+  });
+  return (
+    <form.AppForm>
+      <SampleEconomicInterestFields />
+    </form.AppForm>
+  );
+}
+
+const toggle = () =>
+  page.getByRole("switch", { name: "Record an economic interest" });
+const resourceType = () =>
+  page.getByRole("combobox", { name: "Resource type" });
+const elements = () =>
+  page.getByRole("combobox", { name: "Chemical elements of interest" });
 
 const noop = () => {};
 
-const createAction = (onSubmit: (value: CreateSample) => void) =>
-  ({ kind: "submit", label: "Create", onSubmit }) as const;
-
-async function renderEconomicSection(
+async function renderEconomicTab(
   onSubmit: (value: CreateSample) => void = noop,
 ) {
-  const screen = await render(
+  const screen = await renderWithClient(
     <SampleForm
       onCancel={noop}
       defaultValues={{
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
-        material: null,
+        material: "sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
       }}
-      primaryAction={createAction(onSubmit)}
+      primaryAction={{ kind: "submit", label: "Create", onSubmit }}
     />,
   );
-  await screen.getByRole("tab", { name: "Physical description" }).click();
+  await screen.getByRole("tab", { name: "Sample type" }).click();
   return screen;
 }
 
 describe("SampleEconomicInterestFields", () => {
+  it("should render nothing for a material with no economic interest", async () => {
+    await render(<Harness material="mineral" />);
+
+    await expect.element(toggle()).not.toBeInTheDocument();
+    await expect
+      .element(page.getByRole("heading", { name: "Economic interest" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should offer the switch off by default for an eligible material", async () => {
+    await render(<Harness />);
+
+    await expect.element(toggle()).not.toBeChecked();
+    await expect.element(resourceType()).not.toBeInTheDocument();
+  });
+
+  it("should reveal the resource type and the detail fields once enabled", async () => {
+    await render(<Harness />);
+
+    await toggle().click();
+
+    await expect.element(resourceType()).toBeInTheDocument();
+    await expect
+      .element(page.getByLabelText("Resource type details"))
+      .toBeVisible();
+    await expect.element(page.getByLabelText("Deposit name")).toBeVisible();
+    await expect
+      .element(page.getByLabelText("Deposit description"))
+      .toBeVisible();
+  });
+
+  it("should clear what was entered when disabled and re-enabled", async () => {
+    await render(<Harness />);
+
+    await toggle().click();
+    await page.getByLabelText("Deposit name").fill("Cigar Lake");
+    await toggle().click();
+    await toggle().click();
+
+    await expect.element(page.getByLabelText("Deposit name")).toHaveValue("");
+  });
+
+  it("should start enabled when the draft already carries a detail", async () => {
+    await render(<Harness values={{ economicDepositName: "Grande Mine" }} />);
+
+    await expect.element(toggle()).toBeChecked();
+    await expect
+      .element(page.getByLabelText("Deposit name"))
+      .toHaveValue("Grande Mine");
+  });
+
+  it("should reveal the chemical elements only under mineral_and_ore", async () => {
+    await render(<Harness />);
+
+    await toggle().click();
+    await resourceType().click();
+    await page.getByRole("option", { name: "Hydrocarbon Resources" }).click();
+
+    await expect.element(elements()).not.toBeInTheDocument();
+
+    await resourceType().click();
+    await page
+      .getByRole("option", { name: "Mineral and Ore Resources" })
+      .click();
+
+    await expect.element(elements()).toBeInTheDocument();
+  });
+
   it("should submit the elements and detail chosen for a mineral_and_ore resource", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderEconomicSection(onSubmit);
+    const screen = await renderEconomicTab(onSubmit);
 
-    await screen.getByRole("combobox", { name: "Economic interest" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await toggle().click();
     await screen.getByRole("combobox", { name: "Resource type" }).click();
     await screen
       .getByRole("option", { name: "Mineral and Ore Resources" })
@@ -53,52 +156,11 @@ describe("SampleEconomicInterestFields", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
-          economicInterest: "yes.mineral_and_ore",
+          resourceType: "mineral_and_ore",
           economicInterestElements: ["fe"],
           economicDepositName: "Cigar Lake",
         }),
       ),
     );
-  });
-
-  it("should show the deposit fields only once the answer is yes", async () => {
-    const screen = await renderEconomicSection();
-
-    await expect
-      .element(screen.getByLabelText("Resource type details"))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByLabelText("Deposit name"))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByLabelText("Deposit description"))
-      .not.toBeInTheDocument();
-
-    await screen.getByRole("combobox", { name: "Economic interest" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
-
-    await expect.element(screen.getByLabelText("Deposit name")).toBeVisible();
-
-    await screen.getByRole("combobox", { name: "Economic interest" }).click();
-    await screen.getByRole("option", { name: "No", exact: true }).click();
-
-    await expect
-      .element(screen.getByLabelText("Deposit name"))
-      .not.toBeInTheDocument();
-  });
-
-  it("should reveal the chemical elements only for a mineral_and_ore resource", async () => {
-    const screen = await renderEconomicSection();
-
-    await screen.getByRole("combobox", { name: "Economic interest" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
-    await screen.getByRole("combobox", { name: "Resource type" }).click();
-    await screen.getByRole("option", { name: "Hydrocarbon Resources" }).click();
-
-    await expect
-      .element(
-        screen.getByRole("combobox", { name: "Chemical elements of interest" }),
-      )
-      .not.toBeInTheDocument();
   });
 });

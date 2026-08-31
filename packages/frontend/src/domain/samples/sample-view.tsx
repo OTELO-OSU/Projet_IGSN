@@ -5,6 +5,7 @@ import {
   organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
+import { hasEconomicInterest } from "@projet-igsn/domain/sample/resource-type/has-economic-interest";
 import { fullName } from "@projet-igsn/domain/user/full-name";
 
 import { AgeView, hasAge } from "#/domain/samples/age-view.tsx";
@@ -59,7 +60,7 @@ export function SampleView({
     age,
     links,
     attachments,
-    economicInterest,
+    resourceType,
     economicInterestElements,
     economicResourceTypePrecision,
     economicDepositName,
@@ -193,12 +194,18 @@ export function SampleView({
       title: m.sample_section_security(),
       content: <SecurityView security={security} />,
     },
-    economicInterest != null && {
+    hasEconomicInterest({
+      resourceType,
+      economicInterestElements,
+      economicResourceTypePrecision,
+      economicDepositName,
+      economicDepositDescription,
+    }) && {
       id: "economic-interest",
       title: m.sample_section_economic_interest(),
       content: (
         <EconomicInterestView
-          economicInterest={economicInterest}
+          resourceType={resourceType}
           economicInterestElements={economicInterestElements}
           economicResourceTypePrecision={economicResourceTypePrecision}
           economicDepositName={economicDepositName}
