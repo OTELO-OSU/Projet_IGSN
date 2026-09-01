@@ -95,9 +95,9 @@ function toScientificContext(row: Selectable<DB["sample"]>) {
       ...omitNull({
         funderOrganizations: row.sc_funder_organizations,
         researchProgramName: row.sc_research_program_name,
-        researchProgramChief: row.sc_research_program_chief,
-        researchProgramChiefOrcid: row.sc_research_program_chief_orcid,
-        researchStructure: row.sc_research_structure,
+        chiefScientist: row.sc_chief_scientist,
+        chiefScientistOrcid: row.sc_chief_scientist_orcid,
+        hostInstitution: row.sc_host_institution,
         collectorName: row.sc_collector_name,
         collectorOrcid: row.sc_collector_orcid,
         researchCampaign: row.sc_research_campaign,

@@ -89,9 +89,9 @@ type SampleTable = {
   sc_provenance_status: string | null;
   sc_funder_organizations: string[] | null;
   sc_research_program_name: string | null;
-  sc_research_program_chief: string | null;
-  sc_research_program_chief_orcid: string | null;
-  sc_research_structure: string[] | null;
+  sc_chief_scientist: string | null;
+  sc_chief_scientist_orcid: string | null;
+  sc_host_institution: string[] | null;
   sc_collector_name: string | null;
   sc_collector_orcid: string | null;
   sc_research_campaign: string | null;

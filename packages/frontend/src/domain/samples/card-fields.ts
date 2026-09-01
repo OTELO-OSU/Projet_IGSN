@@ -142,8 +142,8 @@ const OPTIONAL_CARD_FIELDS: readonly CardField[] = [
     get: (sample) => sample.texture && textureLabel(sample.texture),
   },
   contextField("researchProgramName", m.facet_research_program_name),
-  contextField("researchProgramChief", m.facet_research_program_chief),
-  contextField("researchCampaign", m.facet_research_campaign),
+  contextField("chiefScientist", m.facet_chief_scientist),
+  contextField("researchCampaign", m.sample_field_research_campaign),
   contextField("collectionCurator", m.facet_collection_curator),
   {
     key: "numericAge",

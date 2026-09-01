@@ -13,8 +13,8 @@ export const FACET_COLUMN: Record<string, string> = {
   nature: "nature",
   texture: "texture",
   researchProgramName: "sc_research_program_name",
-  researchProgramChief: "sc_research_program_chief",
-  researchCampaign: "sc_research_campaign",
+  chiefScientist: "sc_chief_scientist",
+  hostInstitution: "sc_host_institution",
   collectorName: "sc_collector_name",
   collectionCurator: "sc_collection_curator",
   institutionalOrganization: "institutional_organization",
@@ -44,7 +44,9 @@ function facetFilter(
     case "hierarchy":
       return sql<SqlBool>`${sql.ref(column)} <@ ${value}::ltree`;
     case "enum":
-      return sql<SqlBool>`${sql.ref(column)} = ${value}`;
+      return facet.multiValued
+        ? sql<SqlBool>`${value} = any(${sql.ref(column)})`
+        : sql<SqlBool>`${sql.ref(column)} = ${value}`;
     case "text":
       return sql<SqlBool>`immutable_unaccent(${sql.ref(column)}) ILIKE immutable_unaccent(${likePattern(value)})`;
     case "numericRange":

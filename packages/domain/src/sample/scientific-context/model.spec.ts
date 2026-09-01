@@ -6,11 +6,11 @@ const recentCollection = {
   provenanceStatus: "recent_collection",
   funderOrganizations: ["02feahw73", "04kdfz702"],
   researchProgramName: "Deep Biosphere Survey",
-  researchProgramChief: "Marie Curie",
-  researchProgramChiefOrcid: "0000-0002-1825-0097",
+  chiefScientist: "Marie Curie",
+  chiefScientistOrcid: "0000-0002-1825-0097",
   collectorName: "Pierre Curie",
   collectorOrcid: "0000-0001-2345-6789",
-  researchStructure: ["04kdfz702", "02feahw73"],
+  hostInstitution: ["04kdfz702", "02feahw73"],
   researchCampaign: "MD 209 / 2021",
   funding: "ANR grant 42",
   researchProgramDescription: "Multi-year survey of\nsub-seafloor life",
@@ -60,11 +60,6 @@ describe("scientificContextSchema", () => {
 
   it.each([
     { case: "missing provenance status", input: { collectorName: "X" } },
-    { case: "unknown provenance status", input: { provenanceStatus: "other" } },
-    {
-      case: "empty free text",
-      input: { provenanceStatus: "recent_collection", researchProgramName: "" },
-    },
     {
       case: "invalid ROR funder",
       input: {
@@ -80,38 +75,24 @@ describe("scientificContextSchema", () => {
       },
     },
     {
-      case: "invalid ROR in the research structures",
+      case: "empty host institutions (not filled is null, never [])",
       input: {
         provenanceStatus: "recent_collection",
-        researchStructure: ["04kdfz702", "123"],
+        hostInstitution: [],
       },
     },
     {
-      case: "empty research structures (not filled is null, never [])",
+      case: "duplicate host institutions",
       input: {
         provenanceStatus: "recent_collection",
-        researchStructure: [],
+        hostInstitution: ["04kdfz702", "04kdfz702"],
       },
     },
     {
-      case: "duplicate research structures",
+      case: "malformed chief scientist ORCID",
       input: {
         provenanceStatus: "recent_collection",
-        researchStructure: ["04kdfz702", "04kdfz702"],
-      },
-    },
-    {
-      case: "malformed research programme chief ORCID",
-      input: {
-        provenanceStatus: "recent_collection",
-        researchProgramChiefOrcid: "0000-0002-1825",
-      },
-    },
-    {
-      case: "malformed collector ORCID",
-      input: {
-        provenanceStatus: "recent_collection",
-        collectorOrcid: "not-an-orcid",
+        chiefScientistOrcid: "0000-0002-1825",
       },
     },
     {

@@ -54,18 +54,18 @@ describe("publishedSampleSchema", () => {
       "scientificContext.collectionOrigin",
     ],
     [
-      "research_structure_missing",
+      "host_institution_missing",
       {
         ...publishable,
         scientificContext: {
           provenanceStatus: "recent_collection" as const,
           funderOrganizations: ["02feahw73"],
           researchProgramName: "Deep Biosphere Survey",
-          researchProgramChief: "Marie Curie",
+          chiefScientist: "Marie Curie",
           collectorName: "Pierre Curie",
         },
       },
-      "scientificContext.researchStructure",
+      "scientificContext.hostInstitution",
     ],
   ])(
     "should reject an update that raises %s, pinned on its field",

@@ -70,7 +70,7 @@ describe("SampleScientificContextFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
-    await pickProvenance(screen, "Recent collection");
+    await pickProvenance(screen, "Field collection");
     await screen
       .getByRole("combobox", { name: "Funder organizations *" })
       .click();
@@ -81,7 +81,7 @@ describe("SampleScientificContextFields", () => {
       .fill("Deep Biosphere Survey");
     await screen
       .getByRole("combobox", {
-        name: "Research structure of the programme chief *",
+        name: "Host institution (project leader) *",
       })
       .click();
     await pickOrganization(screen, "04kdfz702");
@@ -96,7 +96,7 @@ describe("SampleScientificContextFields", () => {
             provenanceStatus: "recent_collection",
             funderOrganizations: ["02feahw73", "04kdfz702"],
             researchProgramName: "Deep Biosphere Survey",
-            researchStructure: ["04kdfz702", "05hnb7x64"],
+            hostInstitution: ["04kdfz702", "05hnb7x64"],
             collectorName: "Pierre Curie",
           },
         }),
@@ -108,7 +108,7 @@ describe("SampleScientificContextFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
-    await pickProvenance(screen, "Collection / historical specimen");
+    await pickProvenance(screen, "Historical collection");
     await screen
       .getByLabelText("Name of the collection curator *")
       .fill("Georges Cuvier");
@@ -147,12 +147,12 @@ describe("SampleScientificContextFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
-    await pickProvenance(screen, "Recent collection");
+    await pickProvenance(screen, "Field collection");
     await screen
       .getByLabelText("Name of the research programme *")
       .fill("Deep Biosphere Survey");
     await screen.getByLabelText("Collector name *").fill("Pierre Curie");
-    await pickProvenance(screen, "Collection / historical specimen");
+    await pickProvenance(screen, "Historical collection");
     await expect
       .element(screen.getByLabelText("Name of the research programme *"))
       .not.toBeInTheDocument();
@@ -160,12 +160,12 @@ describe("SampleScientificContextFields", () => {
       .element(screen.getByLabelText("Collector name"))
       .toHaveValue("Pierre Curie");
 
-    await pickProvenance(screen, "Recent collection");
+    await pickProvenance(screen, "Field collection");
     await expect
       .element(screen.getByLabelText("Name of the research programme *"))
       .toHaveValue("Deep Biosphere Survey");
 
-    await pickProvenance(screen, "Collection / historical specimen");
+    await pickProvenance(screen, "Historical collection");
     await screen
       .getByLabelText("Name of the collection curator *")
       .fill("Georges Cuvier");

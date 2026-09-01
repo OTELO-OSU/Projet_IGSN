@@ -28,6 +28,8 @@ describe("facetQueryFields", () => {
     ["nature", "rock_powder"],
     ["texture", "aphanitic"],
     ["collectorName", "Marie Curie"],
+    ["chiefScientist", "Marie Curie"],
+    ["hostInstitution", "02feahw73"],
     ["institutionalLaboratory", "EA4038"],
     ["manualGroup", "b4c1f0de-0f4a-4b0e-9c1e-8f2a1d6b7c30"],
     ["contributor", "3f9a2c18-5d7b-4e2a-9c0f-1b8e4d6a2f57"],
@@ -41,6 +43,7 @@ describe("facetQueryFields", () => {
     ["nature", "not_a_nature"],
     ["texture", "not_a_texture"],
     ["institutionalOrganization", "not-a-ror"],
+    ["hostInstitution", "not-a-ror"],
     ["manualGroup", "not-a-uuid"],
     ["contributor", "not-a-uuid"],
   ])("should degrade an invalid %s value to no filter", (key, value) => {

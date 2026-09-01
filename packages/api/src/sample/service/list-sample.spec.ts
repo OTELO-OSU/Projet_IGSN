@@ -234,6 +234,35 @@ describe("listSamples", () => {
   });
 
   pgTest(
+    "should filter the host institution by membership in its array",
+    async ({ db }) => {
+      // Arrange
+      const hosted = (name: string, hostInstitution: string[]) =>
+        insertSample(db, {
+          name,
+          nature: "rock_powder",
+          type: null,
+          collectionMethod: null,
+          scientificContext: {
+            provenanceStatus: "recent_collection",
+            hostInstitution,
+          },
+        });
+      await hosted("Co-hosted core", ["04kdfz702", "02feahw73"]);
+      await hosted("Elsewhere core", ["02rx3b187"]);
+      // Act
+      const { data, total } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        hostInstitution: "02feahw73",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Co-hosted core"]);
+    },
+  );
+
+  pgTest(
     "should filter by the institutional codes snapshotted on the sample",
     async ({ db }) => {
       // Arrange

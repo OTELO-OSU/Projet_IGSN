@@ -11,9 +11,9 @@ export function scientificContextColumns(
     sc_provenance_status: context?.provenanceStatus ?? null,
     sc_funder_organizations: recent?.funderOrganizations ?? null,
     sc_research_program_name: recent?.researchProgramName ?? null,
-    sc_research_program_chief: recent?.researchProgramChief ?? null,
-    sc_research_program_chief_orcid: recent?.researchProgramChiefOrcid ?? null,
-    sc_research_structure: recent?.researchStructure ?? null,
+    sc_chief_scientist: recent?.chiefScientist ?? null,
+    sc_chief_scientist_orcid: recent?.chiefScientistOrcid ?? null,
+    sc_host_institution: recent?.hostInstitution ?? null,
     sc_collector_name:
       recent?.collectorName ?? historical?.collectorName ?? null,
     sc_collector_orcid: recent?.collectorOrcid ?? null,

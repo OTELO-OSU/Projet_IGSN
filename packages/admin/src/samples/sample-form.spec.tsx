@@ -2141,9 +2141,9 @@ const publishedRecentFixture: CreateSample = {
     provenanceStatus: "recent_collection",
     funderOrganizations: ["03fd77x13"],
     researchProgramName: "GEOSAMPLE",
-    researchProgramChief: "Marie Tharp",
-    researchProgramChiefOrcid: "0000-0002-1825-0097",
-    researchStructure: ["02cte4b68"],
+    chiefScientist: "Marie Tharp",
+    chiefScientistOrcid: "0000-0002-1825-0097",
+    hostInstitution: ["02cte4b68"],
     collectorName: "Alfred Wegener",
   },
 };
@@ -2519,10 +2519,10 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByLabelText("Name of the research programme *"))
       .toBeDisabled();
     await expect
-      .element(screen.getByLabelText("Research programme chief *"))
+      .element(screen.getByLabelText("Chief scientist / Project leader *"))
       .toBeDisabled();
     await expect
-      .element(screen.getByLabelText("Research programme chief ORCID"))
+      .element(screen.getByLabelText("Chief scientist ORCID"))
       .toBeDisabled();
     await expect
       .element(screen.getByLabelText("Collector name *"))
@@ -2530,7 +2530,7 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(
         screen.getByRole("combobox", {
-          name: "Research structure of the programme chief *",
+          name: "Host institution (project leader) *",
         }),
       )
       .toBeEnabled();

@@ -7,7 +7,10 @@ import {
   LABORATORIES,
   laboratoryCodeSchema,
 } from "../../institutional-group/laboratory.ts";
-import { organizationRorSchema } from "../../institutional-group/organization.ts";
+import {
+  ORGANIZATIONS,
+  organizationRorSchema,
+} from "../../institutional-group/organization.ts";
 import { OSUS, osuCodeSchema } from "../../institutional-group/osu.ts";
 import {
   NUMERIC_UNITS,
@@ -42,7 +45,12 @@ export type SampleFacet =
       hierarchy: SearchableHierarchy;
       schema: z.ZodTypeAny;
     }
-  | { key: string; kind: "enum"; values: readonly string[] }
+  | {
+      key: string;
+      kind: "enum";
+      values: readonly string[];
+      multiValued?: true;
+    }
   | { key: string; kind: "text" }
   | { key: string; kind: "linked" }
   | {
@@ -73,8 +81,13 @@ export const SAMPLE_FACETS: readonly SampleFacet[] = [
   { key: "nature", kind: "enum", values: NATURES },
   { key: "texture", kind: "enum", values: TEXTURES },
   { key: "researchProgramName", kind: "text" },
-  { key: "researchProgramChief", kind: "text" },
-  { key: "researchCampaign", kind: "text" },
+  { key: "chiefScientist", kind: "text" },
+  {
+    key: "hostInstitution",
+    kind: "enum",
+    multiValued: true,
+    values: ORGANIZATIONS.map((o) => o.ror),
+  },
   { key: "collectorName", kind: "text" },
   { key: "collectionCurator", kind: "text" },
   { key: "age", kind: "numericRange", units: NUMERIC_UNITS },
@@ -130,8 +143,8 @@ export function facetQueryFields() {
     nature: optionalFilter(natureSchema),
     texture: optionalFilter(textureSchema),
     researchProgramName: textFilter(),
-    researchProgramChief: textFilter(),
-    researchCampaign: textFilter(),
+    chiefScientist: textFilter(),
+    hostInstitution: optionalFilter(organizationRorSchema),
     collectorName: textFilter(),
     collectionCurator: textFilter(),
     ageMin: optionalFilter(z.coerce.number()),

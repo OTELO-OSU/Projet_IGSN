@@ -141,7 +141,7 @@ export function sampleEditPage(page: Page) {
       await pick("Existence status", "Exists");
       await pick("Availability status", "Available");
       await openTab("Scientific context");
-      await pick("Provenance status", "Collection / historical specimen");
+      await pick("Provenance status", "Historical collection");
       await page.getByLabel(/collection curator/i).fill("Paul Bernard");
       await pick("Collection origin", "Scientific expedition");
     },

@@ -11,9 +11,9 @@ describe("ScientificContextView", () => {
           provenanceStatus: "recent_collection",
           funderOrganizations: ["03fd77x13", "02cte4b68"],
           researchProgramName: "Deep Earth Sampling",
-          researchProgramChief: "Marie Curie",
-          researchProgramChiefOrcid: "0000-0002-1825-0097",
-          researchStructure: ["043htjv09", "00z54nq84"],
+          chiefScientist: "Marie Curie",
+          chiefScientistOrcid: "0000-0002-1825-0097",
+          hostInstitution: ["043htjv09", "00z54nq84"],
           collectorName: "John Field",
           collectorOrcid: "0000-0001-2345-6789",
           researchCampaign: "Atlantic 2025",
@@ -29,7 +29,7 @@ describe("ScientificContextView", () => {
       .element(screen.getByText("Provenance status"))
       .toBeInTheDocument();
     await expect
-      .element(screen.getByText("Recent collection"))
+      .element(screen.getByText("Field collection"))
       .toBeInTheDocument();
 
     for (const ror of ["03fd77x13", "02cte4b68", "043htjv09", "00z54nq84"]) {
@@ -63,7 +63,7 @@ describe("ScientificContextView", () => {
     );
 
     await expect
-      .element(screen.getByText("Collection / historical specimen"))
+      .element(screen.getByText("Historical collection"))
       .toBeInTheDocument();
     await expect
       .element(screen.getByText("Scientific expedition"))

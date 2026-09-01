@@ -40,8 +40,8 @@ export const FACET_SECTIONS: readonly {
     keys: [
       "contributor",
       "researchProgramName",
-      "researchProgramChief",
-      "researchCampaign",
+      "chiefScientist",
+      "hostInstitution",
       "collectorName",
       "collectionCurator",
     ],

@@ -24,8 +24,8 @@ const base: Sample = {
     provenanceStatus: "recent_collection",
     funderOrganizations: ["02feahw73"],
     researchProgramName: "Deep Biosphere Survey",
-    researchProgramChief: "Marie Curie",
-    researchStructure: ["04kdfz702"],
+    chiefScientist: "Marie Curie",
+    hostInstitution: ["04kdfz702"],
     collectorName: "Pierre Curie",
   },
   age: null,
@@ -132,38 +132,21 @@ describe("samplePublishBlockers", () => {
     ).toEqual(["type_incomplete", "material_incomplete"]);
   });
 
-  it("should report location_position_missing when a required material has no position", () => {
-    expect(samplePublishBlockers({ ...base, location: null })).toEqual([
+  it.each<[string, Sample["location"]]>([
+    ["a required material has no location", null],
+    ["a location has no position", { localityName: "Somewhere" }],
+  ])("should report location_position_missing when %s", (_label, location) => {
+    expect(samplePublishBlockers({ ...base, location })).toEqual([
       "location_position_missing",
     ]);
   });
 
-  it("should report location_position_missing when a location has no position", () => {
+  it.each([
+    "synthetic_rock_mineral",
+    "extraterrestrial_rock.returned_samples.other",
+  ])("should not require a location for %s", (material) => {
     expect(
-      samplePublishBlockers({
-        ...base,
-        location: { localityName: "Somewhere" },
-      }),
-    ).toEqual(["location_position_missing"]);
-  });
-
-  it("should not require a location for synthetic material", () => {
-    expect(
-      samplePublishBlockers({
-        ...base,
-        material: "synthetic_rock_mineral",
-        location: null,
-      }),
-    ).toEqual([]);
-  });
-
-  it("should not require a location for an extraterrestrial returned sample", () => {
-    expect(
-      samplePublishBlockers({
-        ...base,
-        material: "extraterrestrial_rock.returned_samples.other",
-        location: null,
-      }),
+      samplePublishBlockers({ ...base, material, location: null }),
     ).toEqual([]);
   });
 
@@ -173,19 +156,16 @@ describe("samplePublishBlockers", () => {
     ).toEqual(["material_incomplete"]);
   });
 
-  it("should report collection_date_missing when the sample has no description", () => {
-    expect(samplePublishBlockers({ ...base, description: null })).toEqual([
+  it.each<[string, Sample["description"]]>([
+    ["the sample has no description", null],
+    [
+      "the description has no collection date",
+      { openDescription: "Coarse-grained" },
+    ],
+  ])("should report collection_date_missing when %s", (_label, description) => {
+    expect(samplePublishBlockers({ ...base, description })).toEqual([
       "collection_date_missing",
     ]);
-  });
-
-  it("should report collection_date_missing when the description has no collection date", () => {
-    expect(
-      samplePublishBlockers({
-        ...base,
-        description: { openDescription: "Coarse-grained" },
-      }),
-    ).toEqual(["collection_date_missing"]);
   });
 
   const emptyAge: NonNullable<Sample["age"]> = {
@@ -413,8 +393,8 @@ describe("samplePublishBlockers", () => {
     ).toEqual([
       "funder_organizations_missing",
       "research_program_name_missing",
-      "research_program_chief_missing",
-      "research_structure_missing",
+      "chief_scientist_missing",
+      "host_institution_missing",
       "collector_name_missing",
     ]);
   });
@@ -427,10 +407,10 @@ describe("samplePublishBlockers", () => {
           provenanceStatus: "recent_collection",
           funderOrganizations: ["02feahw73"],
           researchProgramName: "Deep Biosphere Survey",
-          researchProgramChief: "Marie Curie",
+          chiefScientist: "Marie Curie",
         },
       }),
-    ).toEqual(["research_structure_missing", "collector_name_missing"]);
+    ).toEqual(["host_institution_missing", "collector_name_missing"]);
   });
 
   it("should report the missing mandatory fields of the historical-specimen branch", () => {
