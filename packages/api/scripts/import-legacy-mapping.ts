@@ -340,38 +340,57 @@ export function mapSize(
   };
 }
 
-const ELEVATION_UNIT_BY_LEGACY: Record<string, "m" | "km"> = {
-  m: "m",
-  meter: "m",
-  meters: "m",
-  km: "km",
+const METRE_FACTOR_BY_LEGACY_UNIT: Record<string, number> = {
+  m: 1,
+  meter: 1,
+  meters: 1,
+  km: 1000,
 };
 
-type Elevation = NonNullable<
+type Vertical = NonNullable<
   NonNullable<CreateSample["location"]>["position"]
->["elevation"];
+>["vertical"];
 
-function elevationUnit(value: string | null): "m" | "km" | undefined {
-  return ELEVATION_UNIT_BY_LEGACY[value?.trim().toLowerCase() ?? ""];
+function metreFactor(value: string | null): number | undefined {
+  return METRE_FACTOR_BY_LEGACY_UNIT[value?.trim().toLowerCase() ?? ""];
 }
 
-export function mapElevation(row: LegacyRow): Elevation | null {
-  const landUnit = elevationUnit(row.elevation_unit);
+// A vertical position is a distance, so a legacy value below sea level flips the reference.
+function toPositiveRange(low: number, high: number) {
+  if (high <= 0)
+    return {
+      min: Math.abs(high),
+      max: Math.abs(low),
+      reference: "bathymetry",
+    } as const;
+  if (low >= 0) return { min: low, max: high, reference: "elevation" } as const;
+  return { min: 0, max: Math.max(-low, high), reference: "other" } as const;
+}
+
+export function mapVertical(
+  row: LegacyRow,
+  type: "point" | "area",
+): Vertical | null {
+  const landFactor = metreFactor(row.elevation_unit);
   const land = parseNumber(row.elevation);
-  if (landUnit && Number.isFinite(land)) {
+  if (landFactor && Number.isFinite(land)) {
     const landEnd = parseNumber(row.elevation_end);
     const end = Number.isFinite(landEnd) ? landEnd : land;
-    return {
-      min: Math.min(land, end),
-      max: Math.max(land, end),
-      unit: landUnit,
-      datum: null,
-    };
+    const { min, max, reference } = toPositiveRange(
+      Math.min(land, end) * landFactor,
+      Math.max(land, end) * landFactor,
+    );
+    return type === "point"
+      ? { position: min, reference }
+      : { min, max, reference };
   }
-  const bathyUnit = elevationUnit(row.bathy_unit);
+  const bathyFactor = metreFactor(row.bathy_unit);
   const bathy = parseNumber(row.bathy);
-  if (bathyUnit && Number.isFinite(bathy)) {
-    return { min: -bathy, max: -bathy, unit: bathyUnit, datum: "msl" };
+  if (bathyFactor && Number.isFinite(bathy)) {
+    const depth = Math.abs(bathy * bathyFactor);
+    return type === "point"
+      ? { position: depth, reference: "bathymetry", system: "msl" }
+      : { min: depth, max: depth, reference: "bathymetry", system: "msl" };
   }
   return null;
 }
@@ -388,27 +407,28 @@ type Position = NonNullable<CreateSample["location"]>["position"];
 
 export function mapPosition(row: LegacyRow): Position | null {
   if (!inLongitude(row.longitude) || !inLatitude(row.latitude)) return null;
-  const elevation = mapElevation(row);
-  const elevationPart = elevation ? { elevation } : {};
-  if (
-    inLongitude(row.longitude_end) &&
-    inLatitude(row.latitude_end) &&
-    (row.longitude_end !== row.longitude || row.latitude_end !== row.latitude)
-  ) {
+  const { longitude_end: longitudeEnd, latitude_end: latitudeEnd } = row;
+  const isArea =
+    inLongitude(longitudeEnd) &&
+    inLatitude(latitudeEnd) &&
+    (longitudeEnd !== row.longitude || latitudeEnd !== row.latitude);
+  const vertical = mapVertical(row, isArea ? "area" : "point");
+  const verticalPart = vertical ? { vertical } : {};
+  if (isArea) {
     return {
       type: "area",
       westLongitude: row.longitude,
-      eastLongitude: row.longitude_end,
-      southLatitude: Math.min(row.latitude, row.latitude_end),
-      northLatitude: Math.max(row.latitude, row.latitude_end),
-      ...elevationPart,
+      eastLongitude: longitudeEnd,
+      southLatitude: Math.min(row.latitude, latitudeEnd),
+      northLatitude: Math.max(row.latitude, latitudeEnd),
+      ...verticalPart,
     };
   }
   return {
     type: "point",
     longitude: row.longitude,
     latitude: row.latitude,
-    ...elevationPart,
+    ...verticalPart,
   };
 }
 
@@ -629,14 +649,14 @@ export function unmappableValues(row: LegacyRow): SkipIssue[] {
   if (
     row.elevation?.trim() &&
     row.elevation_unit &&
-    !ELEVATION_UNIT_BY_LEGACY[norm(row.elevation_unit)]
+    !METRE_FACTOR_BY_LEGACY_UNIT[norm(row.elevation_unit)]
   ) {
     issues.push({ field: "elevation_unit", value: row.elevation_unit });
   }
   if (
     row.bathy?.trim() &&
     row.bathy_unit &&
-    !ELEVATION_UNIT_BY_LEGACY[norm(row.bathy_unit)]
+    !METRE_FACTOR_BY_LEGACY_UNIT[norm(row.bathy_unit)]
   ) {
     issues.push({ field: "bathy_unit", value: row.bathy_unit });
   }

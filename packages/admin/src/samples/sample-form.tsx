@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { availabilitySchema } from "@projet-igsn/domain/sample/availability/availability";
+import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import {
@@ -36,6 +37,7 @@ import {
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
+import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import { AgeFields } from "#/samples/age-fields.tsx";
@@ -48,6 +50,7 @@ import {
   ConfirmMenuButton,
   type ConfirmMenuItem,
 } from "#/samples/confirm-menu-button.tsx";
+import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
@@ -74,6 +77,8 @@ import { TextureField } from "#/samples/texture-field.tsx";
 import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
 import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
+
+const DEFAULT_TAB = "classification";
 
 const natureItems = toComboboxItems(natureSchema.options, natureLabel);
 const availabilityItems = toComboboxItems(
@@ -144,6 +149,7 @@ export function SampleForm({
   readOnlyReason,
   manualGroupOptions = [],
 }: SampleFormProps) {
+  const [tab, setTab] = useState<string>(DEFAULT_TAB);
   const roleOnSample = useUserRoleOnSample(sampleId);
   const wasPublished = hasPermanentIgsn({ status });
   const validate = validateDraft(
@@ -377,157 +383,188 @@ export function SampleForm({
         }}
         className="flex flex-col gap-6"
       >
-        <Tabs defaultValue="classification">
-          <TabsList>
-            <TabsTrigger value="classification">
-              {m.tab_sample_classification()}
-            </TabsTrigger>
-            <TabsTrigger value="type">{m.tab_sample_type()}</TabsTrigger>
-            <TabsTrigger value="physical-description">
-              {m.tab_physical_description()}
-            </TabsTrigger>
-            <TabsTrigger value="scientific-context">
-              {m.tab_scientific_context()}
-            </TabsTrigger>
-            {sampleId ? (
-              <TabsTrigger value="links">{m.tab_links()}</TabsTrigger>
-            ) : null}
-          </TabsList>
+        <form.Subscribe
+          selector={(state) =>
+            allowsLocation(composeHierarchyValue(state.values.materialPath))
+          }
+        >
+          {(showLocation) => (
+            <Tabs
+              value={tab === "location" && !showLocation ? DEFAULT_TAB : tab}
+              onValueChange={setTab}
+            >
+              <TabsList>
+                <TabsTrigger value={DEFAULT_TAB}>
+                  {m.tab_sample_classification()}
+                </TabsTrigger>
+                <TabsTrigger value="type">{m.tab_sample_type()}</TabsTrigger>
+                <TabsTrigger value="physical-description">
+                  {m.tab_physical_description()}
+                </TabsTrigger>
+                {showLocation ? (
+                  <TabsTrigger value="location">{m.tab_location()}</TabsTrigger>
+                ) : null}
+                <TabsTrigger value="scientific-context">
+                  {m.tab_scientific_context()}
+                </TabsTrigger>
+                {sampleId ? (
+                  <TabsTrigger value="links">{m.tab_links()}</TabsTrigger>
+                ) : null}
+              </TabsList>
 
-          <TabsContent value="classification" className="grid gap-4">
-            <FormSection title={m.section_sample_classification()}>
-              <form.AppField
-                name="name"
-                validators={{
-                  onChange: ({ value }) =>
-                    value?.trim()
-                      ? undefined
-                      : { message: m.field_name_required() },
-                }}
-              >
-                {(field) => (
-                  <field.TextField label={m.field_name()} requiredToPublish />
-                )}
-              </form.AppField>
+              <TabsContent value={DEFAULT_TAB} className="grid gap-4">
+                <FormSection title={m.section_sample_classification()}>
+                  <form.AppField
+                    name="name"
+                    validators={{
+                      onChange: ({ value }) =>
+                        value?.trim()
+                          ? undefined
+                          : { message: m.field_name_required() },
+                    }}
+                  >
+                    {(field) => (
+                      <field.TextField
+                        label={m.field_name()}
+                        requiredToPublish
+                      />
+                    )}
+                  </form.AppField>
 
-              <form.AppForm>
-                <SampleTypeFields />
-              </form.AppForm>
+                  <form.AppForm>
+                    <SampleTypeFields />
+                  </form.AppForm>
 
-              <form.AppField
-                name="nature"
-                validators={{
-                  onChange: ({ value }) =>
-                    value ? undefined : { message: m.field_nature_required() },
-                }}
-              >
-                {(field) => (
-                  <field.ComboboxField
-                    label={m.field_nature()}
-                    requiredToPublish
-                    items={natureItems}
-                    placeholder={m.nature_placeholder()}
-                    searchPlaceholder={m.nature_search_placeholder()}
-                    emptyText={m.nature_empty()}
-                  />
-                )}
-              </form.AppField>
+                  <form.AppField
+                    name="nature"
+                    validators={{
+                      onChange: ({ value }) =>
+                        value
+                          ? undefined
+                          : { message: m.field_nature_required() },
+                    }}
+                  >
+                    {(field) => (
+                      <field.ComboboxField
+                        label={m.field_nature()}
+                        requiredToPublish
+                        items={natureItems}
+                        placeholder={m.nature_placeholder()}
+                        searchPlaceholder={m.nature_search_placeholder()}
+                        emptyText={m.nature_empty()}
+                      />
+                    )}
+                  </form.AppField>
 
-              <form.AppForm>
-                <CollectionMethodField />
-              </form.AppForm>
+                  <form.AppForm>
+                    <CollectionMethodField />
+                  </form.AppForm>
 
-              <form.AppField name="collectionMethodDescription">
-                {(field) => (
-                  <field.TextField
-                    label={m.field_collection_method_description()}
-                    multiline
-                  />
-                )}
-              </form.AppField>
-            </FormSection>
+                  <form.AppField name="collectionMethodDescription">
+                    {(field) => (
+                      <field.TextField
+                        label={m.field_collection_method_description()}
+                        multiline
+                      />
+                    )}
+                  </form.AppField>
+                </FormSection>
 
-            <form.AppForm>
-              <SampleManualGroupsField options={manualGroupOptions} />
-            </form.AppForm>
-          </TabsContent>
+                <form.AppForm>
+                  <SampleManualGroupsField options={manualGroupOptions} />
+                </form.AppForm>
+              </TabsContent>
 
-          <TabsContent value="type" className="grid gap-4">
-            <FormSection title={m.section_material()}>
-              <form.AppForm>
-                <MaterialField />
-              </form.AppForm>
-              <form.AppForm>
-                <TextureField />
-              </form.AppForm>
-              <form.AppForm>
-                <MetamorphicFaciesField />
-              </form.AppForm>
-            </FormSection>
+              <TabsContent value="type" className="grid gap-4">
+                <FormSection title={m.section_material()}>
+                  <form.AppForm>
+                    <MaterialField />
+                  </form.AppForm>
+                  <form.AppForm>
+                    <TextureField />
+                  </form.AppForm>
+                  <form.AppForm>
+                    <MetamorphicFaciesField />
+                  </form.AppForm>
+                </FormSection>
 
-            <form.AppForm>
-              <SampleEconomicInterestFields />
-            </form.AppForm>
+                <form.AppForm>
+                  <SampleEconomicInterestFields />
+                </form.AppForm>
 
-            <form.AppField name="specificName">
-              {(field) => <field.TextField label={m.field_specific_name()} />}
-            </form.AppField>
-          </TabsContent>
+                <form.AppField name="specificName">
+                  {(field) => (
+                    <field.TextField label={m.field_specific_name()} />
+                  )}
+                </form.AppField>
+              </TabsContent>
 
-          <TabsContent value="physical-description" className="grid gap-6">
-            <form.AppForm>
-              <PhysicalDescriptionFields />
-            </form.AppForm>
+              <TabsContent value="physical-description" className="grid gap-6">
+                <form.AppForm>
+                  <PhysicalDescriptionFields />
+                </form.AppForm>
 
-            <FormSection title={m.section_availability()}>
-              <form.AppField name="availability">
-                {(field) => (
-                  <field.ComboboxField
-                    label={m.field_availability()}
-                    requiredToPublish
-                    items={availabilityItems}
-                    placeholder={m.availability_placeholder()}
-                    searchPlaceholder={m.availability_search_placeholder()}
-                    emptyText={m.availability_empty()}
-                  />
-                )}
-              </form.AppField>
-            </FormSection>
+                <FormSection title={m.section_availability()}>
+                  <form.AppField name="availability">
+                    {(field) => (
+                      <field.ComboboxField
+                        label={m.field_availability()}
+                        requiredToPublish
+                        items={availabilityItems}
+                        placeholder={m.availability_placeholder()}
+                        searchPlaceholder={m.availability_search_placeholder()}
+                        emptyText={m.availability_empty()}
+                      />
+                    )}
+                  </form.AppField>
+                </FormSection>
 
-            <form.AppForm>
-              <AgeFields />
-            </form.AppForm>
+                <form.AppForm>
+                  <AgeFields />
+                </form.AppForm>
 
-            <FormSection title={m.section_security()}>
-              <form.AppForm>
-                <SampleSecurityFields />
-              </form.AppForm>
-            </FormSection>
-          </TabsContent>
+                <FormSection title={m.section_security()}>
+                  <form.AppForm>
+                    <SampleSecurityFields />
+                  </form.AppForm>
+                </FormSection>
+              </TabsContent>
 
-          <TabsContent value="scientific-context" className="grid gap-4">
-            <FormSection title={m.section_scientific_context()}>
-              <form.AppForm>
-                <SampleScientificContextFields />
-              </form.AppForm>
-            </FormSection>
-          </TabsContent>
-
-          {sampleId ? (
-            <TabsContent value="links" className="grid gap-6">
-              <form.AppForm>
-                <SampleLinksFields />
-              </form.AppForm>
-              {attachmentChanges ? (
-                <SampleAttachments
-                  sampleId={sampleId}
-                  attachments={attachments}
-                  changes={attachmentChanges}
-                />
+              {showLocation ? (
+                <TabsContent value="location" className="grid gap-4">
+                  <FormSection title={m.section_location()}>
+                    <form.AppForm>
+                      <LocationFields />
+                    </form.AppForm>
+                  </FormSection>
+                </TabsContent>
               ) : null}
-            </TabsContent>
-          ) : null}
-        </Tabs>
+
+              <TabsContent value="scientific-context" className="grid gap-4">
+                <FormSection title={m.section_scientific_context()}>
+                  <form.AppForm>
+                    <SampleScientificContextFields />
+                  </form.AppForm>
+                </FormSection>
+              </TabsContent>
+
+              {sampleId ? (
+                <TabsContent value="links" className="grid gap-6">
+                  <form.AppForm>
+                    <SampleLinksFields />
+                  </form.AppForm>
+                  {attachmentChanges ? (
+                    <SampleAttachments
+                      sampleId={sampleId}
+                      attachments={attachments}
+                      changes={attachmentChanges}
+                    />
+                  ) : null}
+                </TabsContent>
+              ) : null}
+            </Tabs>
+          )}
+        </form.Subscribe>
 
         {attachmentChanges ? (
           <SampleAttachmentUploadDialog changes={attachmentChanges} />

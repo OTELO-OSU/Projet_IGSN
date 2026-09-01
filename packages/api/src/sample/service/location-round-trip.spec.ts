@@ -15,35 +15,47 @@ const base = {
 };
 
 describe("sample location persistence", () => {
-  pgTest("should round-trip a point location", async ({ db }) => {
-    const created = await insertSample(db, {
-      ...base,
-      location: {
-        position: { type: "point", longitude: 2.35, latitude: 48.85 },
-      },
-    });
-    expect(created.location).toEqual({
-      position: { type: "point", longitude: 2.35, latitude: 48.85 },
-    });
-    expect(await readSample(db, created.id)).toEqual(created);
-  });
-
-  pgTest(
-    "should round-trip a decimal point elevation as a degenerate range",
-    async ({ db }) => {
-      const location = {
+  pgTest.for([
+    [
+      "point",
+      { position: { type: "point", longitude: 2.35, latitude: 48.85 } },
+    ],
+    [
+      "point with a decimal vertical position",
+      {
         position: {
-          type: "point" as const,
+          type: "point",
           longitude: 2.35,
           latitude: 48.85,
-          elevation: {
-            min: -1200.5,
-            max: -1200.5,
-            unit: "m" as const,
-            datum: "msl" as const,
+          vertical: {
+            position: 1200.5,
+            reference: "bathymetry",
+            system: "msl",
           },
         },
-      };
+      },
+    ],
+    [
+      "line with a vertical position per endpoint",
+      {
+        position: {
+          type: "line",
+          startLongitude: 5,
+          startLatitude: 44,
+          endLongitude: 8,
+          endLatitude: 46,
+          vertical: {
+            start: 120,
+            end: 340.5,
+            reference: "elevation",
+            system: "ngf_ign69",
+          },
+        },
+      },
+    ],
+  ] as const)(
+    "should round-trip a %s location",
+    async ([, location], { db }) => {
       const created = await insertSample(db, { ...base, location });
       expect(created.location).toEqual(location);
       expect(await readSample(db, created.id)).toEqual(created);
@@ -51,26 +63,37 @@ describe("sample location persistence", () => {
   );
 
   pgTest(
-    "should round-trip a partial elevation (a draft with a lone bound)",
+    "should round-trip a partial vertical position (a draft with a lone bound)",
     async ({ db }) => {
-      const location = {
+      const created = await insertSample(db, {
+        ...base,
+        location: {
+          position: {
+            type: "area",
+            westLongitude: 5,
+            eastLongitude: 8,
+            southLatitude: 44,
+            northLatitude: 46,
+            vertical: { min: 200 },
+          },
+        },
+      });
+      expect(created.location).toEqual({
         position: {
-          type: "area" as const,
+          type: "area",
           westLongitude: 5,
           eastLongitude: 8,
           southLatitude: 44,
           northLatitude: 46,
-          elevation: { min: -200 },
+          vertical: { min: 200, max: null, reference: null, system: null },
         },
-      };
-      const created = await insertSample(db, { ...base, location });
-      expect(created.location).toMatchObject(location);
+      });
       expect(await readSample(db, created.id)).toEqual(created);
     },
   );
 
   pgTest(
-    "should round-trip an area with elevation, region and nav",
+    "should round-trip an area with a vertical range, region and nav",
     async ({ db }) => {
       const location = {
         position: {
@@ -79,11 +102,11 @@ describe("sample location persistence", () => {
           eastLongitude: 8,
           southLatitude: 44,
           northLatitude: 46,
-          elevation: {
-            min: -200,
+          vertical: {
+            min: 200,
             max: 1500,
-            unit: "m" as const,
-            datum: "msl" as const,
+            reference: "elevation" as const,
+            system: "msl" as const,
           },
         },
         region: {
@@ -220,6 +243,38 @@ describe("sample location persistence", () => {
       expect(shape.rows[0]).toEqual({ type: "MULTIPOLYGON", parts: 2 });
       expect(nearDateline.rows.map((r) => r.id)).toContain(pacific.id);
       expect(overGreenwich.rows.map((r) => r.id)).not.toContain(pacific.id);
+    },
+  );
+
+  pgTest(
+    "should store a line as a linestring found by a bounding-box search",
+    async ({ db }) => {
+      const traverse = await insertSample(db, {
+        ...base,
+        location: {
+          position: {
+            type: "line",
+            startLongitude: 5,
+            startLatitude: 44,
+            endLongitude: 8,
+            endLatitude: 46,
+          },
+        },
+      });
+      const shape = await sql<{ type: string }>`
+        SELECT GeometryType(geom) AS type FROM sample WHERE id = ${traverse.id}
+      `.execute(db);
+      const crossing = await sql<{ id: string }>`
+        SELECT id FROM sample
+        WHERE ST_Intersects(geom, ST_MakeEnvelope(6, 44.5, 7, 45.5, 4326))
+      `.execute(db);
+      const elsewhere = await sql<{ id: string }>`
+        SELECT id FROM sample
+        WHERE ST_Intersects(geom, ST_MakeEnvelope(20, 44.5, 21, 45.5, 4326))
+      `.execute(db);
+      expect(shape.rows[0]).toEqual({ type: "LINESTRING" });
+      expect(crossing.rows.map((r) => r.id)).toContain(traverse.id);
+      expect(elsewhere.rows.map((r) => r.id)).not.toContain(traverse.id);
     },
   );
 });

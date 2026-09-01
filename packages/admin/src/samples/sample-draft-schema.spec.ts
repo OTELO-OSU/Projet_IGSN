@@ -72,7 +72,7 @@ describe("sampleDraftSchema", () => {
     });
   });
 
-  it("should drop a lingering location when the material no longer determines its requirement", () => {
+  it("should keep the location when no material is chosen", () => {
     const result = sampleDraftSchema.parse({
       ...draft,
       materialPath: [],
@@ -84,7 +84,12 @@ describe("sampleDraftSchema", () => {
       },
     });
 
-    expect(result).toMatchObject({ material: null, location: null });
+    expect(result).toMatchObject({
+      material: null,
+      location: {
+        position: { type: "point", longitude: 2.35, latitude: 48.85 },
+      },
+    });
   });
 
   it("should compose an entered description into the domain shape", () => {

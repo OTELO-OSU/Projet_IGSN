@@ -327,41 +327,82 @@ describe("samplePublishBlockers", () => {
     ).toEqual([]);
   });
 
-  const withElevation = (
-    elevation: NonNullable<
-      NonNullable<NonNullable<Sample["location"]>["position"]>
-    >["elevation"],
-  ): Sample => ({
+  type Position = NonNullable<
+    NonNullable<NonNullable<Sample["location"]>["position"]>
+  >;
+
+  const withPosition = (position: Position): Sample => ({
     ...base,
-    location: {
-      position: { type: "point", longitude: 0, latitude: 0, elevation },
+    location: { position },
+  });
+
+  const areaPosition = {
+    type: "area",
+    westLongitude: 5,
+    eastLongitude: 8,
+    southLatitude: 44,
+    northLatitude: 46,
+  } as const;
+  const linePosition = {
+    type: "line",
+    startLongitude: 5,
+    startLatitude: 44,
+    endLongitude: 8,
+    endLatitude: 46,
+  } as const;
+  const pointPosition = { type: "point", longitude: 0, latitude: 0 } as const;
+  const meta = { reference: "bathymetry", system: "msl" } as const;
+
+  it.each<[string, Position]>([
+    ["a point", { ...pointPosition, vertical: { position: 2500, ...meta } }],
+    ["an area", { ...areaPosition, vertical: { min: 0, max: 100, ...meta } }],
+    ["a line", { ...linePosition, vertical: { start: 0, end: 100, ...meta } }],
+  ])(
+    "should not report a blocker for a complete vertical position on %s",
+    (_label, position) => {
+      expect(samplePublishBlockers(withPosition(position))).toEqual([]);
     },
-  });
+  );
 
-  it("should not require an elevation to publish", () => {
-    expect(samplePublishBlockers(base)).toEqual([]);
-  });
-
-  it("should not report a blocker for a complete elevation", () => {
-    expect(
-      samplePublishBlockers(
-        withElevation({ min: -2500, max: -2500, unit: "m", datum: "msl" }),
-      ),
-    ).toEqual([]);
-  });
-
-  it.each([
-    ["a missing bound", { min: 100, max: null, unit: "m", datum: "msl" }],
-    ["a missing unit", { min: 100, max: 200, unit: null, datum: "msl" }],
-    ["a missing datum", { min: 100, max: 200, unit: "m", datum: null }],
-  ] as const)(
-    "should report elevation_incomplete for %s",
-    (_label, elevation) => {
-      expect(samplePublishBlockers(withElevation(elevation))).toEqual([
-        "elevation_incomplete",
+  it.each<[string, Position]>([
+    [
+      "a point without its position",
+      { ...pointPosition, vertical: { position: null, ...meta } },
+    ],
+    [
+      "an area missing a bound",
+      { ...areaPosition, vertical: { min: 100, max: null, ...meta } },
+    ],
+    [
+      "a line missing an endpoint",
+      { ...linePosition, vertical: { start: null, end: 100, ...meta } },
+    ],
+    [
+      "a missing reference",
+      {
+        ...pointPosition,
+        vertical: { position: 100, reference: null, system: "msl" },
+      },
+    ],
+  ])(
+    "should report vertical_position_incomplete for %s",
+    (_label, position) => {
+      expect(samplePublishBlockers(withPosition(position))).toEqual([
+        "vertical_position_incomplete",
       ]);
     },
   );
+
+  it("should not require a vertical reference system to publish", () => {
+    expect(
+      samplePublishBlockers(
+        withPosition({
+          ...pointPosition,
+          vertical: { position: 100, reference: "bathymetry", system: null },
+        }),
+      ),
+    ).toEqual([]);
+  });
 
   it("should report scientific_context_missing when there is no context", () => {
     expect(samplePublishBlockers({ ...base, scientificContext: null })).toEqual(

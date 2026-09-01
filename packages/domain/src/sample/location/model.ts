@@ -2,29 +2,29 @@ import { z } from "zod";
 
 import { freeTextSchema } from "../free-text.ts";
 import { countrySchema } from "./country.ts";
-import { elevationUnitSchema } from "./elevation-unit.ts";
 import { navigationTypeSchema } from "./navigation-type.ts";
 import { oceanSeaSchema } from "./ocean-sea.ts";
-import { verticalDatumSchema } from "./vertical-datum.ts";
+import { verticalReferenceSystemSchema } from "./vertical-reference-system.ts";
+import { verticalReferenceSchema } from "./vertical-reference.ts";
 
 const longitudeSchema = z.number().min(-180).max(180);
 const latitudeSchema = z.number().min(-90).max(90);
 
-// Signed elevation range: positive above the datum (elevation),
-// negative below (bathymetry).
-const elevationSchema = z.object({
-  min: z.number().nullish(),
-  max: z.number().nullish(),
-  unit: elevationUnitSchema.nullish(),
-  datum: verticalDatumSchema.nullish(),
-});
+// The vertical reference carries the direction, so the position is a distance.
+const verticalPositionSchema = z.number().min(0).nullish();
+const verticalMetaShape = {
+  reference: verticalReferenceSchema.nullish(),
+  system: verticalReferenceSystemSchema.nullish(),
+};
 
 const positionSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("point"),
     longitude: longitudeSchema,
     latitude: latitudeSchema,
-    elevation: elevationSchema.nullish(),
+    vertical: z
+      .object({ position: verticalPositionSchema, ...verticalMetaShape })
+      .nullish(),
   }),
   z.object({
     type: z.literal("area"),
@@ -32,7 +32,27 @@ const positionSchema = z.discriminatedUnion("type", [
     eastLongitude: longitudeSchema,
     southLatitude: latitudeSchema,
     northLatitude: latitudeSchema,
-    elevation: elevationSchema.nullish(),
+    vertical: z
+      .object({
+        min: verticalPositionSchema,
+        max: verticalPositionSchema,
+        ...verticalMetaShape,
+      })
+      .nullish(),
+  }),
+  z.object({
+    type: z.literal("line"),
+    startLongitude: longitudeSchema,
+    startLatitude: latitudeSchema,
+    endLongitude: longitudeSchema,
+    endLatitude: latitudeSchema,
+    vertical: z
+      .object({
+        start: verticalPositionSchema,
+        end: verticalPositionSchema,
+        ...verticalMetaShape,
+      })
+      .nullish(),
   }),
 ]);
 
@@ -60,27 +80,27 @@ export const locationSchema = z
       });
     }
     if (!position) return;
-    if (
-      position.type === "area" &&
-      position.northLatitude < position.southLatitude
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["position", "northLatitude"],
-        message: "northLatitude must be greater than or equal to southLatitude",
-      });
-    }
-    const elevation = position.elevation;
-    if (
-      elevation?.min != null &&
-      elevation.max != null &&
-      elevation.min > elevation.max
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["position", "elevation", "min"],
-        message: "elevation min must be less than or equal to max",
-      });
+    if (position.type === "area") {
+      if (position.northLatitude < position.southLatitude) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["position", "northLatitude"],
+          message:
+            "northLatitude must be greater than or equal to southLatitude",
+        });
+      }
+      const vertical = position.vertical;
+      if (
+        vertical?.min != null &&
+        vertical.max != null &&
+        vertical.min > vertical.max
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["position", "vertical", "min"],
+          message: "vertical min must be less than or equal to max",
+        });
+      }
     }
   });
 

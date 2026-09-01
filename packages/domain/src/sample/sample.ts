@@ -13,7 +13,7 @@ import { conditionSchema } from "./condition/model.ts";
 import { descriptionSchema } from "./description/model.ts";
 import { elementSchema } from "./element/vocabulary.ts";
 import { createSampleLinkSchema, sampleLinkSchema } from "./link/model.ts";
-import { locationRequirement } from "./location/location-requirement.ts";
+import { allowsLocation } from "./location/allows-location.ts";
 import { locationSchema } from "./location/model.ts";
 import { materialPathSchema } from "./material/classification.ts";
 import {
@@ -127,14 +127,12 @@ export const createSampleSchema = z
         message: "metamorphic facies is not valid for the selected material",
       });
     }
-    if (
-      value.location != null &&
-      locationRequirement(value.material ?? null) === "forbidden"
-    ) {
+    if (value.location != null && !allowsLocation(value.material ?? null)) {
       ctx.addIssue({
         code: "custom",
         path: ["location"],
-        message: "a synthetic sample must not have a location",
+        message:
+          "a synthetic or returned extraterrestrial sample must not have a location",
       });
     }
   });

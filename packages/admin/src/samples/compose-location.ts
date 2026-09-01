@@ -1,23 +1,30 @@
 import type { Country } from "@projet-igsn/domain/sample/location/country";
-import type { ElevationUnit } from "@projet-igsn/domain/sample/location/elevation-unit";
+import type { LocationType } from "@projet-igsn/domain/sample/location/location-type";
 import type { Location } from "@projet-igsn/domain/sample/location/model";
 import type { NavigationType } from "@projet-igsn/domain/sample/location/navigation-type";
 import type { OceanSea } from "@projet-igsn/domain/sample/location/ocean-sea";
-import type { VerticalDatum } from "@projet-igsn/domain/sample/location/vertical-datum";
+import type { VerticalReference } from "@projet-igsn/domain/sample/location/vertical-reference";
+import type { VerticalReferenceSystem } from "@projet-igsn/domain/sample/location/vertical-reference-system";
 
 export type LocationDraft = {
-  type: "point" | "area" | null | undefined;
+  type: LocationType | null | undefined;
   longitude: number | undefined;
   latitude: number | undefined;
   westLongitude: number | undefined;
   eastLongitude: number | undefined;
   southLatitude: number | undefined;
   northLatitude: number | undefined;
-  elevationValue: number | undefined;
-  elevationMin: number | undefined;
-  elevationMax: number | undefined;
-  elevationUnit: ElevationUnit | null | undefined;
-  elevationDatum: VerticalDatum | null | undefined;
+  startLongitude: number | undefined;
+  startLatitude: number | undefined;
+  endLongitude: number | undefined;
+  endLatitude: number | undefined;
+  verticalPosition: number | undefined;
+  verticalPositionMin: number | undefined;
+  verticalPositionMax: number | undefined;
+  startVerticalPosition: number | undefined;
+  endVerticalPosition: number | undefined;
+  verticalReference: VerticalReference | null | undefined;
+  verticalReferenceSystem: VerticalReferenceSystem | null | undefined;
   regionKind: "continent" | "ocean" | null | undefined;
   country: Country | null | undefined;
   oceanSea: OceanSea | null | undefined;
@@ -26,11 +33,9 @@ export type LocationDraft = {
   localityDescription: string | null | undefined;
 };
 
-type ElevationCandidate = {
-  min: number | undefined;
-  max: number | undefined;
-  unit: ElevationUnit | undefined;
-  datum: VerticalDatum | undefined;
+type VerticalMeta = {
+  reference: VerticalReference | undefined;
+  system: VerticalReferenceSystem | undefined;
 };
 
 type LocationCandidate = {
@@ -39,7 +44,7 @@ type LocationCandidate = {
         type: "point";
         longitude: number | undefined;
         latitude: number | undefined;
-        elevation: ElevationCandidate | undefined;
+        vertical: ({ position: number | undefined } & VerticalMeta) | undefined;
       }
     | {
         type: "area";
@@ -47,7 +52,25 @@ type LocationCandidate = {
         eastLongitude: number | undefined;
         southLatitude: number | undefined;
         northLatitude: number | undefined;
-        elevation: ElevationCandidate | undefined;
+        vertical:
+          | ({
+              min: number | undefined;
+              max: number | undefined;
+            } & VerticalMeta)
+          | undefined;
+      }
+    | {
+        type: "line";
+        startLongitude: number | undefined;
+        startLatitude: number | undefined;
+        endLongitude: number | undefined;
+        endLatitude: number | undefined;
+        vertical:
+          | ({
+              start: number | undefined;
+              end: number | undefined;
+            } & VerticalMeta)
+          | undefined;
       }
     | undefined;
   region:
@@ -59,29 +82,33 @@ type LocationCandidate = {
   localityDescription: string | undefined;
 };
 
-export const isElevationEntered = (location: LocationDraft): boolean => {
-  const hasMeta =
-    location.elevationUnit != null || location.elevationDatum != null;
-  return location.type === "point"
-    ? location.elevationValue !== undefined || hasMeta
-    : location.type === "area"
-      ? location.elevationMin !== undefined ||
-        location.elevationMax !== undefined ||
-        hasMeta
-      : false;
+const verticalValues = (location: LocationDraft): (number | undefined)[] => {
+  switch (location.type) {
+    case "point":
+      return [location.verticalPosition];
+    case "area":
+      return [location.verticalPositionMin, location.verticalPositionMax];
+    case "line":
+      return [location.startVerticalPosition, location.endVerticalPosition];
+    default:
+      return [];
+  }
 };
 
-function composeElevation(
-  min: number | undefined,
-  max: number | undefined,
+export const isVerticalEntered = (location: LocationDraft): boolean =>
+  verticalValues(location).some((value) => value !== undefined) ||
+  location.verticalReference != null ||
+  location.verticalReferenceSystem != null;
+
+function composeVertical<T extends object>(
   draft: LocationDraft,
-): ElevationCandidate | undefined {
-  if (!isElevationEntered(draft)) return undefined;
+  values: T,
+): (T & VerticalMeta) | undefined {
+  if (!isVerticalEntered(draft)) return undefined;
   return {
-    min,
-    max,
-    unit: draft.elevationUnit || undefined,
-    datum: draft.elevationDatum || undefined,
+    ...values,
+    reference: draft.verticalReference || undefined,
+    system: draft.verticalReferenceSystem || undefined,
   };
 }
 
@@ -91,11 +118,7 @@ function composePosition(draft: LocationDraft): LocationCandidate["position"] {
       type: "point",
       longitude: draft.longitude,
       latitude: draft.latitude,
-      elevation: composeElevation(
-        draft.elevationValue,
-        draft.elevationValue,
-        draft,
-      ),
+      vertical: composeVertical(draft, { position: draft.verticalPosition }),
     };
   }
   if (draft.type === "area") {
@@ -105,11 +128,23 @@ function composePosition(draft: LocationDraft): LocationCandidate["position"] {
       eastLongitude: draft.eastLongitude,
       southLatitude: draft.southLatitude,
       northLatitude: draft.northLatitude,
-      elevation: composeElevation(
-        draft.elevationMin,
-        draft.elevationMax,
-        draft,
-      ),
+      vertical: composeVertical(draft, {
+        min: draft.verticalPositionMin,
+        max: draft.verticalPositionMax,
+      }),
+    };
+  }
+  if (draft.type === "line") {
+    return {
+      type: "line",
+      startLongitude: draft.startLongitude,
+      startLatitude: draft.startLatitude,
+      endLongitude: draft.endLongitude,
+      endLatitude: draft.endLatitude,
+      vertical: composeVertical(draft, {
+        start: draft.startVerticalPosition,
+        end: draft.endVerticalPosition,
+      }),
     };
   }
   return undefined;
@@ -152,7 +187,7 @@ export function toLocationDraft(
   const region = location?.region;
   const point = position?.type === "point" ? position : undefined;
   const area = position?.type === "area" ? position : undefined;
-  const elevation = position?.elevation;
+  const line = position?.type === "line" ? position : undefined;
   return {
     type: position?.type,
     longitude: point?.longitude,
@@ -161,11 +196,17 @@ export function toLocationDraft(
     eastLongitude: area?.eastLongitude,
     southLatitude: area?.southLatitude,
     northLatitude: area?.northLatitude,
-    elevationValue: point ? (elevation?.min ?? undefined) : undefined,
-    elevationMin: area ? (elevation?.min ?? undefined) : undefined,
-    elevationMax: area ? (elevation?.max ?? undefined) : undefined,
-    elevationUnit: elevation?.unit,
-    elevationDatum: elevation?.datum,
+    startLongitude: line?.startLongitude,
+    startLatitude: line?.startLatitude,
+    endLongitude: line?.endLongitude,
+    endLatitude: line?.endLatitude,
+    verticalPosition: point?.vertical?.position ?? undefined,
+    verticalPositionMin: area?.vertical?.min ?? undefined,
+    verticalPositionMax: area?.vertical?.max ?? undefined,
+    startVerticalPosition: line?.vertical?.start ?? undefined,
+    endVerticalPosition: line?.vertical?.end ?? undefined,
+    verticalReference: position?.vertical?.reference,
+    verticalReferenceSystem: position?.vertical?.system,
     regionKind: region?.kind,
     country: region?.kind === "continent" ? region.country : undefined,
     oceanSea: region?.kind === "ocean" ? region.oceanSea : undefined,

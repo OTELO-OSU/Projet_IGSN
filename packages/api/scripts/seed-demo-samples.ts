@@ -8,35 +8,48 @@ import type { SampleRow } from "./seed.ts";
 type DemoRow = Omit<SampleRow, "id" | "igsn" | "status">;
 
 type Position = NonNullable<Location["position"]>;
-type Elevation = NonNullable<Position["elevation"]>;
+type PointPosition = Extract<Position, { type: "point" }>;
+type AreaPosition = Extract<Position, { type: "area" }>;
 
 const point = (
   longitude: number,
   latitude: number,
-  elevation?: Elevation,
-): Position => ({ type: "point", longitude, latitude, elevation });
+  vertical?: PointPosition["vertical"],
+): Position => ({ type: "point", longitude, latitude, vertical });
 
 const area = (
   westLongitude: number,
   eastLongitude: number,
   southLatitude: number,
   northLatitude: number,
-  elevation?: Elevation,
+  vertical?: AreaPosition["vertical"],
 ): Position => ({
   type: "area",
   westLongitude,
   eastLongitude,
   southLatitude,
   northLatitude,
-  elevation,
+  vertical,
 });
 
-const elev = (
-  min: number,
-  max: number,
-  unit: Elevation["unit"],
-  datum: Elevation["datum"],
-): Elevation => ({ min, max, unit, datum });
+const elev = (position: number): PointPosition["vertical"] => ({
+  position,
+  reference: "elevation",
+  system: "msl",
+});
+
+const bathy = (position: number): PointPosition["vertical"] => ({
+  position,
+  reference: "bathymetry",
+  system: "msl",
+});
+
+const bathyRange = (min: number, max: number): AreaPosition["vertical"] => ({
+  min,
+  max,
+  reference: "bathymetry",
+  system: "msl",
+});
 
 const on = (start: string, end: string = start) => ({
   collectionDate: { start, end },
@@ -114,7 +127,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     specificName: "COR-GD-2025-03",
     location: {
-      position: point(9.1, 42.15, elev(800, 800, "m", "msl")),
+      position: point(9.1, 42.15, elev(800)),
       region: { kind: "continent", country: "FR" },
     },
     description: on("2025-06-20"),
@@ -128,7 +141,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "phaneritic",
     collectionMethod: "manual",
     location: {
-      position: point(8.3, 46.7, elev(2200, 2200, "m", "msl")),
+      position: point(8.3, 46.7, elev(2200)),
       region: { kind: "continent", country: "CH" },
     },
     description: on("2024-08-01"),
@@ -172,7 +185,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     specificName: "OM-OPH-2025-11",
     location: {
-      position: point(58.1, 23.1, elev(450, 450, "m", "msl")),
+      position: point(58.1, 23.1, elev(450)),
       region: { kind: "continent", country: "OM" },
     },
     description: on("2025-03-30"),
@@ -201,7 +214,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     specificName: "MC-BAS-2025-19",
     location: {
-      position: point(2.96, 45.77, elev(1050, 1050, "m", "msl")),
+      position: point(2.96, 45.77, elev(1050)),
       region: { kind: "continent", country: "FR" },
     },
     description: on("2025-06-15"),
@@ -217,7 +230,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "AT-2025-RR03",
     collectionMethodDescription: "Chain-bag dredge on the axial ridge flank",
     location: {
-      position: area(-30.5, -29.8, 56.8, 57.2, elev(-1520, -1520, "m", "msl")),
+      position: area(-30.5, -29.8, 56.8, 57.2, bathyRange(1520, 1520)),
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
       navigationType: "GPS",
     },
@@ -232,7 +245,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "porphyritic",
     collectionMethod: "manual",
     location: {
-      position: point(15.0, 37.75, elev(2900, 2900, "m", "msl")),
+      position: point(15.0, 37.75, elev(2900)),
       region: { kind: "continent", country: "IT" },
     },
     description: on("2025-05-01"),
@@ -246,7 +259,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "glassy",
     collectionMethod: "manual",
     location: {
-      position: point(-110.6, 44.6, elev(2400, 2400, "m", "wgs84")),
+      position: point(-110.6, 44.6, elev(2400)),
       region: { kind: "continent", country: "US" },
     },
     description: on("2024-06-11"),
@@ -260,7 +273,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "microlitic",
     collectionMethod: "manual",
     location: {
-      position: point(-70.0, -23.0, elev(3800, 3800, "m", "msl")),
+      position: point(-70.0, -23.0, elev(3800)),
       region: { kind: "continent", country: "CL" },
     },
     description: on("2025-01-22"),
@@ -288,7 +301,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "porphyritic",
     collectionMethod: "manual",
     location: {
-      position: point(-16.6, 28.3, elev(1900, 1900, "m", "msl")),
+      position: point(-16.6, 28.3, elev(1900)),
       region: { kind: "continent", country: "ES" },
     },
     description: on("2025-02-02"),
@@ -459,7 +472,7 @@ const PUBLISHED: DemoRow[] = [
     metamorphicFacies: "greenschist",
     collectionMethod: "manual",
     location: {
-      position: point(7.1, 45.5, elev(2500, 2500, "m", "msl")),
+      position: point(7.1, 45.5, elev(2500)),
       region: { kind: "continent", country: "IT" },
     },
     description: on("2025-01-08"),
@@ -516,7 +529,7 @@ const PUBLISHED: DemoRow[] = [
       "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.dolostone",
     collectionMethod: "manual",
     location: {
-      position: point(11.9, 46.4, elev(2100, 2100, "m", "msl")),
+      position: point(11.9, 46.4, elev(2100)),
       region: { kind: "continent", country: "IT" },
     },
     description: on("2024-08-18"),
@@ -559,7 +572,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "coring.drill_corer",
     specificName: "RUHR-BH-14",
     location: {
-      position: point(7.2, 51.5, elev(-800, -800, "m", "msl")),
+      position: point(7.2, 51.5, bathy(800)),
       region: { kind: "continent", country: "DE" },
     },
     description: on("2024-11-11"),
@@ -573,7 +586,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "coring.drill_corer",
     specificName: "NS-42/10-A",
     location: {
-      position: point(2.0, 57.0, elev(-2500, -2500, "m", "msl")),
+      position: point(2.0, 57.0, bathy(2500)),
       region: { kind: "ocean", oceanSea: "north_sea" },
       navigationType: "GPS",
     },
@@ -588,7 +601,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "grab.rov",
     collectionMethodDescription: "ROV manipulator grab of an active chimney",
     location: {
-      position: point(-44.83, 26.14, elev(-3620, -3620, "m", "msl")),
+      position: point(-44.83, 26.14, bathy(3620)),
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
       navigationType: "USBL",
     },
@@ -602,7 +615,7 @@ const PUBLISHED: DemoRow[] = [
     material: "rock.hydrothermal.breccia",
     collectionMethod: "grab.hov",
     location: {
-      position: point(-33.9, 36.23, elev(-2300, -2300, "m", "msl")),
+      position: point(-33.9, 36.23, bathy(2300)),
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
       navigationType: "DVL/LBL",
     },
@@ -616,7 +629,7 @@ const PUBLISHED: DemoRow[] = [
     material: "rock.hydrothermal.carbonate",
     collectionMethod: "grab.rov",
     location: {
-      position: point(-30.13, 30.13, elev(-750, -750, "m", "msl")),
+      position: point(-30.13, 30.13, bathy(750)),
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
       navigationType: "USBL",
     },
@@ -632,7 +645,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "PAC-GC-07",
     collectionMethodDescription: "Giant gravity corer, 8 m recovery",
     location: {
-      position: point(-140.0, 30.0, elev(-5000, -5000, "m", "msl")),
+      position: point(-140.0, 30.0, bathy(5000)),
       region: { kind: "ocean", oceanSea: "pacific_ocean" },
       navigationType: "GPS",
     },
@@ -700,7 +713,7 @@ const PUBLISHED: DemoRow[] = [
     material: "sediment.biogenic.carbonate.mud_supported.mudstone",
     collectionMethod: "coring.piston_corer.giant",
     location: {
-      position: point(-76.0, 24.0, elev(-600, -600, "m", "msl")),
+      position: point(-76.0, 24.0, bathy(600)),
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
       navigationType: "GPS",
     },
@@ -714,7 +727,7 @@ const PUBLISHED: DemoRow[] = [
     material: "sediment.biogenic.siliceous.diatoms",
     collectionMethod: "coring.gravity_corer.giant",
     location: {
-      position: point(170.0, -60.0, elev(-3500, -3500, "m", "msl")),
+      position: point(170.0, -60.0, bathy(3500)),
       region: { kind: "ocean", oceanSea: "pacific_ocean" },
       navigationType: "GPS",
     },
@@ -742,7 +755,7 @@ const PUBLISHED: DemoRow[] = [
     material: "sediment.physico_chemical.precipitates.evaporitic",
     collectionMethod: "grab.grab",
     location: {
-      position: point(38.5, 21.0, elev(-1800, -1800, "m", "msl")),
+      position: point(38.5, 21.0, bathy(1800)),
       region: { kind: "ocean", oceanSea: "red_sea" },
       navigationType: "GPS",
     },
@@ -757,7 +770,7 @@ const PUBLISHED: DemoRow[] = [
     material: "mineral",
     collectionMethod: "manual",
     location: {
-      position: point(8.5, 46.5, elev(2600, 2600, "m", "msl")),
+      position: point(8.5, 46.5, elev(2600)),
       region: { kind: "continent", country: "CH" },
     },
     description: on("2024-07-01"),
@@ -995,7 +1008,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "vesicular",
     collectionMethod: "camera_sled_camera_tow",
     location: {
-      position: area(-45.2, -44.6, 25.8, 26.4, elev(-3600, -3400, "m", "msl")),
+      position: area(-45.2, -44.6, 25.8, 26.4, bathyRange(3400, 3600)),
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
       navigationType: "GPS",
     },
@@ -1010,7 +1023,7 @@ const PUBLISHED: DemoRow[] = [
     material: "sediment.biogenic.siliceous.diatoms",
     collectionMethod: "sediment_trap",
     location: {
-      position: point(-25.0, 49.0, elev(-1000, -1000, "m", "msl")),
+      position: point(-25.0, 49.0, bathy(1000)),
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
       navigationType: "GPS",
     },
@@ -1040,7 +1053,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "IODP-U1309D",
     collectionMethodDescription: "Rotary drill core, 3.2 m recovery",
     location: {
-      position: point(-46.0, 23.0, elev(-4200, -4200, "m", "msl")),
+      position: point(-46.0, 23.0, bathy(4200)),
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
       navigationType: "GPS",
     },
@@ -1054,7 +1067,7 @@ const PUBLISHED: DemoRow[] = [
     material: "sediment.exogenous_detritic.sand.fine_sand",
     collectionMethod: "coring.box_corer",
     location: {
-      position: point(-4.0, 48.5, elev(-120, -120, "m", "msl")),
+      position: point(-4.0, 48.5, bathy(120)),
       region: { kind: "ocean", oceanSea: "bay_of_biscay" },
       navigationType: "GPS",
     },
@@ -1097,7 +1110,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "vesicular",
     collectionMethod: "manual",
     location: {
-      position: point(-155.29, 19.42, elev(1200, 1200, "m", "msl")),
+      position: point(-155.29, 19.42, elev(1200)),
       region: { kind: "continent", country: "US" },
     },
     description: on("2025-05-30"),
@@ -1181,7 +1194,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "porphyritic",
     collectionMethod: "manual",
     location: {
-      position: point(2.964, 45.772, elev(1465, 1465, "m", "msl")),
+      position: point(2.964, 45.772, elev(1465)),
       region: { kind: "continent", country: "FR" },
       localityName: "Puy de Dôme",
     },
@@ -1196,7 +1209,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "vesicular",
     collectionMethod: "manual",
     location: {
-      position: point(2.94, 45.81, elev(1250, 1250, "m", "msl")),
+      position: point(2.94, 45.81, elev(1250)),
       region: { kind: "continent", country: "FR" },
       localityName: "Puy de Côme",
     },
@@ -1211,7 +1224,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "aphanitic",
     collectionMethod: "manual",
     location: {
-      position: point(2.966, 45.798, elev(1210, 1210, "m", "msl")),
+      position: point(2.966, 45.798, elev(1210)),
       region: { kind: "continent", country: "FR" },
       localityName: "Puy Pariou",
     },
@@ -1226,7 +1239,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "vesicular",
     collectionMethod: "manual",
     location: {
-      position: point(2.98, 45.7, elev(1160, 1160, "m", "msl")),
+      position: point(2.98, 45.7, elev(1160)),
       region: { kind: "continent", country: "FR" },
       localityName: "Puy de la Vache",
     },
@@ -1241,7 +1254,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "porphyritic",
     collectionMethod: "manual",
     location: {
-      position: point(2.97, 45.83, elev(1180, 1180, "m", "msl")),
+      position: point(2.97, 45.83, elev(1180)),
       region: { kind: "continent", country: "FR" },
       localityName: "Puy Chopine",
     },
@@ -1284,7 +1297,7 @@ const PUBLISHED: DemoRow[] = [
     metamorphicFacies: "amphibolite",
     collectionMethod: "manual",
     location: {
-      position: point(86.9, 28.0, elev(5200, 5200, "m", "msl")),
+      position: point(86.9, 28.0, elev(5200)),
       region: { kind: "continent", country: "NP" },
     },
     description: on("2024-09-25"),
@@ -1312,7 +1325,7 @@ const PUBLISHED: DemoRow[] = [
     texture: "microlitic",
     collectionMethod: "manual",
     location: {
-      position: point(-98.62, 19.02, elev(4000, 4000, "m", "msl")),
+      position: point(-98.62, 19.02, elev(4000)),
       region: { kind: "continent", country: "MX" },
     },
     description: on("2025-05-08"),
@@ -1394,9 +1407,9 @@ const DRAFTS: DemoRow[] = [
     location: { position: point(3.0, 45.0) },
   },
   {
-    name: "Partial elevation record",
+    name: "Partial vertical position record",
     nature: "hand_sample",
-    location: { position: point(2.0, 46.0, { min: -100 }) },
+    location: { position: point(2.0, 46.0, { position: 100 }) },
   },
   {
     name: "Unclassified mineral",
@@ -1438,6 +1451,25 @@ const DRAFTS: DemoRow[] = [
     name: "Area-location draft",
     nature: "hand_sample",
     location: { position: area(-1.0, 1.0, 44.0, 46.0) },
+  },
+  {
+    name: "Line-traverse draft",
+    nature: "hand_sample",
+    location: {
+      position: {
+        type: "line",
+        startLongitude: 6.0,
+        startLatitude: 45.0,
+        endLongitude: 7.0,
+        endLatitude: 45.5,
+        vertical: {
+          start: 900,
+          end: 1400,
+          reference: "elevation",
+          system: "ngf_ign69",
+        },
+      },
+    },
   },
   {
     name: "Locality-description draft",

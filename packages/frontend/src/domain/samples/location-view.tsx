@@ -1,29 +1,52 @@
 import type { Location } from "@projet-igsn/domain/sample/location/model";
-import type { VerticalDatum } from "@projet-igsn/domain/sample/location/vertical-datum";
 
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
+import { verticalValues } from "@projet-igsn/domain/sample/location/vertical-values";
 
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
-import { oceanSeaLabel } from "#/domain/samples/sample-labels.ts";
+import {
+  oceanSeaLabel,
+  verticalReferenceLabel,
+  verticalReferenceSystemLabel,
+} from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 import { getLocale } from "#/paraglide/runtime.js";
 
-const VERTICAL_DATUM_LABELS: Record<VerticalDatum, () => string> = {
-  msl: m.vertical_datum_msl,
-  wgs84: m.vertical_datum_wgs84,
-  grs80: m.vertical_datum_grs80,
+type Position = NonNullable<Location["position"]>;
+
+const VERTICAL_SEPARATORS = { point: "", area: " - ", line: " -> " };
+
+const verticalText = (position: Position): string | undefined => {
+  const present = verticalValues(position).filter((value) => value != null);
+  return present.length > 0
+    ? `${present.join(VERTICAL_SEPARATORS[position.type])} m`
+    : undefined;
 };
 
-type Elevation = NonNullable<NonNullable<Location["position"]>["elevation"]>;
-
-const elevationText = ({ min, max, unit, datum }: Elevation): string => {
-  const range =
-    min != null && max != null && min !== max
-      ? `${min} - ${max}`
-      : String(min ?? max ?? "");
-  const unitText = unit ? ` ${unit}` : "";
-  const datumText = datum ? ` (${VERTICAL_DATUM_LABELS[datum]()})` : "";
-  return `${range}${unitText}${datumText}`.trim();
+const coordinates = (
+  position: Position,
+): readonly (readonly [string, number])[] => {
+  switch (position.type) {
+    case "point":
+      return [
+        [m.sample_field_latitude(), position.latitude],
+        [m.sample_field_longitude(), position.longitude],
+      ];
+    case "area":
+      return [
+        [m.sample_field_west_longitude(), position.westLongitude],
+        [m.sample_field_east_longitude(), position.eastLongitude],
+        [m.sample_field_south_latitude(), position.southLatitude],
+        [m.sample_field_north_latitude(), position.northLatitude],
+      ];
+    case "line":
+      return [
+        [m.sample_field_start_longitude(), position.startLongitude],
+        [m.sample_field_start_latitude(), position.startLatitude],
+        [m.sample_field_end_longitude(), position.endLongitude],
+        [m.sample_field_end_latitude(), position.endLatitude],
+      ];
+  }
 };
 
 export function LocationView({ location }: { location: Location }) {
@@ -36,41 +59,27 @@ export function LocationView({ location }: { location: Location }) {
   } = location;
   return (
     <FieldRows>
-      {position?.type === "point" && (
-        <>
-          <FieldRow
-            label={m.sample_field_latitude()}
-            value={String(position.latitude)}
-          />
-          <FieldRow
-            label={m.sample_field_longitude()}
-            value={String(position.longitude)}
-          />
-        </>
-      )}
-      {position?.type === "area" && (
-        <>
-          <FieldRow
-            label={m.sample_field_west_longitude()}
-            value={String(position.westLongitude)}
-          />
-          <FieldRow
-            label={m.sample_field_east_longitude()}
-            value={String(position.eastLongitude)}
-          />
-          <FieldRow
-            label={m.sample_field_south_latitude()}
-            value={String(position.southLatitude)}
-          />
-          <FieldRow
-            label={m.sample_field_north_latitude()}
-            value={String(position.northLatitude)}
-          />
-        </>
-      )}
+      {position &&
+        coordinates(position).map(([label, value]) => (
+          <FieldRow key={label} label={label} value={String(value)} />
+        ))}
       <FieldRow
-        label={m.sample_field_elevation()}
-        value={position?.elevation && elevationText(position.elevation)}
+        label={m.sample_field_vertical_position()}
+        value={position && verticalText(position)}
+      />
+      <FieldRow
+        label={m.sample_field_vertical_reference()}
+        value={
+          position?.vertical?.reference &&
+          verticalReferenceLabel(position.vertical.reference)
+        }
+      />
+      <FieldRow
+        label={m.sample_field_vertical_reference_system()}
+        value={
+          position?.vertical?.system &&
+          verticalReferenceSystemLabel(position.vertical.system)
+        }
       />
       <FieldRow
         label={m.sample_field_region()}

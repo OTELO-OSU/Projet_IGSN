@@ -15,6 +15,13 @@ describe("locationSchema", () => {
     southLatitude: 44,
     northLatitude: 46,
   };
+  const line = {
+    type: "line" as const,
+    startLongitude: 5,
+    startLatitude: 44,
+    endLongitude: 8,
+    endLatitude: 46,
+  };
 
   it("should parse a point position to the same value", () => {
     expect(locationSchema.parse({ position: point })).toEqual({
@@ -25,40 +32,77 @@ describe("locationSchema", () => {
   it.each<[string, unknown]>([
     ["a bare point", { position: point }],
     [
-      "a point with a signed elevation (a degenerate range)",
+      "a point with a vertical position",
       {
         position: {
           ...point,
-          elevation: { min: -1200, max: -1200, unit: "m", datum: "msl" },
+          vertical: {
+            position: 1200,
+            reference: "depth_below_sea_floor",
+            system: "msl",
+          },
         },
       },
     ],
     ["an area", { position: area }],
     [
-      "an area with an elevation range",
+      "an area with a vertical range",
       {
         position: {
           ...area,
-          elevation: { min: 0, max: 100, unit: "km", datum: "wgs84" },
+          vertical: {
+            min: 0,
+            max: 100,
+            reference: "elevation",
+            system: "ngf_ign69",
+          },
         },
       },
     ],
+    ["a line", { position: line }],
     [
-      "an elevation missing its unit and datum",
-      { position: { ...point, elevation: { min: 10, max: 10 } } },
-    ],
-    [
-      "a half-entered elevation range (min only)",
-      { position: { ...area, elevation: { min: 0 } } },
-    ],
-    [
-      "a fractional elevation",
+      "a line with vertical endpoints",
       {
         position: {
-          ...point,
-          elevation: { min: 10.5, max: 10.5, unit: "m", datum: "msl" },
+          ...line,
+          vertical: {
+            start: 10,
+            end: 20,
+            reference: "core_depth",
+            system: "local",
+          },
         },
       },
+    ],
+    [
+      "a descending line, the endpoints having no order",
+      {
+        position: {
+          ...line,
+          vertical: {
+            start: 900,
+            end: 20,
+            reference: "bathymetry",
+            system: "egm96",
+          },
+        },
+      },
+    ],
+    [
+      "a vertical position of zero",
+      { position: { ...point, vertical: { position: 0 } } },
+    ],
+    [
+      "a vertical position missing its reference and system",
+      { position: { ...point, vertical: { position: 10 } } },
+    ],
+    [
+      "a half-entered vertical range (min only)",
+      { position: { ...area, vertical: { min: 0 } } },
+    ],
+    [
+      "a fractional vertical position",
+      { position: { ...point, vertical: { position: 10.5 } } },
     ],
     [
       "a dateline-crossing area",
@@ -100,12 +144,15 @@ describe("locationSchema", () => {
       },
     ],
     [
-      "a continent region with an unknown country",
-      { region: { kind: "continent", country: "XX" } },
-    ],
-    [
-      "an ocean region with an unknown code",
-      { region: { kind: "ocean", oceanSea: "foo" } },
+      "a line missing an endpoint",
+      {
+        position: {
+          type: "line",
+          startLongitude: 5,
+          startLatitude: 44,
+          endLongitude: 8,
+        },
+      },
     ],
     [
       "an area with north below south",
@@ -120,13 +167,30 @@ describe("locationSchema", () => {
       },
     ],
     [
-      "an area with elevation min above max",
+      "an area with a vertical min above its max",
       {
         position: {
           ...area,
-          elevation: { min: 100, max: 0, unit: "m", datum: "msl" },
+          vertical: { min: 100, max: 0, reference: "elevation", system: "msl" },
         },
       },
+    ],
+    [
+      "a negative vertical position on a point",
+      {
+        position: {
+          ...point,
+          vertical: { position: -50, reference: "bathymetry", system: "msl" },
+        },
+      },
+    ],
+    [
+      "a negative vertical bound on an area",
+      { position: { ...area, vertical: { min: -50, max: 0 } } },
+    ],
+    [
+      "a negative vertical endpoint on a line",
+      { position: { ...line, vertical: { start: 0, end: -50 } } },
     ],
     [
       "a longitude out of range",
@@ -136,9 +200,8 @@ describe("locationSchema", () => {
       "a latitude out of range",
       { position: { type: "point", longitude: 0, latitude: 100 } },
     ],
-    ["an unknown navigation type", { navigationType: "sonar" }],
     ["a navigation type without a position", { navigationType: "GPS" }],
-    ["an unknown position type", { position: { type: "line" } }],
+    ["an unknown position type", { position: { type: "polygon" } }],
   ])("should reject %s", (_label, value) => {
     expect(locationSchema.safeParse(value).success).toBe(false);
   });

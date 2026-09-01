@@ -2,7 +2,7 @@ import {
   composeHierarchyValue,
   toHierarchyPath,
 } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
-import { locationRequirement } from "@projet-igsn/domain/sample/location/location-requirement";
+import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { publishedSampleSchema as domainPublishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import {
   type CreateSample,
@@ -125,11 +125,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     collectionMethodDescription:
       draft.collectionMethodDescription?.trim() || null,
     specificName: draft.specificName?.trim() || null,
-    location: ["forbidden", "undetermined"].includes(
-      locationRequirement(material),
-    )
-      ? null
-      : composeLocation(draft.location),
+    location: allowsLocation(material) ? composeLocation(draft.location) : null,
     ...(description ? { description } : {}),
     ...(condition ? { condition } : {}),
     ...(security ? { security } : {}),

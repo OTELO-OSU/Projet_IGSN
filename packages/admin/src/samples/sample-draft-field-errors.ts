@@ -1,7 +1,8 @@
 import { publishBlockerSchema } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 
+import type { LocationDraft } from "#/samples/compose-location.ts";
+
 import { m } from "#/paraglide/messages.js";
-import { type LocationDraft } from "#/samples/compose-location.ts";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 
 const MEASUREMENT_PATH =
@@ -11,6 +12,18 @@ const READING_PATH =
   /^condition\.(temperature|pressure)\.measurement\.(value|unit)$/;
 
 const LINK_PATH = /^links\.(\d+)\.(url|description)$/;
+
+const VERTICAL_PREFIX = "location.position.vertical.";
+
+const VERTICAL_FIELDS: Record<string, keyof LocationDraft> = {
+  position: "verticalPosition",
+  min: "verticalPositionMin",
+  max: "verticalPositionMax",
+  start: "startVerticalPosition",
+  end: "endVerticalPosition",
+  reference: "verticalReference",
+  system: "verticalReferenceSystem",
+};
 
 const LONGITUDE_PATH = /^location\.position\.\w*longitude$/i;
 const LATITUDE_PATH = /^location\.position\.\w*latitude$/i;
@@ -25,23 +38,13 @@ type DraftContext = {
   typePath: (string | undefined)[];
   materialPath: (string | undefined)[];
   collectionMethodPath: (string | undefined)[];
-  location: Pick<LocationDraft, "type">;
 };
 
 const draftFieldName = (path: string, draft: DraftContext): string => {
-  const locationType = draft.location.type;
-  if (path.startsWith("location.position.elevation.min"))
-    return locationType === "point"
-      ? "location.elevationValue"
-      : "location.elevationMin";
-  if (path.startsWith("location.position.elevation.max"))
-    return locationType === "point"
-      ? "location.elevationValue"
-      : "location.elevationMax";
-  if (path === "location.position.elevation.unit")
-    return "location.elevationUnit";
-  if (path === "location.position.elevation.datum")
-    return "location.elevationDatum";
+  if (path.startsWith(VERTICAL_PREFIX)) {
+    const leaf = path.slice(VERTICAL_PREFIX.length);
+    return `location.${VERTICAL_FIELDS[leaf] ?? leaf}`;
+  }
   if (path.startsWith("location.position."))
     return `location.${path.slice("location.position.".length)}`;
   if (path === "location.region.kind") return "location.regionKind";
@@ -97,6 +100,9 @@ function issueMessage(path: string, issue: DraftIssue): string {
   }
   if (reason === "humidity_percentage_range") {
     return m.field_humidity_percentage_range();
+  }
+  if (issue.code === "too_small" && path.startsWith(VERTICAL_PREFIX)) {
+    return m.field_vertical_position_negative();
   }
   if (issue.code === "too_big" || issue.code === "too_small") {
     if (LONGITUDE_PATH.test(path)) return m.field_longitude_range();

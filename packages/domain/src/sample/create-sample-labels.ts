@@ -12,6 +12,8 @@ import { type StorageCondition } from "./condition/storage-condition.ts";
 import { type TemperatureType } from "./condition/temperature-type.ts";
 import { type Element } from "./element/vocabulary.ts";
 import { type OceanSea } from "./location/ocean-sea.ts";
+import { type VerticalReferenceSystem } from "./location/vertical-reference-system.ts";
+import { type VerticalReference } from "./location/vertical-reference.ts";
 import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
 import { type Nature } from "./nature.ts";
 import { pathSegment } from "./path/segment.ts";
@@ -43,6 +45,10 @@ type _provenanceStatusKeys =
 type _collectionOriginKeys =
   AssertKeys<`collection_origin_${CollectionOrigin}`>;
 type _oceanSeaKeys = AssertKeys<`ocean_sea_${OceanSea}`>;
+type _verticalReferenceKeys =
+  AssertKeys<`vertical_reference_${VerticalReference}`>;
+type _verticalReferenceSystemKeys =
+  AssertKeys<`vertical_reference_system_${VerticalReferenceSystem}`>;
 
 export type Messages = Record<
   Exclude<MessageKey, `$${string}`>,
@@ -59,6 +65,8 @@ export type SampleLabels = {
   metamorphicFaciesLabel: (facies: MetamorphicFacies) => string;
   natureLabel: (nature: Nature) => string;
   oceanSeaLabel: (oceanSea: OceanSea) => string;
+  verticalReferenceLabel: (reference: VerticalReference) => string;
+  verticalReferenceSystemLabel: (system: VerticalReferenceSystem) => string;
   packagingLabel: (packaging: Packaging) => string;
   storageConditionLabel: (storageCondition: StorageCondition) => string;
   temperatureTypeLabel: (type: TemperatureType) => string;
@@ -83,6 +91,8 @@ const LABEL_KEY = {
   metamorphicFaciesLabel: ["metamorphic_facies", "code"],
   natureLabel: ["nature", "code"],
   oceanSeaLabel: ["ocean_sea", "code"],
+  verticalReferenceLabel: ["vertical_reference", "code"],
+  verticalReferenceSystemLabel: ["vertical_reference_system", "code"],
   packagingLabel: ["packaging", "code"],
   storageConditionLabel: ["storage_condition", "code"],
   temperatureTypeLabel: ["temperature", "code"],

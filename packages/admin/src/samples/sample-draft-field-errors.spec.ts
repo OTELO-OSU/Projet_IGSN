@@ -6,12 +6,10 @@ const draft = (over?: {
   typePath?: (string | undefined)[];
   materialPath?: (string | undefined)[];
   collectionMethodPath?: (string | undefined)[];
-  locationType?: "point" | "area" | null | undefined;
 }) => ({
   typePath: over?.typePath ?? [],
   materialPath: over?.materialPath ?? [],
   collectionMethodPath: over?.collectionMethodPath ?? [],
-  location: { type: over?.locationType },
 });
 
 describe("sampleDraftFieldErrors", () => {
@@ -33,33 +31,31 @@ describe("sampleDraftFieldErrors", () => {
           { path: ["type"] },
           { path: ["collectionMethod"] },
           { path: ["location", "position", "longitude"] },
-          { path: ["location", "position", "elevation", "min"] },
-          { path: ["location", "position", "elevation", "datum"] },
+          { path: ["location", "position", "vertical", "min"] },
+          { path: ["location", "position", "vertical", "system"] },
           { path: ["location", "region", "kind"] },
         ],
-        draft({ locationType: "area" }),
+        draft(),
       ),
     ).toEqual({
       name: { message: "Invalid value." },
       "typePath[0]": { message: "Invalid value." },
       "collectionMethodPath[0]": { message: "Invalid value." },
       "location.longitude": { message: "Invalid value." },
-      "location.elevationMin": { message: "Invalid value." },
-      "location.elevationDatum": { message: "Invalid value." },
+      "location.verticalPositionMin": { message: "Invalid value." },
+      "location.verticalReferenceSystem": { message: "Invalid value." },
       "location.regionKind": { message: "Invalid value." },
     });
   });
 
-  it("should pin a hierarchy issue on the next level to refine", () => {
+  it.each([
+    ["the next level to refine", ["rock", "rock.igneous"]],
+    ["a cleared level, not past it", ["rock", "rock.igneous", undefined]],
+  ])("should pin a hierarchy issue on %s", (_label, materialPath) => {
     expect(
       sampleDraftFieldErrors(
-        [
-          {
-            path: ["material"],
-            params: { code: "material_incomplete" },
-          },
-        ],
-        draft({ materialPath: ["rock", "rock.igneous"] }),
+        [{ path: ["material"], params: { code: "material_incomplete" } }],
+        draft({ materialPath }),
       ),
     ).toEqual({
       "materialPath[2]": {
@@ -69,32 +65,22 @@ describe("sampleDraftFieldErrors", () => {
     });
   });
 
-  it("should pin a hierarchy issue on a cleared level, not past it", () => {
+  it("should translate a negative vertical position", () => {
     expect(
       sampleDraftFieldErrors(
         [
           {
-            path: ["material"],
-            params: { code: "material_incomplete" },
+            path: ["location", "position", "vertical", "position"],
+            code: "too_small",
           },
         ],
-        draft({ materialPath: ["rock", "rock.igneous", undefined] }),
+        draft(),
       ),
     ).toEqual({
-      "materialPath[2]": {
-        message:
-          "Classify the material down to a specific type before publishing.",
+      "location.verticalPosition": {
+        message: "A vertical position must not be negative.",
       },
     });
-  });
-
-  it("should map an elevation bound to the single value input for a point", () => {
-    expect(
-      sampleDraftFieldErrors(
-        [{ path: ["location", "position", "elevation", "min"] }],
-        draft({ locationType: "point" }),
-      ),
-    ).toEqual({ "location.elevationValue": { message: "Invalid value." } });
   });
 
   it("should map description issues on the draft fields that produced them", () => {
@@ -135,44 +121,37 @@ describe("sampleDraftFieldErrors", () => {
     });
   });
 
-  it("should translate an out-of-range coordinate on submit", () => {
-    expect(
-      sampleDraftFieldErrors(
-        [
-          { path: ["location", "position", "longitude"], code: "too_big" },
-          { path: ["location", "position", "latitude"], code: "too_small" },
-        ],
-        draft(),
-      ),
-    ).toEqual({
-      "location.longitude": {
-        message: "Longitude must be between -180 and 180.",
-      },
-      "location.latitude": { message: "Latitude must be between -90 and 90." },
-    });
-  });
-
-  it("should translate an out-of-range area bound on submit", () => {
-    expect(
-      sampleDraftFieldErrors(
-        [
-          { path: ["location", "position", "westLongitude"], code: "too_big" },
-          {
-            path: ["location", "position", "northLatitude"],
-            code: "too_small",
-          },
-        ],
-        draft({ locationType: "area" }),
-      ),
-    ).toEqual({
-      "location.westLongitude": {
-        message: "Longitude must be between -180 and 180.",
-      },
-      "location.northLatitude": {
-        message: "Latitude must be between -90 and 90.",
-      },
-    });
-  });
+  it.each([
+    ["a point coordinate", "longitude", "latitude"],
+    ["a line endpoint", "startLongitude", "endLatitude"],
+    ["an area bound", "westLongitude", "northLatitude"],
+  ])(
+    "should translate an out-of-range %s on submit",
+    (_label, longitudeField, latitudeField) => {
+      expect(
+        sampleDraftFieldErrors(
+          [
+            {
+              path: ["location", "position", longitudeField],
+              code: "too_big",
+            },
+            {
+              path: ["location", "position", latitudeField],
+              code: "too_small",
+            },
+          ],
+          draft(),
+        ),
+      ).toEqual({
+        [`location.${longitudeField}`]: {
+          message: "Longitude must be between -180 and 180.",
+        },
+        [`location.${latitudeField}`]: {
+          message: "Latitude must be between -90 and 90.",
+        },
+      });
+    },
+  );
 
   it("should keep the generic message on a missing coordinate", () => {
     expect(

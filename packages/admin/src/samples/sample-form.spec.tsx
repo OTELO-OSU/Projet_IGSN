@@ -23,7 +23,10 @@ const publishableScientificContext = {
 
 type Screen = Awaited<ReturnType<typeof render>>;
 
-async function renderPointLocation(): Promise<Screen> {
+async function renderLocation(
+  typeOption: "Point" | "Polygon" | "Line",
+  onSubmit: (value: CreateSample) => void = noop,
+): Promise<Screen> {
   const screen = await render(
     <SampleForm
       onCancel={noop}
@@ -35,22 +38,26 @@ async function renderPointLocation(): Promise<Screen> {
         collectionMethod: null,
         collectionMethodDescription: null,
       }}
-      primaryAction={createAction(noop)}
+      primaryAction={createAction(onSubmit)}
     />,
   );
 
-  await screen.getByRole("tab", { name: "Physical description" }).click();
+  await screen.getByRole("tab", { name: "Location" }).click();
   await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-  await screen.getByRole("option", { name: "Point" }).click();
+  await screen.getByRole("option", { name: typeOption }).click();
   return screen;
 }
 
-async function fillElevation(screen: Screen) {
-  await screen.getByLabelText("Elevation").fill("100");
-  await screen.getByRole("combobox", { name: "Unit *" }).click();
-  await screen.getByRole("option", { name: "m", exact: true }).click();
-  await screen.getByRole("combobox", { name: "Vertical datum *" }).click();
-  await screen.getByRole("option", { name: "Mean sea level" }).click();
+const MSL_SYSTEM = "MSL height (EPSG:5714) - Mean sea level";
+
+async function fillVertical(screen: Screen) {
+  await screen.getByLabelText("Vertical position").fill("100");
+  await screen.getByRole("combobox", { name: "Vertical reference *" }).click();
+  await screen.getByRole("option", { name: "Bathymetry" }).click();
+  await screen
+    .getByRole("combobox", { name: "Vertical reference system" })
+    .click();
+  await screen.getByRole("option", { name: MSL_SYSTEM }).click();
 }
 
 const BASALT_TEAM = {
@@ -1396,7 +1403,10 @@ describe("SampleForm", () => {
       .toHaveAttribute("href", "https://example.test/samples/IGSN123");
   });
 
-  it("should hide the Location section for a synthetic material", async () => {
+  it.each([
+    ["a synthetic material", "synthetic_rock_mineral"],
+    ["a returned sample", "extraterrestrial_rock.returned_samples.other"],
+  ])("should hide the Location tab for %s", async (_case, material) => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -1404,7 +1414,7 @@ describe("SampleForm", () => {
           name: "Synthetic corundum",
           nature: "thin_section",
           type: "dredge",
-          material: "synthetic_rock_mineral",
+          material,
           collectionMethod: null,
           collectionMethodDescription: null,
         }}
@@ -1412,13 +1422,11 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-
     await expect
-      .element(screen.getByRole("heading", { name: "Description" }))
+      .element(screen.getByRole("tab", { name: "Physical description" }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("heading", { name: "Location" }))
+      .element(screen.getByRole("tab", { name: "Location" }))
       .not.toBeInTheDocument();
   });
 
@@ -1459,50 +1467,38 @@ describe("SampleForm", () => {
       .toBeVisible();
   });
 
-  it("should hide the Location section until the material determines its requirement", async () => {
+  it("should show the Location tab with no material chosen", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Location" }).click();
     await expect
-      .element(screen.getByRole("heading", { name: "Description" }))
+      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
       .toBeVisible();
-    await expect
-      .element(screen.getByRole("heading", { name: "Location" }))
-      .not.toBeInTheDocument();
+  });
+
+  it("should hide the Location tab once the material refuses it", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
 
     await screen.getByRole("tab", { name: "Sample type" }).click();
     await screen
       .getByRole("combobox", { name: "Material *", exact: true })
       .click();
-    await screen.getByRole("option", { name: "Rock", exact: true }).click();
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen
+      .getByRole("option", { name: "Synthetic rock / mineral" })
+      .click();
+
     await expect
-      .element(screen.getByRole("heading", { name: "Location" }))
-      .toBeVisible();
+      .element(screen.getByRole("tab", { name: "Location" }))
+      .not.toBeInTheDocument();
   });
 
   it("should submit a point location entered on the Location tab", async () => {
     const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(onSubmit)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
+    const screen = await renderLocation("Point", onSubmit);
     await screen.getByLabelText("Longitude *").fill("3.5");
     await screen.getByLabelText("Latitude *").fill("-45");
     await screen.getByRole("button", { name: "Create" }).click();
@@ -1518,36 +1514,18 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should save a draft elevation without its unit or datum (publish-only)", async () => {
+  it("should save a draft vertical position without its reference or system (publish-only)", async () => {
     const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(onSubmit)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
+    const screen = await renderLocation("Point", onSubmit);
     await screen.getByLabelText("Longitude *").fill("3");
     await screen.getByLabelText("Latitude *").fill("45");
-    await screen.getByLabelText("Elevation").fill("-1200");
-    await expect
-      .element(screen.getByLabelText("Bathymetry"))
-      .toHaveValue(-1200);
+    await screen.getByLabelText("Vertical position").fill("1200");
 
-    await expect.element(screen.getByLabelText("Unit *")).toBeVisible();
     await expect
-      .element(screen.getByLabelText("Vertical datum *"))
+      .element(screen.getByLabelText("Vertical reference *"))
+      .toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Vertical reference system"))
       .toBeVisible();
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -1559,7 +1537,7 @@ describe("SampleForm", () => {
               type: "point",
               longitude: 3,
               latitude: 45,
-              elevation: { min: -1200, max: -1200 },
+              vertical: { position: 1200 },
             },
           },
         }),
@@ -1567,34 +1545,12 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should include the elevation unit and datum once selected", async () => {
+  it("should include the vertical reference and system once selected", async () => {
     const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(onSubmit)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
+    const screen = await renderLocation("Point", onSubmit);
     await screen.getByLabelText("Longitude *").fill("3");
     await screen.getByLabelText("Latitude *").fill("45");
-    await screen.getByLabelText("Elevation").fill("-1200");
-
-    await screen.getByRole("combobox", { name: "Unit *" }).click();
-    await screen.getByRole("option", { name: "m", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Vertical datum *" }).click();
-    await screen.getByRole("option", { name: "Mean sea level" }).click();
+    await fillVertical(screen);
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -1605,7 +1561,11 @@ describe("SampleForm", () => {
               type: "point",
               longitude: 3,
               latitude: 45,
-              elevation: { min: -1200, max: -1200, unit: "m", datum: "msl" },
+              vertical: {
+                position: 100,
+                reference: "bathymetry",
+                system: "msl",
+              },
             },
           },
         }),
@@ -1615,24 +1575,7 @@ describe("SampleForm", () => {
 
   it("should show a field error when a value the schema rejects is submitted", async () => {
     const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(onSubmit)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
+    const screen = await renderLocation("Point", onSubmit);
     await screen.getByLabelText("Longitude *").fill("200");
     await screen.getByLabelText("Latitude *").fill("45");
     await screen.getByRole("button", { name: "Create" }).click();
@@ -1659,24 +1602,7 @@ describe("SampleForm", () => {
   });
 
   it("should name the axis and its range on an out-of-range latitude", async () => {
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(noop)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
+    const screen = await renderLocation("Point");
     await screen.getByLabelText("Latitude *").fill("200");
 
     await expect
@@ -1690,24 +1616,7 @@ describe("SampleForm", () => {
 
   it("should accept the coordinate bounds and a decimal degree", async () => {
     const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(onSubmit)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
+    const screen = await renderLocation("Point", onSubmit);
     for (const [longitude, latitude] of [
       ["-180", "-90"],
       ["180", "90"],
@@ -1741,7 +1650,8 @@ describe("SampleForm", () => {
 
   it.each([
     ["Point", 1],
-    ["Area", 2],
+    ["Polygon", 2],
+    ["Line", 2],
   ])(
     "should hint the coordinate format on every %s coordinate input",
     async (locationType, perAxis) => {
@@ -1760,7 +1670,7 @@ describe("SampleForm", () => {
         />,
       );
 
-      await screen.getByRole("tab", { name: "Physical description" }).click();
+      await screen.getByRole("tab", { name: "Location" }).click();
       await screen
         .getByRole("combobox", { name: "Type *", exact: true })
         .click();
@@ -1768,10 +1678,14 @@ describe("SampleForm", () => {
 
       await vi.waitFor(() => {
         expect(
-          screen.getByText(/Decimal degrees, WGS 84.*west/).elements(),
+          screen
+            .getByText(/Decimal degrees, WGS 84, e\.g\. -2\.352222\./)
+            .elements(),
         ).toHaveLength(perAxis);
         expect(
-          screen.getByText(/Decimal degrees, WGS 84.*south/).elements(),
+          screen
+            .getByText(/Decimal degrees, WGS 84, e\.g\. -48\.856614\./)
+            .elements(),
         ).toHaveLength(perAxis);
       });
     },
@@ -1779,24 +1693,7 @@ describe("SampleForm", () => {
 
   it("should reject an incomplete point instead of silently dropping it", async () => {
     const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(onSubmit)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
+    const screen = await renderLocation("Point", onSubmit);
     await screen.getByLabelText("Longitude *").fill("3");
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -1804,29 +1701,12 @@ describe("SampleForm", () => {
     await expect.element(screen.getByText("Invalid value.")).toBeVisible();
   });
 
-  it("should accept a decimal point elevation", async () => {
+  it("should accept a decimal vertical position", async () => {
     const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(onSubmit)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
+    const screen = await renderLocation("Point", onSubmit);
     await screen.getByLabelText("Longitude *").fill("3");
     await screen.getByLabelText("Latitude *").fill("45");
-    await screen.getByLabelText("Elevation").fill("12.5");
+    await screen.getByLabelText("Vertical position").fill("12.5");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -1837,7 +1717,7 @@ describe("SampleForm", () => {
               type: "point",
               longitude: 3,
               latitude: 45,
-              elevation: { min: 12.5, max: 12.5 },
+              vertical: { position: 12.5 },
             },
           },
         }),
@@ -1847,36 +1727,19 @@ describe("SampleForm", () => {
 
   it("should mark the other bound required but still save a half-range draft", async () => {
     const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(onSubmit)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Area" }).click();
+    const screen = await renderLocation("Polygon", onSubmit);
     await screen.getByLabelText("West longitude *").fill("5");
     await screen.getByLabelText("East longitude *").fill("8");
     await screen.getByLabelText("South latitude *").fill("44");
     await screen.getByLabelText("North latitude *").fill("46");
 
     await expect
-      .element(screen.getByLabelText("Maximum elevation"))
+      .element(screen.getByLabelText("Maximum vertical position"))
       .toBeVisible();
-    await screen.getByLabelText("Minimum elevation").fill("-200");
+    await screen.getByLabelText("Minimum vertical position").fill("200");
 
     await expect
-      .element(screen.getByLabelText("Maximum elevation *"))
+      .element(screen.getByLabelText("Maximum vertical position *"))
       .toBeVisible();
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -1890,7 +1753,7 @@ describe("SampleForm", () => {
               eastLongitude: 8,
               southLatitude: 44,
               northLatitude: 46,
-              elevation: { min: -200 },
+              vertical: { min: 200 },
             },
           },
         }),
@@ -1898,96 +1761,112 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should not mark the location required for an exempt material", async () => {
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Lunar regolith",
-          nature: "thin_section",
-          type: "dredge",
-          material: "extraterrestrial_rock.returned_samples.other",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(noop)}
-      />,
-    );
+  it("should submit a line with both endpoints, both vertical positions, a reference and a system", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderLocation("Line", onSubmit);
+    await screen.getByLabelText("Start longitude *").fill("3");
+    await screen.getByLabelText("Start latitude *").fill("45");
+    await screen.getByLabelText("End longitude *").fill("4");
+    await screen.getByLabelText("End latitude *").fill("46");
+    await screen.getByLabelText("Start vertical position").fill("10");
+    await screen.getByLabelText("End vertical position").fill("90");
+    await screen
+      .getByRole("combobox", { name: "Vertical reference *" })
+      .click();
+    await screen.getByRole("option", { name: "Core depth" }).click();
+    await screen
+      .getByRole("combobox", { name: "Vertical reference system" })
+      .click();
+    await screen.getByRole("option", { name: MSL_SYSTEM }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          location: {
+            position: {
+              type: "line",
+              startLongitude: 3,
+              startLatitude: 45,
+              endLongitude: 4,
+              endLatitude: 46,
+              vertical: {
+                start: 10,
+                end: 90,
+                reference: "core_depth",
+                system: "msl",
+              },
+            },
+          },
+        }),
+      ),
+    );
+  });
+
+  it("should mark the other line vertical position required once one is filled", async () => {
+    const screen = await renderLocation("Line");
+    await screen.getByLabelText("Start vertical position").fill("10");
+
     await expect
-      .element(screen.getByRole("combobox", { name: "Type", exact: true }))
+      .element(screen.getByLabelText("End vertical position *"))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
-      .not.toBeInTheDocument();
+      .element(screen.getByLabelText("Start vertical position"))
+      .toBeVisible();
   });
 
-  it("should show unit and datum only once an elevation part is entered", async () => {
-    const screen = await renderPointLocation();
+  it("should show the reference and system only once a vertical position is entered", async () => {
+    const screen = await renderLocation("Point");
 
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit", exact: true }))
+      .element(screen.getByRole("combobox", { name: "Vertical reference" }))
       .not.toBeInTheDocument();
 
-    await fillElevation(screen);
+    await fillVertical(screen);
 
-    await screen.getByLabelText("Elevation").fill("");
+    await screen.getByLabelText("Vertical position").fill("");
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit *", exact: true }))
-      .toHaveTextContent("m");
+      .element(screen.getByRole("combobox", { name: "Vertical reference *" }))
+      .toHaveTextContent("Bathymetry");
     await expect
-      .element(screen.getByRole("combobox", { name: "Vertical datum *" }))
-      .toHaveTextContent("Mean sea level");
+      .element(
+        screen.getByRole("combobox", { name: "Vertical reference system" }),
+      )
+      .toHaveTextContent(MSL_SYSTEM);
 
-    await screen.getByLabelText("Elevation").fill("100");
+    await screen.getByLabelText("Vertical position").fill("100");
     await expect
-      .element(screen.getByRole("combobox", { name: "Unit *", exact: true }))
-      .toHaveTextContent("m");
+      .element(screen.getByRole("combobox", { name: "Vertical reference *" }))
+      .toHaveTextContent("Bathymetry");
   });
 
-  it("should keep the elevation unit and datum when the location type changes", async () => {
-    const screen = await renderPointLocation();
-    await fillElevation(screen);
+  it("should keep the vertical reference and system when the location type changes", async () => {
+    const screen = await renderLocation("Point");
+    await fillVertical(screen);
 
-    for (const type of ["Area", "Point"]) {
+    for (const type of ["Polygon", "Line", "Point"]) {
       await screen
         .getByRole("combobox", { name: "Type *", exact: true })
         .click();
       await screen.getByRole("option", { name: type }).click();
       await expect
-        .element(screen.getByRole("combobox", { name: "Unit *", exact: true }))
-        .toHaveTextContent("m");
+        .element(screen.getByRole("combobox", { name: "Vertical reference *" }))
+        .toHaveTextContent("Bathymetry");
       await expect
-        .element(screen.getByRole("combobox", { name: "Vertical datum *" }))
-        .toHaveTextContent("Mean sea level");
+        .element(
+          screen.getByRole("combobox", { name: "Vertical reference system" }),
+        )
+        .toHaveTextContent(MSL_SYSTEM);
     }
   });
 
   it("should clear values the save dropped, keeping only what was submitted", async () => {
     const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "dredge",
-          material: "fossil",
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={createAction(onSubmit)}
-      />,
-    );
-
-    await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Point" }).click();
+    const screen = await renderLocation("Point", onSubmit);
     await screen.getByLabelText("Longitude *").fill("3");
     await screen.getByLabelText("Latitude *").fill("45");
     await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Area" }).click();
+    await screen.getByRole("option", { name: "Polygon" }).click();
     await screen.getByLabelText("West longitude *").fill("5");
     await screen.getByLabelText("East longitude *").fill("8");
     await screen.getByLabelText("South latitude *").fill("44");
@@ -2100,7 +1979,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Location" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Navigation type" }))
       .not.toBeInTheDocument();
@@ -2164,7 +2043,7 @@ const publishedRecentFixture: CreateSample = {
       type: "point",
       longitude: 3,
       latitude: 45,
-      elevation: { min: 800, max: 800, unit: "m", datum: "msl" },
+      vertical: { position: 800, reference: "bathymetry", system: "msl" },
     },
     region: { kind: "continent", country: "FR" },
     localityName: "Massif Central",
@@ -2388,14 +2267,16 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("switch", { name: "Date range" }))
       .toBeDisabled();
-    await expect.element(screen.getByLabelText(/longitude/i)).toBeDisabled();
-    await expect.element(screen.getByLabelText(/latitude/i)).toBeDisabled();
-    await expect
-      .element(screen.getByText(/Decimal degrees, WGS 84.*west/))
-      .toBeVisible();
     await expect
       .element(screen.getByRole("combobox", { name: /availability/i }))
       .toBeEnabled();
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+    await expect.element(screen.getByLabelText(/longitude/i)).toBeDisabled();
+    await expect.element(screen.getByLabelText(/latitude/i)).toBeDisabled();
+    await expect
+      .element(screen.getByText(/Decimal degrees, WGS 84, e\.g\. -2\.352222\./))
+      .toBeVisible();
   });
 
   it("freezes the provenance status and branch identity fields on a published sample", async () => {
@@ -2566,7 +2447,7 @@ describe("SampleForm post-publication field lock", () => {
       .toBeEnabled();
   });
 
-  it("freezes the region but not the locality or elevation on a published sample", async () => {
+  it("freezes the region but not the locality or vertical position on a published sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -2582,7 +2463,7 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("combobox", { name: "Collection Method" }))
       .toBeEnabled();
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Location" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Region kind" }))
       .toBeDisabled();
@@ -2590,7 +2471,14 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("combobox", { name: "Country" }))
       .toBeDisabled();
     await expect.element(screen.getByLabelText("Locality name")).toBeEnabled();
-    await expect.element(screen.getByLabelText("Elevation")).toBeEnabled();
+    await expect
+      .element(screen.getByLabelText("Vertical position"))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Vertical reference *" }))
+      .toBeEnabled();
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: /availability/i }))
       .toBeEnabled();

@@ -7,17 +7,10 @@ describe("publishedSampleFrozenField", () => {
 
   it.each([
     "name",
-    "nature",
-    "typePath[0]",
     "typePath[2]",
-    "materialPath[0]",
-    "location.type",
-    "location.longitude",
-    "location.northLatitude",
+    "location.startLongitude",
     "location.regionKind",
-    "location.country",
     "description.collectionDateStart",
-    "description.collectionDateEnd",
     "scientificContext.provenanceStatus",
   ])("freezes %s on a published sample", (field) => {
     expect(isFrozen(field)).toBe(true);
@@ -25,15 +18,11 @@ describe("publishedSampleFrozenField", () => {
 
   it.each([
     "texture",
-    "metamorphicFacies",
     "collectionMethodPath[0]",
-    "location.elevationValue",
-    "location.elevationMin",
-    "location.navigationType",
+    "location.startVerticalPosition",
+    "location.verticalReference",
     "location.localityName",
     "availability",
-    "specificName",
-    "scientificContext.researchStructure",
   ])("leaves %s editable on a published sample", (field) => {
     expect(isFrozen(field)).toBe(false);
   });

@@ -4,7 +4,7 @@ import type { CreateSample, Sample } from "../sample.ts";
 import type { ScientificContext } from "../scientific-context/model.ts";
 import type { ProvenanceStatus } from "../scientific-context/provenance-status.ts";
 
-import { locationRequirement } from "../location/location-requirement.ts";
+import { allowsLocation } from "../location/allows-location.ts";
 import { isPathAtOrUnder } from "../path/is-at-or-under.ts";
 import { frozenMaterialPrefix } from "./frozen-material-prefix.ts";
 
@@ -23,6 +23,10 @@ const LOCKED_LOCATION_FIELDS_TO_FORM_FIELDS = {
     "location.eastLongitude",
     "location.southLatitude",
     "location.northLatitude",
+    "location.startLongitude",
+    "location.startLatitude",
+    "location.endLongitude",
+    "location.endLatitude",
   ],
   region: ["location.regionKind", "location.country", "location.oceanSea"],
 } as const;
@@ -89,12 +93,26 @@ function freezeLocked<T extends object, K extends keyof T & string>(
   return { ...incoming, ...frozen };
 }
 
+type Position = NonNullable<Location["position"]>;
+
+function mergeVertical(
+  current: Position,
+  incoming: Location["position"],
+): Position {
+  return {
+    ...current,
+    vertical:
+      incoming?.type === current.type ? (incoming.vertical ?? null) : null,
+  };
+}
+
 function mergeLocation(
   current: Sample,
   incoming: CreateSample["location"],
   material: Sample["material"],
 ): Location | null {
-  if (locationRequirement(material) === "forbidden") return null;
+  // A material that forbids a location cannot erase one a published sample already stored.
+  if (!allowsLocation(material)) return current.location ?? null;
   const payload: Location = { ...incoming };
   const merged = freezeLocked(
     payload,
@@ -105,7 +123,7 @@ function mergeLocation(
     LOCKED_LOCATION_FIELDS_TO_FORM_FIELDS,
   );
   const position = merged.position
-    ? { ...merged.position, elevation: payload.position?.elevation ?? null }
+    ? mergeVertical(merged.position, payload.position)
     : null;
   const navigationType = position ? merged.navigationType : null;
   if (
