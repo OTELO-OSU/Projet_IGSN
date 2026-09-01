@@ -18,6 +18,8 @@ const base: Sample = {
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
   description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
   condition: null,
+  geologicalContextDescription: null,
+  geomorphologicalEnvironment: null,
   scientificContext: {
     provenanceStatus: "recent_collection",
     funderOrganizations: ["02feahw73"],
@@ -82,12 +84,6 @@ describe("samplePublishBlockers", () => {
     expect(
       samplePublishBlockers({ ...base, type: null, material: null }),
     ).toEqual(["type_missing", "material_missing"]);
-  });
-
-  it("should report material_missing when material is null", () => {
-    expect(samplePublishBlockers({ ...base, material: null })).toEqual([
-      "material_missing",
-    ]);
   });
 
   it("should report material_incomplete when the path is an internal node", () => {
@@ -206,23 +202,20 @@ describe("samplePublishBlockers", () => {
     expect(samplePublishBlockers({ ...base, age: null })).toEqual([]);
   });
 
-  it("should report numeric_age_unit_missing when a numeric value has no unit", () => {
-    expect(
-      samplePublishBlockers({
-        ...base,
-        age: { ...emptyAge, numericAgeMin: 120, numericAgeMax: 120 },
-      }),
-    ).toEqual(["numeric_age_unit_missing"]);
-  });
-
-  it("should report numeric_age_unit_missing when a range has no unit", () => {
-    expect(
-      samplePublishBlockers({
-        ...base,
-        age: { ...emptyAge, numericAgeMin: 500, numericAgeMax: 2000 },
-      }),
-    ).toEqual(["numeric_age_unit_missing"]);
-  });
+  it.each([
+    [120, 120],
+    [500, 2000],
+  ])(
+    "should report numeric_age_unit_missing when the bounds %s-%s have no unit",
+    (min, max) => {
+      expect(
+        samplePublishBlockers({
+          ...base,
+          age: { ...emptyAge, numericAgeMin: min, numericAgeMax: max },
+        }),
+      ).toEqual(["numeric_age_unit_missing"]);
+    },
+  );
 
   it("should not report a blocker when a numeric value has its unit", () => {
     expect(

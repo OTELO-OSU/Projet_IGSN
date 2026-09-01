@@ -23,6 +23,8 @@ const withdrawn: Sample = {
   },
   description: { openDescription: "kept out of the public view" },
   condition: null,
+  geologicalContextDescription: "kept out of the public view",
+  geomorphologicalEnvironment: "continental_zone.bedrock",
   scientificContext: {
     provenanceStatus: "recent_collection",
     collectorName: "Claire Martin",

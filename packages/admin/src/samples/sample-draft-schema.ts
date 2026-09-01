@@ -58,6 +58,8 @@ export type SampleDraft = {
   collectionMethodPath: string[];
   collectionMethodDescription: string | null | undefined;
   specificName: string | null | undefined;
+  geologicalContextDescription: string | null | undefined;
+  geomorphologicalEnvironmentPath: string[];
   location: LocationDraft;
   description: DescriptionDraft;
   condition: ConditionDraft;
@@ -80,6 +82,10 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   collectionMethodPath: toHierarchyPath(value?.collectionMethod ?? null),
   collectionMethodDescription: value?.collectionMethodDescription,
   specificName: value?.specificName,
+  geologicalContextDescription: value?.geologicalContextDescription,
+  geomorphologicalEnvironmentPath: toHierarchyPath(
+    value?.geomorphologicalEnvironment ?? null,
+  ),
   location: toLocationDraft(value?.location),
   description: toDescriptionDraft(value?.description),
   condition: toConditionDraft(value?.condition),
@@ -107,6 +113,7 @@ const composeLinks = (links: LinkDraft[]) =>
 
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
+  const locationAllowed = allowsLocation(material);
   const description = composeDescription(draft.description);
   const condition = composeCondition(draft.condition);
   const age = toAgeInput(draft.age);
@@ -127,7 +134,13 @@ const composeCreateSample = (draft: SampleDraft) => {
     collectionMethodDescription:
       draft.collectionMethodDescription?.trim() || null,
     specificName: draft.specificName?.trim() || null,
-    location: allowsLocation(material) ? composeLocation(draft.location) : null,
+    geologicalContextDescription: locationAllowed
+      ? draft.geologicalContextDescription?.trim() || null
+      : null,
+    geomorphologicalEnvironment: locationAllowed
+      ? composeHierarchyValue(draft.geomorphologicalEnvironmentPath)
+      : null,
+    location: locationAllowed ? composeLocation(draft.location) : null,
     ...(description ? { description } : {}),
     ...(condition ? { condition } : {}),
     ...(security ? { security } : {}),

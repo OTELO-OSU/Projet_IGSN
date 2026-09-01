@@ -12,6 +12,8 @@ const LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   name: ["name"],
   nature: ["nature"],
   type: ["typePath"],
+  geologicalContextDescription: ["geologicalContextDescription"],
+  geomorphologicalEnvironment: ["geomorphologicalEnvironmentPath"],
   manualGroupIds: ["manualGroupIds"],
 } as const;
 const LOCKED_LOCATION_FIELDS_TO_FORM_FIELDS = {

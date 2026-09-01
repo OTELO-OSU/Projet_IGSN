@@ -221,6 +221,9 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "dredging.chain_bag",
     specificName: "AT-2025-RR03",
     collectionMethodDescription: "Chain-bag dredge on the axial ridge flank",
+    geologicalContextDescription:
+      "Fresh pillow lavas on the axial ridge flank, above sheeted dykes",
+    geomorphologicalEnvironment: "marine_zone.volcanic_edifice_submarine",
     location: {
       position: area(-30.5, -29.8, 56.8, 57.2, bathyRange(1520, 1520)),
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },

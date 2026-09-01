@@ -14,6 +14,8 @@ import { availabilityStatusSchema } from "./curation/availability-status.ts";
 import { existenceStatusSchema } from "./curation/existence-status.ts";
 import { descriptionSchema } from "./description/model.ts";
 import { elementSchema } from "./element/vocabulary.ts";
+import { freeTextSchema } from "./free-text.ts";
+import { geomorphologicalEnvironmentSchema } from "./geomorphological-environment/vocabulary.ts";
 import { createSampleLinkSchema, sampleLinkSchema } from "./link/model.ts";
 import { allowsLocation } from "./location/allows-location.ts";
 import { locationSchema } from "./location/model.ts";
@@ -54,6 +56,10 @@ export const sampleSchema = z.object({
   location: locationSchema.nullable(),
   description: descriptionSchema.nullable(),
   condition: conditionSchema.nullable(),
+  geologicalContextDescription: freeTextSchema.nullable().default(null),
+  geomorphologicalEnvironment: geomorphologicalEnvironmentSchema
+    .nullable()
+    .default(null),
   scientificContext: scientificContextSchema.nullable().default(null),
   age: ageSchema.nullable().default(null),
   links: z.array(sampleLinkSchema).default([]),
@@ -96,6 +102,8 @@ export const createSampleSchema = z
     location: locationSchema.nullish(),
     description: descriptionSchema.nullish(),
     condition: conditionSchema.nullish(),
+    geologicalContextDescription: freeTextSchema.nullish(),
+    geomorphologicalEnvironment: geomorphologicalEnvironmentSchema.nullish(),
     scientificContext: scientificContextSchema.nullish(),
     age: ageSchema.nullish(),
     links: z.array(createSampleLinkSchema).optional(),
@@ -143,13 +151,20 @@ export const createSampleSchema = z
         message: "availability status is not valid for the existence status",
       });
     }
-    if (value.location != null && !allowsLocation(value.material ?? null)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["location"],
-        message:
-          "a synthetic or returned extraterrestrial sample must not have a location",
-      });
+    if (!allowsLocation(value.material ?? null)) {
+      for (const field of [
+        "location",
+        "geologicalContextDescription",
+        "geomorphologicalEnvironment",
+      ] as const) {
+        if (value[field] != null) {
+          ctx.addIssue({
+            code: "custom",
+            path: [field],
+            message: `a synthetic or returned extraterrestrial sample must not have a ${field}`,
+          });
+        }
+      }
     }
   });
 

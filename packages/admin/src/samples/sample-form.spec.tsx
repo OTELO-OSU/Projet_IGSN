@@ -104,6 +104,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -144,6 +146,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -174,6 +178,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -223,6 +229,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -251,6 +259,8 @@ describe("SampleForm", () => {
         type: "core",
         material: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         collectionMethod: null,
         collectionMethodDescription: null,
         location: null,
@@ -287,6 +297,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -348,6 +360,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -405,6 +419,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -463,6 +479,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -519,6 +537,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -574,6 +594,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -644,6 +666,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -695,6 +719,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -725,6 +751,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: "MC-2026-007",
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -763,6 +791,8 @@ describe("SampleForm", () => {
         collectionMethod: "coring.gravity_corer.giant",
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -829,6 +859,8 @@ describe("SampleForm", () => {
         collectionMethodDescription:
           "Cored at low tide from the northern outcrop",
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -858,6 +890,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -896,6 +930,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -1241,6 +1277,8 @@ describe("SampleForm", () => {
           collectionMethod: null,
           collectionMethodDescription: null,
           specificName: "MC-2026-007",
+          geologicalContextDescription: null,
+          geomorphologicalEnvironment: null,
           location: { position: { type: "point", longitude: 3, latitude: 45 } },
           description: {
             collectionDate: { start: "2026-01-01", end: "2026-01-01" },
@@ -1521,6 +1559,9 @@ describe("SampleForm", () => {
     await screen.getByRole("tab", { name: "Location" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("heading", { name: "Geological context" }))
       .toBeVisible();
   });
 
@@ -2296,7 +2337,7 @@ describe("SampleForm post-publication field lock", () => {
       .toHaveTextContent(/classify the material down to a specific type/i);
   });
 
-  it("freezes the collection date and location coordinates on a published sample", async () => {
+  it("freezes the collection date, location coordinates and geological context on a published sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -2325,6 +2366,12 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByText(/Decimal degrees, WGS 84, e\.g\. -2\.352222\./))
       .toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Geological context description"))
+      .toBeDisabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Environment" }))
+      .toBeDisabled();
   });
 
   it("freezes the provenance status and branch identity fields on a published sample", async () => {

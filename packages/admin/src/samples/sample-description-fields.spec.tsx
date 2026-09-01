@@ -427,6 +427,8 @@ describe("SampleDescriptionFields", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",

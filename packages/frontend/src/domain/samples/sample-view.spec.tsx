@@ -33,6 +33,8 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   description: null,
   condition: null,
   scientificContext: null,
+  geologicalContextDescription: null,
+  geomorphologicalEnvironment: null,
   location: null,
   age: null,
   links: [],
@@ -704,6 +706,39 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByRole("button", { name: "Contact the record owner" }))
       .toBeInTheDocument();
+  });
+
+  it("should show the geological context as its own section with the environment breadcrumb", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          geologicalContextDescription: "Sampled in a peat bog margin",
+          geomorphologicalEnvironment: "wetland.peat_bog",
+        })}
+      />,
+    );
+
+    await expect
+      .element(
+        screen.getByRole("heading", { level: 2, name: "Geological context" }),
+      )
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Sampled in a peat bog margin"))
+      .toBeInTheDocument();
+    const environment = screen.getByRole("list", { name: "Environment" });
+    await expect
+      .element(environment.getByText("Wetland", { exact: true }))
+      .toBeInTheDocument();
+    await expect.element(environment.getByText("Peat-bog")).toBeInTheDocument();
+  });
+
+  it("should omit the Geological context section when both fields are unset", async () => {
+    const screen = await render(<SampleView sample={sample()} />);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Geological context" }))
+      .not.toBeInTheDocument();
   });
 
   it("should show the locality name and description", async () => {

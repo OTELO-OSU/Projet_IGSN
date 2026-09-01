@@ -45,6 +45,8 @@ const stored: Sample = {
     volume: null,
   },
   condition: null,
+  geologicalContextDescription: "stored geological context",
+  geomorphologicalEnvironment: "marine_zone.fjord",
   scientificContext: {
     provenanceStatus: "recent_collection",
     funderOrganizations: ["https://ror.org/00stored"],
@@ -124,6 +126,8 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
       volume: null,
     },
     condition: null,
+    geologicalContextDescription: "edited geological context",
+    geomorphologicalEnvironment: "wetland.peat_bog",
     scientificContext: {
       provenanceStatus: "recent_collection",
       funderOrganizations: ["https://ror.org/00edited"],

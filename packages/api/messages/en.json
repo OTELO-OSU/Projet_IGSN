@@ -59,6 +59,8 @@
   "mail_sample_field_collectionMethodDescription": "Collection method description",
   "mail_sample_field_specificName": "Specific name",
   "mail_sample_field_location": "Location",
+  "mail_sample_field_geologicalContextDescription": "Geological context description",
+  "mail_sample_field_geomorphologicalEnvironment": "Geomorphological environment",
   "mail_sample_field_description": "Description",
   "mail_sample_field_condition": "Condition",
   "mail_sample_field_scientificContext": "Scientific context",

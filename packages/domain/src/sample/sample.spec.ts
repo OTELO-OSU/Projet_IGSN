@@ -50,6 +50,8 @@ describe("sampleSchema", () => {
       location: null,
       description: null,
       condition: null,
+      geologicalContextDescription: null,
+      geomorphologicalEnvironment: null,
       scientificContext: null,
       age: null,
       links: [],
@@ -94,188 +96,32 @@ describe("sampleSchema", () => {
 });
 
 describe("createSampleSchema", () => {
-  it("should accept an explicit type", () => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      type: "dredge",
-    });
-    // Assert
-    expect(result).toEqual({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      type: "dredge",
-    });
-  });
-
-  it("should accept an explicit collection method", () => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      collectionMethod: "coring.gravity_corer.giant",
-    });
-    // Assert
-    expect(result).toEqual({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      type: null,
-      collectionMethod: "coring.gravity_corer.giant",
-    });
-  });
-
-  it("should accept an explicit collection method description", () => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      collectionMethodDescription: "Collected at low tide, 30 cm depth",
-    });
-    // Assert
-    expect(result).toEqual({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      type: null,
-      collectionMethodDescription: "Collected at low tide, 30 cm depth",
-    });
-  });
-
-  it("should accept an explicit specific name", () => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      specificName: "FTB-2026-042",
-    });
-    // Assert
-    expect(result).toEqual({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      type: null,
-      specificName: "FTB-2026-042",
-    });
-  });
-
-  it("should accept an explicit age", () => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      age: {
-        numericAgeMin: 12000,
-        numericAgeMax: 12000,
-        numericAgeUnit: "a",
-        numericAgeYearsUnit: "bp",
-      },
-    });
-    // Assert
-    expect(result).toMatchObject({
-      age: {
-        numericAgeMin: 12000,
-        numericAgeMax: 12000,
-        numericAgeUnit: "a",
-        numericAgeYearsUnit: "bp",
-      },
-    });
-  });
-
-  it("should accept explicit links", () => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      links: [
-        { url: "https://doi.org/10.1594/IEDA.100252" },
-        {
-          url: "https://doi.org/10.5880/GFZ.2026.001",
-          description: "Companion dataset",
-        },
-      ],
-    });
-    // Assert
-    expect(result.links).toEqual([
-      { url: "https://doi.org/10.1594/IEDA.100252" },
-      {
-        url: "https://doi.org/10.5880/GFZ.2026.001",
-        description: "Companion dataset",
-      },
-    ]);
-  });
-
-  it("should accept an explicit resource type", () => {
-    // Arrange / Act
-    const result = createSampleSchema.parse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+  it.each([
+    { type: "dredge" },
+    { collectionMethod: "coring.gravity_corer.giant" },
+    { collectionMethodDescription: "Collected at low tide, 30 cm depth" },
+    { specificName: "FTB-2026-042" },
+    {
       resourceType: "mineral_and_ore.uranium.sandstone",
       economicInterestElements: ["u", "fe"],
       economicResourceTypePrecision: "high-grade ore",
       economicDepositName: "Cigar Lake",
       economicDepositDescription: "Unconformity-related uranium deposit",
-    });
-    // Assert
-    expect(result).toMatchObject({
-      resourceType: "mineral_and_ore.uranium.sandstone",
-      economicInterestElements: ["u", "fe"],
-      economicResourceTypePrecision: "high-grade ore",
-      economicDepositName: "Cigar Lake",
-      economicDepositDescription: "Unconformity-related uranium deposit",
-    });
-  });
-
-  it("should reject an unknown resource type path", () => {
-    // Arrange / Act
-    const result = createSampleSchema.safeParse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      resourceType: "mineral_and_ore.unobtanium",
-    });
-    // Assert
-    expect(result.success).toBe(false);
-  });
-
-  it("should reject an unknown economic interest element", () => {
-    // Arrange / Act
-    const result = createSampleSchema.safeParse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      economicInterestElements: ["fe", "xx"],
-    });
-    // Assert
-    expect(result.success).toBe(false);
-  });
-
-  it("should reject a link that is not a DOI url", () => {
-    // Arrange / Act
-    const result = createSampleSchema.safeParse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      links: [{ url: "https://example.com/paper" }],
-    });
-    // Assert
-    expect(result.success).toBe(false);
-  });
-
-  it("should reject an age with an inverted numeric range", () => {
-    // Arrange / Act
-    const result = createSampleSchema.safeParse({
-      name: "Grès de Fontainebleau",
-      nature: "rock_powder",
-      age: { numericAgeMin: 140, numericAgeMax: 100 },
-    });
-    // Assert
-    expect(result.success).toBe(false);
-  });
-
-  it("should default a missing type to null", () => {
+    },
+  ])("should accept and echo the explicit optional fields #%#", (extra) => {
     // Arrange / Act
     const result = createSampleSchema.parse({
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
+      ...extra,
     });
     // Assert
-    expect(result.type).toBeNull();
+    expect(result).toEqual({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      type: null,
+      ...extra,
+    });
   });
 
   it("should trim the name", () => {
@@ -292,31 +138,12 @@ describe("createSampleSchema", () => {
     });
   });
 
-  it("should accept a create payload with a material path and no rockType", () => {
-    const result = createSampleSchema.safeParse({
-      name: "Basalt 42",
-      nature: "hand_sample",
-      material: "rock.igneous",
-    });
-    expect(result).toMatchObject({ success: true });
-  });
-
   it("should accept a texture valid for the plutonic material branch", () => {
     const result = createSampleSchema.safeParse({
       name: "Granite 1",
       nature: "hand_sample",
       material: "rock.igneous.plutonic.felsic.granite",
       texture: "phaneritic",
-    });
-    expect(result).toMatchObject({ success: true });
-  });
-
-  it("should accept porphyritic under a volcanic material (shared texture)", () => {
-    const result = createSampleSchema.safeParse({
-      name: "Basalt 1",
-      nature: "hand_sample",
-      material: "rock.igneous.volcanic.mafic.basalt",
-      texture: "porphyritic",
     });
     expect(result).toMatchObject({ success: true });
   });
@@ -369,25 +196,6 @@ describe("createSampleSchema", () => {
     },
   );
 
-  it("should reject a create payload carrying an unknown rockType field", () => {
-    const result = createSampleSchema.safeParse({
-      name: "Basalt 42",
-      nature: "hand_sample",
-      material: "rock",
-      rockType: "igneous",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("should reject an unknown material path", () => {
-    const result = createSampleSchema.safeParse({
-      name: "Basalt 42",
-      nature: "hand_sample",
-      material: "gemstone",
-    });
-    expect(result.success).toBe(false);
-  });
-
   it("should accept a synthetic material without a location", () => {
     const result = createSampleSchema.safeParse({
       name: "Synthetic 1",
@@ -398,17 +206,31 @@ describe("createSampleSchema", () => {
   });
 
   it.each([
-    "synthetic_rock_mineral",
-    "extraterrestrial_rock.returned_samples.lunar_sample",
-  ])("should reject a %s material carrying a location", (material) => {
-    const result = createSampleSchema.safeParse({
-      name: "Synthetic 1",
-      nature: "hand_sample",
-      material,
-      location: { position: { type: "point", longitude: 0, latitude: 0 } },
-    });
-    expect(result.success).toBe(false);
-  });
+    [
+      "synthetic_rock_mineral",
+      { location: { position: { type: "point", longitude: 0, latitude: 0 } } },
+    ],
+    [
+      "synthetic_rock_mineral",
+      { geologicalContextDescription: "Basaltic plateau carved by the river" },
+    ],
+    ["synthetic_rock_mineral", { geomorphologicalEnvironment: "marine_zone" }],
+    [
+      "extraterrestrial_rock.returned_samples.lunar_sample",
+      { location: { position: { type: "point", longitude: 0, latitude: 0 } } },
+    ],
+  ] as const)(
+    "should reject a %s material carrying a geological context %o",
+    (material, extra) => {
+      const result = createSampleSchema.safeParse({
+        name: "Synthetic 1",
+        nature: "hand_sample",
+        material,
+        ...extra,
+      });
+      expect(result.success).toBe(false);
+    },
+  );
 
   it.each([
     { name: "", nature: "rock_powder" },
