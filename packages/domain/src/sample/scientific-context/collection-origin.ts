@@ -7,7 +7,6 @@ export const COLLECTION_ORIGINS = [
   "constitution",
   "inheritance",
   "unknown_origin",
-  "other",
 ] as const;
 
 export const collectionOriginSchema = z.enum(COLLECTION_ORIGINS);

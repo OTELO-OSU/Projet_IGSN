@@ -31,8 +31,8 @@ export const publishBlockerSchema = z.enum([
   "scientific_context_missing",
   "funder_organizations_missing",
   "research_program_name_missing",
-  "research_program_chief_missing",
-  "research_structure_missing",
+  "chief_scientist_missing",
+  "host_institution_missing",
   "collector_name_missing",
   "collection_curator_missing",
   "collection_origin_missing",
@@ -173,10 +173,10 @@ export function samplePublishBlockers(
       blockers.push("funder_organizations_missing");
     if (context.researchProgramName == null)
       blockers.push("research_program_name_missing");
-    if (context.researchProgramChief == null)
-      blockers.push("research_program_chief_missing");
-    if (context.researchStructure == null)
-      blockers.push("research_structure_missing");
+    if (context.chiefScientist == null)
+      blockers.push("chief_scientist_missing");
+    if (context.hostInstitution == null)
+      blockers.push("host_institution_missing");
     if (context.collectorName == null) blockers.push("collector_name_missing");
   } else {
     if (context.collectionCurator == null)

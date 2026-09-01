@@ -41,8 +41,8 @@ const LOCKED_DESCRIPTION_FIELDS_TO_FORM_FIELDS = {
 const LOCKED_RECENT_COLLECTION_FIELDS_TO_FORM_FIELDS = {
   funderOrganizations: ["scientificContext.funderOrganizations"],
   researchProgramName: ["scientificContext.researchProgramName"],
-  researchProgramChief: ["scientificContext.researchProgramChief"],
-  researchProgramChiefOrcid: ["scientificContext.researchProgramChiefOrcid"],
+  chiefScientist: ["scientificContext.chiefScientist"],
+  chiefScientistOrcid: ["scientificContext.chiefScientistOrcid"],
   collectorName: ["scientificContext.collectorName"],
 } as const;
 const LOCKED_HISTORICAL_SPECIMEN_FIELDS_TO_FORM_FIELDS = {

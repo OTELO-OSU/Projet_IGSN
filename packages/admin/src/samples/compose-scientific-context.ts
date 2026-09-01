@@ -6,9 +6,9 @@ export type ScientificContextDraft = {
   provenanceStatus: ProvenanceStatus | undefined;
   funderOrganizations: string[];
   researchProgramName: string | null | undefined;
-  researchProgramChief: string | null | undefined;
-  researchProgramChiefOrcid: string | null | undefined;
-  researchStructure: string[];
+  chiefScientist: string | null | undefined;
+  chiefScientistOrcid: string | null | undefined;
+  hostInstitution: string[];
   collectorName: string | null | undefined;
   collectorOrcid: string | null | undefined;
   researchCampaign: string | null | undefined;
@@ -26,9 +26,9 @@ type ScientificContextCandidate =
       provenanceStatus: "recent_collection";
       funderOrganizations: string[] | undefined;
       researchProgramName: string | undefined;
-      researchProgramChief: string | undefined;
-      researchProgramChiefOrcid: string | undefined;
-      researchStructure: string[] | undefined;
+      chiefScientist: string | undefined;
+      chiefScientistOrcid: string | undefined;
+      hostInstitution: string[] | undefined;
       collectorName: string | undefined;
       collectorOrcid: string | undefined;
       researchCampaign: string | undefined;
@@ -55,9 +55,9 @@ export function composeScientificContext(
       provenanceStatus: "recent_collection",
       funderOrganizations: nonEmpty(draft.funderOrganizations),
       researchProgramName: draft.researchProgramName || undefined,
-      researchProgramChief: draft.researchProgramChief || undefined,
-      researchProgramChiefOrcid: draft.researchProgramChiefOrcid || undefined,
-      researchStructure: nonEmpty(draft.researchStructure),
+      chiefScientist: draft.chiefScientist || undefined,
+      chiefScientistOrcid: draft.chiefScientistOrcid || undefined,
+      hostInstitution: nonEmpty(draft.hostInstitution),
       collectorName: draft.collectorName || undefined,
       collectorOrcid: draft.collectorOrcid || undefined,
       researchCampaign: draft.researchCampaign || undefined,
@@ -91,9 +91,9 @@ export function toScientificContextDraft(
     provenanceStatus: value?.provenanceStatus,
     funderOrganizations: recent?.funderOrganizations ?? [],
     researchProgramName: recent?.researchProgramName ?? undefined,
-    researchProgramChief: recent?.researchProgramChief ?? undefined,
-    researchProgramChiefOrcid: recent?.researchProgramChiefOrcid ?? undefined,
-    researchStructure: recent?.researchStructure ?? [],
+    chiefScientist: recent?.chiefScientist ?? undefined,
+    chiefScientistOrcid: recent?.chiefScientistOrcid ?? undefined,
+    hostInstitution: recent?.hostInstitution ?? [],
     collectorName:
       recent?.collectorName ?? historical?.collectorName ?? undefined,
     collectorOrcid: recent?.collectorOrcid ?? undefined,

@@ -74,34 +74,32 @@ export function SampleScientificContextFields() {
                   )}
                 </form.AppField>
 
-                <form.AppField name="scientificContext.researchProgramChief">
+                <form.AppField name="scientificContext.chiefScientist">
                   {(field) => (
                     <field.TextField
-                      label={m.field_research_program_chief()}
+                      label={m.field_chief_scientist()}
                       requiredToPublish
                     />
                   )}
                 </form.AppField>
 
-                <form.AppField name="scientificContext.researchProgramChiefOrcid">
+                <form.AppField name="scientificContext.chiefScientistOrcid">
                   {(field) => (
-                    <field.TextField
-                      label={m.field_research_program_chief_orcid()}
-                    />
+                    <field.TextField label={m.field_chief_scientist_orcid()} />
                   )}
                 </form.AppField>
 
-                <form.AppField name="scientificContext.researchStructure">
+                <form.AppField name="scientificContext.hostInstitution">
                   {(field) => (
                     <field.MultiComboboxField
-                      label={m.field_research_structure()}
+                      label={m.field_host_institution()}
                       requiredToPublish
                       items={organizationItems}
                       placeholder={m.organization_placeholder()}
                       searchPlaceholder={m.organization_search_placeholder()}
                       emptyText={m.organization_empty()}
                       removeLabel={(label) =>
-                        m.research_structure_remove({ label })
+                        m.host_institution_remove({ label })
                       }
                     />
                   )}

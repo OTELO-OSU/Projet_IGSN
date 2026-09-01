@@ -69,20 +69,20 @@ function RecentCollectionRows({ context }: { context: RecentCollection }) {
         value={context.researchProgramName}
       />
       <FieldRow
-        label={m.sample_field_research_program_chief()}
-        value={context.researchProgramChief}
+        label={m.sample_field_chief_scientist()}
+        value={context.chiefScientist}
       />
       <FieldRow
-        label={m.sample_field_research_program_chief_orcid()}
+        label={m.sample_field_chief_scientist_orcid()}
         value={
-          context.researchProgramChiefOrcid && (
-            <OrcidLink orcid={context.researchProgramChiefOrcid} />
+          context.chiefScientistOrcid && (
+            <OrcidLink orcid={context.chiefScientistOrcid} />
           )
         }
       />
       <OrgLinksRow
-        label={m.sample_field_research_structure()}
-        rors={context.researchStructure}
+        label={m.sample_field_host_institution()}
+        rors={context.hostInstitution}
       />
       <FieldRow
         label={m.sample_field_collector_name()}

@@ -24,9 +24,8 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   funder_organizations_missing: m.publish_blocked_funder_organizations_missing,
   research_program_name_missing:
     m.publish_blocked_research_program_name_missing,
-  research_program_chief_missing:
-    m.publish_blocked_research_program_chief_missing,
-  research_structure_missing: m.publish_blocked_research_structure_missing,
+  chief_scientist_missing: m.publish_blocked_chief_scientist_missing,
+  host_institution_missing: m.publish_blocked_host_institution_missing,
   collector_name_missing: m.publish_blocked_collector_name_missing,
   collection_curator_missing: m.publish_blocked_collection_curator_missing,
   collection_origin_missing: m.publish_blocked_collection_origin_missing,

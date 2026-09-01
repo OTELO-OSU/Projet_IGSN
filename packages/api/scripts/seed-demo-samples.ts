@@ -1460,8 +1460,8 @@ const RECENT_CONTEXT: SampleRow["scientificContext"] = {
   provenanceStatus: "recent_collection",
   funderOrganizations: ["02feahw73"],
   researchProgramName: "Solid Earth Demo Survey",
-  researchProgramChief: "Jean Dupont",
-  researchStructure: ["02rx3b187"],
+  chiefScientist: "Jean Dupont",
+  hostInstitution: ["02rx3b187"],
   collectorName: "Claire Martin",
 };
 
