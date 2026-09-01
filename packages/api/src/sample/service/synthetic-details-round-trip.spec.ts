@@ -18,8 +18,8 @@ describe("sample synthetic details persistence", () => {
     "should round-trip a full synthetic details section",
     async ({ db }) => {
       const syntheticDetails = {
-        startingMaterialNature: "mixture" as const,
-        startingMaterialForm: "powder" as const,
+        startingMaterial: "mixture" as const,
+        startingMaterialNature: "powder" as const,
         startingMaterialComposition: "MgO + SiO2,\nground together",
         finalProduct: "mineral" as const,
         experimentType: "crystallization_dynamic" as const,
@@ -44,7 +44,7 @@ describe("sample synthetic details persistence", () => {
   pgTest(
     "should round-trip a section holding a single field",
     async ({ db }) => {
-      const syntheticDetails = { startingMaterialNature: "natural" as const };
+      const syntheticDetails = { startingMaterial: "natural" as const };
       const created = await insertSample(db, { ...base, syntheticDetails });
       expect(created.syntheticDetails).toEqual(syntheticDetails);
       expect(await readSample(db, created.id)).toEqual(created);
@@ -64,7 +64,7 @@ describe("sample synthetic details persistence", () => {
     const created = await insertSample(db, {
       ...base,
       syntheticDetails: {
-        startingMaterialForm: "glass",
+        startingMaterialNature: "glass",
         operatorName: "Pierre Curie",
       },
     });

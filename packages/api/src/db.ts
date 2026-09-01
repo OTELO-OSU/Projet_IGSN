@@ -107,8 +107,8 @@ type SampleTable = {
   rep_collection_name: string | null;
   rep_original_archive: string | null;
   rep_original_archive_contact: string | null;
+  syn_starting_material: string | null;
   syn_starting_material_nature: string | null;
-  syn_starting_material_form: string | null;
   syn_starting_material_composition: string | null;
   syn_final_product: string | null;
   syn_experiment_type: string | null;

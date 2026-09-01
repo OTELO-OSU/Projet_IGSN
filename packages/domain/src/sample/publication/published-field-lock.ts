@@ -52,8 +52,8 @@ const LOCKED_HISTORICAL_SPECIMEN_FIELDS_TO_FORM_FIELDS = {
 } as const;
 
 const LOCKED_SYNTHETIC_DETAILS_FIELDS_TO_FORM_FIELDS = {
+  startingMaterial: ["syntheticDetails.startingMaterial"],
   startingMaterialNature: ["syntheticDetails.startingMaterialNature"],
-  startingMaterialForm: ["syntheticDetails.startingMaterialForm"],
   startingMaterialComposition: ["syntheticDetails.startingMaterialComposition"],
   finalProduct: ["syntheticDetails.finalProduct"],
   experimentType: ["syntheticDetails.experimentType"],

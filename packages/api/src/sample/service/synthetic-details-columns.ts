@@ -4,8 +4,8 @@ export function syntheticDetailsColumns(
   details: SyntheticDetails | null | undefined,
 ) {
   return {
+    syn_starting_material: details?.startingMaterial ?? null,
     syn_starting_material_nature: details?.startingMaterialNature ?? null,
-    syn_starting_material_form: details?.startingMaterialForm ?? null,
     syn_starting_material_composition:
       details?.startingMaterialComposition ?? null,
     syn_final_product: details?.finalProduct ?? null,

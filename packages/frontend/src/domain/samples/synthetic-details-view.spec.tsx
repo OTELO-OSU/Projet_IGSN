@@ -8,8 +8,8 @@ describe("SyntheticDetailsView", () => {
     const screen = await render(
       <SyntheticDetailsView
         syntheticDetails={{
-          startingMaterialNature: "synthetic",
-          startingMaterialForm: "powder",
+          startingMaterial: "synthetic",
+          startingMaterialNature: "powder",
           startingMaterialComposition: "SiO2 + Al2O3",
           finalProduct: "glass",
           experimentType: "fusion",

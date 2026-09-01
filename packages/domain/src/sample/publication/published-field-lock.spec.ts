@@ -419,8 +419,8 @@ describe("mergePublishedEdit", () => {
 
   describe("syntheticDetails", () => {
     const storedDetails: SyntheticDetails = {
-      startingMaterialNature: "natural",
-      startingMaterialForm: "rock",
+      startingMaterial: "natural",
+      startingMaterialNature: "rock",
       startingMaterialComposition: "stored composition",
       finalProduct: "glass",
       experimentType: "fusion",
@@ -437,8 +437,8 @@ describe("mergePublishedEdit", () => {
       equipmentUsed: "stored equipment",
     };
     const incomingDetails: SyntheticDetails = {
-      startingMaterialNature: "mixture",
-      startingMaterialForm: "powder",
+      startingMaterial: "mixture",
+      startingMaterialNature: "powder",
       startingMaterialComposition: "edited composition",
       finalProduct: "fluid",
       experimentType: "diffusion",

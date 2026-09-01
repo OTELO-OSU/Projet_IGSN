@@ -23,8 +23,8 @@ import { type CollectionOrigin } from "./scientific-context/collection-origin.ts
 import { type ProvenanceStatus } from "./scientific-context/provenance-status.ts";
 import { type ExperimentType } from "./synthetic-details/experiment-type.ts";
 import { type FinalProduct } from "./synthetic-details/final-product.ts";
-import { type StartingMaterialForm } from "./synthetic-details/starting-material-form.ts";
 import { type StartingMaterialNature } from "./synthetic-details/starting-material-nature.ts";
+import { type StartingMaterial } from "./synthetic-details/starting-material.ts";
 import { type Texture } from "./texture/vocabulary.ts";
 
 type MessageKey = keyof typeof Catalog;
@@ -51,10 +51,10 @@ type _provenanceStatusKeys =
   AssertKeys<`provenance_status_${ProvenanceStatus}`>;
 type _collectionOriginKeys =
   AssertKeys<`collection_origin_${CollectionOrigin}`>;
+type _startingMaterialKeys =
+  AssertKeys<`starting_material_${StartingMaterial}`>;
 type _startingMaterialNatureKeys =
   AssertKeys<`starting_material_nature_${StartingMaterialNature}`>;
-type _startingMaterialFormKeys =
-  AssertKeys<`starting_material_form_${StartingMaterialForm}`>;
 type _finalProductKeys = AssertKeys<`final_product_${FinalProduct}`>;
 type _experimentTypeKeys = AssertKeys<`experiment_type_${ExperimentType}`>;
 type _oceanSeaKeys = AssertKeys<`ocean_sea_${OceanSea}`>;
@@ -94,8 +94,8 @@ export type SampleLabels = {
   availabilityStatusLabel: (status: AvailabilityStatus) => string;
   provenanceStatusLabel: (status: ProvenanceStatus) => string;
   collectionOriginLabel: (origin: CollectionOrigin) => string;
-  startingMaterialNatureLabel: (nature: StartingMaterialNature) => string;
-  startingMaterialFormLabel: (form: StartingMaterialForm) => string;
+  startingMaterialLabel: (nature: StartingMaterial) => string;
+  startingMaterialNatureLabel: (form: StartingMaterialNature) => string;
   finalProductLabel: (product: FinalProduct) => string;
   experimentTypeLabel: (type: ExperimentType) => string;
 };
@@ -126,8 +126,8 @@ const LABEL_KEY = {
   availabilityStatusLabel: ["availability_status", "code"],
   provenanceStatusLabel: ["provenance_status", "code"],
   collectionOriginLabel: ["collection_origin", "code"],
+  startingMaterialLabel: ["starting_material", "code"],
   startingMaterialNatureLabel: ["starting_material_nature", "code"],
-  startingMaterialFormLabel: ["starting_material_form", "code"],
   finalProductLabel: ["final_product", "code"],
   experimentTypeLabel: ["experiment_type", "code"],
 } satisfies Record<keyof SampleLabels, [string, "path" | "code"]>;

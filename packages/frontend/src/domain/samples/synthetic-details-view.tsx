@@ -11,8 +11,8 @@ import { OrgLinksRow } from "#/domain/samples/org-links-row.tsx";
 import {
   experimentTypeLabel,
   finalProductLabel,
-  startingMaterialFormLabel,
   startingMaterialNatureLabel,
+  startingMaterialLabel,
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
@@ -27,8 +27,8 @@ export function SyntheticDetailsView({
   syntheticDetails: SyntheticDetails;
 }) {
   const {
+    startingMaterial,
     startingMaterialNature,
-    startingMaterialForm,
     startingMaterialComposition,
     finalProduct,
     experimentType,
@@ -47,17 +47,14 @@ export function SyntheticDetailsView({
   return (
     <FieldRows>
       <FieldRow
+        label={m.sample_field_starting_material()}
+        value={startingMaterial && startingMaterialLabel(startingMaterial)}
+      />
+      <FieldRow
         label={m.sample_field_starting_material_nature()}
         value={
           startingMaterialNature &&
           startingMaterialNatureLabel(startingMaterialNature)
-        }
-      />
-      <FieldRow
-        label={m.sample_field_starting_material_form()}
-        value={
-          startingMaterialForm &&
-          startingMaterialFormLabel(startingMaterialForm)
         }
       />
       <FieldRow

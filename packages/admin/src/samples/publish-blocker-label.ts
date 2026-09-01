@@ -30,10 +30,10 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   collection_curator_missing: m.publish_blocked_collection_curator_missing,
   collection_origin_missing: m.publish_blocked_collection_origin_missing,
   current_archive_missing: m.publish_blocked_current_archive_missing,
+  synthetic_starting_material_missing:
+    m.publish_blocked_synthetic_starting_material_missing,
   synthetic_starting_material_nature_missing:
     m.publish_blocked_synthetic_starting_material_nature_missing,
-  synthetic_starting_material_form_missing:
-    m.publish_blocked_synthetic_starting_material_form_missing,
   synthetic_starting_material_composition_missing:
     m.publish_blocked_synthetic_starting_material_composition_missing,
   synthetic_final_product_missing:

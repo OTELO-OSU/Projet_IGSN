@@ -4,7 +4,7 @@ import type { ExperimentDurationUnit } from "@projet-igsn/domain/sample/syntheti
 import type { ExperimentType } from "@projet-igsn/domain/sample/synthetic-details/experiment-type";
 import type { FinalProduct } from "@projet-igsn/domain/sample/synthetic-details/final-product";
 import type { SyntheticDetails } from "@projet-igsn/domain/sample/synthetic-details/model";
-import type { StartingMaterialForm } from "@projet-igsn/domain/sample/synthetic-details/starting-material-form";
+import type { StartingMaterial } from "@projet-igsn/domain/sample/synthetic-details/starting-material";
 import type { StartingMaterialNature } from "@projet-igsn/domain/sample/synthetic-details/starting-material-nature";
 
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
@@ -17,8 +17,8 @@ import {
 import { nonEmpty } from "#/samples/compose-scientific-context.ts";
 
 export type SyntheticDetailsDraft = {
+  startingMaterial: StartingMaterial | undefined;
   startingMaterialNature: StartingMaterialNature | undefined;
-  startingMaterialForm: StartingMaterialForm | undefined;
   startingMaterialComposition: string | null | undefined;
   finalProduct: FinalProduct | undefined;
   experimentType: ExperimentType | undefined;
@@ -40,8 +40,8 @@ export type SyntheticDetailsDraft = {
 };
 
 type SyntheticDetailsCandidate = {
+  startingMaterial: StartingMaterial | undefined;
   startingMaterialNature: StartingMaterialNature | undefined;
-  startingMaterialForm: StartingMaterialForm | undefined;
   startingMaterialComposition: string | undefined;
   finalProduct: FinalProduct | undefined;
   experimentType: ExperimentType | undefined;
@@ -64,10 +64,10 @@ export function composeSyntheticDetails(
 ): SyntheticDetailsCandidate | null {
   if (!isSyntheticMaterial(material)) return null;
   const details = {
+    startingMaterial: draft.startingMaterial,
     startingMaterialNature: draft.startingMaterialNature,
-    startingMaterialForm: draft.startingMaterialForm,
     startingMaterialComposition: needsStartingMaterialComposition(
-      draft.startingMaterialNature,
+      draft.startingMaterial,
     )
       ? draft.startingMaterialComposition?.trim() || undefined
       : undefined,
@@ -107,8 +107,8 @@ export function toSyntheticDetailsDraft(
   value?: SyntheticDetails | null,
 ): SyntheticDetailsDraft {
   return {
+    startingMaterial: value?.startingMaterial ?? undefined,
     startingMaterialNature: value?.startingMaterialNature ?? undefined,
-    startingMaterialForm: value?.startingMaterialForm ?? undefined,
     startingMaterialComposition:
       value?.startingMaterialComposition ?? undefined,
     finalProduct: value?.finalProduct ?? undefined,

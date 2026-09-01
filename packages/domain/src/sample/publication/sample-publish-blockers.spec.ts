@@ -54,8 +54,8 @@ const base: Sample = {
 };
 
 const syntheticDetails = {
-  startingMaterialNature: "natural",
-  startingMaterialForm: "rock",
+  startingMaterial: "natural",
+  startingMaterialNature: "rock",
   finalProduct: "glass",
   experimentDuration: { value: 2, unit: "hour" },
   synthesisDate: { start: "2020-01-01", end: "2020-01-02" },
@@ -480,8 +480,8 @@ describe("samplePublishBlockers", () => {
     expect(
       samplePublishBlockers({ ...synthetic, syntheticDetails: null }),
     ).toEqual([
+      "synthetic_starting_material_missing",
       "synthetic_starting_material_nature_missing",
-      "synthetic_starting_material_form_missing",
       "synthetic_final_product_missing",
       "synthetic_experiment_duration_missing",
       "synthetic_synthesis_date_missing",
@@ -491,13 +491,13 @@ describe("samplePublishBlockers", () => {
 
   it.each(["synthetic", "mixture"] as const)(
     "should require the starting material composition of a %s starting material",
-    (startingMaterialNature) => {
+    (startingMaterial) => {
       expect(
         samplePublishBlockers({
           ...synthetic,
           syntheticDetails: {
             ...syntheticDetails,
-            startingMaterialNature,
+            startingMaterial,
           },
         }),
       ).toEqual(["synthetic_starting_material_composition_missing"]);

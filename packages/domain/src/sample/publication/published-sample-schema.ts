@@ -36,13 +36,10 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   collection_curator_missing: ["scientificContext", "collectionCurator"],
   collection_origin_missing: ["scientificContext", "collectionOrigin"],
   current_archive_missing: ["repository", "currentArchive"],
+  synthetic_starting_material_missing: ["syntheticDetails", "startingMaterial"],
   synthetic_starting_material_nature_missing: [
     "syntheticDetails",
     "startingMaterialNature",
-  ],
-  synthetic_starting_material_form_missing: [
-    "syntheticDetails",
-    "startingMaterialForm",
   ],
   synthetic_starting_material_composition_missing: [
     "syntheticDetails",

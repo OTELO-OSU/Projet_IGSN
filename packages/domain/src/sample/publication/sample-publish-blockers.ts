@@ -39,8 +39,8 @@ export const publishBlockerSchema = z.enum([
   "collection_curator_missing",
   "collection_origin_missing",
   "current_archive_missing",
+  "synthetic_starting_material_missing",
   "synthetic_starting_material_nature_missing",
-  "synthetic_starting_material_form_missing",
   "synthetic_starting_material_composition_missing",
   "synthetic_final_product_missing",
   "synthetic_experiment_duration_missing",
@@ -205,12 +205,12 @@ export function samplePublishBlockers(
 
   if (materialComplete && isSyntheticMaterial(sample.material)) {
     const details = sample.syntheticDetails ?? {};
-    const nature = details.startingMaterialNature;
+    const nature = details.startingMaterial;
     if (nature == null) {
-      blockers.push("synthetic_starting_material_nature_missing");
+      blockers.push("synthetic_starting_material_missing");
     }
-    if (details.startingMaterialForm == null) {
-      blockers.push("synthetic_starting_material_form_missing");
+    if (details.startingMaterialNature == null) {
+      blockers.push("synthetic_starting_material_nature_missing");
     }
     if (
       needsStartingMaterialComposition(nature) &&

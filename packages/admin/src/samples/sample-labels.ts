@@ -31,8 +31,8 @@ export const {
   geologicalAgeLabel,
   provenanceStatusLabel,
   collectionOriginLabel,
+  startingMaterialLabel,
   startingMaterialNatureLabel,
-  startingMaterialFormLabel,
   finalProductLabel,
   experimentTypeLabel,
 } = createSampleLabels(m as unknown as Messages);

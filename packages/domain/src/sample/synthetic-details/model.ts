@@ -10,12 +10,12 @@ import { uniqueRorArraySchema } from "../scientific-context/model.ts";
 import { experimentDurationUnitSchema } from "./experiment-duration-unit.ts";
 import { experimentTypeSchema } from "./experiment-type.ts";
 import { finalProductSchema } from "./final-product.ts";
-import { startingMaterialFormSchema } from "./starting-material-form.ts";
 import { startingMaterialNatureSchema } from "./starting-material-nature.ts";
+import { startingMaterialSchema } from "./starting-material.ts";
 
 export const syntheticDetailsSchema = z.object({
+  startingMaterial: startingMaterialSchema.nullish(),
   startingMaterialNature: startingMaterialNatureSchema.nullish(),
-  startingMaterialForm: startingMaterialFormSchema.nullish(),
   startingMaterialComposition: freeTextSchema.nullish(),
   finalProduct: finalProductSchema.nullish(),
   experimentType: experimentTypeSchema.nullish(),

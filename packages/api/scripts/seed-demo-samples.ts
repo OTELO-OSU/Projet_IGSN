@@ -101,8 +101,8 @@ const geologicalAge = (
   }) as const;
 
 const SYNTHESIS: SampleRow["syntheticDetails"] = {
-  startingMaterialNature: "synthetic",
-  startingMaterialForm: "powder",
+  startingMaterial: "synthetic",
+  startingMaterialNature: "powder",
   startingMaterialComposition: "MgO + SiO2 oxide mix",
   finalProduct: "mineral",
   experimentType: "crystallization_dynamic",
@@ -1445,7 +1445,7 @@ const DRAFTS: DemoRow[] = [
     nature: "hand_sample",
     material: "synthetic_rock_mineral",
     syntheticDetails: {
-      startingMaterialNature: "natural",
+      startingMaterial: "natural",
       experimentType: "deformation",
     },
   },

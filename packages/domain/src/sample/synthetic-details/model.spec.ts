@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 import { syntheticDetailsSchema } from "./model.ts";
 
 const syntheticDetails = {
-  startingMaterialNature: "synthetic",
-  startingMaterialForm: "powder",
+  startingMaterial: "synthetic",
+  startingMaterialNature: "powder",
   startingMaterialComposition: "SiO2 + Al2O3",
   finalProduct: "glass",
   experimentType: "fusion",

@@ -1,9 +1,11 @@
 import { z } from "zod";
 
 export const STARTING_MATERIAL_NATURES = [
-  "natural",
-  "synthetic",
-  "mixture",
+  "glass",
+  "powder",
+  "rock",
+  "mineral",
+  "fluid",
 ] as const;
 
 export const startingMaterialNatureSchema = z.enum(STARTING_MATERIAL_NATURES);

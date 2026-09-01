@@ -17,7 +17,7 @@ import {
 import { EXPERIMENT_TYPES } from "@projet-igsn/domain/sample/synthetic-details/experiment-type";
 import { FINAL_PRODUCTS } from "@projet-igsn/domain/sample/synthetic-details/final-product";
 import { needsStartingMaterialComposition } from "@projet-igsn/domain/sample/synthetic-details/needs-starting-material-composition";
-import { STARTING_MATERIAL_FORMS } from "@projet-igsn/domain/sample/synthetic-details/starting-material-form";
+import { STARTING_MATERIALS } from "@projet-igsn/domain/sample/synthetic-details/starting-material";
 import { STARTING_MATERIAL_NATURES } from "@projet-igsn/domain/sample/synthetic-details/starting-material-nature";
 
 import { m } from "#/paraglide/messages.js";
@@ -27,18 +27,18 @@ import { organizationItems } from "#/samples/organization-items.ts";
 import {
   experimentTypeLabel,
   finalProductLabel,
-  startingMaterialFormLabel,
   startingMaterialNatureLabel,
+  startingMaterialLabel,
 } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
+const startingMaterialItems = toComboboxItems(
+  STARTING_MATERIALS,
+  startingMaterialLabel,
+);
 const startingMaterialNatureItems = toComboboxItems(
   STARTING_MATERIAL_NATURES,
   startingMaterialNatureLabel,
-);
-const startingMaterialFormItems = toComboboxItems(
-  STARTING_MATERIAL_FORMS,
-  startingMaterialFormLabel,
 );
 const finalProductItems = toComboboxItems(FINAL_PRODUCTS, finalProductLabel);
 const experimentTypeItems = toComboboxItems(
@@ -76,6 +76,19 @@ export function SampleSyntheticDetailsFields() {
   );
   return (
     <div className="grid gap-4">
+      <form.AppField name="syntheticDetails.startingMaterial">
+        {(field) => (
+          <field.ComboboxField
+            label={m.field_starting_material()}
+            requiredToPublish
+            items={startingMaterialItems}
+            placeholder={m.starting_material_placeholder()}
+            searchPlaceholder={m.starting_material_search_placeholder()}
+            emptyText={m.starting_material_empty()}
+          />
+        )}
+      </form.AppField>
+
       <form.AppField name="syntheticDetails.startingMaterialNature">
         {(field) => (
           <field.ComboboxField
@@ -89,23 +102,10 @@ export function SampleSyntheticDetailsFields() {
         )}
       </form.AppField>
 
-      <form.AppField name="syntheticDetails.startingMaterialForm">
-        {(field) => (
-          <field.ComboboxField
-            label={m.field_starting_material_form()}
-            requiredToPublish
-            items={startingMaterialFormItems}
-            placeholder={m.starting_material_form_placeholder()}
-            searchPlaceholder={m.starting_material_form_search_placeholder()}
-            emptyText={m.starting_material_form_empty()}
-          />
-        )}
-      </form.AppField>
-
       <form.Subscribe
         selector={(state) =>
           needsStartingMaterialComposition(
-            state.values.syntheticDetails.startingMaterialNature,
+            state.values.syntheticDetails.startingMaterial,
           )
         }
       >

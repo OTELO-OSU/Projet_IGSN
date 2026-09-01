@@ -150,8 +150,8 @@ export function sampleEditPage(page: Page) {
         "Centre National de la Recherche Scientifique (CNRS)",
       );
       await openTab("Synthetic details");
-      await pick("Starting material nature", "Natural");
-      await pick("Starting material form", "Powder");
+      await pick("Starting material", "Natural");
+      await pick("Nature of starting material", "Powder");
       await pick("Final product", "Glass");
       await page.getByRole("switch", { name: "Duration not relevant" }).click();
       await page

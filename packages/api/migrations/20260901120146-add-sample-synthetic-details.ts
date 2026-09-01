@@ -3,8 +3,8 @@ import { type Kysely, sql } from "kysely";
 export async function up(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .alterTable("sample")
+    .addColumn("syn_starting_material", sql`text`)
     .addColumn("syn_starting_material_nature", sql`text`)
-    .addColumn("syn_starting_material_form", sql`text`)
     .addColumn("syn_starting_material_composition", sql`text`)
     .addColumn("syn_final_product", sql`text`)
     .addColumn("syn_experiment_type", sql`text`)
@@ -29,8 +29,8 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 export async function down(db: Kysely<unknown>): Promise<void> {
   await db.schema
     .alterTable("sample")
+    .dropColumn("syn_starting_material")
     .dropColumn("syn_starting_material_nature")
-    .dropColumn("syn_starting_material_form")
     .dropColumn("syn_starting_material_composition")
     .dropColumn("syn_final_product")
     .dropColumn("syn_experiment_type")

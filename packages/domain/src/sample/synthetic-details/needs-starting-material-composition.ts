@@ -1,7 +1,7 @@
-import type { StartingMaterialNature } from "./starting-material-nature.ts";
+import type { StartingMaterial } from "./starting-material.ts";
 
 export function needsStartingMaterialComposition(
-  nature: StartingMaterialNature | null | undefined,
+  startingMaterial: StartingMaterial | null | undefined,
 ): boolean {
-  return nature === "synthetic" || nature === "mixture";
+  return startingMaterial === "synthetic" || startingMaterial === "mixture";
 }

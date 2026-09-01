@@ -134,8 +134,8 @@ function toRepository(row: Selectable<DB["sample"]>) {
 
 function toSyntheticDetails(row: Selectable<DB["sample"]>) {
   return prune({
+    startingMaterial: row.syn_starting_material,
     startingMaterialNature: row.syn_starting_material_nature,
-    startingMaterialForm: row.syn_starting_material_form,
     startingMaterialComposition: row.syn_starting_material_composition,
     finalProduct: row.syn_final_product,
     experimentType: row.syn_experiment_type,

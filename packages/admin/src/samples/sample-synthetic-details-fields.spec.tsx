@@ -93,8 +93,8 @@ describe("SampleSyntheticDetailsFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderSyntheticForm(onSubmit);
 
-    await pickOption(screen, "Starting material nature *", "Synthetic");
-    await pickOption(screen, "Starting material form *", "Powder");
+    await pickOption(screen, "Starting material *", "Synthetic");
+    await pickOption(screen, "Nature of starting material *", "Powder");
     await screen
       .getByLabelText("Starting material composition *", { exact: true })
       .fill("SiO2 + MgO");
@@ -143,8 +143,8 @@ describe("SampleSyntheticDetailsFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           syntheticDetails: {
-            startingMaterialNature: "synthetic",
-            startingMaterialForm: "powder",
+            startingMaterial: "synthetic",
+            startingMaterialNature: "powder",
             startingMaterialComposition: "SiO2 + MgO",
             finalProduct: "glass",
             experimentType: "fusion",
@@ -195,7 +195,7 @@ describe("SampleSyntheticDetailsFields", () => {
     async ({ nature, visible }) => {
       const screen = await renderSyntheticForm();
 
-      await pickOption(screen, "Starting material nature *", nature);
+      await pickOption(screen, "Starting material *", nature);
 
       const composition = screen.getByLabelText(
         "Starting material composition *",
@@ -213,17 +213,17 @@ describe("SampleSyntheticDetailsFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderSyntheticForm(onSubmit);
 
-    await pickOption(screen, "Starting material nature *", "Synthetic");
+    await pickOption(screen, "Starting material *", "Synthetic");
     await screen
       .getByLabelText("Starting material composition *", { exact: true })
       .fill("SiO2 + MgO");
-    await pickOption(screen, "Starting material nature *", "Natural");
+    await pickOption(screen, "Starting material *", "Natural");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
-          syntheticDetails: { startingMaterialNature: "natural" },
+          syntheticDetails: { startingMaterial: "natural" },
         }),
       ),
     );
@@ -325,8 +325,8 @@ describe("SampleSyntheticDetailsFields", () => {
               collectionOrigin: "scientific_expedition",
             },
             syntheticDetails: {
-              startingMaterialNature: "synthetic",
-              startingMaterialForm: "powder",
+              startingMaterial: "synthetic",
+              startingMaterialNature: "powder",
               startingMaterialComposition: "SiO2 + MgO",
               finalProduct: "glass",
               experimentType: "fusion",
@@ -344,8 +344,8 @@ describe("SampleSyntheticDetailsFields", () => {
     await screen.getByRole("tab", { name: "Synthetic details" }).click();
 
     for (const name of [
-      "Starting material nature *",
-      "Starting material form *",
+      "Starting material *",
+      "Nature of starting material *",
       "Final product *",
       "Experiment type",
     ]) {
