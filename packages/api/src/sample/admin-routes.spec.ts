@@ -305,7 +305,8 @@ describe("admin sample routes", () => {
               location: {
                 position: { type: "point", longitude: 3, latitude: 45 },
               },
-              availability: "exists",
+              existenceStatus: "exists",
+              availabilityStatus: "available",
             },
           },
           { headers: authHeader },
@@ -996,7 +997,7 @@ describe("admin sample routes", () => {
             param: { id: data.id },
             json: {
               ...publishable,
-              availability: null,
+              existenceStatus: null,
               expectedUpdatedAt: data.updatedAt,
             },
           },
@@ -1013,7 +1014,7 @@ describe("admin sample routes", () => {
           { headers: authHeader },
         );
         expect(
-          sampleResponseSchema.parse(await re.json()).data.availability,
+          sampleResponseSchema.parse(await re.json()).data.existenceStatus,
         ).toBe("exists");
       },
     );
@@ -1035,7 +1036,8 @@ describe("admin sample routes", () => {
             param: { id: data.id },
             json: {
               ...publishable,
-              availability: "no_longer_exists",
+              existenceStatus: "lost",
+              availabilityStatus: "not_available",
               expectedUpdatedAt: data.updatedAt,
             },
           },
@@ -1048,8 +1050,8 @@ describe("admin sample routes", () => {
           { headers: authHeader },
         );
         expect(
-          sampleResponseSchema.parse(await re.json()).data.availability,
-        ).toBe("no_longer_exists");
+          sampleResponseSchema.parse(await re.json()).data.existenceStatus,
+        ).toBe("lost");
       },
     );
 
@@ -1225,7 +1227,8 @@ describe("admin sample routes", () => {
           description: {
             collectionDate: { start: "2026-01-01", end: "2026-01-01" },
           },
-          availability: "exists",
+          existenceStatus: "exists",
+          availabilityStatus: "available",
           scientificContext: {
             provenanceStatus: "historical_specimen",
             collectionCurator: "Georges Cuvier",

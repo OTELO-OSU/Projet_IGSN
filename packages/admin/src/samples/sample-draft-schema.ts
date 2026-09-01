@@ -63,7 +63,8 @@ export type SampleDraft = {
   condition: ConditionDraft;
   security: SecurityDraft;
   scientificContext: ScientificContextDraft;
-  availability: CreateSample["availability"] | undefined;
+  existenceStatus: CreateSample["existenceStatus"] | undefined;
+  availabilityStatus: CreateSample["availabilityStatus"] | undefined;
   age: AgeFormValues;
   links: LinkDraft[];
   manualGroupIds: string[];
@@ -84,7 +85,8 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   condition: toConditionDraft(value?.condition),
   security: toSecurityDraft(value?.security),
   scientificContext: toScientificContextDraft(value?.scientificContext),
-  availability: value?.availability ?? "exists",
+  existenceStatus: value?.existenceStatus ?? "exists",
+  availabilityStatus: value?.availabilityStatus ?? "available",
   age: ageFormValues(value?.age),
   links: (value?.links ?? []).map((link) => ({
     key: crypto.randomUUID(),
@@ -130,7 +132,12 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(condition ? { condition } : {}),
     ...(security ? { security } : {}),
     ...(scientificContext ? { scientificContext } : {}),
-    ...(draft.availability ? { availability: draft.availability } : {}),
+    ...(draft.existenceStatus
+      ? { existenceStatus: draft.existenceStatus }
+      : {}),
+    ...(draft.availabilityStatus
+      ? { availabilityStatus: draft.availabilityStatus }
+      : {}),
     ...(age ? { age } : {}),
     ...(links.length > 0 ? { links } : {}),
     manualGroupIds: draft.manualGroupIds,

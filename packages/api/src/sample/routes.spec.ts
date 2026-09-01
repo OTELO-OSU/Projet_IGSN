@@ -42,7 +42,8 @@ async function createSample(
         description: {
           collectionDate: { start: "2026-01-01", end: "2026-01-01" },
         },
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
         scientificContext: {
           provenanceStatus: "historical_specimen",
           collectionCurator: "Georges Cuvier",

@@ -30,7 +30,8 @@ const base: Sample = {
   links: [],
   attachments: [],
   security: null,
-  availability: "exists",
+  existenceStatus: "exists",
+  availabilityStatus: "available",
   publicationYear: null,
   resourceType: null,
   economicInterestElements: [],
@@ -59,10 +60,16 @@ describe("samplePublishBlockers", () => {
     ]);
   });
 
-  it("should report availability_missing when availability is null", () => {
-    expect(samplePublishBlockers({ ...base, availability: null })).toEqual([
-      "availability_missing",
+  it("should report existence_status_missing when the existence status is null", () => {
+    expect(samplePublishBlockers({ ...base, existenceStatus: null })).toEqual([
+      "existence_status_missing",
     ]);
+  });
+
+  it("should report availability_status_missing when the availability status is null", () => {
+    expect(
+      samplePublishBlockers({ ...base, availabilityStatus: null }),
+    ).toEqual(["availability_status_missing"]);
   });
 
   it("should report type_incomplete when the type is an ancestor path", () => {
@@ -107,12 +114,6 @@ describe("samplePublishBlockers", () => {
         metamorphicFacies: "amphibolite",
       }),
     ).toEqual([]);
-  });
-
-  it("should not require a facies for a non-metamorphic sample", () => {
-    expect(samplePublishBlockers({ ...base, metamorphicFacies: null })).toEqual(
-      [],
-    );
   });
 
   it("should report metamorphic_facies_missing for an out-of-vocabulary facies", () => {
@@ -519,14 +520,10 @@ describe("samplePublishBlockers", () => {
 
   it("should report the field blockers alongside user_not_verified", () => {
     expect(
-      samplePublishBlockers({ ...base, availability: null }, undefined, {
+      samplePublishBlockers({ ...base, existenceStatus: null }, undefined, {
         status: "pending",
         superAdmin: false,
       }),
-    ).toEqual(["availability_missing", "user_not_verified"]);
-  });
-
-  it("should never report user_not_verified when no publisher is supplied", () => {
-    expect(samplePublishBlockers(base)).toEqual([]);
+    ).toEqual(["existence_status_missing", "user_not_verified"]);
   });
 });

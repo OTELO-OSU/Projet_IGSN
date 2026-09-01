@@ -105,7 +105,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -144,7 +145,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -173,7 +175,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -221,7 +224,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -250,7 +254,8 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -283,7 +288,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -343,7 +349,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -399,7 +406,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   }, 15000);
@@ -456,7 +464,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -511,7 +520,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -565,7 +575,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -634,7 +645,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   }, 15000);
@@ -684,7 +696,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -713,7 +726,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: "MC-2026-007",
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -750,7 +764,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -815,7 +830,8 @@ describe("SampleForm", () => {
           "Cored at low tide from the northern outcrop",
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -843,7 +859,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
       }),
     );
   });
@@ -880,7 +897,8 @@ describe("SampleForm", () => {
         collectionMethodDescription: null,
         specificName: null,
         location: null,
-        availability: "exists",
+        existenceStatus: "exists",
+        availabilityStatus: "available",
         age: {
           numericAgeMin: 12000,
           numericAgeMax: 12000,
@@ -1200,7 +1218,8 @@ describe("SampleForm", () => {
           description: {
             collectionDate: { start: "2026-01-01", end: "2026-01-01" },
           },
-          availability: "exists",
+          existenceStatus: "exists",
+          availabilityStatus: "available",
           scientificContext: publishableScientificContext,
         }}
         secondaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
@@ -1226,7 +1245,8 @@ describe("SampleForm", () => {
           description: {
             collectionDate: { start: "2026-01-01", end: "2026-01-01" },
           },
-          availability: "exists",
+          existenceStatus: "exists",
+          availabilityStatus: "available",
           scientificContext: publishableScientificContext,
         },
         "published",
@@ -1313,7 +1333,8 @@ describe("SampleForm", () => {
             description: {
               collectionDate: { start: "2026-01-01", end: "2026-01-01" },
             },
-            availability: "exists",
+            existenceStatus: "exists",
+            availabilityStatus: "available",
             scientificContext: publishableScientificContext,
           }}
           secondaryAction={{
@@ -1335,7 +1356,7 @@ describe("SampleForm", () => {
       .toBeEnabled();
   });
 
-  it("should default availability to Exists and not block publish on it", async () => {
+  it("should default the curation statuses to Exists and Available and not block publish on them", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -1366,11 +1387,36 @@ describe("SampleForm", () => {
 
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: /availability/i }))
+      .element(screen.getByRole("combobox", { name: /existence status/i }))
       .toHaveTextContent("Exists");
+    await expect
+      .element(screen.getByRole("combobox", { name: /availability status/i }))
+      .toHaveTextContent("Available");
     await expect
       .element(screen.getByRole("button", { name: "Save & Publish" }))
       .toBeEnabled();
+  });
+
+  it("should narrow the availability status to the only one an existence status allows", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("combobox", { name: /existence status/i }).click();
+    await screen.getByRole("option", { name: "Consumed", exact: true }).click();
+
+    const availability = screen.getByRole("combobox", {
+      name: /availability status/i,
+    });
+    await expect.element(availability).toHaveTextContent("Not available");
+    await availability.click();
+    await expect
+      .element(screen.getByRole("option", { name: "Not available" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("option", { name: "Available", exact: true }))
+      .not.toBeInTheDocument();
   });
 
   it("should render a link action as an anchor to the public page", async () => {
@@ -1914,7 +1960,7 @@ describe("SampleForm", () => {
     await expect.element(save).toBeEnabled();
 
     await screen.getByRole("tab", { name: "Physical description" }).click();
-    await screen.getByRole("combobox", { name: /availability/i }).click();
+    await screen.getByRole("combobox", { name: /existence status/i }).click();
     await screen.getByRole("option", { name: "Exists", exact: true }).click();
 
     await expect.element(save).toBeDisabled();
@@ -1923,7 +1969,7 @@ describe("SampleForm", () => {
       .element(screen.getByRole("tooltip"))
       .toHaveTextContent(/whether the sample still exists/i);
 
-    await screen.getByRole("combobox", { name: /availability/i }).click();
+    await screen.getByRole("combobox", { name: /existence status/i }).click();
     await screen.getByRole("option", { name: "Exists", exact: true }).click();
 
     await expect.element(save).toBeEnabled();
@@ -1935,7 +1981,8 @@ describe("SampleForm", () => {
           name: "Basalte du Massif Central",
           type: "dredge",
           material: "rock.igneous.plutonic.felsic.granite",
-          availability: "exists",
+          existenceStatus: "exists",
+          availabilityStatus: "available",
         }),
       ),
     );
@@ -2032,7 +2079,8 @@ const publishedFixture: CreateSample = {
   specificName: "MC-2026-007",
   location: { position: { type: "point", longitude: 3, latitude: 45 } },
   description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
-  availability: "exists",
+  existenceStatus: "exists",
+  availabilityStatus: "available",
   scientificContext: publishableScientificContext,
 };
 
@@ -2268,7 +2316,7 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("switch", { name: "Date range" }))
       .toBeDisabled();
     await expect
-      .element(screen.getByRole("combobox", { name: /availability/i }))
+      .element(screen.getByRole("combobox", { name: /existence status/i }))
       .toBeEnabled();
 
     await screen.getByRole("tab", { name: "Location" }).click();
@@ -2480,7 +2528,7 @@ describe("SampleForm post-publication field lock", () => {
 
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: /availability/i }))
+      .element(screen.getByRole("combobox", { name: /existence status/i }))
       .toBeEnabled();
   });
 

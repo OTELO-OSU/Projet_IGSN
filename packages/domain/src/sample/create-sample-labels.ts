@@ -3,13 +3,14 @@ import type Catalog from "../../messages/en.json";
 import { type GeologicalAge } from "./age/geological-age.ts";
 import { type NumericUnit } from "./age/numeric-unit.ts";
 import { type YearsUnit } from "./age/years-unit.ts";
-import { type Availability } from "./availability/availability.ts";
 import { type HumidityType } from "./condition/humidity-type.ts";
 import { type Light } from "./condition/light.ts";
 import { type Packaging } from "./condition/packaging.ts";
 import { type PressureType } from "./condition/pressure-type.ts";
 import { type StorageCondition } from "./condition/storage-condition.ts";
 import { type TemperatureType } from "./condition/temperature-type.ts";
+import { type AvailabilityStatus } from "./curation/availability-status.ts";
+import { type ExistenceStatus } from "./curation/existence-status.ts";
 import { type Element } from "./element/vocabulary.ts";
 import { type OceanSea } from "./location/ocean-sea.ts";
 import { type VerticalReferenceSystem } from "./location/vertical-reference-system.ts";
@@ -38,7 +39,9 @@ type _pressureTypeKeys = AssertKeys<`pressure_${PressureType}`>;
 type _numericUnitKeys = AssertKeys<`age_unit_${NumericUnit}`>;
 type _yearsUnitKeys = AssertKeys<`age_years_${YearsUnit}`>;
 type _geologicalAgeKeys = AssertKeys<`age_ics_${GeologicalAge}`>;
-type _availabilityKeys = AssertKeys<`availability_${Availability}`>;
+type _existenceStatusKeys = AssertKeys<`existence_status_${ExistenceStatus}`>;
+type _availabilityStatusKeys =
+  AssertKeys<`availability_status_${AvailabilityStatus}`>;
 type _elementKeys = AssertKeys<`element_${Element}`>;
 type _provenanceStatusKeys =
   AssertKeys<`provenance_status_${ProvenanceStatus}`>;
@@ -76,7 +79,8 @@ export type SampleLabels = {
   numericUnitLabel: (unit: NumericUnit) => string;
   yearsUnitLabel: (unit: YearsUnit) => string;
   geologicalAgeLabel: (age: GeologicalAge) => string;
-  availabilityLabel: (availability: Availability) => string;
+  existenceStatusLabel: (status: ExistenceStatus) => string;
+  availabilityStatusLabel: (status: AvailabilityStatus) => string;
   provenanceStatusLabel: (status: ProvenanceStatus) => string;
   collectionOriginLabel: (origin: CollectionOrigin) => string;
 };
@@ -102,7 +106,8 @@ const LABEL_KEY = {
   numericUnitLabel: ["age_unit", "code"],
   yearsUnitLabel: ["age_years", "code"],
   geologicalAgeLabel: ["age_ics", "code"],
-  availabilityLabel: ["availability", "code"],
+  existenceStatusLabel: ["existence_status", "code"],
+  availabilityStatusLabel: ["availability_status", "code"],
   provenanceStatusLabel: ["provenance_status", "code"],
   collectionOriginLabel: ["collection_origin", "code"],
 } satisfies Record<keyof SampleLabels, [string, "path" | "code"]>;

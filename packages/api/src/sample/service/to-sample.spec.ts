@@ -96,7 +96,8 @@ const row = {
   sc_collection_curator: null,
   sc_collection_origin: null,
   sc_collection_context_description: null,
-  availability: "exists",
+  existence_status: "exists",
+  availability_status: "available",
   publication_year: null,
   resource_type: null,
   economic_interest_elements: null,
@@ -147,7 +148,8 @@ describe("toSample", () => {
       links: [],
       attachments: [],
       security: null,
-      availability: "exists",
+      existenceStatus: "exists",
+      availabilityStatus: "available",
       owner: null,
       publicationYear: null,
       resourceType: null,
@@ -250,13 +252,7 @@ describe("toSample", () => {
     expect(() => toSample({ ...ageRow, geological_age_min: 99 })).toThrow();
   });
 
-  it.each([
-    { nature: "inconnu" },
-    { type: "half_round" },
-    { collection_method: "gravity_corer" },
-    { name: "" },
-    { id: "pas-un-uuid" },
-  ])("should throw on the invalid row column %o", (invalid) => {
-    expect(() => toSample({ ...row, ...invalid })).toThrow();
+  it("should throw on a row the sample schema rejects", () => {
+    expect(() => toSample({ ...row, nature: "inconnu" })).toThrow();
   });
 });

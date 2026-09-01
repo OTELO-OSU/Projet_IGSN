@@ -1,8 +1,10 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+import type { ExistenceStatus } from "@projet-igsn/domain/sample/curation/existence-status";
 import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
 
+import { allowedAvailabilityStatuses } from "@projet-igsn/domain/sample/curation/allowed-availability-statuses";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
@@ -108,7 +110,7 @@ function fakeApi(
   fail: FailMode = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
-  availability: "exists" | "no_longer_exists" = "exists",
+  existenceStatus: ExistenceStatus = "exists",
   security: Record<string, unknown> | null = null,
   economic: Record<string, unknown> | null = null,
   attachments: SampleAttachment[] = [],
@@ -137,7 +139,8 @@ function fakeApi(
       collectionCurator: "Georges Cuvier",
       collectionOrigin: "scientific_expedition",
     },
-    availability,
+    existenceStatus,
+    availabilityStatus: allowedAvailabilityStatuses(existenceStatus)[0],
     publicationYear: status === "draft" ? null : 2026,
     resourceType: null,
     economicInterestElements: [],
@@ -293,7 +296,7 @@ async function renderEditPage(
   fail: FailMode = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
-  availability: "exists" | "no_longer_exists" = "exists",
+  existenceStatus: ExistenceStatus = "exists",
   security: Record<string, unknown> | null = null,
   economic: Record<string, unknown> | null = null,
   attachments: SampleAttachment[] = [],
@@ -306,7 +309,7 @@ async function renderEditPage(
     fail,
     metamorphicFacies,
     texture,
-    availability,
+    existenceStatus,
     security,
     economic,
     attachments,
@@ -719,19 +722,19 @@ describe("EditSamplePage", () => {
     },
   );
 
-  it("should prefill availability from the saved sample instead of resetting it to Exists", async () => {
+  it("should prefill the existence status from the saved sample instead of resetting it to Exists", async () => {
     const { screen } = await renderEditPage(
       "draft",
       "fossil",
       false,
       null,
       null,
-      "no_longer_exists",
+      "lost",
     );
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: /availability/i }))
-      .toHaveTextContent("No longer exists");
+      .element(screen.getByRole("combobox", { name: /existence status/i }))
+      .toHaveTextContent("Lost");
   });
 
   it("should prefill a declared security hazard from the saved sample", async () => {
@@ -793,12 +796,12 @@ describe("EditSamplePage", () => {
     const save = screen.getByRole("button", { name: "Publish updates" });
 
     await screen.getByRole("tab", { name: "Physical description" }).click();
-    const availability = screen.getByRole("combobox", {
-      name: /availability/i,
+    const existence = screen.getByRole("combobox", {
+      name: /existence status/i,
     });
-    await availability.click();
+    await existence.click();
     await screen.getByRole("option", { name: "Exists", exact: true }).click();
-    await expect.element(availability).not.toHaveTextContent("Exists");
+    await expect.element(existence).not.toHaveTextContent("Exists");
     await expect.element(save).toBeDisabled();
     save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
@@ -808,9 +811,9 @@ describe("EditSamplePage", () => {
       );
     expect(calls).toEqual([]);
 
-    await availability.click();
+    await existence.click();
     await screen.getByRole("option", { name: "Exists", exact: true }).click();
-    await expect.element(availability).toHaveTextContent("Exists");
+    await expect.element(existence).toHaveTextContent("Exists");
     await expect.element(save).toBeEnabled();
     await save.click();
     await vi.waitFor(() => expect(calls.length).toBeGreaterThan(0));

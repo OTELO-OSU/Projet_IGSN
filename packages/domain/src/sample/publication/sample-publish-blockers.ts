@@ -26,7 +26,8 @@ export const publishBlockerSchema = z.enum([
   "numeric_age_range_incomplete",
   "geological_age_range_incomplete",
   "vertical_position_incomplete",
-  "availability_missing",
+  "existence_status_missing",
+  "availability_status_missing",
   "scientific_context_missing",
   "funder_organizations_missing",
   "research_program_name_missing",
@@ -49,7 +50,8 @@ export type PublishableFields = Pick<
   | "location"
   | "description"
   | "age"
-  | "availability"
+  | "existenceStatus"
+  | "availabilityStatus"
   | "scientificContext"
 >;
 
@@ -63,7 +65,8 @@ export function toPublishableFields(
     location: sample.location ?? null,
     description: sample.description ?? null,
     age: sample.age ?? null,
-    availability: sample.availability ?? null,
+    existenceStatus: sample.existenceStatus ?? null,
+    availabilityStatus: sample.availabilityStatus ?? null,
     scientificContext: sample.scientificContext ?? null,
   };
 }
@@ -154,8 +157,12 @@ export function samplePublishBlockers(
     }
   }
 
-  if (sample.availability == null) {
-    blockers.push("availability_missing");
+  if (sample.existenceStatus == null) {
+    blockers.push("existence_status_missing");
+  }
+
+  if (sample.availabilityStatus == null) {
+    blockers.push("availability_status_missing");
   }
 
   const context = sample.scientificContext;

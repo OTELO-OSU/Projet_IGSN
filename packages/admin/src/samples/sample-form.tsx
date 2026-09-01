@@ -22,7 +22,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
-import { availabilitySchema } from "@projet-igsn/domain/sample/availability/availability";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
@@ -50,6 +49,10 @@ import {
   ConfirmMenuButton,
   type ConfirmMenuItem,
 } from "#/samples/confirm-menu-button.tsx";
+import {
+  AvailabilityStatusField,
+  ExistenceStatusField,
+} from "#/samples/curation-fields.tsx";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
@@ -66,7 +69,7 @@ import {
   toSampleDraft,
 } from "#/samples/sample-draft-schema.ts";
 import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest-fields.tsx";
-import { availabilityLabel, natureLabel } from "#/samples/sample-labels.ts";
+import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
 import { SampleManualGroupsField } from "#/samples/sample-manual-groups-field.tsx";
 import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
@@ -81,10 +84,6 @@ import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 const DEFAULT_TAB = "classification";
 
 const natureItems = toComboboxItems(natureSchema.options, natureLabel);
-const availabilityItems = toComboboxItems(
-  availabilitySchema.options,
-  availabilityLabel,
-);
 
 const validateDraft =
   (schema: typeof sampleDraftSchema) =>
@@ -230,7 +229,8 @@ export function SampleForm({
         metamorphicFacies: state.values.metamorphicFacies,
         location: state.values.location,
         description: state.values.description,
-        availability: state.values.availability,
+        existenceStatus: state.values.existenceStatus,
+        availabilityStatus: state.values.availabilityStatus,
         age: toAgeInput(state.values.age),
         scientificContext: composeScientificContext(
           state.values.scientificContext,
@@ -244,7 +244,8 @@ export function SampleForm({
         metamorphicFacies,
         location,
         description,
-        availability,
+        existenceStatus,
+        availabilityStatus,
         age,
         scientificContext,
       }) => {
@@ -256,7 +257,8 @@ export function SampleForm({
             location: composeLocation(location),
             description: composeDescription(description),
             age,
-            availability: availability ?? null,
+            existenceStatus: existenceStatus ?? null,
+            availabilityStatus: availabilityStatus ?? null,
             scientificContext,
             attachments: {
               length: attachmentChanges?.keptCount ?? attachments.length,
@@ -504,19 +506,11 @@ export function SampleForm({
                   <PhysicalDescriptionFields />
                 </form.AppForm>
 
-                <FormSection title={m.section_availability()}>
-                  <form.AppField name="availability">
-                    {(field) => (
-                      <field.ComboboxField
-                        label={m.field_availability()}
-                        requiredToPublish
-                        items={availabilityItems}
-                        placeholder={m.availability_placeholder()}
-                        searchPlaceholder={m.availability_search_placeholder()}
-                        emptyText={m.availability_empty()}
-                      />
-                    )}
-                  </form.AppField>
+                <FormSection title={m.section_curation()}>
+                  <form.AppForm>
+                    <ExistenceStatusField />
+                    <AvailabilityStatusField />
+                  </form.AppForm>
                 </FormSection>
 
                 <form.AppForm>

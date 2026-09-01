@@ -20,7 +20,8 @@ export const publishableSample = {
   description: {
     collectionDate: { start: "2026-01-01", end: "2026-01-01" },
   },
-  availability: "exists" as const,
+  existenceStatus: "exists" as const,
+  availabilityStatus: "available" as const,
   scientificContext: {
     provenanceStatus: "historical_specimen" as const,
     collectionCurator: "Georges Cuvier",
