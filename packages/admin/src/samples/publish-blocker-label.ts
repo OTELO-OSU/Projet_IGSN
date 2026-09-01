@@ -18,7 +18,8 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   geological_age_range_incomplete:
     m.publish_blocked_geological_age_range_incomplete,
   vertical_position_incomplete: m.publish_blocked_vertical_position_incomplete,
-  availability_missing: m.publish_blocked_availability_missing,
+  existence_status_missing: m.publish_blocked_existence_status_missing,
+  availability_status_missing: m.publish_blocked_availability_status_missing,
   scientific_context_missing: m.publish_blocked_scientific_context_missing,
   funder_organizations_missing: m.publish_blocked_funder_organizations_missing,
   research_program_name_missing:

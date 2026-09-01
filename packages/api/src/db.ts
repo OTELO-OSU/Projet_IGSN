@@ -100,7 +100,8 @@ type SampleTable = {
   sc_collection_curator: string | null;
   sc_collection_origin: string | null;
   sc_collection_context_description: string | null;
-  availability: string | null;
+  existence_status: string | null;
+  availability_status: string | null;
   publication_year: number | null;
   resource_type: string | null;
   economic_interest_elements: string[] | null;

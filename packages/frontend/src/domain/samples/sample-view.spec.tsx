@@ -38,7 +38,8 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   links: [],
   attachments: [],
   security: null,
-  availability: null,
+  existenceStatus: null,
+  availabilityStatus: null,
   publicationYear: null,
   resourceType: null,
   economicInterestElements: [],
@@ -231,20 +232,25 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
-  it("should show the translated availability and the publication year when set", async () => {
+  it("should show the translated existence and availability statuses and the publication year when set", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
-          availability: "no_longer_exists",
+          existenceStatus: "lost",
+          availabilityStatus: "not_available",
           publicationYear: 2026,
         })}
       />,
     );
 
-    await expect.element(screen.getByText("Availability")).toBeInTheDocument();
     await expect
-      .element(screen.getByText("No longer exists"))
+      .element(screen.getByText("Existence status"))
       .toBeInTheDocument();
+    await expect.element(screen.getByText("Lost")).toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Availability status"))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("Not available")).toBeInTheDocument();
     await expect
       .element(screen.getByText("Publication year"))
       .toBeInTheDocument();

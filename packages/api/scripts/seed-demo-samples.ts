@@ -116,7 +116,6 @@ const PUBLISHED: DemoRow[] = [
     },
     description: on("2025-05-12"),
     age: numericAge(295, 305),
-    availability: "exists",
   },
   {
     name: "Corsica Granodiorite",
@@ -131,7 +130,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
     },
     description: on("2025-06-20"),
-    availability: "exists",
   },
   {
     name: "Aar Massif Tonalite",
@@ -145,7 +143,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "CH" },
     },
     description: on("2024-08-01"),
-    availability: "exists",
   },
   {
     name: "Bushveld Gabbro",
@@ -160,7 +157,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "ZA" },
     },
     description: on("2025-02-14"),
-    availability: "exists",
   },
   {
     name: "Harz Norite",
@@ -174,7 +170,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "DE" },
     },
     description: on("2024-09-03"),
-    availability: "exists",
   },
   {
     name: "Oman Ophiolite Peridotite",
@@ -189,7 +184,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "OM" },
     },
     description: on("2025-03-30"),
-    availability: "exists",
   },
   {
     name: "Oslo Rift Syenite",
@@ -203,7 +197,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "NO" },
     },
     description: on("2024-07-19"),
-    availability: "exists",
   },
   {
     name: "Massif Central Basalt",
@@ -218,7 +211,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
     },
     description: on("2025-06-15"),
-    availability: "exists",
   },
   {
     name: "Reykjanes Ridge Basalt",
@@ -235,7 +227,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2025-04-08"),
-    availability: "exists",
   },
   {
     name: "Etna Trachyte",
@@ -249,7 +240,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "IT" },
     },
     description: on("2025-05-01"),
-    availability: "exists",
   },
   {
     name: "Yellowstone Rhyolite",
@@ -263,7 +253,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "US" },
     },
     description: on("2024-06-11"),
-    availability: "exists",
   },
   {
     name: "Andean Andesite",
@@ -277,7 +266,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "CL" },
     },
     description: on("2025-01-22"),
-    availability: "exists",
   },
   {
     name: "Barberton Komatiite",
@@ -291,7 +279,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "ZA" },
     },
     description: on("2024-10-05"),
-    availability: "exists",
   },
   {
     name: "Canary Phonolite",
@@ -305,7 +292,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "ES" },
     },
     description: on("2025-02-02"),
-    availability: "exists",
   },
   {
     name: "Deccan Picrite",
@@ -319,7 +305,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "IN" },
     },
     description: on("2024-11-20"),
-    availability: "exists",
   },
   {
     name: "Kimberley Kimberlite",
@@ -333,7 +318,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "ZA" },
     },
     description: on("2025-03-11"),
-    availability: "exists",
   },
   {
     name: "Carrara Marble",
@@ -348,7 +332,6 @@ const PUBLISHED: DemoRow[] = [
       localityName: "Carrara quarry",
     },
     description: on("2024-05-30"),
-    availability: "exists",
   },
   {
     name: "Alpine Mica Schist",
@@ -362,7 +345,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "IT" },
     },
     description: on("2025-01-15"),
-    availability: "exists",
   },
   {
     name: "Lofoten Gneiss",
@@ -376,7 +358,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "NO" },
     },
     description: on("2024-08-22"),
-    availability: "exists",
   },
   {
     name: "Western Gneiss Eclogite",
@@ -390,7 +371,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "NO" },
     },
     description: on("2025-02-27"),
-    availability: "exists",
   },
   {
     name: "Franciscan Blueschist",
@@ -404,7 +384,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "US" },
     },
     description: on("2024-09-14"),
-    availability: "exists",
   },
   {
     name: "Highland Quartzite",
@@ -418,7 +397,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "GB" },
     },
     description: on("2025-04-19"),
-    availability: "exists",
   },
   {
     name: "Welsh Slate Series",
@@ -432,7 +410,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "GB" },
     },
     description: on("2024-07-07"),
-    availability: "exists",
   },
   {
     name: "Lapland Granulite",
@@ -446,7 +423,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FI" },
     },
     description: on("2025-03-05"),
-    availability: "exists",
   },
   {
     name: "Ivrea Amphibolite",
@@ -460,7 +436,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "IT" },
     },
     description: on("2024-10-30"),
-    availability: "exists",
   },
   {
     name: "Zermatt Metabasalt",
@@ -476,7 +451,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "IT" },
     },
     description: on("2025-01-08"),
-    availability: "exists",
   },
   {
     name: "Aosta Metagranite",
@@ -492,7 +466,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "IT" },
     },
     description: on("2025-02-18"),
-    availability: "exists",
   },
   {
     name: "Fontainebleau Sandstone",
@@ -505,7 +478,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
     },
     description: on("2024-06-01"),
-    availability: "exists",
   },
   {
     name: "Jura Limestone",
@@ -519,7 +491,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
     },
     description: on("2025-05-25"),
-    availability: "exists",
   },
   {
     name: "Dolomites Dolostone",
@@ -533,7 +504,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "IT" },
     },
     description: on("2024-08-18"),
-    availability: "exists",
   },
   {
     name: "Franconian Chert",
@@ -547,7 +517,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "DE" },
     },
     description: on("2025-01-30"),
-    availability: "exists",
   },
   {
     name: "Paris Basin Gypsum",
@@ -561,7 +530,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
     },
     description: on("2024-09-27"),
-    availability: "exists",
   },
   {
     name: "Ruhr Coal Core",
@@ -576,7 +544,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "DE" },
     },
     description: on("2024-11-11"),
-    availability: "exists",
   },
   {
     name: "North Sea Mudstone Core",
@@ -591,7 +558,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2025-02-09"),
-    availability: "exists",
   },
   {
     name: "TAG Sulfide Chimney",
@@ -606,7 +572,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "USBL",
     },
     description: on("2025-03-22"),
-    availability: "exists",
   },
   {
     name: "Rainbow Hydrothermal Breccia",
@@ -620,7 +585,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "DVL/LBL",
     },
     description: on("2024-10-16"),
-    availability: "exists",
   },
   {
     name: "Lost City Carbonate",
@@ -634,7 +598,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "USBL",
     },
     description: on("2025-04-27"),
-    availability: "exists",
   },
   {
     name: "Pacific Abyssal Clay",
@@ -650,7 +613,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2024-07-30"),
-    availability: "exists",
   },
   {
     name: "Loire Sand",
@@ -663,7 +625,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
     },
     description: on("2025-05-06"),
-    availability: "exists",
   },
   {
     name: "Rhine Gravel",
@@ -676,7 +637,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "DE" },
     },
     description: on("2024-06-25"),
-    availability: "exists",
   },
   {
     name: "Champagne Loess Silt",
@@ -690,7 +650,6 @@ const PUBLISHED: DemoRow[] = [
     },
     description: on("2025-01-19"),
     age: annumAge(12000, 25000, "bp"),
-    availability: "exists",
   },
   {
     name: "Vesuvius Volcanic Ash",
@@ -704,7 +663,6 @@ const PUBLISHED: DemoRow[] = [
     },
     description: on("2024-09-09"),
     age: annumAge(79, 79, "ce"),
-    availability: "exists",
   },
   {
     name: "Bahamas Carbonate Ooze",
@@ -718,7 +676,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2025-02-21"),
-    availability: "exists",
   },
   {
     name: "Southern Ocean Diatom Ooze",
@@ -732,7 +689,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2024-12-03"),
-    availability: "exists",
   },
   {
     name: "Irish Bog Peat",
@@ -746,7 +702,6 @@ const PUBLISHED: DemoRow[] = [
     },
     description: on("2025-03-17"),
     age: annumAge(2000, 8000, "cal_bp"),
-    availability: "exists",
   },
   {
     name: "Red Sea Evaporitic Precipitate",
@@ -761,7 +716,6 @@ const PUBLISHED: DemoRow[] = [
     },
     description: on("2024-08-12"),
     age: annumAge(1000, 3000, "bce"),
-    availability: "exists",
   },
   {
     name: "Alpine Quartz Crystal",
@@ -774,7 +728,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "CH" },
     },
     description: on("2024-07-01"),
-    availability: "exists",
   },
   {
     name: "Rio Tinto Pyrite",
@@ -787,7 +740,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "ES" },
     },
     description: on("2025-04-14"),
-    availability: "exists",
   },
   {
     name: "Minas Gerais Beryl",
@@ -800,7 +752,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "BR" },
     },
     description: on("2024-10-22"),
-    availability: "exists",
   },
   {
     name: "Normandy Ammonite",
@@ -814,7 +765,6 @@ const PUBLISHED: DemoRow[] = [
     },
     description: on("2025-05-18"),
     age: geologicalAge(10, 12, "Terres Noires Formation"),
-    availability: "exists",
   },
   {
     name: "Bohemian Trilobite",
@@ -828,7 +778,6 @@ const PUBLISHED: DemoRow[] = [
     },
     description: on("2024-09-19"),
     age: geologicalAge(31, 34),
-    availability: "exists",
   },
   {
     name: "Dorset Belemnite",
@@ -842,7 +791,6 @@ const PUBLISHED: DemoRow[] = [
     },
     description: on("2025-01-27"),
     age: geologicalAge(8, 10),
-    availability: "exists",
   },
   {
     name: "Synthetic Corundum",
@@ -851,7 +799,6 @@ const PUBLISHED: DemoRow[] = [
     material: "synthetic_rock_mineral",
     collectionMethod: "experimental_apparatus",
     description: on("2025-06-01"),
-    availability: "exists",
   },
   {
     name: "Synthetic Forsterite",
@@ -860,7 +807,6 @@ const PUBLISHED: DemoRow[] = [
     material: "synthetic_rock_mineral",
     collectionMethod: "experimental_apparatus",
     description: on("2024-11-30"),
-    availability: "exists",
   },
   {
     name: "Sahara Ordinary Chondrite",
@@ -874,7 +820,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "DZ" },
     },
     description: on("2024-06-05"),
-    availability: "exists",
   },
   {
     name: "Victoria CM Chondrite",
@@ -888,7 +833,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "AU" },
     },
     description: on("2025-02-11"),
-    availability: "exists",
   },
   {
     name: "Canyon Diablo Iron Meteorite",
@@ -902,7 +846,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "US" },
     },
     description: on("2024-08-08"),
-    availability: "exists",
   },
   {
     name: "NWA Shergottite",
@@ -917,7 +860,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "MA" },
     },
     description: on("2025-03-01"),
-    availability: "exists",
   },
   {
     name: "Antarctic Lunar Meteorite",
@@ -932,7 +874,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "AQ" },
     },
     description: on("2024-12-20"),
-    availability: "exists",
   },
   {
     name: "Apollo 15 Mare Basalt",
@@ -943,7 +884,6 @@ const PUBLISHED: DemoRow[] = [
     specificName: "Apollo 15 / 15555",
     description: on("2024-05-01"),
     age: numericAge(3, 4, "ga"),
-    availability: "exists",
   },
   {
     name: "Apollo 17 Lunar Soil",
@@ -953,7 +893,6 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "spatial_mission",
     specificName: "Apollo 17 / 70017",
     description: on("2024-05-02"),
-    availability: "exists",
   },
   {
     name: "Hayabusa2 Ryugu Grain",
@@ -964,7 +903,6 @@ const PUBLISHED: DemoRow[] = [
     specificName: "Hayabusa2 / C0002",
     description: on("2025-01-05"),
     age: numericAge(4, 5, "ga"),
-    availability: "exists",
   },
   {
     name: "OSIRIS-REx Bennu Grain",
@@ -974,7 +912,6 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "spatial_mission",
     specificName: "OSIRIS-REx",
     description: on("2025-01-06"),
-    availability: "exists",
   },
   {
     name: "Hayabusa Itokawa Grain",
@@ -984,7 +921,6 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "spatial_mission",
     specificName: "Hayabusa / RA-QD02",
     description: on("2024-04-15"),
-    availability: "exists",
   },
   {
     name: "Legacy Archive Basalt",
@@ -998,7 +934,8 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
     },
     description: on("2024-01-10"),
-    availability: "no_longer_exists",
+    existenceStatus: "lost",
+    availabilityStatus: "not_available",
   },
   {
     name: "Camera-Tow Ridge Basalt",
@@ -1014,7 +951,6 @@ const PUBLISHED: DemoRow[] = [
     },
     description: on("2025-03-28"),
     age: numericAge(500, 1500, "ka"),
-    availability: "exists",
   },
   {
     name: "Sediment Trap Particulate",
@@ -1028,7 +964,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2024-10-01"),
-    availability: "exists",
   },
   {
     name: "Rhone Suspended Sediment",
@@ -1041,7 +976,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
     },
     description: on("2025-04-02"),
-    availability: "exists",
   },
   {
     name: "IODP Basement Gabbro",
@@ -1058,7 +992,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2024-11-05"),
-    availability: "exists",
   },
   {
     name: "Biscay Shelf Sand Boxcore",
@@ -1072,7 +1005,6 @@ const PUBLISHED: DemoRow[] = [
       navigationType: "GPS",
     },
     description: on("2025-02-15"),
-    availability: "exists",
   },
   {
     name: "Sanbagawa Blueschist",
@@ -1086,7 +1018,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "JP" },
     },
     description: on("2025-04-25"),
-    availability: "exists",
   },
   {
     name: "Otago Schist",
@@ -1100,7 +1031,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "NZ" },
     },
     description: on("2024-11-08"),
-    availability: "exists",
   },
   {
     name: "Kilauea Basalt",
@@ -1114,7 +1044,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "US" },
     },
     description: on("2025-05-30"),
-    availability: "exists",
   },
   {
     name: "Acasta Gneiss",
@@ -1128,7 +1057,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "CA" },
     },
     description: on("2024-07-22"),
-    availability: "exists",
   },
   {
     name: "Dabie Shan Eclogite",
@@ -1142,7 +1070,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "CN" },
     },
     description: on("2025-03-14"),
-    availability: "exists",
   },
   {
     name: "Toba Rhyolitic Tuff",
@@ -1156,7 +1083,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "ID" },
     },
     description: on("2024-10-09"),
-    availability: "exists",
   },
   {
     name: "Krafla Basalt",
@@ -1170,7 +1096,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "IS" },
     },
     description: on("2025-06-28"),
-    availability: "exists",
   },
   {
     name: "Siberian Traps Basalt",
@@ -1184,7 +1109,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "RU" },
     },
     description: on("2024-08-30"),
-    availability: "exists",
   },
   {
     name: "Puy de Dôme Trachyte",
@@ -1199,7 +1123,6 @@ const PUBLISHED: DemoRow[] = [
       localityName: "Puy de Dôme",
     },
     description: on("2025-06-18"),
-    availability: "exists",
   },
   {
     name: "Puy de Côme Basalt",
@@ -1214,7 +1137,6 @@ const PUBLISHED: DemoRow[] = [
       localityName: "Puy de Côme",
     },
     description: on("2025-06-19"),
-    availability: "exists",
   },
   {
     name: "Puy Pariou Basalt",
@@ -1229,7 +1151,6 @@ const PUBLISHED: DemoRow[] = [
       localityName: "Puy Pariou",
     },
     description: on("2025-06-20"),
-    availability: "exists",
   },
   {
     name: "Puy de la Vache Scoria",
@@ -1244,7 +1165,6 @@ const PUBLISHED: DemoRow[] = [
       localityName: "Puy de la Vache",
     },
     description: on("2025-06-21"),
-    availability: "exists",
   },
   {
     name: "Puy Chopine Domite",
@@ -1259,7 +1179,6 @@ const PUBLISHED: DemoRow[] = [
       localityName: "Puy Chopine",
     },
     description: on("2025-06-22"),
-    availability: "exists",
   },
   {
     name: "Afar Rift Basalt",
@@ -1273,7 +1192,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "ET" },
     },
     description: on("2025-02-04"),
-    availability: "exists",
   },
   {
     name: "Isua Amphibolite",
@@ -1287,7 +1205,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "GL" },
     },
     description: on("2024-07-14"),
-    availability: "exists",
   },
   {
     name: "Himalayan Gneiss",
@@ -1301,7 +1218,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "NP" },
     },
     description: on("2024-09-25"),
-    availability: "exists",
   },
   {
     name: "Patagonian Plateau Basalt",
@@ -1315,7 +1231,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "AR" },
     },
     description: on("2025-01-12"),
-    availability: "exists",
   },
   {
     name: "Popocatépetl Andesite",
@@ -1329,7 +1244,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "MX" },
     },
     description: on("2025-05-08"),
-    availability: "exists",
   },
   {
     name: "Jeju Island Basalt",
@@ -1343,7 +1257,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "KR" },
     },
     description: on("2024-10-27"),
-    availability: "exists",
   },
   {
     name: "Papuan Ophiolite Peridotite",
@@ -1357,7 +1270,6 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "PG" },
     },
     description: on("2025-03-19"),
-    availability: "exists",
   },
 ];
 
@@ -1570,6 +1482,8 @@ export const DEMO_SAMPLES: SampleRow[] = [...PUBLISHED, ...DRAFTS].map(
             scientificContext:
               row.scientificContext ??
               (index % 2 === 0 ? RECENT_CONTEXT : HISTORICAL_CONTEXT),
+            existenceStatus: row.existenceStatus ?? "exists",
+            availabilityStatus: row.availabilityStatus ?? "available",
           }
         : {}),
     };

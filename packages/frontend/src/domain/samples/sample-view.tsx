@@ -19,8 +19,9 @@ import { LinksView } from "#/domain/samples/links-view.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
 import { SampleHero } from "#/domain/samples/sample-hero.tsx";
 import {
-  availabilityLabel,
+  availabilityStatusLabel,
   collectionMethodLabel,
+  existenceStatusLabel,
   materialPathLabel,
   metamorphicFaciesLabel,
   natureLabel,
@@ -55,7 +56,8 @@ export function SampleView({
     owner,
     location,
     security,
-    availability,
+    existenceStatus,
+    availabilityStatus,
     publicationYear,
     age,
     links,
@@ -116,8 +118,14 @@ export function SampleView({
             value={collectionMethodDescription}
           />
           <FieldRow
-            label={m.sample_field_availability()}
-            value={availability && availabilityLabel(availability)}
+            label={m.sample_field_existence_status()}
+            value={existenceStatus && existenceStatusLabel(existenceStatus)}
+          />
+          <FieldRow
+            label={m.sample_field_availability_status()}
+            value={
+              availabilityStatus && availabilityStatusLabel(availabilityStatus)
+            }
           />
           <FieldRow
             label={m.sample_field_publication_year()}

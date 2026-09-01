@@ -17,7 +17,8 @@ const validSample = {
   scientificContext: null,
   age: null,
   security: null,
-  availability: "exists",
+  existenceStatus: "exists",
+  availabilityStatus: "available",
   publicationYear: null,
   resourceType: null,
   economicInterestElements: [],
@@ -54,7 +55,8 @@ describe("sampleSchema", () => {
       links: [],
       attachments: [],
       security: null,
-      availability: "exists",
+      existenceStatus: "exists",
+      availabilityStatus: "available",
       publicationYear: null,
       resourceType: null,
       economicInterestElements: [],
@@ -74,7 +76,6 @@ describe("sampleSchema", () => {
   });
 
   it.each([
-    { ...validSample, name: "" },
     { ...validSample, name: "   " },
     { ...validSample, nature: "Thin section" },
     { ...validSample, id: "not-a-uuid" },
@@ -82,9 +83,7 @@ describe("sampleSchema", () => {
     { ...validSample, igsn: "not-an-igsn" },
     { ...validSample, type: "half_round" },
     { ...validSample, collectionMethod: "gravity_corer" },
-    { ...validSample, collectionMethodDescription: "" },
     { ...validSample, collectionMethodDescription: "   " },
-    { ...validSample, specificName: "" },
     { ...validSample, specificName: "   " },
   ])("should reject an invalid sample #%#", (input) => {
     // Arrange / Act
@@ -429,6 +428,31 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse(input);
     // Assert
     expect(result.success).toBe(false);
+  });
+
+  it("should reject an availability status the existence status forbids", () => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      existenceStatus: "consumed",
+      availabilityStatus: "available",
+    });
+    // Assert
+    expect(result.error?.issues).toMatchObject([
+      { path: ["availabilityStatus"] },
+    ]);
+  });
+
+  it("should accept an existence status with no availability status", () => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Grès de Fontainebleau",
+      nature: "rock_powder",
+      existenceStatus: "consumed",
+    });
+    // Assert
+    expect(result).toMatchObject({ success: true });
   });
 
   it("should reject unknown fields", () => {

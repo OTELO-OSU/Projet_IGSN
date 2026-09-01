@@ -29,7 +29,8 @@ const draft: SampleDraft = {
   condition: toConditionDraft(null),
   security: toSecurityDraft(null),
   scientificContext: toScientificContextDraft(null),
-  availability: "exists",
+  existenceStatus: "exists",
+  availabilityStatus: "available",
   age: EMPTY_AGE_FORM_VALUES,
   links: [],
   manualGroupIds: [],
@@ -49,7 +50,8 @@ describe("sampleDraftSchema", () => {
       collectionMethodDescription: null,
       specificName: null,
       location: null,
-      availability: "exists",
+      existenceStatus: "exists",
+      availabilityStatus: "available",
       manualGroupIds: [],
     });
   });
@@ -113,7 +115,8 @@ describe("sampleDraftSchema", () => {
       collectionMethodDescription: null,
       specificName: null,
       location: null,
-      availability: "exists",
+      existenceStatus: "exists",
+      availabilityStatus: "available",
       manualGroupIds: [],
       description: {
         collectionDate: { start: "2026-01-05", end: "2026-01-05" },

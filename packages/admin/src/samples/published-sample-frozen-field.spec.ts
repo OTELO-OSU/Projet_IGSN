@@ -22,7 +22,8 @@ describe("publishedSampleFrozenField", () => {
     "location.startVerticalPosition",
     "location.verticalReference",
     "location.localityName",
-    "availability",
+    "existenceStatus",
+    "availabilityStatus",
   ])("leaves %s editable on a published sample", (field) => {
     expect(isFrozen(field)).toBe(false);
   });

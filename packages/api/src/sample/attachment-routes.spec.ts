@@ -52,7 +52,8 @@ const sampleBody = {
   type: "individual_sample",
   material: "sediment.exogenous_detritic.clay",
   specificName: "FTB-2026-042",
-  availability: "exists",
+  existenceStatus: "exists",
+  availabilityStatus: "available",
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
   description: {
     collectionDate: { start: "2026-01-01", end: "2026-01-01" },

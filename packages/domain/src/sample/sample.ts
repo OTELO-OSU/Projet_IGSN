@@ -7,9 +7,11 @@ import { userSchema } from "../user/model.ts";
 import { ageSchema } from "./age/model.ts";
 import { updateSampleAttachmentSchema } from "./attachment/attachment-validator.ts";
 import { sampleAttachmentSchema } from "./attachment/model.ts";
-import { availabilitySchema } from "./availability/availability.ts";
 import { collectionMethodSchema } from "./collection-method/vocabulary.ts";
 import { conditionSchema } from "./condition/model.ts";
+import { allowedAvailabilityStatuses } from "./curation/allowed-availability-statuses.ts";
+import { availabilityStatusSchema } from "./curation/availability-status.ts";
+import { existenceStatusSchema } from "./curation/existence-status.ts";
 import { descriptionSchema } from "./description/model.ts";
 import { elementSchema } from "./element/vocabulary.ts";
 import { createSampleLinkSchema, sampleLinkSchema } from "./link/model.ts";
@@ -57,7 +59,8 @@ export const sampleSchema = z.object({
   links: z.array(sampleLinkSchema).default([]),
   attachments: z.array(sampleAttachmentSchema).default([]),
   security: securitySchema.nullable(),
-  availability: availabilitySchema.nullable(),
+  existenceStatus: existenceStatusSchema.nullable(),
+  availabilityStatus: availabilityStatusSchema.nullable(),
   publicationYear: z.number().int().positive().nullable(),
   resourceType: resourceTypeSchema.nullable(),
   economicInterestElements: z.array(elementSchema).default([]),
@@ -98,7 +101,8 @@ export const createSampleSchema = z
     links: z.array(createSampleLinkSchema).optional(),
     attachments: z.array(updateSampleAttachmentSchema).optional(),
     security: securitySchema.nullish(),
-    availability: availabilitySchema.nullish(),
+    existenceStatus: existenceStatusSchema.nullish(),
+    availabilityStatus: availabilityStatusSchema.nullish(),
     resourceType: resourceTypeSchema.nullish(),
     economicInterestElements: z.array(elementSchema).optional(),
     economicResourceTypePrecision: nameSchema.nullish(),
@@ -125,6 +129,18 @@ export const createSampleSchema = z
         code: "custom",
         path: ["metamorphicFacies"],
         message: "metamorphic facies is not valid for the selected material",
+      });
+    }
+    if (
+      value.availabilityStatus != null &&
+      !allowedAvailabilityStatuses(value.existenceStatus).includes(
+        value.availabilityStatus,
+      )
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["availabilityStatus"],
+        message: "availability status is not valid for the existence status",
       });
     }
     if (value.location != null && !allowsLocation(value.material ?? null)) {

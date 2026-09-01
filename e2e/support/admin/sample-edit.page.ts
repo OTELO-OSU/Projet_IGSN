@@ -138,7 +138,8 @@ export function sampleEditPage(page: Page) {
         .getByRole("group", { name: /collection date/i })
         .getByRole("textbox", { name: /^Date/ })
         .fill("2025-06-15");
-      await pick("Availability", "Exists");
+      await pick("Existence status", "Exists");
+      await pick("Availability status", "Available");
       await openTab("Scientific context");
       await pick("Provenance status", "Collection / historical specimen");
       await page.getByLabel(/collection curator/i).fill("Paul Bernard");

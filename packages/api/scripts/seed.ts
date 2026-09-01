@@ -17,10 +17,7 @@ import { z } from "zod";
 import type { DB } from "../src/db.ts";
 
 import { createDb } from "../src/db.ts";
-import { descriptionColumns } from "../src/sample/service/description-columns.ts";
-import { scientificContextColumns } from "../src/sample/service/scientific-context-columns.ts";
-import { toAgeColumns } from "../src/sample/service/to-age-columns.ts";
-import { locationColumns } from "../src/sample/service/to-location.ts";
+import { sampleColumns } from "../src/sample/service/sample-columns.ts";
 
 type SeedUser = SampleOwner & {
   email: string;
@@ -325,30 +322,18 @@ export async function insertSamples(
         ({
           owner,
           collaborators: _collaborators,
-          material,
-          collectionMethod,
-          collectionMethodDescription,
-          specificName,
-          metamorphicFacies,
-          location,
-          description,
-          scientificContext,
-          age,
-          ...rest
+          id,
+          igsn,
+          status,
+          ...create
         }) => ({
-          ...rest,
-          publication_year: hasPermanentIgsn(rest)
+          id,
+          status,
+          igsn: igsn ?? null,
+          publication_year: hasPermanentIgsn({ status })
             ? SEED_PUBLICATION_YEAR
             : null,
-          material: material ?? null,
-          collection_method: collectionMethod ?? null,
-          collection_method_description: collectionMethodDescription ?? null,
-          specific_name: specificName ?? null,
-          metamorphic_facies: metamorphicFacies ?? null,
-          ...toAgeColumns(age),
-          ...locationColumns(location),
-          ...descriptionColumns(description),
-          ...scientificContextColumns(scientificContext),
+          ...sampleColumns({ ...create, type: create.type ?? null }),
           institutional_organization: owner.institutionalOrganization,
           institutional_osu: owner.institutionalOsu,
           institutional_laboratory: owner.institutionalLaboratory,
@@ -432,7 +417,8 @@ export const sampleRowSchema = sampleSchema
     specificName: true,
     location: true,
     description: true,
-    availability: true,
+    existenceStatus: true,
+    availabilityStatus: true,
     scientificContext: true,
     age: true,
     igsn: true,
@@ -447,7 +433,8 @@ export const sampleRowSchema = sampleSchema
     specificName: true,
     location: true,
     description: true,
-    availability: true,
+    existenceStatus: true,
+    availabilityStatus: true,
     scientificContext: true,
     age: true,
     igsn: true,
@@ -577,7 +564,8 @@ export const SEED_SAMPLES: SeedSample[] = [
       geologicalAgeMax: null,
       geologicalUnit: null,
     },
-    availability: "exists",
+    existenceStatus: "exists",
+    availabilityStatus: "available",
     scientificContext: {
       provenanceStatus: "recent_collection",
       funderOrganizations: ["02feahw73"],
@@ -603,7 +591,8 @@ export const SEED_SAMPLES: SeedSample[] = [
     description: {
       collectionDate: { start: "2025-04-02", end: "2025-04-02" },
     },
-    availability: "exists",
+    existenceStatus: "exists",
+    availabilityStatus: "available",
     scientificContext: {
       provenanceStatus: "historical_specimen",
       collectionCurator: "Paul Bernard",
@@ -629,7 +618,8 @@ export const SEED_SAMPLES: SeedSample[] = [
     description: {
       collectionDate: { start: "2025-07-01", end: "2025-07-01" },
     },
-    availability: "exists",
+    existenceStatus: "exists",
+    availabilityStatus: "available",
     scientificContext: {
       provenanceStatus: "recent_collection",
       funderOrganizations: ["02feahw73"],
@@ -657,7 +647,8 @@ export const SEED_SAMPLES: SeedSample[] = [
     description: {
       collectionDate: { start: "2025-07-01", end: "2025-07-01" },
     },
-    availability: "exists",
+    existenceStatus: "exists",
+    availabilityStatus: "available",
     scientificContext: {
       provenanceStatus: "recent_collection",
       funderOrganizations: ["02feahw73"],

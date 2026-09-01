@@ -7,14 +7,8 @@ import { v7 as uuidv7 } from "uuid";
 import type { DB } from "../src/db.ts";
 
 import { createDb } from "../src/db.ts";
-import { conditionColumns } from "../src/sample/service/condition-columns.ts";
-import { descriptionColumns } from "../src/sample/service/description-columns.ts";
 import { replaceSampleLinks } from "../src/sample/service/replace-sample-links.ts";
-import { resourceTypeColumns } from "../src/sample/service/resource-type-columns.ts";
-import { scientificContextColumns } from "../src/sample/service/scientific-context-columns.ts";
-import { securityColumns } from "../src/sample/service/security-columns.ts";
-import { toAgeColumns } from "../src/sample/service/to-age-columns.ts";
-import { locationColumns } from "../src/sample/service/to-location.ts";
+import { sampleColumns } from "../src/sample/service/sample-columns.ts";
 import {
   type LegacyOwner,
   type LegacyRow,
@@ -110,23 +104,7 @@ function toSampleRow(
   return {
     id: uuidv7(),
     igsn,
-    name: create.name,
-    nature: create.nature,
-    type: create.type ?? null,
-    material: create.material ?? null,
-    texture: create.texture ?? null,
-    metamorphic_facies: create.metamorphicFacies ?? null,
-    collection_method: create.collectionMethod ?? null,
-    collection_method_description: create.collectionMethodDescription ?? null,
-    specific_name: create.specificName ?? null,
-    availability: create.availability ?? null,
-    ...descriptionColumns(create.description),
-    ...locationColumns(create.location),
-    ...conditionColumns(create.condition),
-    ...scientificContextColumns(create.scientificContext),
-    ...toAgeColumns(create.age),
-    ...securityColumns(create.security),
-    ...resourceTypeColumns(create),
+    ...sampleColumns(create),
     status: "published" as const,
     publication_year: publishedAt.getUTCFullYear(),
     created_at: publishedAt,

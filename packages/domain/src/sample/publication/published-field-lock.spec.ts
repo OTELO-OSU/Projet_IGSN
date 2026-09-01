@@ -64,7 +64,8 @@ const stored: Sample = {
   links: [],
   attachments: [],
   security: null,
-  availability: "exists",
+  existenceStatus: "exists",
+  availabilityStatus: "available",
   publicationYear: 2020,
   resourceType: "mineral_and_ore",
   economicInterestElements: [],
@@ -142,7 +143,8 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     links: [],
     attachments: [],
     security: null,
-    availability: "no_longer_exists",
+    existenceStatus: "lost",
+    availabilityStatus: "not_available",
     resourceType: "hydrocarbon",
     economicInterestElements: [],
     economicResourceTypePrecision: null,
@@ -164,9 +166,9 @@ describe("mergePublishedEdit", () => {
   it("takes whole-editable fields from the payload", () => {
     const merged = mergePublishedEdit(
       stored,
-      incoming({ availability: "no_longer_exists" }),
+      incoming({ existenceStatus: "lost" }),
     );
-    expect(merged.availability).toBe("no_longer_exists");
+    expect(merged.existenceStatus).toBe("lost");
     expect(merged.collectionMethod).toBe("dredging");
     expect(merged.specificName).toBe("edited specific");
     expect(merged.resourceType).toBe("hydrocarbon");
