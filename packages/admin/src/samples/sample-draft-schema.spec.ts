@@ -24,6 +24,8 @@ const draft: SampleDraft = {
   collectionMethodPath: toHierarchyPath(null),
   collectionMethodDescription: null,
   specificName: null,
+  geologicalContextDescription: null,
+  geomorphologicalEnvironmentPath: [],
   location: toLocationDraft(null),
   description: toDescriptionDraft(null),
   condition: toConditionDraft(null),
@@ -49,6 +51,8 @@ describe("sampleDraftSchema", () => {
       collectionMethod: null,
       collectionMethodDescription: null,
       specificName: null,
+      geologicalContextDescription: null,
+      geomorphologicalEnvironment: null,
       location: null,
       existenceStatus: "exists",
       availabilityStatus: "available",
@@ -56,7 +60,7 @@ describe("sampleDraftSchema", () => {
     });
   });
 
-  it("should drop a lingering location when the material forbids one", () => {
+  it("should drop a lingering location and geological context when the material forbids a location", () => {
     const result = sampleDraftSchema.parse({
       ...draft,
       materialPath: toHierarchyPath("synthetic_rock_mineral"),
@@ -66,11 +70,15 @@ describe("sampleDraftSchema", () => {
         longitude: 2.35,
         latitude: 48.85,
       },
+      geologicalContextDescription: "Eroded plateau",
+      geomorphologicalEnvironmentPath: toHierarchyPath("marine_zone.bay"),
     });
 
     expect(result).toMatchObject({
       material: "synthetic_rock_mineral",
       location: null,
+      geologicalContextDescription: null,
+      geomorphologicalEnvironment: null,
     });
   });
 
@@ -114,6 +122,8 @@ describe("sampleDraftSchema", () => {
       collectionMethod: null,
       collectionMethodDescription: null,
       specificName: null,
+      geologicalContextDescription: null,
+      geomorphologicalEnvironment: null,
       location: null,
       existenceStatus: "exists",
       availabilityStatus: "available",

@@ -9,6 +9,7 @@ export const {
   materialPathLabel,
   typeLabel,
   collectionMethodLabel,
+  geomorphologicalEnvironmentLabel,
   textureLabel,
   metamorphicFaciesLabel,
   natureLabel,

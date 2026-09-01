@@ -27,6 +27,8 @@ const sample: AdminSampleListItem = {
   collectionMethod: "coring.gravity_corer",
   collectionMethodDescription: null,
   specificName: "MC-2026-007",
+  geologicalContextDescription: null,
+  geomorphologicalEnvironment: null,
   location: null,
   description: null,
   condition: null,

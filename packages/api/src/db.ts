@@ -16,6 +16,8 @@ type SampleTable = {
   metamorphic_facies: string | null;
   collection_method: string | null;
   collection_method_description: string | null;
+  geological_context_description: string | null;
+  geomorphological_environment: string | null;
   specific_name: string | null;
   collection_date_start: ColumnType<Date, string, string> | null;
   collection_date_end: ColumnType<Date, string, string> | null;

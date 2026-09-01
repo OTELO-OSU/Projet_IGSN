@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import catalog from "../../messages/en.json";
 import { COLLECTION_METHODS } from "./collection-method/vocabulary.ts";
 import { createSampleLabels, type Messages } from "./create-sample-labels.ts";
+import { GEOMORPHOLOGICAL_ENVIRONMENTS } from "./geomorphological-environment/vocabulary.ts";
 import { MATERIAL_PATHS } from "./material/classification.ts";
 import { pathSegment } from "./path/segment.ts";
 import {
@@ -22,6 +23,7 @@ const {
   typeLabel,
   collectionMethodLabel,
   resourceTypeLabel,
+  geomorphologicalEnvironmentLabel,
 } = createSampleLabels(m);
 
 describe("materialPathLabel", () => {
@@ -57,6 +59,12 @@ describe("tree vocabulary label coverage", () => {
       "collection_method",
     ],
     ["resource type", RESOURCE_TYPE_PATHS, resourceTypeLabel, "resource_type"],
+    [
+      "geomorphological environment",
+      GEOMORPHOLOGICAL_ENVIRONMENTS,
+      geomorphologicalEnvironmentLabel,
+      "geomorphological_environment",
+    ],
   ] as const)(
     "should translate every %s path",
     (_vocabulary, paths, label, prefix) => {

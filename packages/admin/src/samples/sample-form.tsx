@@ -69,6 +69,7 @@ import {
   toSampleDraft,
 } from "#/samples/sample-draft-schema.ts";
 import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest-fields.tsx";
+import { SampleGeologicalContextFields } from "#/samples/sample-geological-context-fields.tsx";
 import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
 import { SampleManualGroupsField } from "#/samples/sample-manual-groups-field.tsx";
@@ -529,6 +530,12 @@ export function SampleForm({
                   <FormSection title={m.section_location()}>
                     <form.AppForm>
                       <LocationFields />
+                    </form.AppForm>
+                  </FormSection>
+
+                  <FormSection title={m.section_geological_context()}>
+                    <form.AppForm>
+                      <SampleGeologicalContextFields />
                     </form.AppForm>
                   </FormSection>
                 </TabsContent>

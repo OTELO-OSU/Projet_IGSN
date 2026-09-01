@@ -22,6 +22,7 @@ import {
   availabilityStatusLabel,
   collectionMethodLabel,
   existenceStatusLabel,
+  geomorphologicalEnvironmentLabel,
   materialPathLabel,
   metamorphicFaciesLabel,
   natureLabel,
@@ -49,6 +50,8 @@ export function SampleView({
     description,
     condition,
     scientificContext,
+    geologicalContextDescription,
+    geomorphologicalEnvironment,
     institutionalOrganization,
     institutionalOsu,
     institutionalLaboratory,
@@ -143,6 +146,25 @@ export function SampleView({
       id: "location",
       title: m.sample_section_location(),
       content: <LocationView location={location} />,
+    },
+    (geologicalContextDescription != null ||
+      geomorphologicalEnvironment != null) && {
+      id: "geological-context",
+      title: m.sample_section_geological_context(),
+      content: (
+        <FieldRows>
+          <FieldRow
+            label={m.sample_field_geological_context_description()}
+            value={geologicalContextDescription}
+          />
+          <BreadcrumbFieldRow
+            id="sample-field-environment"
+            label={m.sample_field_environment()}
+            path={geomorphologicalEnvironment}
+            pathLabel={geomorphologicalEnvironmentLabel}
+          />
+        </FieldRows>
+      ),
     },
     condition && {
       id: "condition",

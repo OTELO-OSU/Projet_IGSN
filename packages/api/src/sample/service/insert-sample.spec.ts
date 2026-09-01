@@ -59,6 +59,8 @@ describe("insertSample", () => {
       expect(created.material).toBeNull();
       expect(created.specificName).toBeNull();
       expect(created.collectionMethodDescription).toBeNull();
+      expect(created.geologicalContextDescription).toBeNull();
+      expect(created.geomorphologicalEnvironment).toBeNull();
     },
   );
 
@@ -71,6 +73,8 @@ describe("insertSample", () => {
       collectionMethod: "coring.gravity_corer.giant",
       collectionMethodDescription: "Deployed from the aft A-frame",
       specificName: "MC-2026-007",
+      geologicalContextDescription: "Volcanic pile above a\nfossil beach",
+      geomorphologicalEnvironment: "marine_zone.fjord",
     });
     // Assert
     expect(created).toMatchObject({
@@ -80,6 +84,8 @@ describe("insertSample", () => {
       collectionMethod: "coring.gravity_corer.giant",
       collectionMethodDescription: "Deployed from the aft A-frame",
       specificName: "MC-2026-007",
+      geologicalContextDescription: "Volcanic pile above a\nfossil beach",
+      geomorphologicalEnvironment: "marine_zone.fjord",
     });
     expect(created.createdAt).toBeInstanceOf(Date);
 

@@ -158,6 +158,8 @@ export function toSample(
     metamorphicFacies: row.metamorphic_facies,
     collectionMethod: row.collection_method,
     collectionMethodDescription: row.collection_method_description,
+    geologicalContextDescription: row.geological_context_description,
+    geomorphologicalEnvironment: row.geomorphological_environment,
     specificName: row.specific_name,
     location: toLocation(row),
     description: toDescription(row),

@@ -17,6 +17,8 @@ export const sampleColumns = (input: CreateSample) => ({
   metamorphic_facies: input.metamorphicFacies ?? null,
   collection_method: input.collectionMethod ?? null,
   collection_method_description: input.collectionMethodDescription ?? null,
+  geological_context_description: input.geologicalContextDescription ?? null,
+  geomorphological_environment: input.geomorphologicalEnvironment ?? null,
   specific_name: input.specificName ?? null,
   existence_status: input.existenceStatus ?? null,
   availability_status: input.availabilityStatus ?? null,
