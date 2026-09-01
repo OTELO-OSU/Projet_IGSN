@@ -8,7 +8,9 @@ type SaveMenuAction = "Withdraw" | "Tombstone";
 export function sampleEditPage(page: Page) {
   const openTab = (name: string) => page.getByRole("tab", { name }).click();
   const pick = async (field: string, label: string) => {
-    const combobox = page.getByRole("combobox", { name: field });
+    const combobox = page.getByRole("combobox", {
+      name: new RegExp(`^${field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`),
+    });
     await expect(async () => {
       if ((await combobox.innerText()).trim() !== label) {
         await combobox.click();
