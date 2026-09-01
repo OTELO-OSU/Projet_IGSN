@@ -4,7 +4,6 @@ import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-conte
 
 import { ALL_ORGANIZATION_ITEMS } from "#/institutional-groups/to-items.ts";
 import { m } from "#/paraglide/messages.js";
-import { organizationItems } from "#/samples/organization-items.ts";
 import {
   collectionOriginLabel,
   provenanceStatusLabel,
