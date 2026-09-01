@@ -27,6 +27,9 @@ export const publishableSample = {
     collectionCurator: "Georges Cuvier",
     collectionOrigin: "scientific_expedition" as const,
   },
+  repository: {
+    currentArchive: "02feahw73",
+  },
 } satisfies CreateSample;
 
 export const attachGroup = (

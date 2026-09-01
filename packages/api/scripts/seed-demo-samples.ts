@@ -1465,6 +1465,12 @@ const RECENT_CONTEXT: SampleRow["scientificContext"] = {
   collectorName: "Claire Martin",
 };
 
+const DEMO_REPOSITORY: SampleRow["repository"] = {
+  currentArchive: "02feahw73",
+  currentArchiveContact: "collections@insu.cnrs.fr",
+  collectionName: "Solid Earth demo collection",
+};
+
 const HISTORICAL_CONTEXT: SampleRow["scientificContext"] = {
   provenanceStatus: "historical_specimen",
   collectionCurator: "Paul Bernard",
@@ -1485,6 +1491,7 @@ export const DEMO_SAMPLES: SampleRow[] = [...PUBLISHED, ...DRAFTS].map(
             scientificContext:
               row.scientificContext ??
               (index % 2 === 0 ? RECENT_CONTEXT : HISTORICAL_CONTEXT),
+            repository: row.repository ?? DEMO_REPOSITORY,
             existenceStatus: row.existenceStatus ?? "exists",
             availabilityStatus: row.availabilityStatus ?? "available",
           }

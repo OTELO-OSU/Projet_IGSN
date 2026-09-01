@@ -144,6 +144,11 @@ export function sampleEditPage(page: Page) {
       await pick("Provenance status", "Historical collection");
       await page.getByLabel(/collection curator/i).fill("Paul Bernard");
       await pick("Collection origin", "Scientific expedition");
+      await openTab("Repository");
+      await pick(
+        "Current archive",
+        "Centre National de la Recherche Scientifique (CNRS)",
+      );
     },
     publish: () => confirmStatusChange("Save & Publish", "Publish sample"),
     publishAsWithdrawn: async () => {

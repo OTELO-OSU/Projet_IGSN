@@ -13,7 +13,7 @@ export function FieldRow({ id, label, value }: FieldRowProps) {
       <dt id={id} className="text-muted-foreground w-40">
         {label}
       </dt>
-      <dd className="font-medium whitespace-pre-line">{value}</dd>
+      <dd className="font-medium wrap-anywhere whitespace-pre-line">{value}</dd>
     </div>
   );
 }

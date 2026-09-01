@@ -26,7 +26,7 @@ Domain naming the form's field names is deliberate: it is the only way one entry
 
 **Frozen inputs are disabled by a form-level resolver, with no marker.** No control decides for itself that publication freezes it: `SampleForm` provides a `FieldDisabledProvider` holding `publishedSampleFrozenField(provenanceStatus, storedMaterial)`, a predicate on the field name, and the kit's field controls read it through `useFieldDisabled(disabled)`, which ORs it with their own dependent-field reason. A control with no field context asks by name instead (`useIsFieldDisabled()`), which is how the collection-date mode switch follows the dates it drives.
 
-**Deferred**: `repository.*`, `context.geotectonic` and `condition.preparation` / `state_of_conservation` / `transformation` have no `CreateSample` field yet. `CheckboxGroupField` has no field-level `disabled` and no locked field uses it, so the prop comes with the first lock that needs it.
+**Deferred**: `context.geotectonic` and `condition.preparation` / `state_of_conservation` / `transformation` have no `CreateSample` field yet. `repository.*` shipped with no lock-map entry: an archive moves and a contact person changes, so all five fields stay editable after publication, the same "everything is editable by default" rule as any other unlisted field. `CheckboxGroupField` has no field-level `disabled` and no locked field uses it, so the prop comes with the first lock that needs it.
 
 ### Rejected
 

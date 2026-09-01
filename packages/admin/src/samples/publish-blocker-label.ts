@@ -29,6 +29,7 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   collector_name_missing: m.publish_blocked_collector_name_missing,
   collection_curator_missing: m.publish_blocked_collection_curator_missing,
   collection_origin_missing: m.publish_blocked_collection_origin_missing,
+  current_archive_missing: m.publish_blocked_current_archive_missing,
   attachment_limit_exceeded: () =>
     m.publish_blocked_attachment_limit_exceeded({ limit: UPLOAD_LIMIT }),
   user_not_verified: m.publish_blocked_user_not_verified,

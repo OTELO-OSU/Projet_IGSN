@@ -102,6 +102,11 @@ type SampleTable = {
   sc_collection_curator: string | null;
   sc_collection_origin: string | null;
   sc_collection_context_description: string | null;
+  rep_current_archive: string | null;
+  rep_current_archive_contact: string | null;
+  rep_collection_name: string | null;
+  rep_original_archive: string | null;
+  rep_original_archive_contact: string | null;
   existence_status: string | null;
   availability_status: string | null;
   publication_year: number | null;

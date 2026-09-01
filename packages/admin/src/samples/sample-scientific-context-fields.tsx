@@ -1,20 +1,14 @@
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
-import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
-import { ORGANIZATIONS } from "@projet-igsn/domain/institutional-group/organization";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
+import { ALL_ORGANIZATION_ITEMS } from "#/institutional-groups/to-items.ts";
 import { m } from "#/paraglide/messages.js";
 import {
   collectionOriginLabel,
   provenanceStatusLabel,
 } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
-
-const organizationItems = ORGANIZATIONS.map((organization) => ({
-  value: organization.ror,
-  label: organizationLabel(organization.ror),
-}));
 
 const provenanceStatusItems = toComboboxItems(
   PROVENANCE_STATUSES,
@@ -54,7 +48,7 @@ export function SampleScientificContextFields() {
                     <field.MultiComboboxField
                       label={m.field_funder_organizations()}
                       requiredToPublish
-                      items={organizationItems}
+                      items={ALL_ORGANIZATION_ITEMS}
                       placeholder={m.organization_placeholder()}
                       searchPlaceholder={m.organization_search_placeholder()}
                       emptyText={m.organization_empty()}
@@ -94,7 +88,7 @@ export function SampleScientificContextFields() {
                     <field.MultiComboboxField
                       label={m.field_host_institution()}
                       requiredToPublish
-                      items={organizationItems}
+                      items={ALL_ORGANIZATION_ITEMS}
                       placeholder={m.organization_placeholder()}
                       searchPlaceholder={m.organization_search_placeholder()}
                       emptyText={m.organization_empty()}

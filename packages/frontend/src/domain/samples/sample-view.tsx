@@ -17,6 +17,7 @@ import { EconomicInterestView } from "#/domain/samples/economic-interest-view.ts
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { LinksView } from "#/domain/samples/links-view.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
+import { RepositoryView } from "#/domain/samples/repository-view.tsx";
 import { SampleHero } from "#/domain/samples/sample-hero.tsx";
 import {
   availabilityStatusLabel,
@@ -50,6 +51,7 @@ export function SampleView({
     description,
     condition,
     scientificContext,
+    repository,
     geologicalContextDescription,
     geomorphologicalEnvironment,
     institutionalOrganization,
@@ -175,6 +177,11 @@ export function SampleView({
       id: "scientific-context",
       title: m.sample_section_scientific_context(),
       content: <ScientificContextView scientificContext={scientificContext} />,
+    },
+    repository && {
+      id: "repository",
+      title: m.sample_section_repository(),
+      content: <RepositoryView repository={repository} />,
     },
     institutionalOrganization !== null && {
       id: "institution",

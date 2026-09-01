@@ -36,6 +36,7 @@ export const publishBlockerSchema = z.enum([
   "collector_name_missing",
   "collection_curator_missing",
   "collection_origin_missing",
+  "current_archive_missing",
   "attachment_limit_exceeded",
   "user_not_verified",
 ]);
@@ -53,6 +54,7 @@ export type PublishableFields = Pick<
   | "existenceStatus"
   | "availabilityStatus"
   | "scientificContext"
+  | "repository"
 >;
 
 export function toPublishableFields(
@@ -68,6 +70,7 @@ export function toPublishableFields(
     existenceStatus: sample.existenceStatus ?? null,
     availabilityStatus: sample.availabilityStatus ?? null,
     scientificContext: sample.scientificContext ?? null,
+    repository: sample.repository ?? null,
   };
 }
 
@@ -183,6 +186,10 @@ export function samplePublishBlockers(
       blockers.push("collection_curator_missing");
     if (context.collectionOrigin == null)
       blockers.push("collection_origin_missing");
+  }
+
+  if (sample.repository?.currentArchive == null) {
+    blockers.push("current_archive_missing");
   }
 
   if (sample.attachments != null && sample.attachments.length > uploadLimit) {
