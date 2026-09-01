@@ -1,9 +1,8 @@
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 
-import { ExternalLink } from "@projet-igsn/design-system/components/ui/external-link";
-
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
-import { OrgLink } from "#/domain/samples/org-link.tsx";
+import { OrcidLink } from "#/domain/samples/orcid-link.tsx";
+import { OrgLinksRow } from "#/domain/samples/org-links-row.tsx";
 import {
   collectionOriginLabel,
   provenanceStatusLabel,
@@ -18,36 +17,6 @@ type HistoricalSpecimen = Extract<
   ScientificContext,
   { provenanceStatus: "historical_specimen" }
 >;
-
-function OrgLinksRow({
-  label,
-  rors,
-}: {
-  label: string;
-  rors: string[] | null | undefined;
-}) {
-  if (!rors?.length) return null;
-  return (
-    <FieldRow
-      label={label}
-      value={
-        <ul className="flex flex-col gap-1">
-          {rors.map((ror) => (
-            <li key={ror}>
-              <OrgLink ror={ror} />
-            </li>
-          ))}
-        </ul>
-      }
-    />
-  );
-}
-
-function OrcidLink({ orcid }: { orcid: string }) {
-  return (
-    <ExternalLink href={`https://orcid.org/${orcid}`}>{orcid}</ExternalLink>
-  );
-}
 
 function RecentCollectionRows({ context }: { context: RecentCollection }) {
   return (

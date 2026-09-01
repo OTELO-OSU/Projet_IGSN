@@ -10,6 +10,8 @@ import { verticalValues } from "../location/vertical-values.ts";
 import { MATERIAL_PATHS } from "../material/classification.ts";
 import { isMaterialComplete } from "../material/is-complete.ts";
 import { faciesFor } from "../metamorphic-facies/vocabulary.ts";
+import { isSyntheticMaterial } from "../synthetic-details/is-synthetic-material.ts";
+import { needsStartingMaterialComposition } from "../synthetic-details/needs-starting-material-composition.ts";
 import { isSampleTypeComplete } from "../type/is-complete.ts";
 import { SAMPLE_TYPES } from "../type/vocabulary.ts";
 
@@ -37,6 +39,13 @@ export const publishBlockerSchema = z.enum([
   "collection_curator_missing",
   "collection_origin_missing",
   "current_archive_missing",
+  "synthetic_starting_material_nature_missing",
+  "synthetic_starting_material_form_missing",
+  "synthetic_starting_material_composition_missing",
+  "synthetic_final_product_missing",
+  "synthetic_experiment_duration_missing",
+  "synthetic_synthesis_date_missing",
+  "synthetic_operator_name_missing",
   "attachment_limit_exceeded",
   "user_not_verified",
 ]);
@@ -55,6 +64,7 @@ export type PublishableFields = Pick<
   | "availabilityStatus"
   | "scientificContext"
   | "repository"
+  | "syntheticDetails"
 >;
 
 export function toPublishableFields(
@@ -71,6 +81,7 @@ export function toPublishableFields(
     availabilityStatus: sample.availabilityStatus ?? null,
     scientificContext: sample.scientificContext ?? null,
     repository: sample.repository ?? null,
+    syntheticDetails: sample.syntheticDetails ?? null,
   };
 }
 
@@ -190,6 +201,38 @@ export function samplePublishBlockers(
 
   if (sample.repository?.currentArchive == null) {
     blockers.push("current_archive_missing");
+  }
+
+  if (materialComplete && isSyntheticMaterial(sample.material)) {
+    const details = sample.syntheticDetails ?? {};
+    const nature = details.startingMaterialNature;
+    if (nature == null) {
+      blockers.push("synthetic_starting_material_nature_missing");
+    }
+    if (details.startingMaterialForm == null) {
+      blockers.push("synthetic_starting_material_form_missing");
+    }
+    if (
+      needsStartingMaterialComposition(nature) &&
+      details.startingMaterialComposition == null
+    ) {
+      blockers.push("synthetic_starting_material_composition_missing");
+    }
+    if (details.finalProduct == null) {
+      blockers.push("synthetic_final_product_missing");
+    }
+    if (
+      details.experimentDuration == null &&
+      details.experimentDurationNotRelevant !== true
+    ) {
+      blockers.push("synthetic_experiment_duration_missing");
+    }
+    if (details.synthesisDate == null) {
+      blockers.push("synthetic_synthesis_date_missing");
+    }
+    if (details.operatorName == null) {
+      blockers.push("synthetic_operator_name_missing");
+    }
   }
 
   if (sample.attachments != null && sample.attachments.length > uploadLimit) {

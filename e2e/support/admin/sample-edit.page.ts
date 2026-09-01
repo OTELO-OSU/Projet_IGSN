@@ -149,6 +149,16 @@ export function sampleEditPage(page: Page) {
         "Current archive",
         "Centre National de la Recherche Scientifique (CNRS)",
       );
+      await openTab("Synthetic details");
+      await pick("Starting material nature", "Natural");
+      await pick("Starting material form", "Powder");
+      await pick("Final product", "Glass");
+      await page.getByRole("switch", { name: "Duration not relevant" }).click();
+      await page
+        .getByRole("group", { name: /synthesis date/i })
+        .getByRole("textbox", { name: /^Date/ })
+        .fill("2025-06-15");
+      await page.getByLabel(/operator name/i).fill("Paul Bernard");
     },
     publish: () => confirmStatusChange("Save & Publish", "Publish sample"),
     publishAsWithdrawn: async () => {

@@ -45,7 +45,8 @@ type ScientificContextCandidate =
       collectionContextDescription: string | undefined;
     };
 
-const nonEmpty = (rors: string[]) => (rors.length > 0 ? rors : undefined);
+export const nonEmpty = (rors: string[]) =>
+  rors.length > 0 ? rors : undefined;
 
 export function composeScientificContext(
   draft: ScientificContextDraft,

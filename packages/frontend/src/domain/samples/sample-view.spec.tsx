@@ -38,6 +38,7 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   repository: null,
   geologicalContextDescription: null,
   geomorphologicalEnvironment: null,
+  syntheticDetails: null,
   location: null,
   age: null,
   links: [],
@@ -424,6 +425,36 @@ describe("SampleView", () => {
 
     await expect
       .element(screen.getByRole("heading", { name: "Groups" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show the synthetic details as their own section", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          syntheticDetails: {
+            experimentType: "fusion",
+            equipmentUsed: "Piston cylinder press",
+          },
+        })}
+      />,
+    );
+
+    await expect
+      .element(
+        screen.getByRole("heading", { level: 2, name: "Synthetic details" }),
+      )
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Piston cylinder press"))
+      .toBeInTheDocument();
+  });
+
+  it("should omit the Synthetic details section when the sample was not synthesised", async () => {
+    const screen = await render(<SampleView sample={sample()} />);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Synthetic details" }))
       .not.toBeInTheDocument();
   });
 

@@ -34,6 +34,7 @@ const sample: AdminSampleListItem = {
   condition: null,
   scientificContext: null,
   repository: null,
+  syntheticDetails: null,
   age: null,
   links: [],
   attachments: [],

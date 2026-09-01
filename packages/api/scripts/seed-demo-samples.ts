@@ -100,6 +100,23 @@ const geologicalAge = (
     geologicalUnit: unit,
   }) as const;
 
+const SYNTHESIS: SampleRow["syntheticDetails"] = {
+  startingMaterialNature: "synthetic",
+  startingMaterialForm: "powder",
+  startingMaterialComposition: "MgO + SiO2 oxide mix",
+  finalProduct: "mineral",
+  experimentType: "crystallization_dynamic",
+  synthesisDate: { start: "2025-03-03", end: "2025-03-05" },
+  operatorName: "Claire Martin",
+  operatorOrcid: "0000-0002-1825-0097",
+  researchStructure: ["02rx3b187"],
+  temperature: { value: 1450, unit: "celsius" },
+  pressure: { value: 1, unit: "gpa" },
+  experimentalProtocol: "Piston-cylinder run, water quench",
+  experimentPurpose: "Grow a reference crystal for microprobe standards",
+  equipmentUsed: "Piston cylinder press",
+};
+
 const PUBLISHED: DemoRow[] = [
   {
     name: "Brittany Granite",
@@ -802,6 +819,10 @@ const PUBLISHED: DemoRow[] = [
     material: "synthetic_rock_mineral",
     collectionMethod: "experimental_apparatus",
     description: on("2025-06-01"),
+    syntheticDetails: {
+      ...SYNTHESIS,
+      experimentDuration: { value: 12, unit: "hour" },
+    },
   },
   {
     name: "Synthetic Forsterite",
@@ -810,6 +831,7 @@ const PUBLISHED: DemoRow[] = [
     material: "synthetic_rock_mineral",
     collectionMethod: "experimental_apparatus",
     description: on("2024-11-30"),
+    syntheticDetails: { ...SYNTHESIS, experimentDurationNotRelevant: true },
   },
   {
     name: "Sahara Ordinary Chondrite",
@@ -1422,6 +1444,10 @@ const DRAFTS: DemoRow[] = [
     name: "Synthetic phase draft",
     nature: "hand_sample",
     material: "synthetic_rock_mineral",
+    syntheticDetails: {
+      startingMaterialNature: "natural",
+      experimentType: "deformation",
+    },
   },
   {
     name: "Sample series draft",

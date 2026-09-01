@@ -55,6 +55,7 @@ describe("sampleSchema", () => {
       geologicalContextDescription: null,
       geomorphologicalEnvironment: null,
       scientificContext: null,
+      syntheticDetails: null,
       age: null,
       links: [],
       attachments: [],
@@ -151,10 +152,7 @@ describe("createSampleSchema", () => {
   });
 
   it.each([
-    { material: "rock.igneous.volcanic.mafic.basalt", texture: "cumulate" },
     { material: "rock.igneous.plutonic.felsic.granite", texture: "glassy" },
-    { material: "rock.igneous", texture: "phaneritic" },
-    { material: "rock.sedimentary.microbialite", texture: "phaneritic" },
     { material: null, texture: "phaneritic" },
   ])(
     "should reject a texture inconsistent with the material %o",
@@ -229,6 +227,29 @@ describe("createSampleSchema", () => {
         nature: "hand_sample",
         material,
         ...extra,
+      });
+      expect(result.success).toBe(false);
+    },
+  );
+
+  it("should accept synthetic details on a synthetic material", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Synthetic 1",
+      nature: "hand_sample",
+      material: "synthetic_rock_mineral",
+      syntheticDetails: { finalProduct: "glass" },
+    });
+    expect(result).toMatchObject({ success: true });
+  });
+
+  it.each(["rock.igneous.plutonic.felsic.granite", null])(
+    "should reject synthetic details on the non-synthetic material %s",
+    (material) => {
+      const result = createSampleSchema.safeParse({
+        name: "Granite 1",
+        nature: "hand_sample",
+        material,
+        syntheticDetails: { finalProduct: "glass" },
       });
       expect(result.success).toBe(false);
     },

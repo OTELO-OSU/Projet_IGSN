@@ -33,6 +33,7 @@ import {
 import { ScientificContextView } from "#/domain/samples/scientific-context-view.tsx";
 import { SectionHeading } from "#/domain/samples/section-heading.tsx";
 import { SecurityView } from "#/domain/samples/security-view.tsx";
+import { SyntheticDetailsView } from "#/domain/samples/synthetic-details-view.tsx";
 import { useActiveSection } from "#/domain/samples/use-active-section.ts";
 import { m } from "#/paraglide/messages.js";
 
@@ -54,6 +55,7 @@ export function SampleView({
     repository,
     geologicalContextDescription,
     geomorphologicalEnvironment,
+    syntheticDetails,
     institutionalOrganization,
     institutionalOsu,
     institutionalLaboratory,
@@ -182,6 +184,11 @@ export function SampleView({
       id: "repository",
       title: m.sample_section_repository(),
       content: <RepositoryView repository={repository} />,
+    },
+    syntheticDetails && {
+      id: "synthetic-details",
+      title: m.sample_section_synthetic_details(),
+      content: <SyntheticDetailsView syntheticDetails={syntheticDetails} />,
     },
     institutionalOrganization !== null && {
       id: "institution",

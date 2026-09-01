@@ -1,18 +1,10 @@
 import type { Description } from "@projet-igsn/domain/sample/description/model";
 
-import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { volumeUnitLabel } from "@projet-igsn/domain/sample/description/volume-unit";
 
+import { dateRangeText } from "#/domain/samples/date-range-text.ts";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { m } from "#/paraglide/messages.js";
-
-const collectionDateText = ({
-  start,
-  end,
-}: NonNullable<Description["collectionDate"]>): string => {
-  const from = formatDate(new Date(start));
-  return start === end ? from : `${from} - ${formatDate(new Date(end))}`;
-};
 
 export function DescriptionView({ description }: { description: Description }) {
   const measurements = [
@@ -34,7 +26,7 @@ export function DescriptionView({ description }: { description: Description }) {
         label={m.sample_field_collection_date()}
         value={
           description.collectionDate &&
-          collectionDateText(description.collectionDate)
+          dateRangeText(description.collectionDate)
         }
       />
       <FieldRow

@@ -9,6 +9,7 @@ import { toLocationDraft } from "./compose-location.ts";
 import { toRepositoryDraft } from "./compose-repository.ts";
 import { toScientificContextDraft } from "./compose-scientific-context.ts";
 import { toSecurityDraft } from "./compose-security.ts";
+import { toSyntheticDetailsDraft } from "./compose-synthetic-details.ts";
 import {
   type SampleDraft,
   sampleDraftSchema,
@@ -33,6 +34,7 @@ const draft: SampleDraft = {
   security: toSecurityDraft(null),
   scientificContext: toScientificContextDraft(null),
   repository: toRepositoryDraft(null),
+  syntheticDetails: toSyntheticDetailsDraft(null),
   existenceStatus: "exists",
   availabilityStatus: "available",
   age: EMPTY_AGE_FORM_VALUES,

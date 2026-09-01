@@ -6,6 +6,7 @@ import { repositoryColumns } from "./repository-columns.ts";
 import { resourceTypeColumns } from "./resource-type-columns.ts";
 import { scientificContextColumns } from "./scientific-context-columns.ts";
 import { securityColumns } from "./security-columns.ts";
+import { syntheticDetailsColumns } from "./synthetic-details-columns.ts";
 import { toAgeColumns } from "./to-age-columns.ts";
 import { locationColumns } from "./to-location.ts";
 
@@ -28,6 +29,7 @@ export const sampleColumns = (input: CreateSample) => ({
   ...conditionColumns(input.condition),
   ...scientificContextColumns(input.scientificContext),
   ...repositoryColumns(input.repository),
+  ...syntheticDetailsColumns(input.syntheticDetails),
   ...toAgeColumns(input.age),
   ...securityColumns(input.security),
   ...resourceTypeColumns(input),
