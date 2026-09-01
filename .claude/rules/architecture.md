@@ -43,6 +43,8 @@ A sample's `status` (`draft | published | withdrawn | tombstone`) drives three s
 
 `domain/sample/publication/withdrawn-sample.ts` (`toWithdrawnSample`) is the only place that redacts a withdrawn sample, a field-by-field whitelist so a new `Sample` field stays private by default, and `public-sample.ts` (`toPublicSample`) picks it by status for the public `GET /samples/:igsn`; see ADR 0032.
 
+A published sample is public whole but for the fields `domain/sample/publication/redact-archive-contacts.ts` drops (the two archive contacts, admin-only), called by `toPublicSample` and by the public list route, the two public payloads.
+
 Why a sample cannot be published lives in ONE place, `domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`).
 
 - The api publish guard and the admin publish tooltip both derive from it.

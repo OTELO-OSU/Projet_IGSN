@@ -35,6 +35,7 @@ const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
   collector_name_missing: ["scientificContext", "collectorName"],
   collection_curator_missing: ["scientificContext", "collectionCurator"],
   collection_origin_missing: ["scientificContext", "collectionOrigin"],
+  current_archive_missing: ["repository", "currentArchive"],
   attachment_limit_exceeded: ["attachments"],
   user_not_verified: [],
 };

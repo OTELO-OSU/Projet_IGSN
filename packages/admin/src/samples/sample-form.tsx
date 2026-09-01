@@ -44,6 +44,7 @@ import { toAgeInput } from "#/samples/age-form.ts";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
+import { composeRepository } from "#/samples/compose-repository.ts";
 import { composeScientificContext } from "#/samples/compose-scientific-context.ts";
 import {
   ConfirmMenuButton,
@@ -73,6 +74,7 @@ import { SampleGeologicalContextFields } from "#/samples/sample-geological-conte
 import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
 import { SampleManualGroupsField } from "#/samples/sample-manual-groups-field.tsx";
+import { SampleRepositoryFields } from "#/samples/sample-repository-fields.tsx";
 import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
 import { SampleSubmitButton } from "#/samples/sample-submit-button.tsx";
@@ -236,6 +238,7 @@ export function SampleForm({
         scientificContext: composeScientificContext(
           state.values.scientificContext,
         ),
+        repository: composeRepository(state.values.repository),
       })}
     >
       {({
@@ -249,6 +252,7 @@ export function SampleForm({
         availabilityStatus,
         age,
         scientificContext,
+        repository,
       }) => {
         const reasons = samplePublishBlockers(
           {
@@ -261,6 +265,7 @@ export function SampleForm({
             existenceStatus: existenceStatus ?? null,
             availabilityStatus: availabilityStatus ?? null,
             scientificContext,
+            repository,
             attachments: {
               length: attachmentChanges?.keptCount ?? attachments.length,
             },
@@ -410,6 +415,9 @@ export function SampleForm({
                 <TabsTrigger value="scientific-context">
                   {m.tab_scientific_context()}
                 </TabsTrigger>
+                <TabsTrigger value="repository">
+                  {m.tab_repository()}
+                </TabsTrigger>
                 {sampleId ? (
                   <TabsTrigger value="links">{m.tab_links()}</TabsTrigger>
                 ) : null}
@@ -545,6 +553,14 @@ export function SampleForm({
                 <FormSection title={m.section_scientific_context()}>
                   <form.AppForm>
                     <SampleScientificContextFields />
+                  </form.AppForm>
+                </FormSection>
+              </TabsContent>
+
+              <TabsContent value="repository" className="grid gap-4">
+                <FormSection title={m.section_repository()}>
+                  <form.AppForm>
+                    <SampleRepositoryFields />
                   </form.AppForm>
                 </FormSection>
               </TabsContent>

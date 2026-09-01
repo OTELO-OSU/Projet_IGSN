@@ -14,6 +14,17 @@ describe("toPublicSample", () => {
     expect(toPublicSample(sample)).toEqual(sample);
   });
 
+  it("should redact the archive contacts of a published sample", () => {
+    const archived = {
+      ...sample,
+      repository: { currentArchiveContact: "archivist@example.org" },
+    } as Sample;
+
+    expect(toPublicSample(archived)).toMatchObject({
+      repository: { currentArchiveContact: null },
+    });
+  });
+
   it("should redact a withdrawn sample", () => {
     const withdrawn = { ...sample, status: "withdrawn" } as Sample;
     expect(toPublicSample(withdrawn)).toEqual(toWithdrawnSample(withdrawn));

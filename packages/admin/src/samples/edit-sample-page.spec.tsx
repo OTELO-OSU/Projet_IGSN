@@ -139,6 +139,7 @@ function fakeApi(
       collectionCurator: "Georges Cuvier",
       collectionOrigin: "scientific_expedition",
     },
+    repository: { currentArchive: "02feahw73" },
     existenceStatus,
     availabilityStatus: allowedAvailabilityStatuses(existenceStatus)[0],
     publicationYear: status === "draft" ? null : 2026,

@@ -18,6 +18,7 @@ const base: Sample = {
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
   description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
   condition: null,
+  repository: { currentArchive: "02feahw73" },
   geologicalContextDescription: null,
   geomorphologicalEnvironment: null,
   scientificContext: {
@@ -55,6 +56,15 @@ describe("samplePublishBlockers", () => {
   it("should report no blockers when the type and material path are leaves", () => {
     expect(samplePublishBlockers(base)).toEqual([]);
   });
+
+  it.each([{ repository: null }, { repository: { currentArchive: null } }])(
+    "should report current_archive_missing for %o",
+    (overrides) => {
+      expect(samplePublishBlockers({ ...base, ...overrides })).toEqual([
+        "current_archive_missing",
+      ]);
+    },
+  );
 
   it("should report type_missing when type is null", () => {
     expect(samplePublishBlockers({ ...base, type: null })).toEqual([

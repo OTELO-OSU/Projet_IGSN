@@ -23,6 +23,7 @@ const withdrawn: Sample = {
   },
   description: { openDescription: "kept out of the public view" },
   condition: null,
+  repository: { currentArchive: "02feahw73" },
   geologicalContextDescription: "kept out of the public view",
   geomorphologicalEnvironment: "continental_zone.bedrock",
   scientificContext: {

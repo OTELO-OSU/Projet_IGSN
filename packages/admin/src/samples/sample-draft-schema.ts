@@ -36,6 +36,11 @@ import {
   toLocationDraft,
 } from "#/samples/compose-location.ts";
 import {
+  composeRepository,
+  type RepositoryDraft,
+  toRepositoryDraft,
+} from "#/samples/compose-repository.ts";
+import {
   composeScientificContext,
   type ScientificContextDraft,
   toScientificContextDraft,
@@ -65,6 +70,7 @@ export type SampleDraft = {
   condition: ConditionDraft;
   security: SecurityDraft;
   scientificContext: ScientificContextDraft;
+  repository: RepositoryDraft;
   existenceStatus: CreateSample["existenceStatus"] | undefined;
   availabilityStatus: CreateSample["availabilityStatus"] | undefined;
   age: AgeFormValues;
@@ -91,6 +97,7 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   condition: toConditionDraft(value?.condition),
   security: toSecurityDraft(value?.security),
   scientificContext: toScientificContextDraft(value?.scientificContext),
+  repository: toRepositoryDraft(value?.repository),
   existenceStatus: value?.existenceStatus ?? "exists",
   availabilityStatus: value?.availabilityStatus ?? "available",
   age: ageFormValues(value?.age),
@@ -119,6 +126,7 @@ const composeCreateSample = (draft: SampleDraft) => {
   const age = toAgeInput(draft.age);
   const security = composeSecurity(draft.security);
   const scientificContext = composeScientificContext(draft.scientificContext);
+  const repository = composeRepository(draft.repository);
   const links = composeLinks(draft.links);
   const economic = composeEconomicInterest(draft, material);
   return {
@@ -145,6 +153,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(condition ? { condition } : {}),
     ...(security ? { security } : {}),
     ...(scientificContext ? { scientificContext } : {}),
+    ...(repository ? { repository } : {}),
     ...(draft.existenceStatus
       ? { existenceStatus: draft.existenceStatus }
       : {}),

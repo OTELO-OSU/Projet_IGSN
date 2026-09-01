@@ -1,9 +1,9 @@
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 
 import { ExternalLink } from "@projet-igsn/design-system/components/ui/external-link";
-import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
+import { OrgLink } from "#/domain/samples/org-link.tsx";
 import {
   collectionOriginLabel,
   provenanceStatusLabel,
@@ -18,14 +18,6 @@ type HistoricalSpecimen = Extract<
   ScientificContext,
   { provenanceStatus: "historical_specimen" }
 >;
-
-function OrgLink({ ror }: { ror: string }) {
-  return (
-    <ExternalLink href={`https://ror.org/${ror}`}>
-      {organizationLabel(ror)}
-    </ExternalLink>
-  );
-}
 
 function OrgLinksRow({
   label,

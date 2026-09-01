@@ -1234,6 +1234,7 @@ describe("admin sample routes", () => {
             collectionCurator: "Georges Cuvier",
             collectionOrigin: "scientific_expedition",
           },
+          repository: { currentArchive: "02feahw73" },
         },
       },
       { headers: authHeader },

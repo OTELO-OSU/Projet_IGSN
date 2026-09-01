@@ -122,6 +122,16 @@ function toScientificContext(row: Selectable<DB["sample"]>) {
   return null;
 }
 
+function toRepository(row: Selectable<DB["sample"]>) {
+  return prune({
+    currentArchive: row.rep_current_archive,
+    currentArchiveContact: row.rep_current_archive_contact,
+    collectionName: row.rep_collection_name,
+    originalArchive: row.rep_original_archive,
+    originalArchiveContact: row.rep_original_archive_contact,
+  });
+}
+
 export function toSample(
   row: Selectable<DB["sample"]>,
   links: Selectable<DB["sample_link"]>[] = [],
@@ -165,6 +175,7 @@ export function toSample(
     description: toDescription(row),
     condition: toCondition(row),
     scientificContext: toScientificContext(row),
+    repository: toRepository(row),
     age,
     links: links.map((link) => ({
       id: link.id,

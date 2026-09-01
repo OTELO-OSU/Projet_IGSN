@@ -21,6 +21,8 @@ const publishableScientificContext = {
   collectionOrigin: "scientific_expedition",
 } as const;
 
+const publishableRepository = { currentArchive: "02feahw73" } as const;
+
 type Screen = Awaited<ReturnType<typeof render>>;
 
 async function renderLocation(
@@ -1257,6 +1259,7 @@ describe("SampleForm", () => {
           existenceStatus: "exists",
           availabilityStatus: "available",
           scientificContext: publishableScientificContext,
+          repository: publishableRepository,
         }}
         secondaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
         primaryAction={{ kind: "publish", label: "Save & Publish", onPublish }}
@@ -1286,6 +1289,7 @@ describe("SampleForm", () => {
           existenceStatus: "exists",
           availabilityStatus: "available",
           scientificContext: publishableScientificContext,
+          repository: publishableRepository,
         },
         "published",
       ),
@@ -1374,6 +1378,7 @@ describe("SampleForm", () => {
             existenceStatus: "exists",
             availabilityStatus: "available",
             scientificContext: publishableScientificContext,
+            repository: publishableRepository,
           }}
           secondaryAction={{
             kind: "submit",
@@ -1413,6 +1418,7 @@ describe("SampleForm", () => {
               collectionDate: { start: "2026-01-01", end: "2026-01-01" },
             },
             scientificContext: publishableScientificContext,
+            repository: publishableRepository,
           }}
           primaryAction={{
             kind: "publish",
@@ -2123,6 +2129,7 @@ const publishedFixture: CreateSample = {
   existenceStatus: "exists",
   availabilityStatus: "available",
   scientificContext: publishableScientificContext,
+  repository: publishableRepository,
 };
 
 const publishedRecentFixture: CreateSample = {

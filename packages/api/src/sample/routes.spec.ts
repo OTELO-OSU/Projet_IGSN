@@ -49,6 +49,7 @@ async function createSample(
           collectionCurator: "Georges Cuvier",
           collectionOrigin: "scientific_expedition",
         },
+        repository: { currentArchive: "02feahw73" },
       },
     },
     { headers: authHeader },
@@ -477,6 +478,44 @@ describe("public sample routes", () => {
           collectorName: null,
           collectionCurator: "Georges Cuvier",
         },
+      });
+    },
+  );
+
+  pgTest(
+    "should never expose the archive contacts on a public payload",
+    async ({ db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      const published = await createPublishedSample(
+        client,
+        "Rhyolite archivée",
+      );
+      await db
+        .updateTable("sample")
+        .set({
+          rep_current_archive_contact: "archivist@example.org",
+          rep_original_archive_contact: "museum@example.org",
+        })
+        .where("id", "=", published.id)
+        .execute();
+      // Act
+      const detail = await client.samples[":igsn"].$get({
+        param: { igsn: published.igsn! },
+      });
+      const list = await client.samples.$get({
+        query: { page: "1", perPage: "10" },
+      });
+      // Assert
+      const redacted = {
+        currentArchiveContact: null,
+        originalArchiveContact: null,
+      };
+      expect(await detail.json()).toMatchObject({
+        data: { repository: redacted },
+      });
+      expect(await list.json()).toMatchObject({
+        data: [{ repository: redacted }],
       });
     },
   );

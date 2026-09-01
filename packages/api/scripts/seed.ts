@@ -306,6 +306,12 @@ async function seedOwners(
 
 const SEED_PUBLICATION_YEAR = 2025;
 
+const SEED_REPOSITORY = {
+  currentArchive: "02feahw73",
+  currentArchiveContact: "collections@insu.cnrs.fr",
+  collectionName: "National rock reference collection",
+};
+
 export async function insertSamples(
   db: Kysely<DB>,
   rows: OwnedSampleRow[],
@@ -422,6 +428,7 @@ export const sampleRowSchema = sampleSchema
     existenceStatus: true,
     availabilityStatus: true,
     scientificContext: true,
+    repository: true,
     age: true,
     igsn: true,
   })
@@ -440,6 +447,7 @@ export const sampleRowSchema = sampleSchema
     existenceStatus: true,
     availabilityStatus: true,
     scientificContext: true,
+    repository: true,
     age: true,
     igsn: true,
   })
@@ -578,6 +586,7 @@ export const SEED_SAMPLES: SeedSample[] = [
       hostInstitution: ["02rx3b187"],
       collectorName: "Claire Martin",
     },
+    repository: SEED_REPOSITORY,
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a69"),
     status: "published",
   },
@@ -603,6 +612,7 @@ export const SEED_SAMPLES: SeedSample[] = [
       collectionOrigin: "scientific_expedition",
       collectionContextDescription: "Armorican Massif reference collection",
     },
+    repository: SEED_REPOSITORY,
     igsn: generateIgsnSuffix("01890a5d-ac96-774b-bcce-b302099a8057"),
     status: "published",
   },
@@ -632,6 +642,7 @@ export const SEED_SAMPLES: SeedSample[] = [
       hostInstitution: ["02rx3b187"],
       collectorName: "Claire Martin",
     },
+    repository: SEED_REPOSITORY,
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a70"),
     status: "withdrawn",
   },
@@ -661,6 +672,7 @@ export const SEED_SAMPLES: SeedSample[] = [
       hostInstitution: ["02rx3b187"],
       collectorName: "Claire Martin",
     },
+    repository: SEED_REPOSITORY,
     igsn: generateIgsnSuffix("01980e2d-6f9b-7cca-a0e3-1f2d3c4b5a71"),
     status: "tombstone",
   },

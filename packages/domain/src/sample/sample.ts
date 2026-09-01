@@ -25,6 +25,7 @@ import {
   metamorphicFaciesSchema,
 } from "./metamorphic-facies/vocabulary.ts";
 import { natureSchema } from "./nature.ts";
+import { repositorySchema } from "./repository/model.ts";
 import { resourceTypeSchema } from "./resource-type/vocabulary.ts";
 import { scientificContextSchema } from "./scientific-context/model.ts";
 import { securitySchema } from "./security/model.ts";
@@ -56,6 +57,7 @@ export const sampleSchema = z.object({
   location: locationSchema.nullable(),
   description: descriptionSchema.nullable(),
   condition: conditionSchema.nullable(),
+  repository: repositorySchema.nullable().default(null),
   geologicalContextDescription: freeTextSchema.nullable().default(null),
   geomorphologicalEnvironment: geomorphologicalEnvironmentSchema
     .nullable()
@@ -102,6 +104,7 @@ export const createSampleSchema = z
     location: locationSchema.nullish(),
     description: descriptionSchema.nullish(),
     condition: conditionSchema.nullish(),
+    repository: repositorySchema.nullish(),
     geologicalContextDescription: freeTextSchema.nullish(),
     geomorphologicalEnvironment: geomorphologicalEnvironmentSchema.nullish(),
     scientificContext: scientificContextSchema.nullish(),

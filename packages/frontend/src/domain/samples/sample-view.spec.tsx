@@ -1,5 +1,7 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
+import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
+
 import { renderWithRouter } from "../../../test/render-with-router.tsx";
 import { SampleView } from "./sample-view.tsx";
 
@@ -33,6 +35,7 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   description: null,
   condition: null,
   scientificContext: null,
+  repository: null,
   geologicalContextDescription: null,
   geomorphologicalEnvironment: null,
   location: null,
@@ -738,6 +741,64 @@ describe("SampleView", () => {
 
     await expect
       .element(screen.getByRole("heading", { name: "Geological context" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show the repository as its own section with the current archive linked to ror.org", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          repository: {
+            currentArchive: "03fd77x13",
+            collectionName: "Historic basalts",
+            originalArchive: "Museum of Nancy",
+          },
+        })}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Repository" }))
+      .toBeInTheDocument();
+    await expect
+      .element(
+        screen.getByRole("link", { name: organizationLabel("03fd77x13") }),
+      )
+      .toHaveAttribute("href", "https://ror.org/03fd77x13");
+    await expect
+      .element(screen.getByText("Historic basalts"))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Museum of Nancy"))
+      .toBeInTheDocument();
+  });
+
+  it("should never show the archive contacts, which stay private to the admin", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          repository: {
+            currentArchive: "03fd77x13",
+            currentArchiveContact: "archivist@example.org",
+            originalArchiveContact: "museum@example.org",
+          },
+        })}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("archivist@example.org"))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByText("museum@example.org"))
+      .not.toBeInTheDocument();
+  });
+
+  it("should omit the Repository section when the sample has no repository", async () => {
+    const screen = await render(<SampleView sample={sample()} />);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Repository" }))
       .not.toBeInTheDocument();
   });
 
