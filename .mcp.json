@@ -5,12 +5,9 @@
       "args": ["dlx", "@playwright/mcp@catalog:"]
     },
     "memnos": {
-      "type": "stdio",
       "command": "node",
-      "args": ["/home/node/dev/memnos/dist/src/server.js"],
-      "env": {
-        "MEMNOS_BUNDLE_PATH": "./knowledge"
-      }
+      "args": ["node_modules/memnos/dist/src/server.js"],
+      "env": { "MEMNOS_BUNDLE_PATH": "./knowledge" }
     }
   }
 }
