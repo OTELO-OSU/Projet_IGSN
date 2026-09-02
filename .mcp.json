@@ -3,6 +3,14 @@
     "playwright": {
       "command": "pnpm",
       "args": ["dlx", "@playwright/mcp@catalog:"]
+    },
+    "memnos": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/home/node/dev/memnos/dist/src/server.js"],
+      "env": {
+        "MEMNOS_BUNDLE_PATH": "./knowledge"
+      }
     }
   }
 }

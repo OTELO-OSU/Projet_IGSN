@@ -53,6 +53,11 @@
       "type": "volume",
       "source": "${devcontainerId}-tmp",
       "target": "/tmp"
+    },
+    {
+      "type": "bind",
+      "source": "${localEnv:HOME}/dev/memnos",
+      "target": "/home/node/dev/memnos"
     }
   ]
 }
