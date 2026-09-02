@@ -25,7 +25,7 @@ okf_version: "0.2"
 
 - [allowsLocation: the material-driven location gate](location-material-gate.md) - One predicate decides whether a material allows a location; the Location tab shows by default and hides only for a refusing material.
 - [Editable material levels after publication](material-levels-editable.md) - TreeNode.frozenWhenPublished marks the editable frontier per node; frozenMaterialPrefix derives the prefix a published sample must keep.
-- [IGSN identifier format and minting](igsn-identifier.md) - Minted IGSNs are a 26-char Crockford base32 suffix; legacy CNRS/TOAE identifiers are real IGSNs, accepted on read only.
+- [IGSN identifier format and minting](igsn-identifier.md) - Minted IGSNs are a 26-char Crockford base32 suffix, immutable once minted and never reassigned or removed; legacy CNRS/TOAE identifiers are real IGSNs, accepted on read only.
 - [Institutional groups (organisme / OSU / labo)](institutional-groups.md) - A static generated catalog forming a graph, not a chain; membership is three codes recorded on a user and snapshotted on a sample.
 - [Manual groups](manual-groups.md) - Curated group rows with explicit membership, orthogonal to the institutional catalog, attachable to a sample and frozen once it publishes.
 - [Personas and roles](personas-and-roles.md) - Reader, Contributor, Editor as per-sample roles, plus space manager and super admin as account-level reach.

@@ -2,6 +2,8 @@
 
 ## 2026-09-02
 
+- **Update**: IGSN identifier format and minting (igsn-identifier)
+
 - **Update**: IGSN registry (igsn-registry)
 - **Update**: IGSN registry (igsn-registry)
 - **Creation**: React and accessibility conventions (frontend-conventions)
