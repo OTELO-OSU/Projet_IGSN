@@ -4,6 +4,7 @@ packages:
 allowBuilds:
   esbuild: true
   msw: true
+  memnos@https://codeload.github.com/marmelab/memnos/tar.gz/ca542741e961876ca90eed4d0015eb97454227f9: true
 
 catalog:
   "@babel/core": ^7.29.0
@@ -79,6 +80,7 @@ catalog:
   papaparse: ^5.5.4
   "@types/papaparse": ^5.5.2
   json-diff-ts: ^4.10.4
+  memnos: github:marmelab/memnos
 
 catalogMode: strict
 
@@ -86,6 +88,7 @@ minimumReleaseAge: 4320
 minimumReleaseAgeExclude:
   - "@kysely-vitest/core"
   - "@kysely-vitest/postgres"
+  - "@suss/datalog@0.21.0"
   - kysely@0.29.4
 
 trustPolicy: no-downgrade
