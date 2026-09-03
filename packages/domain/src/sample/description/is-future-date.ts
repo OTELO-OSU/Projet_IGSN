@@ -5,5 +5,5 @@ const MAX_UTC_OFFSET_MS = 14 * 3_600_000;
 
 export function isFutureDate(isoDate: string): boolean {
   const lastTodayOnEarth = formatDate(new Date(Date.now() + MAX_UTC_OFFSET_MS));
-  return isoDate > lastTodayOnEarth;
+  return isoDate.slice(0, 10) > lastTodayOnEarth;
 }

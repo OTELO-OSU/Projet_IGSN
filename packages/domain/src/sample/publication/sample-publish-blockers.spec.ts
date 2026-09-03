@@ -16,7 +16,13 @@ const base: Sample = {
   collectionMethodDescription: null,
   specificName: "BAS-42-001",
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
-  description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
+  description: {
+    collectionDate: {
+      precision: "day",
+      start: "2026-01-01",
+      end: "2026-01-01",
+    },
+  },
   condition: null,
   repository: { currentArchive: "02feahw73" },
   geologicalContextDescription: null,
