@@ -57,18 +57,6 @@ export const conditionSchema = z
         params: { code: "storage_conditions_duplicate" },
       });
     }
-    if (
-      storage != null &&
-      storage.includes("no_specific_condition") &&
-      storage.length > 1
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["storageConditions"],
-        message: "no specific condition excludes every other storage condition",
-        params: { code: "storage_conditions_exclusive" },
-      });
-    }
     for (const reading of Object.keys(
       READING_STORAGE_CONDITION,
     ) as ControlledReading[]) {

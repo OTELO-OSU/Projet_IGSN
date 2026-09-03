@@ -64,20 +64,6 @@ describe("conditionSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("should accept no_specific_condition alone", () => {
-    const result = conditionSchema.safeParse({
-      storageConditions: ["no_specific_condition"],
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("should reject no_specific_condition combined with another condition", () => {
-    const result = conditionSchema.safeParse({
-      storageConditions: ["no_specific_condition", "light_controlled"],
-    });
-    expect(result.success).toBe(false);
-  });
-
   it("should reject duplicate storage conditions", () => {
     const result = conditionSchema.safeParse({
       storageConditions: ["light_controlled", "light_controlled"],
@@ -141,14 +127,6 @@ describe("conditionSchema", () => {
       expect(conditionSchema.safeParse(reading).success).toBe(false);
     },
   );
-
-  it("should reject a reading when no_specific_condition is the only storage condition", () => {
-    const result = conditionSchema.safeParse({
-      storageConditions: ["no_specific_condition"],
-      temperature: { type: "ambient" },
-    });
-    expect(result.success).toBe(false);
-  });
 
   it("should reject a blank specificConditions", () => {
     const result = conditionSchema.safeParse({ specificConditions: "   " });
