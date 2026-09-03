@@ -5,9 +5,6 @@ import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
-// A date input (native picker, no dependency): the form store holds an ISO
-// YYYY-MM-DD string, YYYY-MM-DDTHH:mm with `withTime`, or undefined when
-// blank, never a Date (no timezone).
 export function DateField({
   label,
   requiredToPublish = false,
