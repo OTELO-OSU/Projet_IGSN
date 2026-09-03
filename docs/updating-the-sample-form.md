@@ -222,6 +222,7 @@ const LOCKED_DESCRIPTION_FIELDS_TO_FORM_FIELDS = {
   collectionDate: [
     "description.collectionDateStart",
     "description.collectionDateEnd",
+    "description.collectionDateTimeZone",
   ],
 } as const;
 ```
