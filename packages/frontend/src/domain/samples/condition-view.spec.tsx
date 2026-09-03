@@ -111,7 +111,10 @@ describe("ConditionView", () => {
     await expect.element(screen.getByText("Paper bag")).toBeInTheDocument();
     await expect
       .element(screen.getByText("Storage conditions"))
-      .not.toBeInTheDocument();
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("No specific condition"))
+      .toBeInTheDocument();
     await expect
       .element(screen.getByText("Temperature", { exact: true }))
       .not.toBeInTheDocument();

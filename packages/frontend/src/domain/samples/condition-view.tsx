@@ -35,7 +35,11 @@ export function ConditionView({ condition }: { condition: Condition }) {
       />
       <FieldRow
         label={m.sample_field_storage_conditions()}
-        value={storageConditions?.map(storageConditionLabel).join(", ")}
+        value={
+          storageConditions
+            ? storageConditions.map(storageConditionLabel).join(", ")
+            : m.sample_storage_conditions_none()
+        }
       />
       <FieldRow
         label={m.sample_field_temperature()}
