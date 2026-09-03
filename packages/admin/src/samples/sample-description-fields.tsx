@@ -22,6 +22,15 @@ export function SampleDescriptionFields() {
         startLabel={m.field_collection_date_start()}
         endLabel={m.field_collection_date_end()}
         identicalMessage={m.collection_date_range_identical}
+        time={{
+          precisionName: "description.collectionDatePrecision",
+          timeZoneName: "description.collectionDateTimeZone",
+          modeLabel: m.collection_date_mode_time(),
+          zoneLabel: m.field_collection_time_zone(),
+          zonePlaceholder: m.time_zone_placeholder(),
+          zoneSearchPlaceholder: m.time_zone_search_placeholder(),
+          zoneEmptyText: m.time_zone_empty(),
+        }}
       />
 
       <form.AppField name="description.oriented">

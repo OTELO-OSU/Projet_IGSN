@@ -144,7 +144,11 @@ describe("sampleDraftSchema", () => {
       availabilityStatus: "available",
       manualGroupIds: [],
       description: {
-        collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+        collectionDate: {
+          precision: "day",
+          start: "2026-01-05",
+          end: "2026-01-05",
+        },
         mass: { value: 1.2, unit: "kg" },
       },
     });

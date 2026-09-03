@@ -1,3 +1,4 @@
+import type { DatePrecision } from "@projet-igsn/domain/sample/description/collection-date";
 import type { MassUnit } from "@projet-igsn/domain/sample/description/mass-unit";
 import type { Description } from "@projet-igsn/domain/sample/description/model";
 import type { SizeUnit } from "@projet-igsn/domain/sample/description/size-unit";
@@ -11,6 +12,8 @@ import {
 export type DescriptionDraft = {
   collectionDateStart: string | undefined;
   collectionDateEnd: string | undefined;
+  collectionDatePrecision: DatePrecision;
+  collectionDateTimeZone: string | undefined;
   oriented: "yes" | "no" | null | undefined;
   orientationExplanation: string | null | undefined;
   openDescription: string | null | undefined;
@@ -28,7 +31,12 @@ export type DescriptionDraft = {
 
 type DescriptionCandidate = {
   collectionDate:
-    | { start: string | undefined; end: string | undefined }
+    | {
+        precision: DatePrecision;
+        start: string | undefined;
+        end: string | undefined;
+        timeZone?: string | undefined;
+      }
     | undefined;
   oriented: boolean | undefined;
   orientationExplanation: string | undefined;
@@ -41,10 +49,20 @@ type DescriptionCandidate = {
 };
 
 function composeCollectionDate(draft: DescriptionDraft) {
-  return draft.collectionDateStart === undefined &&
+  if (
+    draft.collectionDateStart === undefined &&
     draft.collectionDateEnd === undefined
-    ? undefined
-    : { start: draft.collectionDateStart, end: draft.collectionDateEnd };
+  ) {
+    return undefined;
+  }
+  return {
+    precision: draft.collectionDatePrecision,
+    start: draft.collectionDateStart,
+    end: draft.collectionDateEnd,
+    ...(draft.collectionDatePrecision === "hour"
+      ? { timeZone: draft.collectionDateTimeZone }
+      : {}),
+  };
 }
 
 export const isOrientedYes = (
@@ -80,9 +98,15 @@ export function composeDescription(
 export function toDescriptionDraft(
   description: Description | null | undefined,
 ): DescriptionDraft {
+  const collectionDate = description?.collectionDate;
   return {
-    collectionDateStart: description?.collectionDate?.start,
-    collectionDateEnd: description?.collectionDate?.end,
+    collectionDateStart: collectionDate?.start,
+    collectionDateEnd: collectionDate?.end,
+    collectionDatePrecision: collectionDate?.precision ?? "day",
+    collectionDateTimeZone:
+      collectionDate?.precision === "hour"
+        ? collectionDate.timeZone
+        : undefined,
     oriented:
       description?.oriented == null
         ? undefined

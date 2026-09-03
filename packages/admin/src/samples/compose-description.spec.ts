@@ -26,7 +26,13 @@ describe("composeDescription", () => {
           collectionDateEnd: "2026-01-05",
         }),
       ),
-    ).toEqual({ collectionDate: { start: "2026-01-05", end: "2026-01-05" } });
+    ).toEqual({
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-05",
+        end: "2026-01-05",
+      },
+    });
   });
 
   it("should compose a range from its start and end", () => {
@@ -38,14 +44,56 @@ describe("composeDescription", () => {
         }),
       ),
     ).toEqual({
-      collectionDate: { start: "2026-01-05", end: "2026-02-10" },
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-05",
+        end: "2026-02-10",
+      },
+    });
+  });
+
+  it("should compose an hour-precision range with its time zone", () => {
+    expect(
+      composeDescription(
+        draft({
+          collectionDatePrecision: "hour",
+          collectionDateStart: "2026-01-05T08:30",
+          collectionDateEnd: "2026-01-05T17:00",
+          collectionDateTimeZone: "Europe/Paris",
+        }),
+      ),
+    ).toEqual({
+      collectionDate: {
+        precision: "hour",
+        start: "2026-01-05T08:30",
+        end: "2026-01-05T17:00",
+        timeZone: "Europe/Paris",
+      },
+    });
+  });
+
+  it("should drop the time zone left behind at day precision", () => {
+    expect(
+      composeDescription(
+        draft({
+          collectionDateStart: "2026-01-05",
+          collectionDateEnd: "2026-01-05",
+          collectionDateTimeZone: "Europe/Paris",
+        }),
+      ),
+    ).toEqual({
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-05",
+        end: "2026-01-05",
+      },
     });
   });
 
   it("should keep a half-filled range for the schema to reject", () => {
     expect(
       composeDescription(draft({ collectionDateStart: "2026-01-05" })),
-    ).toEqual({ collectionDate: { start: "2026-01-05" } });
+    ).toEqual({ collectionDate: { precision: "day", start: "2026-01-05" } });
   });
 
   it("should compose an oriented sample with its explanation", () => {
@@ -94,24 +142,53 @@ describe("composeDescription", () => {
 });
 
 describe("toDescriptionDraft", () => {
-  it("should return a draft with every field unset for a null description", () => {
-    expect(toDescriptionDraft(null)).toEqual({});
+  it("should return a day-precision draft with every field unset for a null description", () => {
+    expect(toDescriptionDraft(null)).toEqual({
+      collectionDatePrecision: "day",
+    });
   });
 
   it("should fill both range bounds from the stored collection date", () => {
     expect(
       toDescriptionDraft({
-        collectionDate: { start: "2026-01-05", end: "2026-02-10" },
+        collectionDate: {
+          precision: "day",
+          start: "2026-01-05",
+          end: "2026-02-10",
+        },
       }),
     ).toEqual({
+      collectionDatePrecision: "day",
       collectionDateStart: "2026-01-05",
       collectionDateEnd: "2026-02-10",
     });
   });
 
+  it("should fill the precision and time zone from an hour-precision collection date", () => {
+    expect(
+      toDescriptionDraft({
+        collectionDate: {
+          precision: "hour",
+          start: "2026-01-05T08:30",
+          end: "2026-01-05T17:00",
+          timeZone: "Europe/Paris",
+        },
+      }),
+    ).toEqual({
+      collectionDatePrecision: "hour",
+      collectionDateStart: "2026-01-05T08:30",
+      collectionDateEnd: "2026-01-05T17:00",
+      collectionDateTimeZone: "Europe/Paris",
+    });
+  });
+
   it.each<Description>([
     {
-      collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-05",
+        end: "2026-01-05",
+      },
       oriented: true,
       orientationExplanation: "Marked north face",
       openDescription: "Fine-grained basalt",
@@ -122,7 +199,12 @@ describe("toDescriptionDraft", () => {
       volume: { value: 250, unit: "cm3" },
     },
     {
-      collectionDate: { start: "2026-01-05", end: "2026-02-10" },
+      collectionDate: {
+        precision: "hour",
+        start: "2026-01-05T08:30",
+        end: "2026-02-10T17:00",
+        timeZone: "Europe/Paris",
+      },
       oriented: false,
     },
   ])("should round-trip through the draft", (description) => {

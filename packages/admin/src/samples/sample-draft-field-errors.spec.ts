@@ -117,6 +117,7 @@ describe("sampleDraftFieldErrors", () => {
         [
           { path: ["description", "collectionDate", "start"] },
           { path: ["description", "collectionDate", "end"] },
+          { path: ["description", "collectionDate", "timeZone"] },
           { path: ["description", "length", "value"] },
           { path: ["description", "mass", "unit"] },
           { path: ["description", "orientationExplanation"] },
@@ -126,6 +127,7 @@ describe("sampleDraftFieldErrors", () => {
     ).toEqual({
       "description.collectionDateStart": { message: "Invalid value." },
       "description.collectionDateEnd": { message: "Invalid value." },
+      "description.collectionDateTimeZone": { message: "Invalid value." },
       "description.lengthValue": {
         message: "Enter a value for the selected unit.",
       },
