@@ -19,6 +19,7 @@ export function DateRangeField({
   startLabel,
   endLabel,
   identicalMessage,
+  requiredToPublish = true,
 }: {
   prefix: DateRangePrefix;
   id: string;
@@ -28,6 +29,7 @@ export function DateRangeField({
   startLabel: string;
   endLabel: string;
   identicalMessage: () => string;
+  requiredToPublish?: boolean;
 }) {
   const startName = `${prefix}Start` as const;
   const endName = `${prefix}End` as const;
@@ -59,7 +61,7 @@ export function DateRangeField({
     <div role="group" aria-labelledby={`${id}-label`} className="grid gap-2">
       <div className="flex items-center gap-4">
         <span id={`${id}-label`} className="text-sm leading-none font-medium">
-          {withRequired(groupLabel, true)}
+          {withRequired(groupLabel, requiredToPublish)}
         </span>
         <div className="flex items-center gap-2">
           <Switch

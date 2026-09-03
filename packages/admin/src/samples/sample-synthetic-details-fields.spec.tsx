@@ -101,7 +101,7 @@ describe("SampleSyntheticDetailsFields", () => {
     await pickOption(screen, "Final product *", "Glass");
     await pickOption(screen, "Experiment type", "Fusion");
     await screen
-      .getByLabelText("Experiment duration", { exact: true })
+      .getByLabelText("Experiment duration *", { exact: true })
       .fill("3");
     await pickOption(screen, "Experiment duration unit *", "h");
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
@@ -234,13 +234,13 @@ describe("SampleSyntheticDetailsFields", () => {
     const screen = await renderSyntheticForm(onSubmit);
 
     await screen
-      .getByLabelText("Experiment duration", { exact: true })
+      .getByLabelText("Experiment duration *", { exact: true })
       .fill("3");
     await pickOption(screen, "Experiment duration unit *", "h");
     await screen.getByRole("switch", { name: "Duration not relevant" }).click();
 
     await expect
-      .element(screen.getByLabelText("Experiment duration", { exact: true }))
+      .element(screen.getByLabelText("Experiment duration *", { exact: true }))
       .not.toBeInTheDocument();
     await expect
       .element(
@@ -263,7 +263,7 @@ describe("SampleSyntheticDetailsFields", () => {
   });
 
   it.each([
-    { value: "Experiment duration", unit: "Experiment duration unit *" },
+    { value: "Experiment duration *", unit: "Experiment duration unit *" },
     { value: "Synthesis temperature", unit: "Synthesis temperature unit *" },
     { value: "Synthesis pressure", unit: "Synthesis pressure unit *" },
   ])(

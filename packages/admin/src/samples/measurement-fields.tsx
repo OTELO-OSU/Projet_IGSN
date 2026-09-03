@@ -64,18 +64,25 @@ export function MeasurementFieldPair({
   label,
   unitLabel,
   items,
+  requiredToPublish = false,
 }: {
   name: MeasurementName;
   selectValue: (values: SampleDraft) => number | undefined;
   label: () => string;
   unitLabel: () => string;
   items: ComboboxItem[];
+  requiredToPublish?: boolean;
 }) {
   const form = useSampleForm();
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <form.AppField name={`${name}Value`}>
-        {(field) => <field.NumberField label={label()} />}
+        {(field) => (
+          <field.NumberField
+            label={label()}
+            requiredToPublish={requiredToPublish}
+          />
+        )}
       </form.AppField>
       <form.Subscribe
         selector={(state) => hasMeasurementValue(selectValue(state.values))}

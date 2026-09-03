@@ -180,6 +180,7 @@ export function SampleSyntheticDetailsFields() {
               label={m.field_experiment_duration}
               unitLabel={m.field_experiment_duration_unit}
               items={durationUnitItems}
+              requiredToPublish
             />
           )
         }
@@ -194,6 +195,7 @@ export function SampleSyntheticDetailsFields() {
         startLabel={m.field_synthesis_date_start()}
         endLabel={m.field_synthesis_date_end()}
         identicalMessage={m.synthesis_date_range_identical}
+        requiredToPublish={false}
       />
 
       <form.AppField name="syntheticDetails.operatorName">
