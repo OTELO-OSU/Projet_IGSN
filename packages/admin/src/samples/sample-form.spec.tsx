@@ -23,6 +23,11 @@ const publishableScientificContext = {
 
 const publishableRepository = { currentArchive: "02feahw73" } as const;
 
+const NO_ANSWERS = {
+  description: { oriented: false },
+  security: { radioactivity: false, asbestosRich: false, chemicalRisk: false },
+} as const;
+
 type Screen = Awaited<ReturnType<typeof render>>;
 
 async function renderLocation(
@@ -111,12 +116,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -159,12 +159,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -197,12 +192,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -254,12 +244,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -292,12 +277,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -334,12 +314,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -403,12 +378,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -468,12 +438,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   }, 15000);
@@ -534,12 +499,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -598,12 +558,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -661,12 +616,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -739,12 +689,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   }, 15000);
@@ -798,12 +743,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -836,12 +776,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -882,12 +817,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -956,12 +886,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -993,12 +918,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -1039,12 +959,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
-        description: { oriented: false },
-        security: {
-          radioactivity: false,
-          asbestosRich: false,
-          chemicalRisk: false,
-        },
+        ...NO_ANSWERS,
         age: {
           numericAgeMin: 12000,
           numericAgeMax: 12000,

@@ -1,4 +1,5 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
@@ -6,13 +7,7 @@ import { useState } from "react";
 
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-type DateRangePrefix =
-  | "description.collectionDate"
-  | "syntheticDetails.synthesisDate";
-
-type TimePrecision = {
-  precisionName: "description.collectionDatePrecision";
-  timeZoneName: "description.collectionDateTimeZone";
+type TimeLabels = {
   modeLabel: string;
   zoneLabel: string;
   zonePlaceholder: string;
@@ -21,7 +16,6 @@ type TimePrecision = {
 };
 
 type DateRangeFieldProps = {
-  prefix: DateRangePrefix;
   id: string;
   groupLabel: string;
   rangeModeLabel: string;
@@ -30,13 +24,18 @@ type DateRangeFieldProps = {
   endLabel: string;
   identicalMessage: () => string;
   requiredToPublish?: boolean;
-  time?: TimePrecision;
-};
+} & (
+  | { prefix: "description.collectionDate"; time?: TimeLabels }
+  | { prefix: "syntheticDetails.synthesisDate"; time?: never }
+);
 
-const timeZoneItems = Intl.supportedValuesOf("timeZone").map((zone) => ({
-  value: zone,
-  label: zone,
-}));
+const PRECISION_NAME = "description.collectionDatePrecision";
+const TIME_ZONE_NAME = "description.collectionDateTimeZone";
+
+const timeZoneItems = toComboboxItems(
+  Intl.supportedValuesOf("timeZone"),
+  (zone) => zone,
+);
 
 export function DateRangeField({
   prefix,
@@ -57,9 +56,6 @@ export function DateRangeField({
   const [isRange, setIsRange] = useState(
     () => form.getFieldValue(startName) !== form.getFieldValue(endName),
   );
-  const isHourPrecision = () =>
-    time !== undefined && form.getFieldValue(time.precisionName) === "hour";
-
   const clearBoundErrors = () => {
     for (const name of [startName, endName]) {
       form.setFieldMeta(name, (meta) => ({ ...meta, errorMap: {} }));
@@ -75,8 +71,7 @@ export function DateRangeField({
   };
 
   const togglePrecision = (checked: boolean) => {
-    if (time === undefined) return;
-    form.setFieldValue(time.precisionName, checked ? "hour" : "day");
+    form.setFieldValue(PRECISION_NAME, checked ? "hour" : "day");
     for (const name of [startName, endName]) {
       const bound = form.getFieldValue(name);
       if (bound !== undefined) {
@@ -86,9 +81,9 @@ export function DateRangeField({
         );
       }
     }
-    if (checked && !form.getFieldValue(time.timeZoneName)) {
+    if (checked && !form.getFieldValue(TIME_ZONE_NAME)) {
       form.setFieldValue(
-        time.timeZoneName,
+        TIME_ZONE_NAME,
         Intl.DateTimeFormat().resolvedOptions().timeZone,
       );
     }
@@ -104,7 +99,12 @@ export function DateRangeField({
   };
 
   return (
-    <form.Subscribe selector={isHourPrecision}>
+    <form.Subscribe
+      selector={(state) =>
+        time !== undefined &&
+        state.values.description.collectionDatePrecision === "hour"
+      }
+    >
       {(isHour) => (
         <div
           role="group"
@@ -197,7 +197,7 @@ export function DateRangeField({
             )}
           </div>
           {time && isHour ? (
-            <form.AppField name={time.timeZoneName}>
+            <form.AppField name={TIME_ZONE_NAME}>
               {(field) => (
                 <field.ComboboxField
                   label={time.zoneLabel}

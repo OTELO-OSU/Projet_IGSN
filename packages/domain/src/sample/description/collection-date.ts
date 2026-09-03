@@ -3,10 +3,6 @@ import { z } from "zod";
 import { timeZoneSchema } from "../../date/time-zone.ts";
 import { dateRangeIssues } from "../date-range.ts";
 
-export const datePrecisionSchema = z.enum(["day", "hour"]);
-
-export type DatePrecision = z.infer<typeof datePrecisionSchema>;
-
 const localDateTimeSchema = z.iso
   .datetime({ local: true, precision: -1 })
   .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
@@ -28,3 +24,5 @@ export const collectionDateSchema = z
   .superRefine(dateRangeIssues("collection_date"));
 
 export type CollectionDate = z.infer<typeof collectionDateSchema>;
+
+export type DatePrecision = CollectionDate["precision"];

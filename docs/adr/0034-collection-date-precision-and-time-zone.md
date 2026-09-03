@@ -28,7 +28,7 @@ A sample's `collectionDate` was `{ start, end }` of `YYYY-MM-DD` strings (a sing
 
 ## Also decided (same tab, same ticket)
 
-The four yes/no comboboxes (`description.oriented`, `security.radioactivity`, `security.asbestosRich`, `security.chemicalRisk`) become switches defaulting to `false`. The third state, "not answered", is dropped: `description` and `security` are now always submitted, every hazard flag always present. This is the same reversibility class as the precision decision above (a stored-shape and default-value choice, not routine), hence recorded here rather than skipped as a routine change.
+The four yes/no comboboxes (`description.oriented`, `security.radioactivity`, `security.asbestosRich`, `security.chemicalRisk`) become switches defaulting to `false`. The third state, "not answered", is dropped: `description` and `security` are now always submitted, every hazard flag always present.
 
 ### Rejected
 

@@ -35,7 +35,7 @@ type DescriptionCandidate = {
         precision: DatePrecision;
         start: string | undefined;
         end: string | undefined;
-        timeZone?: string | undefined;
+        timeZone: string | undefined;
       }
     | undefined;
   oriented: boolean;
@@ -59,9 +59,10 @@ function composeCollectionDate(draft: DescriptionDraft) {
     precision: draft.collectionDatePrecision,
     start: draft.collectionDateStart,
     end: draft.collectionDateEnd,
-    ...(draft.collectionDatePrecision === "hour"
-      ? { timeZone: draft.collectionDateTimeZone }
-      : {}),
+    timeZone:
+      draft.collectionDatePrecision === "hour"
+        ? draft.collectionDateTimeZone
+        : undefined,
   };
 }
 

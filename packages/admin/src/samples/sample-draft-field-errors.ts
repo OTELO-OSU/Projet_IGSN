@@ -15,6 +15,7 @@ const DATE_RANGE_PATH =
   /^(description\.collectionDate|syntheticDetails\.synthesisDate)(?:\.(start|end|timeZone))?$/;
 
 const DATE_RANGE_SUFFIXES: Record<string, string> = {
+  start: "Start",
   end: "End",
   timeZone: "TimeZone",
 };
@@ -62,8 +63,7 @@ const draftFieldName = (path: string, draft: DraftContext): string => {
     return `location.${path.slice("location.region.".length)}`;
   if (path === "location") return "location.type";
   const range = DATE_RANGE_PATH.exec(path);
-  if (range)
-    return `${range[1]}${DATE_RANGE_SUFFIXES[range[2] ?? ""] ?? "Start"}`;
+  if (range) return `${range[1]}${DATE_RANGE_SUFFIXES[range[2] ?? "start"]}`;
   const measurement = MEASUREMENT_PATH.exec(path) ?? READING_PATH.exec(path);
   if (measurement)
     return `${measurement[1]}.${measurement[2]}${

@@ -17,8 +17,6 @@ export function SampleDescriptionFields() {
         endLabel={m.field_collection_date_end()}
         identicalMessage={m.collection_date_range_identical}
         time={{
-          precisionName: "description.collectionDatePrecision",
-          timeZoneName: "description.collectionDateTimeZone",
           modeLabel: m.collection_date_mode_time(),
           zoneLabel: m.field_collection_time_zone(),
           zonePlaceholder: m.time_zone_placeholder(),
