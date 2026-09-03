@@ -18,7 +18,6 @@ export function TextField({
   multiline = false,
   number = false,
   disabled = false,
-  // a draft must save without the value.
   requiredToPublish = false,
   hint,
   placeholder,

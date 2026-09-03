@@ -31,7 +31,6 @@ export function FieldError({
   error,
   errorId,
 }: Pick<FieldErrorState, "error" | "errorId">) {
-  // The empty line keeps the field's height stable when an error appears.
   return (
     <div className="min-h-5">
       {error ? (

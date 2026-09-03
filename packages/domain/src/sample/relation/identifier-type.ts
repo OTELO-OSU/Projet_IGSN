@@ -1,6 +1,5 @@
 import { z } from "zod";
 
-// Declaration order is the picker order: the format-validated types lead.
 export const IDENTIFIER_TYPES = [
   "igsn",
   "doi",
