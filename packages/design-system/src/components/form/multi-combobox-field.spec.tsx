@@ -135,6 +135,23 @@ describe("MultiComboboxField", () => {
       .toBeEnabled();
   });
 
+  it("should hide the placeholder once a value is picked", async () => {
+    await render(<Harness />);
+
+    await expect.element(page.getByText("Add elements")).toBeVisible();
+
+    await page.getByRole("combobox", { name: "Elements" }).click();
+    await page.getByRole("option", { name: "Copper" }).click();
+
+    await expect
+      .element(page.getByText("Add elements"))
+      .not.toBeInTheDocument();
+
+    await page.getByRole("button", { name: "Remove Copper" }).click();
+
+    await expect.element(page.getByText("Add elements")).toBeVisible();
+  });
+
   it("should submit every picked value", async () => {
     const onSubmit = vi.fn();
     await render(<Harness onSubmit={onSubmit} />);

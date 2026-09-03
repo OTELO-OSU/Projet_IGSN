@@ -1,6 +1,5 @@
 import { createFormHook } from "@tanstack/react-form";
 
-import { CheckboxGroupField } from "./checkbox-group-field.tsx";
 import { ComboboxField } from "./combobox-field.tsx";
 import { DateField } from "./date-field.tsx";
 import { fieldContext, formContext } from "./form-hook-contexts.tsx";
@@ -20,7 +19,6 @@ export const { useAppForm, useTypedAppFormContext } = createFormHook({
     ComboboxField,
     MultiComboboxField,
     DateField,
-    CheckboxGroupField,
   },
   formComponents: { SubmitButton },
   fieldContext,
