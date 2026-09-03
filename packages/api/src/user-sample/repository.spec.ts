@@ -258,6 +258,39 @@ describe("userSampleRepository", () => {
   });
 
   pgTest(
+    "should release the edit lock of a removed contributor",
+    async ({ db }) => {
+      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const contributor = await insertUser(db, "contributor@univ-lorraine.fr");
+      const sample = await insertSample(db, draft);
+      const repository = createUserSampleRepository(db);
+      await repository.addOwner(sample.id, owner.id);
+      await repository.addCollaborator(
+        sample.id,
+        contributor.id,
+        "contributor",
+      );
+      await db
+        .insertInto("sample_edit_lock")
+        .values({
+          sample_id: sample.id,
+          user_id: contributor.id,
+          expires_at: new Date(Date.now() + 15 * 60 * 1000),
+        })
+        .execute();
+
+      await repository.removeCollaborator(sample.id, contributor.id);
+
+      const locks = await db
+        .selectFrom("sample_edit_lock")
+        .selectAll()
+        .where("sample_id", "=", sample.id)
+        .execute();
+      expect(locks).toEqual([]);
+    },
+  );
+
+  pgTest(
     "should leave the owner untouched when removed as contributor",
     async ({ db }) => {
       const owner = await insertUser(db, "owner@univ-lorraine.fr");
