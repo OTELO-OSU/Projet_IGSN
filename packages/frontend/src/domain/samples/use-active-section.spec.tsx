@@ -35,7 +35,7 @@ describe("useActiveSection", () => {
 
   it("should return the first section before anything is scrolled", async () => {
     const screen = await render(
-      <Probe ids={["sample", "description", "links"]} />,
+      <Probe ids={["sample", "description", "related-resources"]} />,
     );
 
     await expect
@@ -45,7 +45,7 @@ describe("useActiveSection", () => {
 
   it("should return the section scrolled into the reading band", async () => {
     const screen = await render(
-      <Probe ids={["sample", "description", "links"]} />,
+      <Probe ids={["sample", "description", "related-resources"]} />,
     );
 
     scrollToSection("description");
@@ -57,11 +57,13 @@ describe("useActiveSection", () => {
 
   it("should return the first section still in the band when several intersect", async () => {
     const screen = await render(
-      <Probe ids={["sample", "description", "links"]} />,
+      <Probe ids={["sample", "description", "related-resources"]} />,
     );
 
-    scrollToSection("links");
-    await expect.element(screen.getByText("active: links")).toBeInTheDocument();
+    scrollToSection("related-resources");
+    await expect
+      .element(screen.getByText("active: related-resources"))
+      .toBeInTheDocument();
 
     scrollToSection("description");
 

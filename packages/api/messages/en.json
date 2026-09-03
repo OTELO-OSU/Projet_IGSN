@@ -67,7 +67,7 @@
   "mail_sample_field_repository": "Repository",
   "mail_sample_field_syntheticDetails": "Synthetic details",
   "mail_sample_field_age": "Age",
-  "mail_sample_field_links": "Links",
+  "mail_sample_field_relations": "Related resources",
   "mail_sample_field_security": "Security",
   "mail_sample_field_existenceStatus": "Existence status",
   "mail_sample_field_availabilityStatus": "Availability status",

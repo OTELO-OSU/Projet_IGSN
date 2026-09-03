@@ -67,6 +67,8 @@ const ATTACHMENT: SampleAttachment = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c33cc",
   name: "data.csv",
   mediaType: "text/csv",
+  title: null,
+  targetResourceType: null,
   description: null,
 };
 
@@ -92,6 +94,8 @@ const overLimitAttachments: SampleAttachment[] = Array.from(
     id: `3f2504e0-4f89-41d3-9a0c-03050000000${i}`,
     name: `legacy-${i}.csv`,
     mediaType: "text/csv",
+    title: null,
+    targetResourceType: null,
     description: null,
   }),
 );
@@ -845,7 +849,7 @@ describe("EditSamplePage", () => {
 
     await save.click();
 
-    await screen.getByRole("tab", { name: "Links" }).click();
+    await screen.getByRole("tab", { name: "Related resources" }).click();
     await screen.getByRole("button", { name: "Delete legacy-0.csv" }).click();
     await expect.element(publish).toBeEnabled();
 
@@ -966,12 +970,12 @@ describe("EditSamplePage", () => {
       .toHaveTextContent("Sample saved");
   });
 
-  it("should upload files staged in the Links tab only when saving, before the save", async () => {
+  it("should upload files staged in the Related resources tab only when saving, before the save", async () => {
     FakeXhr.instances = [];
     vi.stubGlobal("XMLHttpRequest", FakeXhr);
     const { screen, calls } = await renderEditPage();
 
-    await screen.getByRole("tab", { name: "Links" }).click();
+    await screen.getByRole("tab", { name: "Related resources" }).click();
     await screen
       .getByLabelText("Browse files")
       .upload([new File(["col1\n1\n"], "data.csv", { type: "text/csv" })]);
@@ -1033,7 +1037,7 @@ describe("EditSamplePage", () => {
 
     it("should let no attachment be added, deleted or described while another user holds the lock", async () => {
       const { screen } = await renderEditPageLockedBy(PIERRE);
-      await screen.getByRole("tab", { name: "Links" }).click();
+      await screen.getByRole("tab", { name: "Related resources" }).click();
 
       await expect
         .element(screen.getByRole("button", { name: "Download data.csv" }))
@@ -1044,11 +1048,15 @@ describe("EditSamplePage", () => {
       await expect
         .element(screen.getByLabelText("Description of data.csv"))
         .toBeDisabled();
+      await expect.element(screen.getByLabelText("Title")).toBeDisabled();
+      await expect
+        .element(screen.getByRole("combobox", { name: "Resource type" }))
+        .toBeDisabled();
       expect(
         screen.getByRole("button", { name: "Browse files" }).elements(),
       ).toHaveLength(0);
       expect(
-        screen.getByRole("button", { name: "Add a link" }).elements(),
+        screen.getByRole("button", { name: "Add a relation" }).elements(),
       ).toHaveLength(0);
     });
 
@@ -1122,7 +1130,7 @@ describe("EditSamplePage", () => {
     vi.stubGlobal("XMLHttpRequest", FakeXhr);
     const { screen, calls } = await renderEditPage();
 
-    await screen.getByRole("tab", { name: "Links" }).click();
+    await screen.getByRole("tab", { name: "Related resources" }).click();
     await screen
       .getByLabelText("Browse files")
       .upload([new File(["col1\n1\n"], "data.csv", { type: "text/csv" })]);

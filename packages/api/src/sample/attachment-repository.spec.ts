@@ -18,6 +18,8 @@ const content = new TextEncoder().encode("col1,col2\n1,2\n");
 const input = {
   name: "measurements.csv",
   mediaType: "text/csv",
+  title: "XRF measurements",
+  targetResourceType: "dataset" as const,
   description: "Raw XRF measurements",
 };
 
@@ -51,6 +53,8 @@ describe("sampleAttachmentRepository", () => {
       expect(created).toMatchObject({
         name: "measurements.csv",
         mediaType: "text/csv",
+        title: "XRF measurements",
+        targetResourceType: "dataset",
         description: "Raw XRF measurements",
       });
       const found = await repository.getContent(sample.id, stored(created).id);
@@ -149,7 +153,7 @@ describe("sampleAttachmentRepository", () => {
   });
 
   pgTest(
-    "should reconcile: update listed descriptions, remove unlisted rows and blobs",
+    "should reconcile: update the listed resource metadata, remove unlisted rows and blobs",
     async ({ db }) => {
       const { repository, sample } = await arrange(db);
       const kept = stored(await repository.create(sample.id, input, content));
@@ -160,11 +164,21 @@ describe("sampleAttachmentRepository", () => {
       );
       // Act
       await repository.reconcile(sample.id, [
-        { id: kept.id, description: "Calibrated measurements" },
+        {
+          id: kept.id,
+          title: "Calibrated XRF measurements",
+          targetResourceType: "report",
+          description: "Calibrated measurements",
+        },
       ]);
       // Assert
       expect((await readSample(db, sample.id))?.attachments).toEqual([
-        { ...kept, description: "Calibrated measurements" },
+        {
+          ...kept,
+          title: "Calibrated XRF measurements",
+          targetResourceType: "report",
+          description: "Calibrated measurements",
+        },
       ]);
       expect(await readdir(join(dir, sample.id))).not.toContain(
         `${stored(dropped).id}-photo.jpg`,
@@ -200,7 +214,12 @@ describe("sampleAttachmentRepository", () => {
       const otherCreated = await repository.create(other.id, input, content);
       // Act
       await repository.reconcile(other.id, [
-        { id: stored(created).id, description: "hijack" },
+        {
+          id: stored(created).id,
+          title: null,
+          targetResourceType: null,
+          description: "hijack",
+        },
       ]);
       // Assert
       expect((await readSample(db, sample.id))?.attachments).toEqual([created]);

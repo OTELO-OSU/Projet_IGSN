@@ -32,7 +32,7 @@ const withdrawn: Sample = {
   },
   syntheticDetails: null,
   age: null,
-  links: [],
+  relations: [],
   attachments: [],
   security: { radioactivity: true, radioactivityExplanation: "handle gloved" },
   existenceStatus: "exists",

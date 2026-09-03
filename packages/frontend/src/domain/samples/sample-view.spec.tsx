@@ -41,7 +41,7 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   syntheticDetails: null,
   location: null,
   age: null,
-  links: [],
+  relations: [],
   attachments: [],
   security: null,
   existenceStatus: null,
@@ -87,14 +87,22 @@ describe("SampleView", () => {
       .not.toHaveAttribute("aria-current");
   });
 
-  it("should show the Links section when the sample has links", async () => {
+  it("should show the related resources section when the sample has relations", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
-          links: [
+          relations: [
             {
               id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
-              url: "https://doi.org/10.1594/IEDA.100252",
+              relationType: "is_cited_by",
+              identifierType: "doi",
+              identifier: "https://doi.org/10.1594/IEDA.100252",
+              targetTitle: "IEDA companion dataset",
+              targetResourceType: null,
+              relationTypeInformation: null,
+              relatedMetadataScheme: null,
+              schemeURI: null,
+              schemeType: null,
               description: null,
             },
           ],
@@ -103,25 +111,25 @@ describe("SampleView", () => {
     );
 
     await expect
-      .element(screen.getByRole("heading", { level: 2, name: "Links" }))
+      .element(
+        screen.getByRole("heading", { level: 2, name: "Related resources" }),
+      )
       .toBeVisible();
     await expect
-      .element(
-        screen.getByRole("link", {
-          name: "https://doi.org/10.1594/IEDA.100252",
-        }),
-      )
+      .element(screen.getByRole("link", { name: "IEDA companion dataset" }))
       .toBeVisible();
   });
 
-  it("should hide the Links section when the sample has none", async () => {
+  it("should hide the related resources section when the sample has none", async () => {
     const screen = await render(<SampleView sample={sample()} />);
 
     await expect
       .element(screen.getByRole("heading", { level: 1, name: "Basalt 42" }))
       .toBeVisible();
     expect(
-      screen.getByRole("heading", { level: 2, name: "Links" }).query(),
+      screen
+        .getByRole("heading", { level: 2, name: "Related resources" })
+        .query(),
     ).toBeNull();
   });
 

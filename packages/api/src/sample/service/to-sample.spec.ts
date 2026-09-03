@@ -176,7 +176,7 @@ describe("toSample", () => {
       repository: null,
       syntheticDetails: null,
       age: null,
-      links: [],
+      relations: [],
       attachments: [],
       security: null,
       existenceStatus: "exists",
@@ -199,7 +199,7 @@ describe("toSample", () => {
     });
   });
 
-  it("should map link and attachment child rows", () => {
+  it("should map relation and attachment child rows", () => {
     // Act
     const sample = toSample(
       row,
@@ -207,7 +207,15 @@ describe("toSample", () => {
         {
           id: "018f4d3a-1f2b-7c00-8000-000000000001",
           sample_id: row.id,
-          url: "https://doi.org/10.1594/IEDA.100252",
+          relation_type: "has_metadata",
+          identifier_type: "doi",
+          identifier: "https://doi.org/10.1594/IEDA.100252",
+          target_title: "IEDA companion dataset",
+          target_resource_type: "dataset",
+          relation_type_information: null,
+          related_metadata_scheme: "DataCite",
+          scheme_uri: "https://schema.datacite.org/meta/kernel-4.6/",
+          scheme_type: "XSD",
           description: null,
         },
       ],
@@ -217,15 +225,25 @@ describe("toSample", () => {
           sample_id: row.id,
           name: "analysis.pdf",
           media_type: "application/pdf",
+          title: "XRF analysis",
+          target_resource_type: "report",
           description: "XRF analysis report",
         },
       ],
     );
     // Assert
-    expect(sample.links).toEqual([
+    expect(sample.relations).toEqual([
       {
         id: "018f4d3a-1f2b-7c00-8000-000000000001",
-        url: "https://doi.org/10.1594/IEDA.100252",
+        relationType: "has_metadata",
+        identifierType: "doi",
+        identifier: "https://doi.org/10.1594/IEDA.100252",
+        targetTitle: "IEDA companion dataset",
+        targetResourceType: "dataset",
+        relationTypeInformation: null,
+        relatedMetadataScheme: "DataCite",
+        schemeURI: "https://schema.datacite.org/meta/kernel-4.6/",
+        schemeType: "XSD",
         description: null,
       },
     ]);
@@ -234,18 +252,28 @@ describe("toSample", () => {
         id: "018f4d3a-1f2b-7c00-8000-000000000002",
         name: "analysis.pdf",
         mediaType: "application/pdf",
+        title: "XRF analysis",
+        targetResourceType: "report",
         description: "XRF analysis report",
       },
     ]);
   });
 
-  it("should throw when a link url is not a DOI url", () => {
+  it("should throw when a doi relation target is not a DOI url", () => {
     expect(() =>
       toSample(row, [
         {
           id: "018f4d3a-1f2b-7c00-8000-000000000001",
           sample_id: row.id,
-          url: "https://example.com/paper",
+          relation_type: "other",
+          identifier_type: "doi",
+          identifier: "https://example.com/paper",
+          target_title: "A related paper",
+          target_resource_type: null,
+          relation_type_information: null,
+          related_metadata_scheme: null,
+          scheme_uri: null,
+          scheme_type: null,
           description: null,
         },
       ]),

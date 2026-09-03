@@ -74,8 +74,8 @@ import {
 import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest-fields.tsx";
 import { SampleGeologicalContextFields } from "#/samples/sample-geological-context-fields.tsx";
 import { natureLabel } from "#/samples/sample-labels.ts";
-import { SampleLinksFields } from "#/samples/sample-links-fields.tsx";
 import { SampleManualGroupsField } from "#/samples/sample-manual-groups-field.tsx";
+import { SampleRelationsFields } from "#/samples/sample-relations-fields.tsx";
 import { SampleRepositoryFields } from "#/samples/sample-repository-fields.tsx";
 import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
 import { SampleSecurityFields } from "#/samples/sample-security-fields.tsx";
@@ -441,7 +441,9 @@ export function SampleForm({
                     </TabsTrigger>
                   ) : null}
                   {sampleId ? (
-                    <TabsTrigger value="links">{m.tab_links()}</TabsTrigger>
+                    <TabsTrigger value="related-resources">
+                      {m.tab_related_resources()}
+                    </TabsTrigger>
                   ) : null}
                 </TabsList>
 
@@ -601,9 +603,9 @@ export function SampleForm({
                 ) : null}
 
                 {sampleId ? (
-                  <TabsContent value="links" className="grid gap-6">
+                  <TabsContent value="related-resources" className="grid gap-6">
                     <form.AppForm>
-                      <SampleLinksFields />
+                      <SampleRelationsFields />
                     </form.AppForm>
                     {attachmentChanges ? (
                       <SampleAttachments

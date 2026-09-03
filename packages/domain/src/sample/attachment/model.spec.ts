@@ -4,6 +4,8 @@ const validAttachment = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "thin-section-analysis.pdf",
   mediaType: "application/pdf",
+  title: "XRF analysis of the thin section",
+  targetResourceType: "report",
   description: "XRF analysis report",
 };
 

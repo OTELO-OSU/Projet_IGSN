@@ -24,6 +24,8 @@ function toAttachment(
     id: row.id,
     name: row.name,
     mediaType: row.media_type,
+    title: row.title,
+    targetResourceType: row.target_resource_type,
     description: row.description,
   });
 }
@@ -68,6 +70,8 @@ export function createSampleAttachmentRepository(
             sample_id: sampleId,
             name: input.name,
             media_type: input.mediaType,
+            title: input.title,
+            target_resource_type: input.targetResourceType,
             description: input.description,
           })
           .returningAll()
@@ -79,7 +83,7 @@ export function createSampleAttachmentRepository(
 
     reconcile: (sampleId, attachments) =>
       withTransaction(db, async (trx) => {
-        const keep = new Map(attachments.map((a) => [a.id, a.description]));
+        const keep = new Map(attachments.map((a) => [a.id, a]));
         const existing = await trx
           .selectFrom("sample_attachment")
           .selectAll()
@@ -95,14 +99,16 @@ export function createSampleAttachmentRepository(
               await rm(pathFor(sampleId, row.id, row.name), { force: true });
               return;
             }
-            const description = keep.get(row.id) ?? null;
-            if (description !== row.description) {
-              await trx
-                .updateTable("sample_attachment")
-                .set({ description })
-                .where("id", "=", row.id)
-                .execute();
-            }
+            const submitted = keep.get(row.id)!;
+            await trx
+              .updateTable("sample_attachment")
+              .set({
+                title: submitted.title,
+                target_resource_type: submitted.targetResourceType,
+                description: submitted.description,
+              })
+              .where("id", "=", row.id)
+              .execute();
           }),
         );
       }),

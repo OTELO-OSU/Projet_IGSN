@@ -19,6 +19,8 @@ import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
 import { type Nature } from "./nature.ts";
 import { pathSegment } from "./path/segment.ts";
 import { vocabularyLabel } from "./path/vocabulary-label.ts";
+import { type RelationType } from "./relation/relation-type.ts";
+import { type RelationTargetResourceType } from "./relation/target-resource-type.ts";
 import { type CollectionOrigin } from "./scientific-context/collection-origin.ts";
 import { type ProvenanceStatus } from "./scientific-context/provenance-status.ts";
 import { type ExperimentType } from "./synthetic-details/experiment-type.ts";
@@ -60,6 +62,9 @@ type _experimentTypeKeys = AssertKeys<`experiment_type_${ExperimentType}`>;
 type _oceanSeaKeys = AssertKeys<`ocean_sea_${OceanSea}`>;
 type _verticalReferenceKeys =
   AssertKeys<`vertical_reference_${VerticalReference}`>;
+type _relationTypeKeys = AssertKeys<`relation_type_${RelationType}`>;
+type _relationTargetResourceTypeKeys =
+  AssertKeys<`relation_resource_type_${RelationTargetResourceType}`>;
 type _verticalReferenceSystemKeys =
   AssertKeys<`vertical_reference_system_${VerticalReferenceSystem}`>;
 
@@ -98,6 +103,10 @@ export type SampleLabels = {
   startingMaterialNatureLabel: (form: StartingMaterialNature) => string;
   finalProductLabel: (product: FinalProduct) => string;
   experimentTypeLabel: (type: ExperimentType) => string;
+  relationTypeLabel: (relationType: RelationType) => string;
+  relationTargetResourceTypeLabel: (
+    resourceType: RelationTargetResourceType,
+  ) => string;
 };
 
 const LABEL_KEY = {
@@ -130,6 +139,8 @@ const LABEL_KEY = {
   startingMaterialNatureLabel: ["starting_material_nature", "code"],
   finalProductLabel: ["final_product", "code"],
   experimentTypeLabel: ["experiment_type", "code"],
+  relationTypeLabel: ["relation_type", "code"],
+  relationTargetResourceTypeLabel: ["relation_resource_type", "code"],
 } satisfies Record<keyof SampleLabels, [string, "path" | "code"]>;
 
 export function createSampleLabels(m: Messages): SampleLabels {

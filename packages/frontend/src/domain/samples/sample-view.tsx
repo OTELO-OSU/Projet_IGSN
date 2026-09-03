@@ -15,8 +15,8 @@ import { ContactOwnerDialog } from "#/domain/samples/contact-owner-dialog.tsx";
 import { DescriptionView } from "#/domain/samples/description-view.tsx";
 import { EconomicInterestView } from "#/domain/samples/economic-interest-view.tsx";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
-import { LinksView } from "#/domain/samples/links-view.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
+import { RelationsView } from "#/domain/samples/relations-view.tsx";
 import { RepositoryView } from "#/domain/samples/repository-view.tsx";
 import { SampleHero } from "#/domain/samples/sample-hero.tsx";
 import {
@@ -67,7 +67,7 @@ export function SampleView({
     availabilityStatus,
     publicationYear,
     age,
-    links,
+    relations,
     attachments,
     resourceType,
     economicInterestElements,
@@ -258,11 +258,15 @@ export function SampleView({
       ),
     },
     igsn != null &&
-      (links.length > 0 || attachments.length > 0) && {
-        id: "links",
-        title: m.sample_section_links(),
+      (relations.length > 0 || attachments.length > 0) && {
+        id: "related-resources",
+        title: m.sample_section_related_resources(),
         content: (
-          <LinksView igsn={igsn} links={links} attachments={attachments} />
+          <RelationsView
+            igsn={igsn}
+            relations={relations}
+            attachments={attachments}
+          />
         ),
       },
   ].filter((section) => section != null && section !== false);

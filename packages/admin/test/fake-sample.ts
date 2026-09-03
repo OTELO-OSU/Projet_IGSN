@@ -17,7 +17,7 @@ export const fakeSample = {
   existenceStatus: null,
   availabilityStatus: null,
   age: null,
-  links: [],
+  relations: [],
   attachments: [],
   publicationYear: null,
   resourceType: null,

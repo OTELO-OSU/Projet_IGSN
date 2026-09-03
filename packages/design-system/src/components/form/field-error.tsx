@@ -31,9 +31,14 @@ export function FieldError({
   error,
   errorId,
 }: Pick<FieldErrorState, "error" | "errorId">) {
-  return error ? (
-    <p id={errorId} role="alert" className="text-destructive text-sm">
-      {error.message}
-    </p>
-  ) : null;
+  // The empty line keeps the field's height stable when an error appears.
+  return (
+    <div className="min-h-5">
+      {error ? (
+        <p id={errorId} role="alert" className="text-destructive text-sm">
+          {error.message}
+        </p>
+      ) : null}
+    </div>
+  );
 }

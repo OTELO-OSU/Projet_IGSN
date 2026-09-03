@@ -25,3 +25,7 @@ A sample can carry any number of related DOI links (url plus optional descriptio
 - Every sample read (get, list, publish) hydrates children with two batched queries, so there is no N+1 at list scale.
 - Blob and row move inside one transaction on create, so a commit failure can orphan a blob nothing references. Acceptable; a sweep can reclaim them if it ever matters.
 - Downloads are always `Content-Disposition: attachment` with `nosniff`: the media type is client-declared, so the browser must never render it inline.
+
+## Update, 2026-09-01
+
+`sample_link` generalized to `sample_relation`, carrying the DataCite-inspired relation vocabulary (`relationType`, `identifierType`, `targetURI`...) instead of a bare DOI url. Storage pattern unchanged: same child table shape, same wholesale replace on save.

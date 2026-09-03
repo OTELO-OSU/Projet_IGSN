@@ -32,12 +32,11 @@ export function sampleDetailPage(page: Page) {
       await expect(page.getByText("Nature")).toBeVisible();
       await expect(page.getByText(label)).toBeVisible();
     },
-    expectDoiLink: async (url: string, description: string) => {
-      const link = page.getByRole("link", { name: url });
+    expectRelation: async (title: string, identifier: string) => {
+      const link = page.getByRole("link", { name: title });
       await expect(link).toBeVisible();
-      await expect(link).toHaveAttribute("href", url);
+      await expect(link).toHaveAttribute("href", identifier);
       await expect(link).toHaveAttribute("target", "_blank");
-      await expect(page.getByText(description)).toBeVisible();
     },
     expectDeclaredBy: (owner: string) =>
       expect(
@@ -72,8 +71,8 @@ export function sampleDetailPage(page: Page) {
       expect(
         page.getByRole("region", { name: "Groups" }).getByText(name),
       ).toBeVisible(),
-    expectAttachment: (name: string) =>
-      expect(page.getByText(name, { exact: true })).toBeVisible(),
+    expectAttachment: (label: string) =>
+      expect(page.getByText(label, { exact: true })).toBeVisible(),
     attachmentDownloadHref: (name: string) =>
       page.getByRole("link", { name: `Download ${name}` }).getAttribute("href"),
   };

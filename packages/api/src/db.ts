@@ -151,10 +151,18 @@ type SampleEditLockTable = {
   expires_at: Date;
 };
 
-type SampleLinkTable = {
+type SampleRelationTable = {
   id: string;
   sample_id: string;
-  url: string;
+  relation_type: string;
+  identifier_type: string;
+  identifier: string;
+  target_title: string;
+  target_resource_type: string | null;
+  relation_type_information: string | null;
+  related_metadata_scheme: string | null;
+  scheme_uri: string | null;
+  scheme_type: string | null;
   description: string | null;
 };
 
@@ -163,6 +171,8 @@ type SampleAttachmentTable = {
   sample_id: string;
   name: string;
   media_type: string;
+  title: string | null;
+  target_resource_type: string | null;
   description: string | null;
 };
 
@@ -218,7 +228,7 @@ export type DB = {
   manual_group_member: ManualGroupMemberTable;
   sample: SampleTable;
   sample_manual_group: SampleManualGroupTable;
-  sample_link: SampleLinkTable;
+  sample_relation: SampleRelationTable;
   sample_attachment: SampleAttachmentTable;
   sample_edit_lock: SampleEditLockTable;
   user: UserTable;

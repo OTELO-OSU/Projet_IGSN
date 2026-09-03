@@ -3270,7 +3270,7 @@ describe("admin sample routes", () => {
     });
 
     pgTest(
-      "should leave no attachment, link, collaborator, group or lock row behind, nor its stored files",
+      "should leave no attachment, relation, collaborator, group or lock row behind, nor its stored files",
       async ({ db }) => {
         const app = createApp(db, { attachmentsDir }).app;
         const { caller, sample } = await arrangeDeletableSample(db);
@@ -3282,12 +3282,14 @@ describe("admin sample routes", () => {
           body: form,
         });
         await db
-          .insertInto("sample_link")
+          .insertInto("sample_relation")
           .values({
             id: crypto.randomUUID(),
             sample_id: sample.id,
-            url: "https://doi.org/10.1234/basalte",
-            description: null,
+            relation_type: "other",
+            identifier_type: "doi",
+            identifier: "https://doi.org/10.1234/basalte",
+            target_title: "Basalte dataset",
           })
           .execute();
         await db.insertInto("manual_group").values(GROUP).execute();
@@ -3303,8 +3305,8 @@ describe("admin sample routes", () => {
             .select("id")
             .where("sample_id", "=", sample.id)
             .execute(),
-          links: await db
-            .selectFrom("sample_link")
+          relations: await db
+            .selectFrom("sample_relation")
             .select("id")
             .where("sample_id", "=", sample.id)
             .execute(),
@@ -3325,7 +3327,7 @@ describe("admin sample routes", () => {
             .execute(),
         }).toEqual({
           attachments: [],
-          links: [],
+          relations: [],
           collaborators: [],
           groups: [],
           locks: [],
