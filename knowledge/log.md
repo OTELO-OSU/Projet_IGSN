@@ -1,5 +1,14 @@
 # Directory Update Log
 
+## 2026-09-03
+
+- **Creation**: Synthetic sample details (synthetic-details)
+- **Update**: Sample model (sample-model)
+- **Update**: allowsLocation: the material-driven location gate (location-material-gate)
+- **Update**: Publish blockers (publish-blockers)
+- **Update**: Post-publish field mutability (published-field-locks)
+- **Update**: Testing strategy (testing-strategy)
+
 ## 2026-09-02
 
 - **Update**: IGSN identifier format and minting (igsn-identifier)

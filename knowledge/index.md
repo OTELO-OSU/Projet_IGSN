@@ -34,6 +34,7 @@ okf_version: "0.2"
 - [Sample model](sample-model.md) - One wide sample row with flat nullable sub-blocks, two one-to-many child tables, and snapshotted institutional codes.
 - [Sample status lifecycle and its three predicates](sample-status-lifecycle.md) - status is draft | published | withdrawn | tombstone, read through three distinct predicates for permanence, public visibility and public resolution.
 - [Sample vocabularies as segment-keyed trees](vocabulary-tree.md) - Every sample vocabulary is one segment-keyed TreeNode tree in domain, expanded to flat dot-paths by expandPaths, with per-node completeness.
+- [Synthetic sample details](synthetic-details.md) - syntheticDetails is the sub-block a synthetic sample carries instead of a location, gated by isSyntheticMaterial and required in seven fields to publish.
 
 # feature
 
