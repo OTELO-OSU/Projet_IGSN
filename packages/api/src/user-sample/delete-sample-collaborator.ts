@@ -1,5 +1,6 @@
 import type { DB } from "../db.ts";
 
+import { releaseEditLock } from "../sample/service/release-edit-lock.ts";
 import { type Transactional } from "../transaction.ts";
 
 export async function deleteSampleCollaborator(
@@ -13,5 +14,7 @@ export async function deleteSampleCollaborator(
     .where("user_id", "=", userId)
     .where("role", "!=", "owner")
     .executeTakeFirst();
-  return result.numDeletedRows > 0n ? "removed" : "not_found";
+  if (result.numDeletedRows === 0n) return "not_found";
+  await releaseEditLock(db, sampleId, userId);
+  return "removed";
 }
