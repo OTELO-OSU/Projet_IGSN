@@ -4,7 +4,12 @@ import { conditionSchema } from "./model.ts";
 
 const full = {
   packaging: "glass_bottle",
-  storageConditions: ["temperature_controlled", "light_controlled"],
+  storageConditions: [
+    "temperature_controlled",
+    "light_controlled",
+    "pressure_controlled",
+    "moisture_controlled",
+  ],
   temperature: { type: "frozen", measurement: { value: -18, unit: "celsius" } },
   humidity: { type: "controlled", percentage: 40 },
   light: "total_darkness",
@@ -26,6 +31,11 @@ describe("conditionSchema", () => {
 
   it("should accept a category without its numeric reading", () => {
     const result = conditionSchema.safeParse({
+      storageConditions: [
+        "temperature_controlled",
+        "moisture_controlled",
+        "pressure_controlled",
+      ],
       temperature: { type: "ambient" },
       humidity: { type: "dry" },
       pressure: { type: "vacuum" },
@@ -92,7 +102,12 @@ describe("conditionSchema", () => {
   ])(
     "should accept a humidity percentage matching its range %o",
     (humidity) => {
-      expect(conditionSchema.safeParse({ humidity }).success).toBe(true);
+      expect(
+        conditionSchema.safeParse({
+          humidity,
+          storageConditions: ["moisture_controlled"],
+        }).success,
+      ).toBe(true);
     },
   );
 
@@ -107,7 +122,32 @@ describe("conditionSchema", () => {
     { type: "humid", percentage: 101 },
     { type: "dehydrated", percentage: -1 },
   ])("should reject a humidity percentage outside its range %o", (humidity) => {
-    expect(conditionSchema.safeParse({ humidity }).success).toBe(false);
+    expect(
+      conditionSchema.safeParse({
+        humidity,
+        storageConditions: ["moisture_controlled"],
+      }).success,
+    ).toBe(false);
+  });
+
+  it.each([
+    { temperature: { type: "ambient" } },
+    { pressure: { type: "vacuum" } },
+    { humidity: { type: "dry" } },
+    { light: "total_darkness" },
+  ])(
+    "should reject the reading %o without its storage condition",
+    (reading) => {
+      expect(conditionSchema.safeParse(reading).success).toBe(false);
+    },
+  );
+
+  it("should reject a reading when no_specific_condition is the only storage condition", () => {
+    const result = conditionSchema.safeParse({
+      storageConditions: ["no_specific_condition"],
+      temperature: { type: "ambient" },
+    });
+    expect(result.success).toBe(false);
   });
 
   it("should reject a blank specificConditions", () => {
