@@ -535,6 +535,7 @@ describe("SampleView", () => {
         sample={sample({
           condition: {
             packaging: "glass_bottle",
+            storageConditions: ["temperature_controlled"],
             temperature: {
               type: "frozen",
               measurement: { value: -18, unit: "celsius" },
