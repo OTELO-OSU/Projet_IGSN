@@ -36,7 +36,7 @@ const sample: AdminSampleListItem = {
   repository: null,
   syntheticDetails: null,
   age: null,
-  links: [],
+  relations: [],
   attachments: [],
   security: null,
   existenceStatus: "exists",

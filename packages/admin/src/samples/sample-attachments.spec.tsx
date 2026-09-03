@@ -19,6 +19,8 @@ const attachment = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
   name: "measurements.csv",
   mediaType: "text/csv",
+  title: null,
+  targetResourceType: null,
   description: "Raw measurements",
 };
 
@@ -165,11 +167,14 @@ describe("SampleAttachments", () => {
     await vi.waitFor(() => expect(dialog.query()).toBeNull());
   });
 
-  it("should upload a staged file with its description and list it in the payload", async () => {
+  it("should upload a staged file with its resource metadata and list it in the payload", async () => {
     const onCommit = vi.fn();
     const screen = await renderAttachments([], onCommit);
 
     await screen.getByLabelText("Browse files").upload([file("a.csv")]);
+    await screen.getByLabelText("Title").fill("Raw measurements");
+    await screen.getByRole("combobox", { name: "Resource type" }).click();
+    await screen.getByRole("option", { name: "Dataset" }).click();
     await screen.getByLabelText("Description of a.csv").fill("Raw data");
 
     expect(FakeXhr.instances).toHaveLength(0);
@@ -177,19 +182,29 @@ describe("SampleAttachments", () => {
     await screen.getByRole("button", { name: "Save" }).click();
 
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
-    expect(FakeXhr.instances[0]!.body!.get("description")).toBe("Raw data");
+    const body = FakeXhr.instances[0]!.body!;
+    expect(body.get("title")).toBe("Raw measurements");
+    expect(body.get("targetResourceType")).toBe("dataset");
+    expect(body.get("description")).toBe("Raw data");
 
     const created = {
       id: "3f2504e0-4f89-41d3-9a0c-0305e82c3303",
       name: "a.csv",
       mediaType: "text/csv",
+      title: "Raw measurements",
+      targetResourceType: "dataset",
       description: "Raw data",
     };
     FakeXhr.instances[0]!.finish(201, JSON.stringify({ data: created }));
 
     await vi.waitFor(() =>
       expect(onCommit).toHaveBeenCalledWith([
-        { id: created.id, description: "Raw data" },
+        {
+          id: created.id,
+          title: "Raw measurements",
+          targetResourceType: "dataset",
+          description: "Raw data",
+        },
       ]),
     );
   });
@@ -220,6 +235,19 @@ describe("SampleAttachments", () => {
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(3));
   });
 
+  it("should title one block per attachment, numbered in display order", async () => {
+    const screen = await renderAttachments();
+
+    await screen.getByLabelText("Browse files").upload([file("a.csv")]);
+
+    await expect
+      .element(screen.getByRole("group", { name: "Attachment 1", exact: true }))
+      .toHaveTextContent("a.csv");
+    await expect
+      .element(screen.getByRole("group", { name: "Attachment 2", exact: true }))
+      .toHaveTextContent("measurements.csv");
+  });
+
   it("should list the saved attachments", async () => {
     const screen = await renderAttachments();
 
@@ -237,11 +265,14 @@ describe("SampleAttachments", () => {
       .toBeVisible();
   });
 
-  it("should put an edited description in the committed payload without any direct call", async () => {
+  it("should put edited resource metadata in the committed payload without any direct call", async () => {
     const onCommit = vi.fn();
     const fetchSpy = vi.spyOn(window, "fetch");
     const screen = await renderAttachments([attachment], onCommit);
 
+    await screen.getByLabelText("Title").fill("XRF run 3");
+    await screen.getByRole("combobox", { name: "Resource type" }).click();
+    await screen.getByRole("option", { name: "Dataset" }).click();
     await screen
       .getByLabelText("Description of measurements.csv")
       .fill("XRF measurements");
@@ -249,7 +280,12 @@ describe("SampleAttachments", () => {
 
     await vi.waitFor(() =>
       expect(onCommit).toHaveBeenCalledWith([
-        { id: attachment.id, description: "XRF measurements" },
+        {
+          id: attachment.id,
+          title: "XRF run 3",
+          targetResourceType: "dataset",
+          description: "XRF measurements",
+        },
       ]),
     );
     expect(fetchSpy).not.toHaveBeenCalled();
@@ -294,7 +330,12 @@ describe("SampleAttachments", () => {
 
     await vi.waitFor(() =>
       expect(onCommit).toHaveBeenCalledWith([
-        { id: attachment.id, description: "Raw measurements" },
+        {
+          id: attachment.id,
+          title: null,
+          targetResourceType: null,
+          description: "Raw measurements",
+        },
       ]),
     );
   });

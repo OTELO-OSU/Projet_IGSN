@@ -1,9 +1,16 @@
+import type { IdentifierType } from "@projet-igsn/domain/sample/relation/identifier-type";
+import type { RelationTargetResourceType } from "@projet-igsn/domain/sample/relation/target-resource-type";
+
 import {
   composeHierarchyValue,
   toHierarchyPath,
 } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { publishedSampleSchema as domainPublishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
+import {
+  hasMetadataScheme,
+  type RelationType,
+} from "@projet-igsn/domain/sample/relation/relation-type";
 import {
   type CreateSample,
   createSampleSchema,
@@ -56,7 +63,32 @@ import {
   toSyntheticDetailsDraft,
 } from "#/samples/compose-synthetic-details.ts";
 
-export type LinkDraft = { key: string; url: string; description: string };
+export type RelationDraft = {
+  key: string;
+  relationType: RelationType | "";
+  identifierType: IdentifierType | "";
+  identifier: string;
+  targetTitle: string;
+  targetResourceType: RelationTargetResourceType | "";
+  relationTypeInformation: string;
+  relatedMetadataScheme: string;
+  schemeURI: string;
+  schemeType: string;
+  description: string;
+};
+
+export const EMPTY_RELATION_DRAFT: Omit<RelationDraft, "key"> = {
+  relationType: "",
+  identifierType: "",
+  identifier: "",
+  targetTitle: "",
+  targetResourceType: "",
+  relationTypeInformation: "",
+  relatedMetadataScheme: "",
+  schemeURI: "",
+  schemeType: "",
+  description: "",
+};
 
 export type SampleDraft = {
   name: string | undefined;
@@ -80,7 +112,7 @@ export type SampleDraft = {
   existenceStatus: CreateSample["existenceStatus"] | undefined;
   availabilityStatus: CreateSample["availabilityStatus"] | undefined;
   age: AgeFormValues;
-  links: LinkDraft[];
+  relations: RelationDraft[];
   manualGroupIds: string[];
 } & EconomicInterestDraft;
 
@@ -108,22 +140,40 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   existenceStatus: value?.existenceStatus ?? "exists",
   availabilityStatus: value?.availabilityStatus ?? "available",
   age: ageFormValues(value?.age),
-  links: (value?.links ?? []).map((link) => ({
+  relations: (value?.relations ?? []).map((relation) => ({
     key: crypto.randomUUID(),
-    url: link.url,
-    description: link.description ?? "",
+    relationType: relation.relationType,
+    identifierType: relation.identifierType,
+    identifier: relation.identifier,
+    targetTitle: relation.targetTitle,
+    targetResourceType: relation.targetResourceType ?? "",
+    relationTypeInformation: relation.relationTypeInformation ?? "",
+    relatedMetadataScheme: relation.relatedMetadataScheme ?? "",
+    schemeURI: relation.schemeURI ?? "",
+    schemeType: relation.schemeType ?? "",
+    description: relation.description ?? "",
   })),
   manualGroupIds: value?.manualGroupIds ?? [],
   ...toEconomicInterestDraft(value),
 });
 
-const composeLinks = (links: LinkDraft[]) =>
-  links
-    .filter((link) => link.url.trim() || link.description.trim())
-    .map((link) => ({
-      url: link.url.trim(),
-      description: link.description.trim() || null,
-    }));
+const composeRelations = (relations: RelationDraft[]) =>
+  relations.map((relation) => ({
+    relationType: relation.relationType,
+    identifierType: relation.identifierType,
+    identifier: relation.identifier.trim(),
+    targetTitle: relation.targetTitle.trim(),
+    targetResourceType: relation.targetResourceType || null,
+    relationTypeInformation: relation.relationTypeInformation.trim() || null,
+    description: relation.description.trim() || null,
+    ...(hasMetadataScheme(relation.relationType)
+      ? {
+          relatedMetadataScheme: relation.relatedMetadataScheme.trim() || null,
+          schemeURI: relation.schemeURI.trim() || null,
+          schemeType: relation.schemeType.trim() || null,
+        }
+      : {}),
+  }));
 
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
@@ -134,7 +184,7 @@ const composeCreateSample = (draft: SampleDraft) => {
   const security = composeSecurity(draft.security);
   const scientificContext = composeScientificContext(draft.scientificContext);
   const repository = composeRepository(draft.repository);
-  const links = composeLinks(draft.links);
+  const relations = composeRelations(draft.relations);
   const economic = composeEconomicInterest(draft, material);
   const syntheticDetails = composeSyntheticDetails(
     draft.syntheticDetails,
@@ -173,7 +223,7 @@ const composeCreateSample = (draft: SampleDraft) => {
       ? { availabilityStatus: draft.availabilityStatus }
       : {}),
     ...(age ? { age } : {}),
-    ...(links.length > 0 ? { links } : {}),
+    ...(relations.length > 0 ? { relations } : {}),
     manualGroupIds: draft.manualGroupIds,
     ...economic,
   };

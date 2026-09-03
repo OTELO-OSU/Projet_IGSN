@@ -4,14 +4,14 @@ import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres";
 
 import type { DB } from "../../db.ts";
 
-export function sampleLinksQuery(eb: ExpressionBuilder<DB, "sample">) {
+export function sampleRelationsQuery(eb: ExpressionBuilder<DB, "sample">) {
   return jsonArrayFrom(
     eb
-      .selectFrom("sample_link")
-      .selectAll("sample_link")
-      .whereRef("sample_link.sample_id", "=", "sample.id")
-      .orderBy("sample_link.id"),
-  ).as("links");
+      .selectFrom("sample_relation")
+      .selectAll("sample_relation")
+      .whereRef("sample_relation.sample_id", "=", "sample.id")
+      .orderBy("sample_relation.id"),
+  ).as("relations");
 }
 
 export function sampleManualGroupsQuery(eb: ExpressionBuilder<DB, "sample">) {

@@ -18,9 +18,9 @@ export function TextField({
   multiline = false,
   number = false,
   disabled = false,
-  // a draft must save without the value.
   requiredToPublish = false,
   hint,
+  placeholder,
 }: {
   label: string;
   multiline?: boolean;
@@ -28,6 +28,7 @@ export function TextField({
   disabled?: boolean;
   requiredToPublish?: boolean;
   hint?: string;
+  placeholder?: string;
 }) {
   const field = useFieldContext<string | number | null | undefined>();
   const hintId = hint ? `${field.name}-hint` : undefined;
@@ -43,6 +44,7 @@ export function TextField({
       <Control
         id={field.name}
         {...(number ? { type: "number", step: "any" } : {})}
+        placeholder={placeholder}
         value={isBadInput ? "" : (field.state.value ?? "")}
         disabled={isDisabled}
         onBlur={() => {
@@ -63,11 +65,11 @@ export function TextField({
       />
       {error ? (
         <FieldError error={error} errorId={errorId} />
-      ) : hint ? (
-        <p id={hintId} className="text-muted-foreground text-sm">
+      ) : (
+        <p id={hintId} className="text-muted-foreground min-h-5 text-sm">
           {hint}
         </p>
-      ) : null}
+      )}
     </div>
   );
 }

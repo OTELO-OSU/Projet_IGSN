@@ -16,7 +16,6 @@ import { descriptionSchema } from "./description/model.ts";
 import { elementSchema } from "./element/vocabulary.ts";
 import { freeTextSchema } from "./free-text.ts";
 import { geomorphologicalEnvironmentSchema } from "./geomorphological-environment/vocabulary.ts";
-import { createSampleLinkSchema, sampleLinkSchema } from "./link/model.ts";
 import { allowsLocation } from "./location/allows-location.ts";
 import { locationSchema } from "./location/model.ts";
 import { materialPathSchema } from "./material/classification.ts";
@@ -25,6 +24,10 @@ import {
   metamorphicFaciesSchema,
 } from "./metamorphic-facies/vocabulary.ts";
 import { natureSchema } from "./nature.ts";
+import {
+  createSampleRelationSchema,
+  sampleRelationSchema,
+} from "./relation/model.ts";
 import { repositorySchema } from "./repository/model.ts";
 import { resourceTypeSchema } from "./resource-type/vocabulary.ts";
 import { scientificContextSchema } from "./scientific-context/model.ts";
@@ -67,7 +70,7 @@ export const sampleSchema = z.object({
   scientificContext: scientificContextSchema.nullable().default(null),
   syntheticDetails: syntheticDetailsSchema.nullable().default(null),
   age: ageSchema.nullable().default(null),
-  links: z.array(sampleLinkSchema).default([]),
+  relations: z.array(sampleRelationSchema).default([]),
   attachments: z.array(sampleAttachmentSchema).default([]),
   security: securitySchema.nullable(),
   existenceStatus: existenceStatusSchema.nullable(),
@@ -113,7 +116,7 @@ export const createSampleSchema = z
     scientificContext: scientificContextSchema.nullish(),
     syntheticDetails: syntheticDetailsSchema.nullish(),
     age: ageSchema.nullish(),
-    links: z.array(createSampleLinkSchema).optional(),
+    relations: z.array(createSampleRelationSchema).optional(),
     attachments: z.array(updateSampleAttachmentSchema).optional(),
     security: securitySchema.nullish(),
     existenceStatus: existenceStatusSchema.nullish(),

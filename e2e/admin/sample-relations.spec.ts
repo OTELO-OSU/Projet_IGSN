@@ -7,8 +7,21 @@ import { test } from "../support/db";
 
 const fixture = (name: string) => path.join(__dirname, "..", "fixtures", name);
 
-test.describe("sample links", () => {
-  test("a researcher adds a DOI link and attaches files", async ({
+const RELATION = {
+  relationType: "References",
+  identifierType: "DOI",
+  identifier: "https://doi.org/10.1594/IEDA.100252",
+  title: "Companion dataset",
+  description: "Measurements published alongside this sample.",
+};
+
+const ATTACHMENT_RESOURCE = {
+  title: "Analysis report",
+  resourceType: "Report",
+};
+
+test.describe("sample relations", () => {
+  test("a researcher adds a relation and attaches files", async ({
     page,
     samples,
   }) => {
@@ -23,18 +36,15 @@ test.describe("sample links", () => {
 
     const edit = sampleEditPage(page);
     await edit.expectVisible();
-    await edit.openLinksTab();
+    await edit.openRelatedResourcesTab();
 
-    await edit.addLink(
-      1,
-      "https://doi.org/10.1594/IEDA.100252",
-      "Companion dataset",
-    );
+    await edit.addRelation(1, RELATION);
     await edit.uploadAttachments([
       fixture("fichierTest.pdf"),
       fixture("test.png"),
       fixture("test.txt"),
     ]);
+    await edit.setAttachmentResource("fichierTest.pdf", ATTACHMENT_RESOURCE);
     await edit.expectAttachment("fichierTest.pdf");
     await edit.expectAttachment("test.png");
     await edit.expectAttachment("test.txt");
@@ -42,13 +52,9 @@ test.describe("sample links", () => {
     await edit.confirmUploads();
 
     await page.reload();
-    await edit.openLinksTab();
-    await edit.expectLink(
-      1,
-      "https://doi.org/10.1594/IEDA.100252",
-      "Companion dataset",
-    );
-    await edit.expectAttachment("fichierTest.pdf");
+    await edit.openRelatedResourcesTab();
+    await edit.expectRelation(1, RELATION);
+    await edit.expectAttachment("fichierTest.pdf", ATTACHMENT_RESOURCE);
     await edit.expectAttachment("test.png");
     await edit.expectAttachment("test.txt");
   });

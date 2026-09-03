@@ -13,14 +13,42 @@ const draft = (over?: {
 });
 
 describe("sampleDraftFieldErrors", () => {
-  it("should pin a link issue on the row's indexed field", () => {
+  it.each([
+    ["invalid_type", "relationType"],
+    ["invalid_value", "identifierType"],
+    ["too_small", "identifier"],
+  ])(
+    "should pin a missing relation value (%s) on the row's indexed field",
+    (code, field) => {
+      expect(
+        sampleDraftFieldErrors(
+          [{ path: ["relations", 1, field], code }],
+          draft(),
+        ),
+      ).toEqual({
+        [`relations[1].${field}`]: { message: "Required." },
+      });
+    },
+  );
+
+  it.each([
+    [
+      "relation_identifier_doi",
+      "Enter a DOI (https://doi.org/10.xxxx/... or doi:10.xxxx/...).",
+    ],
+    ["relation_identifier_igsn", "Enter a valid IGSN."],
+    ["relation_identifier_url", "Enter a valid URL."],
+    [
+      "relation_scheme_without_has_metadata",
+      "Only allowed when the relation type is Has metadata.",
+    ],
+  ])("should translate the %s relation error", (code, message) => {
     expect(
-      sampleDraftFieldErrors([{ path: ["links", 1, "url"] }], draft()),
-    ).toEqual({
-      "links[1].url": {
-        message: "Enter a DOI URL (https://doi.org/...).",
-      },
-    });
+      sampleDraftFieldErrors(
+        [{ path: ["relations", 0, "identifier"], params: { code } }],
+        draft(),
+      ),
+    ).toEqual({ "relations[0].identifier": { message } });
   });
 
   it("should pin issues on the draft fields that produced them", () => {

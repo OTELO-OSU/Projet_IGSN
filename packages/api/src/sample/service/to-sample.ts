@@ -168,7 +168,7 @@ function toSyntheticDetails(row: Selectable<DB["sample"]>) {
 
 export function toSample(
   row: Selectable<DB["sample"]>,
-  links: Selectable<DB["sample_link"]>[] = [],
+  relations: Selectable<DB["sample_relation"]>[] = [],
   attachments: Selectable<DB["sample_attachment"]>[] = [],
   manualGroups: ManualGroup[] = [],
 ): Sample {
@@ -212,15 +212,25 @@ export function toSample(
     repository: toRepository(row),
     syntheticDetails: toSyntheticDetails(row),
     age,
-    links: links.map((link) => ({
-      id: link.id,
-      url: link.url,
-      description: link.description,
+    relations: relations.map((relation) => ({
+      id: relation.id,
+      relationType: relation.relation_type,
+      identifierType: relation.identifier_type,
+      identifier: relation.identifier,
+      targetTitle: relation.target_title,
+      targetResourceType: relation.target_resource_type,
+      relationTypeInformation: relation.relation_type_information,
+      relatedMetadataScheme: relation.related_metadata_scheme,
+      schemeURI: relation.scheme_uri,
+      schemeType: relation.scheme_type,
+      description: relation.description,
     })),
     attachments: attachments.map((attachment) => ({
       id: attachment.id,
       name: attachment.name,
       mediaType: attachment.media_type,
+      title: attachment.title,
+      targetResourceType: attachment.target_resource_type,
       description: attachment.description,
     })),
     security: toSecurity(row),

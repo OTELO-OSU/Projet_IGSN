@@ -31,7 +31,7 @@ const base: Sample = {
   },
   syntheticDetails: null,
   age: null,
-  links: [],
+  relations: [],
   attachments: [],
   security: null,
   existenceStatus: "exists",

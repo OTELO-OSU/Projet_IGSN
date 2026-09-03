@@ -8,8 +8,21 @@ import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 
 const fixture = (name: string) => path.join(__dirname, "..", "fixtures", name);
 
-test.describe("sample links on the public page", () => {
-  test("a reader sees an editor's links and downloads the file", async ({
+const RELATION = {
+  relationType: "Is cited by",
+  identifierType: "DOI",
+  identifier: "https://doi.org/10.5880/GFZ.2026.001",
+  title: "Field measurements dataset",
+  description: "Measurements collected during the same campaign.",
+};
+
+const ATTACHMENT_RESOURCE = {
+  title: "Field notes",
+  resourceType: "Dataset",
+};
+
+test.describe("sample relations on the public page", () => {
+  test("a reader sees an editor's relation and downloads the file", async ({
     page,
     samples,
   }) => {
@@ -22,24 +35,18 @@ test.describe("sample links on the public page", () => {
     const list = sampleListPage(page);
     await list.openSample(published.name);
     const edit = sampleEditPage(page);
-    await edit.openLinksTab();
-    await edit.addLink(
-      1,
-      "https://doi.org/10.5880/GFZ.2026.001",
-      "Field measurements dataset",
-    );
+    await edit.openRelatedResourcesTab();
+    await edit.addRelation(1, RELATION);
     await edit.uploadAttachments([fixture("test.txt")]);
+    await edit.setAttachmentResource("test.txt", ATTACHMENT_RESOURCE);
     await edit.publishUpdates();
     await edit.confirmUploads();
-    await edit.expectAttachment("test.txt");
+    await edit.expectAttachment("test.txt", ATTACHMENT_RESOURCE);
 
     const detail = sampleDetailPage(page);
     await detail.goto(published.igsn);
-    await detail.expectDoiLink(
-      "https://doi.org/10.5880/GFZ.2026.001",
-      "Field measurements dataset",
-    );
-    await detail.expectAttachment("test.txt");
+    await detail.expectRelation(RELATION.title, RELATION.identifier);
+    await detail.expectAttachment(ATTACHMENT_RESOURCE.title);
 
     const href = await detail.attachmentDownloadHref("test.txt");
     expect(href).not.toBeNull();

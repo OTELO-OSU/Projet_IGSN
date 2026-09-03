@@ -1,9 +1,12 @@
+import type { RelationTargetResourceType } from "../relation/target-resource-type.ts";
 import type { UpdateSampleAttachment } from "./attachment-validator.ts";
 import type { SampleAttachment } from "./model.ts";
 
 export type CreateSampleAttachment = {
   name: string;
   mediaType: string;
+  title: string | null;
+  targetResourceType: RelationTargetResourceType | null;
   description: string | null;
 };
 

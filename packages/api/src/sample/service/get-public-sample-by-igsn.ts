@@ -18,7 +18,7 @@ export async function getPublicSampleByIgsn(
     .executeTakeFirst();
   if (!row) return null;
   return {
-    ...toSample(row, row.links, row.attachments, row.manualGroups),
+    ...toSample(row, row.relations, row.attachments, row.manualGroups),
     owner: row.owner && {
       name: row.owner.name,
       firstname: row.owner.firstname,

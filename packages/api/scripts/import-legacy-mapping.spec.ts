@@ -441,14 +441,20 @@ describe("mapDoiLink", () => {
     const citation =
       "James, D.E., Boyd, F.R., Schutt, R., Bell, D.R., Carlson, R.W., (2004). Xenoltih constraints on seismic velocities.";
     expect(mapDoiLink(citation)).toEqual({
-      url: "https://doi.org/10.1029/2003GC000551",
+      relationType: "other",
+      identifierType: "doi",
+      identifier: "https://doi.org/10.1029/2003GC000551",
+      targetTitle: "https://doi.org/10.1029/2003GC000551",
       description: citation,
     });
   });
 
   it("should map a bare DOI url with no description", () => {
     expect(mapDoiLink("https://doi.org/10.17600/18002387")).toEqual({
-      url: "https://doi.org/10.17600/18002387",
+      relationType: "other",
+      identifierType: "doi",
+      identifier: "https://doi.org/10.17600/18002387",
+      targetTitle: "https://doi.org/10.17600/18002387",
       description: null,
     });
   });
@@ -457,7 +463,10 @@ describe("mapDoiLink", () => {
     const citation =
       "Boudier,F., Baronnet,A., Mainprice,D., Serpentine Mineral Replacements of Natural Olivine, Journal of Petrology, doi: 10.1093/petrology/egp107";
     expect(mapDoiLink(citation)).toEqual({
-      url: "https://doi.org/10.1093/petrology/egp049",
+      relationType: "other",
+      identifierType: "doi",
+      identifier: "https://doi.org/10.1093/petrology/egp049",
+      targetTitle: "https://doi.org/10.1093/petrology/egp049",
       description: citation,
     });
   });
@@ -506,16 +515,16 @@ describe("toCreateSample", () => {
     });
   });
 
-  it("should keep the sample, without links, when its only citation is unreviewed", () => {
+  it("should keep the sample, without relations, when its only citation is unreviewed", () => {
     const row = legacyRow({
       doi_related_resources: ["Smith, J. (1999). Some unreviewed paper."],
     });
     const result = createSampleSchema.safeParse(toCreateSample(row));
     expect(result.success).toBe(true);
-    expect(result.data?.links).toBeUndefined();
+    expect(result.data?.relations).toBeUndefined();
   });
 
-  it("should carry the DOI links, deduplicated by url", () => {
+  it("should carry the DOI relations, deduplicated by target", () => {
     const row = legacyRow({
       doi_related_resources: [
         "https://doi.org/10.17600/18002387",
@@ -527,10 +536,13 @@ describe("toCreateSample", () => {
     expect(result).toMatchObject({
       success: true,
       data: {
-        links: [
-          { url: "https://doi.org/10.17600/18002387", description: null },
+        relations: [
           {
-            url: "https://doi.org/10.1029/2003GC000551",
+            identifier: "https://doi.org/10.17600/18002387",
+            description: null,
+          },
+          {
+            identifier: "https://doi.org/10.1029/2003GC000551",
             description: expect.stringContaining("James, D.E."),
           },
         ],

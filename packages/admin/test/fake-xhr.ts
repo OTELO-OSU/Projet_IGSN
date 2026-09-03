@@ -33,6 +33,8 @@ export class FakeXhr {
           id: crypto.randomUUID(),
           name: file?.name ?? "file.bin",
           mediaType: file?.type || "application/octet-stream",
+          title: this.body?.get("title") ?? null,
+          targetResourceType: this.body?.get("targetResourceType") ?? null,
           description: this.body?.get("description") ?? null,
         },
       });

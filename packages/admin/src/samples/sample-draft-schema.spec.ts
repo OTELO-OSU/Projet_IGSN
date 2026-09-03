@@ -11,10 +11,21 @@ import { toScientificContextDraft } from "./compose-scientific-context.ts";
 import { toSecurityDraft } from "./compose-security.ts";
 import { toSyntheticDetailsDraft } from "./compose-synthetic-details.ts";
 import {
+  EMPTY_RELATION_DRAFT,
+  type RelationDraft,
   type SampleDraft,
   sampleDraftSchema,
   toSampleDraft,
 } from "./sample-draft-schema.ts";
+
+const relationDraft: RelationDraft = {
+  ...EMPTY_RELATION_DRAFT,
+  key: "k0",
+  relationType: "is_cited_by",
+  identifierType: "doi",
+  identifier: "https://doi.org/10.1594/IEDA.100252",
+  targetTitle: "IEDA companion dataset",
+};
 
 const draft: SampleDraft = {
   name: "Basalt 42",
@@ -38,7 +49,7 @@ const draft: SampleDraft = {
   existenceStatus: "exists",
   availabilityStatus: "available",
   age: EMPTY_AGE_FORM_VALUES,
-  links: [],
+  relations: [],
   manualGroupIds: [],
   ...toEconomicInterestDraft(undefined),
 };
@@ -168,58 +179,150 @@ describe("sampleDraftSchema", () => {
     ]);
   });
 
-  it("should compose link rows, dropping blank ones", () => {
+  it("should compose relation rows", () => {
     const result = sampleDraftSchema.parse({
       ...draft,
-      links: [
+      relations: [
         {
+          ...relationDraft,
           key: "k1",
-          url: " https://doi.org/10.1594/IEDA.100252 ",
-          description: "  ",
+          identifier: " https://doi.org/10.1594/IEDA.100252 ",
         },
         {
+          ...relationDraft,
           key: "k2",
-          url: "https://doi.org/10.5880/GFZ.2026.001",
-          description: "Companion dataset",
+          identifier: "https://doi.org/10.5880/GFZ.2026.001",
+          targetTitle: "Companion dataset",
+          targetResourceType: "dataset",
+          relationTypeInformation: "Table 2",
+          description: "Cites this sample",
         },
-        { key: "k3", url: "", description: "" },
       ],
     });
 
-    expect(result.links).toEqual([
-      { url: "https://doi.org/10.1594/IEDA.100252", description: null },
+    expect(result.relations).toEqual([
       {
-        url: "https://doi.org/10.5880/GFZ.2026.001",
-        description: "Companion dataset",
+        relationType: "is_cited_by",
+        identifierType: "doi",
+        identifier: "https://doi.org/10.1594/IEDA.100252",
+        targetTitle: "IEDA companion dataset",
+        targetResourceType: null,
+        relationTypeInformation: null,
+        description: null,
+      },
+      {
+        relationType: "is_cited_by",
+        identifierType: "doi",
+        identifier: "https://doi.org/10.5880/GFZ.2026.001",
+        targetTitle: "Companion dataset",
+        targetResourceType: "dataset",
+        relationTypeInformation: "Table 2",
+        description: "Cites this sample",
       },
     ]);
   });
 
-  it("should omit links when every row is blank", () => {
-    const result = sampleDraftSchema.parse({
-      ...draft,
-      links: [{ key: "k1", url: "", description: "" }],
-    });
-
-    expect(result).not.toHaveProperty("links");
-  });
-
-  it("should reject a description without its url on the row's url", () => {
+  it("should flag every required field of a blank relation row", () => {
     const result = sampleDraftSchema.safeParse({
       ...draft,
-      links: [
+      relations: [{ ...EMPTY_RELATION_DRAFT, key: "k1" }],
+    });
+
+    if (result.success) throw new Error("expected the parse to fail");
+    expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
+      "relations.0.relationType",
+      "relations.0.identifierType",
+      "relations.0.identifier",
+      "relations.0.targetTitle",
+    ]);
+  });
+
+  it("should flag a row whose title is blank", () => {
+    const result = sampleDraftSchema.safeParse({
+      ...draft,
+      relations: [{ ...relationDraft, targetTitle: "  " }],
+    });
+
+    if (result.success) throw new Error("expected the parse to fail");
+    expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
+      "relations.0.targetTitle",
+    ]);
+  });
+
+  it("should keep the scheme fields only when the relation has metadata", () => {
+    const scheme = {
+      relatedMetadataScheme: "DataCite",
+      schemeURI: "https://schema.datacite.org",
+      schemeType: "XSD",
+    };
+
+    expect(
+      sampleDraftSchema.parse({
+        ...draft,
+        relations: [
+          { ...relationDraft, relationType: "has_metadata", ...scheme },
+        ],
+      }).relations,
+    ).toEqual([expect.objectContaining(scheme)]);
+
+    expect(
+      sampleDraftSchema.parse({
+        ...draft,
+        relations: [{ ...relationDraft, ...scheme }],
+      }).relations,
+    ).toEqual([
+      expect.not.objectContaining({ relatedMetadataScheme: "DataCite" }),
+    ]);
+  });
+
+  it("should flag the row that is missing a required value", () => {
+    const result = sampleDraftSchema.safeParse({
+      ...draft,
+      relations: [
+        relationDraft,
         {
-          key: "k1",
-          url: "https://doi.org/10.1594/IEDA.100252",
-          description: "",
+          ...EMPTY_RELATION_DRAFT,
+          key: "k2",
+          targetTitle: "Companion dataset",
         },
-        { key: "k2", url: "", description: "Companion dataset" },
       ],
     });
 
     if (result.success) throw new Error("expected the parse to fail");
     expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
-      "links.1.url",
+      "relations.1.relationType",
+      "relations.1.identifierType",
+      "relations.1.identifier",
+    ]);
+  });
+
+  it("should round-trip saved relations into the draft", () => {
+    expect(
+      toSampleDraft({
+        name: "Basalt 42",
+        nature: "thin_section",
+        type: null,
+        relations: [
+          {
+            relationType: "is_cited_by",
+            identifierType: "doi",
+            identifier: "https://doi.org/10.1594/IEDA.100252",
+            targetTitle: "IEDA companion dataset",
+            targetResourceType: null,
+            relationTypeInformation: null,
+            relatedMetadataScheme: null,
+            schemeURI: null,
+            schemeType: null,
+            description: null,
+          },
+        ],
+      }).relations,
+    ).toEqual([
+      {
+        ...relationDraft,
+        key: expect.any(String),
+        identifier: "https://doi.org/10.1594/IEDA.100252",
+      },
     ]);
   });
 
@@ -238,24 +341,5 @@ describe("sampleDraftSchema", () => {
         manualGroupIds: [MANUAL_GROUP_ID],
       }).manualGroupIds,
     ).toEqual([MANUAL_GROUP_ID]);
-  });
-
-  it("should round-trip saved links into the draft", () => {
-    expect(
-      toSampleDraft({
-        name: "Basalt 42",
-        nature: "thin_section",
-        type: null,
-        links: [
-          { url: "https://doi.org/10.1594/IEDA.100252", description: null },
-        ],
-      }).links,
-    ).toEqual([
-      {
-        key: expect.any(String),
-        url: "https://doi.org/10.1594/IEDA.100252",
-        description: "",
-      },
-    ]);
   });
 });

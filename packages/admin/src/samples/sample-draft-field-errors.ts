@@ -14,7 +14,9 @@ const READING_PATH =
 const DATE_RANGE_PATH =
   /^(description\.collectionDate|syntheticDetails\.synthesisDate)(?:\.(start|end))?$/;
 
-const LINK_PATH = /^links\.(\d+)\.(url|description)$/;
+const RELATION_PATH = /^relations\.(\d+)\.(\w+)$/;
+
+const RELATION_REQUIRED_CODES = ["invalid_type", "invalid_value", "too_small"];
 
 const VERTICAL_PREFIX = "location.position.vertical.";
 
@@ -69,8 +71,8 @@ const draftFieldName = (path: string, draft: DraftContext): string => {
   const hierarchy = HIERARCHY_PATHS[path as keyof typeof HIERARCHY_PATHS];
   if (hierarchy)
     return `${hierarchy}[${draft[hierarchy].filter(Boolean).length}]`;
-  const link = LINK_PATH.exec(path);
-  if (link) return `links[${link[1]}].${link[2]}`;
+  const relation = RELATION_PATH.exec(path);
+  if (relation) return `relations[${relation[1]}].${relation[2]}`;
   return path;
 };
 
@@ -103,6 +105,24 @@ function issueMessage(path: string, issue: DraftIssue): string {
   if (reasonMessage) {
     return reasonMessage();
   }
+  if (reason === "relation_identifier_doi") {
+    return m.field_relation_identifier_doi();
+  }
+  if (reason === "relation_identifier_igsn") {
+    return m.field_relation_identifier_igsn();
+  }
+  if (reason === "relation_identifier_url") {
+    return m.field_relation_identifier_url();
+  }
+  if (reason === "relation_scheme_without_has_metadata") {
+    return m.field_relation_scheme_without_has_metadata();
+  }
+  if (
+    RELATION_PATH.test(path) &&
+    RELATION_REQUIRED_CODES.includes(issue.code ?? "")
+  ) {
+    return m.field_relation_required();
+  }
   if (issue.code === "too_small" && path.startsWith(VERTICAL_PREFIX)) {
     return m.field_vertical_position_negative();
   }
@@ -120,7 +140,6 @@ function issueMessage(path: string, issue: DraftIssue): string {
       ? m.field_measurement_positive()
       : m.field_measurement_value_required();
   }
-  if (LINK_PATH.exec(path)?.[2] === "url") return m.field_doi_url_invalid();
   return m.field_invalid();
 }
 

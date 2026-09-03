@@ -469,12 +469,15 @@ export function createSampleAdminRoutes(
         if (sample && !canUpdateSample(c.get("role"), sample)) {
           return c.json({ error: "Forbidden" }, 403);
         }
-        const { file, description } = c.req.valid("form");
+        const { file, title, targetResourceType, description } =
+          c.req.valid("form");
         const created = await attachmentsRepository.create(
           c.req.valid("param").id,
           {
             name: file.name,
             mediaType: file.type || "application/octet-stream",
+            title: title ?? null,
+            targetResourceType: targetResourceType ?? null,
             description: description ?? null,
           },
           new Uint8Array(await file.arrayBuffer()),

@@ -17,7 +17,7 @@ relations:
   - type: depends_on
     target: sample-location
   - type: depends_on
-    target: sample-links-attachments
+    target: sample-relations-attachments
   - type: depends_on
     target: synthetic-details
   - type: depends_on
@@ -29,7 +29,7 @@ status: stable
 
 - Ids are app-generated UUIDv7, which also seeds the minted IGSN ([[igsn-identifier]]).
 - Sub-blocks: identity (name, specific name, nature, type), [[material-classification-ltree]], [[sample-location]] (`location: Location | null`), physical description, condition, scientific context, provenance, repository (archive plus two admin-only contacts), [[synthetic-details]] for a synthetic material.
-- One-to-many children have their own tables: `sample_link` and `sample_attachment`, see [[sample-links-attachments]].
+- One-to-many children have their own tables: `sample_relation` and `sample_attachment`, see [[sample-relations-attachments]].
 - `manualGroups` (id plus name) come from the `sample_manual_group` join table, `createSampleSchema` carrying `manualGroupIds`; see [[manual-groups]].
 - Three institutional codes (`institutional_organization`, `institutional_osu`, `institutional_laboratory`) are snapshotted at creation from the owner and never updated; they stay out of `createSampleSchema`. See [[institutional-groups]].
 - Ownership and collaborators live in `user_sample`; see [[per-sample-roles]].

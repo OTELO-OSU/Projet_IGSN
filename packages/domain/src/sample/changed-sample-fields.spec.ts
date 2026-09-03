@@ -7,7 +7,13 @@ const location = {
   localityName: "Vosges",
 };
 
-const links = [{ url: "https://doi.org/10.1594/IEDA.100252" }];
+const relations = [
+  {
+    relationType: "references",
+    identifierType: "doi",
+    identifier: "https://doi.org/10.1594/IEDA.100252",
+  },
+];
 
 describe("changedSampleFields", () => {
   it.each([
@@ -18,9 +24,15 @@ describe("changedSampleFields", () => {
       next: { ...location, localityName: "Alpes" },
     },
     {
-      field: "links",
-      current: links,
-      next: [{ url: "https://doi.org/10.1594/IEDA.100253" }],
+      field: "relations",
+      current: relations,
+      next: [
+        {
+          relationType: "references",
+          identifierType: "doi",
+          identifier: "https://doi.org/10.1594/IEDA.100253",
+        },
+      ],
     },
   ])("should report $field when its value differs", ({ field, ...values }) => {
     // Arrange / Act
@@ -35,7 +47,7 @@ describe("changedSampleFields", () => {
   it.each([
     { field: "name", value: "Basalt" },
     { field: "location", value: location },
-    { field: "links", value: links },
+    { field: "relations", value: relations },
   ])("should not report $field when its value is equal", ({ field, value }) => {
     // Arrange / Act
     const result = changedSampleFields(
@@ -52,7 +64,7 @@ describe("changedSampleFields", () => {
       current: { age: null },
       next: { age: undefined },
     },
-    { case: "empty array vs absent", current: { links: [] }, next: {} },
+    { case: "empty array vs absent", current: { relations: [] }, next: {} },
   ])("should not report a field with no value ($case)", ({ current, next }) => {
     // Arrange / Act
     const result = changedSampleFields(current, next);
@@ -60,18 +72,20 @@ describe("changedSampleFields", () => {
     expect(result).toEqual([]);
   });
 
-  it("should not report links when only the stored id is absent from the payload", () => {
+  it("should not report relations when only the stored id is absent from the payload", () => {
     // Arrange
     const current = {
-      links: [
+      relations: [
         {
           id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
-          url: "https://doi.org/10.1594/IEDA.100252",
+          relationType: "references",
+          identifierType: "doi",
+          identifier: "https://doi.org/10.1594/IEDA.100252",
           description: null,
         },
       ],
     };
-    const next = { links: [{ url: "https://doi.org/10.1594/IEDA.100252" }] };
+    const next = { relations };
     // Act
     const result = changedSampleFields(current, next);
     // Assert

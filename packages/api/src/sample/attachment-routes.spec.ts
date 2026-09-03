@@ -33,10 +33,17 @@ async function insertLegacyAttachments(
     sample_id: sampleId,
     name: `legacy-${i}.csv`,
     media_type: "text/csv",
+    title: null,
+    target_resource_type: null,
     description: null,
   }));
   await db.insertInto("sample_attachment").values(rows).execute();
-  return rows.map((row) => ({ id: row.id, description: null }));
+  return rows.map((row) => ({
+    id: row.id,
+    title: null,
+    targetResourceType: null,
+    description: null,
+  }));
 }
 
 const attachmentsDir = join(import.meta.dirname, "..", "..", "attachments");
@@ -99,13 +106,26 @@ describe("admin attachment routes", () => {
       const client = await createTestApp(db);
       const sample = await createSample(client);
       // Act
-      const res = await uploadAttachment(client, sample.id, "Raw measurements");
+      const res = await client.admin.samples[":id"].attachments.$post(
+        {
+          param: { id: sample.id },
+          form: {
+            file: csvFile(),
+            title: "XRF measurements",
+            targetResourceType: "dataset",
+            description: "Raw measurements",
+          },
+        },
+        { headers: authHeader },
+      );
       // Assert
       expect(res.status).toBe(201);
       const { data } = (await res.json()) as { data: { id: string } };
       expect(data).toMatchObject({
         name: "measurements.csv",
         mediaType: "text/csv",
+        title: "XRF measurements",
+        targetResourceType: "dataset",
         description: "Raw measurements",
       });
       const read = await client.admin.samples[":id"].$get(
@@ -340,7 +360,14 @@ describe("admin attachment routes", () => {
           param: { id: sample.id },
           json: {
             ...sampleBody,
-            attachments: [{ id: kept.id, description: "Calibrated" }],
+            attachments: [
+              {
+                id: kept.id,
+                title: "Calibrated XRF",
+                targetResourceType: "report",
+                description: "Calibrated",
+              },
+            ],
             expectedUpdatedAt: sample.updatedAt,
           },
         },
@@ -350,7 +377,14 @@ describe("admin attachment routes", () => {
       expect(res.status).toBe(200);
       expect(
         sampleResponseSchema.parse(await res.json()).data.attachments,
-      ).toEqual([{ ...kept, description: "Calibrated" }]);
+      ).toEqual([
+        {
+          ...kept,
+          title: "Calibrated XRF",
+          targetResourceType: "report",
+          description: "Calibrated",
+        },
+      ]);
     },
   );
 

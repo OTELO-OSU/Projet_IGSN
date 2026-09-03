@@ -42,7 +42,7 @@ if (owners.length === 0) {
 }
 
 await db.deleteFrom("sample_attachment").execute();
-await db.deleteFrom("sample_link").execute();
+await db.deleteFrom("sample_relation").execute();
 await db.deleteFrom("sample").execute();
 const created = await insertSamples(
   db,

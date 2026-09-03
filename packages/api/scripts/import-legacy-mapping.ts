@@ -1,4 +1,4 @@
-import type { CreateSampleLink } from "@projet-igsn/domain/sample/link/model";
+import type { CreateSampleRelation } from "@projet-igsn/domain/sample/relation/model";
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 
@@ -235,14 +235,20 @@ const DOI_URL_BY_CITATION_PREFIX: [string, string][] = [
   ["Zaffarana, C., Tommasi, A., Vauchez", "10.1016/j.tecto.2014.02.017"],
 ];
 
-export function mapDoiLink(value: string): CreateSampleLink | null {
+export function mapDoiLink(value: string): CreateSampleRelation | null {
   const citation = value.trim();
   const entry = DOI_URL_BY_CITATION_PREFIX.find(([prefix]) =>
     citation.startsWith(prefix),
   );
   if (!entry) return null;
-  const url = `https://doi.org/${entry[1]}`;
-  return { url, description: citation === url ? null : citation };
+  const identifier = `https://doi.org/${entry[1]}`;
+  return {
+    relationType: "other",
+    identifierType: "doi",
+    identifier,
+    targetTitle: identifier,
+    description: citation === identifier ? null : citation,
+  };
 }
 
 export function droppedDoiLinks(values: string[]): string[] {
@@ -673,18 +679,20 @@ export function unmappableValues(row: LegacyRow): SkipIssue[] {
   return issues;
 }
 
-function mapDoiLinks(values: string[]): CreateSampleLink[] {
-  const byUrl = new Map<string, CreateSampleLink>();
+function mapDoiLinks(values: string[]): CreateSampleRelation[] {
+  const byTarget = new Map<string, CreateSampleRelation>();
   for (const value of values) {
-    const link = mapDoiLink(value);
-    if (link && !byUrl.has(link.url)) byUrl.set(link.url, link);
+    const relation = mapDoiLink(value);
+    if (relation && !byTarget.has(relation.identifier)) {
+      byTarget.set(relation.identifier, relation);
+    }
   }
-  return [...byUrl.values()];
+  return [...byTarget.values()];
 }
 
 export function toCreateSample(row: LegacyRow): CreateSample {
   const { type, nature } = mapResourceType(row.resource_type);
-  const links = mapDoiLinks(row.doi_related_resources);
+  const relations = mapDoiLinks(row.doi_related_resources);
   return {
     name: row.name.trim(),
     nature,
@@ -697,7 +705,7 @@ export function toCreateSample(row: LegacyRow): CreateSample {
     description: mapDescription(row),
     scientificContext: mapScientificContext(row),
     age: mapAge(row),
-    ...(links.length > 0 ? { links } : {}),
+    ...(relations.length > 0 ? { relations } : {}),
   };
 }
 

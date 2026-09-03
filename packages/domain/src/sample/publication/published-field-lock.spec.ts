@@ -66,7 +66,7 @@ const stored: Sample = {
   },
   syntheticDetails: null,
   age: null,
-  links: [],
+  relations: [],
   attachments: [],
   security: null,
   existenceStatus: "exists",
@@ -148,7 +148,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
       missionDescription: "edited mission",
     },
     age: null,
-    links: [],
+    relations: [],
     attachments: [],
     security: null,
     existenceStatus: "lost",
@@ -409,12 +409,17 @@ describe("mergePublishedEdit", () => {
     ]);
   });
 
-  it("carries links and attachments from the payload", () => {
-    const merged = mergePublishedEdit(
-      stored,
-      incoming({ links: [{ url: "https://doi.org/10.1234/x" }] }),
-    );
-    expect(merged.links).toEqual([{ url: "https://doi.org/10.1234/x" }]);
+  it("carries relations and attachments from the payload", () => {
+    const relations = [
+      {
+        relationType: "references" as const,
+        identifierType: "doi" as const,
+        identifier: "https://doi.org/10.1234/x",
+        targetTitle: "Referenced paper",
+      },
+    ];
+    const merged = mergePublishedEdit(stored, incoming({ relations }));
+    expect(merged.relations).toEqual(relations);
   });
 
   describe("syntheticDetails", () => {

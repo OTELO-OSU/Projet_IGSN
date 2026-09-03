@@ -7,7 +7,7 @@ import { v7 as uuidv7 } from "uuid";
 import type { DB } from "../src/db.ts";
 
 import { createDb } from "../src/db.ts";
-import { replaceSampleLinks } from "../src/sample/service/replace-sample-links.ts";
+import { replaceSampleRelations } from "../src/sample/service/replace-sample-relations.ts";
 import { sampleColumns } from "../src/sample/service/sample-columns.ts";
 import {
   type LegacyOwner,
@@ -117,7 +117,7 @@ async function main() {
   const db = createDb();
   const preserved = new Set(["id", "igsn", "created_at"]);
 
-  const summary = { read: 0, imported: 0, users: 0, linked: 0, links: 0 };
+  const summary = { read: 0, imported: 0, users: 0, linked: 0, relations: 0 };
   const skipped: { igsn: string; reason: string; value: string }[] = [];
   const droppedLinks: { igsn: string; value: string }[] = [];
 
@@ -128,9 +128,9 @@ async function main() {
     let batch: ReturnType<typeof toSampleRow>[] = [];
     const sampleIdByIgsn = new Map<string, string>();
     const ownerByIgsn = new Map<string, LegacyOwner>();
-    const linksByIgsn = new Map<
+    const relationsByIgsn = new Map<
       string,
-      NonNullable<ReturnType<typeof createSampleSchema.parse>["links"]>
+      NonNullable<ReturnType<typeof createSampleSchema.parse>["relations"]>
     >();
     const flush = async () => {
       if (batch.length === 0) return;
@@ -192,8 +192,8 @@ async function main() {
       }
       const owner = toOwner(row);
       if (owner) ownerByIgsn.set(igsn.data, owner);
-      if (parsed.data.links?.length)
-        linksByIgsn.set(igsn.data, parsed.data.links);
+      if (parsed.data.relations?.length)
+        relationsByIgsn.set(igsn.data, parsed.data.relations);
       for (const value of droppedDoiLinks(row.doi_related_resources)) {
         droppedLinks.push({ igsn: igsn.data, value });
       }
@@ -202,11 +202,11 @@ async function main() {
     }
     await flush();
 
-    for (const [igsn, links] of linksByIgsn) {
+    for (const [igsn, relations] of relationsByIgsn) {
       const sampleId = sampleIdByIgsn.get(igsn);
       if (!sampleId) continue;
-      await replaceSampleLinks(db, sampleId, links);
-      summary.links += links.length;
+      await replaceSampleRelations(db, sampleId, relations);
+      summary.relations += relations.length;
     }
 
     const owners = new Map(

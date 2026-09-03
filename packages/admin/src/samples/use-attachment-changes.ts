@@ -1,4 +1,5 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+import type { RelationTargetResourceType } from "@projet-igsn/domain/sample/relation/target-resource-type";
 
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import {
@@ -15,12 +16,17 @@ import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
 
+export type AttachmentEdit = {
+  title?: string;
+  targetResourceType?: RelationTargetResourceType | "";
+  description?: string;
+};
+
 type StagedAttachment = {
   key: string;
   file: File;
-  description?: string;
   error?: boolean;
-};
+} & AttachmentEdit;
 type UploadBatchItem = {
   key: string;
   name: string;
@@ -36,7 +42,7 @@ function xhrUpload(
   url: string,
   token: string | undefined,
   file: File,
-  description: string | undefined,
+  edit: AttachmentEdit,
   onProgress: (percent: number) => void,
 ): Promise<SampleAttachment> {
   return new Promise((resolve, reject) => {
@@ -61,7 +67,9 @@ function xhrUpload(
     xhr.onerror = () => reject(new Error("Upload failed"));
     const body = new FormData();
     body.append("file", file);
-    if (description) body.append("description", description);
+    for (const [name, value] of Object.entries(edit)) {
+      if (value?.trim()) body.append(name, value.trim());
+    }
     xhr.send(body);
   });
 }
@@ -72,7 +80,7 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const queryClient = useQueryClient();
   const [pending, setPending] = useState<StagedAttachment[]>([]);
   const [deletions, setDeletions] = useState<string[]>([]);
-  const [descriptions, setDescriptions] = useState<Record<string, string>>({});
+  const [edits, setEdits] = useState<Record<string, AttachmentEdit>>({});
   const [batch, setBatch] = useState<UploadBatchItem[]>([]);
   const [isDialogOpen, setDialogOpen] = useState(false);
 
@@ -93,10 +101,10 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const removeFile = (key: string) =>
     setPending((current) => current.filter((staged) => staged.key !== key));
 
-  const setPendingDescription = (key: string, description: string) =>
+  const setPendingEdit = (key: string, edit: AttachmentEdit) =>
     setPending((current) =>
       current.map((staged) =>
-        staged.key === key ? { ...staged, description } : staged,
+        staged.key === key ? { ...staged, ...edit } : staged,
       ),
     );
 
@@ -106,8 +114,11 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const restore = (attachmentId: string) =>
     setDeletions((current) => current.filter((id) => id !== attachmentId));
 
-  const setDescription = (attachmentId: string, description: string) =>
-    setDescriptions((current) => ({ ...current, [attachmentId]: description }));
+  const setEdit = (attachmentId: string, edit: AttachmentEdit) =>
+    setEdits((current) => ({
+      ...current,
+      [attachmentId]: { ...current[attachmentId], ...edit },
+    }));
 
   const setBatchItem = (key: string, patch: Partial<UploadBatchItem>) =>
     setBatch((current) =>
@@ -128,18 +139,23 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
     );
     setDialogOpen(true);
     const results = await Promise.all(
-      staged.map(async ({ key, file, description }) => {
+      staged.map(async ({ key, file, error: _error, ...edit }) => {
         try {
           const created = await xhrUpload(
             new URL(`admin/samples/${sampleId}/attachments`, API_URL).href,
             token,
             file,
-            description?.trim() || undefined,
+            edit,
             (progress) => setBatchItem(key, { progress }),
           );
           setBatchItem(key, { status: "uploaded" });
           setPending((current) => current.filter((s) => s.key !== key));
-          return { id: created.id, description: created.description };
+          return {
+            id: created.id,
+            title: created.title,
+            targetResourceType: created.targetResourceType,
+            description: created.description,
+          };
         } catch {
           setBatchItem(key, { status: "failed" });
           setPending((current) =>
@@ -174,15 +190,18 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
     return [
       ...saved
         .filter((attachment) => !deletions.includes(attachment.id))
-        .map((attachment) => ({
-          id: attachment.id,
-          description:
-            (
-              descriptions[attachment.id] ??
-              attachment.description ??
-              ""
-            ).trim() || null,
-        })),
+        .map((attachment) => {
+          const edit = edits[attachment.id] ?? {};
+          return {
+            id: attachment.id,
+            title: (edit.title ?? attachment.title ?? "").trim() || null,
+            targetResourceType:
+              (edit.targetResourceType ?? attachment.targetResourceType) ||
+              null,
+            description:
+              (edit.description ?? attachment.description ?? "").trim() || null,
+          };
+        }),
       ...uploaded,
     ];
   };
@@ -192,12 +211,12 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
     keptCount,
     addFiles,
     removeFile,
-    setPendingDescription,
+    setPendingEdit,
     deletions,
     markDelete,
     restore,
-    descriptions,
-    setDescription,
+    edits,
+    setEdit,
     batch,
     commit,
     isDialogOpen,

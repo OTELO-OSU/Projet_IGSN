@@ -17,9 +17,9 @@ import { institutionSampleWhere } from "./institution-sample-where.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
   sampleAttachmentsQuery,
-  sampleLinksQuery,
   sampleManualGroupsQuery,
   sampleOwnerQuery,
+  sampleRelationsQuery,
 } from "./sample-children-query.ts";
 import {
   applyFuzzyThreshold,
@@ -98,7 +98,7 @@ async function listSamplesWhere(
     const relevance = search === undefined ? undefined : relevanceScore(search);
     const rows = await matching()
       .selectAll()
-      .select(sampleLinksQuery)
+      .select(sampleRelationsQuery)
       .select(sampleAttachmentsQuery)
       .select(sampleManualGroupsQuery)
       .$if(withOwner, (qb) => qb.select(sampleOwnerQuery))
@@ -116,7 +116,7 @@ async function listSamplesWhere(
 
     return {
       data: rows.map((row) =>
-        toSample(row, row.links, row.attachments, row.manualGroups),
+        toSample(row, row.relations, row.attachments, row.manualGroups),
       ),
       owners: new Map(rows.map((row) => [row.id, row.owner])),
       total: Number(count),

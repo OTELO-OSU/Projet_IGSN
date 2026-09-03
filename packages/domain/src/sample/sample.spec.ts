@@ -57,7 +57,7 @@ describe("sampleSchema", () => {
       scientificContext: null,
       syntheticDetails: null,
       age: null,
-      links: [],
+      relations: [],
       attachments: [],
       security: null,
       existenceStatus: "exists",
@@ -104,6 +104,23 @@ describe("createSampleSchema", () => {
     { collectionMethod: "coring.gravity_corer.giant" },
     { collectionMethodDescription: "Collected at low tide, 30 cm depth" },
     { specificName: "FTB-2026-042" },
+    {
+      relations: [
+        {
+          relationType: "references",
+          identifierType: "doi",
+          identifier: "https://doi.org/10.1594/IEDA.100252",
+          targetTitle: "IEDA companion dataset",
+        },
+        {
+          relationType: "is_derived_from",
+          identifierType: "url",
+          identifier: "https://example.com/companion-dataset",
+          targetTitle: "Companion dataset",
+          description: "Companion dataset",
+        },
+      ],
+    },
     {
       resourceType: "mineral_and_ore.uranium.sandstone",
       economicInterestElements: ["u", "fe"],

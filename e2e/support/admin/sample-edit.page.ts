@@ -1,14 +1,32 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 import { adminUrl } from "../urls";
+import { chooseOption } from "./choose-option.ts";
 import { expectNoManualGroupOffered } from "./manual-groups-field.ts";
 
 type SaveMenuAction = "Withdraw" | "Tombstone";
 
+type RelationFields = {
+  relationType: string;
+  identifierType: string;
+  identifier: string;
+  title: string;
+  description: string;
+};
+
+type AttachmentResource = {
+  title: string;
+  resourceType: string;
+};
+
 export function sampleEditPage(page: Page) {
   const openTab = (name: string) => page.getByRole("tab", { name }).click();
-  const pick = async (field: string, label: string) => {
-    const combobox = page.getByRole("combobox", {
+  const pick = async (
+    field: string,
+    label: string,
+    scope: Locator | Page = page,
+  ) => {
+    const combobox = scope.getByRole("combobox", {
       name: new RegExp(`^${field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`),
     });
     await expect(async () => {
@@ -19,6 +37,24 @@ export function sampleEditPage(page: Page) {
       await expect(combobox).toHaveText(label, { timeout: 2_000 });
     }).toPass({ timeout: 20_000 });
   };
+
+  const relationBlock = (index: number) =>
+    page.getByRole("group", { name: `Relation ${index}`, exact: true });
+
+  const attachmentRow = (name: string) =>
+    page.getByRole("listitem").filter({ hasText: name });
+
+  const uploadDialog = page.getByRole("dialog", { name: "Uploading files" });
+  const savedToast = page.getByText("Sample saved");
+  // ponytail: under load the first save click is sometimes swallowed, so retry until the save is under way
+  const clickSave = (name: string) =>
+    expect(async () => {
+      if (await uploadDialog.or(savedToast).first().isVisible()) return;
+      await page.getByRole("button", { name }).click();
+      await expect(uploadDialog.or(savedToast).first()).toBeVisible({
+        timeout: 3_000,
+      });
+    }).toPass({ timeout: 30_000 });
 
   const confirm = (dialog: string) =>
     page
@@ -198,36 +234,67 @@ export function sampleEditPage(page: Page) {
         page.getByText("This sample is withdrawn from public view."),
       ).toBeVisible(),
 
-    openLinksTab: () => openTab("Links"),
-    addLink: async (index: number, url: string, description: string) => {
-      await page.getByRole("button", { name: "Add a link" }).click();
-      await page.getByLabel(`DOI URL ${index}`).fill(url);
-      await page.getByLabel(`Description ${index}`).fill(description);
+    openRelatedResourcesTab: () => openTab("Related resources"),
+    addRelation: async (index: number, relation: RelationFields) => {
+      await page.getByRole("button", { name: "Add a relation" }).click();
+      const block = relationBlock(index);
+      await pick("Relation type", relation.relationType, block);
+      await pick("Identifier type", relation.identifierType, block);
+      await block
+        .getByRole("textbox", { name: "Identifier" })
+        .fill(relation.identifier);
+      await block.getByLabel("Title").fill(relation.title);
+      await block.getByLabel("Description").fill(relation.description);
     },
-    expectLink: async (index: number, url: string, description: string) => {
-      await expect(page.getByLabel(`DOI URL ${index}`)).toHaveValue(url);
-      await expect(page.getByLabel(`Description ${index}`)).toHaveValue(
-        description,
+    expectRelation: async (index: number, relation: RelationFields) => {
+      const block = relationBlock(index);
+      await expect(
+        block.getByRole("combobox", { name: "Relation type" }),
+      ).toHaveText(relation.relationType);
+      await expect(
+        block.getByRole("combobox", { name: "Identifier type" }),
+      ).toHaveText(relation.identifierType);
+      await expect(
+        block.getByRole("textbox", { name: "Identifier" }),
+      ).toHaveValue(relation.identifier);
+      await expect(block.getByLabel("Title")).toHaveValue(relation.title);
+      await expect(block.getByLabel("Description")).toHaveValue(
+        relation.description,
       );
     },
     uploadAttachments: (paths: string[]) =>
       page.getByLabel("Browse files").setInputFiles(paths),
-    expectAttachment: (name: string) =>
-      expect(page.getByLabel(`Description of ${name}`)).toBeVisible(),
+    setAttachmentResource: async (
+      name: string,
+      resource: AttachmentResource,
+    ) => {
+      const row = attachmentRow(name);
+      await row.getByLabel("Title", { exact: true }).fill(resource.title);
+      await chooseOption(page, row)("Resource type", resource.resourceType);
+    },
+    expectAttachment: async (name: string, resource?: AttachmentResource) => {
+      await expect(page.getByLabel(`Description of ${name}`)).toBeVisible();
+      if (!resource) return;
+      const row = attachmentRow(name);
+      await expect(row.getByLabel("Title", { exact: true })).toHaveValue(
+        resource.title,
+      );
+      await expect(
+        row.getByRole("combobox", { name: "Resource type" }),
+      ).toHaveText(resource.resourceType);
+    },
     confirmUploads: async () => {
       await page.getByRole("button", { name: "Confirm" }).click();
-      await expect(
-        page.getByRole("dialog", { name: "Uploading files" }),
-      ).toBeHidden();
+      await expect(uploadDialog).toBeHidden();
     },
 
     saveDraft: async () => {
-      await page.getByRole("button", { name: "Save as draft" }).click();
-      await expect(page.getByText("Sample saved")).toBeVisible();
+      await clickSave("Save as draft");
+      await expect(savedToast).toBeVisible();
     },
     publishUpdates: async () => {
-      await page.getByRole("button", { name: "Publish updates" }).click();
-      await expect(page.getByText("Sample saved")).toBeVisible();
+      await clickSave("Publish updates");
+      await expect(savedToast).toBeVisible();
     },
   };
 }

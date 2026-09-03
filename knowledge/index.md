@@ -60,8 +60,8 @@ okf_version: "0.2"
 
 - [Kysely as the backend DBAL](kysely-dbal.md) - api persistence is Kysely, a type-safe SQL query builder and not an ORM, tested against a real Postgres.
 - [Material classification stored as ltree](material-classification-ltree.md) - sample.material is one Postgres ltree column with a GiST index, holding a dot-joined path of vocabulary codes.
-- [Sample links and attachments](sample-links-attachments.md) - Two cascading child tables; links ride the sample document, attachments have their own routes and their blobs live on the server filesystem.
 - [Sample location: PostGIS storage and model](sample-location.md) - Raw coordinate columns on sample are the CRUD source of truth; a generated planar geometry column carries the GiST-indexed search geometry.
+- [Sample relations and attachments](sample-relations-attachments.md) - Two cascading child tables; DataCite-shaped relations ride the sample document, attachments have their own routes and their blobs live on the server filesystem.
 
 # practice
 

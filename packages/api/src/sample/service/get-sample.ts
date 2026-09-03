@@ -23,7 +23,7 @@ export async function getSample(
     .executeTakeFirst();
   if (!row) return null;
   return {
-    sample: toSample(row, row.links, row.attachments, row.manualGroups),
+    sample: toSample(row, row.relations, row.attachments, row.manualGroups),
     role: row.role,
   };
 }
