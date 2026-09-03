@@ -1035,6 +1035,52 @@ describe("EditSamplePage", () => {
       await expect.element(screen.getByRole("status")).not.toBeInTheDocument();
     });
 
+    it("should become editable as soon as the lock holder is removed from the collaborators", async () => {
+      const { screen, releaseLock } = await renderEditPageLockedBy(PIERRE);
+      worker.use(
+        http.get("*/samples/:id/collaborators", () =>
+          HttpResponse.json({
+            data: [
+              {
+                id: ME.userId,
+                email: "marie.dupont@univ-lorraine.fr",
+                name: ME.name,
+                firstname: ME.firstname,
+                orcid: null,
+                status: "accepted",
+                role: "owner",
+              },
+              {
+                id: PIERRE.userId,
+                email: "pierre.martin@univ-lorraine.fr",
+                name: PIERRE.name,
+                firstname: PIERRE.firstname,
+                orcid: null,
+                status: "accepted",
+                role: "contributor",
+              },
+            ],
+          }),
+        ),
+        http.delete(
+          "*/samples/:id/collaborators/:userId",
+          () => new HttpResponse(null, { status: 204 }),
+        ),
+      );
+      await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
+
+      releaseLock();
+      await screen.getByRole("button", { name: "Share" }).click();
+      await screen
+        .getByRole("button", { name: "Remove Pierre Martin" })
+        .click();
+      await screen.getByRole("button", { name: "Confirm" }).click();
+      await screen.getByRole("button", { name: "Close" }).click();
+
+      await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
+      await expect.element(screen.getByRole("status")).not.toBeInTheDocument();
+    });
+
     it("should let no attachment be added, deleted or described while another user holds the lock", async () => {
       const { screen } = await renderEditPageLockedBy(PIERRE);
       await screen.getByRole("tab", { name: "Related resources" }).click();

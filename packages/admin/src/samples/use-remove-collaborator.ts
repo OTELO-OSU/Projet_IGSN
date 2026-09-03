@@ -21,9 +21,12 @@ export function useRemoveCollaborator(sampleId: string) {
     onSuccess: () => {
       toast.success(m.share_contributor_removed());
       queryClient.removeQueries({ queryKey: ["users"] });
-      return queryClient.invalidateQueries({
-        queryKey: ["samples", sampleId, "collaborators"],
-      });
+      return Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["samples", sampleId, "collaborators"],
+        }),
+        queryClient.invalidateQueries({ queryKey: ["sample-lock", sampleId] }),
+      ]);
     },
     onError: () => toast.error(m.share_contributor_remove_error()),
   });
