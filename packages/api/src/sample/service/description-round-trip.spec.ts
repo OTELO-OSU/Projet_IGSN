@@ -15,7 +15,11 @@ const base = {
 describe("sample description persistence", () => {
   pgTest("should round-trip a full description", async ({ db }) => {
     const description = {
-      collectionDate: { start: "2014-10-01", end: "2014-10-24" },
+      collectionDate: {
+        precision: "day" as const,
+        start: "2014-10-01",
+        end: "2014-10-24",
+      },
       oriented: true,
       orientationExplanation: "Oriented with a compass on the north face",
       openDescription: "Coarse-grained, weathered surface",
@@ -34,7 +38,28 @@ describe("sample description persistence", () => {
     "should round-trip a single-date collection as start === end",
     async ({ db }) => {
       const description = {
-        collectionDate: { start: "2014-10-24", end: "2014-10-24" },
+        collectionDate: {
+          precision: "day" as const,
+          start: "2014-10-24",
+          end: "2014-10-24",
+        },
+      };
+      const created = await insertSample(db, { ...base, description });
+      expect(created.description).toEqual(description);
+      expect(await readSample(db, created.id)).toEqual(created);
+    },
+  );
+
+  pgTest(
+    "should round-trip an hour-precision collection date in its own time zone",
+    async ({ db }) => {
+      const description = {
+        collectionDate: {
+          precision: "hour" as const,
+          start: "2025-06-15T14:30",
+          end: "2025-06-16T09:00",
+          timeZone: "Europe/Paris",
+        },
       };
       const created = await insertSample(db, { ...base, description });
       expect(created.description).toEqual(description);
@@ -59,12 +84,20 @@ describe("sample description persistence", () => {
     const updated = await updateSample(db, created.id, {
       ...base,
       description: {
-        collectionDate: { start: "2026-01-01", end: "2026-02-01" },
+        collectionDate: {
+          precision: "day" as const,
+          start: "2026-01-01",
+          end: "2026-02-01",
+        },
         mass: { value: 0.5, unit: "kg" as const },
       },
     });
     expect(updated?.description).toEqual({
-      collectionDate: { start: "2026-01-01", end: "2026-02-01" },
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-01",
+        end: "2026-02-01",
+      },
       mass: { value: 0.5, unit: "kg" },
     });
   });
@@ -73,7 +106,11 @@ describe("sample description persistence", () => {
     const created = await insertSample(db, {
       ...base,
       description: {
-        collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+        collectionDate: {
+          precision: "day" as const,
+          start: "2026-01-01",
+          end: "2026-01-01",
+        },
         oriented: false,
       },
     });

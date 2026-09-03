@@ -567,7 +567,11 @@ export const SEED_SAMPLES: SeedSample[] = [
       position: { type: "point", longitude: 2.96, latitude: 45.77 },
     },
     description: {
-      collectionDate: { start: "2025-06-15", end: "2025-06-15" },
+      collectionDate: {
+        precision: "day",
+        start: "2025-06-15",
+        end: "2025-06-15",
+      },
     },
     age: {
       numericAgeMin: 2,
@@ -604,7 +608,11 @@ export const SEED_SAMPLES: SeedSample[] = [
       position: { type: "point", longitude: -2.83, latitude: 48.28 },
     },
     description: {
-      collectionDate: { start: "2025-04-02", end: "2025-04-02" },
+      collectionDate: {
+        precision: "day",
+        start: "2025-04-02",
+        end: "2025-04-02",
+      },
     },
     existenceStatus: "exists",
     availabilityStatus: "available",
@@ -632,7 +640,11 @@ export const SEED_SAMPLES: SeedSample[] = [
       position: { type: "point", longitude: 2.81, latitude: 45.57 },
     },
     description: {
-      collectionDate: { start: "2025-07-01", end: "2025-07-01" },
+      collectionDate: {
+        precision: "day",
+        start: "2025-07-01",
+        end: "2025-07-01",
+      },
     },
     existenceStatus: "exists",
     availabilityStatus: "available",
@@ -662,7 +674,11 @@ export const SEED_SAMPLES: SeedSample[] = [
       position: { type: "point", longitude: 2.81, latitude: 45.57 },
     },
     description: {
-      collectionDate: { start: "2025-07-01", end: "2025-07-01" },
+      collectionDate: {
+        precision: "day",
+        start: "2025-07-01",
+        end: "2025-07-01",
+      },
     },
     existenceStatus: "exists",
     availabilityStatus: "available",

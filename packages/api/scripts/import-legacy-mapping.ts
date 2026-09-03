@@ -510,13 +510,13 @@ export function mapDescription(
 function mapCollectionDate(
   start: string | null,
   end: string | null,
-): { start: string; end: string } | null {
+): { precision: "day"; start: string; end: string } | null {
   const first = start ?? end;
   const last = end ?? start;
   if (!first || !last) return null;
   return first <= last
-    ? { start: first, end: last }
-    : { start: last, end: first };
+    ? { precision: "day", start: first, end: last }
+    : { precision: "day", start: last, end: first };
 }
 
 type NumericAge = Pick<

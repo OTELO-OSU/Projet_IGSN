@@ -18,7 +18,11 @@ export const publishableSample = {
     position: { type: "point" as const, longitude: 3, latitude: 45 },
   },
   description: {
-    collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+    collectionDate: {
+      precision: "day",
+      start: "2026-01-01",
+      end: "2026-01-01",
+    },
   },
   existenceStatus: "exists" as const,
   availabilityStatus: "available" as const,

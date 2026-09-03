@@ -63,7 +63,11 @@ const sampleBody = {
   availabilityStatus: "available",
   location: { position: { type: "point", longitude: 0, latitude: 0 } },
   description: {
-    collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+    collectionDate: {
+      precision: "day",
+      start: "2026-01-01",
+      end: "2026-01-01",
+    },
   },
   scientificContext: {
     provenanceStatus: "historical_specimen",

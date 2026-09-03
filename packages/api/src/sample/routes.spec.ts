@@ -40,7 +40,11 @@ async function createSample(
         specificName,
         location: { position: { type: "point", ...position } },
         description: {
-          collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+          collectionDate: {
+            precision: "day",
+            start: "2026-01-01",
+            end: "2026-01-01",
+          },
         },
         existenceStatus: "exists",
         availabilityStatus: "available",

@@ -763,7 +763,11 @@ describe("admin sample routes", () => {
       expect(await kept.json()).toMatchObject({
         data: {
           description: {
-            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-01",
+              end: "2026-01-01",
+            },
           },
         },
       });
@@ -1225,7 +1229,11 @@ describe("admin sample routes", () => {
           specificName: "MC-2026-007",
           location: { position: { type: "point", longitude: 3, latitude: 45 } },
           description: {
-            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-01",
+              end: "2026-01-01",
+            },
           },
           existenceStatus: "exists",
           availabilityStatus: "available",

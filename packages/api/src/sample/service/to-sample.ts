@@ -2,6 +2,7 @@ import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { Selectable } from "kysely";
 
 import { formatDate } from "@projet-igsn/domain/date/format-date";
+import { formatZonedDateTime } from "@projet-igsn/domain/date/format-zoned-date-time";
 import { type Sample, sampleSchema } from "@projet-igsn/domain/sample/sample";
 import { scientificContextSchema } from "@projet-igsn/domain/sample/scientific-context/model";
 
@@ -24,15 +25,28 @@ function omitNull(parts: Record<string, unknown>) {
   );
 }
 
+function toCollectionDate(row: Selectable<DB["sample"]>) {
+  const { collection_date_start: start, collection_date_end: end } = row;
+  if (start === null || end === null) return null;
+  const timeZone = row.collection_date_time_zone;
+  if (row.collection_date_precision === "hour" && timeZone !== null) {
+    return {
+      precision: "hour",
+      start: formatZonedDateTime(start, timeZone),
+      end: formatZonedDateTime(end, timeZone),
+      timeZone,
+    };
+  }
+  return {
+    precision: "day",
+    start: formatDate(start),
+    end: formatDate(end),
+  };
+}
+
 function toDescription(row: Selectable<DB["sample"]>) {
   return prune({
-    collectionDate:
-      row.collection_date_start !== null && row.collection_date_end !== null
-        ? {
-            start: formatDate(row.collection_date_start),
-            end: formatDate(row.collection_date_end),
-          }
-        : null,
+    collectionDate: toCollectionDate(row),
     oriented: row.oriented,
     orientationExplanation: row.orientation_explanation,
     openDescription: row.open_description,

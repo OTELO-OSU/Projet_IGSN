@@ -17,6 +17,8 @@ const row = {
   specific_name: "FTB-2026-042",
   collection_date_start: null,
   collection_date_end: null,
+  collection_date_precision: null,
+  collection_date_time_zone: null,
   oriented: null,
   orientation_explanation: null,
   open_description: null,
