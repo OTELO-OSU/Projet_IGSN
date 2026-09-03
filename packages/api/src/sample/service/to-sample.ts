@@ -34,18 +34,10 @@ function toCollectionDate(row: Selectable<DB["sample"]>) {
         `sample ${row.id} has an hour-precision collection date without a time zone`,
       );
     }
-    return {
-      precision: "hour",
-      start: wallClock(start),
-      end: wallClock(end),
-      timeZone,
-    };
+    return { precision: "hour", start, end, timeZone };
   }
-  return { precision: "day", start: start.slice(0, 10), end: end.slice(0, 10) };
+  return { precision: "day", start, end };
 }
-
-const wallClock = (timestamp: string) =>
-  timestamp.replace(" ", "T").slice(0, 16);
 
 function toDescription(row: Selectable<DB["sample"]>) {
   return prune({

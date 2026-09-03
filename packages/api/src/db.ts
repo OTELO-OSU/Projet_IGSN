@@ -248,15 +248,6 @@ const dbConfigSchema = z.object({
   ssl: z.literal("require").optional(),
 });
 
-export const POSTGRES_TYPES = {
-  timestamp: {
-    to: 1114,
-    from: [1114],
-    serialize: (value: string) => value,
-    parse: (value: string) => value,
-  },
-};
-
 export function createDb(): Kysely<DB> {
   const config = dbConfigSchema.parse({
     host: process.env.DATABASE_HOST,
@@ -267,8 +258,6 @@ export function createDb(): Kysely<DB> {
     ssl: process.env.DATABASE_SSL,
   });
   return new Kysely<DB>({
-    dialect: new PostgresJSDialect({
-      postgres: postgres({ ...config, types: POSTGRES_TYPES }),
-    }),
+    dialect: new PostgresJSDialect({ postgres: postgres(config) }),
   });
 }

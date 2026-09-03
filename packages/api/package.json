@@ -29,7 +29,6 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@kysely-vitest/core": "catalog:",
     "@kysely-vitest/postgres": "catalog:",
     "@types/mjml": "catalog:",
     "@types/node": "catalog:",
