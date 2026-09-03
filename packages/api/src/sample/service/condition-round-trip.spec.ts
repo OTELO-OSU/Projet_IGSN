@@ -1,3 +1,4 @@
+import { STORAGE_CONDITIONS } from "@projet-igsn/domain/sample/condition/storage-condition";
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
@@ -16,10 +17,7 @@ describe("sample condition persistence", () => {
   pgTest("should round-trip a full condition", async ({ db }) => {
     const condition = {
       packaging: "glass_bottle" as const,
-      storageConditions: [
-        "temperature_controlled" as const,
-        "light_controlled" as const,
-      ],
+      storageConditions: [...STORAGE_CONDITIONS],
       temperature: {
         type: "frozen" as const,
         measurement: { value: -18, unit: "celsius" as const },
@@ -41,6 +39,11 @@ describe("sample condition persistence", () => {
     "should round-trip a category without its numeric reading",
     async ({ db }) => {
       const condition = {
+        storageConditions: [
+          "temperature_controlled" as const,
+          "moisture_controlled" as const,
+          "pressure_controlled" as const,
+        ],
         temperature: { type: "ambient" as const },
         humidity: { type: "dry" as const },
         pressure: { type: "vacuum" as const },
@@ -63,7 +66,7 @@ describe("sample condition persistence", () => {
   pgTest("should update a condition", async ({ db }) => {
     const created = await insertSample(db, {
       ...base,
-      condition: { storageConditions: ["no_specific_condition" as const] },
+      condition: { storageConditions: ["light_controlled" as const] },
     });
     const updated = await updateSample(db, created.id, {
       ...base,

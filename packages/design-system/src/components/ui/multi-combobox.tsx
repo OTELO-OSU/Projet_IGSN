@@ -119,7 +119,7 @@ export function MultiCombobox({
               className="text-muted-foreground h-7 flex-1 justify-between px-1 font-normal hover:bg-transparent"
               {...aria}
             >
-              {placeholder}
+              {selected.length === 0 ? placeholder : null}
               <ChevronsUpDownIcon className="opacity-50" />
             </Button>
           </PopoverTrigger>

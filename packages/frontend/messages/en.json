@@ -135,6 +135,7 @@
   "sample_attachment_download_name": "Download {name}",
   "sample_field_packaging": "Packaging",
   "sample_field_storage_conditions": "Storage conditions",
+  "sample_storage_conditions_none": "No specific condition",
   "sample_field_temperature": "Temperature",
   "sample_field_humidity": "Relative humidity",
   "sample_field_light": "Light",

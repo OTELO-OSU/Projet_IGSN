@@ -1,5 +1,6 @@
 import type { Condition } from "@projet-igsn/domain/sample/condition/model";
 
+import { STORAGE_CONDITIONS } from "@projet-igsn/domain/sample/condition/storage-condition";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -21,7 +22,7 @@ describe("composeCondition", () => {
   it("should round-trip a full condition through the draft", () => {
     const condition: Condition = {
       packaging: "glass_bottle",
-      storageConditions: ["temperature_controlled", "light_controlled"],
+      storageConditions: [...STORAGE_CONDITIONS],
       temperature: {
         type: "frozen",
         measurement: { value: -18, unit: "celsius" },
@@ -38,15 +39,30 @@ describe("composeCondition", () => {
   });
 
   it("should compose a category without its reading", () => {
-    expect(composeCondition(draft({ temperatureType: "ambient" }))).toEqual({
+    expect(
+      composeCondition(
+        draft({
+          storageConditions: ["temperature_controlled"],
+          temperatureType: "ambient",
+        }),
+      ),
+    ).toEqual({
+      storageConditions: ["temperature_controlled"],
       temperature: { type: "ambient", measurement: undefined },
     });
   });
 
   it("should keep a half-filled measurement for the schema to reject", () => {
     expect(
-      composeCondition(draft({ pressureType: "vacuum", pressureValue: 0.5 })),
+      composeCondition(
+        draft({
+          storageConditions: ["pressure_controlled"],
+          pressureType: "vacuum",
+          pressureValue: 0.5,
+        }),
+      ),
     ).toEqual({
+      storageConditions: ["pressure_controlled"],
       pressure: {
         type: "vacuum",
         measurement: { value: 0.5, unit: undefined },
@@ -56,8 +72,33 @@ describe("composeCondition", () => {
 
   it("should drop a reading unit left behind by a cleared value", () => {
     expect(
-      composeCondition(draft({ pressureType: "vacuum", pressureUnit: "bar" })),
-    ).toEqual({ pressure: { type: "vacuum", measurement: undefined } });
+      composeCondition(
+        draft({
+          storageConditions: ["pressure_controlled"],
+          pressureType: "vacuum",
+          pressureUnit: "bar",
+        }),
+      ),
+    ).toEqual({
+      storageConditions: ["pressure_controlled"],
+      pressure: { type: "vacuum", measurement: undefined },
+    });
+  });
+
+  it("should drop a reading whose storage condition is removed", () => {
+    expect(
+      composeCondition(
+        draft({
+          storageConditions: [],
+          temperatureType: "frozen",
+          temperatureValue: -18,
+          temperatureUnit: "celsius",
+          humidityType: "dry",
+          light: "total_darkness",
+          specificConditions: "argon",
+        }),
+      ),
+    ).toBeNull();
   });
 
   it("should drop a reading left behind an unset category", () => {
@@ -77,10 +118,15 @@ describe("composeCondition", () => {
   });
 
   it("should trim the specific conditions and drop them when blank", () => {
+    const controlled = { storageConditions: ["light_controlled" as const] };
     expect(
-      composeCondition(draft({ specificConditions: "  argon  " })),
-    ).toEqual({ specificConditions: "argon" });
-    expect(composeCondition(draft({ specificConditions: "   " }))).toBeNull();
+      composeCondition(
+        draft({ ...controlled, specificConditions: "  argon  " }),
+      ),
+    ).toEqual({ ...controlled, specificConditions: "argon" });
+    expect(
+      composeCondition(draft({ ...controlled, specificConditions: "   " })),
+    ).toEqual(controlled);
   });
 });
 

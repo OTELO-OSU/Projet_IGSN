@@ -3,6 +3,11 @@ import { z } from "zod";
 import { freeTextSchema } from "../free-text.ts";
 import { measurementSchema } from "../measurement.ts";
 import {
+  CONTROLLED_READINGS,
+  hasStorageCondition,
+  isReadingControlled,
+} from "./controlled-reading.ts";
+import {
   humidityTypeSchema,
   isHumidityPercentageInRange,
 } from "./humidity-type.ts";
@@ -51,16 +56,25 @@ export const conditionSchema = z
         params: { code: "storage_conditions_duplicate" },
       });
     }
-    if (
-      storage != null &&
-      storage.includes("no_specific_condition") &&
-      storage.length > 1
-    ) {
+    for (const reading of CONTROLLED_READINGS) {
+      if (
+        condition[reading] != null &&
+        !isReadingControlled(storage, reading)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: [reading],
+          message: `${reading} requires its storage condition`,
+          params: { code: "reading_without_storage_condition" },
+        });
+      }
+    }
+    if (condition.specificConditions != null && !hasStorageCondition(storage)) {
       ctx.addIssue({
         code: "custom",
-        path: ["storageConditions"],
-        message: "no specific condition excludes every other storage condition",
-        params: { code: "storage_conditions_exclusive" },
+        path: ["specificConditions"],
+        message: "specific conditions require a storage condition",
+        params: { code: "specific_conditions_without_storage_condition" },
       });
     }
     if (

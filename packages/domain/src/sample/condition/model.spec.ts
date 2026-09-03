@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { conditionSchema } from "./model.ts";
+import { STORAGE_CONDITIONS } from "./storage-condition.ts";
 
 const full = {
   packaging: "glass_bottle",
-  storageConditions: ["temperature_controlled", "light_controlled"],
+  storageConditions: [...STORAGE_CONDITIONS],
   temperature: { type: "frozen", measurement: { value: -18, unit: "celsius" } },
   humidity: { type: "controlled", percentage: 40 },
   light: "total_darkness",
@@ -26,6 +27,11 @@ describe("conditionSchema", () => {
 
   it("should accept a category without its numeric reading", () => {
     const result = conditionSchema.safeParse({
+      storageConditions: [
+        "temperature_controlled",
+        "moisture_controlled",
+        "pressure_controlled",
+      ],
       temperature: { type: "ambient" },
       humidity: { type: "dry" },
       pressure: { type: "vacuum" },
@@ -54,20 +60,6 @@ describe("conditionSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("should accept no_specific_condition alone", () => {
-    const result = conditionSchema.safeParse({
-      storageConditions: ["no_specific_condition"],
-    });
-    expect(result.success).toBe(true);
-  });
-
-  it("should reject no_specific_condition combined with another condition", () => {
-    const result = conditionSchema.safeParse({
-      storageConditions: ["no_specific_condition", "light_controlled"],
-    });
-    expect(result.success).toBe(false);
-  });
-
   it("should reject duplicate storage conditions", () => {
     const result = conditionSchema.safeParse({
       storageConditions: ["light_controlled", "light_controlled"],
@@ -92,7 +84,12 @@ describe("conditionSchema", () => {
   ])(
     "should accept a humidity percentage matching its range %o",
     (humidity) => {
-      expect(conditionSchema.safeParse({ humidity }).success).toBe(true);
+      expect(
+        conditionSchema.safeParse({
+          humidity,
+          storageConditions: ["moisture_controlled"],
+        }).success,
+      ).toBe(true);
     },
   );
 
@@ -107,11 +104,29 @@ describe("conditionSchema", () => {
     { type: "humid", percentage: 101 },
     { type: "dehydrated", percentage: -1 },
   ])("should reject a humidity percentage outside its range %o", (humidity) => {
-    expect(conditionSchema.safeParse({ humidity }).success).toBe(false);
+    expect(
+      conditionSchema.safeParse({
+        humidity,
+        storageConditions: ["moisture_controlled"],
+      }).success,
+    ).toBe(false);
+  });
+
+  it.each([
+    { temperature: { type: "ambient" } },
+    { pressure: { type: "vacuum" } },
+    { humidity: { type: "dry" } },
+    { light: "total_darkness" },
+    { specificConditions: "argon" },
+  ])("should reject %o without its storage condition", (part) => {
+    expect(conditionSchema.safeParse(part).success).toBe(false);
   });
 
   it("should reject a blank specificConditions", () => {
-    const result = conditionSchema.safeParse({ specificConditions: "   " });
+    const result = conditionSchema.safeParse({
+      storageConditions: ["light_controlled"],
+      specificConditions: "   ",
+    });
     expect(result.success).toBe(false);
   });
 

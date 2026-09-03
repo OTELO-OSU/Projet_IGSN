@@ -1,9 +1,11 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
+import { STORAGE_CONDITIONS } from "@projet-igsn/domain/sample/condition/storage-condition";
 import { vi } from "vitest";
 
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
+import { storageConditionLabel } from "./sample-labels.ts";
 
 const noop = () => {};
 
@@ -33,6 +35,18 @@ async function renderConditionTab(
   return screen;
 }
 
+async function pickStorageConditions(
+  screen: Awaited<ReturnType<typeof renderConditionTab>>,
+  ...labels: string[]
+) {
+  const combobox = screen.getByRole("combobox", { name: "Storage conditions" });
+  await combobox.click();
+  for (const label of labels) {
+    await screen.getByRole("option", { name: label }).click();
+  }
+  await combobox.click();
+}
+
 describe("SampleConditionFields", () => {
   it("should submit a full condition", async () => {
     const onSubmit = vi.fn();
@@ -40,10 +54,10 @@ describe("SampleConditionFields", () => {
 
     await screen.getByRole("combobox", { name: "Packaging" }).click();
     await screen.getByRole("option", { name: "Glass bottle" }).click();
-    await screen
-      .getByRole("checkbox", { name: "Temperature controlled" })
-      .click();
-    await screen.getByRole("checkbox", { name: "Light controlled" }).click();
+    await pickStorageConditions(
+      screen,
+      ...STORAGE_CONDITIONS.map(storageConditionLabel),
+    );
     await screen
       .getByRole("combobox", { name: "Temperature", exact: true })
       .click();
@@ -77,7 +91,7 @@ describe("SampleConditionFields", () => {
         expect.objectContaining({
           condition: {
             packaging: "glass_bottle",
-            storageConditions: ["temperature_controlled", "light_controlled"],
+            storageConditions: [...STORAGE_CONDITIONS],
             temperature: {
               type: "frozen",
               measurement: { value: -18, unit: "celsius" },
@@ -95,9 +109,38 @@ describe("SampleConditionFields", () => {
     );
   });
 
-  it("should show the reading inputs only once their category is chosen", async () => {
+  it("should show a reading only once its storage condition is picked, then its category is chosen", async () => {
     const screen = await renderConditionTab();
 
+    await expect
+      .element(screen.getByRole("combobox", { name: "Storage conditions" }))
+      .toHaveTextContent("No specific condition");
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Temperature", exact: true }),
+      )
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Pressure", exact: true }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Relative humidity" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Light", exact: true }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByLabelText("Specific sample conditions"))
+      .not.toBeInTheDocument();
+
+    await pickStorageConditions(
+      screen,
+      ...STORAGE_CONDITIONS.map(storageConditionLabel),
+    );
+
+    await expect
+      .element(screen.getByLabelText("Specific sample conditions"))
+      .toBeVisible();
     await expect
       .element(screen.getByLabelText("Temperature value"))
       .not.toBeInTheDocument();
@@ -136,6 +179,8 @@ describe("SampleConditionFields", () => {
   it("should show the unit only once its value is set, marked required", async () => {
     const screen = await renderConditionTab();
 
+    await pickStorageConditions(screen, "Pressure controlled");
+
     await expect
       .element(
         screen.getByRole("combobox", { name: "Pressure unit", exact: true }),
@@ -167,6 +212,7 @@ describe("SampleConditionFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderConditionTab(onSubmit);
 
+    await pickStorageConditions(screen, "Temperature controlled");
     await screen
       .getByRole("combobox", { name: "Temperature", exact: true })
       .click();
@@ -187,6 +233,7 @@ describe("SampleConditionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           condition: {
+            storageConditions: ["temperature_controlled"],
             temperature: {
               type: "ambient",
               measurement: { value: 21, unit: "celsius" },
@@ -201,6 +248,7 @@ describe("SampleConditionFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderConditionTab(onSubmit);
 
+    await pickStorageConditions(screen, "Moisture controlled");
     await screen.getByRole("combobox", { name: "Relative humidity" }).click();
     await screen.getByRole("option", { name: "<10% (dehydrated)" }).click();
     await screen.getByLabelText("Relative humidity in %").fill("11");
@@ -220,42 +268,43 @@ describe("SampleConditionFields", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
-          condition: { humidity: { type: "dehydrated", percentage: 5 } },
+          condition: {
+            storageConditions: ["moisture_controlled"],
+            humidity: { type: "dehydrated", percentage: 5 },
+          },
         }),
       ),
     );
   });
 
-  it("should make no specific condition exclusive with the other storage conditions", async () => {
+  it("should hide a reading once its storage condition is removed", async () => {
     const screen = await renderConditionTab();
 
+    await pickStorageConditions(screen, "Temperature controlled");
     await screen
-      .getByRole("checkbox", { name: "No specific condition" })
+      .getByRole("combobox", { name: "Temperature", exact: true })
       .click();
+    await screen.getByRole("option", { name: "Ambient" }).click();
+    await screen.getByLabelText("Temperature value").fill("21");
+    await screen
+      .getByLabelText("Specific sample conditions")
+      .fill("Stored under argon");
+
+    await screen
+      .getByRole("button", { name: "Remove Temperature controlled" })
+      .click();
+
     await expect
-      .element(screen.getByRole("checkbox", { name: "Temperature controlled" }))
+      .element(
+        screen.getByRole("combobox", { name: "Temperature", exact: true }),
+      )
       .not.toBeInTheDocument();
-
-    await screen
-      .getByRole("checkbox", { name: "No specific condition" })
-      .click();
     await expect
-      .element(screen.getByRole("checkbox", { name: "Temperature controlled" }))
-      .not.toBeChecked();
-
-    await screen
-      .getByRole("checkbox", { name: "Temperature controlled" })
-      .click();
-    await expect
-      .element(screen.getByRole("checkbox", { name: "No specific condition" }))
+      .element(screen.getByLabelText("Temperature value"))
       .not.toBeInTheDocument();
-
-    await screen
-      .getByRole("checkbox", { name: "Temperature controlled" })
-      .click();
     await expect
-      .element(screen.getByRole("checkbox", { name: "No specific condition" }))
-      .not.toBeChecked();
+      .element(screen.getByLabelText("Specific sample conditions"))
+      .not.toBeInTheDocument();
   });
 
   it("should prefill the tab when editing a sample with a condition", async () => {
@@ -268,9 +317,7 @@ describe("SampleConditionFields", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Packaging" }))
       .toHaveTextContent("Paper bag");
-    await expect
-      .element(screen.getByRole("checkbox", { name: "Moisture controlled" }))
-      .toBeChecked();
+    await expect.element(screen.getByText("Moisture controlled")).toBeVisible();
     await expect
       .element(screen.getByLabelText("Relative humidity in %"))
       .toHaveValue(20);

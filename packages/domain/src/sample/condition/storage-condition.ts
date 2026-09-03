@@ -1,7 +1,6 @@
 import { z } from "zod";
 
 export const STORAGE_CONDITIONS = [
-  "no_specific_condition",
   "temperature_controlled",
   "pressure_controlled",
   "moisture_controlled",

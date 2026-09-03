@@ -1,4 +1,11 @@
+import type { ReactNode } from "react";
+
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
+import {
+  type ControlledReading,
+  hasStorageCondition,
+  isReadingControlled,
+} from "@projet-igsn/domain/sample/condition/controlled-reading";
 import { HUMIDITY_TYPES } from "@projet-igsn/domain/sample/condition/humidity-type";
 import { LIGHTS } from "@projet-igsn/domain/sample/condition/light";
 import { PACKAGINGS } from "@projet-igsn/domain/sample/condition/packaging";
@@ -30,6 +37,10 @@ import { useSampleForm } from "#/samples/use-sample-form.ts";
 const packagingItems = toComboboxItems(PACKAGINGS, packagingLabel);
 const lightItems = toComboboxItems(LIGHTS, lightLabel);
 const humidityTypeItems = toComboboxItems(HUMIDITY_TYPES, humidityTypeLabel);
+const storageConditionItems = toComboboxItems(
+  STORAGE_CONDITIONS,
+  storageConditionLabel,
+);
 
 const readings = [
   {
@@ -62,15 +73,24 @@ const readings = [
   },
 ];
 
-const storageConditionItems = (selected: readonly string[]) => {
-  const none = selected.includes("no_specific_condition");
-  const controlled = selected.some(
-    (value) => value !== "no_specific_condition",
+function ControlledReadingFields({
+  reading,
+  children,
+}: {
+  reading: ControlledReading;
+  children: ReactNode;
+}) {
+  const form = useSampleForm();
+  return (
+    <form.Subscribe
+      selector={(state) =>
+        isReadingControlled(state.values.condition.storageConditions, reading)
+      }
+    >
+      {(controlled) => (controlled ? children : null)}
+    </form.Subscribe>
   );
-  return STORAGE_CONDITIONS.filter((value) =>
-    value === "no_specific_condition" ? !controlled : !none,
-  ).map((value) => ({ value, label: storageConditionLabel(value) }));
-};
+}
 
 export function SampleConditionFields() {
   const form = useSampleForm();
@@ -90,116 +110,139 @@ export function SampleConditionFields() {
 
       <form.AppField name="condition.storageConditions">
         {(field) => (
-          <field.CheckboxGroupField
+          <field.MultiComboboxField
             label={m.field_storage_conditions()}
-            items={storageConditionItems(field.state.value)}
+            items={storageConditionItems}
+            placeholder={m.storage_conditions_placeholder()}
+            searchPlaceholder={m.storage_conditions_search_placeholder()}
+            emptyText={m.storage_conditions_empty()}
+            removeLabel={(label) => m.storage_conditions_remove({ label })}
           />
         )}
       </form.AppField>
 
       {readings.map((reading) => (
-        <div key={reading.key} className="grid gap-4 sm:grid-cols-3">
-          <form.AppField name={`condition.${reading.key}Type`}>
+        <ControlledReadingFields key={reading.key} reading={reading.key}>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <form.AppField name={`condition.${reading.key}Type`}>
+              {(field) => (
+                <field.ComboboxField
+                  label={reading.label()}
+                  items={reading.typeItems}
+                  placeholder={reading.placeholder()}
+                  searchPlaceholder={reading.searchPlaceholder()}
+                  emptyText={reading.emptyText()}
+                />
+              )}
+            </form.AppField>
+            <form.Subscribe
+              selector={(state) =>
+                hasReadingType(state.values.condition[`${reading.key}Type`])
+              }
+            >
+              {(hasType) =>
+                hasType ? (
+                  <>
+                    <form.AppField name={`condition.${reading.key}Value`}>
+                      {(field) => (
+                        <field.NumberField label={reading.valueLabel()} />
+                      )}
+                    </form.AppField>
+                    <form.Subscribe
+                      selector={(state) =>
+                        hasMeasurementValue(
+                          state.values.condition[`${reading.key}Value`],
+                        )
+                      }
+                    >
+                      {(hasValue) =>
+                        hasValue ? (
+                          <form.AppField name={`condition.${reading.key}Unit`}>
+                            {(field) => (
+                              <field.ComboboxField
+                                label={reading.unitLabel()}
+                                requiredToPublish
+                                items={reading.unitItems}
+                                placeholder={m.unit_placeholder()}
+                                searchPlaceholder={m.unit_search_placeholder()}
+                                emptyText={m.unit_empty()}
+                              />
+                            )}
+                          </form.AppField>
+                        ) : null
+                      }
+                    </form.Subscribe>
+                  </>
+                ) : null
+              }
+            </form.Subscribe>
+          </div>
+        </ControlledReadingFields>
+      ))}
+
+      <ControlledReadingFields reading="humidity">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <form.AppField name="condition.humidityType">
             {(field) => (
               <field.ComboboxField
-                label={reading.label()}
-                items={reading.typeItems}
-                placeholder={reading.placeholder()}
-                searchPlaceholder={reading.searchPlaceholder()}
-                emptyText={reading.emptyText()}
+                label={m.field_humidity()}
+                items={humidityTypeItems}
+                placeholder={m.humidity_placeholder()}
+                searchPlaceholder={m.humidity_search_placeholder()}
+                emptyText={m.humidity_empty()}
               />
             )}
           </form.AppField>
           <form.Subscribe
             selector={(state) =>
-              hasReadingType(state.values.condition[`${reading.key}Type`])
+              hasReadingType(state.values.condition.humidityType)
             }
           >
             {(hasType) =>
               hasType ? (
-                <>
-                  <form.AppField name={`condition.${reading.key}Value`}>
-                    {(field) => (
-                      <field.NumberField label={reading.valueLabel()} />
-                    )}
-                  </form.AppField>
-                  <form.Subscribe
-                    selector={(state) =>
-                      hasMeasurementValue(
-                        state.values.condition[`${reading.key}Value`],
-                      )
-                    }
-                  >
-                    {(hasValue) =>
-                      hasValue ? (
-                        <form.AppField name={`condition.${reading.key}Unit`}>
-                          {(field) => (
-                            <field.ComboboxField
-                              label={reading.unitLabel()}
-                              requiredToPublish
-                              items={reading.unitItems}
-                              placeholder={m.unit_placeholder()}
-                              searchPlaceholder={m.unit_search_placeholder()}
-                              emptyText={m.unit_empty()}
-                            />
-                          )}
-                        </form.AppField>
-                      ) : null
-                    }
-                  </form.Subscribe>
-                </>
+                <form.AppField name="condition.humidityPercentage">
+                  {(field) => (
+                    <field.NumberField label={m.field_humidity_percentage()} />
+                  )}
+                </form.AppField>
               ) : null
             }
           </form.Subscribe>
         </div>
-      ))}
+      </ControlledReadingFields>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <form.AppField name="condition.humidityType">
+      <ControlledReadingFields reading="light">
+        <form.AppField name="condition.light">
           {(field) => (
             <field.ComboboxField
-              label={m.field_humidity()}
-              items={humidityTypeItems}
-              placeholder={m.humidity_placeholder()}
-              searchPlaceholder={m.humidity_search_placeholder()}
-              emptyText={m.humidity_empty()}
+              label={m.field_light()}
+              items={lightItems}
+              placeholder={m.light_placeholder()}
+              searchPlaceholder={m.light_search_placeholder()}
+              emptyText={m.light_empty()}
             />
           )}
         </form.AppField>
-        <form.Subscribe
-          selector={(state) =>
-            hasReadingType(state.values.condition.humidityType)
-          }
-        >
-          {(hasType) =>
-            hasType ? (
-              <form.AppField name="condition.humidityPercentage">
-                {(field) => (
-                  <field.NumberField label={m.field_humidity_percentage()} />
-                )}
-              </form.AppField>
-            ) : null
-          }
-        </form.Subscribe>
-      </div>
+      </ControlledReadingFields>
 
-      <form.AppField name="condition.light">
-        {(field) => (
-          <field.ComboboxField
-            label={m.field_light()}
-            items={lightItems}
-            placeholder={m.light_placeholder()}
-            searchPlaceholder={m.light_search_placeholder()}
-            emptyText={m.light_empty()}
-          />
-        )}
-      </form.AppField>
-
-      <form.AppField name="condition.specificConditions">
-        {(field) => (
-          <field.TextField label={m.field_specific_conditions()} multiline />
-        )}
-      </form.AppField>
+      <form.Subscribe
+        selector={(state) =>
+          hasStorageCondition(state.values.condition.storageConditions)
+        }
+      >
+        {(controlled) =>
+          controlled ? (
+            <form.AppField name="condition.specificConditions">
+              {(field) => (
+                <field.TextField
+                  label={m.field_specific_conditions()}
+                  multiline
+                />
+              )}
+            </form.AppField>
+          ) : null
+        }
+      </form.Subscribe>
     </div>
   );
 }

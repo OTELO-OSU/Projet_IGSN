@@ -1,3 +1,4 @@
+import { STORAGE_CONDITIONS } from "@projet-igsn/domain/sample/condition/storage-condition";
 import { render } from "vitest-browser-react";
 
 import { ConditionView } from "./condition-view.tsx";
@@ -8,7 +9,7 @@ describe("ConditionView", () => {
       <ConditionView
         condition={{
           packaging: "glass_bottle",
-          storageConditions: ["temperature_controlled", "light_controlled"],
+          storageConditions: [...STORAGE_CONDITIONS],
           temperature: {
             type: "frozen",
             measurement: { value: -18, unit: "celsius" },
@@ -30,7 +31,11 @@ describe("ConditionView", () => {
       .element(screen.getByText("Storage conditions"))
       .toBeInTheDocument();
     await expect
-      .element(screen.getByText("Temperature controlled, Light controlled"))
+      .element(
+        screen.getByText(
+          "Temperature controlled, Pressure controlled, Moisture controlled, Light controlled",
+        ),
+      )
       .toBeInTheDocument();
     await expect
       .element(screen.getByText("Temperature", { exact: true }))
@@ -70,6 +75,11 @@ describe("ConditionView", () => {
     const screen = await render(
       <ConditionView
         condition={{
+          storageConditions: [
+            "temperature_controlled",
+            "moisture_controlled",
+            "pressure_controlled",
+          ],
           temperature: { type: "ambient" },
           humidity: { type: "dry" },
           pressure: { type: "vacuum" },
@@ -97,7 +107,10 @@ describe("ConditionView", () => {
     await expect.element(screen.getByText("Paper bag")).toBeInTheDocument();
     await expect
       .element(screen.getByText("Storage conditions"))
-      .not.toBeInTheDocument();
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("No specific condition"))
+      .toBeInTheDocument();
     await expect
       .element(screen.getByText("Temperature", { exact: true }))
       .not.toBeInTheDocument();
@@ -119,6 +132,7 @@ describe("ConditionView", () => {
     const screen = await render(
       <ConditionView
         condition={{
+          storageConditions: ["temperature_controlled"],
           temperature: {
             type: "refrigerated",
             measurement: { value: 277, unit: "kelvin" },
