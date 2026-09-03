@@ -54,10 +54,9 @@ export const hasReadingType = <T extends string>(
   type: T | null | undefined,
 ): type is T => type != null;
 
-export const hasControlledStorageCondition = (
+export const hasStorageCondition = (
   storageConditions: readonly string[],
-): boolean =>
-  storageConditions.some((value) => value !== "no_specific_condition");
+): boolean => storageConditions.length > 0;
 
 export function composeCondition(
   draft: ConditionDraft,
@@ -96,7 +95,7 @@ export function composeCondition(
             ),
           }
         : undefined,
-    specificConditions: hasControlledStorageCondition(draft.storageConditions)
+    specificConditions: hasStorageCondition(draft.storageConditions)
       ? draft.specificConditions?.trim() || undefined
       : undefined,
   };

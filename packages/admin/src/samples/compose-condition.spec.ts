@@ -89,7 +89,7 @@ describe("composeCondition", () => {
     });
   });
 
-  it("should drop a reading whose storage condition is unchecked", () => {
+  it("should drop a reading whose storage condition is removed", () => {
     expect(
       composeCondition(
         draft({
@@ -103,17 +103,6 @@ describe("composeCondition", () => {
         }),
       ),
     ).toBeNull();
-  });
-
-  it("should drop the specific conditions when only no specific condition is checked", () => {
-    expect(
-      composeCondition(
-        draft({
-          storageConditions: ["no_specific_condition"],
-          specificConditions: "argon",
-        }),
-      ),
-    ).toEqual({ storageConditions: ["no_specific_condition"] });
   });
 
   it("should drop a reading left behind an unset category", () => {

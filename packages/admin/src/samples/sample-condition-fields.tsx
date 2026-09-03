@@ -17,8 +17,8 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 import {
-  hasControlledStorageCondition,
   hasReadingType,
+  hasStorageCondition,
 } from "#/samples/compose-condition.ts";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import {
@@ -34,6 +34,10 @@ import { useSampleForm } from "#/samples/use-sample-form.ts";
 const packagingItems = toComboboxItems(PACKAGINGS, packagingLabel);
 const lightItems = toComboboxItems(LIGHTS, lightLabel);
 const humidityTypeItems = toComboboxItems(HUMIDITY_TYPES, humidityTypeLabel);
+const storageConditionItems = toComboboxItems(
+  STORAGE_CONDITIONS,
+  storageConditionLabel,
+);
 
 const readings = [
   {
@@ -66,14 +70,6 @@ const readings = [
   },
 ];
 
-const storageConditionItems = (selected: readonly string[]) => {
-  const none = selected.includes("no_specific_condition");
-  const controlled = hasControlledStorageCondition(selected);
-  return STORAGE_CONDITIONS.filter((value) =>
-    value === "no_specific_condition" ? !controlled : !none,
-  ).map((value) => ({ value, label: storageConditionLabel(value) }));
-};
-
 export function SampleConditionFields() {
   const form = useSampleForm();
   return (
@@ -92,9 +88,13 @@ export function SampleConditionFields() {
 
       <form.AppField name="condition.storageConditions">
         {(field) => (
-          <field.CheckboxGroupField
+          <field.MultiComboboxField
             label={m.field_storage_conditions()}
-            items={storageConditionItems(field.state.value)}
+            items={storageConditionItems}
+            placeholder={m.storage_conditions_placeholder()}
+            searchPlaceholder={m.storage_conditions_search_placeholder()}
+            emptyText={m.storage_conditions_empty()}
+            removeLabel={(label) => m.storage_conditions_remove({ label })}
           />
         )}
       </form.AppField>
@@ -240,9 +240,7 @@ export function SampleConditionFields() {
 
       <form.Subscribe
         selector={(state) =>
-          hasControlledStorageCondition(
-            state.values.condition.storageConditions,
-          )
+          hasStorageCondition(state.values.condition.storageConditions)
         }
       >
         {(controlled) =>
