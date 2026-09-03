@@ -6,6 +6,7 @@ import { fieldContext, formContext } from "./form-hook-contexts.tsx";
 import { MultiComboboxField } from "./multi-combobox-field.tsx";
 import { NumberField } from "./number-field.tsx";
 import { SubmitButton } from "./submit-button.tsx";
+import { SwitchField } from "./switch-field.tsx";
 import { TextField } from "./text-field.tsx";
 
 // Typed form kit (see @tanstack/react-form "Form Composition"). `useAppForm`
@@ -19,6 +20,7 @@ export const { useAppForm, useTypedAppFormContext } = createFormHook({
     ComboboxField,
     MultiComboboxField,
     DateField,
+    SwitchField,
   },
   formComponents: { SubmitButton },
   fieldContext,

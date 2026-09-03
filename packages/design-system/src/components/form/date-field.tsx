@@ -5,16 +5,19 @@ import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
-// A date-only input (native picker, no dependency): the form store holds an
-// ISO YYYY-MM-DD string, or undefined when blank, never a Date (no timezone).
+// A date input (native picker, no dependency): the form store holds an ISO
+// YYYY-MM-DD string, YYYY-MM-DDTHH:mm with `withTime`, or undefined when
+// blank, never a Date (no timezone).
 export function DateField({
   label,
   requiredToPublish = false,
   disabled = false,
+  withTime = false,
 }: {
   label: string;
   requiredToPublish?: boolean;
   disabled?: boolean;
+  withTime?: boolean;
 }) {
   const field = useFieldContext<string | null | undefined>();
   const { error, errorId, ariaProps } = useFieldError();
@@ -26,7 +29,7 @@ export function DateField({
       </Label>
       <Input
         id={field.name}
-        type="date"
+        type={withTime ? "datetime-local" : "date"}
         value={field.state.value ?? ""}
         disabled={isDisabled}
         onBlur={field.handleBlur}
