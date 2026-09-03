@@ -51,6 +51,7 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
+            oriented: false,
             collectionDate: {
               precision: "day",
               start: "2026-01-05",
@@ -75,6 +76,7 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
+            oriented: false,
             collectionDate: {
               precision: "day",
               start: "2026-01-05",
@@ -138,6 +140,7 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
+            oriented: false,
             collectionDate: {
               precision: "day",
               start: "2026-01-05",
@@ -173,6 +176,7 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
+            oriented: false,
             collectionDate: {
               precision: "day",
               start: "2026-01-05",
@@ -209,6 +213,7 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
+            oriented: false,
             collectionDate: {
               precision: "day",
               start: "2026-02-10",
@@ -250,6 +255,7 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
+            oriented: false,
             collectionDate: {
               precision: "hour",
               start: "2026-01-05T08:30",
@@ -308,6 +314,7 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
+            oriented: false,
             collectionDate: {
               precision: "day",
               start: "2026-01-05",
@@ -421,8 +428,11 @@ describe("SampleDescriptionFields", () => {
     await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
-    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-    expect(onSubmit.mock.lastCall?.[0]).not.toHaveProperty("description");
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ description: { oriented: false } }),
+      ),
+    );
 
     await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await expect
@@ -449,7 +459,7 @@ describe("SampleDescriptionFields", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
-          description: { mass: { value: 1.2, unit: "kg" } },
+          description: { oriented: false, mass: { value: 1.2, unit: "kg" } },
         }),
       ),
     );
@@ -465,8 +475,11 @@ describe("SampleDescriptionFields", () => {
     await screen.getByLabelText("Length", { exact: true }).fill("");
     await screen.getByRole("button", { name: "Create" }).click();
 
-    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-    expect(onSubmit.mock.lastCall?.[0]).not.toHaveProperty("description");
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ description: { oriented: false } }),
+      ),
+    );
   });
 
   it("should submit a full description", async () => {
@@ -519,7 +532,7 @@ describe("SampleDescriptionFields", () => {
     );
   });
 
-  it("should submit no description when the section is left empty", async () => {
+  it("should submit only the default answers when the section is left empty", async () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
@@ -540,6 +553,7 @@ describe("SampleDescriptionFields", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,

@@ -111,6 +111,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -158,6 +159,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -195,6 +197,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -251,6 +254,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -288,6 +292,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -329,6 +334,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -397,6 +403,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -461,6 +468,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -526,6 +534,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -589,6 +598,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -651,6 +661,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -728,6 +739,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -786,6 +798,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -823,6 +836,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -868,6 +882,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -941,6 +956,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -977,6 +993,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -1022,6 +1039,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
         security: {
           radioactivity: false,
           asbestosRich: false,
@@ -1378,6 +1396,7 @@ describe("SampleForm", () => {
           geomorphologicalEnvironment: null,
           location: { position: { type: "point", longitude: 3, latitude: 45 } },
           description: {
+            oriented: false,
             collectionDate: {
               precision: "day",
               start: "2026-01-01",

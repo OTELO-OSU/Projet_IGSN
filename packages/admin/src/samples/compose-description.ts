@@ -38,7 +38,7 @@ type DescriptionCandidate = {
         timeZone?: string | undefined;
       }
     | undefined;
-  oriented: boolean | undefined;
+  oriented: boolean;
   orientationExplanation: string | undefined;
   openDescription: string | undefined;
   length: MeasurementCandidate<SizeUnit> | undefined;
@@ -67,11 +67,10 @@ function composeCollectionDate(draft: DescriptionDraft) {
 
 export function composeDescription(
   draft: DescriptionDraft,
-): DescriptionCandidate | null {
-  const description = {
+): DescriptionCandidate {
+  return {
     collectionDate: composeCollectionDate(draft),
-    // An unoriented sample states nothing, so the section stays droppable.
-    oriented: draft.oriented || undefined,
+    oriented: draft.oriented,
     orientationExplanation: draft.oriented
       ? draft.orientationExplanation?.trim() || undefined
       : undefined,
@@ -82,9 +81,6 @@ export function composeDescription(
     mass: composeMeasurement(draft.massValue, draft.massUnit),
     volume: composeMeasurement(draft.volumeValue, draft.volumeUnit),
   };
-  return Object.values(description).some((part) => part !== undefined)
-    ? description
-    : null;
 }
 
 export function toDescriptionDraft(

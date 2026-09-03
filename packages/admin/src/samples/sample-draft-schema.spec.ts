@@ -71,6 +71,7 @@ describe("sampleDraftSchema", () => {
       location: null,
       existenceStatus: "exists",
       availabilityStatus: "available",
+      description: { oriented: false },
       security: {
         radioactivity: false,
         asbestosRich: false,
@@ -154,6 +155,7 @@ describe("sampleDraftSchema", () => {
       },
       manualGroupIds: [],
       description: {
+        oriented: false,
         collectionDate: {
           precision: "day",
           start: "2026-01-05",

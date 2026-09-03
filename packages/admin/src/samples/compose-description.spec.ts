@@ -14,8 +14,8 @@ const draft = (over: Partial<DescriptionDraft>): DescriptionDraft => ({
 });
 
 describe("composeDescription", () => {
-  it("should return null for an empty draft", () => {
-    expect(composeDescription(draft({}))).toBeNull();
+  it("should answer the orientation as absent for an untouched draft", () => {
+    expect(composeDescription(draft({}))).toEqual({ oriented: false });
   });
 
   it("should compose the mirrored degenerate range of a single date", () => {
@@ -27,6 +27,7 @@ describe("composeDescription", () => {
         }),
       ),
     ).toEqual({
+      oriented: false,
       collectionDate: {
         precision: "day",
         start: "2026-01-05",
@@ -44,6 +45,7 @@ describe("composeDescription", () => {
         }),
       ),
     ).toEqual({
+      oriented: false,
       collectionDate: {
         precision: "day",
         start: "2026-01-05",
@@ -63,6 +65,7 @@ describe("composeDescription", () => {
         }),
       ),
     ).toEqual({
+      oriented: false,
       collectionDate: {
         precision: "hour",
         start: "2026-01-05T08:30",
@@ -82,6 +85,7 @@ describe("composeDescription", () => {
         }),
       ),
     ).toEqual({
+      oriented: false,
       collectionDate: {
         precision: "day",
         start: "2026-01-05",
@@ -93,7 +97,10 @@ describe("composeDescription", () => {
   it("should keep a half-filled range for the schema to reject", () => {
     expect(
       composeDescription(draft({ collectionDateStart: "2026-01-05" })),
-    ).toEqual({ collectionDate: { precision: "day", start: "2026-01-05" } });
+    ).toEqual({
+      oriented: false,
+      collectionDate: { precision: "day", start: "2026-01-05" },
+    });
   });
 
   it("should compose an oriented sample with its explanation", () => {
@@ -104,32 +111,37 @@ describe("composeDescription", () => {
     ).toEqual({ oriented: true, orientationExplanation: "Marked north face" });
   });
 
-  it("should state nothing for an unoriented sample, explanation left behind included", () => {
+  it("should drop the explanation left behind when the sample is not oriented", () => {
     expect(
       composeDescription(
         draft({ oriented: false, orientationExplanation: "Marked north face" }),
       ),
-    ).toBeNull();
+    ).toEqual({ oriented: false });
   });
 
   it("should drop a blank open description", () => {
-    expect(composeDescription(draft({ openDescription: "   " }))).toBeNull();
+    expect(composeDescription(draft({ openDescription: "   " }))).toEqual({
+      oriented: false,
+    });
   });
 
   it("should compose a full measurement", () => {
     expect(
       composeDescription(draft({ lengthValue: 10, lengthUnit: "cm" })),
-    ).toEqual({ length: { value: 10, unit: "cm" } });
+    ).toEqual({ oriented: false, length: { value: 10, unit: "cm" } });
   });
 
   it("should keep a value missing its unit for the schema to reject", () => {
     expect(composeDescription(draft({ massValue: 5 }))).toEqual({
+      oriented: false,
       mass: { value: 5 },
     });
   });
 
   it("should drop a unit left behind by a cleared value", () => {
-    expect(composeDescription(draft({ massUnit: "kg" }))).toBeNull();
+    expect(composeDescription(draft({ massUnit: "kg" }))).toEqual({
+      oriented: false,
+    });
   });
 });
 
@@ -200,7 +212,7 @@ describe("toDescriptionDraft", () => {
         end: "2026-02-10T17:00",
         timeZone: "Europe/Paris",
       },
-      openDescription: "Fine-grained basalt",
+      oriented: false,
     },
   ])("should round-trip through the draft", (description) => {
     expect(composeDescription(toDescriptionDraft(description))).toEqual(
