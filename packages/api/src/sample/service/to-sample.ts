@@ -28,8 +28,13 @@ function omitNull(parts: Record<string, unknown>) {
 function toCollectionDate(row: Selectable<DB["sample"]>) {
   const { collection_date_start: start, collection_date_end: end } = row;
   if (start === null || end === null) return null;
-  const timeZone = row.collection_date_time_zone;
-  if (row.collection_date_precision === "hour" && timeZone !== null) {
+  if (row.collection_date_precision === "hour") {
+    const timeZone = row.collection_date_time_zone;
+    if (timeZone === null) {
+      throw new Error(
+        `sample ${row.id} has an hour-precision collection date without a time zone`,
+      );
+    }
     return {
       precision: "hour",
       start: formatZonedDateTime(start, timeZone),

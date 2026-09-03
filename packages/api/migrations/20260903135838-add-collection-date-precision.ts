@@ -9,11 +9,14 @@ export async function up(db: Kysely<unknown>): Promise<void> {
         USING collection_date_end::timestamp AT TIME ZONE 'UTC'
   `.execute(db);
 
-  await db.schema
-    .alterTable("sample")
-    .addColumn("collection_date_precision", sql`text`)
-    .addColumn("collection_date_time_zone", sql`text`)
-    .execute();
+  await sql`
+    ALTER TABLE sample
+      ADD COLUMN collection_date_precision text
+        CHECK (collection_date_precision IN ('day', 'hour')),
+      ADD COLUMN collection_date_time_zone text,
+      ADD CONSTRAINT sample_hour_precision_has_time_zone
+        CHECK (collection_date_precision IS DISTINCT FROM 'hour' OR collection_date_time_zone IS NOT NULL)
+  `.execute(db);
 
   await sql`
     UPDATE sample SET collection_date_precision = 'day'
