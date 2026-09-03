@@ -2,6 +2,12 @@
 
 ## 2026-09-03
 
+- **Update**: Form kit and the hidden-value lifecycle (form-kit-and-hidden-values)
+- **Update**: Legacy IGSN dump import (legacy-import)
+- **Update**: IGSN registry (igsn-registry)
+- **Update**: Sample model (sample-model)
+- **Creation**: Sample relations and attachments (sample-relations-attachments)
+- **Deletion**: sample-links-attachments
 - **Creation**: Synthetic sample details (synthetic-details)
 - **Update**: Sample model (sample-model)
 - **Update**: allowsLocation: the material-driven location gate (location-material-gate)

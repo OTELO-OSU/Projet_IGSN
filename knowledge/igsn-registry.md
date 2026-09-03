@@ -62,7 +62,7 @@ A registry assigning unique IGSN identifiers (International Generic Sample Numbe
 Map of the graph:
 
 - Structure: [[package-layering]], [[file-layout-conventions]], [[zod-single-source-of-truth]], [[dev-practices]], [[commands-and-services]], [[testing-strategy]].
-- Sample: [[sample-model]], [[igsn-identifier]], [[sample-status-lifecycle]], [[publish-blockers]], [[published-field-locks]], [[material-levels-editable]], [[sample-location]], [[location-material-gate]], [[sample-links-attachments]], [[vocabulary-tree]], [[material-classification-ltree]].
+- Sample: [[sample-model]], [[igsn-identifier]], [[sample-status-lifecycle]], [[publish-blockers]], [[published-field-locks]], [[material-levels-editable]], [[sample-location]], [[location-material-gate]], [[sample-relations-attachments]], [[vocabulary-tree]], [[material-classification-ltree]].
 - People and rights: [[personas-and-roles]], [[auth-keycloak-gaiadata]], [[gaiadata-sso-compliance]], [[user-store-and-ownership]], [[per-sample-roles]], [[user-moderation-super-admin]], [[space-manager-scope]], [[institutional-groups]], [[manual-groups]], [[orcid-linking]].
 - Public app: [[sample-search]], [[search-facets]], [[map-search-leaflet]], [[public-contributor-directory]], [[frontend-url-i18n]].
 - Apps and UI: [[form-kit-and-hidden-values]], [[hierarchy-select-field]], [[frontend-conventions]], [[i18n-strategy]], [[sample-form-update-guide]].

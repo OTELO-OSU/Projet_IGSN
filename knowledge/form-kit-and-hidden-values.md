@@ -29,4 +29,8 @@ Build every form with `useAppForm` from `@projet-igsn/design-system/components/f
 
 In the sample form, rule 2 is `composeLocation` plus the `sampleDraftSchema` preprocess, rule 3 is `form.reset(toSampleDraft(parsed))`. Every rule that hides a field needs its matching exclusion, and client-side dropping never replaces server validation.
 
+**Repeatable rows are never dropped silently.** A blank row in a list (a relation) is composed as is and fails the save on its required fields, gated per field, so the user removes it explicitly instead of losing a half-filled entry; the compose step only excludes values hidden behind UI state (rule 2), never a whole row.
+
+**Every field reserves its message line.** `FieldError` renders a `min-h-5` box whether or not an error shows, and the hint line keeps the same height, so a message appearing never shifts the form.
+
 **`disabled` means one of three things**, resolved by one predicate: frozen by publication ([[published-field-locks]]), forbidden to the caller's role, or the whole form read-only because another collaborator holds the edit lock or the api refused the last save as stale. The value is submitted unchanged. A field waiting on a sibling is not rendered rather than disabled.
