@@ -1,3 +1,4 @@
+import { STORAGE_CONDITIONS } from "@projet-igsn/domain/sample/condition/storage-condition";
 import { render } from "vitest-browser-react";
 
 import { ConditionView } from "./condition-view.tsx";
@@ -8,12 +9,7 @@ describe("ConditionView", () => {
       <ConditionView
         condition={{
           packaging: "glass_bottle",
-          storageConditions: [
-            "temperature_controlled",
-            "pressure_controlled",
-            "moisture_controlled",
-            "light_controlled",
-          ],
+          storageConditions: [...STORAGE_CONDITIONS],
           temperature: {
             type: "frozen",
             measurement: { value: -18, unit: "celsius" },

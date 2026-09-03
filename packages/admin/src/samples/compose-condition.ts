@@ -8,7 +8,11 @@ import type { StorageCondition } from "@projet-igsn/domain/sample/condition/stor
 import type { TemperatureType } from "@projet-igsn/domain/sample/condition/temperature-type";
 import type { TemperatureUnit } from "@projet-igsn/domain/sample/condition/temperature-unit";
 
-import { isReadingControlled } from "@projet-igsn/domain/sample/condition/controlled-reading";
+import {
+  type ControlledReading,
+  hasStorageCondition,
+  isReadingControlled,
+} from "@projet-igsn/domain/sample/condition/controlled-reading";
 
 import {
   composeMeasurement,
@@ -54,19 +58,20 @@ export const hasReadingType = <T extends string>(
   type: T | null | undefined,
 ): type is T => type != null;
 
-export const hasStorageCondition = (
-  storageConditions: readonly string[],
-): boolean => storageConditions.length > 0;
-
 export function composeCondition(
   draft: ConditionDraft,
 ): ConditionCandidate | null {
-  const condition = {
+  const controlled = hasStorageCondition(draft.storageConditions);
+  const controlledReading = <T>(
+    reading: ControlledReading,
+    value: T,
+  ): T | undefined =>
+    isReadingControlled(draft.storageConditions, reading) ? value : undefined;
+  const condition: ConditionCandidate = {
     packaging: draft.packaging ?? undefined,
-    storageConditions:
-      draft.storageConditions.length > 0 ? draft.storageConditions : undefined,
-    temperature:
-      isReadingControlled(draft.storageConditions, "temperature") &&
+    storageConditions: controlled ? draft.storageConditions : undefined,
+    temperature: controlledReading(
+      "temperature",
       hasReadingType(draft.temperatureType)
         ? {
             type: draft.temperatureType,
@@ -76,16 +81,16 @@ export function composeCondition(
             ),
           }
         : undefined,
-    humidity:
-      isReadingControlled(draft.storageConditions, "humidity") &&
+    ),
+    humidity: controlledReading(
+      "humidity",
       hasReadingType(draft.humidityType)
         ? { type: draft.humidityType, percentage: draft.humidityPercentage }
         : undefined,
-    light: isReadingControlled(draft.storageConditions, "light")
-      ? (draft.light ?? undefined)
-      : undefined,
-    pressure:
-      isReadingControlled(draft.storageConditions, "pressure") &&
+    ),
+    light: controlledReading("light", draft.light ?? undefined),
+    pressure: controlledReading(
+      "pressure",
       hasReadingType(draft.pressureType)
         ? {
             type: draft.pressureType,
@@ -95,7 +100,8 @@ export function composeCondition(
             ),
           }
         : undefined,
-    specificConditions: hasStorageCondition(draft.storageConditions)
+    ),
+    specificConditions: controlled
       ? draft.specificConditions?.trim() || undefined
       : undefined,
   };

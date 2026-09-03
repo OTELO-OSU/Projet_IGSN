@@ -31,6 +31,16 @@ export async function up(db: Kysely<unknown>): Promise<void> {
       end,
       '{}'::text[]
     )
+    where storage_conditions @> '{no_specific_condition}'
+      or temperature_type is not null
+      or pressure_type is not null
+      or humidity_type is not null
+      or light is not null
+  `.execute(db);
+  await sql`
+    update sample
+    set specific_conditions = null
+    where storage_conditions is null and specific_conditions is not null
   `.execute(db);
 }
 

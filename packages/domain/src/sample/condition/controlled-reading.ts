@@ -9,6 +9,14 @@ export const READING_STORAGE_CONDITION = {
 
 export type ControlledReading = keyof typeof READING_STORAGE_CONDITION;
 
+export const CONTROLLED_READINGS = Object.keys(
+  READING_STORAGE_CONDITION,
+) as ControlledReading[];
+
+export const hasStorageCondition = (
+  storageConditions: readonly StorageCondition[] | null | undefined,
+): boolean => (storageConditions?.length ?? 0) > 0;
+
 export const isReadingControlled = (
   storageConditions: readonly StorageCondition[] | null | undefined,
   reading: ControlledReading,

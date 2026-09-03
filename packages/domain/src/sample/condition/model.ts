@@ -1,11 +1,10 @@
 import { z } from "zod";
 
-import type { ControlledReading } from "./controlled-reading.ts";
-
 import { freeTextSchema } from "../free-text.ts";
 import { measurementSchema } from "../measurement.ts";
 import {
-  READING_STORAGE_CONDITION,
+  CONTROLLED_READINGS,
+  hasStorageCondition,
   isReadingControlled,
 } from "./controlled-reading.ts";
 import {
@@ -57,12 +56,10 @@ export const conditionSchema = z
         params: { code: "storage_conditions_duplicate" },
       });
     }
-    for (const reading of Object.keys(
-      READING_STORAGE_CONDITION,
-    ) as ControlledReading[]) {
+    for (const reading of CONTROLLED_READINGS) {
       if (
         condition[reading] != null &&
-        !isReadingControlled(condition.storageConditions, reading)
+        !isReadingControlled(storage, reading)
       ) {
         ctx.addIssue({
           code: "custom",
@@ -71,6 +68,14 @@ export const conditionSchema = z
           params: { code: "reading_without_storage_condition" },
         });
       }
+    }
+    if (condition.specificConditions != null && !hasStorageCondition(storage)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["specificConditions"],
+        message: "specific conditions require a storage condition",
+        params: { code: "specific_conditions_without_storage_condition" },
+      });
     }
     if (
       condition.humidity?.percentage != null &&

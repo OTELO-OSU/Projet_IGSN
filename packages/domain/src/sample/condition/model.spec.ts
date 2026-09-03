@@ -1,15 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import { conditionSchema } from "./model.ts";
+import { STORAGE_CONDITIONS } from "./storage-condition.ts";
 
 const full = {
   packaging: "glass_bottle",
-  storageConditions: [
-    "temperature_controlled",
-    "light_controlled",
-    "pressure_controlled",
-    "moisture_controlled",
-  ],
+  storageConditions: [...STORAGE_CONDITIONS],
   temperature: { type: "frozen", measurement: { value: -18, unit: "celsius" } },
   humidity: { type: "controlled", percentage: 40 },
   light: "total_darkness",
@@ -121,15 +117,16 @@ describe("conditionSchema", () => {
     { pressure: { type: "vacuum" } },
     { humidity: { type: "dry" } },
     { light: "total_darkness" },
-  ])(
-    "should reject the reading %o without its storage condition",
-    (reading) => {
-      expect(conditionSchema.safeParse(reading).success).toBe(false);
-    },
-  );
+    { specificConditions: "argon" },
+  ])("should reject %o without its storage condition", (part) => {
+    expect(conditionSchema.safeParse(part).success).toBe(false);
+  });
 
   it("should reject a blank specificConditions", () => {
-    const result = conditionSchema.safeParse({ specificConditions: "   " });
+    const result = conditionSchema.safeParse({
+      storageConditions: ["light_controlled"],
+      specificConditions: "   ",
+    });
     expect(result.success).toBe(false);
   });
 

@@ -1,5 +1,6 @@
 import type { Condition } from "@projet-igsn/domain/sample/condition/model";
 
+import { STORAGE_CONDITIONS } from "@projet-igsn/domain/sample/condition/storage-condition";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -21,12 +22,7 @@ describe("composeCondition", () => {
   it("should round-trip a full condition through the draft", () => {
     const condition: Condition = {
       packaging: "glass_bottle",
-      storageConditions: [
-        "temperature_controlled",
-        "pressure_controlled",
-        "moisture_controlled",
-        "light_controlled",
-      ],
+      storageConditions: [...STORAGE_CONDITIONS],
       temperature: {
         type: "frozen",
         measurement: { value: -18, unit: "celsius" },
