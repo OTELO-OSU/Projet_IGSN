@@ -70,7 +70,7 @@ describe("sample condition persistence", () => {
   pgTest("should update a condition", async ({ db }) => {
     const created = await insertSample(db, {
       ...base,
-      condition: { storageConditions: ["no_specific_condition" as const] },
+      condition: { storageConditions: ["light_controlled" as const] },
     });
     const updated = await updateSample(db, created.id, {
       ...base,

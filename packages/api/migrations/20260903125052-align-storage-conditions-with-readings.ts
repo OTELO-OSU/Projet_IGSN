@@ -3,7 +3,7 @@ import { type Kysely, sql } from "kysely";
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`
     update sample
-    set storage_conditions =
+    set storage_conditions = nullif(
       array_remove(coalesce(storage_conditions, '{}'), 'no_specific_condition')
       || case
         when temperature_type is not null
@@ -28,11 +28,9 @@ export async function up(db: Kysely<unknown>): Promise<void> {
           and not (coalesce(storage_conditions, '{}') @> '{light_controlled}')
         then '{light_controlled}'::text[]
         else '{}'::text[]
-      end
-    where temperature_type is not null
-      or pressure_type is not null
-      or humidity_type is not null
-      or light is not null
+      end,
+      '{}'::text[]
+    )
   `.execute(db);
 }
 
