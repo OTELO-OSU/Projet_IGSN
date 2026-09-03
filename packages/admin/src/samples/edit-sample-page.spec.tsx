@@ -760,8 +760,8 @@ describe("EditSamplePage", () => {
     );
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: "Radioactivity" }))
-      .toHaveTextContent("Yes");
+      .element(screen.getByRole("switch", { name: "Radioactivity" }))
+      .toBeChecked();
     await expect
       .element(screen.getByLabelText("Radioactivity explanation"))
       .toHaveValue("3.2 kBq alpha");

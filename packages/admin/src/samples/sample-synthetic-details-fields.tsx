@@ -1,7 +1,4 @@
-import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
-import { Label } from "@projet-igsn/design-system/components/ui/label";
-import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import {
   PRESSURE_UNITS,
   pressureUnitLabel,
@@ -71,9 +68,6 @@ const durationUnitItems = toComboboxItems(
 
 export function SampleSyntheticDetailsFields() {
   const form = useSampleForm();
-  const isNotRelevantDisabled = useIsFieldDisabled(
-    "syntheticDetails.experimentDurationNotRelevant",
-  );
   return (
     <div className="grid gap-4">
       <form.AppField name="syntheticDetails.startingMaterial">
@@ -151,17 +145,9 @@ export function SampleSyntheticDetailsFields() {
 
       <form.AppField name="syntheticDetails.experimentDurationNotRelevant">
         {(field) => (
-          <div className="flex items-center gap-2">
-            <Switch
-              id="experiment-duration-not-relevant"
-              checked={field.state.value}
-              disabled={isNotRelevantDisabled}
-              onCheckedChange={(checked) => field.handleChange(checked)}
-            />
-            <Label htmlFor="experiment-duration-not-relevant">
-              {m.field_experiment_duration_not_relevant()}
-            </Label>
-          </div>
+          <field.SwitchField
+            label={m.field_experiment_duration_not_relevant()}
+          />
         )}
       </form.AppField>
 

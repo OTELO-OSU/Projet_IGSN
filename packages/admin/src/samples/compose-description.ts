@@ -14,7 +14,7 @@ export type DescriptionDraft = {
   collectionDateEnd: string | undefined;
   collectionDatePrecision: DatePrecision;
   collectionDateTimeZone: string | undefined;
-  oriented: "yes" | "no" | null | undefined;
+  oriented: boolean;
   orientationExplanation: string | null | undefined;
   openDescription: string | null | undefined;
   lengthValue: number | undefined;
@@ -65,22 +65,14 @@ function composeCollectionDate(draft: DescriptionDraft) {
   };
 }
 
-export const isOrientedYes = (
-  oriented: DescriptionDraft["oriented"],
-): boolean => oriented === "yes";
-
 export function composeDescription(
   draft: DescriptionDraft,
 ): DescriptionCandidate | null {
-  const oriented = isOrientedYes(draft.oriented)
-    ? true
-    : draft.oriented === "no"
-      ? false
-      : undefined;
   const description = {
     collectionDate: composeCollectionDate(draft),
-    oriented,
-    orientationExplanation: isOrientedYes(draft.oriented)
+    // An unoriented sample states nothing, so the section stays droppable.
+    oriented: draft.oriented || undefined,
+    orientationExplanation: draft.oriented
       ? draft.orientationExplanation?.trim() || undefined
       : undefined,
     openDescription: draft.openDescription?.trim() || undefined,
@@ -107,12 +99,7 @@ export function toDescriptionDraft(
       collectionDate?.precision === "hour"
         ? collectionDate.timeZone
         : undefined,
-    oriented:
-      description?.oriented == null
-        ? undefined
-        : description.oriented
-          ? "yes"
-          : "no",
+    oriented: description?.oriented ?? false,
     orientationExplanation: description?.orientationExplanation ?? undefined,
     openDescription: description?.openDescription ?? undefined,
     lengthValue: description?.length?.value,

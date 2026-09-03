@@ -376,20 +376,17 @@ describe("SampleDescriptionFields", () => {
       .element(screen.getByLabelText("Orientation explanation"))
       .not.toBeInTheDocument();
 
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await screen
       .getByLabelText("Orientation explanation")
       .fill("Marked north face");
 
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "No" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
       .not.toBeInTheDocument();
 
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
       .toHaveValue("Marked north face");
@@ -417,23 +414,17 @@ describe("SampleDescriptionFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await screen
       .getByLabelText("Orientation explanation")
       .fill("Marked north face");
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "No" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({ description: { oriented: false } }),
-      ),
-    );
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
+    expect(onSubmit.mock.lastCall?.[0]).not.toHaveProperty("description");
 
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
       .toHaveValue("");
@@ -483,8 +474,7 @@ describe("SampleDescriptionFields", () => {
     const screen = await renderDescriptionTab(onSubmit);
 
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await screen
       .getByLabelText("Orientation explanation")
       .fill("Marked north face");
@@ -550,6 +540,11 @@ describe("SampleDescriptionFields", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        security: {
+          radioactivity: false,
+          asbestosRich: false,
+          chemicalRisk: false,
+        },
       }),
     );
   });

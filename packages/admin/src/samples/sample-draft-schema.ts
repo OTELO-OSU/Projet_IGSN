@@ -181,7 +181,6 @@ const composeCreateSample = (draft: SampleDraft) => {
   const description = composeDescription(draft.description);
   const condition = composeCondition(draft.condition);
   const age = toAgeInput(draft.age);
-  const security = composeSecurity(draft.security);
   const scientificContext = composeScientificContext(draft.scientificContext);
   const repository = composeRepository(draft.repository);
   const relations = composeRelations(draft.relations);
@@ -212,7 +211,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     location: locationAllowed ? composeLocation(draft.location) : null,
     ...(description ? { description } : {}),
     ...(condition ? { condition } : {}),
-    ...(security ? { security } : {}),
+    security: composeSecurity(draft.security),
     ...(scientificContext ? { scientificContext } : {}),
     ...(repository ? { repository } : {}),
     ...(syntheticDetails ? { syntheticDetails } : {}),

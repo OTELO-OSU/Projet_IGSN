@@ -71,6 +71,11 @@ describe("sampleDraftSchema", () => {
       location: null,
       existenceStatus: "exists",
       availabilityStatus: "available",
+      security: {
+        radioactivity: false,
+        asbestosRich: false,
+        chemicalRisk: false,
+      },
       manualGroupIds: [],
     });
   });
@@ -142,6 +147,11 @@ describe("sampleDraftSchema", () => {
       location: null,
       existenceStatus: "exists",
       availabilityStatus: "available",
+      security: {
+        radioactivity: false,
+        asbestosRich: false,
+        chemicalRisk: false,
+      },
       manualGroupIds: [],
       description: {
         collectionDate: {

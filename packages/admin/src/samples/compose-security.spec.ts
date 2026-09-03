@@ -13,66 +13,61 @@ const draft = (over: Partial<SecurityDraft>): SecurityDraft => ({
   ...over,
 });
 
+const NO_HAZARD = {
+  radioactivity: false,
+  asbestosRich: false,
+  chemicalRisk: false,
+};
+
 describe("composeSecurity", () => {
-  it("should return null for an empty draft", () => {
-    expect(composeSecurity(draft({}))).toBeNull();
+  it("should answer every hazard as absent for an untouched draft", () => {
+    expect(composeSecurity(draft({}))).toEqual(NO_HAZARD);
   });
 
   it("should compose a declared hazard with its explanation", () => {
     expect(
       composeSecurity(
         draft({
-          radioactivity: "yes",
+          radioactivity: true,
           radioactivityExplanation: "3.2 kBq alpha",
         }),
       ),
     ).toEqual({
+      ...NO_HAZARD,
       radioactivity: true,
       radioactivityExplanation: "3.2 kBq alpha",
     });
   });
 
-  it("should drop the explanation left behind when the hazard is answered no", () => {
+  it("should drop the explanation left behind by a hazard switched off", () => {
     expect(
       composeSecurity(
         draft({
-          asbestosRich: "no",
+          asbestosRich: false,
           asbestosExplanation: "trace chrysotile",
         }),
       ),
-    ).toEqual({ asbestosRich: false });
-  });
-
-  it("should drop the explanation when the hazard question is unanswered", () => {
-    expect(
-      composeSecurity(draft({ chemicalRiskExplanation: "toxic metals" })),
-    ).toBeNull();
+    ).toEqual(NO_HAZARD);
   });
 
   it("should drop a blank explanation", () => {
     expect(
       composeSecurity(
-        draft({ chemicalRisk: "yes", chemicalRiskExplanation: "   " }),
+        draft({ chemicalRisk: true, chemicalRiskExplanation: "   " }),
       ),
-    ).toEqual({ chemicalRisk: true });
+    ).toEqual({ ...NO_HAZARD, chemicalRisk: true });
   });
 
   it("should compose several independent hazards", () => {
     expect(
-      composeSecurity(
-        draft({ radioactivity: "yes", asbestosRich: "no", chemicalRisk: "no" }),
-      ),
-    ).toEqual({
-      radioactivity: true,
-      asbestosRich: false,
-      chemicalRisk: false,
-    });
+      composeSecurity(draft({ radioactivity: true, asbestosRich: true })),
+    ).toEqual({ ...NO_HAZARD, radioactivity: true, asbestosRich: true });
   });
 });
 
 describe("toSecurityDraft", () => {
-  it("should return a draft with every field unset for a null security", () => {
-    expect(toSecurityDraft(null)).toEqual({});
+  it("should answer every hazard as absent for a null security", () => {
+    expect(toSecurityDraft(null)).toEqual(NO_HAZARD);
   });
 
   it.each<Security>([
@@ -83,7 +78,12 @@ describe("toSecurityDraft", () => {
       chemicalRisk: true,
       chemicalRiskExplanation: "toxic metals",
     },
-    { asbestosRich: true, asbestosExplanation: "10% amphibole" },
+    {
+      radioactivity: false,
+      asbestosRich: true,
+      asbestosExplanation: "10% amphibole",
+      chemicalRisk: false,
+    },
   ])("should round-trip through the draft", (security) => {
     expect(composeSecurity(toSecurityDraft(security))).toEqual(security);
   });

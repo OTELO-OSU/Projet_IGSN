@@ -99,23 +99,15 @@ describe("composeDescription", () => {
   it("should compose an oriented sample with its explanation", () => {
     expect(
       composeDescription(
-        draft({ oriented: "yes", orientationExplanation: "Marked north face" }),
+        draft({ oriented: true, orientationExplanation: "Marked north face" }),
       ),
     ).toEqual({ oriented: true, orientationExplanation: "Marked north face" });
   });
 
-  it("should drop the explanation left behind when the sample is not oriented", () => {
+  it("should state nothing for an unoriented sample, explanation left behind included", () => {
     expect(
       composeDescription(
-        draft({ oriented: "no", orientationExplanation: "Marked north face" }),
-      ),
-    ).toEqual({ oriented: false });
-  });
-
-  it("should drop the explanation when the orientation question is unanswered", () => {
-    expect(
-      composeDescription(
-        draft({ orientationExplanation: "Marked north face" }),
+        draft({ oriented: false, orientationExplanation: "Marked north face" }),
       ),
     ).toBeNull();
   });
@@ -142,9 +134,10 @@ describe("composeDescription", () => {
 });
 
 describe("toDescriptionDraft", () => {
-  it("should return a day-precision draft with every field unset for a null description", () => {
+  it("should return an unoriented day-precision draft for a null description", () => {
     expect(toDescriptionDraft(null)).toEqual({
       collectionDatePrecision: "day",
+      oriented: false,
     });
   });
 
@@ -161,6 +154,7 @@ describe("toDescriptionDraft", () => {
       collectionDatePrecision: "day",
       collectionDateStart: "2026-01-05",
       collectionDateEnd: "2026-02-10",
+      oriented: false,
     });
   });
 
@@ -179,6 +173,7 @@ describe("toDescriptionDraft", () => {
       collectionDateStart: "2026-01-05T08:30",
       collectionDateEnd: "2026-01-05T17:00",
       collectionDateTimeZone: "Europe/Paris",
+      oriented: false,
     });
   });
 
@@ -205,7 +200,7 @@ describe("toDescriptionDraft", () => {
         end: "2026-02-10T17:00",
         timeZone: "Europe/Paris",
       },
-      oriented: false,
+      openDescription: "Fine-grained basalt",
     },
   ])("should round-trip through the draft", (description) => {
     expect(composeDescription(toDescriptionDraft(description))).toEqual(
