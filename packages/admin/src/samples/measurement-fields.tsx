@@ -1,4 +1,7 @@
-import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
+import {
+  type ComboboxItem,
+  toComboboxItems,
+} from "@projet-igsn/design-system/components/ui/combobox";
 import { MASS_UNITS } from "@projet-igsn/domain/sample/description/mass-unit";
 import { SIZE_UNITS } from "@projet-igsn/domain/sample/description/size-unit";
 import {
@@ -8,6 +11,7 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
+import { type SampleDraft } from "#/samples/sample-draft-schema.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const sizeUnitItems = toComboboxItems(SIZE_UNITS, (value) => value);
@@ -50,38 +54,72 @@ const measurements = [
   },
 ];
 
-export function MeasurementFields() {
+type MeasurementName =
+  | `description.${"length" | "width" | "thickness" | "mass" | "volume"}`
+  | `syntheticDetails.${"experimentDuration" | "temperature" | "pressure"}`;
+
+export function MeasurementFieldPair({
+  name,
+  selectValue,
+  label,
+  unitLabel,
+  items,
+  requiredToPublish = false,
+}: {
+  name: MeasurementName;
+  selectValue: (values: SampleDraft) => number | undefined;
+  label: () => string;
+  unitLabel: () => string;
+  items: ComboboxItem[];
+  requiredToPublish?: boolean;
+}) {
   const form = useSampleForm();
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      <form.AppField name={`${name}Value`}>
+        {(field) => (
+          <field.NumberField
+            label={label()}
+            requiredToPublish={requiredToPublish}
+          />
+        )}
+      </form.AppField>
+      <form.Subscribe
+        selector={(state) => hasMeasurementValue(selectValue(state.values))}
+      >
+        {(hasValue) =>
+          hasValue ? (
+            <form.AppField name={`${name}Unit`}>
+              {(field) => (
+                <field.ComboboxField
+                  label={unitLabel()}
+                  requiredToPublish
+                  items={items}
+                  placeholder={m.unit_placeholder()}
+                  searchPlaceholder={m.unit_search_placeholder()}
+                  emptyText={m.unit_empty()}
+                />
+              )}
+            </form.AppField>
+          ) : null
+        }
+      </form.Subscribe>
+    </div>
+  );
+}
+
+export function MeasurementFields() {
   return (
     <>
       {measurements.map(({ key, label, unitLabel, items }) => (
-        <div key={key} className="grid gap-4 sm:grid-cols-2">
-          <form.AppField name={`description.${key}Value`}>
-            {(field) => <field.NumberField label={label()} />}
-          </form.AppField>
-          <form.Subscribe
-            selector={(state) =>
-              hasMeasurementValue(state.values.description[`${key}Value`])
-            }
-          >
-            {(hasValue) =>
-              hasValue ? (
-                <form.AppField name={`description.${key}Unit`}>
-                  {(field) => (
-                    <field.ComboboxField
-                      label={unitLabel()}
-                      requiredToPublish
-                      items={items}
-                      placeholder={m.unit_placeholder()}
-                      searchPlaceholder={m.unit_search_placeholder()}
-                      emptyText={m.unit_empty()}
-                    />
-                  )}
-                </form.AppField>
-              ) : null
-            }
-          </form.Subscribe>
-        </div>
+        <MeasurementFieldPair
+          key={key}
+          name={`description.${key}`}
+          selectValue={(values) => values.description[`${key}Value`]}
+          label={label}
+          unitLabel={unitLabel}
+          items={items}
+        />
       ))}
     </>
   );

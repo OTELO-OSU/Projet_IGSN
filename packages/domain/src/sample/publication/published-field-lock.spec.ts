@@ -5,6 +5,7 @@ import {
   createSampleSchema,
   type Sample,
 } from "../sample.ts";
+import { type SyntheticDetails } from "../synthetic-details/model.ts";
 import {
   frozenMaterialDepth,
   mergePublishedEdit,
@@ -63,6 +64,7 @@ const stored: Sample = {
     fieldName: "stored field",
     missionDescription: "stored mission",
   },
+  syntheticDetails: null,
   age: null,
   links: [],
   attachments: [],
@@ -413,6 +415,84 @@ describe("mergePublishedEdit", () => {
       incoming({ links: [{ url: "https://doi.org/10.1234/x" }] }),
     );
     expect(merged.links).toEqual([{ url: "https://doi.org/10.1234/x" }]);
+  });
+
+  describe("syntheticDetails", () => {
+    const storedDetails: SyntheticDetails = {
+      startingMaterial: "natural",
+      startingMaterialNature: "rock",
+      startingMaterialComposition: "stored composition",
+      finalProduct: "glass",
+      experimentType: "fusion",
+      experimentDuration: { value: 2, unit: "hour" },
+      experimentDurationNotRelevant: false,
+      synthesisDate: { start: "2000-01-01", end: "2000-01-02" },
+      operatorName: "Stored operator",
+      operatorOrcid: "0000-0002-1825-0097",
+      researchStructure: ["04kdfz702"],
+      temperature: { value: 900, unit: "celsius" },
+      pressure: { value: 1, unit: "gpa" },
+      experimentalProtocol: "stored protocol",
+      experimentPurpose: "stored purpose",
+      equipmentUsed: "stored equipment",
+    };
+    const incomingDetails: SyntheticDetails = {
+      startingMaterial: "mixture",
+      startingMaterialNature: "powder",
+      startingMaterialComposition: "edited composition",
+      finalProduct: "fluid",
+      experimentType: "diffusion",
+      experimentDuration: { value: 30, unit: "minute" },
+      experimentDurationNotRelevant: true,
+      synthesisDate: { start: "1990-05-05", end: "1990-05-06" },
+      operatorName: "Edited operator",
+      operatorOrcid: "0000-0001-5109-3700",
+      researchStructure: ["02feahw73"],
+      temperature: { value: 1200, unit: "kelvin" },
+      pressure: { value: 3, unit: "kbar" },
+      experimentalProtocol: "edited protocol",
+      experimentPurpose: "edited purpose",
+      equipmentUsed: "edited equipment",
+    };
+    const synthetic: Sample = {
+      ...stored,
+      material: "synthetic_rock_mineral",
+      location: null,
+      syntheticDetails: storedDetails,
+    };
+
+    it("keeps the frozen synthesis leaves but takes the editable conditions", () => {
+      const merged = mergePublishedEdit(
+        synthetic,
+        incoming({
+          material: synthetic.material,
+          location: null,
+          syntheticDetails: incomingDetails,
+        }),
+      );
+
+      expect(merged.syntheticDetails).toEqual({
+        ...storedDetails,
+        temperature: incomingDetails.temperature,
+        pressure: incomingDetails.pressure,
+        experimentalProtocol: "edited protocol",
+        experimentPurpose: "edited purpose",
+        equipmentUsed: "edited equipment",
+      });
+    });
+
+    it("takes the whole section when the sample was published without one", () => {
+      const merged = mergePublishedEdit(
+        { ...synthetic, syntheticDetails: null },
+        incoming({
+          material: synthetic.material,
+          location: null,
+          syntheticDetails: incomingDetails,
+        }),
+      );
+
+      expect(merged.syntheticDetails).toEqual(incomingDetails);
+    });
   });
 
   describe("material", () => {

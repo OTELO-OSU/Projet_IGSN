@@ -50,6 +50,11 @@ import {
   type SecurityDraft,
   toSecurityDraft,
 } from "#/samples/compose-security.ts";
+import {
+  composeSyntheticDetails,
+  type SyntheticDetailsDraft,
+  toSyntheticDetailsDraft,
+} from "#/samples/compose-synthetic-details.ts";
 
 export type LinkDraft = { key: string; url: string; description: string };
 
@@ -71,6 +76,7 @@ export type SampleDraft = {
   security: SecurityDraft;
   scientificContext: ScientificContextDraft;
   repository: RepositoryDraft;
+  syntheticDetails: SyntheticDetailsDraft;
   existenceStatus: CreateSample["existenceStatus"] | undefined;
   availabilityStatus: CreateSample["availabilityStatus"] | undefined;
   age: AgeFormValues;
@@ -98,6 +104,7 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   security: toSecurityDraft(value?.security),
   scientificContext: toScientificContextDraft(value?.scientificContext),
   repository: toRepositoryDraft(value?.repository),
+  syntheticDetails: toSyntheticDetailsDraft(value?.syntheticDetails),
   existenceStatus: value?.existenceStatus ?? "exists",
   availabilityStatus: value?.availabilityStatus ?? "available",
   age: ageFormValues(value?.age),
@@ -129,6 +136,10 @@ const composeCreateSample = (draft: SampleDraft) => {
   const repository = composeRepository(draft.repository);
   const links = composeLinks(draft.links);
   const economic = composeEconomicInterest(draft, material);
+  const syntheticDetails = composeSyntheticDetails(
+    draft.syntheticDetails,
+    material,
+  );
   return {
     name: draft.name,
     nature: draft.nature,
@@ -154,6 +165,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(security ? { security } : {}),
     ...(scientificContext ? { scientificContext } : {}),
     ...(repository ? { repository } : {}),
+    ...(syntheticDetails ? { syntheticDetails } : {}),
     ...(draft.existenceStatus
       ? { existenceStatus: draft.existenceStatus }
       : {}),

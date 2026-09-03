@@ -29,6 +29,8 @@ import { repositorySchema } from "./repository/model.ts";
 import { resourceTypeSchema } from "./resource-type/vocabulary.ts";
 import { scientificContextSchema } from "./scientific-context/model.ts";
 import { securitySchema } from "./security/model.ts";
+import { isSyntheticMaterial } from "./synthetic-details/is-synthetic-material.ts";
+import { syntheticDetailsSchema } from "./synthetic-details/model.ts";
 import { textureSchema, texturesFor } from "./texture/vocabulary.ts";
 import { sampleTypeSchema } from "./type/vocabulary.ts";
 
@@ -63,6 +65,7 @@ export const sampleSchema = z.object({
     .nullable()
     .default(null),
   scientificContext: scientificContextSchema.nullable().default(null),
+  syntheticDetails: syntheticDetailsSchema.nullable().default(null),
   age: ageSchema.nullable().default(null),
   links: z.array(sampleLinkSchema).default([]),
   attachments: z.array(sampleAttachmentSchema).default([]),
@@ -108,6 +111,7 @@ export const createSampleSchema = z
     geologicalContextDescription: freeTextSchema.nullish(),
     geomorphologicalEnvironment: geomorphologicalEnvironmentSchema.nullish(),
     scientificContext: scientificContextSchema.nullish(),
+    syntheticDetails: syntheticDetailsSchema.nullish(),
     age: ageSchema.nullish(),
     links: z.array(createSampleLinkSchema).optional(),
     attachments: z.array(updateSampleAttachmentSchema).optional(),
@@ -168,6 +172,16 @@ export const createSampleSchema = z
           });
         }
       }
+    }
+    if (
+      value.syntheticDetails != null &&
+      !isSyntheticMaterial(value.material ?? null)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["syntheticDetails"],
+        message: "only a synthetic sample carries synthesis details",
+      });
     }
   });
 

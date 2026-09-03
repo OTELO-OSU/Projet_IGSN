@@ -1,6 +1,14 @@
 import { z } from "zod";
 
-export const PRESSURE_UNITS = ["mbar", "mmhg", "bar", "kbar", "atm"] as const;
+export const PRESSURE_UNITS = [
+  "mbar",
+  "mmhg",
+  "bar",
+  "kbar",
+  "atm",
+  "pa",
+  "gpa",
+] as const;
 
 export const pressureUnitSchema = z.enum(PRESSURE_UNITS);
 
@@ -12,4 +20,6 @@ export const pressureUnitLabel: Record<PressureUnit, string> = {
   bar: "bar",
   kbar: "kbar",
   atm: "atm",
+  pa: "Pa",
+  gpa: "GPa",
 };

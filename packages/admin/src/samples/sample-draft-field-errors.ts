@@ -6,10 +6,13 @@ import { m } from "#/paraglide/messages.js";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 
 const MEASUREMENT_PATH =
-  /^description\.(length|width|thickness|mass|volume)\.(value|unit)$/;
+  /^(description|syntheticDetails)\.(\w+)\.(value|unit)$/;
 
 const READING_PATH =
-  /^condition\.(temperature|pressure)\.measurement\.(value|unit)$/;
+  /^(condition)\.(temperature|pressure)\.measurement\.(value|unit)$/;
+
+const DATE_RANGE_PATH =
+  /^(description\.collectionDate|syntheticDetails\.synthesisDate)(?:\.(start|end))?$/;
 
 const LINK_PATH = /^links\.(\d+)\.(url|description)$/;
 
@@ -51,21 +54,12 @@ const draftFieldName = (path: string, draft: DraftContext): string => {
   if (path.startsWith("location.region."))
     return `location.${path.slice("location.region.".length)}`;
   if (path === "location") return "location.type";
-  if (path === "description.collectionDate")
-    return "description.collectionDateStart";
-  if (path.startsWith("description.collectionDate."))
-    return path === "description.collectionDate.start"
-      ? "description.collectionDateStart"
-      : "description.collectionDateEnd";
-  const measurement = MEASUREMENT_PATH.exec(path);
+  const range = DATE_RANGE_PATH.exec(path);
+  if (range) return `${range[1]}${range[2] === "end" ? "End" : "Start"}`;
+  const measurement = MEASUREMENT_PATH.exec(path) ?? READING_PATH.exec(path);
   if (measurement)
-    return `description.${measurement[1]}${
-      measurement[2] === "value" ? "Value" : "Unit"
-    }`;
-  const reading = READING_PATH.exec(path);
-  if (reading)
-    return `condition.${reading[1]}${
-      reading[2] === "value" ? "Value" : "Unit"
+    return `${measurement[1]}.${measurement[2]}${
+      measurement[3] === "value" ? "Value" : "Unit"
     }`;
   if (path === "condition.temperature.type") return "condition.temperatureType";
   if (path === "condition.pressure.type") return "condition.pressureType";
@@ -80,6 +74,19 @@ const draftFieldName = (path: string, draft: DraftContext): string => {
   return path;
 };
 
+const ORDER_END_FIELDS: Record<string, string | undefined> = {
+  collection_date_order: "description.collectionDateEnd",
+  synthesis_date_order: "syntheticDetails.synthesisDateEnd",
+};
+
+const REASON_MESSAGES: Record<string, (() => string) | undefined> = {
+  collection_date_future: m.field_collection_date_future,
+  collection_date_order: m.field_collection_date_order,
+  synthesis_date_future: m.field_synthesis_date_future,
+  synthesis_date_order: m.field_synthesis_date_order,
+  humidity_percentage_range: m.field_humidity_percentage_range,
+};
+
 type DraftIssue = {
   path: ReadonlyArray<PropertyKey>;
   code?: string;
@@ -92,14 +99,9 @@ function issueMessage(path: string, issue: DraftIssue): string {
   if (blocker.success) {
     return publishBlockerLabel(blocker.data);
   }
-  if (reason === "collection_date_future") {
-    return m.field_collection_date_future();
-  }
-  if (reason === "collection_date_order") {
-    return m.field_collection_date_order();
-  }
-  if (reason === "humidity_percentage_range") {
-    return m.field_humidity_percentage_range();
+  const reasonMessage = reason == null ? undefined : REASON_MESSAGES[reason];
+  if (reasonMessage) {
+    return reasonMessage();
   }
   if (issue.code === "too_small" && path.startsWith(VERTICAL_PREFIX)) {
     return m.field_vertical_position_negative();
@@ -113,7 +115,7 @@ function issueMessage(path: string, issue: DraftIssue): string {
   }
   const measurement = MEASUREMENT_PATH.exec(path) ?? READING_PATH.exec(path);
   if (measurement) {
-    if (measurement[2] === "unit") return m.field_measurement_unit_required();
+    if (measurement[3] === "unit") return m.field_measurement_unit_required();
     return issue.code === "too_small"
       ? m.field_measurement_positive()
       : m.field_measurement_value_required();
@@ -131,12 +133,9 @@ export function sampleDraftFieldErrors(
     const path = issue.path.join(".");
     const message = issueMessage(path, issue);
     fields[draftFieldName(path, draft)] ??= { message };
-    if (
-      (issue.params as { code?: string } | undefined)?.code ===
-      "collection_date_order"
-    ) {
-      fields["description.collectionDateEnd"] ??= { message };
-    }
+    const reason = (issue.params as { code?: string } | undefined)?.code;
+    const endField = reason && ORDER_END_FIELDS[reason];
+    if (endField) fields[endField] ??= { message };
   }
   return fields;
 }

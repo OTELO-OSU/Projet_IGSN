@@ -3,6 +3,7 @@ import type { Location } from "../location/model.ts";
 import type { CreateSample, Sample } from "../sample.ts";
 import type { ScientificContext } from "../scientific-context/model.ts";
 import type { ProvenanceStatus } from "../scientific-context/provenance-status.ts";
+import type { SyntheticDetails } from "../synthetic-details/model.ts";
 
 import { allowsLocation } from "../location/allows-location.ts";
 import { isPathAtOrUnder } from "../path/is-at-or-under.ts";
@@ -50,6 +51,28 @@ const LOCKED_HISTORICAL_SPECIMEN_FIELDS_TO_FORM_FIELDS = {
   collectionOrigin: ["scientificContext.collectionOrigin"],
 } as const;
 
+const LOCKED_SYNTHETIC_DETAILS_FIELDS_TO_FORM_FIELDS = {
+  startingMaterial: ["syntheticDetails.startingMaterial"],
+  startingMaterialNature: ["syntheticDetails.startingMaterialNature"],
+  startingMaterialComposition: ["syntheticDetails.startingMaterialComposition"],
+  finalProduct: ["syntheticDetails.finalProduct"],
+  experimentType: ["syntheticDetails.experimentType"],
+  experimentDuration: [
+    "syntheticDetails.experimentDurationValue",
+    "syntheticDetails.experimentDurationUnit",
+  ],
+  experimentDurationNotRelevant: [
+    "syntheticDetails.experimentDurationNotRelevant",
+  ],
+  synthesisDate: [
+    "syntheticDetails.synthesisDateStart",
+    "syntheticDetails.synthesisDateEnd",
+  ],
+  operatorName: ["syntheticDetails.operatorName"],
+  operatorOrcid: ["syntheticDetails.operatorOrcid"],
+  researchStructure: ["syntheticDetails.researchStructure"],
+} as const;
+
 const PROVENANCE_DISCRIMINANT_FORM_FIELD =
   "scientificContext.provenanceStatus" as const;
 
@@ -57,6 +80,7 @@ export const FROZEN_FORM_FIELDS: readonly string[] = [
   ...Object.values(LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS).flat(),
   ...Object.values(LOCKED_LOCATION_FIELDS_TO_FORM_FIELDS).flat(),
   ...Object.values(LOCKED_DESCRIPTION_FIELDS_TO_FORM_FIELDS).flat(),
+  ...Object.values(LOCKED_SYNTHETIC_DETAILS_FIELDS_TO_FORM_FIELDS).flat(),
   PROVENANCE_DISCRIMINANT_FORM_FIELD,
 ];
 
@@ -160,6 +184,19 @@ function mergeDescription(
   );
 }
 
+function mergeSyntheticDetails(
+  current: Sample["syntheticDetails"],
+  incoming: CreateSample["syntheticDetails"],
+): SyntheticDetails | null {
+  if (current == null) return incoming ?? null;
+  const payload: SyntheticDetails = { ...incoming };
+  return freezeLocked(
+    payload,
+    current,
+    LOCKED_SYNTHETIC_DETAILS_FIELDS_TO_FORM_FIELDS,
+  );
+}
+
 function mergeScientificContext(
   current: Sample["scientificContext"],
   incoming: CreateSample["scientificContext"],
@@ -211,6 +248,10 @@ export function mergePublishedEdit(
     scientificContext: mergeScientificContext(
       current.scientificContext,
       incoming.scientificContext,
+    ),
+    syntheticDetails: mergeSyntheticDetails(
+      current.syntheticDetails,
+      incoming.syntheticDetails,
     ),
   };
   return freezeLocked(

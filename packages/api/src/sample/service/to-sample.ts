@@ -132,6 +132,40 @@ function toRepository(row: Selectable<DB["sample"]>) {
   });
 }
 
+function toSyntheticDetails(row: Selectable<DB["sample"]>) {
+  return prune({
+    startingMaterial: row.syn_starting_material,
+    startingMaterialNature: row.syn_starting_material_nature,
+    startingMaterialComposition: row.syn_starting_material_composition,
+    finalProduct: row.syn_final_product,
+    experimentType: row.syn_experiment_type,
+    experimentDuration: measurement(
+      row.syn_experiment_duration_value,
+      row.syn_experiment_duration_unit,
+    ),
+    experimentDurationNotRelevant: row.syn_experiment_duration_not_relevant,
+    synthesisDate:
+      row.syn_synthesis_date_start !== null &&
+      row.syn_synthesis_date_end !== null
+        ? {
+            start: formatDate(row.syn_synthesis_date_start),
+            end: formatDate(row.syn_synthesis_date_end),
+          }
+        : null,
+    operatorName: row.syn_operator_name,
+    operatorOrcid: row.syn_operator_orcid,
+    researchStructure: row.syn_research_structure,
+    temperature: measurement(
+      row.syn_temperature_value,
+      row.syn_temperature_unit,
+    ),
+    pressure: measurement(row.syn_pressure_value, row.syn_pressure_unit),
+    experimentalProtocol: row.syn_experimental_protocol,
+    experimentPurpose: row.syn_experiment_purpose,
+    equipmentUsed: row.syn_equipment_used,
+  });
+}
+
 export function toSample(
   row: Selectable<DB["sample"]>,
   links: Selectable<DB["sample_link"]>[] = [],
@@ -176,6 +210,7 @@ export function toSample(
     condition: toCondition(row),
     scientificContext: toScientificContext(row),
     repository: toRepository(row),
+    syntheticDetails: toSyntheticDetails(row),
     age,
     links: links.map((link) => ({
       id: link.id,

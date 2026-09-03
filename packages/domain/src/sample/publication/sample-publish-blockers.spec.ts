@@ -29,6 +29,7 @@ const base: Sample = {
     hostInstitution: ["04kdfz702"],
     collectorName: "Pierre Curie",
   },
+  syntheticDetails: null,
   age: null,
   links: [],
   attachments: [],
@@ -50,6 +51,22 @@ const base: Sample = {
   status: "draft",
   createdAt: new Date("2026-01-01T00:00:00Z"),
   updatedAt: new Date("2026-01-01T00:00:00Z"),
+};
+
+const syntheticDetails = {
+  startingMaterial: "natural",
+  startingMaterialNature: "rock",
+  finalProduct: "glass",
+  experimentDuration: { value: 2, unit: "hour" },
+  synthesisDate: { start: "2020-01-01", end: "2020-01-02" },
+  operatorName: "Marie Curie",
+} as const;
+
+const synthetic: Sample = {
+  ...base,
+  material: "synthetic_rock_mineral",
+  location: null,
+  syntheticDetails,
 };
 
 describe("samplePublishBlockers", () => {
@@ -151,12 +168,17 @@ describe("samplePublishBlockers", () => {
     ]);
   });
 
-  it.each([
-    "synthetic_rock_mineral",
-    "extraterrestrial_rock.returned_samples.other",
-  ])("should not require a location for %s", (material) => {
+  it("should not require a location for synthetic material", () => {
+    expect(samplePublishBlockers(synthetic)).toEqual([]);
+  });
+
+  it("should not require a location for an extraterrestrial returned sample", () => {
     expect(
-      samplePublishBlockers({ ...base, material, location: null }),
+      samplePublishBlockers({
+        ...base,
+        material: "extraterrestrial_rock.returned_samples.other",
+        location: null,
+      }),
     ).toEqual([]);
   });
 
@@ -440,6 +462,59 @@ describe("samplePublishBlockers", () => {
           provenanceStatus: "historical_specimen",
           collectionCurator: "Georges Cuvier",
           collectionOrigin: "scientific_expedition",
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it("should not report a synthetic blocker for a non-synthetic material", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        syntheticDetails: { finalProduct: "glass" },
+      }),
+    ).toEqual([]);
+  });
+
+  it("should report every required synthesis field when the section is missing", () => {
+    expect(
+      samplePublishBlockers({ ...synthetic, syntheticDetails: null }),
+    ).toEqual([
+      "synthetic_starting_material_missing",
+      "synthetic_starting_material_nature_missing",
+      "synthetic_final_product_missing",
+      "synthetic_experiment_duration_missing",
+      "synthetic_synthesis_date_missing",
+      "synthetic_operator_name_missing",
+    ]);
+  });
+
+  it.each(["synthetic", "mixture"] as const)(
+    "should require the starting material composition of a %s starting material",
+    (startingMaterial) => {
+      expect(
+        samplePublishBlockers({
+          ...synthetic,
+          syntheticDetails: {
+            ...syntheticDetails,
+            startingMaterial,
+          },
+        }),
+      ).toEqual(["synthetic_starting_material_composition_missing"]);
+    },
+  );
+
+  it.each([
+    { experimentDuration: { value: 2, unit: "hour" } as const },
+    { experimentDurationNotRelevant: true },
+  ])("should lift the experiment duration blocker with %o", (override) => {
+    expect(
+      samplePublishBlockers({
+        ...synthetic,
+        syntheticDetails: {
+          ...syntheticDetails,
+          experimentDuration: null,
+          ...override,
         },
       }),
     ).toEqual([]);

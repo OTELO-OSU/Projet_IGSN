@@ -429,6 +429,7 @@ export const sampleRowSchema = sampleSchema
     availabilityStatus: true,
     scientificContext: true,
     repository: true,
+    syntheticDetails: true,
     age: true,
     igsn: true,
   })
@@ -448,6 +449,7 @@ export const sampleRowSchema = sampleSchema
     availabilityStatus: true,
     scientificContext: true,
     repository: true,
+    syntheticDetails: true,
     age: true,
     igsn: true,
   })

@@ -8,7 +8,9 @@ type SaveMenuAction = "Withdraw" | "Tombstone";
 export function sampleEditPage(page: Page) {
   const openTab = (name: string) => page.getByRole("tab", { name }).click();
   const pick = async (field: string, label: string) => {
-    const combobox = page.getByRole("combobox", { name: field });
+    const combobox = page.getByRole("combobox", {
+      name: new RegExp(`^${field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`),
+    });
     await expect(async () => {
       if ((await combobox.innerText()).trim() !== label) {
         await combobox.click();
@@ -149,6 +151,16 @@ export function sampleEditPage(page: Page) {
         "Current archive",
         "Centre National de la Recherche Scientifique (CNRS)",
       );
+      await openTab("Synthetic details");
+      await pick("Starting material", "Natural");
+      await pick("Nature of starting material", "Powder");
+      await pick("Final product", "Glass");
+      await page.getByRole("switch", { name: "Duration not relevant" }).click();
+      await page
+        .getByRole("group", { name: /synthesis date/i })
+        .getByRole("textbox", { name: /^Date/ })
+        .fill("2025-06-15");
+      await page.getByLabel(/operator name/i).fill("Paul Bernard");
     },
     publish: () => confirmStatusChange("Save & Publish", "Publish sample"),
     publishAsWithdrawn: async () => {

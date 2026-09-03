@@ -30,6 +30,7 @@ const withdrawn: Sample = {
     provenanceStatus: "recent_collection",
     collectorName: "Claire Martin",
   },
+  syntheticDetails: null,
   age: null,
   links: [],
   attachments: [],

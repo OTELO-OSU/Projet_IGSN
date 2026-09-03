@@ -1,6 +1,6 @@
 import { m } from "#/paraglide/messages.js";
-import { CollectionDatesField } from "#/samples/collection-dates-field.tsx";
 import { isOrientedYes } from "#/samples/compose-description.ts";
+import { DateRangeField } from "#/samples/date-range-field.tsx";
 import { MeasurementFields } from "#/samples/measurement-fields.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
@@ -13,7 +13,16 @@ export function SampleDescriptionFields() {
   const form = useSampleForm();
   return (
     <div className="grid gap-4">
-      <CollectionDatesField />
+      <DateRangeField
+        prefix="description.collectionDate"
+        id="collection-dates"
+        groupLabel={m.field_collection_dates()}
+        rangeModeLabel={m.collection_date_mode_range()}
+        singleLabel={m.field_collection_date()}
+        startLabel={m.field_collection_date_start()}
+        endLabel={m.field_collection_date_end()}
+        identicalMessage={m.collection_date_range_identical}
+      />
 
       <form.AppField name="description.oriented">
         {(field) => (

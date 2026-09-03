@@ -59,6 +59,7 @@ describe("getSampleByIgsn", () => {
       repository: null,
       geologicalContextDescription: null,
       geomorphologicalEnvironment: null,
+      syntheticDetails: null,
       age: null,
       links: [],
       attachments: [],

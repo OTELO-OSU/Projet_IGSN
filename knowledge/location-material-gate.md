@@ -26,7 +26,9 @@ Three consumers:
 - `createSampleSchema`: rejects a location the material forbids.
 - `samplePublishBlockers`: requires a position where a location applies (`location_position_missing`).
 
-Refusing materials: `synthetic_rock_mineral` and `extraterrestrial_rock.returned_samples[.*]`. Everything else allows a location and requires a position (point, area or line) to publish.
+Refusing materials: `synthetic_rock_mineral`, through the shared `isSyntheticMaterial` ([[synthetic-details]]), and `extraterrestrial_rock.returned_samples[.*]`. Everything else allows a location and requires a position (point, area or line) to publish.
+
+- A synthetic material trades the Location tab for the Synthetic details tab, the two gates reading the same predicate.
 
 - Entering a location then picking a refusing material drops it on save, per the hidden-value rules of [[form-kit-and-hidden-values]].
 - On a published sample, the whole location drops when the frozen material forbids one ([[published-field-locks]]).

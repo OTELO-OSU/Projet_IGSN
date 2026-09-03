@@ -5,7 +5,7 @@ import { orcidSchema } from "../../user/orcid.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { collectionOriginSchema } from "./collection-origin.ts";
 
-const uniqueRorArraySchema = (code: string) =>
+export const uniqueRorArraySchema = (code: string) =>
   z
     .array(organizationRorSchema)
     .min(1)
