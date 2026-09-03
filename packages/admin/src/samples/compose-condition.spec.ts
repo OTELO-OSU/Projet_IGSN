@@ -21,7 +21,12 @@ describe("composeCondition", () => {
   it("should round-trip a full condition through the draft", () => {
     const condition: Condition = {
       packaging: "glass_bottle",
-      storageConditions: ["temperature_controlled", "light_controlled"],
+      storageConditions: [
+        "temperature_controlled",
+        "pressure_controlled",
+        "moisture_controlled",
+        "light_controlled",
+      ],
       temperature: {
         type: "frozen",
         measurement: { value: -18, unit: "celsius" },
@@ -38,15 +43,30 @@ describe("composeCondition", () => {
   });
 
   it("should compose a category without its reading", () => {
-    expect(composeCondition(draft({ temperatureType: "ambient" }))).toEqual({
+    expect(
+      composeCondition(
+        draft({
+          storageConditions: ["temperature_controlled"],
+          temperatureType: "ambient",
+        }),
+      ),
+    ).toEqual({
+      storageConditions: ["temperature_controlled"],
       temperature: { type: "ambient", measurement: undefined },
     });
   });
 
   it("should keep a half-filled measurement for the schema to reject", () => {
     expect(
-      composeCondition(draft({ pressureType: "vacuum", pressureValue: 0.5 })),
+      composeCondition(
+        draft({
+          storageConditions: ["pressure_controlled"],
+          pressureType: "vacuum",
+          pressureValue: 0.5,
+        }),
+      ),
     ).toEqual({
+      storageConditions: ["pressure_controlled"],
       pressure: {
         type: "vacuum",
         measurement: { value: 0.5, unit: undefined },
@@ -56,8 +76,32 @@ describe("composeCondition", () => {
 
   it("should drop a reading unit left behind by a cleared value", () => {
     expect(
-      composeCondition(draft({ pressureType: "vacuum", pressureUnit: "bar" })),
-    ).toEqual({ pressure: { type: "vacuum", measurement: undefined } });
+      composeCondition(
+        draft({
+          storageConditions: ["pressure_controlled"],
+          pressureType: "vacuum",
+          pressureUnit: "bar",
+        }),
+      ),
+    ).toEqual({
+      storageConditions: ["pressure_controlled"],
+      pressure: { type: "vacuum", measurement: undefined },
+    });
+  });
+
+  it("should drop a reading whose storage condition is unchecked", () => {
+    expect(
+      composeCondition(
+        draft({
+          storageConditions: [],
+          temperatureType: "frozen",
+          temperatureValue: -18,
+          temperatureUnit: "celsius",
+          humidityType: "dry",
+          light: "total_darkness",
+        }),
+      ),
+    ).toBeNull();
   });
 
   it("should drop a reading left behind an unset category", () => {

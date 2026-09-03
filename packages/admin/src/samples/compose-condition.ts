@@ -8,6 +8,8 @@ import type { StorageCondition } from "@projet-igsn/domain/sample/condition/stor
 import type { TemperatureType } from "@projet-igsn/domain/sample/condition/temperature-type";
 import type { TemperatureUnit } from "@projet-igsn/domain/sample/condition/temperature-unit";
 
+import { isReadingControlled } from "@projet-igsn/domain/sample/condition/controlled-reading";
+
 import {
   composeMeasurement,
   type MeasurementCandidate,
@@ -59,28 +61,36 @@ export function composeCondition(
     packaging: draft.packaging ?? undefined,
     storageConditions:
       draft.storageConditions.length > 0 ? draft.storageConditions : undefined,
-    temperature: hasReadingType(draft.temperatureType)
-      ? {
-          type: draft.temperatureType,
-          measurement: composeMeasurement(
-            draft.temperatureValue,
-            draft.temperatureUnit,
-          ),
-        }
+    temperature:
+      isReadingControlled(draft.storageConditions, "temperature") &&
+      hasReadingType(draft.temperatureType)
+        ? {
+            type: draft.temperatureType,
+            measurement: composeMeasurement(
+              draft.temperatureValue,
+              draft.temperatureUnit,
+            ),
+          }
+        : undefined,
+    humidity:
+      isReadingControlled(draft.storageConditions, "humidity") &&
+      hasReadingType(draft.humidityType)
+        ? { type: draft.humidityType, percentage: draft.humidityPercentage }
+        : undefined,
+    light: isReadingControlled(draft.storageConditions, "light")
+      ? (draft.light ?? undefined)
       : undefined,
-    humidity: hasReadingType(draft.humidityType)
-      ? { type: draft.humidityType, percentage: draft.humidityPercentage }
-      : undefined,
-    light: draft.light ?? undefined,
-    pressure: hasReadingType(draft.pressureType)
-      ? {
-          type: draft.pressureType,
-          measurement: composeMeasurement(
-            draft.pressureValue,
-            draft.pressureUnit,
-          ),
-        }
-      : undefined,
+    pressure:
+      isReadingControlled(draft.storageConditions, "pressure") &&
+      hasReadingType(draft.pressureType)
+        ? {
+            type: draft.pressureType,
+            measurement: composeMeasurement(
+              draft.pressureValue,
+              draft.pressureUnit,
+            ),
+          }
+        : undefined,
     specificConditions: draft.specificConditions?.trim() || undefined,
   };
   return Object.values(condition).some((part) => part !== undefined)
