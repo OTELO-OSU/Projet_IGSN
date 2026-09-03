@@ -16,7 +16,10 @@ import {
 } from "@projet-igsn/domain/sample/condition/temperature-unit";
 
 import { m } from "#/paraglide/messages.js";
-import { hasReadingType } from "#/samples/compose-condition.ts";
+import {
+  hasControlledStorageCondition,
+  hasReadingType,
+} from "#/samples/compose-condition.ts";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import {
   humidityTypeLabel,
@@ -65,9 +68,7 @@ const readings = [
 
 const storageConditionItems = (selected: readonly string[]) => {
   const none = selected.includes("no_specific_condition");
-  const controlled = selected.some(
-    (value) => value !== "no_specific_condition",
-  );
+  const controlled = hasControlledStorageCondition(selected);
   return STORAGE_CONDITIONS.filter((value) =>
     value === "no_specific_condition" ? !controlled : !none,
   ).map((value) => ({ value, label: storageConditionLabel(value) }));
@@ -237,11 +238,26 @@ export function SampleConditionFields() {
         }
       </form.Subscribe>
 
-      <form.AppField name="condition.specificConditions">
-        {(field) => (
-          <field.TextField label={m.field_specific_conditions()} multiline />
-        )}
-      </form.AppField>
+      <form.Subscribe
+        selector={(state) =>
+          hasControlledStorageCondition(
+            state.values.condition.storageConditions,
+          )
+        }
+      >
+        {(controlled) =>
+          controlled ? (
+            <form.AppField name="condition.specificConditions">
+              {(field) => (
+                <field.TextField
+                  label={m.field_specific_conditions()}
+                  multiline
+                />
+              )}
+            </form.AppField>
+          ) : null
+        }
+      </form.Subscribe>
     </div>
   );
 }

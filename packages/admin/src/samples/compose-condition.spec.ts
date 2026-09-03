@@ -99,9 +99,21 @@ describe("composeCondition", () => {
           temperatureUnit: "celsius",
           humidityType: "dry",
           light: "total_darkness",
+          specificConditions: "argon",
         }),
       ),
     ).toBeNull();
+  });
+
+  it("should drop the specific conditions when only no specific condition is checked", () => {
+    expect(
+      composeCondition(
+        draft({
+          storageConditions: ["no_specific_condition"],
+          specificConditions: "argon",
+        }),
+      ),
+    ).toEqual({ storageConditions: ["no_specific_condition"] });
   });
 
   it("should drop a reading left behind an unset category", () => {
@@ -121,10 +133,15 @@ describe("composeCondition", () => {
   });
 
   it("should trim the specific conditions and drop them when blank", () => {
+    const controlled = { storageConditions: ["light_controlled" as const] };
     expect(
-      composeCondition(draft({ specificConditions: "  argon  " })),
-    ).toEqual({ specificConditions: "argon" });
-    expect(composeCondition(draft({ specificConditions: "   " }))).toBeNull();
+      composeCondition(
+        draft({ ...controlled, specificConditions: "  argon  " }),
+      ),
+    ).toEqual({ ...controlled, specificConditions: "argon" });
+    expect(
+      composeCondition(draft({ ...controlled, specificConditions: "   " })),
+    ).toEqual(controlled);
   });
 });
 

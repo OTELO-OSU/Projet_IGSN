@@ -119,6 +119,9 @@ describe("SampleConditionFields", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Light", exact: true }))
       .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByLabelText("Specific sample conditions"))
+      .not.toBeInTheDocument();
 
     await screen
       .getByRole("checkbox", { name: "Temperature controlled" })
@@ -127,6 +130,9 @@ describe("SampleConditionFields", () => {
     await screen.getByRole("checkbox", { name: "Moisture controlled" }).click();
     await screen.getByRole("checkbox", { name: "Light controlled" }).click();
 
+    await expect
+      .element(screen.getByLabelText("Specific sample conditions"))
+      .toBeVisible();
     await expect
       .element(screen.getByLabelText("Temperature value"))
       .not.toBeInTheDocument();
@@ -277,6 +283,9 @@ describe("SampleConditionFields", () => {
       .click();
     await screen.getByRole("option", { name: "Ambient" }).click();
     await screen.getByLabelText("Temperature value").fill("21");
+    await screen
+      .getByLabelText("Specific sample conditions")
+      .fill("Stored under argon");
 
     await screen
       .getByRole("checkbox", { name: "Temperature controlled" })
@@ -289,6 +298,9 @@ describe("SampleConditionFields", () => {
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByLabelText("Temperature value"))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByLabelText("Specific sample conditions"))
       .not.toBeInTheDocument();
 
     await screen.getByRole("button", { name: "Create" }).click();
