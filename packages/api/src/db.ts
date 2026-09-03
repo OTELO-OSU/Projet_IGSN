@@ -19,8 +19,8 @@ type SampleTable = {
   geological_context_description: string | null;
   geomorphological_environment: string | null;
   specific_name: string | null;
-  collection_date_start: ColumnType<Date, string, string> | null;
-  collection_date_end: ColumnType<Date, string, string> | null;
+  collection_date_start: string | null;
+  collection_date_end: string | null;
   collection_date_precision: string | null;
   collection_date_time_zone: string | null;
   oriented: boolean | null;
@@ -248,6 +248,15 @@ const dbConfigSchema = z.object({
   ssl: z.literal("require").optional(),
 });
 
+export const POSTGRES_TYPES = {
+  timestamp: {
+    to: 1114,
+    from: [1114],
+    serialize: (value: string) => value,
+    parse: (value: string) => value,
+  },
+};
+
 export function createDb(): Kysely<DB> {
   const config = dbConfigSchema.parse({
     host: process.env.DATABASE_HOST,
@@ -258,6 +267,8 @@ export function createDb(): Kysely<DB> {
     ssl: process.env.DATABASE_SSL,
   });
   return new Kysely<DB>({
-    dialect: new PostgresJSDialect({ postgres: postgres(config) }),
+    dialect: new PostgresJSDialect({
+      postgres: postgres({ ...config, types: POSTGRES_TYPES }),
+    }),
   });
 }

@@ -3,14 +3,8 @@ import { type Kysely, sql } from "kysely";
 export async function up(db: Kysely<unknown>): Promise<void> {
   await sql`
     ALTER TABLE sample
-      ALTER COLUMN collection_date_start TYPE timestamptz
-        USING collection_date_start::timestamp AT TIME ZONE 'UTC',
-      ALTER COLUMN collection_date_end TYPE timestamptz
-        USING collection_date_end::timestamp AT TIME ZONE 'UTC'
-  `.execute(db);
-
-  await sql`
-    ALTER TABLE sample
+      ALTER COLUMN collection_date_start TYPE timestamp,
+      ALTER COLUMN collection_date_end TYPE timestamp,
       ADD COLUMN collection_date_precision text
         CHECK (collection_date_precision IN ('day', 'hour')),
       ADD COLUMN collection_date_time_zone text,
@@ -25,17 +19,11 @@ export async function up(db: Kysely<unknown>): Promise<void> {
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {
-  await db.schema
-    .alterTable("sample")
-    .dropColumn("collection_date_precision")
-    .dropColumn("collection_date_time_zone")
-    .execute();
-
   await sql`
     ALTER TABLE sample
-      ALTER COLUMN collection_date_start TYPE date
-        USING (collection_date_start AT TIME ZONE 'UTC')::date,
+      DROP COLUMN collection_date_precision,
+      DROP COLUMN collection_date_time_zone,
+      ALTER COLUMN collection_date_start TYPE date,
       ALTER COLUMN collection_date_end TYPE date
-        USING (collection_date_end AT TIME ZONE 'UTC')::date
   `.execute(db);
 }

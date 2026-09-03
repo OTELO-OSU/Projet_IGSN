@@ -14,9 +14,9 @@ A sample's `collectionDate` was `{ start, end }` of `YYYY-MM-DD` strings (a sing
 
 **`collectionDate` gains an explicit `precision` (`day | hour`), a discriminated union in `domain`:** `day` keeps `YYYY-MM-DD` bounds, `hour` adds `YYYY-MM-DDTHH:mm` wall-clock bounds and a required IANA `timeZone`. The two bounds of a range share one precision and, at `hour`, one zone.
 
-**Postgres does the wall-clock/instant conversion, not JavaScript.** The two columns become `timestamptz`; on write, `<bound>::timestamp AT TIME ZONE <zone>` turns the wall-clock string into an instant; on read, the instant is formatted back in the stored zone (`Intl.DateTimeFormat` for `hour`, plain UTC read for `day`, since day bounds are always written at UTC midnight). Two new columns, `collection_date_precision` and `collection_date_time_zone`, record what to do with the instant on the way back out; the zone is written only at `hour` precision.
+**The wall clock is stored as typed, with no conversion anywhere.** The two columns become `timestamp` (without time zone) holding the bound exactly as the researcher entered it, a day bound at `00:00`; two new columns, `collection_date_precision` and `collection_date_time_zone`, say how to read it back, the zone written only at `hour` precision and enforced by a CHECK. The driver passes `timestamp` through as text in both directions (`POSTGRES_TYPES` in `api/src/db.ts`, shared by `createDb` and the test client), since postgres.js would otherwise turn the wall clock into a `Date` and shift it by the api process's own zone.
 
-**A day-precision bound is stored at UTC midnight**, `tz = "UTC"` on write regardless of the researcher's own zone, since a day has no wall-clock ambiguity to preserve. `synthesisDate` (synthetic samples) stays day-only: nothing in this ticket asked for an hour-precision synthesis date, and it keeps its own `dateRangeSchema` sharing only the extracted order/future check (`dateRangeIssues`) with `collectionDate`.
+`synthesisDate` (synthetic samples) stays day-only: nothing in this ticket asked for an hour-precision synthesis date, and it keeps its own `dateRangeSchema` sharing only the extracted order/future check (`dateRangeIssues`) with `collectionDate`.
 
 **Public `GET /samples/:igsn` returns `collectionDate` as the same discriminated union**, so a consumer reading `precision` gets the right shape without a separate flag.
 
@@ -24,7 +24,8 @@ A sample's `collectionDate` was `{ start, end }` of `YYYY-MM-DD` strings (a sing
 
 - **Keep `date` columns plus a wall-clock text bound for the hour case**: two storage shapes for one logical field, and every reader would need to branch on which columns are populated instead of reading one `precision` discriminant already carried in the row.
 - **Store UTC only and derive the local time from a client-supplied zone at render time**: loses the zone the sample was actually collected in the moment two admins in different zones view or edit the record, and re-derives a value that should be a stored fact, not a runtime guess.
-- **A JS time-zone conversion library**: `Intl.DateTimeFormat` and Postgres's `AT TIME ZONE` already cover the whole read/write path with the platform's own IANA database; a library would duplicate that database and add a dependency for zero extra correctness.
+- **`timestamptz` columns, converting with `AT TIME ZONE <zone>` on write and `Intl.DateTimeFormat` on read**: the zone sits in its own column anyway, so the instant is derivable and the two conversions only add a place to drift (Postgres and ICU each carry their own tzdata) for nothing a reader asks for.
+- **A JS time-zone conversion library**: nothing is converted, and `Intl.DateTimeFormat` already validates a zone name with the platform's IANA database.
 
 ## Also decided (same tab, same ticket)
 
@@ -36,7 +37,7 @@ The four yes/no comboboxes (`description.oriented`, `security.radioactivity`, `s
 
 ## Consequences
 
-- The migration's `down` path degrades: reversing `timestamptz` back to `date` with `(col AT TIME ZONE 'UTC')::date` loses the time-of-day on every `hour`-precision row. Rolling back after `hour` rows exist is destructive; there is no round-trip-safe down migration for this data.
+- The migration's `down` path degrades: casting `timestamp` back to `date` loses the time-of-day on every `hour`-precision row. Rolling back after `hour` rows exist is destructive; there is no round-trip-safe down migration for this data.
 - Every consumer of `collectionDate` (API service, admin compose/decompose, frontend rendering) now reads a discriminated union instead of a flat `{ start, end }`, so a new caller must handle both `day` and `hour` rather than assuming two plain date strings.
 - A sample created before this change with no `oriented`/hazard answer now reads as `false` ("no") rather than "unanswered"; the distinction is gone from every existing draft the moment it is next saved, and the public view has no third state left to render.
 - The time-zone control (`description.collectionDateTimeZone`) joins the `collectionDate` entry of `LOCKED_DESCRIPTION_FIELDS_TO_FORM_FIELDS`; the time-mode switch renders no field of its own and follows the start bound's lock, so precision and zone freeze with the rest of the collection date on a published sample; see [published-field-lock.ts](../../packages/domain/src/sample/publication/published-field-lock.ts) and ADR [0021](0021-post-publish-field-mutability.md).

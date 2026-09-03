@@ -2,7 +2,6 @@ import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { Selectable } from "kysely";
 
 import { formatDate } from "@projet-igsn/domain/date/format-date";
-import { formatZonedDateTime } from "@projet-igsn/domain/date/format-zoned-date-time";
 import { type Sample, sampleSchema } from "@projet-igsn/domain/sample/sample";
 import { scientificContextSchema } from "@projet-igsn/domain/sample/scientific-context/model";
 
@@ -37,17 +36,16 @@ function toCollectionDate(row: Selectable<DB["sample"]>) {
     }
     return {
       precision: "hour",
-      start: formatZonedDateTime(start, timeZone),
-      end: formatZonedDateTime(end, timeZone),
+      start: wallClock(start),
+      end: wallClock(end),
       timeZone,
     };
   }
-  return {
-    precision: "day",
-    start: formatDate(start),
-    end: formatDate(end),
-  };
+  return { precision: "day", start: start.slice(0, 10), end: end.slice(0, 10) };
 }
+
+const wallClock = (timestamp: string) =>
+  timestamp.replace(" ", "T").slice(0, 16);
 
 function toDescription(row: Selectable<DB["sample"]>) {
   return prune({
