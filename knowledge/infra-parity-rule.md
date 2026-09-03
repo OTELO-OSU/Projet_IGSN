@@ -16,4 +16,5 @@ status: stable
 - Before finishing such a change, diff the preprod compose against it: a requirement that only reaches dev ships a broken deploy.
 - Declare secrets and host-specific values as `${VAR}` and document them in `infra/preprod/docker-compose.env.example`.
 - Set plain constants (paths, ports) directly in the compose file.
+- The edge is part of parity: dev and e2e run a `caddy` service on `infra/Caddyfile`, preprod its own `infra/preprod/Caddyfile`, both routing the same `/admin` and `/api` paths ([[single-origin-routing]]).
 - The one accepted divergence is preprod's auth stack, which drops the throwaway Keycloak and mock IdPs dev and e2e need ([[preprod-infrastructure]]).
