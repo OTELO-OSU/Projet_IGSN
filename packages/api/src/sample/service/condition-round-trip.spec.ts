@@ -19,6 +19,8 @@ describe("sample condition persistence", () => {
       storageConditions: [
         "temperature_controlled" as const,
         "light_controlled" as const,
+        "pressure_controlled" as const,
+        "moisture_controlled" as const,
       ],
       temperature: {
         type: "frozen" as const,
@@ -41,6 +43,11 @@ describe("sample condition persistence", () => {
     "should round-trip a category without its numeric reading",
     async ({ db }) => {
       const condition = {
+        storageConditions: [
+          "temperature_controlled" as const,
+          "moisture_controlled" as const,
+          "pressure_controlled" as const,
+        ],
         temperature: { type: "ambient" as const },
         humidity: { type: "dry" as const },
         pressure: { type: "vacuum" as const },
