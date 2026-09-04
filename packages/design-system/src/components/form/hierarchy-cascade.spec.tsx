@@ -11,7 +11,7 @@ import {
   hierarchyLevelItems,
 } from "./hierarchy-select-field.tsx";
 
-const identity = (code: string) => code;
+const translate = (code: string) => code.split(".").at(-1) ?? code;
 
 // rock -> {igneous (leaf), sedimentary -> sand}. igneous has no entry, so its
 // level offers nothing and ends the cascade.
@@ -81,11 +81,11 @@ function Harness() {
   return (
     <HierarchyCascade
       hierarchy={hierarchy}
-      translate={identity}
+      translate={translate}
       value={value}
       onChange={setValue}
       rootLabel="Material"
-      itemsAt={(parent) => hierarchyLevelItems(hierarchy, parent, identity)}
+      itemsAt={(parent) => hierarchyLevelItems(hierarchy, parent, translate)}
       renderLevel={({ label, items, current, onPick }) => (
         <RawLevel
           label={label}

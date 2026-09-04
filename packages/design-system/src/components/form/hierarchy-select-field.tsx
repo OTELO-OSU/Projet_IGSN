@@ -42,14 +42,16 @@ export function isPathSearchable(hierarchy: Hierarchy, path: string): boolean {
 
 const identity = (code: string) => code;
 
+function withLabelCode(path: string, code: string | undefined): string {
+  return code ? [...path.split(".").slice(0, -1), code].join(".") : path;
+}
+
 export function hierarchyPathLabel(
   hierarchy: Hierarchy,
   path: string,
   translate: (code: string) => string = identity,
 ): string {
-  return translate(
-    resolveNode(hierarchy, path)?.label ?? path.split(".").at(-1) ?? path,
-  );
+  return translate(withLabelCode(path, resolveNode(hierarchy, path)?.label));
 }
 
 export function hierarchyChildLabel(
@@ -58,9 +60,7 @@ export function hierarchyChildLabel(
   translate: (code: string) => string = identity,
 ): string {
   const node = resolveNode(hierarchy, parent);
-  return translate(
-    node?.childLabel ?? node?.label ?? parent.split(".").at(-1) ?? parent,
-  );
+  return translate(withLabelCode(parent, node?.childLabel ?? node?.label));
 }
 
 export function hierarchyChildren(

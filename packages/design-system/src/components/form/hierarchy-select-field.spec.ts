@@ -26,7 +26,8 @@ const hierarchy: Hierarchy = {
   },
 };
 
-const translate = (code: string) => code.toUpperCase();
+const translate = (code: string) =>
+  (code.split(".").at(-1) ?? code).toUpperCase();
 
 describe("hierarchyChildren", () => {
   it("should offer the roots at the top level", () => {
@@ -71,18 +72,10 @@ describe("hierarchyPathLabel", () => {
     );
   });
 
-  it("should label an undefined segment by its own code, not the full path", () => {
-    expect(hierarchyPathLabel(hierarchy, "rock.igneous", translate)).toBe(
-      "IGNEOUS",
+  it("should let a dotted override relabel its occurrence's last segment", () => {
+    expect(hierarchyPathLabel(hierarchy, "water.water")).toBe(
+      "water.water_only",
     );
-  });
-
-  it("should default to the raw code", () => {
-    expect(hierarchyPathLabel(hierarchy, "rock.igneous")).toBe("igneous");
-  });
-
-  it("should let a dotted override label its occurrence differently", () => {
-    expect(hierarchyPathLabel(hierarchy, "water.water")).toBe("water_only");
   });
 });
 
@@ -96,6 +89,27 @@ describe("hierarchyChildLabel", () => {
       "SEDIMENTARY",
     );
   });
+});
+
+describe("label codes", () => {
+  const labelled: Hierarchy = {
+    roots: ["a"],
+    nodes: {
+      a: { choices: ["b"] },
+      "a.b": { label: "b", childLabel: "kids" },
+    },
+  };
+
+  it.each([
+    ["a path label", hierarchyPathLabel, "a.b", "a.b"],
+    ["a root path label", hierarchyPathLabel, "a", "a"],
+    ["a child label", hierarchyChildLabel, "a.b", "a.kids"],
+  ] as const)(
+    "should give translate the full path for %s",
+    (_case, label, path, expected) => {
+      expect(label(labelled, path, (code) => code)).toBe(expected);
+    },
+  );
 });
 
 describe("hierarchyLevelItems", () => {
