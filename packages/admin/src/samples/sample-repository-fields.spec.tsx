@@ -25,7 +25,7 @@ async function renderRepositorySection(
       primaryAction={{ kind: "submit", label: "Create", onSubmit }}
     />,
   );
-  await screen.getByRole("tab", { name: "Repository" }).click();
+  await screen.getByRole("tab", { name: "Curation and repository" }).click();
   return screen;
 }
 

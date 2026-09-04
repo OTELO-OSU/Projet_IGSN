@@ -10,11 +10,11 @@ const noop = () => {};
 const createAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Create", onSubmit }) as const;
 
-async function renderDescriptionTab(
+async function renderSampleForm(
   onSubmit: (value: CreateSample) => void = noop,
   description?: CreateSample["description"],
 ) {
-  const screen = await render(
+  return render(
     <SampleForm
       onCancel={noop}
       defaultValues={{
@@ -29,6 +29,13 @@ async function renderDescriptionTab(
       primaryAction={createAction(onSubmit)}
     />,
   );
+}
+
+async function renderDescriptionTab(
+  onSubmit: (value: CreateSample) => void = noop,
+  description?: CreateSample["description"],
+) {
+  const screen = await renderSampleForm(onSubmit, description);
   await screen.getByRole("tab", { name: "Physical description" }).click();
   return screen;
 }
@@ -36,7 +43,7 @@ async function renderDescriptionTab(
 describe("SampleDescriptionFields", () => {
   it("should submit a single date as the degenerate range start === end", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderDescriptionTab(onSubmit);
+    const screen = await renderSampleForm(onSubmit);
 
     await expect
       .element(screen.getByRole("group", { name: "Collection date *" }))
@@ -65,7 +72,7 @@ describe("SampleDescriptionFields", () => {
 
   it("should submit the start and end entered in range mode", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderDescriptionTab(onSubmit);
+    const screen = await renderSampleForm(onSubmit);
 
     await screen.getByRole("switch", { name: "Date range" }).click();
     await screen.getByLabelText("Start date").fill("2026-01-05");
@@ -89,7 +96,7 @@ describe("SampleDescriptionFields", () => {
   });
 
   it("should open in single mode when editing a sample whose start === end", async () => {
-    const screen = await renderDescriptionTab(noop, {
+    const screen = await renderSampleForm(noop, {
       collectionDate: {
         precision: "day",
         start: "2026-01-05",
@@ -106,7 +113,7 @@ describe("SampleDescriptionFields", () => {
   });
 
   it("should open in range mode when editing a sample whose start differs from end", async () => {
-    const screen = await renderDescriptionTab(noop, {
+    const screen = await renderSampleForm(noop, {
       collectionDate: {
         precision: "day",
         start: "2026-01-05",
@@ -124,7 +131,7 @@ describe("SampleDescriptionFields", () => {
 
   it("should collapse a range to its start when switching back to single mode", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderDescriptionTab(onSubmit);
+    const screen = await renderSampleForm(onSubmit);
 
     await screen.getByRole("switch", { name: "Date range" }).click();
     await screen.getByLabelText("Start date").fill("2026-01-05");
@@ -154,7 +161,7 @@ describe("SampleDescriptionFields", () => {
 
   it("should reject the same date on both range bounds, until single mode is used instead", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderDescriptionTab(onSubmit);
+    const screen = await renderSampleForm(onSubmit);
 
     await screen.getByRole("switch", { name: "Date range" }).click();
     await screen.getByLabelText("Start date").fill("2026-01-05");
@@ -190,7 +197,7 @@ describe("SampleDescriptionFields", () => {
 
   it("should reject a range whose start is after its end, on both fields", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderDescriptionTab(onSubmit);
+    const screen = await renderSampleForm(onSubmit);
 
     await screen.getByRole("switch", { name: "Date range" }).click();
     await screen.getByLabelText("Start date").fill("2026-02-10");
@@ -227,7 +234,7 @@ describe("SampleDescriptionFields", () => {
 
   it("should reject a collection date in the future", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderDescriptionTab(onSubmit);
+    const screen = await renderSampleForm(onSubmit);
 
     await screen.getByLabelText("Date *", { exact: true }).fill("2999-01-01");
 
@@ -240,7 +247,7 @@ describe("SampleDescriptionFields", () => {
 
   it("should submit an hour-precision range with the picked time zone", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderDescriptionTab(onSubmit);
+    const screen = await renderSampleForm(onSubmit);
 
     await screen.getByRole("switch", { name: "Specify time" }).click();
     await screen.getByRole("switch", { name: "Date range" }).click();
@@ -269,7 +276,7 @@ describe("SampleDescriptionFields", () => {
   });
 
   it("should open in time mode with the saved time zone", async () => {
-    const screen = await renderDescriptionTab(noop, {
+    const screen = await renderSampleForm(noop, {
       collectionDate: {
         precision: "hour",
         start: "2026-01-05T08:30",
@@ -291,7 +298,7 @@ describe("SampleDescriptionFields", () => {
 
   it("should keep the picked day when switching time on and back off", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderDescriptionTab(onSubmit);
+    const screen = await renderSampleForm(onSubmit);
 
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
     await screen.getByRole("switch", { name: "Specify time" }).click();
@@ -484,9 +491,10 @@ describe("SampleDescriptionFields", () => {
 
   it("should submit a full description", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderDescriptionTab(onSubmit);
+    const screen = await renderSampleForm(onSubmit);
 
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
+    await screen.getByRole("tab", { name: "Physical description" }).click();
     await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await screen
       .getByLabelText("Orientation explanation")
@@ -534,7 +542,7 @@ describe("SampleDescriptionFields", () => {
 
   it("should submit only the default answers when the section is left empty", async () => {
     const onSubmit = vi.fn();
-    const screen = await renderDescriptionTab(onSubmit);
+    const screen = await renderSampleForm(onSubmit);
 
     await screen.getByRole("button", { name: "Create" }).click();
 

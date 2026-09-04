@@ -36,12 +36,12 @@ async function renderSyntheticForm(
       primaryAction={createAction(onSubmit)}
     />,
   );
-  await screen.getByRole("tab", { name: "Synthetic details" }).click();
+  await screen.getByRole("tab", { name: "Sample classification" }).click();
   return screen;
 }
 
 const pickMaterial = async (screen: Screen, option: string) => {
-  await screen.getByRole("tab", { name: "Sample type" }).click();
+  await screen.getByRole("tab", { name: "Sample classification" }).click();
   await screen
     .getByRole("combobox", { name: "Material *", exact: true })
     .click();
@@ -54,7 +54,7 @@ const pickOption = async (screen: Screen, combobox: string, option: string) => {
 };
 
 describe("SampleSyntheticDetailsFields", () => {
-  it("should swap the location tab for the synthetic details tab with the material", async () => {
+  it("should swap the Location tab for the Synthetic details section with the material", async () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -64,16 +64,13 @@ describe("SampleSyntheticDetailsFields", () => {
     );
 
     await expect
-      .element(screen.getByRole("tab", { name: "Synthetic details" }))
-      .not.toBeInTheDocument();
-    await expect
       .element(screen.getByRole("tab", { name: "Location" }))
       .toBeVisible();
 
     await pickMaterial(screen, SYNTHETIC_MATERIAL);
 
     await expect
-      .element(screen.getByRole("tab", { name: "Synthetic details" }))
+      .element(screen.getByRole("heading", { name: "Synthetic details" }))
       .toBeVisible();
     await expect
       .element(screen.getByRole("tab", { name: "Location" }))
@@ -82,7 +79,7 @@ describe("SampleSyntheticDetailsFields", () => {
     await pickMaterial(screen, "Fossil");
 
     await expect
-      .element(screen.getByRole("tab", { name: "Synthetic details" }))
+      .element(screen.getByRole("heading", { name: "Synthetic details" }))
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByRole("tab", { name: "Location" }))
@@ -174,7 +171,6 @@ describe("SampleSyntheticDetailsFields", () => {
 
     await pickMaterial(screen, "Fossil");
     await pickMaterial(screen, SYNTHETIC_MATERIAL);
-    await screen.getByRole("tab", { name: "Synthetic details" }).click();
     await expect
       .element(screen.getByLabelText("Operator name *", { exact: true }))
       .toHaveValue("Marie Curie");
@@ -341,7 +337,7 @@ describe("SampleSyntheticDetailsFields", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Synthetic details" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
 
     for (const name of [
       "Starting material *",

@@ -66,17 +66,17 @@ describe("SampleForm related resources tab", () => {
     );
 
     await expect
-      .element(screen.getByRole("tab", { name: "Sample classification" }))
+      .element(screen.getByRole("tab", { name: "Identity" }))
       .toBeVisible();
     expect(
-      screen.getByRole("tab", { name: "Related resources" }).query(),
+      screen.getByRole("tab", { name: "Related URL or document" }).query(),
     ).toBeNull();
   });
 
   it("should title one block per relation", async () => {
     const screen = await renderEditForm(vi.fn());
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByRole("button", { name: "Add a relation" }).click();
     await screen.getByRole("button", { name: "Add a relation" }).click();
 
@@ -88,7 +88,7 @@ describe("SampleForm related resources tab", () => {
     const onSubmit = vi.fn();
     const screen = await renderEditForm(onSubmit);
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByRole("button", { name: "Add a relation" }).click();
     const block = relationBlock(screen, 1);
     await select(screen, block, "Relation type", "Is cited by");
@@ -125,7 +125,7 @@ describe("SampleForm related resources tab", () => {
     const onSubmit = vi.fn();
     const screen = await renderEditForm(onSubmit);
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByRole("button", { name: "Add a relation" }).click();
     const block = relationBlock(screen, 1);
     await block
@@ -141,7 +141,7 @@ describe("SampleForm related resources tab", () => {
   it("should offer the metadata scheme fields only while the relation has metadata", async () => {
     const screen = await renderEditForm(vi.fn());
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByRole("button", { name: "Add a relation" }).click();
     const block = relationBlock(screen, 1);
 
@@ -163,7 +163,7 @@ describe("SampleForm related resources tab", () => {
   it("should show the target URI format example of the selected identifier type", async () => {
     const screen = await renderEditForm(vi.fn());
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByRole("button", { name: "Add a relation" }).click();
     const block = relationBlock(screen, 1);
 
@@ -182,7 +182,7 @@ describe("SampleForm related resources tab", () => {
     const onSubmit = vi.fn();
     const screen = await renderEditForm(onSubmit);
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByRole("button", { name: "Add a relation" }).click();
     await screen.getByRole("button", { name: "Save" }).click();
 
@@ -196,7 +196,7 @@ describe("SampleForm related resources tab", () => {
   it("should not flag untouched sibling fields when the identifier type is set", async () => {
     const screen = await renderEditForm(vi.fn());
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByRole("button", { name: "Add a relation" }).click();
     const block = relationBlock(screen, 1);
 
@@ -213,7 +213,7 @@ describe("SampleForm related resources tab", () => {
   it("should show the target URI format error before submit", async () => {
     const screen = await renderEditForm(vi.fn());
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByRole("button", { name: "Add a relation" }).click();
     const block = relationBlock(screen, 1);
 
@@ -259,7 +259,7 @@ describe("SampleForm related resources tab", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
 
     const block = relationBlock(screen, 1);
     await expect

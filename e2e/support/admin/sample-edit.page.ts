@@ -102,7 +102,7 @@ export function sampleEditPage(page: Page) {
     expectName: (name: string) =>
       expect(page.getByLabel(/name/i)).toHaveValue(name),
     fillSpecificName: async (value: string) => {
-      await openTab("Sample type");
+      await openTab("Sample classification");
       await page.getByLabel("Specific Name").fill(value);
     },
     goToList: () => page.getByRole("link", { name: "IGSN Admin" }).click(),
@@ -169,25 +169,24 @@ export function sampleEditPage(page: Page) {
 
     fillPublishableFields: async () => {
       await pick("Type", "Dredge");
-      await openTab("Sample type");
-      await pick("Material", "Synthetic rock / mineral");
-      await openTab("Physical description");
+      await pick("Provenance status", "Collection specimen");
       await page
         .getByRole("group", { name: /collection date/i })
         .getByRole("textbox", { name: /^Date/ })
         .fill("2025-06-15");
-      await pick("Existence status", "Exists");
-      await pick("Availability status", "Available");
+      await openTab("Sample classification");
+      await pick("Material", "Synthetic rock / mineral");
       await openTab("Scientific context");
-      await pick("Provenance status", "Collection specimen");
       await page.getByLabel(/collection curator/i).fill("Paul Bernard");
       await pick("Collection origin", "Scientific expedition");
-      await openTab("Repository");
+      await openTab("Curation and repository");
+      await pick("Existence status", "Exists");
+      await pick("Availability status", "Available");
       await pick(
         "Current archive",
         "Centre National de la Recherche Scientifique (CNRS)",
       );
-      await openTab("Synthetic details");
+      await openTab("Sample classification");
       await pick("Starting material", "Natural");
       await pick("Nature of starting material", "Powder");
       await pick("Final product", "Glass");
@@ -234,7 +233,7 @@ export function sampleEditPage(page: Page) {
         page.getByText("This sample is withdrawn from public view."),
       ).toBeVisible(),
 
-    openRelatedResourcesTab: () => openTab("Related resources"),
+    openRelatedResourcesTab: () => openTab("Related URL or document"),
     addRelation: async (index: number, relation: RelationFields) => {
       await page.getByRole("button", { name: "Add a relation" }).click();
       const block = relationBlock(index);

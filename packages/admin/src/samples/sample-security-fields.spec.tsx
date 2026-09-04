@@ -29,7 +29,7 @@ async function renderSecuritySection(
       primaryAction={createAction(onSubmit)}
     />,
   );
-  await screen.getByRole("tab", { name: "Physical description" }).click();
+  await screen.getByRole("tab", { name: "Conservation and security" }).click();
   return screen;
 }
 

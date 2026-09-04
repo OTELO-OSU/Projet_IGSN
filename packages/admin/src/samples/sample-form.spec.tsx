@@ -5,10 +5,21 @@ import type {
 import type { ComponentProps } from "react";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
+import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 
+import { fakeSample } from "../../test/fake-sample.ts";
+import { worker } from "../../test/msw.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
+
+beforeAll(() => {
+  worker.use(
+    http.get("*/samples/:id", () =>
+      HttpResponse.json({ data: fakeSample, role: "owner" }),
+    ),
+  );
+});
 
 const noop = () => {};
 
@@ -353,7 +364,7 @@ describe("SampleForm", () => {
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
 
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     await screen
       .getByRole("combobox", { name: "Material *", exact: true })
       .click();
@@ -392,7 +403,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Granite");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
 
     await expect
       .element(screen.getByRole("combobox", { name: "Texture" }))
@@ -452,7 +463,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Granite");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
 
     await screen
       .getByRole("combobox", { name: "Material *", exact: true })
@@ -513,7 +524,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Rock");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
 
     await screen
       .getByRole("combobox", { name: "Material *", exact: true })
@@ -572,7 +583,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Gneiss");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
 
     await screen
       .getByRole("combobox", { name: "Material *", exact: true })
@@ -630,7 +641,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Meta-granite");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
 
     await screen
       .getByRole("combobox", { name: "Material *", exact: true })
@@ -719,7 +730,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Rock");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
 
     await screen
       .getByRole("combobox", { name: "Material *", exact: true })
@@ -781,7 +792,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     await screen.getByLabelText(/specific name/i).fill("MC-2026-007");
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -956,7 +967,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Age" }).click();
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
     await screen
@@ -1006,7 +1017,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Age" }).click();
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
     await screen
@@ -1029,7 +1040,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Age" }).click();
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
     await expect
@@ -1061,7 +1072,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Age" }).click();
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
     await expect
@@ -1093,7 +1104,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Age" }).click();
     await expect
       .element(
         screen.getByRole("spinbutton", { name: "Numeric age", exact: true }),
@@ -1118,7 +1129,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Age" }).click();
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
     await screen
       .getByRole("radio", { name: "Range (min / max)" })
@@ -1157,7 +1168,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/^name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Age" }).click();
     await screen.getByRole("switch", { name: "Record a numeric age" }).click();
 
     await screen
@@ -1211,7 +1222,7 @@ describe("SampleForm", () => {
       />,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Age" }).click();
 
     await expect
       .element(
@@ -1248,7 +1259,7 @@ describe("SampleForm", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Age" }).click();
 
     await expect
       .element(screen.getByRole("switch", { name: "Record a numeric age" }))
@@ -1498,7 +1509,7 @@ describe("SampleForm", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Curation and repository" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: /existence status/i }))
       .toHaveTextContent("Exists");
@@ -1515,7 +1526,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Curation and repository" }).click();
     await screen.getByRole("combobox", { name: /existence status/i }).click();
     await screen.getByRole("option", { name: "Consumed", exact: true }).click();
 
@@ -1589,13 +1600,13 @@ describe("SampleForm", () => {
       .not.toBeInTheDocument();
   });
 
-  it("should head the classification and scientific context tabs with a section heading", async () => {
+  it("should head the identity and scientific context tabs with a section heading", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
     await expect
-      .element(screen.getByRole("heading", { name: "Sample classification" }))
+      .element(screen.getByRole("heading", { name: "Sample", exact: true }))
       .toBeVisible();
 
     await screen.getByRole("tab", { name: "Scientific context" }).click();
@@ -1604,12 +1615,28 @@ describe("SampleForm", () => {
       .toBeVisible();
   });
 
+  it("should list the tabs in their reading order, related resources last", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        sampleId={fakeSample.id}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("tablist"))
+      .toHaveTextContent(
+        "IdentitySample classificationLocationAgePhysical descriptionScientific contextConservation and securityCuration and repositoryRelated URL or document",
+      );
+  });
+
   it("should nest the numeric and stratigraphic age headings under Age", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Age" }).click();
     await expect
       .element(screen.getByRole("heading", { level: 2, name: "Age" }))
       .toBeVisible();
@@ -1636,7 +1663,12 @@ describe("SampleForm", () => {
       .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("heading", { name: "Geological context" }))
+      .element(
+        screen.getByRole("heading", {
+          name: "Geomorphological context",
+          level: 2,
+        }),
+      )
       .toBeVisible();
   });
 
@@ -1674,7 +1706,7 @@ describe("SampleForm", () => {
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     await screen
       .getByRole("combobox", { name: "Material *", exact: true })
       .click();
@@ -2104,7 +2136,7 @@ describe("SampleForm", () => {
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeEnabled();
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Curation and repository" }).click();
     await screen.getByRole("combobox", { name: /existence status/i }).click();
     await screen.getByRole("option", { name: "Exists", exact: true }).click();
 
@@ -2310,7 +2342,7 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("combobox", { name: "Collection Method" }))
       .toBeEnabled();
 
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     await expect.element(screen.getByLabelText("Specific Name")).toBeEnabled();
     await expect
       .element(
@@ -2373,7 +2405,7 @@ describe("SampleForm post-publication field lock", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     for (const level of disabled) {
       await expect
         .element(screen.getByRole("combobox", { name: level, exact: true }))
@@ -2399,7 +2431,7 @@ describe("SampleForm post-publication field lock", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     await screen
       .getByRole("combobox", { name: "Felsic *", exact: true })
       .click();
@@ -2434,7 +2466,7 @@ describe("SampleForm post-publication field lock", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     await screen
       .getByRole("combobox", { name: "Felsic *", exact: true })
       .click();
@@ -2460,13 +2492,14 @@ describe("SampleForm post-publication field lock", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
       .element(screen.getByLabelText("Date *", { exact: true }))
       .toBeDisabled();
     await expect
       .element(screen.getByRole("switch", { name: "Date range" }))
       .toBeDisabled();
+
+    await screen.getByRole("tab", { name: "Curation and repository" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: /existence status/i }))
       .toBeEnabled();
@@ -2497,10 +2530,11 @@ describe("SampleForm post-publication field lock", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Scientific context" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Provenance status *" }))
       .toBeDisabled();
+
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
     await expect
       .element(screen.getByLabelText(/name of the collection curator/i))
       .toBeDisabled();
@@ -2569,7 +2603,7 @@ describe("SampleForm post-publication field lock", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Texture" }))
       .toBeEnabled();
@@ -2596,7 +2630,7 @@ describe("SampleForm post-publication field lock", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Metamorphic facies *" }))
       .toBeEnabled();
@@ -2619,10 +2653,11 @@ describe("SampleForm post-publication field lock", () => {
       </TooltipProvider>,
     );
 
-    await screen.getByRole("tab", { name: "Scientific context" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Provenance status *" }))
       .toBeDisabled();
+
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Funder organizations *" }))
       .toBeDisabled();
@@ -2684,7 +2719,7 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("combobox", { name: "Vertical reference *" }))
       .toBeEnabled();
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Curation and repository" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: /existence status/i }))
       .toBeEnabled();

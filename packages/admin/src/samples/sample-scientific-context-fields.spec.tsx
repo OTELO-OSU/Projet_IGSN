@@ -28,7 +28,6 @@ async function renderScientificContextSection(
       primaryAction={createAction(onSubmit)}
     />,
   );
-  await screen.getByRole("tab", { name: "Scientific context" }).click();
   return screen;
 }
 
@@ -36,10 +35,12 @@ const pickProvenance = async (
   screen: Awaited<ReturnType<typeof renderScientificContextSection>>,
   option: string,
 ) => {
+  await screen.getByRole("tab", { name: "Identity" }).click();
   await screen
     .getByRole("combobox", { name: "Provenance status *", exact: true })
     .click();
   await screen.getByRole("option", { name: option }).click();
+  await screen.getByRole("tab", { name: "Scientific context" }).click();
 };
 
 const pickOrganization = async (
@@ -58,6 +59,8 @@ describe("SampleScientificContextFields", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Provenance status *" }))
       .toBeVisible();
+
+    await screen.getByRole("tab", { name: "Scientific context" }).click();
     await expect
       .element(screen.getByLabelText(/collection curator/i))
       .not.toBeInTheDocument();
