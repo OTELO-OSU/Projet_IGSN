@@ -23,7 +23,7 @@ okf_version: "0.2"
 
 # domain-model
 
-- [allowsLocation: the material-driven location gate](location-material-gate.md) - One predicate decides whether a material allows a location; the Location tab shows by default and hides only for a refusing material.
+- [allowsLocation and requiresLocation: the two location gates](location-material-gate.md) - allowsLocation(material) decides whether a sample may carry a location; requiresLocation(provenanceStatus) decides whether publishing needs one. The Location tab shows by default and hides only for a refusing material.
 - [Editable material levels after publication](material-levels-editable.md) - TreeNode.frozenWhenPublished marks the editable frontier per node; frozenMaterialPrefix derives the prefix a published sample must keep.
 - [IGSN identifier format and minting](igsn-identifier.md) - Minted IGSNs are a 26-char Crockford base32 suffix, immutable once minted and never reassigned or removed; legacy CNRS/TOAE identifiers are real IGSNs, accepted on read only.
 - [Institutional groups (organisme / OSU / labo)](institutional-groups.md) - A static generated catalog forming a graph, not a chain; membership is three codes recorded on a user and snapshotted on a sample.
@@ -34,6 +34,7 @@ okf_version: "0.2"
 - [Sample model](sample-model.md) - One wide sample row with flat nullable sub-blocks, two one-to-many child tables, and snapshotted institutional codes.
 - [Sample status lifecycle and its three predicates](sample-status-lifecycle.md) - status is draft | published | withdrawn | tombstone, read through three distinct predicates for permanence, public visibility and public resolution.
 - [Sample vocabularies as segment-keyed trees](vocabulary-tree.md) - Every sample vocabulary is one segment-keyed TreeNode tree in domain, expanded to flat dot-paths by expandPaths, with per-node completeness.
+- [Scientific context: field sample or collection specimen](scientific-context.md) - A discriminated union on provenanceStatus (field_sample | collection_specimen) with per-branch mandatory fields, per-branch post-publish locks, and a location requirement that only the collection specimen relaxes.
 - [Synthetic sample details](synthetic-details.md) - syntheticDetails is the sub-block a synthetic sample carries instead of a location, gated by isSyntheticMaterial and required in seven fields to publish.
 
 # feature
