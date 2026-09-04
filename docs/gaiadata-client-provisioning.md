@@ -39,6 +39,10 @@ branch can do.
 | Scopes                    | `openid profile email`; no `offline_access`                                                                 |
 | Refresh tokens            | issued to this public client, their rotation policy (doc SPA line: 5 min access, 30 min single-use refresh) |
 
+The registry's own service accounts (ADR 0035) are rows in its database, not
+Keycloak service accounts on this client, so "service accounts OFF" above
+stands unaffected.
+
 The SPA always returns to origin + `/auth/callback` (`redirect_uri` derives
 from `window.location.origin`), so exact URIs suffice: stricter than the
 suffix-wildcard
