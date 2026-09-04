@@ -63,7 +63,7 @@ async function renderEconomicTab(
       primaryAction={{ kind: "submit", label: "Create", onSubmit }}
     />,
   );
-  await screen.getByRole("tab", { name: "Sample type" }).click();
+  await screen.getByRole("tab", { name: "Sample classification" }).click();
   return screen;
 }
 

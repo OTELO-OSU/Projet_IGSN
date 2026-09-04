@@ -1,19 +1,11 @@
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
-import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
 import { ALL_ORGANIZATION_ITEMS } from "#/institutional-groups/to-items.ts";
 import { m } from "#/paraglide/messages.js";
-import {
-  collectionOriginLabel,
-  provenanceStatusLabel,
-} from "#/samples/sample-labels.ts";
+import { collectionOriginLabel } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-const provenanceStatusItems = toComboboxItems(
-  PROVENANCE_STATUSES,
-  provenanceStatusLabel,
-);
 const collectionOriginItems = toComboboxItems(
   COLLECTION_ORIGINS,
   collectionOriginLabel,
@@ -23,19 +15,6 @@ export function SampleScientificContextFields() {
   const form = useSampleForm();
   return (
     <div className="grid gap-4">
-      <form.AppField name="scientificContext.provenanceStatus">
-        {(field) => (
-          <field.ComboboxField
-            label={m.field_provenance_status()}
-            requiredToPublish
-            items={provenanceStatusItems}
-            placeholder={m.provenance_status_placeholder()}
-            searchPlaceholder={m.provenance_status_search_placeholder()}
-            emptyText={m.provenance_status_empty()}
-          />
-        )}
-      </form.AppField>
-
       <form.Subscribe
         selector={(state) => state.values.scientificContext.provenanceStatus}
       >

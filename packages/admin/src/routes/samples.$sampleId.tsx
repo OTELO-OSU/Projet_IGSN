@@ -281,6 +281,7 @@ function EditSamplePage() {
           query.data
         }
         manualGroupOptions={query.data.manualGroupOptions}
+        publicationYear={query.data.publicationYear}
         sampleId={query.data.id}
         attachments={query.data.attachments}
         attachmentChanges={attachmentChanges}
