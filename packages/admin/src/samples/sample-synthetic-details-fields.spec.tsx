@@ -320,7 +320,7 @@ describe("SampleSyntheticDetailsFields", () => {
           defaultValues={{
             ...syntheticDefaults,
             scientificContext: {
-              provenanceStatus: "historical_specimen",
+              provenanceStatus: "collection_specimen",
               collectionCurator: "Georges Cuvier",
               collectionOrigin: "scientific_expedition",
             },

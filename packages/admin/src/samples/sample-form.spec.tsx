@@ -16,7 +16,7 @@ const createAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Create", onSubmit }) as const;
 
 const publishableScientificContext = {
-  provenanceStatus: "historical_specimen",
+  provenanceStatus: "collection_specimen",
   collectionCurator: "Georges Cuvier",
   collectionOrigin: "scientific_expedition",
 } as const;
@@ -2132,7 +2132,7 @@ const publishedFixture: CreateSample = {
   repository: publishableRepository,
 };
 
-const publishedRecentFixture: CreateSample = {
+const publishedFieldSampleFixture: CreateSample = {
   ...publishedFixture,
   location: {
     position: {
@@ -2145,7 +2145,7 @@ const publishedRecentFixture: CreateSample = {
     localityName: "Massif Central",
   },
   scientificContext: {
-    provenanceStatus: "recent_collection",
+    provenanceStatus: "field_sample",
     funderOrganizations: ["03fd77x13"],
     researchProgramName: "GEOSAMPLE",
     chiefScientist: "Marie Tharp",
@@ -2503,13 +2503,13 @@ describe("SampleForm post-publication field lock", () => {
       .toBeDisabled();
   });
 
-  it("freezes the recent-collection branch fields on a published sample", async () => {
+  it("freezes the field-sample branch fields on a published sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
           status="published"
-          defaultValues={publishedRecentFixture}
+          defaultValues={publishedFieldSampleFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
       </TooltipProvider>,
@@ -2530,7 +2530,7 @@ describe("SampleForm post-publication field lock", () => {
       .toBeDisabled();
     await expect
       .element(screen.getByLabelText("Chief scientist ORCID"))
-      .toBeDisabled();
+      .toBeEnabled();
     await expect
       .element(screen.getByLabelText("Collector name *"))
       .toBeDisabled();
@@ -2540,10 +2540,10 @@ describe("SampleForm post-publication field lock", () => {
           name: "Host institution (project leader) *",
         }),
       )
-      .toBeEnabled();
+      .toBeDisabled();
     await expect
       .element(screen.getByLabelText("Collector ORCID"))
-      .toBeEnabled();
+      .toBeDisabled();
     await expect
       .element(screen.getByLabelText("Research campaign"))
       .toBeEnabled();
@@ -2555,7 +2555,7 @@ describe("SampleForm post-publication field lock", () => {
         <SampleForm
           onCancel={noop}
           status="published"
-          defaultValues={publishedRecentFixture}
+          defaultValues={publishedFieldSampleFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
       </TooltipProvider>,
@@ -2615,7 +2615,7 @@ describe("SampleForm post-publication field lock", () => {
       .toBeVisible();
   });
 
-  it("keeps the collector name editable on a published historical specimen", async () => {
+  it("keeps the collector name editable on a published collection specimen", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm

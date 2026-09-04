@@ -139,7 +139,7 @@ function fakeApi(
     condition: null,
     security,
     scientificContext: {
-      provenanceStatus: "historical_specimen",
+      provenanceStatus: "collection_specimen",
       collectionCurator: "Georges Cuvier",
       collectionOrigin: "scientific_expedition",
     },
