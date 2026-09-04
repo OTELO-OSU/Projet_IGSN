@@ -316,7 +316,7 @@ describe("LaboratoriesPage", () => {
       .toBeVisible();
     expect(managerRequests).toEqual([
       {
-        url: "/admin/institutional-groups/laboratory/UMR7358/managers",
+        url: "/api/admin/institutional-groups/laboratory/UMR7358/managers",
         body: { userId: CANDIDATE.id },
       },
     ]);

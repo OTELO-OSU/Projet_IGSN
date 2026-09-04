@@ -3,7 +3,7 @@ type: reference
 title: Commands and dev services
 description: >-
   The makefile wraps the pnpm monorepo; dev runs the stack over
-  docker-compose.dev.yml on ports 3000 to 3002.
+  docker-compose.dev.yml behind one Caddy origin on port 3000.
 resource: makefile
 tags:
   - reference
@@ -31,6 +31,6 @@ Stack commands:
 - `make db-seed-demo` re-seeds the demo data; `make db-import-legacy` loads the legacy dump into a throwaway database and imports it ([[legacy-import]]).
 - `make preprod-deploy` deploys preprod ([[preprod-infrastructure]]).
 
-Dev services: `frontend` http://localhost:3000, `admin` http://localhost:3001, `api` http://localhost:3002, `maildev` UI http://localhost:1080.
+Dev services: one origin, http://localhost:3000, with `frontend` at `/`, `admin` at `/admin` and `api` at `/api` ([[single-origin-routing]]); `keycloak` http://localhost:8080; `maildev` UI http://localhost:1080.
 
 A full `pnpm test` run can flake under contention with iframe or port errors that vanish per project, so rerun by project before treating one as real. The pre-commit hook type-checks the whole repo.

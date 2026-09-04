@@ -1,10 +1,16 @@
 import { getClientIp } from "./client-ip.ts";
 
-export const apiUrl =
-  (import.meta.env.SSR ? process.env.API_URL : import.meta.env.VITE_API_URL) ??
-  "http://localhost:3002";
+const DEFAULT_API_URL = "http://localhost:3000/api";
 
-export const baseApiUrl = apiUrl.endsWith("/") ? apiUrl : `${apiUrl}/`;
+const withSlash = (url: string) => (url.endsWith("/") ? url : `${url}/`);
+
+export const baseBrowserApiUrl = withSlash(
+  import.meta.env.VITE_API_URL || DEFAULT_API_URL,
+);
+
+export const baseApiUrl = import.meta.env.SSR
+  ? withSlash(process.env.API_URL || DEFAULT_API_URL)
+  : baseBrowserApiUrl;
 
 export const apiFetch: typeof fetch = async (input, init) => {
   const ip = import.meta.env.SSR ? await getClientIp() : undefined;

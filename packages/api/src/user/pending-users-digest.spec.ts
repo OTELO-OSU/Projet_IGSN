@@ -7,8 +7,8 @@ import { pendingUsersDigest } from "./pending-users-digest.ts";
 
 const now = new Date("2026-08-06T12:00:00Z");
 
-const USERS_URL = "http://localhost:3001/users";
-const ADMIN_URL = "http://localhost:3001/";
+const USERS_URL = "http://localhost:3001/admin/users";
+const ADMIN_URL = "http://localhost:3001/admin/";
 
 const MASSIF = "01890a5d-ac96-774b-bcce-b302099a9001";
 
@@ -62,7 +62,7 @@ describe("pendingUsersDigest", () => {
 - Jean Martin (jean.martin@univ-lorraine.fr), waiting for 30 days
 - Marie Dupont (marie.dupont@univ-lorraine.fr), waiting for 1 day
 
-Moderate these accounts: http://localhost:3001/users
+Moderate these accounts: http://localhost:3001/admin/users
 `,
     );
   });
@@ -163,16 +163,16 @@ Moderate these accounts: http://localhost:3001/users
     const digest = await pendingUsersDigest([], ORPHAN_GROUPS, ADMIN_URL, now);
 
     expect(digest.text).toContain(
-      `- Massif Central 2026: http://localhost:3001/manual-groups/${MASSIF}`,
+      `- Massif Central 2026: http://localhost:3001/admin/manual-groups/${MASSIF}`,
     );
     expect(digest.text).toContain(
-      "- GeoRessources: http://localhost:3001/institutional-groups/laboratories/UMR7358",
+      "- GeoRessources: http://localhost:3001/admin/institutional-groups/laboratories/UMR7358",
     );
     expect(digest.html).toContain(
-      `href="http://localhost:3001/manual-groups/${MASSIF}"`,
+      `href="http://localhost:3001/admin/manual-groups/${MASSIF}"`,
     );
     expect(digest.html).toContain(
-      'href="http://localhost:3001/institutional-groups/laboratories/UMR7358"',
+      'href="http://localhost:3001/admin/institutional-groups/laboratories/UMR7358"',
     );
   });
 

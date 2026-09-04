@@ -93,7 +93,7 @@ describe("listSamples", () => {
     await listSamples({ page: 3, perPage: 50 }, fetch);
 
     const url = new URL(lastUrl() ?? "");
-    expect(url.pathname).toBe("/samples");
+    expect(url.pathname).toBe("/api/samples");
     expect(url.searchParams.get("page")).toBe("3");
     expect(url.searchParams.get("perPage")).toBe("50");
   });

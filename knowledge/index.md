@@ -54,7 +54,8 @@ okf_version: "0.2"
 # infrastructure
 
 - [API rate limiting](rate-limiting.md) - In-process counters, one limiter per mount, keyed on the edge-forwarded client IP for public reads and on the JWT sub for admin.
-- [Preprod on a single AWS EC2 host](preprod-infrastructure.md) - Three app containers plus Postgres on one EC2 host behind Caddy and Cloudflare, deployed manually with images shipped over SSH.
+- [Preprod on a single AWS EC2 host](preprod-infrastructure.md) - Three app containers plus Postgres on one EC2 host behind Caddy and Cloudflare on a single origin, deployed manually with images shipped over SSH.
+- [Single origin, path-routed apps](single-origin-routing.md) - Frontend, admin and api share one origin behind Caddy, the admin at /admin and the api at /api, in dev, e2e and preprod alike; only Caddy knows the topology.
 
 # persistence
 
@@ -80,4 +81,4 @@ okf_version: "0.2"
 
 # reference
 
-- [Commands and dev services](commands-and-services.md) - The makefile wraps the pnpm monorepo; dev runs the stack over docker-compose.dev.yml on ports 3000 to 3002.
+- [Commands and dev services](commands-and-services.md) - The makefile wraps the pnpm monorepo; dev runs the stack over docker-compose.dev.yml behind one Caddy origin on port 3000.

@@ -20,11 +20,14 @@ be a sibling `infra/prod/`.
   [infra-parity](../.claude/rules/infra-parity.md) since the requirement
   exists only outside preprod.
 - **Caddy** ([Caddyfile](../infra/preprod/Caddyfile)) serves a Cloudflare Origin
-  CA cert (mounted from `~/certs`) and proxies each host: `igsn.$DOMAIN` ->
-  frontend, `igsn-admin.$DOMAIN` -> admin, `igsn-api.$DOMAIN` -> api, plus
-  security headers. Hosts are flat single-level subdomains, not nested: the `*.$DOMAIN`
-  cert covers only one label deep. No Let's Encrypt: ACME can't validate behind
-  the Cloudflare proxy. Caddy trusts every peer for the visitor's real IP
+  CA cert (mounted from `~/certs`) behind one host, `igsn.$DOMAIN`, path-routing
+  to the three apps: `/api` -> api (prefix stripped, `handle_path`), `/admin` ->
+  admin, everything else -> frontend. The api is prefix-stripped because it has
+  no route prefix of its own; the admin isn't, because its bundle is built for
+  `/admin/`, so dev and prod serve identical paths. `igsn.$DOMAIN` is a flat
+  single-level subdomain, not nested: the `*.$DOMAIN` cert covers only one
+  label deep. No Let's Encrypt: ACME can't validate behind the Cloudflare
+  proxy. Caddy trusts every peer for the visitor's real IP
   (`trusted_proxies static 0.0.0.0/0`); this is only sound because `ec2.tf`
   restricts 80/443 to Cloudflare's fetched ranges, so no other peer can reach
   it.

@@ -47,6 +47,6 @@ Follow TDD (testing rule).
 - `pnpm test packages/admin` green (runs in headless Chromium).
 - Every interactive element is reachable by role/label in the test (testing rule).
 - Render it for real: `pnpm --filter @projet-igsn/admin dev` on
-  http://localhost:3001 and check keyboard operability and visible focus.
+  http://localhost:3000/admin and check keyboard operability and visible focus.
 
 Not done until the tests pass and you have seen the output.

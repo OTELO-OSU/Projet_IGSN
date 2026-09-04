@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { contactSampleOwnerMail } from "./contact-sample-owner-mail.ts";
 
-const FRONTEND_URL = "http://localhost:3000";
+const FRONTEND_URL = "http://localhost:3000/registry/";
 const IGSN = "0123456789ABCDEFGHJKMNPQRS";
 
 const contact = {
@@ -32,7 +32,7 @@ Camille Curieux (camille.curieux@example.org) sent this message about the sample
 > Where was this sample collected?
 > Could I get a sub-sample?
 
-Open the sample: ${FRONTEND_URL}/samples/${IGSN}
+Open the sample: ${FRONTEND_URL}samples/${IGSN}
 `,
     );
   });

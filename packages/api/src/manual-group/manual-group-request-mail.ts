@@ -26,7 +26,7 @@ function requestUrl(
   name: string,
   managerIds: string[],
 ): string {
-  const url = new URL("/manual-groups", adminUrl);
+  const url = new URL("manual-groups", adminUrl);
   url.searchParams.set("requestedName", name);
   url.searchParams.set("requestedManagerIds", managerIds.join(","));
   return url.toString();

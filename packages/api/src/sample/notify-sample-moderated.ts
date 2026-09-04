@@ -37,7 +37,7 @@ export async function notifySampleModerated({
           owner,
           fields,
           sampleName: sample.name,
-          sampleUrl: new URL(`/samples/${sample.id}`, mail.adminUrl).toString(),
+          sampleUrl: new URL(`samples/${sample.id}`, mail.adminUrl).toString(),
         }),
       mail.sendMail,
       FAILURE,

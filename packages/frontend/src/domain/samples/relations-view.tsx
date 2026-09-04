@@ -9,16 +9,16 @@ import { relationTargetHref } from "@projet-igsn/domain/sample/relation/relation
 import { Link } from "@tanstack/react-router";
 import { Download } from "lucide-react";
 
+import { baseBrowserApiUrl } from "#/api.ts";
 import {
   relationTargetResourceTypeLabel,
   relationTypeLabel,
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
-const publicApiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3002";
-
 const attachmentUrl = (igsn: string, attachmentId: string) =>
-  `${publicApiUrl.replace(/\/$/, "")}/samples/${igsn}/attachments/${attachmentId}`;
+  new URL(`samples/${igsn}/attachments/${attachmentId}`, baseBrowserApiUrl)
+    .href;
 
 const relationSummary = ({
   relationType,

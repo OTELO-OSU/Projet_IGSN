@@ -8,11 +8,12 @@ import { defineConfig } from "vite";
 import { paraglideOptions } from "./paraglide.config.ts";
 
 export default defineConfig({
+  base: "/admin/",
   server: {
     port: 3001,
     host: true,
     hmr: {
-      clientPort: 3001,
+      clientPort: 3000,
     },
   },
   resolve: { tsconfigPaths: true },

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { userAcceptedMail } from "./user-accepted-mail.ts";
 
-const ADMIN_URL = "http://localhost:3001/";
+const ADMIN_URL = "http://localhost:3001/admin/";
 
 describe("userAcceptedMail", () => {
   it("should greet the user by name and link the registry", async () => {

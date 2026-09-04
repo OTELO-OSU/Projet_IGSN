@@ -17,6 +17,13 @@ Preprod now authenticates against this test SSO. Dev switches to it via
 `.env` (see [dev-authentication.md](dev-authentication.md)); e2e stays on the
 mock realm.
 
+Preprod moved behind a single origin with the admin at `/admin`, but the
+existing `formaterre-igsn` test client still registers the old
+`igsn-admin.<prod-domain>` redirect URI and web origin. Preprod login stays
+broken until someone re-registers that client with the URIs above; that
+re-registration is a human prerequisite of the next deploy, not something a
+branch can do.
+
 ## Client
 
 | Setting                   | Value                                                                                                       |
@@ -26,9 +33,9 @@ mock realm.
 | Protocol / type           | OpenID Connect, public (no client_secret)                                                                   |
 | Flows                     | Standard flow only; implicit OFF, direct access grants OFF, service accounts OFF, device OFF                |
 | PKCE                      | required, `pkce.code.challenge.method: S256`                                                                |
-| Redirect URIs             | `https://igsn-admin.<prod-domain>/auth/callback` (exact, no wildcard)                                       |
-| Post-logout redirect URIs | `https://igsn-admin.<prod-domain>/auth/callback`                                                            |
-| Web origins               | `https://igsn-admin.<prod-domain>`                                                                          |
+| Redirect URIs             | `https://igsn.<prod-domain>/admin/auth/callback` (exact, no wildcard)                                       |
+| Post-logout redirect URIs | `https://igsn.<prod-domain>/admin/auth/callback`                                                            |
+| Web origins               | `https://igsn.<prod-domain>`                                                                                |
 | Scopes                    | `openid profile email`; no `offline_access`                                                                 |
 | Refresh tokens            | issued to this public client, their rotation policy (doc SPA line: 5 min access, 30 min single-use refresh) |
 

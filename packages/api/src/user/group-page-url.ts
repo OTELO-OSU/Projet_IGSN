@@ -9,7 +9,7 @@ const INSTITUTIONAL_PATHS = {
 export function groupPageUrl(group: OrphanedGroup, adminUrl: string): string {
   const path =
     group.kind === "manual"
-      ? `/manual-groups/${group.id}`
-      : `/institutional-groups/${INSTITUTIONAL_PATHS[group.kind]}/${group.code}`;
+      ? `manual-groups/${group.id}`
+      : `institutional-groups/${INSTITUTIONAL_PATHS[group.kind]}/${group.code}`;
   return new URL(path, adminUrl).toString();
 }

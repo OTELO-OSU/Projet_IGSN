@@ -53,8 +53,8 @@ services:
       OIDC_USERINFO_URI: http://keycloak:18080/realms/igsn/protocol/openid-connect/userinfo
       OIDC_CLIENT_ID: igsn-admin
       OIDC_ALLOWED_IDENTITY_PROVIDERS: "satosa,orcid"
-      CORS_ORIGINS: http://localhost:4001,http://localhost:4000
-      ADMIN_URL: http://localhost:4001
+      CORS_ORIGINS: http://localhost:4000
+      ADMIN_URL: http://localhost:4000/admin
       FRONTEND_URL: http://localhost:4000
       RATE_LIMIT_ENABLED: "false"
       ATTACHMENTS_DIR: /data/attachments
@@ -72,8 +72,6 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
-    ports:
-      - "4002:3002"
 
   admin:
     build:
@@ -83,14 +81,14 @@ services:
       args:
         VITE_OIDC_AUTHORITY: http://localhost:18080/realms/igsn
         VITE_OIDC_CLIENT_ID: igsn-admin
-        VITE_API_URL: http://localhost:4002
+        VITE_API_URL: http://localhost:4000/api
         VITE_FRONTEND_URL: http://localhost:4000
         VITE_SAMPLE_LOCK_POLL_SECONDS: "30"
     environment:
       PORT: "3001"
-    healthcheck: *healthcheck
-    ports:
-      - "4001:3001"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3001/admin/"]
 
   frontend:
     build:
@@ -98,13 +96,28 @@ services:
       dockerfile: ./packages/frontend/Dockerfile
       target: prod
       args:
-        VITE_API_URL: http://localhost:4002
+        VITE_API_URL: http://localhost:4000/api
     environment:
       PORT: "3000"
       API_URL: http://api:3002
     healthcheck: *healthcheck
+
+  caddy:
+    image: caddy:2-alpine
     ports:
-      - "4000:3000"
+      - "4000:8080"
+    volumes:
+      - ./infra/Caddyfile:/etc/caddy/Caddyfile:ro
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/"]
+    depends_on:
+      frontend:
+        condition: service_healthy
+      admin:
+        condition: service_healthy
+      api:
+        condition: service_healthy
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.6
@@ -115,8 +128,8 @@ services:
       KC_HTTP_PORT: "18080"
       KC_HOSTNAME: http://localhost:18080
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
-      ADMIN_REDIRECT_URI: http://localhost:4001/*
-      ADMIN_WEB_ORIGIN: http://localhost:4001
+      ADMIN_REDIRECT_URI: http://localhost:4000/admin/*
+      ADMIN_WEB_ORIGIN: http://localhost:4000
       SHIBBOLETH_SSO_URL: http://localhost:18081/simplesaml/saml2/idp/SSOService.php
       SHIBBOLETH_SLO_URL: http://localhost:18081/simplesaml/saml2/idp/SingleLogoutService.php
       ORCID_LOGOUT_URL: http://localhost:18080/realms/mock-orcid/protocol/openid-connect/logout

@@ -8,6 +8,12 @@
 - **Update**: Sample model (sample-model)
 - **Creation**: Sample relations and attachments (sample-relations-attachments)
 - **Deletion**: sample-links-attachments
+- **Creation**: Single origin, path-routed apps (single-origin-routing)
+- **Update**: Commands and dev services (commands-and-services)
+- **Update**: Preprod on a single AWS EC2 host (preprod-infrastructure)
+- **Update**: Authentication through Keycloak (auth-keycloak-gaiadata)
+- **Update**: Outbound mail and notifications (mail-notifications)
+- **Update**: Compose parity across dev, e2e and preprod (infra-parity-rule)
 - **Creation**: Synthetic sample details (synthetic-details)
 - **Update**: Sample model (sample-model)
 - **Update**: allowsLocation: the material-driven location gate (location-material-gate)

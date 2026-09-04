@@ -2,13 +2,13 @@
 
 `make dev` also starts a [Keycloak](https://www.keycloak.org) at http://localhost:8080, preconfigured from [`keycloak/realm-igsn.json`](../keycloak/realm-igsn.json) via its native `--import-realm`.
 
-| What             | Value                                         |
-| ---------------- | --------------------------------------------- |
-| Realm            | `igsn`                                        |
-| Admin console    | http://localhost:8080, `admin` / `admin`      |
-| Admin SPA client | `igsn-admin` (public, PKCE, `localhost:3001`) |
-| Test user        | `test` / `test` (realm role `admin`)          |
-| OIDC issuer      | http://localhost:8080/realms/igsn             |
+| What             | Value                                               |
+| ---------------- | --------------------------------------------------- |
+| Realm            | `igsn`                                              |
+| Admin console    | http://localhost:8080, `admin` / `admin`            |
+| Admin SPA client | `igsn-admin` (public, PKCE, `localhost:3000/admin`) |
+| Test user        | `test` / `test` (realm role `admin`)                |
+| OIDC issuer      | http://localhost:8080/realms/igsn                   |
 
 - Edit the realm file and restart to change clients or users.
 - Token policy mirrors production (5 min access tokens, single-use 30 min refresh tokens, no password grant; GT-SSO recommendations, ADR 0006), so tests drive the real browser login.
@@ -81,7 +81,8 @@
 
 - Uncomment the GaiaData block in `.env` (see `.env.example`) and restart the stack to log in against the real GaiaData test SSO.
 - Test accounts are GaiaData self-registered accounts, and the mock users above do not exist there.
-- `http://localhost:3001/auth/callback` is already registered as redirect URI and `http://localhost:3001` as web origin on the `formaterre-igsn` client.
+- `http://localhost:3000/admin/auth/callback` must be registered as redirect URI and `http://localhost:3000` as web origin on the `formaterre-igsn` client.
+- Only the old `localhost:3001` pair is registered there today, so a GaiaData login fails until someone asks them to add the `/admin` mount.
 - The mock realm no longer injects an `igsn-api` audience, for parity with GaiaData, which has none yet.
 - `aud` validation is opt-in via `OIDC_AUDIENCE` (ADR 0006 amendment), skipped when unset.
 

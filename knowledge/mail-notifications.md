@@ -30,4 +30,6 @@ What is sent:
 
 Not sent: no mail on any user status change, on withdraw, republish, tombstone or restore, on detach or group deletion.
 
+Every link in a mail is built relative to `ADMIN_URL` / `FRONTEND_URL` through `appUrl`, which guarantees the trailing slash: `new URL("samples/x", adminUrl)`, never a leading slash, which would drop the `/admin` mount ([[single-origin-routing]]).
+
 Dev uses the `maildev` sink at http://localhost:1080. Preprod talks STARTTLS on 587 to a transactional-mail provider with the `SMTP_*` host env values, not AWS SES ([[preprod-infrastructure]]).

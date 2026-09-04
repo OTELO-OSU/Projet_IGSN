@@ -13,7 +13,11 @@ import { routeTree } from "./routeTree.gen.ts";
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: shouldRetry, retryDelay } },
 });
-const router = createRouter({ routeTree, context: { queryClient } });
+const router = createRouter({
+  routeTree,
+  context: { queryClient },
+  basepath: import.meta.env.BASE_URL,
+});
 
 declare module "@tanstack/react-router" {
   interface Register {

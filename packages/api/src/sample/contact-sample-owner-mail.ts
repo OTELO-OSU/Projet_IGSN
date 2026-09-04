@@ -33,6 +33,6 @@ export async function contactSampleOwnerMail({
     body: t("mail_contact_body", params),
     quote: visitor.message,
     cta: t("mail_contact_cta"),
-    url: new URL(`/samples/${igsn}`, frontendUrl).toString(),
+    url: new URL(`samples/${igsn}`, frontendUrl).toString(),
   });
 }

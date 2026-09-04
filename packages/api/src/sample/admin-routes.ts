@@ -199,7 +199,7 @@ export function createSampleAdminRoutes(
                 inviter: c.get("user"),
                 role,
                 sampleName: sample.name,
-                sampleUrl: new URL(`/samples/${id}`, mail.adminUrl).toString(),
+                sampleUrl: new URL(`samples/${id}`, mail.adminUrl).toString(),
               }),
             mail.sendMail,
             "Could not mail the sample invitation",

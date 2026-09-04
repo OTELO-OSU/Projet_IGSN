@@ -107,3 +107,36 @@ describe("sample clients on SSR", () => {
     expect(forwardedIps(fetchMock)).toEqual(["203.0.113.7"]);
   });
 });
+
+describe("api base urls", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
+
+  const load = async (apiUrl?: string, viteApiUrl?: string) => {
+    vi.resetModules();
+    vi.stubEnv("API_URL", apiUrl);
+    vi.stubEnv("VITE_API_URL", viteApiUrl);
+    return import("./api.ts");
+  };
+
+  it.each(["http://api:3002/api", "http://api:3002/api/"])(
+    "should resolve an SSR path under the configured path prefix (%s)",
+    async (configured) => {
+      const { baseApiUrl } = await load(configured, configured);
+
+      expect(new URL("samples", baseApiUrl).href).toBe(
+        "http://api:3002/api/samples",
+      );
+    },
+  );
+
+  it("should ignore the SSR api url in the browser url so a server-rendered link stays followable", async () => {
+    const { baseBrowserApiUrl } = await load("http://api:3002/api", undefined);
+
+    expect(new URL("samples", baseBrowserApiUrl).href).toBe(
+      "http://localhost:3000/api/samples",
+    );
+  });
+});

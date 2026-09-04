@@ -1,0 +1,23 @@
+(realip) {
+	header_up X-Real-IP {client_ip}
+}
+
+:8080 {
+	redir /admin /admin/
+	redir /api /api/
+	handle_path /api/* {
+		reverse_proxy api:3002 {
+			import realip
+		}
+	}
+	handle /admin/* {
+		reverse_proxy admin:3001 {
+			import realip
+		}
+	}
+	handle {
+		reverse_proxy frontend:3000 {
+			import realip
+		}
+	}
+}
