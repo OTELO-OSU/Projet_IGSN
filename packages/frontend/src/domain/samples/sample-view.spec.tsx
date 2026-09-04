@@ -29,6 +29,7 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   material: null,
   texture: null,
   metamorphicFacies: null,
+  metamorphicFabric: null,
   specificName: null,
   collectionMethod: null,
   collectionMethodDescription: null,
@@ -182,12 +183,13 @@ describe("SampleView", () => {
     await expect.element(screen.getByText("Phaneritic")).toBeInTheDocument();
   });
 
-  it("should show the translated metamorphic facies when set", async () => {
+  it("should show the translated metamorphic facies and fabric when set", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
           material: "rock.metamorphic.strongly_metamorphosed.gneiss",
           metamorphicFacies: "amphibolite",
+          metamorphicFabric: "schistose",
         })}
       />,
     );
@@ -195,6 +197,7 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByText("Amphibolite facies"))
       .toBeInTheDocument();
+    await expect.element(screen.getByText("Schistose")).toBeInTheDocument();
   });
 
   it("should show the specific name", async () => {

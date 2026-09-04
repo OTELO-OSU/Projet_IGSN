@@ -19,6 +19,7 @@ const stored: Sample = {
   material: "rock.igneous.plutonic",
   texture: null,
   metamorphicFacies: null,
+  metamorphicFabric: null,
   collectionMethod: "manual",
   collectionMethodDescription: "stored method detail",
   specificName: "stored specific",
@@ -102,6 +103,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     material: "sediment",
     texture: null,
     metamorphicFacies: null,
+    metamorphicFabric: null,
     collectionMethod: "dredging",
     collectionMethodDescription: "edited method detail",
     specificName: "edited specific",
@@ -197,7 +199,7 @@ describe("mergePublishedEdit", () => {
     expect(merged.type).toBe("core");
   });
 
-  it("takes the texture and facies from a payload agreeing on the material", () => {
+  it("takes the texture, facies and fabric from a payload agreeing on the material", () => {
     const withTexture: Sample = { ...stored, texture: "phaneritic" };
     const merged = mergePublishedEdit(
       withTexture,
@@ -205,13 +207,15 @@ describe("mergePublishedEdit", () => {
     );
     expect(merged.texture).toBe("cumulate");
     expect(merged.metamorphicFacies).toBeNull();
+    expect(merged.metamorphicFabric).toBeNull();
   });
 
-  it("keeps the stored texture and facies when the payload's material disagrees", () => {
+  it("keeps the stored texture, facies and fabric when the payload's material disagrees", () => {
     const metamorphic: Sample = {
       ...stored,
       material: "rock.metamorphic",
       metamorphicFacies: "eclogite",
+      metamorphicFabric: "gneissic",
     };
     const merged = mergePublishedEdit(
       metamorphic,
@@ -219,9 +223,11 @@ describe("mergePublishedEdit", () => {
         material: "rock.igneous.plutonic",
         texture: "cumulate",
         metamorphicFacies: null,
+        metamorphicFabric: null,
       }),
     );
     expect(merged.metamorphicFacies).toBe("eclogite");
+    expect(merged.metamorphicFabric).toBe("gneissic");
     expect(merged.texture).toBeNull();
   });
 

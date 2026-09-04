@@ -895,6 +895,7 @@ describe("admin sample routes", () => {
       ...publishable,
       material: "rock.metamorphic.strongly_metamorphosed.gneiss",
       metamorphicFacies: "eclogite" as const,
+      metamorphicFabric: "gneissic" as const,
     };
 
     pgTest(
@@ -957,7 +958,7 @@ describe("admin sample routes", () => {
     );
 
     pgTest(
-      "keeps the stored texture and facies when the payload's material disagrees",
+      "keeps the stored texture, facies and fabric when the payload's material disagrees",
       async ({ db }) => {
         // Arrange
         const client = testClient(createApp(db).app);
@@ -971,6 +972,7 @@ describe("admin sample routes", () => {
               material: metamorphic.material,
               texture: null,
               metamorphicFacies: "eclogite",
+              metamorphicFabric: "gneissic",
               expectedUpdatedAt: data.updatedAt,
             },
           },
@@ -986,6 +988,7 @@ describe("admin sample routes", () => {
         expect(kept.material).toBe(igneous.material);
         expect(kept.texture).toBe("phaneritic");
         expect(kept.metamorphicFacies).toBeNull();
+        expect(kept.metamorphicFabric).toBeNull();
       },
     );
 
@@ -1641,14 +1644,17 @@ describe("admin sample routes", () => {
       },
     );
 
-    pgTest(
-      "should reject a facies on a non-metamorphic material with 400",
-      async ({ db }) => {
+    pgTest.for([
+      ["a facies", { metamorphicFacies: "amphibolite" }],
+      ["a fabric", { metamorphicFabric: "schistose" }],
+    ] as const)(
+      "should reject %s on a non-metamorphic material with 400",
+      async ([, fields], { db }) => {
         const res = await postSample(createApp(db).app, {
           name: "Basalt",
           nature: "thin_section",
           material: "rock.igneous.volcanic.mafic.basalt",
-          metamorphicFacies: "amphibolite",
+          ...fields,
         });
         expect(res.status).toBe(400);
       },

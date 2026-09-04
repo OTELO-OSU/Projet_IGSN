@@ -36,6 +36,7 @@
   "sample_field_material": "Material",
   "sample_field_texture": "Texture",
   "sample_field_metamorphic_facies": "Metamorphic facies",
+  "sample_field_metamorphic_fabric": "Metamorphic fabrics",
   "sample_field_specific_name": "Specific name",
   "sample_field_collection_method": "Collection method",
   "sample_field_collection_method_description": "Collection method details",

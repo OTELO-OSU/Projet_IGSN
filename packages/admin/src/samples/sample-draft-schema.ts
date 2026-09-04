@@ -97,6 +97,7 @@ export type SampleDraft = {
   materialPath: string[];
   texture: CreateSample["texture"] | undefined;
   metamorphicFacies: CreateSample["metamorphicFacies"] | undefined;
+  metamorphicFabric: CreateSample["metamorphicFabric"] | undefined;
   collectionMethodPath: string[];
   collectionMethodDescription: string | null | undefined;
   specificName: string | null | undefined;
@@ -123,6 +124,7 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
   materialPath: toHierarchyPath(value?.material ?? null),
   texture: value?.texture,
   metamorphicFacies: value?.metamorphicFacies,
+  metamorphicFabric: value?.metamorphicFabric,
   collectionMethodPath: toHierarchyPath(value?.collectionMethod ?? null),
   collectionMethodDescription: value?.collectionMethodDescription,
   specificName: value?.specificName,
@@ -196,6 +198,9 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(draft.texture ? { texture: draft.texture } : {}),
     ...(draft.metamorphicFacies
       ? { metamorphicFacies: draft.metamorphicFacies }
+      : {}),
+    ...(draft.metamorphicFabric
+      ? { metamorphicFabric: draft.metamorphicFabric }
       : {}),
     collectionMethod: composeHierarchyValue(draft.collectionMethodPath),
     collectionMethodDescription:

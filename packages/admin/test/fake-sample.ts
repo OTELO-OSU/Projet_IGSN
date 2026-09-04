@@ -6,6 +6,7 @@ export const fakeSample = {
   material: null,
   texture: null,
   metamorphicFacies: null,
+  metamorphicFabric: null,
   collectionMethod: null,
   collectionMethodDescription: null,
   specificName: null,

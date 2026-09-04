@@ -78,6 +78,7 @@ let callerManagedLaboratories: string[] = [];
 let callerManaged = false;
 let editPageSearch = "";
 let sampleFetched = false;
+let sampleMetamorphicFabric: string | null = null;
 
 beforeEach(() => {
   callerStatus = "accepted";
@@ -86,6 +87,7 @@ beforeEach(() => {
   callerManaged = false;
   editPageSearch = "";
   sampleFetched = false;
+  sampleMetamorphicFabric = null;
 });
 
 const overLimitAttachments: SampleAttachment[] = Array.from(
@@ -131,6 +133,7 @@ function fakeApi(
     material,
     texture,
     metamorphicFacies,
+    metamorphicFabric: sampleMetamorphicFabric,
     collectionMethod: null,
     collectionMethodDescription: null,
     specificName: "MC-2026-007",
@@ -706,19 +709,38 @@ describe("EditSamplePage", () => {
       .toHaveTextContent(/account is not yet activated/i);
   });
 
-  it.each<[string, string, string | null, string | null, string]>([
-    ["Rock *", "rock.igneous", null, null, "Igneous"],
+  it.each<
+    [string, string, string | null, string | null, string | null, string]
+  >([
+    ["Rock *", "rock.igneous", null, null, null, "Igneous"],
     [
       "Metamorphic facies *",
       "rock.metamorphic.strongly_metamorphosed.gneiss",
       "amphibolite",
       null,
+      null,
       "Amphibolite facies",
     ],
-    ["Texture", "rock.igneous.plutonic", null, "phaneritic", "Phaneritic"],
+    [
+      "Texture",
+      "rock.igneous.plutonic",
+      null,
+      "phaneritic",
+      null,
+      "Phaneritic",
+    ],
+    [
+      "Metamorphic fabrics",
+      "rock.metamorphic.strongly_metamorphosed.gneiss",
+      null,
+      null,
+      "gneissic",
+      "Gneissic",
+    ],
   ])(
     "should render %s prefilled on the Sample type tab",
-    async (combobox, material, facies, texture, expected) => {
+    async (combobox, material, facies, texture, fabric, expected) => {
+      sampleMetamorphicFabric = fabric;
       const { screen } = await renderEditPage(
         "draft",
         material,

@@ -655,20 +655,35 @@ describe("SampleForm", () => {
     await screen
       .getByRole("combobox", { name: "Meta-igneous rock *", exact: true })
       .click();
-    await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
     await screen
-      .getByRole("combobox", { name: "Plutonic *", exact: true })
+      .getByRole("option", { name: "Meta-Plutonic", exact: true })
       .click();
-    await screen.getByRole("option", { name: "Felsic", exact: true }).click();
     await screen
-      .getByRole("combobox", { name: "Felsic *", exact: true })
+      .getByRole("combobox", { name: "Meta-Plutonic *", exact: true })
       .click();
-    await screen.getByRole("option", { name: "Granite", exact: true }).click();
+    await screen
+      .getByRole("option", { name: "Meta-Felsic", exact: true })
+      .click();
+    await screen
+      .getByRole("combobox", { name: "Meta-Felsic *", exact: true })
+      .click();
+    await screen
+      .getByRole("option", { name: "Meta-Granite", exact: true })
+      .click();
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Texture" }))
+      .not.toBeInTheDocument();
 
     await screen
       .getByRole("combobox", { name: "Metamorphic facies *", exact: true })
       .click();
     await screen.getByRole("option", { name: "Amphibolite facies" }).click();
+
+    await screen
+      .getByRole("combobox", { name: "Metamorphic fabrics", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Schistose" }).click();
 
     await screen.getByRole("button", { name: "Create" }).click();
 
@@ -681,6 +696,7 @@ describe("SampleForm", () => {
         material:
           "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
         metamorphicFacies: "amphibolite",
+        metamorphicFabric: "schistose",
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
@@ -719,11 +735,19 @@ describe("SampleForm", () => {
       .click();
     await screen.getByRole("option", { name: "Amphibolite facies" }).click();
 
+    await screen
+      .getByRole("combobox", { name: "Metamorphic fabrics", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Schistose" }).click();
+
     await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
     await screen.getByRole("option", { name: "Igneous", exact: true }).click();
 
     await expect
       .element(screen.getByRole("combobox", { name: "Metamorphic facies *" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Metamorphic fabrics" }))
       .not.toBeInTheDocument();
 
     await screen.getByRole("button", { name: "Create" }).click();

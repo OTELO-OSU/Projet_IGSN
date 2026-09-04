@@ -55,6 +55,7 @@ function fakeApi(failWrites = false) {
         id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
         texture: null,
         metamorphicFacies: null,
+        metamorphicFabric: null,
         description: null,
         condition: null,
         security: null,

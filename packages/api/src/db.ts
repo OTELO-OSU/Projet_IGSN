@@ -14,6 +14,7 @@ type SampleTable = {
   material: string | null;
   texture: string | null;
   metamorphic_facies: string | null;
+  metamorphic_fabric: string | null;
   collection_method: string | null;
   collection_method_description: string | null;
   geological_context_description: string | null;

@@ -12,6 +12,7 @@ export const {
   geomorphologicalEnvironmentLabel,
   textureLabel,
   metamorphicFaciesLabel,
+  metamorphicFabricLabel,
   natureLabel,
   oceanSeaLabel,
   verticalReferenceLabel,

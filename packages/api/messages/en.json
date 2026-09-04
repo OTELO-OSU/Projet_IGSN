@@ -61,6 +61,7 @@
   "mail_sample_field_material": "Material",
   "mail_sample_field_texture": "Texture",
   "mail_sample_field_metamorphicFacies": "Metamorphic facies",
+  "mail_sample_field_metamorphicFabric": "Metamorphic fabrics",
   "mail_sample_field_collectionMethod": "Collection method",
   "mail_sample_field_collectionMethodDescription": "Collection method description",
   "mail_sample_field_specificName": "Specific name",

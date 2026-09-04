@@ -17,6 +17,7 @@ export const sampleColumns = (input: CreateSample) => ({
   material: input.material ?? null,
   texture: input.texture ?? null,
   metamorphic_facies: input.metamorphicFacies ?? null,
+  metamorphic_fabric: input.metamorphicFabric ?? null,
   collection_method: input.collectionMethod ?? null,
   collection_method_description: input.collectionMethodDescription ?? null,
   geological_context_description: input.geologicalContextDescription ?? null,

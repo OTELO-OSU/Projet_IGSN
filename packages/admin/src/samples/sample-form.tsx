@@ -58,7 +58,7 @@ import {
 } from "#/samples/curation-fields.tsx";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
-import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
+import { MetamorphicDetails } from "#/samples/metamorphic-details.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
@@ -519,7 +519,7 @@ export function SampleForm({
                       <TextureField />
                     </form.AppForm>
                     <form.AppForm>
-                      <MetamorphicFaciesField />
+                      <MetamorphicDetails />
                     </form.AppForm>
                     <form.AppField name="specificName">
                       {(field) => (

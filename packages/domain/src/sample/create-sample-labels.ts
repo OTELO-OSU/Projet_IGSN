@@ -15,6 +15,8 @@ import { type Element } from "./element/vocabulary.ts";
 import { type OceanSea } from "./location/ocean-sea.ts";
 import { type VerticalReferenceSystem } from "./location/vertical-reference-system.ts";
 import { type VerticalReference } from "./location/vertical-reference.ts";
+import { isUnderMetaIgneousRock } from "./material/is-under-meta-igneous-rock.ts";
+import { type MetamorphicFabric } from "./metamorphic-fabric/vocabulary.ts";
 import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
 import { type Nature } from "./nature.ts";
 import { pathSegment } from "./path/segment.ts";
@@ -35,6 +37,7 @@ type AssertKeys<T extends MessageKey> = T;
 type _natureKeys = AssertKeys<`nature_${Nature}`>;
 type _textureKeys = AssertKeys<`texture_${Texture}`>;
 type _faciesKeys = AssertKeys<`metamorphic_facies_${MetamorphicFacies}`>;
+type _fabricKeys = AssertKeys<`metamorphic_fabric_${MetamorphicFabric}`>;
 type _packagingKeys = AssertKeys<`packaging_${Packaging}`>;
 type _storageConditionKeys =
   AssertKeys<`storage_condition_${StorageCondition}`>;
@@ -82,6 +85,7 @@ export type SampleLabels = {
   elementLabel: (element: Element) => string;
   textureLabel: (texture: Texture) => string;
   metamorphicFaciesLabel: (facies: MetamorphicFacies) => string;
+  metamorphicFabricLabel: (fabric: MetamorphicFabric) => string;
   natureLabel: (nature: Nature) => string;
   oceanSeaLabel: (oceanSea: OceanSea) => string;
   verticalReferenceLabel: (reference: VerticalReference) => string;
@@ -118,6 +122,7 @@ const LABEL_KEY = {
   elementLabel: ["element", "code"],
   textureLabel: ["texture", "code"],
   metamorphicFaciesLabel: ["metamorphic_facies", "code"],
+  metamorphicFabricLabel: ["metamorphic_fabric", "code"],
   natureLabel: ["nature", "code"],
   oceanSeaLabel: ["ocean_sea", "code"],
   verticalReferenceLabel: ["vertical_reference", "code"],
@@ -144,7 +149,7 @@ const LABEL_KEY = {
 } satisfies Record<keyof SampleLabels, [string, "path" | "code"]>;
 
 export function createSampleLabels(m: Messages): SampleLabels {
-  return Object.fromEntries(
+  const labels = Object.fromEntries(
     Object.entries(LABEL_KEY).map(([name, [prefix, kind]]) => [
       name,
       vocabularyLabel(
@@ -154,4 +159,12 @@ export function createSampleLabels(m: Messages): SampleLabels {
       ),
     ]),
   ) as unknown as SampleLabels;
+  const materialPathLabel = labels.materialPathLabel;
+  return {
+    ...labels,
+    materialPathLabel: (path) =>
+      isUnderMetaIgneousRock(path)
+        ? `${m.material_meta_prefix?.() ?? ""}${materialPathLabel(path)}`
+        : materialPathLabel(path),
+  };
 }
