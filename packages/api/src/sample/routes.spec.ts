@@ -49,7 +49,7 @@ async function createSample(
         existenceStatus: "exists",
         availabilityStatus: "available",
         scientificContext: {
-          provenanceStatus: "historical_specimen",
+          provenanceStatus: "collection_specimen",
           collectionCurator: "Georges Cuvier",
           collectionOrigin: "scientific_expedition",
         },

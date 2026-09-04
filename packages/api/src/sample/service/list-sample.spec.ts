@@ -244,7 +244,7 @@ describe("listSamples", () => {
           type: null,
           collectionMethod: null,
           scientificContext: {
-            provenanceStatus: "recent_collection",
+            provenanceStatus: "field_sample",
             hostInstitution,
           },
         });
@@ -395,7 +395,7 @@ describe("listSamples", () => {
         type: null,
         collectionMethod: null,
         scientificContext: {
-          provenanceStatus: "recent_collection",
+          provenanceStatus: "field_sample",
           collectorName: "Marie Curié",
         },
       });
@@ -405,7 +405,7 @@ describe("listSamples", () => {
         type: null,
         collectionMethod: null,
         scientificContext: {
-          provenanceStatus: "recent_collection",
+          provenanceStatus: "field_sample",
           collectorName: "Charles Darwin",
         },
       });

@@ -4,11 +4,11 @@ import { render } from "vitest-browser-react";
 import { ScientificContextView } from "./scientific-context-view.tsx";
 
 describe("ScientificContextView", () => {
-  it("should render every part of a recent collection", async () => {
+  it("should render every part of a field sample", async () => {
     const screen = await render(
       <ScientificContextView
         scientificContext={{
-          provenanceStatus: "recent_collection",
+          provenanceStatus: "field_sample",
           funderOrganizations: ["03fd77x13", "02cte4b68"],
           researchProgramName: "Deep Earth Sampling",
           chiefScientist: "Marie Curie",
@@ -28,9 +28,7 @@ describe("ScientificContextView", () => {
     await expect
       .element(screen.getByText("Provenance status"))
       .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Field collection"))
-      .toBeInTheDocument();
+    await expect.element(screen.getByText("Field sample")).toBeInTheDocument();
 
     for (const ror of ["03fd77x13", "02cte4b68", "043htjv09", "00z54nq84"]) {
       await expect
@@ -49,11 +47,11 @@ describe("ScientificContextView", () => {
       .toBeInTheDocument();
   });
 
-  it("should render every part of a historical specimen", async () => {
+  it("should render every part of a collection specimen", async () => {
     const screen = await render(
       <ScientificContextView
         scientificContext={{
-          provenanceStatus: "historical_specimen",
+          provenanceStatus: "collection_specimen",
           collectionCurator: "Alfred Curator",
           collectionOrigin: "scientific_expedition",
           collectorName: "Old Collector",
@@ -63,7 +61,7 @@ describe("ScientificContextView", () => {
     );
 
     await expect
-      .element(screen.getByText("Historical collection"))
+      .element(screen.getByText("Collection specimen"))
       .toBeInTheDocument();
     await expect
       .element(screen.getByText("Scientific expedition"))
@@ -80,7 +78,7 @@ describe("ScientificContextView", () => {
     const screen = await render(
       <ScientificContextView
         scientificContext={{
-          provenanceStatus: "recent_collection",
+          provenanceStatus: "field_sample",
           researchProgramName: "Only the name",
         }}
       />,

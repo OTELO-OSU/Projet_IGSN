@@ -40,7 +40,7 @@ export function SampleScientificContextFields() {
         selector={(state) => state.values.scientificContext.provenanceStatus}
       >
         {(provenanceStatus) => {
-          if (provenanceStatus === "recent_collection") {
+          if (provenanceStatus === "field_sample") {
             return (
               <>
                 <form.AppField name="scientificContext.funderOrganizations">
@@ -148,7 +148,7 @@ export function SampleScientificContextFields() {
               </>
             );
           }
-          if (provenanceStatus === "historical_specimen") {
+          if (provenanceStatus === "collection_specimen") {
             return (
               <>
                 <form.AppField name="scientificContext.collectionCurator">

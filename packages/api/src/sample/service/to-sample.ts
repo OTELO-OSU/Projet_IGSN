@@ -98,9 +98,9 @@ function toSecurity(row: Selectable<DB["sample"]>) {
 }
 
 function toScientificContext(row: Selectable<DB["sample"]>) {
-  if (row.sc_provenance_status === "recent_collection") {
+  if (row.sc_provenance_status === "field_sample") {
     return scientificContextSchema.parse({
-      provenanceStatus: "recent_collection",
+      provenanceStatus: "field_sample",
       ...omitNull({
         funderOrganizations: row.sc_funder_organizations,
         researchProgramName: row.sc_research_program_name,
@@ -117,9 +117,9 @@ function toScientificContext(row: Selectable<DB["sample"]>) {
       }),
     });
   }
-  if (row.sc_provenance_status === "historical_specimen") {
+  if (row.sc_provenance_status === "collection_specimen") {
     return scientificContextSchema.parse({
-      provenanceStatus: "historical_specimen",
+      provenanceStatus: "collection_specimen",
       ...omitNull({
         collectionCurator: row.sc_collection_curator,
         collectionOrigin: row.sc_collection_origin,

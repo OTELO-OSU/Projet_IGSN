@@ -588,7 +588,7 @@ export function mapScientificContext(row: LegacyRow): ScientificContext | null {
     return null;
   }
   return {
-    provenanceStatus: "recent_collection",
+    provenanceStatus: "field_sample",
     ...(collectorName ? { collectorName } : {}),
     ...(collectorOrcid ? { collectorOrcid } : {}),
     ...(researchCampaign ? { researchCampaign } : {}),

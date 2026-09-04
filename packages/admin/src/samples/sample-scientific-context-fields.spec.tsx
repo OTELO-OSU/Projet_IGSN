@@ -66,11 +66,11 @@ describe("SampleScientificContextFields", () => {
       .not.toBeInTheDocument();
   });
 
-  it("should submit a recent collection with organizations picked from the reference list", async () => {
+  it("should submit a field sample with organizations picked from the reference list", async () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
-    await pickProvenance(screen, "Field collection");
+    await pickProvenance(screen, "Field sample");
     await screen
       .getByRole("combobox", { name: "Funder organizations *" })
       .click();
@@ -93,7 +93,7 @@ describe("SampleScientificContextFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           scientificContext: {
-            provenanceStatus: "recent_collection",
+            provenanceStatus: "field_sample",
             funderOrganizations: ["02feahw73", "04kdfz702"],
             researchProgramName: "Deep Biosphere Survey",
             hostInstitution: ["04kdfz702", "05hnb7x64"],
@@ -104,11 +104,11 @@ describe("SampleScientificContextFields", () => {
     );
   });
 
-  it("should submit a historical specimen with its curator and origin", async () => {
+  it("should submit a collection specimen with its curator and origin", async () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
-    await pickProvenance(screen, "Historical collection");
+    await pickProvenance(screen, "Collection specimen");
     await screen
       .getByLabelText("Name of the collection curator *")
       .fill("Georges Cuvier");
@@ -123,7 +123,7 @@ describe("SampleScientificContextFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           scientificContext: {
-            provenanceStatus: "historical_specimen",
+            provenanceStatus: "collection_specimen",
             collectionCurator: "Georges Cuvier",
             collectionOrigin: "purchase",
             collectionContextDescription: "Bought at auction in 1902",
@@ -147,12 +147,12 @@ describe("SampleScientificContextFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
-    await pickProvenance(screen, "Field collection");
+    await pickProvenance(screen, "Field sample");
     await screen
       .getByLabelText("Name of the research programme *")
       .fill("Deep Biosphere Survey");
     await screen.getByLabelText("Collector name *").fill("Pierre Curie");
-    await pickProvenance(screen, "Historical collection");
+    await pickProvenance(screen, "Collection specimen");
     await expect
       .element(screen.getByLabelText("Name of the research programme *"))
       .not.toBeInTheDocument();
@@ -160,12 +160,12 @@ describe("SampleScientificContextFields", () => {
       .element(screen.getByLabelText("Collector name"))
       .toHaveValue("Pierre Curie");
 
-    await pickProvenance(screen, "Field collection");
+    await pickProvenance(screen, "Field sample");
     await expect
       .element(screen.getByLabelText("Name of the research programme *"))
       .toHaveValue("Deep Biosphere Survey");
 
-    await pickProvenance(screen, "Historical collection");
+    await pickProvenance(screen, "Collection specimen");
     await screen
       .getByLabelText("Name of the collection curator *")
       .fill("Georges Cuvier");
@@ -175,7 +175,7 @@ describe("SampleScientificContextFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           scientificContext: {
-            provenanceStatus: "historical_specimen",
+            provenanceStatus: "collection_specimen",
             collectionCurator: "Georges Cuvier",
             collectorName: "Pierre Curie",
           },

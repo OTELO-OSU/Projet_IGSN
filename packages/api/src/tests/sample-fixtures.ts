@@ -27,7 +27,7 @@ export const publishableSample = {
   existenceStatus: "exists" as const,
   availabilityStatus: "available" as const,
   scientificContext: {
-    provenanceStatus: "historical_specimen" as const,
+    provenanceStatus: "collection_specimen" as const,
     collectionCurator: "Georges Cuvier",
     collectionOrigin: "scientific_expedition" as const,
   },

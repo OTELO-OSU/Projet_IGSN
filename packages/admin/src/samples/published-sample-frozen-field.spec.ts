@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 
 describe("publishedSampleFrozenField", () => {
-  const isFrozen = publishedSampleFrozenField("recent_collection", null);
+  const isFrozen = publishedSampleFrozenField("field_sample", null);
 
   it.each([
     "name",
@@ -13,6 +13,8 @@ describe("publishedSampleFrozenField", () => {
     "description.collectionDateStart",
     "description.collectionDateTimeZone",
     "scientificContext.provenanceStatus",
+    "scientificContext.hostInstitution",
+    "scientificContext.collectorOrcid",
   ])("freezes %s on a published sample", (field) => {
     expect(isFrozen(field)).toBe(true);
   });
@@ -25,25 +27,26 @@ describe("publishedSampleFrozenField", () => {
     "location.localityName",
     "existenceStatus",
     "availabilityStatus",
+    "scientificContext.chiefScientistOrcid",
   ])("leaves %s editable on a published sample", (field) => {
     expect(isFrozen(field)).toBe(false);
   });
 
-  it("freezes the collector name only on the recent-collection branch", () => {
+  it("freezes the collector name only on the field-sample branch", () => {
     expect(isFrozen("scientificContext.collectorName")).toBe(true);
     expect(
       publishedSampleFrozenField(
-        "historical_specimen",
+        "collection_specimen",
         null,
       )("scientificContext.collectorName"),
     ).toBe(false);
   });
 
-  it("freezes the collection curator only on the historical-specimen branch", () => {
+  it("freezes the collection curator only on the collection-specimen branch", () => {
     expect(isFrozen("scientificContext.collectionCurator")).toBe(false);
     expect(
       publishedSampleFrozenField(
-        "historical_specimen",
+        "collection_specimen",
         null,
       )("scientificContext.collectionCurator"),
     ).toBe(true);
@@ -63,9 +66,9 @@ describe("publishedSampleFrozenField", () => {
       ["materialPath[0]", "rock.igneous.plutonic"],
       ["materialPath[3]", "rock.igneous.plutonic"],
     ])("freezes %s on %s, down to the frozen prefix", (field, material) => {
-      expect(
-        publishedSampleFrozenField("recent_collection", material)(field),
-      ).toBe(true);
+      expect(publishedSampleFrozenField("field_sample", material)(field)).toBe(
+        true,
+      );
     });
 
     it.each(["materialPath[4]", "materialPath[5]"])(
@@ -73,7 +76,7 @@ describe("publishedSampleFrozenField", () => {
       (field) => {
         expect(
           publishedSampleFrozenField(
-            "recent_collection",
+            "field_sample",
             "rock.igneous.plutonic.felsic.granite",
           )(field),
         ).toBe(false);

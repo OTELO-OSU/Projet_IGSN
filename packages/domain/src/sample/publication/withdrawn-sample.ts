@@ -39,7 +39,7 @@ export function toWithdrawnSample(sample: Sample): WithdrawnSample {
       : null,
     collectorName: context?.collectorName ?? null,
     collectionCurator:
-      context?.provenanceStatus === "historical_specimen"
+      context?.provenanceStatus === "collection_specimen"
         ? (context.collectionCurator ?? null)
         : null,
   };

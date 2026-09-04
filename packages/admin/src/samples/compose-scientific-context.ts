@@ -23,7 +23,7 @@ export type ScientificContextDraft = {
 
 type ScientificContextCandidate =
   | {
-      provenanceStatus: "recent_collection";
+      provenanceStatus: "field_sample";
       funderOrganizations: string[] | undefined;
       researchProgramName: string | undefined;
       chiefScientist: string | undefined;
@@ -38,7 +38,7 @@ type ScientificContextCandidate =
       missionDescription: string | undefined;
     }
   | {
-      provenanceStatus: "historical_specimen";
+      provenanceStatus: "collection_specimen";
       collectionCurator: string | undefined;
       collectionOrigin: CollectionOrigin | undefined;
       collectorName: string | undefined;
@@ -51,9 +51,9 @@ export const nonEmpty = (rors: string[]) =>
 export function composeScientificContext(
   draft: ScientificContextDraft,
 ): ScientificContextCandidate | null {
-  if (draft.provenanceStatus === "recent_collection") {
+  if (draft.provenanceStatus === "field_sample") {
     return {
-      provenanceStatus: "recent_collection",
+      provenanceStatus: "field_sample",
       funderOrganizations: nonEmpty(draft.funderOrganizations),
       researchProgramName: draft.researchProgramName || undefined,
       chiefScientist: draft.chiefScientist || undefined,
@@ -68,9 +68,9 @@ export function composeScientificContext(
       missionDescription: draft.missionDescription || undefined,
     };
   }
-  if (draft.provenanceStatus === "historical_specimen") {
+  if (draft.provenanceStatus === "collection_specimen") {
     return {
-      provenanceStatus: "historical_specimen",
+      provenanceStatus: "collection_specimen",
       collectionCurator: draft.collectionCurator || undefined,
       collectionOrigin: draft.collectionOrigin,
       collectorName: draft.collectorName || undefined,
@@ -84,28 +84,31 @@ export function composeScientificContext(
 export function toScientificContextDraft(
   value: ScientificContext | null | undefined,
 ): ScientificContextDraft {
-  const recent =
-    value?.provenanceStatus === "recent_collection" ? value : undefined;
-  const historical =
-    value?.provenanceStatus === "historical_specimen" ? value : undefined;
+  const fieldSample =
+    value?.provenanceStatus === "field_sample" ? value : undefined;
+  const collectionSpecimen =
+    value?.provenanceStatus === "collection_specimen" ? value : undefined;
   return {
     provenanceStatus: value?.provenanceStatus,
-    funderOrganizations: recent?.funderOrganizations ?? [],
-    researchProgramName: recent?.researchProgramName ?? undefined,
-    chiefScientist: recent?.chiefScientist ?? undefined,
-    chiefScientistOrcid: recent?.chiefScientistOrcid ?? undefined,
-    hostInstitution: recent?.hostInstitution ?? [],
+    funderOrganizations: fieldSample?.funderOrganizations ?? [],
+    researchProgramName: fieldSample?.researchProgramName ?? undefined,
+    chiefScientist: fieldSample?.chiefScientist ?? undefined,
+    chiefScientistOrcid: fieldSample?.chiefScientistOrcid ?? undefined,
+    hostInstitution: fieldSample?.hostInstitution ?? [],
     collectorName:
-      recent?.collectorName ?? historical?.collectorName ?? undefined,
-    collectorOrcid: recent?.collectorOrcid ?? undefined,
-    researchCampaign: recent?.researchCampaign ?? undefined,
-    funding: recent?.funding ?? undefined,
-    researchProgramDescription: recent?.researchProgramDescription ?? undefined,
-    fieldName: recent?.fieldName ?? undefined,
-    missionDescription: recent?.missionDescription ?? undefined,
-    collectionCurator: historical?.collectionCurator ?? undefined,
-    collectionOrigin: historical?.collectionOrigin ?? undefined,
+      fieldSample?.collectorName ??
+      collectionSpecimen?.collectorName ??
+      undefined,
+    collectorOrcid: fieldSample?.collectorOrcid ?? undefined,
+    researchCampaign: fieldSample?.researchCampaign ?? undefined,
+    funding: fieldSample?.funding ?? undefined,
+    researchProgramDescription:
+      fieldSample?.researchProgramDescription ?? undefined,
+    fieldName: fieldSample?.fieldName ?? undefined,
+    missionDescription: fieldSample?.missionDescription ?? undefined,
+    collectionCurator: collectionSpecimen?.collectionCurator ?? undefined,
+    collectionOrigin: collectionSpecimen?.collectionOrigin ?? undefined,
     collectionContextDescription:
-      historical?.collectionContextDescription ?? undefined,
+      collectionSpecimen?.collectionContextDescription ?? undefined,
   };
 }

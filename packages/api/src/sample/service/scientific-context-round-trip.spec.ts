@@ -13,35 +13,32 @@ const base = {
 };
 
 describe("sample scientific context persistence", () => {
-  pgTest(
-    "should round-trip a full recent-collection context",
-    async ({ db }) => {
-      const scientificContext = {
-        provenanceStatus: "recent_collection" as const,
-        funderOrganizations: ["02feahw73", "04kdfz702"],
-        researchProgramName: "Deep Biosphere Survey",
-        chiefScientist: "Marie Curie",
-        chiefScientistOrcid: "0000-0002-1825-0097",
-        hostInstitution: ["04kdfz702", "02feahw73"],
-        collectorName: "Pierre Curie",
-        collectorOrcid: "0000-0001-2345-6789",
-        researchCampaign: "MD 209 / 2021",
-        funding: "ANR grant 42",
-        researchProgramDescription: "Multi-year survey of\nsub-seafloor life",
-        fieldName: "Site A",
-        missionDescription: "Coring campaign in\nthe North Atlantic",
-      };
-      const created = await insertSample(db, { ...base, scientificContext });
-      expect(created.scientificContext).toEqual(scientificContext);
-      expect(await readSample(db, created.id)).toEqual(created);
-    },
-  );
+  pgTest("should round-trip a full field-sample context", async ({ db }) => {
+    const scientificContext = {
+      provenanceStatus: "field_sample" as const,
+      funderOrganizations: ["02feahw73", "04kdfz702"],
+      researchProgramName: "Deep Biosphere Survey",
+      chiefScientist: "Marie Curie",
+      chiefScientistOrcid: "0000-0002-1825-0097",
+      hostInstitution: ["04kdfz702", "02feahw73"],
+      collectorName: "Pierre Curie",
+      collectorOrcid: "0000-0001-2345-6789",
+      researchCampaign: "MD 209 / 2021",
+      funding: "ANR grant 42",
+      researchProgramDescription: "Multi-year survey of\nsub-seafloor life",
+      fieldName: "Site A",
+      missionDescription: "Coring campaign in\nthe North Atlantic",
+    };
+    const created = await insertSample(db, { ...base, scientificContext });
+    expect(created.scientificContext).toEqual(scientificContext);
+    expect(await readSample(db, created.id)).toEqual(created);
+  });
 
   pgTest(
-    "should round-trip a full historical-specimen context",
+    "should round-trip a full collection-specimen context",
     async ({ db }) => {
       const scientificContext = {
-        provenanceStatus: "historical_specimen" as const,
+        provenanceStatus: "collection_specimen" as const,
         collectionCurator: "Georges Cuvier",
         collectionOrigin: "scientific_expedition" as const,
         collectorName: "Alexander von Humboldt",
@@ -57,7 +54,7 @@ describe("sample scientific context persistence", () => {
     "should round-trip a context holding only its provenance status",
     async ({ db }) => {
       const scientificContext = {
-        provenanceStatus: "recent_collection" as const,
+        provenanceStatus: "field_sample" as const,
       };
       const created = await insertSample(db, { ...base, scientificContext });
       expect(created.scientificContext).toEqual(scientificContext);
@@ -78,7 +75,7 @@ describe("sample scientific context persistence", () => {
     const created = await insertSample(db, {
       ...base,
       scientificContext: {
-        provenanceStatus: "recent_collection" as const,
+        provenanceStatus: "field_sample" as const,
         researchProgramName: "Old programme",
         collectorName: "Someone",
       },
@@ -86,12 +83,12 @@ describe("sample scientific context persistence", () => {
     const updated = await updateSample(db, created.id, {
       ...base,
       scientificContext: {
-        provenanceStatus: "historical_specimen" as const,
+        provenanceStatus: "collection_specimen" as const,
         collectionCurator: "Georges Cuvier",
       },
     });
     expect(updated?.scientificContext).toEqual({
-      provenanceStatus: "historical_specimen",
+      provenanceStatus: "collection_specimen",
       collectionCurator: "Georges Cuvier",
     });
     expect(await readSample(db, created.id)).toEqual(updated);
@@ -101,7 +98,7 @@ describe("sample scientific context persistence", () => {
     const created = await insertSample(db, {
       ...base,
       scientificContext: {
-        provenanceStatus: "historical_specimen" as const,
+        provenanceStatus: "collection_specimen" as const,
         collectionCurator: "Georges Cuvier",
       },
     });

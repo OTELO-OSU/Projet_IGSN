@@ -28,7 +28,7 @@ const base: Sample = {
   geologicalContextDescription: null,
   geomorphologicalEnvironment: null,
   scientificContext: {
-    provenanceStatus: "recent_collection",
+    provenanceStatus: "field_sample",
     funderOrganizations: ["02feahw73"],
     researchProgramName: "Deep Biosphere Survey",
     chiefScientist: "Marie Curie",
@@ -184,6 +184,20 @@ describe("samplePublishBlockers", () => {
         ...base,
         material: "extraterrestrial_rock.returned_samples.other",
         location: null,
+      }),
+    ).toEqual([]);
+  });
+
+  it("should not require a location for a collection specimen", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        location: null,
+        scientificContext: {
+          provenanceStatus: "collection_specimen",
+          collectionCurator: "Alexander von Humboldt",
+          collectionOrigin: "scientific_expedition",
+        },
       }),
     ).toEqual([]);
   });
@@ -422,11 +436,11 @@ describe("samplePublishBlockers", () => {
     );
   });
 
-  it("should report each missing mandatory field of the recent-collection branch", () => {
+  it("should report each missing mandatory field of the field-sample branch", () => {
     expect(
       samplePublishBlockers({
         ...base,
-        scientificContext: { provenanceStatus: "recent_collection" },
+        scientificContext: { provenanceStatus: "field_sample" },
       }),
     ).toEqual([
       "funder_organizations_missing",
@@ -437,12 +451,12 @@ describe("samplePublishBlockers", () => {
     ]);
   });
 
-  it("should report only the still-missing recent-collection fields", () => {
+  it("should report only the still-missing field-sample fields", () => {
     expect(
       samplePublishBlockers({
         ...base,
         scientificContext: {
-          provenanceStatus: "recent_collection",
+          provenanceStatus: "field_sample",
           funderOrganizations: ["02feahw73"],
           researchProgramName: "Deep Biosphere Survey",
           chiefScientist: "Marie Curie",
@@ -451,21 +465,21 @@ describe("samplePublishBlockers", () => {
     ).toEqual(["host_institution_missing", "collector_name_missing"]);
   });
 
-  it("should report the missing mandatory fields of the historical-specimen branch", () => {
+  it("should report the missing mandatory fields of the collection-specimen branch", () => {
     expect(
       samplePublishBlockers({
         ...base,
-        scientificContext: { provenanceStatus: "historical_specimen" },
+        scientificContext: { provenanceStatus: "collection_specimen" },
       }),
     ).toEqual(["collection_curator_missing", "collection_origin_missing"]);
   });
 
-  it("should report no blocker for a complete historical-specimen context", () => {
+  it("should report no blocker for a complete collection-specimen context", () => {
     expect(
       samplePublishBlockers({
         ...base,
         scientificContext: {
-          provenanceStatus: "historical_specimen",
+          provenanceStatus: "collection_specimen",
           collectionCurator: "Georges Cuvier",
           collectionOrigin: "scientific_expedition",
         },

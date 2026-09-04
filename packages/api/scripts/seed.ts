@@ -585,7 +585,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     existenceStatus: "exists",
     availabilityStatus: "available",
     scientificContext: {
-      provenanceStatus: "recent_collection",
+      provenanceStatus: "field_sample",
       funderOrganizations: ["02feahw73"],
       researchProgramName: "Chaîne des Puys Survey",
       chiefScientist: "Jean Dupont",
@@ -617,7 +617,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     existenceStatus: "exists",
     availabilityStatus: "available",
     scientificContext: {
-      provenanceStatus: "historical_specimen",
+      provenanceStatus: "collection_specimen",
       collectionCurator: "Paul Bernard",
       collectionOrigin: "scientific_expedition",
       collectionContextDescription: "Armorican Massif reference collection",
@@ -649,7 +649,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     existenceStatus: "exists",
     availabilityStatus: "available",
     scientificContext: {
-      provenanceStatus: "recent_collection",
+      provenanceStatus: "field_sample",
       funderOrganizations: ["02feahw73"],
       researchProgramName: "Chaîne des Puys Survey",
       chiefScientist: "Jean Dupont",
@@ -683,7 +683,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     existenceStatus: "exists",
     availabilityStatus: "available",
     scientificContext: {
-      provenanceStatus: "recent_collection",
+      provenanceStatus: "field_sample",
       funderOrganizations: ["02feahw73"],
       researchProgramName: "Chaîne des Puys Survey",
       chiefScientist: "Jean Dupont",

@@ -12,8 +12,8 @@ export const uniqueRorArraySchema = (code: string) =>
     .refine((rors) => new Set(rors).size === rors.length, { params: { code } })
     .nullish();
 
-const recentCollectionSchema = z.object({
-  provenanceStatus: z.literal("recent_collection"),
+const fieldSampleSchema = z.object({
+  provenanceStatus: z.literal("field_sample"),
   funderOrganizations: uniqueRorArraySchema("funder_organizations_duplicate"),
   researchProgramName: freeTextSchema.nullish(),
   chiefScientist: freeTextSchema.nullish(),
@@ -28,8 +28,8 @@ const recentCollectionSchema = z.object({
   missionDescription: freeTextSchema.nullish(),
 });
 
-const historicalSpecimenSchema = z.object({
-  provenanceStatus: z.literal("historical_specimen"),
+const collectionSpecimenSchema = z.object({
+  provenanceStatus: z.literal("collection_specimen"),
   collectionCurator: freeTextSchema.nullish(),
   collectionOrigin: collectionOriginSchema.nullish(),
   collectorName: freeTextSchema.nullish(),
@@ -38,7 +38,7 @@ const historicalSpecimenSchema = z.object({
 
 export const scientificContextSchema = z.discriminatedUnion(
   "provenanceStatus",
-  [recentCollectionSchema, historicalSpecimenSchema],
+  [fieldSampleSchema, collectionSpecimenSchema],
 );
 
 export type ScientificContext = z.infer<typeof scientificContextSchema>;

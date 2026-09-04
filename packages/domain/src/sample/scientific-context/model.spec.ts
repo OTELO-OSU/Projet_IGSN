@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import { scientificContextSchema } from "./model.ts";
 
-const recentCollection = {
-  provenanceStatus: "recent_collection",
+const fieldSample = {
+  provenanceStatus: "field_sample",
   funderOrganizations: ["02feahw73", "04kdfz702"],
   researchProgramName: "Deep Biosphere Survey",
   chiefScientist: "Marie Curie",
@@ -18,8 +18,8 @@ const recentCollection = {
   missionDescription: "Coring campaign in\nthe North Atlantic",
 };
 
-const historicalSpecimen = {
-  provenanceStatus: "historical_specimen",
+const collectionSpecimen = {
+  provenanceStatus: "collection_specimen",
   collectionCurator: "Georges Cuvier",
   collectionOrigin: "scientific_expedition",
   collectorName: "Alexander von Humboldt",
@@ -27,21 +27,19 @@ const historicalSpecimen = {
 };
 
 describe("scientificContextSchema", () => {
-  it("should accept a full recent-collection context", () => {
-    expect(scientificContextSchema.parse(recentCollection)).toEqual(
-      recentCollection,
-    );
+  it("should accept a full field-sample context", () => {
+    expect(scientificContextSchema.parse(fieldSample)).toEqual(fieldSample);
   });
 
-  it("should accept a full historical-specimen context", () => {
-    expect(scientificContextSchema.parse(historicalSpecimen)).toEqual(
-      historicalSpecimen,
+  it("should accept a full collection-specimen context", () => {
+    expect(scientificContextSchema.parse(collectionSpecimen)).toEqual(
+      collectionSpecimen,
     );
   });
 
   it.each([
-    { provenanceStatus: "recent_collection" },
-    { provenanceStatus: "historical_specimen" },
+    { provenanceStatus: "field_sample" },
+    { provenanceStatus: "collection_specimen" },
   ])("should accept only the provenance status: %o", (input) => {
     expect(scientificContextSchema.safeParse(input).success).toBe(true);
   });
@@ -49,11 +47,11 @@ describe("scientificContextSchema", () => {
   it("should trim free-text fields", () => {
     expect(
       scientificContextSchema.parse({
-        provenanceStatus: "recent_collection",
+        provenanceStatus: "field_sample",
         researchProgramName: "  Deep Biosphere Survey  ",
       }),
     ).toEqual({
-      provenanceStatus: "recent_collection",
+      provenanceStatus: "field_sample",
       researchProgramName: "Deep Biosphere Survey",
     });
   });
@@ -63,42 +61,42 @@ describe("scientificContextSchema", () => {
     {
       case: "invalid ROR funder",
       input: {
-        provenanceStatus: "recent_collection",
+        provenanceStatus: "field_sample",
         funderOrganizations: ["nope"],
       },
     },
     {
       case: "duplicate funder organizations",
       input: {
-        provenanceStatus: "recent_collection",
+        provenanceStatus: "field_sample",
         funderOrganizations: ["02feahw73", "02feahw73"],
       },
     },
     {
       case: "empty host institutions (not filled is null, never [])",
       input: {
-        provenanceStatus: "recent_collection",
+        provenanceStatus: "field_sample",
         hostInstitution: [],
       },
     },
     {
       case: "duplicate host institutions",
       input: {
-        provenanceStatus: "recent_collection",
+        provenanceStatus: "field_sample",
         hostInstitution: ["04kdfz702", "04kdfz702"],
       },
     },
     {
       case: "malformed chief scientist ORCID",
       input: {
-        provenanceStatus: "recent_collection",
+        provenanceStatus: "field_sample",
         chiefScientistOrcid: "0000-0002-1825",
       },
     },
     {
       case: "unknown collection origin",
       input: {
-        provenanceStatus: "historical_specimen",
+        provenanceStatus: "collection_specimen",
         collectionOrigin: "stolen",
       },
     },

@@ -196,7 +196,7 @@
   "publish_blocked_vertical_position_incomplete": "A vertical position needs every value and a reference before publishing.",
   "publish_blocked_existence_status_missing": "State whether the sample still exists before publishing.",
   "publish_blocked_availability_status_missing": "State whether the sample is available before publishing.",
-  "publish_blocked_scientific_context_missing": "Set the provenance status (field collection or historical collection) before publishing.",
+  "publish_blocked_scientific_context_missing": "Set the provenance status (field sample or collection specimen) before publishing.",
   "publish_blocked_funder_organizations_missing": "Set the funder organizations before publishing.",
   "publish_blocked_research_program_name_missing": "Set the research programme name before publishing.",
   "publish_blocked_chief_scientist_missing": "Set the chief scientist before publishing.",

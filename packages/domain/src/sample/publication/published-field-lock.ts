@@ -40,14 +40,15 @@ const LOCKED_DESCRIPTION_FIELDS_TO_FORM_FIELDS = {
     "description.collectionDateTimeZone",
   ],
 } as const;
-const LOCKED_RECENT_COLLECTION_FIELDS_TO_FORM_FIELDS = {
+const LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   funderOrganizations: ["scientificContext.funderOrganizations"],
   researchProgramName: ["scientificContext.researchProgramName"],
   chiefScientist: ["scientificContext.chiefScientist"],
-  chiefScientistOrcid: ["scientificContext.chiefScientistOrcid"],
+  hostInstitution: ["scientificContext.hostInstitution"],
   collectorName: ["scientificContext.collectorName"],
+  collectorOrcid: ["scientificContext.collectorOrcid"],
 } as const;
-const LOCKED_HISTORICAL_SPECIMEN_FIELDS_TO_FORM_FIELDS = {
+const LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS = {
   collectionCurator: ["scientificContext.collectionCurator"],
   collectionOrigin: ["scientificContext.collectionOrigin"],
 } as const;
@@ -89,11 +90,9 @@ export const FROZEN_FORM_FIELDS_BY_PROVENANCE: Record<
   ProvenanceStatus,
   readonly string[]
 > = {
-  recent_collection: Object.values(
-    LOCKED_RECENT_COLLECTION_FIELDS_TO_FORM_FIELDS,
-  ).flat(),
-  historical_specimen: Object.values(
-    LOCKED_HISTORICAL_SPECIMEN_FIELDS_TO_FORM_FIELDS,
+  field_sample: Object.values(LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS).flat(),
+  collection_specimen: Object.values(
+    LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS,
   ).flat(),
 };
 
@@ -101,13 +100,13 @@ export function frozenMaterialDepth(material: Sample["material"]): number {
   return frozenMaterialPrefix(material)?.split(".").length ?? Infinity;
 }
 
-type RecentCollection = Extract<
+type FieldSample = Extract<
   ScientificContext,
-  { provenanceStatus: "recent_collection" }
+  { provenanceStatus: "field_sample" }
 >;
-type HistoricalSpecimen = Extract<
+type CollectionSpecimen = Extract<
   ScientificContext,
-  { provenanceStatus: "historical_specimen" }
+  { provenanceStatus: "collection_specimen" }
 >;
 
 function freezeLocked<T extends object, K extends keyof T & string>(
@@ -205,21 +204,21 @@ function mergeScientificContext(
   if (current == null) {
     return null;
   }
-  if (current.provenanceStatus === "recent_collection") {
-    if (incoming?.provenanceStatus !== "recent_collection") return current;
-    const payload: RecentCollection = { ...incoming };
+  if (current.provenanceStatus === "field_sample") {
+    if (incoming?.provenanceStatus !== "field_sample") return current;
+    const payload: FieldSample = { ...incoming };
     return freezeLocked(
       payload,
       current,
-      LOCKED_RECENT_COLLECTION_FIELDS_TO_FORM_FIELDS,
+      LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS,
     );
   }
-  if (incoming?.provenanceStatus !== "historical_specimen") return current;
-  const payload: HistoricalSpecimen = { ...incoming };
+  if (incoming?.provenanceStatus !== "collection_specimen") return current;
+  const payload: CollectionSpecimen = { ...incoming };
   return freezeLocked(
     payload,
     current,
-    LOCKED_HISTORICAL_SPECIMEN_FIELDS_TO_FORM_FIELDS,
+    LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS,
   );
 }
 

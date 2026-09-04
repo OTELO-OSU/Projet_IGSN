@@ -62,7 +62,7 @@ describe("SampleList", () => {
           region: { kind: "continent", country: "FR" },
         },
         scientificContext: {
-          provenanceStatus: "recent_collection",
+          provenanceStatus: "field_sample",
           collectorName: "Marie Curie",
         },
       }),
@@ -168,8 +168,8 @@ describe("SampleList", () => {
   });
 
   it.each([
-    ["a recent collection", "recent_collection"],
-    ["a historical specimen", "historical_specimen"],
+    ["a field sample", "field_sample"],
+    ["a collection specimen", "collection_specimen"],
   ] as const)("should show the collector of %s", async (_case, status) => {
     const screen = await renderSampleList([
       sampleItem({

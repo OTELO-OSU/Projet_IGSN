@@ -19,7 +19,7 @@ const publishable = {
   existenceStatus: "exists" as const,
   availabilityStatus: "available" as const,
   scientificContext: {
-    provenanceStatus: "historical_specimen" as const,
+    provenanceStatus: "collection_specimen" as const,
     collectionCurator: "Georges Cuvier",
     collectionOrigin: "scientific_expedition" as const,
   },
@@ -41,7 +41,18 @@ describe("publishedSampleSchema", () => {
     ["type_missing", { ...publishable, type: null }, "type"],
     [
       "location_position_missing",
-      { ...publishable, location: null },
+      {
+        ...publishable,
+        location: null,
+        scientificContext: {
+          provenanceStatus: "field_sample" as const,
+          funderOrganizations: ["02feahw73"],
+          researchProgramName: "Deep Biosphere Survey",
+          chiefScientist: "Marie Curie",
+          hostInstitution: ["04kdfz702"],
+          collectorName: "Pierre Curie",
+        },
+      },
       "location",
     ],
     [
@@ -54,7 +65,7 @@ describe("publishedSampleSchema", () => {
       {
         ...publishable,
         scientificContext: {
-          provenanceStatus: "historical_specimen" as const,
+          provenanceStatus: "collection_specimen" as const,
           collectionCurator: "Georges Cuvier",
         },
       },
@@ -65,7 +76,7 @@ describe("publishedSampleSchema", () => {
       {
         ...publishable,
         scientificContext: {
-          provenanceStatus: "recent_collection" as const,
+          provenanceStatus: "field_sample" as const,
           funderOrganizations: ["02feahw73"],
           researchProgramName: "Deep Biosphere Survey",
           chiefScientist: "Marie Curie",

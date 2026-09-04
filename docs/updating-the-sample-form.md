@@ -301,7 +301,7 @@ Two things that must go with any hide:
 - **A matching exclusion in `composeCreateSample`, on the same condition.** A hidden field keeps its value in the form store (so switching back restores it), but on save the compose step must drop it. Read the display condition and the compose exclusion off one shared helper, not two expressions that happen to agree: a coincidental pairing drifts the moment either side changes on its own. Miss the exclusion entirely and a hidden value reaches validation and fails silently: the save errors with no message the user can see or fix.
 - **Toggle the required marker with `withRequired`** if the field is a conditional publish requirement, so the trailing `*` appears exactly when the requirement holds. A field only ever rendered while its requirement holds can pass a bare `requiredToPublish` instead: there is no moment it is shown and not required, so nothing needs toggling.
 
-A requirement driven by another field (for example `allowsLocation(material)`) lives in `domain`, so the form and the publish tooltip always agree.
+A requirement driven by another field (for example `allowsLocation(material)`, or `requiresLocation(provenanceStatus)` which drops the requirement for a `collection_specimen`) lives in `domain`, so the form and the publish tooltip always agree.
 
 ## Verify
 

@@ -9,16 +9,16 @@ import {
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
-type RecentCollection = Extract<
+type FieldSample = Extract<
   ScientificContext,
-  { provenanceStatus: "recent_collection" }
+  { provenanceStatus: "field_sample" }
 >;
-type HistoricalSpecimen = Extract<
+type CollectionSpecimen = Extract<
   ScientificContext,
-  { provenanceStatus: "historical_specimen" }
+  { provenanceStatus: "collection_specimen" }
 >;
 
-function RecentCollectionRows({ context }: { context: RecentCollection }) {
+function FieldSampleRows({ context }: { context: FieldSample }) {
   return (
     <>
       <OrgLinksRow
@@ -73,7 +73,7 @@ function RecentCollectionRows({ context }: { context: RecentCollection }) {
   );
 }
 
-function HistoricalSpecimenRows({ context }: { context: HistoricalSpecimen }) {
+function CollectionSpecimenRows({ context }: { context: CollectionSpecimen }) {
   return (
     <>
       <FieldRow
@@ -110,10 +110,10 @@ export function ScientificContextView({
         label={m.sample_field_provenance_status()}
         value={provenanceStatusLabel(scientificContext.provenanceStatus)}
       />
-      {scientificContext.provenanceStatus === "recent_collection" ? (
-        <RecentCollectionRows context={scientificContext} />
+      {scientificContext.provenanceStatus === "field_sample" ? (
+        <FieldSampleRows context={scientificContext} />
       ) : (
-        <HistoricalSpecimenRows context={scientificContext} />
+        <CollectionSpecimenRows context={scientificContext} />
       )}
     </FieldRows>
   );

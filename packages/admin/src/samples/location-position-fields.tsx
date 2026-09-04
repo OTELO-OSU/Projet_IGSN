@@ -89,7 +89,13 @@ const ROWS: Record<LocationType, readonly PositionRow[]> = {
   ],
 };
 
-export function LocationPositionFields({ type }: { type: LocationType }) {
+export function LocationPositionFields({
+  type,
+  requiredToPublish,
+}: {
+  type: LocationType;
+  requiredToPublish: boolean;
+}) {
   const form = useSampleForm();
   return (
     <div className="grid gap-4 sm:grid-cols-3">
@@ -101,7 +107,7 @@ export function LocationPositionFields({ type }: { type: LocationType }) {
                 {(field) => (
                   <field.NumberField
                     label={coordinateLabel()}
-                    requiredToPublish
+                    requiredToPublish={requiredToPublish}
                     hint={hint()}
                   />
                 )}
