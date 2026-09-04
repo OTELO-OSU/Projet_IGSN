@@ -12,6 +12,7 @@ const base: Sample = {
   material: "rock.igneous.plutonic.felsic.granite",
   texture: null,
   metamorphicFacies: null,
+  metamorphicFabric: null,
   collectionMethod: null,
   collectionMethodDescription: null,
   specificName: "BAS-42-001",

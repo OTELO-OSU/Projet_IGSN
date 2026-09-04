@@ -11,6 +11,7 @@ const withdrawn: Sample = {
   material: "sediment",
   texture: null,
   metamorphicFacies: null,
+  metamorphicFabric: null,
   collectionMethod: "dredging",
   collectionMethodDescription: null,
   specificName: null,

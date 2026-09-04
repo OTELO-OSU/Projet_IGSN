@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { isMetamorphicRock } from "../material/is-metamorphic-rock.ts";
+
 export const METAMORPHIC_FACIES = [
   "zeolite",
   "prehnite_pumpellyite",
@@ -19,10 +21,5 @@ export type MetamorphicFacies = z.infer<typeof metamorphicFaciesSchema>;
 export function faciesFor(
   material: string | null,
 ): readonly MetamorphicFacies[] {
-  if (!material) return [];
-  const segments = material.split(".");
-  if (segments[0] === "rock" && segments[1] === "metamorphic") {
-    return METAMORPHIC_FACIES;
-  }
-  return [];
+  return isMetamorphicRock(material) ? METAMORPHIC_FACIES : [];
 }

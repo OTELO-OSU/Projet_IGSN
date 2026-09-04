@@ -33,7 +33,25 @@ describe("materialPathLabel", () => {
     ["rock.hydrothermal", "Hydrothermal"],
     ["fossil", "Fossil"],
     ["extraterrestrial_rock", "Extraterrestrial rock"],
+    ["rock.igneous.plutonic.felsic.granite", "Granite"],
   ] as const)("should label %s as its node name %s", (path, label) => {
+    expect(materialPathLabel(path)).toBe(label);
+  });
+
+  it.each([
+    [
+      "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic",
+      "Meta-Plutonic",
+    ],
+    [
+      "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
+      "Meta-Granite",
+    ],
+    [
+      "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock",
+      "Meta-igneous rock",
+    ],
+  ] as const)("should prefix %s with Meta- as %s", (path, label) => {
     expect(materialPathLabel(path)).toBe(label);
   });
 });

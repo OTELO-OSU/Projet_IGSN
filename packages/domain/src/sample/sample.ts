@@ -20,6 +20,10 @@ import { allowsLocation } from "./location/allows-location.ts";
 import { locationSchema } from "./location/model.ts";
 import { materialPathSchema } from "./material/classification.ts";
 import {
+  fabricsFor,
+  metamorphicFabricSchema,
+} from "./metamorphic-fabric/vocabulary.ts";
+import {
   faciesFor,
   metamorphicFaciesSchema,
 } from "./metamorphic-facies/vocabulary.ts";
@@ -56,6 +60,7 @@ export const sampleSchema = z.object({
   material: materialPathSchema.nullable(),
   texture: textureSchema.nullable(),
   metamorphicFacies: metamorphicFaciesSchema.nullable(),
+  metamorphicFabric: metamorphicFabricSchema.nullable(),
   collectionMethod: collectionMethodSchema.nullable(),
   collectionMethodDescription: nameSchema.nullable(),
   specificName: nameSchema.nullable(),
@@ -104,6 +109,7 @@ export const createSampleSchema = z
     material: materialPathSchema.nullish(),
     texture: textureSchema.nullish(),
     metamorphicFacies: metamorphicFaciesSchema.nullish(),
+    metamorphicFabric: metamorphicFabricSchema.nullish(),
     collectionMethod: collectionMethodSchema.nullish(),
     collectionMethodDescription: nameSchema.nullish(),
     specificName: nameSchema.nullish(),
@@ -147,6 +153,16 @@ export const createSampleSchema = z
         code: "custom",
         path: ["metamorphicFacies"],
         message: "metamorphic facies is not valid for the selected material",
+      });
+    }
+    if (
+      value.metamorphicFabric != null &&
+      !fabricsFor(value.material ?? null).includes(value.metamorphicFabric)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["metamorphicFabric"],
+        message: "metamorphic fabric is not valid for the selected material",
       });
     }
     if (

@@ -232,6 +232,7 @@ function mergeMaterialDependent(
     ...incoming,
     texture: current.texture,
     metamorphicFacies: current.metamorphicFacies,
+    metamorphicFabric: current.metamorphicFabric,
   };
 }
 

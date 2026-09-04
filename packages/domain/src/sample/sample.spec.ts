@@ -8,6 +8,7 @@ const validSample = {
   material: null,
   texture: null,
   metamorphicFacies: null,
+  metamorphicFabric: null,
   collectionMethod: "coring.gravity_corer",
   collectionMethodDescription: null,
   specificName: null,
@@ -45,6 +46,7 @@ describe("sampleSchema", () => {
       material: null,
       texture: null,
       metamorphicFacies: null,
+      metamorphicFabric: null,
       collectionMethod: "coring.gravity_corer",
       collectionMethodDescription: null,
       specificName: null,
@@ -194,20 +196,34 @@ describe("createSampleSchema", () => {
     expect(result).toMatchObject({ success: true });
   });
 
+  it("should accept a metamorphic fabric for a metamorphic material", () => {
+    const result = createSampleSchema.safeParse({
+      name: "Gneiss 2",
+      nature: "hand_sample",
+      material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+      metamorphicFabric: "gneissic",
+    });
+    expect(result).toMatchObject({ success: true });
+  });
+
   it.each([
     {
       material: "rock.igneous.plutonic.felsic.granite",
       metamorphicFacies: "amphibolite",
     },
     { material: null, metamorphicFacies: "amphibolite" },
+    {
+      material: "rock.igneous.plutonic.felsic.granite",
+      metamorphicFabric: "gneissic",
+    },
+    { material: null, metamorphicFabric: "gneissic" },
   ])(
-    "should reject a metamorphic facies inconsistent with the material %o",
-    ({ material, metamorphicFacies }) => {
+    "should reject a metamorphic facies or fabric inconsistent with the material %o",
+    (fields) => {
       const result = createSampleSchema.safeParse({
         name: "Sample",
         nature: "hand_sample",
-        material,
-        metamorphicFacies,
+        ...fields,
       });
       expect(result.success).toBe(false);
     },
