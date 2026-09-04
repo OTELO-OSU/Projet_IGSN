@@ -27,13 +27,11 @@ const collectionSpecimen = {
 };
 
 describe("scientificContextSchema", () => {
-  it("should accept a full recent-collection context", () => {
-    expect(scientificContextSchema.parse(fieldSample)).toEqual(
-      fieldSample,
-    );
+  it("should accept a full field-sample context", () => {
+    expect(scientificContextSchema.parse(fieldSample)).toEqual(fieldSample);
   });
 
-  it("should accept a full historical-specimen context", () => {
+  it("should accept a full collection-specimen context", () => {
     expect(scientificContextSchema.parse(collectionSpecimen)).toEqual(
       collectionSpecimen,
     );

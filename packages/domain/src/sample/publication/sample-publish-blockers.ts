@@ -6,6 +6,7 @@ import type { Sample } from "../sample.ts";
 import { canPublishSamples } from "../../user/can-publish-samples.ts";
 import { DEFAULT_UPLOAD_LIMIT } from "../attachment/attachment-validator.ts";
 import { allowsLocation } from "../location/allows-location.ts";
+import { requiresLocation } from "../location/requires-location.ts";
 import { verticalValues } from "../location/vertical-values.ts";
 import { MATERIAL_PATHS } from "../material/classification.ts";
 import { isMaterialComplete } from "../material/is-complete.ts";
@@ -125,6 +126,7 @@ export function samplePublishBlockers(
   if (
     materialComplete &&
     allowsLocation(sample.material) &&
+    requiresLocation(sample.scientificContext?.provenanceStatus) &&
     !sample.location?.position
   ) {
     blockers.push("location_position_missing");

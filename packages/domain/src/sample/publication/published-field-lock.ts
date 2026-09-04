@@ -89,9 +89,7 @@ export const FROZEN_FORM_FIELDS_BY_PROVENANCE: Record<
   ProvenanceStatus,
   readonly string[]
 > = {
-  field_sample: Object.values(
-    LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS,
-  ).flat(),
+  field_sample: Object.values(LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS).flat(),
   collection_specimen: Object.values(
     LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS,
   ).flat(),

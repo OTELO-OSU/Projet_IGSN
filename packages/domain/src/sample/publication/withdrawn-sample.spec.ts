@@ -72,7 +72,7 @@ describe("toWithdrawnSample", () => {
     });
   });
 
-  it("should expose the curator of a historical specimen", () => {
+  it("should expose the curator of a collection specimen", () => {
     const scientificContext = {
       provenanceStatus: "collection_specimen",
       collectorName: "Pierre Curie",

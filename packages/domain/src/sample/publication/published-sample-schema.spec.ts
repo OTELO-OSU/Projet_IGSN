@@ -35,7 +35,18 @@ describe("publishedSampleSchema", () => {
     ["type_missing", { ...publishable, type: null }, "type"],
     [
       "location_position_missing",
-      { ...publishable, location: null },
+      {
+        ...publishable,
+        location: null,
+        scientificContext: {
+          provenanceStatus: "field_sample" as const,
+          funderOrganizations: ["02feahw73"],
+          researchProgramName: "Deep Biosphere Survey",
+          chiefScientist: "Marie Curie",
+          hostInstitution: ["04kdfz702"],
+          collectorName: "Pierre Curie",
+        },
+      },
       "location",
     ],
     [
