@@ -41,7 +41,7 @@ Accepted. Supersedes ADR 0019's "still to come" paragraph (role column, adding a
 
 - Publishing a shared draft silently revokes the contributor's write access, notifying nobody.
 - Being added mails an invitation naming the inviter, sample and role; a re-add that changes nothing sends nothing.
-- Being removed mails the removed collaborator, naming the remover and the sample.
-- Deleting a draft mails every other collaborator, the deleter excluded; the collaborator list is read before the cascading delete of `user_sample` rows.
+- Being removed mails the removed collaborator, naming the remover and the sample, unless their account is `rejected`.
+- Deleting a draft mails every other collaborator, the deleter and `rejected` accounts excluded (`domain/user/can-receive-mail.ts`); the collaborator list is read before the cascading delete of `user_sample` rows.
 - A collaborator rejected after being added keeps their `user_sample` row, nothing revoking it. Safe, since `currentUser` 403s a rejected non-super-admin at the admin router root, so the stale row grants nothing and the UI only labels them.
 - The zero-owner case stays latent until user deletion (REQ-USER-01) ships: reassign ownership in the same transaction as the delete, or the sample is left with nobody able to publish or share it.
