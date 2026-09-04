@@ -521,17 +521,16 @@ export function SampleForm({
                     <form.AppForm>
                       <MetamorphicFaciesField />
                     </form.AppForm>
+                    <form.AppField name="specificName">
+                      {(field) => (
+                        <field.TextField label={m.field_specific_name()} />
+                      )}
+                    </form.AppField>
                   </FormSection>
 
                   <form.AppForm>
                     <SampleEconomicInterestFields />
                   </form.AppForm>
-
-                  <form.AppField name="specificName">
-                    {(field) => (
-                      <field.TextField label={m.field_specific_name()} />
-                    )}
-                  </form.AppField>
                 </TabsContent>
 
                 <TabsContent
