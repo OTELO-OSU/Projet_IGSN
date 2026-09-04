@@ -9,6 +9,10 @@ export type AddCollaboratorResult =
   | "already_collaborator"
   | { added: Pick<User, "email" | "name" | "firstname"> };
 
+export type RemoveCollaboratorResult =
+  | { removed: Pick<User, "email" | "name" | "firstname"> }
+  | "not_found";
+
 export type ContactSample = Pick<
   Sample,
   | "id"
@@ -29,7 +33,7 @@ export type UserSampleRepository = {
   removeCollaborator(
     sampleId: string,
     userId: string,
-  ): Promise<"removed" | "not_found">;
+  ): Promise<RemoveCollaboratorResult>;
   listCollaborators(sampleId: string): Promise<SampleCollaborator[]>;
   listContactRecipients(sample: ContactSample): Promise<string[]>;
 };
