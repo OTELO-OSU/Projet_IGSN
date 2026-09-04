@@ -13,7 +13,7 @@ const publishable = {
   existenceStatus: "exists" as const,
   availabilityStatus: "available" as const,
   scientificContext: {
-    provenanceStatus: "historical_specimen" as const,
+    provenanceStatus: "collection_specimen" as const,
     collectionCurator: "Georges Cuvier",
     collectionOrigin: "scientific_expedition" as const,
   },
@@ -48,7 +48,7 @@ describe("publishedSampleSchema", () => {
       {
         ...publishable,
         scientificContext: {
-          provenanceStatus: "historical_specimen" as const,
+          provenanceStatus: "collection_specimen" as const,
           collectionCurator: "Georges Cuvier",
         },
       },
@@ -59,7 +59,7 @@ describe("publishedSampleSchema", () => {
       {
         ...publishable,
         scientificContext: {
-          provenanceStatus: "recent_collection" as const,
+          provenanceStatus: "field_sample" as const,
           funderOrganizations: ["02feahw73"],
           researchProgramName: "Deep Biosphere Survey",
           chiefScientist: "Marie Curie",

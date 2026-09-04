@@ -50,7 +50,7 @@ const stored: Sample = {
   geologicalContextDescription: "stored geological context",
   geomorphologicalEnvironment: "marine_zone.fjord",
   scientificContext: {
-    provenanceStatus: "recent_collection",
+    provenanceStatus: "field_sample",
     funderOrganizations: ["https://ror.org/00stored"],
     researchProgramName: "Stored program",
     chiefScientist: "Stored chief",
@@ -133,7 +133,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     geologicalContextDescription: "edited geological context",
     geomorphologicalEnvironment: "wetland.peat_bog",
     scientificContext: {
-      provenanceStatus: "recent_collection",
+      provenanceStatus: "field_sample",
       funderOrganizations: ["https://ror.org/00edited"],
       researchProgramName: "Edited program",
       chiefScientist: "Edited chief",
@@ -370,7 +370,7 @@ describe("mergePublishedEdit", () => {
   it("keeps frozen scientific-context leaves but takes editable ones on the same branch", () => {
     const merged = mergePublishedEdit(stored, incoming());
     expect(merged.scientificContext).toMatchObject({
-      provenanceStatus: "recent_collection",
+      provenanceStatus: "field_sample",
       funderOrganizations: ["https://ror.org/00stored"],
       researchProgramName: "Stored program",
       chiefScientist: "Stored chief",
@@ -386,7 +386,7 @@ describe("mergePublishedEdit", () => {
       stored,
       incoming({
         scientificContext: {
-          provenanceStatus: "historical_specimen",
+          provenanceStatus: "collection_specimen",
           collectionCurator: "Smuggled curator",
           collectionOrigin: "purchase",
           collectorName: "Smuggled collector",

@@ -182,7 +182,7 @@ export function samplePublishBlockers(
   const context = sample.scientificContext;
   if (context == null) {
     blockers.push("scientific_context_missing");
-  } else if (context.provenanceStatus === "recent_collection") {
+  } else if (context.provenanceStatus === "field_sample") {
     if (context.funderOrganizations == null)
       blockers.push("funder_organizations_missing");
     if (context.researchProgramName == null)

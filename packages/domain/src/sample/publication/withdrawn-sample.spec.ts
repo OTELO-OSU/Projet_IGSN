@@ -27,7 +27,7 @@ const withdrawn: Sample = {
   geologicalContextDescription: "kept out of the public view",
   geomorphologicalEnvironment: "continental_zone.bedrock",
   scientificContext: {
-    provenanceStatus: "recent_collection",
+    provenanceStatus: "field_sample",
     collectorName: "Claire Martin",
   },
   syntheticDetails: null,
@@ -74,7 +74,7 @@ describe("toWithdrawnSample", () => {
 
   it("should expose the curator of a historical specimen", () => {
     const scientificContext = {
-      provenanceStatus: "historical_specimen",
+      provenanceStatus: "collection_specimen",
       collectorName: "Pierre Curie",
       collectionCurator: "Paris museum",
     } satisfies ScientificContext;

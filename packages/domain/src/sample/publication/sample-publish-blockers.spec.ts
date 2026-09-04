@@ -22,7 +22,7 @@ const base: Sample = {
   geologicalContextDescription: null,
   geomorphologicalEnvironment: null,
   scientificContext: {
-    provenanceStatus: "recent_collection",
+    provenanceStatus: "field_sample",
     funderOrganizations: ["02feahw73"],
     researchProgramName: "Deep Biosphere Survey",
     chiefScientist: "Marie Curie",
@@ -420,7 +420,7 @@ describe("samplePublishBlockers", () => {
     expect(
       samplePublishBlockers({
         ...base,
-        scientificContext: { provenanceStatus: "recent_collection" },
+        scientificContext: { provenanceStatus: "field_sample" },
       }),
     ).toEqual([
       "funder_organizations_missing",
@@ -436,7 +436,7 @@ describe("samplePublishBlockers", () => {
       samplePublishBlockers({
         ...base,
         scientificContext: {
-          provenanceStatus: "recent_collection",
+          provenanceStatus: "field_sample",
           funderOrganizations: ["02feahw73"],
           researchProgramName: "Deep Biosphere Survey",
           chiefScientist: "Marie Curie",
@@ -449,7 +449,7 @@ describe("samplePublishBlockers", () => {
     expect(
       samplePublishBlockers({
         ...base,
-        scientificContext: { provenanceStatus: "historical_specimen" },
+        scientificContext: { provenanceStatus: "collection_specimen" },
       }),
     ).toEqual(["collection_curator_missing", "collection_origin_missing"]);
   });
@@ -459,7 +459,7 @@ describe("samplePublishBlockers", () => {
       samplePublishBlockers({
         ...base,
         scientificContext: {
-          provenanceStatus: "historical_specimen",
+          provenanceStatus: "collection_specimen",
           collectionCurator: "Georges Cuvier",
           collectionOrigin: "scientific_expedition",
         },
