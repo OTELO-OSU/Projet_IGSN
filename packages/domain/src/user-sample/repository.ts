@@ -10,7 +10,7 @@ export type AddCollaboratorResult =
   | { added: Pick<User, "email" | "name" | "firstname"> };
 
 export type RemoveCollaboratorResult =
-  | { removed: Pick<User, "email" | "name" | "firstname"> }
+  | { removed: Pick<User, "email" | "name" | "firstname" | "status"> }
   | "not_found";
 
 export type ContactSample = Pick<

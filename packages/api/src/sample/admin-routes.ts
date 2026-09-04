@@ -30,6 +30,7 @@ import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-samp
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
+import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
 import { Hono } from "hono";
 
 import type { ModerationEnv } from "../auth/require-user-moderation.ts";
@@ -230,7 +231,7 @@ export function createSampleAdminRoutes(
         if (removed === "not_found") {
           return c.json({ error: "Collaborator not found" }, 404);
         }
-        if (mail) {
+        if (mail && canReceiveMail(removed.removed)) {
           void trySendMail(
             removed.removed.email,
             () =>

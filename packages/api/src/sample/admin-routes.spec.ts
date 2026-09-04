@@ -3021,6 +3021,77 @@ describe("admin sample routes", () => {
       },
     );
 
+    pgTest(
+      "should not mail a removed collaborator whose account is rejected",
+      async ({ db }) => {
+        const sendMail = vi.fn().mockResolvedValue(undefined);
+        const { app, sample, colleague } = await arrangeOwnedSample(db, {
+          sendMail,
+          adminUrl: ADMIN_URL,
+          frontendUrl: FRONTEND_URL,
+        });
+        const client = testClient(app);
+        await client.admin.samples[":id"].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
+          { headers: authHeader },
+        );
+        await vi.waitFor(() => expect(sendMail).toHaveBeenCalled());
+        sendMail.mockClear();
+        await db
+          .updateTable("user")
+          .set({ status: "rejected" })
+          .where("id", "=", colleague.id)
+          .execute();
+
+        const res = await client.admin.samples[":id"].collaborators[
+          ":userId"
+        ].$delete(
+          { param: { id: sample.id, userId: colleague.id } },
+          { headers: authHeader },
+        );
+
+        expect(res.status).toBe(204);
+        expect(sendMail).not.toHaveBeenCalled();
+      },
+    );
+
+    pgTest(
+      "should not mail a rejected collaborator when a draft is deleted",
+      async ({ db }) => {
+        const sendMail = vi.fn().mockResolvedValue(undefined);
+        const { app, sample, colleague } = await arrangeOwnedSample(db, {
+          sendMail,
+          adminUrl: ADMIN_URL,
+          frontendUrl: FRONTEND_URL,
+        });
+        await testClient(app).admin.samples[":id"].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "contributor" },
+          },
+          { headers: authHeader },
+        );
+        await vi.waitFor(() => expect(sendMail).toHaveBeenCalled());
+        sendMail.mockClear();
+        await db
+          .updateTable("user")
+          .set({ status: "rejected" })
+          .where("id", "=", colleague.id)
+          .execute();
+
+        const res = await app.request(`/admin/samples/${sample.id}`, {
+          method: "DELETE",
+          headers: authHeader,
+        });
+
+        expect(res.status).toBe(204);
+        expect(sendMail).not.toHaveBeenCalled();
+      },
+    );
+
     pgTest("should not invite a contributor added twice", async ({ db }) => {
       const sendMail = vi.fn().mockResolvedValue(undefined);
       const { app, sample, colleague } = await arrangeOwnedSample(db, {

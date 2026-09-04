@@ -17,7 +17,7 @@ export async function deleteSampleCollaborator(
     .where("user_sample.sample_id", "=", sampleId)
     .where("user_sample.user_id", "=", userId)
     .where("user_sample.role", "!=", "owner")
-    .returning(["user.email", "user.name", "user.firstname"])
+    .returning(["user.email", "user.name", "user.firstname", "user.status"])
     .executeTakeFirst();
   if (!removed) return "not_found";
   await releaseEditLock(db, sampleId, userId);

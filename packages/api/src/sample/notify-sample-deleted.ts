@@ -2,6 +2,8 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { SampleCollaborator } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 
+import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
+
 import type { SendMail } from "../mail/send-mail.ts";
 
 import { trySendMail } from "../mail/try-send-mail.ts";
@@ -23,7 +25,10 @@ export async function notifySampleDeleted({
   try {
     await Promise.all(
       collaborators
-        .filter((collaborator) => collaborator.id !== deleter.id)
+        .filter(
+          (collaborator) =>
+            collaborator.id !== deleter.id && canReceiveMail(collaborator),
+        )
         .map((recipient) =>
           trySendMail(
             recipient.email,

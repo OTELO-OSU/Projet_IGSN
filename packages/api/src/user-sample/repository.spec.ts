@@ -248,6 +248,7 @@ describe("userSampleRepository", () => {
         email: "contributor@univ-lorraine.fr",
         name: null,
         firstname: null,
+        status: "accepted",
       },
     });
     expect(await repository.listCollaborators(sample.id)).toEqual([
