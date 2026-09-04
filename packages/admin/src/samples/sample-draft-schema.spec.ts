@@ -34,6 +34,7 @@ const draft: SampleDraft = {
   materialPath: toHierarchyPath("fossil"),
   texture: undefined,
   metamorphicFacies: undefined,
+  metamorphicFabric: undefined,
   collectionMethodPath: toHierarchyPath(null),
   collectionMethodDescription: null,
   specificName: null,

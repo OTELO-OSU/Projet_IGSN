@@ -24,6 +24,7 @@ const sample: AdminSampleListItem = {
   material: null,
   texture: null,
   metamorphicFacies: null,
+  metamorphicFabric: null,
   collectionMethod: "coring.gravity_corer",
   collectionMethodDescription: null,
   specificName: "MC-2026-007",

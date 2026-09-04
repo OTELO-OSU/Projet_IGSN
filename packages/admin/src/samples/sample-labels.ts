@@ -14,6 +14,7 @@ export const {
   elementLabel,
   textureLabel,
   metamorphicFaciesLabel,
+  metamorphicFabricLabel,
   natureLabel,
   oceanSeaLabel,
   verticalReferenceLabel,

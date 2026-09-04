@@ -3,6 +3,7 @@ import {
   HierarchySelectField,
 } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { MATERIAL_HIERARCHY } from "@projet-igsn/domain/sample/material/classification";
+import { fabricsFor } from "@projet-igsn/domain/sample/metamorphic-fabric/vocabulary";
 import { faciesFor } from "@projet-igsn/domain/sample/metamorphic-facies/vocabulary";
 import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 
@@ -23,7 +24,8 @@ export function MaterialField() {
       searchPlaceholder={m.material_search_placeholder()}
       emptyText={m.material_empty()}
       onChange={() => {
-        const { materialPath, texture, metamorphicFacies } = form.state.values;
+        const { materialPath, texture, metamorphicFacies, metamorphicFabric } =
+          form.state.values;
         const material = composeHierarchyValue(materialPath ?? []);
         const textures: readonly string[] = texturesFor(material);
         if (texture && !textures.includes(texture)) {
@@ -32,6 +34,10 @@ export function MaterialField() {
         const facies: readonly string[] = faciesFor(material);
         if (metamorphicFacies && !facies.includes(metamorphicFacies)) {
           form.setFieldValue("metamorphicFacies", undefined);
+        }
+        const fabrics: readonly string[] = fabricsFor(material);
+        if (metamorphicFabric && !fabrics.includes(metamorphicFabric)) {
+          form.setFieldValue("metamorphicFabric", undefined);
         }
       }}
     />

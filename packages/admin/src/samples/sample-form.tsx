@@ -58,6 +58,7 @@ import {
 } from "#/samples/curation-fields.tsx";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
+import { MetamorphicFabricField } from "#/samples/metamorphic-fabric-field.tsx";
 import { MetamorphicFaciesField } from "#/samples/metamorphic-facies-field.tsx";
 import { PhysicalDescriptionFields } from "#/samples/physical-description-fields.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
@@ -520,6 +521,9 @@ export function SampleForm({
                     </form.AppForm>
                     <form.AppForm>
                       <MetamorphicFaciesField />
+                    </form.AppForm>
+                    <form.AppForm>
+                      <MetamorphicFabricField />
                     </form.AppForm>
                   </FormSection>
 
