@@ -374,8 +374,10 @@ describe("mergePublishedEdit", () => {
       funderOrganizations: ["https://ror.org/00stored"],
       researchProgramName: "Stored program",
       chiefScientist: "Stored chief",
+      chiefScientistOrcid: "0000-0001-5109-3700",
+      hostInstitution: ["https://ror.org/00struct"],
       collectorName: "Stored collector",
-      collectorOrcid: "0000-0001-5109-3700",
+      collectorOrcid: "0000-0002-1825-0097",
       researchCampaign: "edited campaign",
       funding: "edited funding",
     });

@@ -43,8 +43,9 @@ const LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   funderOrganizations: ["scientificContext.funderOrganizations"],
   researchProgramName: ["scientificContext.researchProgramName"],
   chiefScientist: ["scientificContext.chiefScientist"],
-  chiefScientistOrcid: ["scientificContext.chiefScientistOrcid"],
+  hostInstitution: ["scientificContext.hostInstitution"],
   collectorName: ["scientificContext.collectorName"],
+  collectorOrcid: ["scientificContext.collectorOrcid"],
 } as const;
 const LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS = {
   collectionCurator: ["scientificContext.collectionCurator"],
