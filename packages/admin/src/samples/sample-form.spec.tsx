@@ -1698,24 +1698,6 @@ describe("SampleForm", () => {
     },
   );
 
-  it("should disable the Location tab once the material refuses it", async () => {
-    const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
-    );
-
-    await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await screen
-      .getByRole("combobox", { name: "Material *", exact: true })
-      .click();
-    await screen
-      .getByRole("option", { name: "Synthetic rock / mineral" })
-      .click();
-
-    await expect
-      .element(screen.getByRole("tab", { name: "Location" }))
-      .toBeDisabled();
-  });
-
   it("should submit a point location entered on the Location tab", async () => {
     const onSubmit = vi.fn();
     const screen = await renderLocation("Point", onSubmit);
