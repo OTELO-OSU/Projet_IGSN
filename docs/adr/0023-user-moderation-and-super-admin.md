@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Amended 2026-08-24, folded in below.
+Accepted. Amended 2026-08-24, folded in below. Amended 2026-09-04: a rejected account is never mailed.
 
 ## Context
 
@@ -41,3 +41,4 @@ UPDATE "user" SET status = 'accepted', super_admin = true WHERE email = '<email>
 - Adding a role beyond owner and super admin shipped as the space manager (ADR 0030), derived from a scope rather than a second boolean.
 - It widens `/admin/users` reach, the digest recipients and, per sample in scope, the ownership override, never `canPublishSamples`.
 - A re-pended trio-less account has no laboratory, so it is out of every space manager's reach and digest, and appears only in the super admins' weekly digest; no mail is sent on removal.
+- A `rejected` account receives no mail from any path: `domain/user/can-receive-mail.ts` guards the per-user notifiers (collaborator removal, draft deletion, moderated edit), and the recipient queries (`listSuperAdminEmails`, `listSpaceManagers`, `listContactRecipients`) filter on status in SQL; a rejected super admin is skipped by the admin notifications too.
