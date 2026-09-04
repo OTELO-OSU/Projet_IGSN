@@ -16,11 +16,24 @@ describe("collectionMethodSchema", () => {
   });
 
   it.each([
+    "coring.piston_corer.piston_corer",
+    "coring.piston_corer.giant",
+    "coring.piston_corer.stationary_piston",
+    "coring.rock_corer",
+    "coring.hollow_auger_corer",
+  ])("should accept %s", (input) => {
+    expect(collectionMethodSchema.safeParse(input).success).toBe(true);
+  });
+
+  it.each([
     "",
     "gravity_corer",
     "dredging.gravity_corer",
     "coring.unknown",
     "Coring",
+    "coring.piston_corer.rock_corer",
+    "coring.piston_corer.hollow_auger_corer",
+    "coring.piston_corer.piston_corer.piston_corer",
   ])("should reject %s", (input) => {
     expect(collectionMethodSchema.safeParse(input).success).toBe(false);
   });
