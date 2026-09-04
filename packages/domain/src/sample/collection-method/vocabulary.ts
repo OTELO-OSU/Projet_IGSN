@@ -46,20 +46,9 @@ const collectionMethodTree = {
   "gravity_corer.gravity_corer": { label: "gravity_corer" },
   piston_corer: {
     optional: true,
-    choices: [
-      "giant",
-      "stationary_piston",
-      "rock_corer",
-      "side_saddle_corer",
-      "submersible_mounted_corer",
-      "trigger_weight_corer",
-      "vibrating_corer",
-      "tube_without_corer",
-      "russian_corer",
-      "freeze_corer",
-      "hollow_auger_corer",
-    ],
+    choices: ["piston_corer", "giant", "stationary_piston"],
   },
+  "piston_corer.piston_corer": { label: "piston_corer" },
   dredging: {
     optional: true,
     searchable: true,
