@@ -29,8 +29,8 @@ Run this the first time infra is stood up, or when changing it.
 
 3. Set up outbound mail with a transactional-mail provider (Brevo, Resend,
    Postmark...; the stack only needs a plain SMTP endpoint). In the provider's
-   dashboard, register the sending domain for `postmaster@igsn.$DOMAIN`
-   (`igsn.$DOMAIN` or the zone, whichever the provider expects) and add the
+   dashboard, register the sending domain of the `SMTP_FROM` address, `postmaster@igsn.$DOMAIN`
+   by default (`igsn.$DOMAIN` or the zone, whichever the provider expects), and add the
    DKIM/SPF DNS records it gives you in Cloudflare, **DNS only (grey cloud)**:
    a proxied record answers with Cloudflare's own value, so the provider never
    sees it and verification never completes. Once verified, note the SMTP
