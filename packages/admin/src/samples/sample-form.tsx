@@ -407,14 +407,19 @@ export function SampleForm({
         className="flex flex-col gap-6"
       >
         <form.Subscribe
-          selector={(state) => composeHierarchyValue(state.values.materialPath)}
+          selector={(state) => ({
+            material: composeHierarchyValue(state.values.materialPath),
+            provenanceStatus: state.values.scientificContext.provenanceStatus,
+          })}
         >
-          {(material) => {
-            const showLocation = allowsLocation(material);
+          {({ material, provenanceStatus }) => {
             const showSynthetic = isSyntheticMaterial(material);
+            const isTabDisabled = (value: string) =>
+              (value === "location" && !allowsLocation(material)) ||
+              (value === "scientific-context" && !provenanceStatus);
             return (
               <Tabs
-                value={tab === "location" && !showLocation ? DEFAULT_TAB : tab}
+                value={isTabDisabled(tab) ? DEFAULT_TAB : tab}
                 onValueChange={setTab}
               >
                 <TabsList>
@@ -424,16 +429,20 @@ export function SampleForm({
                   <TabsTrigger value="classification">
                     {m.tab_sample_classification()}
                   </TabsTrigger>
-                  {showLocation ? (
-                    <TabsTrigger value="location">
-                      {m.tab_location()}
-                    </TabsTrigger>
-                  ) : null}
+                  <TabsTrigger
+                    value="location"
+                    disabled={isTabDisabled("location")}
+                  >
+                    {m.tab_location()}
+                  </TabsTrigger>
                   <TabsTrigger value="age">{m.tab_age()}</TabsTrigger>
                   <TabsTrigger value="physical-description">
                     {m.tab_physical_description()}
                   </TabsTrigger>
-                  <TabsTrigger value="scientific-context">
+                  <TabsTrigger
+                    value="scientific-context"
+                    disabled={isTabDisabled("scientific-context")}
+                  >
                     {m.tab_scientific_context()}
                   </TabsTrigger>
                   <TabsTrigger value="conservation">
@@ -442,11 +451,9 @@ export function SampleForm({
                   <TabsTrigger value="curation">
                     {m.tab_curation_repository()}
                   </TabsTrigger>
-                  {sampleId ? (
-                    <TabsTrigger value="related-resources">
-                      {m.tab_related_resources()}
-                    </TabsTrigger>
-                  ) : null}
+                  <TabsTrigger value="related-resources">
+                    {m.tab_related_resources()}
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value={DEFAULT_TAB} className="grid gap-4">
@@ -551,21 +558,19 @@ export function SampleForm({
                   ) : null}
                 </TabsContent>
 
-                {showLocation ? (
-                  <TabsContent value="location" className="grid gap-4">
-                    <FormSection title={m.section_location()}>
-                      <form.AppForm>
-                        <LocationFields />
-                      </form.AppForm>
-                    </FormSection>
+                <TabsContent value="location" className="grid gap-4">
+                  <FormSection title={m.section_location()}>
+                    <form.AppForm>
+                      <LocationFields />
+                    </form.AppForm>
+                  </FormSection>
 
-                    <FormSection title={m.section_geomorphological_context()}>
-                      <form.AppForm>
-                        <SampleGeologicalContextFields />
-                      </form.AppForm>
-                    </FormSection>
-                  </TabsContent>
-                ) : null}
+                  <FormSection title={m.section_geomorphological_context()}>
+                    <form.AppForm>
+                      <SampleGeologicalContextFields />
+                    </form.AppForm>
+                  </FormSection>
+                </TabsContent>
 
                 <TabsContent value="age" className="grid gap-4">
                   <form.AppForm>
@@ -622,20 +627,18 @@ export function SampleForm({
                   </FormSection>
                 </TabsContent>
 
-                {sampleId ? (
-                  <TabsContent value="related-resources" className="grid gap-6">
-                    <form.AppForm>
-                      <SampleRelationsFields />
-                    </form.AppForm>
-                    {attachmentChanges ? (
-                      <SampleAttachments
-                        sampleId={sampleId}
-                        attachments={attachments}
-                        changes={attachmentChanges}
-                      />
-                    ) : null}
-                  </TabsContent>
-                ) : null}
+                <TabsContent value="related-resources" className="grid gap-6">
+                  <form.AppForm>
+                    <SampleRelationsFields />
+                  </form.AppForm>
+                  {sampleId && attachmentChanges ? (
+                    <SampleAttachments
+                      sampleId={sampleId}
+                      attachments={attachments}
+                      changes={attachmentChanges}
+                    />
+                  ) : null}
+                </TabsContent>
               </Tabs>
             );
           }}

@@ -5,21 +5,10 @@ import type {
 import type { ComponentProps } from "react";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
-import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 
-import { fakeSample } from "../../test/fake-sample.ts";
-import { worker } from "../../test/msw.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
-
-beforeAll(() => {
-  worker.use(
-    http.get("*/samples/:id", () =>
-      HttpResponse.json({ data: fakeSample, role: "owner" }),
-    ),
-  );
-});
 
 const noop = () => {};
 
@@ -1576,7 +1565,7 @@ describe("SampleForm", () => {
   it.each([
     ["a synthetic material", "synthetic_rock_mineral"],
     ["a returned sample", "extraterrestrial_rock.returned_samples.other"],
-  ])("should hide the Location tab for %s", async (_case, material) => {
+  ])("should disable the Location tab for %s", async (_case, material) => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -1597,12 +1586,24 @@ describe("SampleForm", () => {
       .toBeVisible();
     await expect
       .element(screen.getByRole("tab", { name: "Location" }))
-      .not.toBeInTheDocument();
+      .toBeDisabled();
   });
 
   it("should head the identity and scientific context tabs with a section heading", async () => {
     const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+      <SampleForm
+        onCancel={noop}
+        defaultValues={{
+          name: "Basalte du Massif Central",
+          nature: "thin_section",
+          type: null,
+          material: null,
+          collectionMethod: null,
+          collectionMethodDescription: null,
+          scientificContext: { provenanceStatus: "field_sample" },
+        }}
+        primaryAction={createAction(noop)}
+      />,
     );
 
     await expect
@@ -1617,11 +1618,7 @@ describe("SampleForm", () => {
 
   it("should list the tabs in their reading order, related resources last", async () => {
     const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        sampleId={fakeSample.id}
-        primaryAction={createAction(noop)}
-      />,
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
 
     await expect
@@ -1701,7 +1698,7 @@ describe("SampleForm", () => {
     },
   );
 
-  it("should hide the Location tab once the material refuses it", async () => {
+  it("should disable the Location tab once the material refuses it", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
     );
@@ -1716,7 +1713,7 @@ describe("SampleForm", () => {
 
     await expect
       .element(screen.getByRole("tab", { name: "Location" }))
-      .not.toBeInTheDocument();
+      .toBeDisabled();
   });
 
   it("should submit a point location entered on the Location tab", async () => {

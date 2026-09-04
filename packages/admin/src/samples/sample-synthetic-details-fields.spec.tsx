@@ -54,7 +54,7 @@ const pickOption = async (screen: Screen, combobox: string, option: string) => {
 };
 
 describe("SampleSyntheticDetailsFields", () => {
-  it("should swap the Location tab for the Synthetic details section with the material", async () => {
+  it("should disable the Location tab for the Synthetic details section with the material", async () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -65,7 +65,7 @@ describe("SampleSyntheticDetailsFields", () => {
 
     await expect
       .element(screen.getByRole("tab", { name: "Location" }))
-      .toBeVisible();
+      .toBeEnabled();
 
     await pickMaterial(screen, SYNTHETIC_MATERIAL);
 
@@ -74,7 +74,7 @@ describe("SampleSyntheticDetailsFields", () => {
       .toBeVisible();
     await expect
       .element(screen.getByRole("tab", { name: "Location" }))
-      .not.toBeInTheDocument();
+      .toBeDisabled();
 
     await pickMaterial(screen, "Fossil");
 
@@ -83,7 +83,7 @@ describe("SampleSyntheticDetailsFields", () => {
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByRole("tab", { name: "Location" }))
-      .toBeVisible();
+      .toBeEnabled();
   });
 
   it("should submit the entered synthesis details", async () => {

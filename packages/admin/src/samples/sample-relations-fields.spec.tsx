@@ -60,17 +60,19 @@ const select = async (
 };
 
 describe("SampleForm related resources tab", () => {
-  it("should hide the Related resources tab during creation", async () => {
+  it("should offer the relations but no attachments during creation", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={saveAction(vi.fn())} />,
     );
 
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
+
     await expect
-      .element(screen.getByRole("tab", { name: "Identity" }))
+      .element(screen.getByRole("heading", { name: "Related resources" }))
       .toBeVisible();
-    expect(
-      screen.getByRole("tab", { name: "Related URL or document" }).query(),
-    ).toBeNull();
+    await expect
+      .element(screen.getByRole("heading", { name: "Attached files" }))
+      .not.toBeInTheDocument();
   });
 
   it("should title one block per relation", async () => {
