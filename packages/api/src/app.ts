@@ -24,6 +24,8 @@ import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
 import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
+import { createServiceAccountRepository } from "./service-account/repository.ts";
+import { createServiceAccountRoutes } from "./service-account/routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createCurrentUserRoutes } from "./user/current-user-routes.ts";
 import { createPublicUserRoutes } from "./user/public-routes.ts";
@@ -61,6 +63,7 @@ export function createApp(
   const manualGroupRepository = createManualGroupRepository(database);
   const institutionalGroupRepository =
     createInstitutionalGroupRepository(database);
+  const serviceAccountRepository = createServiceAccountRepository(database);
 
   const publicSampleRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
@@ -116,6 +119,10 @@ export function createApp(
         userRepository,
         mail,
       ),
+    )
+    .route(
+      "/service-accounts",
+      createServiceAccountRoutes(serviceAccountRepository),
     )
     .route("/users/search", createUserSearchRoutes(userRepository))
     .route(
