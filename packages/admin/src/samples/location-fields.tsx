@@ -1,5 +1,6 @@
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { LOCATION_TYPES } from "@projet-igsn/domain/sample/location/location-type";
+import { requiresLocation } from "@projet-igsn/domain/sample/location/requires-location";
 
 import { m } from "#/paraglide/messages.js";
 import { locationTypeLabel } from "#/samples/location-label.ts";
@@ -14,21 +15,38 @@ export function LocationFields() {
   const form = useSampleForm();
   return (
     <div className="grid gap-4">
-      <form.AppField name="location.type">
-        {(field) => (
-          <field.ComboboxField
-            label={m.field_location_type()}
-            requiredToPublish
-            items={typeItems}
-            placeholder={m.location_type_placeholder()}
-            searchPlaceholder={m.location_type_search_placeholder()}
-            emptyText={m.location_type_empty()}
-          />
-        )}
-      </form.AppField>
+      <form.Subscribe
+        selector={(state) =>
+          requiresLocation(state.values.scientificContext.provenanceStatus)
+        }
+      >
+        {(requiredToPublish) => (
+          <>
+            <form.AppField name="location.type">
+              {(field) => (
+                <field.ComboboxField
+                  label={m.field_location_type()}
+                  requiredToPublish={requiredToPublish}
+                  items={typeItems}
+                  placeholder={m.location_type_placeholder()}
+                  searchPlaceholder={m.location_type_search_placeholder()}
+                  emptyText={m.location_type_empty()}
+                />
+              )}
+            </form.AppField>
 
-      <form.Subscribe selector={(state) => state.values.location.type}>
-        {(type) => (type ? <LocationPositionFields type={type} /> : null)}
+            <form.Subscribe selector={(state) => state.values.location.type}>
+              {(type) =>
+                type ? (
+                  <LocationPositionFields
+                    type={type}
+                    requiredToPublish={requiredToPublish}
+                  />
+                ) : null
+              }
+            </form.Subscribe>
+          </>
+        )}
       </form.Subscribe>
 
       <LocationNavigationTypeField />

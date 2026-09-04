@@ -1571,6 +1571,35 @@ describe("SampleForm", () => {
       .toBeVisible();
   });
 
+  it.each([
+    ["field_sample", "Type *"],
+    ["collection_specimen", "Type"],
+  ] as const)(
+    "marks the location type required to publish under %s as %s",
+    async (provenanceStatus, name) => {
+      const screen = await render(
+        <SampleForm
+          onCancel={noop}
+          defaultValues={{
+            name: "Basalte du Massif Central",
+            nature: "thin_section",
+            type: "dredge",
+            material: "fossil",
+            collectionMethod: null,
+            collectionMethodDescription: null,
+            scientificContext: { provenanceStatus },
+          }}
+          primaryAction={createAction(noop)}
+        />,
+      );
+
+      await screen.getByRole("tab", { name: "Location" }).click();
+      await expect
+        .element(screen.getByRole("combobox", { name, exact: true }))
+        .toBeVisible();
+    },
+  );
+
   it("should hide the Location tab once the material refuses it", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
