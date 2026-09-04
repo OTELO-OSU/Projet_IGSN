@@ -1,3 +1,5 @@
+import type { RemoveCollaboratorResult } from "@projet-igsn/domain/user-sample/repository";
+
 import type { DB } from "../db.ts";
 
 import { releaseEditLock } from "../sample/service/release-edit-lock.ts";
@@ -7,14 +9,17 @@ export async function deleteSampleCollaborator(
   db: Transactional<DB>,
   sampleId: string,
   userId: string,
-): Promise<"removed" | "not_found"> {
-  const result = await db
+): Promise<RemoveCollaboratorResult> {
+  const removed = await db
     .deleteFrom("user_sample")
-    .where("sample_id", "=", sampleId)
-    .where("user_id", "=", userId)
-    .where("role", "!=", "owner")
+    .using("user")
+    .whereRef("user.id", "=", "user_sample.user_id")
+    .where("user_sample.sample_id", "=", sampleId)
+    .where("user_sample.user_id", "=", userId)
+    .where("user_sample.role", "!=", "owner")
+    .returning(["user.email", "user.name", "user.firstname"])
     .executeTakeFirst();
-  if (result.numDeletedRows === 0n) return "not_found";
+  if (!removed) return "not_found";
   await releaseEditLock(db, sampleId, userId);
-  return "removed";
+  return { removed };
 }

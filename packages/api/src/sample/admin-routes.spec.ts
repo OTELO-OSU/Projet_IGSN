@@ -2948,6 +2948,79 @@ describe("admin sample routes", () => {
       );
     });
 
+    pgTest("should mail the removed collaborator", async ({ db }) => {
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const { app, sample, colleague } = await arrangeOwnedSample(db, {
+        sendMail,
+        adminUrl: ADMIN_URL,
+        frontendUrl: FRONTEND_URL,
+      });
+      const client = testClient(app);
+      await client.admin.samples[":id"].collaborators.$post(
+        {
+          param: { id: sample.id },
+          json: { userId: colleague.id, role: "contributor" },
+        },
+        { headers: authHeader },
+      );
+      await vi.waitFor(() => expect(sendMail).toHaveBeenCalled());
+      sendMail.mockClear();
+
+      const res = await client.admin.samples[":id"].collaborators[
+        ":userId"
+      ].$delete(
+        { param: { id: sample.id, userId: colleague.id } },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(204);
+      await vi.waitFor(() =>
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({
+            to: ["colleague@example.com"],
+            subject:
+              'Test User removed you from the sample "Basalte à partager"',
+          }),
+        ),
+      );
+      expect(sendMail.mock.calls[0]?.[0].text).toContain(ADMIN_URL);
+    });
+
+    pgTest(
+      "should mail the other collaborators, not the deleter, when a draft is deleted",
+      async ({ db }) => {
+        const sendMail = vi.fn().mockResolvedValue(undefined);
+        const { app, sample, colleague } = await arrangeOwnedSample(db, {
+          sendMail,
+          adminUrl: ADMIN_URL,
+          frontendUrl: FRONTEND_URL,
+        });
+        await testClient(app).admin.samples[":id"].collaborators.$post(
+          {
+            param: { id: sample.id },
+            json: { userId: colleague.id, role: "editor" },
+          },
+          { headers: authHeader },
+        );
+        await vi.waitFor(() => expect(sendMail).toHaveBeenCalled());
+        sendMail.mockClear();
+
+        const res = await app.request(`/admin/samples/${sample.id}`, {
+          method: "DELETE",
+          headers: colleagueHeader,
+        });
+
+        expect(res.status).toBe(204);
+        await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({
+            to: [authenticatedCallerEmail],
+            subject: 'Test User deleted the draft sample "Basalte à partager"',
+          }),
+        );
+      },
+    );
+
     pgTest("should not invite a contributor added twice", async ({ db }) => {
       const sendMail = vi.fn().mockResolvedValue(undefined);
       const { app, sample, colleague } = await arrangeOwnedSample(db, {

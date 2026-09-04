@@ -41,7 +41,9 @@ import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
 import { trySendMail } from "../mail/try-send-mail.ts";
 import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
+import { sampleRemovalMail } from "../user-sample/sample-removal-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
+import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
@@ -213,7 +215,8 @@ export function createSampleAdminRoutes(
       requireActiveSession,
       validateCollaboratorParams,
       async (c) => {
-        if (!c.get("sample")) {
+        const sample = c.get("sample");
+        if (!sample) {
           return c.json({ error: "Not found" }, 404);
         }
         if (!canManageCollaborators(c.get("shareRole"))) {
@@ -226,6 +229,20 @@ export function createSampleAdminRoutes(
         );
         if (removed === "not_found") {
           return c.json({ error: "Collaborator not found" }, 404);
+        }
+        if (mail) {
+          void trySendMail(
+            removed.removed.email,
+            () =>
+              sampleRemovalMail({
+                removed: removed.removed,
+                remover: c.get("user"),
+                sampleName: sample.name,
+                url: mail.adminUrl,
+              }),
+            mail.sendMail,
+            "Could not mail the collaborator removal",
+          );
         }
         return c.body(null, 204);
       },
@@ -361,8 +378,17 @@ export function createSampleAdminRoutes(
           return c.json({ error: "Forbidden" }, 403);
         }
         const id = c.req.valid("param").id;
+        const collaborators = await userSampleRepository.listCollaborators(id);
         await repository.remove(id);
         await attachmentsRepository.removeAll(id);
+        if (mail) {
+          void notifySampleDeleted({
+            collaborators,
+            deleter: c.get("user"),
+            sample,
+            mail,
+          });
+        }
         return c.body(null, 204);
       },
     )
