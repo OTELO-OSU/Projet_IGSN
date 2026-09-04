@@ -296,6 +296,7 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           .selectFrom("user")
           .select("email")
           .where("super_admin", "=", true)
+          .where("status", "!=", "rejected")
           .orderBy("email", "asc")
           .execute();
         return rows.map(({ email }) => email);

@@ -243,7 +243,14 @@ describe("userSampleRepository", () => {
       contributor.id,
     );
 
-    expect(result).toBe("removed");
+    expect(result).toEqual({
+      removed: {
+        email: "contributor@univ-lorraine.fr",
+        name: null,
+        firstname: null,
+        status: "accepted",
+      },
+    });
     expect(await repository.listCollaborators(sample.id)).toEqual([
       {
         id: owner.id,

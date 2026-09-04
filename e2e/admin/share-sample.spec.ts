@@ -3,12 +3,14 @@ import { sampleListPage } from "../support/admin/sample-list.page";
 import { shareSamplePage } from "../support/admin/share-sample.page";
 import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { test } from "../support/db";
+import { maildev } from "../support/maildev";
 
 const COLLEAGUE = "jean.martin@univ-lorraine.fr";
 
 test.describe("share a sample", () => {
   test("a researcher shares a draft with a colleague", async ({
     page,
+    request,
     samples,
   }) => {
     const draft = samples.find(
@@ -43,5 +45,11 @@ test.describe("share a sample", () => {
 
     await share.removeCollaborator("Jean Martin");
     await share.expectNoCollaborator(COLLEAGUE);
+
+    await maildev(request).expectMail(
+      COLLEAGUE,
+      `Camille Petit removed you from the sample "${draft.name}"`,
+      [draft.name],
+    );
   });
 });

@@ -4,6 +4,7 @@ import type { PublishStatus } from "@projet-igsn/domain/sample/sample-validator"
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
+import { canReceiveMail } from "@projet-igsn/domain/user/can-receive-mail";
 
 import type { SendMail } from "../mail/send-mail.ts";
 
@@ -27,7 +28,7 @@ export async function notifySampleModerated({
     const owner = (await userSamples.listCollaborators(sample.id)).find(
       (collaborator) => isSampleOwner(collaborator.role),
     );
-    if (!owner) {
+    if (!owner || !canReceiveMail(owner)) {
       return;
     }
     await trySendMail(

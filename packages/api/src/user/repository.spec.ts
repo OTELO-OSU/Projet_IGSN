@@ -700,15 +700,25 @@ describe("createUserRepository", () => {
     },
   );
 
-  pgTest("should list the super admins' emails", async ({ db }) => {
-    await insertUser(db, "zoe@univ-lorraine.fr", { superAdmin: true });
-    await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
-    await insertUser(db, "researcher@univ-lorraine.fr", {});
+  pgTest(
+    "should list the super admins' emails, rejected accounts excluded",
+    async ({ db }) => {
+      await insertUser(db, "zoe@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "admin@univ-lorraine.fr", { superAdmin: true });
+      await insertUser(db, "gone@univ-lorraine.fr", {
+        superAdmin: true,
+        status: "rejected",
+      });
+      await insertUser(db, "researcher@univ-lorraine.fr", {});
 
-    const emails = await createUserRepository(db).listSuperAdminEmails();
+      const emails = await createUserRepository(db).listSuperAdminEmails();
 
-    expect(emails).toEqual(["admin@univ-lorraine.fr", "zoe@univ-lorraine.fr"]);
-  });
+      expect(emails).toEqual([
+        "admin@univ-lorraine.fr",
+        "zoe@univ-lorraine.fr",
+      ]);
+    },
+  );
 
   pgTest(
     "should list the accepted non super admin users holding a scope",
