@@ -86,8 +86,8 @@ describe("tree vocabulary label coverage", () => {
   ] as const)(
     "should translate every %s path",
     (_vocabulary, paths, label, prefix) => {
-      const untranslated = paths.filter(
-        (path) => label(path) === `${prefix}_${pathSegment(path)}`,
+      const untranslated = paths.filter((path) =>
+        label(path).includes(`${prefix}_${pathSegment(path)}`),
       );
       expect(untranslated).toEqual([]);
     },
