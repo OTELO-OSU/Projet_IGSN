@@ -25,6 +25,7 @@ import {
   existenceStatusLabel,
   geomorphologicalEnvironmentLabel,
   materialPathLabel,
+  metamorphicFabricLabel,
   metamorphicFaciesLabel,
   natureLabel,
   textureLabel,
@@ -46,6 +47,7 @@ export function SampleView({
     material,
     texture,
     metamorphicFacies,
+    metamorphicFabric,
     specificName,
     collectionMethod,
     collectionMethodDescription,
@@ -108,6 +110,12 @@ export function SampleView({
             label={m.sample_field_metamorphic_facies()}
             value={
               metamorphicFacies && metamorphicFaciesLabel(metamorphicFacies)
+            }
+          />
+          <FieldRow
+            label={m.sample_field_metamorphic_fabric()}
+            value={
+              metamorphicFabric && metamorphicFabricLabel(metamorphicFabric)
             }
           />
           <FieldRow
