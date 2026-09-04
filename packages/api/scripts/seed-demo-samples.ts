@@ -363,6 +363,7 @@ const PUBLISHED: DemoRow[] = [
     type: "core.piece",
     material: "rock.metamorphic.strongly_metamorphosed.mica_schist",
     metamorphicFacies: "greenschist",
+    metamorphicFabric: "schistose",
     collectionMethod: "manual",
     location: {
       position: point(7.0, 45.9),
@@ -376,6 +377,7 @@ const PUBLISHED: DemoRow[] = [
     type: "individual_sample",
     material: "rock.metamorphic.strongly_metamorphosed.gneiss",
     metamorphicFacies: "amphibolite",
+    metamorphicFabric: "gneissic",
     collectionMethod: "manual",
     location: {
       position: point(13.6, 68.2),
@@ -467,8 +469,8 @@ const PUBLISHED: DemoRow[] = [
     type: "individual_sample",
     material:
       "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.volcanic.mafic.basalt",
-    texture: "aphanitic",
     metamorphicFacies: "greenschist",
+    metamorphicFabric: "schistose",
     collectionMethod: "manual",
     location: {
       position: point(7.1, 45.5, elev(2500)),
@@ -482,8 +484,8 @@ const PUBLISHED: DemoRow[] = [
     type: "individual_sample",
     material:
       "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
-    texture: "phaneritic",
     metamorphicFacies: "greenschist",
+    metamorphicFabric: "gneissic",
     collectionMethod: "manual",
     location: {
       position: point(6.9, 45.2),

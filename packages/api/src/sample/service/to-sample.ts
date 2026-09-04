@@ -209,6 +209,7 @@ export function toSample(
     material: row.material,
     texture: row.texture,
     metamorphicFacies: row.metamorphic_facies,
+    metamorphicFabric: row.metamorphic_fabric,
     collectionMethod: row.collection_method,
     collectionMethodDescription: row.collection_method_description,
     geologicalContextDescription: row.geological_context_description,
