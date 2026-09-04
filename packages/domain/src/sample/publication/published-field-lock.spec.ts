@@ -35,7 +35,11 @@ const stored: Sample = {
     localityDescription: "stored locality detail",
   },
   description: {
-    collectionDate: { start: "2000-01-01", end: "2000-01-02" },
+    collectionDate: {
+      precision: "day",
+      start: "2000-01-01",
+      end: "2000-01-02",
+    },
     oriented: true,
     orientationExplanation: "stored orientation",
     openDescription: "stored open",
@@ -118,7 +122,11 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
       localityDescription: "edited locality detail",
     },
     description: {
-      collectionDate: { start: "1990-05-05", end: "1990-05-06" },
+      collectionDate: {
+        precision: "day",
+        start: "1990-05-05",
+        end: "1990-05-06",
+      },
       oriented: false,
       orientationExplanation: null,
       openDescription: "edited open",
@@ -360,6 +368,7 @@ describe("mergePublishedEdit", () => {
   it("keeps frozen collectionDate but takes editable description leaves", () => {
     const merged = mergePublishedEdit(stored, incoming());
     expect(merged.description?.collectionDate).toEqual({
+      precision: "day",
       start: "2000-01-01",
       end: "2000-01-02",
     });

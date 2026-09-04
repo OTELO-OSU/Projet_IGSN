@@ -11,6 +11,7 @@ describe("publishedSampleFrozenField", () => {
     "location.startLongitude",
     "location.regionKind",
     "description.collectionDateStart",
+    "description.collectionDateTimeZone",
     "scientificContext.provenanceStatus",
   ])("freezes %s on a published sample", (field) => {
     expect(isFrozen(field)).toBe(true);

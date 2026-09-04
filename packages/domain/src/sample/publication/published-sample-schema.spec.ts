@@ -8,7 +8,13 @@ const publishable = {
   type: "individual_sample",
   material: "sediment.exogenous_detritic.clay",
   location: { position: { type: "point" as const, longitude: 0, latitude: 0 } },
-  description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
+  description: {
+    collectionDate: {
+      precision: "day",
+      start: "2026-01-01",
+      end: "2026-01-01",
+    },
+  },
   repository: { currentArchive: "02feahw73" },
   existenceStatus: "exists" as const,
   availabilityStatus: "available" as const,

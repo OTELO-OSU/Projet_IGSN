@@ -23,6 +23,11 @@ const publishableScientificContext = {
 
 const publishableRepository = { currentArchive: "02feahw73" } as const;
 
+const NO_ANSWERS = {
+  description: { oriented: false },
+  security: { radioactivity: false, asbestosRich: false, chemicalRisk: false },
+} as const;
+
 type Screen = Awaited<ReturnType<typeof render>>;
 
 async function renderLocation(
@@ -111,6 +116,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -153,6 +159,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -185,6 +192,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -236,6 +244,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -268,6 +277,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -304,6 +314,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -367,6 +378,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -426,6 +438,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   }, 15000);
@@ -486,6 +499,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -544,6 +558,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -601,6 +616,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -673,6 +689,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   }, 15000);
@@ -726,6 +743,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -758,6 +776,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -798,6 +817,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -866,6 +886,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -897,6 +918,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
       }),
     );
   });
@@ -937,6 +959,7 @@ describe("SampleForm", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        ...NO_ANSWERS,
         age: {
           numericAgeMin: 12000,
           numericAgeMax: 12000,
@@ -1254,7 +1277,11 @@ describe("SampleForm", () => {
           specificName: "MC-2026-007",
           location: { position: { type: "point", longitude: 3, latitude: 45 } },
           description: {
-            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-01",
+              end: "2026-01-01",
+            },
           },
           existenceStatus: "exists",
           availabilityStatus: "available",
@@ -1284,10 +1311,20 @@ describe("SampleForm", () => {
           geomorphologicalEnvironment: null,
           location: { position: { type: "point", longitude: 3, latitude: 45 } },
           description: {
-            collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+            oriented: false,
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-01",
+              end: "2026-01-01",
+            },
           },
           existenceStatus: "exists",
           availabilityStatus: "available",
+          security: {
+            radioactivity: false,
+            asbestosRich: false,
+            chemicalRisk: false,
+          },
           scientificContext: publishableScientificContext,
           repository: publishableRepository,
         },
@@ -1373,7 +1410,11 @@ describe("SampleForm", () => {
               position: { type: "point", longitude: 3, latitude: 45 },
             },
             description: {
-              collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+              collectionDate: {
+                precision: "day",
+                start: "2026-01-01",
+                end: "2026-01-01",
+              },
             },
             existenceStatus: "exists",
             availabilityStatus: "available",
@@ -1415,7 +1456,11 @@ describe("SampleForm", () => {
               position: { type: "point", longitude: 3, latitude: 45 },
             },
             description: {
-              collectionDate: { start: "2026-01-01", end: "2026-01-01" },
+              collectionDate: {
+                precision: "day",
+                start: "2026-01-01",
+                end: "2026-01-01",
+              },
             },
             scientificContext: publishableScientificContext,
             repository: publishableRepository,
@@ -2125,7 +2170,13 @@ const publishedFixture: CreateSample = {
   collectionMethodDescription: null,
   specificName: "MC-2026-007",
   location: { position: { type: "point", longitude: 3, latitude: 45 } },
-  description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
+  description: {
+    collectionDate: {
+      precision: "day",
+      start: "2026-01-01",
+      end: "2026-01-01",
+    },
+  },
   existenceStatus: "exists",
   availabilityStatus: "available",
   scientificContext: publishableScientificContext,

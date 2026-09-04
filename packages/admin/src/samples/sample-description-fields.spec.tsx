@@ -51,7 +51,12 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
-            collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+            oriented: false,
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-05",
+              end: "2026-01-05",
+            },
           },
         }),
       ),
@@ -71,7 +76,12 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
-            collectionDate: { start: "2026-01-05", end: "2026-02-10" },
+            oriented: false,
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-05",
+              end: "2026-02-10",
+            },
           },
         }),
       ),
@@ -80,7 +90,11 @@ describe("SampleDescriptionFields", () => {
 
   it("should open in single mode when editing a sample whose start === end", async () => {
     const screen = await renderDescriptionTab(noop, {
-      collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-05",
+        end: "2026-01-05",
+      },
     });
 
     await expect
@@ -93,7 +107,11 @@ describe("SampleDescriptionFields", () => {
 
   it("should open in range mode when editing a sample whose start differs from end", async () => {
     const screen = await renderDescriptionTab(noop, {
-      collectionDate: { start: "2026-01-05", end: "2026-02-10" },
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-05",
+        end: "2026-02-10",
+      },
     });
 
     await expect
@@ -122,7 +140,12 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
-            collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+            oriented: false,
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-05",
+              end: "2026-01-05",
+            },
           },
         }),
       ),
@@ -153,7 +176,12 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
-            collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+            oriented: false,
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-05",
+              end: "2026-01-05",
+            },
           },
         }),
       ),
@@ -185,7 +213,12 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
-            collectionDate: { start: "2026-02-10", end: "2026-03-01" },
+            oriented: false,
+            collectionDate: {
+              precision: "day",
+              start: "2026-02-10",
+              end: "2026-03-01",
+            },
           },
         }),
       ),
@@ -203,6 +236,94 @@ describe("SampleDescriptionFields", () => {
       .toHaveTextContent("The collection date cannot be in the future.");
     await screen.getByRole("button", { name: "Create" }).click();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("should submit an hour-precision range with the picked time zone", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderDescriptionTab(onSubmit);
+
+    await screen.getByRole("switch", { name: "Specify time" }).click();
+    await screen.getByRole("switch", { name: "Date range" }).click();
+    await screen.getByLabelText("Start date").fill("2026-01-05T08:30");
+    await screen.getByLabelText("End date").fill("2026-01-06T17:00");
+    await screen.getByRole("combobox", { name: "Time zone *" }).click();
+    await screen.getByPlaceholder("Search a time zone...").fill("Europe/Paris");
+    await screen.getByRole("option", { name: "Europe/Paris" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: {
+            oriented: false,
+            collectionDate: {
+              precision: "hour",
+              start: "2026-01-05T08:30",
+              end: "2026-01-06T17:00",
+              timeZone: "Europe/Paris",
+            },
+          },
+        }),
+      ),
+    );
+  });
+
+  it("should open in time mode with the saved time zone", async () => {
+    const screen = await renderDescriptionTab(noop, {
+      collectionDate: {
+        precision: "hour",
+        start: "2026-01-05T08:30",
+        end: "2026-01-06T17:00",
+        timeZone: "Europe/Paris",
+      },
+    });
+
+    await expect
+      .element(screen.getByRole("switch", { name: "Specify time" }))
+      .toBeChecked();
+    await expect
+      .element(screen.getByLabelText("Start date"))
+      .toHaveValue("2026-01-05T08:30");
+    await expect
+      .element(screen.getByRole("combobox", { name: "Time zone *" }))
+      .toHaveTextContent("Europe/Paris");
+  });
+
+  it("should keep the picked day when switching time on and back off", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderDescriptionTab(onSubmit);
+
+    await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
+    await screen.getByRole("switch", { name: "Specify time" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Date *", { exact: true }))
+      .toHaveValue("2026-01-05T00:00");
+
+    await screen.getByRole("switch", { name: "Specify time" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Date *", { exact: true }))
+      .toHaveValue("2026-01-05");
+    await expect
+      .element(screen.getByLabelText("Time zone"))
+      .not.toBeInTheDocument();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: {
+            oriented: false,
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-05",
+              end: "2026-01-05",
+            },
+          },
+        }),
+      ),
+    );
   });
 
   it("should show the unit only once its value is set, marked required", async () => {
@@ -262,20 +383,17 @@ describe("SampleDescriptionFields", () => {
       .element(screen.getByLabelText("Orientation explanation"))
       .not.toBeInTheDocument();
 
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await screen
       .getByLabelText("Orientation explanation")
       .fill("Marked north face");
 
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "No" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
       .not.toBeInTheDocument();
 
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
       .toHaveValue("Marked north face");
@@ -303,13 +421,11 @@ describe("SampleDescriptionFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await screen
       .getByLabelText("Orientation explanation")
       .fill("Marked north face");
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "No" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -318,8 +434,7 @@ describe("SampleDescriptionFields", () => {
       ),
     );
 
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await expect
       .element(screen.getByLabelText("Orientation explanation"))
       .toHaveValue("");
@@ -344,7 +459,7 @@ describe("SampleDescriptionFields", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
-          description: { mass: { value: 1.2, unit: "kg" } },
+          description: { oriented: false, mass: { value: 1.2, unit: "kg" } },
         }),
       ),
     );
@@ -360,8 +475,11 @@ describe("SampleDescriptionFields", () => {
     await screen.getByLabelText("Length", { exact: true }).fill("");
     await screen.getByRole("button", { name: "Create" }).click();
 
-    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledTimes(1));
-    expect(onSubmit.mock.lastCall?.[0]).not.toHaveProperty("description");
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({ description: { oriented: false } }),
+      ),
+    );
   });
 
   it("should submit a full description", async () => {
@@ -369,8 +487,7 @@ describe("SampleDescriptionFields", () => {
     const screen = await renderDescriptionTab(onSubmit);
 
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
-    await screen.getByRole("combobox", { name: "Oriented sample" }).click();
-    await screen.getByRole("option", { name: "Yes" }).click();
+    await screen.getByRole("switch", { name: "Oriented sample" }).click();
     await screen
       .getByLabelText("Orientation explanation")
       .fill("Marked north face");
@@ -396,7 +513,11 @@ describe("SampleDescriptionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           description: {
-            collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-05",
+              end: "2026-01-05",
+            },
             oriented: true,
             orientationExplanation: "Marked north face",
             openDescription: "Fine-grained basalt",
@@ -411,7 +532,7 @@ describe("SampleDescriptionFields", () => {
     );
   });
 
-  it("should submit no description when the section is left empty", async () => {
+  it("should submit only the default answers when the section is left empty", async () => {
     const onSubmit = vi.fn();
     const screen = await renderDescriptionTab(onSubmit);
 
@@ -432,6 +553,12 @@ describe("SampleDescriptionFields", () => {
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
+        description: { oriented: false },
+        security: {
+          radioactivity: false,
+          asbestosRich: false,
+          chemicalRisk: false,
+        },
       }),
     );
   });

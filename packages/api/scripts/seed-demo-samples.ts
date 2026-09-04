@@ -52,7 +52,11 @@ const bathyRange = (min: number, max: number): AreaPosition["vertical"] => ({
 });
 
 const on = (start: string, end: string = start) => ({
-  collectionDate: { start, end },
+  collectionDate: { precision: "day" as const, start, end },
+});
+
+const during = (start: string, end: string, timeZone = "Europe/Paris") => ({
+  collectionDate: { precision: "hour" as const, start, end, timeZone },
 });
 
 const numericAge = (
@@ -131,7 +135,7 @@ const PUBLISHED: DemoRow[] = [
       region: { kind: "continent", country: "FR" },
       localityName: "Ploumanac'h quarry",
     },
-    description: on("2025-05-12"),
+    description: during("2025-05-12T09:15", "2025-05-12T17:40"),
     age: numericAge(295, 305),
   },
   {

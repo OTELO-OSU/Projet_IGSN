@@ -1,11 +1,11 @@
 import type { Security } from "@projet-igsn/domain/sample/security/model";
 
 export type SecurityDraft = {
-  radioactivity: "yes" | "no" | null | undefined;
+  radioactivity: boolean;
   radioactivityExplanation: string | null | undefined;
-  asbestosRich: "yes" | "no" | null | undefined;
+  asbestosRich: boolean;
   asbestosExplanation: string | null | undefined;
-  chemicalRisk: "yes" | "no" | null | undefined;
+  chemicalRisk: boolean;
   chemicalRiskExplanation: string | null | undefined;
 };
 
@@ -16,37 +16,23 @@ const HAZARDS = [
 ] as const;
 
 type SecurityCandidate = {
-  radioactivity: boolean | undefined;
+  radioactivity: boolean;
   radioactivityExplanation: string | undefined;
-  asbestosRich: boolean | undefined;
+  asbestosRich: boolean;
   asbestosExplanation: string | undefined;
-  chemicalRisk: boolean | undefined;
+  chemicalRisk: boolean;
   chemicalRiskExplanation: string | undefined;
 };
 
-export const isHazardDeclared = (
-  answer: "yes" | "no" | null | undefined,
-): boolean => answer === "yes";
-
-const toBoolean = (
-  answer: "yes" | "no" | null | undefined,
-): boolean | undefined =>
-  isHazardDeclared(answer) ? true : answer === "no" ? false : undefined;
-
-export function composeSecurity(
-  draft: SecurityDraft,
-): SecurityCandidate | null {
+export function composeSecurity(draft: SecurityDraft): SecurityCandidate {
   const security = {} as SecurityCandidate;
   for (const { flag, explanation } of HAZARDS) {
-    const answered = toBoolean(draft[flag]);
-    security[flag] = answered;
-    security[explanation] = isHazardDeclared(draft[flag])
+    security[flag] = draft[flag];
+    security[explanation] = draft[flag]
       ? draft[explanation]?.trim() || undefined
       : undefined;
   }
-  return Object.values(security).some((part) => part !== undefined)
-    ? security
-    : null;
+  return security;
 }
 
 export function toSecurityDraft(
@@ -54,8 +40,7 @@ export function toSecurityDraft(
 ): SecurityDraft {
   const draft = {} as SecurityDraft;
   for (const { flag, explanation } of HAZARDS) {
-    draft[flag] =
-      security?.[flag] == null ? undefined : security[flag] ? "yes" : "no";
+    draft[flag] = security?.[flag] ?? false;
     draft[explanation] = security?.[explanation] ?? undefined;
   }
   return draft;

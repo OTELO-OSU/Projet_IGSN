@@ -178,10 +178,8 @@ const composeRelations = (relations: RelationDraft[]) =>
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
   const locationAllowed = allowsLocation(material);
-  const description = composeDescription(draft.description);
   const condition = composeCondition(draft.condition);
   const age = toAgeInput(draft.age);
-  const security = composeSecurity(draft.security);
   const scientificContext = composeScientificContext(draft.scientificContext);
   const repository = composeRepository(draft.repository);
   const relations = composeRelations(draft.relations);
@@ -210,9 +208,9 @@ const composeCreateSample = (draft: SampleDraft) => {
       ? composeHierarchyValue(draft.geomorphologicalEnvironmentPath)
       : null,
     location: locationAllowed ? composeLocation(draft.location) : null,
-    ...(description ? { description } : {}),
+    description: composeDescription(draft.description),
     ...(condition ? { condition } : {}),
-    ...(security ? { security } : {}),
+    security: composeSecurity(draft.security),
     ...(scientificContext ? { scientificContext } : {}),
     ...(repository ? { repository } : {}),
     ...(syntheticDetails ? { syntheticDetails } : {}),

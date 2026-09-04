@@ -1,13 +1,7 @@
 import { m } from "#/paraglide/messages.js";
-import { isOrientedYes } from "#/samples/compose-description.ts";
 import { DateRangeField } from "#/samples/date-range-field.tsx";
 import { MeasurementFields } from "#/samples/measurement-fields.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
-
-const orientedItems = [
-  { value: "yes", label: m.oriented_yes() },
-  { value: "no", label: m.oriented_no() },
-];
 
 export function SampleDescriptionFields() {
   const form = useSampleForm();
@@ -22,23 +16,20 @@ export function SampleDescriptionFields() {
         startLabel={m.field_collection_date_start()}
         endLabel={m.field_collection_date_end()}
         identicalMessage={m.collection_date_range_identical}
+        time={{
+          modeLabel: m.collection_date_mode_time(),
+          zoneLabel: m.field_collection_time_zone(),
+          zonePlaceholder: m.time_zone_placeholder(),
+          zoneSearchPlaceholder: m.time_zone_search_placeholder(),
+          zoneEmptyText: m.time_zone_empty(),
+        }}
       />
 
       <form.AppField name="description.oriented">
-        {(field) => (
-          <field.ComboboxField
-            label={m.field_oriented()}
-            items={orientedItems}
-            placeholder={m.oriented_placeholder()}
-            searchPlaceholder={m.oriented_search_placeholder()}
-            emptyText={m.oriented_empty()}
-          />
-        )}
+        {(field) => <field.SwitchField label={m.field_oriented()} />}
       </form.AppField>
 
-      <form.Subscribe
-        selector={(state) => isOrientedYes(state.values.description.oriented)}
-      >
+      <form.Subscribe selector={(state) => state.values.description.oriented}>
         {(oriented) =>
           oriented ? (
             <form.AppField name="description.orientationExplanation">

@@ -1,15 +1,15 @@
 import { z } from "zod";
 
-import { dateRangeSchema } from "../date-range.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { measurementSchema } from "../measurement.ts";
+import { collectionDateSchema } from "./collection-date.ts";
 import { massUnitSchema } from "./mass-unit.ts";
 import { sizeUnitSchema } from "./size-unit.ts";
 import { volumeUnitSchema } from "./volume-unit.ts";
 
 export const descriptionSchema = z
   .object({
-    collectionDate: dateRangeSchema("collection_date").nullish(),
+    collectionDate: collectionDateSchema.nullish(),
     oriented: z.boolean().nullish(),
     orientationExplanation: freeTextSchema.nullish(),
     openDescription: freeTextSchema.nullish(),

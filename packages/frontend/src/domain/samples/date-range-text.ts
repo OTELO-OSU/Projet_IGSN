@@ -1,12 +1,12 @@
-import { formatDate } from "@projet-igsn/domain/date/format-date";
+import type { CollectionDate } from "@projet-igsn/domain/sample/description/collection-date";
 
-export const dateRangeText = ({
-  start,
-  end,
-}: {
-  start: string;
-  end: string;
-}): string => {
-  const from = formatDate(new Date(start));
-  return start === end ? from : `${from} - ${formatDate(new Date(end))}`;
+export const dateRangeText = (
+  date: CollectionDate | { start: string; end: string },
+): string => {
+  const start = date.start.replace("T", " ");
+  const end = date.end.replace("T", " ");
+  const range = start === end ? start : `${start} - ${end}`;
+  return "precision" in date && date.precision === "hour"
+    ? `${range} (${date.timeZone})`
+    : range;
 };

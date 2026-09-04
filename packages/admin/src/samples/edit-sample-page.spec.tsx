@@ -135,7 +135,13 @@ function fakeApi(
     collectionMethodDescription: null,
     specificName: "MC-2026-007",
     location: { position: { type: "point", longitude: 3, latitude: 45 } },
-    description: { collectionDate: { start: "2026-01-01", end: "2026-01-01" } },
+    description: {
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-01",
+        end: "2026-01-01",
+      },
+    },
     condition: null,
     security,
     scientificContext: {
@@ -754,8 +760,8 @@ describe("EditSamplePage", () => {
     );
     await screen.getByRole("tab", { name: "Physical description" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: "Radioactivity" }))
-      .toHaveTextContent("Yes");
+      .element(screen.getByRole("switch", { name: "Radioactivity" }))
+      .toBeChecked();
     await expect
       .element(screen.getByLabelText("Radioactivity explanation"))
       .toHaveValue("3.2 kBq alpha");

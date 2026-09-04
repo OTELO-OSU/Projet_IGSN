@@ -7,7 +7,11 @@ describe("DescriptionView", () => {
     const screen = await render(
       <DescriptionView
         description={{
-          collectionDate: { start: "2024-03-05", end: "2024-03-05" },
+          collectionDate: {
+            precision: "day",
+            start: "2024-03-05",
+            end: "2024-03-05",
+          },
           oriented: true,
           orientationExplanation: "Arrow drawn on the top face",
           openDescription: "Dark fine-grained basalt with olivine phenocrysts",
@@ -58,7 +62,11 @@ describe("DescriptionView", () => {
     const screen = await render(
       <DescriptionView
         description={{
-          collectionDate: { start: "2024-03-05", end: "2024-04-01" },
+          collectionDate: {
+            precision: "day",
+            start: "2024-03-05",
+            end: "2024-04-01",
+          },
         }}
       />,
     );
@@ -67,6 +75,36 @@ describe("DescriptionView", () => {
       .element(screen.getByText("2024-03-05 - 2024-04-01"))
       .toBeInTheDocument();
   });
+
+  it.each([
+    {
+      collectionDate: {
+        precision: "hour",
+        start: "2024-03-05T14:30",
+        end: "2024-03-05T14:30",
+        timeZone: "Europe/Paris",
+      },
+      expected: "2024-03-05 14:30 (Europe/Paris)",
+    },
+    {
+      collectionDate: {
+        precision: "hour",
+        start: "2024-03-05T14:30",
+        end: "2024-03-06T09:05",
+        timeZone: "Pacific/Auckland",
+      },
+      expected: "2024-03-05 14:30 - 2024-03-06 09:05 (Pacific/Auckland)",
+    },
+  ] as const)(
+    "should show an hour-precision collection date as $expected",
+    async ({ collectionDate, expected }) => {
+      const screen = await render(
+        <DescriptionView description={{ collectionDate }} />,
+      );
+
+      await expect.element(screen.getByText(expected)).toBeInTheDocument();
+    },
+  );
 
   it("should show a translated No for a non-oriented sample", async () => {
     const screen = await render(

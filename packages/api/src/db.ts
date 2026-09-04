@@ -19,8 +19,10 @@ type SampleTable = {
   geological_context_description: string | null;
   geomorphological_environment: string | null;
   specific_name: string | null;
-  collection_date_start: ColumnType<Date, string, string> | null;
-  collection_date_end: ColumnType<Date, string, string> | null;
+  collection_date_start: string | null;
+  collection_date_end: string | null;
+  collection_date_precision: string | null;
+  collection_date_time_zone: string | null;
   oriented: boolean | null;
   orientation_explanation: string | null;
   open_description: string | null;

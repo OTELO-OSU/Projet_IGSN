@@ -14,8 +14,8 @@ const draft = (over: Partial<DescriptionDraft>): DescriptionDraft => ({
 });
 
 describe("composeDescription", () => {
-  it("should return null for an empty draft", () => {
-    expect(composeDescription(draft({}))).toBeNull();
+  it("should answer the orientation as absent for an untouched draft", () => {
+    expect(composeDescription(draft({}))).toEqual({ oriented: false });
   });
 
   it("should compose the mirrored degenerate range of a single date", () => {
@@ -26,7 +26,14 @@ describe("composeDescription", () => {
           collectionDateEnd: "2026-01-05",
         }),
       ),
-    ).toEqual({ collectionDate: { start: "2026-01-05", end: "2026-01-05" } });
+    ).toEqual({
+      oriented: false,
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-05",
+        end: "2026-01-05",
+      },
+    });
   });
 
   it("should compose a range from its start and end", () => {
@@ -38,20 +45,68 @@ describe("composeDescription", () => {
         }),
       ),
     ).toEqual({
-      collectionDate: { start: "2026-01-05", end: "2026-02-10" },
+      oriented: false,
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-05",
+        end: "2026-02-10",
+      },
+    });
+  });
+
+  it("should compose an hour-precision range with its time zone", () => {
+    expect(
+      composeDescription(
+        draft({
+          collectionDatePrecision: "hour",
+          collectionDateStart: "2026-01-05T08:30",
+          collectionDateEnd: "2026-01-05T17:00",
+          collectionDateTimeZone: "Europe/Paris",
+        }),
+      ),
+    ).toEqual({
+      oriented: false,
+      collectionDate: {
+        precision: "hour",
+        start: "2026-01-05T08:30",
+        end: "2026-01-05T17:00",
+        timeZone: "Europe/Paris",
+      },
+    });
+  });
+
+  it("should drop the time zone left behind at day precision", () => {
+    expect(
+      composeDescription(
+        draft({
+          collectionDateStart: "2026-01-05",
+          collectionDateEnd: "2026-01-05",
+          collectionDateTimeZone: "Europe/Paris",
+        }),
+      ),
+    ).toEqual({
+      oriented: false,
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-05",
+        end: "2026-01-05",
+      },
     });
   });
 
   it("should keep a half-filled range for the schema to reject", () => {
     expect(
       composeDescription(draft({ collectionDateStart: "2026-01-05" })),
-    ).toEqual({ collectionDate: { start: "2026-01-05" } });
+    ).toEqual({
+      oriented: false,
+      collectionDate: { precision: "day", start: "2026-01-05" },
+    });
   });
 
   it("should compose an oriented sample with its explanation", () => {
     expect(
       composeDescription(
-        draft({ oriented: "yes", orientationExplanation: "Marked north face" }),
+        draft({ oriented: true, orientationExplanation: "Marked north face" }),
       ),
     ).toEqual({ oriented: true, orientationExplanation: "Marked north face" });
   });
@@ -59,59 +114,88 @@ describe("composeDescription", () => {
   it("should drop the explanation left behind when the sample is not oriented", () => {
     expect(
       composeDescription(
-        draft({ oriented: "no", orientationExplanation: "Marked north face" }),
+        draft({ oriented: false, orientationExplanation: "Marked north face" }),
       ),
     ).toEqual({ oriented: false });
   });
 
-  it("should drop the explanation when the orientation question is unanswered", () => {
-    expect(
-      composeDescription(
-        draft({ orientationExplanation: "Marked north face" }),
-      ),
-    ).toBeNull();
-  });
-
   it("should drop a blank open description", () => {
-    expect(composeDescription(draft({ openDescription: "   " }))).toBeNull();
+    expect(composeDescription(draft({ openDescription: "   " }))).toEqual({
+      oriented: false,
+    });
   });
 
   it("should compose a full measurement", () => {
     expect(
       composeDescription(draft({ lengthValue: 10, lengthUnit: "cm" })),
-    ).toEqual({ length: { value: 10, unit: "cm" } });
+    ).toEqual({ oriented: false, length: { value: 10, unit: "cm" } });
   });
 
   it("should keep a value missing its unit for the schema to reject", () => {
     expect(composeDescription(draft({ massValue: 5 }))).toEqual({
+      oriented: false,
       mass: { value: 5 },
     });
   });
 
   it("should drop a unit left behind by a cleared value", () => {
-    expect(composeDescription(draft({ massUnit: "kg" }))).toBeNull();
+    expect(composeDescription(draft({ massUnit: "kg" }))).toEqual({
+      oriented: false,
+    });
   });
 });
 
 describe("toDescriptionDraft", () => {
-  it("should return a draft with every field unset for a null description", () => {
-    expect(toDescriptionDraft(null)).toEqual({});
+  it("should return an unoriented day-precision draft for a null description", () => {
+    expect(toDescriptionDraft(null)).toEqual({
+      collectionDatePrecision: "day",
+      oriented: false,
+    });
   });
 
   it("should fill both range bounds from the stored collection date", () => {
     expect(
       toDescriptionDraft({
-        collectionDate: { start: "2026-01-05", end: "2026-02-10" },
+        collectionDate: {
+          precision: "day",
+          start: "2026-01-05",
+          end: "2026-02-10",
+        },
       }),
     ).toEqual({
+      collectionDatePrecision: "day",
       collectionDateStart: "2026-01-05",
       collectionDateEnd: "2026-02-10",
+      oriented: false,
+    });
+  });
+
+  it("should fill the precision and time zone from an hour-precision collection date", () => {
+    expect(
+      toDescriptionDraft({
+        collectionDate: {
+          precision: "hour",
+          start: "2026-01-05T08:30",
+          end: "2026-01-05T17:00",
+          timeZone: "Europe/Paris",
+        },
+      }),
+    ).toEqual({
+      collectionDatePrecision: "hour",
+      collectionDateStart: "2026-01-05T08:30",
+      collectionDateEnd: "2026-01-05T17:00",
+      collectionDateTimeZone: "Europe/Paris",
+      oriented: false,
     });
   });
 
   it.each<Description>([
     {
-      collectionDate: { start: "2026-01-05", end: "2026-01-05" },
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-05",
+        end: "2026-01-05",
+      },
       oriented: true,
       orientationExplanation: "Marked north face",
       openDescription: "Fine-grained basalt",
@@ -122,7 +206,12 @@ describe("toDescriptionDraft", () => {
       volume: { value: 250, unit: "cm3" },
     },
     {
-      collectionDate: { start: "2026-01-05", end: "2026-02-10" },
+      collectionDate: {
+        precision: "hour",
+        start: "2026-01-05T08:30",
+        end: "2026-02-10T17:00",
+        timeZone: "Europe/Paris",
+      },
       oriented: false,
     },
   ])("should round-trip through the draft", (description) => {

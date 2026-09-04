@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { descriptionSchema } from "./model.ts";
 
 const full = {
-  collectionDate: { start: "2014-10-01", end: "2014-10-24" },
+  collectionDate: { precision: "day", start: "2014-10-01", end: "2014-10-24" },
   oriented: true,
   orientationExplanation: "Oriented with a compass on the north face",
   openDescription:
@@ -26,14 +26,22 @@ describe("descriptionSchema", () => {
 
   it("should accept a single collection date as the degenerate range start === end", () => {
     const result = descriptionSchema.safeParse({
-      collectionDate: { start: "2014-10-24", end: "2014-10-24" },
+      collectionDate: {
+        precision: "day",
+        start: "2014-10-24",
+        end: "2014-10-24",
+      },
     });
     expect(result.success).toBe(true);
   });
 
   it("should reject a collection date range where start is after end", () => {
     const result = descriptionSchema.safeParse({
-      collectionDate: { start: "2014-10-24", end: "2014-10-01" },
+      collectionDate: {
+        precision: "day",
+        start: "2014-10-24",
+        end: "2014-10-01",
+      },
     });
     expect(result.success).toBe(false);
   });
@@ -42,22 +50,22 @@ describe("descriptionSchema", () => {
     "should reject the non ISO date %s",
     (start) => {
       const result = descriptionSchema.safeParse({
-        collectionDate: { start, end: "2014-10-24" },
+        collectionDate: { precision: "day", start, end: "2014-10-24" },
       });
       expect(result.success).toBe(false);
     },
   );
 
   it.each([
-    { start: "9999-01-01", end: "9999-01-02" },
-    { start: "2014-10-01", end: "9999-01-01" },
+    { precision: "day", start: "9999-01-01", end: "9999-01-02" },
+    { precision: "day", start: "2014-10-01", end: "9999-01-01" },
   ])("should reject the future collection date %j", (collectionDate) => {
     expect(descriptionSchema.safeParse({ collectionDate }).success).toBe(false);
   });
 
   it("should reject a collection date missing one end of the range", () => {
     const result = descriptionSchema.safeParse({
-      collectionDate: { start: "2014-10-24" },
+      collectionDate: { precision: "day", start: "2014-10-24" },
     });
     expect(result.success).toBe(false);
   });

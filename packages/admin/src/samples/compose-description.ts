@@ -1,3 +1,4 @@
+import type { DatePrecision } from "@projet-igsn/domain/sample/description/collection-date";
 import type { MassUnit } from "@projet-igsn/domain/sample/description/mass-unit";
 import type { Description } from "@projet-igsn/domain/sample/description/model";
 import type { SizeUnit } from "@projet-igsn/domain/sample/description/size-unit";
@@ -11,7 +12,9 @@ import {
 export type DescriptionDraft = {
   collectionDateStart: string | undefined;
   collectionDateEnd: string | undefined;
-  oriented: "yes" | "no" | null | undefined;
+  collectionDatePrecision: DatePrecision;
+  collectionDateTimeZone: string | undefined;
+  oriented: boolean;
   orientationExplanation: string | null | undefined;
   openDescription: string | null | undefined;
   lengthValue: number | undefined;
@@ -28,9 +31,14 @@ export type DescriptionDraft = {
 
 type DescriptionCandidate = {
   collectionDate:
-    | { start: string | undefined; end: string | undefined }
+    | {
+        precision: DatePrecision;
+        start: string | undefined;
+        end: string | undefined;
+        timeZone: string | undefined;
+      }
     | undefined;
-  oriented: boolean | undefined;
+  oriented: boolean;
   orientationExplanation: string | undefined;
   openDescription: string | undefined;
   length: MeasurementCandidate<SizeUnit> | undefined;
@@ -41,28 +49,30 @@ type DescriptionCandidate = {
 };
 
 function composeCollectionDate(draft: DescriptionDraft) {
-  return draft.collectionDateStart === undefined &&
+  if (
+    draft.collectionDateStart === undefined &&
     draft.collectionDateEnd === undefined
-    ? undefined
-    : { start: draft.collectionDateStart, end: draft.collectionDateEnd };
+  ) {
+    return undefined;
+  }
+  return {
+    precision: draft.collectionDatePrecision,
+    start: draft.collectionDateStart,
+    end: draft.collectionDateEnd,
+    timeZone:
+      draft.collectionDatePrecision === "hour"
+        ? draft.collectionDateTimeZone
+        : undefined,
+  };
 }
-
-export const isOrientedYes = (
-  oriented: DescriptionDraft["oriented"],
-): boolean => oriented === "yes";
 
 export function composeDescription(
   draft: DescriptionDraft,
-): DescriptionCandidate | null {
-  const oriented = isOrientedYes(draft.oriented)
-    ? true
-    : draft.oriented === "no"
-      ? false
-      : undefined;
-  const description = {
+): DescriptionCandidate {
+  return {
     collectionDate: composeCollectionDate(draft),
-    oriented,
-    orientationExplanation: isOrientedYes(draft.oriented)
+    oriented: draft.oriented,
+    orientationExplanation: draft.oriented
       ? draft.orientationExplanation?.trim() || undefined
       : undefined,
     openDescription: draft.openDescription?.trim() || undefined,
@@ -72,23 +82,21 @@ export function composeDescription(
     mass: composeMeasurement(draft.massValue, draft.massUnit),
     volume: composeMeasurement(draft.volumeValue, draft.volumeUnit),
   };
-  return Object.values(description).some((part) => part !== undefined)
-    ? description
-    : null;
 }
 
 export function toDescriptionDraft(
   description: Description | null | undefined,
 ): DescriptionDraft {
+  const collectionDate = description?.collectionDate;
   return {
-    collectionDateStart: description?.collectionDate?.start,
-    collectionDateEnd: description?.collectionDate?.end,
-    oriented:
-      description?.oriented == null
-        ? undefined
-        : description.oriented
-          ? "yes"
-          : "no",
+    collectionDateStart: collectionDate?.start,
+    collectionDateEnd: collectionDate?.end,
+    collectionDatePrecision: collectionDate?.precision ?? "day",
+    collectionDateTimeZone:
+      collectionDate?.precision === "hour"
+        ? collectionDate.timeZone
+        : undefined,
+    oriented: description?.oriented ?? false,
     orientationExplanation: description?.orientationExplanation ?? undefined,
     openDescription: description?.openDescription ?? undefined,
     lengthValue: description?.length?.value,

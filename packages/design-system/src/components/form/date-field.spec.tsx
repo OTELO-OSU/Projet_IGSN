@@ -4,7 +4,15 @@ import { page } from "vitest/browser";
 
 import { useAppForm } from "./app-form.tsx";
 
-function Harness({ label, disabled }: { label: string; disabled?: boolean }) {
+function Harness({
+  label,
+  disabled,
+  withTime,
+}: {
+  label: string;
+  disabled?: boolean;
+  withTime?: boolean;
+}) {
   const form = useAppForm({
     defaultValues: { collected: null as string | null | undefined },
   });
@@ -17,7 +25,13 @@ function Harness({ label, disabled }: { label: string; disabled?: boolean }) {
             value === "2026-01-01" ? { message: "Too early" } : undefined,
         }}
       >
-        {(field) => <field.DateField label={label} disabled={disabled} />}
+        {(field) => (
+          <field.DateField
+            label={label}
+            disabled={disabled}
+            withTime={withTime}
+          />
+        )}
       </form.AppField>
     </form>
   );
@@ -62,6 +76,16 @@ describe("DateField", () => {
       .element(page.getByRole("alert"))
       .toHaveTextContent("Too early");
     await expect.element(input).toHaveAttribute("aria-invalid", "true");
+  });
+
+  it("should store a minute-precision local date-time when asked for a time", async () => {
+    await render(<Harness label="Collection date" withTime />);
+
+    const input = page.getByLabelText("Collection date");
+    expect(input.element().getAttribute("type")).toBe("datetime-local");
+    await input.fill("2014-10-24T08:30");
+
+    await expect.element(input).toHaveValue("2014-10-24T08:30");
   });
 
   it("should render a non-interactive input when disabled", async () => {

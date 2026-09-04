@@ -1,11 +1,5 @@
 import { m } from "#/paraglide/messages.js";
-import { isHazardDeclared } from "#/samples/compose-security.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
-
-const yesNoItems = [
-  { value: "yes", label: m.hazard_yes() },
-  { value: "no", label: m.hazard_no() },
-];
 
 const hazards = [
   {
@@ -35,20 +29,10 @@ export function SampleSecurityFields() {
       {hazards.map((hazard) => (
         <div key={hazard.flag} className="grid gap-4">
           <form.AppField name={`security.${hazard.flag}`}>
-            {(field) => (
-              <field.ComboboxField
-                label={hazard.label()}
-                items={yesNoItems}
-                placeholder={m.hazard_placeholder()}
-                searchPlaceholder={m.hazard_search_placeholder()}
-                emptyText={m.hazard_empty()}
-              />
-            )}
+            {(field) => <field.SwitchField label={hazard.label()} />}
           </form.AppField>
           <form.Subscribe
-            selector={(state) =>
-              isHazardDeclared(state.values.security[hazard.flag])
-            }
+            selector={(state) => state.values.security[hazard.flag]}
           >
             {(declared) =>
               declared ? (

@@ -515,7 +515,11 @@ describe("SampleView", () => {
       <SampleView
         sample={sample({
           description: {
-            collectionDate: { start: "2024-03-05", end: "2024-03-05" },
+            collectionDate: {
+              precision: "day",
+              start: "2024-03-05",
+              end: "2024-03-05",
+            },
             mass: { value: 1.4, unit: "kg" },
           },
         })}

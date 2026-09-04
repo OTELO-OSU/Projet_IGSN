@@ -24,15 +24,24 @@ function omitNull(parts: Record<string, unknown>) {
   );
 }
 
+function toCollectionDate(row: Selectable<DB["sample"]>) {
+  const { collection_date_start: start, collection_date_end: end } = row;
+  if (start === null || end === null) return null;
+  if (row.collection_date_precision === "hour") {
+    const timeZone = row.collection_date_time_zone;
+    if (timeZone === null) {
+      throw new Error(
+        `sample ${row.id} has an hour-precision collection date without a time zone`,
+      );
+    }
+    return { precision: "hour", start, end, timeZone };
+  }
+  return { precision: "day", start, end };
+}
+
 function toDescription(row: Selectable<DB["sample"]>) {
   return prune({
-    collectionDate:
-      row.collection_date_start !== null && row.collection_date_end !== null
-        ? {
-            start: formatDate(row.collection_date_start),
-            end: formatDate(row.collection_date_end),
-          }
-        : null,
+    collectionDate: toCollectionDate(row),
     oriented: row.oriented,
     orientationExplanation: row.orientation_explanation,
     openDescription: row.open_description,

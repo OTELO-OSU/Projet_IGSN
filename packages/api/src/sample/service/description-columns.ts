@@ -3,9 +3,13 @@ import type { Description } from "@projet-igsn/domain/sample/description/model";
 export function descriptionColumns(
   description: Description | null | undefined,
 ) {
+  const collectionDate = description?.collectionDate;
   return {
-    collection_date_start: description?.collectionDate?.start ?? null,
-    collection_date_end: description?.collectionDate?.end ?? null,
+    collection_date_start: collectionDate?.start ?? null,
+    collection_date_end: collectionDate?.end ?? null,
+    collection_date_precision: collectionDate?.precision ?? null,
+    collection_date_time_zone:
+      collectionDate?.precision === "hour" ? collectionDate.timeZone : null,
     oriented: description?.oriented ?? null,
     orientation_explanation: description?.orientationExplanation ?? null,
     open_description: description?.openDescription ?? null,
