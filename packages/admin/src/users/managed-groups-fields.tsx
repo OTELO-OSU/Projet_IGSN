@@ -3,7 +3,10 @@ import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 
-import { useManualGroups } from "#/manual-groups/use-manual-groups.ts";
+import {
+  CATALOG_PAGE,
+  useManualGroups,
+} from "#/manual-groups/use-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 import {
   MANAGED_LABORATORY_ITEMS,
@@ -11,9 +14,6 @@ import {
   MANAGED_OSU_ITEMS,
   withGranted,
 } from "#/users/managed-group-items.ts";
-
-// ponytail: one page of 50 groups, server-side search once the catalog outgrows it
-export const CATALOG_PAGE = { page: 1, perPage: 50, search: "" };
 
 export function ManagedGroupsFields({ granted }: { granted: ManagedGroups }) {
   const form = useTypedAppFormContext({

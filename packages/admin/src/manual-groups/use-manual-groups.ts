@@ -7,6 +7,9 @@ import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
+// ponytail: one page of 50 groups, server-side search once the catalog outgrows it
+export const CATALOG_PAGE = { page: 1, perPage: 50 };
+
 export function useManualGroups(params: ListManualGroupsQuery, enabled = true) {
   const apiFetch = useApiClient();
   return useQuery({

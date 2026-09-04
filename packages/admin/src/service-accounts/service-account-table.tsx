@@ -1,4 +1,4 @@
-import type { ServiceAccount } from "@projet-igsn/domain/service-account/model";
+import type { ListedServiceAccount } from "@projet-igsn/domain/service-account/model";
 
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import {
@@ -14,7 +14,7 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 
-const columns: ColumnDef<ServiceAccount>[] = [
+const columns: ColumnDef<ListedServiceAccount>[] = [
   {
     accessorKey: "name",
     header: () => m.column_name(),
@@ -37,20 +37,11 @@ const columns: ColumnDef<ServiceAccount>[] = [
         institutionalOsu,
         institutionalLaboratory,
       } = row.original;
-      const labels = [
-        institutionalOrganization &&
-          organizationShortLabel(institutionalOrganization),
-        institutionalOsu,
-        institutionalLaboratory &&
-          laboratoryShortLabel(institutionalLaboratory),
-      ].filter(Boolean);
-      return labels.length === 0 ? (
-        m.user_value_missing()
-      ) : (
+      return (
         <ul>
-          {labels.map((label) => (
-            <li key={label}>{label}</li>
-          ))}
+          <li>{organizationShortLabel(institutionalOrganization)}</li>
+          {institutionalOsu && <li>{institutionalOsu}</li>}
+          <li>{laboratoryShortLabel(institutionalLaboratory)}</li>
         </ul>
       );
     },
@@ -60,7 +51,7 @@ const columns: ColumnDef<ServiceAccount>[] = [
 export function ServiceAccountTable({
   accounts,
 }: {
-  accounts: ServiceAccount[];
+  accounts: ListedServiceAccount[];
 }) {
   const navigate = useNavigate();
   const table = useReactTable({

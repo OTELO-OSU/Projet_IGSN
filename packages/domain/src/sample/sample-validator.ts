@@ -73,6 +73,8 @@ export const bboxSchema = z.string().transform((value, ctx) => {
 
 export type Bbox = z.infer<typeof bboxSchema>;
 
+export const pageSchema = z.coerce.number().int().min(1).default(1).catch(1);
+
 export const pageSizeSchema = (fallback: (typeof PAGE_SIZES)[number]) =>
   z.coerce
     .number()
@@ -83,7 +85,7 @@ export const pageSizeSchema = (fallback: (typeof PAGE_SIZES)[number]) =>
     );
 
 export const listSamplesQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1).catch(1),
+  page: pageSchema,
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
   sort: z.enum(["status"]).optional().catch(undefined),
   order: z.enum(["asc", "desc"]).optional().catch(undefined),

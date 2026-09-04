@@ -1,3 +1,4 @@
+import type { InstitutionalGroupKind } from "@projet-igsn/domain/institutional-group/model";
 import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 
@@ -217,7 +218,7 @@ type SampleManualGroupTable = {
 
 type UserManagedInstitutionalGroupTable = {
   user_id: string;
-  kind: "organization" | "osu" | "laboratory";
+  kind: InstitutionalGroupKind;
   code: string;
 };
 
@@ -237,7 +238,7 @@ type ServiceAccountTable = {
 
 type ServiceAccountManagedInstitutionalGroupTable = {
   service_account_id: string;
-  kind: "organization" | "osu" | "laboratory";
+  kind: InstitutionalGroupKind;
   code: string;
 };
 

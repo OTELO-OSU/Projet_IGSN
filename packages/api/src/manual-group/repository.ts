@@ -9,13 +9,13 @@ import {
 import { manualGroupSchema } from "@projet-igsn/domain/manual-group/model";
 import { groupManagerSchema } from "@projet-igsn/domain/user/user-validator";
 import { HTTPException } from "hono/http-exception";
-import { sql } from "kysely";
 import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
 
 import { likePattern } from "../like-pattern.ts";
 import { type Transactional, withTransaction } from "../transaction.ts";
+import { isNameTakenBy, lockName } from "../unique-name.ts";
 import { addManualGroupMember } from "./add-manual-group-member.ts";
 import { canDetachFromGroup } from "./can-detach-from-group.ts";
 import { detachManualGroupMember } from "./detach-manual-group-member.ts";
@@ -48,11 +48,6 @@ const sampleGroups = (trx: Transactional<DB>) =>
     .innerJoin("sample", "sample.id", "sample_manual_group.sample_id");
 
 // ponytail: name-keyed advisory lock rather than catching the unique violation.
-const lockName = (trx: Transactional<DB>, name: string) =>
-  sql`select pg_advisory_xact_lock(hashtext(${name.toLowerCase()}))`.execute(
-    trx,
-  );
-
 export function createManualGroupRepository(
   db: Kysely<DB>,
 ): ManualGroupRepository {
@@ -127,13 +122,7 @@ export function createManualGroupRepository(
     rename: (id, name) =>
       withTransaction(db, async (trx) => {
         await lockName(trx, name);
-        const taken = await trx
-          .selectFrom("manual_group")
-          .select("id")
-          .where(sql`lower(name)`, "=", name.toLowerCase())
-          .where("id", "<>", id)
-          .executeTakeFirst();
-        if (taken) {
+        if (await isNameTakenBy(trx, "manual_group", name, id)) {
           return "name_taken";
         }
         const row = await trx

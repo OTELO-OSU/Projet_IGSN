@@ -17,12 +17,12 @@ import { updateUserSchema } from "@projet-igsn/domain/user/user-validator";
 import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { institutionalGroupsFieldErrors } from "#/institutional-groups/institutional-groups-field-errors.ts";
 import { InstitutionalGroupsFields } from "#/institutional-groups/institutional-groups-fields.tsx";
-import { useManualGroups } from "#/manual-groups/use-manual-groups.ts";
-import { m } from "#/paraglide/messages.js";
 import {
   CATALOG_PAGE,
-  ManagedGroupsFields,
-} from "#/users/managed-groups-fields.tsx";
+  useManualGroups,
+} from "#/manual-groups/use-manual-groups.ts";
+import { m } from "#/paraglide/messages.js";
+import { ManagedGroupsFields } from "#/users/managed-groups-fields.tsx";
 import { UserStatusBadge } from "#/users/user-status-badge.tsx";
 import { userStatusLabel } from "#/users/user-status-label.ts";
 

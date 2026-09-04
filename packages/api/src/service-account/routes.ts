@@ -17,7 +17,7 @@ import {
 } from "./validator.ts";
 
 const NOT_FOUND = { error: "Service account not found" } as const;
-const NAME_TAKEN = { reason: "name_taken" } as const;
+const NAME_TAKEN = { error: "Service account name already taken" } as const;
 
 const logAccountChange = (actor: string, account: string, action: string) =>
   console.info("service account changed", { actor, account, action });

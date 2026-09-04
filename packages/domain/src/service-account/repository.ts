@@ -1,4 +1,4 @@
-import type { ServiceAccount } from "./model.ts";
+import type { ListedServiceAccount, ServiceAccount } from "./model.ts";
 import type {
   ListServiceAccountsQuery,
   ServiceAccountBody,
@@ -7,7 +7,7 @@ import type {
 export type ServiceAccountRepository = {
   list(
     query: ListServiceAccountsQuery,
-  ): Promise<{ data: ServiceAccount[]; total: number }>;
+  ): Promise<{ data: ListedServiceAccount[]; total: number }>;
   get(id: string): Promise<ServiceAccount | null>;
   create(body: ServiceAccountBody): Promise<ServiceAccount | "name_taken">;
   update(

@@ -3,7 +3,10 @@ import type { ServiceAccountBody } from "@projet-igsn/domain/service-account/ser
 import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
 import type { Kysely, Transaction } from "kysely";
 
-import { serviceAccountSchema } from "@projet-igsn/domain/service-account/model";
+import {
+  listedServiceAccountSchema,
+  serviceAccountSchema,
+} from "@projet-igsn/domain/service-account/model";
 import {
   knownManagedCodes,
   MANAGED_GROUP_KINDS,
@@ -17,6 +20,7 @@ import type { DB } from "../db.ts";
 
 import { assertManualGroupsExist } from "../manual-group/manual-groups-by-ids.ts";
 import { type Transactional, withTransaction } from "../transaction.ts";
+import { isNameTakenBy, lockName } from "../unique-name.ts";
 
 const ACCOUNT_COLUMNS = [
   "id",
@@ -67,11 +71,6 @@ const accountRow = ({
   institutional_osu: institutionalOsu,
   institutional_laboratory: institutionalLaboratory,
 });
-
-const lockName = (trx: Transaction<DB>, name: string) =>
-  sql`select pg_advisory_xact_lock(hashtext(${name.toLowerCase()}))`.execute(
-    trx,
-  );
 
 const replaceManagedGroups = async (
   trx: Transaction<DB>,
@@ -126,7 +125,9 @@ export function createServiceAccountRepository(
   return {
     list: ({ page, perPage }) =>
       withTransaction(db, async (trx) => {
-        const rows = await selectAccounts(trx)
+        const rows = await trx
+          .selectFrom("service_account")
+          .select(ACCOUNT_COLUMNS)
           .orderBy("name", "asc")
           .limit(perPage)
           .offset((page - 1) * perPage)
@@ -135,7 +136,10 @@ export function createServiceAccountRepository(
           .selectFrom("service_account")
           .select((eb) => eb.fn.countAll<number>().as("count"))
           .executeTakeFirstOrThrow();
-        return { data: rows.map(toServiceAccount), total: Number(count) };
+        return {
+          data: rows.map((row) => listedServiceAccountSchema.parse(row)),
+          total: Number(count),
+        };
       }),
     get: (id) =>
       withTransaction(db, async (trx) => {
@@ -162,13 +166,7 @@ export function createServiceAccountRepository(
     update: (id, body) =>
       withTransaction(db, async (trx) => {
         await lockName(trx, body.name);
-        const taken = await trx
-          .selectFrom("service_account")
-          .select("id")
-          .where(sql`lower(name)`, "=", body.name.toLowerCase())
-          .where("id", "<>", id)
-          .executeTakeFirst();
-        if (taken) {
+        if (await isNameTakenBy(trx, "service_account", body.name, id)) {
           return "name_taken";
         }
         const row = await trx

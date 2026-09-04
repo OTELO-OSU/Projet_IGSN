@@ -128,31 +128,31 @@ export function AppLayout({
               />
             )}
             {me?.superAdmin && (
-              <>
-                <li>
-                  <p id={GROUPS_NAV_ID} className="p-2 text-sm font-medium">
-                    {m.nav_institutional_groups()}
-                  </p>
-                  <ul aria-labelledby={GROUPS_NAV_ID} className="md:pl-3">
-                    {GROUPS_NAV.map(({ to, Icon, label }) => (
-                      <NavItem
-                        key={to}
-                        to={to}
-                        Icon={Icon}
-                        label={label()}
-                        isCurrent={pathname.startsWith(to)}
-                      />
-                    ))}
-                  </ul>
-                </li>
-                <NavItem
-                  to={SERVICE_ACCOUNTS_PATH}
-                  search={listSearch}
-                  Icon={BotIcon}
-                  label={m.nav_service_accounts()}
-                  isCurrent={pathname.startsWith(SERVICE_ACCOUNTS_PATH)}
-                />
-              </>
+              <li>
+                <p id={GROUPS_NAV_ID} className="p-2 text-sm font-medium">
+                  {m.nav_institutional_groups()}
+                </p>
+                <ul aria-labelledby={GROUPS_NAV_ID} className="md:pl-3">
+                  {GROUPS_NAV.map(({ to, Icon, label }) => (
+                    <NavItem
+                      key={to}
+                      to={to}
+                      Icon={Icon}
+                      label={label()}
+                      isCurrent={pathname.startsWith(to)}
+                    />
+                  ))}
+                </ul>
+              </li>
+            )}
+            {me?.superAdmin && (
+              <NavItem
+                to={SERVICE_ACCOUNTS_PATH}
+                search={listSearch}
+                Icon={BotIcon}
+                label={m.nav_service_accounts()}
+                isCurrent={pathname.startsWith(SERVICE_ACCOUNTS_PATH)}
+              />
             )}
             {me && canAdminManualGroups(me) && (
               <NavItem

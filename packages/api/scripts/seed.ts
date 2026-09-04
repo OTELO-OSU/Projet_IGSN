@@ -242,12 +242,10 @@ async function seedServiceAccounts(db: Kysely<DB>): Promise<void> {
     .execute();
   await db
     .insertInto("service_account_managed_manual_group")
-    .values(
-      MOCK_MANUAL_GROUPS.slice(0, 1).map(({ id }) => ({
-        service_account_id: MOCK_SERVICE_ACCOUNT.id,
-        group_id: id,
-      })),
-    )
+    .values({
+      service_account_id: MOCK_SERVICE_ACCOUNT.id,
+      group_id: MOCK_MANUAL_GROUPS[0]!.id,
+    })
     .onConflict((oc) => oc.doNothing())
     .execute();
 }

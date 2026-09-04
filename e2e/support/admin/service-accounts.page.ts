@@ -1,7 +1,8 @@
 import { expect, type Page } from "@playwright/test";
 
 import { adminUrl } from "../urls";
-import { pickComboboxOption } from "./pick-combobox-option.ts";
+import { chooseOption } from "./choose-option.ts";
+import { managedGroupsSection } from "./managed-groups.page.ts";
 
 export function serviceAccountsPage(page: Page) {
   const menuEntry = page
@@ -30,10 +31,7 @@ export function serviceAccountsPage(page: Page) {
 }
 
 export function serviceAccountPage(page: Page) {
-  const choose = async (field: RegExp, option: string) => {
-    await page.getByRole("combobox", { name: field }).click();
-    await page.getByRole("option", { name: option }).click();
-  };
+  const choose = chooseOption(page);
 
   return {
     expectVisible: (name: string) =>
@@ -47,13 +45,7 @@ export function serviceAccountPage(page: Page) {
       await choose(/^Organization/, institution.organization);
       await choose(/^Laboratory/, institution.laboratory);
     },
-    grant: (field: string, query: string, option: string) =>
-      pickComboboxOption(page, {
-        field,
-        query,
-        option,
-        chipLabel: `Remove ${option}`,
-      }),
+    grant: managedGroupsSection(page).grant,
     create: () =>
       page.getByRole("button", { name: "Create", exact: true }).click(),
     save: async () => {

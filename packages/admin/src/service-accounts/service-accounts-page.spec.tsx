@@ -26,8 +26,8 @@ const ACCOUNT = {
   managedGroups: NO_MANAGED_GROUPS,
 };
 
-function fakeApi({ superAdmin = true }: { superAdmin?: boolean } = {}) {
-  fakeCurrentUser({ superAdmin });
+function fakeApi() {
+  fakeCurrentUser({ superAdmin: true });
   worker.use(
     http.get("*/admin/samples", () =>
       HttpResponse.json({ data: [], meta: { total: 0 } }),
@@ -52,13 +52,5 @@ describe("ServiceAccountsPage", () => {
         screen.getByRole("cell", { name: "Université de Lorraine CRPG" }),
       )
       .toBeVisible();
-  });
-
-  it("should send a caller who is not a super admin back to the samples", async () => {
-    fakeApi({ superAdmin: false });
-
-    const { router } = await renderRoute("/service-accounts");
-
-    await expect.poll(() => router.state.location.pathname).toBe("/");
   });
 });

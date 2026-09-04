@@ -8,7 +8,7 @@ import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 
 import { institutionalGroupsFieldErrors } from "#/institutional-groups/institutional-groups-field-errors.ts";
 import { InstitutionalGroupsFields } from "#/institutional-groups/institutional-groups-fields.tsx";
-import { isNameTaken } from "#/manual-groups/is-name-taken.ts";
+import { isNameTaken } from "#/is-name-taken.ts";
 import { m } from "#/paraglide/messages.js";
 import { ManagedGroupsFields } from "#/users/managed-groups-fields.tsx";
 
@@ -24,11 +24,6 @@ const toDraft = (account?: ServiceAccount) => ({
   managedGroups: account?.managedGroups ?? NO_MANAGED_GROUPS,
 });
 
-const compose = (draft: ReturnType<typeof toDraft>) => ({
-  ...draft,
-  institutionalOsu: draft.institutionalOsu ?? null,
-});
-
 export function ServiceAccountForm({
   account,
   submitLabel,
@@ -41,11 +36,10 @@ export function ServiceAccountForm({
   const form = useAppForm({
     defaultValues: toDraft(account),
     validators: {
-      onSubmit: ({ value }) =>
-        validateServiceAccount({ value: compose(value) }),
+      onSubmit: validateServiceAccount,
       onSubmitAsync: async ({ value }) => {
         try {
-          await onSave(serviceAccountBodySchema.parse(compose(value)));
+          await onSave(serviceAccountBodySchema.parse(value));
           return undefined;
         } catch (error) {
           return isNameTaken(error)

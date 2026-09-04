@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   DEFAULT_PAGE_SIZE,
+  pageSchema,
   pageSizeSchema,
 } from "../sample/sample-validator.ts";
 import { MAX_SEARCH_LENGTH } from "../sample/search/search-tokens.ts";
@@ -40,7 +41,7 @@ export type AddManualGroupMemberBody = z.infer<
 >;
 
 export const listManualGroupsQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1).catch(1),
+  page: pageSchema,
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
   search: z
     .string()

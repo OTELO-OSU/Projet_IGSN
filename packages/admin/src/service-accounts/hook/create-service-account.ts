@@ -3,7 +3,7 @@ import type { ServiceAccountBody } from "@projet-igsn/domain/service-account/ser
 import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-import { isNameTaken } from "#/manual-groups/is-name-taken.ts";
+import { isNameTaken } from "#/is-name-taken.ts";
 import { m } from "#/paraglide/messages.js";
 import { createServiceAccount } from "#/service-accounts/client/create-service-account.ts";
 import { useApiClient } from "#/use-api-client.ts";

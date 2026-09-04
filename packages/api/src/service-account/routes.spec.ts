@@ -262,7 +262,9 @@ describe("admin service account routes", () => {
           : await updateAccount(client, other, taken);
       // Assert
       expect(res.status).toBe(409);
-      expect(await res.json()).toEqual({ reason: "name_taken" });
+      expect(await res.json()).toEqual({
+        error: "Service account name already taken",
+      });
     },
   );
 

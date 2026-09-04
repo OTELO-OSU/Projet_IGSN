@@ -1,40 +1,29 @@
 import { z } from "zod";
 
-import { institutionalGroupIssues } from "../institutional-group/institutional-groups-validator.ts";
-import { laboratoryCodeSchema } from "../institutional-group/laboratory.ts";
-import { organizationRorSchema } from "../institutional-group/organization.ts";
+import { setInstitutionalGroupsSchema } from "../institutional-group/institutional-groups-validator.ts";
 import { osuCodeSchema } from "../institutional-group/osu.ts";
 import {
   DEFAULT_PAGE_SIZE,
+  pageSchema,
   pageSizeSchema,
 } from "../sample/sample-validator.ts";
 import { managedGroupsSchema } from "../user/managed-groups.ts";
-import { serviceAccountSchema } from "./model.ts";
+import { listedServiceAccountSchema, serviceAccountSchema } from "./model.ts";
 
 const MAX_NAME_LENGTH = 100;
 
-export const serviceAccountBodySchema = z
-  .strictObject({
+export const serviceAccountBodySchema = setInstitutionalGroupsSchema.safeExtend(
+  {
     name: z.string().trim().min(1).max(MAX_NAME_LENGTH),
-    institutionalOrganization: organizationRorSchema,
-    institutionalOsu: osuCodeSchema.nullable(),
-    institutionalLaboratory: laboratoryCodeSchema,
+    institutionalOsu: osuCodeSchema.nullable().default(null),
     managedGroups: managedGroupsSchema,
-  })
-  .superRefine((account, ctx) => {
-    for (const issue of institutionalGroupIssues(account)) {
-      ctx.addIssue({
-        code: "custom",
-        path: [issue.path],
-        message: issue.message,
-      });
-    }
-  });
+  },
+);
 
 export type ServiceAccountBody = z.infer<typeof serviceAccountBodySchema>;
 
 export const listServiceAccountsQuerySchema = z.object({
-  page: z.coerce.number().int().min(1).default(1).catch(1),
+  page: pageSchema,
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
 });
 
@@ -51,7 +40,7 @@ export type ServiceAccountResponse = z.infer<
 >;
 
 export const listServiceAccountsResponseSchema = z.object({
-  data: z.array(serviceAccountSchema),
+  data: z.array(listedServiceAccountSchema),
   meta: z.object({ total: z.number() }),
 });
 
