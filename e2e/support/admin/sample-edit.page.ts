@@ -34,6 +34,7 @@ export function sampleEditPage(page: Page) {
         await combobox.click();
         await page.getByRole("option", { name: label, exact: true }).click();
       }
+      await expect(page.getByRole("listbox")).toHaveCount(0);
       await expect(combobox).toHaveText(label, { timeout: 2_000 });
     }).toPass({ timeout: 20_000 });
   };
