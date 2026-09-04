@@ -1,7 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
 import { adminUrl } from "../urls";
-import { chooseOption } from "./choose-option.ts";
 import { pickComboboxOption } from "./pick-combobox-option.ts";
 
 export function serviceAccountsPage(page: Page) {
@@ -31,7 +30,10 @@ export function serviceAccountsPage(page: Page) {
 }
 
 export function serviceAccountPage(page: Page) {
-  const choose = chooseOption(page);
+  const choose = async (field: RegExp, option: string) => {
+    await page.getByRole("combobox", { name: field }).click();
+    await page.getByRole("option", { name: option }).click();
+  };
 
   return {
     expectVisible: (name: string) =>
@@ -42,8 +44,8 @@ export function serviceAccountPage(page: Page) {
       organization: string;
       laboratory: string;
     }) => {
-      await choose("Organization", institution.organization);
-      await choose("Laboratory", institution.laboratory);
+      await choose(/^Organization/, institution.organization);
+      await choose(/^Laboratory/, institution.laboratory);
     },
     grant: (field: string, query: string, option: string) =>
       pickComboboxOption(page, {
