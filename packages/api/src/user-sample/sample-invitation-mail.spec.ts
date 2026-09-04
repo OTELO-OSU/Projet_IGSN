@@ -26,12 +26,12 @@ describe("sampleInvitationMail", () => {
     const mail = await sampleInvitationMail(invitation);
 
     expect(mail.subject).toBe(
-      'Jean Martin invited you to collaborate on "Basalt core 12"',
+      'Jean Martin designated you as a contributor for the sample "Basalt core 12"',
     );
     expect(mail.text).toBe(
       `Hello Marie Dupont,
 
-Jean Martin invited you to contribute to the sample "Basalt core 12", which you may edit while it is a draft.
+Jean Martin designated you as a contributor for the sample "Basalt core 12". You may edit it while it is a draft.
 
 Open the sample: ${SAMPLE_URL}
 `,
@@ -51,8 +51,11 @@ Open the sample: ${SAMPLE_URL}
   it("should tell an editor they may publish the sample", async () => {
     const mail = await sampleInvitationMail({ ...invitation, role: "editor" });
 
+    expect(mail.subject).toBe(
+      'Jean Martin designated you as an editor for the sample "Basalt core 12"',
+    );
     expect(mail.text).toContain(
-      'Jean Martin invited you to edit the sample "Basalt core 12", which you may also publish and keep editing afterwards.',
+      'Jean Martin designated you as an editor for the sample "Basalt core 12". You may edit it, publish it and keep editing it afterwards.',
     );
   });
 
@@ -81,9 +84,9 @@ Open the sample: ${SAMPLE_URL}
     });
 
     expect(mail.subject).toBe(
-      'jean.martin@univ-lorraine.fr invited you to collaborate on "Basalt core 12"',
+      'jean.martin@univ-lorraine.fr designated you as a contributor for the sample "Basalt core 12"',
     );
-    expect(mail.text).toContain("jean.martin@univ-lorraine.fr invited you");
+    expect(mail.text).toContain("jean.martin@univ-lorraine.fr designated you");
   });
 
   it("should escape html carried by the inviter and the sample name", async () => {
