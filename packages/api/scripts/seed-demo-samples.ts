@@ -1482,8 +1482,8 @@ const DRAFTS: DemoRow[] = [
 const demoId = (index: number): string =>
   `019f5b01-0000-7000-8000-${index.toString(16).padStart(12, "0")}`;
 
-const RECENT_CONTEXT: SampleRow["scientificContext"] = {
-  provenanceStatus: "recent_collection",
+const FIELD_SAMPLE_CONTEXT: SampleRow["scientificContext"] = {
+  provenanceStatus: "field_sample",
   funderOrganizations: ["02feahw73"],
   researchProgramName: "Solid Earth Demo Survey",
   chiefScientist: "Jean Dupont",
@@ -1497,8 +1497,8 @@ const DEMO_REPOSITORY: SampleRow["repository"] = {
   collectionName: "Solid Earth demo collection",
 };
 
-const HISTORICAL_CONTEXT: SampleRow["scientificContext"] = {
-  provenanceStatus: "historical_specimen",
+const COLLECTION_SPECIMEN_CONTEXT: SampleRow["scientificContext"] = {
+  provenanceStatus: "collection_specimen",
   collectionCurator: "Paul Bernard",
   collectionOrigin: "scientific_expedition",
 };
@@ -1516,7 +1516,9 @@ export const DEMO_SAMPLES: SampleRow[] = [...PUBLISHED, ...DRAFTS].map(
             igsn: generateIgsnSuffix(id),
             scientificContext:
               row.scientificContext ??
-              (index % 2 === 0 ? RECENT_CONTEXT : HISTORICAL_CONTEXT),
+              (index % 2 === 0
+                ? FIELD_SAMPLE_CONTEXT
+                : COLLECTION_SPECIMEN_CONTEXT),
             repository: row.repository ?? DEMO_REPOSITORY,
             existenceStatus: row.existenceStatus ?? "exists",
             availabilityStatus: row.availabilityStatus ?? "available",

@@ -66,7 +66,7 @@ const sampleBody = {
     collectionDate: { start: "2026-01-01", end: "2026-01-01" },
   },
   scientificContext: {
-    provenanceStatus: "historical_specimen",
+    provenanceStatus: "collection_specimen",
     collectionCurator: "Georges Cuvier",
     collectionOrigin: "scientific_expedition",
   },
