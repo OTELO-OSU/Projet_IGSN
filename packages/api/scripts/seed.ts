@@ -217,6 +217,41 @@ async function seedManagedGroups(
     .execute();
 }
 
+const MOCK_SERVICE_ACCOUNT = {
+  id: "01980e2d-6f9b-7000-a000-000000000001",
+  name: "GeoPortal harvester",
+  institutional_organization: "04vfs2w97",
+  institutional_osu: "OTELo",
+  institutional_laboratory: "UMR7358",
+};
+
+async function seedServiceAccounts(db: Kysely<DB>): Promise<void> {
+  await db
+    .insertInto("service_account")
+    .values(MOCK_SERVICE_ACCOUNT)
+    .onConflict((oc) => oc.column("id").doNothing())
+    .execute();
+  await db
+    .insertInto("service_account_managed_institutional_group")
+    .values({
+      service_account_id: MOCK_SERVICE_ACCOUNT.id,
+      kind: "laboratory",
+      code: "UMR7327",
+    })
+    .onConflict((oc) => oc.doNothing())
+    .execute();
+  await db
+    .insertInto("service_account_managed_manual_group")
+    .values(
+      MOCK_MANUAL_GROUPS.slice(0, 1).map(({ id }) => ({
+        service_account_id: MOCK_SERVICE_ACCOUNT.id,
+        group_id: id,
+      })),
+    )
+    .onConflict((oc) => oc.doNothing())
+    .execute();
+}
+
 async function seedManualGroups(
   db: Kysely<DB>,
   ownerIds: Record<ResearcherKey, string>,
@@ -246,6 +281,7 @@ export async function seedMockUsers(
   const ownerIds = await seedOwners(db);
   await seedManualGroups(db, ownerIds);
   await seedManagedGroups(db, ownerIds);
+  await seedServiceAccounts(db);
   return ownerIds;
 }
 

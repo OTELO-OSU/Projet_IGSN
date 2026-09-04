@@ -26,6 +26,7 @@
 - A sample also carries manual groups its owner picks and edits, frozen once published; see ADR 0025.
 - Moderation reach reads the sample's own codes and groups (`api/src/sample/service/moderated-sample-where.ts`), but the user row for a user (`api/src/user/moderation-scope-where.ts`); see ADR 0030.
 - `api/src/institutional-group/` is that entity's first repository (managers, active-manager counts); `api/src/user/orphaned-groups-of-user.ts` and the two repositories' `listWithoutActiveManager` methods are the single "who still manages this group" queries, shared by the orphan-group mail, the pending-users digest recap and the group lists; see ADR 0030.
+- `domain/service-account/` and `api/src/service-account/` are the service account: a super-admin-declared non-human account with a name, an institutional trio and managed groups, its own table never a user row, never a manager on a group page or in a count; its future sample reach is `managerScope` + `moderatedSampleWhere`; see ADR 0035.
 
 ## Server-side sorting and filtering
 

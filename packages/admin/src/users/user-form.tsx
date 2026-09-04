@@ -20,16 +20,11 @@ import { InstitutionalGroupsFields } from "#/institutional-groups/institutional-
 import { useManualGroups } from "#/manual-groups/use-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 import {
-  MANAGED_LABORATORY_ITEMS,
-  MANAGED_ORGANIZATION_ITEMS,
-  MANAGED_OSU_ITEMS,
-  withGranted,
-} from "#/users/managed-group-items.ts";
+  CATALOG_PAGE,
+  ManagedGroupsFields,
+} from "#/users/managed-groups-fields.tsx";
 import { UserStatusBadge } from "#/users/user-status-badge.tsx";
 import { userStatusLabel } from "#/users/user-status-label.ts";
-
-// ponytail: one page of 50 groups, server-side search once the catalog outgrows it
-const CATALOG_PAGE = { page: 1, perPage: 50, search: "" };
 
 const toItem = (group: { id: string; name: string }) => ({
   value: group.id,
@@ -103,39 +98,6 @@ export function UserForm({
       (group) => !group.canDetach || !canManageManualGroup(caller, group.id),
     )
     .map((group) => group.id);
-  const managedFields = [
-    {
-      name: "managedGroups.organizations",
-      label: m.field_managed_organizations(),
-      items: withGranted(
-        MANAGED_ORGANIZATION_ITEMS,
-        user.managedGroups.organizations,
-      ),
-      placeholder: m.organization_placeholder(),
-      emptyText: m.organization_empty(),
-    },
-    {
-      name: "managedGroups.osus",
-      label: m.field_managed_osus(),
-      items: MANAGED_OSU_ITEMS,
-      placeholder: m.osu_placeholder(),
-      emptyText: m.osu_empty(),
-    },
-    {
-      name: "managedGroups.laboratories",
-      label: m.field_managed_laboratories(),
-      items: MANAGED_LABORATORY_ITEMS,
-      placeholder: m.laboratory_placeholder(),
-      emptyText: m.laboratory_empty(),
-    },
-    {
-      name: "managedGroups.manualGroupIds",
-      label: m.field_managed_manual_groups(),
-      items: withGranted(catalogItems, user.managedGroups.manualGroupIds),
-      placeholder: m.manual_group_placeholder(),
-      emptyText: m.manual_groups_empty(),
-    },
-  ] as const;
 
   const statusField = (
     <form.AppField name="status">
@@ -226,29 +188,9 @@ export function UserForm({
         <>
           <hr />
 
-          <FormSection title={m.user_managed_groups_title()}>
-            <p className="text-muted-foreground text-sm">
-              {m.user_managed_groups_cascade()}
-            </p>
-            {managedFields.map(
-              ({ name, label, items, placeholder, emptyText }) => (
-                <form.AppField key={name} name={name}>
-                  {(field) => (
-                    <field.MultiComboboxField
-                      label={label}
-                      items={items}
-                      placeholder={placeholder}
-                      searchPlaceholder={m.managed_search_placeholder()}
-                      emptyText={emptyText}
-                      removeLabel={(picked) =>
-                        m.managed_remove({ name: picked })
-                      }
-                    />
-                  )}
-                </form.AppField>
-              ),
-            )}
-          </FormSection>
+          <form.AppForm>
+            <ManagedGroupsFields granted={user.managedGroups} />
+          </form.AppForm>
         </>
       )}
 

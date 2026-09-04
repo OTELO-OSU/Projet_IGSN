@@ -226,6 +226,26 @@ type UserManagedManualGroupTable = {
   group_id: string;
 };
 
+type ServiceAccountTable = {
+  id: string;
+  name: string;
+  institutional_organization: string;
+  institutional_osu: string | null;
+  institutional_laboratory: string;
+  created_at: Generated<Date>;
+};
+
+type ServiceAccountManagedInstitutionalGroupTable = {
+  service_account_id: string;
+  kind: "organization" | "osu" | "laboratory";
+  code: string;
+};
+
+type ServiceAccountManagedManualGroupTable = {
+  service_account_id: string;
+  group_id: string;
+};
+
 export type DB = {
   manual_group: ManualGroupTable;
   manual_group_member: ManualGroupMemberTable;
@@ -234,6 +254,9 @@ export type DB = {
   sample_relation: SampleRelationTable;
   sample_attachment: SampleAttachmentTable;
   sample_edit_lock: SampleEditLockTable;
+  service_account: ServiceAccountTable;
+  service_account_managed_institutional_group: ServiceAccountManagedInstitutionalGroupTable;
+  service_account_managed_manual_group: ServiceAccountManagedManualGroupTable;
   user: UserTable;
   user_managed_institutional_group: UserManagedInstitutionalGroupTable;
   user_managed_manual_group: UserManagedManualGroupTable;

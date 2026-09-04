@@ -2,6 +2,7 @@
 
 ## 2026-09-04
 
+- **Creation**: Service accounts (service-accounts)
 - **Creation**: Scientific context: field sample or collection specimen (scientific-context)
 - **Update**: allowsLocation and requiresLocation: the two location gates (location-material-gate)
 

@@ -12,8 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as UsersIndexRouteImport } from './routes/users.index'
+import { Route as ServiceAccountsIndexRouteImport } from './routes/service-accounts.index'
 import { Route as ManualGroupsIndexRouteImport } from './routes/manual-groups.index'
 import { Route as UsersUserIdRouteImport } from './routes/users.$userId'
+import { Route as ServiceAccountsCreateRouteImport } from './routes/service-accounts.create'
+import { Route as ServiceAccountsAccountIdRouteImport } from './routes/service-accounts.$accountId'
 import { Route as SamplesModerationRouteImport } from './routes/samples.moderation'
 import { Route as SamplesCreateRouteImport } from './routes/samples.create'
 import { Route as SamplesSampleIdRouteImport } from './routes/samples.$sampleId'
@@ -41,6 +44,11 @@ const UsersIndexRoute = UsersIndexRouteImport.update({
   path: '/users/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServiceAccountsIndexRoute = ServiceAccountsIndexRouteImport.update({
+  id: '/service-accounts/',
+  path: '/service-accounts/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ManualGroupsIndexRoute = ManualGroupsIndexRouteImport.update({
   id: '/manual-groups/',
   path: '/manual-groups/',
@@ -51,6 +59,17 @@ const UsersUserIdRoute = UsersUserIdRouteImport.update({
   path: '/users/$userId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ServiceAccountsCreateRoute = ServiceAccountsCreateRouteImport.update({
+  id: '/service-accounts/create',
+  path: '/service-accounts/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServiceAccountsAccountIdRoute =
+  ServiceAccountsAccountIdRouteImport.update({
+    id: '/service-accounts/$accountId',
+    path: '/service-accounts/$accountId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SamplesModerationRoute = SamplesModerationRouteImport.update({
   id: '/samples/moderation',
   path: '/samples/moderation',
@@ -121,8 +140,11 @@ export interface FileRoutesByFullPath {
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
   '/samples/moderation': typeof SamplesModerationRoute
+  '/service-accounts/$accountId': typeof ServiceAccountsAccountIdRoute
+  '/service-accounts/create': typeof ServiceAccountsCreateRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/manual-groups/': typeof ManualGroupsIndexRoute
+  '/service-accounts/': typeof ServiceAccountsIndexRoute
   '/users/': typeof UsersIndexRoute
   '/institutional-groups/laboratories/$code': typeof InstitutionalGroupsLaboratoriesCodeRoute
   '/institutional-groups/organizations/$ror': typeof InstitutionalGroupsOrganizationsRorRoute
@@ -139,8 +161,11 @@ export interface FileRoutesByTo {
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
   '/samples/moderation': typeof SamplesModerationRoute
+  '/service-accounts/$accountId': typeof ServiceAccountsAccountIdRoute
+  '/service-accounts/create': typeof ServiceAccountsCreateRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/manual-groups': typeof ManualGroupsIndexRoute
+  '/service-accounts': typeof ServiceAccountsIndexRoute
   '/users': typeof UsersIndexRoute
   '/institutional-groups/laboratories/$code': typeof InstitutionalGroupsLaboratoriesCodeRoute
   '/institutional-groups/organizations/$ror': typeof InstitutionalGroupsOrganizationsRorRoute
@@ -158,8 +183,11 @@ export interface FileRoutesById {
   '/samples/$sampleId': typeof SamplesSampleIdRoute
   '/samples/create': typeof SamplesCreateRoute
   '/samples/moderation': typeof SamplesModerationRoute
+  '/service-accounts/$accountId': typeof ServiceAccountsAccountIdRoute
+  '/service-accounts/create': typeof ServiceAccountsCreateRoute
   '/users/$userId': typeof UsersUserIdRoute
   '/manual-groups/': typeof ManualGroupsIndexRoute
+  '/service-accounts/': typeof ServiceAccountsIndexRoute
   '/users/': typeof UsersIndexRoute
   '/institutional-groups/laboratories/$code': typeof InstitutionalGroupsLaboratoriesCodeRoute
   '/institutional-groups/organizations/$ror': typeof InstitutionalGroupsOrganizationsRorRoute
@@ -178,8 +206,11 @@ export interface FileRouteTypes {
     | '/samples/$sampleId'
     | '/samples/create'
     | '/samples/moderation'
+    | '/service-accounts/$accountId'
+    | '/service-accounts/create'
     | '/users/$userId'
     | '/manual-groups/'
+    | '/service-accounts/'
     | '/users/'
     | '/institutional-groups/laboratories/$code'
     | '/institutional-groups/organizations/$ror'
@@ -196,8 +227,11 @@ export interface FileRouteTypes {
     | '/samples/$sampleId'
     | '/samples/create'
     | '/samples/moderation'
+    | '/service-accounts/$accountId'
+    | '/service-accounts/create'
     | '/users/$userId'
     | '/manual-groups'
+    | '/service-accounts'
     | '/users'
     | '/institutional-groups/laboratories/$code'
     | '/institutional-groups/organizations/$ror'
@@ -214,8 +248,11 @@ export interface FileRouteTypes {
     | '/samples/$sampleId'
     | '/samples/create'
     | '/samples/moderation'
+    | '/service-accounts/$accountId'
+    | '/service-accounts/create'
     | '/users/$userId'
     | '/manual-groups/'
+    | '/service-accounts/'
     | '/users/'
     | '/institutional-groups/laboratories/$code'
     | '/institutional-groups/organizations/$ror'
@@ -233,8 +270,11 @@ export interface RootRouteChildren {
   SamplesSampleIdRoute: typeof SamplesSampleIdRoute
   SamplesCreateRoute: typeof SamplesCreateRoute
   SamplesModerationRoute: typeof SamplesModerationRoute
+  ServiceAccountsAccountIdRoute: typeof ServiceAccountsAccountIdRoute
+  ServiceAccountsCreateRoute: typeof ServiceAccountsCreateRoute
   UsersUserIdRoute: typeof UsersUserIdRoute
   ManualGroupsIndexRoute: typeof ManualGroupsIndexRoute
+  ServiceAccountsIndexRoute: typeof ServiceAccountsIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
   InstitutionalGroupsLaboratoriesCodeRoute: typeof InstitutionalGroupsLaboratoriesCodeRoute
   InstitutionalGroupsOrganizationsRorRoute: typeof InstitutionalGroupsOrganizationsRorRoute
@@ -267,6 +307,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/service-accounts/': {
+      id: '/service-accounts/'
+      path: '/service-accounts'
+      fullPath: '/service-accounts/'
+      preLoaderRoute: typeof ServiceAccountsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/manual-groups/': {
       id: '/manual-groups/'
       path: '/manual-groups'
@@ -279,6 +326,20 @@ declare module '@tanstack/react-router' {
       path: '/users/$userId'
       fullPath: '/users/$userId'
       preLoaderRoute: typeof UsersUserIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/service-accounts/create': {
+      id: '/service-accounts/create'
+      path: '/service-accounts/create'
+      fullPath: '/service-accounts/create'
+      preLoaderRoute: typeof ServiceAccountsCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/service-accounts/$accountId': {
+      id: '/service-accounts/$accountId'
+      path: '/service-accounts/$accountId'
+      fullPath: '/service-accounts/$accountId'
+      preLoaderRoute: typeof ServiceAccountsAccountIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/samples/moderation': {
@@ -369,8 +430,11 @@ const rootRouteChildren: RootRouteChildren = {
   SamplesSampleIdRoute: SamplesSampleIdRoute,
   SamplesCreateRoute: SamplesCreateRoute,
   SamplesModerationRoute: SamplesModerationRoute,
+  ServiceAccountsAccountIdRoute: ServiceAccountsAccountIdRoute,
+  ServiceAccountsCreateRoute: ServiceAccountsCreateRoute,
   UsersUserIdRoute: UsersUserIdRoute,
   ManualGroupsIndexRoute: ManualGroupsIndexRoute,
+  ServiceAccountsIndexRoute: ServiceAccountsIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
   InstitutionalGroupsLaboratoriesCodeRoute:
     InstitutionalGroupsLaboratoriesCodeRoute,

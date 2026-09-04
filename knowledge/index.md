@@ -33,6 +33,7 @@ okf_version: "0.2"
 - [Publish blockers](publish-blockers.md) - samplePublishBlockers is the single place stating why a sample cannot be published; the api guard and the admin tooltip both derive from it.
 - [Sample model](sample-model.md) - One wide sample row with flat nullable sub-blocks, two one-to-many child tables, and snapshotted institutional codes.
 - [Sample status lifecycle and its three predicates](sample-status-lifecycle.md) - status is draft | published | withdrawn | tombstone, read through three distinct predicates for permanence, public visibility and public resolution.
+- [Service accounts](service-accounts.md) - A super-admin-declared non-human account with a name, an institutional trio and managed groups, its own table never a user row, for a future machine API's sample reach.
 - [Sample vocabularies as segment-keyed trees](vocabulary-tree.md) - Every sample vocabulary is one segment-keyed TreeNode tree in domain, expanded to flat dot-paths by expandPaths, with per-node completeness.
 - [Scientific context: field sample or collection specimen](scientific-context.md) - A discriminated union on provenanceStatus (field_sample | collection_specimen) with per-branch mandatory fields, per-branch post-publish locks, and a location requirement that only the collection specimen relaxes.
 - [Synthetic sample details](synthetic-details.md) - syntheticDetails is the sub-block a synthetic sample carries instead of a location, gated by isSyntheticMaterial and required in seven fields to publish.
