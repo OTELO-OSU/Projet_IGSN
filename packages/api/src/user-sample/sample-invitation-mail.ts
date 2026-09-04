@@ -30,7 +30,7 @@ export async function sampleInvitationMail({
   };
   return ctaMail({
     recipient: invitee,
-    subject: t("mail_invitation_subject", params),
+    subject: t(`mail_invitation_subject_${role}`, params),
     body: t(`mail_invitation_body_${role}`, params),
     cta: t("mail_invitation_cta"),
     url: sampleUrl,
