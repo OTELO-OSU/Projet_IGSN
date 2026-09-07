@@ -325,20 +325,6 @@ describe("CreateSamplePage", () => {
       .toHaveTextContent("Could not publish the sample. Please try again.");
   });
 
-  it("should tell the depositor to save once before attaching files", async () => {
-    const screen = await renderCreatePage();
-    await screen.getByRole("tab", { name: "Related URL or document" }).click();
-
-    await expect
-      .element(screen.getByRole("heading", { name: "Attached files" }))
-      .toBeVisible();
-    await expect
-      .element(
-        screen.getByText("Save the sample once before attaching files to it."),
-      )
-      .toBeVisible();
-  });
-
   it("should show an error toast when creation fails", async () => {
     const screen = await renderCreatePage(true);
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");

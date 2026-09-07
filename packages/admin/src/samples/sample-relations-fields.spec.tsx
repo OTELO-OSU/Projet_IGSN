@@ -82,6 +82,11 @@ describe("SampleForm related resources tab", () => {
       .element(screen.getByRole("heading", { name: "Attached files" }))
       .toBeVisible();
     await expect
+      .element(
+        screen.getByText("Save the sample once before attaching files to it."),
+      )
+      .toBeVisible();
+    await expect
       .element(screen.getByRole("button", { name: "Browse files" }))
       .not.toBeInTheDocument();
   });
