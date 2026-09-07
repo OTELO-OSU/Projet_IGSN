@@ -45,7 +45,7 @@ export function WithdrawnSampleView({
             />
             <FieldRow
               label={m.sample_field_nature()}
-              value={natureLabel(nature)}
+              value={nature ? natureLabel(nature) : null}
             />
             <BreadcrumbFieldRow
               id="sample-field-material"
