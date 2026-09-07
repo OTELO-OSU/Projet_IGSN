@@ -1,5 +1,5 @@
-import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
+import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 
 import { m } from "#/paraglide/messages.js";

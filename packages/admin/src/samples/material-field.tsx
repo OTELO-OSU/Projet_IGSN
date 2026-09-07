@@ -1,4 +1,4 @@
-import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { MATERIAL_HIERARCHY } from "@projet-igsn/domain/sample/material/classification";
 import { fabricsFor } from "@projet-igsn/domain/sample/metamorphic-fabric/vocabulary";
 import { faciesFor } from "@projet-igsn/domain/sample/metamorphic-facies/vocabulary";

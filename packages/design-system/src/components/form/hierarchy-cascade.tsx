@@ -1,9 +1,6 @@
 import type { ReactNode } from "react";
 
-import {
-  type Hierarchy,
-  hierarchyChildLabel,
-} from "./hierarchy-select-field.tsx";
+import { type Hierarchy, hierarchyChildLabel } from "../../lib/hierarchy.ts";
 
 // The child path of `parent` that the current dot-path value selects at this
 // level, or "" when the value does not descend through this level.

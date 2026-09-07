@@ -5,10 +5,9 @@ import {
   hierarchyChildren,
   hierarchyLevelItems,
   hierarchyPathLabel,
-  levelLabel,
   toHierarchyPath,
   type Hierarchy,
-} from "./hierarchy-select-field.tsx";
+} from "./hierarchy.ts";
 
 // A fixture exercising every tree feature: a must-refine node (rock, the
 // default), an optional node with children (sedimentary), a self-child stop
@@ -142,22 +141,6 @@ describe("hierarchyLevelItems", () => {
       { value: "water.water", label: "WATER_ONLY" },
       { value: "water.sea", label: "SEA" },
     ]);
-  });
-});
-
-describe("levelLabel", () => {
-  it("should leave the root level to the caller's marker", () => {
-    expect(levelLabel(hierarchy, "Material *", null)).toBe("Material *");
-  });
-
-  it("should mark a nested level required when its parent cannot stop there", () => {
-    expect(levelLabel(hierarchy, "Rock", "rock")).toBe("Rock *");
-  });
-
-  it("should not mark a nested level when its parent may stop there", () => {
-    expect(levelLabel(hierarchy, "Sedimentary", "rock.sedimentary")).toBe(
-      "Sedimentary",
-    );
   });
 });
 

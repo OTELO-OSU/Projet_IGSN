@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
-import type { Hierarchy } from "./hierarchy-select-field.tsx";
+import type { Hierarchy } from "../../lib/hierarchy.ts";
 
 import { useAppForm } from "./app-form.tsx";
 import { FieldDisabledProvider } from "./field-disabled-context.tsx";

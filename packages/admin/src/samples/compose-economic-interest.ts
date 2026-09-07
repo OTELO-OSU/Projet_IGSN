@@ -1,7 +1,7 @@
 import {
   composeHierarchyValue,
   toHierarchyPath,
-} from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+} from "@projet-igsn/design-system/lib/hierarchy";
 import { allowsResourceType } from "@projet-igsn/domain/sample/resource-type/allows-resource-type";
 import { allowsResourceTypeElements } from "@projet-igsn/domain/sample/resource-type/allows-resource-type-elements";
 import { hasEconomicInterest } from "@projet-igsn/domain/sample/resource-type/has-economic-interest";

@@ -1,7 +1,3 @@
-import { withRequired } from "../../lib/with-required.ts";
-import { useTypedAppFormContext } from "./app-form.tsx";
-import { HierarchyCascade } from "./hierarchy-cascade.tsx";
-
 // Structural mirror of the domain vocabulary trees (design-system MUST NOT
 // import domain).
 export type HierarchyNodeDef = {
@@ -92,17 +88,6 @@ export function hierarchyLevelItems(
   }));
 }
 
-export function levelLabel(
-  hierarchy: Hierarchy,
-  label: string,
-  parent: string | null,
-): string {
-  return withRequired(
-    label,
-    Boolean(parent && !canStopAtPath(hierarchy, parent)),
-  );
-}
-
 export function composeHierarchyValue(path: string[]): string | null {
   return path.filter(Boolean).at(-1) ?? null;
 }
@@ -111,81 +96,4 @@ export function toHierarchyPath(value: string | null): string[] {
   if (!value) return [];
   const segments = value.split(".");
   return segments.map((_, index) => segments.slice(0, index + 1).join("."));
-}
-
-type HierarchySelectFieldProps = {
-  // Form field holding the per-level path (a string[]); must exist in the
-  // parent form's defaultValues.
-  name: string;
-  hierarchy: Hierarchy;
-  // Translates a node's label code; owned by the calling package (i18n rule).
-  translate?: (code: string) => string;
-  rootLabel: string;
-  // Marks the root label with the trailing "*" publish marker; deeper levels
-  // derive their own from the tree's stop rules.
-  requiredToPublish?: boolean;
-  placeholder: string;
-  searchPlaceholder: string;
-  emptyText: string;
-  // Fired whenever any level's selection changes, after the deeper levels are
-  // truncated.
-  onChange?: () => void;
-};
-
-// Render inside a `form.AppForm`.
-export function HierarchySelectField({
-  name,
-  hierarchy,
-  translate = identity,
-  rootLabel,
-  requiredToPublish = false,
-  placeholder,
-  searchPlaceholder,
-  emptyText,
-  onChange,
-}: HierarchySelectFieldProps) {
-  const form = useTypedAppFormContext({
-    defaultValues: {} as Record<string, string[]>,
-  });
-
-  return (
-    <form.Subscribe
-      selector={(state) =>
-        composeHierarchyValue(state.values[name] ?? []) ?? undefined
-      }
-    >
-      {(value) => (
-        <HierarchyCascade
-          hierarchy={hierarchy}
-          translate={translate}
-          value={value}
-          rootLabel={withRequired(rootLabel, requiredToPublish)}
-          itemsAt={(parent) =>
-            hierarchyLevelItems(hierarchy, parent, translate)
-          }
-          renderLevel={({ parent, depth, label, items }) => (
-            <form.AppField
-              name={`${name}[${depth}]`}
-              listeners={{
-                onChange: () => {
-                  form.setFieldValue(name, (path) => path.slice(0, depth + 1));
-                  onChange?.();
-                },
-              }}
-            >
-              {(field) => (
-                <field.ComboboxField
-                  label={levelLabel(hierarchy, label, parent)}
-                  items={items}
-                  placeholder={placeholder}
-                  searchPlaceholder={searchPlaceholder}
-                  emptyText={emptyText}
-                />
-              )}
-            </form.AppField>
-          )}
-        />
-      )}
-    </form.Subscribe>
-  );
 }

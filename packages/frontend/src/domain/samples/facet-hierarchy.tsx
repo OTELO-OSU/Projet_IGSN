@@ -1,11 +1,11 @@
 import { HierarchyCascade } from "@projet-igsn/design-system/components/form/hierarchy-cascade";
+import { Combobox } from "@projet-igsn/design-system/components/ui/combobox";
+import { Label } from "@projet-igsn/design-system/components/ui/label";
 import {
   type Hierarchy,
   hierarchyLevelItems,
   isPathSearchable,
-} from "@projet-igsn/design-system/components/form/hierarchy-select-field";
-import { Combobox } from "@projet-igsn/design-system/components/ui/combobox";
-import { Label } from "@projet-igsn/design-system/components/ui/label";
+} from "@projet-igsn/design-system/lib/hierarchy";
 import { useId } from "react";
 
 type HierarchyFacetProps = {

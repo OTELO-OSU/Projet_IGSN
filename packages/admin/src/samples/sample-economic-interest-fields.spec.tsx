@@ -1,7 +1,7 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
-import { toHierarchyPath } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { toHierarchyPath } from "@projet-igsn/design-system/lib/hierarchy";
 import { describe, expect, it, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";

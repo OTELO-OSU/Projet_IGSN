@@ -1,6 +1,12 @@
 import { CheckIcon, ChevronsUpDownIcon, XIcon } from "lucide-react";
 import { Fragment, useState } from "react";
 
+import {
+  canStopAtPath,
+  hierarchyChildren,
+  hierarchyPathLabel,
+  type Hierarchy,
+} from "../../lib/hierarchy.ts";
 import { cn } from "../../lib/utils.ts";
 import { withRequired } from "../../lib/with-required.ts";
 import { Badge } from "../ui/badge.tsx";
@@ -26,12 +32,6 @@ import {
 } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
-import {
-  canStopAtPath,
-  hierarchyChildren,
-  hierarchyPathLabel,
-  type Hierarchy,
-} from "./hierarchy-select-field.tsx";
 
 const identity = (code: string) => code;
 

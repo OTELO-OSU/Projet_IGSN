@@ -1,7 +1,7 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
-import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
+import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { ELEMENTS } from "@projet-igsn/domain/sample/element/vocabulary";
 import { allowsResourceType } from "@projet-igsn/domain/sample/resource-type/allows-resource-type";
 import { allowsResourceTypeElements } from "@projet-igsn/domain/sample/resource-type/allows-resource-type-elements";

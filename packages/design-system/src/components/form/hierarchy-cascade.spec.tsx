@@ -3,13 +3,10 @@ import { describe, expect, it } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
+import { type Hierarchy, hierarchyLevelItems } from "../../lib/hierarchy.ts";
 import { Combobox } from "../ui/combobox.tsx";
 import { Label } from "../ui/label.tsx";
 import { HierarchyCascade, selectedChild } from "./hierarchy-cascade.tsx";
-import {
-  type Hierarchy,
-  hierarchyLevelItems,
-} from "./hierarchy-select-field.tsx";
 
 const translate = (code: string) => code.split(".").at(-1) ?? code;
 
