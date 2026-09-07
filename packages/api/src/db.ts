@@ -10,7 +10,7 @@ import { z } from "zod";
 type SampleTable = {
   id: string;
   name: string;
-  nature: string;
+  nature: string | null;
   type: string | null;
   material: string | null;
   texture: string | null;

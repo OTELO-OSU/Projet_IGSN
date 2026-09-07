@@ -4,6 +4,7 @@ import { m } from "#/paraglide/messages.js";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
 const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
+  nature_missing: m.publish_blocked_nature_missing,
   type_missing: m.publish_blocked_type_missing,
   type_incomplete: m.publish_blocked_type_incomplete,
   material_missing: m.publish_blocked_material_missing,

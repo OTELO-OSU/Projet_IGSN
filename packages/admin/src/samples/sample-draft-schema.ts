@@ -194,7 +194,7 @@ const composeCreateSample = (draft: SampleDraft) => {
   );
   return {
     name: draft.name,
-    nature: draft.nature,
+    nature: draft.nature ?? null,
     type: composeHierarchyValue(draft.typePath),
     material,
     ...(draft.texture ? { texture: draft.texture } : {}),

@@ -48,7 +48,7 @@ test.describe("sample relations", () => {
     await edit.expectAttachment("fichierTest.pdf");
     await edit.expectAttachment("test.png");
     await edit.expectAttachment("test.txt");
-    await edit.saveDraft();
+    await edit.save();
     await edit.confirmUploads();
 
     await page.reload();

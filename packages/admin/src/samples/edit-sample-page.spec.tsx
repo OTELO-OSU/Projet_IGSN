@@ -426,27 +426,23 @@ describe("EditSamplePage", () => {
     [
       "an editor on a draft",
       () => renderEditPageAsEditor("draft"),
-      ["Save & Publish"],
+      ["Publish"],
     ],
     [
       "an editor on a published sample",
       () => renderEditPageAsEditor("published"),
-      ["Publish updates"],
+      ["Save"],
     ],
-    [
-      "the owner on a draft",
-      () => renderEditPage(),
-      ["Save as draft", "Save & Publish"],
-    ],
+    ["the owner on a draft", () => renderEditPage(), ["Save", "Publish"]],
     [
       "the owner on a published sample",
       () => renderEditPage("published"),
-      ["Publish updates"],
+      ["Save"],
     ],
     [
       "the owner on a withdrawn sample",
       () => renderEditPage("withdrawn"),
-      ["Save changes"],
+      ["Save"],
     ],
   ])(
     "should offer the save actions to %s",
@@ -455,7 +451,7 @@ describe("EditSamplePage", () => {
 
       for (const name of buttons) {
         await expect
-          .element(screen.getByRole("button", { name }))
+          .element(screen.getByRole("button", { name, exact: true }))
           .toBeEnabled();
       }
     },
@@ -465,7 +461,7 @@ describe("EditSamplePage", () => {
     ["a publishable draft", "fossil"],
     ["a blocked draft", null],
   ])(
-    "should offer a contributor no Save & Publish and no focusable tooltip on %s",
+    "should offer a contributor no Publish button and no focusable tooltip on %s",
     async (_case, material) => {
       const { screen } = await renderEditPage(
         "draft",
@@ -481,10 +477,10 @@ describe("EditSamplePage", () => {
       );
 
       await expect
-        .element(screen.getByRole("button", { name: "Save as draft" }))
+        .element(screen.getByRole("button", { name: "Save", exact: true }))
         .toBeEnabled();
       expect(
-        screen.getByRole("button", { name: "Save & Publish" }).elements(),
+        screen.getByRole("button", { name: "Publish", exact: true }).elements(),
       ).toHaveLength(0);
       expect(document.querySelectorAll('span[tabindex="0"]')).toHaveLength(0);
     },
@@ -492,7 +488,7 @@ describe("EditSamplePage", () => {
 
   it("should disable saving for a contributor on a published sample and explain why", async () => {
     const { screen } = await renderEditPageAsContributor("published");
-    const save = screen.getByRole("button", { name: "Publish updates" });
+    const save = screen.getByRole("button", { name: "Save", exact: true });
     await expect.element(save).toBeDisabled();
 
     save.element().closest<HTMLElement>("[tabindex]")?.focus();
@@ -525,7 +521,9 @@ describe("EditSamplePage", () => {
     const { screen, calls } = await renderEditPage("published");
 
     await screen.getByRole("button", { name: "More actions" }).click();
-    await screen.getByRole("menuitem", { name: "Save & Withdraw" }).click();
+    await screen
+      .getByRole("menuitem", { name: "Withdraw", exact: true })
+      .click();
     await expect
       .element(screen.getByRole("dialog", { name: "Withdraw sample" }))
       .toHaveTextContent(/your changes are saved/i);
@@ -560,7 +558,9 @@ describe("EditSamplePage", () => {
       const { screen, calls } = await renderEditPage(status);
 
       await screen.getByRole("button", { name: "More actions" }).click();
-      await screen.getByRole("menuitem", { name: "Save & Tombstone" }).click();
+      await screen
+        .getByRole("menuitem", { name: "Tombstone", exact: true })
+        .click();
       await expect
         .element(screen.getByRole("dialog", { name: "Tombstone sample" }))
         .toHaveTextContent(
@@ -586,10 +586,12 @@ describe("EditSamplePage", () => {
     await screen.getByRole("button", { name: "More actions" }).click();
 
     await expect
-      .element(screen.getByRole("menuitem", { name: "Save & Withdraw" }))
+      .element(screen.getByRole("menuitem", { name: "Withdraw", exact: true }))
       .toBeVisible();
     expect(
-      screen.getByRole("menuitem", { name: "Save & Tombstone" }).elements(),
+      screen
+        .getByRole("menuitem", { name: "Tombstone", exact: true })
+        .elements(),
     ).toHaveLength(0);
   });
 
@@ -604,32 +606,42 @@ describe("EditSamplePage", () => {
       );
     await expect.element(screen.getByLabelText("Name")).toBeDisabled();
     expect(
-      screen
-        .getByRole("button", { name: /save|share|more actions/i })
-        .elements(),
+      screen.getByRole("button", { name: /save|share/i }).elements(),
     ).toHaveLength(0);
     expect(lockCalls).toEqual([]);
   });
 
-  it.each<[string, string]>([
-    ["Republish", "STATUS published"],
-    ["Restore as withdrawn", "STATUS withdrawn"],
-  ])(
-    "should restore a tombstoned sample with %s",
-    async (button, expectedCall) => {
-      callerManaged = true;
-      const { screen, calls } = await renderEditPage("tombstone");
+  it("should republish a tombstoned sample from the restore button", async () => {
+    callerManaged = true;
+    const { screen, calls } = await renderEditPage("tombstone");
 
-      await screen.getByRole("button", { name: button, exact: true }).click();
-      await screen.getByRole("button", { name: "Confirm" }).click();
+    await screen
+      .getByRole("button", { name: "Republish", exact: true })
+      .click();
+    await screen.getByRole("button", { name: "Confirm" }).click();
 
-      await vi.waitFor(() => expect(calls).toEqual([expectedCall]));
-    },
-  );
+    await vi.waitFor(() => expect(calls).toEqual(["STATUS published"]));
+  });
 
-  it("should disable Save & Publish and explain in a tooltip when the sample has no material", async () => {
+  it("should restore a tombstoned sample as withdrawn from the restore button menu", async () => {
+    callerManaged = true;
+    const { screen, calls } = await renderEditPage("tombstone");
+
+    await screen.getByRole("button", { name: "More actions" }).click();
+    await screen
+      .getByRole("menuitem", { name: "Restore as withdrawn", exact: true })
+      .click();
+    await screen.getByRole("button", { name: "Confirm" }).click();
+
+    await vi.waitFor(() => expect(calls).toEqual(["STATUS withdrawn"]));
+  });
+
+  it("should disable Publish and explain in a tooltip when the sample has no material", async () => {
     const { screen } = await renderEditPage("draft", null);
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    const publish = screen.getByRole("button", {
+      name: "Publish",
+      exact: true,
+    });
     await expect.element(publish).toBeDisabled();
     await expect
       .element(screen.getByRole("button", { name: "More publishing options" }))
@@ -641,10 +653,13 @@ describe("EditSamplePage", () => {
       .toHaveTextContent(/set the material before publishing/i);
   });
 
-  it("should disable Save & Publish for a pending account, complete sample or not", async () => {
+  it("should disable Publish for a pending account, complete sample or not", async () => {
     callerStatus = "pending";
     const { screen } = await renderEditPage();
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    const publish = screen.getByRole("button", {
+      name: "Publish",
+      exact: true,
+    });
     await expect.element(publish).toBeDisabled();
 
     publish.element().closest<HTMLElement>("[tabindex]")?.focus();
@@ -654,7 +669,7 @@ describe("EditSamplePage", () => {
       .toHaveTextContent(/account is not yet activated/i);
     await expect.element(tooltip).not.toHaveTextContent(/before publishing/i);
     await expect
-      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .element(screen.getByRole("button", { name: "Save", exact: true }))
       .toBeEnabled();
   });
 
@@ -664,7 +679,10 @@ describe("EditSamplePage", () => {
     await screen.getByRole("tab", { name: "Sample classification" }).click();
     await pickPath(screen, "Material *", "Mafic", "Basalt");
 
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    const publish = screen.getByRole("button", {
+      name: "Publish",
+      exact: true,
+    });
     await expect.element(publish).toBeDisabled();
     publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     const tooltip = screen.getByRole("tooltip");
@@ -683,14 +701,17 @@ describe("EditSamplePage", () => {
     );
     await expect.element(screen.getByText("Loading samples...")).toBeVisible();
     expect(
-      screen.getByRole("button", { name: "Save & Publish" }).elements(),
+      screen.getByRole("button", { name: "Publish", exact: true }).elements(),
     ).toHaveLength(0);
   });
 
   it("should list the missing fields and the account reason together", async () => {
     callerStatus = "pending";
     const { screen } = await renderEditPage("draft", null);
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
+    const publish = screen.getByRole("button", {
+      name: "Publish",
+      exact: true,
+    });
     await expect.element(publish).toBeDisabled();
 
     publish.element().closest<HTMLElement>("[tabindex]")?.focus();
@@ -829,9 +850,9 @@ describe("EditSamplePage", () => {
     await expect.element(year).toHaveAttribute("readonly");
   });
 
-  it("should refuse Publish updates that would make the sample unpublishable", async () => {
+  it("should refuse a save that would make the sample unpublishable", async () => {
     const { screen, calls } = await renderEditPage("published");
-    const save = screen.getByRole("button", { name: "Publish updates" });
+    const save = screen.getByRole("button", { name: "Save", exact: true });
 
     await screen.getByRole("tab", { name: "Curation and repository" }).click();
     const existence = screen.getByRole("combobox", {
@@ -869,8 +890,11 @@ describe("EditSamplePage", () => {
       null,
       overLimitAttachments,
     );
-    const publish = screen.getByRole("button", { name: "Save & Publish" });
-    const save = screen.getByRole("button", { name: "Save as draft" });
+    const publish = screen.getByRole("button", {
+      name: "Publish",
+      exact: true,
+    });
+    const save = screen.getByRole("button", { name: "Save", exact: true });
 
     await expect.element(publish).toBeDisabled();
     publish.element().closest<HTMLElement>("[tabindex]")?.focus();
@@ -892,16 +916,13 @@ describe("EditSamplePage", () => {
     );
   });
 
-  it("should offer only Publish updates on an already published sample", async () => {
+  it("should offer no publish action on an already published sample", async () => {
     const { screen } = await renderEditPage("published");
     await expect
-      .element(screen.getByRole("button", { name: "Publish updates" }))
+      .element(screen.getByRole("button", { name: "Save", exact: true }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("button", { name: "Save & Publish" }))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("button", { name: "Save as draft" }))
+      .element(screen.getByRole("button", { name: "Publish", exact: true }))
       .not.toBeInTheDocument();
   });
 
@@ -915,7 +936,7 @@ describe("EditSamplePage", () => {
   it("should not link to the public page on a draft", async () => {
     const { screen } = await renderEditPage();
     await expect
-      .element(screen.getByRole("button", { name: "Save & Publish" }))
+      .element(screen.getByRole("button", { name: "Publish", exact: true }))
       .toBeVisible();
     await expect
       .element(screen.getByRole("link", { name: "View public page" }))
@@ -925,7 +946,7 @@ describe("EditSamplePage", () => {
   it("should save the edits, then publish, and warn the IGSN is permanent", async () => {
     const { screen, calls } = await renderEditPage();
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
-    await screen.getByRole("button", { name: "Save & Publish" }).click();
+    await screen.getByRole("button", { name: "Publish", exact: true }).click();
 
     await expect.element(screen.getByText(/the IGSN stays/i)).toBeVisible();
 
@@ -947,7 +968,7 @@ describe("EditSamplePage", () => {
       .getByRole("button", { name: "More publishing options" })
       .click();
     await screen
-      .getByRole("menuitem", { name: "Publish as withdrawn" })
+      .getByRole("menuitem", { name: "Withdraw", exact: true })
       .click();
 
     await expect
@@ -970,7 +991,7 @@ describe("EditSamplePage", () => {
   it("should show an error toast when saving fails", async () => {
     const { screen } = await renderEditPage("draft", "fossil", "save");
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
-    await screen.getByRole("button", { name: "Save as draft" }).click();
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
 
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
@@ -979,7 +1000,7 @@ describe("EditSamplePage", () => {
 
   it("should show an error toast when publishing fails", async () => {
     const { screen } = await renderEditPage("draft", "fossil", "publish");
-    await screen.getByRole("button", { name: "Save & Publish" }).click();
+    await screen.getByRole("button", { name: "Publish", exact: true }).click();
     await screen.getByRole("button", { name: "Confirm" }).click();
 
     await expect
@@ -987,10 +1008,10 @@ describe("EditSamplePage", () => {
       .toHaveTextContent("Could not publish the sample. Please try again.");
   });
 
-  it("should stay on the page after Save as draft, with a toast", async () => {
+  it("should stay on the page after Save, with a toast", async () => {
     const { screen, calls } = await renderEditPage();
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
-    await screen.getByRole("button", { name: "Save as draft" }).click();
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
 
     await expect
       .element(screen.getByRole("heading", { name: "Edit sample" }))
@@ -1016,7 +1037,7 @@ describe("EditSamplePage", () => {
     await expect.element(screen.getByText("data.csv")).toBeVisible();
     expect(FakeXhr.instances).toHaveLength(0);
 
-    await screen.getByRole("button", { name: "Save as draft" }).click();
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
 
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
     expect(FakeXhr.instances[0]!.url).toContain("/attachments");
@@ -1035,7 +1056,7 @@ describe("EditSamplePage", () => {
         .element(screen.getByRole("status"))
         .toHaveTextContent("Pierre Martin");
       await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
-      const save = screen.getByRole("button", { name: "Publish updates" });
+      const save = screen.getByRole("button", { name: "Save", exact: true });
       await expect.element(save).toBeDisabled();
       save.element().closest<HTMLElement>("[tabindex]")?.focus();
       await expect
@@ -1172,7 +1193,7 @@ describe("EditSamplePage", () => {
         await renderEditPageAsContributor("published");
 
       await expect
-        .element(screen.getByRole("button", { name: "Publish updates" }))
+        .element(screen.getByRole("button", { name: "Save", exact: true }))
         .toBeDisabled();
       expect(lockCalls).toEqual([]);
     });
@@ -1196,7 +1217,7 @@ describe("EditSamplePage", () => {
       const { screen } = await renderEditPage("draft", "fossil", reason);
       const name = screen.getByLabelText(/name/i);
       await name.fill("Grès de Fontainebleau");
-      await screen.getByRole("button", { name: "Save as draft" }).click();
+      await screen.getByRole("button", { name: "Save", exact: true }).click();
 
       await expect
         .element(screen.getByRole("alert"))
@@ -1216,7 +1237,7 @@ describe("EditSamplePage", () => {
       .getByLabelText("Browse files")
       .upload([new File(["col1\n1\n"], "data.csv", { type: "text/csv" })]);
     await screen.getByRole("tab", { name: "Identity" }).click();
-    await screen.getByRole("button", { name: "Save as draft" }).click();
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
 
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
     FakeXhr.instances[0]!.finish(500);

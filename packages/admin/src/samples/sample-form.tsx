@@ -123,6 +123,7 @@ export type SampleFormAction =
   | {
       kind: "publish";
       label: string;
+      disabled?: boolean;
       onPublish: (value: CreateSample, status: PublishStatus) => void;
     }
   | { kind: "link"; label: string; href: string };
@@ -236,6 +237,7 @@ export function SampleForm({
     <form.Subscribe
       selector={(state) => ({
         canSubmit: state.canSubmit,
+        nature: state.values.nature ?? null,
         typePath: state.values.typePath,
         materialPath: state.values.materialPath,
         metamorphicFacies: state.values.metamorphicFacies,
@@ -256,6 +258,7 @@ export function SampleForm({
     >
       {({
         canSubmit,
+        nature,
         typePath,
         materialPath,
         metamorphicFacies,
@@ -270,6 +273,7 @@ export function SampleForm({
       }) => {
         const reasons = samplePublishBlockers(
           {
+            nature,
             type: composeHierarchyValue(typePath),
             material: composeHierarchyValue(materialPath),
             metamorphicFacies: metamorphicFacies || null,
@@ -330,35 +334,38 @@ export function SampleForm({
         void form.handleSubmit({
           onValid: (value) => action.onPublish(value, status),
         });
-      return renderPublishGated((disabled) => (
-        <div className="flex">
-          <ConfirmButton
-            className="rounded-r-none"
-            disabled={disabled}
-            title={m.publish_sample_title()}
-            description={m.publish_sample_warning()}
-            confirmLabel={m.action_confirm()}
-            cancelLabel={m.action_cancel()}
-            closeLabel={m.action_close()}
-            onConfirm={() => publish("published")}
-          >
-            {action.label}
-          </ConfirmButton>
-          <ConfirmMenuButton
-            label={m.action_publish_options()}
-            className="border-l-primary-foreground/30 rounded-l-none border-l"
-            disabled={disabled}
-            items={[
-              {
-                label: m.action_publish_withdrawn(),
-                title: m.publish_withdrawn_sample_title(),
-                description: m.publish_withdrawn_sample_warning(),
-                onConfirm: () => publish("withdrawn"),
-              },
-            ]}
-          />
-        </div>
-      ));
+      return renderPublishGated((gated) => {
+        const disabled = gated || action.disabled === true;
+        return (
+          <div className="flex">
+            <ConfirmButton
+              className="rounded-r-none"
+              disabled={disabled}
+              title={m.publish_sample_title()}
+              description={m.publish_sample_warning()}
+              confirmLabel={m.action_confirm()}
+              cancelLabel={m.action_cancel()}
+              closeLabel={m.action_close()}
+              onConfirm={() => publish("published")}
+            >
+              {action.label}
+            </ConfirmButton>
+            <ConfirmMenuButton
+              label={m.action_publish_options()}
+              className="border-l-primary-foreground/30 rounded-l-none border-l"
+              disabled={disabled}
+              items={[
+                {
+                  label: m.action_withdraw(),
+                  title: m.publish_withdrawn_sample_title(),
+                  description: m.publish_withdrawn_sample_warning(),
+                  onConfirm: () => publish("withdrawn"),
+                },
+              ]}
+            />
+          </div>
+        );
+      });
     }
     // ponytail: only one submit-kind action is supported at a time.
     // add explicit per-button meta if that ever changes.
@@ -479,15 +486,7 @@ export function SampleForm({
                       <SampleTypeFields />
                     </form.AppForm>
 
-                    <form.AppField
-                      name="nature"
-                      validators={{
-                        onChange: ({ value }) =>
-                          value
-                            ? undefined
-                            : { message: m.field_nature_required() },
-                      }}
-                    >
+                    <form.AppField name="nature">
                       {(field) => (
                         <field.ComboboxField
                           label={m.field_nature()}
@@ -637,7 +636,13 @@ export function SampleForm({
                       attachments={attachments}
                       changes={attachmentChanges}
                     />
-                  ) : null}
+                  ) : (
+                    <FormSection title={m.section_attachments()}>
+                      <p className="text-muted-foreground text-sm">
+                        {m.attachments_unsaved_hint()}
+                      </p>
+                    </FormSection>
+                  )}
                 </TabsContent>
               </Tabs>
             );

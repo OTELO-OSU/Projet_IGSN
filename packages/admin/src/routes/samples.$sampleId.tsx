@@ -44,12 +44,6 @@ import {
   useUpdateSample,
 } from "#/samples/use-update-sample.ts";
 
-const SAVE_LABEL: Record<Exclude<SampleStatus, "tombstone">, () => string> = {
-  draft: m.action_save_draft,
-  published: m.action_publish_updates,
-  withdrawn: m.action_save_changes,
-};
-
 const PUBLIC_HINT: Partial<Record<SampleStatus, () => string>> = {
   withdrawn: m.sample_withdrawn_hint,
   tombstone: m.sample_tombstone_hint,
@@ -70,7 +64,7 @@ function EditSamplePage() {
   const navigate = useNavigate();
   const query = useSample(sampleId);
   const updateSample = useUpdateSample(sampleId);
-  const publishSample = usePublishSample(sampleId);
+  const publishSample = usePublishSample();
   const setStatus = useSetSampleStatus(sampleId);
   const deleteSample = useDeleteSample(sampleId);
   const { heldByOther } = useSampleEditLock(
@@ -120,15 +114,16 @@ function EditSamplePage() {
         ? m.edit_sample_stale()
         : undefined;
   const publicHint = PUBLIC_HINT[status]?.();
-  const restoreButton = (to: PublishStatus) => (
+  const restoreButton = (to: PublishStatus, menuStatus?: PublishStatus) => (
     <SetStatusButton
       status={to}
+      menuStatus={menuStatus}
       disabled={isPending}
-      onConfirm={() => setStatus.mutate(to)}
+      onConfirm={(status) => setStatus.mutate(status)}
     />
   );
   const withdrawItem: SampleSubmitMenuItem = {
-    label: m.action_save_withdraw(),
+    label: m.action_withdraw(),
     title: m.withdraw_sample_title(),
     description: m.withdraw_sample_warning(),
     onConfirm: (value) =>
@@ -137,7 +132,7 @@ function EditSamplePage() {
       }),
   };
   const tombstoneItem: SampleSubmitMenuItem = {
-    label: m.action_save_tombstone(),
+    label: m.action_tombstone(),
     title: m.tombstone_sample_title(),
     description: m.tombstone_sample_warning(),
     onConfirm: (value) =>
@@ -158,12 +153,7 @@ function EditSamplePage() {
   > = isTombstone
     ? {
         readOnlyReason: publicHint,
-        statusAction: (
-          <>
-            {restoreButton("published")}
-            {restoreButton("withdrawn")}
-          </>
-        ),
+        statusAction: restoreButton("published", "withdrawn"),
       }
     : {
         readOnlyReason: lockedMessage ?? rejection,
@@ -173,7 +163,7 @@ function EditSamplePage() {
             : undefined,
         secondaryAction: {
           kind: "submit",
-          label: SAVE_LABEL[status](),
+          label: m.action_save(),
           onSubmit: (value) => updateSample.mutate(value),
           menu: statusItems.length
             ? { label: m.action_status_options(), items: statusItems }
@@ -187,13 +177,16 @@ function EditSamplePage() {
             }
           : {
               kind: "publish",
-              label: m.action_save_publish(),
+              label: m.action_publish(),
               onPublish: (value, publishStatus) =>
                 updateSample.mutate(value, {
                   onSuccess: () =>
-                    publishSample.mutate(publishStatus, {
-                      onSuccess: () => navigate({ to: listRoute }),
-                    }),
+                    publishSample.mutate(
+                      { id: sampleId, status: publishStatus },
+                      {
+                        onSuccess: () => navigate({ to: listRoute }),
+                      },
+                    ),
                 }),
             },
       };

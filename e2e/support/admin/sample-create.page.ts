@@ -4,9 +4,11 @@ import {
   attachManualGroup,
   expectNoManualGroupOffered,
 } from "./manual-groups-field.ts";
+import { sampleFormPage } from "./sample-form.page.ts";
 
 export function sampleCreatePage(page: Page) {
   return {
+    ...sampleFormPage(page),
     expectVisible: () =>
       expect(
         page.getByRole("heading", { name: "Create sample" }),
@@ -19,7 +21,8 @@ export function sampleCreatePage(page: Page) {
     attachManualGroup: (name: string) =>
       attachManualGroup(page, "Groups this sample belongs to", name),
     expectNoManualGroupOffered: () => expectNoManualGroupOffered(page),
-    submit: () => page.getByRole("button", { name: "Create" }).click(),
+    submit: () =>
+      page.getByRole("button", { name: "Save", exact: true }).click(),
     expectNameRequired: () =>
       expect(page.getByText("Name is required")).toBeVisible(),
   };

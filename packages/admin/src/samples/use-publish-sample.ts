@@ -8,11 +8,17 @@ import { API_URL } from "#/api-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function usePublishSample(id: string) {
+export function usePublishSample() {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (status: PublishStatus) => {
+    mutationFn: async ({
+      id,
+      status,
+    }: {
+      id: string;
+      status: PublishStatus;
+    }) => {
       const url = new URL(`admin/samples/${id}/publish`, API_URL);
       url.searchParams.set("status", status);
       const res = await apiFetch(url, { method: "POST" });
@@ -21,7 +27,7 @@ export function usePublishSample(id: string) {
       }
       return sampleResponseSchema.parse(await res.json()).data;
     },
-    onSuccess: (_sample, status) => {
+    onSuccess: (_sample, { status }) => {
       toast.success(
         status === "withdrawn"
           ? m.publish_withdrawn_sample_success()

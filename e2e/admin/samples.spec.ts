@@ -35,7 +35,6 @@ test.describe("samples", () => {
     await create.expectVisible();
     const name = `Basalte du Massif Central ${Date.now()}`;
     await create.fillName(name);
-    await create.selectNature("Thin section");
     await create.submit();
 
     const edit = sampleEditPage(page);
@@ -137,14 +136,11 @@ test.describe("samples", () => {
     const name = `Withdrawn on arrival ${Date.now()}`;
     await create.fillName(name);
     await create.selectNature("Thin section");
-    await create.submit();
-
-    const edit = sampleEditPage(page);
-    await edit.expectName(name);
-    await edit.fillPublishableFields();
-    await edit.publishAsWithdrawn();
+    await create.fillPublishableFields();
+    await create.publishAsWithdrawn();
     await list.expectVisible();
 
+    const edit = sampleEditPage(page);
     await list.openSample(name);
     await edit.expectWithdrawnHint();
     await edit.expectStatusAction("Republish");

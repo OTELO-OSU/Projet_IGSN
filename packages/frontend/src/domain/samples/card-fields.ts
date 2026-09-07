@@ -55,7 +55,10 @@ const pathText = (
 
 export function typeNatureText(sample: CardSample): string | null {
   return (
-    [joinPath(pathText(sample.type, typeLabel)), natureLabel(sample.nature)]
+    [
+      joinPath(pathText(sample.type, typeLabel)),
+      sample.nature ? natureLabel(sample.nature) : null,
+    ]
       .filter(Boolean)
       .join(" / ") || null
   );

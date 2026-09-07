@@ -97,7 +97,8 @@ function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
     {
       accessorKey: "nature",
       header: () => m.column_nature(),
-      cell: ({ row }) => natureLabel(row.original.nature),
+      cell: ({ row }) =>
+        row.original.nature ? natureLabel(row.original.nature) : null,
       meta: { className: "w-36" },
     },
     {

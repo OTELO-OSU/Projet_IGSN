@@ -155,7 +155,6 @@ export const grainSizeSchema = z.enum(["fine", "medium", "coarse"]);
 // wired into createSampleSchema in sample.ts
 export const createSampleSchema = z.strictObject({
   name: nameSchema,
-  nature: natureSchema,
   // ...existing fields...
   grainSize: grainSizeSchema.nullish(), // added: optional so a draft still saves
 });
