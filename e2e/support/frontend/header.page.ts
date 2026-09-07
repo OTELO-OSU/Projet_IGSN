@@ -15,11 +15,13 @@ export function headerPage(page: Page) {
       expect(banner.getByRole("button", { name: "Sign out" })).toBeVisible(),
     expectSignedOut: () =>
       expect(banner.getByRole("button", { name: "Sign in" })).toBeVisible(),
-    goToAdminHref: () =>
-      banner
-        .getByRole("link", { name: "Go to admin" })
-        .getAttribute("href", { timeout: 10_000 }),
-    editHref: () => editLink.getAttribute("href", { timeout: 10_000 }),
+    expectGoToAdminHref: (href: string) =>
+      expect(banner.getByRole("link", { name: "Go to admin" })).toHaveAttribute(
+        "href",
+        href,
+      ),
+    expectEditHref: (href: string) =>
+      expect(editLink).toHaveAttribute("href", href),
     accessAnswered: (sampleId: string) =>
       page.waitForResponse((res) =>
         res.url().includes(`/admin/samples/${sampleId}`),

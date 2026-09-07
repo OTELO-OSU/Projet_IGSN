@@ -15,7 +15,7 @@ const stubApi = (status: number) =>
 
 const signedIn = {
   isAuthenticated: true,
-  user: { access_token: "a-token" },
+  user: { access_token: "a-token", profile: { sub: "jean" } },
 } as Parameters<typeof stubAuth>[1];
 
 describe("EditSampleLink", () => {
@@ -46,7 +46,7 @@ describe("EditSampleLink", () => {
   it("should hide the link from a signed-out visitor", async () => {
     stubApi(200);
     const screen = await renderWithRouter(
-      stubAuth(<EditSampleLink sampleId={id} />, {}),
+      stubAuth(<EditSampleLink sampleId={id} />),
     );
 
     await expect

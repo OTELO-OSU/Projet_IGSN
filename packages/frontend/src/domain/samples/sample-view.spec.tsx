@@ -6,7 +6,7 @@ import { renderWithRouter } from "../../../test/render-with-router.tsx";
 import { stubAuth } from "../../../test/stub-auth.tsx";
 import { SampleView } from "./sample-view.tsx";
 
-const render = (ui: React.ReactNode) => renderWithRouter(stubAuth(ui, {}));
+const render = (ui: React.ReactNode) => renderWithRouter(stubAuth(ui));
 
 const emptyAge = {
   numericAgeMin: null,

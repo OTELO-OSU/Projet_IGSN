@@ -4,7 +4,7 @@ import { AuthContext } from "react-oidc-context";
 
 export function stubAuth(
   ui: React.ReactNode,
-  auth: Partial<AuthContextProps>,
+  auth: Partial<AuthContextProps> = {},
 ): React.ReactElement {
   return (
     <AuthContext.Provider
