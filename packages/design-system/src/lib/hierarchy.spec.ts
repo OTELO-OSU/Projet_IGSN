@@ -1,7 +1,6 @@
 import {
   canStopAtPath,
   composeHierarchyValue,
-  hierarchyChildLabel,
   hierarchyChildren,
   hierarchyLevelItems,
   hierarchyPathLabel,
@@ -78,18 +77,6 @@ describe("hierarchyPathLabel", () => {
   });
 });
 
-describe("hierarchyChildLabel", () => {
-  it("should translate a node's childLabel code when it declares one", () => {
-    expect(hierarchyChildLabel(hierarchy, "rock", translate)).toBe("ROCK_KIND");
-  });
-
-  it("should fall back to the path label when the node has no childLabel", () => {
-    expect(hierarchyChildLabel(hierarchy, "rock.sedimentary", translate)).toBe(
-      "SEDIMENTARY",
-    );
-  });
-});
-
 describe("label codes", () => {
   const labelled: Hierarchy = {
     roots: ["a"],
@@ -102,7 +89,6 @@ describe("label codes", () => {
   it.each([
     ["a path label", hierarchyPathLabel, "a.b", "a.b"],
     ["a root path label", hierarchyPathLabel, "a", "a"],
-    ["a child label", hierarchyChildLabel, "a.b", "a.kids"],
   ] as const)(
     "should give translate the full path for %s",
     (_case, label, path, expected) => {

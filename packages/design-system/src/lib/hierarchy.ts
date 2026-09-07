@@ -50,15 +50,6 @@ export function hierarchyPathLabel(
   return translate(withLabelCode(path, resolveNode(hierarchy, path)?.label));
 }
 
-export function hierarchyChildLabel(
-  hierarchy: Hierarchy,
-  parent: string,
-  translate: (code: string) => string = identity,
-): string {
-  const node = resolveNode(hierarchy, parent);
-  return translate(withLabelCode(parent, node?.childLabel ?? node?.label));
-}
-
 export function hierarchyChildren(
   hierarchy: Hierarchy,
   parent: string | null,
