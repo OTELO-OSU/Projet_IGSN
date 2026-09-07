@@ -1,9 +1,9 @@
-import { expect, type Locator, type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
-import { pickHierarchyLevel } from "../pick-hierarchy.ts";
 import { adminUrl } from "../urls";
 import { chooseOption } from "./choose-option.ts";
 import { expectNoManualGroupOffered } from "./manual-groups-field.ts";
+import { sampleFormPage } from "./sample-form.page.ts";
 
 type SaveMenuAction = "Withdraw" | "Tombstone";
 
@@ -21,29 +21,8 @@ type AttachmentResource = {
 };
 
 export function sampleEditPage(page: Page) {
-  const openTab = (name: string) => page.getByRole("tab", { name }).click();
-  const fieldCombobox = (field: string, scope: Locator | Page = page) =>
-    scope.getByRole("combobox", {
-      name: new RegExp(`^${field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`),
-    });
-  const pick = async (
-    field: string,
-    label: string,
-    scope: Locator | Page = page,
-  ) => {
-    const combobox = fieldCombobox(field, scope);
-    await expect(async () => {
-      if ((await combobox.innerText()).trim() !== label) {
-        await combobox.click();
-        await page.getByRole("option", { name: label, exact: true }).click();
-      }
-      await expect(page.getByRole("listbox")).toHaveCount(0);
-      await expect(combobox).toHaveText(label, { timeout: 2_000 });
-    }).toPass({ timeout: 20_000 });
-  };
-
-  const pickHierarchy = (field: string, label: string) =>
-    pickHierarchyLevel(page, fieldCombobox(field), label);
+  const form = sampleFormPage(page);
+  const { openTab, pick, confirm, confirmStatusChange } = form;
 
   const relationBlock = (index: number, type: string) =>
     page.getByRole("group", {
@@ -57,24 +36,14 @@ export function sampleEditPage(page: Page) {
   const uploadDialog = page.getByRole("dialog", { name: "Uploading files" });
   const savedToast = page.getByText("Sample saved");
   // ponytail: under load the first save click is sometimes swallowed, so retry until the save is under way
-  const clickSave = (name: string) =>
+  const clickSave = () =>
     expect(async () => {
       if (await uploadDialog.or(savedToast).first().isVisible()) return;
-      await page.getByRole("button", { name }).click();
+      await page.getByRole("button", { name: "Save", exact: true }).click();
       await expect(uploadDialog.or(savedToast).first()).toBeVisible({
         timeout: 3_000,
       });
     }).toPass({ timeout: 30_000 });
-
-  const confirm = (dialog: string) =>
-    page
-      .getByRole("dialog", { name: dialog })
-      .getByRole("button", { name: "Confirm" })
-      .click();
-  const confirmStatusChange = async (action: string, dialog: string) => {
-    await page.getByRole("button", { name: action }).click();
-    await confirm(dialog);
-  };
 
   const openActionsMenu = () =>
     page.getByRole("button", { name: "More actions" }).click();
@@ -102,6 +71,7 @@ export function sampleEditPage(page: Page) {
   });
 
   return {
+    ...form,
     expectVisible: () =>
       expect(page.getByRole("heading", { name: "Edit sample" })).toBeVisible(),
     goto: (sampleId: string) => page.goto(`${adminUrl}/samples/${sampleId}`),
@@ -177,64 +147,25 @@ export function sampleEditPage(page: Page) {
       return igsn;
     },
 
-    fillPublishableFields: async () => {
-      await pickHierarchy("Type", "Dredge");
-      await pick("Provenance status", "Collection specimen");
-      await page
-        .getByRole("group", { name: /collection date/i })
-        .getByRole("textbox", { name: /^Date/ })
-        .fill("2025-06-15");
-      await openTab("Sample classification");
-      await pickHierarchy("Material", "Synthetic rock / mineral");
-      await openTab("Scientific context");
-      await page.getByLabel(/collection curator/i).fill("Paul Bernard");
-      await pick("Collection origin", "Scientific expedition");
-      await openTab("Curation and repository");
-      await pick("Existence status", "Exists");
-      await pick("Availability status", "Available");
-      await pick(
-        "Current archive",
-        "Centre National de la Recherche Scientifique (CNRS)",
-      );
-      await openTab("Sample classification");
-      await pick("Starting material", "Natural");
-      await pick("Nature of starting material", "Powder");
-      await pick("Final product", "Glass");
-      await page.getByRole("switch", { name: "Duration not relevant" }).click();
-      await page
-        .getByRole("group", { name: /synthesis date/i })
-        .getByRole("textbox", { name: /^Date/ })
-        .fill("2025-06-15");
-      await page.getByLabel(/operator name/i).fill("Paul Bernard");
-    },
-    publish: () => confirmStatusChange("Save & Publish", "Publish sample"),
-    publishAsWithdrawn: async () => {
-      await page
-        .getByRole("button", { name: "More publishing options" })
-        .click();
-      await page
-        .getByRole("menuitem", { name: "Publish as withdrawn" })
-        .click();
-      await confirm("Publish sample as withdrawn");
-    },
-
     saveAnd: async (action: SaveMenuAction) => {
       await openActionsMenu();
-      await page.getByRole("menuitem", { name: `Save & ${action}` }).click();
+      await page.getByRole("menuitem", { name: action, exact: true }).click();
       await confirm(`${action} sample`);
     },
     expectSaveMenuItem: async (action: SaveMenuAction) => {
       await openActionsMenu();
       await expect(
-        page.getByRole("menuitem", { name: `Save & ${action}` }),
+        page.getByRole("menuitem", { name: action, exact: true }),
       ).toBeVisible();
       await page.keyboard.press("Escape");
     },
-    restoreAsWithdrawn: () =>
-      confirmStatusChange(
-        "Restore as withdrawn",
-        "Restore sample as withdrawn",
-      ),
+    restoreAsWithdrawn: async () => {
+      await openActionsMenu();
+      await page
+        .getByRole("menuitem", { name: "Restore as withdrawn", exact: true })
+        .click();
+      await confirm("Restore sample as withdrawn");
+    },
     republish: () => confirmStatusChange("Republish", "Republish sample"),
     expectStatusAction: (name: string) =>
       expect(page.getByRole("button", { name })).toBeVisible(),
@@ -296,12 +227,8 @@ export function sampleEditPage(page: Page) {
       await expect(uploadDialog).toBeHidden();
     },
 
-    saveDraft: async () => {
-      await clickSave("Save as draft");
-      await expect(savedToast).toBeVisible();
-    },
-    publishUpdates: async () => {
-      await clickSave("Publish updates");
+    save: async () => {
+      await clickSave();
       await expect(savedToast).toBeVisible();
     },
   };

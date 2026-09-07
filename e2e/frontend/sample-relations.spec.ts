@@ -39,7 +39,7 @@ test.describe("sample relations on the public page", () => {
     await edit.addRelation(1, RELATION);
     await edit.uploadAttachments([fixture("test.txt")]);
     await edit.setAttachmentResource("test.txt", ATTACHMENT_RESOURCE);
-    await edit.publishUpdates();
+    await edit.save();
     await edit.confirmUploads();
     await edit.expectAttachment("test.txt", ATTACHMENT_RESOURCE);
 

@@ -198,7 +198,7 @@ test.describe("space manager", () => {
     await moderation.openSample(target.name);
     await edit.expectVisible();
     await edit.fillSpecificName(`MC-${Date.now()}`);
-    await edit.saveDraft();
+    await edit.save();
 
     await maildev(request).expectMail(
       RESEARCHERS.jean.email,
