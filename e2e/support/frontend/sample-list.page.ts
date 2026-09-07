@@ -36,9 +36,19 @@ export function sampleListPage(page: Page) {
       await expect(page.getByRole("option", { name: option })).toHaveCount(0);
       await page.keyboard.press("Escape");
     },
-    chooseFacetOption: async (level: string, option: string) => {
-      await page.getByRole("combobox", { name: level }).click();
-      await page.getByRole("option", { name: option }).click();
+    drillFacet: async (facet: string, option: string) => {
+      const chip = page.getByRole("button", {
+        name: `Remove ${option}`,
+        exact: true,
+      });
+      await expect(async () => {
+        if (!(await chip.isVisible())) {
+          await page.getByRole("combobox", { name: facet }).click();
+          await page.getByRole("option", { name: option, exact: true }).click();
+        }
+        await expect(page.getByRole("listbox")).toHaveCount(0);
+        await expect(chip).toBeVisible({ timeout: 2_000 });
+      }).toPass({ timeout: 20_000 });
     },
     fillTextFacet: async (facet: string, value: string, param: string) => {
       const field = page.getByRole("searchbox", { name: facet });

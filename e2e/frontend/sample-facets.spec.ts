@@ -39,7 +39,7 @@ test.describe("search facets", () => {
     await list.expectSampleAbsent("Granite 7");
   });
 
-  test("a reader drills a hierarchy facet deeper through the cascade", async ({
+  test("a reader drills a hierarchy facet deeper", async ({
     page,
     samples,
   }) => {
@@ -49,7 +49,7 @@ test.describe("search facets", () => {
     await list.gotoWithSearch("material=rock.igneous");
     await list.expectResultCount(2);
 
-    await list.chooseFacetOption("Igneous", "Volcanic");
+    await list.drillFacet("Material", "Volcanic");
     await list.expectResultCount(1);
     await list.expectSampleLink("Basalt 42", basalt);
     await list.expectSampleAbsent("Granite 7");

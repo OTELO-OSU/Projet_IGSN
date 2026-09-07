@@ -157,6 +157,8 @@
   "facet_section_type": "Sample type",
   "facet_section_author": "Author",
   "facet_any": "Any",
+  "hierarchy_stop_here": "Stop here",
+  "hierarchy_remove_level": "Remove {label}",
   "facet_search_placeholder": "Search…",
   "facet_empty": "No match",
   "facet_research_program_name": "Research program",
