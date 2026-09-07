@@ -4,6 +4,8 @@ import { useAuth } from "react-oidc-context";
 import { ADMIN_URL } from "#/admin-url.ts";
 import { m } from "#/paraglide/messages.js";
 
+import { signIn } from "./sign-in.ts";
+
 export function AuthControls() {
   const auth = useAuth();
 
@@ -13,15 +15,7 @@ export function AuthControls() {
 
   if (!auth.isAuthenticated) {
     return (
-      <Button
-        type="button"
-        onClick={() =>
-          void auth.signinRedirect({
-            redirect_uri: window.location.href,
-            nonce: crypto.randomUUID(),
-          })
-        }
-      >
+      <Button type="button" onClick={() => signIn(auth)}>
         {m.auth_sign_in()}
       </Button>
     );
@@ -36,11 +30,7 @@ export function AuthControls() {
         type="button"
         variant="outline"
         size="sm"
-        onClick={() =>
-          void auth.signoutRedirect({
-            post_logout_redirect_uri: window.location.href,
-          })
-        }
+        onClick={() => void auth.signoutRedirect()}
       >
         {m.auth_sign_out()}
       </Button>

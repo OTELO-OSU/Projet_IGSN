@@ -1,4 +1,4 @@
-import { safeReturnPath } from "./sign-in.ts";
+import { safeReturnPath } from "./safe-return-path.ts";
 
 describe("safeReturnPath", () => {
   it.each(["/samples/x", "/samples/x?y=1"])(

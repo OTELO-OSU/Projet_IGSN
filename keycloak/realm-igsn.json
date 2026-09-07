@@ -20,12 +20,12 @@
       "directAccessGrantsEnabled": false,
       "redirectUris": [
         "${ADMIN_REDIRECT_URI:http://localhost:3000/admin/*}",
-        "${FRONTEND_REDIRECT_URI:http://localhost:3000/*}"
+        "${FRONTEND_REDIRECT_URI:http://localhost:3000/auth/callback}"
       ],
       "webOrigins": ["${ADMIN_WEB_ORIGIN:http://localhost:3000}"],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "${ADMIN_REDIRECT_URI:http://localhost:3000/admin/*}##${FRONTEND_REDIRECT_URI:http://localhost:3000/*}"
+        "post.logout.redirect.uris": "${ADMIN_REDIRECT_URI:http://localhost:3000/admin/*}##${FRONTEND_REDIRECT_URI:http://localhost:3000/auth/callback}"
       },
       "protocolMappers": [
         {
