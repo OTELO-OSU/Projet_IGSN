@@ -19,7 +19,7 @@ okf_version: "0.2"
 
 # component
 
-- [HierarchySelectField takes the tree as one prop](hierarchy-select-field.md) - The widget receives a self-describing hierarchy prop and derives children, stop policy and labels, so the UI cannot contradict the domain publish gate.
+- [HierarchyField takes the tree as one prop](hierarchy-select-field.md) - The widget receives a self-describing hierarchy prop and derives children, stop policy and labels, so the UI cannot contradict the domain publish gate; one chip per level replaces the old per-level cascade.
 
 # domain-model
 

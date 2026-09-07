@@ -1,4 +1,4 @@
-import { canStopAtPath } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { canStopAtPath } from "@projet-igsn/design-system/lib/hierarchy";
 import {
   COLLECTION_METHOD_HIERARCHY,
   COLLECTION_METHODS,

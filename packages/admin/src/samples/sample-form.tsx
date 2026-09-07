@@ -7,7 +7,6 @@ import type { ReactNode } from "react";
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { FieldDisabledProvider } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
-import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
@@ -22,6 +21,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
@@ -101,7 +101,7 @@ const validateDraft =
     const parsed = schema.safeParse(value);
     return parsed.success
       ? undefined
-      : { fields: sampleDraftFieldErrors(parsed.error.issues, value) };
+      : { fields: sampleDraftFieldErrors(parsed.error.issues) };
   };
 
 export type SampleSubmitMenu = {

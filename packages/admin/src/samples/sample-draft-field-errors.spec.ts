@@ -2,16 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import { sampleDraftFieldErrors } from "./sample-draft-field-errors.ts";
 
-const draft = (over?: {
-  typePath?: (string | undefined)[];
-  materialPath?: (string | undefined)[];
-  collectionMethodPath?: (string | undefined)[];
-}) => ({
-  typePath: over?.typePath ?? [],
-  materialPath: over?.materialPath ?? [],
-  collectionMethodPath: over?.collectionMethodPath ?? [],
-});
-
 describe("sampleDraftFieldErrors", () => {
   it.each([
     ["invalid_type", "relationType"],
@@ -20,10 +10,7 @@ describe("sampleDraftFieldErrors", () => {
     "should pin a missing relation value (%s) on the row's indexed field",
     (code, field) => {
       expect(
-        sampleDraftFieldErrors(
-          [{ path: ["relations", 1, field], code }],
-          draft(),
-        ),
+        sampleDraftFieldErrors([{ path: ["relations", 1, field], code }]),
       ).toEqual({
         [`relations[1].${field}`]: { message: "Required." },
       });
@@ -43,31 +30,27 @@ describe("sampleDraftFieldErrors", () => {
     ],
   ])("should translate the %s relation error", (code, message) => {
     expect(
-      sampleDraftFieldErrors(
-        [{ path: ["relations", 0, "identifier"], params: { code } }],
-        draft(),
-      ),
+      sampleDraftFieldErrors([
+        { path: ["relations", 0, "identifier"], params: { code } },
+      ]),
     ).toEqual({ "relations[0].identifier": { message } });
   });
 
   it("should pin issues on the draft fields that produced them", () => {
     expect(
-      sampleDraftFieldErrors(
-        [
-          { path: ["name"] },
-          { path: ["type"] },
-          { path: ["collectionMethod"] },
-          { path: ["location", "position", "longitude"] },
-          { path: ["location", "position", "vertical", "min"] },
-          { path: ["location", "position", "vertical", "system"] },
-          { path: ["location", "region", "kind"] },
-        ],
-        draft(),
-      ),
+      sampleDraftFieldErrors([
+        { path: ["name"] },
+        { path: ["type"] },
+        { path: ["collectionMethod"] },
+        { path: ["location", "position", "longitude"] },
+        { path: ["location", "position", "vertical", "min"] },
+        { path: ["location", "position", "vertical", "system"] },
+        { path: ["location", "region", "kind"] },
+      ]),
     ).toEqual({
       name: { message: "Invalid value." },
-      "typePath[0]": { message: "Invalid value." },
-      "collectionMethodPath[0]": { message: "Invalid value." },
+      typePath: { message: "Invalid value." },
+      collectionMethodPath: { message: "Invalid value." },
       "location.longitude": { message: "Invalid value." },
       "location.verticalPositionMin": { message: "Invalid value." },
       "location.verticalReferenceSystem": { message: "Invalid value." },
@@ -75,17 +58,13 @@ describe("sampleDraftFieldErrors", () => {
     });
   });
 
-  it.each([
-    ["the next level to refine", ["rock", "rock.igneous"]],
-    ["a cleared level, not past it", ["rock", "rock.igneous", undefined]],
-  ])("should pin a hierarchy issue on %s", (_label, materialPath) => {
+  it("should pin a hierarchy issue on the path field", () => {
     expect(
-      sampleDraftFieldErrors(
-        [{ path: ["material"], params: { code: "material_incomplete" } }],
-        draft({ materialPath }),
-      ),
+      sampleDraftFieldErrors([
+        { path: ["material"], params: { code: "material_incomplete" } },
+      ]),
     ).toEqual({
-      "materialPath[2]": {
+      materialPath: {
         message:
           "Classify the material down to a specific type before publishing.",
       },
@@ -94,15 +73,12 @@ describe("sampleDraftFieldErrors", () => {
 
   it("should translate a negative vertical position", () => {
     expect(
-      sampleDraftFieldErrors(
-        [
-          {
-            path: ["location", "position", "vertical", "position"],
-            code: "too_small",
-          },
-        ],
-        draft(),
-      ),
+      sampleDraftFieldErrors([
+        {
+          path: ["location", "position", "vertical", "position"],
+          code: "too_small",
+        },
+      ]),
     ).toEqual({
       "location.verticalPosition": {
         message: "A vertical position must not be negative.",
@@ -112,17 +88,14 @@ describe("sampleDraftFieldErrors", () => {
 
   it("should map description issues on the draft fields that produced them", () => {
     expect(
-      sampleDraftFieldErrors(
-        [
-          { path: ["description", "collectionDate", "start"] },
-          { path: ["description", "collectionDate", "end"] },
-          { path: ["description", "collectionDate", "timeZone"] },
-          { path: ["description", "length", "value"] },
-          { path: ["description", "mass", "unit"] },
-          { path: ["description", "orientationExplanation"] },
-        ],
-        draft(),
-      ),
+      sampleDraftFieldErrors([
+        { path: ["description", "collectionDate", "start"] },
+        { path: ["description", "collectionDate", "end"] },
+        { path: ["description", "collectionDate", "timeZone"] },
+        { path: ["description", "length", "value"] },
+        { path: ["description", "mass", "unit"] },
+        { path: ["description", "orientationExplanation"] },
+      ]),
     ).toEqual({
       "description.collectionDateStart": { message: "Invalid value." },
       "description.collectionDateEnd": { message: "Invalid value." },
@@ -139,10 +112,9 @@ describe("sampleDraftFieldErrors", () => {
 
   it("should translate a non positive measurement value", () => {
     expect(
-      sampleDraftFieldErrors(
-        [{ path: ["description", "mass", "value"], code: "too_small" }],
-        draft(),
-      ),
+      sampleDraftFieldErrors([
+        { path: ["description", "mass", "value"], code: "too_small" },
+      ]),
     ).toEqual({
       "description.massValue": {
         message: "Enter a number greater than zero.",
@@ -158,19 +130,16 @@ describe("sampleDraftFieldErrors", () => {
     "should translate an out-of-range %s on submit",
     (_label, longitudeField, latitudeField) => {
       expect(
-        sampleDraftFieldErrors(
-          [
-            {
-              path: ["location", "position", longitudeField],
-              code: "too_big",
-            },
-            {
-              path: ["location", "position", latitudeField],
-              code: "too_small",
-            },
-          ],
-          draft(),
-        ),
+        sampleDraftFieldErrors([
+          {
+            path: ["location", "position", longitudeField],
+            code: "too_big",
+          },
+          {
+            path: ["location", "position", latitudeField],
+            code: "too_small",
+          },
+        ]),
       ).toEqual({
         [`location.${longitudeField}`]: {
           message: "Longitude must be between -180 and 180.",
@@ -184,29 +153,23 @@ describe("sampleDraftFieldErrors", () => {
 
   it("should keep the generic message on a missing coordinate", () => {
     expect(
-      sampleDraftFieldErrors(
-        [
-          {
-            path: ["location", "position", "latitude"],
-            code: "invalid_type",
-          },
-        ],
-        draft(),
-      ),
+      sampleDraftFieldErrors([
+        {
+          path: ["location", "position", "latitude"],
+          code: "invalid_type",
+        },
+      ]),
     ).toEqual({ "location.latitude": { message: "Invalid value." } });
   });
 
   it("should not claim a positive bound on a reading value that has none", () => {
     expect(
-      sampleDraftFieldErrors(
-        [
-          {
-            path: ["condition", "temperature", "measurement", "value"],
-            code: "invalid_type",
-          },
-        ],
-        draft(),
-      ),
+      sampleDraftFieldErrors([
+        {
+          path: ["condition", "temperature", "measurement", "value"],
+          code: "invalid_type",
+        },
+      ]),
     ).toEqual({
       "condition.temperatureValue": {
         message: "Enter a value for the selected unit.",
@@ -216,15 +179,12 @@ describe("sampleDraftFieldErrors", () => {
 
   it("should translate a future collection date", () => {
     expect(
-      sampleDraftFieldErrors(
-        [
-          {
-            path: ["description", "collectionDate", "end"],
-            params: { code: "collection_date_future" },
-          },
-        ],
-        draft(),
-      ),
+      sampleDraftFieldErrors([
+        {
+          path: ["description", "collectionDate", "end"],
+          params: { code: "collection_date_future" },
+        },
+      ]),
     ).toEqual({
       "description.collectionDateEnd": {
         message: "The collection date cannot be in the future.",
@@ -234,15 +194,12 @@ describe("sampleDraftFieldErrors", () => {
 
   it("should read the range order error on both date fields", () => {
     expect(
-      sampleDraftFieldErrors(
-        [
-          {
-            path: ["description", "collectionDate", "start"],
-            params: { code: "collection_date_order" },
-          },
-        ],
-        draft(),
-      ),
+      sampleDraftFieldErrors([
+        {
+          path: ["description", "collectionDate", "start"],
+          params: { code: "collection_date_order" },
+        },
+      ]),
     ).toEqual({
       "description.collectionDateStart": {
         message: "The start date must be before the end date.",

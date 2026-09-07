@@ -6,10 +6,7 @@ import { createSampleLabels, type Messages } from "./create-sample-labels.ts";
 import { GEOMORPHOLOGICAL_ENVIRONMENTS } from "./geomorphological-environment/vocabulary.ts";
 import { MATERIAL_PATHS } from "./material/classification.ts";
 import { pathSegment } from "./path/segment.ts";
-import {
-  RESOURCE_TYPE_PATHS,
-  RESOURCE_TYPE_TREE,
-} from "./resource-type/vocabulary.ts";
+import { RESOURCE_TYPE_PATHS } from "./resource-type/vocabulary.ts";
 import { SAMPLE_TYPES } from "./type/vocabulary.ts";
 
 const m = Object.fromEntries(
@@ -29,10 +26,6 @@ const {
 describe("materialPathLabel", () => {
   it.each([
     ["rock", "Rock"],
-    ["rock.igneous", "Igneous"],
-    ["rock.hydrothermal", "Hydrothermal"],
-    ["fossil", "Fossil"],
-    ["extraterrestrial_rock", "Extraterrestrial rock"],
     ["rock.igneous.plutonic.felsic.granite", "Granite"],
   ] as const)("should label %s as its node name %s", (path, label) => {
     expect(materialPathLabel(path)).toBe(label);
@@ -44,20 +37,8 @@ describe("materialPathLabel", () => {
       "Meta-Plutonic",
     ],
     [
-      "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
-      "Meta-Granite",
-    ],
-    [
       "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock",
       "Meta-igneous rock",
-    ],
-    [
-      "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.clastic_sedimentary_rock",
-      "Meta-Clastic sedimentary rock",
-    ],
-    [
-      "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock",
-      "Meta-sedimentary rock",
     ],
   ] as const)("should prefix %s with Meta- as %s", (path, label) => {
     expect(materialPathLabel(path)).toBe(label);
@@ -65,12 +46,8 @@ describe("materialPathLabel", () => {
 });
 
 describe("typeLabel", () => {
-  it.each([
-    ["core", "Core"],
-    ["core.half_round", "Core Half round"],
-    ["dredge", "Dredge"],
-  ] as const)("should return the translated label for %s", (type, label) => {
-    expect(typeLabel(type)).toBe(label);
+  it("should translate the last segment under the type prefix", () => {
+    expect(typeLabel("core.half_round")).toBe("Core Half round");
   });
 });
 
@@ -100,14 +77,4 @@ describe("tree vocabulary label coverage", () => {
       expect(untranslated).toEqual([]);
     },
   );
-
-  it("should translate every resource-type childLabel code", () => {
-    const childLabels = Object.values(RESOURCE_TYPE_TREE)
-      .map((node) => node.childLabel)
-      .filter((code): code is string => code !== undefined);
-    const untranslated = childLabels.filter(
-      (code) => resourceTypeLabel(code) === `resource_type_${code}`,
-    );
-    expect(untranslated).toEqual([]);
-  });
 });

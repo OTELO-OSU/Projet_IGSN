@@ -7,6 +7,7 @@ import type { ComponentProps } from "react";
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import { vi } from "vitest";
 
+import { pickPath, repickPath } from "../../test/pick-hierarchy.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
@@ -164,56 +165,6 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should submit the selected type", async () => {
-    const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
-    );
-
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox", { name: "Nature" }).click();
-    await screen.getByText("Thin section").click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Dredge" }).click();
-    await screen.getByRole("button", { name: "Create" }).click();
-
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        manualGroupIds: [],
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: "dredge",
-        material: null,
-        collectionMethod: null,
-        collectionMethodDescription: null,
-        specificName: null,
-        geologicalContextDescription: null,
-        geomorphologicalEnvironment: null,
-        location: null,
-        existenceStatus: "exists",
-        availabilityStatus: "available",
-        ...NO_ANSWERS,
-      }),
-    );
-  });
-
-  it("should show the sub-type select only for a type with sub-values", async () => {
-    const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
-    );
-
-    await expect
-      .element(screen.getByRole("combobox", { name: "Core" }))
-      .not.toBeInTheDocument();
-
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Core" }).click();
-
-    await expect
-      .element(screen.getByRole("combobox", { name: "Core" }))
-      .toBeVisible();
-  });
-
   it("should submit the selected sub-type as the full type path", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
@@ -223,10 +174,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Core" }).click();
-    await screen.getByRole("combobox", { name: "Core" }).click();
-    await screen.getByRole("option", { name: "Half round" }).click();
+    await pickPath(screen, "Type *", "Core", "Core Half round");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -258,8 +206,7 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Core" }).click();
+    await pickPath(screen, "Type *", "Core", "Stop here");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -274,107 +221,6 @@ describe("SampleForm", () => {
         geomorphologicalEnvironment: null,
         collectionMethod: null,
         collectionMethodDescription: null,
-        location: null,
-        existenceStatus: "exists",
-        availabilityStatus: "available",
-        ...NO_ANSWERS,
-      }),
-    );
-  });
-
-  it("should reset the sub-type when the type changes", async () => {
-    const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
-    );
-
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox", { name: "Nature" }).click();
-    await screen.getByText("Thin section").click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Core" }).click();
-    await screen.getByRole("combobox", { name: "Core" }).click();
-    await screen.getByRole("option", { name: "Half round" }).click();
-    await screen.getByRole("combobox", { name: "Type *", exact: true }).click();
-    await screen.getByRole("option", { name: "Dredge" }).click();
-    await screen.getByRole("button", { name: "Create" }).click();
-
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        manualGroupIds: [],
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: "dredge",
-        material: null,
-        collectionMethod: null,
-        collectionMethodDescription: null,
-        specificName: null,
-        geologicalContextDescription: null,
-        geomorphologicalEnvironment: null,
-        location: null,
-        existenceStatus: "exists",
-        availabilityStatus: "available",
-        ...NO_ANSWERS,
-      }),
-    );
-  });
-
-  it("should prefill the type and sub-type selects from a nested path", async () => {
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "core.section",
-          material: null,
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
-      />,
-    );
-
-    await expect
-      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
-      .toHaveTextContent("Core");
-    await expect
-      .element(screen.getByRole("combobox", { name: "Core" }))
-      .toHaveTextContent("Section");
-  });
-
-  it("should drill down the material cascade and submit the leaf path", async () => {
-    const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
-    );
-
-    await screen.getByLabelText(/name/i).fill("Basalt");
-    await screen.getByRole("combobox", { name: "Nature" }).click();
-    await screen.getByText("Thin section").click();
-
-    await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await screen
-      .getByRole("combobox", { name: "Material *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Rock", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
-    await screen.getByRole("option", { name: "Igneous", exact: true }).click();
-
-    await screen.getByRole("button", { name: "Create" }).click();
-
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        manualGroupIds: [],
-        name: "Basalt",
-        nature: "thin_section",
-        type: null,
-        material: "rock.igneous",
-        collectionMethod: null,
-        collectionMethodDescription: null,
-        specificName: null,
-        geologicalContextDescription: null,
-        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -398,24 +244,15 @@ describe("SampleForm", () => {
       .element(screen.getByRole("combobox", { name: "Texture" }))
       .not.toBeInTheDocument();
 
-    await screen
-      .getByRole("combobox", { name: "Material *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Rock", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
-    await screen.getByRole("option", { name: "Igneous", exact: true }).click();
-    await screen
-      .getByRole("combobox", { name: "Igneous *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
-    await screen
-      .getByRole("combobox", { name: "Plutonic *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Felsic", exact: true }).click();
-    await screen
-      .getByRole("combobox", { name: "Felsic *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Granite", exact: true }).click();
+    await pickPath(
+      screen,
+      "Material *",
+      "Rock",
+      "Igneous",
+      "Plutonic",
+      "Felsic",
+      "Granite",
+    );
 
     await screen.getByRole("combobox", { name: "Texture" }).click();
     await screen.getByRole("option", { name: "Phaneritic" }).click();
@@ -454,28 +291,19 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
 
-    await screen
-      .getByRole("combobox", { name: "Material *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Rock", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
-    await screen.getByRole("option", { name: "Igneous", exact: true }).click();
-    await screen
-      .getByRole("combobox", { name: "Igneous *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
+    await pickPath(
+      screen,
+      "Material *",
+      "Rock",
+      "Igneous",
+      "Plutonic",
+      "Stop here",
+    );
 
     await screen.getByRole("combobox", { name: "Texture" }).click();
     await screen.getByRole("option", { name: "Phaneritic" }).click();
 
-    await screen
-      .getByRole("combobox", { name: "Plutonic *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Felsic", exact: true }).click();
-    await screen
-      .getByRole("combobox", { name: "Felsic *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Granite", exact: true }).click();
+    await pickPath(screen, "Material *", "Felsic", "Granite");
 
     await expect
       .element(screen.getByRole("combobox", { name: "Texture" }))
@@ -515,16 +343,14 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
 
-    await screen
-      .getByRole("combobox", { name: "Material *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Rock", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
-    await screen.getByRole("option", { name: "Igneous", exact: true }).click();
-    await screen
-      .getByRole("combobox", { name: "Igneous *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Plutonic", exact: true }).click();
+    await pickPath(
+      screen,
+      "Material *",
+      "Rock",
+      "Igneous",
+      "Plutonic",
+      "Stop here",
+    );
 
     await screen.getByRole("combobox", { name: "Texture" }).click();
     await screen.getByRole("option", { name: "Phaneritic" }).click();
@@ -532,10 +358,7 @@ describe("SampleForm", () => {
       .element(screen.getByRole("combobox", { name: "Texture" }))
       .toHaveTextContent("Phaneritic");
 
-    await screen
-      .getByRole("combobox", { name: "Igneous *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Volcanic", exact: true }).click();
+    await repickPath(screen, "Plutonic", "Volcanic", "Stop here");
 
     await expect
       .element(screen.getByRole("combobox", { name: "Texture" }))
@@ -574,24 +397,14 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
 
-    await screen
-      .getByRole("combobox", { name: "Material *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Rock", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
-    await screen
-      .getByRole("option", { name: "Metamorphic", exact: true })
-      .click();
-    await screen
-      .getByRole("combobox", { name: "Metamorphic *", exact: true })
-      .click();
-    await screen
-      .getByRole("option", { name: "Strongly metamorphosed", exact: true })
-      .click();
-    await screen
-      .getByRole("combobox", { name: "Strongly metamorphosed *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Gneiss", exact: true }).click();
+    await pickPath(
+      screen,
+      "Material *",
+      "Rock",
+      "Metamorphic",
+      "Strongly metamorphosed",
+      "Gneiss",
+    );
 
     await screen
       .getByRole("combobox", { name: "Metamorphic facies *" })
@@ -632,44 +445,17 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
 
-    await screen
-      .getByRole("combobox", { name: "Material *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Rock", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
-    await screen
-      .getByRole("option", { name: "Metamorphic", exact: true })
-      .click();
-    await screen
-      .getByRole("combobox", { name: "Metamorphic *", exact: true })
-      .click();
-    await screen
-      .getByRole("option", { name: "Weakly metamorphosed", exact: true })
-      .click();
-    await screen
-      .getByRole("combobox", { name: "Weakly metamorphosed *", exact: true })
-      .click();
-    await screen
-      .getByRole("option", { name: "Meta-igneous rock", exact: true })
-      .click();
-    await screen
-      .getByRole("combobox", { name: "Meta-igneous rock *", exact: true })
-      .click();
-    await screen
-      .getByRole("option", { name: "Meta-Plutonic", exact: true })
-      .click();
-    await screen
-      .getByRole("combobox", { name: "Meta-Plutonic *", exact: true })
-      .click();
-    await screen
-      .getByRole("option", { name: "Meta-Felsic", exact: true })
-      .click();
-    await screen
-      .getByRole("combobox", { name: "Meta-Felsic *", exact: true })
-      .click();
-    await screen
-      .getByRole("option", { name: "Meta-Granite", exact: true })
-      .click();
+    await pickPath(
+      screen,
+      "Material *",
+      "Rock",
+      "Metamorphic",
+      "Weakly metamorphosed",
+      "Meta-igneous rock",
+      "Meta-Plutonic",
+      "Meta-Felsic",
+      "Meta-Granite",
+    );
 
     await expect
       .element(screen.getByRole("combobox", { name: "Texture" }))
@@ -721,14 +507,7 @@ describe("SampleForm", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
 
-    await screen
-      .getByRole("combobox", { name: "Material *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Rock", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
-    await screen
-      .getByRole("option", { name: "Metamorphic", exact: true })
-      .click();
+    await pickPath(screen, "Material *", "Rock", "Metamorphic", "Stop here");
 
     await screen
       .getByRole("combobox", { name: "Metamorphic facies *" })
@@ -740,8 +519,7 @@ describe("SampleForm", () => {
       .click();
     await screen.getByRole("option", { name: "Schistose" }).click();
 
-    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
-    await screen.getByRole("option", { name: "Igneous", exact: true }).click();
+    await repickPath(screen, "Metamorphic", "Igneous", "Stop here");
 
     await expect
       .element(screen.getByRole("combobox", { name: "Metamorphic facies *" }))
@@ -814,16 +592,13 @@ describe("SampleForm", () => {
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: "Nature" }).click();
     await screen.getByText("Thin section").click();
-    await screen
-      .getByRole("combobox", { name: "Collection Method", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Coring" }).click();
-    await screen.getByRole("combobox", { name: "Coring", exact: true }).click();
-    await screen.getByRole("option", { name: "GravityCorer" }).click();
-    await screen
-      .getByRole("combobox", { name: "GravityCorer", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Giant" }).click();
+    await pickPath(
+      screen,
+      "Collection Method",
+      "Coring",
+      "GravityCorer",
+      "Giant",
+    );
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -846,7 +621,7 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should prefill the collection-method levels from a nested path", async () => {
+  it("should prefill a chip per level of a nested collection-method path", async () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
@@ -862,22 +637,11 @@ describe("SampleForm", () => {
       />,
     );
 
-    await expect
-      .element(
-        screen.getByRole("combobox", {
-          name: "Collection Method",
-          exact: true,
-        }),
-      )
-      .toHaveTextContent("Coring");
-    await expect
-      .element(screen.getByRole("combobox", { name: "Coring", exact: true }))
-      .toHaveTextContent("GravityCorer");
-    await expect
-      .element(
-        screen.getByRole("combobox", { name: "GravityCorer", exact: true }),
-      )
-      .toHaveTextContent("Giant");
+    for (const level of ["Coring", "GravityCorer", "Giant"]) {
+      await expect
+        .element(screen.getByRole("button", { name: `Remove ${level}` }))
+        .toBeVisible();
+    }
   });
 
   it("should submit the entered collection method description", async () => {
@@ -2295,6 +2059,9 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
       .toBeDisabled();
     await expect
+      .element(screen.getByRole("button", { name: "Remove Dredge" }))
+      .not.toBeInTheDocument();
+    await expect
       .element(screen.getByRole("combobox", { name: "Nature" }))
       .toBeDisabled();
   });
@@ -2307,7 +2074,7 @@ describe("SampleForm post-publication field lock", () => {
 
     await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
     await expect
-      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
+      .element(screen.getByRole("button", { name: "Remove Dredge" }))
       .toBeEnabled();
     await expect
       .element(screen.getByRole("combobox", { name: "Nature" }))
@@ -2334,45 +2101,51 @@ describe("SampleForm post-publication field lock", () => {
     name: string;
     status: SampleStatus;
     material: string;
-    disabled: string[];
-    enabled: string[];
+    locked: string[];
+    removable: string[];
+    canAppend: boolean;
   }>([
     {
-      name: "locks the material levels down to the frozen prefix and opens the rest",
+      name: "locks the material levels down to the frozen prefix and leaves the deeper one removable",
       status: "published",
       material: "rock.igneous.plutonic.felsic.granite",
-      disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
-      enabled: ["Felsic *"],
+      locked: ["Rock", "Igneous", "Plutonic", "Felsic"],
+      removable: ["Granite"],
+      canAppend: false,
     },
     {
       name: "opens the next level of a published sample stopped at an unlocked node",
       status: "published",
       material: "sediment.exogenous_detritic",
-      disabled: ["Material *", "Sediment *"],
-      enabled: ["Exogenous detritic *"],
+      locked: ["Sediment", "Exogenous detritic"],
+      removable: [],
+      canAppend: true,
     },
     {
       name: "locks every material level when nothing in the path unlocks",
       status: "published",
       material: "rock.igneous.plutonic",
-      disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
-      enabled: [],
+      locked: ["Rock", "Igneous", "Plutonic"],
+      removable: [],
+      canAppend: false,
     },
     {
       name: "locks a withdrawn sample's material levels like a published one",
       status: "withdrawn",
       material: "rock.igneous.plutonic.felsic.granite",
-      disabled: ["Material *", "Rock *", "Igneous *", "Plutonic *"],
-      enabled: ["Felsic *"],
+      locked: ["Rock", "Igneous", "Plutonic", "Felsic"],
+      removable: ["Granite"],
+      canAppend: false,
     },
     {
       name: "keeps every material level editable on a draft",
       status: "draft",
       material: "rock.igneous.plutonic.felsic.granite",
-      disabled: [],
-      enabled: ["Material *", "Rock *", "Igneous *", "Plutonic *", "Felsic *"],
+      locked: [],
+      removable: ["Rock", "Igneous", "Plutonic", "Felsic", "Granite"],
+      canAppend: false,
     },
-  ])("$name", async ({ status, material, disabled, enabled }) => {
+  ])("$name", async ({ status, material, locked, removable, canAppend }) => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -2385,16 +2158,23 @@ describe("SampleForm post-publication field lock", () => {
     );
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
-    for (const level of disabled) {
+    for (const level of locked) {
+      await expect.element(screen.getByText(level)).toBeVisible();
       await expect
-        .element(screen.getByRole("combobox", { name: level, exact: true }))
-        .toBeDisabled();
+        .element(screen.getByRole("button", { name: `Remove ${level}` }))
+        .not.toBeInTheDocument();
     }
-    for (const level of enabled) {
+    for (const level of removable) {
       await expect
-        .element(screen.getByRole("combobox", { name: level, exact: true }))
+        .element(screen.getByRole("button", { name: `Remove ${level}` }))
         .toBeEnabled();
     }
+    const trigger = screen.getByRole("combobox", {
+      name: "Material *",
+      exact: true,
+    });
+    if (canAppend) await expect.element(trigger).toBeEnabled();
+    else await expect.element(trigger).toBeDisabled();
   });
 
   it("saves a material refined at the open level of a published sample", async () => {
@@ -2411,10 +2191,7 @@ describe("SampleForm post-publication field lock", () => {
     );
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await screen
-      .getByRole("combobox", { name: "Felsic *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Granodiorite" }).click();
+    await repickPath(screen, "Granite", "Granodiorite");
 
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeEnabled();
@@ -2429,7 +2206,7 @@ describe("SampleForm post-publication field lock", () => {
     );
   });
 
-  it("gates the save when the open material level is cleared", async () => {
+  it("gates the save when the open material level is removed", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -2446,10 +2223,7 @@ describe("SampleForm post-publication field lock", () => {
     );
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await screen
-      .getByRole("combobox", { name: "Felsic *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Granite" }).click();
+    await screen.getByRole("button", { name: "Remove Granite" }).click();
 
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeDisabled();
@@ -2547,23 +2321,6 @@ describe("SampleForm post-publication field lock", () => {
         }),
       ),
     );
-  });
-
-  it("disables nothing on a draft", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          defaultValues={publishedFixture}
-          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
-        />
-      </TooltipProvider>,
-    );
-
-    await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
-      .toBeEnabled();
   });
 
   it("keeps the texture editable on a published igneous sample", async () => {

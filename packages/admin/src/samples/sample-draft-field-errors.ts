@@ -45,13 +45,7 @@ const HIERARCHY_PATHS = {
   collectionMethod: "collectionMethodPath",
 } as const;
 
-type DraftContext = {
-  typePath: (string | undefined)[];
-  materialPath: (string | undefined)[];
-  collectionMethodPath: (string | undefined)[];
-};
-
-const draftFieldName = (path: string, draft: DraftContext): string => {
+const draftFieldName = (path: string): string => {
   if (path.startsWith(VERTICAL_PREFIX)) {
     const leaf = path.slice(VERTICAL_PREFIX.length);
     return `location.${VERTICAL_FIELDS[leaf] ?? leaf}`;
@@ -75,8 +69,7 @@ const draftFieldName = (path: string, draft: DraftContext): string => {
   if (path === "condition.humidity.percentage")
     return "condition.humidityPercentage";
   const hierarchy = HIERARCHY_PATHS[path as keyof typeof HIERARCHY_PATHS];
-  if (hierarchy)
-    return `${hierarchy}[${draft[hierarchy].filter(Boolean).length}]`;
+  if (hierarchy) return hierarchy;
   const relation = RELATION_PATH.exec(path);
   if (relation) return `relations[${relation[1]}].${relation[2]}`;
   return path;
@@ -151,13 +144,12 @@ function issueMessage(path: string, issue: DraftIssue): string {
 
 export function sampleDraftFieldErrors(
   issues: ReadonlyArray<DraftIssue>,
-  draft: DraftContext,
 ): Record<string, { message: string }> {
   const fields: Record<string, { message: string }> = {};
   for (const issue of issues) {
     const path = issue.path.join(".");
     const message = issueMessage(path, issue);
-    fields[draftFieldName(path, draft)] ??= { message };
+    fields[draftFieldName(path)] ??= { message };
     const reason = (issue.params as { code?: string } | undefined)?.code;
     const endField = reason && ORDER_END_FIELDS[reason];
     if (endField) fields[endField] ??= { message };

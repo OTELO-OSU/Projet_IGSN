@@ -4,7 +4,7 @@ import type { RelationTargetResourceType } from "@projet-igsn/domain/sample/rela
 import {
   composeHierarchyValue,
   toHierarchyPath,
-} from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+} from "@projet-igsn/design-system/lib/hierarchy";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { publishedSampleSchema as domainPublishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import {

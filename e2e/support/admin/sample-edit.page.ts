@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { pickHierarchyLevel } from "../pick-hierarchy.ts";
 import { adminUrl } from "../urls";
 import { chooseOption } from "./choose-option.ts";
 import { expectNoManualGroupOffered } from "./manual-groups-field.ts";
@@ -21,14 +22,16 @@ type AttachmentResource = {
 
 export function sampleEditPage(page: Page) {
   const openTab = (name: string) => page.getByRole("tab", { name }).click();
+  const fieldCombobox = (field: string, scope: Locator | Page = page) =>
+    scope.getByRole("combobox", {
+      name: new RegExp(`^${field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`),
+    });
   const pick = async (
     field: string,
     label: string,
     scope: Locator | Page = page,
   ) => {
-    const combobox = scope.getByRole("combobox", {
-      name: new RegExp(`^${field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`),
-    });
+    const combobox = fieldCombobox(field, scope);
     await expect(async () => {
       if ((await combobox.innerText()).trim() !== label) {
         await combobox.click();
@@ -38,6 +41,9 @@ export function sampleEditPage(page: Page) {
       await expect(combobox).toHaveText(label, { timeout: 2_000 });
     }).toPass({ timeout: 20_000 });
   };
+
+  const pickHierarchy = (field: string, label: string) =>
+    pickHierarchyLevel(page, fieldCombobox(field), label);
 
   const relationBlock = (index: number, type: string) =>
     page.getByRole("group", {
@@ -172,14 +178,14 @@ export function sampleEditPage(page: Page) {
     },
 
     fillPublishableFields: async () => {
-      await pick("Type", "Dredge");
+      await pickHierarchy("Type", "Dredge");
       await pick("Provenance status", "Collection specimen");
       await page
         .getByRole("group", { name: /collection date/i })
         .getByRole("textbox", { name: /^Date/ })
         .fill("2025-06-15");
       await openTab("Sample classification");
-      await pick("Material", "Synthetic rock / mineral");
+      await pickHierarchy("Material", "Synthetic rock / mineral");
       await openTab("Scientific context");
       await page.getByLabel(/collection curator/i).fill("Paul Bernard");
       await pick("Collection origin", "Scientific expedition");

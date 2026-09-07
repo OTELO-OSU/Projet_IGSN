@@ -131,7 +131,7 @@ export function SampleFacets({
             key={facet.key}
             hierarchy={facet.hierarchy}
             translate={facetValueLabel(facet.key)}
-            rootLabel={label}
+            label={label}
             value={values[facet.key] as string | undefined}
             onChange={(value) => onChange(facet.key, value)}
             placeholder={m.facet_any()}

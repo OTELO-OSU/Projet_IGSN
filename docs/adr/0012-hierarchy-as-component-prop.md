@@ -27,3 +27,4 @@ Domain-side, each vocabulary exports its bundle (`MATERIAL_HIERARCHY`, `SAMPLE_T
 - A new vocabulary needs only its tree and label map, with no per-vocabulary wiring in the widget.
 - Paths are runtime-derived strings, so the `T extends string` generic is gone and the domain path types are `string` aliases.
 - The suffix-resolution convention lives in two places by design, the consistency spec pinning them together.
+- Superseded in presentation only: `HierarchySelectField` gave way to the single-control `HierarchyField`, which consumes the same `hierarchy` prop through the helpers now in `design-system/src/lib/hierarchy.ts`.

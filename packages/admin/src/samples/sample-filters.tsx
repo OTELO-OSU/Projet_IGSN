@@ -1,11 +1,11 @@
 import type { ListSamplesQuery } from "@projet-igsn/domain/sample/sample-validator";
 
-import { hierarchyPathLabel } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import {
   Combobox,
   toComboboxItems,
 } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
+import { hierarchyPathLabel } from "@projet-igsn/design-system/lib/hierarchy";
 import { COLLECTION_METHOD_HIERARCHY } from "@projet-igsn/domain/sample/collection-method/vocabulary";
 import { NATURES } from "@projet-igsn/domain/sample/nature";
 import { sampleStatusSchema } from "@projet-igsn/domain/sample/sample";

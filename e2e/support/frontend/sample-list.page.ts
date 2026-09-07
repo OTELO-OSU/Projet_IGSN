@@ -1,5 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 
+import { pickHierarchyLevel } from "../pick-hierarchy.ts";
 import { frontendUrl } from "../urls";
 
 export function sampleListPage(page: Page) {
@@ -36,10 +37,12 @@ export function sampleListPage(page: Page) {
       await expect(page.getByRole("option", { name: option })).toHaveCount(0);
       await page.keyboard.press("Escape");
     },
-    chooseFacetOption: async (level: string, option: string) => {
-      await page.getByRole("combobox", { name: level }).click();
-      await page.getByRole("option", { name: option }).click();
-    },
+    drillFacet: (facet: string, option: string) =>
+      pickHierarchyLevel(
+        page,
+        page.getByRole("combobox", { name: facet }),
+        option,
+      ),
     fillTextFacet: async (facet: string, value: string, param: string) => {
       const field = page.getByRole("searchbox", { name: facet });
       await field.fill(value);

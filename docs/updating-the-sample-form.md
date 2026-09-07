@@ -99,9 +99,9 @@ So a path like `rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic
 
 Because the reused nodes keep their shared labels, every level under `meta_igneous_rock` or `meta_sedimentary_rock` is prefixed "Meta-" by rule instead: `isUnderMetaRock` (`material/is-under-meta-rock.ts`) flags a path passing through either segment, and `materialPathLabel` (`create-sample-labels.ts`) adds the prefix for it. This is why `hierarchyPathLabel` hands the translator the full path, not just the resolved label's own code: telling a meta-igneous occurrence from its plain igneous twin needs the path, not the leaf.
 
-**`optional: true`** marks a node where stopping is a complete, publishable answer on its own. Without it, a node that has children must be refined deeper before the sample can be published. Leaves are always valid stops.
+**`optional: true`** marks a node where stopping is a complete, publishable answer on its own. Without it, a node that has children must be refined deeper before the sample can be published. Leaves are always valid stops. In the form, `HierarchyField` shows this as a hint after the last chip: `> ...` while the path must still be refined, `(> ...)` once it is complete but could still be refined, nothing at a leaf.
 
-**`searchable: true`** offers the node as an option in the public search filter for that tree (the sidebar cascade on the sample list). It changes nothing in the declaration form: a value is always selectable there, searchable or not. It changes nothing in the admin collection-method filter either, which offers every level regardless of the flag. There is no inheritance, so flag every node the filter should offer, at each level; a node without the flag stays absent from the filter even if its parent carries it. A plain leaf that would otherwise need no entry gets one just for the flag:
+**`searchable: true`** offers the node as an option in the public search filter for that tree (the sidebar hierarchy filter on the sample list, one chip control per facet offering only searchable nodes). It changes nothing in the declaration form: a value is always selectable there, searchable or not. It changes nothing in the admin collection-method filter either, which offers every level regardless of the flag. There is no inheritance, so flag every node the filter should offer, at each level; a node without the flag stays absent from the filter even if its parent carries it. A plain leaf that would otherwise need no entry gets one just for the flag:
 
 ```ts
 // packages/domain/src/sample/material/classification.ts
@@ -277,7 +277,7 @@ frozenMaterialPrefix("mineral");
 // -> null: nothing unlocks, the whole material is frozen
 ```
 
-The merge accepts an incoming path only at or under that prefix (a sibling branch or another root keeps the stored value), and the form predicate disables exactly the cascade levels above it. Both read the same flag, so you never state the rule twice. Background: ADR [0022](adr/0022-editable-material-levels-after-publication.md).
+The merge accepts an incoming path only at or under that prefix (a sibling branch or another root keeps the stored value). The form asks the same question one level at a time: `HierarchyField` renders each selected level as a Badge chip, and for each depth asks the form-level disabled predicate for `name[depth]` (`useFieldDisabledRule`) whether that level is frozen; a frozen level shows as a plain-text chip with no remove button, and the trigger that would append the next level is disabled when that next level is frozen. Both the merge and the form read the same `frozenWhenPublished` flag, so you never state the rule twice. Background: ADR [0022](adr/0022-editable-material-levels-after-publication.md).
 
 ## Add/remove a display condition
 

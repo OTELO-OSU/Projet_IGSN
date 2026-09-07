@@ -1,4 +1,4 @@
-import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { isMetamorphicRock } from "@projet-igsn/domain/sample/material/is-metamorphic-rock";
 
 import { MetamorphicFabricField } from "#/samples/metamorphic-fabric-field.tsx";

@@ -1,4 +1,4 @@
-import { toHierarchyPath } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { toHierarchyPath } from "@projet-igsn/design-system/lib/hierarchy";
 import { describe, expect, it } from "vitest";
 
 import { EMPTY_AGE_FORM_VALUES } from "./age-form.ts";

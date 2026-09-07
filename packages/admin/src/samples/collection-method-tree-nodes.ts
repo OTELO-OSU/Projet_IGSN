@@ -1,4 +1,4 @@
-import { hierarchyLevelItems } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { hierarchyLevelItems } from "@projet-igsn/design-system/lib/hierarchy";
 import { COLLECTION_METHOD_HIERARCHY } from "@projet-igsn/domain/sample/collection-method/vocabulary";
 
 import type { TreeFilterNode } from "#/filters/tree-filter-node.ts";

@@ -7,6 +7,7 @@ import { render } from "vitest-browser-react";
 import { FACET_SECTIONS, SampleFacets } from "./sample-facets.tsx";
 
 const LORRAINE = "04vfs2w97";
+const TYPE_FACET = "Type";
 
 async function renderFacets(
   values: Record<string, string | number | undefined> = {},
@@ -37,13 +38,25 @@ describe("SampleFacets", () => {
     expect(onChange).toHaveBeenCalledWith("nature", "hand_sample");
   });
 
-  it("should reveal a child level once a hierarchy node is picked", async () => {
+  it("should report the picked child of a hierarchy facet", async () => {
     const { screen, onChange } = await renderFacets({ type: "core" });
 
-    await screen.getByRole("combobox").nth(1).click();
-    await screen.getByRole("option").first().click();
+    await screen
+      .getByRole("combobox", { name: TYPE_FACET, exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Core", exact: true }).click();
 
     expect(onChange).toHaveBeenCalledWith("type", "core.core");
+  });
+
+  it("should clear a hierarchy facet when its root chip is removed", async () => {
+    const { screen, onChange } = await renderFacets({ type: "core" });
+
+    await screen
+      .getByRole("button", { name: "Remove Core", exact: true })
+      .click();
+
+    expect(onChange).toHaveBeenCalledWith("type", undefined);
   });
 
   it("should disable clear-all until a facet is active", async () => {
