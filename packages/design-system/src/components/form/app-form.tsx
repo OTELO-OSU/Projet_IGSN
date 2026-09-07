@@ -3,6 +3,7 @@ import { createFormHook } from "@tanstack/react-form";
 import { ComboboxField } from "./combobox-field.tsx";
 import { DateField } from "./date-field.tsx";
 import { fieldContext, formContext } from "./form-hook-contexts.tsx";
+import { HierarchyField } from "./hierarchy-field.tsx";
 import { MultiComboboxField } from "./multi-combobox-field.tsx";
 import { NumberField } from "./number-field.tsx";
 import { SubmitButton } from "./submit-button.tsx";
@@ -19,6 +20,7 @@ export const { useAppForm, useTypedAppFormContext } = createFormHook({
     NumberField,
     ComboboxField,
     MultiComboboxField,
+    HierarchyField,
     DateField,
     SwitchField,
   },

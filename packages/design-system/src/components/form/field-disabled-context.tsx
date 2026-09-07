@@ -10,10 +10,14 @@ const FieldDisabledContext = createContext<(name: string) => boolean>(
 
 export const FieldDisabledProvider = FieldDisabledContext.Provider;
 
+export function useFieldDisabledRule(): (name: string) => boolean {
+  return useContext(FieldDisabledContext);
+}
+
 // For a control that sits outside a field context and must name the field whose
 // rule it follows.
 export function useIsFieldDisabled(name: string): boolean {
-  return useContext(FieldDisabledContext)(name);
+  return useFieldDisabledRule()(name);
 }
 
 export function useFieldDisabled(disabled?: boolean): boolean {
