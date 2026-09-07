@@ -16,7 +16,6 @@ import {
   validateServiceAccountIdParam,
 } from "./validator.ts";
 
-const NOT_FOUND = { error: "Service account not found" } as const;
 const NAME_TAKEN = { error: "Service account name already taken" } as const;
 
 const logAccountChange = (actor: string, account: string, action: string) =>
@@ -42,11 +41,9 @@ export function createServiceAccountRoutes(
       return c.json(body, 201);
     })
     .get("/:id", validateServiceAccountIdParam, async (c) => {
-      const account = await repository.get(c.req.valid("param").id);
-      if (!account) {
-        return c.json(NOT_FOUND, 404);
-      }
-      const body: ServiceAccountResponse = { data: account };
+      const body: ServiceAccountResponse = {
+        data: await repository.get(c.req.valid("param").id),
+      };
       return c.json(body);
     })
     .put(

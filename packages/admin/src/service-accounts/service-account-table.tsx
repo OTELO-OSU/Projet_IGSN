@@ -1,4 +1,4 @@
-import type { ListedServiceAccount } from "@projet-igsn/domain/service-account/model";
+import type { ServiceAccount } from "@projet-igsn/domain/service-account/model";
 
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import {
@@ -14,7 +14,7 @@ import {
 
 import { m } from "#/paraglide/messages.js";
 
-const columns: ColumnDef<ListedServiceAccount>[] = [
+const columns: ColumnDef<ServiceAccount>[] = [
   {
     accessorKey: "name",
     header: () => m.column_name(),
@@ -51,7 +51,7 @@ const columns: ColumnDef<ListedServiceAccount>[] = [
 export function ServiceAccountTable({
   accounts,
 }: {
-  accounts: ListedServiceAccount[];
+  accounts: ServiceAccount[];
 }) {
   const navigate = useNavigate();
   const table = useReactTable({

@@ -37,7 +37,6 @@ function ServiceAccountsPage() {
             </Link>
           </Button>
         }
-        filters={[]}
       />
 
       {query.isPending ? (

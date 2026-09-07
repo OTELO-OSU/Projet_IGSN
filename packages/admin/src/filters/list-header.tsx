@@ -60,11 +60,11 @@ function AddFilter({
 export function ListHeader({
   title,
   action,
-  filters,
+  filters = [],
 }: {
   title: string;
   action?: ReactNode;
-  filters: FilterEntry[];
+  filters?: FilterEntry[];
 }) {
   const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
 

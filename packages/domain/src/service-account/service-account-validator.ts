@@ -8,7 +8,7 @@ import {
   pageSizeSchema,
 } from "../sample/sample-validator.ts";
 import { managedGroupsSchema } from "../user/managed-groups.ts";
-import { listedServiceAccountSchema, serviceAccountSchema } from "./model.ts";
+import { serviceAccountSchema } from "./model.ts";
 
 const MAX_NAME_LENGTH = 100;
 
@@ -40,7 +40,7 @@ export type ServiceAccountResponse = z.infer<
 >;
 
 export const listServiceAccountsResponseSchema = z.object({
-  data: z.array(listedServiceAccountSchema),
+  data: z.array(serviceAccountSchema),
   meta: z.object({ total: z.number() }),
 });
 

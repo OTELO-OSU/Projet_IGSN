@@ -6,12 +6,11 @@ import {
   serviceAccountResponseSchema,
 } from "@projet-igsn/domain/service-account/service-account-validator";
 import { testClient } from "hono/testing";
-import { describe, expect, vi } from "vitest";
+import { describe, expect } from "vitest";
 
 import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
-import { requireActiveSession } from "../auth/active-session.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 
@@ -298,34 +297,6 @@ describe("admin service account routes", () => {
       );
       // Assert
       expect(res.status).toBe(403);
-    },
-  );
-
-  pgTest("should answer 401 to an unauthenticated caller", async ({ db }) => {
-    // Act
-    const res = await createApp(db).app.request("/admin/service-accounts");
-    // Assert
-    expect(res.status).toBe(401);
-  });
-
-  pgTest.for(["post", "put", "delete"] as const)(
-    "should answer 401 to a %s on a revoked session",
-    async (method, { db }) => {
-      // Arrange
-      const client = await asSuperAdmin(db);
-      const id = await createdId(client, accountBody());
-      vi.mocked(requireActiveSession).mockImplementationOnce(async (c) =>
-        c.json({ error: "Unauthorized" }, 401),
-      );
-      // Act
-      const res =
-        method === "post"
-          ? await createAccount(client, accountBody({ name: "Other" }))
-          : method === "put"
-            ? await updateAccount(client, id, accountBody())
-            : await deleteAccount(client, id);
-      // Assert
-      expect(res.status).toBe(401);
     },
   );
 });

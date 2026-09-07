@@ -15,9 +15,3 @@ export const serviceAccountSchema = z.object({
 });
 
 export type ServiceAccount = z.infer<typeof serviceAccountSchema>;
-
-export const listedServiceAccountSchema = serviceAccountSchema.omit({
-  managedGroups: true,
-});
-
-export type ListedServiceAccount = z.infer<typeof listedServiceAccountSchema>;
