@@ -8,6 +8,7 @@ import { canModerateSamples } from "@projet-igsn/domain/user/can-moderate-sample
 import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
 import { Link, useLocation } from "@tanstack/react-router";
 import {
+  BotIcon,
   Building2Icon,
   FlaskConicalIcon,
   MountainIcon,
@@ -28,6 +29,8 @@ const listSearch = { page: 1, perPage: DEFAULT_PAGE_SIZE };
 const SAMPLE_MODERATION_PATH = "/samples/moderation";
 
 const GROUPS_NAV_ID = "nav-institutional-groups";
+
+const SERVICE_ACCOUNTS_PATH = "/service-accounts";
 
 const GROUPS_NAV = [
   {
@@ -141,6 +144,15 @@ export function AppLayout({
                   ))}
                 </ul>
               </li>
+            )}
+            {me?.superAdmin && (
+              <NavItem
+                to={SERVICE_ACCOUNTS_PATH}
+                search={listSearch}
+                Icon={BotIcon}
+                label={m.nav_service_accounts()}
+                isCurrent={pathname.startsWith(SERVICE_ACCOUNTS_PATH)}
+              />
             )}
             {me && canAdminManualGroups(me) && (
               <NavItem

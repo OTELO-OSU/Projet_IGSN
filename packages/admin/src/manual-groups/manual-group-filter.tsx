@@ -4,11 +4,13 @@ import { Label } from "@projet-igsn/design-system/components/ui/label";
 import type { FilterEntry } from "#/filters/list-header.tsx";
 
 import { useManualGroup } from "#/manual-groups/use-manual-group.ts";
-import { useManualGroups } from "#/manual-groups/use-manual-groups.ts";
+import {
+  CATALOG_PAGE,
+  useManualGroups,
+} from "#/manual-groups/use-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 
 // ponytail: one page of 50 groups, server-side search once the catalog outgrows it
-const CATALOG_PAGE = { page: 1, perPage: 50 };
 
 const ID = "manual-group-filter";
 

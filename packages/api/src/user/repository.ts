@@ -19,12 +19,17 @@ import {
 } from "@projet-igsn/domain/user/user-validator";
 import { HTTPException } from "hono/http-exception";
 import { sql } from "kysely";
-import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/postgres";
+import { jsonArrayFrom } from "kysely/helpers/postgres";
 import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../db.ts";
 
 import { likePattern } from "../like-pattern.ts";
+import {
+  managedGroupsOf,
+  replaceManagedGroups,
+  USER_MANAGED_GROUP_TABLES,
+} from "../managed-groups.ts";
 import { canDetachFromGroup } from "../manual-group/can-detach-from-group.ts";
 import { withTransaction } from "../transaction.ts";
 import { countUsersByInstitutionalGroup } from "./count-users-by-institutional-group.ts";
@@ -32,7 +37,6 @@ import { moderationScopeWhere } from "./moderation-scope-where.ts";
 import { orphanedGroupsOfUser } from "./orphaned-groups-of-user.ts";
 import { searchUsers } from "./search-users.ts";
 import { updateUserStatusAndInstitutions } from "./update-user-status-and-institutions.ts";
-import { upsertUserManagedGroups } from "./upsert-user-managed-groups.ts";
 import { upsertUserManualGroups } from "./upsert-user-manual-groups.ts";
 
 const USER_COLUMNS = [
@@ -68,24 +72,7 @@ const manualGroups = (eb: ExpressionBuilder<DB, "user">) =>
       .orderBy("manual_group.name", "asc"),
   ).as("manualGroups");
 
-const managedCodes = (kind: DB["user_managed_institutional_group"]["kind"]) =>
-  sql<string[]>`coalesce((
-    select array_agg(code order by code)
-      from user_managed_institutional_group
-     where user_managed_institutional_group.user_id = "user".id
-       and user_managed_institutional_group.kind = ${kind}
-  ), '{}')`;
-
-const managedGroups = jsonBuildObject({
-  organizations: managedCodes("organization"),
-  osus: managedCodes("osu"),
-  laboratories: managedCodes("laboratory"),
-  manualGroupIds: sql<string[]>`coalesce((
-    select array_agg(group_id order by group_id)
-      from user_managed_manual_group
-     where user_managed_manual_group.user_id = "user".id
-  ), '{}')`,
-}).as("managedGroups");
+const managedGroups = managedGroupsOf(USER_MANAGED_GROUP_TABLES, "user.id");
 
 const orphanedGroupsOnLeavingAccepted = (
   trx: Transaction<DB>,
@@ -318,7 +305,12 @@ export function createUserRepository(db: Kysely<DB>): UserRepository {
           scope,
         );
         if (rights.managedGroups) {
-          await upsertUserManagedGroups(trx, id, submitted.managedGroups);
+          await replaceManagedGroups(
+            trx,
+            USER_MANAGED_GROUP_TABLES,
+            id,
+            submitted.managedGroups,
+          );
         }
         await trx
           .updateTable("user")

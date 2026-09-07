@@ -6,9 +6,9 @@ import {
   requestManualGroupBodySchema,
 } from "@projet-igsn/domain/manual-group/manual-group-validator";
 
+import { isNameTaken } from "#/is-name-taken.ts";
 import { m } from "#/paraglide/messages.js";
 
-import { isNameTaken } from "./is-name-taken.ts";
 import { ManualGroupManagersField } from "./manual-group-managers-field.tsx";
 
 export function ManualGroupForm({

@@ -1,3 +1,4 @@
+import type { InstitutionalGroupKind } from "@projet-igsn/domain/institutional-group/model";
 import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 
@@ -217,12 +218,32 @@ type SampleManualGroupTable = {
 
 type UserManagedInstitutionalGroupTable = {
   user_id: string;
-  kind: "organization" | "osu" | "laboratory";
+  kind: InstitutionalGroupKind;
   code: string;
 };
 
 type UserManagedManualGroupTable = {
   user_id: string;
+  group_id: string;
+};
+
+type ServiceAccountTable = {
+  id: string;
+  name: string;
+  institutional_organization: string;
+  institutional_osu: string | null;
+  institutional_laboratory: string;
+  created_at: Generated<Date>;
+};
+
+type ServiceAccountManagedInstitutionalGroupTable = {
+  service_account_id: string;
+  kind: InstitutionalGroupKind;
+  code: string;
+};
+
+type ServiceAccountManagedManualGroupTable = {
+  service_account_id: string;
   group_id: string;
 };
 
@@ -234,6 +255,9 @@ export type DB = {
   sample_relation: SampleRelationTable;
   sample_attachment: SampleAttachmentTable;
   sample_edit_lock: SampleEditLockTable;
+  service_account: ServiceAccountTable;
+  service_account_managed_institutional_group: ServiceAccountManagedInstitutionalGroupTable;
+  service_account_managed_manual_group: ServiceAccountManagedManualGroupTable;
   user: UserTable;
   user_managed_institutional_group: UserManagedInstitutionalGroupTable;
   user_managed_manual_group: UserManagedManualGroupTable;
