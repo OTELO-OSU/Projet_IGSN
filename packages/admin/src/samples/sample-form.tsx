@@ -236,6 +236,7 @@ export function SampleForm({
     <form.Subscribe
       selector={(state) => ({
         canSubmit: state.canSubmit,
+        nature: state.values.nature ?? null,
         typePath: state.values.typePath,
         materialPath: state.values.materialPath,
         metamorphicFacies: state.values.metamorphicFacies,
@@ -256,6 +257,7 @@ export function SampleForm({
     >
       {({
         canSubmit,
+        nature,
         typePath,
         materialPath,
         metamorphicFacies,
@@ -270,6 +272,7 @@ export function SampleForm({
       }) => {
         const reasons = samplePublishBlockers(
           {
+            nature,
             type: composeHierarchyValue(typePath),
             material: composeHierarchyValue(materialPath),
             metamorphicFacies: metamorphicFacies || null,
@@ -350,7 +353,7 @@ export function SampleForm({
             disabled={disabled}
             items={[
               {
-                label: m.action_publish_withdrawn(),
+                label: m.action_withdraw(),
                 title: m.publish_withdrawn_sample_title(),
                 description: m.publish_withdrawn_sample_warning(),
                 onConfirm: () => publish("withdrawn"),
@@ -479,15 +482,7 @@ export function SampleForm({
                       <SampleTypeFields />
                     </form.AppForm>
 
-                    <form.AppField
-                      name="nature"
-                      validators={{
-                        onChange: ({ value }) =>
-                          value
-                            ? undefined
-                            : { message: m.field_nature_required() },
-                      }}
-                    >
+                    <form.AppField name="nature">
                       {(field) => (
                         <field.ComboboxField
                           label={m.field_nature()}
@@ -637,7 +632,13 @@ export function SampleForm({
                       attachments={attachments}
                       changes={attachmentChanges}
                     />
-                  ) : null}
+                  ) : (
+                    <FormSection title={m.section_attachments()}>
+                      <p className="text-muted-foreground text-sm">
+                        {m.attachments_unsaved_hint()}
+                      </p>
+                    </FormSection>
+                  )}
                 </TabsContent>
               </Tabs>
             );

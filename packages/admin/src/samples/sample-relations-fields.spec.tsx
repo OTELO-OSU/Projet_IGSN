@@ -68,7 +68,7 @@ const select = async (
 };
 
 describe("SampleForm related resources tab", () => {
-  it("should offer the relations but no attachments during creation", async () => {
+  it("should offer the relations but no file upload during creation", async () => {
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={saveAction(vi.fn())} />,
     );
@@ -80,6 +80,9 @@ describe("SampleForm related resources tab", () => {
       .toBeVisible();
     await expect
       .element(screen.getByRole("heading", { name: "Attached files" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: "Browse files" }))
       .not.toBeInTheDocument();
   });
 

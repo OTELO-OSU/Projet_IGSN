@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
+import { useCurrentUser } from "#/auth/use-current-user.ts";
 import { useMyManualGroups } from "#/manual-groups/use-my-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { useCreateSample } from "#/samples/use-create-sample.ts";
+import { usePublishSample } from "#/samples/use-publish-sample.ts";
 
 export const Route = createFileRoute("/samples/create")({
   component: CreateSamplePage,
@@ -11,7 +13,9 @@ export const Route = createFileRoute("/samples/create")({
 
 function CreateSamplePage() {
   const navigate = useNavigate();
+  const me = useCurrentUser();
   const createSample = useCreateSample();
+  const publishSample = usePublishSample();
   const myManualGroups = useMyManualGroups();
 
   return (
@@ -19,12 +23,13 @@ function CreateSamplePage() {
       <h1 className="text-2xl font-bold">{m.create_sample_title()}</h1>
 
       <SampleForm
-        isPending={createSample.isPending}
+        currentUser={me.data}
+        isPending={createSample.isPending || publishSample.isPending}
         manualGroupOptions={myManualGroups.data?.data ?? []}
         onCancel={() => navigate({ to: "/" })}
-        primaryAction={{
+        secondaryAction={{
           kind: "submit",
-          label: m.action_create(),
+          label: m.action_save(),
           onSubmit: (value) =>
             createSample.mutate(value, {
               onSuccess: (sample) =>
@@ -32,6 +37,25 @@ function CreateSamplePage() {
                   to: "/samples/$sampleId",
                   params: { sampleId: sample.id },
                 }),
+            }),
+        }}
+        primaryAction={{
+          kind: "publish",
+          label: m.action_publish(),
+          onPublish: (value, status) =>
+            createSample.mutate(value, {
+              onSuccess: (sample) =>
+                publishSample.mutate(
+                  { id: sample.id, status },
+                  {
+                    onSuccess: () => navigate({ to: "/" }),
+                    onError: () =>
+                      navigate({
+                        to: "/samples/$sampleId",
+                        params: { sampleId: sample.id },
+                      }),
+                  },
+                ),
             }),
         }}
       />

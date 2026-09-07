@@ -122,6 +122,35 @@ describe("SampleForm", () => {
     );
   });
 
+  it("should submit a name alone with a null nature", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
+    );
+
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith({
+        manualGroupIds: [],
+        name: "Basalte du Massif Central",
+        nature: null,
+        type: null,
+        material: null,
+        collectionMethod: null,
+        collectionMethodDescription: null,
+        specificName: null,
+        geologicalContextDescription: null,
+        geomorphologicalEnvironment: null,
+        location: null,
+        existenceStatus: "exists",
+        availabilityStatus: "available",
+        ...NO_ANSWERS,
+      }),
+    );
+  });
+
   it("should prefill the fields and use the given primary label", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
@@ -1130,6 +1159,16 @@ describe("SampleForm", () => {
   } as const;
 
   it.each<[string, CreateSample, RegExp]>([
+    [
+      "the nature is missing",
+      {
+        ...publishGateBase,
+        nature: null,
+        type: "dredge",
+        material: "fossil",
+      },
+      /set the nature before publishing/i,
+    ],
     [
       "the material is missing",
       { ...publishGateBase, type: "dredge", material: null },
