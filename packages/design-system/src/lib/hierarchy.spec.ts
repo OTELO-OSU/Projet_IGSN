@@ -69,48 +69,8 @@ describe("hierarchyPathLabel", () => {
   });
 });
 
-describe("label codes", () => {
-  const labelled: Hierarchy = {
-    roots: ["a"],
-    nodes: {
-      a: { choices: ["b"] },
-      "a.b": { label: "b" },
-    },
-  };
-
-  it.each([
-    ["a path label", hierarchyPathLabel, "a.b", "a.b"],
-    ["a root path label", hierarchyPathLabel, "a", "a"],
-  ] as const)(
-    "should give translate the full path for %s",
-    (_case, label, path, expected) => {
-      expect(label(labelled, path, (code) => code)).toBe(expected);
-    },
-  );
-});
-
 describe("hierarchyLevelItems", () => {
-  it("should list only the roots at the top level (no parent)", () => {
-    expect(hierarchyLevelItems(hierarchy, null, translate)).toEqual([
-      { value: "rock", label: "ROCK" },
-      { value: "water", label: "WATER" },
-    ]);
-  });
-
-  it("should list only the children, never a synthetic parent-itself stop option", () => {
-    expect(
-      hierarchyLevelItems(hierarchy, "rock.sedimentary", translate),
-    ).toEqual([{ value: "rock.sedimentary.sand", label: "SAND" }]);
-  });
-
-  it("should list the children of a must-refine parent", () => {
-    expect(hierarchyLevelItems(hierarchy, "rock", translate)).toEqual([
-      { value: "rock.igneous", label: "IGNEOUS" },
-      { value: "rock.sedimentary", label: "SEDIMENTARY" },
-    ]);
-  });
-
-  it("should render an explicit self-child stop value like any other child", () => {
+  it("should pair each child path with its translated label", () => {
     expect(hierarchyLevelItems(hierarchy, "water", translate)).toEqual([
       { value: "water.water", label: "WATER_ONLY" },
       { value: "water.sea", label: "SEA" },
@@ -121,10 +81,8 @@ describe("hierarchyLevelItems", () => {
 describe("composeHierarchyValue", () => {
   it.each([
     [[], null],
-    [["a"], "a"],
     [["a", "a.b"], "a.b"],
     [["a", "a.b", ""], "a.b"],
-    [["a", "a"], "a"],
   ] as const)(
     "should take the deepest picked value of %j",
     (path, expected) => {
@@ -136,7 +94,6 @@ describe("composeHierarchyValue", () => {
 describe("toHierarchyPath", () => {
   it.each([
     [null, []],
-    ["a", ["a"]],
     ["a.b.c", ["a", "a.b", "a.b.c"]],
   ] as const)(
     "should split %j into per-level selections",

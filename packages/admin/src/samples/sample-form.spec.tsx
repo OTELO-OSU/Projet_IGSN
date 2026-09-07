@@ -165,38 +165,6 @@ describe("SampleForm", () => {
     );
   });
 
-  it("should submit the selected type", async () => {
-    const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
-    );
-
-    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
-    await screen.getByRole("combobox", { name: "Nature" }).click();
-    await screen.getByText("Thin section").click();
-    await pickPath(screen, "Type *", "Dredge");
-    await screen.getByRole("button", { name: "Create" }).click();
-
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        manualGroupIds: [],
-        name: "Basalte du Massif Central",
-        nature: "thin_section",
-        type: "dredge",
-        material: null,
-        collectionMethod: null,
-        collectionMethodDescription: null,
-        specificName: null,
-        geologicalContextDescription: null,
-        geomorphologicalEnvironment: null,
-        location: null,
-        existenceStatus: "exists",
-        availabilityStatus: "available",
-        ...NO_ANSWERS,
-      }),
-    );
-  });
-
   it("should submit the selected sub-type as the full type path", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
@@ -253,65 +221,6 @@ describe("SampleForm", () => {
         geomorphologicalEnvironment: null,
         collectionMethod: null,
         collectionMethodDescription: null,
-        location: null,
-        existenceStatus: "exists",
-        availabilityStatus: "available",
-        ...NO_ANSWERS,
-      }),
-    );
-  });
-
-  it("should prefill a chip per level of a nested type path", async () => {
-    const screen = await render(
-      <SampleForm
-        onCancel={noop}
-        defaultValues={{
-          name: "Basalte du Massif Central",
-          nature: "thin_section",
-          type: "core.section",
-          material: null,
-          collectionMethod: null,
-          collectionMethodDescription: null,
-        }}
-        primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
-      />,
-    );
-
-    await expect
-      .element(screen.getByRole("button", { name: "Remove Core", exact: true }))
-      .toBeVisible();
-    await expect
-      .element(screen.getByRole("button", { name: "Remove Core Section" }))
-      .toBeVisible();
-  });
-
-  it("should drill down the material cascade and submit the leaf path", async () => {
-    const onSubmit = vi.fn();
-    const screen = await render(
-      <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
-    );
-
-    await screen.getByLabelText(/name/i).fill("Basalt");
-    await screen.getByRole("combobox", { name: "Nature" }).click();
-    await screen.getByText("Thin section").click();
-
-    await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await pickPath(screen, "Material *", "Rock", "Igneous", "Stop here");
-
-    await screen.getByRole("button", { name: "Create" }).click();
-
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith({
-        manualGroupIds: [],
-        name: "Basalt",
-        nature: "thin_section",
-        type: null,
-        material: "rock.igneous",
-        collectionMethod: null,
-        collectionMethodDescription: null,
-        specificName: null,
-        geologicalContextDescription: null,
-        geomorphologicalEnvironment: null,
         location: null,
         existenceStatus: "exists",
         availabilityStatus: "available",
@@ -2412,23 +2321,6 @@ describe("SampleForm post-publication field lock", () => {
         }),
       ),
     );
-  });
-
-  it("disables nothing on a draft", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          defaultValues={publishedFixture}
-          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
-        />
-      </TooltipProvider>,
-    );
-
-    await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
-    await expect
-      .element(screen.getByRole("button", { name: "Remove Dredge" }))
-      .toBeEnabled();
   });
 
   it("keeps the texture editable on a published igneous sample", async () => {

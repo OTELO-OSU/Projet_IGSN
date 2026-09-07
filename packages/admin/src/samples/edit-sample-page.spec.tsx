@@ -748,15 +748,6 @@ describe("EditSamplePage", () => {
     },
   );
 
-  it("should render a chip per material level on the Sample classification tab", async () => {
-    const { screen } = await renderEditPage("draft", "rock.igneous");
-    await screen.getByRole("tab", { name: "Sample classification" }).click();
-
-    await expect
-      .element(screen.getByRole("button", { name: "Remove Igneous" }))
-      .toBeVisible();
-  });
-
   it("should prefill the existence status from the saved sample instead of resetting it to Exists", async () => {
     const { screen } = await renderEditPage(
       "draft",

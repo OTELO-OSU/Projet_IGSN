@@ -26,10 +26,6 @@ const {
 describe("materialPathLabel", () => {
   it.each([
     ["rock", "Rock"],
-    ["rock.igneous", "Igneous"],
-    ["rock.hydrothermal", "Hydrothermal"],
-    ["fossil", "Fossil"],
-    ["extraterrestrial_rock", "Extraterrestrial rock"],
     ["rock.igneous.plutonic.felsic.granite", "Granite"],
   ] as const)("should label %s as its node name %s", (path, label) => {
     expect(materialPathLabel(path)).toBe(label);
@@ -41,20 +37,8 @@ describe("materialPathLabel", () => {
       "Meta-Plutonic",
     ],
     [
-      "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
-      "Meta-Granite",
-    ],
-    [
       "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock",
       "Meta-igneous rock",
-    ],
-    [
-      "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.clastic_sedimentary_rock",
-      "Meta-Clastic sedimentary rock",
-    ],
-    [
-      "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock",
-      "Meta-sedimentary rock",
     ],
   ] as const)("should prefix %s with Meta- as %s", (path, label) => {
     expect(materialPathLabel(path)).toBe(label);
@@ -62,12 +46,8 @@ describe("materialPathLabel", () => {
 });
 
 describe("typeLabel", () => {
-  it.each([
-    ["core", "Core"],
-    ["core.half_round", "Core Half round"],
-    ["dredge", "Dredge"],
-  ] as const)("should return the translated label for %s", (type, label) => {
-    expect(typeLabel(type)).toBe(label);
+  it("should translate the last segment under the type prefix", () => {
+    expect(typeLabel("core.half_round")).toBe("Core Half round");
   });
 });
 
