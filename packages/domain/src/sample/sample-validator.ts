@@ -133,7 +133,6 @@ export const setSampleStatusBodySchema = z.strictObject({
 
 export type SetSampleStatusBody = z.infer<typeof setSampleStatusBodySchema>;
 
-/** A tombstone is only reached from a permanent status. */
 export const publishStatusSchema =
   setSampleStatusBodySchema.shape.status.exclude(["tombstone"]);
 

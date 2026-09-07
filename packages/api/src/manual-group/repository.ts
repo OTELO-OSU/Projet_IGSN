@@ -47,7 +47,6 @@ const sampleGroups = (trx: Transactional<DB>) =>
     .selectFrom("sample_manual_group")
     .innerJoin("sample", "sample.id", "sample_manual_group.sample_id");
 
-// ponytail: name-keyed advisory lock rather than catching the unique violation.
 export function createManualGroupRepository(
   db: Kysely<DB>,
 ): ManualGroupRepository {

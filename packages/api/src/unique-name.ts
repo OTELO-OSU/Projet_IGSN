@@ -4,7 +4,7 @@ import { sql } from "kysely";
 
 import type { DB } from "./db.ts";
 
-// Serializes the check-then-write of one case-insensitive name across requests.
+// ponytail: name-keyed advisory lock rather than catching the unique violation.
 export const lockName = (trx: Transaction<DB>, name: string) =>
   sql`select pg_advisory_xact_lock(hashtext(${name.toLowerCase()}))`.execute(
     trx,
