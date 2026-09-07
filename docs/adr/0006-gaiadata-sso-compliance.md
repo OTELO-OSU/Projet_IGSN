@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Formalizes the 2026-07-03 audit of the auth stack against the GT-SSO client recommendations, implemented in the same change set. Amended 2026-07-30 (audience validation).
+Accepted. Formalizes the 2026-07-03 audit of the auth stack against the GT-SSO client recommendations, implemented in the same change set. Amended 2026-07-30 (audience validation) and 2026-09-07 (frontend sign-in).
 
 ## Context
 
@@ -52,6 +52,10 @@ The GaiaData test realm (`https://sso-test.earth-data.fr/realms/gaia-data`, clie
 Residual risk: that realm is shared with other service providers, so signature plus `iss` alone would let any of their tokens, or any client's id_token replayed as a bearer, authenticate here and auto-provision an account. Two claim checks carry the audience's job instead: `azp` must equal `OIDC_CLIENT_ID`, the client the token was issued to, and `typ` must be `Bearer`, Keycloak marking id_tokens `ID`. Weaker than a dedicated audience, since it trusts Keycloak's non-standard `typ` claim and holds only while GaiaData keeps stamping both, so confirm them on a real GaiaData token at the first deploy; if either disappears every request 401s, a lockout rather than a bypass. Signature, `iss` and the RS256 pinning stay mandatory, and `exp` too: the `jwk` middleware only checks it when the claim is present, so the same claim check rejects a token carrying none.
 
 A knowing deviation from [REQ-TOKEN-03/04](#gt-sso-requirements). When GaiaData ships an audience scope for the client, set `OIDC_AUDIENCE` per environment and restore the mock realm mapper; the `azp`/`typ` check can then go, with no other code change.
+
+## Amendment 2026-09-07: the public frontend is a second redirect URI on the same client
+
+The public frontend (`packages/frontend`) now signs in through the same public PKCE client as admin, not a second client: same `client_id`, same scopes, same token policy. It returns through its own exact `origin + /auth/callback`, so the client gains a second exact redirect URI and post-logout redirect URI alongside the admin one, per [REQ-PARAM-02](#gt-sso-requirements); see [gaiadata-client-provisioning.md](../gaiadata-client-provisioning.md). `safeReturnPath` and `signIn` moved to `packages/domain/src/auth/` so both apps share one implementation instead of two copies. No new ADR: same client, same model, no new decision.
 
 ## GT-SSO requirements
 

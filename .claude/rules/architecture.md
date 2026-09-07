@@ -6,6 +6,7 @@
 - `api`: implements the services/repositories declared in `domain`, holding the trust boundary and the wiring, not the contracts.
 - `admin` / `frontend`: consume `domain` types and schemas and call `api` for CRUD.
 - Logic shared by `frontend`/`admin` and/or `api` MUST live in `domain`.
+- `domain/auth/` holds the oidc helpers shared by `admin` and `frontend` (`sign-in.ts`, `safe-return-path.ts`); add a shared auth helper there, not a per-app copy.
 - A service or repository signature MUST live in `domain`; only its implementation lives in `api`.
 
 ## Institutional groups
