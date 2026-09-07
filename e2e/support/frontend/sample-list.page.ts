@@ -45,6 +45,7 @@ export function sampleListPage(page: Page) {
         if (!(await chip.isVisible())) {
           await page.getByRole("combobox", { name: facet }).click();
           await page.getByRole("option", { name: option, exact: true }).click();
+          await page.keyboard.press("Escape");
         }
         await expect(page.getByRole("listbox")).toHaveCount(0);
         await expect(chip).toBeVisible({ timeout: 2_000 });
