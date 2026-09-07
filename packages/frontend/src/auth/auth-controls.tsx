@@ -1,10 +1,9 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { signIn } from "@projet-igsn/domain/auth/sign-in";
 import { useAuth } from "react-oidc-context";
 
 import { ADMIN_URL } from "#/admin-url.ts";
 import { m } from "#/paraglide/messages.js";
-
-import { signIn } from "./sign-in.ts";
 
 export function AuthControls() {
   const auth = useAuth();

@@ -1,7 +1,5 @@
-import type { SigninRedirectArgs } from "oidc-client-ts";
-
 type SignInStarter = {
-  signinRedirect: (args: SigninRedirectArgs) => Promise<void>;
+  signinRedirect: (args: { nonce: string; url_state: string }) => Promise<void>;
 };
 
 export function signIn(starter: SignInStarter): void {

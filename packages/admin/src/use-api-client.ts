@@ -1,7 +1,7 @@
+import { signIn } from "@projet-igsn/domain/auth/sign-in";
 import { useAuth } from "react-oidc-context";
 
 import { userManager } from "./auth/oidc-config.ts";
-import { signIn } from "./auth/sign-in.ts";
 
 export function withAuthToken(
   fetchFn: typeof fetch,

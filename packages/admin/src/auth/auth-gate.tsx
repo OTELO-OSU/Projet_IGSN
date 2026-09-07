@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { signIn } from "@projet-igsn/domain/auth/sign-in";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "react-oidc-context";
 
@@ -11,7 +12,6 @@ import { CenteredLoader } from "./centered-loader.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
 import { IdentityGate } from "./identity-gate.tsx";
 import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
-import { signIn } from "./sign-in.ts";
 import { clearSignedOut, markSignedOut, readSignedOut } from "./signed-out.ts";
 
 export function AuthGate({ children }: { children?: ReactNode }) {
