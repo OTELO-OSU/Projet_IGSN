@@ -51,6 +51,14 @@ describe("materialPathLabel", () => {
       "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock",
       "Meta-igneous rock",
     ],
+    [
+      "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock.clastic_sedimentary_rock",
+      "Meta-Clastic sedimentary rock",
+    ],
+    [
+      "rock.metamorphic.weakly_metamorphosed.meta_sedimentary_rock",
+      "Meta-sedimentary rock",
+    ],
   ] as const)("should prefix %s with Meta- as %s", (path, label) => {
     expect(materialPathLabel(path)).toBe(label);
   });

@@ -15,7 +15,7 @@ import { type Element } from "./element/vocabulary.ts";
 import { type OceanSea } from "./location/ocean-sea.ts";
 import { type VerticalReferenceSystem } from "./location/vertical-reference-system.ts";
 import { type VerticalReference } from "./location/vertical-reference.ts";
-import { isUnderMetaIgneousRock } from "./material/is-under-meta-igneous-rock.ts";
+import { isUnderMetaRock } from "./material/is-under-meta-rock.ts";
 import { type MetamorphicFabric } from "./metamorphic-fabric/vocabulary.ts";
 import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
 import { type Nature } from "./nature.ts";
@@ -163,7 +163,7 @@ export function createSampleLabels(m: Messages): SampleLabels {
   return {
     ...labels,
     materialPathLabel: (path) =>
-      isUnderMetaIgneousRock(path)
+      isUnderMetaRock(path)
         ? `${m.material_meta_prefix?.() ?? ""}${materialPathLabel(path)}`
         : materialPathLabel(path),
   };
