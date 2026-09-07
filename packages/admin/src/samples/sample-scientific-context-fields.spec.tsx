@@ -28,7 +28,6 @@ async function renderScientificContextSection(
       primaryAction={createAction(onSubmit)}
     />,
   );
-  await screen.getByRole("tab", { name: "Scientific context" }).click();
   return screen;
 }
 
@@ -36,10 +35,12 @@ const pickProvenance = async (
   screen: Awaited<ReturnType<typeof renderScientificContextSection>>,
   option: string,
 ) => {
+  await screen.getByRole("tab", { name: "Identity" }).click();
   await screen
     .getByRole("combobox", { name: "Provenance status *", exact: true })
     .click();
   await screen.getByRole("option", { name: option }).click();
+  await screen.getByRole("tab", { name: "Scientific context" }).click();
 };
 
 const pickOrganization = async (
@@ -52,18 +53,21 @@ const pickOrganization = async (
 };
 
 describe("SampleScientificContextFields", () => {
-  it("should show no branch field until a provenance status is chosen", async () => {
+  it("should disable the Scientific context tab until a provenance status is chosen", async () => {
     const screen = await renderScientificContextSection();
 
     await expect
-      .element(screen.getByRole("combobox", { name: "Provenance status *" }))
-      .toBeVisible();
+      .element(screen.getByRole("tab", { name: "Scientific context" }))
+      .toBeDisabled();
+
+    await screen
+      .getByRole("combobox", { name: "Provenance status *", exact: true })
+      .click();
+    await screen.getByRole("option", { name: "Field sample" }).click();
+
     await expect
-      .element(screen.getByLabelText(/collection curator/i))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByLabelText(/research programme/i))
-      .not.toBeInTheDocument();
+      .element(screen.getByRole("tab", { name: "Scientific context" }))
+      .toBeEnabled();
   });
 
   it("should submit a field sample with organizations picked from the reference list", async () => {

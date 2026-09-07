@@ -1,4 +1,3 @@
-import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { HierarchySelectField } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { GEOMORPHOLOGICAL_ENVIRONMENT_HIERARCHY } from "@projet-igsn/domain/sample/geomorphological-environment/vocabulary";
 
@@ -19,17 +18,15 @@ export function SampleGeologicalContextFields() {
         )}
       </form.AppField>
 
-      <FormSection level={3} title={m.section_geomorphological_context()}>
-        <HierarchySelectField
-          name="geomorphologicalEnvironmentPath"
-          hierarchy={GEOMORPHOLOGICAL_ENVIRONMENT_HIERARCHY}
-          translate={geomorphologicalEnvironmentLabel}
-          rootLabel={m.field_environment()}
-          placeholder={m.environment_placeholder()}
-          searchPlaceholder={m.environment_search_placeholder()}
-          emptyText={m.environment_empty()}
-        />
-      </FormSection>
+      <HierarchySelectField
+        name="geomorphologicalEnvironmentPath"
+        hierarchy={GEOMORPHOLOGICAL_ENVIRONMENT_HIERARCHY}
+        translate={geomorphologicalEnvironmentLabel}
+        rootLabel={m.field_environment()}
+        placeholder={m.environment_placeholder()}
+        searchPlaceholder={m.environment_search_placeholder()}
+        emptyText={m.environment_empty()}
+      />
     </div>
   );
 }

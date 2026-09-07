@@ -31,6 +31,8 @@ const BASALT_TEAM = {
   canLeave: true,
 };
 
+const RELATION_ID = "3f2504e0-4f89-41d3-9a0c-0305000000b1";
+
 function fakeApi(failWrites = false) {
   fakeCurrentUser({ sub: "user-1" });
   let sample: Record<string, unknown> | null = null;
@@ -51,6 +53,9 @@ function fakeApi(failWrites = false) {
       if (failWrites) {
         return new HttpResponse(null, { status: 500 });
       }
+      const body = (await request.json()) as {
+        relations?: Record<string, unknown>[];
+      };
       sample = {
         id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
         texture: null,
@@ -67,7 +72,17 @@ function fakeApi(failWrites = false) {
         economicResourceTypePrecision: null,
         economicDepositName: null,
         economicDepositDescription: null,
-        ...((await request.json()) as Record<string, unknown>),
+        ...body,
+        relations: (body.relations ?? []).map((relation) => ({
+          targetResourceType: null,
+          relationTypeInformation: null,
+          relatedMetadataScheme: null,
+          schemeURI: null,
+          schemeType: null,
+          description: null,
+          ...relation,
+          id: RELATION_ID,
+        })),
         igsn: null,
         status: "draft",
         createdAt: "2026-07-06T00:00:00.000Z",
@@ -156,7 +171,7 @@ describe("CreateSamplePage", () => {
     await screen.getByLabelText(/name/i).fill("Gneiss");
     await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
 
     await screen
       .getByRole("combobox", { name: "Material *", exact: true })
@@ -183,6 +198,42 @@ describe("CreateSamplePage", () => {
       .element(screen.getByRole("heading", { name: "Edit sample" }))
       .toBeVisible();
     await expect.element(screen.getByLabelText(/name/i)).toHaveValue("Gneiss");
+  });
+
+  it("should send a relation added on the create page in the POST body", async () => {
+    const screen = await renderCreatePage();
+    await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
+    await screen.getByRole("combobox", { name: /nature/i }).click();
+    await screen.getByText("Thin section").click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
+    await screen.getByRole("button", { name: "Add a relation" }).click();
+    const block = screen.getByRole("group", {
+      name: "Relation 1",
+      exact: true,
+    });
+    await block.getByRole("combobox", { name: "Relation type" }).click();
+    await screen.getByRole("option", { name: "Is cited by" }).click();
+    await block.getByRole("combobox", { name: "Identifier type" }).click();
+    await screen.getByRole("option", { name: "DOI" }).click();
+    await block
+      .getByRole("textbox", { name: "Identifier" })
+      .fill("https://doi.org/10.1594/IEDA.100252");
+    await block.getByLabelText("Title").fill("Companion dataset");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    expect(screen.created()).toMatchObject({
+      relations: [
+        expect.objectContaining({
+          relationType: "is_cited_by",
+          identifierType: "doi",
+          identifier: "https://doi.org/10.1594/IEDA.100252",
+          targetTitle: "Companion dataset",
+        }),
+      ],
+    });
   });
 
   it("should show an error toast when creation fails", async () => {

@@ -23,7 +23,7 @@ The original fix added a fourth state, `undetermined`, for a material path that 
 
 The gate is inverted instead of refined further. `locationRequirement`'s four states (`required`/`optional`/`forbidden`/`undetermined`) collapse into one predicate, `allowsLocation(material)` (`domain/sample/location/allows-location.ts`): the location shows by default, for any material including none chosen yet, and hides only for a material `allowsLocation` refuses (a synthetic material, or an extraterrestrial "returned sample").
 
-The location also moved out of the Physical description tab into its own Location tab in the admin sample form, so hiding it hides a whole tab rather than a section.
+The location also moved out of the Physical description tab into its own Location tab in the admin sample form, so a refused location disables a whole tab rather than hiding a section.
 
 ## Consequences
 

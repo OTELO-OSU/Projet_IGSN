@@ -35,7 +35,10 @@ describe("SampleGeologicalContextFields", () => {
 
     await expect
       .element(
-        screen.getByRole("heading", { name: "Geomorphological context" }),
+        screen.getByRole("heading", {
+          name: "Geomorphological context",
+          level: 2,
+        }),
       )
       .toBeVisible();
     await screen

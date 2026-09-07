@@ -660,7 +660,7 @@ describe("EditSamplePage", () => {
   it("should drop the material reason once a pending account completes the cascade", async () => {
     callerStatus = "pending";
     const { screen } = await renderEditPage("draft", "rock.igneous.volcanic");
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     await screen
       .getByRole("combobox", { name: "Volcanic *", exact: true })
       .click();
@@ -738,7 +738,7 @@ describe("EditSamplePage", () => {
       "Gneissic",
     ],
   ])(
-    "should render %s prefilled on the Sample type tab",
+    "should render %s prefilled on the Sample classification tab",
     async (combobox, material, facies, texture, fabric, expected) => {
       sampleMetamorphicFabric = fabric;
       const { screen } = await renderEditPage(
@@ -748,7 +748,7 @@ describe("EditSamplePage", () => {
         facies,
         texture,
       );
-      await screen.getByRole("tab", { name: "Sample type" }).click();
+      await screen.getByRole("tab", { name: "Sample classification" }).click();
       await expect
         .element(screen.getByRole("combobox", { name: combobox, exact: true }))
         .toHaveTextContent(expected);
@@ -764,7 +764,7 @@ describe("EditSamplePage", () => {
       null,
       "lost",
     );
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Curation and repository" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: /existence status/i }))
       .toHaveTextContent("Lost");
@@ -780,7 +780,9 @@ describe("EditSamplePage", () => {
       "exists",
       { radioactivity: true, radioactivityExplanation: "3.2 kBq alpha" },
     );
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen
+      .getByRole("tab", { name: "Conservation and security" })
+      .click();
     await expect
       .element(screen.getByRole("switch", { name: "Radioactivity" }))
       .toBeChecked();
@@ -800,7 +802,7 @@ describe("EditSamplePage", () => {
       null,
       { resourceType: "hydrocarbon", economicDepositName: "Grande Mine" },
     );
-    await screen.getByRole("tab", { name: "Sample type" }).click();
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Resource type" }))
       .toHaveTextContent("Hydrocarbon Resources");
@@ -824,11 +826,19 @@ describe("EditSamplePage", () => {
     await expect.element(screen.getByLabelText("IGSN")).toHaveTextContent(IGSN);
   });
 
+  it("should show the publication year of a published sample read-only", async () => {
+    const { screen } = await renderEditPage("published");
+    await screen.getByRole("tab", { name: "Curation and repository" }).click();
+    const year = screen.getByLabelText("Publication year");
+    await expect.element(year).toHaveValue("2026");
+    await expect.element(year).toHaveAttribute("readonly");
+  });
+
   it("should refuse Publish updates that would make the sample unpublishable", async () => {
     const { screen, calls } = await renderEditPage("published");
     const save = screen.getByRole("button", { name: "Publish updates" });
 
-    await screen.getByRole("tab", { name: "Physical description" }).click();
+    await screen.getByRole("tab", { name: "Curation and repository" }).click();
     const existence = screen.getByRole("combobox", {
       name: /existence status/i,
     });
@@ -877,7 +887,7 @@ describe("EditSamplePage", () => {
 
     await save.click();
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByRole("button", { name: "Delete legacy-0.csv" }).click();
     await expect.element(publish).toBeEnabled();
 
@@ -998,12 +1008,12 @@ describe("EditSamplePage", () => {
       .toHaveTextContent("Sample saved");
   });
 
-  it("should upload files staged in the Related resources tab only when saving, before the save", async () => {
+  it("should upload files staged in the Related URL or document tab only when saving, before the save", async () => {
     FakeXhr.instances = [];
     vi.stubGlobal("XMLHttpRequest", FakeXhr);
     const { screen, calls } = await renderEditPage();
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen
       .getByLabelText("Browse files")
       .upload([new File(["col1\n1\n"], "data.csv", { type: "text/csv" })]);
@@ -1111,7 +1121,9 @@ describe("EditSamplePage", () => {
 
     it("should let no attachment be added, deleted or described while another user holds the lock", async () => {
       const { screen } = await renderEditPageLockedBy(PIERRE);
-      await screen.getByRole("tab", { name: "Related resources" }).click();
+      await screen
+        .getByRole("tab", { name: "Related URL or document" })
+        .click();
 
       await expect
         .element(screen.getByRole("button", { name: "Download data.csv" }))
@@ -1173,7 +1185,7 @@ describe("EditSamplePage", () => {
     it("should keep the age controls editable on an unlocked published sample", async () => {
       const { screen } = await renderEditPage("published");
 
-      await screen.getByRole("tab", { name: "Physical description" }).click();
+      await screen.getByRole("tab", { name: "Age" }).click();
       await expect
         .element(screen.getByRole("switch", { name: "Record a numeric age" }))
         .toBeEnabled();
@@ -1204,11 +1216,11 @@ describe("EditSamplePage", () => {
     vi.stubGlobal("XMLHttpRequest", FakeXhr);
     const { screen, calls } = await renderEditPage();
 
-    await screen.getByRole("tab", { name: "Related resources" }).click();
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen
       .getByLabelText("Browse files")
       .upload([new File(["col1\n1\n"], "data.csv", { type: "text/csv" })]);
-    await screen.getByRole("tab", { name: "Sample classification" }).click();
+    await screen.getByRole("tab", { name: "Identity" }).click();
     await screen.getByRole("button", { name: "Save as draft" }).click();
 
     await vi.waitFor(() => expect(FakeXhr.instances).toHaveLength(1));
