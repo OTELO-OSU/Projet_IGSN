@@ -1,7 +1,5 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
-// Retried because the first click after hydration is sometimes swallowed; the
-// chip is the proof the level registered (the popover stays open on a non-leaf).
 export const pickHierarchyLevel = (
   page: Page,
   combobox: Locator,

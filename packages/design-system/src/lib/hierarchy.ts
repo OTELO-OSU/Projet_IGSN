@@ -1,24 +1,15 @@
-// Structural mirror of the domain vocabulary trees (design-system MUST NOT
-// import domain).
 export type HierarchyNodeDef = {
   label?: string;
   optional?: boolean;
   choices?: readonly string[];
-  // Offered as a public search-facet option (mirrors domain TreeNode). Unused by
-  // the form widget; the facet sidebar filters levels by it.
   searchable?: boolean;
 };
 
-// A hierarchical vocabulary as one self-describing bundle: its entry segments
-// and its segment-keyed nodes, where a dotted key overrides the bare segment in
-// that context (the full path is the identity, ADR 0010).
 export type Hierarchy = {
   roots: readonly string[];
   nodes: Record<string, HierarchyNodeDef | undefined>;
 };
 
-// Trees are proven acyclic upstream (domain expandPaths throws on cycles at
-// import).
 function resolveNode(
   hierarchy: Hierarchy,
   path: string,
