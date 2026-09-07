@@ -1,7 +1,9 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { vi } from "vitest";
+import { page } from "vitest/browser";
 
+import { pickPath } from "../../test/pick-hierarchy.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
@@ -28,6 +30,8 @@ async function renderGeologicalContextSection(
   return screen;
 }
 
+beforeAll(() => page.viewport(1280, 1600));
+
 describe("SampleGeologicalContextFields", () => {
   it("should submit the description with an environment left at its zone", async () => {
     const onSubmit = vi.fn();
@@ -44,8 +48,7 @@ describe("SampleGeologicalContextFields", () => {
     await screen
       .getByLabelText("Geological context description")
       .fill("Basaltic plateau carved by the river");
-    await screen.getByRole("combobox", { name: "Environment" }).click();
-    await screen.getByRole("option", { name: "Marine zone" }).click();
+    await pickPath(screen, "Environment", "Marine zone", "Stop here");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>

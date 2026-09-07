@@ -13,6 +13,7 @@ import {
 import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest-fields.tsx";
 import { SampleForm } from "#/samples/sample-form.tsx";
 
+import { pickPath, repickPath } from "../../test/pick-hierarchy.ts";
 import { render as renderWithClient } from "../../test/render.tsx";
 
 function Harness({
@@ -123,15 +124,16 @@ describe("SampleEconomicInterestFields", () => {
     await render(<Harness />);
 
     await toggle().click();
-    await resourceType().click();
-    await page.getByRole("option", { name: "Hydrocarbon Resources" }).click();
+    await pickPath(page, "Resource type", "Hydrocarbon Resources", "Stop here");
 
     await expect.element(elements()).not.toBeInTheDocument();
 
-    await resourceType().click();
-    await page
-      .getByRole("option", { name: "Mineral and Ore Resources" })
-      .click();
+    await repickPath(
+      page,
+      "Hydrocarbon Resources",
+      "Mineral and Ore Resources",
+      "Stop here",
+    );
 
     await expect.element(elements()).toBeInTheDocument();
   });
@@ -141,10 +143,12 @@ describe("SampleEconomicInterestFields", () => {
     const screen = await renderEconomicTab(onSubmit);
 
     await toggle().click();
-    await screen.getByRole("combobox", { name: "Resource type" }).click();
-    await screen
-      .getByRole("option", { name: "Mineral and Ore Resources" })
-      .click();
+    await pickPath(
+      screen,
+      "Resource type",
+      "Mineral and Ore Resources",
+      "Stop here",
+    );
     await screen
       .getByRole("combobox", { name: "Chemical elements of interest" })
       .click();

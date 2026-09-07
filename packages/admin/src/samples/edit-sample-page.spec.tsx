@@ -19,6 +19,7 @@ import { render } from "vitest-browser-react";
 import { CALLER_GROUPS } from "../../test/caller-groups.ts";
 import { FakeXhr } from "../../test/fake-xhr.ts";
 import { worker } from "../../test/msw.ts";
+import { pickPath } from "../../test/pick-hierarchy.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
 vi.mock("react-oidc-context", () => ({
@@ -661,14 +662,7 @@ describe("EditSamplePage", () => {
     callerStatus = "pending";
     const { screen } = await renderEditPage("draft", "rock.igneous.volcanic");
     await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await screen
-      .getByRole("combobox", { name: "Volcanic *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Mafic", exact: true }).click();
-    await screen
-      .getByRole("combobox", { name: "Mafic *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Basalt", exact: true }).click();
+    await pickPath(screen, "Material *", "Mafic", "Basalt");
 
     const publish = screen.getByRole("button", { name: "Save & Publish" });
     await expect.element(publish).toBeDisabled();
@@ -712,7 +706,6 @@ describe("EditSamplePage", () => {
   it.each<
     [string, string, string | null, string | null, string | null, string]
   >([
-    ["Rock *", "rock.igneous", null, null, null, "Igneous"],
     [
       "Metamorphic facies *",
       "rock.metamorphic.strongly_metamorphosed.gneiss",
@@ -754,6 +747,15 @@ describe("EditSamplePage", () => {
         .toHaveTextContent(expected);
     },
   );
+
+  it("should render a chip per material level on the Sample classification tab", async () => {
+    const { screen } = await renderEditPage("draft", "rock.igneous");
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Remove Igneous" }))
+      .toBeVisible();
+  });
 
   it("should prefill the existence status from the saved sample instead of resetting it to Exists", async () => {
     const { screen } = await renderEditPage(
@@ -804,8 +806,10 @@ describe("EditSamplePage", () => {
     );
     await screen.getByRole("tab", { name: "Sample classification" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: "Resource type" }))
-      .toHaveTextContent("Hydrocarbon Resources");
+      .element(
+        screen.getByRole("button", { name: "Remove Hydrocarbon Resources" }),
+      )
+      .toBeVisible();
     await expect
       .element(screen.getByLabelText("Deposit name"))
       .toHaveValue("Grande Mine");

@@ -101,7 +101,7 @@ const validateDraft =
     const parsed = schema.safeParse(value);
     return parsed.success
       ? undefined
-      : { fields: sampleDraftFieldErrors(parsed.error.issues, value) };
+      : { fields: sampleDraftFieldErrors(parsed.error.issues) };
   };
 
 export type SampleSubmitMenu = {

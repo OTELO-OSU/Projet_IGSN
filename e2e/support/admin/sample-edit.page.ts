@@ -21,14 +21,16 @@ type AttachmentResource = {
 
 export function sampleEditPage(page: Page) {
   const openTab = (name: string) => page.getByRole("tab", { name }).click();
+  const fieldCombobox = (field: string, scope: Locator | Page = page) =>
+    scope.getByRole("combobox", {
+      name: new RegExp(`^${field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`),
+    });
   const pick = async (
     field: string,
     label: string,
     scope: Locator | Page = page,
   ) => {
-    const combobox = scope.getByRole("combobox", {
-      name: new RegExp(`^${field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`),
-    });
+    const combobox = fieldCombobox(field, scope);
     await expect(async () => {
       if ((await combobox.innerText()).trim() !== label) {
         await combobox.click();
@@ -36,6 +38,21 @@ export function sampleEditPage(page: Page) {
       }
       await expect(page.getByRole("listbox")).toHaveCount(0);
       await expect(combobox).toHaveText(label, { timeout: 2_000 });
+    }).toPass({ timeout: 20_000 });
+  };
+
+  const pickHierarchy = async (field: string, label: string) => {
+    const chip = page.getByRole("button", {
+      name: `Remove ${label}`,
+      exact: true,
+    });
+    await expect(async () => {
+      if (!(await chip.isVisible())) {
+        await fieldCombobox(field).click();
+        await page.getByRole("option", { name: label, exact: true }).click();
+      }
+      await expect(page.getByRole("listbox")).toHaveCount(0);
+      await expect(chip).toBeVisible({ timeout: 2_000 });
     }).toPass({ timeout: 20_000 });
   };
 
@@ -172,14 +189,14 @@ export function sampleEditPage(page: Page) {
     },
 
     fillPublishableFields: async () => {
-      await pick("Type", "Dredge");
+      await pickHierarchy("Type", "Dredge");
       await pick("Provenance status", "Collection specimen");
       await page
         .getByRole("group", { name: /collection date/i })
         .getByRole("textbox", { name: /^Date/ })
         .fill("2025-06-15");
       await openTab("Sample classification");
-      await pick("Material", "Synthetic rock / mineral");
+      await pickHierarchy("Material", "Synthetic rock / mineral");
       await openTab("Scientific context");
       await page.getByLabel(/collection curator/i).fill("Paul Bernard");
       await pick("Collection origin", "Scientific expedition");

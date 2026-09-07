@@ -1,9 +1,6 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
-import {
-  composeHierarchyValue,
-  HierarchySelectField,
-} from "@projet-igsn/design-system/components/form/hierarchy-select-field";
+import { composeHierarchyValue } from "@projet-igsn/design-system/components/form/hierarchy-select-field";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { ELEMENTS } from "@projet-igsn/domain/sample/element/vocabulary";
 import { allowsResourceType } from "@projet-igsn/domain/sample/resource-type/allows-resource-type";
@@ -17,6 +14,7 @@ import {
   type EconomicInterestDraft,
   toEconomicInterestDraft,
 } from "#/samples/compose-economic-interest.ts";
+import { HIERARCHY_FIELD_LABELS } from "#/samples/hierarchy-field-labels.ts";
 import { elementLabel, resourceTypeLabel } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
@@ -63,15 +61,19 @@ export function SampleEconomicInterestFields() {
           >
             {enabled ? (
               <div className="grid gap-4">
-                <HierarchySelectField
-                  name="resourceTypePath"
-                  hierarchy={RESOURCE_TYPE_HIERARCHY}
-                  translate={resourceTypeLabel}
-                  rootLabel={m.field_resource_type()}
-                  placeholder={m.economic_interest_placeholder()}
-                  searchPlaceholder={m.economic_interest_search_placeholder()}
-                  emptyText={m.economic_interest_empty()}
-                />
+                <form.AppField name="resourceTypePath">
+                  {(field) => (
+                    <field.HierarchyField
+                      label={m.field_resource_type()}
+                      hierarchy={RESOURCE_TYPE_HIERARCHY}
+                      translate={resourceTypeLabel}
+                      placeholder={m.economic_interest_placeholder()}
+                      searchPlaceholder={m.economic_interest_search_placeholder()}
+                      emptyText={m.economic_interest_empty()}
+                      {...HIERARCHY_FIELD_LABELS}
+                    />
+                  )}
+                </form.AppField>
 
                 <form.Subscribe
                   selector={(state) =>

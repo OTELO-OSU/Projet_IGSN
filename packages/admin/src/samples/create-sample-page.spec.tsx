@@ -12,6 +12,7 @@ import { page } from "vitest/browser";
 
 import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { worker } from "../../test/msw.ts";
+import { pickPath } from "../../test/pick-hierarchy.ts";
 import { routeTree } from "../routeTree.gen.ts";
 
 vi.mock("react-oidc-context", () => ({
@@ -173,24 +174,14 @@ describe("CreateSamplePage", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Sample classification" }).click();
 
-    await screen
-      .getByRole("combobox", { name: "Material *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Rock", exact: true }).click();
-    await screen.getByRole("combobox", { name: "Rock *", exact: true }).click();
-    await screen
-      .getByRole("option", { name: "Metamorphic", exact: true })
-      .click();
-    await screen
-      .getByRole("combobox", { name: "Metamorphic *", exact: true })
-      .click();
-    await screen
-      .getByRole("option", { name: "Strongly metamorphosed", exact: true })
-      .click();
-    await screen
-      .getByRole("combobox", { name: "Strongly metamorphosed *", exact: true })
-      .click();
-    await screen.getByRole("option", { name: "Gneiss", exact: true }).click();
+    await pickPath(
+      screen,
+      "Material *",
+      "Rock",
+      "Metamorphic",
+      "Strongly metamorphosed",
+      "Gneiss",
+    );
 
     await screen.getByRole("button", { name: "Create" }).click();
 

@@ -4,6 +4,7 @@ import { TooltipProvider } from "@projet-igsn/design-system/components/ui/toolti
 import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 import { vi } from "vitest";
 
+import { repickPath } from "../../test/pick-hierarchy.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
@@ -40,12 +41,9 @@ async function renderSyntheticForm(
   return screen;
 }
 
-const pickMaterial = async (screen: Screen, option: string) => {
+const pickMaterial = async (screen: Screen, from: string, to: string) => {
   await screen.getByRole("tab", { name: "Sample classification" }).click();
-  await screen
-    .getByRole("combobox", { name: "Material *", exact: true })
-    .click();
-  await screen.getByRole("option", { name: option, exact: true }).click();
+  await repickPath(screen, from, to);
 };
 
 const pickOption = async (screen: Screen, combobox: string, option: string) => {
@@ -67,7 +65,7 @@ describe("SampleSyntheticDetailsFields", () => {
       .element(screen.getByRole("tab", { name: "Location" }))
       .toBeEnabled();
 
-    await pickMaterial(screen, SYNTHETIC_MATERIAL);
+    await pickMaterial(screen, "Fossil", SYNTHETIC_MATERIAL);
 
     await expect
       .element(screen.getByRole("heading", { name: "Synthetic details" }))
@@ -76,7 +74,7 @@ describe("SampleSyntheticDetailsFields", () => {
       .element(screen.getByRole("tab", { name: "Location" }))
       .toBeDisabled();
 
-    await pickMaterial(screen, "Fossil");
+    await pickMaterial(screen, SYNTHETIC_MATERIAL, "Fossil");
 
     await expect
       .element(screen.getByRole("heading", { name: "Synthetic details" }))
@@ -169,13 +167,13 @@ describe("SampleSyntheticDetailsFields", () => {
       .getByLabelText("Operator name *", { exact: true })
       .fill("Marie Curie");
 
-    await pickMaterial(screen, "Fossil");
-    await pickMaterial(screen, SYNTHETIC_MATERIAL);
+    await pickMaterial(screen, SYNTHETIC_MATERIAL, "Fossil");
+    await pickMaterial(screen, "Fossil", SYNTHETIC_MATERIAL);
     await expect
       .element(screen.getByLabelText("Operator name *", { exact: true }))
       .toHaveValue("Marie Curie");
 
-    await pickMaterial(screen, "Fossil");
+    await pickMaterial(screen, SYNTHETIC_MATERIAL, "Fossil");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalled());
