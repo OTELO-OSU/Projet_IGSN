@@ -3,7 +3,7 @@ import { Fragment, useState } from "react";
 
 import {
   canStopAtPath,
-  hierarchyChildren,
+  hierarchyLevelItems,
   hierarchyPathLabel,
   type Hierarchy,
 } from "../../lib/hierarchy.ts";
@@ -25,7 +25,6 @@ import {
   PopoverTrigger,
 } from "./popover.tsx";
 
-const identity = (code: string) => code;
 const always = () => true;
 
 type HierarchyInputProps = {
@@ -51,7 +50,7 @@ type HierarchyInputProps = {
 export function HierarchyInput({
   id,
   hierarchy,
-  translate = identity,
+  translate,
   value: path,
   onChange,
   onBlur,
@@ -74,39 +73,36 @@ export function HierarchyInput({
     disabled === true || isLevelLocked?.(level) === true;
 
   const childrenOf = (parent: string | null) =>
-    hierarchyChildren(hierarchy, parent).filter(isSelectable);
+    hierarchyLevelItems(hierarchy, parent, translate).filter((item) =>
+      isSelectable(item.value),
+    );
 
   const current = path.at(-1) ?? null;
   const isLeaf = childrenOf(current).length === 0;
 
   const depth = editingDepth ?? path.length;
-  const isAppending = depth === path.length;
   const query = search.trim().toLowerCase();
   const children = childrenOf(path[depth - 1] ?? null).filter(
-    (child) =>
-      !query ||
-      hierarchyPathLabel(hierarchy, child, translate)
-        .toLowerCase()
-        .includes(query),
+    (item) => !query || item.label.toLowerCase().includes(query),
   );
+
+  const close = () => {
+    setOpen(false);
+    setSearch("");
+    setEditingDepth(null);
+  };
 
   const pick = (child: string) => {
     if (child !== path[depth]) onChange([...path.slice(0, depth), child]);
+    if (childrenOf(child).length === 0) return close();
     setSearch("");
-    if (childrenOf(child).length === 0) setOpen(false);
-    else setEditingDepth(depth + 1);
+    setEditingDepth(depth + 1);
   };
 
   return (
     <Popover
       open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) {
-          setSearch("");
-          setEditingDepth(null);
-        }
-      }}
+      onOpenChange={(next) => (next ? setOpen(true) : close())}
     >
       <PopoverAnchor asChild>
         <div
@@ -133,10 +129,8 @@ export function HierarchyInput({
                   variant="secondary"
                   className={cn(
                     !locked && "gap-1 pr-1",
-                    editingDepth !== null &&
-                      level === depth &&
-                      "ring-2 ring-ring",
-                    editingDepth !== null && level > depth && "opacity-50",
+                    level === depth && "ring-2 ring-ring",
+                    level > depth && "opacity-50",
                   )}
                 >
                   {locked ? (
@@ -191,7 +185,6 @@ export function HierarchyInput({
               aria-expanded={open}
               disabled={isLocked(path.length) || isLeaf}
               onBlur={onBlur}
-              onClick={() => setEditingDepth(null)}
               className="text-muted-foreground h-7 flex-1 justify-between px-1 font-normal hover:bg-transparent"
               {...aria}
             >
@@ -211,24 +204,24 @@ export function HierarchyInput({
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {isAppending && path.length > 0 && !query ? (
-                <CommandItem value="-" onSelect={() => setOpen(false)}>
+              {depth === path.length && path.length > 0 && !query ? (
+                <CommandItem value="-" onSelect={close}>
                   {stopLabel}
                 </CommandItem>
               ) : null}
-              {children.map((child) => (
+              {children.map(({ value, label }) => (
                 <CommandItem
-                  key={child}
-                  value={child}
-                  aria-checked={child === path[depth]}
-                  onSelect={() => pick(child)}
+                  key={value}
+                  value={value}
+                  aria-checked={value === path[depth]}
+                  onSelect={() => pick(value)}
                 >
                   <CheckIcon
                     className={cn(
-                      child === path[depth] ? "opacity-100" : "opacity-0",
+                      value === path[depth] ? "opacity-100" : "opacity-0",
                     )}
                   />
-                  {hierarchyPathLabel(hierarchy, child, translate)}
+                  {label}
                 </CommandItem>
               ))}
             </CommandGroup>

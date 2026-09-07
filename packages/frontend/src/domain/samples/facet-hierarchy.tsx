@@ -13,7 +13,7 @@ import { m } from "#/paraglide/messages.js";
 type HierarchyFacetProps = {
   hierarchy: Hierarchy;
   translate: (code: string) => string;
-  rootLabel: string;
+  label: string;
   value: string | undefined;
   onChange: (value: string | undefined) => void;
   placeholder: string;
@@ -24,7 +24,7 @@ type HierarchyFacetProps = {
 export function HierarchyFacet({
   hierarchy,
   translate,
-  rootLabel,
+  label,
   value,
   onChange,
   placeholder,
@@ -34,7 +34,7 @@ export function HierarchyFacet({
   const id = useId();
   return (
     <div className="space-y-1">
-      <Label htmlFor={id}>{rootLabel}</Label>
+      <Label htmlFor={id}>{label}</Label>
       <HierarchyInput
         id={id}
         hierarchy={hierarchy}

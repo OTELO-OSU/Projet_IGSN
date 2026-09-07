@@ -6,10 +6,7 @@ import { createSampleLabels, type Messages } from "./create-sample-labels.ts";
 import { GEOMORPHOLOGICAL_ENVIRONMENTS } from "./geomorphological-environment/vocabulary.ts";
 import { MATERIAL_PATHS } from "./material/classification.ts";
 import { pathSegment } from "./path/segment.ts";
-import {
-  RESOURCE_TYPE_PATHS,
-  RESOURCE_TYPE_TREE,
-} from "./resource-type/vocabulary.ts";
+import { RESOURCE_TYPE_PATHS } from "./resource-type/vocabulary.ts";
 import { SAMPLE_TYPES } from "./type/vocabulary.ts";
 
 const m = Object.fromEntries(
@@ -100,14 +97,4 @@ describe("tree vocabulary label coverage", () => {
       expect(untranslated).toEqual([]);
     },
   );
-
-  it("should translate every resource-type childLabel code", () => {
-    const childLabels = Object.values(RESOURCE_TYPE_TREE)
-      .map((node) => node.childLabel)
-      .filter((code): code is string => code !== undefined);
-    const untranslated = childLabels.filter(
-      (code) => resourceTypeLabel(code) === `resource_type_${code}`,
-    );
-    expect(untranslated).toEqual([]);
-  });
 });

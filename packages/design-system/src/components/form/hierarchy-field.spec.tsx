@@ -10,7 +10,7 @@ import { FieldDisabledProvider } from "./field-disabled-context.tsx";
 const hierarchy: Hierarchy = {
   roots: ["rock", "water"],
   nodes: {
-    rock: { choices: ["igneous", "sedimentary"], childLabel: "rock_kind" },
+    rock: { choices: ["igneous", "sedimentary"] },
     sedimentary: { optional: true, choices: ["sand"] },
     water: { optional: true, choices: ["water", "sea"] },
     "water.water": { label: "water_only" },

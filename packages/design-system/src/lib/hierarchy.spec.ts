@@ -17,7 +17,7 @@ import {
 const hierarchy: Hierarchy = {
   roots: ["rock", "water"],
   nodes: {
-    rock: { choices: ["igneous", "sedimentary"], childLabel: "rock_kind" },
+    rock: { choices: ["igneous", "sedimentary"] },
     sedimentary: { optional: true, choices: ["sand"] },
     water: { optional: true, choices: ["water", "sea"] },
     "water.water": { label: "water_only" },
@@ -82,7 +82,7 @@ describe("label codes", () => {
     roots: ["a"],
     nodes: {
       a: { choices: ["b"] },
-      "a.b": { label: "b", childLabel: "kids" },
+      "a.b": { label: "b" },
     },
   };
 

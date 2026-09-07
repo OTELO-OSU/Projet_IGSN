@@ -4,7 +4,6 @@ export type HierarchyNodeDef = {
   label?: string;
   optional?: boolean;
   choices?: readonly string[];
-  childLabel?: string;
   // Offered as a public search-facet option (mirrors domain TreeNode). Unused by
   // the form widget; the facet sidebar filters levels by it.
   searchable?: boolean;
@@ -64,14 +63,10 @@ export function canStopAtPath(hierarchy: Hierarchy, path: string): boolean {
   return !node?.choices?.length || node.optional === true;
 }
 
-// When stopping at an optional parent is allowed, the user stops by leaving the
-// level blank (composeHierarchyValue keeps the ancestor), so there is no
-// synthetic "stop here" option echoing the parent inside its own refinement
-// select.
 export function hierarchyLevelItems(
   hierarchy: Hierarchy,
   parent: string | null,
-  translate: (code: string) => string,
+  translate: (code: string) => string = identity,
 ): { value: string; label: string }[] {
   return hierarchyChildren(hierarchy, parent).map((path) => ({
     value: path,

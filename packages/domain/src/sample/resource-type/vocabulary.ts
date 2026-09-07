@@ -6,7 +6,6 @@ import { type TreeNode } from "../path/tree-node.ts";
 const resourceTypeTree = {
   mineral_and_ore: {
     optional: true,
-    childLabel: "ore_deposit_type",
     choices: [
       "uranium",
       "kimberlites",

@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
+import { pickHierarchyLevel } from "../pick-hierarchy.ts";
 import { adminUrl } from "../urls";
 import { chooseOption } from "./choose-option.ts";
 import { expectNoManualGroupOffered } from "./manual-groups-field.ts";
@@ -41,20 +42,8 @@ export function sampleEditPage(page: Page) {
     }).toPass({ timeout: 20_000 });
   };
 
-  const pickHierarchy = async (field: string, label: string) => {
-    const chip = page.getByRole("button", {
-      name: `Remove ${label}`,
-      exact: true,
-    });
-    await expect(async () => {
-      if (!(await chip.isVisible())) {
-        await fieldCombobox(field).click();
-        await page.getByRole("option", { name: label, exact: true }).click();
-      }
-      await expect(page.getByRole("listbox")).toHaveCount(0);
-      await expect(chip).toBeVisible({ timeout: 2_000 });
-    }).toPass({ timeout: 20_000 });
-  };
+  const pickHierarchy = (field: string, label: string) =>
+    pickHierarchyLevel(page, fieldCombobox(field), label);
 
   const relationBlock = (index: number, type: string) =>
     page.getByRole("group", {
