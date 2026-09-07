@@ -10,7 +10,7 @@ import {
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
 import { navigationTypeSchema } from "@projet-igsn/domain/sample/location/navigation-type";
 import { MATERIAL_PATHS } from "@projet-igsn/domain/sample/material/classification";
-import { NATURES } from "@projet-igsn/domain/sample/nature";
+import { NATURES, type Nature } from "@projet-igsn/domain/sample/nature";
 import { SAMPLE_TYPES } from "@projet-igsn/domain/sample/type/vocabulary";
 
 export type LegacyRow = {
@@ -188,12 +188,12 @@ const TYPE_SPECIALS: Record<string, string> = {
 
 export function mapResourceType(resourceType: string | null): {
   type: string | null;
-  nature: CreateSample["nature"];
+  nature: Nature;
 } {
   if (!resourceType) return { type: null, nature: "inapplicable" };
   const slug = slugSegment(resourceType);
-  const nature = NATURES.includes(slug as CreateSample["nature"])
-    ? (slug as CreateSample["nature"])
+  const nature = NATURES.includes(slug as Nature)
+    ? (slug as Nature)
     : "inapplicable";
   const candidate = slug.startsWith("core_") ? `core.${slug.slice(5)}` : slug;
   const type =

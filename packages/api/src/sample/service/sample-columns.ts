@@ -12,7 +12,7 @@ import { locationColumns } from "./to-location.ts";
 
 export const sampleColumns = (input: CreateSample) => ({
   name: input.name,
-  nature: input.nature,
+  nature: input.nature ?? null,
   type: input.type,
   material: input.material ?? null,
   texture: input.texture ?? null,

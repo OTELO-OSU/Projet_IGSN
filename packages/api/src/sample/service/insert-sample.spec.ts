@@ -69,6 +69,15 @@ describe("insertSample", () => {
     },
   );
 
+  pgTest("should persist a null nature for a draft", async ({ db }) => {
+    const created = await insertSample(db, {
+      name: "Natureless draft",
+      nature: null,
+      type: null,
+    });
+    expect(created.nature).toBeNull();
+  });
+
   pgTest("should insert and read back a sample", async ({ db }) => {
     // Act
     const created = await insertSample(db, {
