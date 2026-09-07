@@ -8,6 +8,7 @@ import {
 } from "./sample-publish-blockers.ts";
 
 const BLOCKER_PATHS: Record<PublishBlocker, PropertyKey[]> = {
+  nature_missing: ["nature"],
   type_missing: ["type"],
   type_incomplete: ["type"],
   material_missing: ["material"],

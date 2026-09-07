@@ -146,6 +146,17 @@ describe("createSampleSchema", () => {
     });
   });
 
+  it("should accept a draft carrying only a name and default the nature to null", () => {
+    // Arrange / Act
+    const result = createSampleSchema.parse({ name: "Basalt 42" });
+    // Assert
+    expect(result).toEqual({
+      name: "Basalt 42",
+      nature: null,
+      type: null,
+    });
+  });
+
   it("should trim the name", () => {
     // Arrange / Act
     const result = createSampleSchema.parse({

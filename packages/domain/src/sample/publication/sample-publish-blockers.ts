@@ -17,6 +17,7 @@ import { isSampleTypeComplete } from "../type/is-complete.ts";
 import { SAMPLE_TYPES } from "../type/vocabulary.ts";
 
 export const publishBlockerSchema = z.enum([
+  "nature_missing",
   "type_missing",
   "type_incomplete",
   "material_missing",
@@ -55,6 +56,7 @@ export type PublishBlocker = z.infer<typeof publishBlockerSchema>;
 
 export type PublishableFields = Pick<
   Sample,
+  | "nature"
   | "type"
   | "material"
   | "metamorphicFacies"
@@ -72,6 +74,7 @@ export function toPublishableFields(
   sample: Partial<PublishableFields>,
 ): PublishableFields {
   return {
+    nature: sample.nature ?? null,
     type: sample.type ?? null,
     material: sample.material ?? null,
     metamorphicFacies: sample.metamorphicFacies ?? null,
@@ -94,6 +97,10 @@ export function samplePublishBlockers(
   publisher?: Pick<User, "status" | "superAdmin">,
 ): PublishBlocker[] {
   const blockers: PublishBlocker[] = [];
+
+  if (sample.nature === null) {
+    blockers.push("nature_missing");
+  }
 
   if (sample.type === null) {
     blockers.push("type_missing");

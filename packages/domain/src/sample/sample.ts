@@ -55,7 +55,7 @@ export type SampleStatus = z.infer<typeof sampleStatusSchema>;
 export const sampleSchema = z.object({
   id: z.uuid(),
   name: nameSchema,
-  nature: natureSchema,
+  nature: natureSchema.nullable(),
   type: sampleTypeSchema.nullable(),
   material: materialPathSchema.nullable(),
   texture: textureSchema.nullable(),
@@ -104,7 +104,7 @@ export type Sample = z.infer<typeof sampleSchema>;
 export const createSampleSchema = z
   .strictObject({
     name: nameSchema,
-    nature: natureSchema,
+    nature: natureSchema.nullable().default(null),
     type: sampleTypeSchema.nullable().default(null),
     material: materialPathSchema.nullish(),
     texture: textureSchema.nullish(),

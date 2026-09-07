@@ -81,6 +81,12 @@ describe("samplePublishBlockers", () => {
     expect(samplePublishBlockers(base)).toEqual([]);
   });
 
+  it("should report nature_missing when the sample has no nature", () => {
+    expect(samplePublishBlockers({ ...base, nature: null })).toEqual([
+      "nature_missing",
+    ]);
+  });
+
   it.each([{ repository: null }, { repository: { currentArchive: null } }])(
     "should report current_archive_missing for %o",
     (overrides) => {
