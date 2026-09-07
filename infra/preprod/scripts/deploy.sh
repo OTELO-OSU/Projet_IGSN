@@ -15,7 +15,10 @@ docker build --platform linux/amd64 -f packages/admin/Dockerfile \
 	--build-arg VITE_SAMPLE_LOCK_POLL_SECONDS="${SAMPLE_LOCK_POLL_SECONDS:-30}" \
 	-t igsn-admin:preprod .
 docker build --platform linux/amd64 -f packages/frontend/Dockerfile \
-	--build-arg VITE_API_URL="https://igsn.$DOMAIN/api" -t igsn-frontend:preprod .
+	--build-arg VITE_API_URL="https://igsn.$DOMAIN/api" \
+	--build-arg VITE_OIDC_AUTHORITY="https://sso-test.earth-data.fr/realms/gaia-data" \
+	--build-arg VITE_OIDC_CLIENT_ID="formaterre-igsn" \
+	--build-arg VITE_ADMIN_URL="https://igsn.$DOMAIN/admin" -t igsn-frontend:preprod .
 
 ssh_open
 trap ssh_close EXIT

@@ -32,6 +32,15 @@ FROM base AS build
 ARG VITE_API_URL=http://localhost:3000/api
 ENV VITE_API_URL=$VITE_API_URL
 
+ARG VITE_OIDC_AUTHORITY=http://localhost:8080/realms/igsn
+ENV VITE_OIDC_AUTHORITY=$VITE_OIDC_AUTHORITY
+
+ARG VITE_OIDC_CLIENT_ID=igsn-admin
+ENV VITE_OIDC_CLIENT_ID=$VITE_OIDC_CLIENT_ID
+
+ARG VITE_ADMIN_URL=http://localhost:3000/admin
+ENV VITE_ADMIN_URL=$VITE_ADMIN_URL
+
 RUN pnpm -F @projet-igsn/frontend build
 
 FROM node:24-alpine AS prod

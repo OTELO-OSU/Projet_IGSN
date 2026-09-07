@@ -3,9 +3,10 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 
 import { renderWithRouter } from "../../../test/render-with-router.tsx";
+import { stubAuth } from "../../../test/stub-auth.tsx";
 import { SampleView } from "./sample-view.tsx";
 
-const render = (ui: React.ReactNode) => renderWithRouter(ui);
+const render = (ui: React.ReactNode) => renderWithRouter(stubAuth(ui, {}));
 
 const emptyAge = {
   numericAgeMin: null,
