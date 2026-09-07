@@ -207,14 +207,13 @@ describe("CreateSamplePage", () => {
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByRole("button", { name: "Add a relation" }).click();
+    await screen.getByRole("menuitem", { name: "DOI" }).click();
     const block = screen.getByRole("group", {
-      name: "Relation 1",
+      name: "1. DOI Relation",
       exact: true,
     });
     await block.getByRole("combobox", { name: "Relation type" }).click();
     await screen.getByRole("option", { name: "Is cited by" }).click();
-    await block.getByRole("combobox", { name: "Identifier type" }).click();
-    await screen.getByRole("option", { name: "DOI" }).click();
     await block
       .getByRole("textbox", { name: "Identifier" })
       .fill("https://doi.org/10.1594/IEDA.100252");

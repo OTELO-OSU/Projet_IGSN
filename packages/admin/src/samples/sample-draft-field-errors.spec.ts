@@ -15,7 +15,6 @@ const draft = (over?: {
 describe("sampleDraftFieldErrors", () => {
   it.each([
     ["invalid_type", "relationType"],
-    ["invalid_value", "identifierType"],
     ["too_small", "identifier"],
   ])(
     "should pin a missing relation value (%s) on the row's indexed field",
