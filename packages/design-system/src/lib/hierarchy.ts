@@ -1,32 +1,18 @@
-export type HierarchyNodeDef = {
-  label?: string;
-  optional?: boolean;
-  choices?: readonly string[];
-  searchable?: boolean;
-};
+import type { TreeNode } from "@projet-igsn/domain/sample/path/tree-node";
+
+import { resolvePathNode } from "@projet-igsn/domain/sample/path/resolve-node";
 
 export type Hierarchy = {
   roots: readonly string[];
-  nodes: Record<string, HierarchyNodeDef | undefined>;
+  nodes: Record<string, TreeNode | undefined>;
 };
 
-function resolveNode(
-  hierarchy: Hierarchy,
-  path: string,
-): HierarchyNodeDef | undefined {
-  const segments = path.split(".");
-  for (let i = 0; i < segments.length; i++) {
-    const node = hierarchy.nodes[segments.slice(i).join(".")];
-    if (node) return node;
-  }
-  return undefined;
-}
+const resolveNode = (hierarchy: Hierarchy, path: string) =>
+  resolvePathNode(hierarchy.nodes, path)?.node;
 
 export function isPathSearchable(hierarchy: Hierarchy, path: string): boolean {
   return resolveNode(hierarchy, path)?.searchable === true;
 }
-
-const identity = (code: string) => code;
 
 function withLabelCode(path: string, code: string | undefined): string {
   return code ? [...path.split(".").slice(0, -1), code].join(".") : path;
@@ -35,12 +21,12 @@ function withLabelCode(path: string, code: string | undefined): string {
 export function hierarchyPathLabel(
   hierarchy: Hierarchy,
   path: string,
-  translate: (code: string) => string = identity,
+  translate: (code: string) => string,
 ): string {
   return translate(withLabelCode(path, resolveNode(hierarchy, path)?.label));
 }
 
-export function hierarchyChildren(
+function hierarchyChildren(
   hierarchy: Hierarchy,
   parent: string | null,
 ): string[] {
@@ -57,7 +43,7 @@ export function canStopAtPath(hierarchy: Hierarchy, path: string): boolean {
 export function hierarchyLevelItems(
   hierarchy: Hierarchy,
   parent: string | null,
-  translate: (code: string) => string = identity,
+  translate: (code: string) => string,
 ): { value: string; label: string }[] {
   return hierarchyChildren(hierarchy, parent).map((path) => ({
     value: path,
@@ -66,7 +52,7 @@ export function hierarchyLevelItems(
 }
 
 export function composeHierarchyValue(path: string[]): string | null {
-  return path.filter(Boolean).at(-1) ?? null;
+  return path.at(-1) ?? null;
 }
 
 export function toHierarchyPath(value: string | null): string[] {

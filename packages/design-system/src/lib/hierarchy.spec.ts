@@ -1,7 +1,6 @@
 import {
   canStopAtPath,
   composeHierarchyValue,
-  hierarchyChildren,
   hierarchyLevelItems,
   hierarchyPathLabel,
   toHierarchyPath,
@@ -20,27 +19,6 @@ const hierarchy: Hierarchy = {
 
 const translate = (code: string) =>
   (code.split(".").at(-1) ?? code).toUpperCase();
-
-describe("hierarchyChildren", () => {
-  it("should offer the roots at the top level", () => {
-    expect(hierarchyChildren(hierarchy, null)).toEqual(["rock", "water"]);
-  });
-
-  it("should compose a node's choices onto its path", () => {
-    expect(hierarchyChildren(hierarchy, "rock")).toEqual([
-      "rock.igneous",
-      "rock.sedimentary",
-    ]);
-  });
-
-  it("should return no children for a leaf", () => {
-    expect(hierarchyChildren(hierarchy, "rock.igneous")).toEqual([]);
-  });
-
-  it("should resolve the longest matching suffix, so a dotted override terminates a self-child", () => {
-    expect(hierarchyChildren(hierarchy, "water.water")).toEqual([]);
-  });
-});
 
 describe("canStopAtPath", () => {
   it.each(["rock.igneous", "rock.sedimentary", "water.water", "water"])(
@@ -63,13 +41,29 @@ describe("hierarchyPathLabel", () => {
   });
 
   it("should let a dotted override relabel its occurrence's last segment", () => {
-    expect(hierarchyPathLabel(hierarchy, "water.water")).toBe(
-      "water.water_only",
+    expect(hierarchyPathLabel(hierarchy, "water.water", translate)).toBe(
+      "WATER_ONLY",
     );
   });
 });
 
 describe("hierarchyLevelItems", () => {
+  it.each([
+    [null, ["rock", "water"]],
+    ["rock", ["rock.igneous", "rock.sedimentary"]],
+    ["rock.igneous", []],
+    ["water.water", []],
+  ] as const)(
+    "should compose the children of %j onto its path",
+    (parent, expected) => {
+      expect(
+        hierarchyLevelItems(hierarchy, parent, translate).map(
+          (item) => item.value,
+        ),
+      ).toEqual(expected);
+    },
+  );
+
   it("should pair each child path with its translated label", () => {
     expect(hierarchyLevelItems(hierarchy, "water", translate)).toEqual([
       { value: "water.water", label: "WATER_ONLY" },
@@ -82,7 +76,6 @@ describe("composeHierarchyValue", () => {
   it.each([
     [[], null],
     [["a", "a.b"], "a.b"],
-    [["a", "a.b", ""], "a.b"],
   ] as const)(
     "should take the deepest picked value of %j",
     (path, expected) => {

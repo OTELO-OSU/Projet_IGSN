@@ -13,7 +13,7 @@ import { useFieldContext } from "./form-hook-contexts.tsx";
 type HierarchyFieldProps = {
   label: string;
   hierarchy: Hierarchy;
-  translate?: (code: string) => string;
+  translate: (code: string) => string;
   requiredToPublish?: boolean;
   placeholder: string;
   searchPlaceholder: string;
@@ -27,7 +27,7 @@ type HierarchyFieldProps = {
 
 export function HierarchyField({
   label,
-  requiredToPublish = false,
+  requiredToPublish,
   mustRefineText,
   canRefineText,
   disabled,
@@ -45,7 +45,7 @@ export function HierarchyField({
   return (
     <div className="grid gap-2">
       <Label htmlFor={field.name}>
-        {withRequired(label, requiredToPublish)}
+        {withRequired(label, requiredToPublish === true)}
       </Label>
       <HierarchyInput
         id={field.name}

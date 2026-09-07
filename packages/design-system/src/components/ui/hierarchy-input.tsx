@@ -25,12 +25,10 @@ import {
   PopoverTrigger,
 } from "./popover.tsx";
 
-const always = () => true;
-
 type HierarchyInputProps = {
   id?: string;
   hierarchy: Hierarchy;
-  translate?: (code: string) => string;
+  translate: (code: string) => string;
   value: string[];
   onChange: (value: string[]) => void;
   onBlur?: () => void;
@@ -54,7 +52,7 @@ export function HierarchyInput({
   value: path,
   onChange,
   onBlur,
-  isSelectable = always,
+  isSelectable = () => true,
   isLevelLocked,
   disabled,
   placeholder,
@@ -79,11 +77,12 @@ export function HierarchyInput({
 
   const current = path.at(-1) ?? null;
   const isLeaf = childrenOf(current).length === 0;
+  const canStop = current !== null && canStopAtPath(hierarchy, current);
 
   const depth = editingDepth ?? path.length;
   const query = search.trim().toLowerCase();
-  const children = childrenOf(path[depth - 1] ?? null).filter(
-    (item) => !query || item.label.toLowerCase().includes(query),
+  const children = childrenOf(path[depth - 1] ?? null).filter((item) =>
+    item.label.toLowerCase().includes(query),
   );
 
   const close = () => {
@@ -163,17 +162,10 @@ export function HierarchyInput({
           })}
           {hint && current !== null && !isLeaf ? (
             <span id={hint.id} className="text-muted-foreground text-xs">
-              {canStopAtPath(hierarchy, current) ? (
-                <>
-                  <span aria-hidden>(&gt; ...)</span>
-                  <span className="sr-only">{hint.canRefineText}</span>
-                </>
-              ) : (
-                <>
-                  <span aria-hidden>&gt; ...</span>
-                  <span className="sr-only">{hint.mustRefineText}</span>
-                </>
-              )}
+              <span aria-hidden>{canStop ? "(> ...)" : "> ..."}</span>
+              <span className="sr-only">
+                {canStop ? hint.canRefineText : hint.mustRefineText}
+              </span>
             </span>
           ) : null}
           <PopoverTrigger asChild>
