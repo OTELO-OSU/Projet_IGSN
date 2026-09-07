@@ -242,13 +242,14 @@ describe("sampleDraftSchema", () => {
   it("should flag every required field of a blank relation row", () => {
     const result = sampleDraftSchema.safeParse({
       ...draft,
-      relations: [{ ...EMPTY_RELATION_DRAFT, key: "k1" }],
+      relations: [
+        { ...EMPTY_RELATION_DRAFT, key: "k1", identifierType: "doi" },
+      ],
     });
 
     if (result.success) throw new Error("expected the parse to fail");
     expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
       "relations.0.relationType",
-      "relations.0.identifierType",
       "relations.0.identifier",
       "relations.0.targetTitle",
     ]);
@@ -300,6 +301,7 @@ describe("sampleDraftSchema", () => {
         {
           ...EMPTY_RELATION_DRAFT,
           key: "k2",
+          identifierType: "doi",
           targetTitle: "Companion dataset",
         },
       ],
@@ -308,7 +310,6 @@ describe("sampleDraftSchema", () => {
     if (result.success) throw new Error("expected the parse to fail");
     expect(result.error.issues.map((issue) => issue.path.join("."))).toEqual([
       "relations.1.relationType",
-      "relations.1.identifierType",
       "relations.1.identifier",
     ]);
   });

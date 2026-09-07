@@ -39,8 +39,11 @@ export function sampleEditPage(page: Page) {
     }).toPass({ timeout: 20_000 });
   };
 
-  const relationBlock = (index: number) =>
-    page.getByRole("group", { name: `Relation ${index}`, exact: true });
+  const relationBlock = (index: number, type: string) =>
+    page.getByRole("group", {
+      name: `${index}. ${type} Relation`,
+      exact: true,
+    });
 
   const attachmentRow = (name: string) =>
     page.getByRole("listitem").filter({ hasText: name });
@@ -237,9 +240,11 @@ export function sampleEditPage(page: Page) {
     openRelatedResourcesTab: () => openTab("Related URL or document"),
     addRelation: async (index: number, relation: RelationFields) => {
       await page.getByRole("button", { name: "Add a relation" }).click();
-      const block = relationBlock(index);
+      await page
+        .getByRole("menuitem", { name: relation.identifierType, exact: true })
+        .click();
+      const block = relationBlock(index, relation.identifierType);
       await pick("Relation type", relation.relationType, block);
-      await pick("Identifier type", relation.identifierType, block);
       await block
         .getByRole("textbox", { name: "Identifier" })
         .fill(relation.identifier);
@@ -247,13 +252,10 @@ export function sampleEditPage(page: Page) {
       await block.getByLabel("Description").fill(relation.description);
     },
     expectRelation: async (index: number, relation: RelationFields) => {
-      const block = relationBlock(index);
+      const block = relationBlock(index, relation.identifierType);
       await expect(
         block.getByRole("combobox", { name: "Relation type" }),
       ).toHaveText(relation.relationType);
-      await expect(
-        block.getByRole("combobox", { name: "Identifier type" }),
-      ).toHaveText(relation.identifierType);
       await expect(
         block.getByRole("textbox", { name: "Identifier" }),
       ).toHaveValue(relation.identifier);

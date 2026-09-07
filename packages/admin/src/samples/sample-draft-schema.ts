@@ -66,7 +66,7 @@ import {
 export type RelationDraft = {
   key: string;
   relationType: RelationType | "";
-  identifierType: IdentifierType | "";
+  identifierType: IdentifierType;
   identifier: string;
   targetTitle: string;
   targetResourceType: RelationTargetResourceType | "";
@@ -77,9 +77,11 @@ export type RelationDraft = {
   description: string;
 };
 
-export const EMPTY_RELATION_DRAFT: Omit<RelationDraft, "key"> = {
+export const EMPTY_RELATION_DRAFT: Omit<
+  RelationDraft,
+  "key" | "identifierType"
+> = {
   relationType: "",
-  identifierType: "",
   identifier: "",
   targetTitle: "",
   targetResourceType: "",
