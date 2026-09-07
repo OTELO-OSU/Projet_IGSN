@@ -42,6 +42,7 @@ function CreateSamplePage() {
         primaryAction={{
           kind: "publish",
           label: m.action_publish(),
+          disabled: me.isPending,
           onPublish: (value, status) =>
             createSample.mutate(value, {
               onSuccess: (sample) =>

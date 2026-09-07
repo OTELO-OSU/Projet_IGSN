@@ -37,12 +37,17 @@ const RELATION_ID = "3f2504e0-4f89-41d3-9a0c-0305000000b1";
 
 const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
 
-function fakeApi(failWrites = false, failPublish = false) {
+function fakeApi(
+  failWrites = false,
+  failPublish = false,
+  currentUserGate?: Promise<void>,
+) {
   fakeCurrentUser({ sub: "user-1" });
   let sample: Record<string, unknown> | null = null;
   const lockCalls: string[] = [];
   const calls: string[] = [];
   worker.use(
+    http.get("*/admin/currentUser", () => currentUserGate),
     http.get("*/admin/currentUser/manual-groups", () =>
       HttpResponse.json({ data: [BASALT_TEAM] }),
     ),
@@ -121,8 +126,16 @@ function fakeApi(failWrites = false, failPublish = false) {
   return { lockCalls, calls, created: () => sample };
 }
 
-async function renderCreatePage(failWrites = false, failPublish = false) {
-  const { lockCalls, calls, created } = fakeApi(failWrites, failPublish);
+async function renderCreatePage(
+  failWrites = false,
+  failPublish = false,
+  currentUserGate?: Promise<void>,
+) {
+  const { lockCalls, calls, created } = fakeApi(
+    failWrites,
+    failPublish,
+    currentUserGate,
+  );
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -305,6 +318,28 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Sample published");
+  });
+
+  it("should keep Publish disabled until the current user is known", async () => {
+    let answerCurrentUser = () => {};
+    const screen = await renderCreatePage(
+      false,
+      false,
+      new Promise((resolve) => {
+        answerCurrentUser = () => resolve();
+      }),
+    );
+    await fillPublishableSample(screen);
+
+    const publish = screen.getByRole("button", {
+      name: "Publish",
+      exact: true,
+    });
+    await expect.element(publish).toBeDisabled();
+
+    answerCurrentUser();
+
+    await expect.element(publish).toBeEnabled();
   });
 
   it("should land on the new draft's edit page when publishing fails after creation", async () => {
