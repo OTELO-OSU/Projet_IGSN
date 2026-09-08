@@ -45,10 +45,12 @@ export function headerPage(page: Page) {
       reason: string,
       manualGroup: string,
     ) => {
+      const trigger = page
+        .getByRole("contentinfo")
+        .getByRole("button", { name: "Ask for a service account" });
       await expect(async () => {
-        await banner
-          .getByRole("button", { name: "Ask for a service account" })
-          .click();
+        await trigger.scrollIntoViewIfNeeded();
+        await trigger.click();
         await expect(requestDialog).toBeVisible({ timeout: 3_000 });
       }).toPass({ timeout: 20_000 });
       await requestDialog
