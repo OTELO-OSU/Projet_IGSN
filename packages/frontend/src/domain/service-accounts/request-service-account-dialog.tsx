@@ -7,12 +7,18 @@ import {
   DialogTrigger,
 } from "@projet-igsn/design-system/components/ui/dialog";
 import { useState } from "react";
+import { useAuth } from "react-oidc-context";
 
 import { RequestServiceAccountForm } from "#/domain/service-accounts/request-service-account-form.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export function RequestServiceAccountDialog() {
   const [open, setOpen] = useState(false);
+  const auth = useAuth();
+
+  if (!auth.isAuthenticated) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

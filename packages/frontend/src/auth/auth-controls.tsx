@@ -8,7 +8,6 @@ import { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
 
 import { ADMIN_URL } from "#/admin-url.ts";
-import { RequestServiceAccountDialog } from "#/domain/service-accounts/request-service-account-dialog.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export function AuthControls() {
@@ -22,7 +21,6 @@ export function AuthControls() {
         <Button asChild variant="secondary">
           <a href={ADMIN_URL}>{m.auth_go_to_admin()}</a>
         </Button>
-        <RequestServiceAccountDialog />
         <Button
           type="button"
           variant="secondary"
