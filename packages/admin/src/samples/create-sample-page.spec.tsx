@@ -30,7 +30,6 @@ vi.mock("react-oidc-context", () => ({
 const BASALT_TEAM = {
   id: "3f2504e0-4f89-41d3-9a0c-0305000000a1",
   name: "Basalt team",
-  canLeave: true,
 };
 
 const RELATION_ID = "3f2504e0-4f89-41d3-9a0c-0305000000b1";
@@ -49,6 +48,9 @@ function fakeApi(
   worker.use(
     http.get("*/admin/currentUser", () => currentUserGate),
     http.get("*/admin/currentUser/manual-groups", () =>
+      HttpResponse.json({ data: [] }),
+    ),
+    http.get("*/admin/currentUser/attachable-manual-groups", () =>
       HttpResponse.json({ data: [BASALT_TEAM] }),
     ),
     http.put("*/samples/:id/lock", () => {
@@ -223,7 +225,7 @@ describe("CreateSamplePage", () => {
     expect(screen.lockCalls).toEqual([]);
   });
 
-  it("should offer the groups the depositor belongs to and submit the picked one", async () => {
+  it("should offer the groups the depositor may attach and submit the picked one", async () => {
     const screen = await renderCreatePage();
     await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
     await screen.getByRole("combobox", { name: /nature/i }).click();

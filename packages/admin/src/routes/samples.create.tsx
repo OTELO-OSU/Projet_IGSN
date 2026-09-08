@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
-import { useMyManualGroups } from "#/manual-groups/use-my-manual-groups.ts";
+import { useAttachableManualGroups } from "#/manual-groups/use-attachable-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { useCreateSample } from "#/samples/use-create-sample.ts";
@@ -16,7 +16,7 @@ function CreateSamplePage() {
   const me = useCurrentUser();
   const createSample = useCreateSample();
   const publishSample = usePublishSample();
-  const myManualGroups = useMyManualGroups();
+  const attachableManualGroups = useAttachableManualGroups();
 
   return (
     <>
@@ -25,7 +25,7 @@ function CreateSamplePage() {
       <SampleForm
         currentUser={me.data}
         isPending={createSample.isPending || publishSample.isPending}
-        manualGroupOptions={myManualGroups.data?.data ?? []}
+        manualGroupOptions={attachableManualGroups.data?.data ?? []}
         onCancel={() => navigate({ to: "/" })}
         secondaryAction={{
           kind: "submit",
