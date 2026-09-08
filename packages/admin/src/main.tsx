@@ -5,7 +5,12 @@ import { createRoot } from "react-dom/client";
 import { AuthProvider } from "react-oidc-context";
 
 import "./styles.css";
-import { onSigninCallback, userManager } from "./auth/oidc-config.ts";
+import {
+  matchSignoutCallback,
+  onSigninCallback,
+  onSignoutCallback,
+  userManager,
+} from "./auth/oidc-config.ts";
 import { retryDelay, shouldRetry } from "./http-error.ts";
 import { watchIdleRenew } from "./idle-renew.ts";
 import { routeTree } from "./routeTree.gen.ts";
@@ -29,7 +34,12 @@ watchIdleRenew(userManager);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <AuthProvider userManager={userManager} onSigninCallback={onSigninCallback}>
+    <AuthProvider
+      userManager={userManager}
+      onSigninCallback={onSigninCallback}
+      matchSignoutCallback={matchSignoutCallback}
+      onSignoutCallback={onSignoutCallback}
+    >
       <QueryClientProvider client={queryClient}>
         <RouterProvider router={router} />
       </QueryClientProvider>

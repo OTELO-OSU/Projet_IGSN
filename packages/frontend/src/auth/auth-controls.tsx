@@ -4,6 +4,7 @@ import {
   broadcastSignOut,
   onSignOutBroadcast,
 } from "@projet-igsn/domain/auth/sign-out-broadcast";
+import { markSignedOut } from "@projet-igsn/domain/auth/signed-out";
 import { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
 
@@ -25,8 +26,11 @@ export function AuthControls() {
           type="button"
           variant="secondary"
           onClick={() => {
+            markSignedOut();
             broadcastSignOut();
-            void auth.signoutRedirect();
+            void auth.signoutRedirect({
+              state: window.location.pathname + window.location.search,
+            });
           }}
         >
           {m.auth_sign_out()}

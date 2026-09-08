@@ -2,7 +2,6 @@
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_title": "IGSN",
   "app_subtitle": "Sample Library",
-  "auth_error": "Authentication error: {message}",
   "auth_sign_in": "Sign in",
   "auth_sign_out": "Sign out",
   "auth_go_to_admin": "Go to admin",

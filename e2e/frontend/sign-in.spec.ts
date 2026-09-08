@@ -39,6 +39,7 @@ test.describe("sign in from the public frontend", () => {
     await header.expectNoEditLink();
 
     await header.signOut();
+    await detail.expectSample(other.name, other.igsn);
     await header.expectSignedOut();
   });
 

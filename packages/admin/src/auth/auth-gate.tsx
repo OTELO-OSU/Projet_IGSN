@@ -1,11 +1,20 @@
 import type { ReactNode } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import {
+  isUnderBase,
+  safeReturnPath,
+} from "@projet-igsn/domain/auth/safe-return-path";
 import { signIn } from "@projet-igsn/domain/auth/sign-in";
 import {
   broadcastSignOut,
   onSignOutBroadcast,
 } from "@projet-igsn/domain/auth/sign-out-broadcast";
+import {
+  clearSignedOut,
+  markSignedOut,
+  readSignedOut,
+} from "@projet-igsn/domain/auth/signed-out";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "react-oidc-context";
 
@@ -16,16 +25,37 @@ import { CenteredLoader } from "./centered-loader.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
 import { IdentityGate } from "./identity-gate.tsx";
 import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
-import { clearSignedOut, markSignedOut, readSignedOut } from "./signed-out.ts";
 
-export function AuthGate({ children }: { children?: ReactNode }) {
+export function AuthGate({
+  children,
+  base = import.meta.env.BASE_URL,
+  navigate = (path: string) => window.location.replace(path),
+}: {
+  children?: ReactNode;
+  base?: string;
+  navigate?: (path: string) => void;
+}) {
   const auth = useAuth();
   const [hasSignedOut, setHasSignedOut] = useState(readSignedOut);
   const hasRedirected = useRef(false);
+  const hasReturned = useRef(false);
   const shouldSignIn =
     !hasSignedOut && !auth.isLoading && !auth.error && !auth.isAuthenticated;
+  const urlState = auth.user?.url_state;
+  const returnPath =
+    auth.isAuthenticated &&
+    window.location.pathname === base + "auth/callback" &&
+    urlState !== undefined &&
+    !isUnderBase(urlState, base)
+      ? safeReturnPath(urlState)
+      : undefined;
 
   useEffect(() => clearSignedOut(), []);
+  useEffect(() => {
+    if (returnPath === undefined || hasReturned.current) return;
+    hasReturned.current = true;
+    navigate(returnPath);
+  }, [returnPath, navigate]);
   useEffect(() => {
     if (!shouldSignIn || hasRedirected.current) return;
     hasRedirected.current = true;
@@ -49,7 +79,8 @@ export function AuthGate({ children }: { children?: ReactNode }) {
     void auth.signoutRedirect();
   };
 
-  if (auth.isLoading || shouldSignIn) return <CenteredLoader />;
+  if (auth.isLoading || shouldSignIn || returnPath !== undefined)
+    return <CenteredLoader />;
   if (auth.error)
     return (
       <CenteredScreen

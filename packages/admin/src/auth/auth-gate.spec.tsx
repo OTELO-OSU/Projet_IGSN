@@ -1,15 +1,20 @@
 import { SIGN_OUT_BROADCAST_KEY } from "@projet-igsn/domain/auth/sign-out-broadcast";
+import {
+  markSignedOut,
+  readSignedOut,
+} from "@projet-igsn/domain/auth/signed-out";
 import { StrictMode } from "react";
 import { render } from "vitest-browser-react";
 
 import { AuthGate } from "./auth-gate";
-import { markSignedOut, readSignedOut } from "./signed-out.ts";
 
 const auth = {
   isLoading: false,
   error: undefined as Error | undefined,
   isAuthenticated: false,
-  user: undefined as { profile: { identity_provider?: string } } | undefined,
+  user: undefined as
+    | { profile: { identity_provider?: string }; url_state?: string }
+    | undefined,
   signinRedirect: vi.fn(),
   signoutRedirect: vi.fn(),
   removeUser: vi.fn(() => {
@@ -37,6 +42,8 @@ vi.mock("./identity-gate.tsx", () => ({
   ),
 }));
 
+const initialUrl = window.location.href;
+
 beforeEach(() => {
   auth.isLoading = false;
   auth.error = undefined;
@@ -46,6 +53,8 @@ beforeEach(() => {
   localStorage.removeItem(SIGN_OUT_BROADCAST_KEY);
   vi.clearAllMocks();
 });
+
+afterEach(() => history.replaceState(null, "", initialUrl));
 
 describe("AuthGate", () => {
   it("should announce that it is busy while the session is restored", async () => {
@@ -148,6 +157,41 @@ describe("AuthGate", () => {
     expect(auth.removeUser).toHaveBeenCalledTimes(1);
     expect(auth.signinRedirect).not.toHaveBeenCalled();
     expect(readSignedOut()).toBe(true);
+  });
+
+  it("should send a reader back once to the frontend page they signed in from", async () => {
+    auth.isAuthenticated = true;
+    auth.user = { profile: {}, url_state: "/samples/x" };
+    history.replaceState(null, "", "/admin/auth/callback");
+    const navigate = vi.fn();
+
+    const screen = await render(
+      <StrictMode>
+        <AuthGate base="/admin/" navigate={navigate} />
+      </StrictMode>,
+    );
+
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith("/samples/x"));
+    expect(navigate).toHaveBeenCalledTimes(1);
+    await expect
+      .element(screen.getByRole("status"))
+      .toHaveTextContent(/loading/i);
+  });
+
+  it("should open the admin app when the sign-in came from an admin page", async () => {
+    auth.isAuthenticated = true;
+    auth.user = { profile: {}, url_state: "/admin/users" };
+    history.replaceState(null, "", "/admin/auth/callback");
+    const navigate = vi.fn();
+
+    const screen = await render(
+      <AuthGate base="/admin/" navigate={navigate} />,
+    );
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent(/account gate/i);
+    expect(navigate).not.toHaveBeenCalled();
   });
 
   it.each(["orcid", "ORCID"])(
