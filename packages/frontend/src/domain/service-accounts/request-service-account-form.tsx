@@ -7,7 +7,7 @@ import {
 import { serviceAccountRequestSchema } from "@projet-igsn/domain/service-account/service-account-validator";
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 
-import { useListMyManualGroups } from "#/domain/manual-groups/hook/list-my-manual-groups.ts";
+import { useListAttachableManualGroups } from "#/domain/manual-groups/hook/list-attachable-manual-groups.ts";
 import { useRequestServiceAccount } from "#/domain/service-accounts/hook/request-service-account.ts";
 import { m } from "#/paraglide/messages.js";
 
@@ -27,7 +27,7 @@ const validate = ({ value }: { value: unknown }) => {
 };
 
 export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
-  const { data: myGroups } = useListMyManualGroups();
+  const { data: attachableGroups } = useListAttachableManualGroups();
   const { mutate } = useRequestServiceAccount(onSent);
   const form = useAppForm({
     defaultValues: { name: "", managedGroups: NO_MANAGED_GROUPS },
@@ -60,7 +60,7 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
     {
       name: "managedGroups.manualGroupIds",
       label: m.service_account_field_manual_groups(),
-      items: (myGroups ?? []).map(({ id, name }) => ({
+      items: (attachableGroups ?? []).map(({ id, name }) => ({
         value: id,
         label: name,
       })),

@@ -8,7 +8,6 @@ import { RequestServiceAccountForm } from "./request-service-account-form.tsx";
 const group = {
   id: "01980e2d-6f9b-7000-9000-000000000001",
   name: "ANR CritMet",
-  canLeave: true,
 };
 
 const signedIn = {
@@ -36,7 +35,13 @@ function stubApi() {
       });
       return new Response(null, { status: 204 });
     }
-    return Response.json({ data: [group] });
+    if (
+      new URL(urlOf(input)).pathname ===
+      "/api/admin/currentUser/attachable-manual-groups"
+    ) {
+      return Response.json({ data: [group] });
+    }
+    return new Response(null, { status: 404 });
   });
   return posts;
 }
