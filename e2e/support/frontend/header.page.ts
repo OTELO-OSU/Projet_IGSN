@@ -40,7 +40,11 @@ export function headerPage(page: Page) {
         res.url().includes(`/admin/samples/${sampleId}`),
       ),
     expectNoEditLink: () => expect(editLink).toHaveCount(0),
-    requestServiceAccount: async (name: string, manualGroup: string) => {
+    requestServiceAccount: async (
+      name: string,
+      reason: string,
+      manualGroup: string,
+    ) => {
       await expect(async () => {
         await banner
           .getByRole("button", { name: "Ask for a service account" })
@@ -50,6 +54,9 @@ export function headerPage(page: Page) {
       await requestDialog
         .getByRole("textbox", { name: "Service name" })
         .fill(name);
+      await requestDialog
+        .getByRole("textbox", { name: "Why do you need a service account?" })
+        .fill(reason);
       await requestDialog
         .getByRole("combobox", { name: "Groups to access" })
         .click();

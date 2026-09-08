@@ -13,6 +13,7 @@ import { maildev } from "../support/maildev";
 import { adminUrl, frontendUrl } from "../support/urls";
 
 const MANUAL_GROUP = "ANR CritMet";
+const REASON = "We harvest our laboratory samples every night.";
 const JEAN_LABORATORY = "GéoRessources";
 const PING_URL = `${frontendUrl}/api/service/ping`;
 
@@ -34,12 +35,12 @@ test.describe("service account request", () => {
     await completeIdpLogin(page, RESEARCHERS.jean);
     await header.expectSignedIn();
 
-    await header.requestServiceAccount(name, MANUAL_GROUP);
+    await header.requestServiceAccount(name, REASON, MANUAL_GROUP);
 
     const mail = await maildev(request).expectMail(
       RESEARCHERS.nadia.email,
       `Jean Martin asks for the service account "${name}"`,
-      [JEAN_LABORATORY, MANUAL_GROUP],
+      [JEAN_LABORATORY, MANUAL_GROUP, REASON],
     );
     const link = /http\S+service-accounts\/create\?request=\S+/.exec(mail)?.[0];
     expect(link).toBeDefined();
