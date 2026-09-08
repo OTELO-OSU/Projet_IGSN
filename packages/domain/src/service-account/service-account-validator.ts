@@ -7,6 +7,7 @@ import {
   DEFAULT_PAGE_SIZE,
   pageSchema,
   pageSizeSchema,
+  requestReasonSchema,
 } from "../sample/sample-validator.ts";
 import { managedGroupsSchema } from "../user/managed-groups.ts";
 import { userIdentitySchema } from "../user/user-validator.ts";
@@ -30,6 +31,7 @@ export type ServiceAccountBody = z.infer<typeof serviceAccountBodySchema>;
 export const serviceAccountRequestSchema = z.strictObject({
   name: serviceAccountNameSchema,
   managedGroups: managedGroupsSchema,
+  reason: requestReasonSchema,
 });
 
 export type ServiceAccountRequest = z.infer<typeof serviceAccountRequestSchema>;
