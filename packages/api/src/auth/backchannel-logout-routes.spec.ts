@@ -107,6 +107,7 @@ describe("back-channel logout", () => {
         await mintJwt(
           logoutClaims({ sid: "session-1", sub: "user-1" }),
           privateKey,
+          { typ: "Logout+JWT" },
         ),
       );
 
@@ -136,6 +137,43 @@ describe("back-channel logout", () => {
       ).toBe(401);
     },
   );
+
+  pgTest.for([
+    { case: 'a "logout+jwt" typ', header: { typ: "logout+jwt" } },
+    { case: 'a "JWT" typ', header: { typ: "JWT" } },
+  ])("should accept a logout token with $case", async ({ header }, { db }) => {
+    const app = await createTestApp(db);
+
+    const res = await postLogoutToken(
+      app,
+      await mintJwt(
+        logoutClaims({ sid: "session-1", sub: "user-1" }),
+        privateKey,
+        header,
+      ),
+    );
+
+    expect(res.status).toBe(204);
+  });
+
+  pgTest.for([
+    { case: 'an "ID" typ', header: { typ: "ID" } },
+    { case: 'an "HS256" alg', header: { alg: "HS256" } },
+    { case: "an unknown kid", header: { kid: "another-key" } },
+  ])("should reject a logout token with $case", async ({ header }, { db }) => {
+    const app = await createTestApp(db);
+
+    const res = await postLogoutToken(
+      app,
+      await mintJwt(
+        logoutClaims({ sid: "session-1", sub: "user-1" }),
+        privateKey,
+        header,
+      ),
+    );
+
+    expect(res.status).toBe(400);
+  });
 
   pgTest.for([
     { case: "carrying a nonce", claims: { nonce: "n-1" } },

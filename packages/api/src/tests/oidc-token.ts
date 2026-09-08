@@ -36,9 +36,15 @@ export const exportJwks = async (
 export async function mintJwt(
   claims: Record<string, unknown>,
   key: webcrypto.CryptoKey,
+  headerOverride: Record<string, unknown> = {},
 ): Promise<string> {
   const header = b64url(
-    JSON.stringify({ alg: "RS256", typ: "JWT", kid: TEST_KID }),
+    JSON.stringify({
+      alg: "RS256",
+      typ: "JWT",
+      kid: TEST_KID,
+      ...headerOverride,
+    }),
   );
   const payload = b64url(JSON.stringify(claims));
   const signature = await crypto.subtle.sign(
