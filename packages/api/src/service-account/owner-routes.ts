@@ -16,6 +16,7 @@ import type { SendMail } from "../mail/send-mail.ts";
 
 import { requireActiveSession } from "../auth/active-session.ts";
 import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
+import { hasUnattachable } from "../manual-group/has-unattachable.ts";
 import { generateApiKey, hashApiKey } from "./api-key.ts";
 import { serviceAccountRequestMail } from "./service-account-request-mail.ts";
 import {
@@ -53,11 +54,19 @@ export function createServiceAccountOwnerRoutes(
       async (c) => {
         const { name, managedGroups } = c.req.valid("json");
         const wanted = [...new Set(managedGroups.manualGroupIds)];
-        const groups = await manualGroups.listByIds(wanted);
-        if (groups.length !== wanted.length) {
-          return c.json({ error: "Manual group not found" }, 404);
-        }
         const requester = c.get("user");
+        const attachable = await manualGroups.listAttachableForUser(
+          requester.id,
+        );
+        if (
+          hasUnattachable(
+            wanted,
+            attachable.map((group) => group.id),
+          )
+        ) {
+          return c.json({ error: "Manual group not attachable" }, 422);
+        }
+        const groups = attachable.filter((group) => wanted.includes(group.id));
         const draft: ServiceAccountDraft = {
           name,
           managedGroups,

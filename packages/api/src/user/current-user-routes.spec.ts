@@ -1,5 +1,13 @@
+import type { Kysely } from "kysely";
+
+import {
+  manualGroupsResponseSchema,
+  myManualGroupsResponseSchema,
+} from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { testClient } from "hono/testing";
 import { describe, expect, vi } from "vitest";
+
+import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
@@ -408,4 +416,71 @@ describe("currentUser managed groups", () => {
       managedManualGroups: [group],
     });
   });
+});
+
+describe("the caller's attachable manual groups", () => {
+  const ALPES = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "Alpes" };
+  const BRETAGNE = {
+    id: "01890a5d-ac96-774b-bcce-b302099a9002",
+    name: "Bretagne",
+  };
+  const MASSIF = {
+    id: "01890a5d-ac96-774b-bcce-b302099a9003",
+    name: "Massif central",
+  };
+
+  const arrangeCaller = async (db: Kysely<DB>) => {
+    const caller = await insertUser(db, callerEmail, { status: "accepted" });
+    await db
+      .insertInto("manual_group")
+      .values([MASSIF, ALPES, BRETAGNE])
+      .execute();
+    await db
+      .insertInto("manual_group_member")
+      .values(
+        [BRETAGNE.id, ALPES.id].map((group_id) => ({
+          group_id,
+          user_id: caller.id,
+        })),
+      )
+      .execute();
+    await moderateManualGroup(db, caller.id, [MASSIF.id, BRETAGNE.id]);
+  };
+
+  pgTest(
+    "should list the memberships and the managed groups once each, ordered by name",
+    async ({ db }) => {
+      // Arrange
+      await arrangeCaller(db);
+      // Act
+      const res = await testClient(createApp(db).app).admin.currentUser[
+        "attachable-manual-groups"
+      ].$get(undefined, { headers: authHeader });
+      // Assert
+      expect(res.status).toBe(200);
+      expect(manualGroupsResponseSchema.parse(await res.json())).toEqual({
+        data: [ALPES, BRETAGNE, MASSIF],
+      });
+    },
+  );
+
+  pgTest(
+    "should keep listing the memberships alone on the caller's own groups",
+    async ({ db }) => {
+      // Arrange
+      await arrangeCaller(db);
+      // Act
+      const res = await testClient(createApp(db).app).admin.currentUser[
+        "manual-groups"
+      ].$get(undefined, { headers: authHeader });
+      // Assert
+      expect(res.status).toBe(200);
+      expect(myManualGroupsResponseSchema.parse(await res.json())).toEqual({
+        data: [
+          { ...ALPES, canLeave: true },
+          { ...BRETAGNE, canLeave: true },
+        ],
+      });
+    },
+  );
 });

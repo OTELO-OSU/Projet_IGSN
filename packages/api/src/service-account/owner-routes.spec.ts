@@ -16,6 +16,7 @@ import type { SendMail } from "../mail/send-mail.ts";
 import { createApp } from "../app.ts";
 import { insertServiceAccount } from "../tests/insert-service-account.ts";
 import { insertUser } from "../tests/insert-user.ts";
+import { moderateManualGroup } from "../tests/moderate-manual-group.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { tokenEmail } from "../tests/provision-user.ts";
 
@@ -27,7 +28,6 @@ const ORGANIZATION = "04vfs2w97";
 const OSU = "OTELo";
 const LABORATORY = "UMR7358";
 const GROUP = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "OZCAR-RI" };
-const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a9099";
 const NAME = "GeoPortal harvester";
 const CREATE_LINK = `${ADMIN_URL}service-accounts/create?request=`;
 
@@ -90,6 +90,7 @@ describe("service account owner routes", () => {
       await insertUser(db, "root@univ-lorraine.fr", { superAdmin: true });
       await insertUser(db, "boss@univ-lorraine.fr", { superAdmin: true });
       const requester = await insertRequester(db);
+      await moderateManualGroup(db, requester.id, [GROUP.id]);
       const { sendMail, client } = arrangeApp(db);
       // Act
       const res = await askForAccount(client, requestBody());
@@ -131,14 +132,13 @@ describe("service account owner routes", () => {
       status: 400,
     },
     {
-      rule: "an unknown manual group",
-      json: requestBody({
-        managedGroups: { ...NO_MANAGED_GROUPS, manualGroupIds: [UNKNOWN_ID] },
-      }),
-      status: 404,
+      rule: "a manual group the requester neither belongs to nor manages",
+      json: requestBody(),
+      status: 422,
     },
   ])("should answer $status to $rule", async ({ json, status }, { db }) => {
     // Arrange
+    await db.insertInto("manual_group").values(GROUP).execute();
     await insertRequester(db);
     const { sendMail, client } = arrangeApp(db);
     // Act

@@ -46,6 +46,7 @@ export type ManualGroupRepository = {
   removeManager(groupId: string, userId: string): Promise<void>;
   listWithoutActiveManager(): Promise<ManualGroup[]>;
   listForUser(userId: string): Promise<MyManualGroup[]>;
+  listAttachableForUser(userId: string): Promise<ManualGroup[]>;
   listByIds(ids: string[]): Promise<ManualGroup[]>;
   listForSampleOwner(sampleId: string): Promise<ManualGroup[]>;
   listWithPublishedSample(): Promise<ManualGroup[]>;
