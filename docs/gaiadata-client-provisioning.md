@@ -26,25 +26,26 @@ branch can do.
 
 ## Client
 
-| Setting                   | Value                                                                                                                |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| client_id                 | `igsn-admin` (proposal; their naming convention wins)                                                                |
-| Name                      | IGSN Admin SPA                                                                                                       |
-| Protocol / type           | OpenID Connect, public (no client_secret)                                                                            |
-| Flows                     | Standard flow only; implicit OFF, direct access grants OFF, service accounts OFF, device OFF                         |
-| PKCE                      | required, `pkce.code.challenge.method: S256`                                                                         |
-| Redirect URIs             | `https://igsn.<prod-domain>/admin/auth/callback` and `https://igsn.<prod-domain>/auth/callback` (exact, no wildcard) |
-| Post-logout redirect URIs | `https://igsn.<prod-domain>/admin/auth/callback` and `https://igsn.<prod-domain>/auth/callback`                      |
-| Web origins               | `https://igsn.<prod-domain>`                                                                                         |
-| Scopes                    | `openid profile email`; no `offline_access`                                                                          |
-| Refresh tokens            | issued to this public client, their rotation policy (doc SPA line: 5 min access, 30 min single-use refresh)          |
+| Setting                   | Value                                                                                                       |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| client_id                 | `igsn-admin` (proposal; their naming convention wins)                                                       |
+| Name                      | IGSN Admin SPA                                                                                              |
+| Protocol / type           | OpenID Connect, public (no client_secret)                                                                   |
+| Flows                     | Standard flow only; implicit OFF, direct access grants OFF, service accounts OFF, device OFF                |
+| PKCE                      | required, `pkce.code.challenge.method: S256`                                                                |
+| Redirect URIs             | `https://igsn.<prod-domain>/admin/auth/callback` (exact, no wildcard)                                       |
+| Post-logout redirect URIs | `https://igsn.<prod-domain>/admin/auth/callback`                                                            |
+| Web origins               | `https://igsn.<prod-domain>`                                                                                |
+| Scopes                    | `openid profile email`; no `offline_access`                                                                 |
+| Refresh tokens            | issued to this public client, their rotation policy (doc SPA line: 5 min access, 30 min single-use refresh) |
 
 The registry's own service accounts (ADR 0035) are rows in its database, not
 Keycloak service accounts on this client, so "service accounts OFF" above
 stands unaffected.
 
-The public frontend signs in with this same client, so the second exact URI is
-its own callback at the origin root.
+The public frontend signs in with this same client and returns through this
+same admin callback, carrying its own path in the oidc state, so the client
+needs no second URI.
 
 Each SPA always returns to its own origin + base path + `auth/callback`
 (`redirect_uri` derives from `window.location.origin`), so exact URIs suffice:
