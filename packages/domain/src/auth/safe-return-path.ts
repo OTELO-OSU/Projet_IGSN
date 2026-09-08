@@ -11,9 +11,7 @@ export function safeReturnPath(
   base: string = "/",
 ): string {
   const path = urlState === undefined ? "" : stripBase(urlState, base);
-  return path.startsWith("/") &&
-    !path.startsWith("//") &&
-    !path.startsWith("/auth/callback")
+  return /^\/(?![/\\])/.test(path) && !path.startsWith("/auth/callback")
     ? path
     : "/";
 }

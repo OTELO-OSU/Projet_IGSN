@@ -8,12 +8,15 @@ describe("safeReturnPath", () => {
     },
   );
 
-  it.each([undefined, "//evil.com", "https://evil.com", "/auth/callback"])(
-    "should fall back to the home page for %s",
-    (urlState) => {
-      expect(safeReturnPath(urlState)).toBe("/");
-    },
-  );
+  it.each([
+    undefined,
+    "//evil.com",
+    "/\\evil.com",
+    "https://evil.com",
+    "/auth/callback",
+  ])("should fall back to the home page for %s", (urlState) => {
+    expect(safeReturnPath(urlState)).toBe("/");
+  });
 
   it.each([
     ["/admin/samples/x", "/samples/x"],
