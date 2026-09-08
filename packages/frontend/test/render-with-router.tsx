@@ -22,7 +22,7 @@ export function renderWithRouter(
     createRoute({
       getParentRoute: () => rootRoute,
       path,
-      component: () => null,
+      component: () => path,
     }),
   );
   const router = createRouter({

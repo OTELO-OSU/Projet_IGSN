@@ -81,6 +81,9 @@ services:
     environment:
       API_URL: http://api:3002
       VITE_API_URL: http://localhost:3000/api
+      VITE_OIDC_AUTHORITY: ${OIDC_ISSUER:-http://localhost:8080/realms/igsn}
+      VITE_OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-igsn-admin}
+      VITE_ADMIN_URL: http://localhost:3000/admin
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3000/"]
       interval: 10s

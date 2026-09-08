@@ -3,9 +3,10 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 
 import { renderWithRouter } from "../../../test/render-with-router.tsx";
+import { stubAuth } from "../../../test/stub-auth.tsx";
 import { SampleView } from "./sample-view.tsx";
 
-const render = (ui: React.ReactNode) => renderWithRouter(ui);
+const render = (ui: React.ReactNode) => renderWithRouter(stubAuth(ui));
 
 const emptyAge = {
   numericAgeMin: null,
@@ -121,251 +122,169 @@ describe("SampleView", () => {
       .toBeVisible();
   });
 
-  it("should hide the related resources section when the sample has none", async () => {
+  it("should omit every optional section and row on a bare sample", async () => {
     const screen = await render(<SampleView sample={sample()} />);
 
     await expect
       .element(screen.getByRole("heading", { level: 1, name: "Basalt 42" }))
       .toBeVisible();
-    expect(
-      screen
-        .getByRole("heading", { level: 2, name: "Related resources" })
-        .query(),
-    ).toBeNull();
-  });
-
-  it("should show the translated nature", async () => {
-    const screen = await render(<SampleView sample={sample()} />);
-
-    await expect.element(screen.getByText("Rock powder")).toBeInTheDocument();
-  });
-
-  it("should show the type hierarchy as a breadcrumb labelled by its field", async () => {
-    const screen = await render(
-      <SampleView sample={sample({ type: "core.half_round" })} />,
+    const headings = [
+      "Description",
+      "Location",
+      "Geological context",
+      "Condition",
+      "Scientific context",
+      "Repository",
+      "Synthetic details",
+      "Institution",
+      "Groups",
+      "Age",
+      "Security",
+      "Economic interest",
+      "Related resources",
+    ].map((name) => [name, screen.getByRole("heading", { name })] as const);
+    const lists = ["Type", "Material", "Collection method"].map(
+      (name) => [name, screen.getByRole("list", { name })] as const,
     );
-
-    const type = screen.getByRole("list", { name: "Type" });
-    await expect
-      .element(type.getByText("Core", { exact: true }))
-      .toBeInTheDocument();
-    await expect.element(type.getByText("Core Half round")).toBeInTheDocument();
-    await expect
-      .element(type.getByRole("img", { name: ">" }))
-      .toBeInTheDocument();
+    const shown = [
+      ...headings,
+      ...lists,
+      [
+        "Collection method details",
+        screen.getByText("Collection method details"),
+      ] as const,
+    ]
+      .filter(([, locator]) => locator.query() !== null)
+      .map(([name]) => name);
+    expect(shown).toEqual([]);
   });
 
-  it("should show the material hierarchy as a breadcrumb labelled by its field", async () => {
-    const screen = await render(
-      <SampleView sample={sample({ material: "rock.igneous" })} />,
-    );
+  it.each<[string, Partial<Sample>, string, string]>([
+    ["Type", { type: "core.half_round" }, "Core", "Core Half round"],
+    ["Material", { material: "rock.igneous" }, "Rock", "Igneous"],
+    [
+      "Collection method",
+      { collectionMethod: "coring.gravity_corer" },
+      "Coring",
+      "GravityCorer",
+    ],
+  ])(
+    "should show the %s hierarchy as a breadcrumb labelled by its field",
+    async (name, overrides, parent, child) => {
+      const screen = await render(<SampleView sample={sample(overrides)} />);
 
-    const material = screen.getByRole("list", { name: "Material" });
-    await expect
-      .element(material.getByText("Rock", { exact: true }))
-      .toBeInTheDocument();
-    await expect.element(material.getByText("Igneous")).toBeInTheDocument();
-    await expect
-      .element(material.getByRole("img", { name: ">" }))
-      .toBeInTheDocument();
+      const list = screen.getByRole("list", { name });
+      await expect
+        .element(list.getByText(parent, { exact: true }))
+        .toBeInTheDocument();
+      await expect.element(list.getByText(child)).toBeInTheDocument();
+      await expect
+        .element(list.getByRole("img", { name: ">" }))
+        .toBeInTheDocument();
+    },
+  );
+
+  it.each<[string, Partial<Sample>, (string | RegExp)[]]>([
+    ["the translated nature", {}, ["Rock powder"]],
+    [
+      "the translated texture",
+      {
+        material: "rock.igneous.plutonic.felsic.granite",
+        texture: "phaneritic",
+      },
+      ["Phaneritic"],
+    ],
+    [
+      "the translated metamorphic facies and fabric",
+      {
+        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        metamorphicFacies: "amphibolite",
+        metamorphicFabric: "schistose",
+      },
+      ["Amphibolite facies", "Schistose"],
+    ],
+    [
+      "the specific name",
+      { specificName: "BRT-GRN-2025-07" },
+      ["BRT-GRN-2025-07"],
+    ],
+    [
+      "the collection method description",
+      {
+        collectionMethod: "coring.gravity_corer",
+        collectionMethodDescription: "Cored at low tide from the reef flat",
+      },
+      ["Collection method details", "Cored at low tide from the reef flat"],
+    ],
+    [
+      "the translated statuses and the publication year",
+      {
+        existenceStatus: "lost",
+        availabilityStatus: "not_available",
+        publicationYear: 2026,
+      },
+      [
+        "Existence status",
+        "Lost",
+        "Availability status",
+        "Not available",
+        "Publication year",
+        "2026",
+      ],
+    ],
+    [
+      "a single numeric age with its unit",
+      {
+        age: {
+          ...emptyAge,
+          numericAgeMin: 120,
+          numericAgeMax: 120,
+          numericAgeUnit: "ma",
+        },
+      },
+      ["120 Ma"],
+    ],
+    [
+      "a numeric age range with a shared unit",
+      {
+        age: {
+          ...emptyAge,
+          numericAgeMin: 500,
+          numericAgeMax: 2000,
+          numericAgeUnit: "ka",
+        },
+      },
+      ["500-2000 ka"],
+    ],
+    [
+      "the translated geological age",
+      { age: { ...emptyAge, geologicalAgeMin: 8, geologicalAgeMax: 8 } },
+      ["Cretaceous Upper"],
+    ],
+    [
+      "the free-text geological unit",
+      { age: { ...emptyAge, geologicalUnit: "Green Sandstone Fm" } },
+      ["Green Sandstone Fm"],
+    ],
+    [
+      "the locality name and description",
+      {
+        location: {
+          localityName: "Reef flat",
+          localityDescription: "Southern reef flat, Tahiti",
+        },
+      },
+      [/^Reef flat$/, "Southern reef flat, Tahiti"],
+    ],
+  ])("should show %s", async (_label, overrides, texts) => {
+    const screen = await render(<SampleView sample={sample(overrides)} />);
+
+    for (const text of texts) {
+      await expect.element(screen.getByText(text)).toBeInTheDocument();
+    }
   });
 
-  it("should show the translated texture when set", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          material: "rock.igneous.plutonic.felsic.granite",
-          texture: "phaneritic",
-        })}
-      />,
-    );
-
-    await expect.element(screen.getByText("Phaneritic")).toBeInTheDocument();
-  });
-
-  it("should show the translated metamorphic facies and fabric when set", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          material: "rock.metamorphic.strongly_metamorphosed.gneiss",
-          metamorphicFacies: "amphibolite",
-          metamorphicFabric: "schistose",
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByText("Amphibolite facies"))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Schistose")).toBeInTheDocument();
-  });
-
-  it("should show the specific name", async () => {
-    const screen = await render(
-      <SampleView sample={sample({ specificName: "BRT-GRN-2025-07" })} />,
-    );
-
-    await expect
-      .element(screen.getByText("BRT-GRN-2025-07"))
-      .toBeInTheDocument();
-  });
-
-  it("should show the collection method hierarchy as a breadcrumb labelled by its field", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({ collectionMethod: "coring.gravity_corer" })}
-      />,
-    );
-
-    const collectionMethod = screen.getByRole("list", {
-      name: "Collection method",
-    });
-    await expect
-      .element(collectionMethod.getByText("Coring", { exact: true }))
-      .toBeInTheDocument();
-    await expect
-      .element(collectionMethod.getByText("GravityCorer"))
-      .toBeInTheDocument();
-    await expect
-      .element(collectionMethod.getByRole("img", { name: ">" }))
-      .toBeInTheDocument();
-  });
-
-  it("should show the collection method description when set", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          collectionMethod: "coring.gravity_corer",
-          collectionMethodDescription: "Cored at low tide from the reef flat",
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByText("Collection method details"))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Cored at low tide from the reef flat"))
-      .toBeInTheDocument();
-  });
-
-  it("should show the translated existence and availability statuses and the publication year when set", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          existenceStatus: "lost",
-          availabilityStatus: "not_available",
-          publicationYear: 2026,
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByText("Existence status"))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Lost")).toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Availability status"))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Not available")).toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Publication year"))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("2026")).toBeInTheDocument();
-  });
-
-  it("should show a single numeric age with its unit", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          age: {
-            ...emptyAge,
-            numericAgeMin: 120,
-            numericAgeMax: 120,
-            numericAgeUnit: "ma",
-          },
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByRole("heading", { name: "Age" }))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("120 Ma")).toBeInTheDocument();
-  });
-
-  it("should show a numeric age range with a shared unit", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          age: {
-            ...emptyAge,
-            numericAgeMin: 500,
-            numericAgeMax: 2000,
-            numericAgeUnit: "ka",
-          },
-        })}
-      />,
-    );
-
-    await expect.element(screen.getByText("500-2000 ka")).toBeInTheDocument();
-  });
-
-  it("should show the translated geological age", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          age: { ...emptyAge, geologicalAgeMin: 8, geologicalAgeMax: 8 },
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByText("Cretaceous Upper"))
-      .toBeInTheDocument();
-  });
-
-  it("should show the free-text geological unit", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          age: { ...emptyAge, geologicalUnit: "Green Sandstone Fm" },
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByText("Green Sandstone Fm"))
-      .toBeInTheDocument();
-  });
-
-  it("should omit the Age section when there is no age", async () => {
-    const screen = await render(<SampleView sample={sample()} />);
-
-    await expect
-      .element(screen.getByRole("heading", { name: "Age" }))
-      .not.toBeInTheDocument();
-  });
-
-  it("should show the economic interest as its own section", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          resourceType: "mineral_and_ore",
-          economicDepositName: "Chuquicamata",
-        })}
-      />,
-    );
-
-    await expect
-      .element(
-        screen.getByRole("heading", { level: 2, name: "Economic interest" }),
-      )
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Chuquicamata")).toBeInTheDocument();
-  });
-
-  it("should show the economic interest section when only a detail field is set", async () => {
+  it("should show the economic interest as its own section when only a detail field is set", async () => {
     const screen = await render(
       <SampleView sample={sample({ economicDepositName: "Chuquicamata" })} />,
     );
@@ -375,14 +294,7 @@ describe("SampleView", () => {
         screen.getByRole("heading", { level: 2, name: "Economic interest" }),
       )
       .toBeInTheDocument();
-  });
-
-  it("should omit the Economic interest section when unanswered", async () => {
-    const screen = await render(<SampleView sample={sample()} />);
-
-    await expect
-      .element(screen.getByRole("heading", { name: "Economic interest" }))
-      .not.toBeInTheDocument();
+    await expect.element(screen.getByText("Chuquicamata")).toBeInTheDocument();
   });
 
   it("should show the declarer's institution as its own section", async () => {
@@ -404,14 +316,6 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
-  it("should omit the Institution section when the sample carries no group", async () => {
-    const screen = await render(<SampleView sample={sample()} />);
-
-    await expect
-      .element(screen.getByRole("heading", { name: "Institution" }))
-      .not.toBeInTheDocument();
-  });
-
   it("should show the manual groups the sample belongs to as their own section", async () => {
     const screen = await render(
       <SampleView
@@ -429,14 +333,6 @@ describe("SampleView", () => {
       .toBeInTheDocument();
     await expect.element(screen.getByText("Volcano")).toBeInTheDocument();
     await expect.element(screen.getByText("Deep sea")).toBeInTheDocument();
-  });
-
-  it("should omit the Groups section when the sample belongs to none", async () => {
-    const screen = await render(<SampleView sample={sample()} />);
-
-    await expect
-      .element(screen.getByRole("heading", { name: "Groups" }))
-      .not.toBeInTheDocument();
   });
 
   it("should show the synthetic details as their own section", async () => {
@@ -461,14 +357,6 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
-  it("should omit the Synthetic details section when the sample was not synthesised", async () => {
-    const screen = await render(<SampleView sample={sample()} />);
-
-    await expect
-      .element(screen.getByRole("heading", { name: "Synthetic details" }))
-      .not.toBeInTheDocument();
-  });
-
   it("should show the security as its own section with its hazards", async () => {
     const screen = await render(
       <SampleView
@@ -488,29 +376,6 @@ describe("SampleView", () => {
       .element(screen.getByText("Radioactivity", { exact: true }))
       .toBeInTheDocument();
     await expect.element(screen.getByText("3.2 kBq alpha")).toBeInTheDocument();
-  });
-
-  it("should omit type, material, and collection method rows when unclassified", async () => {
-    const screen = await render(<SampleView sample={sample()} />);
-
-    await expect
-      .element(screen.getByRole("list", { name: "Type" }))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("list", { name: "Material" }))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("list", { name: "Collection method" }))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Collection method details"))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("heading", { name: "Location" }))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("heading", { name: "Description" }))
-      .not.toBeInTheDocument();
   });
 
   it("should show the description section with its rows when set", async () => {
@@ -783,14 +648,6 @@ describe("SampleView", () => {
     await expect.element(environment.getByText("Peat-bog")).toBeInTheDocument();
   });
 
-  it("should omit the Geological context section when both fields are unset", async () => {
-    const screen = await render(<SampleView sample={sample()} />);
-
-    await expect
-      .element(screen.getByRole("heading", { name: "Geological context" }))
-      .not.toBeInTheDocument();
-  });
-
   it("should show the repository as its own section with the current archive linked to ror.org", async () => {
     const screen = await render(
       <SampleView
@@ -839,33 +696,5 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByText("museum@example.org"))
       .not.toBeInTheDocument();
-  });
-
-  it("should omit the Repository section when the sample has no repository", async () => {
-    const screen = await render(<SampleView sample={sample()} />);
-
-    await expect
-      .element(screen.getByRole("heading", { name: "Repository" }))
-      .not.toBeInTheDocument();
-  });
-
-  it("should show the locality name and description", async () => {
-    const screen = await render(
-      <SampleView
-        sample={sample({
-          location: {
-            localityName: "Reef flat",
-            localityDescription: "Southern reef flat, Tahiti",
-          },
-        })}
-      />,
-    );
-
-    await expect
-      .element(screen.getByText("Reef flat", { exact: true }))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Southern reef flat, Tahiti"))
-      .toBeInTheDocument();
   });
 });

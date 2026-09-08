@@ -1,5 +1,5 @@
 import { RESEARCHERS } from "../support/admin/sign-in";
-import { test } from "../support/db";
+import { sampleNamed, test } from "../support/db";
 import {
   sampleContactPage,
   type Visitor,
@@ -21,13 +21,7 @@ test.describe("contact the record owner", () => {
     request,
     samples,
   }) => {
-    const sample = samples.find(
-      (candidate) =>
-        candidate.status === "published" && candidate.owner === "jean",
-    );
-    if (!sample || sample.igsn === null) {
-      throw new Error("seed must include a published sample owned by jean");
-    }
+    const sample = sampleNamed(samples, "Basalt 42");
 
     const detail = sampleDetailPage(page);
     await detail.goto(sample.igsn);

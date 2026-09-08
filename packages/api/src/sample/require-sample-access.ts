@@ -44,6 +44,7 @@ export function requireSampleAccess(
       return next();
     }
     const user = c.get("user");
+    const isRead = c.req.method === "GET" || c.req.method === "HEAD";
     const found = await repository.get(id.data, user.id);
     const managed =
       found !== null &&
@@ -57,12 +58,12 @@ export function requireSampleAccess(
       if (!managed) {
         return c.json({ error: "Sample not found" }, 404);
       }
-      if (c.req.method !== "GET" && !c.req.path.endsWith("/status")) {
+      if (!isRead && !c.req.path.endsWith("/status")) {
         return c.json({ error: "Sample is tombstoned" }, 409);
       }
     }
     if (
-      c.req.method !== "GET" &&
+      !isRead &&
       found &&
       hasPermanentIgsn(found.sample) &&
       !canPublishSamples(user)

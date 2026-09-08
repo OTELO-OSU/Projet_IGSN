@@ -7,7 +7,8 @@ export const userManager = new UserManager(
   oidcSettings({
     authority: import.meta.env.VITE_OIDC_AUTHORITY,
     clientId: import.meta.env.VITE_OIDC_CLIENT_ID,
-    callbackUrl:
-      window.location.origin + import.meta.env.BASE_URL + "auth/callback",
+    callbackUrl: import.meta.env.SSR
+      ? ""
+      : `${window.location.origin}/auth/callback`,
   }),
 );

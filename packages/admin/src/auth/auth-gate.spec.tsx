@@ -1,3 +1,4 @@
+import { SIGN_OUT_BROADCAST_KEY } from "@projet-igsn/domain/auth/sign-out-broadcast";
 import { StrictMode } from "react";
 import { render } from "vitest-browser-react";
 
@@ -11,6 +12,11 @@ const auth = {
   user: undefined as { profile: { identity_provider?: string } } | undefined,
   signinRedirect: vi.fn(),
   signoutRedirect: vi.fn(),
+  removeUser: vi.fn(() => {
+    auth.isAuthenticated = false;
+    auth.user = undefined;
+    return Promise.resolve();
+  }),
 };
 vi.mock("react-oidc-context", () => ({ useAuth: () => auth }));
 
@@ -37,6 +43,7 @@ beforeEach(() => {
   auth.isAuthenticated = false;
   auth.user = undefined;
   sessionStorage.clear();
+  localStorage.removeItem(SIGN_OUT_BROADCAST_KEY);
   vi.clearAllMocks();
 });
 
@@ -90,6 +97,7 @@ describe("AuthGate", () => {
 
     expect(auth.signoutRedirect).toHaveBeenCalledTimes(1);
     expect(readSignedOut()).toBe(true);
+    expect(localStorage.getItem(SIGN_OUT_BROADCAST_KEY)).not.toBeNull();
   });
 
   it("should not sign back in when the sign-out clears the session", async () => {
@@ -120,6 +128,26 @@ describe("AuthGate", () => {
     await screen.getByRole("button", { name: "Sign in" }).click();
 
     expect(auth.signinRedirect).toHaveBeenCalledTimes(1);
+  });
+
+  it("should show the sign-in button without redirecting when another tab broadcasts a sign-out", async () => {
+    auth.isAuthenticated = true;
+    auth.user = { profile: {} };
+    const screen = await render(<AuthGate />);
+
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: SIGN_OUT_BROADCAST_KEY,
+        newValue: "x",
+      }),
+    );
+
+    await expect
+      .element(screen.getByRole("button", { name: "Sign in" }))
+      .toBeEnabled();
+    expect(auth.removeUser).toHaveBeenCalledTimes(1);
+    expect(auth.signinRedirect).not.toHaveBeenCalled();
+    expect(readSignedOut()).toBe(true);
   });
 
   it.each(["orcid", "ORCID"])(

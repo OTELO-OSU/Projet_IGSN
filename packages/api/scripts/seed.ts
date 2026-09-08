@@ -192,6 +192,8 @@ async function seedManagedGroups(
   db: Kysely<DB>,
   ownerIds: Record<ResearcherKey, string>,
 ): Promise<void> {
+  await db.deleteFrom("user_managed_institutional_group").execute();
+  await db.deleteFrom("user_managed_manual_group").execute();
   await db
     .insertInto("user_managed_institutional_group")
     .values([

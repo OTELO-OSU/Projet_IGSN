@@ -195,7 +195,7 @@ export function SampleFacets({
     >
       <Button
         type="button"
-        variant="outline"
+        variant="secondary"
         disabled={!hasActive}
         onClick={() => {
           onClearAll();

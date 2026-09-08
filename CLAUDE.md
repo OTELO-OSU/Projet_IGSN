@@ -12,6 +12,7 @@
 ## Personas
 
 - **Reader** (unauthenticated): browses, filters, and searches published samples.
+- A Reader may sign in from the public site: the header then offers "Go to admin", and a published sample they can reach in `admin` shows an "Edit" link.
 - **Contributor**: enters sample info during declaration, and invites others.
 - **Editor**: validates declarations and edits info after validation.
 - Contributor and Editor are per-sample roles of an authenticated user.

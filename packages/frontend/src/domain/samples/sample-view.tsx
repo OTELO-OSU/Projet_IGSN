@@ -14,6 +14,7 @@ import { ConditionView } from "#/domain/samples/condition-view.tsx";
 import { ContactOwnerDialog } from "#/domain/samples/contact-owner-dialog.tsx";
 import { DescriptionView } from "#/domain/samples/description-view.tsx";
 import { EconomicInterestView } from "#/domain/samples/economic-interest-view.tsx";
+import { EditSampleLink } from "#/domain/samples/edit-sample-link.tsx";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
 import { RelationsView } from "#/domain/samples/relations-view.tsx";
@@ -40,6 +41,7 @@ import { m } from "#/paraglide/messages.js";
 
 export function SampleView({
   sample: {
+    id,
     name,
     igsn,
     nature,
@@ -283,7 +285,11 @@ export function SampleView({
 
   return (
     <div>
-      <SampleHero name={name} igsn={igsn} />
+      <SampleHero
+        name={name}
+        igsn={igsn}
+        actions={<EditSampleLink sampleId={id} />}
+      />
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
         <nav

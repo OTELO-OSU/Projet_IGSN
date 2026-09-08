@@ -97,6 +97,9 @@ services:
       target: prod
       args:
         VITE_API_URL: http://localhost:4000/api
+        VITE_OIDC_AUTHORITY: http://localhost:18080/realms/igsn
+        VITE_OIDC_CLIENT_ID: igsn-admin
+        VITE_ADMIN_URL: http://localhost:4000/admin
     environment:
       PORT: "3000"
       API_URL: http://api:3002
@@ -129,6 +132,7 @@ services:
       KC_HOSTNAME: http://localhost:18080
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       ADMIN_REDIRECT_URI: http://localhost:4000/admin/*
+      FRONTEND_REDIRECT_URI: http://localhost:4000/auth/callback
       ADMIN_WEB_ORIGIN: http://localhost:4000
       SHIBBOLETH_SSO_URL: http://localhost:18081/simplesaml/saml2/idp/SSOService.php
       SHIBBOLETH_SLO_URL: http://localhost:18081/simplesaml/saml2/idp/SingleLogoutService.php

@@ -9,9 +9,12 @@ import {
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Mountain } from "lucide-react";
+import { AuthProvider } from "react-oidc-context";
 
 import type { MyRouterContext } from "../router-context";
 
+import { AuthControls } from "../auth/auth-controls.tsx";
+import { onSigninCallback, userManager } from "../auth/oidc-config.ts";
 import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
 import { m } from "../paraglide/messages.js";
 import { getLocale, localizeHref } from "../paraglide/runtime.js";
@@ -56,45 +59,50 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
 function RootLayout() {
   return (
-    <div className="flex min-h-svh flex-col">
-      <header className="bg-background/80 sticky top-0 z-40 flex h-24 items-center gap-3 border-b px-4 backdrop-blur">
-        <Link
-          to="/"
-          aria-label={m.app_title()}
-          className="flex items-center gap-3 text-sky-900"
-        >
-          <Mountain className="text-foreground size-9" aria-hidden="true" />
-          <span className="flex flex-col leading-tight">
-            <span className="text-2xl font-bold">{m.app_title()}</span>
-            <span className="text-muted-foreground text-sm">
-              {m.app_subtitle()}
+    <AuthProvider userManager={userManager} onSigninCallback={onSigninCallback}>
+      <div className="flex min-h-svh flex-col">
+        <header className="bg-background/80 sticky top-0 z-40 flex h-24 items-center gap-3 border-b px-4 backdrop-blur">
+          <Link
+            to="/"
+            aria-label={m.app_title()}
+            className="flex items-center gap-3 text-sky-900"
+          >
+            <Mountain className="text-foreground size-9" aria-hidden="true" />
+            <span className="flex flex-col leading-tight">
+              <span className="text-2xl font-bold">{m.app_title()}</span>
+              <span className="text-muted-foreground text-sm">
+                {m.app_subtitle()}
+              </span>
             </span>
-          </span>
-        </Link>
-      </header>
-
-      <main className="w-full flex-1">
-        <Outlet />
-      </main>
-      <Toaster />
-
-      <footer className="bg-muted/30 mt-16 border-t">
-        <div className="flex flex-col gap-8 px-6 py-10 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-8">
-            <img
-              src={`${import.meta.env.BASE_URL}republique-francaise.svg`}
-              alt={m.footer_logo_republique_francaise()}
-              className="h-20 w-auto"
-            />
-            <img
-              src={`${import.meta.env.BASE_URL}gaia-data.svg`}
-              alt={m.footer_logo_gaia_data()}
-              className="h-20 w-auto"
-            />
+          </Link>
+          <div className="ml-auto">
+            <AuthControls />
           </div>
-        </div>
-      </footer>
-    </div>
+        </header>
+
+        <main className="w-full flex-1">
+          <Outlet />
+        </main>
+        <Toaster />
+
+        <footer className="bg-muted/30 mt-16 border-t">
+          <div className="flex flex-col gap-8 px-6 py-10 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-8">
+              <img
+                src={`${import.meta.env.BASE_URL}republique-francaise.svg`}
+                alt={m.footer_logo_republique_francaise()}
+                className="h-20 w-auto"
+              />
+              <img
+                src={`${import.meta.env.BASE_URL}gaia-data.svg`}
+                alt={m.footer_logo_gaia_data()}
+                className="h-20 w-auto"
+              />
+            </div>
+          </div>
+        </footer>
+      </div>
+    </AuthProvider>
   );
 }
 

@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
+import { signIn } from "@projet-igsn/domain/auth/sign-in";
+import {
+  broadcastSignOut,
+  onSignOutBroadcast,
+} from "@projet-igsn/domain/auth/sign-out-broadcast";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "react-oidc-context";
 
@@ -11,7 +16,6 @@ import { CenteredLoader } from "./centered-loader.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
 import { IdentityGate } from "./identity-gate.tsx";
 import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
-import { signIn } from "./sign-in.ts";
 import { clearSignedOut, markSignedOut, readSignedOut } from "./signed-out.ts";
 
 export function AuthGate({ children }: { children?: ReactNode }) {
@@ -28,7 +32,18 @@ export function AuthGate({ children }: { children?: ReactNode }) {
     signIn(auth);
   }, [shouldSignIn, auth]);
 
+  useEffect(
+    () =>
+      onSignOutBroadcast(() => {
+        setHasSignedOut(true);
+        markSignedOut();
+        void auth.removeUser();
+      }),
+    [auth],
+  );
+
   const signOut = () => {
+    broadcastSignOut();
     setHasSignedOut(true);
     markSignedOut();
     void auth.signoutRedirect();

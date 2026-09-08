@@ -28,12 +28,16 @@ export const RESEARCHERS = {
   nadia: { username: "nadia.leroy", email: "nadia.leroy@univ-lorraine.fr" },
 } satisfies Record<string, Researcher>;
 
-export async function signInAsResearcher(page: Page, researcher: Researcher) {
-  const admin = adminPage(page);
-  await admin.goto();
+export async function completeIdpLogin(page: Page, researcher: Researcher) {
   await keycloakLoginPage(page).chooseInstitution();
   await shibbolethLoginPage(page).login(researcher.username, "password");
   await keycloakProfilePage(page).completeIfShown(researcher.email);
+}
+
+export async function signInAsResearcher(page: Page, researcher: Researcher) {
+  const admin = adminPage(page);
+  await admin.goto();
+  await completeIdpLogin(page, researcher);
   await admin.expectSignedIn();
 }
 

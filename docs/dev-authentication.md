@@ -2,14 +2,16 @@
 
 `make dev` also starts a [Keycloak](https://www.keycloak.org) at http://localhost:8080, preconfigured from [`keycloak/realm-igsn.json`](../keycloak/realm-igsn.json) via its native `--import-realm`.
 
-| What             | Value                                               |
-| ---------------- | --------------------------------------------------- |
-| Realm            | `igsn`                                              |
-| Admin console    | http://localhost:8080, `admin` / `admin`            |
-| Admin SPA client | `igsn-admin` (public, PKCE, `localhost:3000/admin`) |
-| Test user        | `test` / `test` (realm role `admin`)                |
-| OIDC issuer      | http://localhost:8080/realms/igsn                   |
+| What             | Value                                                                                       |
+| ---------------- | ------------------------------------------------------------------------------------------- |
+| Realm            | `igsn`                                                                                      |
+| Admin console    | http://localhost:8080, `admin` / `admin`                                                    |
+| Admin SPA client | `igsn-admin` (public, PKCE, `localhost:3000/admin` and `localhost:3000` frontend callbacks) |
+| Test user        | `test` / `test` (realm role `admin`)                                                        |
+| OIDC issuer      | http://localhost:8080/realms/igsn                                                           |
 
+- The public frontend signs in with the same `igsn-admin` client, over its own `/auth/callback` at the site root (`FRONTEND_REDIRECT_URI`, `ADR 0006` amendment). A signed-in reader sees "Go to admin" / "Sign out" in the header and an "Edit" link on a published sample they can reach in admin (a `HEAD /admin/samples/:id` probe answers 200).
+- Signing out in one tab signs out every other tab and app: a same-origin `localStorage` broadcast (`domain/src/auth/sign-out-broadcast.ts`) drops the local session in admin and frontend (ADR 0006 amendment); the api keeps honouring an already-issued access token until it expires.
 - Edit the realm file and restart to change clients or users.
 - Token policy mirrors production (5 min access tokens, single-use 30 min refresh tokens, no password grant; GT-SSO recommendations, ADR 0006), so tests drive the real browser login.
 - `KC_HOSTNAME` is pinned to `http://localhost:8080` so the issuer the browser sees matches the one the api calls `/userinfo` on (`requireActiveSession`, needed for accept/reject); preprod already sets this.
@@ -89,5 +91,7 @@
 ## Production
 
 - The admin SPA points at an externally-managed Keycloak via `VITE_OIDC_AUTHORITY` / `VITE_OIDC_CLIENT_ID` (see [`oidc-config.ts`](../packages/admin/src/auth/oidc-config.ts)).
+- The frontend build takes the same two vars plus `VITE_ADMIN_URL` (see [`oidc-config.ts`](../packages/frontend/src/auth/oidc-config.ts) and [`admin-url.ts`](../packages/frontend/src/admin-url.ts)).
+- Both apps build their `UserManager` from [`oidc-settings.ts`](../packages/domain/src/auth/oidc-settings.ts), the one home of the client id, scope and revocation policy.
 - The realm files, the `test` user and the mock IdPs are **dev/e2e only and never shipped**, so the insecure-by-design bits (`sslRequired: none`, unsigned SAML, a local admin password) stay in that throwaway setup.
 - Standing up the prod Keycloak is an ops task: register its SP metadata (`.../realms/igsn/broker/satosa/endpoint`) with RENATER, opt into eduGAIN, and point the ORCID broker at production ORCID.

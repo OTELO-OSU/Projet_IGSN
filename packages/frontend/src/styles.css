@@ -3,6 +3,12 @@
 
 @source "../../design-system/src";
 
+:root {
+  --primary: #0069a8;
+  --primary-foreground: #fff;
+  --ring: #0069a8;
+}
+
 html,
 body,
 #app {

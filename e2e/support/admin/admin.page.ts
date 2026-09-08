@@ -18,6 +18,8 @@ export function adminPage(page: Page) {
       expect(page.getByRole("alert")).toContainText(/eduGAIN.*ORCID iD/is),
     expectSignedIn: () =>
       expect(page.getByRole("button", { name: "Sign out" })).toBeVisible(),
+    expectSignedOut: () =>
+      expect(page.getByRole("button", { name: "Sign in" })).toBeVisible(),
     expectUserName: (name: string) =>
       expect(page.getByRole("banner").getByText(name)).toBeVisible(),
   };
