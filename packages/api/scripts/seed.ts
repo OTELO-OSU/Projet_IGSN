@@ -227,10 +227,13 @@ const MOCK_SERVICE_ACCOUNT = {
   institutional_laboratory: "UMR7358",
 };
 
-async function seedServiceAccounts(db: Kysely<DB>): Promise<void> {
+async function seedServiceAccounts(
+  db: Kysely<DB>,
+  ownerIds: Record<ResearcherKey, string>,
+): Promise<void> {
   await db
     .insertInto("service_account")
-    .values(MOCK_SERVICE_ACCOUNT)
+    .values({ ...MOCK_SERVICE_ACCOUNT, owner_id: ownerIds.jean })
     .onConflict((oc) => oc.column("id").doNothing())
     .execute();
   await db
@@ -281,7 +284,7 @@ export async function seedMockUsers(
   const ownerIds = await seedOwners(db);
   await seedManualGroups(db, ownerIds);
   await seedManagedGroups(db, ownerIds);
-  await seedServiceAccounts(db);
+  await seedServiceAccounts(db, ownerIds);
   return ownerIds;
 }
 

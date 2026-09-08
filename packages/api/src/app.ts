@@ -9,6 +9,10 @@ import type { SendMail } from "./mail/send-mail.ts";
 
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
+import {
+  type ServiceEnv,
+  requireServiceAccount,
+} from "./auth/require-service-account.ts";
 import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
 import { createInstitutionalGroupRoutes } from "./institutional-group/routes.ts";
 import { createPublicManualGroupRoutes } from "./manual-group/public-routes.ts";
@@ -24,6 +28,7 @@ import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
 import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
+import { createServiceAccountOwnerRoutes } from "./service-account/owner-routes.ts";
 import { createServiceAccountRepository } from "./service-account/repository.ts";
 import { createServiceAccountRoutes } from "./service-account/routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
@@ -97,6 +102,19 @@ export function createApp(
       "/currentUser",
       createCurrentUserRoutes(userRepository, manualGroupRepository, mail),
     )
+    .use(
+      "/currentUser/service-accounts/requests",
+      rateLimit(rateLimitConfig, "user", MAIL_REQUEST_USER_BUDGET),
+    )
+    .route(
+      "/currentUser/service-accounts",
+      createServiceAccountOwnerRoutes(
+        serviceAccountRepository,
+        userRepository,
+        manualGroupRepository,
+        mail,
+      ),
+    )
     .route(
       "/institutional-groups",
       createInstitutionalGroupRoutes(institutionalGroupRepository),
@@ -131,6 +149,11 @@ export function createApp(
     )
     .route("/users", createUserRoutes(userRepository, mail));
 
+  const serviceRoutes = new Hono<ServiceEnv>()
+    .use("*", rateLimit(rateLimitConfig, "ip"))
+    .use("*", requireServiceAccount(serviceAccountRepository))
+    .get("/ping", (c) => c.json({ ok: true }));
+
   const app = new Hono<AuthenticatedEnv>()
     .use(
       "*",
@@ -157,6 +180,7 @@ export function createApp(
     .route("/samples", publicSampleRoutes)
     .route("/manual-groups", publicManualGroupRoutes)
     .route("/users", publicUserRoutes)
+    .route("/service", serviceRoutes)
     .route("/admin", adminRoutes);
 
   return { app };
