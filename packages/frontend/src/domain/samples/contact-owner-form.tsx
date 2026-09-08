@@ -21,9 +21,7 @@ const validate = ({ value }: { value: unknown }) => {
       parsed.error.issues.map((issue) => [
         issue.path.join("."),
         {
-          message: (
-            ISSUE_MESSAGE[issue.code] ?? (() => m.contact_field_required())
-          )(),
+          message: (ISSUE_MESSAGE[issue.code] ?? (() => m.field_required()))(),
         },
       ]),
     ),
