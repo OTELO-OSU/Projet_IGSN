@@ -3,8 +3,14 @@ import { expect, type Page } from "@playwright/test";
 import { frontendUrl } from "../urls";
 
 export function sampleDetailPage(page: Page) {
+  const url = (igsn: string) => `${frontendUrl}/samples/${igsn}`;
+
   return {
-    goto: (igsn: string) => page.goto(`${frontendUrl}/samples/${igsn}`),
+    goto: async (igsn: string) => {
+      const response = await page.goto(url(igsn));
+      expect(response?.status()).toBe(200);
+    },
+    gotoNotFound: (igsn: string) => page.goto(url(igsn)),
     expectSample: async (name: string, igsn: string) => {
       await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
       await expect(page.getByText(igsn)).toBeVisible();
