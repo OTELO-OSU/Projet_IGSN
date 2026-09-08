@@ -1399,6 +1399,26 @@ describe("admin sample routes", () => {
     },
   );
 
+  pgTest(
+    "should answer a HEAD like a GET when an unverified user probes their published sample",
+    async ({ db }) => {
+      const { app } = createApp(db);
+      const { id } = await createAndPublish(db, testClient(app));
+      await db
+        .updateTable("user")
+        .set({ status: "pending" })
+        .where("email", "=", authenticatedCallerEmail)
+        .execute();
+
+      const res = await app.request(`/admin/samples/${id}`, {
+        method: "HEAD",
+        headers: authHeader,
+      });
+
+      expect(res.status).toBe(200);
+    },
+  );
+
   pgTest("should let a pending user save a draft", async ({ db }) => {
     // Arrange
     await provisionUser(db, "test-token", { status: "pending" });
