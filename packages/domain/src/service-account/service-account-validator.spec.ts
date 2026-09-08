@@ -6,6 +6,7 @@ const LORRAINE = "04vfs2w97";
 
 const body = (overrides: object) => ({
   name: "Gaia Data",
+  ownerId: "b0f3f6a4-1f4c-4f3a-9a2e-6c1d5e9b7a01",
   institutionalOrganization: ORLEANS,
   institutionalOsu: null,
   institutionalLaboratory: "UMR7327",

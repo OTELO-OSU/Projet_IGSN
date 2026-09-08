@@ -1,4 +1,4 @@
-import type { ServiceAccount } from "./model.ts";
+import type { MyServiceAccount, ServiceAccount } from "./model.ts";
 import type {
   ListServiceAccountsQuery,
   ServiceAccountBody,
@@ -15,4 +15,7 @@ export type ServiceAccountRepository = {
     body: ServiceAccountBody,
   ): Promise<ServiceAccount | "name_taken">;
   remove(id: string): Promise<void>;
+  listByOwner(ownerId: string): Promise<MyServiceAccount[]>;
+  rotateApiKey(id: string, ownerId: string, hash: string): Promise<void>;
+  findByApiKeyHash(hash: string): Promise<ServiceAccount | undefined>;
 };
