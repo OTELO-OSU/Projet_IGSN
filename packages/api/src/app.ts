@@ -7,6 +7,7 @@ import { HTTPException } from "hono/http-exception";
 import type { DB } from "./db.ts";
 import type { SendMail } from "./mail/send-mail.ts";
 
+import { backchannelLogoutRoutes } from "./auth/backchannel-logout-routes.ts";
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
 import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
@@ -89,6 +90,10 @@ export function createApp(
     .use("*", rateLimit(rateLimitConfig, "ip"))
     .route("/", createPublicUserRoutes(userRepository));
 
+  const publicBackchannelLogoutRoutes = new Hono()
+    .use("*", rateLimit(rateLimitConfig, "ip"))
+    .route("/", backchannelLogoutRoutes);
+
   const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
     .use("*", rateLimit(rateLimitConfig, "user"))
@@ -157,6 +162,7 @@ export function createApp(
     .route("/samples", publicSampleRoutes)
     .route("/manual-groups", publicManualGroupRoutes)
     .route("/users", publicUserRoutes)
+    .route("/auth/backchannel-logout", publicBackchannelLogoutRoutes)
     .route("/admin", adminRoutes);
 
   return { app };

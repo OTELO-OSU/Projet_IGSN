@@ -25,7 +25,10 @@
       "webOrigins": ["${ADMIN_WEB_ORIGIN:http://localhost:3000}"],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "${ADMIN_REDIRECT_URI:http://localhost:3000/admin/*}##${FRONTEND_REDIRECT_URI:http://localhost:3000/auth/callback}"
+        "post.logout.redirect.uris": "${ADMIN_REDIRECT_URI:http://localhost:3000/admin/*}##${FRONTEND_REDIRECT_URI:http://localhost:3000/auth/callback}",
+        "backchannel.logout.url": "${BACKCHANNEL_LOGOUT_URL:http://api:3002/auth/backchannel-logout}",
+        "backchannel.logout.session.required": "true",
+        "backchannel.logout.revoke.offline.tokens": "false"
       },
       "protocolMappers": [
         {
