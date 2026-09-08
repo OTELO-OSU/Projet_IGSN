@@ -11,7 +11,7 @@ export function EditSampleLink({ sampleId }: { sampleId: string }) {
   }
 
   return (
-    <Button asChild variant="outline" size="sm">
+    <Button asChild variant="secondary" size="md">
       <a href={`${ADMIN_URL}/samples/${sampleId}`}>{m.sample_edit()}</a>
     </Button>
   );

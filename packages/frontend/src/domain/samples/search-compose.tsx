@@ -122,8 +122,9 @@ export function SearchCompose({
   const submitButton = (
     <Button
       type="submit"
+      variant="primary"
       size="lg"
-      className="ms-auto h-14 px-8 text-base"
+      className="ms-auto h-14"
       disabled={queries.every((query) => !query.value) && !shrunk}
     >
       {m.search_action()}

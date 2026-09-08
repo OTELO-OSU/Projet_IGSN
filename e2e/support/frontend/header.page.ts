@@ -10,6 +10,16 @@ export function headerPage(page: Page) {
         await banner.getByRole("button", { name: "Sign in" }).click();
         await page.waitForURL(/\/realms\//, { timeout: 2_000 });
       }).toPass({ timeout: 20_000 }),
+    signInWithExistingSession: () =>
+      expect(async () => {
+        const signInButton = banner.getByRole("button", { name: "Sign in" });
+        if (await signInButton.isVisible()) {
+          await signInButton.click();
+        }
+        await expect(
+          banner.getByRole("button", { name: "Sign out" }),
+        ).toBeVisible({ timeout: 3_000 });
+      }).toPass({ timeout: 30_000 }),
     signOut: () => banner.getByRole("button", { name: "Sign out" }).click(),
     expectSignedIn: () =>
       expect(banner.getByRole("button", { name: "Sign out" })).toBeVisible(),

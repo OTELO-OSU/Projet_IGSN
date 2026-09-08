@@ -11,7 +11,7 @@ function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-sky-700 text-white">
+    <div className="bg-primary text-white">
       <div className="mx-auto max-w-6xl px-6 py-16 text-center">
         <h1 className="text-4xl font-bold sm:text-5xl">
           {m.search_landing_title()}

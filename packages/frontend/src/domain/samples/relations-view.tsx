@@ -119,7 +119,7 @@ export function RelationsView({
                       )}
                     </span>
                   ) : null}
-                  <Button asChild variant="outline" size="sm">
+                  <Button asChild variant="secondary" size="md">
                     <a
                       href={attachmentUrl(igsn, attachment.id)}
                       download={attachment.name}

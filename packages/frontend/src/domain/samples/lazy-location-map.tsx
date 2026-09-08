@@ -65,7 +65,8 @@ export function LazyLocationMap({
               <TooltipTrigger asChild>
                 <Button
                   type="button"
-                  variant={drawing ? "default" : "outline"}
+                  variant={drawing ? "primary" : "secondary"}
+                  size="md"
                   aria-pressed={drawing}
                   onClick={() => setDrawing(!drawing)}
                 >
