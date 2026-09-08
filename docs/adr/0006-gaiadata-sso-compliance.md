@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Formalizes the 2026-07-03 audit of the auth stack against the GT-SSO client recommendations, implemented in the same change set. Amended 2026-07-30 (audience validation) and 2026-09-07 (frontend sign-in).
+Accepted. Formalizes the 2026-07-03 audit of the auth stack against the GT-SSO client recommendations, implemented in the same change set. Amended 2026-07-30 (audience validation), 2026-09-07 (frontend sign-in) and 2026-09-08 (cross-app sign-out).
 
 ## Context
 
@@ -56,6 +56,16 @@ A knowing deviation from [REQ-TOKEN-03/04](#gt-sso-requirements). When GaiaData 
 ## Amendment 2026-09-07: the public frontend is a second redirect URI on the same client
 
 The public frontend (`packages/frontend`) now signs in through the same public PKCE client as admin, not a second client: same `client_id`, same scopes, same token policy. It returns through its own exact `origin + /auth/callback`, so the client gains a second exact redirect URI and post-logout redirect URI alongside the admin one, per [REQ-PARAM-02](#gt-sso-requirements); see [gaiadata-client-provisioning.md](../gaiadata-client-provisioning.md). `safeReturnPath` and `signIn` moved to `packages/domain/src/auth/` so both apps share one implementation instead of two copies. No new ADR: same client, same model, no new decision.
+
+## Amendment 2026-09-08: cross-app sign-out, two mechanisms
+
+Signing out in one tab left every other tab, and every other app, signed in until its own token expired: refresh tokens stay per-tab `sessionStorage` on purpose (line 44 above, rotation is single-use), so nothing shared lets a tab notice another tab's sign-out on its own.
+
+**(a) Same-origin broadcast.** `domain/src/auth/sign-out-broadcast.ts` writes a random value to the `igsn-sign-out` `localStorage` key on sign-out. Admin's `AuthGate` and the frontend's `AuthControls` both listen for the `storage` event and drop their own user (`auth.removeUser()`) on it. The admin tab shows the welcome screen instead of calling `signinRedirect`, deliberately: the signing-out tab may not yet have reached Keycloak's `end_session` endpoint, so a live SSO cookie would redirect the other tab straight back into a signed-in session.
+
+**(b) OIDC Back-Channel Logout.** The api exposes `POST /auth/backchannel-logout` (`api/src/auth/backchannel-logout-routes.ts`), verifying Keycloak's logout token via JWKS (`iss`, `aud`, `iat`, `events`, no `nonce`, `sid` or `sub` required) and recording the session in an in-memory revoked-sessions map for 10 minutes (`revoked-sessions.ts`, one api instance, ponytail-marked). `requireAuth` then answers 401 for a revoked `sid` (or `sub` when the logout token carried none). The realm client sets `backchannel.logout.url` (`${BACKCHANNEL_LOGOUT_URL:http://api:3002/auth/backchannel-logout}`) and `backchannel.logout.session.required: true`; the e2e compose sets that env explicitly.
+
+This is the transport GaiaData's account-deletion propagation was left open on ([REQ-USER-01](#gt-sso-requirements), "Decision" section above): the endpoint now exists, still only for logout, not yet for deletion. GaiaData must register the preprod URL on its client (tracked in [gaiadata-client-provisioning.md](../gaiadata-client-provisioning.md), already updated). Confirm on the first preprod deploy that GaiaData access tokens carry `sid`, the same "confirm on a real token" caveat as the `azp`/`typ` stand-in above.
 
 ## GT-SSO requirements
 
