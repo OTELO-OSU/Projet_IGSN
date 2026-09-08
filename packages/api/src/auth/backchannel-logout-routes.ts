@@ -7,15 +7,11 @@ import { z } from "zod";
 
 import type { SessionClaims } from "./revoked-sessions.ts";
 
+import { clientId, issuer, jwksUri } from "./oidc-config.ts";
 import { revokeSession } from "./revoked-sessions.ts";
 
 const BACKCHANNEL_LOGOUT_EVENT =
   "http://schemas.openid.net/event/backchannel-logout";
-
-const issuer = process.env.OIDC_ISSUER ?? "http://localhost:8080/realms/igsn";
-const jwksUri =
-  process.env.OIDC_JWKS_URI ?? `${issuer}/protocol/openid-connect/certs`;
-const clientId = process.env.OIDC_CLIENT_ID ?? "igsn-admin";
 
 const logoutFormSchema = z.object({ logout_token: z.string().min(1) });
 

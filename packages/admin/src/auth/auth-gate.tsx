@@ -35,7 +35,6 @@ export function AuthGate({ children }: { children?: ReactNode }) {
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
       if (!isSignOutBroadcast(event)) return;
-      // No signinRedirect here: the other tab may not have reached the end_session yet, so the live SSO cookie would sign this tab straight back in.
       setHasSignedOut(true);
       markSignedOut();
       void auth.removeUser();
