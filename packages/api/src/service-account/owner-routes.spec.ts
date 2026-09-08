@@ -29,6 +29,7 @@ const OSU = "OTELo";
 const LABORATORY = "UMR7358";
 const GROUP = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "OZCAR-RI" };
 const NAME = "GeoPortal harvester";
+const REASON = "To harvest our OZCAR samples nightly";
 const CREATE_LINK = `${ADMIN_URL}service-accounts/create?request=`;
 
 const authHeader = { Authorization: "Bearer test-token" };
@@ -38,6 +39,7 @@ const requestBody = (
 ): ServiceAccountRequest => ({
   name: NAME,
   managedGroups: { ...NO_MANAGED_GROUPS, manualGroupIds: [GROUP.id] },
+  reason: REASON,
   ...overrides,
 });
 
@@ -83,7 +85,7 @@ const ping = (app: ReturnType<typeof arrangeApp>["app"], key: string) =>
 
 describe("service account owner routes", () => {
   pgTest(
-    "should mail every super admin the requester, the service name and a create link prefilled with the request",
+    "should mail every super admin the requester, the service name, the reason and a create link prefilled with the reason-free request",
     async ({ db }) => {
       // Arrange
       await db.insertInto("manual_group").values(GROUP).execute();
@@ -104,6 +106,7 @@ describe("service account owner routes", () => {
       });
       expect(sent.text).toContain("Test User");
       expect(sent.text).toContain(NAME);
+      expect(sent.text).toContain(REASON);
       expect(sent.text).toContain(CREATE_LINK);
       const link = sent.text
         .split(/\s+/)
@@ -129,6 +132,11 @@ describe("service account owner routes", () => {
     {
       rule: "a blank service name",
       json: requestBody({ name: "   " }),
+      status: 400,
+    },
+    {
+      rule: "a blank reason",
+      json: requestBody({ reason: "   " }),
       status: 400,
     },
     {

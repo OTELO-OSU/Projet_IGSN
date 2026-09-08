@@ -16,6 +16,7 @@ import { type Translator, translator } from "../mail/i18n.ts";
 export type ServiceAccountRequestMail = {
   requester: Pick<User, "email" | "name" | "firstname">;
   draft: ServiceAccountDraft;
+  reason: string;
   manualGroupNames: string[];
   adminUrl: string;
 };
@@ -52,6 +53,7 @@ function requestedGroups(
 export async function serviceAccountRequestMail({
   requester,
   draft,
+  reason,
   manualGroupNames,
   adminUrl,
 }: ServiceAccountRequestMail): Promise<RenderedMail> {
@@ -63,12 +65,14 @@ export async function serviceAccountRequestMail({
       : t("mail_service_account_request_no_laboratory"),
     name: draft.name,
   };
-  const quote = requestedGroups(t, draft, manualGroupNames);
+  const quote = [reason, requestedGroups(t, draft, manualGroupNames)]
+    .filter((part) => part.length > 0)
+    .join("\n\n");
   return ctaMail({
     recipient: { name: null, firstname: null },
     subject: t("mail_service_account_request_subject", params),
     body: t("mail_service_account_request_body", params),
-    quote: quote || undefined,
+    quote,
     cta: t("mail_service_account_request_cta"),
     url: requestUrl(adminUrl, draft),
   });

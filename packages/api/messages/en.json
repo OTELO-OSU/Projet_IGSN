@@ -31,7 +31,7 @@
   "mail_manual_group_request_body": "{{requester}} requests the creation of the manual group \"{{name}}\", to be managed by {{managers}}.",
   "mail_manual_group_request_cta": "Create this group",
   "mail_service_account_request_subject": "{{requester}} asks for the service account \"{{name}}\"",
-  "mail_service_account_request_body": "{{requester}}, from {{laboratory}}, asks for the service account \"{{name}}\".",
+  "mail_service_account_request_body": "{{requester}}, from {{laboratory}}, asks for the service account \"{{name}}\", for this reason:",
   "mail_service_account_request_no_laboratory": "no declared laboratory",
   "mail_service_account_request_organizations": "Organizations",
   "mail_service_account_request_osus": "OSUs",

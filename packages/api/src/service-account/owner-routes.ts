@@ -52,7 +52,7 @@ export function createServiceAccountOwnerRoutes(
       requireActiveSession,
       validateServiceAccountRequestBody,
       async (c) => {
-        const { name, managedGroups } = c.req.valid("json");
+        const { name, managedGroups, reason } = c.req.valid("json");
         const wanted = [...new Set(managedGroups.manualGroupIds)];
         const requester = c.get("user");
         const attachable = await manualGroups.listAttachableForUser(
@@ -89,6 +89,7 @@ export function createServiceAccountOwnerRoutes(
               serviceAccountRequestMail({
                 requester,
                 draft,
+                reason,
                 manualGroupNames: groups.map((group) => group.name),
                 adminUrl: mail.adminUrl,
               }),
