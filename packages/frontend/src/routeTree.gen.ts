@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SamplesIgsnRouteImport } from './routes/samples/$igsn'
-import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
@@ -29,43 +28,34 @@ const SamplesIgsnRoute = SamplesIgsnRouteImport.update({
   path: '/samples/$igsn',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthCallbackRoute = AuthCallbackRouteImport.update({
-  id: '/auth/callback',
-  path: '/auth/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
-  '/auth/callback': typeof AuthCallbackRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/search' | '/auth/callback' | '/samples/$igsn'
+  fullPaths: '/' | '/search' | '/samples/$igsn'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/search' | '/auth/callback' | '/samples/$igsn'
-  id: '__root__' | '/' | '/search' | '/auth/callback' | '/samples/$igsn'
+  to: '/' | '/search' | '/samples/$igsn'
+  id: '__root__' | '/' | '/search' | '/samples/$igsn'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SearchRoute: typeof SearchRoute
-  AuthCallbackRoute: typeof AuthCallbackRoute
   SamplesIgsnRoute: typeof SamplesIgsnRoute
 }
 
@@ -92,20 +82,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SamplesIgsnRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/auth/callback': {
-      id: '/auth/callback'
-      path: '/auth/callback'
-      fullPath: '/auth/callback'
-      preLoaderRoute: typeof AuthCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SearchRoute: SearchRoute,
-  AuthCallbackRoute: AuthCallbackRoute,
   SamplesIgsnRoute: SamplesIgsnRoute,
 }
 export const routeTree = rootRouteImport

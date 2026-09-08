@@ -1,4 +1,8 @@
 import { SIGN_OUT_BROADCAST_KEY } from "@projet-igsn/domain/auth/sign-out-broadcast";
+import {
+  clearSignedOut,
+  readSignedOut,
+} from "@projet-igsn/domain/auth/signed-out";
 import { vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
@@ -11,6 +15,7 @@ import { AuthControls } from "./auth-controls.tsx";
 describe("AuthControls", () => {
   beforeEach(() => {
     localStorage.removeItem(SIGN_OUT_BROADCAST_KEY);
+    clearSignedOut();
   });
 
   it("should send a signed-out visitor to the provider, recording the page to come back to", async () => {
@@ -27,7 +32,7 @@ describe("AuthControls", () => {
     );
   });
 
-  it("should offer admin and a sign out that tells the other tabs", async () => {
+  it("should offer admin and a sign out that flags this tab, tells the others, and records the page to come back to", async () => {
     const signoutRedirect = vi.fn();
     const screen = await render(
       stubAuth(<AuthControls />, { isAuthenticated: true, signoutRedirect }),
@@ -38,8 +43,11 @@ describe("AuthControls", () => {
       .toHaveAttribute("href", ADMIN_URL);
     await page.getByRole("button", { name: "Sign out" }).click();
 
-    expect(signoutRedirect).toHaveBeenCalled();
+    expect(signoutRedirect).toHaveBeenCalledWith({
+      state: window.location.pathname + window.location.search,
+    });
     expect(localStorage.getItem(SIGN_OUT_BROADCAST_KEY)).not.toBeNull();
+    expect(readSignedOut()).toBe(true);
   });
 
   it("should render nothing while the session is loading", async () => {

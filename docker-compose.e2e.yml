@@ -132,7 +132,6 @@ services:
       KC_HOSTNAME: http://localhost:18080
       KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
       ADMIN_REDIRECT_URI: http://localhost:4000/admin/*
-      FRONTEND_REDIRECT_URI: http://localhost:4000/auth/callback
       ADMIN_WEB_ORIGIN: http://localhost:4000
       SHIBBOLETH_SSO_URL: http://localhost:18081/simplesaml/saml2/idp/SSOService.php
       SHIBBOLETH_SLO_URL: http://localhost:18081/simplesaml/saml2/idp/SingleLogoutService.php
