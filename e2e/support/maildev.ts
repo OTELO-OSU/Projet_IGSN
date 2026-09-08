@@ -40,6 +40,7 @@ export function maildev(request: APIRequestContext) {
       if (replyTo !== undefined) {
         expect(mail?.replyTo?.map(({ address }) => address)).toContain(replyTo);
       }
+      return mail?.text ?? "";
     },
   };
 }
