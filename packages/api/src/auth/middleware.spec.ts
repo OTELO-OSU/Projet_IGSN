@@ -4,30 +4,43 @@ import { testClient } from "hono/testing";
 import { afterEach, beforeAll, beforeEach, describe, expect, vi } from "vitest";
 
 import type { createApp } from "../app.ts";
-import type { TestJwks } from "../tests/oidc-token.ts";
 
-import {
-  exportJwks,
-  generateRsaKeyPair,
-  mintJwt,
-} from "../tests/oidc-token.ts";
 import { pgTest } from "../tests/pg-test.ts";
 
 vi.unmock("./middleware.ts");
 
+const KID = "test-key";
 const ISSUER = "http://localhost:8080/realms/igsn";
 const AUDIENCE = "igsn-api";
 const CLIENT_ID = "igsn-admin";
 
+const b64url = (data: string | Uint8Array): string =>
+  Buffer.from(data).toString("base64url");
+
+type TestJwk = webcrypto.JsonWebKey & { kid: string; alg: string };
+
 let privateKey: webcrypto.CryptoKey;
-let jwks: TestJwks;
+let jwks: { keys: TestJwk[] };
+
+const generateRsaKeyPair = () =>
+  crypto.subtle.generateKey(
+    {
+      name: "RSASSA-PKCS1-v1_5",
+      modulusLength: 2048,
+      publicExponent: new Uint8Array([1, 0, 1]),
+      hash: "SHA-256",
+    },
+    true,
+    ["sign", "verify"],
+  );
 
 beforeAll(async () => {
   // ponytail: pre-evaluates the app module graph (mjml is slow), since the first per-test dynamic import otherwise blows the test timeout
   await import("../app.ts");
   const pair = await generateRsaKeyPair();
   privateKey = pair.privateKey;
-  jwks = await exportJwks(pair.publicKey);
+  const publicJwk = await crypto.subtle.exportKey("jwk", pair.publicKey);
+  jwks = { keys: [{ ...publicJwk, kid: KID, alg: "RS256" }] };
 });
 
 beforeEach(() => {
@@ -42,10 +55,19 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-const mint = (
+async function mint(
   claims: Record<string, unknown>,
   key: webcrypto.CryptoKey = privateKey,
-): Promise<string> => mintJwt(claims, key);
+): Promise<string> {
+  const header = b64url(JSON.stringify({ alg: "RS256", typ: "JWT", kid: KID }));
+  const payload = b64url(JSON.stringify(claims));
+  const signature = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    new TextEncoder().encode(`${header}.${payload}`),
+  );
+  return `${header}.${payload}.${b64url(new Uint8Array(signature))}`;
+}
 
 const nowSeconds = () => Math.floor(Date.now() / 1000);
 
