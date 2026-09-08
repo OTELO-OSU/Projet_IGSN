@@ -2,6 +2,10 @@ import type { ReactNode } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { signIn } from "@projet-igsn/domain/auth/sign-in";
+import {
+  broadcastSignOut,
+  isSignOutBroadcast,
+} from "@projet-igsn/domain/auth/sign-out-broadcast";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "react-oidc-context";
 
@@ -28,7 +32,20 @@ export function AuthGate({ children }: { children?: ReactNode }) {
     signIn(auth);
   }, [shouldSignIn, auth]);
 
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (!isSignOutBroadcast(event)) return;
+      // No signinRedirect here: the other tab may not have reached the end_session yet, so the live SSO cookie would sign this tab straight back in.
+      setHasSignedOut(true);
+      markSignedOut();
+      void auth.removeUser();
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, [auth]);
+
   const signOut = () => {
+    broadcastSignOut(localStorage);
     setHasSignedOut(true);
     markSignedOut();
     void auth.signoutRedirect();

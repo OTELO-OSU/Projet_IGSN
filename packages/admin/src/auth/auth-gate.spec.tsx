@@ -1,3 +1,4 @@
+import { SIGN_OUT_BROADCAST_KEY } from "@projet-igsn/domain/auth/sign-out-broadcast";
 import { StrictMode } from "react";
 import { render } from "vitest-browser-react";
 
@@ -11,6 +12,11 @@ const auth = {
   user: undefined as { profile: { identity_provider?: string } } | undefined,
   signinRedirect: vi.fn(),
   signoutRedirect: vi.fn(),
+  removeUser: vi.fn(() => {
+    auth.isAuthenticated = false;
+    auth.user = undefined;
+    return Promise.resolve();
+  }),
 };
 vi.mock("react-oidc-context", () => ({ useAuth: () => auth }));
 
@@ -37,6 +43,7 @@ beforeEach(() => {
   auth.isAuthenticated = false;
   auth.user = undefined;
   sessionStorage.clear();
+  localStorage.removeItem(SIGN_OUT_BROADCAST_KEY);
   vi.clearAllMocks();
 });
 
@@ -120,6 +127,51 @@ describe("AuthGate", () => {
     await screen.getByRole("button", { name: "Sign in" }).click();
 
     expect(auth.signinRedirect).toHaveBeenCalledTimes(1);
+  });
+
+  it("should broadcast the sign-out to the other tabs when the user signs out", async () => {
+    auth.isAuthenticated = true;
+    auth.user = { profile: {} };
+    const screen = await render(<AuthGate />);
+
+    await screen.getByRole("button", { name: "Sign out" }).click();
+
+    expect(localStorage.getItem(SIGN_OUT_BROADCAST_KEY)).not.toBeNull();
+  });
+
+  it("should show the sign-in button without redirecting when another tab broadcasts a sign-out", async () => {
+    auth.isAuthenticated = true;
+    auth.user = { profile: {} };
+    const screen = await render(<AuthGate />);
+
+    window.dispatchEvent(
+      new StorageEvent("storage", {
+        key: SIGN_OUT_BROADCAST_KEY,
+        newValue: "x",
+      }),
+    );
+
+    await expect
+      .element(screen.getByRole("button", { name: "Sign in" }))
+      .toBeEnabled();
+    expect(auth.removeUser).toHaveBeenCalledTimes(1);
+    expect(auth.signinRedirect).not.toHaveBeenCalled();
+    expect(readSignedOut()).toBe(true);
+  });
+
+  it("should keep the session when a storage event carries another key", async () => {
+    auth.isAuthenticated = true;
+    auth.user = { profile: {} };
+    const screen = await render(<AuthGate />);
+
+    window.dispatchEvent(
+      new StorageEvent("storage", { key: "other-key", newValue: "x" }),
+    );
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent(/account gate/i);
+    expect(auth.removeUser).not.toHaveBeenCalled();
   });
 
   it.each(["orcid", "ORCID"])(
