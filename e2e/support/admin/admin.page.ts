@@ -26,17 +26,6 @@ export function adminPage(page: Page) {
       expect(page.getByRole("button", { name: "Sign out" })).toBeVisible(),
     expectSignedOut: () =>
       expect(page.getByRole("button", { name: "Sign in" })).toBeVisible(),
-    readAccessToken: () =>
-      page.evaluate(() => {
-        const key = Object.keys(sessionStorage).find((candidate) =>
-          candidate.startsWith("oidc.user:"),
-        );
-        const stored = key === undefined ? null : sessionStorage.getItem(key);
-        if (stored === null) {
-          throw new Error("no oidc session stored in this tab");
-        }
-        return (JSON.parse(stored) as { access_token: string }).access_token;
-      }),
     expectUserName: (name: string) =>
       expect(page.getByRole("banner").getByText(name)).toBeVisible(),
   };

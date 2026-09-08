@@ -3,10 +3,11 @@ import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { jwk } from "hono/jwk";
 
-import { clientId, issuer, jwksUri } from "./oidc-config.ts";
-import { isSessionRevoked } from "./revoked-sessions.ts";
-
+const issuer = process.env.OIDC_ISSUER ?? "http://localhost:8080/realms/igsn";
+const jwksUri =
+  process.env.OIDC_JWKS_URI ?? `${issuer}/protocol/openid-connect/certs`;
 const audience = process.env.OIDC_AUDIENCE;
+const clientId = process.env.OIDC_CLIENT_ID ?? "igsn-admin";
 
 export const requireAuth = every(
   jwk({
@@ -20,8 +21,7 @@ export const requireAuth = every(
       if (
         claims.azp !== clientId ||
         claims.typ !== "Bearer" ||
-        typeof claims.exp !== "number" ||
-        isSessionRevoked(claims)
+        typeof claims.exp !== "number"
       ) {
         throw new HTTPException(401, { message: "Unauthorized" });
       }
@@ -32,7 +32,6 @@ export const requireAuth = every(
 
 export type KeycloakClaims = {
   sub: string;
-  sid?: string;
   azp?: string;
   typ?: string;
   exp?: number;

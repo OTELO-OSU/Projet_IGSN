@@ -4,14 +4,12 @@ import {
   completeIdpLogin,
   signInAsResearcher,
 } from "../support/admin/sign-in";
-import { type SeededSample, expect, test } from "../support/db";
+import { type SeededSample, test } from "../support/db";
 import { headerPage } from "../support/frontend/header.page";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
-import { adminUrl, frontendUrl } from "../support/urls";
+import { adminUrl } from "../support/urls";
 
 const OWNER = "jean";
-
-const apiUrl = `${frontendUrl}/api`;
 
 function ownSample(samples: SeededSample[]) {
   const own = samples.find(
@@ -66,21 +64,14 @@ test.describe("sign in from the public frontend", () => {
     await header.expectSignedOut();
   });
 
-  test("signing out on the public site signs the admin tab out and voids its token", async ({
+  test("signing out on the public site signs the admin tab out", async ({
     page,
-    request,
     samples,
   }) => {
     const own = ownSample(samples);
     const admin = adminPage(page);
 
     await signInAsResearcher(page, RESEARCHERS[OWNER]);
-    const accessToken = await admin.readAccessToken();
-    const currentUser = () =>
-      request.get(`${apiUrl}/admin/currentUser`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-    expect((await currentUser()).status()).toBe(200);
 
     const publicTab = await page.context().newPage();
     const header = headerPage(publicTab);
@@ -96,8 +87,6 @@ test.describe("sign in from the public frontend", () => {
     await admin.expectSignedOut();
     await page.reload();
     await admin.expectSignedOut();
-
-    await expect.poll(async () => (await currentUser()).status()).toBe(401);
   });
 
   test("signing out in admin drops the session of the public tab", async ({
