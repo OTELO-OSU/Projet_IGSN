@@ -11,7 +11,7 @@
 | OIDC issuer      | http://localhost:8080/realms/igsn                                                           |
 
 - The public frontend signs in with the same `igsn-admin` client, over its own `/auth/callback` at the site root (`FRONTEND_REDIRECT_URI`, `ADR 0006` amendment). A signed-in reader sees "Go to admin" / "Sign out" in the header and an "Edit" link on a published sample they can reach in admin (`GET /admin/samples/:id` answers 200).
-- Signing out in one tab signs out every other tab and app: a same-origin `localStorage` broadcast (`domain/src/auth/sign-out-broadcast.ts`) drops the local session in admin and frontend, and the realm's `backchannel.logout.url` (`BACKCHANNEL_LOGOUT_URL`, default `http://api:3002/auth/backchannel-logout`) has Keycloak call the api's `POST /auth/backchannel-logout` to revoke that session server-side (ADR 0006 amendment).
+- Signing out in one tab signs out every other tab and app: a same-origin `localStorage` broadcast (`domain/src/auth/sign-out-broadcast.ts`) drops the local session in admin and frontend (ADR 0006 amendment); the api keeps honouring an already-issued access token until it expires.
 - Edit the realm file and restart to change clients or users.
 - Token policy mirrors production (5 min access tokens, single-use 30 min refresh tokens, no password grant; GT-SSO recommendations, ADR 0006), so tests drive the real browser login.
 - `KC_HOSTNAME` is pinned to `http://localhost:8080` so the issuer the browser sees matches the one the api calls `/userinfo` on (`requireActiveSession`, needed for accept/reject); preprod already sets this.

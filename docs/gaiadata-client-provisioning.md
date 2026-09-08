@@ -38,7 +38,6 @@ branch can do.
 | Web origins               | `https://igsn.<prod-domain>`                                                                                         |
 | Scopes                    | `openid profile email`; no `offline_access`                                                                          |
 | Refresh tokens            | issued to this public client, their rotation policy (doc SPA line: 5 min access, 30 min single-use refresh)          |
-| Back-channel logout URL   | `https://igsn.<prod-domain>/api/auth/backchannel-logout`, session required ON                                        |
 
 The registry's own service accounts (ADR 0035) are rows in its database, not
 Keycloak service accounts on this client, so "service accounts OFF" above
@@ -46,9 +45,6 @@ stands unaffected.
 
 The public frontend signs in with this same client, so the second exact URI is
 its own callback at the origin root.
-
-On a logout token the api revokes that session's tokens at once, instead of
-honouring them until the access token expires.
 
 Each SPA always returns to its own origin + base path + `auth/callback`
 (`redirect_uri` derives from `window.location.origin`), so exact URIs suffice:
