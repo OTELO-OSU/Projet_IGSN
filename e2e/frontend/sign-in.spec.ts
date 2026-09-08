@@ -4,30 +4,18 @@ import {
   completeIdpLogin,
   signInAsResearcher,
 } from "../support/admin/sign-in";
-import { publishedOwnedBy, test } from "../support/db";
+import { sampleNamed, test } from "../support/db";
 import { headerPage } from "../support/frontend/header.page";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { adminUrl } from "../support/urls";
-
-const OWNER = "jean";
 
 test.describe("sign in from the public frontend", () => {
   test("a researcher signs in from a sample page and edits their own sample in admin", async ({
     page,
     samples,
   }) => {
-    const own = publishedOwnedBy(samples, OWNER);
-    const other = samples.find(
-      (sample) =>
-        sample.status === "published" &&
-        sample.owner !== OWNER &&
-        !sample.collaborators.some(
-          (collaborator) => collaborator.researcher === OWNER,
-        ),
-    );
-    if (!other?.igsn) {
-      throw new Error("seed must publish a sample owned by someone else");
-    }
+    const own = sampleNamed(samples, "Basalt 42");
+    const other = sampleNamed(samples, "Granite 7");
 
     const header = headerPage(page);
     const detail = sampleDetailPage(page);
@@ -37,7 +25,7 @@ test.describe("sign in from the public frontend", () => {
     await header.expectNoEditLink();
 
     await header.signIn();
-    await completeIdpLogin(page, RESEARCHERS[OWNER]);
+    await completeIdpLogin(page, RESEARCHERS.jean);
 
     await detail.expectSample(own.name, own.igsn);
     await header.expectSignedIn();
@@ -58,10 +46,10 @@ test.describe("sign in from the public frontend", () => {
     page,
     samples,
   }) => {
-    const own = publishedOwnedBy(samples, OWNER);
+    const own = sampleNamed(samples, "Basalt 42");
     const admin = adminPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS[OWNER]);
+    await signInAsResearcher(page, RESEARCHERS.jean);
 
     const publicTab = await page.context().newPage();
     const header = headerPage(publicTab);
@@ -83,17 +71,19 @@ test.describe("sign in from the public frontend", () => {
     page,
     samples,
   }) => {
-    const own = publishedOwnedBy(samples, OWNER);
+    const own = sampleNamed(samples, "Basalt 42");
     const header = headerPage(page);
     const detail = sampleDetailPage(page);
 
     await detail.goto(own.igsn);
     await header.signIn();
-    await completeIdpLogin(page, RESEARCHERS[OWNER]);
+    await completeIdpLogin(page, RESEARCHERS.jean);
     await header.expectEditHref(`${adminUrl}/samples/${own.id}`);
 
-    const admin = adminPage(await page.context().newPage());
-    await admin.gotoSignedIn();
+    const adminTab = await page.context().newPage();
+    await adminTab.goto(`${adminUrl}/`);
+    const admin = adminPage(adminTab);
+    await admin.expectSignedIn();
     await admin.signOut();
 
     await header.expectSignedOut();

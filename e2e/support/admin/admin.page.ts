@@ -8,12 +8,6 @@ export function adminPage(page: Page) {
       await page.goto(`${adminUrl}/`);
       await page.waitForURL(/\/realms\//);
     },
-    gotoSignedIn: async () => {
-      await page.goto(`${adminUrl}/`);
-      await expect(
-        page.getByRole("button", { name: "Sign out" }),
-      ).toBeVisible();
-    },
     signIn: () => page.getByRole("button", { name: "Sign in" }).click(),
     signOut: () => page.getByRole("button", { name: "Sign out" }).click(),
     expectNoAccess: () =>
