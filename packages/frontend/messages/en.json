@@ -203,6 +203,7 @@
   "service_account_request_success": "Your request was sent to the super admin and is being processed.",
   "service_account_request_error": "Your request could not be sent. Please try again.",
   "service_account_field_name": "Service name",
+  "service_account_field_reason": "Why do you need a service account?",
   "service_account_field_organizations": "Organizations to access",
   "service_account_field_osus": "OSUs to access",
   "service_account_field_laboratories": "Laboratories to access",

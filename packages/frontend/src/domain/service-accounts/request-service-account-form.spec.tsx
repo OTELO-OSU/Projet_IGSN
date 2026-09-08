@@ -58,6 +58,9 @@ describe("RequestServiceAccountForm", () => {
     const screen = await renderForm(onSent);
 
     await screen.getByLabelText("Service name").fill("Basalt pipeline");
+    await screen
+      .getByLabelText("Why do you need a service account?")
+      .fill("Automate our basalt uploads");
     await screen.getByRole("combobox", { name: "Groups to access" }).click();
     await page.getByRole("option", { name: group.name }).click();
     await page.getByRole("button", { name: "Send request" }).click();
@@ -70,6 +73,7 @@ describe("RequestServiceAccountForm", () => {
     expect(token).toBe("Bearer a-token");
     expect(JSON.parse(body)).toEqual({
       name: "Basalt pipeline",
+      reason: "Automate our basalt uploads",
       managedGroups: {
         organizations: [],
         osus: [],
@@ -80,14 +84,20 @@ describe("RequestServiceAccountForm", () => {
     expect(onSent).toHaveBeenCalled();
   });
 
-  it("should flag the name and post nothing when the service has no name", async () => {
+  it("should flag the name and the reason and post nothing when both are blank", async () => {
     const posts = stubApi();
     const screen = await renderForm();
 
     await screen.getByRole("button", { name: "Send request" }).click();
 
     await expect
-      .element(screen.getByRole("alert"))
+      .element(screen.getByLabelText("Service name"))
+      .toHaveAttribute("aria-invalid", "true");
+    await expect
+      .element(screen.getByLabelText("Why do you need a service account?"))
+      .toHaveAttribute("aria-invalid", "true");
+    await expect
+      .element(screen.getByRole("alert").first())
       .toHaveTextContent("This field is required.");
     expect(posts).toEqual([]);
   });

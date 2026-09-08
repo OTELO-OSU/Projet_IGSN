@@ -30,7 +30,7 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
   const { data: attachableGroups } = useListAttachableManualGroups();
   const { mutate } = useRequestServiceAccount(onSent);
   const form = useAppForm({
-    defaultValues: { name: "", managedGroups: NO_MANAGED_GROUPS },
+    defaultValues: { name: "", reason: "", managedGroups: NO_MANAGED_GROUPS },
     validators: { onSubmit: validate },
     onSubmit: ({ value }) => mutate(value),
   });
@@ -81,6 +81,11 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
     >
       <form.AppField name="name">
         {(field) => <field.TextField label={m.service_account_field_name()} />}
+      </form.AppField>
+      <form.AppField name="reason">
+        {(field) => (
+          <field.TextField label={m.service_account_field_reason()} multiline />
+        )}
       </form.AppField>
       {groupFields.map(({ name, label, items, placeholder, emptyText }) => (
         <form.AppField key={name} name={name}>
