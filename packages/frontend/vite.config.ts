@@ -21,7 +21,7 @@ const config = defineConfig({
   optimizeDeps: { include: ["radix-ui", "lucide-react", "cmdk", "sonner"] },
   plugins: [
     devtools(),
-    nitro(),
+    nitro({ exportConditions: ["module"], noExternals: ["tslib"] }),
     tailwindcss(),
     paraglideVitePlugin(paraglideOptions),
     tanstackStart(),
