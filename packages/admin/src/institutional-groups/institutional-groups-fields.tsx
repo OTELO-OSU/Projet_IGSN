@@ -7,11 +7,11 @@ import {
   laboratoryLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
-
 import {
   ORGANIZATION_ITEMS,
   toItems,
-} from "#/institutional-groups/to-items.ts";
+} from "@projet-igsn/domain/institutional-group/managed-group-items";
+
 import { m } from "#/paraglide/messages.js";
 
 export function InstitutionalGroupsFields({

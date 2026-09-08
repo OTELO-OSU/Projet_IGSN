@@ -6,6 +6,7 @@ import { InstitutionalGroupsForm } from "#/institutional-groups/institutional-gr
 import { useSetInstitutionalGroups } from "#/institutional-groups/use-set-institutional-groups.ts";
 import { MyManualGroups } from "#/manual-groups/my-manual-groups.tsx";
 import { m } from "#/paraglide/messages.js";
+import { MyServiceAccounts } from "#/service-accounts/my-service-accounts.tsx";
 import { GroupSamplesLink } from "#/settings/group-samples-link.tsx";
 import { OrcidSettingsForm } from "#/settings/orcid-settings-form.tsx";
 import { ShareLink } from "#/settings/share-link.tsx";
@@ -45,6 +46,7 @@ function SettingsPage() {
                 {m.settings_group_samples_hint()}
               </p>
               <GroupSamplesLink />
+              <MyServiceAccounts />
             </>
           )}
           <h2 className="text-xl font-bold">

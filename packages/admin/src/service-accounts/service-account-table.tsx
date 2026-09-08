@@ -5,6 +5,7 @@ import {
   laboratoryShortLabel,
   organizationShortLabel,
 } from "@projet-igsn/domain/institutional-group/label";
+import { fullName } from "@projet-igsn/domain/user/full-name";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
@@ -27,6 +28,11 @@ const columns: ColumnDef<ServiceAccount>[] = [
         {row.original.name}
       </Link>
     ),
+  },
+  {
+    id: "owner",
+    header: () => m.column_owner(),
+    cell: ({ row }) => fullName(row.original.owner) || row.original.owner.email,
   },
   {
     id: "institution",

@@ -757,5 +757,16 @@
   "service_account_delete_title": "Delete this service account?",
   "service_account_delete_description": "The service account and the groups it manages are removed.",
   "service_account_deleted": "Service account deleted",
-  "service_account_delete_error": "Could not delete the service account"
+  "service_account_delete_error": "Could not delete the service account",
+  "field_service_account_owner": "Requested by",
+  "field_service_account_owner_required": "Choose the user this service account belongs to",
+  "settings_services_title": "Services",
+  "settings_services_hint": "Generate an API key so one of your services can call the API in your name.",
+  "service_account_api_key_generate": "Generate API key",
+  "service_account_api_key_regenerate": "Regenerate API key",
+  "service_account_api_key_regenerate_title": "Regenerate this API key?",
+  "service_account_api_key_regenerate_description": "The current key stops working as soon as the new one is generated.",
+  "service_account_api_key_label": "API key",
+  "service_account_api_key_once": "Copy this key now: it is shown only once.",
+  "service_account_api_key_error": "Could not generate the API key"
 }

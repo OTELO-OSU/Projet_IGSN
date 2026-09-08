@@ -62,7 +62,7 @@ function ServiceAccountDetailPage() {
       </div>
 
       <ServiceAccountForm
-        account={account}
+        draft={account}
         submitLabel={m.action_save()}
         onSave={(body) => update.mutateAsync(body)}
       />

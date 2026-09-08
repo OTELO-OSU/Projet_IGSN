@@ -1,26 +1,28 @@
+import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { ManagedGroups } from "@projet-igsn/domain/user/managed-groups";
 
 import { useTypedAppFormContext } from "@projet-igsn/design-system/components/form/app-form";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
-
-import {
-  CATALOG_PAGE,
-  useManualGroups,
-} from "#/manual-groups/use-manual-groups.ts";
-import { m } from "#/paraglide/messages.js";
 import {
   MANAGED_LABORATORY_ITEMS,
   MANAGED_ORGANIZATION_ITEMS,
   MANAGED_OSU_ITEMS,
   withGranted,
-} from "#/users/managed-group-items.ts";
+} from "@projet-igsn/domain/institutional-group/managed-group-items";
 
-export function ManagedGroupsFields({ granted }: { granted: ManagedGroups }) {
+import { m } from "#/paraglide/messages.js";
+
+export function ManagedGroupsFields({
+  granted,
+  manualGroups,
+}: {
+  granted: ManagedGroups;
+  manualGroups: Pick<ManualGroup, "id" | "name">[];
+}) {
   const form = useTypedAppFormContext({
     defaultValues: {} as { managedGroups: ManagedGroups },
   });
-  const catalog = useManualGroups(CATALOG_PAGE);
-  const catalogItems = (catalog.data?.data ?? []).map((group) => ({
+  const catalogItems = manualGroups.map((group) => ({
     value: group.id,
     label: group.name,
   }));

@@ -1,7 +1,7 @@
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
+import { ALL_ORGANIZATION_ITEMS } from "@projet-igsn/domain/institutional-group/managed-group-items";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 
-import { ALL_ORGANIZATION_ITEMS } from "#/institutional-groups/to-items.ts";
 import { m } from "#/paraglide/messages.js";
 import { collectionOriginLabel } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";

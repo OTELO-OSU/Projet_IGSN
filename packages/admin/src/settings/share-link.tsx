@@ -7,7 +7,15 @@ import { useId } from "react";
 
 import { m } from "#/paraglide/messages.js";
 
-export function ShareLink({ label, link }: { label: string; link: string }) {
+export function ShareLink({
+  label,
+  link,
+  canOpen = true,
+}: {
+  label: string;
+  link: string;
+  canOpen?: boolean;
+}) {
   const id = useId();
   const copyLink = () =>
     void navigator.clipboard.writeText(link).then(
@@ -39,16 +47,18 @@ export function ShareLink({ label, link }: { label: string; link: string }) {
       >
         <CopyIcon />
       </Button>
-      <Button asChild variant="outline" size="icon">
-        <a
-          href={link}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={m.action_open_new_window()}
-        >
-          <ExternalLinkIcon />
-        </a>
-      </Button>
+      {canOpen && (
+        <Button asChild variant="outline" size="icon">
+          <a
+            href={link}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={m.action_open_new_window()}
+          >
+            <ExternalLinkIcon />
+          </a>
+        </Button>
+      )}
     </div>
   );
 }

@@ -26,6 +26,7 @@ export function UserPicker({
   sampleId,
   status,
   excludeMembersOf,
+  ...aria
 }: {
   id: string;
   value: UserIdentity | null;
@@ -35,6 +36,8 @@ export function UserPicker({
   sampleId?: string;
   status?: UserStatus;
   excludeMembersOf?: string;
+  "aria-invalid"?: true;
+  "aria-describedby"?: string;
 }) {
   const picker = useUserPicker({
     onChange,
@@ -45,7 +48,7 @@ export function UserPicker({
 
   return (
     <Popover open={picker.isOpen} onOpenChange={picker.setIsOpen}>
-      <ComboboxTrigger id={id} open={picker.isOpen}>
+      <ComboboxTrigger id={id} open={picker.isOpen} {...aria}>
         {value ? (
           fullName(value)
         ) : (

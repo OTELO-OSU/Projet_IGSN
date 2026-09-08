@@ -1,7 +1,7 @@
 import { Combobox } from "@projet-igsn/design-system/components/ui/combobox";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
+import { ORGANIZATION_ITEMS } from "@projet-igsn/domain/institutional-group/managed-group-items";
 
-import { ORGANIZATION_ITEMS } from "#/institutional-groups/to-items.ts";
 import { m } from "#/paraglide/messages.js";
 
 type FilterProps = {

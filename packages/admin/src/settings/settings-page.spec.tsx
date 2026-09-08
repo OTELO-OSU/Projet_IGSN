@@ -34,21 +34,36 @@ const BASALT_TEAM = {
 };
 const MANUAL_GROUPS = [BASALT_TEAM];
 
+const SERVICE_ID = "3f2504e0-4f89-41d3-9a0c-030500000b01";
+
 function fakeApi({
   orcid = null,
   conflict = false,
   manualGroups = MANUAL_GROUPS,
   status = "accepted",
+  services = [],
 }: {
   orcid?: string | null;
   conflict?: boolean;
   manualGroups?: { id: string; name: string; canLeave: boolean }[];
   status?: "pending" | "accepted";
+  services?: { id: string; name: string; hasApiKey: boolean }[];
 } = {}) {
   const puts: unknown[] = [];
   const groupPuts: unknown[] = [];
   let stored = orcid;
+  let myServices = services;
   worker.use(
+    http.get("*/admin/currentUser/service-accounts", () =>
+      HttpResponse.json({ data: myServices }),
+    ),
+    http.post("*/admin/currentUser/service-accounts/:id/api-key", () => {
+      myServices = myServices.map((service) => ({
+        ...service,
+        hasApiKey: true,
+      }));
+      return HttpResponse.json({ apiKey: "key-42" });
+    }),
     http.get("*/admin/currentUser/manual-groups", () =>
       HttpResponse.json({ data: manualGroups }),
     ),
@@ -271,6 +286,35 @@ describe("settings page", () => {
 
     await expect.element(orcidForm()).toBeVisible();
     await expect.element(mySamplesInput()).not.toBeInTheDocument();
+  });
+
+  it("should hide the services section from a user owning none", async () => {
+    await renderSettingsPage();
+
+    await expect.element(orcidForm()).toBeVisible();
+    await expect
+      .element(page.getByRole("heading", { name: "Services" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show the generated api key once and offer to regenerate it", async () => {
+    await renderSettingsPage({
+      services: [{ id: SERVICE_ID, name: "Gaia harvester", hasApiKey: false }],
+    });
+
+    await expect
+      .element(page.getByRole("heading", { name: "Services" }))
+      .toBeVisible();
+    await expect.element(page.getByText("Gaia harvester")).toBeVisible();
+
+    await page.getByRole("button", { name: "Generate API key" }).click();
+
+    await expect
+      .element(page.getByRole("textbox", { name: "API key" }))
+      .toHaveValue("key-42");
+    await expect
+      .element(page.getByRole("button", { name: "Regenerate API key" }))
+      .toBeVisible();
   });
 
   it("should surface a conflict when another account holds the orcid", async () => {

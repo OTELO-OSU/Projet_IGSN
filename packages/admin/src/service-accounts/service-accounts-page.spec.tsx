@@ -24,6 +24,13 @@ const ACCOUNT = {
   institutionalOsu: null,
   institutionalLaboratory: "UMR7358",
   managedGroups: NO_MANAGED_GROUPS,
+  owner: {
+    id: "3f2504e0-4f89-41d3-9a0c-030500000c01",
+    email: "jean.martin@univ-lorraine.fr",
+    name: "Martin",
+    firstname: "Jean",
+    orcid: null,
+  },
 };
 
 function fakeApi() {
@@ -39,13 +46,16 @@ function fakeApi() {
 }
 
 describe("ServiceAccountsPage", () => {
-  it("should list every service account with its name and its institution", async () => {
+  it("should list every service account with its name, its owner and its institution", async () => {
     fakeApi();
 
     const { screen } = await renderRoute("/service-accounts");
 
     await expect
       .element(screen.getByRole("cell", { name: "Gaia harvester" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("cell", { name: "Jean Martin" }))
       .toBeVisible();
     await expect
       .element(
