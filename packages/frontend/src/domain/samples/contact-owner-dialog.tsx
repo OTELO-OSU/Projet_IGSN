@@ -31,7 +31,7 @@ export function ContactOwnerDialog({ igsn }: { igsn: string }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button type="button" variant="secondary" size="md">
+        <Button type="button" variant="secondary">
           {m.sample_contact_owner()}
         </Button>
       </DialogTrigger>

@@ -4,29 +4,19 @@ import {
   completeIdpLogin,
   signInAsResearcher,
 } from "../support/admin/sign-in";
-import { type SeededSample, test } from "../support/db";
+import { publishedOwnedBy, test } from "../support/db";
 import { headerPage } from "../support/frontend/header.page";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { adminUrl } from "../support/urls";
 
 const OWNER = "jean";
 
-function ownSample(samples: SeededSample[]) {
-  const own = samples.find(
-    (sample) => sample.status === "published" && sample.owner === OWNER,
-  );
-  if (!own?.igsn) {
-    throw new Error(`seed must publish a sample owned by ${OWNER}`);
-  }
-  return { ...own, igsn: own.igsn };
-}
-
 test.describe("sign in from the public frontend", () => {
   test("a researcher signs in from a sample page and edits their own sample in admin", async ({
     page,
     samples,
   }) => {
-    const own = ownSample(samples);
+    const own = publishedOwnedBy(samples, OWNER);
     const other = samples.find(
       (sample) =>
         sample.status === "published" &&
@@ -68,7 +58,7 @@ test.describe("sign in from the public frontend", () => {
     page,
     samples,
   }) => {
-    const own = ownSample(samples);
+    const own = publishedOwnedBy(samples, OWNER);
     const admin = adminPage(page);
 
     await signInAsResearcher(page, RESEARCHERS[OWNER]);
@@ -93,7 +83,7 @@ test.describe("sign in from the public frontend", () => {
     page,
     samples,
   }) => {
-    const own = ownSample(samples);
+    const own = publishedOwnedBy(samples, OWNER);
     const header = headerPage(page);
     const detail = sampleDetailPage(page);
 

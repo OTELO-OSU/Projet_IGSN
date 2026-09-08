@@ -27,7 +27,7 @@ describe("AuthControls", () => {
     );
   });
 
-  it("should offer admin and sign out to a signed-in visitor", async () => {
+  it("should offer admin and a sign out that tells the other tabs", async () => {
     const signoutRedirect = vi.fn();
     const screen = await render(
       stubAuth(<AuthControls />, { isAuthenticated: true, signoutRedirect }),
@@ -39,18 +39,6 @@ describe("AuthControls", () => {
     await page.getByRole("button", { name: "Sign out" }).click();
 
     expect(signoutRedirect).toHaveBeenCalled();
-  });
-
-  it("should tell the other tabs it signed out", async () => {
-    await render(
-      stubAuth(<AuthControls />, {
-        isAuthenticated: true,
-        signoutRedirect: vi.fn(),
-      }),
-    );
-
-    await page.getByRole("button", { name: "Sign out" }).click();
-
     expect(localStorage.getItem(SIGN_OUT_BROADCAST_KEY)).not.toBeNull();
   });
 

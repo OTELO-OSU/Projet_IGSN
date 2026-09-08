@@ -97,6 +97,7 @@ describe("AuthGate", () => {
 
     expect(auth.signoutRedirect).toHaveBeenCalledTimes(1);
     expect(readSignedOut()).toBe(true);
+    expect(localStorage.getItem(SIGN_OUT_BROADCAST_KEY)).not.toBeNull();
   });
 
   it("should not sign back in when the sign-out clears the session", async () => {
@@ -129,16 +130,6 @@ describe("AuthGate", () => {
     expect(auth.signinRedirect).toHaveBeenCalledTimes(1);
   });
 
-  it("should broadcast the sign-out to the other tabs when the user signs out", async () => {
-    auth.isAuthenticated = true;
-    auth.user = { profile: {} };
-    const screen = await render(<AuthGate />);
-
-    await screen.getByRole("button", { name: "Sign out" }).click();
-
-    expect(localStorage.getItem(SIGN_OUT_BROADCAST_KEY)).not.toBeNull();
-  });
-
   it("should show the sign-in button without redirecting when another tab broadcasts a sign-out", async () => {
     auth.isAuthenticated = true;
     auth.user = { profile: {} };
@@ -157,21 +148,6 @@ describe("AuthGate", () => {
     expect(auth.removeUser).toHaveBeenCalledTimes(1);
     expect(auth.signinRedirect).not.toHaveBeenCalled();
     expect(readSignedOut()).toBe(true);
-  });
-
-  it("should keep the session when a storage event carries another key", async () => {
-    auth.isAuthenticated = true;
-    auth.user = { profile: {} };
-    const screen = await render(<AuthGate />);
-
-    window.dispatchEvent(
-      new StorageEvent("storage", { key: "other-key", newValue: "x" }),
-    );
-
-    await expect
-      .element(screen.getByRole("alert"))
-      .toHaveTextContent(/account gate/i);
-    expect(auth.removeUser).not.toHaveBeenCalled();
   });
 
   it.each(["orcid", "ORCID"])(

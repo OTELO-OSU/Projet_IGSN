@@ -2,7 +2,7 @@ import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { signIn } from "@projet-igsn/domain/auth/sign-in";
 import {
   broadcastSignOut,
-  isSignOutBroadcast,
+  onSignOutBroadcast,
 } from "@projet-igsn/domain/auth/sign-out-broadcast";
 import { useEffect } from "react";
 import { useAuth } from "react-oidc-context";
@@ -13,28 +13,19 @@ import { m } from "#/paraglide/messages.js";
 export function AuthControls() {
   const auth = useAuth();
 
-  useEffect(() => {
-    const followOtherTab = (event: StorageEvent) => {
-      if (isSignOutBroadcast(event)) {
-        void auth.removeUser();
-      }
-    };
-    window.addEventListener("storage", followOtherTab);
-    return () => window.removeEventListener("storage", followOtherTab);
-  }, [auth]);
+  useEffect(() => onSignOutBroadcast(() => void auth.removeUser()), [auth]);
 
   if (auth.isAuthenticated) {
     return (
       <div className="flex flex-wrap items-center justify-end gap-2">
-        <Button asChild variant="secondary" size="md">
+        <Button asChild variant="secondary">
           <a href={ADMIN_URL}>{m.auth_go_to_admin()}</a>
         </Button>
         <Button
           type="button"
           variant="secondary"
-          size="md"
           onClick={() => {
-            broadcastSignOut(localStorage);
+            broadcastSignOut();
             void auth.signoutRedirect();
           }}
         >
@@ -51,8 +42,6 @@ export function AuthControls() {
   return (
     <Button
       type="button"
-      variant="primary"
-      size="md"
       disabled={Boolean(auth.activeNavigator)}
       onClick={() => signIn(auth)}
     >

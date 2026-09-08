@@ -1,20 +1,14 @@
+import { oidcSettings } from "@projet-igsn/domain/auth/oidc-settings";
 import { UserManager } from "oidc-client-ts";
 
-const callbackUrl = import.meta.env.SSR
-  ? ""
-  : `${window.location.origin}/auth/callback`;
+export { onSigninCallback } from "@projet-igsn/domain/auth/oidc-settings";
 
-export const userManager = new UserManager({
-  authority:
-    import.meta.env.VITE_OIDC_AUTHORITY ?? "http://localhost:8080/realms/igsn",
-  client_id: import.meta.env.VITE_OIDC_CLIENT_ID ?? "igsn-admin",
-  scope: "openid profile email",
-  redirect_uri: callbackUrl,
-  post_logout_redirect_uri: callbackUrl,
-  revokeTokensOnSignout: true,
-  revokeTokenTypes: ["access_token"],
-});
-
-export const onSigninCallback = (): void => {
-  window.history.replaceState({}, document.title, window.location.pathname);
-};
+export const userManager = new UserManager(
+  oidcSettings({
+    authority: import.meta.env.VITE_OIDC_AUTHORITY,
+    clientId: import.meta.env.VITE_OIDC_CLIENT_ID,
+    callbackUrl: import.meta.env.SSR
+      ? ""
+      : `${window.location.origin}/auth/callback`,
+  }),
+);

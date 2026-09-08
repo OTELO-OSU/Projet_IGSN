@@ -6,6 +6,7 @@ export async function getSampleAccess(
   fetchFn: typeof fetch = fetch,
 ): Promise<boolean> {
   const res = await fetchFn(new URL(`admin/samples/${id}`, baseBrowserApiUrl), {
+    method: "HEAD",
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.ok;

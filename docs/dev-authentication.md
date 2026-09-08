@@ -92,5 +92,6 @@
 
 - The admin SPA points at an externally-managed Keycloak via `VITE_OIDC_AUTHORITY` / `VITE_OIDC_CLIENT_ID` (see [`oidc-config.ts`](../packages/admin/src/auth/oidc-config.ts)).
 - The frontend build takes the same two vars plus `VITE_ADMIN_URL` (see [`oidc-config.ts`](../packages/frontend/src/auth/oidc-config.ts) and [`admin-url.ts`](../packages/frontend/src/admin-url.ts)).
+- Both apps build their `UserManager` from [`oidc-settings.ts`](../packages/domain/src/auth/oidc-settings.ts), the one home of the client id, scope and revocation policy.
 - The realm files, the `test` user and the mock IdPs are **dev/e2e only and never shipped**, so the insecure-by-design bits (`sslRequired: none`, unsigned SAML, a local admin password) stay in that throwaway setup.
 - Standing up the prod Keycloak is an ops task: register its SP metadata (`.../realms/igsn/broker/satosa/endpoint`) with RENATER, opt into eduGAIN, and point the ORCID broker at production ORCID.

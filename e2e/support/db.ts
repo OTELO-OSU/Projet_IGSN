@@ -29,6 +29,15 @@ export function sampleNamed(samples: SeededSample[], name: string) {
   return { ...sample, igsn: sample.igsn };
 }
 
+export function publishedOwnedBy(samples: SeededSample[], owner: string) {
+  const sample = samples.find(
+    (s) => s.status === "published" && s.owner === owner,
+  );
+  if (!sample?.igsn)
+    throw new Error(`seed must publish a sample owned by ${owner}`);
+  return { ...sample, igsn: sample.igsn };
+}
+
 export function published(samples: SeededSample[]) {
   return {
     basalt: sampleNamed(samples, "Basalt 42").igsn,

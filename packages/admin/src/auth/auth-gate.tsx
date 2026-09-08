@@ -4,7 +4,7 @@ import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { signIn } from "@projet-igsn/domain/auth/sign-in";
 import {
   broadcastSignOut,
-  isSignOutBroadcast,
+  onSignOutBroadcast,
 } from "@projet-igsn/domain/auth/sign-out-broadcast";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "react-oidc-context";
@@ -32,19 +32,18 @@ export function AuthGate({ children }: { children?: ReactNode }) {
     signIn(auth);
   }, [shouldSignIn, auth]);
 
-  useEffect(() => {
-    const onStorage = (event: StorageEvent) => {
-      if (!isSignOutBroadcast(event)) return;
-      setHasSignedOut(true);
-      markSignedOut();
-      void auth.removeUser();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, [auth]);
+  useEffect(
+    () =>
+      onSignOutBroadcast(() => {
+        setHasSignedOut(true);
+        markSignedOut();
+        void auth.removeUser();
+      }),
+    [auth],
+  );
 
   const signOut = () => {
-    broadcastSignOut(localStorage);
+    broadcastSignOut();
     setHasSignedOut(true);
     markSignedOut();
     void auth.signoutRedirect();

@@ -11,6 +11,7 @@ describe("getSampleAccess", () => {
     const result = await getSampleAccess(id, "a-token", fetch);
 
     expect(new URL(lastUrl() ?? "").pathname).toBe(`/api/admin/samples/${id}`);
+    expect(lastInit()?.method).toBe("HEAD");
     expect(new Headers(lastInit()?.headers).get("Authorization")).toBe(
       "Bearer a-token",
     );

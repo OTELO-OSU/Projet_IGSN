@@ -48,7 +48,7 @@ export function CardFieldPicker({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button type="button" variant="secondary" size="md">
+        <Button type="button" variant="secondary">
           <PlusIcon aria-hidden />
           {m.card_fields_add()}
         </Button>
