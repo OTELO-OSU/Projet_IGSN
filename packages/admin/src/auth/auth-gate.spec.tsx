@@ -1,9 +1,12 @@
 import { SIGN_OUT_BROADCAST_KEY } from "@projet-igsn/domain/auth/sign-out-broadcast";
+import {
+  markSignedOut,
+  readSignedOut,
+} from "@projet-igsn/domain/auth/signed-out";
 import { StrictMode } from "react";
 import { render } from "vitest-browser-react";
 
 import { AuthGate } from "./auth-gate";
-import { markSignedOut, readSignedOut } from "./signed-out.ts";
 
 const auth = {
   isLoading: false,

@@ -1,5 +1,9 @@
+export function isUnderBase(path: string, base: string): boolean {
+  return `${path}/`.startsWith(base);
+}
+
 function stripBase(path: string, base: string): string {
-  return `${path}/`.startsWith(base) ? `/${path.slice(base.length)}` : path;
+  return isUnderBase(path, base) ? `/${path.slice(base.length)}` : path;
 }
 
 export function safeReturnPath(

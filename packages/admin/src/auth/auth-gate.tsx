@@ -6,6 +6,11 @@ import {
   broadcastSignOut,
   onSignOutBroadcast,
 } from "@projet-igsn/domain/auth/sign-out-broadcast";
+import {
+  clearSignedOut,
+  markSignedOut,
+  readSignedOut,
+} from "@projet-igsn/domain/auth/signed-out";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "react-oidc-context";
 
@@ -16,7 +21,6 @@ import { CenteredLoader } from "./centered-loader.tsx";
 import { CenteredScreen } from "./centered-screen.tsx";
 import { IdentityGate } from "./identity-gate.tsx";
 import { InstitutionalGroupsGate } from "./institutional-groups-gate.tsx";
-import { clearSignedOut, markSignedOut, readSignedOut } from "./signed-out.ts";
 
 export function AuthGate({ children }: { children?: ReactNode }) {
   const auth = useAuth();
