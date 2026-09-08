@@ -21,7 +21,7 @@ export function RequestServiceAccountDialog() {
           {m.service_account_request_action()}
         </Button>
       </DialogTrigger>
-      <DialogContent closeLabel={m.action_close()}>
+      <DialogContent className="sm:max-w-2xl" closeLabel={m.action_close()}>
         <DialogHeader>
           <DialogTitle>{m.service_account_request_action()}</DialogTitle>
         </DialogHeader>

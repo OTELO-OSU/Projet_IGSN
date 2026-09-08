@@ -90,7 +90,10 @@ export function MultiCombobox({
               <Badge
                 key={item.value}
                 variant="secondary"
-                className={locked ? undefined : "gap-1 pr-1"}
+                className={cn(
+                  "max-w-full shrink break-words whitespace-normal",
+                  !locked && "gap-1 pr-1",
+                )}
               >
                 {item.label}
                 {locked ? null : (
@@ -99,7 +102,7 @@ export function MultiCombobox({
                     aria-label={removeLabel(item.label)}
                     disabled={disabled}
                     onClick={() => toggle(item.value)}
-                    className="hover:bg-foreground/10 rounded-full disabled:pointer-events-none"
+                    className="hover:bg-foreground/10 shrink-0 rounded-full disabled:pointer-events-none"
                   >
                     <XIcon className="size-3" />
                   </button>
@@ -125,7 +128,7 @@ export function MultiCombobox({
           </PopoverTrigger>
         </div>
       </PopoverAnchor>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+      <PopoverContent className="flex max-h-[var(--radix-popover-content-available-height)] w-[var(--radix-popover-trigger-width)] flex-col p-0">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
@@ -135,7 +138,7 @@ export function MultiCombobox({
               onSearch?.(value);
             }}
           />
-          <CommandList>
+          <CommandList className="min-h-0">
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
               {visible.map((item) => (
