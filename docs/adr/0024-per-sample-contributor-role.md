@@ -4,7 +4,7 @@ Date: 2026-08-03
 
 ## Status
 
-Accepted. Supersedes ADR 0019's "still to come" paragraph (role column, adding and removing collaborators). Amended 2026-08-14: invites are gated on account status, and status is disclosed to collaborators. Amended 2026-09-04: removal and draft deletion mail the collaborators.
+Accepted. Supersedes ADR 0019's "still to come" paragraph (role column, adding and removing collaborators). Amended 2026-08-14: invites are gated on account status, and status is disclosed to collaborators. Amended 2026-09-04: removal and draft deletion mail the collaborators. Amended 2026-09-09: sub-sampling a parent grants its owner `contributor` on the child automatically.
 
 ## Context
 
@@ -45,3 +45,4 @@ Accepted. Supersedes ADR 0019's "still to come" paragraph (role column, adding a
 - Deleting a draft mails every other collaborator, the deleter and `rejected` accounts excluded (`domain/user/can-receive-mail.ts`); the collaborator list is read before the cascading delete of `user_sample` rows.
 - A collaborator rejected after being added keeps their `user_sample` row, nothing revoking it. Safe, since `currentUser` 403s a rejected non-super-admin at the admin router root, so the stale row grants nothing and the UI only labels them.
 - The zero-owner case stays latent until user deletion (REQ-USER-01) ships: reassign ownership in the same transaction as the delete, or the sample is left with nobody able to publish or share it.
+- **Sub-sampling grants the parent's owner `contributor` on the child automatically, no mail.** Rejected: a mail-backed invitation (a stranger's sub-sample would spam the parent owner for a grant they cannot refuse) and no grant at all (the parent owner would lose reach to a sample built from their own material). See [[sample-parentage]].

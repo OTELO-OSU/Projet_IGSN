@@ -4,6 +4,17 @@ import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres";
 
 import type { DB } from "../../db.ts";
 
+import { LOCATION_COLUMNS } from "./to-location.ts";
+
+export function sampleLocationQuery(eb: ExpressionBuilder<DB, "sample">) {
+  return jsonObjectFrom(
+    eb
+      .selectFrom("location")
+      .select(LOCATION_COLUMNS)
+      .whereRef("location.id", "=", "sample.location_id"),
+  ).as("location");
+}
+
 export function sampleRelationsQuery(eb: ExpressionBuilder<DB, "sample">) {
   return jsonArrayFrom(
     eb
@@ -27,6 +38,17 @@ export function sampleManualGroupsQuery(eb: ExpressionBuilder<DB, "sample">) {
       .whereRef("sample_manual_group.sample_id", "=", "sample.id")
       .orderBy("manual_group.name"),
   ).as("manualGroups");
+}
+
+export function sampleParentsQuery(eb: ExpressionBuilder<DB, "sample">) {
+  return jsonArrayFrom(
+    eb
+      .selectFrom("sample_parent")
+      .innerJoin("sample as parent", "parent.id", "sample_parent.parent_id")
+      .select(["parent.id", "parent.igsn", "parent.name", "parent.material"])
+      .whereRef("sample_parent.sample_id", "=", "sample.id")
+      .orderBy("parent.name"),
+  ).as("parents");
 }
 
 export function sampleOwnerQuery(eb: ExpressionBuilder<DB, "sample">) {

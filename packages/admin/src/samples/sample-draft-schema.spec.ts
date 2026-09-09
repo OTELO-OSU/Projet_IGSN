@@ -52,6 +52,7 @@ const draft: SampleDraft = {
   age: EMPTY_AGE_FORM_VALUES,
   relations: [],
   manualGroupIds: [],
+  parentIds: [],
   ...toEconomicInterestDraft(undefined),
 };
 

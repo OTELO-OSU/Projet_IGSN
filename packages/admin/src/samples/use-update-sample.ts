@@ -24,7 +24,7 @@ export function useUpdateSample(id: string) {
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (input: CreateSample) => {
+    mutationFn: async ({ parentIds: _parentIds, ...input }: CreateSample) => {
       const expectedUpdatedAt = queryClient.getQueryData(
         sampleQueryOptions(apiFetch, id).queryKey,
       )?.updatedAt;

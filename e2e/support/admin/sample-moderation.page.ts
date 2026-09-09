@@ -17,7 +17,8 @@ export function sampleModerationPage(page: Page) {
       expect(
         sampleRow(page, name).getByRole("cell", { name: status }),
       ).toBeVisible(),
-    openSample: (name: string) => page.getByRole("link", { name }).click(),
+    openSample: (name: string) =>
+      page.getByRole("link", { name, exact: true }).click(),
     filterByInstitution: async (query: string, institution: string) => {
       await page.getByRole("combobox", { name: "Institution" }).click();
       await page.getByLabel("Search institutions").fill(query);

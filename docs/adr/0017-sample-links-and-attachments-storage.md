@@ -8,7 +8,7 @@ Accepted
 
 ## Context
 
-A sample can carry any number of related DOI links (url plus optional description) and any number of attached files (file plus optional description). Earlier sub-data (location, description, condition) was 1:1 with the sample and became flat nullable columns, so that pattern does not apply to the first one-to-many children. File content also needs a home, the target infrastructure (Ceph) not being available yet.
+A sample can carry any number of related DOI links (url plus optional description) and any number of attached files (file plus optional description). Earlier sub-data (description, condition) is 1:1 with the sample and lives as flat nullable columns, so that pattern does not apply to the first one-to-many children. (Location started the same way; ADR 0014's fourth amendment moved it to a shared table for sub-sample inheritance, which is a different reason than this one-to-many case.) File content also needs a home, the target infrastructure (Ceph) not being available yet.
 
 ## Decision
 

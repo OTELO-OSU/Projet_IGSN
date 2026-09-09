@@ -33,3 +33,4 @@ Roles live in a `role` column on `user_sample` (`owner | editor | contributor`, 
 - Deletion sits behind `requireActiveSession` and `unlockedSample`, so a draft another collaborator is editing answers 409.
 - Publishing a shared draft silently revokes the contributor's write access, notifying nobody. Being added mails an invitation ([[mail-notifications]]); a re-add that changes nothing sends nothing.
 - A collaborator rejected after being added keeps their row, which grants nothing since `currentUser` 403s them at the admin router root.
+- **Sub-sampling grants `contributor` automatically.** Creating a sample with a parent makes the parent's owner a contributor on the child, silently, no mail; the creator stays sole owner if they already own the parent. See [[sample-parentage]] and ADR 0024's amendment.

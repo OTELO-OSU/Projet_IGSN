@@ -79,6 +79,7 @@ describe("getSampleByIgsn", () => {
       institutionalOsu: null,
       institutionalLaboratory: null,
       manualGroups: [],
+      parents: [],
       owner: null,
       status: "published",
       createdAt: new Date(iso),

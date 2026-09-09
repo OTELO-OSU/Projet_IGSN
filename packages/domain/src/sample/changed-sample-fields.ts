@@ -2,7 +2,7 @@ import { atomizeChangeset, diff } from "json-diff-ts";
 
 import { createSampleSchema, type CreateSample } from "./sample.ts";
 
-const NOT_MAILED = ["attachments", "manualGroupIds"] as const;
+const NOT_MAILED = ["attachments", "manualGroupIds", "parentIds"] as const;
 
 export type SampleMailField = Exclude<
   keyof CreateSample,

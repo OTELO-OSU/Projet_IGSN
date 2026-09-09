@@ -1,5 +1,10 @@
 # Directory Update Log
 
+## 2026-09-09
+
+- **Update**: API trust boundary and security rules (api-trust-boundary-security)
+- **Update**: Sample parentage and sub-samples (sample-parentage)
+
 ## 2026-09-04
 
 - **Creation**: Service accounts (service-accounts)

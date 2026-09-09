@@ -10,7 +10,7 @@ Accepted
 
 The previous registry (a Django app) holds ~24,910 geological samples, each with an already-assigned, citable IGSN (`CNRS##########` or `TOAE##########`). Its `pg_dump` (`bdd-igsn.sql`, gitignored) must land in the new database so those samples are browsable alongside newly-declared ones.
 
-The two schemas differ sharply: the old side is one wide `igsn_resource` table plus many lookup tables, the new side is `sample` with vocabularies stored as domain codes and ltree paths validated by Zod, and no sub-sample hierarchy. Two facts force decisions that constrain the code:
+The two schemas differ sharply: the old side is one wide `igsn_resource` table plus many lookup tables, the new side is `sample` with vocabularies stored as domain codes and ltree paths validated by Zod. At the time of this import the new schema had no sub-sample hierarchy either; one shipped later (`knowledge/sample-parentage.md`), but this import still skips legacy children, importing them being possible now but out of scope. Two facts force decisions that constrain the code:
 
 - The new `igsn` column normally holds a 26-char Crockford base32 suffix derived from the sample UUID; a legacy IGSN does not fit that format.
 - A sample is publishable only when it clears every publish blocker, and most legacy rows are too sparse to qualify.
@@ -31,7 +31,7 @@ The two schemas differ sharply: the old side is one wide `igsn_resource` table p
 
 **The material path must match the start of a supported path**, that is a valid node in the new tree, complete or not, or a coarse root when the source knew no finer type. A genuinely coarse source imports, since its path is a valid prefix; a leaf the new tree spells differently or seats elsewhere is remapped by hand through `MATERIAL_SPECIALS`, keyed to the path the geologist's mapping instructions assign it. Everything else is skipped, including the values the expert table marks "record to review". Truncating to a coarser path would assert a classification the source did not, and publishing an under-classified sample is worse than waiting.
 
-**Private rows and sub-samples are ignored**, the first because they would otherwise be published, the second because the new schema has no hierarchy.
+**Private rows and legacy sub-samples are ignored** (`WHERE r."parentIgsn_id" IS NULL`), the first because they would otherwise be published, the second because the new schema had no hierarchy when this import shipped. Importing them is now possible but stays out of this import's scope.
 
 **Every skip is printed.** `unmappableValues` returns every offending value in a row, and the import prints each skip (IGSN, reason, offending value) to stdout, which `make db-import-legacy` tees to `import-legacy.log`, so the gaps to close before a re-import are visible.
 

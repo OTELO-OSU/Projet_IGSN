@@ -7,6 +7,35 @@ import { PostgresJSDialect } from "kysely-postgres-js";
 import postgres from "postgres";
 import { z } from "zod";
 
+type LocationTable = {
+  id: string;
+  location_type: string | null;
+  point_longitude: number | null;
+  point_latitude: number | null;
+  area_west_longitude: number | null;
+  area_east_longitude: number | null;
+  area_south_latitude: number | null;
+  area_north_latitude: number | null;
+  line_start_longitude: number | null;
+  line_start_latitude: number | null;
+  line_end_longitude: number | null;
+  line_end_latitude: number | null;
+  vertical_position: number | null;
+  vertical_position_min: number | null;
+  vertical_position_max: number | null;
+  line_start_vertical_position: number | null;
+  line_end_vertical_position: number | null;
+  vertical_reference: string | null;
+  vertical_reference_system: string | null;
+  navigation_type: string | null;
+  region_kind: string | null;
+  country: string | null;
+  ocean_sea: string | null;
+  locality_name: string | null;
+  locality_description: string | null;
+  geom: Generated<string | null>;
+};
+
 type SampleTable = {
   id: string;
   name: string;
@@ -47,31 +76,7 @@ type SampleTable = {
   geological_age_min: number | null;
   geological_age_max: number | null;
   geological_unit: string | null;
-  location_type: string | null;
-  point_longitude: number | null;
-  point_latitude: number | null;
-  area_west_longitude: number | null;
-  area_east_longitude: number | null;
-  area_south_latitude: number | null;
-  area_north_latitude: number | null;
-  line_start_longitude: number | null;
-  line_start_latitude: number | null;
-  line_end_longitude: number | null;
-  line_end_latitude: number | null;
-  vertical_position: number | null;
-  vertical_position_min: number | null;
-  vertical_position_max: number | null;
-  line_start_vertical_position: number | null;
-  line_end_vertical_position: number | null;
-  vertical_reference: string | null;
-  vertical_reference_system: string | null;
-  navigation_type: string | null;
-  region_kind: string | null;
-  country: string | null;
-  ocean_sea: string | null;
-  locality_name: string | null;
-  locality_description: string | null;
-  geom: Generated<string | null>;
+  location_id: string | null;
   packaging: string | null;
   storage_conditions: string[] | null;
   temperature_type: string | null;
@@ -216,6 +221,11 @@ type SampleManualGroupTable = {
   group_id: string;
 };
 
+type SampleParentTable = {
+  sample_id: string;
+  parent_id: string;
+};
+
 type UserManagedInstitutionalGroupTable = {
   user_id: string;
   kind: InstitutionalGroupKind;
@@ -250,10 +260,12 @@ type ServiceAccountManagedManualGroupTable = {
 };
 
 export type DB = {
+  location: LocationTable;
   manual_group: ManualGroupTable;
   manual_group_member: ManualGroupMemberTable;
   sample: SampleTable;
   sample_manual_group: SampleManualGroupTable;
+  sample_parent: SampleParentTable;
   sample_relation: SampleRelationTable;
   sample_attachment: SampleAttachmentTable;
   sample_edit_lock: SampleEditLockTable;

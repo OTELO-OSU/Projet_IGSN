@@ -8,22 +8,24 @@ import {
   Alert,
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
+import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare-sub-sample";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canRequestSampleDeletion } from "@projet-igsn/domain/user-sample/can-request-sample-deletion";
 import { canSetSampleStatus } from "@projet-igsn/domain/user-sample/can-set-sample-status";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { InfoIcon, Trash2Icon } from "lucide-react";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { GitBranchPlusIcon, InfoIcon, Trash2Icon } from "lucide-react";
 import { z } from "zod";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
-import { FRONTEND_URL } from "#/frontend-url.ts";
+import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { RequestSampleDeletionDialog } from "#/samples/request-sample-deletion-dialog.tsx";
 import {
@@ -173,7 +175,7 @@ function EditSamplePage() {
           ? {
               kind: "link",
               label: m.action_view_public_page(),
-              href: `${FRONTEND_URL}/samples/${query.data.igsn}`,
+              href: frontendSampleUrl(query.data.igsn),
             }
           : {
               kind: "publish",
@@ -249,7 +251,17 @@ function EditSamplePage() {
             </p>
           ) : null}
         </div>
-        {isTombstone ? null : <ShareSampleButton sampleId={sampleId} />}
+        <div className="flex items-center gap-2">
+          {canDeclareSubSample(query.data, { role, managed }) && (
+            <Button asChild variant="outline">
+              <Link to="/samples/create" search={{ parent: sampleId }}>
+                <GitBranchPlusIcon aria-hidden />
+                {m.sample_add_sub_sample({ name: query.data.name })}
+              </Link>
+            </Button>
+          )}
+          {isTombstone ? null : <ShareSampleButton sampleId={sampleId} />}
+        </div>
       </div>
 
       {lockedMessage ? (
@@ -274,6 +286,7 @@ function EditSamplePage() {
           query.data
         }
         manualGroupOptions={query.data.manualGroupOptions}
+        parent={query.data.parents[0]}
         publicationYear={query.data.publicationYear}
         sampleId={query.data.id}
         attachments={query.data.attachments}

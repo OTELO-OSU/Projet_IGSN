@@ -22,6 +22,7 @@ import {
 import { rateLimit } from "./rate-limit/middleware.ts";
 import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
+import { createSampleParentRoutes } from "./sample/parent-routes.ts";
 import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
 import { createServiceAccountOwnerRoutes } from "./service-account/owner-routes.ts";
@@ -127,6 +128,10 @@ export function createApp(
     .use(
       "/samples/:id/deletion-request",
       rateLimit(rateLimitConfig, "user", MAIL_REQUEST_USER_BUDGET),
+    )
+    .route(
+      "/samples/parents",
+      createSampleParentRoutes(sampleRepository, userRepository),
     )
     .route(
       "/samples",

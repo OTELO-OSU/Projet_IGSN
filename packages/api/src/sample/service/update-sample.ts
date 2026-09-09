@@ -9,6 +9,7 @@ import { getSampleById } from "./get-sample-by-id.ts";
 import { replaceSampleManualGroups } from "./replace-sample-manual-groups.ts";
 import { replaceSampleRelations } from "./replace-sample-relations.ts";
 import { sampleColumns } from "./sample-columns.ts";
+import { writeSampleLocation } from "./write-sample-location.ts";
 
 export async function updateSample(
   db: Transactional<DB>,
@@ -22,6 +23,7 @@ export async function updateSample(
     .returning("id")
     .executeTakeFirst();
   if (!row) return null;
+  await writeSampleLocation(db, id, input.location);
   await replaceSampleRelations(db, id, input.relations ?? []);
   if (input.manualGroupIds) {
     await replaceSampleManualGroups(db, id, input.manualGroupIds);

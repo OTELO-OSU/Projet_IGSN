@@ -4,6 +4,10 @@ import { frontendUrl } from "../urls";
 
 export function sampleDetailPage(page: Page) {
   const url = (igsn: string) => `${frontendUrl}/samples/${igsn}`;
+  const addSubSampleLink = page.getByRole("link", {
+    name: "Add a sub sample",
+    exact: true,
+  });
 
   return {
     goto: async (igsn: string) => {
@@ -11,6 +15,8 @@ export function sampleDetailPage(page: Page) {
       expect(response?.status()).toBe(200);
     },
     gotoNotFound: (igsn: string) => page.goto(url(igsn)),
+    addSubSample: () => addSubSampleLink.click(),
+    expectNoAddSubSampleAction: () => expect(addSubSampleLink).toHaveCount(0),
     expectSample: async (name: string, igsn: string) => {
       await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
       await expect(page.getByText(igsn)).toBeVisible();
@@ -77,6 +83,12 @@ export function sampleDetailPage(page: Page) {
       expect(
         page.getByRole("region", { name: "Groups" }).getByText(name),
       ).toBeVisible(),
+    expectParent: (name: string, igsn: string) =>
+      expect(
+        page
+          .getByRole("region", { name: "Parent samples" })
+          .getByRole("link", { name }),
+      ).toHaveAttribute("href", new RegExp(`/samples/${igsn}$`)),
     expectAttachment: (label: string) =>
       expect(page.getByText(label, { exact: true })).toBeVisible(),
     attachmentDownloadHref: (name: string) =>

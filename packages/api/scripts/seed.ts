@@ -17,7 +17,12 @@ import { z } from "zod";
 import type { DB } from "../src/db.ts";
 
 import { createDb } from "../src/db.ts";
+import { deleteOrphanLocations } from "../src/sample/service/delete-orphan-locations.ts";
 import { sampleColumns } from "../src/sample/service/sample-columns.ts";
+import {
+  hasLocationData,
+  locationColumns,
+} from "../src/sample/service/to-location.ts";
 
 type SeedUser = SampleOwner & {
   email: string;
@@ -360,6 +365,15 @@ export async function insertSamples(
     owner,
     collaborators,
   }));
+  await deleteOrphanLocations(db);
+  const locations = parsed.flatMap(({ id, location }) => {
+    const columns = locationColumns(location);
+    return hasLocationData(columns) ? [{ id, ...columns }] : [];
+  });
+  if (locations.length > 0) {
+    await db.insertInto("location").values(locations).execute();
+  }
+  const located = new Set(locations.map((location) => location.id));
   const created = await db
     .insertInto("sample")
     .values(
@@ -375,6 +389,7 @@ export async function insertSamples(
           id,
           status,
           igsn: igsn ?? null,
+          location_id: located.has(id) ? id : null,
           publication_year: hasPermanentIgsn({ status })
             ? SEED_PUBLICATION_YEAR
             : null,

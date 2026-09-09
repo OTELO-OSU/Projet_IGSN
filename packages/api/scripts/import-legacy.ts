@@ -10,6 +10,11 @@ import { createDb } from "../src/db.ts";
 import { replaceSampleRelations } from "../src/sample/service/replace-sample-relations.ts";
 import { sampleColumns } from "../src/sample/service/sample-columns.ts";
 import {
+  LOCATION_COLUMNS,
+  hasLocationData,
+  locationColumns,
+} from "../src/sample/service/to-location.ts";
+import {
   type LegacyOwner,
   type LegacyRow,
   droppedDoiLinks,
@@ -127,11 +132,51 @@ async function main() {
 
     let batch: ReturnType<typeof toSampleRow>[] = [];
     const sampleIdByIgsn = new Map<string, string>();
+    const locationByIgsn = new Map<
+      string,
+      ReturnType<typeof locationColumns>
+    >();
     const ownerByIgsn = new Map<string, LegacyOwner>();
     const relationsByIgsn = new Map<
       string,
       NonNullable<ReturnType<typeof createSampleSchema.parse>["relations"]>
     >();
+    const upsertLocations = async (
+      stored: { id: string; igsn: string | null; location_id: string | null }[],
+    ) => {
+      const values = [];
+      const idsToLink: string[] = [];
+      for (const { id, igsn, location_id } of stored) {
+        const columns = igsn === null ? undefined : locationByIgsn.get(igsn);
+        if (!columns) continue;
+        values.push({ id: location_id ?? id, ...columns });
+        if (location_id === null) idsToLink.push(id);
+      }
+      if (values.length === 0) return;
+      await db
+        .insertInto("location")
+        .values(values)
+        .onConflict((oc) =>
+          oc
+            .column("id")
+            .doUpdateSet((eb) =>
+              Object.fromEntries(
+                LOCATION_COLUMNS.map((column) => [
+                  column,
+                  eb.ref(`excluded.${column}`),
+                ]),
+              ),
+            ),
+        )
+        .execute();
+      if (idsToLink.length === 0) return;
+      await db
+        .updateTable("sample")
+        .set((eb) => ({ location_id: eb.ref("id") }))
+        .where("id", "in", idsToLink)
+        .execute();
+    };
+
     const flush = async () => {
       if (batch.length === 0) return;
       const rowsToInsert = batch;
@@ -153,9 +198,10 @@ async function main() {
               ),
             ),
         )
-        .returning(["id", "igsn"])
+        .returning(["id", "igsn", "location_id"])
         .execute();
       for (const { id, igsn } of stored) if (igsn) sampleIdByIgsn.set(igsn, id);
+      await upsertLocations(stored);
       summary.imported += rowsToInsert.length;
       batch = [];
     };
@@ -197,6 +243,8 @@ async function main() {
       for (const value of droppedDoiLinks(row.doi_related_resources)) {
         droppedLinks.push({ igsn: igsn.data, value });
       }
+      const location = locationColumns(parsed.data.location);
+      if (hasLocationData(location)) locationByIgsn.set(igsn.data, location);
       batch.push(toSampleRow(row, parsed.data, igsn.data));
       if (batch.length >= BATCH_SIZE) await flush();
     }

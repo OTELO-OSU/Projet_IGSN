@@ -7,9 +7,12 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
+import { inheritParentLocation } from "./inherit-parent-location.ts";
+import { insertSampleParents } from "./insert-sample-parents.ts";
 import { replaceSampleManualGroups } from "./replace-sample-manual-groups.ts";
 import { replaceSampleRelations } from "./replace-sample-relations.ts";
 import { sampleColumns } from "./sample-columns.ts";
+import { writeSampleLocation } from "./write-sample-location.ts";
 
 export async function insertSample(
   db: Transactional<DB>,
@@ -27,6 +30,14 @@ export async function insertSample(
     })
     .returning("id")
     .executeTakeFirstOrThrow();
+  const parentIds = input.parentIds ?? [];
+  await insertSampleParents(db, row.id, parentIds);
+  const [parentId] = parentIds;
+  if (parentId === undefined) {
+    await writeSampleLocation(db, row.id, input.location);
+  } else {
+    await inheritParentLocation(db, row.id, parentId);
+  }
   await replaceSampleRelations(db, row.id, input.relations ?? []);
   await replaceSampleManualGroups(db, row.id, input.manualGroupIds ?? []);
   return getSampleById(db, row.id);

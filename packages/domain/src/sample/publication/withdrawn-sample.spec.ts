@@ -47,6 +47,7 @@ const withdrawn: Sample = {
   igsn: "CNRS1234567890",
   owner: { name: "Martin", firstname: "Jean" },
   manualGroups: [],
+  parents: [],
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,

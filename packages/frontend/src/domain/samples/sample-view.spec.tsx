@@ -6,7 +6,8 @@ import { renderWithRouter } from "../../../test/render-with-router.tsx";
 import { stubAuth } from "../../../test/stub-auth.tsx";
 import { SampleView } from "./sample-view.tsx";
 
-const render = (ui: React.ReactNode) => renderWithRouter(stubAuth(ui));
+const render = (ui: React.ReactNode, stubPaths?: string[]) =>
+  renderWithRouter(stubAuth(ui), stubPaths);
 
 const emptyAge = {
   numericAgeMin: null,
@@ -55,6 +56,7 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   economicDepositName: null,
   economicDepositDescription: null,
   manualGroups: [],
+  parents: [],
   owner: null,
   status: "published",
   createdAt: new Date("2024-01-01"),
@@ -138,6 +140,7 @@ describe("SampleView", () => {
       "Synthetic details",
       "Institution",
       "Groups",
+      "Parent samples",
       "Age",
       "Security",
       "Economic interest",
@@ -333,6 +336,40 @@ describe("SampleView", () => {
       .toBeInTheDocument();
     await expect.element(screen.getByText("Volcano")).toBeInTheDocument();
     await expect.element(screen.getByText("Deep sea")).toBeInTheDocument();
+  });
+
+  it("should show the parents as their own section, in the nav, each linking to its sample page", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          parents: [
+            {
+              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3304",
+              igsn: "0123456789ABCDEFGHJKMNPQRT",
+              name: "Basalt 41",
+              material: null,
+            },
+          ],
+        })}
+      />,
+      ["/samples/$igsn"],
+    );
+
+    await expect
+      .element(
+        screen.getByRole("heading", { level: 2, name: "Parent samples" }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        screen
+          .getByRole("navigation")
+          .getByRole("link", { name: "Parent samples" }),
+      )
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByRole("link", { name: "Basalt 41" }))
+      .toHaveAttribute("href", "/samples/0123456789ABCDEFGHJKMNPQRT");
   });
 
   it("should show the synthetic details as their own section", async () => {

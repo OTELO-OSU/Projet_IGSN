@@ -2,7 +2,28 @@ import {
   DEFAULT_PAGE_SIZE,
   listSamplesQuerySchema,
   pageSizeSchema,
+  updateSampleBodySchema,
 } from "./sample-validator";
+
+describe("updateSampleBodySchema", () => {
+  const body = {
+    name: "Basalt 42",
+    expectedUpdatedAt: "2026-07-02T10:00:00.000Z",
+  };
+
+  it("should accept an edit of a sample", () => {
+    expect(updateSampleBodySchema.safeParse(body).success).toBe(true);
+  });
+
+  it("should reject an edit carrying parentIds, since parentage is set at creation", () => {
+    expect(
+      updateSampleBodySchema.safeParse({
+        ...body,
+        parentIds: ["11111111-1111-4111-8111-111111111111"],
+      }).success,
+    ).toBe(false);
+  });
+});
 
 describe("pageSizeSchema", () => {
   it("should default to the given fallback when absent", () => {

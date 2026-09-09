@@ -24,12 +24,13 @@ export type SampleAccessEnv = {
   };
 };
 
-async function inModerationReach(
+export async function inModerationReach(
   repository: SampleRepository,
   users: UserRepository,
   user: Pick<User, "id" | "superAdmin">,
   sampleId: string,
 ): Promise<boolean> {
+  if (user.superAdmin) return true;
   const scope = await getModerationScope(users, user);
   return scope !== null && (await repository.isModerated(sampleId, scope));
 }
@@ -48,8 +49,7 @@ export function requireSampleAccess(
     const found = await repository.get(id.data, user.id);
     const managed =
       found !== null &&
-      (user.superAdmin ||
-        (await inModerationReach(repository, users, user, found.sample.id)));
+      (await inModerationReach(repository, users, user, found.sample.id));
     const moderating = managed && !isSampleOwner(found?.role ?? null);
     if (found && !managed && found.role === null) {
       return c.json({ error: "Forbidden" }, 403);

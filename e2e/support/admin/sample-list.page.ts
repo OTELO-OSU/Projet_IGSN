@@ -3,7 +3,9 @@ import { expect, type Page } from "@playwright/test";
 import { natureLabel } from "../nature-label";
 
 export const sampleRow = (page: Page, name: string) =>
-  page.getByRole("row").filter({ has: page.getByRole("cell", { name }) });
+  page
+    .getByRole("row")
+    .filter({ has: page.getByRole("cell", { name, exact: true }) });
 
 export function sampleListPage(page: Page) {
   return {
@@ -12,7 +14,14 @@ export function sampleListPage(page: Page) {
     expectHidden: () =>
       expect(page.getByRole("heading", { name: "My samples" })).toBeHidden(),
     goToCreate: () => page.getByRole("link", { name: "Create" }).click(),
-    openSample: (name: string) => page.getByRole("link", { name }).click(),
+    openSample: (name: string) =>
+      page.getByRole("link", { name, exact: true }).click(),
+    addSubSample: (name: string) =>
+      page.getByRole("link", { name: `Add a sub sample of ${name}` }).click(),
+    expectNoSubSampleAction: (name: string) =>
+      expect(
+        page.getByRole("link", { name: `Add a sub sample of ${name}` }),
+      ).toHaveCount(0),
     expectColumns: async () => {
       await expect(
         page.getByRole("columnheader", { name: "Name", exact: true }),
@@ -34,9 +43,9 @@ export function sampleListPage(page: Page) {
       await page.getByRole("option", { name: choice }).click();
     },
     expectSampleRow: (name: string) =>
-      expect(page.getByRole("cell", { name })).toBeVisible(),
+      expect(page.getByRole("cell", { name, exact: true })).toBeVisible(),
     expectNoSampleRow: (name: string) =>
-      expect(page.getByRole("cell", { name })).toBeHidden(),
+      expect(page.getByRole("cell", { name, exact: true })).toBeHidden(),
     expectEmpty: () =>
       expect(page.getByRole("cell", { name: "No results" })).toBeVisible(),
     expectSampleRowWithNature: (name: string, nature: string) =>

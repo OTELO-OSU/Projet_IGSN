@@ -28,6 +28,7 @@ import {
   metamorphicFaciesSchema,
 } from "./metamorphic-facies/vocabulary.ts";
 import { natureSchema } from "./nature.ts";
+import { sampleParentSchema } from "./parent/model.ts";
 import {
   createSampleRelationSchema,
   sampleRelationSchema,
@@ -92,6 +93,7 @@ export const sampleSchema = z.object({
     .nullable()
     .default(null),
   manualGroups: z.array(manualGroupSchema).default([]),
+  parents: z.array(sampleParentSchema).default([]),
   // ponytail: snapshot of the owner's groups at creation, never edited afterwards, so it stays out of createSampleSchema
   ...institutionalGroupsFields,
   status: sampleStatusSchema,
@@ -101,107 +103,117 @@ export const sampleSchema = z.object({
 
 export type Sample = z.infer<typeof sampleSchema>;
 
-export const createSampleSchema = z
-  .strictObject({
-    name: nameSchema,
-    nature: natureSchema.nullable().default(null),
-    type: sampleTypeSchema.nullable().default(null),
-    material: materialPathSchema.nullish(),
-    texture: textureSchema.nullish(),
-    metamorphicFacies: metamorphicFaciesSchema.nullish(),
-    metamorphicFabric: metamorphicFabricSchema.nullish(),
-    collectionMethod: collectionMethodSchema.nullish(),
-    collectionMethodDescription: nameSchema.nullish(),
-    specificName: nameSchema.nullish(),
-    location: locationSchema.nullish(),
-    description: descriptionSchema.nullish(),
-    condition: conditionSchema.nullish(),
-    repository: repositorySchema.nullish(),
-    geologicalContextDescription: freeTextSchema.nullish(),
-    geomorphologicalEnvironment: geomorphologicalEnvironmentSchema.nullish(),
-    scientificContext: scientificContextSchema.nullish(),
-    syntheticDetails: syntheticDetailsSchema.nullish(),
-    age: ageSchema.nullish(),
-    relations: z.array(createSampleRelationSchema).optional(),
-    attachments: z.array(updateSampleAttachmentSchema).optional(),
-    security: securitySchema.nullish(),
-    existenceStatus: existenceStatusSchema.nullish(),
-    availabilityStatus: availabilityStatusSchema.nullish(),
-    resourceType: resourceTypeSchema.nullish(),
-    economicInterestElements: z.array(elementSchema).optional(),
-    economicResourceTypePrecision: nameSchema.nullish(),
-    economicDepositName: nameSchema.nullish(),
-    economicDepositDescription: nameSchema.nullish(),
-    manualGroupIds: z.array(z.uuid()).optional(),
-  })
-  .superRefine((value, ctx) => {
-    if (
-      value.texture != null &&
-      !texturesFor(value.material ?? null).includes(value.texture)
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["texture"],
-        message: "texture is not valid for the selected material",
-      });
-    }
-    if (
-      value.metamorphicFacies != null &&
-      !faciesFor(value.material ?? null).includes(value.metamorphicFacies)
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["metamorphicFacies"],
-        message: "metamorphic facies is not valid for the selected material",
-      });
-    }
-    if (
-      value.metamorphicFabric != null &&
-      !fabricsFor(value.material ?? null).includes(value.metamorphicFabric)
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["metamorphicFabric"],
-        message: "metamorphic fabric is not valid for the selected material",
-      });
-    }
-    if (
-      value.availabilityStatus != null &&
-      !allowedAvailabilityStatuses(value.existenceStatus).includes(
-        value.availabilityStatus,
-      )
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["availabilityStatus"],
-        message: "availability status is not valid for the existence status",
-      });
-    }
-    if (!allowsLocation(value.material ?? null)) {
-      for (const field of [
-        "location",
-        "geologicalContextDescription",
-        "geomorphologicalEnvironment",
-      ] as const) {
-        if (value[field] != null) {
-          ctx.addIssue({
-            code: "custom",
-            path: [field],
-            message: `a synthetic or returned extraterrestrial sample must not have a ${field}`,
-          });
-        }
+const createSampleFieldsSchema = z.strictObject({
+  name: nameSchema,
+  nature: natureSchema.nullable().default(null),
+  type: sampleTypeSchema.nullable().default(null),
+  material: materialPathSchema.nullish(),
+  texture: textureSchema.nullish(),
+  metamorphicFacies: metamorphicFaciesSchema.nullish(),
+  metamorphicFabric: metamorphicFabricSchema.nullish(),
+  collectionMethod: collectionMethodSchema.nullish(),
+  collectionMethodDescription: nameSchema.nullish(),
+  specificName: nameSchema.nullish(),
+  location: locationSchema.nullish(),
+  description: descriptionSchema.nullish(),
+  condition: conditionSchema.nullish(),
+  repository: repositorySchema.nullish(),
+  geologicalContextDescription: freeTextSchema.nullish(),
+  geomorphologicalEnvironment: geomorphologicalEnvironmentSchema.nullish(),
+  scientificContext: scientificContextSchema.nullish(),
+  syntheticDetails: syntheticDetailsSchema.nullish(),
+  age: ageSchema.nullish(),
+  relations: z.array(createSampleRelationSchema).optional(),
+  attachments: z.array(updateSampleAttachmentSchema).optional(),
+  security: securitySchema.nullish(),
+  existenceStatus: existenceStatusSchema.nullish(),
+  availabilityStatus: availabilityStatusSchema.nullish(),
+  resourceType: resourceTypeSchema.nullish(),
+  economicInterestElements: z.array(elementSchema).optional(),
+  economicResourceTypePrecision: nameSchema.nullish(),
+  economicDepositName: nameSchema.nullish(),
+  economicDepositDescription: nameSchema.nullish(),
+  manualGroupIds: z.array(z.uuid()).optional(),
+  parentIds: z.array(z.uuid()).max(1).optional(),
+});
+
+type SampleCheck = Omit<z.infer<typeof createSampleFieldsSchema>, "parentIds">;
+
+const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
+  if (
+    value.texture != null &&
+    !texturesFor(value.material ?? null).includes(value.texture)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["texture"],
+      message: "texture is not valid for the selected material",
+    });
+  }
+  if (
+    value.metamorphicFacies != null &&
+    !faciesFor(value.material ?? null).includes(value.metamorphicFacies)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["metamorphicFacies"],
+      message: "metamorphic facies is not valid for the selected material",
+    });
+  }
+  if (
+    value.metamorphicFabric != null &&
+    !fabricsFor(value.material ?? null).includes(value.metamorphicFabric)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["metamorphicFabric"],
+      message: "metamorphic fabric is not valid for the selected material",
+    });
+  }
+  if (
+    value.availabilityStatus != null &&
+    !allowedAvailabilityStatuses(value.existenceStatus).includes(
+      value.availabilityStatus,
+    )
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["availabilityStatus"],
+      message: "availability status is not valid for the existence status",
+    });
+  }
+  if (!allowsLocation(value.material ?? null)) {
+    for (const field of [
+      "location",
+      "geologicalContextDescription",
+      "geomorphologicalEnvironment",
+    ] as const) {
+      if (value[field] != null) {
+        ctx.addIssue({
+          code: "custom",
+          path: [field],
+          message: `a synthetic or returned extraterrestrial sample must not have a ${field}`,
+        });
       }
     }
-    if (
-      value.syntheticDetails != null &&
-      !isSyntheticMaterial(value.material ?? null)
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["syntheticDetails"],
-        message: "only a synthetic sample carries synthesis details",
-      });
-    }
-  });
+  }
+  if (
+    value.syntheticDetails != null &&
+    !isSyntheticMaterial(value.material ?? null)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["syntheticDetails"],
+      message: "only a synthetic sample carries synthesis details",
+    });
+  }
+};
+
+export const createSampleSchema =
+  createSampleFieldsSchema.superRefine(checkSample);
 
 export type CreateSample = z.infer<typeof createSampleSchema>;
+
+export const updateSampleSchema = createSampleFieldsSchema
+  .omit({ parentIds: true })
+  .superRefine(checkSample);

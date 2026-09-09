@@ -1,6 +1,7 @@
 import type { AdminSampleListItem } from "@projet-igsn/domain/sample/sample-validator";
 import type { ReactNode } from "react";
 
+import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { DataTable } from "@projet-igsn/design-system/components/ui/data-table";
 import {
   Tooltip,
@@ -8,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
+import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
@@ -16,6 +18,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { GitBranchPlusIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
@@ -131,6 +134,30 @@ function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
       header: () => m.column_last_modified(),
       cell: ({ row }) => formatDate(row.original.updatedAt),
       meta: { className: "w-32" },
+    },
+    {
+      id: "actions",
+      header: () => null,
+      cell: ({ row }) =>
+        hasPermanentIgsn(row.original) ? (
+          <TruncatedCell
+            text={m.sample_add_sub_sample({ name: row.original.name })}
+          >
+            <Button asChild variant="ghost" size="icon">
+              <Link
+                to="/samples/create"
+                search={{ parent: row.original.id }}
+                aria-label={m.sample_add_sub_sample({
+                  name: row.original.name,
+                })}
+                onClick={(event) => event.stopPropagation()}
+              >
+                <GitBranchPlusIcon aria-hidden />
+              </Link>
+            </Button>
+          </TruncatedCell>
+        ) : null,
+      meta: { className: "w-12" },
     },
   ];
 }
