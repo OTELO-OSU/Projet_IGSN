@@ -18,6 +18,7 @@ import {
   UsersRoundIcon,
 } from "lucide-react";
 
+import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 
 import { UserName } from "../user-name.tsx";
@@ -170,6 +171,7 @@ export function AppLayout({
         <header className="border-b">
           <div className="flex items-center justify-end gap-4 px-6 py-4">
             <UserName />
+            <a href={FRONTEND_URL}>{m.nav_public_site()}</a>
             <Link to="/settings">{m.nav_settings()}</Link>
             <SignOutButton onSignOut={onSignOut} />
           </div>

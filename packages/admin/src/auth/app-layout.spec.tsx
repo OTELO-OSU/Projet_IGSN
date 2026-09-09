@@ -1,5 +1,7 @@
 import { page } from "vitest/browser";
 
+import { FRONTEND_URL } from "#/frontend-url.ts";
+
 import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { render } from "../../test/render.tsx";
 import { AppLayout } from "./app-layout.tsx";
@@ -125,6 +127,16 @@ describe("AppLayout", () => {
     expect(
       nav.getByRole("link", { name: "Manual groups" }).elements(),
     ).toHaveLength(0);
+  });
+
+  it("should offer a way back to the public site", async () => {
+    fakeCurrentUser();
+
+    const screen = await renderLayout();
+
+    await expect
+      .element(screen.getByRole("link", { name: "Go to public site" }))
+      .toHaveAttribute("href", FRONTEND_URL);
   });
 
   it("should show no banner to an accepted user", async () => {

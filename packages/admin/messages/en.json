@@ -1,6 +1,6 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "app_title": "IGSN Admin",
+  "app_title": "IGSN Dashboard",
   "action_sign_out": "Sign out",
   "auth_loading": "Loading…",
   "auth_error": "Authentication error: {message}",
@@ -9,6 +9,7 @@
   "auth_no_access": "This ORCID iD is not linked to an account. Sign in through your institution and add your ORCID iD in Settings first.",
   "user_name_error": "Could not load your account.",
   "nav_settings": "Settings",
+  "nav_public_site": "Go to public site",
   "settings_title": "Settings",
   "field_orcid": "ORCID iD",
   "field_orcid_invalid": "Invalid ORCID iD: expected the form 0000-0002-1825-0097",
