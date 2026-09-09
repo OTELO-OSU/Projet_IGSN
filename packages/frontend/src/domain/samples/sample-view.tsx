@@ -7,7 +7,9 @@ import {
 } from "@projet-igsn/domain/institutional-group/label";
 import { hasEconomicInterest } from "@projet-igsn/domain/sample/resource-type/has-economic-interest";
 import { fullName } from "@projet-igsn/domain/user/full-name";
+import { Link } from "@tanstack/react-router";
 
+import { AddSubSampleLink } from "#/domain/samples/add-sub-sample-link.tsx";
 import { AgeView, hasAge } from "#/domain/samples/age-view.tsx";
 import { BreadcrumbFieldRow } from "#/domain/samples/breadcrumb-field-row.tsx";
 import { ConditionView } from "#/domain/samples/condition-view.tsx";
@@ -64,6 +66,7 @@ export function SampleView({
     institutionalOsu,
     institutionalLaboratory,
     manualGroups,
+    parents,
     owner,
     location,
     security,
@@ -236,6 +239,25 @@ export function SampleView({
         </ul>
       ),
     },
+    parents.length > 0 && {
+      id: "parents",
+      title: m.sample_section_parents(),
+      content: (
+        <ul className="mt-2 divide-y">
+          {parents.map((parent) => (
+            <li key={parent.id} className="px-4 py-3">
+              <Link
+                to="/samples/$igsn"
+                params={{ igsn: parent.igsn }}
+                className="font-medium break-all text-sky-800 underline"
+              >
+                {parent.name}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ),
+    },
     hasAge(age)
       ? {
           id: "age",
@@ -288,7 +310,12 @@ export function SampleView({
       <SampleHero
         name={name}
         igsn={igsn}
-        actions={<EditSampleLink sampleId={id} />}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            <EditSampleLink sampleId={id} />
+            <AddSubSampleLink sampleId={id} />
+          </div>
+        }
       />
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">

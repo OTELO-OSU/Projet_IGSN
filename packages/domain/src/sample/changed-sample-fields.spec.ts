@@ -98,8 +98,14 @@ describe("changedSampleFields", () => {
       name: "Basalt",
       attachments: [{ id: "a" }],
       manualGroupIds: ["g1"],
+      parentIds: ["p1"],
     };
-    const next = { name: "Basalt", attachments: [], manualGroupIds: ["g2"] };
+    const next = {
+      name: "Basalt",
+      attachments: [],
+      manualGroupIds: ["g2"],
+      parentIds: ["p2"],
+    };
     // Act
     const result = changedSampleFields(current, next);
     // Assert

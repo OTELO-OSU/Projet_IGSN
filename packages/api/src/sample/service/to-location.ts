@@ -7,9 +7,12 @@ import {
 
 import type { DB } from "../../db.ts";
 
-type SampleRow = Selectable<DB["sample"]>;
+type LocationColumn = keyof ReturnType<typeof locationColumns>;
 
-export function toLocation(row: SampleRow): Location | null {
+export type LocationRow = Pick<Selectable<DB["location"]>, LocationColumn>;
+
+export function toLocation(row: LocationRow | null): Location | null {
+  if (row === null) return null;
   const position = toPosition(row);
   const region = toRegion(row);
   const location = {
@@ -27,7 +30,7 @@ export function toLocation(row: SampleRow): Location | null {
   return locationSchema.parse(location);
 }
 
-function toVertical<T extends object>(row: SampleRow, values: T) {
+function toVertical<T extends object>(row: LocationRow, values: T) {
   if (
     row.vertical_reference === null &&
     row.vertical_reference_system === null &&
@@ -41,7 +44,7 @@ function toVertical<T extends object>(row: SampleRow, values: T) {
   };
 }
 
-function toPosition(row: SampleRow) {
+function toPosition(row: LocationRow) {
   if (row.location_type === "point") {
     return {
       type: "point",
@@ -79,7 +82,7 @@ function toPosition(row: SampleRow) {
   return null;
 }
 
-function toRegion(row: SampleRow) {
+function toRegion(row: LocationRow) {
   if (row.region_kind === "continent") {
     return { kind: "continent", country: row.country };
   }
@@ -117,9 +120,19 @@ export function locationColumns(location: Location | null | undefined) {
     vertical_reference_system: vertical?.system ?? null,
     navigation_type: location?.navigationType ?? null,
     region_kind: region?.kind ?? null,
-    country: region?.kind === "continent" ? region.country : null,
-    ocean_sea: region?.kind === "ocean" ? region.oceanSea : null,
+    country: (region?.kind === "continent" ? region.country : null) ?? null,
+    ocean_sea: (region?.kind === "ocean" ? region.oceanSea : null) ?? null,
     locality_name: location?.localityName ?? null,
     locality_description: location?.localityDescription ?? null,
   };
+}
+
+export const LOCATION_COLUMNS = Object.keys(
+  locationColumns(null),
+) as LocationColumn[];
+
+export function hasLocationData(
+  columns: ReturnType<typeof locationColumns>,
+): boolean {
+  return Object.values(columns).some((value) => value !== null);
 }

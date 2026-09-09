@@ -7,7 +7,7 @@ import { scientificContextSchema } from "@projet-igsn/domain/sample/scientific-c
 
 import type { DB } from "../../db.ts";
 
-import { toLocation } from "./to-location.ts";
+import { type LocationRow, toLocation } from "./to-location.ts";
 
 function measurement(value: number | null, unit: string | null) {
   return value !== null && unit !== null ? { value, unit } : null;
@@ -175,12 +175,18 @@ function toSyntheticDetails(row: Selectable<DB["sample"]>) {
   });
 }
 
-export function toSample(
-  row: Selectable<DB["sample"]>,
-  relations: Selectable<DB["sample_relation"]>[] = [],
-  attachments: Selectable<DB["sample_attachment"]>[] = [],
-  manualGroups: ManualGroup[] = [],
-): Sample {
+type SampleRow = Selectable<DB["sample"]> & {
+  location?: LocationRow | null;
+  relations?: Selectable<DB["sample_relation"]>[];
+  attachments?: Selectable<DB["sample_attachment"]>[];
+  manualGroups?: ManualGroup[];
+  parents?: Pick<
+    Selectable<DB["sample"]>,
+    "id" | "igsn" | "name" | "material"
+  >[];
+};
+
+export function toSample(row: SampleRow): Sample {
   const ageColumns = [
     row.numeric_age_min,
     row.numeric_age_max,
@@ -215,14 +221,14 @@ export function toSample(
     geologicalContextDescription: row.geological_context_description,
     geomorphologicalEnvironment: row.geomorphological_environment,
     specificName: row.specific_name,
-    location: toLocation(row),
+    location: toLocation(row.location ?? null),
     description: toDescription(row),
     condition: toCondition(row),
     scientificContext: toScientificContext(row),
     repository: toRepository(row),
     syntheticDetails: toSyntheticDetails(row),
     age,
-    relations: relations.map((relation) => ({
+    relations: (row.relations ?? []).map((relation) => ({
       id: relation.id,
       relationType: relation.relation_type,
       identifierType: relation.identifier_type,
@@ -235,7 +241,7 @@ export function toSample(
       schemeType: relation.scheme_type,
       description: relation.description,
     })),
-    attachments: attachments.map((attachment) => ({
+    attachments: (row.attachments ?? []).map((attachment) => ({
       id: attachment.id,
       name: attachment.name,
       mediaType: attachment.media_type,
@@ -253,7 +259,8 @@ export function toSample(
     economicDepositName: row.economic_deposit_name,
     economicDepositDescription: row.economic_deposit_description,
     igsn: row.igsn,
-    manualGroups,
+    manualGroups: row.manualGroups ?? [],
+    parents: row.parents ?? [],
     institutionalOrganization: row.institutional_organization,
     institutionalOsu: row.institutional_osu,
     institutionalLaboratory: row.institutional_laboratory,

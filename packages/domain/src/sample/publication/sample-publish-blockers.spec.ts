@@ -52,6 +52,7 @@ const base: Sample = {
   igsn: null,
   owner: null,
   manualGroups: [],
+  parents: [],
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,

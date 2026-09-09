@@ -117,9 +117,10 @@ export type SampleDraft = {
   age: AgeFormValues;
   relations: RelationDraft[];
   manualGroupIds: string[];
+  parentIds: string[];
 } & EconomicInterestDraft;
 
-export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
+export const toSampleDraft = (value?: Partial<CreateSample>): SampleDraft => ({
   name: value?.name,
   nature: value?.nature,
   typePath: toHierarchyPath(value?.type ?? null),
@@ -158,6 +159,7 @@ export const toSampleDraft = (value?: CreateSample): SampleDraft => ({
     description: relation.description ?? "",
   })),
   manualGroupIds: value?.manualGroupIds ?? [],
+  parentIds: value?.parentIds ?? [],
   ...toEconomicInterestDraft(value),
 });
 
@@ -230,6 +232,7 @@ const composeCreateSample = (draft: SampleDraft) => {
     ...(age ? { age } : {}),
     ...(relations.length > 0 ? { relations } : {}),
     manualGroupIds: draft.manualGroupIds,
+    ...(draft.parentIds.length > 0 ? { parentIds: draft.parentIds } : {}),
     ...economic,
   };
 };

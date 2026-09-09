@@ -20,7 +20,7 @@ Rejected: **MapLibre GL**, vector tiles with a heavier runtime and a hosted or b
 
 ## Consequences
 
-- A drawn rectangle maps 1:1 to the stored `geom` envelope: the box rides the `bbox` query param and filters with `ST_MakeEnvelope` (ADR 0014). Antimeridian-crossing boxes are out of scope for v1, the domain schema enforcing `west <= east`.
+- A drawn rectangle maps 1:1 to the stored `geom` envelope: the box rides the `bbox` query param and filters with `ST_MakeEnvelope` against the shared `location` table (ADR 0014, amended for sub-samples). Antimeridian-crossing boxes are out of scope for v1, the domain schema enforcing `west <= east`.
 - The map is client-only, Leaflet touching `window` at module scope, so the map module is lazy-imported behind a client mount gate, keeping it and its CSS off the SSR path while the rest of `/search` still server-renders.
 - OSM public tiles carry a usage policy. Attribution ships; revisit self-hosting or a tile provider, and the edge CSP `img-src` for the tile host, if traffic grows.
 - Rate limiting on the public `GET /samples` route, flagged by security review as a pre-existing gap unrelated to the map choice, is closed by [ADR 0029](0029-api-rate-limiting.md).

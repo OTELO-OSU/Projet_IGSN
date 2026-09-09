@@ -1,6 +1,9 @@
 import { expect, type Locator, type Page } from "@playwright/test";
 
 import { pickHierarchyLevel } from "../pick-hierarchy.ts";
+import { frontendUrl } from "../urls.ts";
+
+const SYNTHETIC_MATERIAL = "Synthetic rock / mineral";
 
 export function sampleFormPage(page: Page) {
   const openTab = (name: string) => page.getByRole("tab", { name }).click();
@@ -43,7 +46,38 @@ export function sampleFormPage(page: Page) {
     confirm,
     confirmStatusChange,
 
-    fillPublishableFields: async () => {
+    expectHierarchyLevel: (label: string) =>
+      expect(
+        page.getByRole("button", { name: `Remove ${label}`, exact: true }),
+      ).toBeVisible(),
+
+    expectParentTab: async (parent: { name: string; igsn: string }) => {
+      await expect(
+        page.getByRole("tablist").getByRole("tab").first(),
+      ).toHaveText("Parent sample");
+      await openTab("Parent sample");
+      const panel = page.getByRole("tabpanel");
+      await expect(panel).toContainText("This sample is a sub sample of");
+      await expect(
+        panel.getByRole("link", { name: parent.name }),
+      ).toHaveAttribute("href", `${frontendUrl}/samples/${parent.igsn}`);
+    },
+
+    expectInheritedLocation: async (parentName: string) => {
+      await openTab("Location");
+      const panel = page.getByRole("tabpanel");
+      await expect(panel).toContainText(
+        "The location is inherited from the parent sample:",
+      );
+      await expect(panel.getByRole("link", { name: parentName })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Location", exact: true }),
+      ).toHaveCount(0);
+    },
+
+    fillPublishableFields: async ({
+      material = SYNTHETIC_MATERIAL,
+    }: { material?: string } = {}) => {
       await pickHierarchy("Type", "Dredge");
       await pick("Provenance status", "Collection specimen");
       await page
@@ -51,7 +85,7 @@ export function sampleFormPage(page: Page) {
         .getByRole("textbox", { name: /^Date/ })
         .fill("2025-06-15");
       await openTab("Sample classification");
-      await pickHierarchy("Material", "Synthetic rock / mineral");
+      await pickHierarchy("Material", material);
       await openTab("Scientific context");
       await page.getByLabel(/collection curator/i).fill("Paul Bernard");
       await pick("Collection origin", "Scientific expedition");
@@ -62,6 +96,7 @@ export function sampleFormPage(page: Page) {
         "Current archive",
         "Centre National de la Recherche Scientifique (CNRS)",
       );
+      if (material !== SYNTHETIC_MATERIAL) return;
       await openTab("Sample classification");
       await pick("Starting material", "Natural");
       await pick("Nature of starting material", "Powder");

@@ -43,7 +43,7 @@ function RelationTarget({ relation }: { relation: SampleRelation }) {
         <Link
           to="/samples/$igsn"
           params={{ igsn: parsed.data }}
-          className="font-medium break-all"
+          className="font-medium break-all text-sky-800 underline"
         >
           {targetTitle}
         </Link>

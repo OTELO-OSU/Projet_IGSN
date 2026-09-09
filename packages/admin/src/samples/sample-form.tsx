@@ -24,6 +24,7 @@ import {
 import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
+import { type SampleParent } from "@projet-igsn/domain/sample/parent/model";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import {
   type PublishableFields,
@@ -39,6 +40,7 @@ import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
 import { useState } from "react";
 
+import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { AgeFields } from "#/samples/age-fields.tsx";
 import { toAgeInput } from "#/samples/age-form.ts";
@@ -95,6 +97,21 @@ const DEFAULT_TAB = "identity";
 
 const natureItems = toComboboxItems(natureSchema.options, natureLabel);
 
+export type SampleFormParent = Omit<SampleParent, "id">;
+
+function ParentSampleLink({ parent }: { parent: SampleFormParent }) {
+  return (
+    <a
+      className="underline"
+      href={frontendSampleUrl(parent.igsn)}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {parent.name}
+    </a>
+  );
+}
+
 const validateDraft =
   (schema: typeof sampleDraftSchema) =>
   ({ value }: { value: SampleDraft }) => {
@@ -131,7 +148,8 @@ export type SampleFormAction =
 export type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
-  defaultValues?: CreateSample;
+  defaultValues?: Partial<CreateSample>;
+  parent?: SampleFormParent;
   status?: SampleStatus;
   primaryAction?: SampleFormAction;
   secondaryAction?: SampleFormAction;
@@ -149,6 +167,7 @@ export function SampleForm({
   onCancel,
   isPending,
   defaultValues,
+  parent,
   status = "draft",
   primaryAction,
   secondaryAction,
@@ -179,11 +198,14 @@ export function SampleForm({
       : () => false;
   const areManualGroupsFrozen =
     roleOnSample !== null && !isSampleOwner(roleOnSample);
+  const isMaterialFrozenByParent =
+    parent !== undefined && isSyntheticMaterial(parent.material);
   const isFieldFrozen = isReadOnly
     ? () => true
     : (name: string) =>
         isFrozenByPublication(name) ||
-        (name === "manualGroupIds" && areManualGroupsFrozen);
+        (name === "manualGroupIds" && areManualGroupsFrozen) ||
+        (isMaterialFrozenByParent && name.startsWith("materialPath"));
   const defaultSubmit =
     primaryAction?.kind === "submit"
       ? primaryAction.onSubmit
@@ -430,6 +452,9 @@ export function SampleForm({
                 onValueChange={setTab}
               >
                 <TabsList>
+                  {parent ? (
+                    <TabsTrigger value="parent">{m.tab_parent()}</TabsTrigger>
+                  ) : null}
                   <TabsTrigger value={DEFAULT_TAB}>
                     {m.tab_identity()}
                   </TabsTrigger>
@@ -462,6 +487,15 @@ export function SampleForm({
                     {m.tab_related_resources()}
                   </TabsTrigger>
                 </TabsList>
+
+                {parent ? (
+                  <TabsContent value="parent" className="grid gap-4">
+                    <p>
+                      {m.parent_sample_hint()}{" "}
+                      <ParentSampleLink parent={parent} />
+                    </p>
+                  </TabsContent>
+                ) : null}
 
                 <TabsContent value={DEFAULT_TAB} className="grid gap-4">
                   <FormSection title={m.section_sample()}>
@@ -558,17 +592,26 @@ export function SampleForm({
                 </TabsContent>
 
                 <TabsContent value="location" className="grid gap-4">
-                  <FormSection title={m.section_location()}>
-                    <form.AppForm>
-                      <LocationFields />
-                    </form.AppForm>
-                  </FormSection>
+                  {parent && allowsLocation(parent.material) ? (
+                    <p>
+                      {m.location_inherited_from()}{" "}
+                      <ParentSampleLink parent={parent} />
+                    </p>
+                  ) : (
+                    <>
+                      <FormSection title={m.section_location()}>
+                        <form.AppForm>
+                          <LocationFields />
+                        </form.AppForm>
+                      </FormSection>
 
-                  <FormSection title={m.section_geomorphological_context()}>
-                    <form.AppForm>
-                      <SampleGeologicalContextFields />
-                    </form.AppForm>
-                  </FormSection>
+                      <FormSection title={m.section_geomorphological_context()}>
+                        <form.AppForm>
+                          <SampleGeologicalContextFields />
+                        </form.AppForm>
+                      </FormSection>
+                    </>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="age" className="grid gap-4">

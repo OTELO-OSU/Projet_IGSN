@@ -6,14 +6,14 @@ import { userSampleRoleSchema } from "../user-sample/model.ts";
 import { userSchema } from "../user/model.ts";
 import { withdrawnSampleSchema } from "./publication/withdrawn-sample.ts";
 import {
-  createSampleSchema,
   sampleSchema,
   sampleStatusSchema,
+  updateSampleSchema,
 } from "./sample.ts";
 import { facetQueryFields } from "./search/facets.ts";
 import { MAX_SEARCH_LENGTH } from "./search/search-tokens.ts";
 
-export const updateSampleBodySchema = createSampleSchema.extend({
+export const updateSampleBodySchema = updateSampleSchema.extend({
   expectedUpdatedAt: z.coerce.date(),
 });
 

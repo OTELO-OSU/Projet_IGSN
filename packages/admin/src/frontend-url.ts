@@ -3,3 +3,6 @@ export const FRONTEND_URL =
 
 export const frontendSearchUrl = (filters: Record<string, string>) =>
   `${FRONTEND_URL}/search?${new URLSearchParams(filters)}`;
+
+export const frontendSampleUrl = (igsn: string) =>
+  `${FRONTEND_URL}/samples/${igsn}`;

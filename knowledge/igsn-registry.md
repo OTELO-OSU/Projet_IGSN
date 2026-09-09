@@ -48,6 +48,8 @@ relations:
     target: legacy-import
   - type: depends_on
     target: orcid-linking
+  - type: depends_on
+    target: sample-parentage
 status: stable
 ---
 
@@ -55,14 +57,14 @@ A registry assigning unique IGSN identifiers (International Generic Sample Numbe
 
 - In scope: future physical samples of the solid Earth, extraterrestrial ones included.
 - Out of scope: other domains (fauna, flora, archaeology), past samples except the legacy dump.
-- A sub-sample is a part of a sample transformed for analysis (broken, powdered, cut into thin sections), itself re-transformable, 1 to 3 levels typical and up to ~10. Part of the original is always preserved. The current schema has no sub-sample hierarchy.
+- A sub-sample is a part of a sample transformed for analysis (broken, powdered, cut into thin sections), itself re-transformable, 1 to 3 levels typical and up to ~10. Part of the original is always preserved. A sample may have one parent, see [[sample-parentage]]; the legacy import still skips legacy children.
 - Target user: the tool-fatigued, change-averse researcher, so adoption must be easy.
 - Two apps, a public `frontend` and an authenticated `admin`, over one `api`, sharing `domain` and `design-system`.
 
 Map of the graph:
 
 - Structure: [[package-layering]], [[file-layout-conventions]], [[zod-single-source-of-truth]], [[dev-practices]], [[commands-and-services]], [[testing-strategy]].
-- Sample: [[sample-model]], [[igsn-identifier]], [[sample-status-lifecycle]], [[publish-blockers]], [[published-field-locks]], [[material-levels-editable]], [[sample-location]], [[location-material-gate]], [[sample-relations-attachments]], [[vocabulary-tree]], [[material-classification-ltree]].
+- Sample: [[sample-model]], [[igsn-identifier]], [[sample-status-lifecycle]], [[publish-blockers]], [[published-field-locks]], [[material-levels-editable]], [[sample-location]], [[location-material-gate]], [[sample-relations-attachments]], [[sample-parentage]], [[vocabulary-tree]], [[material-classification-ltree]].
 - People and rights: [[personas-and-roles]], [[auth-keycloak-gaiadata]], [[gaiadata-sso-compliance]], [[user-store-and-ownership]], [[per-sample-roles]], [[user-moderation-super-admin]], [[space-manager-scope]], [[institutional-groups]], [[manual-groups]], [[orcid-linking]].
 - Public app: [[sample-search]], [[search-facets]], [[map-search-leaflet]], [[public-contributor-directory]], [[frontend-url-i18n]].
 - Apps and UI: [[form-kit-and-hidden-values]], [[hierarchy-select-field]], [[frontend-conventions]], [[i18n-strategy]], [[sample-form-update-guide]].

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { locationColumns } from "./to-location.ts";
 import { toSample } from "./to-sample.ts";
 
 const row = {
@@ -33,31 +34,6 @@ const row = {
   mass_unit: null,
   volume_value: null,
   volume_unit: null,
-  location_type: null,
-  point_longitude: null,
-  point_latitude: null,
-  area_west_longitude: null,
-  area_east_longitude: null,
-  area_south_latitude: null,
-  area_north_latitude: null,
-  line_start_longitude: null,
-  line_start_latitude: null,
-  line_end_longitude: null,
-  line_end_latitude: null,
-  vertical_position: null,
-  vertical_position_min: null,
-  vertical_position_max: null,
-  line_start_vertical_position: null,
-  line_end_vertical_position: null,
-  vertical_reference: null,
-  vertical_reference_system: null,
-  navigation_type: null,
-  region_kind: null,
-  country: null,
-  ocean_sea: null,
-  locality_name: null,
-  locality_description: null,
-  geom: null,
   packaging: null,
   storage_conditions: null,
   temperature_type: null,
@@ -135,6 +111,7 @@ const row = {
   economic_deposit_name: null,
   economic_deposit_description: null,
   igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
+  location_id: null,
   institutional_organization: null,
   institutional_osu: null,
   institutional_laboratory: null,
@@ -194,6 +171,7 @@ describe("toSample", () => {
       economicDepositDescription: null,
       igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
       manualGroups: [],
+      parents: [],
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,
@@ -205,9 +183,9 @@ describe("toSample", () => {
 
   it("should map relation and attachment child rows", () => {
     // Act
-    const sample = toSample(
-      row,
-      [
+    const sample = toSample({
+      ...row,
+      relations: [
         {
           id: "018f4d3a-1f2b-7c00-8000-000000000001",
           sample_id: row.id,
@@ -223,7 +201,7 @@ describe("toSample", () => {
           description: null,
         },
       ],
-      [
+      attachments: [
         {
           id: "018f4d3a-1f2b-7c00-8000-000000000002",
           sample_id: row.id,
@@ -234,7 +212,7 @@ describe("toSample", () => {
           description: "XRF analysis report",
         },
       ],
-    );
+    });
     // Assert
     expect(sample.relations).toEqual([
       {
@@ -265,31 +243,37 @@ describe("toSample", () => {
 
   it("should throw when a doi relation target is not a DOI url", () => {
     expect(() =>
-      toSample(row, [
-        {
-          id: "018f4d3a-1f2b-7c00-8000-000000000001",
-          sample_id: row.id,
-          relation_type: "other",
-          identifier_type: "doi",
-          identifier: "https://example.com/paper",
-          target_title: "A related paper",
-          target_resource_type: null,
-          relation_type_information: null,
-          related_metadata_scheme: null,
-          scheme_uri: null,
-          scheme_type: null,
-          description: null,
-        },
-      ]),
+      toSample({
+        ...row,
+        relations: [
+          {
+            id: "018f4d3a-1f2b-7c00-8000-000000000001",
+            sample_id: row.id,
+            relation_type: "other",
+            identifier_type: "doi",
+            identifier: "https://example.com/paper",
+            target_title: "A related paper",
+            target_resource_type: null,
+            relation_type_information: null,
+            related_metadata_scheme: null,
+            scheme_uri: null,
+            scheme_type: null,
+            description: null,
+          },
+        ],
+      }),
     ).toThrow();
   });
 
-  it("should map location columns to a nested location", () => {
+  it("should map the location row to a nested location", () => {
     const sample = toSample({
       ...row,
-      location_type: "point",
-      point_longitude: 2.35,
-      point_latitude: 48.85,
+      location: {
+        ...locationColumns(null),
+        location_type: "point",
+        point_longitude: 2.35,
+        point_latitude: 48.85,
+      },
     });
     expect(sample.location).toEqual({
       position: { type: "point", longitude: 2.35, latitude: 48.85 },

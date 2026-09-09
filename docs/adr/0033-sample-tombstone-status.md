@@ -32,7 +32,11 @@ A published or withdrawn sample keeps a permanent IGSN (ADR 0032), so it cannot 
 
 - **Hard delete**: the same reason as ADR 0032, a permanent IGSN cannot be deleted.
 - **A separate `removed` boolean** alongside `status`: ADR 0032 already rejected the equivalent `withdrawn` boolean for the nonsense states it allows and the call sites it duplicates; the same holds here.
-- **A public tombstone page**: a plain 404 needs no redaction whitelist and leaks nothing; ADR 0032's redacted withdrawn page stays the only public status page.
+- **A public tombstone page**: a plain 404 needs no redaction whitelist and leaks nothing directly; ADR 0032's redacted withdrawn page stays the only public status page.
+
+## Amendment, 2026-09-08: sub-sample lineage exception
+
+A published sub-sample's public page names its parent and links to the parent's IGSN page whatever the parent's status (product decision, over redacting the parent publicly). So a tombstoned parent's `name`, `igsn` and `material` stay visible through a published child, even though the parent's own page still 404s. The 404 on follow-through holds; only the "leaks nothing" claim above no longer holds without this exception.
 
 ## Consequences
 

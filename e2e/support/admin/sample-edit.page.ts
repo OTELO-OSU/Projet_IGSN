@@ -86,6 +86,10 @@ export function sampleEditPage(page: Page) {
       await page.getByLabel("Specific Name").fill(value);
     },
     goToList: () => page.getByRole("link", { name: "IGSN Admin" }).click(),
+    expectAddSubSampleAction: (name: string) =>
+      expect(
+        page.getByRole("link", { name: `Add a sub sample of ${name}` }),
+      ).toBeVisible(),
 
     expectNotFound: () =>
       expect(page.getByText("Sample not found")).toBeVisible(),
@@ -138,6 +142,11 @@ export function sampleEditPage(page: Page) {
       expect(
         page.getByRole("button", { name: `Detach ${name}` }),
       ).toBeDisabled(),
+    sampleId: () => {
+      const id = new URL(page.url()).pathname.split("/").at(-1);
+      if (!id) throw new Error("the edit page url carries no sample id");
+      return id;
+    },
     publicPageIgsn: async () => {
       const href = await page
         .getByRole("link", { name: "View public page" })

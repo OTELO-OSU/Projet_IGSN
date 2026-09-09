@@ -8,7 +8,6 @@ import { scientificContextColumns } from "./scientific-context-columns.ts";
 import { securityColumns } from "./security-columns.ts";
 import { syntheticDetailsColumns } from "./synthetic-details-columns.ts";
 import { toAgeColumns } from "./to-age-columns.ts";
-import { locationColumns } from "./to-location.ts";
 
 export const sampleColumns = (input: CreateSample) => ({
   name: input.name,
@@ -26,7 +25,6 @@ export const sampleColumns = (input: CreateSample) => ({
   existence_status: input.existenceStatus ?? null,
   availability_status: input.availabilityStatus ?? null,
   ...descriptionColumns(input.description),
-  ...locationColumns(input.location),
   ...conditionColumns(input.condition),
   ...scientificContextColumns(input.scientificContext),
   ...repositoryColumns(input.repository),

@@ -45,6 +45,7 @@ import { hasUnattachable } from "../manual-group/has-unattachable.ts";
 import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
 import { sampleRemovalMail } from "../user-sample/sample-removal-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
+import { findEligibleParent } from "./find-eligible-parent.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
@@ -67,6 +68,10 @@ import {
 
 const NOT_ATTACHABLE = {
   error: "Manual group not attachable to this sample",
+} as const;
+
+const PARENT_NOT_ELIGIBLE = {
+  error: "Parent sample not eligible",
 } as const;
 
 function sameGroupIds(submitted: string[], stored: string[]) {
@@ -152,6 +157,13 @@ export function createSampleAdminRoutes(
         ) {
           return c.json(NOT_ATTACHABLE, 422);
         }
+      }
+      const [parentId] = input.parentIds ?? [];
+      if (
+        parentId !== undefined &&
+        !(await findEligibleParent(repository, users, user, parentId))
+      ) {
+        return c.json(PARENT_NOT_ELIGIBLE, 422);
       }
       const sample = await repository.create(input, user);
       return c.json({ data: sample }, 201);

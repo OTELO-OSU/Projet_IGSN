@@ -6,6 +6,7 @@ import type { DB } from "../db.ts";
 import { withTransaction } from "../transaction.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
+import { addParentOwnerAsContributor } from "./service/add-parent-owner-as-contributor.ts";
 import { deleteSample } from "./service/delete-sample.ts";
 import { getEditLock } from "./service/get-edit-lock.ts";
 import { getPublicSampleByIgsn } from "./service/get-public-sample-by-igsn.ts";
@@ -40,6 +41,11 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
       withTransaction(db, async (trx) => {
         const sample = await insertSample(trx, input, owner);
         await insertSampleOwner(trx, sample.id, owner.id);
+        await addParentOwnerAsContributor(
+          trx,
+          sample.id,
+          input.parentIds ?? [],
+        );
         return sample;
       }),
     update: (id, input) =>

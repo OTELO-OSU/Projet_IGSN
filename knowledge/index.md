@@ -19,7 +19,7 @@ okf_version: "0.2"
 
 # component
 
-- [HierarchyField takes the tree as one prop](hierarchy-select-field.md) - The widget receives a self-describing hierarchy prop and derives children, stop policy and labels, so the UI cannot contradict the domain publish gate; one chip per level replaces the old per-level cascade.
+- [HierarchyField takes the tree as one prop](hierarchy-select-field.md) - The widget receives a self-describing hierarchy prop and derives children, stop policy and labels, so the UI cannot contradict the domain publish gate.
 
 # domain-model
 
@@ -32,10 +32,11 @@ okf_version: "0.2"
 - [Post-publish field mutability](published-field-locks.md) - A published sample is partially mutable: lock maps in published-field-lock.ts name every frozen field, everything unlisted is editable, and the merge is the enforcement.
 - [Publish blockers](publish-blockers.md) - samplePublishBlockers is the single place stating why a sample cannot be published; the api guard and the admin tooltip both derive from it.
 - [Sample model](sample-model.md) - One wide sample row with flat nullable sub-blocks, two one-to-many child tables, and snapshotted institutional codes.
+- [Sample parentage and sub-samples](sample-parentage.md) - A sample may have one parent, set at creation and never editable; it inherits the parent's location and, for a synthetic parent, its material branch.
 - [Sample status lifecycle and its three predicates](sample-status-lifecycle.md) - status is draft | published | withdrawn | tombstone, read through three distinct predicates for permanence, public visibility and public resolution.
-- [Service accounts](service-accounts.md) - A super-admin-declared non-human account with a name, a required owner, an institutional trio and managed groups, its own table never a user row, with an owner-rotated API key for the `/service` machine mount.
 - [Sample vocabularies as segment-keyed trees](vocabulary-tree.md) - Every sample vocabulary is one segment-keyed TreeNode tree in domain, expanded to flat dot-paths by expandPaths, with per-node completeness.
 - [Scientific context: field sample or collection specimen](scientific-context.md) - A discriminated union on provenanceStatus (field_sample | collection_specimen) with per-branch mandatory fields, per-branch post-publish locks, and a location requirement that only the collection specimen relaxes.
+- [Service accounts](service-accounts.md) - A super-admin-declared non-human account with a name, a required owner, an institutional trio and managed groups, its own table never a user row, with an owner-rotated API key for the `/service` machine mount.
 - [Synthetic sample details](synthetic-details.md) - syntheticDetails is the sub-block a synthetic sample carries instead of a location, gated by isSyntheticMaterial and required in seven fields to publish.
 
 # feature
@@ -63,7 +64,7 @@ okf_version: "0.2"
 
 - [Kysely as the backend DBAL](kysely-dbal.md) - api persistence is Kysely, a type-safe SQL query builder and not an ORM, tested against a real Postgres.
 - [Material classification stored as ltree](material-classification-ltree.md) - sample.material is one Postgres ltree column with a GiST index, holding a dot-joined path of vocabulary codes.
-- [Sample location: PostGIS storage and model](sample-location.md) - Raw coordinate columns on sample are the CRUD source of truth; a generated planar geometry column carries the GiST-indexed search geometry.
+- [Sample location: PostGIS storage and model](sample-location.md) - Raw coordinate columns on a shared location table are the CRUD source of truth; a generated planar geometry column carries the GiST-indexed search geometry.
 - [Sample relations and attachments](sample-relations-attachments.md) - Two cascading child tables; DataCite-shaped relations ride the sample document, attachments have their own routes and their blobs live on the server filesystem.
 
 # practice

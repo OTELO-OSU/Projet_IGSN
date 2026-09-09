@@ -50,6 +50,7 @@ const sample: AdminSampleListItem = {
   economicDepositDescription: null,
   igsn: null,
   manualGroups: [],
+  parents: [],
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,
@@ -58,6 +59,8 @@ const sample: AdminSampleListItem = {
   updatedAt: new Date("2026-07-01T10:00:00.000Z"),
 };
 const samples = [sample];
+
+const SUB_SAMPLE_ACTION = `Add a sub sample of ${sample.name}`;
 
 function renderTable(
   data: AdminSampleListItem[],
@@ -91,8 +94,13 @@ function renderTable(
     path: "/samples/$sampleId",
     component: () => <p>Edit page stub</p>,
   });
+  const createRouteStub = createRoute({
+    getParentRoute: () => rootRoute,
+    path: "/samples/create",
+    component: () => <p>Create page stub</p>,
+  });
   const router = createRouter({
-    routeTree: rootRoute.addChildren([indexRoute, editRoute]),
+    routeTree: rootRoute.addChildren([indexRoute, editRoute, createRouteStub]),
     history: createMemoryHistory({ initialEntries: ["/"] }),
   });
   return render(
@@ -248,6 +256,48 @@ describe("SampleTable", () => {
         "href",
         "/samples/3f2504e0-4f89-41d3-9a0c-0305e82c3301?from=moderation",
       );
+  });
+
+  it.each(["published", "withdrawn", "tombstone"] as const)(
+    "should offer a sub sample link on a %s sample, which holds a permanent IGSN",
+    async (status) => {
+      const screen = await renderTable([{ ...sample, status }]);
+      await expect
+        .element(screen.getByRole("link", { name: SUB_SAMPLE_ACTION }))
+        .toHaveAttribute("href", `/samples/create?parent=${sample.id}`);
+    },
+  );
+
+  it("should offer no sub sample link on a draft sample", async () => {
+    const screen = await renderTable(samples);
+
+    await expect
+      .element(screen.getByRole("link", { name: sample.name }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("link", { name: SUB_SAMPLE_ACTION }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should explain the sub sample icon in a tooltip on hover", async () => {
+    const screen = await renderTable([{ ...sample, status: "published" }]);
+
+    await screen.getByRole("link", { name: SUB_SAMPLE_ACTION }).hover();
+
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(SUB_SAMPLE_ACTION);
+  });
+
+  it("should not navigate to the edit page when the sub sample link is clicked", async () => {
+    const screen = await renderTable([{ ...sample, status: "published" }]);
+
+    await screen.getByRole("link", { name: SUB_SAMPLE_ACTION }).click();
+
+    await expect.element(screen.getByText("Create page stub")).toBeVisible();
+    await expect
+      .element(screen.getByText("Edit page stub"))
+      .not.toBeInTheDocument();
   });
 
   it("should navigate to the edit page when the row is clicked", async () => {

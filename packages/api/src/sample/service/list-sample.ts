@@ -17,8 +17,10 @@ import { institutionSampleWhere } from "./institution-sample-where.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
   sampleAttachmentsQuery,
+  sampleLocationQuery,
   sampleManualGroupsQuery,
   sampleOwnerQuery,
+  sampleParentsQuery,
   sampleRelationsQuery,
 } from "./sample-children-query.ts";
 import {
@@ -33,9 +35,13 @@ function withinBbox(
 ): Expression<SqlBool> {
   const envelopes = splitBbox(bbox).map(
     ({ west, south, east, north }) =>
-      sql<SqlBool>`ST_Intersects(geom, ST_MakeEnvelope(${west}, ${south}, ${east}, ${north}, 4326))`,
+      sql<SqlBool>`ST_Intersects(location.geom, ST_MakeEnvelope(${west}, ${south}, ${east}, ${north}, 4326))`,
   );
-  return sql<SqlBool>`(${sql.join(envelopes, sql` OR `)})`;
+  return sql<SqlBool>`exists (
+    select 1 from location
+     where location.id = sample.location_id
+       and (${sql.join(envelopes, sql` OR `)})
+  )`;
 }
 
 function assignedTo(
@@ -98,9 +104,11 @@ async function listSamplesWhere(
     const relevance = search === undefined ? undefined : relevanceScore(search);
     const rows = await matching()
       .selectAll()
+      .select(sampleLocationQuery)
       .select(sampleRelationsQuery)
       .select(sampleAttachmentsQuery)
       .select(sampleManualGroupsQuery)
+      .select(sampleParentsQuery)
       .$if(withOwner, (qb) => qb.select(sampleOwnerQuery))
       .$if(sort === "status", (qb) => qb.orderBy(lifecycleOrder, order))
       .$call((qb) => (relevance ? qb.orderBy(relevance, "desc") : qb))
@@ -115,9 +123,7 @@ async function listSamplesWhere(
       .executeTakeFirstOrThrow();
 
     return {
-      data: rows.map((row) =>
-        toSample(row, row.relations, row.attachments, row.manualGroups),
-      ),
+      data: rows.map((row) => toSample(row)),
       owners: new Map(rows.map((row) => [row.id, row.owner])),
       total: Number(count),
     };

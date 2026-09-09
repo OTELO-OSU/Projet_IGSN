@@ -78,6 +78,13 @@ const FOSSIL_TEAM = {
 };
 const MANUAL_GROUPS = [BASALT_TEAM, FOSSIL_TEAM];
 
+const PARENT_IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
+const NATURAL_PARENT = {
+  igsn: PARENT_IGSN,
+  name: "Massif Central 2026",
+  material: "fossil",
+} as const;
+
 describe("SampleForm", () => {
   it("should reject a blank name and not submit", async () => {
     const onSubmit = vi.fn();
@@ -2549,5 +2556,93 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Collection origin *" }))
       .toBeDisabled();
+  });
+
+  it("should offer no parent tab when the sample has no parent", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await expect
+      .element(screen.getByRole("tab", { name: "Identity" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("tab", { name: "Parent sample" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should name the parent sample and link to its public page in the parent tab", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        parent={NATURAL_PARENT}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Parent sample" }).click();
+
+    await expect
+      .element(screen.getByRole("link", { name: NATURAL_PARENT.name }))
+      .toHaveAttribute("href", `http://localhost:3000/samples/${PARENT_IGSN}`);
+  });
+
+  it("should replace the location fields with a notice linking the parent it inherits from", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        parent={NATURAL_PARENT}
+        defaultValues={{ material: "fossil" }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Location" }).click();
+
+    await expect
+      .element(screen.getByRole("link", { name: NATURAL_PARENT.name }))
+      .toHaveAttribute("href", `http://localhost:3000/samples/${PARENT_IGSN}`);
+    await expect
+      .element(screen.getByRole("heading", { name: "Location" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should freeze the material of a sub sample of a synthetic parent", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        parent={{ ...NATURAL_PARENT, material: "synthetic_rock_mineral" }}
+        defaultValues={{ material: "synthetic_rock_mineral" }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+
+    await expect
+      .element(screen.getByText("Synthetic rock / mineral"))
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("button", { name: "Remove Synthetic rock / mineral" }),
+      )
+      .not.toBeInTheDocument();
+  });
+
+  it("should let a sub sample of a natural parent change its material", async () => {
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        parent={NATURAL_PARENT}
+        defaultValues={{ material: "fossil" }}
+        primaryAction={createAction(noop)}
+      />,
+    );
+
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+
+    await expect
+      .element(screen.getByRole("button", { name: "Remove Fossil" }))
+      .toBeEnabled();
   });
 });

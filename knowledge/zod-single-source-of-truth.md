@@ -22,3 +22,4 @@ Every rule about a sample lives once in `domain` as a Zod schema, and both the f
 - "Required" means required to publish, not to save: a half-filled draft saves. Publish requirements live in [[publish-blockers]], never in the draft schema.
 - The api re-validates at the trust boundary whatever the client already checked.
 - Adding a field or a value starts in `domain`; see [[sample-form-update-guide]].
+- `sample.ts` also exports `updateSampleSchema`, `createSampleSchema` without `parentIds`, since zod 4 refuses `.omit` on a refined schema and the unrefined fields object stays private.

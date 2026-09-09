@@ -1,5 +1,8 @@
 import { createSampleSchema, sampleSchema } from "./sample";
 
+const PARENT_ID = "11111111-1111-4111-8111-111111111111";
+const OTHER_PARENT_ID = "22222222-2222-4222-8222-222222222222";
+
 const validSample = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Basalte du Massif Central",
@@ -73,6 +76,7 @@ describe("sampleSchema", () => {
       igsn: null,
       owner: null,
       manualGroups: [],
+      parents: [],
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,
@@ -342,6 +346,35 @@ describe("createSampleSchema", () => {
     });
     // Assert
     expect(result).toMatchObject({ success: true });
+  });
+
+  it.each([{ parentIds: [] }, { parentIds: [PARENT_ID] }])(
+    "should accept a sub-sample declaring up to one parent: %j",
+    ({ parentIds }) => {
+      // Arrange / Act
+      const result = createSampleSchema.safeParse({
+        name: "Sub-sample of Basalt 42",
+        parentIds,
+      });
+      // Assert
+      expect(result.success).toBe(true);
+    },
+  );
+
+  it.each([
+    {
+      reason: "more parents than the cap",
+      parentIds: [PARENT_ID, OTHER_PARENT_ID],
+    },
+    { reason: "a parent id that is not a uuid", parentIds: ["not-a-uuid"] },
+  ])("should reject $reason", ({ parentIds }) => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Sub-sample of Basalt 42",
+      parentIds,
+    });
+    // Assert
+    expect(result.success).toBe(false);
   });
 
   it("should reject unknown fields", () => {

@@ -1,5 +1,6 @@
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
 import type { ExistenceStatus } from "@projet-igsn/domain/sample/curation/existence-status";
+import type { SampleParent } from "@projet-igsn/domain/sample/parent/model";
 import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { SetSampleStatusBody } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRole } from "@projet-igsn/domain/user-sample/model";
@@ -80,6 +81,14 @@ let callerManaged = false;
 let editPageSearch = "";
 let sampleFetched = false;
 let sampleMetamorphicFabric: string | null = null;
+let sampleParents: SampleParent[] = [];
+
+const PARENT: SampleParent = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
+  igsn: "01K072TVWVFK5A1RRZ5MY4PPK8",
+  name: "Massif Central 2026",
+  material: "fossil",
+};
 
 beforeEach(() => {
   callerStatus = "accepted";
@@ -89,6 +98,7 @@ beforeEach(() => {
   editPageSearch = "";
   sampleFetched = false;
   sampleMetamorphicFabric = null;
+  sampleParents = [];
 });
 
 const overLimitAttachments: SampleAttachment[] = Array.from(
@@ -164,6 +174,7 @@ function fakeApi(
     economicDepositDescription: null,
     ...economic,
     manualGroups: [FOSSIL_TEAM],
+    parents: sampleParents,
     igsn: status === "draft" ? null : IGSN,
     status,
     createdAt: "2026-06-01T00:00:00.000Z",
@@ -406,6 +417,38 @@ const renderEditPageAsEditor = (status: SampleStatus) =>
   );
 
 describe("EditSamplePage", () => {
+  it("should offer a sub sample link on a sample holding a permanent IGSN", async () => {
+    const { screen } = await renderEditPage("published");
+
+    await expect
+      .element(
+        screen.getByRole("link", {
+          name: "Add a sub sample of Basalte du Massif Central",
+        }),
+      )
+      .toHaveAttribute(
+        "href",
+        "/samples/create?parent=3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      );
+  });
+
+  it("should show the parent tab and the location inherited from the parent on a sub sample", async () => {
+    sampleParents = [PARENT];
+    const { screen } = await renderEditPage();
+
+    await expect
+      .element(screen.getByRole("tab", { name: "Parent sample" }))
+      .toBeVisible();
+    await screen.getByRole("tab", { name: "Location" }).click();
+
+    await expect
+      .element(screen.getByRole("link", { name: PARENT.name }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("heading", { name: "Location" }))
+      .not.toBeInTheDocument();
+  });
+
   it("should chip the attached manual groups but freeze them to a contributor", async () => {
     const { screen } = await renderEditPageAsContributor("draft");
 

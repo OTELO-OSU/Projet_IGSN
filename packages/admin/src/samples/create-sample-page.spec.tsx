@@ -36,6 +36,45 @@ const RELATION_ID = "3f2504e0-4f89-41d3-9a0c-0305000000b1";
 
 const IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
 
+const PARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f0";
+
+const OUT_OF_REACH_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f1";
+
+const PARENT = {
+  id: PARENT_ID,
+  name: "Massif Central 2026",
+  nature: "thin_section",
+  type: "dredge",
+  material: "fossil",
+  texture: null,
+  metamorphicFacies: null,
+  metamorphicFabric: null,
+  collectionMethod: null,
+  collectionMethodDescription: null,
+  specificName: "MC-2026-007",
+  location: { position: { type: "point", longitude: 3, latitude: 45 } },
+  description: null,
+  condition: null,
+  security: null,
+  scientificContext: null,
+  repository: null,
+  existenceStatus: "exists",
+  availabilityStatus: "available",
+  publicationYear: 2026,
+  resourceType: null,
+  economicInterestElements: [],
+  economicResourceTypePrecision: null,
+  economicDepositName: null,
+  economicDepositDescription: null,
+  relations: [],
+  attachments: [],
+  manualGroups: [],
+  igsn: IGSN,
+  status: "published",
+  createdAt: "2026-06-01T00:00:00.000Z",
+  updatedAt: "2026-07-01T10:00:00.000Z",
+};
+
 function fakeApi(
   failWrites = false,
   failPublish = false,
@@ -132,19 +171,33 @@ async function renderCreatePage(
   failWrites = false,
   failPublish = false,
   currentUserGate?: Promise<void>,
+  parentId?: string,
 ) {
   const { lockCalls, calls, created } = fakeApi(
     failWrites,
     failPublish,
     currentUserGate,
   );
+  if (parentId) {
+    worker.use(
+      http.get("*/admin/samples/parents/:id", ({ params }) =>
+        params.id === PARENT_ID
+          ? HttpResponse.json({ data: PARENT })
+          : new HttpResponse(null, { status: 404 }),
+      ),
+    );
+  }
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
   const router = createRouter({
     routeTree,
     context: { queryClient },
-    history: createMemoryHistory({ initialEntries: ["/samples/create"] }),
+    history: createMemoryHistory({
+      initialEntries: [
+        parentId ? `/samples/create?parent=${parentId}` : "/samples/create",
+      ],
+    }),
   });
   const screen = await render(
     <StrictMode>
@@ -214,6 +267,50 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByRole("region", { name: /notifications/i }))
       .toHaveTextContent("Sample created");
+  });
+
+  it("should create a sub sample carrying the parent id and the location it inherits", async () => {
+    const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
+
+    await expect
+      .element(
+        screen.getByRole("heading", {
+          name: "Create sub sample of Massif Central 2026",
+        }),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("tab", { name: "Parent sample" }))
+      .toBeVisible();
+    await screen.getByLabelText(/name/i).fill("Thin section MC-2026-007");
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    expect(screen.created()).toMatchObject({
+      name: "Thin section MC-2026-007",
+      nature: null,
+      parentIds: [PARENT_ID],
+      specificName: "MC-2026-007",
+      location: { position: { type: "point", longitude: 3, latitude: 45 } },
+    });
+  });
+
+  it("should render the plain create form when the parent is out of reach", async () => {
+    const screen = await renderCreatePage(
+      false,
+      false,
+      undefined,
+      OUT_OF_REACH_ID,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Create sample" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("tab", { name: "Parent sample" }))
+      .not.toBeInTheDocument();
   });
 
   it("should claim no edit lock: the sample has no id yet", async () => {
