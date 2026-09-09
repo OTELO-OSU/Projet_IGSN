@@ -12,9 +12,10 @@ export async function pickComboboxOption(
   const chip = page.getByRole("button", { name: chipLabel });
   await expect(async () => {
     if (!(await chip.isVisible())) {
-      await page.keyboard.press("Escape");
+      const search = page.getByPlaceholder("Search by name");
+      if (await search.isVisible()) await page.keyboard.press("Escape");
       await page.getByRole("combobox", { name: field, exact: true }).click();
-      await page.getByPlaceholder("Search by name").fill(query);
+      await search.fill(query);
       await page
         .getByRole("option", { name: option, exact: true })
         .click({ timeout: 5_000 });
