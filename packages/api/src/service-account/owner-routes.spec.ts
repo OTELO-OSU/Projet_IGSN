@@ -5,6 +5,7 @@ import type { Kysely } from "kysely";
 import {
   apiKeyResponseSchema,
   myServiceAccountsResponseSchema,
+  requestableInstitutionalGroupsResponseSchema,
 } from "@projet-igsn/domain/service-account/service-account-validator";
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import { testClient } from "hono/testing";
@@ -16,6 +17,7 @@ import type { SendMail } from "../mail/send-mail.ts";
 import { createApp } from "../app.ts";
 import { insertServiceAccount } from "../tests/insert-service-account.ts";
 import { insertUser } from "../tests/insert-user.ts";
+import { moderateInstitution } from "../tests/moderate-institution.ts";
 import { moderateManualGroup } from "../tests/moderate-manual-group.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { tokenEmail } from "../tests/provision-user.ts";
@@ -27,6 +29,7 @@ const FRONTEND_URL = "http://localhost:3000";
 const ORGANIZATION = "04vfs2w97";
 const OSU = "OTELo";
 const LABORATORY = "UMR7358";
+const OSU_LABORATORIES = ["UAR3562", "UMR7358", "UMR7359", "UMR7360"];
 const GROUP = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "OZCAR-RI" };
 const NAME = "GeoPortal harvester";
 const REASON = "To harvest our OZCAR samples nightly";
@@ -67,6 +70,12 @@ const askForAccount = (client: Client, json: ServiceAccountRequest) =>
     { headers: authHeader },
   );
 
+const listRequestable = (client: Client) =>
+  client.admin.currentUser["service-accounts"]["requestable-groups"].$get(
+    undefined,
+    { headers: authHeader },
+  );
+
 const listMine = (client: Client) =>
   client.admin.currentUser["service-accounts"].$get(undefined, {
     headers: authHeader,
@@ -93,9 +102,15 @@ describe("service account owner routes", () => {
       await insertUser(db, "boss@univ-lorraine.fr", { superAdmin: true });
       const requester = await insertRequester(db);
       await moderateManualGroup(db, requester.id, [GROUP.id]);
+      await moderateInstitution(db, requester.id, { kind: "osu", code: OSU });
       const { sendMail, client } = arrangeApp(db);
+      const managedGroups = {
+        ...NO_MANAGED_GROUPS,
+        laboratories: [LABORATORY, "UMR7359"],
+        manualGroupIds: [GROUP.id],
+      };
       // Act
-      const res = await askForAccount(client, requestBody());
+      const res = await askForAccount(client, requestBody({ managedGroups }));
       // Assert
       expect(res.status).toBe(204);
       await vi.waitFor(() => expect(sendMail).toHaveBeenCalledTimes(1));
@@ -116,7 +131,7 @@ describe("service account owner routes", () => {
         institutionalOrganization: ORGANIZATION,
         institutionalOsu: OSU,
         institutionalLaboratory: LABORATORY,
-        managedGroups: { ...NO_MANAGED_GROUPS, manualGroupIds: [GROUP.id] },
+        managedGroups,
         owner: {
           id: requester.id,
           email: tokenEmail("test-token"),
@@ -142,6 +157,20 @@ describe("service account owner routes", () => {
     {
       rule: "a manual group the requester neither belongs to nor manages",
       json: requestBody(),
+      status: 422,
+    },
+    {
+      rule: "a laboratory the requester neither belongs to nor reaches",
+      json: requestBody({
+        managedGroups: { ...NO_MANAGED_GROUPS, laboratories: ["UMR7154"] },
+      }),
+      status: 422,
+    },
+    {
+      rule: "the requester's own organisme, which they do not manage",
+      json: requestBody({
+        managedGroups: { ...NO_MANAGED_GROUPS, organizations: [ORGANIZATION] },
+      }),
       status: 422,
     },
   ])("should answer $status to $rule", async ({ json, status }, { db }) => {
@@ -186,6 +215,28 @@ describe("service account owner routes", () => {
       );
       // Assert
       expect(res.status).toBe(401);
+    },
+  );
+
+  pgTest(
+    "should list the requester's own laboratory and every group their managed OSU reaches",
+    async ({ db }) => {
+      // Arrange
+      const requester = await insertRequester(db);
+      await moderateInstitution(db, requester.id, { kind: "osu", code: OSU });
+      const { client } = arrangeApp(db);
+      // Act
+      const res = await listRequestable(client);
+      // Assert
+      expect(
+        requestableInstitutionalGroupsResponseSchema.parse(await res.json()),
+      ).toEqual({
+        data: {
+          organizations: [],
+          osus: [OSU],
+          laboratories: OSU_LABORATORIES,
+        },
+      });
     },
   );
 

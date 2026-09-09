@@ -3,10 +3,13 @@ import type { ServiceAccountRepository } from "@projet-igsn/domain/service-accou
 import type {
   ApiKeyResponse,
   MyServiceAccountsResponse,
+  RequestableInstitutionalGroupsResponse,
   ServiceAccountDraft,
 } from "@projet-igsn/domain/service-account/service-account-validator";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
+import { requestableInstitutionalGroups } from "@projet-igsn/domain/service-account/requestable-institutional-groups";
+import { MANAGED_GROUP_KINDS } from "@projet-igsn/domain/user/managed-groups";
 import { userIdentitySchema } from "@projet-igsn/domain/user/user-validator";
 import { Hono } from "hono";
 
@@ -16,6 +19,7 @@ import type { SendMail } from "../mail/send-mail.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireAcceptedUser } from "../auth/require-accepted-user.ts";
 import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
+import { hasUnattachable } from "../manual-group/has-unattachable.ts";
 import { generateApiKey, hashApiKey } from "./api-key.ts";
 import { serviceAccountRequestMail } from "./service-account-request-mail.ts";
 import {
@@ -37,6 +41,16 @@ export function createServiceAccountOwnerRoutes(
       };
       return c.json(body);
     })
+    .get("/requestable-groups", async (c) => {
+      const requester = c.get("user");
+      const body: RequestableInstitutionalGroupsResponse = {
+        data: requestableInstitutionalGroups(
+          requester.institutionalLaboratory,
+          await users.getModerationScope(requester.id),
+        ),
+      };
+      return c.json(body);
+    })
     .post(
       "/requests",
       requireActiveSession,
@@ -53,6 +67,17 @@ export function createServiceAccountOwnerRoutes(
             : [];
         if (groups.length !== wanted.length) {
           return c.json({ error: "Manual group not attachable" }, 422);
+        }
+        const requestable = requestableInstitutionalGroups(
+          requester.institutionalLaboratory,
+          await users.getModerationScope(requester.id),
+        );
+        if (
+          MANAGED_GROUP_KINDS.some(([kind]) =>
+            hasUnattachable(managedGroups[kind], requestable[kind]),
+          )
+        ) {
+          return c.json({ error: "Institutional group out of reach" }, 422);
         }
         const draft: ServiceAccountDraft = {
           name,
