@@ -1,5 +1,5 @@
 import { manualGroupPage } from "../support/admin/manual-group.page";
-import { waitForMyManualGroups } from "../support/admin/manual-groups-field";
+import { waitForAttachableManualGroups } from "../support/admin/manual-groups-field";
 import { manualGroupsPage } from "../support/admin/manual-groups.page";
 import { sampleCreatePage } from "../support/admin/sample-create.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
@@ -223,7 +223,7 @@ test.describe("manual groups", () => {
     const edit = sampleEditPage(page);
 
     await list.expectVisible();
-    const groupsLoaded = waitForMyManualGroups(page);
+    const groupsLoaded = waitForAttachableManualGroups(page);
     await list.goToCreate();
     await create.expectVisible();
     await groupsLoaded;
