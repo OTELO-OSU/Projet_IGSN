@@ -24,8 +24,10 @@ import { createSampleAdminRoutes } from "./sample/admin-routes.ts";
 import { createSampleAttachmentRepository } from "./sample/attachment-repository.ts";
 import { createSampleRepository } from "./sample/repository.ts";
 import { createSampleRoutes } from "./sample/routes.ts";
+import { createServiceAccountOwnerRoutes } from "./service-account/owner-routes.ts";
 import { createServiceAccountRepository } from "./service-account/repository.ts";
 import { createServiceAccountRoutes } from "./service-account/routes.ts";
+import { createServiceRoutes } from "./service-account/service-routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createCurrentUserRoutes } from "./user/current-user-routes.ts";
 import { createPublicUserRoutes } from "./user/public-routes.ts";
@@ -89,6 +91,10 @@ export function createApp(
     .use("*", rateLimit(rateLimitConfig, "ip"))
     .route("/", createPublicUserRoutes(userRepository));
 
+  const serviceRoutes = new Hono()
+    .use("*", rateLimit(rateLimitConfig, "ip"))
+    .route("/", createServiceRoutes(serviceAccountRepository));
+
   const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
     .use("*", rateLimit(rateLimitConfig, "user"))
@@ -96,6 +102,19 @@ export function createApp(
     .route(
       "/currentUser",
       createCurrentUserRoutes(userRepository, manualGroupRepository, mail),
+    )
+    .use(
+      "/currentUser/service-accounts/requests",
+      rateLimit(rateLimitConfig, "user", MAIL_REQUEST_USER_BUDGET),
+    )
+    .route(
+      "/currentUser/service-accounts",
+      createServiceAccountOwnerRoutes(
+        serviceAccountRepository,
+        userRepository,
+        manualGroupRepository,
+        mail,
+      ),
     )
     .route(
       "/institutional-groups",
@@ -157,6 +176,7 @@ export function createApp(
     .route("/samples", publicSampleRoutes)
     .route("/manual-groups", publicManualGroupRoutes)
     .route("/users", publicUserRoutes)
+    .route("/service", serviceRoutes)
     .route("/admin", adminRoutes);
 
   return { app };

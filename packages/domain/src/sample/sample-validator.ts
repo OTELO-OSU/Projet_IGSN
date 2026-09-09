@@ -30,8 +30,10 @@ export type ContactSampleOwnerBody = z.infer<
   typeof contactSampleOwnerBodySchema
 >;
 
+export const requestReasonSchema = z.string().trim().min(1).max(5000);
+
 export const requestSampleDeletionBodySchema = z.strictObject({
-  reason: z.string().trim().min(1).max(5000),
+  reason: requestReasonSchema,
 });
 
 export type RequestSampleDeletionBody = z.infer<

@@ -19,7 +19,7 @@ test.describe("a tombstoned sample", () => {
     const sample = tombstone(samples);
 
     const detail = sampleDetailPage(page);
-    await detail.goto(sample.igsn);
+    await detail.gotoNotFound(sample.igsn);
 
     await detail.expectNotFound(sample.name);
   });

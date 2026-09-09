@@ -189,7 +189,10 @@ export function UserForm({
           <hr />
 
           <form.AppForm>
-            <ManagedGroupsFields granted={user.managedGroups} />
+            <ManagedGroupsFields
+              granted={user.managedGroups}
+              manualGroups={catalog.data?.data ?? []}
+            />
           </form.AppForm>
         </>
       )}

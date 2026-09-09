@@ -41,6 +41,7 @@ import { requireActiveSession } from "../auth/active-session.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
 import { trySendMail } from "../mail/try-send-mail.ts";
+import { hasUnattachable } from "../manual-group/has-unattachable.ts";
 import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
 import { sampleRemovalMail } from "../user-sample/sample-removal-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
@@ -71,11 +72,6 @@ const NOT_ATTACHABLE = {
 function sameGroupIds(submitted: string[], stored: string[]) {
   const asked = new Set(submitted);
   return asked.size === stored.length && stored.every((id) => asked.has(id));
-}
-
-function hasUnattachable(submitted: string[], allowed: string[]) {
-  const attachable = new Set(allowed);
-  return submitted.some((id) => !attachable.has(id));
 }
 
 function adminListQuery({
@@ -147,7 +143,7 @@ export function createSampleAdminRoutes(
       const user = c.get("user");
       const submitted = input.manualGroupIds ?? [];
       if (submitted.length > 0) {
-        const attachable = await manualGroups.listForUser(user.id);
+        const attachable = await manualGroups.listAttachableForUser(user.id);
         if (
           hasUnattachable(
             submitted,

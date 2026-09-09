@@ -12,6 +12,7 @@ import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
 import { insertUser } from "../tests/insert-user.ts";
+import { moderateManualGroup } from "../tests/moderate-manual-group.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { attachGroup, draft } from "../tests/sample-fixtures.ts";
@@ -89,6 +90,41 @@ describe("a sample's manual groups", () => {
       // Assert
       expect(res.status).toBe(422);
       expect(await db.selectFrom("sample").select("id").execute()).toEqual([]);
+    },
+  );
+
+  pgTest(
+    "should attach a group the owner manages without being a member, on create then on update",
+    async ({ db }) => {
+      // Arrange
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      await insertGroups(db);
+      await moderateManualGroup(db, caller.id, [MASSIF, ALPES]);
+      const client = testClient(createApp(db).app);
+      // Act
+      const created = await client.admin.samples.$post(
+        { json: { ...draft, manualGroupIds: [MASSIF] } },
+        { headers: authHeader },
+      );
+      const { data } = sampleResponseSchema.parse(await created.json());
+      const updated = await client.admin.samples[":id"].$put(
+        {
+          param: { id: data.id },
+          json: {
+            ...draft,
+            manualGroupIds: [MASSIF, ALPES],
+            expectedUpdatedAt: data.updatedAt,
+          },
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect([created.status, updated.status]).toEqual([201, 200]);
+      expect((await readSampleResponse(db, data.id)).data.manualGroups).toEqual(
+        [ALPES_GROUP, MASSIF_GROUP],
+      );
     },
   );
 

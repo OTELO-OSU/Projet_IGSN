@@ -230,6 +230,8 @@ type UserManagedManualGroupTable = {
 type ServiceAccountTable = {
   id: string;
   name: string;
+  owner_id: string;
+  api_key_hash: string | null;
   institutional_organization: string;
   institutional_osu: string | null;
   institutional_laboratory: string;

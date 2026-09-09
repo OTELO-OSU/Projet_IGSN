@@ -11,6 +11,7 @@ import { describe, expect } from "vitest";
 import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
+import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 
@@ -22,6 +23,14 @@ const OTHER_OSU = "OSUC";
 const OTHER_LABORATORY = "UMR7327";
 const GROUP = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "OZCAR-RI" };
 const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a9099";
+const PENDING_ID = "01890a5d-ac96-774b-bcce-b302099a9098";
+const OWNER = {
+  id: "01890a5d-ac96-774b-bcce-b302099a9002",
+  email: "jean.martin@univ-lorraine.fr",
+  name: "Martin",
+  firstname: "Jean",
+  orcid: null,
+};
 
 const authHeader = { Authorization: "Bearer moderator" };
 
@@ -31,6 +40,7 @@ const accountBody = (
   overrides: Partial<ServiceAccountBody> = {},
 ): ServiceAccountBody => ({
   name: "GeoPortal harvester",
+  ownerId: OWNER.id,
   institutionalOrganization: ORGANIZATION,
   institutionalOsu: OSU,
   institutionalLaboratory: LABORATORY,
@@ -48,8 +58,18 @@ const asSuperAdmin = async (db: Db) => {
     status: "accepted",
     superAdmin: true,
   });
+  await insertUser(db, OWNER.email, {
+    id: OWNER.id,
+    name: OWNER.name,
+    firstname: OWNER.firstname,
+  });
   return testClient(createApp(db).app);
 };
+
+const readBack = (
+  id: string,
+  { ownerId: _ownerId, ...body }: ServiceAccountBody,
+) => ({ data: { id, ...body, owner: OWNER } });
 
 type Client = Awaited<ReturnType<typeof asSuperAdmin>>;
 
@@ -109,7 +129,7 @@ describe("admin service account routes", () => {
       const res = await getAccount(client, id);
       // Assert
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ data: { id, ...body } });
+      expect(await res.json()).toEqual(readBack(id, body));
     },
   );
 
@@ -169,7 +189,7 @@ describe("admin service account routes", () => {
       const res = await updateAccount(client, id, replacement);
       // Assert
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual({ data: { id, ...replacement } });
+      expect(await res.json()).toEqual(readBack(id, replacement));
     },
   );
 
@@ -210,18 +230,37 @@ describe("admin service account routes", () => {
     },
   );
 
-  pgTest("should answer 400 to a body without a laboratory", async ({ db }) => {
+  pgTest.for(["institutionalLaboratory", "ownerId"] as const)(
+    "should answer 400 to a body without %s",
+    async (field, { db }) => {
+      // Arrange
+      await asSuperAdmin(db);
+      const { [field]: _omitted, ...body } = accountBody();
+      // Act
+      const res = await createApp(db).app.request("/admin/service-accounts", {
+        method: "POST",
+        headers: { ...authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      // Assert
+      expect(res.status).toBe(400);
+    },
+  );
+
+  pgTest.for([
+    { rule: "an unknown owner", ownerId: UNKNOWN_ID },
+    { rule: "an owner who is not accepted", ownerId: PENDING_ID },
+  ])("should answer 404 to $rule", async ({ ownerId }, { db }) => {
     // Arrange
-    await asSuperAdmin(db);
-    const { institutionalLaboratory: _laboratory, ...body } = accountBody();
-    // Act
-    const res = await createApp(db).app.request("/admin/service-accounts", {
-      method: "POST",
-      headers: { ...authHeader, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
+    const client = await asSuperAdmin(db);
+    await insertUser(db, "pending@univ-lorraine.fr", {
+      id: PENDING_ID,
+      status: "pending",
     });
+    // Act
+    const res = await createAccount(client, accountBody({ ownerId }));
     // Assert
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(404);
   });
 
   pgTest(

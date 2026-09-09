@@ -1,8 +1,13 @@
 import { expect, type Page } from "@playwright/test";
 
+import { pickComboboxOption } from "../admin/pick-combobox-option.ts";
+
 export function headerPage(page: Page) {
   const banner = page.getByRole("banner");
   const editLink = page.getByRole("link", { name: "Edit", exact: true });
+  const requestDialog = page.getByRole("dialog", {
+    name: "Ask for a service account",
+  });
   return {
     // ponytail: hydration scrolls back to top ~1s after load and swallows the first tap, so retry until keycloak takes over
     signIn: () =>
@@ -37,5 +42,36 @@ export function headerPage(page: Page) {
         res.url().includes(`/admin/samples/${sampleId}`),
       ),
     expectNoEditLink: () => expect(editLink).toHaveCount(0),
+    requestServiceAccount: async (
+      name: string,
+      reason: string,
+      manualGroup: string,
+    ) => {
+      const trigger = page
+        .getByRole("contentinfo")
+        .getByRole("button", { name: "Ask for a service account" });
+      await expect(async () => {
+        await trigger.scrollIntoViewIfNeeded();
+        await trigger.click();
+        await expect(requestDialog).toBeVisible({ timeout: 3_000 });
+      }).toPass({ timeout: 20_000 });
+      await requestDialog
+        .getByRole("textbox", { name: "Service name" })
+        .fill(name);
+      await requestDialog
+        .getByRole("textbox", { name: "Why do you need a service account?" })
+        .fill(reason);
+      await pickComboboxOption(page, {
+        field: "Groups to access",
+        option: manualGroup,
+        chipLabel: `Remove ${manualGroup}`,
+      });
+      await requestDialog.getByRole("button", { name: "Send request" }).click();
+      await expect(
+        page.getByText(
+          "Your request was sent to the super admin and is being processed.",
+        ),
+      ).toBeVisible();
+    },
   };
 }

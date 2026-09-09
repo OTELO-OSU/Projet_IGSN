@@ -18,6 +18,15 @@ vi.mock("react-oidc-context", () => ({
 }));
 
 const ACCOUNT_ID = "3f2504e0-4f89-41d3-9a0c-030500000b01";
+const OWNER_ID = "3f2504e0-4f89-41d3-9a0c-030500000c01";
+
+const OWNER = {
+  id: OWNER_ID,
+  email: "jean.martin@univ-lorraine.fr",
+  name: "Martin",
+  firstname: "Jean",
+  orcid: null,
+};
 
 const ACCOUNT = {
   id: ACCOUNT_ID,
@@ -26,6 +35,7 @@ const ACCOUNT = {
   institutionalOsu: null,
   institutionalLaboratory: "UMR7358",
   managedGroups: NO_MANAGED_GROUPS,
+  owner: OWNER,
 };
 
 const CRPG =
@@ -87,6 +97,7 @@ describe("ServiceAccountDetailPage", () => {
             institutionalOsu: null,
             institutionalLaboratory: "UMR7358",
             managedGroups: { ...NO_MANAGED_GROUPS, laboratories: ["UMR7358"] },
+            ownerId: OWNER_ID,
           },
         },
       ]);

@@ -27,6 +27,7 @@ test.describe("service accounts", () => {
 
     await accounts.goToCreate();
     await account.fillName(name);
+    await account.chooseOwner("Martin", "Jean Martin");
     await account.chooseInstitution({
       organization: LORRAINE,
       laboratory: CRPG,

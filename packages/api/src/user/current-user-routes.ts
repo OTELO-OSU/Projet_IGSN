@@ -1,4 +1,7 @@
-import type { MyManualGroupsResponse } from "@projet-igsn/domain/manual-group/manual-group-validator";
+import type {
+  ManualGroupsResponse,
+  MyManualGroupsResponse,
+} from "@projet-igsn/domain/manual-group/manual-group-validator";
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
 import type { CurrentUser } from "@projet-igsn/domain/user/current-user";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
@@ -74,6 +77,12 @@ export function createCurrentUserRoutes(
         return c.body(null, 204);
       },
     )
+    .get("/attachable-manual-groups", async (c) => {
+      const body: ManualGroupsResponse = {
+        data: await manualGroups.listAttachableForUser(c.get("user").id),
+      };
+      return c.json(body);
+    })
     .get("/manual-groups", async (c) => {
       const body: MyManualGroupsResponse = {
         data: await manualGroups.listForUser(c.get("user").id),

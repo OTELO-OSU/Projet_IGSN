@@ -1,5 +1,4 @@
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
-import { TanStackDevtools } from "@tanstack/react-devtools";
 import {
   HeadContent,
   Link,
@@ -7,7 +6,6 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
-import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { Mountain } from "lucide-react";
 import { AuthProvider } from "react-oidc-context";
 
@@ -15,7 +13,7 @@ import type { MyRouterContext } from "../router-context";
 
 import { AuthControls } from "../auth/auth-controls.tsx";
 import { onSigninCallback, userManager } from "../auth/oidc-config.ts";
-import TanStackQueryDevtools from "../integrations/tanstack-query/devtools";
+import { RequestServiceAccountDialog } from "../domain/service-accounts/request-service-account-dialog.tsx";
 import { m } from "../paraglide/messages.js";
 import { getLocale, localizeHref } from "../paraglide/runtime.js";
 import "../styles.css";
@@ -99,6 +97,7 @@ function RootLayout() {
                 className="h-20 w-auto"
               />
             </div>
+            <RequestServiceAccountDialog />
           </div>
         </footer>
       </div>
@@ -114,18 +113,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
-        <TanStackDevtools
-          config={{
-            position: "bottom-right",
-          }}
-          plugins={[
-            {
-              name: "Tanstack Router",
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-            TanStackQueryDevtools,
-          ]}
-        />
         <Scripts />
       </body>
     </html>

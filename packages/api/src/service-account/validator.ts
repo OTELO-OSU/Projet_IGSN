@@ -1,6 +1,7 @@
 import {
   listServiceAccountsQuerySchema,
   serviceAccountBodySchema,
+  serviceAccountRequestSchema,
 } from "@projet-igsn/domain/service-account/service-account-validator";
 
 import { validateUuidIdParam } from "../uuid-param.ts";
@@ -20,4 +21,10 @@ export const validateServiceAccountBody = zodValidator(
   "json",
   serviceAccountBodySchema,
   "Invalid service account",
+);
+
+export const validateServiceAccountRequestBody = zodValidator(
+  "json",
+  serviceAccountRequestSchema,
+  "Invalid service account request",
 );

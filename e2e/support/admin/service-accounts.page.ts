@@ -46,6 +46,26 @@ export function serviceAccountPage(page: Page) {
       await choose(/^Laboratory/, institution.laboratory);
     },
     grant: managedGroupsSection(page).grant,
+    chooseOwner: async (search: string, name: string) => {
+      await page.getByRole("combobox", { name: /^Requested by/ }).click();
+      await page.getByPlaceholder("Search by name or email").fill(search);
+      await page.getByRole("option").filter({ hasText: name }).click();
+    },
+    expectPrefilled: async (prefill: {
+      name: string;
+      laboratory: string;
+      owner: string;
+    }) => {
+      await expect(
+        page.getByRole("textbox", { name: "Service name" }),
+      ).toHaveValue(prefill.name);
+      await expect(
+        page.getByRole("combobox", { name: /^Laboratory/ }),
+      ).toContainText(prefill.laboratory);
+      await expect(
+        page.getByRole("combobox", { name: /^Requested by/ }),
+      ).toContainText(prefill.owner);
+    },
     create: () =>
       page.getByRole("button", { name: "Create", exact: true }).click(),
     save: async () => {

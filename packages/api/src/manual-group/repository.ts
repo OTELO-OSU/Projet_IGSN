@@ -17,6 +17,10 @@ import { likePattern } from "../like-pattern.ts";
 import { type Transactional, withTransaction } from "../transaction.ts";
 import { isNameTakenBy, lockName } from "../unique-name.ts";
 import { addManualGroupMember } from "./add-manual-group-member.ts";
+import {
+  attachableManualGroups,
+  sampleOwnerId,
+} from "./attachable-manual-groups.ts";
 import { canDetachFromGroup } from "./can-detach-from-group.ts";
 import { detachManualGroupMember } from "./detach-manual-group-member.ts";
 import { grantManualGroupManagers } from "./grant-manual-group-managers.ts";
@@ -250,6 +254,8 @@ export function createManualGroupRepository(
           .execute();
         return rows.map((row) => myManualGroupSchema.parse(row));
       }),
+    listAttachableForUser: (userId) =>
+      withTransaction(db, (trx) => attachableManualGroups(trx, userId)),
     listByIds: (ids) =>
       ids.length === 0
         ? Promise.resolve([])
@@ -258,33 +264,9 @@ export function createManualGroupRepository(
             return rows.map((row) => manualGroupSchema.parse(row));
           }),
     listForSampleOwner: (sampleId) =>
-      withTransaction(db, async (trx) => {
-        const rows = await trx
-          .selectFrom("manual_group")
-          .innerJoin(
-            "manual_group_member",
-            "manual_group_member.group_id",
-            "manual_group.id",
-          )
-          .select(["manual_group.id", "manual_group.name"])
-          .where((eb) =>
-            eb.exists(
-              eb
-                .selectFrom("user_sample")
-                .select("user_sample.user_id")
-                .whereRef(
-                  "user_sample.user_id",
-                  "=",
-                  "manual_group_member.user_id",
-                )
-                .where("user_sample.sample_id", "=", sampleId)
-                .where("user_sample.role", "=", "owner"),
-            ),
-          )
-          .orderBy("manual_group.name", "asc")
-          .execute();
-        return rows.map((row) => manualGroupSchema.parse(row));
-      }),
+      withTransaction(db, (trx) =>
+        attachableManualGroups(trx, sampleOwnerId(trx, sampleId)),
+      ),
     listWithPublishedSample: () =>
       withTransaction(db, async (trx) => {
         const rows = await trx

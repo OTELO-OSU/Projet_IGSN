@@ -4,7 +4,7 @@ Date: 2026-08-14
 
 ## Status
 
-Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a manual group, and the leave rule became per-group. Amended 2026-08-21: the published-sample rule now guards every detach, and a manual group manager curates its own groups (ADR 0030). Amended 2026-08-28: the group list carries `managerCount` and a `noManager` filter, and a super admin curates a group's managers from the group page (ADR 0030).
+Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a manual group, and the leave rule became per-group. Amended 2026-08-21: the published-sample rule now guards every detach, and a manual group manager curates its own groups (ADR 0030). Amended 2026-08-28: the group list carries `managerCount` and a `noManager` filter, and a super admin curates a group's managers from the group page (ADR 0030). Amended 2026-09-08: the attachable set now adds the groups a user manages, one query, `api/src/manual-group/attachable-manual-groups.ts`, shared by sample create, sample update and the service-account request.
 
 ## Context
 
@@ -21,8 +21,8 @@ Accepted. Amended 2026-08-17, folded in below: a sample can now be attached to a
 
 **A sample attaches to manual groups through a join table**, `sample_manual_group(sample_id, group_id)`, both columns FK-cascading; `sampleSchema` carries `manualGroups` (id plus name) and `createSampleSchema` carries `manualGroupIds`. Nothing attaches a group automatically, unlike the three institutional codes `insert-sample.ts` snapshots at creation.
 
-- **Only the sample's owner may set or clear them.** `requireSampleAccess` already reports a super admin as `"owner"`, so a super admin can fix a misattribution, choosing only among the sample owner's own memberships, never their own.
-- **The attachable set is the owner's current memberships plus whatever ids the sample already stores**, so a group the owner has since left round-trips on save instead of being rejected forever. Anything outside that set is 422; a non-owner changing the stored set is 403, resubmitting it unchanged is accepted.
+- **Only the sample's owner may set or clear them.** `requireSampleAccess` already reports a super admin as `"owner"`, so a super admin can fix a misattribution, choosing among the sample owner's memberships and managed groups, never their own.
+- **The attachable set is the owner's memberships plus the groups they manage, plus whatever ids the sample already stores**, so a group the owner has since left round-trips on save instead of being rejected forever. One query, `attachableManualGroups`, resolves that set for create, update and the service-account request; anything outside it is 422 on create and on the service-account request, a non-owner changing the stored set on a sample is 403, resubmitting it unchanged is accepted.
 - **Publication freezes the field through the existing lock maps**, one `manualGroupIds` entry in `published-field-lock.ts` and no new mechanism. `mergePublishedEdit` projects the stored `manualGroups` objects to their ids, the payload key carrying ids.
 
 **A member may leave a group unless they own a published sample attached to that group**, a per-group `canLeave` flag on `GET /admin/currentUser/manual-groups`, checked server-side and matching the `owner` role only, so contributing to someone else's published sample never locks the caller.

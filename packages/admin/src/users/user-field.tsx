@@ -1,6 +1,10 @@
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
+import {
+  FieldError,
+  useFieldError,
+} from "@projet-igsn/design-system/components/form/field-error";
 import { useFieldContext } from "@projet-igsn/design-system/components/form/form-hook-contexts";
 
 import { m } from "#/paraglide/messages.js";
@@ -18,16 +22,21 @@ export function UserField({
   excludeMembersOf?: string;
 }) {
   const field = useFieldContext<UserIdentity | null>();
+  const { error, errorId, ariaProps } = useFieldError();
 
   return (
-    <UserPicker
-      id={id}
-      value={field.state.value}
-      onChange={field.handleChange}
-      placeholder={m.share_email_placeholder()}
-      sampleId={sampleId}
-      status={status}
-      excludeMembersOf={excludeMembersOf}
-    />
+    <>
+      <UserPicker
+        id={id}
+        value={field.state.value}
+        onChange={field.handleChange}
+        placeholder={m.share_email_placeholder()}
+        sampleId={sampleId}
+        status={status}
+        excludeMembersOf={excludeMembersOf}
+        {...ariaProps}
+      />
+      <FieldError error={error} errorId={errorId} />
+    </>
   );
 }

@@ -3,6 +3,9 @@ import { expect, type Page } from "@playwright/test";
 import { chooseOption } from "./choose-option.ts";
 
 export function settingsPage(page: Page) {
+  const item = (name: string) =>
+    page.getByRole("listitem").filter({ hasText: name });
+
   return {
     open: async () => {
       await page.getByRole("link", { name: "Settings" }).click();
@@ -44,25 +47,23 @@ export function settingsPage(page: Page) {
           .getByRole("form", { name: "Institution" })
           .getByRole("combobox", { name: "Laboratory" }),
       ).toContainText(laboratory),
-    expectManualGroup: (name: string) =>
-      expect(
-        page.getByRole("listitem").filter({ hasText: name }),
-      ).toBeVisible(),
-    expectNoManualGroup: (name: string) =>
-      expect(page.getByRole("listitem").filter({ hasText: name })).toHaveCount(
-        0,
-      ),
+    expectService: (name: string) => expect(item(name)).toBeVisible(),
+    generateApiKey: async (name: string) => {
+      await item(name)
+        .getByRole("button", { name: "Generate API key" })
+        .click();
+      return item(name).getByRole("textbox", { name: "API key" }).inputValue();
+    },
+    expectManualGroup: (name: string) => expect(item(name)).toBeVisible(),
+    expectNoManualGroup: (name: string) => expect(item(name)).toHaveCount(0),
     expectManualGroupLeaveLocked: async (name: string) => {
       await expect(
         page.getByRole("button", { name: `Leave ${name}` }),
       ).toBeDisabled();
       await expect(
-        page
-          .getByRole("listitem")
-          .filter({ hasText: name })
-          .getByText(
-            "You cannot leave this group while you own a published sample attached to it.",
-          ),
+        item(name).getByText(
+          "You cannot leave this group while you own a published sample attached to it.",
+        ),
       ).toBeVisible();
     },
     leaveManualGroup: async (name: string) => {

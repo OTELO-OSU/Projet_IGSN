@@ -2,9 +2,9 @@ import { expect, type Page } from "@playwright/test";
 
 import { pickComboboxOption } from "./pick-combobox-option.ts";
 
-export const waitForMyManualGroups = (page: Page) =>
+export const waitForAttachableManualGroups = (page: Page) =>
   page.waitForResponse((response) =>
-    response.url().includes("currentUser/manual-groups"),
+    response.url().includes("currentUser/attachable-manual-groups"),
   );
 
 export const expectNoManualGroupOffered = (page: Page) =>

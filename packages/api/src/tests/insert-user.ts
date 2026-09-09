@@ -8,6 +8,7 @@ export function insertUser(
   db: Transactional<DB>,
   email: string,
   overrides: {
+    id?: string;
     name?: string | null;
     firstname?: string | null;
     orcid?: string | null;
@@ -22,7 +23,7 @@ export function insertUser(
   return db
     .insertInto("user")
     .values({
-      id: crypto.randomUUID(),
+      id: overrides.id ?? crypto.randomUUID(),
       email,
       name: overrides.name ?? null,
       firstname: overrides.firstname ?? null,
