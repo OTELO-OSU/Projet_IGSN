@@ -17,6 +17,7 @@ ADR 0035 declared the `service_account` entity but deferred its credential and a
 - A service exists in a user's name, so it dies with that user's account.
 - The migration deletes the existing `service_account` rows first, test data only (PO decision).
 - The model exposes `owner: UserIdentity` read back in one query; the request body takes `ownerId` and answers 404 `Owner not found` for an unknown user.
+- The owner must be an accepted user: the body answers 404 for a pending or rejected one, and a key whose owner is no longer accepted answers 403 like an unknown key, so revoking the researcher revokes their services.
 
 **The credential is a 256-bit random `base64url` key, stored as its SHA-256 hex digest**, unique-indexed, and shown once.
 

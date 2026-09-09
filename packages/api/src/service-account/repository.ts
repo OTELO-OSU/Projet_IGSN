@@ -63,11 +63,12 @@ const accountRow = ({
   institutional_laboratory: institutionalLaboratory,
 });
 
-const assertOwnerExists = async (trx: Transactional<DB>, ownerId: string) => {
+const assertOwnerAccepted = async (trx: Transactional<DB>, ownerId: string) => {
   const owner = await trx
     .selectFrom("user")
     .select("id")
     .where("id", "=", ownerId)
+    .where("status", "=", "accepted")
     .executeTakeFirst();
   if (!owner) {
     throw new HTTPException(404, { message: "Owner not found" });
@@ -102,7 +103,7 @@ export function createServiceAccountRepository(
     get: (id) => withTransaction(db, (trx) => readAccount(trx, id)),
     create: (body) =>
       withTransaction(db, async (trx) => {
-        await assertOwnerExists(trx, body.ownerId);
+        await assertOwnerAccepted(trx, body.ownerId);
         await lockName(trx, body.name);
         const row = await trx
           .insertInto("service_account")
@@ -123,7 +124,7 @@ export function createServiceAccountRepository(
       }),
     update: (id, body) =>
       withTransaction(db, async (trx) => {
-        await assertOwnerExists(trx, body.ownerId);
+        await assertOwnerAccepted(trx, body.ownerId);
         await lockName(trx, body.name);
         if (await isNameTakenBy(trx, "service_account", body.name, id)) {
           return "name_taken";
@@ -177,6 +178,15 @@ export function createServiceAccountRepository(
       withTransaction(db, async (trx) => {
         const row = await selectAccounts(trx)
           .where("api_key_hash", "=", hash)
+          .where((eb) =>
+            eb.exists(
+              eb
+                .selectFrom("user")
+                .select("user.id")
+                .whereRef("user.id", "=", "service_account.owner_id")
+                .where("user.status", "=", "accepted"),
+            ),
+          )
           .executeTakeFirst();
         return row && toServiceAccount(row);
       }),

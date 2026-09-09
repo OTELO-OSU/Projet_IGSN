@@ -24,16 +24,30 @@ describe("GET /service/ping", () => {
   });
 
   pgTest.for([
-    { rule: "no Authorization header", headers: {} },
-    { rule: "an unknown api key", headers: { Authorization: "Bearer nope" } },
-  ])("should answer 403 to $rule", async ({ headers }, { db }) => {
-    // Arrange
-    const owner = await insertUser(db, "jean.martin@univ-lorraine.fr");
-    await insertServiceAccount(db, "Harvester", owner.id, hashApiKey(KEY));
-    const { app } = createApp(db);
-    // Act
-    const res = await app.request("/service/ping", { headers });
-    // Assert
-    expect(res.status).toBe(403);
-  });
+    { rule: "no Authorization header", headers: {}, status: "accepted" },
+    {
+      rule: "an unknown api key",
+      headers: { Authorization: "Bearer nope" },
+      status: "accepted",
+    },
+    {
+      rule: "a valid api key whose owner is no longer accepted",
+      headers: { Authorization: `Bearer ${KEY}` },
+      status: "rejected",
+    },
+  ] as const)(
+    "should answer 403 to $rule",
+    async ({ headers, status }, { db }) => {
+      // Arrange
+      const owner = await insertUser(db, "jean.martin@univ-lorraine.fr", {
+        status,
+      });
+      await insertServiceAccount(db, "Harvester", owner.id, hashApiKey(KEY));
+      const { app } = createApp(db);
+      // Act
+      const res = await app.request("/service/ping", { headers });
+      // Assert
+      expect(res.status).toBe(403);
+    },
+  );
 });

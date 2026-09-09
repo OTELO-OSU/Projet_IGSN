@@ -23,6 +23,7 @@ const OTHER_OSU = "OSUC";
 const OTHER_LABORATORY = "UMR7327";
 const GROUP = { id: "01890a5d-ac96-774b-bcce-b302099a9001", name: "OZCAR-RI" };
 const UNKNOWN_ID = "01890a5d-ac96-774b-bcce-b302099a9099";
+const PENDING_ID = "01890a5d-ac96-774b-bcce-b302099a9098";
 const OWNER = {
   id: "01890a5d-ac96-774b-bcce-b302099a9002",
   email: "jean.martin@univ-lorraine.fr",
@@ -246,14 +247,18 @@ describe("admin service account routes", () => {
     },
   );
 
-  pgTest("should answer 404 to an unknown owner", async ({ db }) => {
+  pgTest.for([
+    { rule: "an unknown owner", ownerId: UNKNOWN_ID },
+    { rule: "an owner who is not accepted", ownerId: PENDING_ID },
+  ])("should answer 404 to $rule", async ({ ownerId }, { db }) => {
     // Arrange
     const client = await asSuperAdmin(db);
+    await insertUser(db, "pending@univ-lorraine.fr", {
+      id: PENDING_ID,
+      status: "pending",
+    });
     // Act
-    const res = await createAccount(
-      client,
-      accountBody({ ownerId: UNKNOWN_ID }),
-    );
+    const res = await createAccount(client, accountBody({ ownerId }));
     // Assert
     expect(res.status).toBe(404);
   });
