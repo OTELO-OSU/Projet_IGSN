@@ -14,7 +14,6 @@ describe("SyntheticDetailsView", () => {
           finalProduct: "glass",
           experimentType: "fusion",
           experimentDuration: { value: 30, unit: "minute" },
-          experimentDurationNotRelevant: false,
           synthesisDate: { start: "2020-01-01", end: "2020-01-05" },
           operatorName: "Marie Curie",
           operatorOrcid: "0000-0002-1825-0097",
@@ -71,18 +70,5 @@ describe("SyntheticDetailsView", () => {
     await expect
       .element(screen.getByText("2020-01-01", { exact: true }))
       .toBeInTheDocument();
-  });
-
-  it("should read the duration as not relevant when the experiment has none", async () => {
-    const screen = await render(
-      <SyntheticDetailsView
-        syntheticDetails={{ experimentDurationNotRelevant: true }}
-      />,
-    );
-
-    await expect
-      .element(screen.getByText("Experiment duration"))
-      .toBeInTheDocument();
-    await expect.element(screen.getByText("Not relevant")).toBeInTheDocument();
   });
 });

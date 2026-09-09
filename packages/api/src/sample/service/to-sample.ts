@@ -152,7 +152,6 @@ function toSyntheticDetails(row: Selectable<DB["sample"]>) {
       row.syn_experiment_duration_value,
       row.syn_experiment_duration_unit,
     ),
-    experimentDurationNotRelevant: row.syn_experiment_duration_not_relevant,
     synthesisDate:
       row.syn_synthesis_date_start !== null &&
       row.syn_synthesis_date_end !== null

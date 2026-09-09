@@ -2,11 +2,16 @@ import { type TreeNode } from "../../path/tree-node.ts";
 
 export const extraterrestrialRockTree = {
   returned_samples: {
+    optional: true,
+    frozenWhenPublished: false,
     choices: ["lunar_sample", "asteroid", "other"],
   },
   meteorites: {
+    optional: true,
+    frozenWhenPublished: false,
     choices: ["chondrites", "achondrite_primitive", "achondrites"],
   },
+  micrometeorites: { optional: true, frozenWhenPublished: false },
 
   lunar_sample: {
     choices: ["rock", "soil", "core"],

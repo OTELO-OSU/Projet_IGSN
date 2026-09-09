@@ -20,7 +20,6 @@ export const syntheticDetailsSchema = z.object({
   finalProduct: finalProductSchema.nullish(),
   experimentType: experimentTypeSchema.nullish(),
   experimentDuration: measurementSchema(experimentDurationUnitSchema).nullish(),
-  experimentDurationNotRelevant: z.boolean().nullish(),
   synthesisDate: dateRangeSchema("synthesis_date").nullish(),
   operatorName: freeTextSchema.nullish(),
   operatorOrcid: orcidSchema.nullish(),

@@ -22,6 +22,39 @@ export type AttachmentEdit = {
   description?: string;
 };
 
+export type AttachmentMetadata = Pick<
+  SampleAttachment,
+  "targetResourceType" | "title" | "description"
+>;
+
+function attachmentMetadata(
+  attachment: Partial<AttachmentMetadata>,
+  edit: AttachmentEdit,
+): AttachmentMetadata {
+  return {
+    title: (edit.title ?? attachment.title ?? "").trim() || null,
+    targetResourceType:
+      (edit.targetResourceType ?? attachment.targetResourceType) || null,
+    description:
+      (edit.description ?? attachment.description ?? "").trim() || null,
+  };
+}
+
+export function keptAttachmentMetadata(
+  saved: SampleAttachment[],
+  changes?: SampleAttachmentChanges,
+): AttachmentMetadata[] {
+  if (changes == null) return saved;
+  return [
+    ...saved
+      .filter(({ id }) => !changes.deletions.includes(id))
+      .map((attachment) =>
+        attachmentMetadata(attachment, changes.edits[attachment.id] ?? {}),
+      ),
+    ...changes.pending.map((staged) => attachmentMetadata({}, staged)),
+  ];
+}
+
 type StagedAttachment = {
   key: string;
   file: File;
@@ -190,18 +223,10 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
     return [
       ...saved
         .filter((attachment) => !deletions.includes(attachment.id))
-        .map((attachment) => {
-          const edit = edits[attachment.id] ?? {};
-          return {
-            id: attachment.id,
-            title: (edit.title ?? attachment.title ?? "").trim() || null,
-            targetResourceType:
-              (edit.targetResourceType ?? attachment.targetResourceType) ||
-              null,
-            description:
-              (edit.description ?? attachment.description ?? "").trim() || null,
-          };
-        }),
+        .map((attachment) => ({
+          id: attachment.id,
+          ...attachmentMetadata(attachment, edits[attachment.id] ?? {}),
+        })),
       ...uploaded,
     ];
   };

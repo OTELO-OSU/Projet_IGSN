@@ -11,7 +11,6 @@ export function SampleRepositoryFields() {
         {(field) => (
           <field.ComboboxField
             label={m.field_current_archive()}
-            requiredToPublish
             items={ALL_ORGANIZATION_ITEMS}
             placeholder={m.organization_placeholder()}
             searchPlaceholder={m.organization_search_placeholder()}

@@ -12,6 +12,7 @@ const RELATION = {
   identifierType: "DOI",
   identifier: "https://doi.org/10.1594/IEDA.100252",
   title: "Companion dataset",
+  resourceType: "Dataset",
   description: "Measurements published alongside this sample.",
 };
 
@@ -19,6 +20,10 @@ const ATTACHMENT_RESOURCE = {
   title: "Analysis report",
   resourceType: "Report",
 };
+
+const PNG_RESOURCE = { title: "Outcrop photograph", resourceType: "Image" };
+
+const TXT_RESOURCE = { title: "Field notes", resourceType: "Text" };
 
 test.describe("sample relations", () => {
   test("a researcher adds a relation and attaches files", async ({
@@ -45,9 +50,8 @@ test.describe("sample relations", () => {
       fixture("test.txt"),
     ]);
     await edit.setAttachmentResource("fichierTest.pdf", ATTACHMENT_RESOURCE);
-    await edit.expectAttachment("fichierTest.pdf");
-    await edit.expectAttachment("test.png");
-    await edit.expectAttachment("test.txt");
+    await edit.setAttachmentResource("test.png", PNG_RESOURCE);
+    await edit.setAttachmentResource("test.txt", TXT_RESOURCE);
     await edit.save();
     await edit.confirmUploads();
 
@@ -55,7 +59,7 @@ test.describe("sample relations", () => {
     await edit.openRelatedResourcesTab();
     await edit.expectRelation(1, RELATION);
     await edit.expectAttachment("fichierTest.pdf", ATTACHMENT_RESOURCE);
-    await edit.expectAttachment("test.png");
-    await edit.expectAttachment("test.txt");
+    await edit.expectAttachment("test.png", PNG_RESOURCE);
+    await edit.expectAttachment("test.txt", TXT_RESOURCE);
   });
 });

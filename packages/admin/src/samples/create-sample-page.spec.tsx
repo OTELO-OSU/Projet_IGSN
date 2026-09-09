@@ -1,4 +1,3 @@
-import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   RouterProvider,
@@ -229,9 +228,7 @@ async function fillPublishableSample(screen: CreateScreen) {
   await openTab(screen, "Sample classification");
   await pick(screen, "Material *", "Synthetic rock / mineral");
   await pick(screen, "Starting material *", "Natural");
-  await pick(screen, "Nature of starting material *", "Powder");
   await pick(screen, "Final product *", "Glass");
-  await screen.getByRole("switch", { name: "Duration not relevant" }).click();
   await screen.getByLabelText("Date *", { exact: true }).fill("2025-06-15");
   await screen
     .getByLabelText("Operator name *", { exact: true })
@@ -240,12 +237,6 @@ async function fillPublishableSample(screen: CreateScreen) {
   await openTab(screen, "Scientific context");
   await screen.getByLabelText(/collection curator/i).fill("Paul Bernard");
   await pick(screen, "Collection origin *", "Scientific expedition");
-
-  await openTab(screen, "Curation and repository");
-  const archive = organizationLabel("02feahw73");
-  await screen.getByRole("combobox", { name: "Current archive *" }).click();
-  await screen.getByPlaceholder("Search organizations...").fill(archive);
-  await screen.getByRole("option", { name: archive }).click();
 }
 
 beforeAll(() => page.viewport(1280, 1600));

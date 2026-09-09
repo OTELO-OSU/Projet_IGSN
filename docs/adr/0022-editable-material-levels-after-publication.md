@@ -4,7 +4,7 @@ Date: 2026-07-30
 
 ## Status
 
-Accepted. Supersedes in part ADR 0021, which declared `material` always frozen.
+Accepted. Supersedes in part ADR 0021, which declared `material` always frozen. ADR 0037 moved the marks this ADR describes onto a single niveau-1 frontier, and made `optional` (ADR 0011) inherit the same way `frozenWhenPublished` already does here; this ADR's mechanism is unchanged.
 
 ## Context
 

@@ -33,7 +33,6 @@ export function SyntheticDetailsView({
     finalProduct,
     experimentType,
     experimentDuration,
-    experimentDurationNotRelevant,
     synthesisDate,
     operatorName,
     operatorOrcid,
@@ -72,10 +71,8 @@ export function SyntheticDetailsView({
       <FieldRow
         label={m.sample_field_experiment_duration()}
         value={
-          experimentDuration
-            ? measurementText(experimentDuration, experimentDurationUnitLabel)
-            : experimentDurationNotRelevant &&
-              m.sample_experiment_duration_not_relevant()
+          experimentDuration &&
+          measurementText(experimentDuration, experimentDurationUnitLabel)
         }
       />
       <FieldRow

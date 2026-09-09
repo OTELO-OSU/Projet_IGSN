@@ -1,5 +1,4 @@
 import { type TreeNode } from "../../path/tree-node.ts";
-import { editableLeaves } from "./editable-leaves.ts";
 
 export const metamorphicTree = {
   weakly_metamorphosed: {
@@ -58,40 +57,4 @@ export const metamorphicTree = {
       "spilite",
     ],
   },
-  ...editableLeaves(
-    "amphibolite",
-    "anthracite_coal",
-    "buchite",
-    "calc_silicate_rock",
-    "carbonate_silicate_rock",
-    "charnockite",
-    "eclogite",
-    "emery_rock",
-    "enderbite",
-    "felsic_granulite",
-    "glaucophanite",
-    "gneiss",
-    "granofels",
-    "granulite",
-    "greenschist",
-    "hornfels",
-    "impactite",
-    "itabirite",
-    "itacolumite",
-    "mafic_granulite",
-    "marble",
-    "mica_schist",
-    "migmatite",
-    "mylonite",
-    "ophicalcite",
-    "ophiocarbonate",
-    "phyllite",
-    "quartzite",
-    "rodingite",
-    "schist",
-    "serpentinite",
-    "skarn",
-    "slate",
-    "spilite",
-  ),
 } satisfies Record<string, TreeNode>;

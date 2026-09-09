@@ -12,6 +12,7 @@ type RelationFields = {
   identifierType: string;
   identifier: string;
   title: string;
+  resourceType: string;
   description: string;
 };
 
@@ -194,7 +195,8 @@ export function sampleEditPage(page: Page) {
       await block
         .getByRole("textbox", { name: "Identifier" })
         .fill(relation.identifier);
-      await block.getByLabel("Title").fill(relation.title);
+      await block.getByLabel(/^Title/).fill(relation.title);
+      await chooseOption(page, block)("Resource type", relation.resourceType);
       await block.getByLabel("Description").fill(relation.description);
     },
     expectRelation: async (index: number, relation: RelationFields) => {
@@ -205,7 +207,10 @@ export function sampleEditPage(page: Page) {
       await expect(
         block.getByRole("textbox", { name: "Identifier" }),
       ).toHaveValue(relation.identifier);
-      await expect(block.getByLabel("Title")).toHaveValue(relation.title);
+      await expect(block.getByLabel(/^Title/)).toHaveValue(relation.title);
+      await expect(
+        block.getByRole("combobox", { name: /^Resource type/ }),
+      ).toHaveText(relation.resourceType);
       await expect(block.getByLabel("Description")).toHaveValue(
         relation.description,
       );
@@ -217,18 +222,15 @@ export function sampleEditPage(page: Page) {
       resource: AttachmentResource,
     ) => {
       const row = attachmentRow(name);
-      await row.getByLabel("Title", { exact: true }).fill(resource.title);
+      await row.getByLabel(/^Title/).fill(resource.title);
       await chooseOption(page, row)("Resource type", resource.resourceType);
     },
-    expectAttachment: async (name: string, resource?: AttachmentResource) => {
+    expectAttachment: async (name: string, resource: AttachmentResource) => {
       await expect(page.getByLabel(`Description of ${name}`)).toBeVisible();
-      if (!resource) return;
       const row = attachmentRow(name);
-      await expect(row.getByLabel("Title", { exact: true })).toHaveValue(
-        resource.title,
-      );
+      await expect(row.getByLabel(/^Title/)).toHaveValue(resource.title);
       await expect(
-        row.getByRole("combobox", { name: "Resource type" }),
+        row.getByRole("combobox", { name: /^Resource type/ }),
       ).toHaveText(resource.resourceType);
     },
     confirmUploads: async () => {

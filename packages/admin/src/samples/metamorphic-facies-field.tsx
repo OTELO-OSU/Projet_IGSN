@@ -14,7 +14,6 @@ export function MetamorphicFaciesField() {
       {(field) => (
         <field.ComboboxField
           label={m.field_metamorphic_facies()}
-          requiredToPublish
           items={items}
           placeholder={m.metamorphic_facies_placeholder()}
           searchPlaceholder={m.metamorphic_facies_search_placeholder()}

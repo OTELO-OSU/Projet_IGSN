@@ -12,6 +12,7 @@ const hierarchy: Hierarchy = {
   nodes: {
     rock: { choices: ["igneous", "sedimentary"] },
     sedimentary: { optional: true, choices: ["sand"] },
+    sand: { choices: ["quartz"] },
     water: { optional: true, choices: ["water", "sea"] },
     "water.water": { label: "water_only" },
   },
@@ -21,12 +22,15 @@ const translate = (code: string) =>
   (code.split(".").at(-1) ?? code).toUpperCase();
 
 describe("canStopAtPath", () => {
-  it.each(["rock.igneous", "rock.sedimentary", "water.water", "water"])(
-    "should allow stopping at %s",
-    (path) => {
-      expect(canStopAtPath(hierarchy, path)).toBe(true);
-    },
-  );
+  it.each([
+    "rock.igneous",
+    "rock.sedimentary",
+    "rock.sedimentary.sand",
+    "water.water",
+    "water",
+  ])("should allow stopping at %s", (path) => {
+    expect(canStopAtPath(hierarchy, path)).toBe(true);
+  });
 
   it("should forbid stopping at a non-leaf not marked optional", () => {
     expect(canStopAtPath(hierarchy, "rock")).toBe(false);

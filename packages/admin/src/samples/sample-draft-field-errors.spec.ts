@@ -66,7 +66,7 @@ describe("sampleDraftFieldErrors", () => {
     ).toEqual({
       materialPath: {
         message:
-          "Classify the material down to a specific type before publishing.",
+          "Classify the material at least one level below its root before publishing.",
       },
     });
   });

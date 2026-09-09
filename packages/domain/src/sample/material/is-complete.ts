@@ -1,5 +1,5 @@
 import { isPathComplete } from "../path/is-complete.ts";
-import { resolvePathNode } from "../path/resolve-node.ts";
+import { isOptionalAtOrAbove } from "../path/is-optional.ts";
 import {
   MATERIAL_PATHS,
   MATERIAL_TREE,
@@ -7,9 +7,7 @@ import {
 } from "./classification.ts";
 
 export function isMaterialComplete(path: MaterialPath): boolean {
-  return isPathComplete(
-    MATERIAL_PATHS,
-    path,
-    (node) => resolvePathNode(MATERIAL_TREE, node)?.node.optional === true,
+  return isPathComplete(MATERIAL_PATHS, path, (node) =>
+    isOptionalAtOrAbove(MATERIAL_TREE, node),
   );
 }

@@ -21,7 +21,7 @@ status: stable
 
 - `design-system` defines its own structural `Hierarchy` type, since it must not import `domain`, and the domain trees satisfy it. Node resolution repeats domain `resolvePathNode`'s longest-matching-suffix convention, a deliberate ~10-line reimplementation living in two places by design.
 - Children of a path are the resolved node's `choices` composed onto the path; level 0 offers `roots`.
-- A path is a valid stop when it is a leaf or its node is `optional: true`, mandatory by default, exported as `canStopAtPath`.
+- A path is a valid stop when it is a leaf, or when its node or any ancestor is marked `optional: true`, mandatory by default, exported as `canStopAtPath`. `optional` inherits: a mark opens its whole subtree, the same `isOptionalAtOrAbove` reading as [[vocabulary-tree]].
 - No `getLabel`: each node's `label` carries its code, rendered through a `translate` prop (`(code) => string`), so translation stays app-side ([[i18n-strategy]]).
 - `admin/src/samples/hierarchy-stop-consistency.spec.ts` asserts `canStopAtPath` equals the domain completeness verdict for every path of every vocabulary, closing the drift hazard between the UI and the publish gate.
 - The widget needs no cycle detection, domain `expandPaths` throwing at import.

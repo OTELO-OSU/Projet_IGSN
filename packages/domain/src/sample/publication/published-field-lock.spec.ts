@@ -192,13 +192,9 @@ describe("mergePublishedEdit", () => {
     expect(merged.collectionMethod).toBe("dredging");
     expect(merged.specificName).toBe("edited specific");
     expect(merged.resourceType).toBe("hydrocarbon");
-  });
-
-  it("keeps whole-frozen fields from storage, ignoring the payload", () => {
-    const merged = mergePublishedEdit(stored, incoming());
-    expect(merged.name).toBe("Stored name");
-    expect(merged.nature).toBe("hand_sample");
-    expect(merged.type).toBe("core");
+    expect(merged.name).toBe("Edited name");
+    expect(merged.nature).toBe("rock_powder");
+    expect(merged.type).toBe("dredge");
   });
 
   it("takes the texture, facies and fabric from a payload agreeing on the material", () => {
@@ -212,191 +208,44 @@ describe("mergePublishedEdit", () => {
     expect(merged.metamorphicFabric).toBeNull();
   });
 
-  it("keeps the stored texture, facies and fabric when the payload's material disagrees", () => {
+  it("keeps every material-governed field when the payload's material is refused", () => {
     const metamorphic: Sample = {
       ...stored,
       material: "rock.metamorphic",
+      texture: "cataclastic",
       metamorphicFacies: "eclogite",
       metamorphicFabric: "gneissic",
     };
-    const merged = mergePublishedEdit(
-      metamorphic,
-      incoming({
-        material: "rock.igneous.plutonic",
-        texture: "cumulate",
-        metamorphicFacies: null,
-        metamorphicFabric: null,
-      }),
-    );
-    expect(merged.metamorphicFacies).toBe("eclogite");
-    expect(merged.metamorphicFabric).toBe("gneissic");
-    expect(merged.texture).toBeNull();
-  });
-
-  it.each([
-    "synthetic_rock_mineral",
-    "extraterrestrial_rock.returned_samples.lunar_sample",
-  ])(
-    "keeps a %s sample without a location, which its material forbids",
-    (material) => {
-      const refused: Sample = { ...stored, material, location: null };
-      const merged = mergePublishedEdit(
-        refused,
-        incoming({
-          material,
-          location: {
-            position: null,
-            region: null,
-            navigationType: null,
-            localityName: "smuggled locality",
-            localityDescription: null,
-          },
-        }),
-      );
-      expect(merged.location).toBeNull();
-    },
-  );
-
-  it("keeps the location a published sample stored before its material forbade one", () => {
-    const material = "extraterrestrial_rock.returned_samples.lunar_sample";
-    const merged = mergePublishedEdit(
-      { ...stored, material },
-      incoming({ material, location: null }),
-    );
-    expect(merged.location).toEqual(stored.location);
-  });
-
-  it("keeps frozen location coords/type/region but takes editable locality and vertical position", () => {
-    const merged = mergePublishedEdit(stored, incoming());
-    expect(merged.location?.position).toMatchObject({
-      type: "point",
-      longitude: 1,
-      latitude: 2,
-    });
-    expect(merged.location?.region).toEqual({
-      kind: "continent",
-      country: "FR",
-    });
-    expect(merged.location?.localityName).toBe("edited locality");
-    expect(merged.location?.localityDescription).toBe("edited locality detail");
-    expect(merged.location?.navigationType).toBe("LBL");
-    expect(merged.location?.position?.vertical).toEqual({
-      position: 99,
-      reference: "elevation",
-      system: "ngf_ign69",
+    const merged = mergePublishedEdit(metamorphic, incoming());
+    expect(merged).toMatchObject({
+      material: "rock.metamorphic",
+      texture: "cataclastic",
+      metamorphicFacies: "eclogite",
+      metamorphicFabric: "gneissic",
+      location: stored.location,
+      geologicalContextDescription: "stored geological context",
+      geomorphologicalEnvironment: "marine_zone.fjord",
     });
   });
 
-  it("keeps the frozen endpoints of a published line but takes its vertical values", () => {
-    const storedLine: Sample = {
-      ...stored,
-      location: {
-        position: {
-          type: "line",
-          startLongitude: 1,
-          startLatitude: 2,
-          endLongitude: 3,
-          endLatitude: 4,
-          vertical: {
-            start: 10,
-            end: 20,
-            reference: "core_depth",
-            system: "local",
-          },
-        },
-      },
-    };
-    const merged = mergePublishedEdit(
-      storedLine,
-      incoming({
-        location: {
-          position: {
-            type: "line",
-            startLongitude: 50,
-            startLatitude: 51,
-            endLongitude: 52,
-            endLatitude: 53,
-            vertical: {
-              start: 99,
-              end: 98,
-              reference: "core_depth",
-              system: "local",
-            },
-          },
-        },
-      }),
-    );
-    expect(merged.location?.position).toEqual({
-      type: "line",
-      startLongitude: 1,
-      startLatitude: 2,
-      endLongitude: 3,
-      endLatitude: 4,
-      vertical: {
-        start: 99,
-        end: 98,
-        reference: "core_depth",
-        system: "local",
-      },
-    });
+  it("takes the location from the payload", () => {
+    const payload = incoming({ material: stored.material });
+    const merged = mergePublishedEdit(stored, payload);
+    expect(merged.location).toEqual(payload.location);
   });
 
-  it("adds an editable locality when the sample was published without a location", () => {
-    const withoutLocation: Sample = { ...stored, location: null };
-    const merged = mergePublishedEdit(
-      withoutLocation,
-      incoming({
-        location: {
-          position: null,
-          region: null,
-          navigationType: null,
-          localityName: "added locality",
-          localityDescription: null,
-        },
-      }),
-    );
-    expect(merged.location).toEqual({
-      position: null,
-      region: null,
-      navigationType: null,
-      localityName: "added locality",
-      localityDescription: null,
-    });
+  it("takes the description from the payload", () => {
+    const payload = incoming();
+    const merged = mergePublishedEdit(stored, payload);
+    expect(merged.description).toEqual(payload.description);
   });
 
-  it("stays without a location when none was stored and none is given", () => {
-    const withoutLocation: Sample = { ...stored, location: null };
-    const merged = mergePublishedEdit(
-      withoutLocation,
-      incoming({ location: null }),
-    );
-    expect(merged.location).toBeNull();
-  });
-
-  it("keeps frozen collectionDate but takes editable description leaves", () => {
-    const merged = mergePublishedEdit(stored, incoming());
-    expect(merged.description?.collectionDate).toEqual({
-      precision: "day",
-      start: "2000-01-01",
-      end: "2000-01-02",
-    });
-    expect(merged.description?.oriented).toBe(false);
-    expect(merged.description?.openDescription).toBe("edited open");
-  });
-
-  it("keeps frozen scientific-context leaves but takes editable ones on the same branch", () => {
-    const merged = mergePublishedEdit(stored, incoming());
-    expect(merged.scientificContext).toMatchObject({
-      provenanceStatus: "field_sample",
-      funderOrganizations: ["https://ror.org/00stored"],
-      researchProgramName: "Stored program",
-      chiefScientist: "Stored chief",
-      chiefScientistOrcid: "0000-0001-5109-3700",
-      hostInstitution: ["https://ror.org/00struct"],
+  it("keeps the frozen collector name but takes the other field-sample leaves", () => {
+    const payload = incoming();
+    const merged = mergePublishedEdit(stored, payload);
+    expect(merged.scientificContext).toEqual({
+      ...payload.scientificContext,
       collectorName: "Stored collector",
-      collectorOrcid: "0000-0002-1825-0097",
-      researchCampaign: "edited campaign",
-      funding: "edited funding",
     });
   });
 
@@ -449,7 +298,6 @@ describe("mergePublishedEdit", () => {
       finalProduct: "glass",
       experimentType: "fusion",
       experimentDuration: { value: 2, unit: "hour" },
-      experimentDurationNotRelevant: false,
       synthesisDate: { start: "2000-01-01", end: "2000-01-02" },
       operatorName: "Stored operator",
       operatorOrcid: "0000-0002-1825-0097",
@@ -467,7 +315,6 @@ describe("mergePublishedEdit", () => {
       finalProduct: "fluid",
       experimentType: "diffusion",
       experimentDuration: { value: 30, unit: "minute" },
-      experimentDurationNotRelevant: true,
       synthesisDate: { start: "1990-05-05", end: "1990-05-06" },
       operatorName: "Edited operator",
       operatorOrcid: "0000-0001-5109-3700",
@@ -485,7 +332,7 @@ describe("mergePublishedEdit", () => {
       syntheticDetails: storedDetails,
     };
 
-    it("keeps the frozen synthesis leaves but takes the editable conditions", () => {
+    it("keeps the frozen operator name but takes every other synthesis leaf", () => {
       const merged = mergePublishedEdit(
         synthetic,
         incoming({
@@ -496,12 +343,8 @@ describe("mergePublishedEdit", () => {
       );
 
       expect(merged.syntheticDetails).toEqual({
-        ...storedDetails,
-        temperature: incomingDetails.temperature,
-        pressure: incomingDetails.pressure,
-        experimentalProtocol: "edited protocol",
-        experimentPurpose: "edited purpose",
-        equipmentUsed: "edited equipment",
+        ...incomingDetails,
+        operatorName: "Stored operator",
       });
     });
 
@@ -529,7 +372,17 @@ describe("mergePublishedEdit", () => {
         "sediment.exogenous_detritic",
         "sediment.exogenous_detritic.sand.medium_sand",
       ],
-    ])("refines %s into %s", (current, next) => {
+      [
+        "rock.igneous.plutonic.felsic.granite",
+        "rock.igneous.volcanic.felsic.rhyolite",
+      ],
+      [
+        "rock.igneous.plutonic.felsic.granite",
+        "rock.metamorphic.strongly_metamorphosed.gneiss",
+      ],
+      ["rock.igneous.plutonic", "rock.igneous.plutonic.felsic.granite"],
+      ["rock.igneous.plutonic.felsic.granite", "rock.igneous"],
+    ])("moves %s to %s, both under the published root", (current, next) => {
       const merged = mergePublishedEdit(
         { ...stored, material: current },
         incoming({ material: next }),
@@ -540,13 +393,9 @@ describe("mergePublishedEdit", () => {
     it.each([
       [
         "rock.igneous.plutonic.felsic.granite",
-        "rock.igneous.volcanic.felsic.rhyolite",
+        "sediment.exogenous_detritic.clay",
       ],
-      [
-        "rock.igneous.plutonic.felsic.granite",
-        "rock.metamorphic.strongly_metamorphosed.gneiss",
-      ],
-      ["rock.igneous.plutonic", "rock.igneous.plutonic.felsic.granite"],
+      ["mineral", "fossil"],
       ["rock.igneous.plutonic.felsic.granite", null],
     ])("keeps %s when the payload carries %s", (current, next) => {
       const merged = mergePublishedEdit(
@@ -590,21 +439,31 @@ describe("mergePublishedEdit", () => {
       },
     );
 
-    it("keeps the stored texture when a rejected refinement leaves the material behind", () => {
+    it("drops the stored location when the material moves to one that forbids it", () => {
       const merged = mergePublishedEdit(
         {
           ...stored,
-          material: "rock.igneous.plutonic.felsic.granite",
-          texture: "phaneritic",
+          material: "extraterrestrial_rock.meteorites.chondrites",
         },
         incoming({
-          material: "rock.igneous.volcanic.felsic.rhyolite",
-          texture: "glassy",
+          material: "extraterrestrial_rock.returned_samples.lunar_sample",
+          location: null,
         }),
       );
       expect(merged).toMatchObject({
-        material: "rock.igneous.plutonic.felsic.granite",
-        texture: "phaneritic",
+        material: "extraterrestrial_rock.returned_samples.lunar_sample",
+        location: null,
+      });
+    });
+
+    it("keeps the stored location when the payload's material is rejected", () => {
+      const merged = mergePublishedEdit(
+        { ...stored, material: "synthetic_rock_mineral", location: null },
+        incoming({ material: "rock.igneous" }),
+      );
+      expect(merged).toMatchObject({
+        material: "synthetic_rock_mineral",
+        location: null,
       });
     });
   });
@@ -612,8 +471,9 @@ describe("mergePublishedEdit", () => {
 
 describe("frozenMaterialDepth", () => {
   it.each([
-    ["rock.igneous.plutonic.felsic.granite", 4],
-    ["rock.igneous.plutonic", Infinity],
+    ["rock.igneous.plutonic.felsic.granite", 1],
+    ["rock.igneous.plutonic", 1],
+    ["mineral", Infinity],
     [null, Infinity],
   ])("locks the levels of %s above depth %s", (material, depth) => {
     expect(frozenMaterialDepth(material)).toBe(depth);

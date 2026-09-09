@@ -123,7 +123,6 @@ type SampleTable = {
   syn_experiment_type: string | null;
   syn_experiment_duration_value: number | null;
   syn_experiment_duration_unit: string | null;
-  syn_experiment_duration_not_relevant: boolean | null;
   syn_synthesis_date_start: ColumnType<Date, string, string> | null;
   syn_synthesis_date_end: ColumnType<Date, string, string> | null;
   syn_operator_name: string | null;

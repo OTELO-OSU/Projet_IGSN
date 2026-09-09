@@ -33,15 +33,15 @@ async function insertLegacyAttachments(
     sample_id: sampleId,
     name: `legacy-${i}.csv`,
     media_type: "text/csv",
-    title: null,
-    target_resource_type: null,
+    title: `Legacy ${i}`,
+    target_resource_type: "dataset",
     description: null,
   }));
   await db.insertInto("sample_attachment").values(rows).execute();
   return rows.map((row) => ({
     id: row.id,
-    title: null,
-    targetResourceType: null,
+    title: row.title,
+    targetResourceType: "dataset" as const,
     description: null,
   }));
 }
@@ -88,19 +88,19 @@ async function createSample(client: Client) {
 async function uploadAttachment(
   client: Client,
   sampleId: string,
-  description?: string,
+  extra: { description?: string; targetResourceType?: "dataset" } = {},
 ) {
   const res = await client.admin.samples[":id"].attachments.$post(
-    {
-      param: { id: sampleId },
-      form: description
-        ? { file: csvFile(), description }
-        : { file: csvFile() },
-    },
+    { param: { id: sampleId }, form: { file: csvFile(), ...extra } },
     { headers: authHeader },
   );
   return res;
 }
+
+const publishableFile = {
+  description: "Measurement table",
+  targetResourceType: "dataset" as const,
+};
 
 describe("admin attachment routes", () => {
   pgTest(
@@ -355,9 +355,11 @@ describe("admin attachment routes", () => {
       // Arrange
       const client = await createTestApp(db);
       const sample = await createSample(client);
-      const keptRes = await uploadAttachment(client, sample.id, "Raw");
+      const keptRes = await uploadAttachment(client, sample.id, {
+        description: "Raw",
+      });
       const kept = ((await keptRes.json()) as { data: { id: string } }).data;
-      await uploadAttachment(client, sample.id, "To drop");
+      await uploadAttachment(client, sample.id, { description: "To drop" });
       // Act
       const res = await client.admin.samples[":id"].$put(
         {
@@ -398,7 +400,7 @@ describe("admin attachment routes", () => {
       // Arrange
       const client = await createTestApp(db);
       const sample = await createSample(client);
-      await uploadAttachment(client, sample.id, "Raw");
+      await uploadAttachment(client, sample.id, { description: "Raw" });
       // Act
       const res = await client.admin.samples[":id"].$put(
         {
@@ -419,7 +421,7 @@ describe("admin attachment routes", () => {
 describe("publishing rights on a published sample's attachments", () => {
   const publishedSampleWithFile = async (client: Client) => {
     const sample = await createSample(client);
-    const uploaded = await uploadAttachment(client, sample.id);
+    const uploaded = await uploadAttachment(client, sample.id, publishableFile);
     const { data } = (await uploaded.json()) as { data: { id: string } };
     await client.admin.samples[":id"].publish.$post(
       { param: { id: sample.id } },
@@ -589,7 +591,7 @@ describe("upload limit on save and publish", () => {
 describe("public attachment download", () => {
   async function publishWithAttachment(client: Client) {
     const sample = await createSample(client);
-    const uploaded = await uploadAttachment(client, sample.id);
+    const uploaded = await uploadAttachment(client, sample.id, publishableFile);
     const { data } = (await uploaded.json()) as { data: { id: string } };
     const published = await client.admin.samples[":id"].publish.$post(
       { param: { id: sample.id } },
@@ -655,6 +657,58 @@ describe("public attachment download", () => {
       ].$get({ param: { igsn, attachmentId: data.id } });
       // Assert
       expect(res.status).toBe(404);
+    },
+  );
+});
+
+describe("attachment metadata on a published sample", () => {
+  pgTest(
+    "should refuse a save clearing the metadata of a published attachment",
+    async ({ db }) => {
+      // Arrange
+      const client = await createTestApp(db);
+      const sample = await createSample(client);
+      const uploaded = await uploadAttachment(
+        client,
+        sample.id,
+        publishableFile,
+      );
+      const { data } = (await uploaded.json()) as { data: { id: string } };
+      const published = await client.admin.samples[":id"].publish.$post(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+      const { updatedAt } = sampleResponseSchema.parse(
+        await published.json(),
+      ).data;
+      // Act
+      const res = await client.admin.samples[":id"].$put(
+        {
+          param: { id: sample.id },
+          json: {
+            ...sampleBody,
+            attachments: [
+              {
+                id: data.id,
+                title: null,
+                targetResourceType: null,
+                description: null,
+              },
+            ],
+            expectedUpdatedAt: updatedAt,
+          },
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(409);
+      const read = await client.admin.samples[":id"].$get(
+        { param: { id: sample.id } },
+        { headers: authHeader },
+      );
+      expect(
+        sampleResponseSchema.parse(await read.json()).data.attachments,
+      ).toMatchObject([{ targetResourceType: "dataset" }]);
     },
   );
 });

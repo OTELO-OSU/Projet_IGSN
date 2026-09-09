@@ -13,6 +13,7 @@ const RELATION = {
   identifierType: "DOI",
   identifier: "https://doi.org/10.5880/GFZ.2026.001",
   title: "Field measurements dataset",
+  resourceType: "Dataset",
   description: "Measurements collected during the same campaign.",
 };
 

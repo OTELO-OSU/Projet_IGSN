@@ -48,7 +48,6 @@ import { CollectionDateField } from "#/samples/collection-date-field.tsx";
 import { CollectionMethodField } from "#/samples/collection-method-field.tsx";
 import { composeDescription } from "#/samples/compose-description.ts";
 import { composeLocation } from "#/samples/compose-location.ts";
-import { composeRepository } from "#/samples/compose-repository.ts";
 import { composeScientificContext } from "#/samples/compose-scientific-context.ts";
 import { composeSyntheticDetails } from "#/samples/compose-synthetic-details.ts";
 import {
@@ -89,7 +88,11 @@ import { SampleSubmitButton } from "#/samples/sample-submit-button.tsx";
 import { SampleSyntheticDetailsFields } from "#/samples/sample-synthetic-details-fields.tsx";
 import { SampleTypeFields } from "#/samples/sample-type-fields.tsx";
 import { TextureField } from "#/samples/texture-field.tsx";
-import { type SampleAttachmentChanges } from "#/samples/use-attachment-changes.ts";
+import {
+  type AttachmentMetadata,
+  keptAttachmentMetadata,
+  type SampleAttachmentChanges,
+} from "#/samples/use-attachment-changes.ts";
 import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
@@ -262,7 +265,7 @@ export function SampleForm({
         nature: state.values.nature ?? null,
         typePath: state.values.typePath,
         materialPath: state.values.materialPath,
-        metamorphicFacies: state.values.metamorphicFacies,
+        relations: state.values.relations,
         location: state.values.location,
         description: state.values.description,
         existenceStatus: state.values.existenceStatus,
@@ -271,7 +274,6 @@ export function SampleForm({
         scientificContext: composeScientificContext(
           state.values.scientificContext,
         ),
-        repository: composeRepository(state.values.repository),
         syntheticDetails: composeSyntheticDetails(
           state.values.syntheticDetails,
           composeHierarchyValue(state.values.materialPath),
@@ -283,14 +285,13 @@ export function SampleForm({
         nature,
         typePath,
         materialPath,
-        metamorphicFacies,
+        relations,
         location,
         description,
         existenceStatus,
         availabilityStatus,
         age,
         scientificContext,
-        repository,
         syntheticDetails,
       }) => {
         const reasons = samplePublishBlockers(
@@ -298,19 +299,18 @@ export function SampleForm({
             nature,
             type: composeHierarchyValue(typePath),
             material: composeHierarchyValue(materialPath),
-            metamorphicFacies: metamorphicFacies || null,
             location: composeLocation(location),
             description: composeDescription(description),
             age,
             existenceStatus: existenceStatus ?? null,
             availabilityStatus: availabilityStatus ?? null,
             scientificContext,
-            repository,
             syntheticDetails,
-            attachments: {
-              length: attachmentChanges?.keptCount ?? attachments.length,
-            },
-          } as PublishableFields & { attachments: { length: number } },
+            relations: relations.map(({ targetResourceType }) => ({
+              targetResourceType: targetResourceType || null,
+            })),
+            attachments: keptAttachmentMetadata(attachments, attachmentChanges),
+          } as PublishableFields & { attachments: AttachmentMetadata[] },
           UPLOAD_LIMIT,
           currentUser,
         ).map(publishBlockerLabel);

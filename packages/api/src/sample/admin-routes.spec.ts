@@ -728,7 +728,7 @@ describe("admin sample routes", () => {
   });
 
   pgTest(
-    "keeps a frozen collection date when a published edit tries to clear it",
+    "rejects with 409 a published edit clearing the collection date",
     async ({ db }) => {
       // Arrange
       await provisionUser(db, "test-token", { status: "accepted" });
@@ -755,7 +755,7 @@ describe("admin sample routes", () => {
         { headers: authHeader },
       );
       // Assert
-      expect(res.status).toBe(200);
+      expect(res.status).toBe(409);
       const kept = await client.admin.samples[":id"].$get(
         { param: { id: data.id } },
         { headers: authHeader },
@@ -771,19 +771,6 @@ describe("admin sample routes", () => {
           },
         },
       });
-      const ok = await client.admin.samples[":id"].$put(
-        {
-          param: { id: data.id },
-          json: {
-            ...publishableSample,
-            name: "Basalte (revu)",
-            expectedUpdatedAt: sampleResponseSchema.parse(await res.json()).data
-              .updatedAt,
-          },
-        },
-        { headers: authHeader },
-      );
-      expect(ok.status).toBe(200);
     },
   );
 
@@ -802,6 +789,10 @@ describe("admin sample routes", () => {
               ...publishable,
               name: "Renamed basalt",
               material: "rock.igneous.plutonic",
+              scientificContext: {
+                ...publishable.scientificContext,
+                collectionOrigin: "purchase",
+              },
               specificName: "MC-EDIT-1",
               expectedUpdatedAt: data.updatedAt,
             },
@@ -815,8 +806,11 @@ describe("admin sample routes", () => {
           { headers: authHeader },
         );
         const kept = sampleResponseSchema.parse(await re.json()).data;
-        expect(kept.name).toBe("Basalte du Massif Central");
+        expect(kept.scientificContext).toMatchObject({
+          collectionOrigin: "scientific_expedition",
+        });
         expect(kept.material).toBe("sediment.exogenous_detritic.clay");
+        expect(kept.name).toBe("Renamed basalt");
         expect(kept.specificName).toBe("MC-EDIT-1");
       },
     );
@@ -851,7 +845,7 @@ describe("admin sample routes", () => {
     );
 
     pgTest(
-      "keeps frozen coordinates but persists an editable locality edit",
+      "persists a coordinate and locality edit on a published sample",
       async ({ db }) => {
         // Arrange
         const client = testClient(createApp(db).app);
@@ -879,8 +873,8 @@ describe("admin sample routes", () => {
         );
         const kept = sampleResponseSchema.parse(await re.json()).data;
         expect(kept.location?.position).toMatchObject({
-          longitude: 3,
-          latitude: 45,
+          longitude: 99,
+          latitude: 10,
         });
         expect(kept.location?.localityName).toBe("New locality");
       },
@@ -929,7 +923,7 @@ describe("admin sample routes", () => {
     );
 
     pgTest(
-      "rejects with 409 an edit clearing the facies of a published metamorphic sample",
+      "persists a facies cleared on a published metamorphic sample",
       async ({ db }) => {
         // Arrange
         const client = testClient(createApp(db).app);
@@ -947,32 +941,31 @@ describe("admin sample routes", () => {
           { headers: authHeader },
         );
         // Assert
-        expect(res.status).toBe(409);
+        expect(res.status).toBe(200);
         const re = await client.admin.samples[":id"].$get(
           { param: { id: data.id } },
           { headers: authHeader },
         );
         const kept = sampleResponseSchema.parse(await re.json()).data;
-        expect(kept.metamorphicFacies).toBe("eclogite");
+        expect(kept.metamorphicFacies).toBeNull();
       },
     );
 
     pgTest(
-      "keeps the stored texture, facies and fabric when the payload's material disagrees",
+      "keeps the stored facies and fabric when the payload's material changes root",
       async ({ db }) => {
         // Arrange
         const client = testClient(createApp(db).app);
-        const data = await createAndPublish(db, client, igneous);
+        const data = await createAndPublish(db, client, metamorphic);
         // Act
         const res = await client.admin.samples[":id"].$put(
           {
             param: { id: data.id },
             json: {
-              ...igneous,
-              material: metamorphic.material,
-              texture: null,
-              metamorphicFacies: "eclogite",
-              metamorphicFabric: "gneissic",
+              ...metamorphic,
+              material: "mineral",
+              metamorphicFacies: null,
+              metamorphicFabric: null,
               expectedUpdatedAt: data.updatedAt,
             },
           },
@@ -985,10 +978,9 @@ describe("admin sample routes", () => {
           { headers: authHeader },
         );
         const kept = sampleResponseSchema.parse(await re.json()).data;
-        expect(kept.material).toBe(igneous.material);
-        expect(kept.texture).toBe("phaneritic");
-        expect(kept.metamorphicFacies).toBeNull();
-        expect(kept.metamorphicFabric).toBeNull();
+        expect(kept.material).toBe(metamorphic.material);
+        expect(kept.metamorphicFacies).toBe("eclogite");
+        expect(kept.metamorphicFabric).toBe("gneissic");
       },
     );
 
@@ -1069,8 +1061,13 @@ describe("admin sample routes", () => {
         "rock.igneous.plutonic.felsic.granodiorite",
       ],
       [
-        "keeps the stored material on a change above the frozen prefix",
+        "accepts a material moved to another branch of the same root",
         "rock.igneous.volcanic.felsic.rhyolite",
+        "rock.igneous.volcanic.felsic.rhyolite",
+      ],
+      [
+        "keeps the stored material on a change of root",
+        "mineral",
         "rock.igneous.plutonic.felsic.granite",
       ],
     ] as const)("%s", async ([, material, persisted], { db }) => {
@@ -1093,7 +1090,7 @@ describe("admin sample routes", () => {
     });
 
     pgTest(
-      "rejects with 409 a refinement rolled back to an incomplete path",
+      "rejects with 409 a material rolled back to its root",
       async ({ db }) => {
         // Arrange
         const client = testClient(createApp(db).app);
@@ -1104,7 +1101,7 @@ describe("admin sample routes", () => {
             param: { id: data.id },
             json: {
               ...publishable,
-              material: "rock.igneous.plutonic.felsic",
+              material: "rock",
               expectedUpdatedAt: data.updatedAt,
             },
           },
@@ -1322,6 +1319,36 @@ describe("admin sample routes", () => {
       );
       // Assert
       expect(res.status).toBe(409);
+    },
+  );
+
+  pgTest(
+    "should answer 409 when publishing a sample whose relation has no resource type",
+    async ({ db }) => {
+      // Arrange
+      const client = testClient(createApp(db).app);
+      const json = {
+        ...publishable,
+        relations: [
+          {
+            relationType: "other" as const,
+            identifierType: "url" as const,
+            identifier: "https://example.com/paper",
+            targetTitle: "A related paper",
+          },
+        ],
+      };
+      const data = await createSample(db, client, json);
+      // Act
+      const res = await client.admin.samples[":id"].publish.$post(
+        { param: { id: data.id } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({
+        error: "Sample is not ready to publish",
+      });
     },
   );
 

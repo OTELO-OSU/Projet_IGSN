@@ -89,7 +89,6 @@ const row = {
   syn_experiment_type: null,
   syn_experiment_duration_value: null,
   syn_experiment_duration_unit: null,
-  syn_experiment_duration_not_relevant: null,
   syn_synthesis_date_start: null,
   syn_synthesis_date_end: null,
   syn_operator_name: null,

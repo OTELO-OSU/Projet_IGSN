@@ -76,16 +76,16 @@ describe("SampleScientificContextFields", () => {
 
     await pickProvenance(screen, "Field sample");
     await screen
-      .getByRole("combobox", { name: "Funder organizations *" })
+      .getByRole("combobox", { name: "Funder organizations" })
       .click();
     await pickOrganization(screen, "02feahw73");
     await pickOrganization(screen, "04kdfz702");
     await screen
-      .getByLabelText("Name of the research programme *")
+      .getByLabelText("Name of the research programme")
       .fill("Deep Biosphere Survey");
     await screen
       .getByRole("combobox", {
-        name: "Host institution (project leader) *",
+        name: "Host institution (project leader)",
       })
       .click();
     await pickOrganization(screen, "04kdfz702");
@@ -153,12 +153,12 @@ describe("SampleScientificContextFields", () => {
 
     await pickProvenance(screen, "Field sample");
     await screen
-      .getByLabelText("Name of the research programme *")
+      .getByLabelText("Name of the research programme")
       .fill("Deep Biosphere Survey");
     await screen.getByLabelText("Collector name *").fill("Pierre Curie");
     await pickProvenance(screen, "Collection specimen");
     await expect
-      .element(screen.getByLabelText("Name of the research programme *"))
+      .element(screen.getByLabelText("Name of the research programme"))
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByLabelText("Collector name"))
@@ -166,7 +166,7 @@ describe("SampleScientificContextFields", () => {
 
     await pickProvenance(screen, "Field sample");
     await expect
-      .element(screen.getByLabelText("Name of the research programme *"))
+      .element(screen.getByLabelText("Name of the research programme"))
       .toHaveValue("Deep Biosphere Survey");
 
     await pickProvenance(screen, "Collection specimen");

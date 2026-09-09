@@ -69,8 +69,8 @@ const ATTACHMENT: SampleAttachment = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c33cc",
   name: "data.csv",
   mediaType: "text/csv",
-  title: null,
-  targetResourceType: null,
+  title: "Raw measurements",
+  targetResourceType: "dataset",
   description: null,
 };
 
@@ -101,17 +101,28 @@ beforeEach(() => {
   sampleParents = [];
 });
 
-const overLimitAttachments: SampleAttachment[] = Array.from(
-  { length: 6 },
-  (_, i) => ({
+const describedAttachments = (count: number): SampleAttachment[] =>
+  Array.from({ length: count }, (_, i) => ({
     id: `3f2504e0-4f89-41d3-9a0c-03050000000${i}`,
     name: `legacy-${i}.csv`,
+    mediaType: "text/csv",
+    title: `Legacy run ${i}`,
+    targetResourceType: "dataset",
+    description: null,
+  }));
+
+const overLimitAttachments = describedAttachments(6);
+
+const untitledAttachment: SampleAttachment[] = [
+  {
+    id: "3f2504e0-4f89-41d3-9a0c-030500000009",
+    name: "orphan.csv",
     mediaType: "text/csv",
     title: null,
     targetResourceType: null,
     description: null,
-  }),
-);
+  },
+];
 
 type FailMode =
   | "save"
@@ -718,9 +729,9 @@ describe("EditSamplePage", () => {
 
   it("should drop the material reason once a pending account completes the cascade", async () => {
     callerStatus = "pending";
-    const { screen } = await renderEditPage("draft", "rock.igneous.volcanic");
+    const { screen } = await renderEditPage("draft", "rock");
     await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await pickPath(screen, "Material *", "Mafic", "Basalt");
+    await pickPath(screen, "Material *", "Igneous", "Stop here");
 
     const publish = screen.getByRole("button", {
       name: "Publish",
@@ -771,7 +782,7 @@ describe("EditSamplePage", () => {
     [string, string, string | null, string | null, string | null, string]
   >([
     [
-      "Metamorphic facies *",
+      "Metamorphic facies",
       "rock.metamorphic.strongly_metamorphosed.gneiss",
       "amphibolite",
       null,
@@ -957,6 +968,38 @@ describe("EditSamplePage", () => {
     await vi.waitFor(() =>
       expect(calls).toEqual(["PUT Basalte du Massif Central"]),
     );
+  });
+
+  it("should refuse publishing a sample whose attachment carries no metadata", async () => {
+    const { screen } = await renderEditPage(
+      "draft",
+      "fossil",
+      false,
+      null,
+      null,
+      "exists",
+      null,
+      null,
+      untitledAttachment,
+    );
+    const publish = screen.getByRole("button", {
+      name: "Publish",
+      exact: true,
+    });
+
+    await expect.element(publish).toBeDisabled();
+    publish.element().closest<HTMLElement>("[tabindex]")?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/resource type and a title or a description/i);
+    publish.element().closest<HTMLElement>("[tabindex]")?.blur();
+
+    await screen.getByRole("tab", { name: "Related URL or document" }).click();
+    await screen.getByLabelText("Title *").fill("Orphan run");
+    await screen.getByRole("combobox", { name: "Resource type *" }).click();
+    await screen.getByRole("option", { name: "Dataset", exact: true }).click();
+
+    await expect.element(publish).toBeEnabled();
   });
 
   it("should offer no publish action on an already published sample", async () => {

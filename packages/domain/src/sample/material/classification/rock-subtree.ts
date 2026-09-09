@@ -1,15 +1,21 @@
 import { type TreeNode } from "../../path/tree-node.ts";
-import { editableLeaves } from "./editable-leaves.ts";
 
 export const rockTree = {
   igneous: {
+    optional: true,
+    frozenWhenPublished: false,
     searchable: true,
     choices: ["plutonic", "volcanic"],
   },
   metamorphic: {
+    optional: true,
+    frozenWhenPublished: false,
     choices: ["weakly_metamorphosed", "strongly_metamorphosed"],
   },
+  unknown: { optional: true, frozenWhenPublished: false },
   hydrothermal: {
+    optional: true,
+    frozenWhenPublished: false,
     choices: [
       "breccia",
       "carbonate",
@@ -22,10 +28,14 @@ export const rockTree = {
   "hydrothermal.carbonate": { label: "carbonate" },
 
   xenolithic_rock: {
+    optional: true,
+    frozenWhenPublished: false,
     choices: ["igneous", "metamorphic"],
   },
 
   sedimentary: {
+    optional: true,
+    frozenWhenPublished: false,
     choices: [
       "microbialite",
       "clastic_sedimentary_rock",
@@ -102,39 +112,6 @@ export const rockTree = {
     ],
   },
 
-  ...editableLeaves(
-    "granite",
-    "granodiorite",
-    "tonalite",
-    "trondhjemite",
-    "syenite",
-    "monzonite",
-    "diorite",
-    "gabbro",
-    "norite",
-    "anorthosite",
-    "troctolite",
-    "peridotite",
-    "pyroxenite",
-    "hornblendite",
-    "carbonatite",
-    "hyperalkaline_rocks",
-    "rhyolite",
-    "dacite",
-    "trachyte",
-    "latite",
-    "andesite",
-    "phonolite",
-    "basalt",
-    "basanite",
-    "tephrite",
-    "komatiite",
-    "picrite",
-    "foidite",
-    "kimberlite",
-    "lamprophyre",
-  ),
-
   clastic_sedimentary_rock: {
     choices: [
       "rudite",
@@ -146,16 +123,6 @@ export const rockTree = {
       "other",
     ],
   },
-  ...editableLeaves(
-    "rudite",
-    "olistostrome",
-    "paraconglomerate",
-    "siliciclastic_sedimentary_rock",
-    "sandstone",
-    "mudstone",
-    "other",
-  ),
-
   biochemical_and_chemical_sedimentary_rock: {
     choices: [
       "concretion",
@@ -176,20 +143,7 @@ export const rockTree = {
       "other",
     ],
   },
-  ...editableLeaves(
-    "concretion",
-    "coprolite",
-    "moronite",
-    "oolite",
-    "pisolite",
-    "grainstone",
-    "wackestone",
-    "packstone",
-    "boundstone",
-  ),
-
   carbonate_rock: {
-    frozenWhenPublished: false,
     choices: [
       "limestone",
       "dolostone",
@@ -205,7 +159,6 @@ export const rockTree = {
   },
 
   evaporite: {
-    frozenWhenPublished: false,
     choices: [
       "gypsum_stone",
       "anhydrite_stone",
@@ -226,7 +179,6 @@ export const rockTree = {
   },
 
   phosphorite: {
-    frozenWhenPublished: false,
     choices: [
       "guano",
       "phosphate_mudstone",
@@ -243,7 +195,6 @@ export const rockTree = {
   },
 
   ironstone: {
-    frozenWhenPublished: false,
     choices: [
       "goethite_stone",
       "hematite_stone",
@@ -265,12 +216,10 @@ export const rockTree = {
   },
 
   organic_rich_rock: {
-    frozenWhenPublished: false,
     choices: ["coal", "asphaltite", "sapropelite", "other"],
   },
 
   siliceous_rock: {
-    frozenWhenPublished: false,
     choices: [
       "diatomite",
       "radiolarite",

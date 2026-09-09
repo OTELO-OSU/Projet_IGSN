@@ -6,6 +6,7 @@ import {
   MATERIAL_TREE,
 } from "../material/classification.ts";
 import { pathChildren } from "../path/children.ts";
+import { isOptionalAtOrAbove } from "../path/is-optional.ts";
 import { resolvePathNode } from "../path/resolve-node.ts";
 import { frozenMaterialPrefix } from "./frozen-material-prefix.ts";
 
@@ -20,54 +21,49 @@ const prefixesOf = (path: string) => {
 
 describe("frozenMaterialPrefix", () => {
   it.each([
-    [
-      "sediment.exogenous_detritic.gravel.boulder",
-      "sediment.exogenous_detritic",
-    ],
-    ["sediment.exogenous_detritic", "sediment.exogenous_detritic"],
+    ["sediment.exogenous_detritic.gravel.boulder", "sediment"],
+    ["sediment.exogenous_detritic", "sediment"],
     [
       "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.limestone",
-      "rock.sedimentary.biochemical_and_chemical_sedimentary_rock",
+      "rock",
     ],
-    ["rock.igneous.plutonic.felsic.granite", "rock.igneous.plutonic.felsic"],
-    [
-      "rock.metamorphic.strongly_metamorphosed.gneiss",
-      "rock.metamorphic.strongly_metamorphosed",
-    ],
+    ["rock.igneous.plutonic.felsic.granite", "rock"],
+    ["rock.metamorphic.strongly_metamorphosed.gneiss", "rock"],
     [
       "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
-      "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic",
+      "rock",
     ],
-    ["sediment.biogenic.carbonate.boundstone.frame", "sediment.biogenic"],
+    ["sediment.biogenic.carbonate.boundstone.frame", "sediment"],
+    ["rock.hydrothermal.carbonate", "rock"],
+    [
+      "extraterrestrial_rock.returned_samples.lunar_sample.rock",
+      "extraterrestrial_rock",
+    ],
+    [
+      "extraterrestrial_rock.meteorites.chondrites.carbonaceous_chondrites.ci",
+      "extraterrestrial_rock",
+    ],
   ])("unlocks %s at %s", (material, expected) => {
     expect(MATERIAL_PATHS).toContain(material);
     expect(frozenMaterialPrefix(material)).toBe(expected);
   });
 
-  it.each([
-    "rock.igneous.plutonic",
-    "rock.igneous",
-    "sediment",
-    "mineral",
-    "rock.hydrothermal.carbonate",
-    "extraterrestrial_rock.returned_samples.lunar_sample.rock",
-    "extraterrestrial_rock.meteorites.chondrites.carbonaceous_chondrites.ci",
-    "extraterrestrial_rock.meteorites.achondrites.stony_achondrite.lunar_meteorite.basalt",
-    "rock.unknown",
-    "rock.hydrothermal.breccia",
-  ])("keeps %s wholly frozen", (material) => {
-    expect(MATERIAL_PATHS).toContain(material);
-    expect(frozenMaterialPrefix(material)).toBeNull();
-  });
+  it.each(["mineral", "fossil", "synthetic_rock_mineral"])(
+    "keeps %s wholly frozen",
+    (material) => {
+      expect(MATERIAL_PATHS).toContain(material);
+      expect(frozenMaterialPrefix(material)).toBeNull();
+    },
+  );
 
   it("returns null for a sample with no material", () => {
     expect(frozenMaterialPrefix(null)).toBeNull();
   });
 
-  it("freezes a path whose deepest segment is not in the tree", () => {
-    expect(
-      frozenMaterialPrefix("rock.igneous.plutonic.felsic.unlisted"),
-    ).toBeNull();
+  it("unlocks a path whose deepest segment is not in the tree at its root", () => {
+    expect(frozenMaterialPrefix("rock.igneous.plutonic.felsic.unlisted")).toBe(
+      "rock",
+    );
   });
 });
 
@@ -83,5 +79,15 @@ describe("frozenWhenPublished marks in the material tree", () => {
       return children.some(isFrozen) && !children.every(isFrozen);
     });
     expect(withMixedChildren).toEqual([]);
+  });
+
+  it("unlocks a path exactly where it becomes an optional stop, one frontier for both", () => {
+    const disagreeing = MATERIAL_PATHS.filter((path) => {
+      const prefix = frozenMaterialPrefix(path);
+      const unlocked =
+        prefix !== null && prefix.split(".").length < path.split(".").length;
+      return unlocked !== isOptionalAtOrAbove(MATERIAL_TREE, path);
+    });
+    expect(disagreeing).toEqual([]);
   });
 });

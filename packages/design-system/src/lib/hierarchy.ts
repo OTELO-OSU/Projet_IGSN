@@ -1,5 +1,6 @@
 import type { TreeNode } from "@projet-igsn/domain/sample/path/tree-node";
 
+import { isOptionalAtOrAbove } from "@projet-igsn/domain/sample/path/is-optional";
 import { resolvePathNode } from "@projet-igsn/domain/sample/path/resolve-node";
 
 export type Hierarchy = {
@@ -37,7 +38,7 @@ function hierarchyChildren(
 
 export function canStopAtPath(hierarchy: Hierarchy, path: string): boolean {
   const node = resolveNode(hierarchy, path);
-  return !node?.choices?.length || node.optional === true;
+  return !node?.choices?.length || isOptionalAtOrAbove(hierarchy.nodes, path);
 }
 
 export function hierarchyLevelItems(

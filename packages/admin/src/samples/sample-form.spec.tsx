@@ -442,9 +442,7 @@ describe("SampleForm", () => {
       "Gneiss",
     );
 
-    await screen
-      .getByRole("combobox", { name: "Metamorphic facies *" })
-      .click();
+    await screen.getByRole("combobox", { name: "Metamorphic facies" }).click();
     await screen.getByRole("option", { name: "Amphibolite facies" }).click();
 
     await screen.getByRole("button", { name: "Create" }).click();
@@ -498,7 +496,7 @@ describe("SampleForm", () => {
       .not.toBeInTheDocument();
 
     await screen
-      .getByRole("combobox", { name: "Metamorphic facies *", exact: true })
+      .getByRole("combobox", { name: "Metamorphic facies", exact: true })
       .click();
     await screen.getByRole("option", { name: "Amphibolite facies" }).click();
 
@@ -545,9 +543,7 @@ describe("SampleForm", () => {
 
     await pickPath(screen, "Material *", "Rock", "Metamorphic", "Stop here");
 
-    await screen
-      .getByRole("combobox", { name: "Metamorphic facies *" })
-      .click();
+    await screen.getByRole("combobox", { name: "Metamorphic facies" }).click();
     await screen.getByRole("option", { name: "Amphibolite facies" }).click();
 
     await screen
@@ -558,7 +554,7 @@ describe("SampleForm", () => {
     await repickPath(screen, "Metamorphic", "Igneous", "Stop here");
 
     await expect
-      .element(screen.getByRole("combobox", { name: "Metamorphic facies *" }))
+      .element(screen.getByRole("combobox", { name: "Metamorphic facies" }))
       .not.toBeInTheDocument();
     await expect
       .element(screen.getByRole("combobox", { name: "Metamorphic fabrics" }))
@@ -1972,7 +1968,9 @@ describe("SampleForm", () => {
     save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/classify the material down to a specific type/i);
+      .toHaveTextContent(
+        /classify the material at least one level below its root/i,
+      );
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
@@ -2097,26 +2095,8 @@ describe("SampleForm post-publication field lock", () => {
     );
   }
 
-  it("disables the identity fields on a published sample", async () => {
+  it("keeps the identity fields editable on a published sample", async () => {
     const screen = await renderPublished();
-
-    await expect.element(screen.getByLabelText(/name/i)).toBeDisabled();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Type *", exact: true }))
-      .toBeDisabled();
-    await expect
-      .element(screen.getByRole("button", { name: "Remove Dredge" }))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Nature" }))
-      .toBeDisabled();
-  });
-
-  it("keeps the identity fields editable for a super admin on a published sample", async () => {
-    const screen = await renderPublished({
-      status: "accepted",
-      superAdmin: true,
-    });
 
     await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
     await expect
@@ -2124,6 +2104,22 @@ describe("SampleForm post-publication field lock", () => {
       .toBeEnabled();
     await expect
       .element(screen.getByRole("combobox", { name: "Nature" }))
+      .toBeEnabled();
+  });
+
+  it("lifts every remaining lock for a super admin on a published sample", async () => {
+    const screen = await renderPublished({
+      status: "accepted",
+      superAdmin: true,
+    });
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Provenance status *" }))
+      .toBeEnabled();
+
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+    await expect
+      .element(screen.getByRole("button", { name: "Remove Rock" }))
       .toBeEnabled();
   });
 
@@ -2152,35 +2148,27 @@ describe("SampleForm post-publication field lock", () => {
     canAppend: boolean;
   }>([
     {
-      name: "locks the material levels down to the frozen prefix and leaves the deeper one removable",
+      name: "locks the material root and leaves every deeper level removable",
       status: "published",
       material: "rock.igneous.plutonic.felsic.granite",
-      locked: ["Rock", "Igneous", "Plutonic", "Felsic"],
-      removable: ["Granite"],
+      locked: ["Rock"],
+      removable: ["Igneous", "Plutonic", "Felsic", "Granite"],
       canAppend: false,
     },
     {
-      name: "opens the next level of a published sample stopped at an unlocked node",
+      name: "opens the next level of a published sample stopped below its root",
       status: "published",
       material: "sediment.exogenous_detritic",
-      locked: ["Sediment", "Exogenous detritic"],
-      removable: [],
+      locked: ["Sediment"],
+      removable: ["Exogenous detritic"],
       canAppend: true,
     },
     {
-      name: "locks every material level when nothing in the path unlocks",
-      status: "published",
-      material: "rock.igneous.plutonic",
-      locked: ["Rock", "Igneous", "Plutonic"],
-      removable: [],
-      canAppend: false,
-    },
-    {
-      name: "locks a withdrawn sample's material levels like a published one",
+      name: "locks a withdrawn sample's material root like a published one",
       status: "withdrawn",
       material: "rock.igneous.plutonic.felsic.granite",
-      locked: ["Rock", "Igneous", "Plutonic", "Felsic"],
-      removable: ["Granite"],
+      locked: ["Rock"],
+      removable: ["Igneous", "Plutonic", "Felsic", "Granite"],
       canAppend: false,
     },
     {
@@ -2269,23 +2257,25 @@ describe("SampleForm post-publication field lock", () => {
     );
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await screen.getByRole("button", { name: "Remove Granite" }).click();
+    await screen.getByRole("button", { name: "Remove Igneous" }).click();
 
     const save = screen.getByRole("button", { name: "Publish updates" });
     await expect.element(save).toBeDisabled();
     save.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/classify the material down to a specific type/i);
+      .toHaveTextContent(
+        /classify the material at least one level below its root/i,
+      );
   });
 
-  it("freezes the collection date, location coordinates and geological context on a published sample", async () => {
+  it("keeps the collection date and the whole location editable on a published sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
           onCancel={noop}
           status="published"
-          defaultValues={publishedFixture}
+          defaultValues={publishedFieldSampleFixture}
           primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
         />
       </TooltipProvider>,
@@ -2293,31 +2283,33 @@ describe("SampleForm post-publication field lock", () => {
 
     await expect
       .element(screen.getByLabelText("Date *", { exact: true }))
-      .toBeDisabled();
+      .toBeEnabled();
     await expect
       .element(screen.getByRole("switch", { name: "Date range" }))
-      .toBeDisabled();
-
-    await screen.getByRole("tab", { name: "Curation and repository" }).click();
-    await expect
-      .element(screen.getByRole("combobox", { name: /existence status/i }))
       .toBeEnabled();
 
     await screen.getByRole("tab", { name: "Location" }).click();
-    await expect.element(screen.getByLabelText(/longitude/i)).toBeDisabled();
-    await expect.element(screen.getByLabelText(/latitude/i)).toBeDisabled();
+    await expect.element(screen.getByLabelText(/longitude/i)).toBeEnabled();
+    await expect.element(screen.getByLabelText(/latitude/i)).toBeEnabled();
     await expect
-      .element(screen.getByText(/Decimal degrees, WGS 84, e\.g\. -2\.352222\./))
-      .toBeVisible();
+      .element(screen.getByRole("combobox", { name: "Region kind" }))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Country" }))
+      .toBeEnabled();
+    await expect.element(screen.getByLabelText("Locality name")).toBeEnabled();
+    await expect
+      .element(screen.getByLabelText("Vertical position"))
+      .toBeEnabled();
     await expect
       .element(screen.getByLabelText("Geological context description"))
-      .toBeDisabled();
+      .toBeEnabled();
     await expect
       .element(screen.getByRole("combobox", { name: "Environment" }))
-      .toBeDisabled();
+      .toBeEnabled();
   });
 
-  it("freezes the provenance status and branch identity fields on a published sample", async () => {
+  it("freezes the provenance status on a published sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -2331,14 +2323,6 @@ describe("SampleForm post-publication field lock", () => {
 
     await expect
       .element(screen.getByRole("combobox", { name: "Provenance status *" }))
-      .toBeDisabled();
-
-    await screen.getByRole("tab", { name: "Scientific context" }).click();
-    await expect
-      .element(screen.getByLabelText(/name of the collection curator/i))
-      .toBeDisabled();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Collection origin *" }))
       .toBeDisabled();
   });
 
@@ -2389,11 +2373,6 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Texture" }))
       .toBeEnabled();
-    await expect
-      .element(
-        screen.getByRole("combobox", { name: "Material *", exact: true }),
-      )
-      .toBeDisabled();
   });
 
   it("keeps the metamorphic facies editable on a published metamorphic sample", async () => {
@@ -2414,7 +2393,7 @@ describe("SampleForm post-publication field lock", () => {
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: "Metamorphic facies *" }))
+      .element(screen.getByRole("combobox", { name: "Metamorphic facies" }))
       .toBeEnabled();
     await expect
       .element(
@@ -2423,7 +2402,7 @@ describe("SampleForm post-publication field lock", () => {
       .toBeDisabled();
   });
 
-  it("freezes the field-sample branch fields on a published sample", async () => {
+  it("freezes the collector name alone on a published field sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -2435,75 +2414,28 @@ describe("SampleForm post-publication field lock", () => {
       </TooltipProvider>,
     );
 
-    await expect
-      .element(screen.getByRole("combobox", { name: "Provenance status *" }))
-      .toBeDisabled();
-
     await screen.getByRole("tab", { name: "Scientific context" }).click();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Funder organizations *" }))
-      .toBeDisabled();
-    await expect
-      .element(screen.getByLabelText("Name of the research programme *"))
-      .toBeDisabled();
-    await expect
-      .element(screen.getByLabelText("Chief scientist / Project leader *"))
-      .toBeDisabled();
-    await expect
-      .element(screen.getByLabelText("Chief scientist ORCID"))
-      .toBeEnabled();
     await expect
       .element(screen.getByLabelText("Collector name *"))
       .toBeDisabled();
     await expect
+      .element(screen.getByRole("combobox", { name: "Funder organizations" }))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByLabelText("Name of the research programme"))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByLabelText("Chief scientist / Project leader"))
+      .toBeEnabled();
+    await expect
       .element(
         screen.getByRole("combobox", {
-          name: "Host institution (project leader) *",
+          name: "Host institution (project leader)",
         }),
       )
-      .toBeDisabled();
+      .toBeEnabled();
     await expect
       .element(screen.getByLabelText("Collector ORCID"))
-      .toBeDisabled();
-    await expect
-      .element(screen.getByLabelText("Research campaign"))
-      .toBeEnabled();
-  });
-
-  it("freezes the region but not the locality or vertical position on a published sample", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          status="published"
-          defaultValues={publishedFieldSampleFixture}
-          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
-        />
-      </TooltipProvider>,
-    );
-
-    await expect
-      .element(screen.getByRole("combobox", { name: "Collection Method" }))
-      .toBeEnabled();
-
-    await screen.getByRole("tab", { name: "Location" }).click();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Region kind" }))
-      .toBeDisabled();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Country" }))
-      .toBeDisabled();
-    await expect.element(screen.getByLabelText("Locality name")).toBeEnabled();
-    await expect
-      .element(screen.getByLabelText("Vertical position"))
-      .toBeEnabled();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Vertical reference *" }))
-      .toBeEnabled();
-
-    await screen.getByRole("tab", { name: "Curation and repository" }).click();
-    await expect
-      .element(screen.getByRole("combobox", { name: /existence status/i }))
       .toBeEnabled();
   });
 
@@ -2536,7 +2468,7 @@ describe("SampleForm post-publication field lock", () => {
       .toBeVisible();
   });
 
-  it("keeps the collector name editable on a published collection specimen", async () => {
+  it("freezes the collection origin alone on a published collection specimen", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -2549,13 +2481,46 @@ describe("SampleForm post-publication field lock", () => {
     );
 
     await screen.getByRole("tab", { name: "Scientific context" }).click();
-    await expect.element(screen.getByLabelText("Collector name")).toBeEnabled();
-    await expect
-      .element(screen.getByLabelText(/name of the collection curator/i))
-      .toBeDisabled();
     await expect
       .element(screen.getByRole("combobox", { name: "Collection origin *" }))
       .toBeDisabled();
+    await expect.element(screen.getByLabelText("Collector name")).toBeEnabled();
+    await expect
+      .element(screen.getByLabelText(/name of the collection curator/i))
+      .toBeEnabled();
+  });
+
+  it("blocks saving a published sample whose relation has no resource type", async () => {
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          status="published"
+          defaultValues={{
+            ...publishedFixture,
+            relations: [
+              {
+                relationType: "is_cited_by",
+                identifierType: "doi",
+                identifier: "https://doi.org/10.1594/IEDA.100252",
+                targetTitle: "Companion dataset",
+                targetResourceType: null,
+                relationTypeInformation: null,
+                description: null,
+              },
+            ],
+          }}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+        />
+      </TooltipProvider>,
+    );
+
+    const save = screen.getByRole("button", { name: "Save" });
+    await expect.element(save).toBeDisabled();
+    save.element().closest<HTMLElement>("[tabindex]")?.focus();
+    await expect
+      .element(screen.getByRole("tooltip"))
+      .toHaveTextContent(/resource type of every related resource/i);
   });
 
   it("should offer no parent tab when the sample has no parent", async () => {

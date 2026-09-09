@@ -35,7 +35,12 @@ the frontier; every level below the frontier is never consulted, so a new
 unmarked node under an editable one stays editable, and a new unmarked node
 anywhere else is frozen by default. Material only: `type` is wholly frozen
 and `collectionMethod` is wholly editable at the field level, so neither needs
-it.
+it. `optional` behaves the same way (ADR
+[0037](../../../docs/adr/0037-relaxed-publish-and-post-publication-rules.md)):
+a mark opens the node AND everything under it as a valid stopping point, not
+just the marked node, so mark the frontier only, never every descendant.
+Material's 13 niveau-1 nodes carry both flags together, one frontier for the
+publish depth and the unlock depth.
 
 Adding a node is **pure data**: no migration, no UI change. Follow TDD (spec first).
 

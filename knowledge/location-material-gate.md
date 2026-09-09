@@ -39,4 +39,4 @@ Whether publishing needs that location is a second predicate, `requiresLocation(
 
 - A synthetic material trades the Location tab for the Synthetic details tab, the two gates reading the same predicate.
 - Entering a location then picking a refusing material drops it on save, per the hidden-value rules of [[form-kit-and-hidden-values]].
-- On a published sample, the whole location drops when the frozen material forbids one ([[published-field-locks]]).
+- On a published sample, the whole location drops when the merge refuses the incoming material, through `mergeMaterialDependent` keying on `incoming.material === material` rather than on `allowsLocation` directly ([[published-field-locks]]). `mergeLocation` is gone. The observable outcome is the same for a refused material, and a cross-branch move within the same frozen root now also correctly drops a location the new sibling material forbids.
