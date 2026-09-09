@@ -10,12 +10,19 @@ import { ChevronDownIcon, LogOut, SettingsIcon, UserIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 
+import { SignOutButton } from "./auth/sign-out-button.tsx";
 import { useCurrentUser } from "./auth/use-current-user.ts";
 
 export function UserMenu({ onSignOut }: { onSignOut: () => void }) {
   const { data, isError } = useCurrentUser();
 
-  if (isError) return <p role="alert">{m.user_name_error()}</p>;
+  if (isError)
+    return (
+      <>
+        <p role="alert">{m.user_name_error()}</p>
+        <SignOutButton onSignOut={onSignOut} />
+      </>
+    );
   if (!data) return null;
   return (
     <DropdownMenu>

@@ -1,4 +1,7 @@
+import { HttpResponse, http } from "msw";
+
 import { fakeCurrentUser } from "../test/fake-current-user.ts";
+import { worker } from "../test/msw.ts";
 import { render } from "../test/render.tsx";
 import { UserMenu } from "./user-menu.tsx";
 
@@ -47,6 +50,24 @@ describe("UserMenu", () => {
     const screen = await render(<UserMenu onSignOut={onSignOut} />);
     await screen.getByRole("button", { name: /Marie Dupont/ }).click();
     await screen.getByRole("menuitem", { name: "Sign out" }).click();
+
+    await vi.waitFor(() => expect(onSignOut).toHaveBeenCalledTimes(1));
+  });
+
+  it("should still offer a way to sign out when the account cannot be loaded", async () => {
+    const onSignOut = vi.fn();
+    worker.use(
+      http.get(
+        "*/admin/currentUser",
+        () =>
+          new HttpResponse(null, {
+            status: 500,
+          }),
+      ),
+    );
+
+    const screen = await render(<UserMenu onSignOut={onSignOut} />);
+    await screen.getByRole("button", { name: "Sign out" }).click();
 
     await vi.waitFor(() => expect(onSignOut).toHaveBeenCalledTimes(1));
   });
