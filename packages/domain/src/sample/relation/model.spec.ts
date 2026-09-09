@@ -75,7 +75,7 @@ describe("sampleRelationSchema", () => {
     },
   );
 
-  it.each(["bibcode", "pmid", "purl", "w3id"] as const)(
+  it.each(["bibcode", "handle", "urn"] as const)(
     "should accept a %s relation pointing at an opaque identifier",
     (identifierType) => {
       // Arrange / Act
