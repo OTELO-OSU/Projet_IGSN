@@ -10,7 +10,9 @@ export function keycloakProfilePage(page: Page) {
       const heading = page.getByRole("heading", {
         name: "Update Account Information",
       });
-      const signedIn = page.getByRole("button", { name: "Sign out" });
+      const signedIn = page
+        .getByRole("link", { name: "Go to public site" })
+        .or(page.getByRole("button", { name: "Sign out" }));
       await expect(heading.or(signedIn).first()).toBeVisible();
       if (await heading.isVisible()) {
         await page.getByRole("textbox", { name: /email/i }).fill(email);
