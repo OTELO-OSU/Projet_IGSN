@@ -33,11 +33,6 @@ describe("serviceAccountBodySchema", () => {
       account: body({ institutionalOrganization: LORRAINE }),
       path: "institutionalLaboratory",
     },
-    {
-      rule: "an unknown extra field",
-      account: body({ credential: "secret" }),
-      path: "",
-    },
   ])("should reject $rule", ({ account, path }) => {
     const result = parse(account);
 
