@@ -20,7 +20,7 @@ export function AuthControls() {
     return (
       <div className="flex flex-wrap items-center justify-end gap-2">
         <Button asChild variant="secondary">
-          <a href={ADMIN_URL}>{m.auth_go_to_admin()}</a>
+          <a href={ADMIN_URL}>{m.auth_go_to_dashboard()}</a>
         </Button>
         <Button
           type="button"
