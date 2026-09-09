@@ -1,3 +1,5 @@
+import type { ComboboxItem } from "@projet-igsn/design-system/components/ui/combobox";
+
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import {
   MANAGED_LABORATORY_ITEMS,
@@ -8,6 +10,7 @@ import { serviceAccountRequestSchema } from "@projet-igsn/domain/service-account
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 
 import { useListAttachableManualGroups } from "#/domain/manual-groups/hook/list-attachable-manual-groups.ts";
+import { useListRequestableGroups } from "#/domain/service-accounts/hook/list-requestable-groups.ts";
 import { useRequestServiceAccount } from "#/domain/service-accounts/hook/request-service-account.ts";
 import { zodFieldErrors } from "#/domain/zod-field-errors.ts";
 import { m } from "#/paraglide/messages.js";
@@ -16,8 +19,12 @@ const validate = zodFieldErrors(serviceAccountRequestSchema, () =>
   m.field_required(),
 );
 
+const requestableItems = (items: ComboboxItem[], codes: string[] = []) =>
+  items.filter(({ value }) => codes.includes(value));
+
 export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
   const { data: attachableGroups } = useListAttachableManualGroups();
+  const { data: requestableGroups } = useListRequestableGroups();
   const { mutate } = useRequestServiceAccount(onSent);
   const form = useAppForm({
     defaultValues: { name: "", reason: "", managedGroups: NO_MANAGED_GROUPS },
@@ -29,21 +36,27 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
     {
       name: "managedGroups.organizations",
       label: m.service_account_field_organizations(),
-      items: MANAGED_ORGANIZATION_ITEMS,
+      items: requestableItems(
+        MANAGED_ORGANIZATION_ITEMS,
+        requestableGroups?.organizations,
+      ),
       placeholder: m.service_account_organization_placeholder(),
       emptyText: m.service_account_organization_empty(),
     },
     {
       name: "managedGroups.osus",
       label: m.service_account_field_osus(),
-      items: MANAGED_OSU_ITEMS,
+      items: requestableItems(MANAGED_OSU_ITEMS, requestableGroups?.osus),
       placeholder: m.service_account_osu_placeholder(),
       emptyText: m.service_account_osu_empty(),
     },
     {
       name: "managedGroups.laboratories",
       label: m.service_account_field_laboratories(),
-      items: MANAGED_LABORATORY_ITEMS,
+      items: requestableItems(
+        MANAGED_LABORATORY_ITEMS,
+        requestableGroups?.laboratories,
+      ),
       placeholder: m.service_account_laboratory_placeholder(),
       emptyText: m.service_account_laboratory_empty(),
     },

@@ -1,9 +1,13 @@
+import { laboratoryLabel } from "@projet-igsn/domain/institutional-group/label";
 import { vi } from "vitest";
 import { page } from "vitest/browser";
 
 import { renderWithRouter } from "../../../test/render-with-router.tsx";
 import { stubAuth } from "../../../test/stub-auth.tsx";
 import { RequestServiceAccountForm } from "./request-service-account-form.tsx";
+
+const laboratory = "UMR7358";
+const laboratoryOption = `${laboratoryLabel(laboratory)} (${laboratory})`;
 
 const group = {
   id: "01980e2d-6f9b-7000-9000-000000000001",
@@ -35,11 +39,16 @@ function stubApi() {
       });
       return new Response(null, { status: 204 });
     }
-    if (
-      new URL(urlOf(input)).pathname ===
-      "/api/admin/currentUser/attachable-manual-groups"
-    ) {
+    const { pathname } = new URL(urlOf(input));
+    if (pathname === "/api/admin/currentUser/attachable-manual-groups") {
       return Response.json({ data: [group] });
+    }
+    if (
+      pathname === "/api/admin/currentUser/service-accounts/requestable-groups"
+    ) {
+      return Response.json({
+        data: { organizations: [], osus: [], laboratories: [laboratory] },
+      });
     }
     return new Response(null, { status: 404 });
   });
@@ -63,6 +72,10 @@ describe("RequestServiceAccountForm", () => {
       .fill("Automate our basalt uploads");
     await screen.getByRole("combobox", { name: "Groups to access" }).click();
     await page.getByRole("option", { name: group.name }).click();
+    await screen
+      .getByRole("combobox", { name: "Laboratories to access" })
+      .click();
+    await page.getByRole("option", { name: laboratoryOption }).click();
     await page.getByRole("button", { name: "Send request" }).click();
 
     await vi.waitFor(() => expect(posts).toHaveLength(1));
@@ -77,11 +90,24 @@ describe("RequestServiceAccountForm", () => {
       managedGroups: {
         organizations: [],
         osus: [],
-        laboratories: [],
+        laboratories: [laboratory],
         manualGroupIds: [group.id],
       },
     });
     expect(onSent).toHaveBeenCalled();
+  });
+
+  it("should offer only the laboratories the requester may request", async () => {
+    stubApi();
+    const screen = await renderForm();
+
+    await screen
+      .getByRole("combobox", { name: "Laboratories to access" })
+      .click();
+
+    await expect
+      .poll(() => page.getByRole("option").elements())
+      .toHaveLength(1);
   });
 
   it("should flag the name and the reason and post nothing when both are blank", async () => {
