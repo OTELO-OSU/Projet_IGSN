@@ -8,7 +8,8 @@ export function settingsPage(page: Page) {
 
   return {
     open: async () => {
-      await page.getByRole("link", { name: "Settings" }).click();
+      await page.getByRole("banner").getByRole("button").click();
+      await page.getByRole("menuitem", { name: "Settings" }).click();
       await expect(
         page.getByRole("heading", { name: "Settings" }),
       ).toBeVisible();
