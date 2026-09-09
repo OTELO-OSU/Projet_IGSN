@@ -110,6 +110,18 @@ describe("RequestServiceAccountForm", () => {
       .toHaveLength(1);
   });
 
+  it("should replace a picker the requester may request nothing from with a message", async () => {
+    stubApi();
+    const screen = await renderForm();
+
+    await expect
+      .element(screen.getByText("You don't have access to any organization."))
+      .toBeVisible();
+    expect(
+      screen.getByRole("combobox", { name: "Organizations to access" }).query(),
+    ).toBeNull();
+  });
+
   it("should flag the name and the reason and post nothing when both are blank", async () => {
     const posts = stubApi();
     const screen = await renderForm();

@@ -19,8 +19,8 @@ const validate = zodFieldErrors(serviceAccountRequestSchema, () =>
   m.field_required(),
 );
 
-const requestableItems = (items: ComboboxItem[], codes: string[] = []) =>
-  items.filter(({ value }) => codes.includes(value));
+const requestableItems = (items: ComboboxItem[], codes?: string[]) =>
+  codes && items.filter(({ value }) => codes.includes(value));
 
 export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
   const { data: attachableGroups } = useListAttachableManualGroups();
@@ -42,6 +42,7 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
       ),
       placeholder: m.service_account_organization_placeholder(),
       emptyText: m.service_account_organization_empty(),
+      noneText: m.service_account_organization_none(),
     },
     {
       name: "managedGroups.osus",
@@ -49,6 +50,7 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
       items: requestableItems(MANAGED_OSU_ITEMS, requestableGroups?.osus),
       placeholder: m.service_account_osu_placeholder(),
       emptyText: m.service_account_osu_empty(),
+      noneText: m.service_account_osu_none(),
     },
     {
       name: "managedGroups.laboratories",
@@ -59,16 +61,18 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
       ),
       placeholder: m.service_account_laboratory_placeholder(),
       emptyText: m.service_account_laboratory_empty(),
+      noneText: m.service_account_laboratory_none(),
     },
     {
       name: "managedGroups.manualGroupIds",
       label: m.service_account_field_manual_groups(),
-      items: (attachableGroups ?? []).map(({ id, name }) => ({
+      items: attachableGroups?.map(({ id, name }) => ({
         value: id,
         label: name,
       })),
       placeholder: m.service_account_manual_group_placeholder(),
       emptyText: m.service_account_manual_group_empty(),
+      noneText: m.service_account_manual_group_none(),
     },
   ] as const;
 
@@ -90,22 +94,29 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
           <field.TextField label={m.service_account_field_reason()} multiline />
         )}
       </form.AppField>
-      {groupFields.map(({ name, label, items, placeholder, emptyText }) => (
-        <form.AppField key={name} name={name}>
-          {(field) => (
-            <field.MultiComboboxField
-              label={label}
-              items={items}
-              placeholder={placeholder}
-              searchPlaceholder={m.service_account_search_placeholder()}
-              emptyText={emptyText}
-              removeLabel={(picked) =>
-                m.service_account_remove({ name: picked })
-              }
-            />
-          )}
-        </form.AppField>
-      ))}
+      {groupFields.map(
+        ({ name, label, items, placeholder, emptyText, noneText }) =>
+          items?.length === 0 ? (
+            <p key={name} className="text-muted-foreground text-sm">
+              {noneText}
+            </p>
+          ) : (
+            <form.AppField key={name} name={name}>
+              {(field) => (
+                <field.MultiComboboxField
+                  label={label}
+                  items={items ?? []}
+                  placeholder={placeholder}
+                  searchPlaceholder={m.service_account_search_placeholder()}
+                  emptyText={emptyText}
+                  removeLabel={(picked) =>
+                    m.service_account_remove({ name: picked })
+                  }
+                />
+              )}
+            </form.AppField>
+          ),
+      )}
       <div>
         <form.AppForm>
           <form.SubmitButton label={m.service_account_request_submit()} />
