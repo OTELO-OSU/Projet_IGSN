@@ -36,6 +36,24 @@ export const serviceAccountRequestSchema = z.strictObject({
 
 export type ServiceAccountRequest = z.infer<typeof serviceAccountRequestSchema>;
 
+export const requestableInstitutionalGroupsSchema = z.object({
+  organizations: z.array(z.string()),
+  osus: z.array(z.string()),
+  laboratories: z.array(z.string()),
+});
+
+export type RequestableInstitutionalGroups = z.infer<
+  typeof requestableInstitutionalGroupsSchema
+>;
+
+export const requestableInstitutionalGroupsResponseSchema = z.object({
+  data: requestableInstitutionalGroupsSchema,
+});
+
+export type RequestableInstitutionalGroupsResponse = z.infer<
+  typeof requestableInstitutionalGroupsResponseSchema
+>;
+
 export const serviceAccountDraftSchema = z.object({
   name: z.string(),
   ...institutionalGroupsFields,
