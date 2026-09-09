@@ -13,6 +13,7 @@ export function settingsPage(page: Page) {
       await expect(
         page.getByRole("heading", { name: "Settings" }),
       ).toBeVisible();
+      await expect(page.getByRole("menu")).toHaveCount(0);
     },
     mySamplesLink: () =>
       page.getByRole("textbox", { name: "My samples link" }).inputValue(),
