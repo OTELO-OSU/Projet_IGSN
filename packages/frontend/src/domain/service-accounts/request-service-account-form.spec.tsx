@@ -117,6 +117,9 @@ describe("RequestServiceAccountForm", () => {
     await expect
       .element(screen.getByText("You don't have access to any organization."))
       .toBeVisible();
+    await expect
+      .element(screen.getByText("Organizations to access"))
+      .toBeVisible();
     expect(
       screen.getByRole("combobox", { name: "Organizations to access" }).query(),
     ).toBeNull();

@@ -97,9 +97,10 @@ export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
       {groupFields.map(
         ({ name, label, items, placeholder, emptyText, noneText }) =>
           items?.length === 0 ? (
-            <p key={name} className="text-muted-foreground text-sm">
-              {noneText}
-            </p>
+            <div key={name} className="grid gap-2">
+              <p className="text-sm leading-none font-medium">{label}</p>
+              <p className="text-muted-foreground text-sm">{noneText}</p>
+            </div>
           ) : (
             <form.AppField key={name} name={name}>
               {(field) => (
