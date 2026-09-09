@@ -4,6 +4,7 @@ import { useAppForm } from "@projet-igsn/design-system/components/form/app-form"
 import { contactSampleOwnerBodySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { useState } from "react";
 
+import { zodFieldErrors } from "#/domain/zod-field-errors.ts";
 import { m } from "#/paraglide/messages.js";
 
 const ISSUE_MESSAGE: Record<string, () => string> = {
@@ -11,22 +12,9 @@ const ISSUE_MESSAGE: Record<string, () => string> = {
   too_big: () => m.contact_field_too_long(),
 };
 
-const validate = ({ value }: { value: unknown }) => {
-  const parsed = contactSampleOwnerBodySchema.safeParse(value);
-  if (parsed.success) {
-    return undefined;
-  }
-  return {
-    fields: Object.fromEntries(
-      parsed.error.issues.map((issue) => [
-        issue.path.join("."),
-        {
-          message: (ISSUE_MESSAGE[issue.code] ?? (() => m.field_required()))(),
-        },
-      ]),
-    ),
-  };
-};
+const validate = zodFieldErrors(contactSampleOwnerBodySchema, (issue) =>
+  (ISSUE_MESSAGE[issue.code] ?? (() => m.field_required()))(),
+);
 
 export function ContactOwnerForm({
   onSend,

@@ -9,10 +9,6 @@ import type { SendMail } from "./mail/send-mail.ts";
 
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
-import {
-  type ServiceEnv,
-  requireServiceAccount,
-} from "./auth/require-service-account.ts";
 import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
 import { createInstitutionalGroupRoutes } from "./institutional-group/routes.ts";
 import { createPublicManualGroupRoutes } from "./manual-group/public-routes.ts";
@@ -31,6 +27,7 @@ import { createSampleRoutes } from "./sample/routes.ts";
 import { createServiceAccountOwnerRoutes } from "./service-account/owner-routes.ts";
 import { createServiceAccountRepository } from "./service-account/repository.ts";
 import { createServiceAccountRoutes } from "./service-account/routes.ts";
+import { createServiceRoutes } from "./service-account/service-routes.ts";
 import { createUserSampleRepository } from "./user-sample/repository.ts";
 import { createCurrentUserRoutes } from "./user/current-user-routes.ts";
 import { createPublicUserRoutes } from "./user/public-routes.ts";
@@ -94,6 +91,10 @@ export function createApp(
     .use("*", rateLimit(rateLimitConfig, "ip"))
     .route("/", createPublicUserRoutes(userRepository));
 
+  const serviceRoutes = new Hono()
+    .use("*", rateLimit(rateLimitConfig, "ip"))
+    .route("/", createServiceRoutes(serviceAccountRepository));
+
   const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
     .use("*", rateLimit(rateLimitConfig, "user"))
@@ -148,11 +149,6 @@ export function createApp(
       createUserInstitutionalCountsRoutes(userRepository),
     )
     .route("/users", createUserRoutes(userRepository, mail));
-
-  const serviceRoutes = new Hono<ServiceEnv>()
-    .use("*", rateLimit(rateLimitConfig, "ip"))
-    .use("*", requireServiceAccount(serviceAccountRepository))
-    .get("/ping", (c) => c.json({ ok: true }));
 
   const app = new Hono<AuthenticatedEnv>()
     .use(

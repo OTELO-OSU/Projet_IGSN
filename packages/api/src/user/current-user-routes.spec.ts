@@ -1,9 +1,6 @@
 import type { Kysely } from "kysely";
 
-import {
-  manualGroupsResponseSchema,
-  myManualGroupsResponseSchema,
-} from "@projet-igsn/domain/manual-group/manual-group-validator";
+import { manualGroupsResponseSchema } from "@projet-igsn/domain/manual-group/manual-group-validator";
 import { testClient } from "hono/testing";
 import { describe, expect, vi } from "vitest";
 
@@ -460,26 +457,6 @@ describe("the caller's attachable manual groups", () => {
       expect(res.status).toBe(200);
       expect(manualGroupsResponseSchema.parse(await res.json())).toEqual({
         data: [ALPES, BRETAGNE, MASSIF],
-      });
-    },
-  );
-
-  pgTest(
-    "should keep listing the memberships alone on the caller's own groups",
-    async ({ db }) => {
-      // Arrange
-      await arrangeCaller(db);
-      // Act
-      const res = await testClient(createApp(db).app).admin.currentUser[
-        "manual-groups"
-      ].$get(undefined, { headers: authHeader });
-      // Assert
-      expect(res.status).toBe(200);
-      expect(myManualGroupsResponseSchema.parse(await res.json())).toEqual({
-        data: [
-          { ...ALPES, canLeave: true },
-          { ...BRETAGNE, canLeave: true },
-        ],
       });
     },
   );

@@ -49,13 +49,13 @@ function fakeApi() {
     ),
     http.get("*/admin/service-accounts/:id", () =>
       HttpResponse.json({
-        data: { id: ACCOUNT_ID, ...REQUEST, owner: OWNER },
+        data: { id: ACCOUNT_ID, ...REQUEST },
       }),
     ),
     http.post("*/admin/service-accounts", async ({ request }) => {
       posts.push(await request.json());
       return HttpResponse.json({
-        data: { id: ACCOUNT_ID, ...REQUEST, owner: OWNER },
+        data: { id: ACCOUNT_ID, ...REQUEST },
       });
     }),
   );

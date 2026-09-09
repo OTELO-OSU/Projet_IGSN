@@ -1,5 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
+import { pickComboboxOption } from "../admin/pick-combobox-option.ts";
+
 export function headerPage(page: Page) {
   const banner = page.getByRole("banner");
   const editLink = page.getByRole("link", { name: "Edit", exact: true });
@@ -59,11 +61,11 @@ export function headerPage(page: Page) {
       await requestDialog
         .getByRole("textbox", { name: "Why do you need a service account?" })
         .fill(reason);
-      await requestDialog
-        .getByRole("combobox", { name: "Groups to access" })
-        .click();
-      await page.getByRole("option", { name: manualGroup }).click();
-      await page.keyboard.press("Escape");
+      await pickComboboxOption(page, {
+        field: "Groups to access",
+        option: manualGroup,
+        chipLabel: `Remove ${manualGroup}`,
+      });
       await requestDialog.getByRole("button", { name: "Send request" }).click();
       await expect(
         page.getByText(

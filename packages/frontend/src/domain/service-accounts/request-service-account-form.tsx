@@ -9,22 +9,12 @@ import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 
 import { useListAttachableManualGroups } from "#/domain/manual-groups/hook/list-attachable-manual-groups.ts";
 import { useRequestServiceAccount } from "#/domain/service-accounts/hook/request-service-account.ts";
+import { zodFieldErrors } from "#/domain/zod-field-errors.ts";
 import { m } from "#/paraglide/messages.js";
 
-const validate = ({ value }: { value: unknown }) => {
-  const parsed = serviceAccountRequestSchema.safeParse(value);
-  if (parsed.success) {
-    return undefined;
-  }
-  return {
-    fields: Object.fromEntries(
-      parsed.error.issues.map((issue) => [
-        issue.path.join("."),
-        { message: m.field_required() },
-      ]),
-    ),
-  };
-};
+const validate = zodFieldErrors(serviceAccountRequestSchema, () =>
+  m.field_required(),
+);
 
 export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
   const { data: attachableGroups } = useListAttachableManualGroups();
