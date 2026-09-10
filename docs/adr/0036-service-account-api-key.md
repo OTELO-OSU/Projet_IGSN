@@ -4,7 +4,7 @@ Date: 2026-09-08
 
 ## Status
 
-Accepted.
+Accepted. Amended 2026-09-10: `GET /service/ping` is deleted, `GET /service/samples` having become the mount's route and the proof that a key works.
 
 ## Context
 
