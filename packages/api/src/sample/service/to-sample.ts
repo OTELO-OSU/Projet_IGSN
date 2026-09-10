@@ -212,6 +212,7 @@ export function toSample(row: SampleRow): Sample {
     nature: row.nature,
     type: row.type,
     material: row.material,
+    materialOtherName: row.material_other_name,
     texture: row.texture,
     metamorphicFacies: row.metamorphic_facies,
     metamorphicFabric: row.metamorphic_fabric,
