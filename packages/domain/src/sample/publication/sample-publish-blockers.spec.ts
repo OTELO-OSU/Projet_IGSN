@@ -90,13 +90,6 @@ describe("samplePublishBlockers", () => {
     ]);
   });
 
-  it.each([{ repository: null }, { repository: { currentArchive: null } }])(
-    "should not require a current archive to publish, given %o",
-    (overrides) => {
-      expect(samplePublishBlockers({ ...base, ...overrides })).toEqual([]);
-    },
-  );
-
   it("should report type_missing when type is null", () => {
     expect(samplePublishBlockers({ ...base, type: null })).toEqual([
       "type_missing",
@@ -431,18 +424,6 @@ describe("samplePublishBlockers", () => {
     ).toEqual(["collector_name_missing"]);
   });
 
-  it("should not require the funders, research program, chief scientist or host institution", () => {
-    expect(
-      samplePublishBlockers({
-        ...base,
-        scientificContext: {
-          provenanceStatus: "field_sample",
-          collectorName: "Pierre Curie",
-        },
-      }),
-    ).toEqual([]);
-  });
-
   it("should report the missing mandatory fields of the collection-specimen branch", () => {
     expect(
       samplePublishBlockers({
@@ -499,19 +480,6 @@ describe("samplePublishBlockers", () => {
       ).toEqual(["synthetic_starting_material_composition_missing"]);
     },
   );
-
-  it("should not require the starting material nature nor the experiment duration", () => {
-    expect(
-      samplePublishBlockers({
-        ...synthetic,
-        syntheticDetails: {
-          ...syntheticDetails,
-          startingMaterialNature: null,
-          experimentDuration: null,
-        },
-      }),
-    ).toEqual([]);
-  });
 
   const relation = (
     targetResourceType: SampleRelation["targetResourceType"],

@@ -325,20 +325,16 @@ export function createSampleAdminRoutes(
             ? mergePublishedEdit(current, input)
             : input;
         if (wasPublished) {
-          const existing = samplePublishBlockers(
-            {
-              ...toPublishableFields(current),
-              attachments: current.attachments,
-            },
-            uploadLimit,
-          );
-          const after = samplePublishBlockers(
-            {
-              ...toPublishableFields(toPersist),
-              attachments: toPersist.attachments ?? [],
-            },
-            uploadLimit,
-          );
+          const blockersOf = (sample: typeof current | typeof toPersist) =>
+            samplePublishBlockers(
+              {
+                ...toPublishableFields(sample),
+                attachments: sample.attachments ?? [],
+              },
+              uploadLimit,
+            );
+          const existing = blockersOf(current);
+          const after = blockersOf(toPersist);
           if (after.some((blocker) => !existing.includes(blocker))) {
             return c.json(
               {
