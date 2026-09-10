@@ -30,5 +30,5 @@ Mechanics:
 - Pure `expandPaths(tree, roots)` expands the tree to a flat path set (`MATERIAL_PATHS`), DFS in root-then-`choices` order, throwing on a cycle at import time, so the path set stays finite.
 - `materialPathSchema` validates a stored value against that set at the trust boundary; the DB holds no CHECK constraint. So a path type is a validated `string`, not a union, and compile-time exhaustiveness lives on the segment keys (`MaterialSegment`).
 - `resolvePathNode` resolves a path by longest-matching-suffix, which is how a dotted context override works.
-- Each vocabulary exports its bundle (`MATERIAL_HIERARCHY`, `SAMPLE_TYPE_HIERARCHY`, `COLLECTION_METHOD_HIERARCHY`), so the stop policy is stated once per source of truth: collection method marks its non-leaves `optional: true`, material marks its 13 niveau-1 nodes ([[material-levels-editable]]), and type marks nothing.
+- Each vocabulary exports its bundle (`MATERIAL_HIERARCHY`, `SAMPLE_TYPE_HIERARCHY`, `COLLECTION_METHOD_HIERARCHY`), so the stop policy is stated once per source of truth: collection method marks its non-leaves `optional: true`, material marks its 14 niveau-1 nodes ([[material-levels-editable]]), and type marks nothing.
 - Adding a value is pure data: one tree node plus its key in a parent's `choices`, no migration and no UI change. Use the `add-sample-vocabulary` skill.

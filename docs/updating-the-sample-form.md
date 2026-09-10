@@ -77,7 +77,6 @@ export const MATERIAL_ROOTS = [
   "rock",
   "sediment",
   "mineral",
-  "fossil",
   "synthetic_rock_mineral",
   "extraterrestrial_rock",
   "meteorite_fall", // added
@@ -239,7 +238,7 @@ Background: ADR [0021](adr/0021-post-publish-field-mutability.md).
 
 ### Hierarchy fields: freeze per node, not per field
 
-A dot-path hierarchy like `material` cannot use the map: it needs a depth, not a field name. So `material` has no map entry. Instead, editability is declared in the vocabulary tree itself: a node with no mark is frozen once published, so mark `frozenWhenPublished: false` only on the frontier, the first level under a frozen head that may still change; every level below the frontier is never consulted. For material that frontier is niveau 1, the same depth required to publish, so the 13 niveau-1 nodes carry both flags together:
+A dot-path hierarchy like `material` cannot use the map: it needs a depth, not a field name. So `material` has no map entry. Instead, editability is declared in the vocabulary tree itself: a node with no mark is frozen once published, so mark `frozenWhenPublished: false` only on the frontier, the first level under a frozen head that may still change; every level below the frontier is never consulted. For material that frontier is niveau 1, the same depth required to publish, so the 14 niveau-1 nodes carry both flags together:
 
 ```ts
 // packages/domain/src/sample/material/classification.ts
