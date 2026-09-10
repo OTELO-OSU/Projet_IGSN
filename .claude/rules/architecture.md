@@ -28,7 +28,7 @@
 - Moderation reach reads the sample's own codes and groups (`api/src/sample/service/moderated-sample-where.ts`), but the user row for a user (`api/src/user/moderation-scope-where.ts`); see ADR 0030.
 - `api/src/institutional-group/` is that entity's first repository (managers, active-manager counts); `api/src/user/orphaned-groups-of-user.ts` and the two repositories' `listWithoutActiveManager` methods are the single "who still manages this group" queries, shared by the orphan-group mail, the pending-users digest recap and the group lists; see ADR 0030.
 - `domain/service-account/` and `api/src/service-account/` are the service account: a super-admin-declared non-human account with a name, a required owner, an institutional trio and managed groups, its own table never a user row, never a manager on a group page or in a count; its future sample reach is `managerScope` + `moderatedSampleWhere`; see ADR 0035.
-- A signed-in frontend user requests one from the public footer; the owner alone rotates its API key (SHA-256 hash at rest, shown once) from admin Settings, and `/service` is the resulting machine mount, `GET /service/samples` its route, listing the published samples in the account's own `managerScope`, 403 for a missing or unknown key; see ADR 0036.
+- A signed-in frontend user requests one from the public footer; the owner alone rotates its API key (SHA-256 hash at rest, shown once) from admin Settings, and `/service` is the resulting machine mount, `GET /service/samples` its route, listing every published sample and narrowing to the account's own `managerScope` on `?editable=true`, 403 for a missing or unknown key; see ADR 0036.
 
 ## Server-side sorting and filtering
 
@@ -46,7 +46,7 @@ A sample's `status` (`draft | published | withdrawn | tombstone`) drives three s
 
 `domain/sample/publication/withdrawn-sample.ts` (`toWithdrawnSample`) is the only place that redacts a withdrawn sample, a field-by-field whitelist so a new `Sample` field stays private by default, and `public-sample.ts` (`toPublicSample`) picks it by status for the public `GET /samples/:igsn`; see ADR 0032.
 
-A published sample is public whole but for the fields `domain/sample/publication/redact-archive-contacts.ts` drops (the two archive contacts, admin-only), called by `toPublicSample` and by the public list route, the two public payloads.
+A published sample is public whole but for the fields `domain/sample/publication/redact-archive-contacts.ts` drops (the two archive contacts), called by `toPublicSample` and by the public list route, the two public payloads; the key-authenticated `/service` list emits them, so they are kept from the public web rather than admin-only.
 
 Why a sample cannot be published lives in ONE place, `domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`).
 
