@@ -71,18 +71,22 @@ const listSamples = (
 
 describe("GET /service/samples", () => {
   pgTest(
-    "should list a published sample of the account's managed groups, archive contacts included",
+    "should list every published sample whatever the account's managed groups, archive contacts included",
     async ({ db }) => {
       // Arrange
       const app = await arrangeAccount(db);
-      const sample = await inLaboratory(db, archivedSample, IN_REACH);
-      const published = await publishSample(db, sample.id);
+      const inReach = await inLaboratory(db, archivedSample, IN_REACH);
+      const outOfReach = await inLaboratory(db, archivedSample, OUT_OF_REACH);
+      const published = [
+        await publishSample(db, inReach.id),
+        await publishSample(db, outOfReach.id),
+      ].sort((a, b) => a!.igsn!.localeCompare(b!.igsn!));
       // Act
       const res = await listSamples(app);
       // Assert
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual(
-        JSON.parse(JSON.stringify({ data: [published], meta: { total: 1 } })),
+        JSON.parse(JSON.stringify({ data: published, meta: { total: 2 } })),
       );
     },
   );
@@ -108,19 +112,20 @@ describe("GET /service/samples", () => {
   );
 
   pgTest(
-    "should omit a published sample outside the account's managed groups",
+    "should omit a published sample outside the account's managed groups when editable is true",
     async ({ db }) => {
       // Arrange
       const app = await arrangeAccount(db);
-      const sample = await inLaboratory(db, publishableSample, OUT_OF_REACH);
-      await publishSample(db, sample.id);
+      const inReach = await inLaboratory(db, archivedSample, IN_REACH);
+      const published = await publishSample(db, inReach.id);
+      const outOfReach = await inLaboratory(db, archivedSample, OUT_OF_REACH);
+      await publishSample(db, outOfReach.id);
       // Act
-      const res = await listSamples(app);
+      const res = await listSamples(app, { editable: "true" });
       // Assert
-      expect(listSamplesResponseSchema.parse(await res.json())).toEqual({
-        data: [],
-        meta: { total: 0 },
-      });
+      expect(await res.json()).toEqual(
+        JSON.parse(JSON.stringify({ data: [published], meta: { total: 1 } })),
+      );
     },
   );
 

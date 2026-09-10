@@ -13,23 +13,19 @@ import { validateListServiceSamplesQuery } from "./validator.ts";
 
 export function createServiceRoutes(
   serviceAccounts: Pick<ServiceAccountRepository, "findByApiKeyHash">,
-  samples: Pick<SampleRepository, "listModerated">,
+  samples: Pick<SampleRepository, "listPublishedForService">,
 ) {
   return new Hono<ServiceEnv>()
     .use("*", requireServiceAccount(serviceAccounts))
     .get("/samples", validateListServiceSamplesQuery, async (c) => {
       const account = c.get("serviceAccount");
-      const { data, total } = await samples.listModerated(
-        { ...c.req.valid("query"), status: "published", sort: "igsn" },
+      const { editable, ...query } = c.req.valid("query");
+      const { data, total } = await samples.listPublishedForService(
+        { ...query, sort: "igsn" },
         managerScope(account.id, account.managedGroups),
+        editable === true,
       );
-      const body: ListSamplesResponse = {
-        data: data.map(({ owner, ...sample }) => ({
-          ...sample,
-          owner: owner && { name: owner.name, firstname: owner.firstname },
-        })),
-        meta: { total },
-      };
+      const body: ListSamplesResponse = { data, meta: { total } };
       return c.json(body);
     });
 }

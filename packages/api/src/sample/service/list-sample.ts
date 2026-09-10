@@ -186,6 +186,18 @@ export function listModeratedSamples(
   return listWithOwners(db, params, [moderatedSampleWhere(scope)], true);
 }
 
+export function listPublishedSamplesForService(
+  db: Transactional<DB>,
+  params: ListSamplesQuery,
+  scope: ModerationScope,
+  editableOnly: boolean,
+): Promise<AdminListSamplesResult> {
+  return listWithOwners(db, params, [
+    isPublished(),
+    ...(editableOnly ? [moderatedSampleWhere(scope)] : []),
+  ]);
+}
+
 export async function listPublishedSamples(
   db: Transactional<DB>,
   params: ListSamplesQuery,
