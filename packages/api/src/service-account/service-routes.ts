@@ -17,7 +17,6 @@ export function createServiceRoutes(
 ) {
   return new Hono<ServiceEnv>()
     .use("*", requireServiceAccount(serviceAccounts))
-    .get("/ping", (c) => c.json({ ok: true }))
     .get("/samples", validateListServiceSamplesQuery, async (c) => {
       const account = c.get("serviceAccount");
       const { data, total } = await samples.listModerated(

@@ -18,50 +18,6 @@ import { hashApiKey } from "./api-key.ts";
 
 const KEY = "9tPqk1n0RmWvJ8LxUeYb3sQaZc7Hd2Fg";
 
-describe("GET /service/ping", () => {
-  pgTest("should answer ok to a valid api key", async ({ db }) => {
-    // Arrange
-    const owner = await insertUser(db, "jean.martin@univ-lorraine.fr");
-    await insertServiceAccount(db, "Harvester", owner.id, hashApiKey(KEY));
-    const { app } = createApp(db);
-    // Act
-    const res = await app.request("/service/ping", {
-      headers: { Authorization: `Bearer ${KEY}` },
-    });
-    // Assert
-    expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true });
-  });
-
-  pgTest.for([
-    { rule: "no Authorization header", headers: {}, status: "accepted" },
-    {
-      rule: "an unknown api key",
-      headers: { Authorization: "Bearer nope" },
-      status: "accepted",
-    },
-    {
-      rule: "a valid api key whose owner is no longer accepted",
-      headers: { Authorization: `Bearer ${KEY}` },
-      status: "rejected",
-    },
-  ] as const)(
-    "should answer 403 to $rule",
-    async ({ headers, status }, { db }) => {
-      // Arrange
-      const owner = await insertUser(db, "jean.martin@univ-lorraine.fr", {
-        status,
-      });
-      await insertServiceAccount(db, "Harvester", owner.id, hashApiKey(KEY));
-      const { app } = createApp(db);
-      // Act
-      const res = await app.request("/service/ping", { headers });
-      // Assert
-      expect(res.status).toBe(403);
-    },
-  );
-});
-
 const IN_REACH = "UMR7358";
 const OUT_OF_REACH = "UMR5275";
 
@@ -203,4 +159,32 @@ describe("GET /service/samples", () => {
     expect(body.data.map((sample) => sample.id)).toEqual([published.id]);
     expect(body.meta.total).toBe(1);
   });
+
+  pgTest.for([
+    { rule: "no Authorization header", headers: {}, status: "accepted" },
+    {
+      rule: "an unknown api key",
+      headers: { Authorization: "Bearer nope" },
+      status: "accepted",
+    },
+    {
+      rule: "a valid api key whose owner is no longer accepted",
+      headers: { Authorization: `Bearer ${KEY}` },
+      status: "rejected",
+    },
+  ] as const)(
+    "should answer 403 to $rule",
+    async ({ headers, status }, { db }) => {
+      // Arrange
+      const owner = await insertUser(db, "jean.martin@univ-lorraine.fr", {
+        status,
+      });
+      await insertServiceAccount(db, "Harvester", owner.id, hashApiKey(KEY));
+      const { app } = createApp(db);
+      // Act
+      const res = await app.request("/service/samples", { headers });
+      // Assert
+      expect(res.status).toBe(403);
+    },
+  );
 });
