@@ -49,6 +49,7 @@ export function SampleView({
     nature,
     type,
     material,
+    materialOtherName,
     texture,
     metamorphicFacies,
     metamorphicFabric,
@@ -106,6 +107,7 @@ export function SampleView({
             label={m.sample_field_material()}
             path={material}
             pathLabel={materialPathLabel}
+            suffix={materialOtherName}
           />
           <FieldRow
             label={m.sample_field_texture()}

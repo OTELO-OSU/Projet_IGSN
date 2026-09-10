@@ -10,6 +10,7 @@ const sample = (overrides: Partial<WithdrawnSample> = {}): WithdrawnSample => ({
   nature: "rock_powder",
   type: "core.half_round",
   material: "rock.igneous",
+  materialOtherName: null,
   location: {
     region: { kind: "continent", country: "FR" },
     localityName: "Mont-Dore",
@@ -39,6 +40,25 @@ describe("WithdrawnSampleView", () => {
     await expect.element(screen.getByText("France > Mont-Dore")).toBeVisible();
     await expect.element(screen.getByText("Claire Martin")).toBeVisible();
     await expect.element(screen.getByText("Paul Durand")).toBeVisible();
+  });
+
+  it("should show the other material free text as the last material step", async () => {
+    const screen = await renderWithRouter(
+      <WithdrawnSampleView
+        sample={sample({
+          material: "rock.other",
+          materialOtherName: "Fossilized wood",
+        })}
+      />,
+    );
+
+    await expect
+      .element(
+        screen
+          .getByRole("list", { name: "Material" })
+          .getByText("Fossilized wood"),
+      )
+      .toBeVisible();
   });
 
   it("should offer the private notice and a way to contact the owner", async () => {

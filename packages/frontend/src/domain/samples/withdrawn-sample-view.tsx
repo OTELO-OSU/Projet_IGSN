@@ -20,6 +20,7 @@ export function WithdrawnSampleView({
     nature,
     type,
     material,
+    materialOtherName,
     location,
     collectorName,
     collectionCurator,
@@ -52,6 +53,7 @@ export function WithdrawnSampleView({
               label={m.sample_field_material()}
               path={material}
               pathLabel={materialPathLabel}
+              suffix={materialOtherName}
             />
             <FieldRow
               label={m.card_field_location()}

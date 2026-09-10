@@ -7,20 +7,26 @@ type BreadcrumbProps = {
   labelId: string;
   segments: string[];
   pathLabel: (path: string) => string;
+  suffix: string | null | undefined;
 };
 
 function ClassificationBreadcrumb({
   labelId,
   segments,
   pathLabel,
+  suffix,
 }: BreadcrumbProps) {
+  const steps = [
+    ...segments.map((segment) => ({ key: segment, text: pathLabel(segment) })),
+    ...(suffix ? [{ key: "suffix", text: suffix }] : []),
+  ];
   return (
     <ol
       aria-labelledby={labelId}
       className="flex flex-wrap items-center gap-1 font-medium"
     >
-      {segments.map((segment, index) => (
-        <li key={segment} className="flex items-center gap-1">
+      {steps.map(({ key, text }, index) => (
+        <li key={key} className="flex items-center gap-1">
           {index > 0 ? (
             <ChevronRightIcon
               role="img"
@@ -28,7 +34,7 @@ function ClassificationBreadcrumb({
               className="text-muted-foreground size-4"
             />
           ) : null}
-          {pathLabel(segment)}
+          {text}
         </li>
       ))}
     </ol>
@@ -40,6 +46,7 @@ type BreadcrumbFieldRowProps = {
   label: string;
   path: string | null | undefined;
   pathLabel: (path: string) => string;
+  suffix?: string | null;
 };
 
 export function BreadcrumbFieldRow({
@@ -47,6 +54,7 @@ export function BreadcrumbFieldRow({
   label,
   path,
   pathLabel,
+  suffix,
 }: BreadcrumbFieldRowProps) {
   return (
     <FieldRow
@@ -58,6 +66,7 @@ export function BreadcrumbFieldRow({
             labelId={id}
             segments={ancestorPaths(path)}
             pathLabel={pathLabel}
+            suffix={suffix}
           />
         )
       }

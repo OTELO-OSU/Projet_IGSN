@@ -29,6 +29,7 @@ const sample = (overrides: Partial<Sample> = {}): Sample => ({
   nature: "rock_powder",
   type: null,
   material: null,
+  materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,
@@ -186,6 +187,27 @@ describe("SampleView", () => {
         .toBeInTheDocument();
     },
   );
+
+  it.each<[string, Partial<Sample>, string[]]>([
+    [
+      "the other material free text as the last material step",
+      { material: "rock.other", materialOtherName: "Fossilized wood" },
+      ["Rock", "Other", "Fossilized wood"],
+    ],
+    [
+      "no extra step when the sample has no free text",
+      { material: "rock.igneous" },
+      ["Rock", "Igneous"],
+    ],
+  ])("should show %s", async (_case, overrides, steps) => {
+    const screen = await render(<SampleView sample={sample(overrides)} />);
+
+    const items = screen
+      .getByRole("list", { name: "Material" })
+      .getByRole("listitem")
+      .elements();
+    expect(items.map((item) => item.textContent)).toEqual(steps);
+  });
 
   it.each<[string, Partial<Sample>, (string | RegExp)[]]>([
     ["the translated nature", {}, ["Rock powder"]],
