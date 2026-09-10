@@ -14,7 +14,7 @@ Each rule already lived in one place (ADR 0021, ADR 0022), so applying the new s
 
 ## Decision
 
-**Publish blockers.** The 8 blockers above are removed. Two are added for the sample-link section: `relation_resource_type_missing` (a relation with no `targetResourceType`) and `attachment_metadata_missing` (an attachment with no resource type, or with neither a title nor a description). `sample-publish-blockers.ts` stays the single place stating why a sample cannot publish (ADR unchanged).
+**Publish blockers.** The 8 blockers above are removed. Two are added for the sample-link section: `relation_resource_type_missing` (a relation with no `targetResourceType`) and `attachment_metadata_missing` (an attachment missing any of its resource type, title and description). `sample-publish-blockers.ts` stays the single place stating why a sample cannot publish (ADR unchanged).
 
 **Post-publication locks.** `published-field-lock.ts` shrinks to five surviving entries: `manualGroupIds` (ADR 0025), `scientificContext.provenanceStatus`, `collectorName` on the field-sample branch, `collectionOrigin` on the collection-specimen branch, and `syntheticDetails.operatorName`. The location and description lock maps are deleted outright: position, region and collection date become editable. `mergeLocation`, `mergeDescription` and `mergeVertical` are removed with them; a frozen material that forbids a location still drops one, now through `mergeMaterialDependent` keying on whether the merge accepted the incoming material rather than on `allowsLocation` directly, which also closes a gap where a cross-branch move within the same frozen root could keep a location a sibling material forbids.
 

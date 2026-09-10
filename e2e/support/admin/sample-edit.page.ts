@@ -19,6 +19,7 @@ type RelationFields = {
 type AttachmentResource = {
   title: string;
   resourceType: string;
+  description: string;
 };
 
 export function sampleEditPage(page: Page) {
@@ -224,6 +225,9 @@ export function sampleEditPage(page: Page) {
       const row = attachmentRow(name);
       await row.getByLabel(/^Title/).fill(resource.title);
       await chooseOption(page, row)("Resource type", resource.resourceType);
+      await page
+        .getByLabel(`Description of ${name}`)
+        .fill(resource.description);
     },
     expectAttachment: async (name: string, resource: AttachmentResource) => {
       await expect(page.getByLabel(`Description of ${name}`)).toBeVisible();
@@ -232,6 +236,9 @@ export function sampleEditPage(page: Page) {
       await expect(
         row.getByRole("combobox", { name: /^Resource type/ }),
       ).toHaveText(resource.resourceType);
+      await expect(page.getByLabel(`Description of ${name}`)).toHaveValue(
+        resource.description,
+      );
     },
     confirmUploads: async () => {
       await page.getByRole("button", { name: "Confirm" }).click();

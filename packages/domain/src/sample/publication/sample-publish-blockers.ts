@@ -221,7 +221,8 @@ export function samplePublishBlockers(
     sample.attachments?.some(
       (attachment) =>
         attachment.targetResourceType == null ||
-        (attachment.title == null && attachment.description == null),
+        attachment.title == null ||
+        attachment.description == null,
     )
   ) {
     blockers.push("attachment_metadata_missing");

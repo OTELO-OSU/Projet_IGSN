@@ -549,11 +549,15 @@ describe("samplePublishBlockers", () => {
     mediaType: "application/pdf",
     title: "Field notes",
     targetResourceType: "text",
-    description: null,
+    description: "A scan of the outcrop",
     ...overrides,
   });
 
-  it.each([{ targetResourceType: null }, { title: null, description: null }])(
+  it.each([
+    { targetResourceType: null },
+    { title: null },
+    { description: null },
+  ])(
     "should report attachment_metadata_missing for an attachment with %o",
     (overrides) => {
       expect(
@@ -564,15 +568,6 @@ describe("samplePublishBlockers", () => {
       ).toEqual(["attachment_metadata_missing"]);
     },
   );
-
-  it.each([
-    { title: "Field notes", description: null },
-    { title: null, description: "A scan of the outcrop" },
-  ])("should accept an attachment described by %o", (overrides) => {
-    expect(
-      samplePublishBlockers({ ...base, attachments: [attachment(overrides)] }),
-    ).toEqual([]);
-  });
 
   it("should report attachment_limit_exceeded above the default limit", () => {
     expect(

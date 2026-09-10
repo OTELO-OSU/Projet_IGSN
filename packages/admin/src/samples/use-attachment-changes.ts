@@ -107,7 +107,7 @@ function xhrUpload(
   });
 }
 
-export function useAttachmentChanges(sampleId: string, savedCount: number) {
+export function useAttachmentChanges(sampleId: string) {
   const token = useAuth().user?.access_token;
   const apiFetch = useApiClient();
   const queryClient = useQueryClient();
@@ -116,8 +116,6 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
   const [edits, setEdits] = useState<Record<string, AttachmentEdit>>({});
   const [batch, setBatch] = useState<UploadBatchItem[]>([]);
   const [isDialogOpen, setDialogOpen] = useState(false);
-
-  const keptCount = savedCount - deletions.length + pending.length;
 
   const addFiles = (files: File[]) => {
     const accepted = files.filter((file) => {
@@ -233,7 +231,6 @@ export function useAttachmentChanges(sampleId: string, savedCount: number) {
 
   return {
     pending,
-    keptCount,
     addFiles,
     removeFile,
     setPendingEdit,

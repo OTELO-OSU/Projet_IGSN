@@ -207,7 +207,7 @@
   "publish_blocked_collection_curator_missing": "Set the collection curator before publishing.",
   "publish_blocked_collection_origin_missing": "Set the collection origin before publishing.",
   "publish_blocked_relation_resource_type_missing": "Set the resource type of every related resource before publishing.",
-  "publish_blocked_attachment_metadata_missing": "Give every attached file a resource type and a title or a description before publishing.",
+  "publish_blocked_attachment_metadata_missing": "Give every attached file a resource type, a title and a description before publishing.",
   "publish_blocked_attachment_limit_exceeded": "Keep at most {limit} attached files before publishing.",
   "publish_blocked_synthetic_starting_material_missing": "Set the starting material before publishing.",
   "publish_blocked_synthetic_starting_material_composition_missing": "Describe the starting material composition before publishing.",

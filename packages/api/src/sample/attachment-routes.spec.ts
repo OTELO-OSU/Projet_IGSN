@@ -35,14 +35,14 @@ async function insertLegacyAttachments(
     media_type: "text/csv",
     title: `Legacy ${i}`,
     target_resource_type: "dataset",
-    description: null,
+    description: `Legacy table ${i}`,
   }));
   await db.insertInto("sample_attachment").values(rows).execute();
   return rows.map((row) => ({
     id: row.id,
     title: row.title,
     targetResourceType: "dataset" as const,
-    description: null,
+    description: row.description,
   }));
 }
 
@@ -88,7 +88,11 @@ async function createSample(client: Client) {
 async function uploadAttachment(
   client: Client,
   sampleId: string,
-  extra: { description?: string; targetResourceType?: "dataset" } = {},
+  extra: {
+    title?: string;
+    description?: string;
+    targetResourceType?: "dataset";
+  } = {},
 ) {
   const res = await client.admin.samples[":id"].attachments.$post(
     { param: { id: sampleId }, form: { file: csvFile(), ...extra } },
@@ -98,7 +102,8 @@ async function uploadAttachment(
 }
 
 const publishableFile = {
-  description: "Measurement table",
+  title: "Measurement table",
+  description: "Rows measured on the sample",
   targetResourceType: "dataset" as const,
 };
 

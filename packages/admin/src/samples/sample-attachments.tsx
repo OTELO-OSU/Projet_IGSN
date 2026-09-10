@@ -24,6 +24,7 @@ import { AttachmentDropZone } from "#/samples/attachment-drop-zone.tsx";
 import { relationTargetResourceTypeLabel } from "#/samples/sample-labels.ts";
 import {
   type AttachmentEdit,
+  keptAttachmentMetadata,
   type SampleAttachmentChanges,
 } from "#/samples/use-attachment-changes.ts";
 import { useDownloadAttachment } from "#/samples/use-download-attachment.ts";
@@ -144,7 +145,7 @@ function AttachmentRowLayout({
               }
             />
             <Label htmlFor={`${fields.id}-description`}>
-              {m.field_description()}
+              {withRequired(m.field_description(), true)}
             </Label>
             <Textarea
               id={`${fields.id}-description`}
@@ -236,6 +237,7 @@ export function SampleAttachments({
   changes,
 }: SampleAttachmentsProps) {
   const { pending, addFiles, removeFile, setPendingEdit } = changes;
+  const keptCount = keptAttachmentMetadata(attachments, changes).length;
   const isDisabled = useIsFieldDisabled("relations");
 
   return (
@@ -244,12 +246,12 @@ export function SampleAttachments({
       <p
         className={cn(
           "text-sm",
-          changes.keptCount > UPLOAD_LIMIT
+          keptCount > UPLOAD_LIMIT
             ? "text-destructive"
             : "text-muted-foreground",
         )}
       >
-        {m.attachment_count({ count: changes.keptCount, limit: UPLOAD_LIMIT })}
+        {m.attachment_count({ count: keptCount, limit: UPLOAD_LIMIT })}
       </p>
       {pending.length > 0 ? (
         <ul className="grid gap-2">

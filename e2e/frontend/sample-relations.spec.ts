@@ -20,6 +20,7 @@ const RELATION = {
 const ATTACHMENT_RESOURCE = {
   title: "Field notes",
   resourceType: "Dataset",
+  description: "Notes taken on the sampling day.",
 };
 
 test.describe("sample relations on the public page", () => {

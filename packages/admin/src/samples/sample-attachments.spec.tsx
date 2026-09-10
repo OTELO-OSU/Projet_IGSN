@@ -36,7 +36,7 @@ type HarnessProps = {
 
 function Harness({ attachments, onCommit }: HarnessProps) {
   const [saved, setSaved] = useState(attachments);
-  const changes = useAttachmentChanges(SAMPLE_ID, saved.length);
+  const changes = useAttachmentChanges(SAMPLE_ID);
   return (
     <>
       <SampleAttachments

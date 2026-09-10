@@ -71,7 +71,7 @@ const ATTACHMENT: SampleAttachment = {
   mediaType: "text/csv",
   title: "Raw measurements",
   targetResourceType: "dataset",
-  description: null,
+  description: "Measurements taken on the sample",
 };
 
 let callerStatus: "pending" | "accepted" = "accepted";
@@ -108,7 +108,7 @@ const describedAttachments = (count: number): SampleAttachment[] =>
     mediaType: "text/csv",
     title: `Legacy run ${i}`,
     targetResourceType: "dataset",
-    description: null,
+    description: `Legacy table ${i}`,
   }));
 
 const overLimitAttachments = describedAttachments(6);
@@ -991,13 +991,16 @@ describe("EditSamplePage", () => {
     publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/resource type and a title or a description/i);
+      .toHaveTextContent(/resource type, a title and a description/i);
     publish.element().closest<HTMLElement>("[tabindex]")?.blur();
 
     await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByLabelText("Title *").fill("Orphan run");
     await screen.getByRole("combobox", { name: "Resource type *" }).click();
     await screen.getByRole("option", { name: "Dataset", exact: true }).click();
+    await screen
+      .getByLabelText("Description of orphan.csv")
+      .fill("A run with no home");
 
     await expect.element(publish).toBeEnabled();
   });

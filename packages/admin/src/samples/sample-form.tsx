@@ -243,7 +243,10 @@ export function SampleForm({
     onSubmit: async ({ value, meta, formApi }) => {
       const parsed = sampleDraftSchema.safeParse(value);
       if (!parsed.success) return;
-      if ((attachmentChanges?.keptCount ?? attachments.length) > UPLOAD_LIMIT) {
+      if (
+        keptAttachmentMetadata(attachments, attachmentChanges).length >
+        UPLOAD_LIMIT
+      ) {
         return;
       }
       const committed = attachmentChanges

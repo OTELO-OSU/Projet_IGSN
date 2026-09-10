@@ -19,11 +19,20 @@ const RELATION = {
 const ATTACHMENT_RESOURCE = {
   title: "Analysis report",
   resourceType: "Report",
+  description: "Laboratory analysis of the sample.",
 };
 
-const PNG_RESOURCE = { title: "Outcrop photograph", resourceType: "Image" };
+const PNG_RESOURCE = {
+  title: "Outcrop photograph",
+  resourceType: "Image",
+  description: "The outcrop the sample was taken from.",
+};
 
-const TXT_RESOURCE = { title: "Field notes", resourceType: "Text" };
+const TXT_RESOURCE = {
+  title: "Field notes",
+  resourceType: "Text",
+  description: "Notes taken on the sampling day.",
+};
 
 test.describe("sample relations", () => {
   test("a researcher adds a relation and attaches files", async ({
