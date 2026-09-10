@@ -146,6 +146,26 @@ describe("GET /service/samples", () => {
     },
   );
 
+  pgTest("should list samples in ascending igsn order", async ({ db }) => {
+    // Arrange
+    const app = await arrangeAccount(db);
+    const igsns = ["C".repeat(26), "A".repeat(26), "B".repeat(26)];
+    for (const igsn of igsns) {
+      const sample = await inLaboratory(db, { ...draft, name: igsn }, IN_REACH);
+      await publishSample(db, sample.id);
+      await db
+        .updateTable("sample")
+        .set({ igsn })
+        .where("id", "=", sample.id)
+        .execute();
+    }
+    // Act
+    const res = await listSamples(app);
+    // Assert
+    const body = listSamplesResponseSchema.parse(await res.json());
+    expect(body.data.map((sample) => sample.igsn)).toEqual([...igsns].sort());
+  });
+
   pgTest("should ignore a status sent by the caller", async ({ db }) => {
     // Arrange
     const app = await arrangeAccount(db);

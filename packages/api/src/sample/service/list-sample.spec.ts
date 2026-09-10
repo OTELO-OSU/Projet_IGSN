@@ -46,6 +46,25 @@ const backdate = (db: Transactional<DB>, id: string) =>
     .where("id", "=", id)
     .execute();
 
+async function insertPublishedSampleWithIgsn(
+  db: Transactional<DB>,
+  name: string,
+  igsn: string,
+) {
+  const sample = await insertSample(db, {
+    name,
+    nature: "thin_section",
+    type: null,
+    collectionMethod: null,
+  });
+  await publishSample(db, sample.id);
+  await db
+    .updateTable("sample")
+    .set({ igsn })
+    .where("id", "=", sample.id)
+    .execute();
+}
+
 async function insertOneSamplePerStatus(db: Transactional<DB>) {
   const sample = (name: string) =>
     insertSample(db, {
@@ -128,6 +147,37 @@ describe("listSamples", () => {
       "Withdrawn sample",
       "Published sample",
       "Draft sample",
+    ]);
+  });
+
+  pgTest("should sort by igsn", async ({ db }) => {
+    // Arrange
+    const scope = superAdminScope(crypto.randomUUID());
+    await insertPublishedSampleWithIgsn(db, "First sample", "A".repeat(26));
+    await insertPublishedSampleWithIgsn(db, "Second sample", "C".repeat(26));
+    await insertPublishedSampleWithIgsn(db, "Third sample", "B".repeat(26));
+
+    // Act / Assert
+    const asc = await listModeratedSamples(
+      db,
+      { page: 1, perPage: 10, sort: "igsn", order: "asc" },
+      scope,
+    );
+    expect(asc.data.map((sample) => sample.name)).toEqual([
+      "First sample",
+      "Third sample",
+      "Second sample",
+    ]);
+
+    const desc = await listModeratedSamples(
+      db,
+      { page: 1, perPage: 10, sort: "igsn", order: "desc" },
+      scope,
+    );
+    expect(desc.data.map((sample) => sample.name)).toEqual([
+      "Second sample",
+      "Third sample",
+      "First sample",
     ]);
   });
 

@@ -20,7 +20,7 @@ export function createServiceRoutes(
     .get("/samples", validateListServiceSamplesQuery, async (c) => {
       const account = c.get("serviceAccount");
       const { data, total } = await samples.listModerated(
-        { ...c.req.valid("query"), status: "published" },
+        { ...c.req.valid("query"), status: "published", sort: "igsn" },
         managerScope(account.id, account.managedGroups),
       );
       const body: ListSamplesResponse = {
