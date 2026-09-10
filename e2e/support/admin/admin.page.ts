@@ -2,6 +2,12 @@ import { expect, type Page } from "@playwright/test";
 
 import { adminUrl } from "../urls";
 
+export const signedInLocator = (page: Page) =>
+  page
+    .getByRole("banner")
+    .getByRole("link", { name: "Go to public site" })
+    .or(page.getByRole("button", { name: "Sign out" }));
+
 export function adminPage(page: Page) {
   const banner = page.getByRole("banner");
   const userMenu = banner.getByRole("button");
@@ -26,10 +32,7 @@ export function adminPage(page: Page) {
       ),
     expectUnsupportedProvider: () =>
       expect(page.getByRole("alert")).toContainText(/eduGAIN.*ORCID iD/is),
-    expectSignedIn: () =>
-      expect(
-        banner.getByRole("link", { name: "Go to public site" }),
-      ).toBeVisible(),
+    expectSignedIn: () => expect(signedInLocator(page).first()).toBeVisible(),
     expectSignedOut: () =>
       expect(page.getByRole("button", { name: "Sign in" })).toBeVisible(),
     expectUserName: (name: string) =>
