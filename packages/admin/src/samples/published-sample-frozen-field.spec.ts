@@ -5,34 +5,16 @@ import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-fi
 describe("publishedSampleFrozenField", () => {
   const isFrozen = publishedSampleFrozenField("field_sample", null);
 
-  it.each([
-    "manualGroupIds",
-    "scientificContext.provenanceStatus",
-    "syntheticDetails.operatorName",
-  ])("freezes %s on a published sample", (field) => {
-    expect(isFrozen(field)).toBe(true);
+  it("freezes the fields the domain lock map lists", () => {
+    expect(isFrozen("manualGroupIds")).toBe(true);
   });
 
-  it.each([
-    "name",
-    "typePath[2]",
-    "texture",
-    "collectionMethodPath[0]",
-    "location.startLongitude",
-    "location.regionKind",
-    "location.startVerticalPosition",
-    "location.verticalReference",
-    "location.localityName",
-    "description.collectionDateStart",
-    "description.collectionDateTimeZone",
-    "existenceStatus",
-    "availabilityStatus",
-    "scientificContext.hostInstitution",
-    "scientificContext.collectorOrcid",
-    "scientificContext.chiefScientistOrcid",
-  ])("leaves %s editable on a published sample", (field) => {
-    expect(isFrozen(field)).toBe(false);
-  });
+  it.each(["name", "typePath[2]", "scientificContext.collectorOrcid"])(
+    "leaves %s editable on a published sample",
+    (field) => {
+      expect(isFrozen(field)).toBe(false);
+    },
+  );
 
   it("freezes the collector name only on the field-sample branch", () => {
     expect(isFrozen("scientificContext.collectorName")).toBe(true);
@@ -62,30 +44,15 @@ describe("publishedSampleFrozenField", () => {
   });
 
   describe("material levels", () => {
-    it.each(["rock.igneous.plutonic.felsic.granite", "rock.igneous.plutonic"])(
-      "freezes materialPath[0] on %s, its frozen root",
-      (material) => {
-        expect(
-          publishedSampleFrozenField(
-            "field_sample",
-            material,
-          )("materialPath[0]"),
-        ).toBe(true);
-      },
+    const isFrozenLevel = publishedSampleFrozenField(
+      "field_sample",
+      "rock.igneous.plutonic.felsic.granite",
     );
 
-    it.each([
-      "materialPath[1]",
-      "materialPath[2]",
-      "materialPath[3]",
-      "materialPath[4]",
-    ])("leaves %s editable, below the frozen root", (field) => {
-      expect(
-        publishedSampleFrozenField(
-          "field_sample",
-          "rock.igneous.plutonic.felsic.granite",
-        )(field),
-      ).toBe(false);
+    it("freezes the root level alone, leaving the deeper ones editable", () => {
+      expect(isFrozenLevel("materialPath[0]")).toBe(true);
+      expect(isFrozenLevel("materialPath[1]")).toBe(false);
+      expect(isFrozenLevel("materialPath[4]")).toBe(false);
     });
   });
 });

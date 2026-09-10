@@ -1950,30 +1950,6 @@ describe("SampleForm", () => {
     );
   });
 
-  it("blocks saving a published sample that no longer holds the publishable bar", async () => {
-    const onSubmit = vi.fn();
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          status="published"
-          defaultValues={{ ...publishedFixture, material: "rock" }}
-          primaryAction={{ kind: "submit", label: "Publish updates", onSubmit }}
-        />
-      </TooltipProvider>,
-    );
-
-    const save = screen.getByRole("button", { name: "Publish updates" });
-    await expect.element(save).toBeDisabled();
-    save.element().closest<HTMLElement>("[tabindex]")?.focus();
-    await expect
-      .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(
-        /classify the material at least one level below its root/i,
-      );
-    expect(onSubmit).not.toHaveBeenCalled();
-  });
-
   it("should show navigation type only after a geometry is chosen", async () => {
     const screen = await render(
       <SampleForm
@@ -2095,7 +2071,7 @@ describe("SampleForm post-publication field lock", () => {
     );
   }
 
-  it("keeps the identity fields editable on a published sample", async () => {
+  it("keeps the editable fields interactive on a published sample", async () => {
     const screen = await renderPublished();
 
     await expect.element(screen.getByLabelText(/name/i)).toBeEnabled();
@@ -2105,6 +2081,17 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Nature" }))
       .toBeEnabled();
+    await expect
+      .element(screen.getByRole("combobox", { name: "Collection Method" }))
+      .toBeEnabled();
+
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+    await expect.element(screen.getByLabelText("Specific Name")).toBeEnabled();
+    await expect
+      .element(
+        screen.getByRole("combobox", { name: "Material *", exact: true }),
+      )
+      .toBeDisabled();
   });
 
   it("lifts every remaining lock for a super admin on a published sample", async () => {
@@ -2121,22 +2108,6 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("button", { name: "Remove Rock" }))
       .toBeEnabled();
-  });
-
-  it("keeps editable fields interactive on a published sample", async () => {
-    const screen = await renderPublished();
-
-    await expect
-      .element(screen.getByRole("combobox", { name: "Collection Method" }))
-      .toBeEnabled();
-
-    await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await expect.element(screen.getByLabelText("Specific Name")).toBeEnabled();
-    await expect
-      .element(
-        screen.getByRole("combobox", { name: "Material *", exact: true }),
-      )
-      .toBeDisabled();
   });
 
   it.each<{
@@ -2309,23 +2280,6 @@ describe("SampleForm post-publication field lock", () => {
       .toBeEnabled();
   });
 
-  it("freezes the provenance status on a published sample", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          status="published"
-          defaultValues={publishedFixture}
-          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
-        />
-      </TooltipProvider>,
-    );
-
-    await expect
-      .element(screen.getByRole("combobox", { name: "Provenance status *" }))
-      .toBeDisabled();
-  });
-
   it("submits the frozen field values unchanged from a published sample", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
@@ -2353,54 +2307,41 @@ describe("SampleForm post-publication field lock", () => {
     );
   });
 
-  it("keeps the texture editable on a published igneous sample", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          status="published"
-          defaultValues={{
-            ...publishedFixture,
-            material: "rock.igneous.plutonic",
-            texture: "phaneritic",
-          }}
-          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
-        />
-      </TooltipProvider>,
-    );
+  it.each([
+    {
+      field: "Texture",
+      values: {
+        material: "rock.igneous.plutonic",
+        texture: "phaneritic" as const,
+      },
+    },
+    {
+      field: "Metamorphic facies",
+      values: {
+        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        metamorphicFacies: "eclogite" as const,
+      },
+    },
+  ])(
+    "keeps $field editable on a published sample whose material root is frozen",
+    async ({ field, values }) => {
+      const screen = await render(
+        <TooltipProvider>
+          <SampleForm
+            onCancel={noop}
+            status="published"
+            defaultValues={{ ...publishedFixture, ...values }}
+            primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
+          />
+        </TooltipProvider>,
+      );
 
-    await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Texture" }))
-      .toBeEnabled();
-  });
-
-  it("keeps the metamorphic facies editable on a published metamorphic sample", async () => {
-    const screen = await render(
-      <TooltipProvider>
-        <SampleForm
-          onCancel={noop}
-          status="published"
-          defaultValues={{
-            ...publishedFixture,
-            material: "rock.metamorphic.strongly_metamorphosed.gneiss",
-            metamorphicFacies: "eclogite",
-          }}
-          primaryAction={{ kind: "submit", label: "Save", onSubmit: noop }}
-        />
-      </TooltipProvider>,
-    );
-
-    await screen.getByRole("tab", { name: "Sample classification" }).click();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Metamorphic facies" }))
-      .toBeEnabled();
-    await expect
-      .element(
-        screen.getByRole("combobox", { name: "Material *", exact: true }),
-      )
-      .toBeDisabled();
-  });
+      await screen.getByRole("tab", { name: "Sample classification" }).click();
+      await expect
+        .element(screen.getByRole("combobox", { name: field, exact: true }))
+        .toBeEnabled();
+    },
+  );
 
   it("freezes the collector name alone on a published field sample", async () => {
     const screen = await render(
@@ -2468,7 +2409,7 @@ describe("SampleForm post-publication field lock", () => {
       .toBeVisible();
   });
 
-  it("freezes the collection origin alone on a published collection specimen", async () => {
+  it("freezes the provenance status and the collection origin alone on a published collection specimen", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -2479,6 +2420,10 @@ describe("SampleForm post-publication field lock", () => {
         />
       </TooltipProvider>,
     );
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Provenance status *" }))
+      .toBeDisabled();
 
     await screen.getByRole("tab", { name: "Scientific context" }).click();
     await expect

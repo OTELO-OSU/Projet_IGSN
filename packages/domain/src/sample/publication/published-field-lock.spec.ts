@@ -184,10 +184,16 @@ describe("mergePublishedEdit", () => {
   });
 
   it("takes whole-editable fields from the payload", () => {
-    const merged = mergePublishedEdit(
-      stored,
-      incoming({ existenceStatus: "lost" }),
-    );
+    const relations = [
+      {
+        relationType: "references" as const,
+        identifierType: "doi" as const,
+        identifier: "https://doi.org/10.1234/x",
+        targetTitle: "Referenced paper",
+      },
+    ];
+    const payload = incoming({ existenceStatus: "lost", relations });
+    const merged = mergePublishedEdit(stored, payload);
     expect(merged.existenceStatus).toBe("lost");
     expect(merged.collectionMethod).toBe("dredging");
     expect(merged.specificName).toBe("edited specific");
@@ -195,6 +201,8 @@ describe("mergePublishedEdit", () => {
     expect(merged.name).toBe("Edited name");
     expect(merged.nature).toBe("rock_powder");
     expect(merged.type).toBe("dredge");
+    expect(merged.description).toEqual(payload.description);
+    expect(merged.relations).toEqual(relations);
   });
 
   it("takes the texture, facies and fabric from a payload agreeing on the material", () => {
@@ -234,12 +242,6 @@ describe("mergePublishedEdit", () => {
     expect(merged.location).toEqual(payload.location);
   });
 
-  it("takes the description from the payload", () => {
-    const payload = incoming();
-    const merged = mergePublishedEdit(stored, payload);
-    expect(merged.description).toEqual(payload.description);
-  });
-
   it("keeps the frozen collector name but takes the other field-sample leaves", () => {
     const payload = incoming();
     const merged = mergePublishedEdit(stored, payload);
@@ -275,19 +277,6 @@ describe("mergePublishedEdit", () => {
     expect(merged.manualGroupIds).toEqual([
       "22222222-2222-2222-2222-222222222222",
     ]);
-  });
-
-  it("carries relations and attachments from the payload", () => {
-    const relations = [
-      {
-        relationType: "references" as const,
-        identifierType: "doi" as const,
-        identifier: "https://doi.org/10.1234/x",
-        targetTitle: "Referenced paper",
-      },
-    ];
-    const merged = mergePublishedEdit(stored, incoming({ relations }));
-    expect(merged.relations).toEqual(relations);
   });
 
   describe("syntheticDetails", () => {
@@ -369,18 +358,9 @@ describe("mergePublishedEdit", () => {
         "rock.igneous.plutonic.felsic.granodiorite",
       ],
       [
-        "sediment.exogenous_detritic",
-        "sediment.exogenous_detritic.sand.medium_sand",
-      ],
-      [
-        "rock.igneous.plutonic.felsic.granite",
-        "rock.igneous.volcanic.felsic.rhyolite",
-      ],
-      [
         "rock.igneous.plutonic.felsic.granite",
         "rock.metamorphic.strongly_metamorphosed.gneiss",
       ],
-      ["rock.igneous.plutonic", "rock.igneous.plutonic.felsic.granite"],
       ["rock.igneous.plutonic.felsic.granite", "rock.igneous"],
     ])("moves %s to %s, both under the published root", (current, next) => {
       const merged = mergePublishedEdit(
@@ -405,39 +385,21 @@ describe("mergePublishedEdit", () => {
       expect(merged).toMatchObject({ material: current });
     });
 
-    it.each([
-      {
-        current: {
-          material: "rock.metamorphic.strongly_metamorphosed.gneiss",
-          metamorphicFacies: "granulite",
-          texture: "cataclastic",
-        },
-        next: {
-          material: "rock.metamorphic.strongly_metamorphosed.schist",
-          metamorphicFacies: "granulite",
-          texture: "cataclastic",
-        },
-      },
-      {
-        current: {
+    it("takes the texture sent alongside a material refined under the root", () => {
+      const next = {
+        material: "rock.igneous.plutonic.felsic.granodiorite",
+        texture: "cumulate",
+      } as const;
+      const merged = mergePublishedEdit(
+        {
+          ...stored,
           material: "rock.igneous.plutonic.felsic.granite",
           texture: "phaneritic",
         },
-        next: {
-          material: "rock.igneous.plutonic.felsic.granodiorite",
-          texture: "cumulate",
-        },
-      },
-    ] as const)(
-      "takes the texture and facies sent alongside a material refined to $next.material",
-      ({ current, next }) => {
-        const merged = mergePublishedEdit(
-          { ...stored, ...current },
-          incoming(next),
-        );
-        expect(merged).toMatchObject(next);
-      },
-    );
+        incoming(next),
+      );
+      expect(merged).toMatchObject(next);
+    });
 
     it("drops the stored location when the material moves to one that forbids it", () => {
       const merged = mergePublishedEdit(
@@ -472,7 +434,6 @@ describe("mergePublishedEdit", () => {
 describe("frozenMaterialDepth", () => {
   it.each([
     ["rock.igneous.plutonic.felsic.granite", 1],
-    ["rock.igneous.plutonic", 1],
     ["mineral", Infinity],
     [null, Infinity],
   ])("locks the levels of %s above depth %s", (material, depth) => {

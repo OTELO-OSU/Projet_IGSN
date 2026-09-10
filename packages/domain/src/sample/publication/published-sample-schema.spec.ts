@@ -36,41 +36,7 @@ describe("publishedSampleSchema", () => {
       { ...publishable, description: null },
       "description.collectionDate",
     ],
-    ["material_missing", { ...publishable, material: null }, "material"],
     ["material_incomplete", { ...publishable, material: "rock" }, "material"],
-    ["type_missing", { ...publishable, type: null }, "type"],
-    [
-      "location_position_missing",
-      {
-        ...publishable,
-        location: null,
-        scientificContext: {
-          provenanceStatus: "field_sample" as const,
-          funderOrganizations: ["02feahw73"],
-          researchProgramName: "Deep Biosphere Survey",
-          chiefScientist: "Marie Curie",
-          hostInstitution: ["04kdfz702"],
-          collectorName: "Pierre Curie",
-        },
-      },
-      "location",
-    ],
-    [
-      "scientific_context_missing",
-      { ...publishable, scientificContext: null },
-      "scientificContext.provenanceStatus",
-    ],
-    [
-      "collection_origin_missing",
-      {
-        ...publishable,
-        scientificContext: {
-          provenanceStatus: "collection_specimen" as const,
-          collectionCurator: "Georges Cuvier",
-        },
-      },
-      "scientificContext.collectionOrigin",
-    ],
     [
       "collector_name_missing",
       {

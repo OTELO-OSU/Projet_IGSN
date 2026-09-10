@@ -1,6 +1,5 @@
 import {
   canStopAtPath,
-  composeHierarchyValue,
   hierarchyLevelItems,
   hierarchyPathLabel,
   toHierarchyPath,
@@ -74,18 +73,6 @@ describe("hierarchyLevelItems", () => {
       { value: "water.sea", label: "SEA" },
     ]);
   });
-});
-
-describe("composeHierarchyValue", () => {
-  it.each([
-    [[], null],
-    [["a", "a.b"], "a.b"],
-  ] as const)(
-    "should take the deepest picked value of %j",
-    (path, expected) => {
-      expect(composeHierarchyValue([...path])).toBe(expected);
-    },
-  );
 });
 
 describe("toHierarchyPath", () => {

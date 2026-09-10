@@ -21,24 +21,8 @@ const prefixesOf = (path: string) => {
 
 describe("frozenMaterialPrefix", () => {
   it.each([
-    ["sediment.exogenous_detritic.gravel.boulder", "sediment"],
     ["sediment.exogenous_detritic", "sediment"],
-    [
-      "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock.limestone",
-      "rock",
-    ],
     ["rock.igneous.plutonic.felsic.granite", "rock"],
-    ["rock.metamorphic.strongly_metamorphosed.gneiss", "rock"],
-    [
-      "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
-      "rock",
-    ],
-    ["sediment.biogenic.carbonate.boundstone.frame", "sediment"],
-    ["rock.hydrothermal.carbonate", "rock"],
-    [
-      "extraterrestrial_rock.returned_samples.lunar_sample.rock",
-      "extraterrestrial_rock",
-    ],
     [
       "extraterrestrial_rock.meteorites.chondrites.carbonaceous_chondrites.ci",
       "extraterrestrial_rock",

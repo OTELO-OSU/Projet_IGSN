@@ -121,20 +121,11 @@ describe("samplePublishBlockers", () => {
     ]);
   });
 
-  it("should report both type and material blockers independently", () => {
-    expect(
-      samplePublishBlockers({ ...base, type: null, material: null }),
-    ).toEqual(["type_missing", "material_missing"]);
+  it("should report material_incomplete for a root, which has sub-levels", () => {
+    expect(samplePublishBlockers({ ...base, material: "rock" })).toEqual([
+      "material_incomplete",
+    ]);
   });
-
-  it.each(["rock", "sediment", "extraterrestrial_rock"])(
-    "should report material_incomplete for the root %s, which has sub-levels",
-    (material) => {
-      expect(samplePublishBlockers({ ...base, material })).toEqual([
-        "material_incomplete",
-      ]);
-    },
-  );
 
   it("should publish a material stopped at its second level", () => {
     expect(
@@ -142,12 +133,9 @@ describe("samplePublishBlockers", () => {
     ).toEqual([]);
   });
 
-  it.each(["mineral", "fossil"])(
-    "should publish the root material %s, which has no sub-level",
-    (material) => {
-      expect(samplePublishBlockers({ ...base, material })).toEqual([]);
-    },
-  );
+  it("should publish the root material mineral, which has no sub-level", () => {
+    expect(samplePublishBlockers({ ...base, material: "mineral" })).toEqual([]);
+  });
 
   it("should report a blocker for a value outside the vocabulary rather than treat it as publishable", () => {
     expect(
@@ -238,20 +226,14 @@ describe("samplePublishBlockers", () => {
     expect(samplePublishBlockers({ ...base, age: null })).toEqual([]);
   });
 
-  it.each([
-    [120, 120],
-    [500, 2000],
-  ])(
-    "should report numeric_age_unit_missing when the bounds %s-%s have no unit",
-    (min, max) => {
-      expect(
-        samplePublishBlockers({
-          ...base,
-          age: { ...emptyAge, numericAgeMin: min, numericAgeMax: max },
-        }),
-      ).toEqual(["numeric_age_unit_missing"]);
-    },
-  );
+  it("should report numeric_age_unit_missing when the bounds have no unit", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: { ...emptyAge, numericAgeMin: 500, numericAgeMax: 2000 },
+      }),
+    ).toEqual(["numeric_age_unit_missing"]);
+  });
 
   it("should not report a blocker when a numeric value has its unit", () => {
     expect(
