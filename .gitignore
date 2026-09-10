@@ -46,3 +46,6 @@ import-legacy.log
 # Institution CSV to sync
 sync-data/*
 !sync-data/.gitkeep
+
+# Working-draft specifications (never committed)
+*.docx
