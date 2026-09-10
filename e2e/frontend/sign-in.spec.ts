@@ -29,7 +29,7 @@ test.describe("sign in from the public frontend", () => {
 
     await detail.expectSample(own.name, own.igsn);
     await header.expectSignedIn();
-    await header.expectGoToAdminHref(adminUrl);
+    await header.expectGoToDashboardHref(adminUrl);
     await header.expectEditHref(`${adminUrl}/samples/${own.id}`);
 
     const accessAnswered = header.accessAnswered(other.id);

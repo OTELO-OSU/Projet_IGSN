@@ -85,7 +85,7 @@ export function sampleEditPage(page: Page) {
       await openTab("Sample classification");
       await page.getByLabel("Specific Name").fill(value);
     },
-    goToList: () => page.getByRole("link", { name: "IGSN Admin" }).click(),
+    goToList: () => page.getByRole("link", { name: "IGSN Dashboard" }).click(),
     expectAddSubSampleAction: (name: string) =>
       expect(
         page.getByRole("link", { name: `Add a sub sample of ${name}` }),

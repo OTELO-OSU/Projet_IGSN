@@ -149,7 +149,7 @@ describe("createSendMail", () => {
     expect(sentMail).toHaveBeenCalledWith({
       from: { name: "No-reply", address: "postmaster@igsn.localhost" },
       to: ["admin@univ-lorraine.fr", "boss@univ-lorraine.fr"],
-      subject: "[IGSN-admin] 2 users are waiting for validation",
+      subject: "[IGSN-Dashboard] 2 users are waiting for validation",
       text: "2 users are waiting for validation",
       html: "<p>2 users are waiting for validation</p>",
     });

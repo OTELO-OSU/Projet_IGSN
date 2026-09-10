@@ -25,7 +25,7 @@ export function maildev(request: APIRequestContext) {
       contents: string[],
       replyTo?: string,
     ) => {
-      const prefixed = `[IGSN-admin] ${subject}`;
+      const prefixed = `[IGSN-Dashboard] ${subject}`;
       await expect
         .poll(async () =>
           (await mailsTo(recipient)).map((mail) => mail.subject),

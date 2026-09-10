@@ -2,6 +2,7 @@ import type { LinkProps } from "@tanstack/react-router";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { canAdminManualGroups } from "@projet-igsn/domain/user/can-admin-manual-groups";
 import { canModerateSamples } from "@projet-igsn/domain/user/can-moderate-samples";
@@ -11,6 +12,7 @@ import {
   BotIcon,
   Building2Icon,
   FlaskConicalIcon,
+  GlobeIcon,
   MountainIcon,
   ShieldCheckIcon,
   TelescopeIcon,
@@ -18,10 +20,10 @@ import {
   UsersRoundIcon,
 } from "lucide-react";
 
+import { FRONTEND_URL } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 
-import { UserName } from "../user-name.tsx";
-import { SignOutButton } from "./sign-out-button.tsx";
+import { UserMenu } from "../user-menu.tsx";
 import { useCurrentUser } from "./use-current-user.ts";
 
 const listSearch = { page: 1, perPage: DEFAULT_PAGE_SIZE };
@@ -168,10 +170,14 @@ export function AppLayout({
       </aside>
       <div className="flex min-h-screen w-full flex-1 flex-col">
         <header className="border-b">
-          <div className="flex items-center justify-end gap-4 px-6 py-4">
-            <UserName />
-            <Link to="/settings">{m.nav_settings()}</Link>
-            <SignOutButton onSignOut={onSignOut} />
+          <div className="flex items-center justify-between gap-4 px-6 py-4">
+            <Button asChild variant="outline" size="sm">
+              <a href={FRONTEND_URL}>
+                <GlobeIcon />
+                {m.nav_public_site()}
+              </a>
+            </Button>
+            <UserMenu onSignOut={onSignOut} />
           </div>
         </header>
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-4 p-6">

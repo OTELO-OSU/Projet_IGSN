@@ -30,11 +30,10 @@ export function headerPage(page: Page) {
       expect(banner.getByRole("button", { name: "Sign out" })).toBeVisible(),
     expectSignedOut: () =>
       expect(banner.getByRole("button", { name: "Sign in" })).toBeVisible(),
-    expectGoToAdminHref: (href: string) =>
-      expect(banner.getByRole("link", { name: "Go to admin" })).toHaveAttribute(
-        "href",
-        href,
-      ),
+    expectGoToDashboardHref: (href: string) =>
+      expect(
+        banner.getByRole("link", { name: "Go to Dashboard" }),
+      ).toHaveAttribute("href", href),
     expectEditHref: (href: string) =>
       expect(editLink).toHaveAttribute("href", href),
     accessAnswered: (sampleId: string) =>

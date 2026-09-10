@@ -4,7 +4,7 @@
   "app_subtitle": "Sample Library",
   "auth_sign_in": "Sign in",
   "auth_sign_out": "Sign out",
-  "auth_go_to_admin": "Go to admin",
+  "auth_go_to_dashboard": "Go to Dashboard",
   "sample_edit": "Edit",
   "sample_add_sub_sample": "Add a sub sample",
   "samples_search_label": "Search samples",

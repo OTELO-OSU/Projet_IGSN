@@ -32,14 +32,14 @@ describe("AuthControls", () => {
     );
   });
 
-  it("should offer admin and a sign out that flags this tab, tells the others, and records the page to come back to", async () => {
+  it("should offer the dashboard and a sign out that flags this tab, tells the others, and records the page to come back to", async () => {
     const signoutRedirect = vi.fn();
     const screen = await render(
       stubAuth(<AuthControls />, { isAuthenticated: true, signoutRedirect }),
     );
 
     await expect
-      .element(screen.getByRole("link", { name: "Go to admin" }))
+      .element(screen.getByRole("link", { name: "Go to Dashboard" }))
       .toHaveAttribute("href", ADMIN_URL);
     await page.getByRole("button", { name: "Sign out" }).click();
 
