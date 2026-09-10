@@ -87,8 +87,11 @@ const generateKey = (client: Client, id: string) =>
     { headers: authHeader },
   );
 
-const ping = (app: ReturnType<typeof arrangeApp>["app"], key: string) =>
-  app.request("/service/ping", {
+const listServiceSamples = (
+  app: ReturnType<typeof arrangeApp>["app"],
+  key: string,
+) =>
+  app.request("/service/samples", {
     headers: { Authorization: `Bearer ${key}` },
   });
 
@@ -283,8 +286,8 @@ describe("service account owner routes", () => {
       const firstKey = apiKeyResponseSchema.parse(await first.json()).apiKey;
       const secondKey = apiKeyResponseSchema.parse(await second.json()).apiKey;
       expect(firstKey).not.toBe(secondKey);
-      expect((await ping(app, firstKey)).status).toBe(403);
-      expect((await ping(app, secondKey)).status).toBe(200);
+      expect((await listServiceSamples(app, firstKey)).status).toBe(403);
+      expect((await listServiceSamples(app, secondKey)).status).toBe(200);
     },
   );
 

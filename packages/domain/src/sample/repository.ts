@@ -29,6 +29,11 @@ export type SampleRepository = {
     params: ListSamplesQuery,
     scope: ModerationScope,
   ): Promise<AdminListSamplesResult>;
+  listPublishedForService(
+    params: ListSamplesQuery,
+    scope: ModerationScope,
+    editableOnly: boolean,
+  ): Promise<AdminListSamplesResult>;
   isModerated(id: string, scope: ModerationScope): Promise<boolean>;
   listPublished(params: ListSamplesQuery): Promise<ListSamplesResult>;
   get(

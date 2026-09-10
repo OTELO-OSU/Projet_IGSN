@@ -15,7 +15,7 @@ import { adminUrl, frontendUrl } from "../support/urls";
 const MANUAL_GROUP = "ANR CritMet";
 const REASON = "We harvest our laboratory samples every night.";
 const JEAN_LABORATORY = "GéoRessources";
-const PING_URL = `${frontendUrl}/api/service/ping`;
+const SAMPLES_URL = `${frontendUrl}/api/service/samples`;
 
 test.describe("service account request", () => {
   test("a researcher asks for a service account, then calls the api with its key", async ({
@@ -66,13 +66,13 @@ test.describe("service account request", () => {
     await settings.expectService(name);
     const apiKey = await settings.generateApiKey(name);
 
-    const answered = await request.get(PING_URL, {
+    const answered = await request.get(SAMPLES_URL, {
       headers: { Authorization: `Bearer ${apiKey}` },
     });
     expect(answered.status()).toBe(200);
-    expect(await answered.json()).toEqual({ ok: true });
+    expect(typeof (await answered.json()).meta.total).toBe("number");
 
-    const refused = await request.get(PING_URL);
+    const refused = await request.get(SAMPLES_URL);
     expect(refused.status()).toBe(403);
   });
 });

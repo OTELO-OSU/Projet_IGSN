@@ -111,6 +111,7 @@ async function listSamplesWhere(
       .select(sampleParentsQuery)
       .$if(withOwner, (qb) => qb.select(sampleOwnerQuery))
       .$if(sort === "status", (qb) => qb.orderBy(lifecycleOrder, order))
+      .$if(sort === "igsn", (qb) => qb.orderBy("igsn", order))
       .$call((qb) => (relevance ? qb.orderBy(relevance, "desc") : qb))
       .orderBy("updated_at", "desc")
       .orderBy("id", "desc")
@@ -183,6 +184,18 @@ export function listModeratedSamples(
   scope: ModerationScope,
 ): Promise<AdminListSamplesResult> {
   return listWithOwners(db, params, [moderatedSampleWhere(scope)], true);
+}
+
+export function listPublishedSamplesForService(
+  db: Transactional<DB>,
+  params: ListSamplesQuery,
+  scope: ModerationScope,
+  editableOnly: boolean,
+): Promise<AdminListSamplesResult> {
+  return listWithOwners(db, params, [
+    isPublished(),
+    ...(editableOnly ? [moderatedSampleWhere(scope)] : []),
+  ]);
 }
 
 export async function listPublishedSamples(

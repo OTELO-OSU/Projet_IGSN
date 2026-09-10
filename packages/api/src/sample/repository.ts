@@ -16,6 +16,7 @@ import { isSampleModerated } from "./service/is-sample-moderated.ts";
 import {
   listModeratedSamples,
   listPublishedSamples,
+  listPublishedSamplesForService,
   listSamplesAssignedTo,
 } from "./service/list-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
@@ -29,6 +30,10 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
       withTransaction(db, (trx) => listSamplesAssignedTo(trx, params, userId)),
     listModerated: (params, scope) =>
       withTransaction(db, (trx) => listModeratedSamples(trx, params, scope)),
+    listPublishedForService: (params, scope, editableOnly) =>
+      withTransaction(db, (trx) =>
+        listPublishedSamplesForService(trx, params, scope, editableOnly),
+      ),
     isModerated: (id, scope) =>
       withTransaction(db, (trx) => isSampleModerated(trx, id, scope)),
     listPublished: (params) =>

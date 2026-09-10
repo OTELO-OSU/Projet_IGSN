@@ -89,7 +89,7 @@ export const pageSizeSchema = (fallback: (typeof PAGE_SIZES)[number]) =>
 export const listSamplesQuerySchema = z.object({
   page: pageSchema,
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
-  sort: z.enum(["status"]).optional().catch(undefined),
+  sort: z.enum(["status", "igsn"]).optional().catch(undefined),
   order: z.enum(["asc", "desc"]).optional().catch(undefined),
   search: z
     .string()
