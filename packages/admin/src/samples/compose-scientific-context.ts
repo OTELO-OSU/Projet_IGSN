@@ -89,7 +89,7 @@ export function toScientificContextDraft(
   const collectionSpecimen =
     value?.provenanceStatus === "collection_specimen" ? value : undefined;
   return {
-    provenanceStatus: value?.provenanceStatus,
+    provenanceStatus: value?.provenanceStatus ?? "field_sample",
     funderOrganizations: fieldSample?.funderOrganizations ?? [],
     researchProgramName: fieldSample?.researchProgramName ?? undefined,
     chiefScientist: fieldSample?.chiefScientist ?? undefined,

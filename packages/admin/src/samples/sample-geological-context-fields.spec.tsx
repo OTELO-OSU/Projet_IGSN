@@ -19,7 +19,7 @@ async function renderGeologicalContextSection(
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "dredge",
-        material: "fossil",
+        material: "mineral",
         collectionMethod: null,
         collectionMethodDescription: null,
       }}

@@ -87,7 +87,7 @@ const PARENT: SampleParent = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
   igsn: "01K072TVWVFK5A1RRZ5MY4PPK8",
   name: "Massif Central 2026",
-  material: "fossil",
+  material: "mineral",
 };
 
 beforeEach(() => {
@@ -134,7 +134,7 @@ type FailMode =
 
 function fakeApi(
   status: SampleStatus = "draft",
-  material: string | null = "fossil",
+  material: string | null = "mineral",
   fail: FailMode = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
@@ -153,6 +153,7 @@ function fakeApi(
     nature: "thin_section",
     type: "dredge",
     material,
+    materialOtherName: null,
     texture,
     metamorphicFacies,
     metamorphicFabric: sampleMetamorphicFabric,
@@ -329,7 +330,7 @@ function fakeApi(
 
 async function renderEditPage(
   status: SampleStatus = "draft",
-  material: string | null = "fossil",
+  material: string | null = "mineral",
   fail: FailMode = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
@@ -385,7 +386,7 @@ const renderEditPageLockedBy = (
 ) =>
   renderEditPage(
     status,
-    "fossil",
+    "mineral",
     false,
     null,
     null,
@@ -400,7 +401,7 @@ const renderEditPageLockedBy = (
 const renderEditPageAsContributor = (status: SampleStatus) =>
   renderEditPage(
     status,
-    "fossil",
+    "mineral",
     false,
     null,
     null,
@@ -416,7 +417,7 @@ type EditPageScreen = Awaited<ReturnType<typeof renderEditPage>>["screen"];
 const renderEditPageAsEditor = (status: SampleStatus) =>
   renderEditPage(
     status,
-    "fossil",
+    "mineral",
     false,
     null,
     null,
@@ -512,7 +513,7 @@ describe("EditSamplePage", () => {
   );
 
   it.each<[string, string | null]>([
-    ["a publishable draft", "fossil"],
+    ["a publishable draft", "mineral"],
     ["a blocked draft", null],
   ])(
     "should offer a contributor no Publish button and no focusable tooltip on %s",
@@ -826,7 +827,7 @@ describe("EditSamplePage", () => {
   it("should prefill the existence status from the saved sample instead of resetting it to Exists", async () => {
     const { screen } = await renderEditPage(
       "draft",
-      "fossil",
+      "mineral",
       false,
       null,
       null,
@@ -841,7 +842,7 @@ describe("EditSamplePage", () => {
   it("should prefill a declared security hazard from the saved sample", async () => {
     const { screen } = await renderEditPage(
       "draft",
-      "fossil",
+      "mineral",
       false,
       null,
       null,
@@ -935,7 +936,7 @@ describe("EditSamplePage", () => {
   it("should refuse publishing a sample carrying more files than the limit", async () => {
     const { screen, calls } = await renderEditPage(
       "draft",
-      "fossil",
+      "mineral",
       false,
       null,
       null,
@@ -973,7 +974,7 @@ describe("EditSamplePage", () => {
   it("should refuse publishing a sample whose attachment carries no metadata", async () => {
     const { screen } = await renderEditPage(
       "draft",
-      "fossil",
+      "mineral",
       false,
       null,
       null,
@@ -1078,7 +1079,7 @@ describe("EditSamplePage", () => {
   });
 
   it("should show an error toast when saving fails", async () => {
-    const { screen } = await renderEditPage("draft", "fossil", "save");
+    const { screen } = await renderEditPage("draft", "mineral", "save");
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
     await screen.getByRole("button", { name: "Save", exact: true }).click();
 
@@ -1088,7 +1089,7 @@ describe("EditSamplePage", () => {
   });
 
   it("should show an error toast when publishing fails", async () => {
-    const { screen } = await renderEditPage("draft", "fossil", "publish");
+    const { screen } = await renderEditPage("draft", "mineral", "publish");
     await screen.getByRole("button", { name: "Publish", exact: true }).click();
     await screen.getByRole("button", { name: "Confirm" }).click();
 
@@ -1303,7 +1304,7 @@ describe("EditSamplePage", () => {
   ] as const)(
     "should keep the typed input and hold the form read-only when the save is refused as %s",
     async (reason, message) => {
-      const { screen } = await renderEditPage("draft", "fossil", reason);
+      const { screen } = await renderEditPage("draft", "mineral", reason);
       const name = screen.getByLabelText(/name/i);
       await name.fill("Grès de Fontainebleau");
       await screen.getByRole("button", { name: "Save", exact: true }).click();
@@ -1388,7 +1389,7 @@ describe("EditSamplePage", () => {
     it("should keep the draft and explain when another collaborator is editing", async () => {
       const { screen, calls } = await renderEditPage(
         "draft",
-        "fossil",
+        "mineral",
         "delete-locked",
       );
       await deleteButton(screen).click();
