@@ -117,6 +117,7 @@ function mergeMaterialDependent(
   if (incoming.material === material) return incoming;
   return {
     ...incoming,
+    materialOtherName: current.materialOtherName,
     texture: current.texture,
     metamorphicFacies: current.metamorphicFacies,
     metamorphicFabric: current.metamorphicFabric,

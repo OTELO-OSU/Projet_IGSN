@@ -17,6 +17,7 @@ const stored: Sample = {
   nature: "hand_sample",
   type: "core",
   material: "rock.igneous.plutonic",
+  materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
   metamorphicFabric: null,
@@ -102,6 +103,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     nature: "rock_powder",
     type: "dredge",
     material: "sediment",
+    materialOtherName: null,
     texture: null,
     metamorphicFacies: null,
     metamorphicFabric: null,
@@ -375,7 +377,7 @@ describe("mergePublishedEdit", () => {
         "rock.igneous.plutonic.felsic.granite",
         "sediment.exogenous_detritic.clay",
       ],
-      ["mineral", "fossil"],
+      ["mineral", "synthetic_rock_mineral"],
       ["rock.igneous.plutonic.felsic.granite", null],
     ])("keeps %s when the payload carries %s", (current, next) => {
       const merged = mergePublishedEdit(
@@ -415,6 +417,36 @@ describe("mergePublishedEdit", () => {
       expect(merged).toMatchObject({
         material: "extraterrestrial_rock.returned_samples.lunar_sample",
         location: null,
+      });
+    });
+
+    it("takes the free text of the other material sent alongside it", () => {
+      const merged = mergePublishedEdit(
+        {
+          ...stored,
+          material: "rock.other",
+          materialOtherName: "Stored breccia",
+        },
+        incoming({ material: "rock.other", materialOtherName: "Impactite" }),
+      );
+      expect(merged).toMatchObject({
+        material: "rock.other",
+        materialOtherName: "Impactite",
+      });
+    });
+
+    it("keeps the stored free text when the payload's material is rejected", () => {
+      const merged = mergePublishedEdit(
+        {
+          ...stored,
+          material: "rock.other",
+          materialOtherName: "Stored breccia",
+        },
+        incoming({ material: "sediment", materialOtherName: "Impactite" }),
+      );
+      expect(merged).toMatchObject({
+        material: "rock.other",
+        materialOtherName: "Stored breccia",
       });
     });
 

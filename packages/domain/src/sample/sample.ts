@@ -19,6 +19,7 @@ import { geomorphologicalEnvironmentSchema } from "./geomorphological-environmen
 import { allowsLocation } from "./location/allows-location.ts";
 import { locationSchema } from "./location/model.ts";
 import { materialPathSchema } from "./material/classification.ts";
+import { isOtherMaterial } from "./material/is-other-material.ts";
 import {
   fabricsFor,
   metamorphicFabricSchema,
@@ -59,6 +60,7 @@ export const sampleSchema = z.object({
   nature: natureSchema.nullable(),
   type: sampleTypeSchema.nullable(),
   material: materialPathSchema.nullable(),
+  materialOtherName: nameSchema.nullable(),
   texture: textureSchema.nullable(),
   metamorphicFacies: metamorphicFaciesSchema.nullable(),
   metamorphicFabric: metamorphicFabricSchema.nullable(),
@@ -108,6 +110,7 @@ const createSampleFieldsSchema = z.strictObject({
   nature: natureSchema.nullable().default(null),
   type: sampleTypeSchema.nullable().default(null),
   material: materialPathSchema.nullish(),
+  materialOtherName: nameSchema.nullish(),
   texture: textureSchema.nullish(),
   metamorphicFacies: metamorphicFaciesSchema.nullish(),
   metamorphicFabric: metamorphicFabricSchema.nullish(),
@@ -148,6 +151,13 @@ const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
       code: "custom",
       path: ["texture"],
       message: "texture is not valid for the selected material",
+    });
+  }
+  if (value.materialOtherName != null && !isOtherMaterial(value.material)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["materialOtherName"],
+      message: "only the other material carries a free-text name",
     });
   }
   if (

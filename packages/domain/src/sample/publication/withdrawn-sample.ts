@@ -6,7 +6,13 @@ import { locationSchema } from "../location/model.ts";
 import { sampleSchema, type Sample } from "../sample.ts";
 
 export const withdrawnSampleSchema = sampleSchema
-  .pick({ name: true, nature: true, type: true, material: true })
+  .pick({
+    name: true,
+    nature: true,
+    type: true,
+    material: true,
+    materialOtherName: true,
+  })
   .extend({
     status: z.literal("withdrawn"),
     igsn: igsnSchema,
@@ -31,6 +37,7 @@ export function toWithdrawnSample(sample: Sample): WithdrawnSample {
     nature: sample.nature,
     type: sample.type,
     material: sample.material,
+    materialOtherName: sample.materialOtherName,
     location: sample.location
       ? {
           region: sample.location.region ?? null,
