@@ -68,6 +68,7 @@
   "mail_sample_field_nature": "Nature",
   "mail_sample_field_type": "Sample type",
   "mail_sample_field_material": "Material",
+  "mail_sample_field_materialOtherName": "Other material name",
   "mail_sample_field_texture": "Texture",
   "mail_sample_field_metamorphicFacies": "Metamorphic facies",
   "mail_sample_field_metamorphicFabric": "Metamorphic fabrics",

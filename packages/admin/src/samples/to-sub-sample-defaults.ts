@@ -9,6 +9,7 @@ export const toSubSampleDefaults = (parent: Sample): Partial<CreateSample> => ({
   collectionMethod: parent.collectionMethod,
   collectionMethodDescription: parent.collectionMethodDescription,
   specificName: parent.specificName,
+  materialOtherName: parent.materialOtherName,
   location: parent.location,
   description: parent.description,
   condition: parent.condition,

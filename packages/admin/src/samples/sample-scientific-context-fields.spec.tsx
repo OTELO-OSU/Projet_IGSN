@@ -31,15 +31,26 @@ async function renderScientificContextSection(
   return screen;
 }
 
-const pickProvenance = async (
-  screen: Awaited<ReturnType<typeof renderScientificContextSection>>,
-  option: string,
-) => {
+type Screen = Awaited<ReturnType<typeof renderScientificContextSection>>;
+
+const pickProvenance = async (screen: Screen, option: string) => {
   await screen.getByRole("tab", { name: "Identity" }).click();
   await screen
     .getByRole("combobox", { name: "Provenance status *", exact: true })
     .click();
   await screen.getByRole("option", { name: option }).click();
+  await screen.getByRole("tab", { name: "Scientific context" }).click();
+};
+
+const clearProvenance = async (screen: Screen) => {
+  await screen.getByRole("tab", { name: "Identity" }).click();
+  await screen
+    .getByRole("combobox", { name: "Provenance status *", exact: true })
+    .click();
+  await screen.getByRole("option", { name: "Field sample" }).click();
+};
+
+const goToScientificContext = async (screen: Screen) => {
   await screen.getByRole("tab", { name: "Scientific context" }).click();
 };
 
@@ -55,6 +66,8 @@ const pickOrganization = async (
 describe("SampleScientificContextFields", () => {
   it("should disable the Scientific context tab until a provenance status is chosen", async () => {
     const screen = await renderScientificContextSection();
+
+    await clearProvenance(screen);
 
     await expect
       .element(screen.getByRole("tab", { name: "Scientific context" }))
@@ -74,7 +87,7 @@ describe("SampleScientificContextFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
-    await pickProvenance(screen, "Field sample");
+    await goToScientificContext(screen);
     await screen
       .getByRole("combobox", { name: "Funder organizations" })
       .click();
@@ -141,6 +154,7 @@ describe("SampleScientificContextFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
+    await clearProvenance(screen);
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalled());
@@ -151,7 +165,7 @@ describe("SampleScientificContextFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
-    await pickProvenance(screen, "Field sample");
+    await goToScientificContext(screen);
     await screen
       .getByLabelText("Name of the research programme")
       .fill("Deep Biosphere Survey");

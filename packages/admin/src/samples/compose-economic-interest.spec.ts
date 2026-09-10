@@ -16,7 +16,7 @@ const draft = (
 
 describe("composeEconomicInterest", () => {
   it.each([
-    ["an ineligible material", "fossil"],
+    ["an ineligible material", "mineral"],
     ["no material", null],
   ])("should send no economic block for %s", (_case, material) => {
     expect(

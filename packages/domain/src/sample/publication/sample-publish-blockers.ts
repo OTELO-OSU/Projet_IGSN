@@ -12,6 +12,7 @@ import { requiresLocation } from "../location/requires-location.ts";
 import { verticalValues } from "../location/vertical-values.ts";
 import { MATERIAL_PATHS } from "../material/classification.ts";
 import { isMaterialComplete } from "../material/is-complete.ts";
+import { isOtherMaterial } from "../material/is-other-material.ts";
 import { isSyntheticMaterial } from "../synthetic-details/is-synthetic-material.ts";
 import { needsStartingMaterialComposition } from "../synthetic-details/needs-starting-material-composition.ts";
 import { isSampleTypeComplete } from "../type/is-complete.ts";
@@ -23,6 +24,7 @@ export const publishBlockerSchema = z.enum([
   "type_incomplete",
   "material_missing",
   "material_incomplete",
+  "material_other_name_missing",
   "location_position_missing",
   "collection_date_missing",
   "numeric_age_unit_missing",
@@ -54,6 +56,7 @@ export type PublishableFields = Pick<
   | "nature"
   | "type"
   | "material"
+  | "materialOtherName"
   | "location"
   | "description"
   | "age"
@@ -72,6 +75,7 @@ export function toPublishableFields(
     nature: sample.nature ?? null,
     type: sample.type ?? null,
     material: sample.material ?? null,
+    materialOtherName: sample.materialOtherName ?? null,
     location: sample.location ?? null,
     description: sample.description ?? null,
     age: sample.age ?? null,
@@ -116,6 +120,10 @@ export function samplePublishBlockers(
     blockers.push("material_missing");
   } else if (!materialComplete) {
     blockers.push("material_incomplete");
+  }
+
+  if (isOtherMaterial(sample.material) && !sample.materialOtherName) {
+    blockers.push("material_other_name_missing");
   }
 
   if (

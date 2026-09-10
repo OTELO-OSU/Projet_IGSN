@@ -6,6 +6,7 @@ import {
   toHierarchyPath,
 } from "@projet-igsn/design-system/lib/hierarchy";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
+import { isOtherMaterial } from "@projet-igsn/domain/sample/material/is-other-material";
 import { publishedSampleSchema as domainPublishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import {
   hasMetadataScheme,
@@ -97,6 +98,7 @@ export type SampleDraft = {
   nature: CreateSample["nature"] | undefined;
   typePath: string[];
   materialPath: string[];
+  materialOtherName: string | null | undefined;
   texture: CreateSample["texture"] | undefined;
   metamorphicFacies: CreateSample["metamorphicFacies"] | undefined;
   metamorphicFabric: CreateSample["metamorphicFabric"] | undefined;
@@ -125,6 +127,7 @@ export const toSampleDraft = (value?: Partial<CreateSample>): SampleDraft => ({
   nature: value?.nature,
   typePath: toHierarchyPath(value?.type ?? null),
   materialPath: toHierarchyPath(value?.material ?? null),
+  materialOtherName: value?.materialOtherName,
   texture: value?.texture,
   metamorphicFacies: value?.metamorphicFacies,
   metamorphicFabric: value?.metamorphicFabric,
@@ -199,6 +202,9 @@ const composeCreateSample = (draft: SampleDraft) => {
     nature: draft.nature ?? null,
     type: composeHierarchyValue(draft.typePath),
     material,
+    materialOtherName: isOtherMaterial(material)
+      ? draft.materialOtherName?.trim() || null
+      : null,
     ...(draft.texture ? { texture: draft.texture } : {}),
     ...(draft.metamorphicFacies
       ? { metamorphicFacies: draft.metamorphicFacies }

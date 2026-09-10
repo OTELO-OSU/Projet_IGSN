@@ -478,6 +478,7 @@ describe("public sample routes", () => {
           nature: "rock_powder",
           type: "individual_sample",
           material: "sediment.exogenous_detritic.clay",
+          materialOtherName: null,
           location: { region: null, localityName: null },
           collectorName: null,
           collectionCurator: "Georges Cuvier",

@@ -13,6 +13,7 @@ export const rockTree = {
     choices: ["weakly_metamorphosed", "strongly_metamorphosed"],
   },
   unknown: { optional: true, frozenWhenPublished: false },
+  "rock.other": { optional: true, frozenWhenPublished: false },
   hydrothermal: {
     optional: true,
     frozenWhenPublished: false,

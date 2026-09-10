@@ -25,8 +25,10 @@ const publishableScientificContext = {
 const publishableRepository = { currentArchive: "02feahw73" } as const;
 
 const NO_ANSWERS = {
+  materialOtherName: null,
   description: { oriented: false },
   security: { radioactivity: false, asbestosRich: false, chemicalRisk: false },
+  scientificContext: { provenanceStatus: "field_sample" },
 } as const;
 
 type Screen = Awaited<ReturnType<typeof render>>;
@@ -42,7 +44,7 @@ async function renderLocation(
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "dredge",
-        material: "fossil",
+        material: "mineral",
         collectionMethod: null,
         collectionMethodDescription: null,
       }}
@@ -82,7 +84,7 @@ const PARENT_IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
 const NATURAL_PARENT = {
   igsn: PARENT_IGSN,
   name: "Massif Central 2026",
-  material: "fossil",
+  material: "mineral",
 } as const;
 
 describe("SampleForm", () => {
@@ -420,6 +422,56 @@ describe("SampleForm", () => {
         ...NO_ANSWERS,
       }),
     );
+  });
+
+  it("should offer the free-text material name for the Other rock alone", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Other material name *"))
+      .not.toBeInTheDocument();
+
+    await pickPath(screen, "Material *", "Rock", "Other");
+
+    await expect
+      .element(screen.getByLabelText("Other material name *"))
+      .toBeVisible();
+  });
+
+  it("should restore the free-text material name after the material leaves the Other rock and returns", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+    await pickPath(screen, "Material *", "Rock", "Other");
+    await screen.getByLabelText("Other material name *").fill("Impactite");
+
+    await repickPath(screen, "Other", "Unknown");
+
+    await expect
+      .element(screen.getByLabelText("Other material name *"))
+      .not.toBeInTheDocument();
+
+    await repickPath(screen, "Unknown", "Other");
+
+    await expect
+      .element(screen.getByLabelText("Other material name *"))
+      .toHaveValue("Impactite");
+  });
+
+  it("should pre-fill the provenance status of a new declaration with Field sample", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "Provenance status *" }))
+      .toHaveTextContent("Field sample");
   });
 
   it("should show and submit a metamorphic facies for a metamorphic material", async () => {
@@ -1091,7 +1143,7 @@ describe("SampleForm", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "dredge",
-          material: "fossil",
+          material: "mineral",
           collectionMethod: null,
           collectionMethodDescription: null,
           specificName: "MC-2026-007",
@@ -1123,7 +1175,8 @@ describe("SampleForm", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "dredge",
-          material: "fossil",
+          material: "mineral",
+          materialOtherName: null,
           collectionMethod: null,
           collectionMethodDescription: null,
           specificName: "MC-2026-007",
@@ -1168,7 +1221,7 @@ describe("SampleForm", () => {
         ...publishGateBase,
         nature: null,
         type: "dredge",
-        material: "fossil",
+        material: "mineral",
       },
       /set the nature before publishing/i,
     ],
@@ -1179,7 +1232,7 @@ describe("SampleForm", () => {
     ],
     [
       "the type is missing",
-      { ...publishGateBase, type: null, material: "fossil" },
+      { ...publishGateBase, type: null, material: "mineral" },
       /set the sample type before publishing/i,
     ],
     [
@@ -1187,14 +1240,14 @@ describe("SampleForm", () => {
       {
         ...publishGateBase,
         type: "dredge",
-        material: "fossil",
+        material: "mineral",
         location: { position: { type: "point", longitude: 3, latitude: 45 } },
       },
       /set the collection date before publishing/i,
     ],
     [
       "a required location is missing",
-      { ...publishGateBase, type: "dredge", material: "fossil" },
+      { ...publishGateBase, type: "dredge", material: "mineral" },
       /set the sample location/i,
     ],
   ])(
@@ -1233,7 +1286,7 @@ describe("SampleForm", () => {
             name: "Basalte du Massif Central",
             nature: "thin_section",
             type: "dredge",
-            material: "fossil",
+            material: "mineral",
             collectionMethod: null,
             collectionMethodDescription: null,
             location: {
@@ -1279,7 +1332,7 @@ describe("SampleForm", () => {
             name: "Basalte du Massif Central",
             nature: "thin_section",
             type: "dredge",
-            material: "fossil",
+            material: "mineral",
             collectionMethod: null,
             collectionMethodDescription: null,
             location: {
@@ -1346,7 +1399,7 @@ describe("SampleForm", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: null,
-          material: "fossil",
+          material: "mineral",
           collectionMethod: null,
           collectionMethodDescription: null,
         }}
@@ -1488,7 +1541,7 @@ describe("SampleForm", () => {
             name: "Basalte du Massif Central",
             nature: "thin_section",
             type: "dredge",
-            material: "fossil",
+            material: "mineral",
             collectionMethod: null,
             collectionMethodDescription: null,
             scientificContext: { provenanceStatus },
@@ -1670,7 +1723,7 @@ describe("SampleForm", () => {
             name: "Basalte du Massif Central",
             nature: "thin_section",
             type: "dredge",
-            material: "fossil",
+            material: "mineral",
             collectionMethod: null,
             collectionMethodDescription: null,
           }}
@@ -1958,7 +2011,7 @@ describe("SampleForm", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "dredge",
-          material: "fossil",
+          material: "mineral",
           collectionMethod: null,
           collectionMethodDescription: null,
         }}
@@ -2502,7 +2555,7 @@ describe("SampleForm post-publication field lock", () => {
       <SampleForm
         onCancel={noop}
         parent={NATURAL_PARENT}
-        defaultValues={{ material: "fossil" }}
+        defaultValues={{ material: "mineral" }}
         primaryAction={createAction(noop)}
       />,
     );
@@ -2544,7 +2597,7 @@ describe("SampleForm post-publication field lock", () => {
       <SampleForm
         onCancel={noop}
         parent={NATURAL_PARENT}
-        defaultValues={{ material: "fossil" }}
+        defaultValues={{ material: "mineral" }}
         primaryAction={createAction(noop)}
       />,
     );
@@ -2552,7 +2605,7 @@ describe("SampleForm post-publication field lock", () => {
     await screen.getByRole("tab", { name: "Sample classification" }).click();
 
     await expect
-      .element(screen.getByRole("button", { name: "Remove Fossil" }))
+      .element(screen.getByRole("button", { name: "Remove Mineral" }))
       .toBeEnabled();
   });
 });

@@ -17,6 +17,7 @@ const materialTree = {
       "hydrothermal",
       "xenolithic_rock",
       "unknown",
+      "other",
     ],
   },
   sediment: {
@@ -33,7 +34,6 @@ const materialTree = {
     choices: ["returned_samples", "meteorites", "micrometeorites"],
   },
   mineral: { searchable: true },
-  fossil: { searchable: true },
   synthetic_rock_mineral: { searchable: true },
 
   ...rockTree,
@@ -50,7 +50,6 @@ export const MATERIAL_ROOTS = [
   "rock",
   "sediment",
   "mineral",
-  "fossil",
   "synthetic_rock_mineral",
   "extraterrestrial_rock",
 ] as const;

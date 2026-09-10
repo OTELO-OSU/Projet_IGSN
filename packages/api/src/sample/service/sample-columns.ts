@@ -14,6 +14,7 @@ export const sampleColumns = (input: CreateSample) => ({
   nature: input.nature ?? null,
   type: input.type,
   material: input.material ?? null,
+  material_other_name: input.materialOtherName ?? null,
   texture: input.texture ?? null,
   metamorphic_facies: input.metamorphicFacies ?? null,
   metamorphic_fabric: input.metamorphicFabric ?? null,

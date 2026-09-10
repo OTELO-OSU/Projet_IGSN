@@ -32,7 +32,7 @@ describe("frozenMaterialPrefix", () => {
     expect(frozenMaterialPrefix(material)).toBe(expected);
   });
 
-  it.each(["mineral", "fossil", "synthetic_rock_mineral"])(
+  it.each(["mineral", "synthetic_rock_mineral"])(
     "keeps %s wholly frozen",
     (material) => {
       expect(MATERIAL_PATHS).toContain(material);

@@ -9,6 +9,7 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   type_incomplete: m.publish_blocked_type_incomplete,
   material_missing: m.publish_blocked_material_missing,
   material_incomplete: m.publish_blocked_material_incomplete,
+  material_other_name_missing: m.publish_blocked_material_other_name_missing,
   location_position_missing: m.publish_blocked_location_position_missing,
   collection_date_missing: m.publish_blocked_collection_date_missing,
   numeric_age_unit_missing: m.publish_blocked_numeric_age_unit_missing,

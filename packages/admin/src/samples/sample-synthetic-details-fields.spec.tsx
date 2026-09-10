@@ -56,7 +56,7 @@ describe("SampleSyntheticDetailsFields", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        defaultValues={{ ...syntheticDefaults, material: "fossil" }}
+        defaultValues={{ ...syntheticDefaults, material: "mineral" }}
         primaryAction={createAction(noop)}
       />,
     );
@@ -65,7 +65,7 @@ describe("SampleSyntheticDetailsFields", () => {
       .element(screen.getByRole("tab", { name: "Location" }))
       .toBeEnabled();
 
-    await pickMaterial(screen, "Fossil", SYNTHETIC_MATERIAL);
+    await pickMaterial(screen, "Mineral", SYNTHETIC_MATERIAL);
 
     await expect
       .element(screen.getByRole("heading", { name: "Synthetic details" }))
@@ -74,7 +74,7 @@ describe("SampleSyntheticDetailsFields", () => {
       .element(screen.getByRole("tab", { name: "Location" }))
       .toBeDisabled();
 
-    await pickMaterial(screen, SYNTHETIC_MATERIAL, "Fossil");
+    await pickMaterial(screen, SYNTHETIC_MATERIAL, "Mineral");
 
     await expect
       .element(screen.getByRole("heading", { name: "Synthetic details" }))
@@ -167,13 +167,13 @@ describe("SampleSyntheticDetailsFields", () => {
       .getByLabelText("Operator name *", { exact: true })
       .fill("Marie Curie");
 
-    await pickMaterial(screen, SYNTHETIC_MATERIAL, "Fossil");
-    await pickMaterial(screen, "Fossil", SYNTHETIC_MATERIAL);
+    await pickMaterial(screen, SYNTHETIC_MATERIAL, "Mineral");
+    await pickMaterial(screen, "Mineral", SYNTHETIC_MATERIAL);
     await expect
       .element(screen.getByLabelText("Operator name *", { exact: true }))
       .toHaveValue("Marie Curie");
 
-    await pickMaterial(screen, SYNTHETIC_MATERIAL, "Fossil");
+    await pickMaterial(screen, SYNTHETIC_MATERIAL, "Mineral");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalled());

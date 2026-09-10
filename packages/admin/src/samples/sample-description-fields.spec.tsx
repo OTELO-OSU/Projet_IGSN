@@ -553,6 +553,7 @@ describe("SampleDescriptionFields", () => {
         nature: "thin_section",
         type: null,
         material: null,
+        materialOtherName: null,
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
@@ -567,6 +568,7 @@ describe("SampleDescriptionFields", () => {
           asbestosRich: false,
           chemicalRisk: false,
         },
+        scientificContext: { provenanceStatus: "field_sample" },
       }),
     );
   });
