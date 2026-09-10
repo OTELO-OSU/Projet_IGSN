@@ -13,12 +13,14 @@ const RELATION = {
   identifierType: "DOI",
   identifier: "https://doi.org/10.5880/GFZ.2026.001",
   title: "Field measurements dataset",
+  resourceType: "Dataset",
   description: "Measurements collected during the same campaign.",
 };
 
 const ATTACHMENT_RESOURCE = {
   title: "Field notes",
   resourceType: "Dataset",
+  description: "Notes taken on the sampling day.",
 };
 
 test.describe("sample relations on the public page", () => {

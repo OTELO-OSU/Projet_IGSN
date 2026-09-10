@@ -24,7 +24,6 @@ export type SyntheticDetailsDraft = {
   experimentType: ExperimentType | undefined;
   experimentDurationValue: number | undefined;
   experimentDurationUnit: ExperimentDurationUnit | null | undefined;
-  experimentDurationNotRelevant: boolean;
   synthesisDateStart: string | undefined;
   synthesisDateEnd: string | undefined;
   operatorName: string | null | undefined;
@@ -46,7 +45,6 @@ type SyntheticDetailsCandidate = {
   finalProduct: FinalProduct | undefined;
   experimentType: ExperimentType | undefined;
   experimentDuration: MeasurementCandidate<ExperimentDurationUnit> | undefined;
-  experimentDurationNotRelevant: true | undefined;
   synthesisDate: { start: string; end: string } | undefined;
   operatorName: string | undefined;
   operatorOrcid: string | undefined;
@@ -73,14 +71,10 @@ export function composeSyntheticDetails(
       : undefined,
     finalProduct: draft.finalProduct,
     experimentType: draft.experimentType,
-    experimentDuration: draft.experimentDurationNotRelevant
-      ? undefined
-      : composeMeasurement(
-          draft.experimentDurationValue,
-          draft.experimentDurationUnit,
-        ),
-    experimentDurationNotRelevant:
-      draft.experimentDurationNotRelevant || undefined,
+    experimentDuration: composeMeasurement(
+      draft.experimentDurationValue,
+      draft.experimentDurationUnit,
+    ),
     synthesisDate:
       draft.synthesisDateStart !== undefined &&
       draft.synthesisDateEnd !== undefined
@@ -115,8 +109,6 @@ export function toSyntheticDetailsDraft(
     experimentType: value?.experimentType ?? undefined,
     experimentDurationValue: value?.experimentDuration?.value,
     experimentDurationUnit: value?.experimentDuration?.unit,
-    experimentDurationNotRelevant:
-      value?.experimentDurationNotRelevant ?? false,
     synthesisDateStart: value?.synthesisDate?.start,
     synthesisDateEnd: value?.synthesisDate?.end,
     operatorName: value?.operatorName ?? undefined,

@@ -92,16 +92,10 @@ export function sampleFormPage(page: Page) {
       await openTab("Curation and repository");
       await pick("Existence status", "Exists");
       await pick("Availability status", "Available");
-      await pick(
-        "Current archive",
-        "Centre National de la Recherche Scientifique (CNRS)",
-      );
       if (material !== SYNTHETIC_MATERIAL) return;
       await openTab("Sample classification");
       await pick("Starting material", "Natural");
-      await pick("Nature of starting material", "Powder");
       await pick("Final product", "Glass");
-      await page.getByRole("switch", { name: "Duration not relevant" }).click();
       await page
         .getByRole("group", { name: /synthesis date/i })
         .getByRole("textbox", { name: /^Date/ })

@@ -24,7 +24,6 @@ describe("sample synthetic details persistence", () => {
         finalProduct: "mineral" as const,
         experimentType: "crystallization_dynamic" as const,
         experimentDuration: { value: 12, unit: "hour" as const },
-        experimentDurationNotRelevant: false,
         synthesisDate: { start: "2025-01-10", end: "2025-01-12" },
         operatorName: "Marie Curie",
         operatorOrcid: "0000-0002-1825-0097",

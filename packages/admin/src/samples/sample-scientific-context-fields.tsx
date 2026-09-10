@@ -26,7 +26,6 @@ export function SampleScientificContextFields() {
                   {(field) => (
                     <field.MultiComboboxField
                       label={m.field_funder_organizations()}
-                      requiredToPublish
                       items={ALL_ORGANIZATION_ITEMS}
                       placeholder={m.organization_placeholder()}
                       searchPlaceholder={m.organization_search_placeholder()}
@@ -40,19 +39,13 @@ export function SampleScientificContextFields() {
 
                 <form.AppField name="scientificContext.researchProgramName">
                   {(field) => (
-                    <field.TextField
-                      label={m.field_research_program_name()}
-                      requiredToPublish
-                    />
+                    <field.TextField label={m.field_research_program_name()} />
                   )}
                 </form.AppField>
 
                 <form.AppField name="scientificContext.chiefScientist">
                   {(field) => (
-                    <field.TextField
-                      label={m.field_chief_scientist()}
-                      requiredToPublish
-                    />
+                    <field.TextField label={m.field_chief_scientist()} />
                   )}
                 </form.AppField>
 
@@ -66,7 +59,6 @@ export function SampleScientificContextFields() {
                   {(field) => (
                     <field.MultiComboboxField
                       label={m.field_host_institution()}
-                      requiredToPublish
                       items={ALL_ORGANIZATION_ITEMS}
                       placeholder={m.organization_placeholder()}
                       searchPlaceholder={m.organization_search_placeholder()}

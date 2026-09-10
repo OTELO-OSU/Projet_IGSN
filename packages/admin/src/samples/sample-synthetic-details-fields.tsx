@@ -87,7 +87,6 @@ export function SampleSyntheticDetailsFields() {
         {(field) => (
           <field.ComboboxField
             label={m.field_starting_material_nature()}
-            requiredToPublish
             items={startingMaterialNatureItems}
             placeholder={m.starting_material_nature_placeholder()}
             searchPlaceholder={m.starting_material_nature_search_placeholder()}
@@ -143,34 +142,15 @@ export function SampleSyntheticDetailsFields() {
         )}
       </form.AppField>
 
-      <form.AppField name="syntheticDetails.experimentDurationNotRelevant">
-        {(field) => (
-          <field.SwitchField
-            label={m.field_experiment_duration_not_relevant()}
-          />
-        )}
-      </form.AppField>
-
-      <form.Subscribe
-        selector={(state) =>
-          state.values.syntheticDetails.experimentDurationNotRelevant
+      <MeasurementFieldPair
+        name="syntheticDetails.experimentDuration"
+        selectValue={(values) =>
+          values.syntheticDetails.experimentDurationValue
         }
-      >
-        {(notRelevant) =>
-          notRelevant ? null : (
-            <MeasurementFieldPair
-              name="syntheticDetails.experimentDuration"
-              selectValue={(values) =>
-                values.syntheticDetails.experimentDurationValue
-              }
-              label={m.field_experiment_duration}
-              unitLabel={m.field_experiment_duration_unit}
-              items={durationUnitItems}
-              requiredToPublish
-            />
-          )
-        }
-      </form.Subscribe>
+        label={m.field_experiment_duration}
+        unitLabel={m.field_experiment_duration_unit}
+        items={durationUnitItems}
+      />
 
       <DateRangeField
         prefix="syntheticDetails.synthesisDate"

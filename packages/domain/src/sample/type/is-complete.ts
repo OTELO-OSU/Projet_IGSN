@@ -1,5 +1,5 @@
 import { isPathComplete } from "../path/is-complete.ts";
-import { resolvePathNode } from "../path/resolve-node.ts";
+import { isOptionalAtOrAbove } from "../path/is-optional.ts";
 import {
   SAMPLE_TYPE_TREE,
   SAMPLE_TYPES,
@@ -10,9 +10,7 @@ import {
 // (ADR 0012) so the tree stays the single source of truth if a type node ever
 // goes optional.
 export function isSampleTypeComplete(type: SampleType): boolean {
-  return isPathComplete(
-    SAMPLE_TYPES,
-    type,
-    (node) => resolvePathNode(SAMPLE_TYPE_TREE, node)?.node.optional === true,
+  return isPathComplete(SAMPLE_TYPES, type, (node) =>
+    isOptionalAtOrAbove(SAMPLE_TYPE_TREE, node),
   );
 }

@@ -34,7 +34,7 @@ describe("SampleRepositoryFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderRepositorySection(onSubmit);
 
-    await screen.getByRole("combobox", { name: "Current archive *" }).click();
+    await screen.getByRole("combobox", { name: "Current archive" }).click();
     await screen
       .getByPlaceholder("Search organizations...")
       .fill(organizationLabel("02feahw73"));

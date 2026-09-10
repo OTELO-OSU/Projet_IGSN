@@ -1,27 +1,32 @@
 import { type TreeNode } from "../../path/tree-node.ts";
-import { editableLeaves } from "./editable-leaves.ts";
 
 export const sedimentTree = {
   exogenous_detritic: {
+    optional: true,
+    frozenWhenPublished: false,
     choices: ["gravel", "sand", "silt", "clay", "heterogeneous"],
   },
   volcano_detritic: {
+    optional: true,
+    frozenWhenPublished: false,
     choices: ["bomb", "lapilli", "ash"],
   },
   biogenic: {
+    optional: true,
+    frozenWhenPublished: false,
     choices: ["carbonate", "siliceous", "organic_rich", "bioprecipitated"],
   },
   physico_chemical: {
+    optional: true,
+    frozenWhenPublished: false,
     choices: ["precipitates", "alteration_residual_products"],
   },
 
   gravel: {
-    frozenWhenPublished: false,
     choices: ["boulder", "cobble", "pebble", "granule"],
   },
 
   sand: {
-    frozenWhenPublished: false,
     choices: [
       "very_coarse_sand",
       "coarse_sand",
@@ -32,7 +37,6 @@ export const sedimentTree = {
   },
 
   silt: {
-    frozenWhenPublished: false,
     choices: [
       "very_coarse_silt",
       "coarse_silt",
@@ -42,28 +46,21 @@ export const sedimentTree = {
     ],
   },
 
-  ...editableLeaves("clay"),
-
   heterogeneous: {
-    frozenWhenPublished: false,
     choices: ["diamicton", "other"],
   },
 
   bomb: {
-    frozenWhenPublished: false,
     choices: ["pumices", "glass", "crystals", "rock_fragments"],
   },
   lapilli: {
-    frozenWhenPublished: false,
     choices: ["pumices", "glass", "crystals", "rock_fragments"],
   },
   ash: {
-    frozenWhenPublished: false,
     choices: ["pumices", "glass", "crystals", "rock_fragments"],
   },
 
   carbonate: {
-    frozenWhenPublished: false,
     choices: ["grain_supported", "mud_supported", "boundstone"],
   },
   grain_supported: {
@@ -78,27 +75,22 @@ export const sedimentTree = {
   },
 
   siliceous: {
-    frozenWhenPublished: false,
     choices: ["diatoms", "radiolarians", "sponges"],
   },
 
   organic_rich: {
-    frozenWhenPublished: false,
     choices: ["peat", "coal", "algal_rich", "organic_mud", "other"],
   },
 
   bioprecipitated: {
-    frozenWhenPublished: false,
     choices: ["microbialites", "organic_decay_induced"],
   },
 
   precipitates: {
-    frozenWhenPublished: false,
     choices: ["evaporitic", "metalliferous", "carbonated", "phosphated"],
   },
 
   alteration_residual_products: {
-    frozenWhenPublished: false,
     choices: ["regoliths", "altered_clays"],
   },
 } satisfies Record<string, TreeNode>;

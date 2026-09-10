@@ -109,6 +109,7 @@ export function SampleRelationsFields() {
                 {(field) => (
                   <field.ComboboxField
                     label={m.field_relation_target_resource_type()}
+                    requiredToPublish
                     items={resourceTypeItems}
                     placeholder={m.relation_resource_type_placeholder()}
                     searchPlaceholder={m.relation_resource_type_search_placeholder()}

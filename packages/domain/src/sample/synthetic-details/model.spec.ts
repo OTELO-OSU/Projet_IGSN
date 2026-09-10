@@ -9,7 +9,6 @@ const syntheticDetails = {
   finalProduct: "glass",
   experimentType: "fusion",
   experimentDuration: { value: 30, unit: "minute" },
-  experimentDurationNotRelevant: false,
   synthesisDate: { start: "2020-01-01", end: "2020-01-02" },
   operatorName: "Marie Curie",
   operatorOrcid: "0000-0002-1825-0097",

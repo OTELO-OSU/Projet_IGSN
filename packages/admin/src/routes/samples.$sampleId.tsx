@@ -73,10 +73,7 @@ function EditSamplePage() {
     sampleId,
     query.data != null && canUpdateSample(query.data.role, query.data),
   );
-  const attachmentChanges = useAttachmentChanges(
-    sampleId,
-    query.data?.attachments.length ?? 0,
-  );
+  const attachmentChanges = useAttachmentChanges(sampleId);
 
   if (query.isPending || me.isPending) {
     return <p>{m.samples_loading()}</p>;

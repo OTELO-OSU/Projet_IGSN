@@ -5,32 +5,16 @@ import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-fi
 describe("publishedSampleFrozenField", () => {
   const isFrozen = publishedSampleFrozenField("field_sample", null);
 
-  it.each([
-    "name",
-    "typePath[2]",
-    "location.startLongitude",
-    "location.regionKind",
-    "description.collectionDateStart",
-    "description.collectionDateTimeZone",
-    "scientificContext.provenanceStatus",
-    "scientificContext.hostInstitution",
-    "scientificContext.collectorOrcid",
-  ])("freezes %s on a published sample", (field) => {
-    expect(isFrozen(field)).toBe(true);
+  it("freezes the fields the domain lock map lists", () => {
+    expect(isFrozen("manualGroupIds")).toBe(true);
   });
 
-  it.each([
-    "texture",
-    "collectionMethodPath[0]",
-    "location.startVerticalPosition",
-    "location.verticalReference",
-    "location.localityName",
-    "existenceStatus",
-    "availabilityStatus",
-    "scientificContext.chiefScientistOrcid",
-  ])("leaves %s editable on a published sample", (field) => {
-    expect(isFrozen(field)).toBe(false);
-  });
+  it.each(["name", "typePath[2]", "scientificContext.collectorOrcid"])(
+    "leaves %s editable on a published sample",
+    (field) => {
+      expect(isFrozen(field)).toBe(false);
+    },
+  );
 
   it("freezes the collector name only on the field-sample branch", () => {
     expect(isFrozen("scientificContext.collectorName")).toBe(true);
@@ -42,45 +26,33 @@ describe("publishedSampleFrozenField", () => {
     ).toBe(false);
   });
 
-  it("freezes the collection curator only on the collection-specimen branch", () => {
-    expect(isFrozen("scientificContext.collectionCurator")).toBe(false);
+  it("freezes the collection origin only on the collection-specimen branch", () => {
+    expect(isFrozen("scientificContext.collectionOrigin")).toBe(false);
     expect(
       publishedSampleFrozenField(
         "collection_specimen",
         null,
-      )("scientificContext.collectionCurator"),
+      )("scientificContext.collectionOrigin"),
     ).toBe(true);
   });
 
   it("freezes no branch field without a provenance status", () => {
     const withoutBranch = publishedSampleFrozenField(null, null);
     expect(withoutBranch("scientificContext.collectorName")).toBe(false);
-    expect(withoutBranch("scientificContext.collectionCurator")).toBe(false);
-    expect(withoutBranch("name")).toBe(true);
+    expect(withoutBranch("scientificContext.collectionOrigin")).toBe(false);
+    expect(withoutBranch("manualGroupIds")).toBe(true);
   });
 
   describe("material levels", () => {
-    it.each([
-      ["materialPath[0]", "rock.igneous.plutonic.felsic.granite"],
-      ["materialPath[3]", "rock.igneous.plutonic.felsic.granite"],
-      ["materialPath[0]", "rock.igneous.plutonic"],
-      ["materialPath[3]", "rock.igneous.plutonic"],
-    ])("freezes %s on %s, down to the frozen prefix", (field, material) => {
-      expect(publishedSampleFrozenField("field_sample", material)(field)).toBe(
-        true,
-      );
-    });
-
-    it.each(["materialPath[4]", "materialPath[5]"])(
-      "leaves %s editable, below the frozen prefix",
-      (field) => {
-        expect(
-          publishedSampleFrozenField(
-            "field_sample",
-            "rock.igneous.plutonic.felsic.granite",
-          )(field),
-        ).toBe(false);
-      },
+    const isFrozenLevel = publishedSampleFrozenField(
+      "field_sample",
+      "rock.igneous.plutonic.felsic.granite",
     );
+
+    it("freezes the root level alone, leaving the deeper ones editable", () => {
+      expect(isFrozenLevel("materialPath[0]")).toBe(true);
+      expect(isFrozenLevel("materialPath[1]")).toBe(false);
+      expect(isFrozenLevel("materialPath[4]")).toBe(false);
+    });
   });
 });

@@ -89,14 +89,14 @@ describe("SampleSyntheticDetailsFields", () => {
     const screen = await renderSyntheticForm(onSubmit);
 
     await pickOption(screen, "Starting material *", "Synthetic");
-    await pickOption(screen, "Nature of starting material *", "Powder");
+    await pickOption(screen, "Nature of starting material", "Powder");
     await screen
       .getByLabelText("Starting material composition *", { exact: true })
       .fill("SiO2 + MgO");
     await pickOption(screen, "Final product *", "Glass");
     await pickOption(screen, "Experiment type", "Fusion");
     await screen
-      .getByLabelText("Experiment duration *", { exact: true })
+      .getByLabelText("Experiment duration", { exact: true })
       .fill("3");
     await pickOption(screen, "Experiment duration unit *", "h");
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
@@ -223,41 +223,8 @@ describe("SampleSyntheticDetailsFields", () => {
     );
   });
 
-  it("should hide the duration and submit only the flag when the duration is not relevant", async () => {
-    const onSubmit = vi.fn();
-    const screen = await renderSyntheticForm(onSubmit);
-
-    await screen
-      .getByLabelText("Experiment duration *", { exact: true })
-      .fill("3");
-    await pickOption(screen, "Experiment duration unit *", "h");
-    await screen.getByRole("switch", { name: "Duration not relevant" }).click();
-
-    await expect
-      .element(screen.getByLabelText("Experiment duration *", { exact: true }))
-      .not.toBeInTheDocument();
-    await expect
-      .element(
-        screen.getByRole("combobox", {
-          name: "Experiment duration unit *",
-          exact: true,
-        }),
-      )
-      .not.toBeInTheDocument();
-
-    await screen.getByRole("button", { name: "Create" }).click();
-
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          syntheticDetails: { experimentDurationNotRelevant: true },
-        }),
-      ),
-    );
-  });
-
   it.each([
-    { value: "Experiment duration *", unit: "Experiment duration unit *" },
+    { value: "Experiment duration", unit: "Experiment duration unit *" },
     { value: "Synthesis temperature", unit: "Synthesis temperature unit *" },
     { value: "Synthesis pressure", unit: "Synthesis pressure unit *" },
   ])(
@@ -305,7 +272,7 @@ describe("SampleSyntheticDetailsFields", () => {
     );
   });
 
-  it("should freeze the identifying synthesis fields of a published sample and keep the rest editable", async () => {
+  it("should freeze the operator name alone on a published synthetic sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -337,15 +304,19 @@ describe("SampleSyntheticDetailsFields", () => {
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
 
+    await expect
+      .element(screen.getByLabelText("Operator name *", { exact: true }))
+      .toBeDisabled();
+
     for (const name of [
       "Starting material *",
-      "Nature of starting material *",
+      "Nature of starting material",
       "Final product *",
       "Experiment type",
     ]) {
       await expect
         .element(screen.getByRole("combobox", { name, exact: true }))
-        .toBeDisabled();
+        .toBeEnabled();
     }
     await expect
       .element(
@@ -353,17 +324,10 @@ describe("SampleSyntheticDetailsFields", () => {
           exact: true,
         }),
       )
-      .toBeDisabled();
+      .toBeEnabled();
     await expect
       .element(screen.getByLabelText("Date *", { exact: true }))
-      .toBeDisabled();
-    await expect
-      .element(screen.getByRole("switch", { name: "Duration not relevant" }))
-      .toBeDisabled();
-    await expect
-      .element(screen.getByLabelText("Operator name *", { exact: true }))
-      .toBeDisabled();
-
+      .toBeEnabled();
     await expect
       .element(screen.getByLabelText("Synthesis temperature", { exact: true }))
       .toBeEnabled();

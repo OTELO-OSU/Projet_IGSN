@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { SampleAttachment } from "../attachment/model.ts";
+import type { SampleRelation } from "../relation/model.ts";
 import type { Sample } from "../sample.ts";
 
 import { samplePublishBlockers } from "./sample-publish-blockers.ts";
@@ -88,15 +90,6 @@ describe("samplePublishBlockers", () => {
     ]);
   });
 
-  it.each([{ repository: null }, { repository: { currentArchive: null } }])(
-    "should report current_archive_missing for %o",
-    (overrides) => {
-      expect(samplePublishBlockers({ ...base, ...overrides })).toEqual([
-        "current_archive_missing",
-      ]);
-    },
-  );
-
   it("should report type_missing when type is null", () => {
     expect(samplePublishBlockers({ ...base, type: null })).toEqual([
       "type_missing",
@@ -121,46 +114,20 @@ describe("samplePublishBlockers", () => {
     ]);
   });
 
-  it("should report both type and material blockers independently", () => {
-    expect(
-      samplePublishBlockers({ ...base, type: null, material: null }),
-    ).toEqual(["type_missing", "material_missing"]);
-  });
-
-  it("should report material_incomplete when the path is an internal node", () => {
+  it("should report material_incomplete for a root, which has sub-levels", () => {
     expect(samplePublishBlockers({ ...base, material: "rock" })).toEqual([
       "material_incomplete",
     ]);
   });
 
-  it("should report metamorphic_facies_missing for a metamorphic sample without a facies", () => {
+  it("should publish a material stopped at its second level", () => {
     expect(
-      samplePublishBlockers({
-        ...base,
-        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
-        metamorphicFacies: null,
-      }),
-    ).toEqual(["metamorphic_facies_missing"]);
-  });
-
-  it("should not report metamorphic_facies_missing once the facies is set", () => {
-    expect(
-      samplePublishBlockers({
-        ...base,
-        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
-        metamorphicFacies: "amphibolite",
-      }),
+      samplePublishBlockers({ ...base, material: "rock.igneous" }),
     ).toEqual([]);
   });
 
-  it("should report metamorphic_facies_missing for an out-of-vocabulary facies", () => {
-    expect(
-      samplePublishBlockers({
-        ...base,
-        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
-        metamorphicFacies: "bogus" as Sample["metamorphicFacies"],
-      }),
-    ).toEqual(["metamorphic_facies_missing"]);
+  it("should publish the root material mineral, which has no sub-level", () => {
+    expect(samplePublishBlockers({ ...base, material: "mineral" })).toEqual([]);
   });
 
   it("should report a blocker for a value outside the vocabulary rather than treat it as publishable", () => {
@@ -210,6 +177,16 @@ describe("samplePublishBlockers", () => {
     ).toEqual([]);
   });
 
+  it("should require a location once the material reaches its second level", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        material: "rock.igneous",
+        location: null,
+      }),
+    ).toEqual(["location_position_missing"]);
+  });
+
   it("should not add a location blocker while the material is still incomplete", () => {
     expect(
       samplePublishBlockers({ ...base, material: "rock", location: null }),
@@ -242,20 +219,14 @@ describe("samplePublishBlockers", () => {
     expect(samplePublishBlockers({ ...base, age: null })).toEqual([]);
   });
 
-  it.each([
-    [120, 120],
-    [500, 2000],
-  ])(
-    "should report numeric_age_unit_missing when the bounds %s-%s have no unit",
-    (min, max) => {
-      expect(
-        samplePublishBlockers({
-          ...base,
-          age: { ...emptyAge, numericAgeMin: min, numericAgeMax: max },
-        }),
-      ).toEqual(["numeric_age_unit_missing"]);
-    },
-  );
+  it("should report numeric_age_unit_missing when the bounds have no unit", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        age: { ...emptyAge, numericAgeMin: 500, numericAgeMax: 2000 },
+      }),
+    ).toEqual(["numeric_age_unit_missing"]);
+  });
 
   it("should not report a blocker when a numeric value has its unit", () => {
     expect(
@@ -450,27 +421,7 @@ describe("samplePublishBlockers", () => {
         ...base,
         scientificContext: { provenanceStatus: "field_sample" },
       }),
-    ).toEqual([
-      "funder_organizations_missing",
-      "research_program_name_missing",
-      "chief_scientist_missing",
-      "host_institution_missing",
-      "collector_name_missing",
-    ]);
-  });
-
-  it("should report only the still-missing field-sample fields", () => {
-    expect(
-      samplePublishBlockers({
-        ...base,
-        scientificContext: {
-          provenanceStatus: "field_sample",
-          funderOrganizations: ["02feahw73"],
-          researchProgramName: "Deep Biosphere Survey",
-          chiefScientist: "Marie Curie",
-        },
-      }),
-    ).toEqual(["host_institution_missing", "collector_name_missing"]);
+    ).toEqual(["collector_name_missing"]);
   });
 
   it("should report the missing mandatory fields of the collection-specimen branch", () => {
@@ -509,9 +460,7 @@ describe("samplePublishBlockers", () => {
       samplePublishBlockers({ ...synthetic, syntheticDetails: null }),
     ).toEqual([
       "synthetic_starting_material_missing",
-      "synthetic_starting_material_nature_missing",
       "synthetic_final_product_missing",
-      "synthetic_experiment_duration_missing",
       "synthetic_synthesis_date_missing",
       "synthetic_operator_name_missing",
     ]);
@@ -532,40 +481,92 @@ describe("samplePublishBlockers", () => {
     },
   );
 
-  it.each([
-    { experimentDuration: { value: 2, unit: "hour" } as const },
-    { experimentDurationNotRelevant: true },
-  ])("should lift the experiment duration blocker with %o", (override) => {
+  const relation = (
+    targetResourceType: SampleRelation["targetResourceType"],
+  ): SampleRelation => ({
+    id: "00000000-0000-7000-8000-000000000002",
+    relationType: "references",
+    identifierType: "doi",
+    identifier: "https://doi.org/10.1234/x",
+    targetTitle: "Referenced paper",
+    targetResourceType,
+    relationTypeInformation: null,
+    relatedMetadataScheme: null,
+    schemeURI: null,
+    schemeType: null,
+    description: null,
+  });
+
+  it("should report relation_resource_type_missing when a relation has no resource type", () => {
     expect(
-      samplePublishBlockers({
-        ...synthetic,
-        syntheticDetails: {
-          ...syntheticDetails,
-          experimentDuration: null,
-          ...override,
-        },
-      }),
+      samplePublishBlockers({ ...base, relations: [relation(null)] }),
+    ).toEqual(["relation_resource_type_missing"]);
+  });
+
+  it("should not report relation_resource_type_missing once every relation has one", () => {
+    expect(
+      samplePublishBlockers({ ...base, relations: [relation("dataset")] }),
     ).toEqual([]);
   });
 
+  const attachment = (
+    overrides: Partial<SampleAttachment> = {},
+  ): SampleAttachment => ({
+    id: "00000000-0000-7000-8000-000000000003",
+    name: "sample.pdf",
+    mediaType: "application/pdf",
+    title: "Field notes",
+    targetResourceType: "text",
+    description: "A scan of the outcrop",
+    ...overrides,
+  });
+
+  it.each([
+    { targetResourceType: null },
+    { title: null },
+    { description: null },
+  ])(
+    "should report attachment_metadata_missing for an attachment with %o",
+    (overrides) => {
+      expect(
+        samplePublishBlockers({
+          ...base,
+          attachments: [attachment(overrides)],
+        }),
+      ).toEqual(["attachment_metadata_missing"]);
+    },
+  );
+
   it("should report attachment_limit_exceeded above the default limit", () => {
     expect(
-      samplePublishBlockers({ ...base, attachments: Array(6).fill({}) }),
+      samplePublishBlockers({
+        ...base,
+        attachments: Array(6).fill(attachment()),
+      }),
     ).toEqual(["attachment_limit_exceeded"]);
   });
 
   it("should report no blocker at the default limit", () => {
     expect(
-      samplePublishBlockers({ ...base, attachments: Array(5).fill({}) }),
+      samplePublishBlockers({
+        ...base,
+        attachments: Array(5).fill(attachment()),
+      }),
     ).toEqual([]);
   });
 
   it("should honour an explicit upload limit", () => {
     expect(
-      samplePublishBlockers({ ...base, attachments: Array(4).fill({}) }, 3),
+      samplePublishBlockers(
+        { ...base, attachments: Array(4).fill(attachment()) },
+        3,
+      ),
     ).toEqual(["attachment_limit_exceeded"]);
     expect(
-      samplePublishBlockers({ ...base, attachments: Array(3).fill({}) }, 3),
+      samplePublishBlockers(
+        { ...base, attachments: Array(3).fill(attachment()) },
+        3,
+      ),
     ).toEqual([]);
   });
 

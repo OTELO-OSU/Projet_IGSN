@@ -15,6 +15,7 @@ import { Input } from "@projet-igsn/design-system/components/ui/input";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { Textarea } from "@projet-igsn/design-system/components/ui/textarea";
 import { cn } from "@projet-igsn/design-system/lib/utils";
+import { withRequired } from "@projet-igsn/design-system/lib/with-required";
 import { RELATION_TARGET_RESOURCE_TYPES } from "@projet-igsn/domain/sample/relation/target-resource-type";
 import { Download, Trash2, Undo2 } from "lucide-react";
 
@@ -23,6 +24,7 @@ import { AttachmentDropZone } from "#/samples/attachment-drop-zone.tsx";
 import { relationTargetResourceTypeLabel } from "#/samples/sample-labels.ts";
 import {
   type AttachmentEdit,
+  keptAttachmentMetadata,
   type SampleAttachmentChanges,
 } from "#/samples/use-attachment-changes.ts";
 import { useDownloadAttachment } from "#/samples/use-download-attachment.ts";
@@ -115,7 +117,7 @@ function AttachmentRowLayout({
         {fields ? (
           <div className="grid gap-2">
             <Label htmlFor={`${fields.id}-title`}>
-              {m.attachment_title_label()}
+              {withRequired(m.attachment_title_label(), true)}
             </Label>
             <Input
               id={`${fields.id}-title`}
@@ -126,7 +128,7 @@ function AttachmentRowLayout({
               }
             />
             <Label htmlFor={`${fields.id}-resource-type`}>
-              {m.attachment_resource_type_label()}
+              {withRequired(m.attachment_resource_type_label(), true)}
             </Label>
             <Combobox
               id={`${fields.id}-resource-type`}
@@ -143,7 +145,7 @@ function AttachmentRowLayout({
               }
             />
             <Label htmlFor={`${fields.id}-description`}>
-              {m.field_description()}
+              {withRequired(m.field_description(), true)}
             </Label>
             <Textarea
               id={`${fields.id}-description`}
@@ -235,6 +237,7 @@ export function SampleAttachments({
   changes,
 }: SampleAttachmentsProps) {
   const { pending, addFiles, removeFile, setPendingEdit } = changes;
+  const keptCount = keptAttachmentMetadata(attachments, changes).length;
   const isDisabled = useIsFieldDisabled("relations");
 
   return (
@@ -243,12 +246,12 @@ export function SampleAttachments({
       <p
         className={cn(
           "text-sm",
-          changes.keptCount > UPLOAD_LIMIT
+          keptCount > UPLOAD_LIMIT
             ? "text-destructive"
             : "text-muted-foreground",
         )}
       >
-        {m.attachment_count({ count: changes.keptCount, limit: UPLOAD_LIMIT })}
+        {m.attachment_count({ count: keptCount, limit: UPLOAD_LIMIT })}
       </p>
       {pending.length > 0 ? (
         <ul className="grid gap-2">

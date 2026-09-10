@@ -837,7 +837,7 @@ const PUBLISHED: DemoRow[] = [
     material: "synthetic_rock_mineral",
     collectionMethod: "experimental_apparatus",
     description: on("2024-11-30"),
-    syntheticDetails: { ...SYNTHESIS, experimentDurationNotRelevant: true },
+    syntheticDetails: SYNTHESIS,
   },
   {
     name: "Sahara Ordinary Chondrite",
