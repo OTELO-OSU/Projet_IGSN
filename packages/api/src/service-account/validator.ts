@@ -1,3 +1,4 @@
+import { listSamplesQuerySchema } from "@projet-igsn/domain/sample/sample-validator";
 import {
   listServiceAccountsQuerySchema,
   serviceAccountBodySchema,
@@ -27,4 +28,10 @@ export const validateServiceAccountRequestBody = zodValidator(
   "json",
   serviceAccountRequestSchema,
   "Invalid service account request",
+);
+
+export const validateListServiceSamplesQuery = zodValidator(
+  "query",
+  listSamplesQuerySchema.pick({ page: true, perPage: true }),
+  "Invalid query parameters",
 );

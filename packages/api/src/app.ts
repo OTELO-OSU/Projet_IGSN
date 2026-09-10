@@ -94,7 +94,10 @@ export function createApp(
 
   const serviceRoutes = new Hono()
     .use("*", rateLimit(rateLimitConfig, "ip"))
-    .route("/", createServiceRoutes(serviceAccountRepository));
+    .route(
+      "/",
+      createServiceRoutes(serviceAccountRepository, sampleRepository),
+    );
 
   const adminRoutes = new Hono<AuthenticatedEnv>()
     .use("*", requireAuth)
