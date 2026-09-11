@@ -9,7 +9,7 @@ const base = {
   name: "Other rock sample",
   nature: "hand_sample" as const,
   type: null,
-  material: "rock.other",
+  material: "rock_and_sediment.rock.other",
   collectionMethod: null,
 };
 
@@ -22,7 +22,7 @@ describe("sample other material name persistence", () => {
         materialOtherName: "Ophicalcite",
       });
       expect(created).toMatchObject({
-        material: "rock.other",
+        material: "rock_and_sediment.rock.other",
         materialOtherName: "Ophicalcite",
       });
       expect(await readSample(db, created.id)).toEqual(created);

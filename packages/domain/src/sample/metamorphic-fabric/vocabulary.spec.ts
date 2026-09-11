@@ -19,18 +19,24 @@ describe("metamorphicFabricSchema", () => {
 describe("fabricsFor", () => {
   it("should return every fabric for a metamorphic material path", () => {
     expect(
-      fabricsFor("rock.metamorphic.strongly_metamorphosed.gneiss"),
+      fabricsFor(
+        "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
+      ),
     ).toEqual(METAMORPHIC_FABRICS);
   });
 
   it("should return the fabrics as soon as metamorphic is chosen", () => {
-    expect(fabricsFor("rock.metamorphic")).toEqual(METAMORPHIC_FABRICS);
+    expect(fabricsFor("rock_and_sediment.rock.metamorphic")).toEqual(
+      METAMORPHIC_FABRICS,
+    );
   });
 
-  it.each([null, "rock.igneous.plutonic.felsic.granite", "rock", "mineral"])(
-    "should return no fabric for non-metamorphic material %s",
-    (material) => {
-      expect(fabricsFor(material)).toEqual([]);
-    },
-  );
+  it.each([
+    null,
+    "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+    "rock_and_sediment.rock",
+    "rock_and_sediment.mineral",
+  ])("should return no fabric for non-metamorphic material %s", (material) => {
+    expect(fabricsFor(material)).toEqual([]);
+  });
 });

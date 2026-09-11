@@ -455,7 +455,7 @@ describe("a child sample's location", () => {
       const child = await insertSample(db, { ...base, parentIds: [parent.id] });
       await updateSample(db, child.id, {
         ...base,
-        material: "synthetic_rock_mineral",
+        material: "rock_and_sediment.synthetic_rock_mineral",
       });
       expect(await locationIdOf(db, child.id)).toBeNull();
       expect((await readSample(db, parent.id))?.location).toEqual(
@@ -470,7 +470,7 @@ describe("a child sample's location", () => {
     async ({ db }) => {
       const parent = await insertParent(db, {
         ...base,
-        material: "synthetic_rock_mineral",
+        material: "rock_and_sediment.synthetic_rock_mineral",
       });
       const child = await insertSample(db, {
         ...base,

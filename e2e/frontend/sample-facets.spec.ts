@@ -12,7 +12,7 @@ test.describe("search facets", () => {
     const { basalt, granite } = published(samples);
     const list = sampleListPage(page);
 
-    await list.gotoWithSearch("material=rock.igneous");
+    await list.gotoWithSearch("material=rock_and_sediment.rock.igneous");
     await list.expectResultCount(2);
     await list.expectSampleLink("Basalt 42", basalt);
     await list.expectSampleLink("Granite 7", granite);
@@ -46,7 +46,7 @@ test.describe("search facets", () => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);
 
-    await list.gotoWithSearch("material=rock.igneous");
+    await list.gotoWithSearch("material=rock_and_sediment.rock.igneous");
     await list.expectResultCount(2);
 
     await list.drillFacet("Material", "Volcanic");
@@ -76,7 +76,7 @@ test.describe("search facets", () => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);
 
-    await list.gotoWithSearch("material=rock.igneous");
+    await list.gotoWithSearch("material=rock_and_sediment.rock.igneous");
     await list.expectResultCount(2);
 
     await list.fillTextFacet("Collector", "Claire Martin", "collectorName");
@@ -89,7 +89,7 @@ test.describe("search facets", () => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);
 
-    await list.gotoWithSearch("material=rock.igneous");
+    await list.gotoWithSearch("material=rock_and_sediment.rock.igneous");
     await list.expectResultCount(2);
 
     await list.fillAgeMin("1");
@@ -105,7 +105,7 @@ test.describe("search facets", () => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);
 
-    await list.gotoWithSearch("material=rock.igneous");
+    await list.gotoWithSearch("material=rock_and_sediment.rock.igneous");
     await list.expectResultCount(2);
 
     await list.pickFacet(
@@ -133,7 +133,7 @@ test.describe("search facets", () => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);
 
-    await list.gotoWithSearch("material=rock.igneous");
+    await list.gotoWithSearch("material=rock_and_sediment.rock.igneous");
     await list.expectResultCount(2);
 
     await list.expectFacetOptionAbsent(GROUP_FACET, "OZCAR-RI");
@@ -147,7 +147,7 @@ test.describe("search facets", () => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);
 
-    await list.gotoWithSearch("material=rock.igneous");
+    await list.gotoWithSearch("material=rock_and_sediment.rock.igneous");
     await list.expectResultCount(2);
 
     await list.expectFacetOptionAbsent("Contributor", "Camille Petit");

@@ -9,7 +9,7 @@ const sample = (overrides: Partial<WithdrawnSample> = {}): WithdrawnSample => ({
   name: "Rhyolite 11",
   nature: "rock_powder",
   type: "core.half_round",
-  material: "rock.igneous",
+  material: "rock_and_sediment.rock.igneous",
   materialOtherName: null,
   location: {
     region: { kind: "continent", country: "FR" },
@@ -46,7 +46,7 @@ describe("WithdrawnSampleView", () => {
     const screen = await renderWithRouter(
       <WithdrawnSampleView
         sample={sample({
-          material: "rock.other",
+          material: "rock_and_sediment.rock.other",
           materialOtherName: "Fossilized wood",
         })}
       />,

@@ -10,12 +10,12 @@ describe("insertSample", () => {
       name: "Basalt 42",
       nature: "hand_sample",
       type: null,
-      material: "rock.igneous.plutonic.felsic.granite",
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
     });
     expect(created).toMatchObject({
       name: "Basalt 42",
       nature: "hand_sample",
-      material: "rock.igneous.plutonic.felsic.granite",
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       texture: null,
     });
   });
@@ -25,11 +25,11 @@ describe("insertSample", () => {
       name: "Granite 1",
       nature: "hand_sample",
       type: null,
-      material: "rock.igneous.plutonic.felsic.granite",
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       texture: "phaneritic",
     });
     expect(created).toMatchObject({
-      material: "rock.igneous.plutonic.felsic.granite",
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       texture: "phaneritic",
     });
   });
@@ -41,12 +41,14 @@ describe("insertSample", () => {
         name: "Gneiss 1",
         nature: "hand_sample",
         type: null,
-        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        material:
+          "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
         metamorphicFacies: "amphibolite",
         metamorphicFabric: "gneissic",
       });
       expect(created).toMatchObject({
-        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        material:
+          "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
         metamorphicFacies: "amphibolite",
         metamorphicFabric: "gneissic",
       });

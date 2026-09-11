@@ -49,8 +49,14 @@ export const VOLCANIC_TEXTURES = [
 ] as const satisfies readonly Texture[];
 
 const TEXTURE_BRANCHES = [
-  { path: "rock.igneous.plutonic", textures: PLUTONIC_TEXTURES },
-  { path: "rock.igneous.volcanic", textures: VOLCANIC_TEXTURES },
+  {
+    path: "rock_and_sediment.rock.igneous.plutonic",
+    textures: PLUTONIC_TEXTURES,
+  },
+  {
+    path: "rock_and_sediment.rock.igneous.volcanic",
+    textures: VOLCANIC_TEXTURES,
+  },
 ];
 
 export function texturesFor(material: string | null): readonly Texture[] {

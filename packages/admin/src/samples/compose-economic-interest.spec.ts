@@ -16,7 +16,7 @@ const draft = (
 
 describe("composeEconomicInterest", () => {
   it.each([
-    ["an ineligible material", "mineral"],
+    ["an ineligible material", "rock_and_sediment.mineral"],
     ["no material", null],
   ])("should send no economic block for %s", (_case, material) => {
     expect(
@@ -34,14 +34,16 @@ describe("composeEconomicInterest", () => {
   });
 
   it("should send no economic block when nothing is entered", () => {
-    expect(composeEconomicInterest(draft({}), "sediment")).toBeNull();
+    expect(
+      composeEconomicInterest(draft({}), "rock_and_sediment.sediment"),
+    ).toBeNull();
   });
 
   it("should keep the detail when no resource type is chosen", () => {
     expect(
       composeEconomicInterest(
         draft({ economicDepositName: "Ruhr" }),
-        "sediment",
+        "rock_and_sediment.sediment",
       ),
     ).toEqual({
       resourceType: null,
@@ -60,7 +62,7 @@ describe("composeEconomicInterest", () => {
           economicInterestElements: ["fe"],
           economicDepositName: "Ruhr",
         }),
-        "sediment",
+        "rock_and_sediment.sediment",
       ),
     ).toEqual({
       resourceType: "hydrocarbon.coal",
@@ -78,7 +80,7 @@ describe("composeEconomicInterest", () => {
           resourceTypePath: toHierarchyPath("hydrocarbon"),
           economicDepositName: "   ",
         }),
-        "sediment",
+        "rock_and_sediment.sediment",
       )?.economicDepositName,
     ).toBeNull();
   });
@@ -105,7 +107,7 @@ describe("toEconomicInterestDraft", () => {
           economicDepositName: "Cigar Lake",
           economicDepositDescription: "Unconformity-related",
         }),
-        "rock.sedimentary",
+        "rock_and_sediment.rock.sedimentary",
       ),
     ).toEqual({
       resourceType: "mineral_and_ore.uranium.sandstone",

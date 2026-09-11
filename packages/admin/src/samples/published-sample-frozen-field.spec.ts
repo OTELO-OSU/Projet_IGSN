@@ -46,12 +46,13 @@ describe("publishedSampleFrozenField", () => {
   describe("material levels", () => {
     const isFrozenLevel = publishedSampleFrozenField(
       "field_sample",
-      "rock.igneous.plutonic.felsic.granite",
+      "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
     );
 
-    it("freezes the root level alone, leaving the deeper ones editable", () => {
+    it("freezes the root and its family, leaving the deeper ones editable", () => {
       expect(isFrozenLevel("materialPath[0]")).toBe(true);
-      expect(isFrozenLevel("materialPath[1]")).toBe(false);
+      expect(isFrozenLevel("materialPath[1]")).toBe(true);
+      expect(isFrozenLevel("materialPath[2]")).toBe(false);
       expect(isFrozenLevel("materialPath[4]")).toBe(false);
     });
   });

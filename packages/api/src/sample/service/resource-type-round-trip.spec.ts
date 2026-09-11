@@ -9,7 +9,7 @@ const base = {
   name: "Resource type sample",
   nature: "hand_sample" as const,
   type: null,
-  material: "rock.igneous.plutonic.felsic.granite",
+  material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
   collectionMethod: null,
 };
 
@@ -62,7 +62,7 @@ describe("sample resource type persistence", () => {
     });
     const updated = await updateSample(db, created.id, {
       ...base,
-      material: "mineral",
+      material: "rock_and_sediment.mineral",
     });
     expect(updated).toMatchObject({
       resourceType: null,

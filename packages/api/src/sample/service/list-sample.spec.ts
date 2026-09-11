@@ -52,7 +52,7 @@ async function insertOneSamplePerStatus(db: Transactional<DB>) {
       name,
       nature: "thin_section",
       type: "individual_sample",
-      material: "sediment",
+      material: "rock_and_sediment.sediment",
       collectionMethod: null,
     });
   await sample("Draft sample");

@@ -300,7 +300,7 @@ describe("admin sample routes", () => {
               name: "Granite published",
               nature: "thin_section",
               type: "individual_sample",
-              material: "sediment.exogenous_detritic.clay",
+              material: "rock_and_sediment.sediment.exogenous_detritic.clay",
               specificName: "GR-2026-001",
               location: {
                 position: { type: "point", longitude: 3, latitude: 45 },
@@ -730,7 +730,7 @@ describe("admin sample routes", () => {
   describe("published field lock", () => {
     const igneous = {
       ...publishable,
-      material: "rock.igneous.plutonic.felsic.granite",
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       texture: "phaneritic" as const,
     };
 
@@ -747,7 +747,7 @@ describe("admin sample routes", () => {
             json: {
               ...publishable,
               name: "Renamed basalt",
-              material: "rock.igneous.plutonic",
+              material: "rock_and_sediment.rock.igneous.plutonic",
               scientificContext: {
                 ...publishable.scientificContext,
                 collectionOrigin: "purchase",
@@ -768,7 +768,9 @@ describe("admin sample routes", () => {
         expect(kept.scientificContext).toMatchObject({
           collectionOrigin: "scientific_expedition",
         });
-        expect(kept.material).toBe("sediment.exogenous_detritic.clay");
+        expect(kept.material).toBe(
+          "rock_and_sediment.sediment.exogenous_detritic.clay",
+        );
         expect(kept.name).toBe("Renamed basalt");
         expect(kept.specificName).toBe("MC-EDIT-1");
       },
@@ -876,13 +878,13 @@ describe("admin sample routes", () => {
     pgTest.for([
       [
         "persists a material refined below the frozen prefix",
-        "rock.igneous.plutonic.felsic.granodiorite",
-        "rock.igneous.plutonic.felsic.granodiorite",
+        "rock_and_sediment.rock.igneous.plutonic.felsic.granodiorite",
+        "rock_and_sediment.rock.igneous.plutonic.felsic.granodiorite",
       ],
       [
         "keeps the stored material on a change of root",
-        "mineral",
-        "rock.igneous.plutonic.felsic.granite",
+        "rock_and_sediment.mineral",
+        "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       ],
     ] as const)("%s", async ([, material, persisted], { db }) => {
       const client = testClient(createApp(db).app);
@@ -915,7 +917,7 @@ describe("admin sample routes", () => {
             param: { id: data.id },
             json: {
               ...publishable,
-              material: "rock",
+              material: "rock_and_sediment.rock",
               expectedUpdatedAt: data.updatedAt,
             },
           },
@@ -928,7 +930,9 @@ describe("admin sample routes", () => {
           .select("material")
           .where("id", "=", data.id)
           .executeTakeFirstOrThrow();
-        expect(row.material).toBe("rock.igneous.plutonic.felsic.granite");
+        expect(row.material).toBe(
+          "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+        );
       },
     );
 
@@ -1002,7 +1006,7 @@ describe("admin sample routes", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "individual_sample",
-          material: "sediment.exogenous_detritic.clay",
+          material: "rock_and_sediment.sediment.exogenous_detritic.clay",
           collectionMethod: null,
           specificName: "MC-2026-007",
           location: { position: { type: "point", longitude: 3, latitude: 45 } },
@@ -1078,7 +1082,10 @@ describe("admin sample routes", () => {
 
   pgTest.for([
     ["no material", { name: "Unclassified draft", material: undefined }],
-    ["an internal-node material", { name: "Rock draft", material: "rock" }],
+    [
+      "an internal-node material",
+      { name: "Rock draft", material: "rock_and_sediment.rock" },
+    ],
   ] as const)(
     "should answer 409 when publishing a sample with %s",
     async ([, { name, material }], { db }) => {
@@ -1371,18 +1378,19 @@ describe("admin sample routes", () => {
       [
         "a leaf material path and texture",
         {
-          material: "rock.igneous.plutonic.felsic.granite",
+          material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
           texture: "phaneritic",
         },
         {
-          material: "rock.igneous.plutonic.felsic.granite",
+          material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
           texture: "phaneritic",
         },
       ],
       [
         "a metamorphic facies",
         {
-          material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+          material:
+            "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
           metamorphicFacies: "amphibolite",
         },
         { metamorphicFacies: "amphibolite" },
@@ -1436,7 +1444,7 @@ describe("admin sample routes", () => {
         const res = await postSample(createApp(db).app, {
           name: "Basalt",
           nature: "thin_section",
-          material: "rock.igneous.volcanic.mafic.basalt",
+          material: "rock_and_sediment.rock.igneous.volcanic.mafic.basalt",
           texture: "cumulate",
         });
         expect(res.status).toBe(400);
@@ -1453,7 +1461,8 @@ describe("admin sample routes", () => {
               name: "Gneiss",
               nature: "thin_section",
               type: null,
-              material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+              material:
+                "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
             },
           },
           { headers: authHeader },
@@ -1462,7 +1471,8 @@ describe("admin sample routes", () => {
         expect(await res.json()).toMatchObject({
           data: {
             name: "Gneiss",
-            material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+            material:
+              "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
             metamorphicFacies: null,
           },
         });
@@ -1478,7 +1488,7 @@ describe("admin sample routes", () => {
         const res = await postSample(createApp(db).app, {
           name: "Basalt",
           nature: "thin_section",
-          material: "rock.igneous.volcanic.mafic.basalt",
+          material: "rock_and_sediment.rock.igneous.volcanic.mafic.basalt",
           ...fields,
         });
         expect(res.status).toBe(400);

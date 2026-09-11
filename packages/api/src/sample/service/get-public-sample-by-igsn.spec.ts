@@ -14,7 +14,7 @@ describe("getPublicSampleByIgsn", () => {
       name: "Basalte du Massif Central",
       nature: "thin_section",
       type: null,
-      material: "sediment",
+      material: "rock_and_sediment.sediment",
       collectionMethod: null,
     });
     const published = await publishSample(db, created.id);
@@ -30,7 +30,7 @@ describe("getPublicSampleByIgsn", () => {
       name: "Basalte du Massif Central",
       nature: "thin_section",
       type: null,
-      material: "sediment",
+      material: "rock_and_sediment.sediment",
       collectionMethod: null,
     });
     const owner = await insertUser(db, "marie.dupont@univ-lorraine.fr", {

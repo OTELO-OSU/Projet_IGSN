@@ -1,11 +1,11 @@
 import { isPathAtOrUnder } from "../path/is-at-or-under.ts";
 
 const RESOURCE_TYPE_MATERIAL_BRANCHES = [
-  "rock.igneous",
-  "rock.metamorphic",
-  "rock.sedimentary",
-  "rock.hydrothermal",
-  "sediment",
+  "rock_and_sediment.rock.igneous",
+  "rock_and_sediment.rock.metamorphic",
+  "rock_and_sediment.rock.sedimentary",
+  "rock_and_sediment.rock.hydrothermal",
+  "rock_and_sediment.sediment",
 ];
 
 export function allowsResourceType(

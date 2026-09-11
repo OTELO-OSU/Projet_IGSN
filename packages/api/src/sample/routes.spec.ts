@@ -36,7 +36,7 @@ async function createSample(
         name,
         nature: "rock_powder",
         type: "individual_sample",
-        material: "sediment.exogenous_detritic.clay",
+        material: "rock_and_sediment.sediment.exogenous_detritic.clay",
         specificName,
         location: { position: { type: "point", ...position } },
         description: {
@@ -134,14 +134,18 @@ describe("public sample routes", () => {
       await publishSample(client, draft.id);
       // Act / Assert
       const match = await client.samples.$get({
-        query: { page: "1", perPage: "10", material: "sediment" },
+        query: {
+          page: "1",
+          perPage: "10",
+          material: "rock_and_sediment.sediment",
+        },
       });
       expect(await match.json()).toMatchObject({
         data: [{ name: "Clay sample" }],
         meta: { total: 1 },
       });
       const miss = await client.samples.$get({
-        query: { page: "1", perPage: "10", material: "rock" },
+        query: { page: "1", perPage: "10", material: "rock_and_sediment.rock" },
       });
       expect(await miss.json()).toMatchObject({ data: [], meta: { total: 0 } });
     },
@@ -477,7 +481,7 @@ describe("public sample routes", () => {
           name: "Rhyolite retirée",
           nature: "rock_powder",
           type: "individual_sample",
-          material: "sediment.exogenous_detritic.clay",
+          material: "rock_and_sediment.sediment.exogenous_detritic.clay",
           materialOtherName: null,
           location: { region: null, localityName: null },
           collectorName: null,

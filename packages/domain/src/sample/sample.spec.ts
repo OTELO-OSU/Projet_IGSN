@@ -181,14 +181,17 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse({
       name: "Granite 1",
       nature: "hand_sample",
-      material: "rock.igneous.plutonic.felsic.granite",
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       texture: "phaneritic",
     });
     expect(result).toMatchObject({ success: true });
   });
 
   it.each([
-    { material: "rock.igneous.plutonic.felsic.granite", texture: "glassy" },
+    {
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+      texture: "glassy",
+    },
     { material: null, texture: "phaneritic" },
   ])(
     "should reject a texture inconsistent with the material %o",
@@ -207,7 +210,8 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse({
       name: "Gneiss 1",
       nature: "hand_sample",
-      material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+      material:
+        "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
       metamorphicFacies: "amphibolite",
     });
     expect(result).toMatchObject({ success: true });
@@ -217,7 +221,8 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse({
       name: "Gneiss 2",
       nature: "hand_sample",
-      material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+      material:
+        "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
       metamorphicFabric: "gneissic",
     });
     expect(result).toMatchObject({ success: true });
@@ -225,12 +230,12 @@ describe("createSampleSchema", () => {
 
   it.each([
     {
-      material: "rock.igneous.plutonic.felsic.granite",
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       metamorphicFacies: "amphibolite",
     },
     { material: null, metamorphicFacies: "amphibolite" },
     {
-      material: "rock.igneous.plutonic.felsic.granite",
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       metamorphicFabric: "gneissic",
     },
     { material: null, metamorphicFabric: "gneissic" },
@@ -250,23 +255,26 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse({
       name: "Synthetic 1",
       nature: "hand_sample",
-      material: "synthetic_rock_mineral",
+      material: "rock_and_sediment.synthetic_rock_mineral",
     });
     expect(result).toMatchObject({ success: true });
   });
 
   it.each([
     [
-      "synthetic_rock_mineral",
+      "rock_and_sediment.synthetic_rock_mineral",
       { location: { position: { type: "point", longitude: 0, latitude: 0 } } },
     ],
     [
-      "synthetic_rock_mineral",
+      "rock_and_sediment.synthetic_rock_mineral",
       { geologicalContextDescription: "Basaltic plateau carved by the river" },
     ],
-    ["synthetic_rock_mineral", { geomorphologicalEnvironment: "marine_zone" }],
     [
-      "extraterrestrial_rock.returned_samples.lunar_sample",
+      "rock_and_sediment.synthetic_rock_mineral",
+      { geomorphologicalEnvironment: "marine_zone" },
+    ],
+    [
+      "rock_and_sediment.extraterrestrial_rock.returned_samples.lunar_sample",
       { location: { position: { type: "point", longitude: 0, latitude: 0 } } },
     ],
   ] as const)(
@@ -286,13 +294,13 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse({
       name: "Synthetic 1",
       nature: "hand_sample",
-      material: "synthetic_rock_mineral",
+      material: "rock_and_sediment.synthetic_rock_mineral",
       syntheticDetails: { finalProduct: "glass" },
     });
     expect(result).toMatchObject({ success: true });
   });
 
-  it.each(["rock.igneous.plutonic.felsic.granite", null])(
+  it.each(["rock_and_sediment.rock.igneous.plutonic.felsic.granite", null])(
     "should reject synthetic details on the non-synthetic material %s",
     (material) => {
       const result = createSampleSchema.safeParse({
@@ -309,15 +317,15 @@ describe("createSampleSchema", () => {
     const result = createSampleSchema.safeParse({
       name: "Other 1",
       nature: "hand_sample",
-      material: "rock.other",
+      material: "rock_and_sediment.rock.other",
       materialOtherName: "Impactite",
     });
     expect(result).toMatchObject({ success: true });
   });
 
   it.each([
-    "rock.igneous",
-    "rock.sedimentary.clastic_sedimentary_rock.other",
+    "rock_and_sediment.rock.igneous",
+    "rock_and_sediment.rock.sedimentary.clastic_sedimentary_rock.other",
     null,
   ])("should reject a material free text on the material %s", (material) => {
     const result = createSampleSchema.safeParse({

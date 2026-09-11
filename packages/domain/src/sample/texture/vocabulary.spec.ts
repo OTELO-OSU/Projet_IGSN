@@ -19,24 +19,26 @@ describe("textureSchema", () => {
 
 describe("texturesFor", () => {
   it("should return the plutonic textures for a plutonic material path", () => {
-    expect(texturesFor("rock.igneous.plutonic.felsic.granite")).toEqual(
+    expect(
+      texturesFor("rock_and_sediment.rock.igneous.plutonic.felsic.granite"),
+    ).toEqual(PLUTONIC_TEXTURES);
+  });
+
+  it("should return the plutonic textures as soon as the plutonic branch is chosen", () => {
+    expect(texturesFor("rock_and_sediment.rock.igneous.plutonic")).toEqual(
       PLUTONIC_TEXTURES,
     );
   });
 
-  it("should return the plutonic textures as soon as the plutonic branch is chosen", () => {
-    expect(texturesFor("rock.igneous.plutonic")).toEqual(PLUTONIC_TEXTURES);
-  });
-
   it("should return the volcanic textures for a volcanic material path", () => {
-    expect(texturesFor("rock.igneous.volcanic.mafic.basalt")).toEqual(
-      VOLCANIC_TEXTURES,
-    );
+    expect(
+      texturesFor("rock_and_sediment.rock.igneous.volcanic.mafic.basalt"),
+    ).toEqual(VOLCANIC_TEXTURES);
   });
 
   it.each([
-    "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
-    "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.volcanic.mafic.basalt",
+    "rock_and_sediment.rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
+    "rock_and_sediment.rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.volcanic.mafic.basalt",
   ])(
     "should return no textures under the metamorphic meta_igneous_rock branch %s",
     (material) => {
@@ -44,7 +46,12 @@ describe("texturesFor", () => {
     },
   );
 
-  it.each([null, "rock.igneous", "rock.sedimentary.microbialite", "mineral"])(
+  it.each([
+    null,
+    "rock_and_sediment.rock.igneous",
+    "rock_and_sediment.rock.sedimentary.microbialite",
+    "rock_and_sediment.mineral",
+  ])(
     "should return no textures for non-igneous-branch material %s",
     (material) => {
       expect(texturesFor(material)).toEqual([]);

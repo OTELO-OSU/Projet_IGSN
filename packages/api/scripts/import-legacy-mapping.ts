@@ -100,10 +100,12 @@ const ROCK_FAMILIES = new Set([
   "unknown",
 ]);
 
+const MATERIAL_ROOT = "rock_and_sediment";
+
 const MATERIAL_ROOT_BY_LEGACY: Record<string, string> = {
-  rock: "rock",
-  sediment: "sediment",
-  mineral: "mineral",
+  rock: "rock_and_sediment.rock",
+  sediment: "rock_and_sediment.sediment",
+  mineral: "rock_and_sediment.mineral",
 };
 
 // Targets follow the domain expert's mapping table; the legacy values it leaves
@@ -133,7 +135,7 @@ const MATERIAL_SPECIALS: Record<string, string> = {
   "rock.sedimentary.volcaniclastic": "rock.sedimentary.volcaniclastic_rock",
 };
 
-function classificationCandidate(classification: string): string {
+function unrootedCandidate(classification: string): string {
   const path = slugPath(classification);
   const [root = "", ...rest] = path.split(".");
   if (root === "xenolithic") {
@@ -145,15 +147,20 @@ function classificationCandidate(classification: string): string {
   return MATERIAL_SPECIALS[rooted] ?? rooted;
 }
 
+function classificationCandidate(classification: string): string {
+  return `${MATERIAL_ROOT}.${unrootedCandidate(classification)}`;
+}
+
 export function mapMaterial(
   classification: string | null,
   material: string | null,
 ): string | null {
   if (classification) {
-    return longestValidPrefix(
+    const path = longestValidPrefix(
       classificationCandidate(classification),
       MATERIAL_PATH_SET,
     );
+    return path === MATERIAL_ROOT ? null : path;
   }
   if (material) {
     return MATERIAL_ROOT_BY_LEGACY[material.trim().toLowerCase()] ?? null;

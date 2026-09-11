@@ -144,7 +144,7 @@ describe("listSamplesQuerySchema", () => {
     expect(
       listSamplesQuerySchema.parse({
         type: "core.section",
-        material: "rock.igneous.plutonic",
+        material: "rock_and_sediment.rock.igneous.plutonic",
         nature: "rock_powder",
         specificName: "Basalt",
         collectorName: "Marie Curie",
@@ -156,7 +156,7 @@ describe("listSamplesQuerySchema", () => {
       page: 1,
       perPage: DEFAULT_PAGE_SIZE,
       type: "core.section",
-      material: "rock.igneous.plutonic",
+      material: "rock_and_sediment.rock.igneous.plutonic",
       nature: "rock_powder",
       collectorName: "Marie Curie",
       ageMin: 10,

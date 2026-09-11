@@ -552,7 +552,7 @@ describe("SampleDescriptionFields", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
-        material: null,
+        material: "rock_and_sediment",
         materialOtherName: null,
         collectionMethod: null,
         collectionMethodDescription: null,

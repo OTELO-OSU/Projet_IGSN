@@ -21,39 +21,50 @@ const prefixesOf = (path: string) => {
 
 describe("frozenMaterialPrefix", () => {
   it.each([
-    ["sediment.exogenous_detritic", "sediment"],
-    ["rock.igneous.plutonic.felsic.granite", "rock"],
     [
-      "extraterrestrial_rock.meteorites.chondrites.carbonaceous_chondrites.ci",
-      "extraterrestrial_rock",
+      "rock_and_sediment.sediment.exogenous_detritic",
+      "rock_and_sediment.sediment",
+    ],
+    [
+      "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+      "rock_and_sediment.rock",
+    ],
+    [
+      "rock_and_sediment.extraterrestrial_rock.meteorites.chondrites.carbonaceous_chondrites.ci",
+      "rock_and_sediment.extraterrestrial_rock",
     ],
   ])("unlocks %s at %s", (material, expected) => {
     expect(MATERIAL_PATHS).toContain(material);
     expect(frozenMaterialPrefix(material)).toBe(expected);
   });
 
-  it.each(["mineral", "synthetic_rock_mineral"])(
-    "keeps %s wholly frozen",
-    (material) => {
-      expect(MATERIAL_PATHS).toContain(material);
-      expect(frozenMaterialPrefix(material)).toBeNull();
-    },
-  );
+  it.each([
+    "rock_and_sediment.mineral",
+    "rock_and_sediment.synthetic_rock_mineral",
+  ])("keeps %s wholly frozen", (material) => {
+    expect(MATERIAL_PATHS).toContain(material);
+    expect(frozenMaterialPrefix(material)).toBeNull();
+  });
 
   it("returns null for a sample with no material", () => {
     expect(frozenMaterialPrefix(null)).toBeNull();
   });
 
   it("unlocks a path whose deepest segment is not in the tree at its root", () => {
-    expect(frozenMaterialPrefix("rock.igneous.plutonic.felsic.unlisted")).toBe(
-      "rock",
-    );
+    expect(
+      frozenMaterialPrefix(
+        "rock_and_sediment.rock.igneous.plutonic.felsic.unlisted",
+      ),
+    ).toBe("rock_and_sediment.rock");
   });
 });
 
 describe("frozenWhenPublished marks in the material tree", () => {
-  it("marks no root editable, so a published sample cannot change what it is", () => {
-    expect(MATERIAL_ROOTS.filter(isEditable)).toEqual([]);
+  it("marks neither root nor family editable, so a published sample cannot change what it is", () => {
+    const families = MATERIAL_ROOTS.flatMap((root) =>
+      pathChildren(MATERIAL_PATHS, root),
+    );
+    expect([...MATERIAL_ROOTS, ...families].filter(isEditable)).toEqual([]);
   });
 
   it("gives a wholly frozen path uniformly frozen or uniformly editable children", () => {

@@ -13,7 +13,7 @@ export const draft = {
 export const publishableSample = {
   ...draft,
   type: "individual_sample",
-  material: "sediment.exogenous_detritic.clay",
+  material: "rock_and_sediment.sediment.exogenous_detritic.clay",
   location: {
     position: { type: "point" as const, longitude: 3, latitude: 45 },
   },

@@ -25,19 +25,19 @@ const {
 
 describe("materialPathLabel", () => {
   it.each([
-    ["rock", "Rock"],
-    ["rock.igneous.plutonic.felsic.granite", "Granite"],
+    ["rock_and_sediment", "Rock and sediment"],
+    ["rock_and_sediment.rock.igneous.plutonic.felsic.granite", "Granite"],
   ] as const)("should label %s as its node name %s", (path, label) => {
     expect(materialPathLabel(path)).toBe(label);
   });
 
   it.each([
     [
-      "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic",
+      "rock_and_sediment.rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic",
       "Meta-Plutonic",
     ],
     [
-      "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock",
+      "rock_and_sediment.rock.metamorphic.weakly_metamorphosed.meta_igneous_rock",
       "Meta-igneous rock",
     ],
   ] as const)("should prefix %s with Meta- as %s", (path, label) => {

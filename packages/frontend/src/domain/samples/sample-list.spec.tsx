@@ -9,7 +9,7 @@ function sampleItem(overrides: Partial<CardSample> = {}): CardSample {
     name: "Basalt 42",
     nature: "rock_powder",
     type: null,
-    material: "rock.igneous",
+    material: "rock_and_sediment.rock.igneous",
     materialOtherName: null,
     specificName: null,
     location: null,
@@ -74,7 +74,7 @@ describe("SampleList", () => {
       "Basalt 42",
       "0123456789ABCDEFGHJKMNPQRS",
       "Core > Core Half round / Rock powder",
-      "Rock > Igneous > Fresh basalt",
+      "Rock and sediment > Rock > Igneous > Fresh basalt",
       "France > Piton de la Fournaise",
       "Collector name: Marie Curie",
     ]);
@@ -94,13 +94,16 @@ describe("SampleList", () => {
   it.each([
     [
       "no trailing separator when the specific name is missing",
-      { material: "rock.igneous" },
-      "Rock > Igneous",
+      { material: "rock_and_sediment.rock.igneous" },
+      "Rock and sediment > Rock > Igneous",
     ],
     [
       "the other material free text as the last step",
-      { material: "rock.other", materialOtherName: "Fossilized wood" },
-      "Rock > Other > Fossilized wood",
+      {
+        material: "rock_and_sediment.rock.other",
+        materialOtherName: "Fossilized wood",
+      },
+      "Rock and sediment > Rock > Other > Fossilized wood",
     ],
     [
       "the specific name alone when the sample is unclassified",
@@ -169,7 +172,7 @@ describe("SampleList", () => {
       "Basalt 42",
       "0123456789ABCDEFGHJKMNPQRS",
       "Rock powder",
-      "Rock > Igneous",
+      "Rock and sediment > Rock > Igneous",
     ]);
   });
 

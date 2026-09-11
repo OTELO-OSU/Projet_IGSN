@@ -18,19 +18,25 @@ describe("metamorphicFaciesSchema", () => {
 
 describe("faciesFor", () => {
   it("should return every facies for a metamorphic material path", () => {
-    expect(faciesFor("rock.metamorphic.strongly_metamorphosed.gneiss")).toEqual(
+    expect(
+      faciesFor(
+        "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
+      ),
+    ).toEqual(METAMORPHIC_FACIES);
+  });
+
+  it("should return the facies as soon as metamorphic is chosen", () => {
+    expect(faciesFor("rock_and_sediment.rock.metamorphic")).toEqual(
       METAMORPHIC_FACIES,
     );
   });
 
-  it("should return the facies as soon as metamorphic is chosen", () => {
-    expect(faciesFor("rock.metamorphic")).toEqual(METAMORPHIC_FACIES);
+  it.each([
+    null,
+    "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+    "rock_and_sediment.rock",
+    "rock_and_sediment.mineral",
+  ])("should return no facies for non-metamorphic material %s", (material) => {
+    expect(faciesFor(material)).toEqual([]);
   });
-
-  it.each([null, "rock.igneous.plutonic.felsic.granite", "rock", "mineral"])(
-    "should return no facies for non-metamorphic material %s",
-    (material) => {
-      expect(faciesFor(material)).toEqual([]);
-    },
-  );
 });

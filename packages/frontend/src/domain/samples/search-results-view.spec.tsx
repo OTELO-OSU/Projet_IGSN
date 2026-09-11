@@ -9,7 +9,7 @@ import { SearchResultsView } from "./search-results-view.tsx";
 const sample = {
   igsn: "0123456789ABCDEFGHJKMNPQRS",
   name: "Basalt 42",
-  material: "rock.igneous",
+  material: "rock_and_sediment.rock.igneous",
 } as unknown as Sample;
 
 type ViewProps = Parameters<typeof SearchResultsView>[0];
