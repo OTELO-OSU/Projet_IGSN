@@ -165,7 +165,12 @@ describe("SampleView", () => {
 
   it.each<[string, Partial<Sample>, string, string]>([
     ["Type", { type: "core.half_round" }, "Core", "Core Half round"],
-    ["Material", { material: "rock.igneous" }, "Rock", "Igneous"],
+    [
+      "Material",
+      { material: "rock_and_sediment.rock.igneous" },
+      "Rock",
+      "Igneous",
+    ],
     [
       "Collection method",
       { collectionMethod: "coring.gravity_corer" },
@@ -183,7 +188,7 @@ describe("SampleView", () => {
         .toBeInTheDocument();
       await expect.element(list.getByText(child)).toBeInTheDocument();
       await expect
-        .element(list.getByRole("img", { name: ">" }))
+        .element(list.getByRole("img", { name: ">" }).first())
         .toBeInTheDocument();
     },
   );
@@ -191,13 +196,16 @@ describe("SampleView", () => {
   it.each<[string, Partial<Sample>, string[]]>([
     [
       "the other material free text as the last material step",
-      { material: "rock.other", materialOtherName: "Fossilized wood" },
-      ["Rock", "Other", "Fossilized wood"],
+      {
+        material: "rock_and_sediment.rock.other",
+        materialOtherName: "Fossilized wood",
+      },
+      ["Rock and sediment", "Rock", "Other", "Fossilized wood"],
     ],
     [
       "no extra step when the sample has no free text",
-      { material: "rock.igneous" },
-      ["Rock", "Igneous"],
+      { material: "rock_and_sediment.rock.igneous" },
+      ["Rock and sediment", "Rock", "Igneous"],
     ],
   ])("should show %s", async (_case, overrides, steps) => {
     const screen = await render(<SampleView sample={sample(overrides)} />);
@@ -214,7 +222,7 @@ describe("SampleView", () => {
     [
       "the translated texture",
       {
-        material: "rock.igneous.plutonic.felsic.granite",
+        material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
         texture: "phaneritic",
       },
       ["Phaneritic"],
@@ -222,7 +230,8 @@ describe("SampleView", () => {
     [
       "the translated metamorphic facies and fabric",
       {
-        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        material:
+          "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
         metamorphicFacies: "amphibolite",
         metamorphicFabric: "schistose",
       },
