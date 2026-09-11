@@ -134,10 +134,12 @@ function toScientificContext(row: Selectable<DB["sample"]>) {
 function toRepository(row: Selectable<DB["sample"]>) {
   return prune({
     currentArchive: row.rep_current_archive,
-    currentArchiveContact: row.rep_current_archive_contact,
+    currentArchiveContactFirstname: row.rep_current_archive_contact_firstname,
+    currentArchiveContactLastname: row.rep_current_archive_contact_lastname,
     collectionName: row.rep_collection_name,
     originalArchive: row.rep_original_archive,
-    originalArchiveContact: row.rep_original_archive_contact,
+    originalArchiveContactFirstname: row.rep_original_archive_contact_firstname,
+    originalArchiveContactLastname: row.rep_original_archive_contact_lastname,
   });
 }
 

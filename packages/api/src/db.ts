@@ -113,10 +113,12 @@ type SampleTable = {
   sc_collection_origin: string | null;
   sc_collection_context_description: string | null;
   rep_current_archive: string | null;
-  rep_current_archive_contact: string | null;
+  rep_current_archive_contact_firstname: string | null;
+  rep_current_archive_contact_lastname: string | null;
   rep_collection_name: string | null;
   rep_original_archive: string | null;
-  rep_original_archive_contact: string | null;
+  rep_original_archive_contact_firstname: string | null;
+  rep_original_archive_contact_lastname: string | null;
   syn_starting_material: string | null;
   syn_starting_material_nature: string | null;
   syn_starting_material_composition: string | null;

@@ -15,10 +15,12 @@ describe("sample repository persistence", () => {
   pgTest("should round-trip a full repository section", async ({ db }) => {
     const repository = {
       currentArchive: "02feahw73",
-      currentArchiveContact: "archives@insu.cnrs.fr",
+      currentArchiveContactFirstname: "Camille",
+      currentArchiveContactLastname: "Durand",
       collectionName: "Chaîne des Puys reference collection",
       originalArchive: "Muséum national d'Histoire naturelle",
-      originalArchiveContact: "collections@mnhn.fr",
+      originalArchiveContactFirstname: "Louise",
+      originalArchiveContactLastname: "Mercier",
     };
     const created = await insertSample(db, { ...base, repository });
     expect(created.repository).toEqual(repository);

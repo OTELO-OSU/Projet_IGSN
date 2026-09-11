@@ -25,8 +25,10 @@ const archivedSample = {
   ...publishableSample,
   repository: {
     ...publishableSample.repository,
-    currentArchiveContact: "curator@example.test",
-    originalArchiveContact: "origin@example.test",
+    currentArchiveContactFirstname: "Camille",
+    currentArchiveContactLastname: "Durand",
+    originalArchiveContactFirstname: "Louise",
+    originalArchiveContactLastname: "Mercier",
   },
 } satisfies CreateSample;
 
