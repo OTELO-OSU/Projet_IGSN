@@ -41,7 +41,7 @@ Attribute casing in the doc is inconsistent working-draft text (`Id`, `Titles=Sa
 These two already hold in the shipped route:
 
 - **The service API sees published samples only.** No draft, no withdrawn, no tombstone. The route forces `status: "published"` inside the account's moderation scope; it is not a client parameter.
-- The API exists so an external service can list published IGSNs and declare new ones published on creation (`POST /service/samples`; see ADR 0036).
+- The API exists so an external service can list published IGSNs, declare new ones published on creation (`POST /service/samples`) and update them (`PUT /service/samples/:igsn`); see ADR 0036.
 
 The rest govern the mapping when it lands:
 
