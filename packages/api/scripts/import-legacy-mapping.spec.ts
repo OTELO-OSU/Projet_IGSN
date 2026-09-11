@@ -70,76 +70,88 @@ function legacyRow(overrides: Partial<LegacyRow> = {}): LegacyRow {
 describe("mapMaterial", () => {
   it("should slug a legacy classification path under rock", () => {
     expect(mapMaterial("Igneous>Volcanic>Mafic", null)).toBe(
-      "rock.igneous.volcanic.mafic",
+      "rock_and_sediment.rock.igneous.volcanic.mafic",
     );
   });
 
   it("should keep the longest valid prefix when the tail is unknown", () => {
     expect(mapMaterial("Igneous>Volcanic>NotAThing", null)).toBe(
-      "rock.igneous.volcanic",
+      "rock_and_sediment.rock.igneous.volcanic",
     );
   });
 
   it("should keep the longest valid prefix when only the family is known", () => {
     expect(mapMaterial("Metamorphic>Granoblastite", "Rock")).toBe(
-      "rock.metamorphic",
+      "rock_and_sediment.rock.metamorphic",
     );
   });
 
   it.each([
     [
       "Metamorphic>Calc-Silicate",
-      "rock.metamorphic.strongly_metamorphosed.calc_silicate_rock",
+      "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.calc_silicate_rock",
     ],
-    ["Metamorphic>Gneiss", "rock.metamorphic.strongly_metamorphosed.gneiss"],
+    [
+      "Metamorphic>Gneiss",
+      "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
+    ],
     [
       "Metamorphic>Granulite",
-      "rock.metamorphic.strongly_metamorphosed.granulite",
+      "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.granulite",
     ],
-    ["Metamorphic>Schist", "rock.metamorphic.strongly_metamorphosed.schist"],
-    ["Metamorphic>Slate", "rock.metamorphic.strongly_metamorphosed.slate"],
+    [
+      "Metamorphic>Schist",
+      "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.schist",
+    ],
+    [
+      "Metamorphic>Slate",
+      "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.slate",
+    ],
     [
       "Metamorphic>Granofels",
-      "rock.metamorphic.strongly_metamorphosed.granofels",
+      "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.granofels",
     ],
     [
       "Sedimentary>Carbonate",
-      "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock",
+      "rock_and_sediment.rock.sedimentary.biochemical_and_chemical_sedimentary_rock.carbonate_rock",
     ],
     [
       "Sedimentary>ConglomerateAndOrBreccia",
-      "rock.sedimentary.clastic_sedimentary_rock.paraconglomerate",
+      "rock_and_sediment.rock.sedimentary.clastic_sedimentary_rock.paraconglomerate",
     ],
     [
       "Sedimentary>Ironstone",
-      "rock.sedimentary.biochemical_and_chemical_sedimentary_rock.ironstone",
+      "rock_and_sediment.rock.sedimentary.biochemical_and_chemical_sedimentary_rock.ironstone",
     ],
     [
       "Sedimentary>MixedCarb-Siliciclastic",
-      "rock.sedimentary.hybrid_sedimentary_rock",
+      "rock_and_sediment.rock.sedimentary.hybrid_sedimentary_rock",
     ],
     [
       "Sedimentary>SiliceousBiogenic",
-      "rock.sedimentary.hybrid_sedimentary_rock",
+      "rock_and_sediment.rock.sedimentary.hybrid_sedimentary_rock",
     ],
     [
       "Sedimentary>Siliciclastic",
-      "rock.sedimentary.clastic_sedimentary_rock.siliciclastic_sedimentary_rock",
+      "rock_and_sediment.rock.sedimentary.clastic_sedimentary_rock.siliciclastic_sedimentary_rock",
     ],
-    ["Sedimentary>Volcaniclastic", "rock.sedimentary.volcaniclastic_rock"],
+    [
+      "Sedimentary>Volcaniclastic",
+      "rock_and_sediment.rock.sedimentary.volcaniclastic_rock",
+    ],
   ] as const)("should map the legacy leaf %s to %s", (legacy, path) => {
     expect(mapMaterial(legacy, "Rock")).toBe(path);
   });
 
   it.each([
-    ["Xenolithic", "rock.xenolithic_rock"],
+    ["Xenolithic", "rock_and_sediment.rock.xenolithic_rock"],
     [
       "Xenolithic>Igneous>Plutonic>Ultramafic",
-      "rock.xenolithic_rock.igneous.plutonic.ultramafic",
+      "rock_and_sediment.rock.xenolithic_rock.igneous.plutonic.ultramafic",
     ],
     [
       "Xenolithic>Metamorphic>Gneiss",
-      "rock.xenolithic_rock.metamorphic.strongly_metamorphosed.gneiss",
+      "rock_and_sediment.rock.xenolithic_rock.metamorphic.strongly_metamorphosed.gneiss",
     ],
   ] as const)(
     "should root the xenolithic classification %s at %s",
@@ -149,7 +161,7 @@ describe("mapMaterial", () => {
   );
 
   it("should fall back to the material root when classification is absent", () => {
-    expect(mapMaterial(null, "Sediment")).toBe("sediment");
+    expect(mapMaterial(null, "Sediment")).toBe("rock_and_sediment.sediment");
   });
 
   it("should drop a classification the new tree cannot place, not coarsen it to the material root", () => {

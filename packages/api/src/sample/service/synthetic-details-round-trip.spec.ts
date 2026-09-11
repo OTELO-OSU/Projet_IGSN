@@ -9,7 +9,7 @@ const base = {
   name: "Synthetic details sample",
   nature: "inapplicable" as const,
   type: null,
-  material: "synthetic_rock_mineral",
+  material: "rock_and_sediment.synthetic_rock_mineral",
   collectionMethod: null,
 };
 

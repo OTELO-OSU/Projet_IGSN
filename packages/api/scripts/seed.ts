@@ -574,7 +574,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     owner: "marie",
     nature: "rock_powder",
     type: "dredge",
-    material: "rock.sedimentary",
+    material: "rock_and_sediment.rock.sedimentary",
     collectionMethod: "dredging.chain_bag",
     collaborators: [{ researcher: "camille", role: "editor" }],
   },
@@ -584,7 +584,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     owner: "jean",
     nature: "hand_sample",
     type: "core.section",
-    material: "rock.igneous",
+    material: "rock_and_sediment.rock.igneous",
     collectionMethod: "coring.gravity_corer.giant",
   },
   {
@@ -593,7 +593,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     owner: "sophie",
     nature: "thin_section",
     type: "core.piece",
-    material: "rock.igneous",
+    material: "rock_and_sediment.rock.igneous",
     collectionMethod: "coring",
   },
   {
@@ -602,7 +602,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     owner: "pierre",
     nature: "rock_chips",
     type: "dredge",
-    material: "rock.sedimentary",
+    material: "rock_and_sediment.rock.sedimentary",
     collectionMethod: "grab.rov",
   },
   {
@@ -611,7 +611,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     owner: "camille",
     nature: "polished_section",
     type: "core.piece",
-    material: "rock.metamorphic",
+    material: "rock_and_sediment.rock.metamorphic",
     collectionMethod: null,
   },
   {
@@ -620,7 +620,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     owner: "jean",
     nature: "hand_sample",
     type: "core.half_round",
-    material: "rock.igneous.volcanic.mafic.basalt",
+    material: "rock_and_sediment.rock.igneous.volcanic.mafic.basalt",
     collectionMethod: "blasting",
     location: {
       position: { type: "point", longitude: 2.96, latitude: 45.77 },
@@ -661,7 +661,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     owner: "pierre",
     nature: "thin_section",
     type: "core.piece",
-    material: "rock.igneous.plutonic.felsic.granite",
+    material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
     collectionMethod: "coring.camera_mounted",
     location: {
       position: { type: "point", longitude: -2.83, latitude: 48.28 },
@@ -691,7 +691,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     owner: "jean",
     nature: "hand_sample",
     type: "core.half_round",
-    material: "rock.igneous.volcanic.felsic.rhyolite",
+    material: "rock_and_sediment.rock.igneous.volcanic.felsic.rhyolite",
     collectionMethod: "blasting",
     location: {
       region: { kind: "continent", country: "FR" },
@@ -725,7 +725,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     owner: "jean",
     nature: "hand_sample",
     type: "core.half_round",
-    material: "rock.igneous.volcanic.felsic.rhyolite",
+    material: "rock_and_sediment.rock.igneous.volcanic.felsic.rhyolite",
     collectionMethod: "blasting",
     location: {
       region: { kind: "continent", country: "FR" },
@@ -758,14 +758,14 @@ export const SEED_SAMPLES: SeedSample[] = [
     name: "Awaiting validation basalt",
     owner: "theo",
     nature: "hand_sample",
-    material: "rock.igneous.volcanic",
+    material: "rock_and_sediment.rock.igneous.volcanic",
   },
   {
     id: "00000000-0000-7000-8000-000000000007",
     name: "Awaiting validation sediment core",
     owner: "theo",
     nature: "sample_fragment",
-    material: "sediment",
+    material: "rock_and_sediment.sediment",
     type: "core",
   },
 ];

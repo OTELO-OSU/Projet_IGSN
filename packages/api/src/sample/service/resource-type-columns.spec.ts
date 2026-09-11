@@ -4,7 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import { resourceTypeColumns } from "./resource-type-columns.ts";
 
-const ELIGIBLE_MATERIAL = "rock.igneous.plutonic.felsic.granite";
+const ELIGIBLE_MATERIAL =
+  "rock_and_sediment.rock.igneous.plutonic.felsic.granite";
 
 describe("resourceTypeColumns", () => {
   it("should keep the resource type, its elements and the details for an eligible material", () => {
@@ -43,7 +44,7 @@ describe("resourceTypeColumns", () => {
     });
   });
 
-  it.each([undefined, "mineral"])(
+  it.each([undefined, "rock_and_sediment.mineral"])(
     "should null every resource type column for the ineligible material %s",
     (material) => {
       expect(

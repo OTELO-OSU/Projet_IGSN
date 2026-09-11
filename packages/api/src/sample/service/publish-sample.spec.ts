@@ -15,7 +15,7 @@ describe("publishSample", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
-        material: "sediment",
+        material: "rock_and_sediment.sediment",
         collectionMethod: null,
       });
       // Act
@@ -122,7 +122,7 @@ describe("publishSample", () => {
       name: "Grès de Fontainebleau",
       nature: "rock_powder",
       type: null,
-      material: "sediment",
+      material: "rock_and_sediment.sediment",
       collectionMethod: null,
     });
     await publishSample(db, created.id);
