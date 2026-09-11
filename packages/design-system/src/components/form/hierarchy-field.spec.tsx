@@ -247,20 +247,47 @@ describe("HierarchyField", () => {
     );
   });
 
-  it("should filter the current level only and clear the search after a pick", async () => {
+  it("should offer deeper levels while searching and fill the levels in between", async () => {
+    const onSubmit = vi.fn();
+    await render(<Harness onSubmit={onSubmit} selected={["rock"]} />);
+
+    await combobox().click();
+    await searchInput().fill("sand");
+
+    await page.getByRole("option", { name: "Sedimentary > Sand" }).click();
+
+    await expect
+      .element(page.getByRole("button", { name: "Sedimentary", exact: true }))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("button", { name: "Sand", exact: true }))
+      .toBeVisible();
+
+    await page.getByRole("button", { name: "Save" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith([
+        "rock",
+        "rock.sedimentary",
+        "rock.sedimentary.sand",
+      ]),
+    );
+  });
+
+  it("should match a direct child by its own label and clear the search after a pick", async () => {
     await render(<Harness />);
 
     await combobox().click();
     await searchInput().fill("wat");
 
     await expect
-      .element(page.getByRole("option", { name: "Water" }))
+      .element(page.getByRole("option", { name: "Water", exact: true }))
       .toBeVisible();
     await expect
       .element(page.getByRole("option", { name: "Rock" }))
       .not.toBeInTheDocument();
 
-    await page.getByRole("option", { name: "Water" }).click();
+    await page.getByRole("option", { name: "Water", exact: true }).click();
 
     await expect.element(searchInput()).toHaveValue("");
     await expect

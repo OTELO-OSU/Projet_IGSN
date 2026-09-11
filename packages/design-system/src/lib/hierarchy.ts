@@ -1,5 +1,6 @@
 import type { TreeNode } from "@projet-igsn/domain/sample/path/tree-node";
 
+import { expandPaths } from "@projet-igsn/domain/sample/path/expand-paths";
 import { isOptionalAtOrAbove } from "@projet-igsn/domain/sample/path/is-optional";
 import { resolvePathNode } from "@projet-igsn/domain/sample/path/resolve-node";
 
@@ -50,6 +51,24 @@ export function hierarchyLevelItems(
     value: path,
     label: hierarchyPathLabel(hierarchy, path, translate),
   }));
+}
+
+export function hierarchyDescendantItems(
+  hierarchy: Hierarchy,
+  parent: string | null,
+  translate: (code: string) => string,
+): { value: string; label: string }[] {
+  const parentDepth = parent === null ? 0 : parent.split(".").length;
+  const roots = parent === null ? hierarchy.roots : [parent];
+  return expandPaths(hierarchy.nodes, roots)
+    .filter((path) => path !== parent)
+    .map((path) => ({
+      value: path,
+      label: toHierarchyPath(path)
+        .slice(parentDepth)
+        .map((level) => hierarchyPathLabel(hierarchy, level, translate))
+        .join(" > "),
+    }));
 }
 
 export function composeHierarchyValue(path: string[]): string | null {

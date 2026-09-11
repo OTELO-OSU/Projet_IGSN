@@ -1,5 +1,6 @@
 import {
   canStopAtPath,
+  hierarchyDescendantItems,
   hierarchyLevelItems,
   hierarchyPathLabel,
   toHierarchyPath,
@@ -73,6 +74,59 @@ describe("hierarchyLevelItems", () => {
       { value: "water.sea", label: "SEA" },
     ]);
   });
+});
+
+describe("hierarchyDescendantItems", () => {
+  it.each([
+    [
+      null,
+      [
+        "rock",
+        "rock.igneous",
+        "rock.sedimentary",
+        "rock.sedimentary.sand",
+        "rock.sedimentary.sand.quartz",
+        "water",
+        "water.water",
+        "water.sea",
+      ],
+    ],
+    [
+      "rock",
+      [
+        "rock.igneous",
+        "rock.sedimentary",
+        "rock.sedimentary.sand",
+        "rock.sedimentary.sand.quartz",
+      ],
+    ],
+    ["rock.igneous", []],
+  ] as const)(
+    "should list every descendant of %j but itself",
+    (parent, expected) => {
+      expect(
+        hierarchyDescendantItems(hierarchy, parent, translate).map(
+          (item) => item.value,
+        ),
+      ).toEqual(expected);
+    },
+  );
+
+  it.each([
+    [null, "rock.sedimentary.sand", "ROCK > SEDIMENTARY > SAND"],
+    ["rock", "rock.sedimentary.sand", "SEDIMENTARY > SAND"],
+    ["rock", "rock.igneous", "IGNEOUS"],
+    [null, "water.water", "WATER > WATER_ONLY"],
+  ] as const)(
+    "should label %j's descendant %j with every level below it",
+    (parent, value, expected) => {
+      expect(
+        hierarchyDescendantItems(hierarchy, parent, translate).find(
+          (item) => item.value === value,
+        )?.label,
+      ).toBe(expected);
+    },
+  );
 });
 
 describe("toHierarchyPath", () => {
