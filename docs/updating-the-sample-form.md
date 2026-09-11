@@ -8,7 +8,7 @@ If TypeScript is not your daily language, three words show up throughout:
 
 - **Schema**: a description of what a valid value looks like (this field is text, that one is a number, this one is optional). We use a library called Zod for it. The form and the API both check data against the same schema, so there is one source of truth and no drifting copies.
 - **Record keyed by code**: an object used as a lookup table. The key is a short machine code like `rock` or `granite`; the value is that entry's data. Think of a dictionary: you look things up by their code.
-- **Path**: a chain of codes joined by dots, like `rock.igneous.plutonic`. It reads left to right, general to specific, the way you drill down a menu.
+- **Path**: a chain of codes joined by dots, like `rock_and_sediment.rock.igneous.plutonic`. It reads left to right, general to specific, the way you drill down a menu.
 
 ## Mental model
 
@@ -65,23 +65,28 @@ porphyry: {
 },
 ```
 
-**Bare code or dotted key?** A node is resolved by the longest matching suffix of its path: for `rock.igneous.plutonic.felsic` the keys `rock.igneous.plutonic.felsic`, `igneous.plutonic.felsic`, `plutonic.felsic`, `felsic` are tried in order, first hit wins. Key a node by its **bare code** (`porphyry`) when that code means the same thing everywhere it appears. Use a **dotted key** (`plutonic.felsic`) only when the same code recurs under more than one parent with different data: `felsic` sits under both `plutonic` (granite, granodiorite...) and `volcanic` (rhyolite, dacite), so each branch needs its own entry to carry the right `choices`. A childless leaf that carries no special data needs no entry at all: it resolves to itself, labelled by its own code.
+**Bare code or dotted key?** A node is resolved by the longest matching suffix of its path: for `rock_and_sediment.rock.igneous.plutonic.felsic` the keys `rock_and_sediment.rock.igneous.plutonic.felsic`, `rock.igneous.plutonic.felsic`, `igneous.plutonic.felsic`, `plutonic.felsic`, `felsic` are tried in order, first hit wins. Key a node by its **bare code** (`porphyry`) when that code means the same thing everywhere it appears. Use a **dotted key** (`plutonic.felsic`) only when the same code recurs under more than one parent with different data: `felsic` sits under both `plutonic` (granite, granodiorite...) and `volcanic` (rhyolite, dacite), so each branch needs its own entry to carry the right `choices`. A childless leaf that carries no special data needs no entry at all: it resolves to itself, labelled by its own code.
 
 A dotted key is also how you **stop a walk that would otherwise recurse forever**. When a code that has children needs to be a plain leaf in one context, a childless dotted override ends the branch there. If a bare code appears among its own descendants (`core` under `core`), the suffix match would keep resolving `core.core.core...` back to the same children-bearing node, and `expandPaths` throws `Path tree cycle` ([expand-paths.ts](../packages/domain/src/sample/path/expand-paths.ts)). Defining `core.core` (or a real case like `hydrothermal.carbonate`, `lunar_sample.rock`) as a leaf, `{ label: "core" }` with no `choices`, makes the deeper path resolve to the leaf instead and terminates the walk. So reach for a dotted key both to specialise a branch and to guard against a bare code accidentally grafting its whole subtree, or itself, where it should stop.
 
-A **new root** (a top-level entry point, not nested under anything) goes in that tree's roots array instead:
+A **new root** (a top-level entry point, not nested under anything) goes in that tree's roots array instead. Material has a single explicit root, `rock_and_sediment`, whose `choices` list its families (`rock`, `sediment`, `mineral`, `synthetic_rock_mineral`, `extraterrestrial_rock`); every stored path starts with it. Add a new family there, not to `MATERIAL_ROOTS`:
 
 ```ts
 // packages/domain/src/sample/material/classification.ts
-export const MATERIAL_ROOTS = [
-  "rock",
-  "sediment",
-  "mineral",
-  "synthetic_rock_mineral",
-  "extraterrestrial_rock",
-  "meteorite_fall", // added
-] as const;
+rock_and_sediment: {
+  searchable: true,
+  choices: [
+    "rock",
+    "sediment",
+    "mineral",
+    "synthetic_rock_mineral",
+    "extraterrestrial_rock",
+    "meteorite_fall", // added family
+  ],
+},
 ```
+
+A genuinely new top-level kind (liquid, gas) is a sibling root of `rock_and_sediment` and goes in `MATERIAL_ROOTS` itself.
 
 A **reused subtree** grafts an existing branch under a new parent without copying it: name the branch's codes in `choices` and stop. Because resolution is by longest suffix and the full path is the identity, every override already defined for those codes keeps applying under the new parent. The metamorphic branch reuses the igneous and sedimentary trees this way:
 
@@ -94,7 +99,7 @@ meta_igneous_rock: {
 // under meta_igneous_rock.plutonic.felsic by longest suffix (plutonic.felsic)
 ```
 
-So a path like `rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite` walks all the way to the same `granite` leaf as the plain igneous path, reusing `plutonic.felsic`'s children with zero duplication. All subtrees spread into one flat record ([classification.ts](../packages/domain/src/sample/material/classification.ts)), so each code is defined once and every graft points at that single definition. If a grafted branch must behave differently under its new parent, do not touch the shared code: add a dotted key scoped to the full branch path (`meta_igneous_rock.plutonic.felsic`), which the longest-suffix match picks up only in that context.
+So a path like `rock_and_sediment.rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite` walks all the way to the same `granite` leaf as the plain igneous path, reusing `plutonic.felsic`'s children with zero duplication. All subtrees spread into one flat record ([classification.ts](../packages/domain/src/sample/material/classification.ts)), so each code is defined once and every graft points at that single definition. If a grafted branch must behave differently under its new parent, do not touch the shared code: add a dotted key scoped to the full branch path (`meta_igneous_rock.plutonic.felsic`), which the longest-suffix match picks up only in that context.
 
 Because the reused nodes keep their shared labels, every level under `meta_igneous_rock` or `meta_sedimentary_rock` is prefixed "Meta-" by rule instead: `isUnderMetaRock` (`material/is-under-meta-rock.ts`) flags a path passing through either segment, and `materialPathLabel` (`create-sample-labels.ts`) adds the prefix for it. This is why `hierarchyPathLabel` hands the translator the full path, not just the resolved label's own code: telling a meta-igneous occurrence from its plain igneous twin needs the path, not the leaf.
 
@@ -127,7 +132,7 @@ A code reused under several parents shares one key: translate it once. If you fo
 Add one accept case and, where relevant, one reject case to that tree's spec (the `*.spec.ts` file beside it):
 
 ```ts
-it.each(["rock.igneous.plutonic.felsic.syenogranite"])(
+it.each(["rock_and_sediment.rock.igneous.plutonic.felsic.syenogranite"])(
   "should accept %s",
   (path) => {
     expect(materialPathSchema.safeParse(path).success).toBe(true);
@@ -238,12 +243,18 @@ Background: ADR [0021](adr/0021-post-publish-field-mutability.md).
 
 ### Hierarchy fields: freeze per node, not per field
 
-A dot-path hierarchy like `material` cannot use the map: it needs a depth, not a field name. So `material` has no map entry. Instead, editability is declared in the vocabulary tree itself: a node with no mark is frozen once published, so mark `frozenWhenPublished: false` only on the frontier, the first level under a frozen head that may still change; every level below the frontier is never consulted. For material that frontier is niveau 1, the same depth required to publish, so the 14 niveau-1 nodes carry both flags together:
+A dot-path hierarchy like `material` cannot use the map: it needs a depth, not a field name. So `material` has no map entry. Instead, editability is declared in the vocabulary tree itself: a node with no mark is frozen once published, so mark `frozenWhenPublished: false` only on the frontier, the first level under a frozen head that may still change; every level below the frontier is never consulted.
+
+Material has one explicit root, `rock_and_sediment` (`MATERIAL_ROOTS`), whose children are the families (`rock`, `sediment`, `mineral`, `synthetic_rock_mineral`, `extraterrestrial_rock`). Neither the root nor a family carries a mark: both stay frozen once published, and neither is a valid publish stop. The frontier is the next level down, niveau 1 (`exogenous_detritic` under `sediment`, `igneous` under `rock`...), the 14 nodes that carry both flags together:
 
 ```ts
 // packages/domain/src/sample/material/classification.ts
+rock_and_sediment: {
+  // no flag: frozen by default, the root
+  choices: ["rock", "sediment", "mineral", "synthetic_rock_mineral", "extraterrestrial_rock"],
+},
 sediment: {
-  // no flag: frozen by default, the root, same as every other root
+  // no flag: frozen by default, a family, same as every other family
   choices: ["exogenous_detritic", "volcano_detritic", "biogenic", "physico_chemical"],
 },
 
@@ -258,14 +269,16 @@ exogenous_detritic: {
 `optional` is inherited the same way `frozenWhenPublished` is: the mark opens the node AND everything under it, so `exogenous_detritic.gravel.boulder` is also a valid stop without its own mark. Everything else derives from the two flags. `frozenMaterialPrefix` walks the stored path and returns its frozen head, the part of the path the sample must keep:
 
 ```ts
-frozenMaterialPrefix("rock.igneous.plutonic.felsic.granite");
-// -> "rock": everything under the root may still change
+frozenMaterialPrefix("rock_and_sediment.rock.igneous.plutonic.felsic.granite");
+// -> "rock_and_sediment.rock": root and family stay frozen, everything under the family may still change
 
-frozenMaterialPrefix("mineral");
+frozenMaterialPrefix("rock_and_sediment.mineral");
 // -> null: nothing unlocks, the whole material is frozen (no sub-level)
 ```
 
-The merge accepts an incoming path only at or under that prefix (another root keeps the stored value, a cross-branch move under the same root is accepted). The form asks the same question one level at a time: `HierarchyField` renders each selected level as a Badge chip, and for each depth asks the form-level disabled predicate for `name[depth]` (`useFieldDisabledRule`) whether that level is frozen; a frozen level shows as a plain-text chip with no remove button, and the trigger that would append the next level is disabled when that next level is frozen. Both the merge and the form read the same `frozenWhenPublished` flag, so you never state the rule twice. Background: ADR [0022](adr/0022-editable-material-levels-after-publication.md) and ADR [0037](adr/0037-relaxed-publish-and-post-publication-rules.md).
+`frozenMaterialDepth` counts the same frozen head in levels (2 for a rock/sediment/extraterrestrial path, since the root and the family both freeze; `Infinity` for a family with no sub-level like `mineral`).
+
+The merge accepts an incoming path only at or under that prefix (another root keeps the stored value, a cross-branch move under the same root is accepted). The form asks the same question one level at a time: `HierarchyField` renders each selected level as a Badge chip, and for each depth asks the form-level disabled predicate for `name[depth]` (`useFieldDisabledRule`) whether that level is frozen; a frozen level shows as a plain-text chip with no remove button, and the trigger that would append the next level is disabled when that next level is frozen. Both the merge and the form read the same `frozenWhenPublished` flag, so you never state the rule twice. Background: ADR [0022](adr/0022-editable-material-levels-after-publication.md), ADR [0037](adr/0037-relaxed-publish-and-post-publication-rules.md) and ADR [0038](adr/0038-explicit-material-root.md).
 
 ## Add/remove a display condition
 

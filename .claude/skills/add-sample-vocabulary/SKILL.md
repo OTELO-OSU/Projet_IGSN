@@ -39,8 +39,15 @@ it. `optional` behaves the same way (ADR
 [0037](../../../docs/adr/0037-relaxed-publish-and-post-publication-rules.md)):
 a mark opens the node AND everything under it as a valid stopping point, not
 just the marked node, so mark the frontier only, never every descendant.
-Material's 13 niveau-1 nodes carry both flags together, one frontier for the
+Material's 14 niveau-1 nodes carry both flags together, one frontier for the
 publish depth and the unlock depth.
+
+Material has one root, `rock_and_sediment` (ADR
+[0038](../../../docs/adr/0038-explicit-material-root.md)); its children are the
+former roots (`rock`, `sediment`, `mineral`, `synthetic_rock_mineral`,
+`extraterrestrial_rock`), neither marked, so both are frozen once published
+and neither is a publish stop. A new top-level kind (liquid, gas) joins as a
+sibling root, not as a child of `rock_and_sediment`.
 
 Adding a node is **pure data**: no migration, no UI change. Follow TDD (spec first).
 

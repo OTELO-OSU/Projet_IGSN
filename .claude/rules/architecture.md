@@ -68,6 +68,7 @@ What a published sample may still change lives in ONE place too, the lock maps a
 
 - That lock lives on the tree node (`TreeNode.frozenWhenPublished`; absent means frozen, a level opens only with an explicit `false`).
 - Niveau 1 is that frontier on every branch, its 14 nodes carrying `frozenWhenPublished: false` alongside `optional: true`; see ADR 0037.
+- The material tree has one root, `rock_and_sediment`; its children are the former roots (`rock`, `sediment`, `mineral`, `synthetic_rock_mineral`, `extraterrestrial_rock`), and a new top-level kind (liquid, gas) joins as its sibling; see ADR 0038.
 - `TreeNode.optional` inherits like `frozenWhenPublished`, so one frontier sets both the publish depth and the unlock depth.
 - `frozenMaterialPrefix` derives the prefix a published sample must keep, read by both `mergeMaterial` and the admin form; see ADR 0022.
 
