@@ -7,6 +7,7 @@ import {
 import {
   type InvalidServiceSample,
   createServiceSampleSchema,
+  updateServiceSampleSchema,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import { validator } from "hono/validator";
 import { z } from "zod";
@@ -15,19 +16,31 @@ import { validateUuidIdParam } from "../uuid-param.ts";
 import { zodValidator } from "../zod-validator.ts";
 import { serviceSampleIssue } from "./service-sample-issue.ts";
 
-export const validateCreateServiceSampleBody = validator("json", (value, c) => {
-  const parsed = createServiceSampleSchema.safeParse(value);
-  if (!parsed.success) {
-    const body: InvalidServiceSample = {
-      error: "Invalid sample",
-      issues: parsed.error.issues.map(({ path, code, message }) =>
-        serviceSampleIssue(code, path, message),
-      ),
-    };
-    return c.json(body, 422);
-  }
-  return parsed.data;
-});
+function serviceSampleBodyValidator<
+  S extends typeof createServiceSampleSchema | typeof updateServiceSampleSchema,
+>(schema: S) {
+  return validator("json", (value, c) => {
+    const parsed = schema.safeParse(value);
+    if (!parsed.success) {
+      const body: InvalidServiceSample = {
+        error: "Invalid sample",
+        issues: parsed.error.issues.map(({ path, code, message }) =>
+          serviceSampleIssue(code, path, message),
+        ),
+      };
+      return c.json(body, 422);
+    }
+    return parsed.data as z.infer<S>;
+  });
+}
+
+export const validateCreateServiceSampleBody = serviceSampleBodyValidator(
+  createServiceSampleSchema,
+);
+
+export const validateUpdateServiceSampleBody = serviceSampleBodyValidator(
+  updateServiceSampleSchema,
+);
 
 export const validateServiceAccountIdParam = validateUuidIdParam(
   "Invalid service account id",

@@ -6,6 +6,7 @@ import {
   listSamplesResponseSchema,
   sampleResponseSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
+import { frozenServiceSampleSchema } from "@projet-igsn/domain/service-account/service-sample-validator";
 import { describe, expect } from "vitest";
 
 import type { DB } from "../db.ts";
@@ -434,6 +435,178 @@ describe("the /service mount", () => {
       const res = await app.request("/service/samples", { method, headers });
       // Assert
       expect(res.status).toBe(403);
+    },
+  );
+});
+
+const fieldSample = {
+  ...publishableSample,
+  scientificContext: {
+    provenanceStatus: "field_sample" as const,
+    collectorName: "Georges Cuvier",
+  },
+} satisfies CreateSample;
+
+const putSample = (
+  app: ReturnType<typeof createApp>["app"],
+  igsn: string,
+  input: unknown,
+) =>
+  app.request(`/service/samples/${igsn}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+const publishViaService = async (
+  app: ReturnType<typeof createApp>["app"],
+  input: CreateSample = publishableSample,
+) =>
+  sampleResponseSchema.parse(await (await postSample(app, input)).json()).data;
+
+const storedNames = (db: Kysely<DB>) =>
+  db.selectFrom("sample").select("name").execute();
+
+describe("PUT /service/samples/:igsn", () => {
+  pgTest(
+    "should update an editable field of a published sample in the account's reach",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const created = await publishViaService(app);
+      // Act
+      const res = await putSample(app, created.igsn!, {
+        ...publishableSample,
+        name: "Basalte revisite",
+      });
+      // Assert
+      expect(res.status).toBe(200);
+      const { data } = sampleResponseSchema.parse(await res.json());
+      expect(data).toMatchObject({
+        id: created.id,
+        igsn: created.igsn,
+        status: "published",
+        name: "Basalte revisite",
+        scientificContext: created.scientificContext,
+      });
+    },
+  );
+
+  pgTest.for([
+    {
+      field: "the collector name",
+      seed: fieldSample,
+      edit: {
+        ...fieldSample,
+        scientificContext: {
+          provenanceStatus: "field_sample" as const,
+          collectorName: "Marie Curie",
+        },
+      },
+      path: "scientificContext.collectorName",
+    },
+    {
+      field: "the manual groups",
+      seed: publishableSample,
+      edit: { ...publishableSample, manualGroupIds: [FOREIGN_GROUP_ID] },
+      path: "manualGroupIds[0]",
+    },
+  ])(
+    "should refuse a body changing $field and write nothing",
+    async ({ seed, edit, path }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const created = await publishViaService(app, seed);
+      // Act
+      const res = await putSample(app, created.igsn!, {
+        ...edit,
+        name: "Nom edite",
+      });
+      // Assert
+      expect(res.status).toBe(403);
+      expect(frozenServiceSampleSchema.parse(await res.json())).toEqual({
+        error: "Forbidden",
+        issues: [{ path, code: "field_frozen" }],
+      });
+      expect(await storedNames(db)).toEqual([{ name: seed.name }]);
+    },
+  );
+
+  pgTest.for([
+    {
+      rule: "an IGSN matching no sample",
+      status: 404,
+      error: "Not found",
+      igsnOf: async () => "A".repeat(26),
+    },
+    {
+      rule: "a draft sample's IGSN",
+      status: 404,
+      error: "Not found",
+      igsnOf: async (db: Kysely<DB>) =>
+        generateIgsnSuffix(
+          (await inLaboratory(db, publishableSample, IN_REACH)).id,
+        ),
+    },
+    {
+      rule: "a published sample outside the account's reach",
+      status: 403,
+      error: "Forbidden",
+      igsnOf: async (db: Kysely<DB>) => {
+        const sample = await inLaboratory(db, publishableSample, OUT_OF_REACH);
+        return (await publishSample(db, sample.id))!.igsn!;
+      },
+    },
+  ] as const)(
+    "should answer $status for $rule",
+    async ({ status, error, igsnOf }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const igsn = await igsnOf(db);
+      // Act
+      const res = await putSample(app, igsn, publishableSample);
+      // Assert
+      expect(res.status).toBe(status);
+      expect(await res.json()).toEqual({ error });
+    },
+  );
+
+  pgTest.for([
+    {
+      rule: "attachments",
+      edit: { attachments: [] },
+      issues: [
+        {
+          path: "attachments",
+          code: "invalid_type",
+          message: expect.any(String),
+        },
+      ],
+    },
+    {
+      rule: "a new publish blocker",
+      edit: { type: null },
+      issues: [{ path: "type", code: "type_missing" }],
+    },
+  ])(
+    "should refuse a body carrying $rule and write nothing",
+    async ({ edit, issues }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const created = await publishViaService(app);
+      // Act
+      const res = await putSample(app, created.igsn!, {
+        ...publishableSample,
+        ...edit,
+        name: "Nom edite",
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({ error: "Invalid sample", issues });
+      expect(await storedNames(db)).toEqual([{ name: publishableSample.name }]);
     },
   );
 });

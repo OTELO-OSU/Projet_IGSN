@@ -17,10 +17,7 @@ import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
-import {
-  samplePublishBlockers,
-  toPublishableFields,
-} from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canGrantRole } from "@projet-igsn/domain/user-sample/can-grant-role";
 import { canManageCollaborators } from "@projet-igsn/domain/user-sample/can-manage-collaborators";
@@ -46,6 +43,7 @@ import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
 import { sampleRemovalMail } from "../user-sample/sample-removal-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
 import { findEligibleParent } from "./find-eligible-parent.ts";
+import { newPublishBlockers } from "./new-publish-blockers.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
@@ -324,26 +322,14 @@ export function createSampleAdminRoutes(
           wasPublished && !canEditFrozenSampleFields(c.get("user"))
             ? mergePublishedEdit(current, input)
             : input;
-        if (wasPublished) {
-          const blockersOf = (sample: typeof current | typeof toPersist) =>
-            samplePublishBlockers(
-              {
-                ...toPublishableFields(sample),
-                attachments: sample.attachments ?? [],
-              },
-              uploadLimit,
-            );
-          const existing = blockersOf(current);
-          const after = blockersOf(toPersist);
-          if (after.some((blocker) => !existing.includes(blocker))) {
-            return c.json(
-              {
-                error: "Update would make the published sample unpublishable",
-                reason: "unpublishable",
-              },
-              409,
-            );
-          }
+        if (wasPublished && newPublishBlockers(current, toPersist).length > 0) {
+          return c.json(
+            {
+              error: "Update would make the published sample unpublishable",
+              reason: "unpublishable",
+            },
+            409,
+          );
         }
         const stored = current.manualGroups.map((group) => group.id);
         const submitted = toPersist.manualGroupIds ?? stored;
