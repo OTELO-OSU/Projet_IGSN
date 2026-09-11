@@ -35,6 +35,9 @@ Camille Curieux (camille.curieux@example.org) sent this message about the sample
 Open the sample: ${FRONTEND_URL}samples/${IGSN}
 `,
     );
+    expect(
+      mail.html.split("</head>")[1]?.replaceAll(/<[^>]*>/g, " "),
+    ).not.toContain("A visitor wants to contact you");
   });
 
   it("should render the message as a quoted block in the html", async () => {

@@ -2770,7 +2770,7 @@ describe("admin sample routes", () => {
           expect.objectContaining({
             to: ["colleague@example.com"],
             subject:
-              'Test User designated you as a contributor for the sample "Basalte à partager"',
+              "You have been designated as a contributor for a new sample",
           }),
         ),
       );
