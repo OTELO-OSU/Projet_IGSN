@@ -9,5 +9,5 @@ export function changedPaths(current: object, next: object): string[] {
       ({ key, value, oldValue }) =>
         key !== "id" && !(hasNoValue(value) && hasNoValue(oldValue)),
     )
-    .map(({ path }) => path.replace("$.", ""));
+    .map(({ path }) => path.replace("$.", "").replace(/\[(\d+)\]/g, ".$1"));
 }

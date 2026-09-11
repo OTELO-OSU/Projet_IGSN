@@ -16,9 +16,7 @@ import { validateUuidIdParam } from "../uuid-param.ts";
 import { zodValidator } from "../zod-validator.ts";
 import { serviceSampleIssue } from "./service-sample-issue.ts";
 
-function serviceSampleBodyValidator<
-  S extends typeof createServiceSampleSchema | typeof updateServiceSampleSchema,
->(schema: S) {
+function serviceSampleBodyValidator<S extends z.ZodType>(schema: S) {
   return validator("json", (value, c) => {
     const parsed = schema.safeParse(value);
     if (!parsed.success) {
@@ -30,7 +28,7 @@ function serviceSampleBodyValidator<
       };
       return c.json(body, 422);
     }
-    return parsed.data as z.infer<S>;
+    return parsed.data as z.output<S>;
   });
 }
 

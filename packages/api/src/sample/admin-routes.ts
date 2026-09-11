@@ -16,6 +16,7 @@ import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
 import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
+import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import { samplePublishBlockers } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
@@ -43,7 +44,6 @@ import { sampleInvitationMail } from "../user-sample/sample-invitation-mail.ts";
 import { sampleRemovalMail } from "../user-sample/sample-removal-mail.ts";
 import { attachmentDownload } from "./attachment-download.ts";
 import { findEligibleParent } from "./find-eligible-parent.ts";
-import { newPublishBlockers } from "./new-publish-blockers.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
@@ -322,7 +322,10 @@ export function createSampleAdminRoutes(
           wasPublished && !canEditFrozenSampleFields(c.get("user"))
             ? mergePublishedEdit(current, input)
             : input;
-        if (wasPublished && newPublishBlockers(current, toPersist).length > 0) {
+        if (
+          wasPublished &&
+          newPublishBlockers(current, toPersist, uploadLimit).length > 0
+        ) {
           return c.json(
             {
               error: "Update would make the published sample unpublishable",

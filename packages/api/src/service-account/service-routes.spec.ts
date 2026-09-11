@@ -78,24 +78,47 @@ const ownedParent = async (db: Kysely<DB>, ownerId: string) => {
   return parent;
 };
 
-const postSample = (app: ReturnType<typeof createApp>["app"], input: unknown) =>
-  app.request("/service/samples", {
-    method: "POST",
+const serviceRequest = (
+  app: ReturnType<typeof createApp>["app"],
+  method: "GET" | "POST" | "PUT",
+  path: string,
+  input?: unknown,
+) =>
+  app.request(`/service/samples${path}`, {
+    method,
     headers: {
       Authorization: `Bearer ${KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(input),
+    body: input === undefined ? undefined : JSON.stringify(input),
   });
+
+const postSample = (app: ReturnType<typeof createApp>["app"], input: unknown) =>
+  serviceRequest(app, "POST", "", input);
+
+const putSample = (
+  app: ReturnType<typeof createApp>["app"],
+  igsn: string,
+  input: unknown,
+) => serviceRequest(app, "PUT", `/${igsn}`, input);
 
 const listSamples = (
   app: ReturnType<typeof createApp>["app"],
   params: Record<string, string> = {},
 ) =>
-  app.request(
-    `/service/samples?${new URLSearchParams({ page: "1", perPage: "10", ...params }).toString()}`,
-    { headers: { Authorization: `Bearer ${KEY}` } },
+  serviceRequest(
+    app,
+    "GET",
+    `?${new URLSearchParams({ page: "1", perPage: "10", ...params }).toString()}`,
   );
+
+const fieldSample = {
+  ...publishableSample,
+  scientificContext: {
+    provenanceStatus: "field_sample" as const,
+    collectorName: "Georges Cuvier",
+  },
+} satisfies CreateSample;
 
 describe("GET /service/samples", () => {
   pgTest(
@@ -388,10 +411,7 @@ describe("POST /service/samples", () => {
       // Act
       const res = await postSample(app, {
         ...subSample,
-        scientificContext: {
-          provenanceStatus: "field_sample",
-          collectorName: "Georges Cuvier",
-        },
+        scientificContext: fieldSample.scientificContext,
         parentIds: [parent.id],
       });
       // Assert
@@ -439,33 +459,10 @@ describe("the /service mount", () => {
   );
 });
 
-const fieldSample = {
-  ...publishableSample,
-  scientificContext: {
-    provenanceStatus: "field_sample" as const,
-    collectorName: "Georges Cuvier",
-  },
-} satisfies CreateSample;
-
-const putSample = (
-  app: ReturnType<typeof createApp>["app"],
-  igsn: string,
-  input: unknown,
-) =>
-  app.request(`/service/samples/${igsn}`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(input),
-  });
-
-const publishViaService = async (
-  app: ReturnType<typeof createApp>["app"],
+const publishedInReach = async (
+  db: Kysely<DB>,
   input: CreateSample = publishableSample,
-) =>
-  sampleResponseSchema.parse(await (await postSample(app, input)).json()).data;
+) => (await publishSample(db, (await inLaboratory(db, input, IN_REACH)).id))!;
 
 const storedNames = (db: Kysely<DB>) =>
   db.selectFrom("sample").select("name").execute();
@@ -476,14 +473,12 @@ describe("PUT /service/samples/:igsn", () => {
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const created = await publishViaService(app);
-      const {
-        scientificContext: { collectionOrigin: _origin, ...scientificContext },
-        ...withoutFrozen
-      } = publishableSample;
+      const created = await publishedInReach(db);
+      const { collectionOrigin: _frozen, ...scientificContext } =
+        publishableSample.scientificContext;
       // Act
       const res = await putSample(app, created.igsn!, {
-        ...withoutFrozen,
+        ...publishableSample,
         scientificContext,
         name: "Basalte revisite",
       });
@@ -507,7 +502,7 @@ describe("PUT /service/samples/:igsn", () => {
       edit: {
         ...fieldSample,
         scientificContext: {
-          provenanceStatus: "field_sample" as const,
+          provenanceStatus: "field_sample",
           collectorName: "Marie Curie",
         },
       },
@@ -517,14 +512,14 @@ describe("PUT /service/samples/:igsn", () => {
       field: "the manual groups",
       seed: publishableSample,
       edit: { ...publishableSample, manualGroupIds: [FOREIGN_GROUP_ID] },
-      path: "manualGroupIds[0]",
+      path: "manualGroupIds.0",
     },
   ])(
     "should refuse a body changing $field and write nothing",
     async ({ seed, edit, path }, { db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const created = await publishViaService(app, seed);
+      const created = await publishedInReach(db, seed);
       // Act
       const res = await putSample(app, created.igsn!, {
         ...edit,
@@ -565,7 +560,7 @@ describe("PUT /service/samples/:igsn", () => {
         return (await publishSample(db, sample.id))!.igsn!;
       },
     },
-  ] as const)(
+  ])(
     "should answer $status for $rule",
     async ({ status, error, igsnOf }, { db }) => {
       // Arrange
@@ -601,7 +596,7 @@ describe("PUT /service/samples/:igsn", () => {
     async ({ edit, issues }, { db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const created = await publishViaService(app);
+      const created = await publishedInReach(db);
       // Act
       const res = await putSample(app, created.igsn!, {
         ...publishableSample,

@@ -50,27 +50,19 @@ const stored: Sample = sampleSchema.parse({
   updatedAt: new Date("2020-01-01"),
 });
 
-function body(
-  sample: Sample,
-  overrides: Partial<CreateSample> = {},
-): CreateSample {
-  return createSampleSchema.parse({
-    ...Object.fromEntries(
-      Object.keys(createSampleSchema.shape).map((field) => [
-        field,
-        sample[field as keyof Sample],
-      ]),
-    ),
-    manualGroupIds: sample.manualGroups.map(({ id }) => id),
-    parentIds: [],
+const body = (overrides: Partial<CreateSample> = {}): CreateSample =>
+  createSampleSchema.parse({
+    name: stored.name,
+    material: stored.material,
+    scientificContext: stored.scientificContext,
+    manualGroupIds: stored.manualGroups.map(({ id }) => id),
     ...overrides,
   });
-}
 
 describe("frozenFieldEdits", () => {
   it("should report a frozen field a body tries to change", () => {
     // Arrange
-    const payload = body(stored, {
+    const payload = body({
       scientificContext: {
         provenanceStatus: "field_sample",
         collectorName: "Edited collector",
@@ -87,7 +79,7 @@ describe("frozenFieldEdits", () => {
 
   it("should report nothing for a body changing only an editable field", () => {
     // Arrange
-    const payload = body(stored, { name: "Edited name" });
+    const payload = body({ name: "Edited name" });
     // Act
     const result = frozenFieldEdits(
       payload,
@@ -99,7 +91,7 @@ describe("frozenFieldEdits", () => {
 
   it("should report nothing for a body omitting the frozen fields the stored sample has set", () => {
     // Arrange
-    const payload = body(stored, {
+    const payload = body({
       manualGroupIds: undefined,
       scientificContext: { provenanceStatus: "field_sample" },
     });

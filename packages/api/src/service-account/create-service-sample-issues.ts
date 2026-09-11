@@ -6,17 +6,16 @@ import type {
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
-import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
-import {
-  samplePublishBlockers,
-  toPublishableFields,
-} from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { publishBlockersOf } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { z } from "zod";
 
 import { unattachableIndexes } from "../manual-group/has-unattachable.ts";
 import { findEligibleParent } from "../sample/find-eligible-parent.ts";
 import { uploadLimit } from "../sample/upload-limit.ts";
-import { serviceSampleIssue } from "./service-sample-issue.ts";
+import {
+  publishBlockerIssues,
+  serviceSampleIssue,
+} from "./service-sample-issue.ts";
 
 type Deps = {
   samples: SampleRepository;
@@ -44,19 +43,15 @@ export async function createServiceSampleIssues(
       serviceSampleIssue("location_inherited_from_parent", ["location"]),
     );
   }
-  for (const blocker of samplePublishBlockers(
-    {
-      ...toPublishableFields({
-        ...input,
-        location: parents[0]?.location ?? input.location,
-      }),
-      attachments: [],
-      parents,
-    },
-    uploadLimit,
-  )) {
-    issues.push(serviceSampleIssue(blocker, PUBLISH_BLOCKER_PATH[blocker]));
-  }
+  issues.push(
+    ...publishBlockerIssues(
+      publishBlockersOf(
+        { ...input, location: parents[0]?.location ?? input.location },
+        uploadLimit,
+        parents,
+      ),
+    ),
+  );
   const submitted = input.manualGroupIds ?? [];
   if (submitted.length > 0) {
     const attachable = await manualGroups.listAttachableForUser(ownerId);

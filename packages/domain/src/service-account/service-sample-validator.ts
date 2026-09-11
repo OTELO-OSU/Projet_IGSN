@@ -4,15 +4,17 @@ import type { PublishBlocker } from "../sample/publication/sample-publish-blocke
 
 import { createSampleSchema, updateSampleSchema } from "../sample/sample.ts";
 
+const NO_ATTACHMENTS = { attachments: z.never().optional() };
+
 export const createServiceSampleSchema = createSampleSchema.safeExtend({
+  ...NO_ATTACHMENTS,
   parentIds: z.array(z.string().trim().min(1)).max(1).optional(),
 });
 
 export type CreateServiceSample = z.infer<typeof createServiceSampleSchema>;
 
-export const updateServiceSampleSchema = updateSampleSchema.safeExtend({
-  attachments: z.never().optional(),
-});
+export const updateServiceSampleSchema =
+  updateSampleSchema.safeExtend(NO_ATTACHMENTS);
 
 export type UpdateServiceSample = z.infer<typeof updateServiceSampleSchema>;
 
@@ -37,9 +39,8 @@ export const invalidServiceSampleSchema = z.object({
 
 export type InvalidServiceSample = z.infer<typeof invalidServiceSampleSchema>;
 
-export const frozenServiceSampleSchema = z.object({
+export const frozenServiceSampleSchema = invalidServiceSampleSchema.extend({
   error: z.literal("Forbidden"),
-  issues: z.array(serviceSampleIssueSchema),
 });
 
 export type FrozenServiceSample = z.infer<typeof frozenServiceSampleSchema>;

@@ -12,7 +12,7 @@ import type {
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
 import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
-import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
+import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
 import { Hono } from "hono";
@@ -21,10 +21,10 @@ import {
   type ServiceEnv,
   requireServiceAccount,
 } from "../auth/require-service-account.ts";
-import { newPublishBlockers } from "../sample/new-publish-blockers.ts";
+import { uploadLimit } from "../sample/upload-limit.ts";
 import { validateIgsnParam } from "../sample/validator.ts";
 import { createServiceSampleIssues } from "./create-service-sample-issues.ts";
-import { serviceSampleIssue } from "./service-sample-issue.ts";
+import { publishBlockerIssues } from "./service-sample-issue.ts";
 import {
   validateCreateServiceSampleBody,
   validateListServiceSamplesQuery,
@@ -93,19 +93,15 @@ export function createServiceRoutes(
         if (frozen.length > 0) {
           const body: FrozenServiceSample = {
             error: "Forbidden",
-            issues: frozen.map((path) =>
-              serviceSampleIssue("field_frozen", [path]),
-            ),
+            issues: frozen.map((path) => ({ path, code: "field_frozen" })),
           };
           return c.json(body, 403);
         }
-        const blockers = newPublishBlockers(current, merged);
+        const blockers = newPublishBlockers(current, merged, uploadLimit);
         if (blockers.length > 0) {
           const body: InvalidServiceSample = {
             error: "Invalid sample",
-            issues: blockers.map((blocker) =>
-              serviceSampleIssue(blocker, PUBLISH_BLOCKER_PATH[blocker]),
-            ),
+            issues: publishBlockerIssues(blockers),
           };
           return c.json(body, 422);
         }

@@ -21,7 +21,7 @@ export const changedSampleFields = (
   next: SampleMailValues,
 ): SampleMailField[] => {
   const changed = new Set(
-    changedPaths(current, next).map((path) => path.split(/[.[]/)[0]),
+    changedPaths(current, next).map((path) => path.split(".")[0]),
   );
   return SAMPLE_MAIL_FIELDS.filter((field) => changed.has(field));
 };
