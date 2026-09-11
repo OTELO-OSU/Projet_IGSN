@@ -42,8 +42,11 @@ describe("SampleRepositoryFields", () => {
       .getByRole("option", { name: organizationLabel("02feahw73") })
       .click();
     await screen
-      .getByRole("textbox", { name: "Current archive contact" })
-      .fill("curator@example.org");
+      .getByRole("textbox", { name: "Current archive contact first name" })
+      .fill("Ada");
+    await screen
+      .getByRole("textbox", { name: "Current archive contact last name" })
+      .fill("Lovelace");
     await screen
       .getByRole("textbox", { name: "Collection name" })
       .fill("Massif Central basalts");
@@ -51,8 +54,11 @@ describe("SampleRepositoryFields", () => {
       .getByRole("textbox", { name: "Original archive", exact: true })
       .fill("Museum of Clermont-Ferrand");
     await screen
-      .getByRole("textbox", { name: "Original archive contact" })
-      .fill("archives@example.org");
+      .getByRole("textbox", { name: "Original archive contact first name" })
+      .fill("Marie");
+    await screen
+      .getByRole("textbox", { name: "Original archive contact last name" })
+      .fill("Curie");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -60,10 +66,12 @@ describe("SampleRepositoryFields", () => {
         expect.objectContaining({
           repository: {
             currentArchive: "02feahw73",
-            currentArchiveContact: "curator@example.org",
+            currentArchiveContactFirstname: "Ada",
+            currentArchiveContactLastname: "Lovelace",
             collectionName: "Massif Central basalts",
             originalArchive: "Museum of Clermont-Ferrand",
-            originalArchiveContact: "archives@example.org",
+            originalArchiveContactFirstname: "Marie",
+            originalArchiveContactLastname: "Curie",
           },
         }),
       ),

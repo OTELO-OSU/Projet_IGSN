@@ -19,9 +19,17 @@ export function SampleRepositoryFields() {
         )}
       </form.AppField>
 
-      <form.AppField name="repository.currentArchiveContact">
+      <form.AppField name="repository.currentArchiveContactFirstname">
         {(field) => (
-          <field.TextField label={m.field_current_archive_contact()} />
+          <field.TextField
+            label={m.field_current_archive_contact_firstname()}
+          />
+        )}
+      </form.AppField>
+
+      <form.AppField name="repository.currentArchiveContactLastname">
+        {(field) => (
+          <field.TextField label={m.field_current_archive_contact_lastname()} />
         )}
       </form.AppField>
 
@@ -33,9 +41,19 @@ export function SampleRepositoryFields() {
         {(field) => <field.TextField label={m.field_original_archive()} />}
       </form.AppField>
 
-      <form.AppField name="repository.originalArchiveContact">
+      <form.AppField name="repository.originalArchiveContactFirstname">
         {(field) => (
-          <field.TextField label={m.field_original_archive_contact()} />
+          <field.TextField
+            label={m.field_original_archive_contact_firstname()}
+          />
+        )}
+      </form.AppField>
+
+      <form.AppField name="repository.originalArchiveContactLastname">
+        {(field) => (
+          <field.TextField
+            label={m.field_original_archive_contact_lastname()}
+          />
         )}
       </form.AppField>
     </div>
