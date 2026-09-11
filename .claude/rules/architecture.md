@@ -52,6 +52,7 @@ Why a sample cannot be published lives in ONE place, `domain/sample/publication/
 
 - The api publish guard and the admin publish tooltip both derive from it.
 - Add a constraint by adding a code to `publishBlockerSchema` and pushing it in `samplePublishBlockers`.
+- The function has no I/O, so a caller resolves the parent and passes it in `parents`, a `null` entry firing `parent_not_found`; `publish-blocker-path.ts` is the single blocker-to-path map, read by `publishedSampleSchema` and the `/service` 422 body.
 - The admin label map (`publish-blocker-label.ts`) is an exhaustive `Record<PublishBlocker, () => string>`, so it fails to compile until the new reason is translated.
 
 What a published sample may still change lives in ONE place too, the lock maps at the top of `published-field-lock.ts`.
