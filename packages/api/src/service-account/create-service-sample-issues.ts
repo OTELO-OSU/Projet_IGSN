@@ -3,6 +3,7 @@ import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   CreateServiceSample,
   ServiceSampleIssue,
+  ServiceSampleIssueCode,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
@@ -16,6 +17,11 @@ import { z } from "zod";
 
 import { findEligibleParent } from "../sample/find-eligible-parent.ts";
 import { uploadLimit } from "../sample/upload-limit.ts";
+
+const issueOf = (
+  code: ServiceSampleIssueCode,
+  path: string | null,
+): ServiceSampleIssue => (path === null ? { code } : { path, code });
 
 type Deps = {
   samples: SampleRepository;
@@ -35,10 +41,10 @@ export async function createServiceSampleIssues(
       ? await findEligibleParent(samples, users, owner, parentId)
       : null;
   if (parentId !== undefined && parent === null) {
-    issues.push({ path: "parentIds.0", code: "parent_not_found" });
+    issues.push(issueOf("parent_not_found", "parentIds.0"));
   }
   if (parentId !== undefined && input.location != null) {
-    issues.push({ path: "location", code: "location_inherited_from_parent" });
+    issues.push(issueOf("location_inherited_from_parent", "location"));
   }
   for (const blocker of samplePublishBlockers(
     {
@@ -50,8 +56,7 @@ export async function createServiceSampleIssues(
     },
     uploadLimit,
   )) {
-    const path = PUBLISH_BLOCKER_PATH[blocker];
-    issues.push(path === null ? { code: blocker } : { path, code: blocker });
+    issues.push(issueOf(blocker, PUBLISH_BLOCKER_PATH[blocker]));
   }
   const submitted = input.manualGroupIds ?? [];
   if (submitted.length > 0) {
@@ -62,10 +67,9 @@ export async function createServiceSampleIssues(
     );
     submitted.forEach((id, index) => {
       if (!attachable.has(id)) {
-        issues.push({
-          path: `manualGroupIds.${index}`,
-          code: "manual_group_not_attachable",
-        });
+        issues.push(
+          issueOf("manual_group_not_attachable", `manualGroupIds.${index}`),
+        );
       }
     });
   }
