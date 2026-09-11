@@ -262,7 +262,10 @@ describe("POST /service/samples", () => {
           },
           { path: "existenceStatus", code: "existence_status_missing" },
           { path: "availabilityStatus", code: "availability_status_missing" },
-          { path: "scientificContext", code: "scientific_context_missing" },
+          {
+            path: "scientificContext.provenanceStatus",
+            code: "scientific_context_missing",
+          },
           { path: "manualGroupIds.0", code: "manual_group_not_attachable" },
         ],
       });

@@ -3,7 +3,6 @@ import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   CreateServiceSample,
   ServiceSampleIssue,
-  ServiceSampleIssueCode,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
@@ -17,11 +16,7 @@ import { z } from "zod";
 
 import { findEligibleParent } from "../sample/find-eligible-parent.ts";
 import { uploadLimit } from "../sample/upload-limit.ts";
-
-const issueOf = (
-  code: ServiceSampleIssueCode,
-  path: string | null,
-): ServiceSampleIssue => (path === null ? { code } : { path, code });
+import { serviceSampleIssue } from "./service-sample-issue.ts";
 
 type Deps = {
   samples: SampleRepository;
@@ -40,11 +35,10 @@ export async function createServiceSampleIssues(
     parentId !== undefined && z.uuid().safeParse(parentId).success
       ? await findEligibleParent(samples, users, owner, parentId)
       : null;
-  if (parentId !== undefined && parent === null) {
-    issues.push(issueOf("parent_not_found", "parentIds.0"));
-  }
   if (parentId !== undefined && input.location != null) {
-    issues.push(issueOf("location_inherited_from_parent", "location"));
+    issues.push(
+      serviceSampleIssue("location_inherited_from_parent", ["location"]),
+    );
   }
   for (const blocker of samplePublishBlockers(
     {
@@ -53,10 +47,11 @@ export async function createServiceSampleIssues(
         location: parent?.location ?? input.location,
       }),
       attachments: [],
+      parents: parentId === undefined ? [] : [parent],
     },
     uploadLimit,
   )) {
-    issues.push(issueOf(blocker, PUBLISH_BLOCKER_PATH[blocker]));
+    issues.push(serviceSampleIssue(blocker, PUBLISH_BLOCKER_PATH[blocker]));
   }
   const submitted = input.manualGroupIds ?? [];
   if (submitted.length > 0) {
@@ -68,7 +63,10 @@ export async function createServiceSampleIssues(
     submitted.forEach((id, index) => {
       if (!attachable.has(id)) {
         issues.push(
-          issueOf("manual_group_not_attachable", `manualGroupIds.${index}`),
+          serviceSampleIssue("manual_group_not_attachable", [
+            "manualGroupIds",
+            index,
+          ]),
         );
       }
     });
