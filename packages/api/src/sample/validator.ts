@@ -54,7 +54,11 @@ function sampleBodyValidator<
   return validator("json", (value, c) => {
     const parsed = schema.safeParse(value);
     if (!parsed.success) {
-      return c.json({ error: "Invalid sample" }, 400);
+      const issues = parsed.error.issues.map(({ path, message }) => ({
+        path: path.join("."),
+        message,
+      }));
+      return c.json({ error: "Invalid sample", issues }, 400);
     }
     if ((parsed.data.attachments?.length ?? 0) > uploadLimit) {
       return c.json({ error: "Too many attachments" }, 400);

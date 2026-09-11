@@ -259,6 +259,26 @@ describe("POST /service/samples", () => {
     },
   );
 
+  pgTest(
+    "should name the failing field when a parent id is not a sample id",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const { location: _location, ...subSample } = publishableSample;
+      // Act
+      const res = await postSample(app, {
+        ...subSample,
+        parentIds: ["10.60510/ABCDEFGHJKMNPQRSTVWXYZ0123"],
+      });
+      // Assert
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [{ path: "parentIds.0", message: expect.any(String) }],
+      });
+    },
+  );
+
   pgTest("should refuse a body choosing its own groups", async ({ db }) => {
     // Arrange
     const { app } = await arrangeAccount(db);
