@@ -87,7 +87,7 @@ const PARENT: SampleParent = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
   igsn: "01K072TVWVFK5A1RRZ5MY4PPK8",
   name: "Massif Central 2026",
-  material: "mineral",
+  material: "rock_and_sediment.mineral",
 };
 
 beforeEach(() => {
@@ -134,7 +134,7 @@ type FailMode =
 
 function fakeApi(
   status: SampleStatus = "draft",
-  material: string | null = "mineral",
+  material: string | null = "rock_and_sediment.mineral",
   fail: FailMode = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
@@ -330,7 +330,7 @@ function fakeApi(
 
 async function renderEditPage(
   status: SampleStatus = "draft",
-  material: string | null = "mineral",
+  material: string | null = "rock_and_sediment.mineral",
   fail: FailMode = false,
   metamorphicFacies: string | null = null,
   texture: string | null = null,
@@ -386,7 +386,7 @@ const renderEditPageLockedBy = (
 ) =>
   renderEditPage(
     status,
-    "mineral",
+    "rock_and_sediment.mineral",
     false,
     null,
     null,
@@ -401,7 +401,7 @@ const renderEditPageLockedBy = (
 const renderEditPageAsContributor = (status: SampleStatus) =>
   renderEditPage(
     status,
-    "mineral",
+    "rock_and_sediment.mineral",
     false,
     null,
     null,
@@ -417,7 +417,7 @@ type EditPageScreen = Awaited<ReturnType<typeof renderEditPage>>["screen"];
 const renderEditPageAsEditor = (status: SampleStatus) =>
   renderEditPage(
     status,
-    "mineral",
+    "rock_and_sediment.mineral",
     false,
     null,
     null,
@@ -513,7 +513,7 @@ describe("EditSamplePage", () => {
   );
 
   it.each<[string, string | null]>([
-    ["a publishable draft", "mineral"],
+    ["a publishable draft", "rock_and_sediment.mineral"],
     ["a blocked draft", null],
   ])(
     "should offer a contributor no Publish button and no focusable tooltip on %s",
@@ -691,8 +691,8 @@ describe("EditSamplePage", () => {
     await vi.waitFor(() => expect(calls).toEqual(["STATUS withdrawn"]));
   });
 
-  it("should disable Publish and explain in a tooltip when the sample has no material", async () => {
-    const { screen } = await renderEditPage("draft", null);
+  it("should disable Publish and explain in a tooltip when the sample material stops at its root", async () => {
+    const { screen } = await renderEditPage("draft", "rock_and_sediment");
     const publish = screen.getByRole("button", {
       name: "Publish",
       exact: true,
@@ -705,7 +705,9 @@ describe("EditSamplePage", () => {
     publish.element().closest<HTMLElement>("[tabindex]")?.focus();
     await expect
       .element(screen.getByRole("tooltip"))
-      .toHaveTextContent(/set the material before publishing/i);
+      .toHaveTextContent(
+        /classify the material at least one level below its root/i,
+      );
   });
 
   it("should disable Publish for a pending account, complete sample or not", async () => {
@@ -730,7 +732,7 @@ describe("EditSamplePage", () => {
 
   it("should drop the material reason once a pending account completes the cascade", async () => {
     callerStatus = "pending";
-    const { screen } = await renderEditPage("draft", "rock");
+    const { screen } = await renderEditPage("draft", "rock_and_sediment.rock");
     await screen.getByRole("tab", { name: "Sample classification" }).click();
     await pickPath(screen, "Material *", "Igneous", "Stop here");
 
@@ -762,7 +764,7 @@ describe("EditSamplePage", () => {
 
   it("should list the missing fields and the account reason together", async () => {
     callerStatus = "pending";
-    const { screen } = await renderEditPage("draft", null);
+    const { screen } = await renderEditPage("draft", "rock_and_sediment");
     const publish = screen.getByRole("button", {
       name: "Publish",
       exact: true,
@@ -773,7 +775,9 @@ describe("EditSamplePage", () => {
     const tooltip = screen.getByRole("tooltip");
     await expect
       .element(tooltip)
-      .toHaveTextContent(/set the material before publishing/i);
+      .toHaveTextContent(
+        /classify the material at least one level below its root/i,
+      );
     await expect
       .element(tooltip)
       .toHaveTextContent(/account is not yet activated/i);
@@ -784,7 +788,7 @@ describe("EditSamplePage", () => {
   >([
     [
       "Metamorphic facies",
-      "rock.metamorphic.strongly_metamorphosed.gneiss",
+      "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
       "amphibolite",
       null,
       null,
@@ -792,7 +796,7 @@ describe("EditSamplePage", () => {
     ],
     [
       "Texture",
-      "rock.igneous.plutonic",
+      "rock_and_sediment.rock.igneous.plutonic",
       null,
       "phaneritic",
       null,
@@ -800,7 +804,7 @@ describe("EditSamplePage", () => {
     ],
     [
       "Metamorphic fabrics",
-      "rock.metamorphic.strongly_metamorphosed.gneiss",
+      "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
       null,
       null,
       "gneissic",
@@ -827,7 +831,7 @@ describe("EditSamplePage", () => {
   it("should prefill the existence status from the saved sample instead of resetting it to Exists", async () => {
     const { screen } = await renderEditPage(
       "draft",
-      "mineral",
+      "rock_and_sediment.mineral",
       false,
       null,
       null,
@@ -842,7 +846,7 @@ describe("EditSamplePage", () => {
   it("should prefill a declared security hazard from the saved sample", async () => {
     const { screen } = await renderEditPage(
       "draft",
-      "mineral",
+      "rock_and_sediment.mineral",
       false,
       null,
       null,
@@ -863,7 +867,7 @@ describe("EditSamplePage", () => {
   it("should prefill the resource type and deposit name from the saved sample", async () => {
     const { screen } = await renderEditPage(
       "draft",
-      "sediment",
+      "rock_and_sediment.sediment",
       false,
       null,
       null,
@@ -928,7 +932,7 @@ describe("EditSamplePage", () => {
   it("should refuse publishing a sample carrying more files than the limit", async () => {
     const { screen, calls } = await renderEditPage(
       "draft",
-      "mineral",
+      "rock_and_sediment.mineral",
       false,
       null,
       null,
@@ -966,7 +970,7 @@ describe("EditSamplePage", () => {
   it("should refuse publishing a sample whose attachment carries no metadata", async () => {
     const { screen } = await renderEditPage(
       "draft",
-      "mineral",
+      "rock_and_sediment.mineral",
       false,
       null,
       null,
@@ -1071,7 +1075,11 @@ describe("EditSamplePage", () => {
   });
 
   it("should show an error toast when saving fails", async () => {
-    const { screen } = await renderEditPage("draft", "mineral", "save");
+    const { screen } = await renderEditPage(
+      "draft",
+      "rock_and_sediment.mineral",
+      "save",
+    );
     await screen.getByLabelText(/name/i).fill("Grès de Fontainebleau");
     await screen.getByRole("button", { name: "Save", exact: true }).click();
 
@@ -1081,7 +1089,11 @@ describe("EditSamplePage", () => {
   });
 
   it("should show an error toast when publishing fails", async () => {
-    const { screen } = await renderEditPage("draft", "mineral", "publish");
+    const { screen } = await renderEditPage(
+      "draft",
+      "rock_and_sediment.mineral",
+      "publish",
+    );
     await screen.getByRole("button", { name: "Publish", exact: true }).click();
     await screen.getByRole("button", { name: "Confirm" }).click();
 
@@ -1296,7 +1308,11 @@ describe("EditSamplePage", () => {
   ] as const)(
     "should keep the typed input and hold the form read-only when the save is refused as %s",
     async (reason, message) => {
-      const { screen } = await renderEditPage("draft", "mineral", reason);
+      const { screen } = await renderEditPage(
+        "draft",
+        "rock_and_sediment.mineral",
+        reason,
+      );
       const name = screen.getByLabelText(/name/i);
       await name.fill("Grès de Fontainebleau");
       await screen.getByRole("button", { name: "Save", exact: true }).click();
@@ -1381,7 +1397,7 @@ describe("EditSamplePage", () => {
     it("should keep the draft and explain when another collaborator is editing", async () => {
       const { screen, calls } = await renderEditPage(
         "draft",
-        "mineral",
+        "rock_and_sediment.mineral",
         "delete-locked",
       );
       await deleteButton(screen).click();

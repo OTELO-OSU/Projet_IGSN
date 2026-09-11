@@ -44,7 +44,7 @@ const PARENT = {
   name: "Massif Central 2026",
   nature: "thin_section",
   type: "dredge",
-  material: "mineral",
+  material: "rock_and_sediment.mineral",
   materialOtherName: null,
   texture: null,
   metamorphicFacies: null,

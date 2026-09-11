@@ -17,7 +17,7 @@ import { pickPath, repickPath } from "../../test/pick-hierarchy.ts";
 import { render as renderWithClient } from "../../test/render.tsx";
 
 function Harness({
-  material = "sediment",
+  material = "rock_and_sediment.sediment",
   values,
 }: {
   material?: string | null;
@@ -57,7 +57,7 @@ async function renderEconomicTab(
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
-        material: "sediment",
+        material: "rock_and_sediment.sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
       }}
@@ -70,7 +70,7 @@ async function renderEconomicTab(
 
 describe("SampleEconomicInterestFields", () => {
   it("should render nothing for a material with no economic interest", async () => {
-    await render(<Harness material="mineral" />);
+    await render(<Harness material="rock_and_sediment.mineral" />);
 
     await expect.element(toggle()).not.toBeInTheDocument();
     await expect

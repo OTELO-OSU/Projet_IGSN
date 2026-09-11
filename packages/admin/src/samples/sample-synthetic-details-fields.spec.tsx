@@ -19,7 +19,7 @@ const syntheticDefaults = {
   name: "Synthetic forsterite",
   nature: "thin_section",
   type: "dredge",
-  material: "synthetic_rock_mineral",
+  material: "rock_and_sediment.synthetic_rock_mineral",
   collectionMethod: null,
   collectionMethodDescription: null,
 } satisfies Partial<CreateSample> as CreateSample;
@@ -56,7 +56,10 @@ describe("SampleSyntheticDetailsFields", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        defaultValues={{ ...syntheticDefaults, material: "mineral" }}
+        defaultValues={{
+          ...syntheticDefaults,
+          material: "rock_and_sediment.mineral",
+        }}
         primaryAction={createAction(noop)}
       />,
     );

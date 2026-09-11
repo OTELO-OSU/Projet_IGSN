@@ -44,7 +44,7 @@ async function renderLocation(
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "dredge",
-        material: "mineral",
+        material: "rock_and_sediment.mineral",
         collectionMethod: null,
         collectionMethodDescription: null,
       }}
@@ -84,7 +84,7 @@ const PARENT_IGSN = "01K072TVWVFK5A1RRZ5MY4PPK9";
 const NATURAL_PARENT = {
   igsn: PARENT_IGSN,
   name: "Massif Central 2026",
-  material: "mineral",
+  material: "rock_and_sediment.mineral",
 } as const;
 
 describe("SampleForm", () => {
@@ -100,7 +100,7 @@ describe("SampleForm", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("should submit the entered name and selected nature with null type and material", async () => {
+  it("should submit the entered name and selected nature with a null type and the default material root", async () => {
     const onSubmit = vi.fn();
     const screen = await render(
       <SampleForm onCancel={noop} primaryAction={createAction(onSubmit)} />,
@@ -117,7 +117,7 @@ describe("SampleForm", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
-        material: null,
+        material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
@@ -146,7 +146,7 @@ describe("SampleForm", () => {
         name: "Basalte du Massif Central",
         nature: null,
         type: null,
-        material: null,
+        material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
@@ -189,7 +189,7 @@ describe("SampleForm", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "core.section",
-        material: null,
+        material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
@@ -221,7 +221,7 @@ describe("SampleForm", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "core.half_round",
-        material: null,
+        material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
@@ -253,7 +253,7 @@ describe("SampleForm", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: "core",
-        material: null,
+        material: "rock_and_sediment",
         specificName: null,
         geologicalContextDescription: null,
         geomorphologicalEnvironment: null,
@@ -265,6 +265,29 @@ describe("SampleForm", () => {
         ...NO_ANSWERS,
       }),
     );
+  });
+
+  it("should prefill the material root as a locked chip and offer the families below it", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+
+    await expect
+      .element(screen.getByText("Rock and sediment", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("button", { name: "Remove Rock and sediment" }))
+      .not.toBeInTheDocument();
+
+    await screen
+      .getByRole("combobox", { name: "Material *", exact: true })
+      .click();
+
+    await expect
+      .element(screen.getByRole("option", { name: "Rock", exact: true }))
+      .toBeVisible();
   });
 
   it("should show the texture field for an igneous branch and submit the chosen texture", async () => {
@@ -303,7 +326,7 @@ describe("SampleForm", () => {
         name: "Granite",
         nature: "thin_section",
         type: null,
-        material: "rock.igneous.plutonic.felsic.granite",
+        material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
         texture: "phaneritic",
         collectionMethod: null,
         collectionMethodDescription: null,
@@ -355,7 +378,7 @@ describe("SampleForm", () => {
         name: "Granite",
         nature: "thin_section",
         type: null,
-        material: "rock.igneous.plutonic.felsic.granite",
+        material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
         texture: "phaneritic",
         collectionMethod: null,
         collectionMethodDescription: null,
@@ -410,7 +433,7 @@ describe("SampleForm", () => {
         name: "Rock",
         nature: "thin_section",
         type: null,
-        material: "rock.igneous.volcanic",
+        material: "rock_and_sediment.rock.igneous.volcanic",
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
@@ -505,7 +528,8 @@ describe("SampleForm", () => {
         name: "Gneiss",
         nature: "thin_section",
         type: null,
-        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        material:
+          "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
         metamorphicFacies: "amphibolite",
         collectionMethod: null,
         collectionMethodDescription: null,
@@ -566,7 +590,7 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: null,
         material:
-          "rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
+          "rock_and_sediment.rock.metamorphic.weakly_metamorphosed.meta_igneous_rock.plutonic.felsic.granite",
         metamorphicFacies: "amphibolite",
         metamorphicFabric: "schistose",
         collectionMethod: null,
@@ -620,7 +644,7 @@ describe("SampleForm", () => {
         name: "Rock",
         nature: "thin_section",
         type: null,
-        material: "rock.igneous",
+        material: "rock_and_sediment.rock.igneous",
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
@@ -653,7 +677,7 @@ describe("SampleForm", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
-        material: null,
+        material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: "MC-2026-007",
@@ -691,7 +715,7 @@ describe("SampleForm", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
-        material: null,
+        material: "rock_and_sediment",
         collectionMethod: "coring.gravity_corer.giant",
         collectionMethodDescription: null,
         specificName: null,
@@ -748,7 +772,7 @@ describe("SampleForm", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
-        material: null,
+        material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription:
           "Cored at low tide from the northern outcrop",
@@ -781,7 +805,7 @@ describe("SampleForm", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
-        material: null,
+        material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
@@ -822,7 +846,7 @@ describe("SampleForm", () => {
         name: "Basalte du Massif Central",
         nature: "thin_section",
         type: null,
-        material: null,
+        material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
         specificName: null,
@@ -1143,7 +1167,7 @@ describe("SampleForm", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "dredge",
-          material: "mineral",
+          material: "rock_and_sediment.mineral",
           collectionMethod: null,
           collectionMethodDescription: null,
           specificName: "MC-2026-007",
@@ -1175,7 +1199,7 @@ describe("SampleForm", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "dredge",
-          material: "mineral",
+          material: "rock_and_sediment.mineral",
           materialOtherName: null,
           collectionMethod: null,
           collectionMethodDescription: null,
@@ -1221,18 +1245,22 @@ describe("SampleForm", () => {
         ...publishGateBase,
         nature: null,
         type: "dredge",
-        material: "mineral",
+        material: "rock_and_sediment.mineral",
       },
       /set the nature before publishing/i,
     ],
     [
-      "the material is missing",
-      { ...publishGateBase, type: "dredge", material: null },
-      /set the material before publishing/i,
+      "the material stops above the first refinable level",
+      {
+        ...publishGateBase,
+        type: "dredge",
+        material: "rock_and_sediment.rock",
+      },
+      /classify the material at least one level below its root/i,
     ],
     [
       "the type is missing",
-      { ...publishGateBase, type: null, material: "mineral" },
+      { ...publishGateBase, type: null, material: "rock_and_sediment.mineral" },
       /set the sample type before publishing/i,
     ],
     [
@@ -1240,14 +1268,18 @@ describe("SampleForm", () => {
       {
         ...publishGateBase,
         type: "dredge",
-        material: "mineral",
+        material: "rock_and_sediment.mineral",
         location: { position: { type: "point", longitude: 3, latitude: 45 } },
       },
       /set the collection date before publishing/i,
     ],
     [
       "a required location is missing",
-      { ...publishGateBase, type: "dredge", material: "mineral" },
+      {
+        ...publishGateBase,
+        type: "dredge",
+        material: "rock_and_sediment.mineral",
+      },
       /set the sample location/i,
     ],
   ])(
@@ -1286,7 +1318,7 @@ describe("SampleForm", () => {
             name: "Basalte du Massif Central",
             nature: "thin_section",
             type: "dredge",
-            material: "mineral",
+            material: "rock_and_sediment.mineral",
             collectionMethod: null,
             collectionMethodDescription: null,
             location: {
@@ -1332,7 +1364,7 @@ describe("SampleForm", () => {
             name: "Basalte du Massif Central",
             nature: "thin_section",
             type: "dredge",
-            material: "mineral",
+            material: "rock_and_sediment.mineral",
             collectionMethod: null,
             collectionMethodDescription: null,
             location: {
@@ -1399,7 +1431,7 @@ describe("SampleForm", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: null,
-          material: "mineral",
+          material: "rock_and_sediment.mineral",
           collectionMethod: null,
           collectionMethodDescription: null,
         }}
@@ -1422,8 +1454,11 @@ describe("SampleForm", () => {
   });
 
   it.each([
-    ["a synthetic material", "synthetic_rock_mineral"],
-    ["a returned sample", "extraterrestrial_rock.returned_samples.other"],
+    ["a synthetic material", "rock_and_sediment.synthetic_rock_mineral"],
+    [
+      "a returned sample",
+      "rock_and_sediment.extraterrestrial_rock.returned_samples.other",
+    ],
   ])("should disable the Location tab for %s", async (_case, material) => {
     const screen = await render(
       <SampleForm
@@ -1541,7 +1576,7 @@ describe("SampleForm", () => {
             name: "Basalte du Massif Central",
             nature: "thin_section",
             type: "dredge",
-            material: "mineral",
+            material: "rock_and_sediment.mineral",
             collectionMethod: null,
             collectionMethodDescription: null,
             scientificContext: { provenanceStatus },
@@ -1723,7 +1758,7 @@ describe("SampleForm", () => {
             name: "Basalte du Massif Central",
             nature: "thin_section",
             type: "dredge",
-            material: "mineral",
+            material: "rock_and_sediment.mineral",
             collectionMethod: null,
             collectionMethodDescription: null,
           }}
@@ -1995,7 +2030,7 @@ describe("SampleForm", () => {
         expect.objectContaining({
           name: "Basalte du Massif Central",
           type: "dredge",
-          material: "rock.igneous.plutonic.felsic.granite",
+          material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
           existenceStatus: "exists",
           availabilityStatus: "available",
         }),
@@ -2011,7 +2046,7 @@ describe("SampleForm", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "dredge",
-          material: "mineral",
+          material: "rock_and_sediment.mineral",
           collectionMethod: null,
           collectionMethodDescription: null,
         }}
@@ -2066,7 +2101,7 @@ const publishedFixture: CreateSample = {
   name: "Basalte du Massif Central",
   nature: "thin_section",
   type: "dredge",
-  material: "rock.igneous.plutonic.felsic.granite",
+  material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
   collectionMethod: null,
   collectionMethodDescription: null,
   specificName: "MC-2026-007",
@@ -2161,6 +2196,9 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("button", { name: "Remove Rock" }))
       .toBeEnabled();
+    await expect
+      .element(screen.getByRole("button", { name: "Remove Rock and sediment" }))
+      .not.toBeInTheDocument();
   });
 
   it.each<{
@@ -2172,34 +2210,34 @@ describe("SampleForm post-publication field lock", () => {
     canAppend: boolean;
   }>([
     {
-      name: "locks the material root and leaves every deeper level removable",
+      name: "locks the material root and family, leaving every deeper level removable",
       status: "published",
-      material: "rock.igneous.plutonic.felsic.granite",
-      locked: ["Rock"],
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+      locked: ["Rock and sediment", "Rock"],
       removable: ["Igneous", "Plutonic", "Felsic", "Granite"],
       canAppend: false,
     },
     {
       name: "opens the next level of a published sample stopped below its root",
       status: "published",
-      material: "sediment.exogenous_detritic",
-      locked: ["Sediment"],
+      material: "rock_and_sediment.sediment.exogenous_detritic",
+      locked: ["Rock and sediment", "Sediment"],
       removable: ["Exogenous detritic"],
       canAppend: true,
     },
     {
       name: "locks a withdrawn sample's material root like a published one",
       status: "withdrawn",
-      material: "rock.igneous.plutonic.felsic.granite",
-      locked: ["Rock"],
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+      locked: ["Rock and sediment", "Rock"],
       removable: ["Igneous", "Plutonic", "Felsic", "Granite"],
       canAppend: false,
     },
     {
-      name: "keeps every material level editable on a draft",
+      name: "keeps every material level below the root editable on a draft",
       status: "draft",
-      material: "rock.igneous.plutonic.felsic.granite",
-      locked: [],
+      material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+      locked: ["Rock and sediment"],
       removable: ["Rock", "Igneous", "Plutonic", "Felsic", "Granite"],
       canAppend: false,
     },
@@ -2217,7 +2255,9 @@ describe("SampleForm post-publication field lock", () => {
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
     for (const level of locked) {
-      await expect.element(screen.getByText(level)).toBeVisible();
+      await expect
+        .element(screen.getByText(level, { exact: true }))
+        .toBeVisible();
       await expect
         .element(screen.getByRole("button", { name: `Remove ${level}` }))
         .not.toBeInTheDocument();
@@ -2258,7 +2298,8 @@ describe("SampleForm post-publication field lock", () => {
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
-          material: "rock.igneous.plutonic.felsic.granodiorite",
+          material:
+            "rock_and_sediment.rock.igneous.plutonic.felsic.granodiorite",
         }),
       ),
     );
@@ -2354,7 +2395,7 @@ describe("SampleForm post-publication field lock", () => {
           name: "Basalte du Massif Central",
           nature: "thin_section",
           type: "dredge",
-          material: "rock.igneous.plutonic.felsic.granite",
+          material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
         }),
       ),
     );
@@ -2364,14 +2405,15 @@ describe("SampleForm post-publication field lock", () => {
     {
       field: "Texture",
       values: {
-        material: "rock.igneous.plutonic",
+        material: "rock_and_sediment.rock.igneous.plutonic",
         texture: "phaneritic" as const,
       },
     },
     {
       field: "Metamorphic facies",
       values: {
-        material: "rock.metamorphic.strongly_metamorphosed.gneiss",
+        material:
+          "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
         metamorphicFacies: "eclogite" as const,
       },
     },
@@ -2555,7 +2597,7 @@ describe("SampleForm post-publication field lock", () => {
       <SampleForm
         onCancel={noop}
         parent={NATURAL_PARENT}
-        defaultValues={{ material: "mineral" }}
+        defaultValues={{ material: "rock_and_sediment.mineral" }}
         primaryAction={createAction(noop)}
       />,
     );
@@ -2574,8 +2616,11 @@ describe("SampleForm post-publication field lock", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        parent={{ ...NATURAL_PARENT, material: "synthetic_rock_mineral" }}
-        defaultValues={{ material: "synthetic_rock_mineral" }}
+        parent={{
+          ...NATURAL_PARENT,
+          material: "rock_and_sediment.synthetic_rock_mineral",
+        }}
+        defaultValues={{ material: "rock_and_sediment.synthetic_rock_mineral" }}
         primaryAction={createAction(noop)}
       />,
     );
@@ -2597,7 +2642,7 @@ describe("SampleForm post-publication field lock", () => {
       <SampleForm
         onCancel={noop}
         parent={NATURAL_PARENT}
-        defaultValues={{ material: "mineral" }}
+        defaultValues={{ material: "rock_and_sediment.mineral" }}
         primaryAction={createAction(noop)}
       />,
     );

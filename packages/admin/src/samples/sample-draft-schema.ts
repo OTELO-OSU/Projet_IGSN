@@ -6,6 +6,7 @@ import {
   toHierarchyPath,
 } from "@projet-igsn/design-system/lib/hierarchy";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
+import { MATERIAL_ROOTS } from "@projet-igsn/domain/sample/material/classification";
 import { isOtherMaterial } from "@projet-igsn/domain/sample/material/is-other-material";
 import { publishedSampleSchema as domainPublishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
 import {
@@ -126,7 +127,7 @@ export const toSampleDraft = (value?: Partial<CreateSample>): SampleDraft => ({
   name: value?.name,
   nature: value?.nature,
   typePath: toHierarchyPath(value?.type ?? null),
-  materialPath: toHierarchyPath(value?.material ?? null),
+  materialPath: toHierarchyPath(value?.material ?? MATERIAL_ROOTS[0]),
   materialOtherName: value?.materialOtherName,
   texture: value?.texture,
   metamorphicFacies: value?.metamorphicFacies,

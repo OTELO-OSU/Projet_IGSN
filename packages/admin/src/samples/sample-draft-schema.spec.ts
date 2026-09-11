@@ -31,7 +31,7 @@ const draft: SampleDraft = {
   name: "Basalt 42",
   nature: "thin_section",
   typePath: toHierarchyPath("dredge"),
-  materialPath: toHierarchyPath("mineral"),
+  materialPath: toHierarchyPath("rock_and_sediment.mineral"),
   materialOtherName: null,
   texture: undefined,
   metamorphicFacies: undefined,
@@ -65,7 +65,7 @@ describe("sampleDraftSchema", () => {
       name: "Basalt 42",
       nature: "thin_section",
       type: "dredge",
-      material: "mineral",
+      material: "rock_and_sediment.mineral",
       materialOtherName: null,
       collectionMethod: null,
       collectionMethodDescription: null,
@@ -89,10 +89,14 @@ describe("sampleDraftSchema", () => {
   it.each<[string, string[], string | null]>([
     [
       "keep the free-text material name for the Other rock",
-      toHierarchyPath("rock.other"),
+      toHierarchyPath("rock_and_sediment.rock.other"),
       "Impactite",
     ],
-    ["drop it for any other material", toHierarchyPath("mineral"), null],
+    [
+      "drop it for any other material",
+      toHierarchyPath("rock_and_sediment.mineral"),
+      null,
+    ],
   ])("should %s", (_case, materialPath, materialOtherName) => {
     expect(
       sampleDraftSchema.parse({
@@ -106,7 +110,7 @@ describe("sampleDraftSchema", () => {
   it("should drop a lingering location and geological context when the material forbids a location", () => {
     const result = sampleDraftSchema.parse({
       ...draft,
-      materialPath: toHierarchyPath("synthetic_rock_mineral"),
+      materialPath: toHierarchyPath("rock_and_sediment.synthetic_rock_mineral"),
       location: {
         ...toLocationDraft(null),
         type: "point",
@@ -118,7 +122,7 @@ describe("sampleDraftSchema", () => {
     });
 
     expect(result).toMatchObject({
-      material: "synthetic_rock_mineral",
+      material: "rock_and_sediment.synthetic_rock_mineral",
       location: null,
       geologicalContextDescription: null,
       geomorphologicalEnvironment: null,
@@ -161,7 +165,7 @@ describe("sampleDraftSchema", () => {
       name: "Basalt 42",
       nature: "thin_section",
       type: "dredge",
-      material: "mineral",
+      material: "rock_and_sediment.mineral",
       materialOtherName: null,
       collectionMethod: null,
       collectionMethodDescription: null,
@@ -335,6 +339,10 @@ describe("sampleDraftSchema", () => {
       "relations.1.relationType",
       "relations.1.identifier",
     ]);
+  });
+
+  it("should open a sample with no material on the material root", () => {
+    expect(toSampleDraft().materialPath).toEqual(["rock_and_sediment"]);
   });
 
   it("should round-trip saved relations into the draft", () => {

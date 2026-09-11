@@ -204,6 +204,7 @@ export function SampleForm({
     ? () => true
     : (name: string) =>
         isFrozenByPublication(name) ||
+        name === "materialPath[0]" ||
         (name === "manualGroupIds" && areManualGroupsFrozen) ||
         (isMaterialFrozenByParent && name.startsWith("materialPath"));
   const defaultSubmit =
