@@ -1,5 +1,4 @@
-import { atomizeChangeset, diff } from "json-diff-ts";
-
+import { changedPaths } from "./changed-paths.ts";
 import { createSampleSchema, type CreateSample } from "./sample.ts";
 
 const NOT_MAILED = ["attachments", "manualGroupIds", "parentIds"] as const;
@@ -17,20 +16,12 @@ const SAMPLE_MAIL_FIELDS: SampleMailField[] = Object.keys(
 
 type SampleMailValues = Partial<Record<SampleMailField, unknown>>;
 
-const hasNoValue = (value: unknown): boolean =>
-  value == null || (Array.isArray(value) && value.length === 0);
-
 export const changedSampleFields = (
   current: SampleMailValues,
   next: SampleMailValues,
 ): SampleMailField[] => {
   const changed = new Set(
-    atomizeChangeset(diff(current, next))
-      .filter(
-        ({ key, value, oldValue }) =>
-          key !== "id" && !(hasNoValue(value) && hasNoValue(oldValue)),
-      )
-      .map(({ path }) => path.split(/[.[]/)[1]),
+    changedPaths(current, next).map((path) => path.split(/[.[]/)[0]),
   );
   return SAMPLE_MAIL_FIELDS.filter((field) => changed.has(field));
 };
