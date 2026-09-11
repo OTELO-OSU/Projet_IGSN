@@ -1,3 +1,4 @@
+import type { InstitutionalGroups } from "../institutional-group/model.ts";
 import type { UserSampleRole } from "../user-sample/model.ts";
 import type { User } from "../user/model.ts";
 import type { ModerationScope } from "../user/moderation-scope.ts";
@@ -42,6 +43,12 @@ export type SampleRepository = {
   ): Promise<{ sample: Sample; role: UserSampleRole | null } | null>;
   getPublicByIgsn(igsn: string): Promise<Sample | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
+  /** Publishes in the same transaction, so a refused publish leaves no draft. */
+  createPublished(
+    input: CreateSample,
+    ownerId: string,
+    groups: InstitutionalGroups,
+  ): Promise<Sample>;
   update(id: string, input: CreateSample): Promise<Sample | null>;
   /** `withdrawn` mints the IGSN while keeping the sample out of public view. */
   publish(id: string, status: PublishStatus): Promise<Sample | null>;
