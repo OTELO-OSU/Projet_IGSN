@@ -1,9 +1,13 @@
+import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
+import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
+
+import { HTTPException } from "hono/http-exception";
 
 import type { DB } from "../db.ts";
 
-import { withTransaction } from "../transaction.ts";
+import { type Transactional, withTransaction } from "../transaction.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { addParentOwnerAsContributor } from "./service/add-parent-owner-as-contributor.ts";
@@ -24,6 +28,18 @@ import { releaseEditLock } from "./service/release-edit-lock.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
 import { updateSample } from "./service/update-sample.ts";
 
+async function insertOwnedSample(
+  trx: Transactional<DB>,
+  input: CreateSample,
+  ownerId: string,
+  groups: InstitutionalGroups,
+) {
+  const sample = await insertSample(trx, input, groups);
+  await insertSampleOwner(trx, sample.id, ownerId);
+  await addParentOwnerAsContributor(trx, sample.id, input.parentIds ?? []);
+  return sample;
+}
+
 export function createSampleRepository(db: Kysely<DB>): SampleRepository {
   return {
     listAssignedTo: (params, userId) =>
@@ -43,15 +59,19 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
     getPublicByIgsn: (igsn) =>
       withTransaction(db, (trx) => getPublicSampleByIgsn(trx, igsn)),
     create: (input, owner) =>
+      withTransaction(db, (trx) =>
+        insertOwnedSample(trx, input, owner.id, owner),
+      ),
+    createPublished: (input, ownerId, groups) =>
       withTransaction(db, async (trx) => {
-        const sample = await insertSample(trx, input, owner);
-        await insertSampleOwner(trx, sample.id, owner.id);
-        await addParentOwnerAsContributor(
-          trx,
-          sample.id,
-          input.parentIds ?? [],
-        );
-        return sample;
+        const { id } = await insertOwnedSample(trx, input, ownerId, groups);
+        const published = await publishSample(trx, id);
+        if (!published) {
+          throw new HTTPException(500, {
+            message: "Sample vanished before publish",
+          });
+        }
+        return published;
       }),
     update: (id, input) =>
       withTransaction(db, (trx) => updateSample(trx, id, input)),

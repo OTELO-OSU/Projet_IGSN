@@ -96,7 +96,12 @@ export function createApp(
     .use("*", rateLimit(rateLimitConfig, "ip"))
     .route(
       "/",
-      createServiceRoutes(serviceAccountRepository, sampleRepository),
+      createServiceRoutes(
+        serviceAccountRepository,
+        sampleRepository,
+        manualGroupRepository,
+        userRepository,
+      ),
     );
 
   const adminRoutes = new Hono<AuthenticatedEnv>()

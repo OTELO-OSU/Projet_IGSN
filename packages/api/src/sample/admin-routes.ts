@@ -66,11 +66,11 @@ import {
   validateUpdateSampleBody,
 } from "./validator.ts";
 
-const NOT_ATTACHABLE = {
+export const NOT_ATTACHABLE = {
   error: "Manual group not attachable to this sample",
 } as const;
 
-const PARENT_NOT_ELIGIBLE = {
+export const PARENT_NOT_ELIGIBLE = {
   error: "Parent sample not eligible",
 } as const;
 
