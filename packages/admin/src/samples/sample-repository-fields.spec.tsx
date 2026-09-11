@@ -34,16 +34,18 @@ describe("SampleRepositoryFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderRepositorySection(onSubmit);
 
-    await screen.getByRole("combobox", { name: "Current archive" }).click();
+    const currentArchive = screen.getByRole("region", {
+      name: "Current archive",
+    });
+    await currentArchive
+      .getByRole("combobox", { name: "Organization" })
+      .click();
     await screen
       .getByPlaceholder("Search organizations...")
       .fill(organizationLabel("02feahw73"));
     await screen
       .getByRole("option", { name: organizationLabel("02feahw73") })
       .click();
-    const currentArchive = screen.getByRole("region", {
-      name: "Current archive",
-    });
     await currentArchive
       .getByRole("textbox", { name: "First name" })
       .fill("Ada");
@@ -57,7 +59,7 @@ describe("SampleRepositoryFields", () => {
       name: "Original archive",
     });
     await originalArchive
-      .getByRole("textbox", { name: "Original archive", exact: true })
+      .getByRole("textbox", { name: "Organization" })
       .fill("Museum of Clermont-Ferrand");
     await originalArchive
       .getByRole("textbox", { name: "First name" })

@@ -13,7 +13,7 @@ export function SampleRepositoryFields() {
           <form.AppField name="repository.currentArchive">
             {(field) => (
               <field.ComboboxField
-                label={m.field_current_archive()}
+                label={m.field_archive_organization()}
                 items={ALL_ORGANIZATION_ITEMS}
                 placeholder={m.organization_placeholder()}
                 searchPlaceholder={m.organization_search_placeholder()}
@@ -46,7 +46,9 @@ export function SampleRepositoryFields() {
       <div className="rounded-lg border p-4">
         <FormSection level={3} title={m.section_original_archive()}>
           <form.AppField name="repository.originalArchive">
-            {(field) => <field.TextField label={m.field_original_archive()} />}
+            {(field) => (
+              <field.TextField label={m.field_archive_organization()} />
+            )}
           </form.AppField>
 
           <fieldset className="grid gap-4">
