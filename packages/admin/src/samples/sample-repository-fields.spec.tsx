@@ -41,23 +41,29 @@ describe("SampleRepositoryFields", () => {
     await screen
       .getByRole("option", { name: organizationLabel("02feahw73") })
       .click();
-    await screen
-      .getByRole("textbox", { name: "Current archive contact first name" })
+    const currentArchive = screen.getByRole("region", {
+      name: "Current archive",
+    });
+    await currentArchive
+      .getByRole("textbox", { name: "First name" })
       .fill("Ada");
-    await screen
-      .getByRole("textbox", { name: "Current archive contact last name" })
+    await currentArchive
+      .getByRole("textbox", { name: "Last name" })
       .fill("Lovelace");
     await screen
       .getByRole("textbox", { name: "Collection name" })
       .fill("Massif Central basalts");
-    await screen
+    const originalArchive = screen.getByRole("region", {
+      name: "Original archive",
+    });
+    await originalArchive
       .getByRole("textbox", { name: "Original archive", exact: true })
       .fill("Museum of Clermont-Ferrand");
-    await screen
-      .getByRole("textbox", { name: "Original archive contact first name" })
+    await originalArchive
+      .getByRole("textbox", { name: "First name" })
       .fill("Marie");
-    await screen
-      .getByRole("textbox", { name: "Original archive contact last name" })
+    await originalArchive
+      .getByRole("textbox", { name: "Last name" })
       .fill("Curie");
     await screen.getByRole("button", { name: "Create" }).click();
 
