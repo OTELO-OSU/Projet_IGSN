@@ -7,6 +7,7 @@ import {
   sampleSchema,
 } from "../sample.ts";
 import { frozenFieldEdits } from "./frozen-field-edits.ts";
+import { mergePublishedEdit } from "./published-field-lock.ts";
 
 const EMPTY_SAMPLE_FIELDS = {
   nature: null,
@@ -49,12 +50,6 @@ const stored: Sample = sampleSchema.parse({
   updatedAt: new Date("2020-01-01"),
 });
 
-const emptyStored: Sample = sampleSchema.parse({
-  ...stored,
-  manualGroups: [],
-  scientificContext: { provenanceStatus: "field_sample", collectorName: null },
-});
-
 function body(
   sample: Sample,
   overrides: Partial<CreateSample> = {},
@@ -82,7 +77,10 @@ describe("frozenFieldEdits", () => {
       },
     });
     // Act
-    const result = frozenFieldEdits(stored, payload);
+    const result = frozenFieldEdits(
+      payload,
+      mergePublishedEdit(stored, payload),
+    );
     // Assert
     expect(result).toEqual(["scientificContext.collectorName"]);
   });
@@ -91,19 +89,25 @@ describe("frozenFieldEdits", () => {
     // Arrange
     const payload = body(stored, { name: "Edited name" });
     // Act
-    const result = frozenFieldEdits(stored, payload);
+    const result = frozenFieldEdits(
+      payload,
+      mergePublishedEdit(stored, payload),
+    );
     // Assert
     expect(result).toEqual([]);
   });
 
-  it("should report nothing for a frozen field omitted while the stored one is empty", () => {
+  it("should report nothing for a body omitting the frozen fields the stored sample has set", () => {
     // Arrange
-    const payload = body(emptyStored, {
+    const payload = body(stored, {
       manualGroupIds: undefined,
       scientificContext: { provenanceStatus: "field_sample" },
     });
     // Act
-    const result = frozenFieldEdits(emptyStored, payload);
+    const result = frozenFieldEdits(
+      payload,
+      mergePublishedEdit(stored, payload),
+    );
     // Assert
     expect(result).toEqual([]);
   });
