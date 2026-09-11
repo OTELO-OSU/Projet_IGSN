@@ -62,7 +62,6 @@ import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicDetails } from "#/samples/metamorphic-details.tsx";
 import { ProvenanceStatusField } from "#/samples/provenance-status-field.tsx";
-import { PublicationYearField } from "#/samples/publication-year-field.tsx";
 import { publishBlockerLabel } from "#/samples/publish-blocker-label.ts";
 import { publishedSampleFrozenField } from "#/samples/published-sample-frozen-field.ts";
 import { SampleAttachmentUploadDialog } from "#/samples/sample-attachment-upload-dialog.tsx";
@@ -163,7 +162,6 @@ export type SampleFormProps = {
   currentUser?: Pick<User, "status" | "superAdmin">;
   readOnlyReason?: string;
   manualGroupOptions?: ManualGroup[];
-  publicationYear?: number | null;
 };
 
 export function SampleForm({
@@ -181,7 +179,6 @@ export function SampleForm({
   currentUser,
   readOnlyReason,
   manualGroupOptions = [],
-  publicationYear,
 }: SampleFormProps) {
   const [tab, setTab] = useState<string>(DEFAULT_TAB);
   const roleOnSample = useUserRoleOnSample(sampleId);
@@ -665,7 +662,6 @@ export function SampleForm({
                       <ExistenceStatusField />
                       <AvailabilityStatusField />
                     </form.AppForm>
-                    <PublicationYearField value={publicationYear} />
                   </FormSection>
 
                   <FormSection title={m.section_repository()}>

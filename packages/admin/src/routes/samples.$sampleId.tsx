@@ -284,7 +284,6 @@ function EditSamplePage() {
         }
         manualGroupOptions={query.data.manualGroupOptions}
         parent={query.data.parents[0]}
-        publicationYear={query.data.publicationYear}
         sampleId={query.data.id}
         attachments={query.data.attachments}
         attachmentChanges={attachmentChanges}

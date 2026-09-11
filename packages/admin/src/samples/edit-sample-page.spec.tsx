@@ -897,14 +897,6 @@ describe("EditSamplePage", () => {
     await expect.element(screen.getByLabelText("IGSN")).toHaveTextContent(IGSN);
   });
 
-  it("should show the publication year of a published sample read-only", async () => {
-    const { screen } = await renderEditPage("published");
-    await screen.getByRole("tab", { name: "Curation and repository" }).click();
-    const year = screen.getByLabelText("Publication year");
-    await expect.element(year).toHaveValue("2026");
-    await expect.element(year).toHaveAttribute("readonly");
-  });
-
   it("should refuse a save that would make the sample unpublishable", async () => {
     const { screen, calls } = await renderEditPage("published");
     const save = screen.getByRole("button", { name: "Save", exact: true });
