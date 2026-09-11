@@ -36,7 +36,7 @@ const stored: Sample = sampleSchema.parse({
   ...EMPTY_SAMPLE_FIELDS,
   id: "11111111-1111-4111-8111-111111111111",
   name: "Stored name",
-  material: "rock.igneous.plutonic",
+  material: "rock_and_sediment.rock.igneous.plutonic",
   scientificContext: {
     provenanceStatus: "field_sample",
     collectorName: "Stored collector",
