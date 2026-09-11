@@ -69,7 +69,8 @@ const asSuperAdmin = async (db: Db) => {
 const readBack = (
   id: string,
   { ownerId: _ownerId, ...body }: ServiceAccountBody,
-) => ({ data: { id, ...body, owner: OWNER } });
+  hasApiKey = false,
+) => ({ data: { id, ...body, owner: OWNER, hasApiKey } });
 
 type Client = Awaited<ReturnType<typeof asSuperAdmin>>;
 
@@ -132,6 +133,24 @@ describe("admin service account routes", () => {
       expect(await res.json()).toEqual(readBack(id, body));
     },
   );
+
+  pgTest("should report whether the account has an api key", async ({ db }) => {
+    // Arrange
+    const client = await asSuperAdmin(db);
+    const body = accountBody();
+    const id = await createdId(client, body);
+    // Act
+    const without = await getAccount(client, id);
+    await db
+      .updateTable("service_account")
+      .set({ api_key_hash: "hash" })
+      .where("id", "=", id)
+      .execute();
+    const withKey = await getAccount(client, id);
+    // Assert
+    expect(await without.json()).toEqual(readBack(id, body));
+    expect(await withKey.json()).toEqual(readBack(id, body, true));
+  });
 
   pgTest(
     "should list the service accounts ordered by name, paginated with a total",

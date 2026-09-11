@@ -41,6 +41,7 @@ const selectAccounts = (trx: Transactional<DB>) =>
           .select(["id", "email", "name", "firstname", "orcid"])
           .whereRef("user.id", "=", "service_account.owner_id"),
       ).as("owner"),
+      eb("api_key_hash", "is not", null).$castTo<boolean>().as("hasApiKey"),
     ]);
 
 const toServiceAccount = (row: { managedGroups: ManagedGroups }) =>
