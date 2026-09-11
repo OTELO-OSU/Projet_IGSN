@@ -45,7 +45,7 @@ export function createServiceRoutes(
       const input = c.req.valid("json");
       const issues = await createServiceSampleIssues(
         { samples, users, manualGroups },
-        { id: account.owner.id, superAdmin: false },
+        account.owner.id,
         input,
       );
       if (issues.length > 0) {

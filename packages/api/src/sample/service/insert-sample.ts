@@ -19,6 +19,14 @@ export async function insertSample(
   input: CreateSample,
   groups?: InstitutionalGroups,
 ): Promise<Sample> {
+  return getSampleById(db, await insertSampleRows(db, input, groups));
+}
+
+export async function insertSampleRows(
+  db: Transactional<DB>,
+  input: CreateSample,
+  groups?: InstitutionalGroups,
+): Promise<string> {
   const row = await db
     .insertInto("sample")
     .values({
@@ -40,5 +48,5 @@ export async function insertSample(
   }
   await replaceSampleRelations(db, row.id, input.relations ?? []);
   await replaceSampleManualGroups(db, row.id, input.manualGroupIds ?? []);
-  return getSampleById(db, row.id);
+  return row.id;
 }

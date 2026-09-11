@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-import { publishBlockerSchema } from "../sample/publication/sample-publish-blockers.ts";
+import type { PublishBlocker } from "../sample/publication/sample-publish-blockers.ts";
+
 import { createSampleSchema } from "../sample/sample.ts";
 
 export const createServiceSampleSchema = createSampleSchema.safeExtend({
@@ -9,15 +10,10 @@ export const createServiceSampleSchema = createSampleSchema.safeExtend({
 
 export type CreateServiceSample = z.infer<typeof createServiceSampleSchema>;
 
-export const serviceSampleIssueCodeSchema = z.enum([
-  ...publishBlockerSchema.options,
-  "location_inherited_from_parent",
-  "manual_group_not_attachable",
-]);
-
-export type ServiceSampleIssueCode = z.infer<
-  typeof serviceSampleIssueCodeSchema
->;
+export type ServiceSampleIssueCode =
+  | PublishBlocker
+  | "location_inherited_from_parent"
+  | "manual_group_not_attachable";
 
 export const serviceSampleIssueSchema = z.object({
   path: z.string().optional(),

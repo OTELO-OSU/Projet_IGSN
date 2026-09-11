@@ -10,8 +10,8 @@ export function serviceSampleIssue(
   message?: string,
 ): ServiceSampleIssue {
   return {
-    ...(path.length > 0 && { path: path.map(String).join(".") }),
+    path: path.length > 0 ? path.map(String).join(".") : undefined,
     code,
-    ...(message !== undefined && { message }),
+    message,
   };
 }

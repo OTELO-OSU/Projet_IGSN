@@ -36,6 +36,8 @@ const archivedSample = {
   },
 } satisfies CreateSample;
 
+const { location: _location, ...subSample } = publishableSample;
+
 async function arrangeAccount(db: Kysely<DB>) {
   const owner = await insertUser(db, "jean.martin@univ-lorraine.fr");
   const account = await insertServiceAccount(
@@ -65,6 +67,13 @@ const inLaboratory = (
     institutionalOsu: null,
     institutionalLaboratory: laboratory,
   });
+
+const ownedParent = async (db: Kysely<DB>, ownerId: string) => {
+  const parent = await inLaboratory(db, publishableSample, IN_REACH);
+  await insertSampleOwner(db, parent.id, ownerId);
+  await publishSample(db, parent.id);
+  return parent;
+};
 
 const postSample = (app: ReturnType<typeof createApp>["app"], input: unknown) =>
   app.request("/service/samples", {
@@ -311,7 +320,6 @@ describe("POST /service/samples", () => {
     async ([, parentId], { db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
-      const { location: _location, ...subSample } = publishableSample;
       // Act
       const res = await postSample(app, {
         ...subSample,
@@ -334,7 +342,6 @@ describe("POST /service/samples", () => {
       const stranger = await insertUser(db, "mary.stone@univ-lorraine.fr");
       const parent = await inLaboratory(db, publishableSample, OUT_OF_REACH);
       await insertSampleOwner(db, parent.id, stranger.id);
-      const { location: _location, ...subSample } = publishableSample;
       // Act
       const res = await postSample(app, {
         ...subSample,
@@ -354,9 +361,7 @@ describe("POST /service/samples", () => {
     async ({ db }) => {
       // Arrange
       const { app, owner } = await arrangeAccount(db);
-      const parent = await inLaboratory(db, publishableSample, IN_REACH);
-      await insertSampleOwner(db, parent.id, owner.id);
-      await publishSample(db, parent.id);
+      const parent = await ownedParent(db, owner.id);
       // Act
       const res = await postSample(app, {
         ...publishableSample,
@@ -376,10 +381,7 @@ describe("POST /service/samples", () => {
     async ({ db }) => {
       // Arrange
       const { app, owner } = await arrangeAccount(db);
-      const parent = await inLaboratory(db, publishableSample, IN_REACH);
-      await insertSampleOwner(db, parent.id, owner.id);
-      const published = await publishSample(db, parent.id);
-      const { location: _location, ...subSample } = publishableSample;
+      const parent = await ownedParent(db, owner.id);
       // Act
       const res = await postSample(app, {
         ...subSample,
@@ -392,7 +394,7 @@ describe("POST /service/samples", () => {
       // Assert
       expect(res.status).toBe(201);
       const { data } = sampleResponseSchema.parse(await res.json());
-      expect(data.location).toEqual(published?.location);
+      expect(data.location).toEqual(parent.location);
       expect(data.parents.map((sample) => sample.id)).toEqual([parent.id]);
     },
   );
