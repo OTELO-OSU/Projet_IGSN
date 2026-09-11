@@ -13,6 +13,7 @@ import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
 import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
 import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
+import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
 import { Hono } from "hono";
 
@@ -87,7 +88,8 @@ export function createServiceRoutes(
           return c.json({ error: "Forbidden" }, 403);
         }
         const input = c.req.valid("json");
-        const frozen = frozenFieldEdits(current, input);
+        const merged = mergePublishedEdit(current, input);
+        const frozen = frozenFieldEdits(input, merged);
         if (frozen.length > 0) {
           const body: FrozenServiceSample = {
             error: "Forbidden",
@@ -97,7 +99,7 @@ export function createServiceRoutes(
           };
           return c.json(body, 403);
         }
-        const blockers = newPublishBlockers(current, input);
+        const blockers = newPublishBlockers(current, merged);
         if (blockers.length > 0) {
           const body: InvalidServiceSample = {
             error: "Invalid sample",
@@ -107,7 +109,7 @@ export function createServiceRoutes(
           };
           return c.json(body, 422);
         }
-        const data = await samples.update(current.id, input);
+        const data = await samples.update(current.id, merged);
         if (!data) {
           return c.json({ error: "Not found" }, 404);
         }

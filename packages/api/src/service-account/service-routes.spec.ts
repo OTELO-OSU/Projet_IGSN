@@ -472,14 +472,19 @@ const storedNames = (db: Kysely<DB>) =>
 
 describe("PUT /service/samples/:igsn", () => {
   pgTest(
-    "should update an editable field of a published sample in the account's reach",
+    "should update an editable field of a published sample in the account's reach, keeping an omitted frozen field",
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
       const created = await publishViaService(app);
+      const {
+        scientificContext: { collectionOrigin: _origin, ...scientificContext },
+        ...withoutFrozen
+      } = publishableSample;
       // Act
       const res = await putSample(app, created.igsn!, {
-        ...publishableSample,
+        ...withoutFrozen,
+        scientificContext,
         name: "Basalte revisite",
       });
       // Assert
