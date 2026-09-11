@@ -11,7 +11,6 @@ export type CreateServiceSample = z.infer<typeof createServiceSampleSchema>;
 
 export const serviceSampleIssueCodeSchema = z.enum([
   ...publishBlockerSchema.options,
-  "parent_not_found",
   "location_inherited_from_parent",
   "manual_group_not_attachable",
 ]);

@@ -44,6 +44,7 @@ export const publishBlockerSchema = z.enum([
   "synthetic_synthesis_date_missing",
   "synthetic_operator_name_missing",
   "relation_resource_type_missing",
+  "parent_not_found",
   "attachment_metadata_missing",
   "attachment_limit_exceeded",
   "user_not_verified",
@@ -93,6 +94,7 @@ export function samplePublishBlockers(
       SampleAttachment,
       "targetResourceType" | "title" | "description"
     >[];
+    parents?: readonly (Pick<Sample, "id"> | null)[];
   },
   uploadLimit: number = DEFAULT_UPLOAD_LIMIT,
   publisher?: Pick<User, "status" | "superAdmin">,
@@ -223,6 +225,10 @@ export function samplePublishBlockers(
     sample.relations.some((relation) => relation.targetResourceType == null)
   ) {
     blockers.push("relation_resource_type_missing");
+  }
+
+  if (sample.parents?.some((parent) => parent === null)) {
+    blockers.push("parent_not_found");
   }
 
   if (
