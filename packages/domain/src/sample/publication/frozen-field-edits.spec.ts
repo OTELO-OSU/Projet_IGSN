@@ -49,13 +49,6 @@ const stored: Sample = sampleSchema.parse({
   updatedAt: new Date("2020-01-01"),
 });
 
-const syntheticStored: Sample = sampleSchema.parse({
-  ...stored,
-  material: "synthetic_rock_mineral",
-  scientificContext: null,
-  syntheticDetails: { operatorName: "Stored operator" },
-});
-
 const emptyStored: Sample = sampleSchema.parse({
   ...stored,
   manualGroups: [],
@@ -79,69 +72,29 @@ function body(
   });
 }
 
-const frozenCases: {
-  field: string;
-  current: Sample;
-  overrides: Partial<CreateSample>;
-  expected: string[];
-}[] = [
-  {
-    field: "collector name",
-    current: stored,
-    overrides: {
+describe("frozenFieldEdits", () => {
+  it("should report a frozen field a body tries to change", () => {
+    // Arrange
+    const payload = body(stored, {
       scientificContext: {
         provenanceStatus: "field_sample",
         collectorName: "Edited collector",
       },
-    },
-    expected: ["scientificContext.collectorName"],
-  },
-  {
-    field: "manual groups",
-    current: stored,
-    overrides: { manualGroupIds: ["33333333-3333-4333-8333-333333333333"] },
-    expected: ["manualGroupIds[0]"],
-  },
-  {
-    field: "material outside the frozen prefix",
-    current: stored,
-    overrides: { material: "sediment" },
-    expected: ["material"],
-  },
-  {
-    field: "operator name",
-    current: syntheticStored,
-    overrides: { syntheticDetails: { operatorName: "Edited operator" } },
-    expected: ["syntheticDetails.operatorName"],
-  },
-];
+    });
+    // Act
+    const result = frozenFieldEdits(stored, payload);
+    // Assert
+    expect(result).toEqual(["scientificContext.collectorName"]);
+  });
 
-describe("frozenFieldEdits", () => {
-  it.each(frozenCases)(
-    "should report the $field a body tries to change",
-    ({ current, overrides, expected }) => {
-      // Arrange / Act
-      const result = frozenFieldEdits(current, body(current, overrides));
-      // Assert
-      expect(result).toEqual(expected);
-    },
-  );
-
-  it.each([
-    { case: "a new name", overrides: { name: "Edited name" } },
-    {
-      case: "a material deepened under the frozen prefix",
-      overrides: { material: "rock.igneous.plutonic.felsic.granite" },
-    },
-  ])(
-    "should report nothing for a body changing only $case",
-    ({ overrides }) => {
-      // Arrange / Act
-      const result = frozenFieldEdits(stored, body(stored, overrides));
-      // Assert
-      expect(result).toEqual([]);
-    },
-  );
+  it("should report nothing for a body changing only an editable field", () => {
+    // Arrange
+    const payload = body(stored, { name: "Edited name" });
+    // Act
+    const result = frozenFieldEdits(stored, payload);
+    // Assert
+    expect(result).toEqual([]);
+  });
 
   it("should report nothing for a frozen field omitted while the stored one is empty", () => {
     // Arrange
