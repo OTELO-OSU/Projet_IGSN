@@ -4,10 +4,35 @@ import {
   serviceAccountBodySchema,
   serviceAccountRequestSchema,
 } from "@projet-igsn/domain/service-account/service-account-validator";
+import {
+  type InvalidServiceSample,
+  type ServiceSampleIssue,
+  createServiceSampleSchema,
+} from "@projet-igsn/domain/service-account/service-sample-validator";
+import { validator } from "hono/validator";
 import { z } from "zod";
 
 import { validateUuidIdParam } from "../uuid-param.ts";
 import { zodValidator } from "../zod-validator.ts";
+
+const toIssue = ({ path, code, message }: z.core.$ZodIssue) => {
+  const issue: ServiceSampleIssue = { code, message };
+  return path.length > 0
+    ? { ...issue, path: path.map(String).join(".") }
+    : issue;
+};
+
+export const validateCreateServiceSampleBody = validator("json", (value, c) => {
+  const parsed = createServiceSampleSchema.safeParse(value);
+  if (!parsed.success) {
+    const body: InvalidServiceSample = {
+      error: "Invalid sample",
+      issues: parsed.error.issues.map(toIssue),
+    };
+    return c.json(body, 422);
+  }
+  return parsed.data;
+});
 
 export const validateServiceAccountIdParam = validateUuidIdParam(
   "Invalid service account id",

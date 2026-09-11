@@ -236,63 +236,7 @@ describe("POST /service/samples", () => {
   );
 
   pgTest(
-    "should answer 422 with the publish blockers and write no sample when the body is not publishable",
-    async ({ db }) => {
-      // Arrange
-      const { app } = await arrangeAccount(db);
-      // Act
-      const res = await postSample(app, draft);
-      // Assert
-      expect(res.status).toBe(422);
-      expect(await res.json()).toEqual({
-        error: "Sample is not ready to publish",
-        blockers: [
-          "type_missing",
-          "material_missing",
-          "collection_date_missing",
-          "existence_status_missing",
-          "availability_status_missing",
-          "scientific_context_missing",
-        ],
-      });
-      expect(await db.selectFrom("sample").selectAll().execute()).toEqual([]);
-    },
-  );
-
-  pgTest(
-    "should name the failing field when a parent id is not a sample id",
-    async ({ db }) => {
-      // Arrange
-      const { app } = await arrangeAccount(db);
-      const { location: _location, ...subSample } = publishableSample;
-      // Act
-      const res = await postSample(app, {
-        ...subSample,
-        parentIds: ["10.60510/ABCDEFGHJKMNPQRSTVWXYZ0123"],
-      });
-      // Assert
-      expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({
-        error: "Invalid sample",
-        issues: [{ path: "parentIds.0", message: expect.any(String) }],
-      });
-    },
-  );
-
-  pgTest("should refuse a body choosing its own groups", async ({ db }) => {
-    // Arrange
-    const { app } = await arrangeAccount(db);
-    // Act
-    const res = await postSample(app, {
-      ...publishableSample,
-      institutionalLaboratory: IN_REACH,
-    });
-    // Assert
-    expect(res.status).toBe(400);
-  });
-
-  pgTest(
-    "should answer 422 for a manual group the owner cannot attach",
+    "should list every missing field with its path and write no sample when the body is incomplete",
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
@@ -302,19 +246,85 @@ describe("POST /service/samples", () => {
         .execute();
       // Act
       const res = await postSample(app, {
-        ...publishableSample,
+        ...draft,
         manualGroupIds: [FOREIGN_GROUP_ID],
       });
       // Assert
       expect(res.status).toBe(422);
       expect(await res.json()).toEqual({
-        error: "Manual group not attachable to this sample",
+        error: "Invalid sample",
+        issues: [
+          { path: "type", code: "type_missing" },
+          { path: "material", code: "material_missing" },
+          {
+            path: "description.collectionDate",
+            code: "collection_date_missing",
+          },
+          { path: "existenceStatus", code: "existence_status_missing" },
+          { path: "availabilityStatus", code: "availability_status_missing" },
+          { path: "scientificContext", code: "scientific_context_missing" },
+          { path: "manualGroupIds.0", code: "manual_group_not_attachable" },
+        ],
+      });
+      expect(await db.selectFrom("sample").selectAll().execute()).toEqual([]);
+    },
+  );
+
+  pgTest(
+    "should name the offending field when the body breaks the schema",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(app, {
+        ...publishableSample,
+        nature: "pebble",
+        institutionalLaboratory: IN_REACH,
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [
+          {
+            path: "nature",
+            code: "invalid_value",
+            message: expect.any(String),
+          },
+          { code: "unrecognized_keys", message: expect.any(String) },
+        ],
+      });
+    },
+  );
+
+  pgTest.for([
+    ["an IGSN", "10.60510/ABCDEFGHJKMNPQRSTVWXYZ0123"],
+    [
+      "a sample id that matches nothing",
+      "01990000-0000-7000-8000-000000000000",
+    ],
+  ] as const)(
+    "should report a parent that does not resolve, %s",
+    async ([, parentId], { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const { location: _location, ...subSample } = publishableSample;
+      // Act
+      const res = await postSample(app, {
+        ...subSample,
+        parentIds: [parentId],
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [{ path: "parentIds.0", code: "parent_not_found" }],
       });
     },
   );
 
   pgTest(
-    "should answer 422 for a parent outside the owner's reach",
+    "should report a parent outside the owner's reach as not found",
     async ({ db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
@@ -329,7 +339,10 @@ describe("POST /service/samples", () => {
       });
       // Assert
       expect(res.status).toBe(422);
-      expect(await res.json()).toEqual({ error: "Parent sample not eligible" });
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [{ path: "parentIds.0", code: "parent_not_found" }],
+      });
     },
   );
 
@@ -347,9 +360,10 @@ describe("POST /service/samples", () => {
         parentIds: [parent.id],
       });
       // Assert
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(422);
       expect(await res.json()).toEqual({
-        error: "A sub-sample inherits its parent's location",
+        error: "Invalid sample",
+        issues: [{ path: "location", code: "location_inherited_from_parent" }],
       });
     },
   );
