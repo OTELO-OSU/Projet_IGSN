@@ -47,8 +47,33 @@ export function createServiceRoutes(
     .post("/samples", validateCreateSampleBody, async (c) => {
       const account = c.get("serviceAccount");
       const input = c.req.valid("json");
+      const [parentId] = input.parentIds ?? [];
+      if (parentId !== undefined && input.location != null) {
+        return c.json(
+          { error: "A sub-sample inherits its parent's location" },
+          400,
+        );
+      }
+      const parent =
+        parentId === undefined
+          ? null
+          : await findEligibleParent(
+              samples,
+              users,
+              { id: account.owner.id, superAdmin: false },
+              parentId,
+            );
+      if (parentId !== undefined && parent === null) {
+        return c.json(PARENT_NOT_ELIGIBLE, 422);
+      }
       const blockers = samplePublishBlockers(
-        { ...toPublishableFields(input), attachments: [] },
+        {
+          ...toPublishableFields({
+            ...input,
+            location: parent?.location ?? input.location,
+          }),
+          attachments: [],
+        },
         uploadLimit,
       );
       if (blockers.length > 0) {
@@ -70,18 +95,6 @@ export function createServiceRoutes(
         ) {
           return c.json(NOT_ATTACHABLE, 422);
         }
-      }
-      const [parentId] = input.parentIds ?? [];
-      if (
-        parentId !== undefined &&
-        !(await findEligibleParent(
-          samples,
-          users,
-          { id: account.owner.id, superAdmin: false },
-          parentId,
-        ))
-      ) {
-        return c.json(PARENT_NOT_ELIGIBLE, 422);
       }
       const body: SampleResponse = {
         data: await samples.createPublished(input, account.owner.id, account),

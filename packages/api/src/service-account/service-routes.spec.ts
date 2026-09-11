@@ -301,14 +301,62 @@ describe("POST /service/samples", () => {
       const stranger = await insertUser(db, "mary.stone@univ-lorraine.fr");
       const parent = await inLaboratory(db, publishableSample, OUT_OF_REACH);
       await insertSampleOwner(db, parent.id, stranger.id);
+      const { location: _location, ...subSample } = publishableSample;
+      // Act
+      const res = await postSample(app, {
+        ...subSample,
+        parentIds: [parent.id],
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({ error: "Parent sample not eligible" });
+    },
+  );
+
+  pgTest(
+    "should refuse a body carrying both a parent and a location",
+    async ({ db }) => {
+      // Arrange
+      const { app, owner } = await arrangeAccount(db);
+      const parent = await inLaboratory(db, publishableSample, IN_REACH);
+      await insertSampleOwner(db, parent.id, owner.id);
+      await publishSample(db, parent.id);
       // Act
       const res = await postSample(app, {
         ...publishableSample,
         parentIds: [parent.id],
       });
       // Assert
-      expect(res.status).toBe(422);
-      expect(await res.json()).toEqual({ error: "Parent sample not eligible" });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({
+        error: "A sub-sample inherits its parent's location",
+      });
+    },
+  );
+
+  pgTest(
+    "should publish a sub-sample with its parent's location",
+    async ({ db }) => {
+      // Arrange
+      const { app, owner } = await arrangeAccount(db);
+      const parent = await inLaboratory(db, publishableSample, IN_REACH);
+      await insertSampleOwner(db, parent.id, owner.id);
+      const published = await publishSample(db, parent.id);
+      const { location: _location, ...subSample } = publishableSample;
+      // Act
+      const res = await postSample(app, {
+        ...subSample,
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorName: "Georges Cuvier",
+        },
+        parentIds: [parent.id],
+      });
+      // Assert
+      expect(res.status).toBe(201);
+      const { data } = sampleResponseSchema.parse(await res.json());
+      expect(data.location).toEqual(published?.location);
+      expect(data.parents.map((sample) => sample.id)).toEqual([parent.id]);
     },
   );
 });
