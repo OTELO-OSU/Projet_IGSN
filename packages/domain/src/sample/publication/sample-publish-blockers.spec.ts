@@ -526,6 +526,15 @@ describe("samplePublishBlockers", () => {
     ).toEqual([]);
   });
 
+  it("should report parent_not_found when a requested parent did not resolve", () => {
+    expect(samplePublishBlockers({ ...base, parents: [null] })).toEqual([
+      "parent_not_found",
+    ]);
+    expect(
+      samplePublishBlockers({ ...base, parents: [{ id: base.id }] }),
+    ).toEqual([]);
+  });
+
   const attachment = (
     overrides: Partial<SampleAttachment> = {},
   ): SampleAttachment => ({

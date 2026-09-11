@@ -28,7 +28,7 @@
 - Moderation reach reads the sample's own codes and groups (`api/src/sample/service/moderated-sample-where.ts`), but the user row for a user (`api/src/user/moderation-scope-where.ts`); see ADR 0030.
 - `api/src/institutional-group/` is that entity's first repository (managers, active-manager counts); `api/src/user/orphaned-groups-of-user.ts` and the two repositories' `listWithoutActiveManager` methods are the single "who still manages this group" queries, shared by the orphan-group mail, the pending-users digest recap and the group lists; see ADR 0030.
 - `domain/service-account/` and `api/src/service-account/` are the service account: a super-admin-declared non-human account with a name, a required owner, an institutional trio and managed groups, its own table never a user row, never a manager on a group page or in a count; its future sample reach is `managerScope` + `moderatedSampleWhere`; see ADR 0035.
-- A signed-in frontend user requests one from the public footer; the owner alone rotates its API key (SHA-256 hash at rest, shown once) from admin Settings, and `/service` is the resulting machine mount, `GET /service/samples` its route, listing every published sample and narrowing to the account's own `managerScope` on `?editable=true`, 403 for a missing or unknown key; see ADR 0036.
+- A signed-in frontend user requests one from the public footer; the owner alone rotates its API key (SHA-256 hash at rest, shown once) from admin Settings, and `/service` is the resulting machine mount, `GET /service/samples` listing every published sample and narrowing to the account's own `managerScope` on `?editable=true`, `POST /service/samples` creating and publishing one owned by the account's owner and snapshotting the account's own trio, 403 for a missing or unknown key; see ADR 0036.
 
 ## Server-side sorting and filtering
 
@@ -52,6 +52,7 @@ Why a sample cannot be published lives in ONE place, `domain/sample/publication/
 
 - The api publish guard and the admin publish tooltip both derive from it.
 - Add a constraint by adding a code to `publishBlockerSchema` and pushing it in `samplePublishBlockers`.
+- The function has no I/O, so a caller resolves the parent and passes it in `parents`, a `null` entry firing `parent_not_found`; `publish-blocker-path.ts` is the single blocker-to-path map, read by `publishedSampleSchema` and the `/service` 422 body.
 - The admin label map (`publish-blocker-label.ts`) is an exhaustive `Record<PublishBlocker, () => string>`, so it fails to compile until the new reason is translated.
 
 What a published sample may still change lives in ONE place too, the lock maps at the top of `published-field-lock.ts`.
