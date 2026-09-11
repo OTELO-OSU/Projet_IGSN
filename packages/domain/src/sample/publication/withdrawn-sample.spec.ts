@@ -8,7 +8,7 @@ const withdrawn: Sample = {
   name: "Rhyolite 11",
   nature: "hand_sample",
   type: "dredge",
-  material: "rock.other",
+  material: "rock_and_sediment.rock.other",
   materialOtherName: "Volcanic breccia",
   texture: null,
   metamorphicFacies: null,
@@ -65,7 +65,7 @@ describe("toWithdrawnSample", () => {
       name: "Rhyolite 11",
       nature: "hand_sample",
       type: "dredge",
-      material: "rock.other",
+      material: "rock_and_sediment.rock.other",
       materialOtherName: "Volcanic breccia",
       location: {
         region: { kind: "continent", country: "FR" },

@@ -4,20 +4,20 @@ import { allowsLocation } from "./allows-location.ts";
 
 describe("allowsLocation", () => {
   it.each([
-    "synthetic_rock_mineral",
-    "extraterrestrial_rock.returned_samples",
-    "extraterrestrial_rock.returned_samples.lunar_sample",
-    "extraterrestrial_rock.returned_samples.other",
+    "rock_and_sediment.synthetic_rock_mineral",
+    "rock_and_sediment.extraterrestrial_rock.returned_samples",
+    "rock_and_sediment.extraterrestrial_rock.returned_samples.lunar_sample",
+    "rock_and_sediment.extraterrestrial_rock.returned_samples.other",
   ])("should refuse a location on %s", (material) => {
     expect(allowsLocation(material)).toBe(false);
   });
 
   it.each([
     null,
-    "extraterrestrial_rock",
-    "extraterrestrial_rock.meteorites",
-    "rock.igneous.volcanic.basalt",
-    "mineral",
+    "rock_and_sediment.extraterrestrial_rock",
+    "rock_and_sediment.extraterrestrial_rock.meteorites",
+    "rock_and_sediment.rock.igneous.volcanic.basalt",
+    "rock_and_sediment.mineral",
   ])("should allow a location on %s", (material) => {
     expect(allowsLocation(material)).toBe(true);
   });

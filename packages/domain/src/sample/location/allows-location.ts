@@ -6,6 +6,9 @@ import { isSyntheticMaterial } from "../synthetic-details/is-synthetic-material.
 export function allowsLocation(material: MaterialPath | null): boolean {
   return (
     !isSyntheticMaterial(material) &&
-    !isPathAtOrUnder(material, "extraterrestrial_rock.returned_samples")
+    !isPathAtOrUnder(
+      material,
+      "rock_and_sediment.extraterrestrial_rock.returned_samples",
+    )
   );
 }

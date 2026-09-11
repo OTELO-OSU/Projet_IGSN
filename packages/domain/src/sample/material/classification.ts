@@ -8,6 +8,16 @@ import { rockTree } from "./classification/rock-subtree.ts";
 import { sedimentTree } from "./classification/sediment-subtree.ts";
 
 const materialTree = {
+  rock_and_sediment: {
+    searchable: true,
+    choices: [
+      "rock",
+      "sediment",
+      "mineral",
+      "synthetic_rock_mineral",
+      "extraterrestrial_rock",
+    ],
+  },
   rock: {
     searchable: true,
     choices: [
@@ -46,13 +56,7 @@ export type MaterialSegment = keyof typeof materialTree;
 
 export const MATERIAL_TREE: Record<MaterialSegment, TreeNode> = materialTree;
 
-export const MATERIAL_ROOTS = [
-  "rock",
-  "sediment",
-  "mineral",
-  "synthetic_rock_mineral",
-  "extraterrestrial_rock",
-] as const;
+export const MATERIAL_ROOTS = ["rock_and_sediment"] as const;
 
 export const MATERIAL_PATHS = expandPaths(MATERIAL_TREE, MATERIAL_ROOTS);
 

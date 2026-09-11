@@ -16,7 +16,7 @@ const stored: Sample = {
   name: "Stored name",
   nature: "hand_sample",
   type: "core",
-  material: "rock.igneous.plutonic",
+  material: "rock_and_sediment.rock.igneous.plutonic",
   materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
@@ -102,7 +102,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     name: "Edited name",
     nature: "rock_powder",
     type: "dredge",
-    material: "sediment",
+    material: "rock_and_sediment.sediment",
     materialOtherName: null,
     texture: null,
     metamorphicFacies: null,
@@ -221,14 +221,14 @@ describe("mergePublishedEdit", () => {
   it("keeps every material-governed field when the payload's material is refused", () => {
     const metamorphic: Sample = {
       ...stored,
-      material: "rock.metamorphic",
+      material: "rock_and_sediment.rock.metamorphic",
       texture: "cataclastic",
       metamorphicFacies: "eclogite",
       metamorphicFabric: "gneissic",
     };
     const merged = mergePublishedEdit(metamorphic, incoming());
     expect(merged).toMatchObject({
-      material: "rock.metamorphic",
+      material: "rock_and_sediment.rock.metamorphic",
       texture: "cataclastic",
       metamorphicFacies: "eclogite",
       metamorphicFabric: "gneissic",
@@ -318,7 +318,7 @@ describe("mergePublishedEdit", () => {
     };
     const synthetic: Sample = {
       ...stored,
-      material: "synthetic_rock_mineral",
+      material: "rock_and_sediment.synthetic_rock_mineral",
       location: null,
       syntheticDetails: storedDetails,
     };
@@ -356,14 +356,17 @@ describe("mergePublishedEdit", () => {
   describe("material", () => {
     it.each([
       [
-        "rock.igneous.plutonic.felsic.granite",
-        "rock.igneous.plutonic.felsic.granodiorite",
+        "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+        "rock_and_sediment.rock.igneous.plutonic.felsic.granodiorite",
       ],
       [
-        "rock.igneous.plutonic.felsic.granite",
-        "rock.metamorphic.strongly_metamorphosed.gneiss",
+        "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+        "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
       ],
-      ["rock.igneous.plutonic.felsic.granite", "rock.igneous"],
+      [
+        "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+        "rock_and_sediment.rock.igneous",
+      ],
     ])("moves %s to %s, both under the published root", (current, next) => {
       const merged = mergePublishedEdit(
         { ...stored, material: current },
@@ -374,11 +377,11 @@ describe("mergePublishedEdit", () => {
 
     it.each([
       [
-        "rock.igneous.plutonic.felsic.granite",
-        "sediment.exogenous_detritic.clay",
+        "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+        "rock_and_sediment.sediment.exogenous_detritic.clay",
       ],
-      ["mineral", "synthetic_rock_mineral"],
-      ["rock.igneous.plutonic.felsic.granite", null],
+      ["rock_and_sediment.mineral", "rock_and_sediment.synthetic_rock_mineral"],
+      ["rock_and_sediment.rock.igneous.plutonic.felsic.granite", null],
     ])("keeps %s when the payload carries %s", (current, next) => {
       const merged = mergePublishedEdit(
         { ...stored, material: current },
@@ -389,13 +392,13 @@ describe("mergePublishedEdit", () => {
 
     it("takes the texture sent alongside a material refined under the root", () => {
       const next = {
-        material: "rock.igneous.plutonic.felsic.granodiorite",
+        material: "rock_and_sediment.rock.igneous.plutonic.felsic.granodiorite",
         texture: "cumulate",
       } as const;
       const merged = mergePublishedEdit(
         {
           ...stored,
-          material: "rock.igneous.plutonic.felsic.granite",
+          material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
           texture: "phaneritic",
         },
         incoming(next),
@@ -407,15 +410,18 @@ describe("mergePublishedEdit", () => {
       const merged = mergePublishedEdit(
         {
           ...stored,
-          material: "extraterrestrial_rock.meteorites.chondrites",
+          material:
+            "rock_and_sediment.extraterrestrial_rock.meteorites.chondrites",
         },
         incoming({
-          material: "extraterrestrial_rock.returned_samples.lunar_sample",
+          material:
+            "rock_and_sediment.extraterrestrial_rock.returned_samples.lunar_sample",
           location: null,
         }),
       );
       expect(merged).toMatchObject({
-        material: "extraterrestrial_rock.returned_samples.lunar_sample",
+        material:
+          "rock_and_sediment.extraterrestrial_rock.returned_samples.lunar_sample",
         location: null,
       });
     });
@@ -424,13 +430,16 @@ describe("mergePublishedEdit", () => {
       const merged = mergePublishedEdit(
         {
           ...stored,
-          material: "rock.other",
+          material: "rock_and_sediment.rock.other",
           materialOtherName: "Stored breccia",
         },
-        incoming({ material: "rock.other", materialOtherName: "Impactite" }),
+        incoming({
+          material: "rock_and_sediment.rock.other",
+          materialOtherName: "Impactite",
+        }),
       );
       expect(merged).toMatchObject({
-        material: "rock.other",
+        material: "rock_and_sediment.rock.other",
         materialOtherName: "Impactite",
       });
     });
@@ -439,24 +448,31 @@ describe("mergePublishedEdit", () => {
       const merged = mergePublishedEdit(
         {
           ...stored,
-          material: "rock.other",
+          material: "rock_and_sediment.rock.other",
           materialOtherName: "Stored breccia",
         },
-        incoming({ material: "sediment", materialOtherName: "Impactite" }),
+        incoming({
+          material: "rock_and_sediment.sediment",
+          materialOtherName: "Impactite",
+        }),
       );
       expect(merged).toMatchObject({
-        material: "rock.other",
+        material: "rock_and_sediment.rock.other",
         materialOtherName: "Stored breccia",
       });
     });
 
     it("keeps the stored location when the payload's material is rejected", () => {
       const merged = mergePublishedEdit(
-        { ...stored, material: "synthetic_rock_mineral", location: null },
-        incoming({ material: "rock.igneous" }),
+        {
+          ...stored,
+          material: "rock_and_sediment.synthetic_rock_mineral",
+          location: null,
+        },
+        incoming({ material: "rock_and_sediment.rock.igneous" }),
       );
       expect(merged).toMatchObject({
-        material: "synthetic_rock_mineral",
+        material: "rock_and_sediment.synthetic_rock_mineral",
         location: null,
       });
     });
@@ -465,8 +481,8 @@ describe("mergePublishedEdit", () => {
 
 describe("frozenMaterialDepth", () => {
   it.each([
-    ["rock.igneous.plutonic.felsic.granite", 1],
-    ["mineral", Infinity],
+    ["rock_and_sediment.rock.igneous.plutonic.felsic.granite", 2],
+    ["rock_and_sediment.mineral", Infinity],
     [null, Infinity],
   ])("locks the levels of %s above depth %s", (material, depth) => {
     expect(frozenMaterialDepth(material)).toBe(depth);

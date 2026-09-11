@@ -23,7 +23,7 @@ describe("facetQueryFields", () => {
 
   it.each([
     ["type", "core.section"],
-    ["material", "rock.igneous.plutonic"],
+    ["material", "rock_and_sediment.rock.igneous.plutonic"],
     ["collectionMethod", "coring"],
     ["nature", "rock_powder"],
     ["texture", "aphanitic"],

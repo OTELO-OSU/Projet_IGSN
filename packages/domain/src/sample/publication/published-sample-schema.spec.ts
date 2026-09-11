@@ -6,7 +6,7 @@ const publishable = {
   name: "Basalt 42",
   nature: "hand_sample" as const,
   type: "individual_sample",
-  material: "sediment.exogenous_detritic.clay",
+  material: "rock_and_sediment.sediment.exogenous_detritic.clay",
   location: { position: { type: "point" as const, longitude: 0, latitude: 0 } },
   description: {
     collectionDate: {
@@ -36,7 +36,11 @@ describe("publishedSampleSchema", () => {
       { ...publishable, description: null },
       "description.collectionDate",
     ],
-    ["material_incomplete", { ...publishable, material: "rock" }, "material"],
+    [
+      "material_incomplete",
+      { ...publishable, material: "rock_and_sediment.rock" },
+      "material",
+    ],
     [
       "collector_name_missing",
       {

@@ -11,7 +11,7 @@ const base: Sample = {
   name: "Basalt 42",
   nature: "hand_sample",
   type: "individual_sample",
-  material: "rock.igneous.plutonic.felsic.granite",
+  material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
   materialOtherName: null,
   texture: null,
   metamorphicFacies: null,
@@ -75,7 +75,7 @@ const syntheticDetails = {
 
 const synthetic: Sample = {
   ...base,
-  material: "synthetic_rock_mineral",
+  material: "rock_and_sediment.synthetic_rock_mineral",
   location: null,
   syntheticDetails,
 };
@@ -115,36 +115,44 @@ describe("samplePublishBlockers", () => {
     ]);
   });
 
-  it("should report material_incomplete for a root, which has sub-levels", () => {
-    expect(samplePublishBlockers({ ...base, material: "rock" })).toEqual([
-      "material_incomplete",
-    ]);
+  it("should report material_incomplete for a family, which has sub-levels", () => {
+    expect(
+      samplePublishBlockers({ ...base, material: "rock_and_sediment.rock" }),
+    ).toEqual(["material_incomplete"]);
   });
 
-  it("should publish a material stopped at its second level", () => {
+  it("should publish a material stopped at its third level", () => {
     expect(
-      samplePublishBlockers({ ...base, material: "rock.igneous" }),
+      samplePublishBlockers({
+        ...base,
+        material: "rock_and_sediment.rock.igneous",
+      }),
     ).toEqual([]);
   });
 
   it("should report material_other_name_missing when the other material has no free text", () => {
-    expect(samplePublishBlockers({ ...base, material: "rock.other" })).toEqual([
-      "material_other_name_missing",
-    ]);
+    expect(
+      samplePublishBlockers({
+        ...base,
+        material: "rock_and_sediment.rock.other",
+      }),
+    ).toEqual(["material_other_name_missing"]);
   });
 
   it("should publish the other material once it is named", () => {
     expect(
       samplePublishBlockers({
         ...base,
-        material: "rock.other",
+        material: "rock_and_sediment.rock.other",
         materialOtherName: "Impactite",
       }),
     ).toEqual([]);
   });
 
-  it("should publish the root material mineral, which has no sub-level", () => {
-    expect(samplePublishBlockers({ ...base, material: "mineral" })).toEqual([]);
+  it("should publish the family mineral, which has no sub-level", () => {
+    expect(
+      samplePublishBlockers({ ...base, material: "rock_and_sediment.mineral" }),
+    ).toEqual([]);
   });
 
   it("should report a blocker for a value outside the vocabulary rather than treat it as publishable", () => {
@@ -174,7 +182,8 @@ describe("samplePublishBlockers", () => {
     expect(
       samplePublishBlockers({
         ...base,
-        material: "extraterrestrial_rock.returned_samples.other",
+        material:
+          "rock_and_sediment.extraterrestrial_rock.returned_samples.other",
         location: null,
       }),
     ).toEqual([]);
@@ -198,7 +207,7 @@ describe("samplePublishBlockers", () => {
     expect(
       samplePublishBlockers({
         ...base,
-        material: "rock.igneous",
+        material: "rock_and_sediment.rock.igneous",
         location: null,
       }),
     ).toEqual(["location_position_missing"]);
@@ -206,7 +215,11 @@ describe("samplePublishBlockers", () => {
 
   it("should not add a location blocker while the material is still incomplete", () => {
     expect(
-      samplePublishBlockers({ ...base, material: "rock", location: null }),
+      samplePublishBlockers({
+        ...base,
+        material: "rock_and_sediment.rock",
+        location: null,
+      }),
     ).toEqual(["material_incomplete"]);
   });
 
