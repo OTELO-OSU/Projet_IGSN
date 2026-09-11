@@ -742,18 +742,17 @@ describe("SampleView", () => {
         sample={sample({
           repository: {
             currentArchive: "03fd77x13",
-            currentArchiveContact: "archivist@example.org",
-            originalArchiveContact: "museum@example.org",
+            currentArchiveContactFirstname: "Archibald",
+            currentArchiveContactLastname: "Archivist",
+            originalArchiveContactFirstname: "Museo",
+            originalArchiveContactLastname: "Nancy",
           },
         })}
       />,
     );
 
-    await expect
-      .element(screen.getByText("archivist@example.org"))
-      .not.toBeInTheDocument();
-    await expect
-      .element(screen.getByText("museum@example.org"))
-      .not.toBeInTheDocument();
+    for (const value of ["Archibald", "Archivist", "Museo", "Nancy"]) {
+      await expect.element(screen.getByText(value)).not.toBeInTheDocument();
+    }
   });
 });
