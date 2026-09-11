@@ -3,8 +3,10 @@ import { Fragment, useState } from "react";
 
 import {
   canStopAtPath,
+  hierarchyDescendantItems,
   hierarchyLevelItems,
   hierarchyPathLabel,
+  toHierarchyPath,
   type Hierarchy,
 } from "../../lib/hierarchy.ts";
 import { cn } from "../../lib/utils.ts";
@@ -80,10 +82,14 @@ export function HierarchyInput({
   const canStop = current !== null && canStopAtPath(hierarchy, current);
 
   const depth = editingDepth ?? path.length;
+  const parent = path[depth - 1] ?? null;
   const query = search.trim().toLowerCase();
-  const children = childrenOf(path[depth - 1] ?? null).filter((item) =>
-    item.label.toLowerCase().includes(query),
-  );
+  const children = query
+    ? hierarchyDescendantItems(hierarchy, parent, translate).filter(
+        (item) =>
+          isSelectable(item.value) && item.label.toLowerCase().includes(query),
+      )
+    : childrenOf(parent);
 
   const close = () => {
     setOpen(false);
@@ -91,11 +97,15 @@ export function HierarchyInput({
     setEditingDepth(null);
   };
 
-  const pick = (child: string) => {
-    if (child !== path[depth]) onChange([...path.slice(0, depth), child]);
-    if (childrenOf(child).length === 0) return close();
+  const pick = (value: string) => {
+    const next = [
+      ...path.slice(0, depth),
+      ...toHierarchyPath(value).slice(depth),
+    ];
+    if (next.some((node, level) => node !== path[level])) onChange(next);
+    if (childrenOf(value).length === 0) return close();
     setSearch("");
-    setEditingDepth(depth + 1);
+    setEditingDepth(next.length);
   };
 
   return (
