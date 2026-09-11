@@ -769,5 +769,8 @@
   "service_account_api_key_regenerate_description": "The current key stops working as soon as the new one is generated.",
   "service_account_api_key_label": "API key",
   "service_account_api_key_once": "Copy this key now: it is shown only once.",
-  "service_account_api_key_error": "Could not generate the API key"
+  "service_account_api_key_error": "Could not generate the API key",
+  "column_active": "Active",
+  "service_account_active": "Active",
+  "service_account_inactive": "Inactive"
 }

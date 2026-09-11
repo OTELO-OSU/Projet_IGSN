@@ -24,6 +24,7 @@ const ACCOUNT = {
   institutionalOsu: null,
   institutionalLaboratory: "UMR7358",
   managedGroups: NO_MANAGED_GROUPS,
+  hasApiKey: true,
   owner: {
     id: "3f2504e0-4f89-41d3-9a0c-030500000c01",
     email: "jean.martin@univ-lorraine.fr",
@@ -46,7 +47,7 @@ function fakeApi() {
 }
 
 describe("ServiceAccountsPage", () => {
-  it("should list every service account with its name, its owner and its institution", async () => {
+  it("should list every service account with its name, its owner, its institution and whether it is active", async () => {
     fakeApi();
 
     const { screen } = await renderRoute("/service-accounts");
@@ -61,6 +62,9 @@ describe("ServiceAccountsPage", () => {
       .element(
         screen.getByRole("cell", { name: "Université de Lorraine CRPG" }),
       )
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("img", { name: "Active" }))
       .toBeVisible();
   });
 });

@@ -7,6 +7,7 @@ import { m } from "#/paraglide/messages.js";
 import { useDeleteServiceAccount } from "#/service-accounts/hook/delete-service-account.ts";
 import { useGetServiceAccountById } from "#/service-accounts/hook/get-service-account-by-id.ts";
 import { useUpdateServiceAccount } from "#/service-accounts/hook/update-service-account.ts";
+import { ServiceAccountActiveMark } from "#/service-accounts/service-account-active-mark.tsx";
 import { ServiceAccountForm } from "#/service-accounts/service-account-form.tsx";
 
 export const Route = createFileRoute("/service-accounts/$accountId")({
@@ -33,7 +34,10 @@ function ServiceAccountDetailPage() {
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">{account.name}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold">{account.name}</h1>
+          <ServiceAccountActiveMark active={account.hasApiKey} />
+        </div>
         <ConfirmButton
           variant="destructive"
           title={m.service_account_delete_title()}
