@@ -221,14 +221,14 @@ Our field paths are leaves of `sampleSchema` (`packages/domain/src/sample/sample
 
 ### `repository`
 
-| Our field                           | Core field                                            | Comment / question                                                                                              |
-| ----------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `repository.currentArchive`         | `curation.currentRepository.organization.id`, `.name` | ROR uri as `id`, catalog name as `name`.                                                                        |
-| `repository.currentArchiveContact`  | `curation.currentRepository.contact.name`             | `Agent` needs `name` and `agentType`; our contact is one free-text string, often an email. `agentType: Person`. |
-| `repository.collectionName`         | `curation.currentRepository.collectionName`           |                                                                                                                 |
-| `repository.originalArchive`        | `curation.originalRepository.organization.name`       | Free text on our side, so no ROR `id`.                                                                          |
-| `repository.originalArchiveContact` | `curation.originalRepository.contact.name`            |                                                                                                                 |
-|                                     | `curation.*Repository.storageLocation`                | No source field.                                                                                                |
+| Our field                                                                       | Core field                                            | Comment / question                                |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------- |
+| `repository.currentArchive`                                                     | `curation.currentRepository.organization.id`, `.name` | ROR uri as `id`, catalog name as `name`.          |
+| `repository.currentArchiveContactFirstname`, `.currentArchiveContactLastname`   | `curation.currentRepository.contact.name`             | Joined `firstname lastname`, `agentType: Person`. |
+| `repository.collectionName`                                                     | `curation.currentRepository.collectionName`           |                                                   |
+| `repository.originalArchive`                                                    | `curation.originalRepository.organization.name`       | Free text on our side, so no ROR `id`.            |
+| `repository.originalArchiveContactFirstname`, `.originalArchiveContactLastname` | `curation.originalRepository.contact.name`            | Same join.                                        |
+|                                                                                 | `curation.*Repository.storageLocation`                | No source field.                                  |
 
 The two archive contacts are admin-only on the public API (`redact-archive-contacts.ts`). The service API is machine-authenticated inside the account's own reach, so it emits them unredacted.
 
