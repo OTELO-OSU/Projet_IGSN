@@ -43,7 +43,6 @@ export type SampleRepository = {
   ): Promise<{ sample: Sample; role: UserSampleRole | null } | null>;
   getPublicByIgsn(igsn: string): Promise<Sample | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
-  /** Publishes in the same transaction, so a refused publish leaves no draft. */
   createPublished(
     input: CreateSample,
     ownerId: string,
