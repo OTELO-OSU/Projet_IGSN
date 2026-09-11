@@ -499,8 +499,10 @@ describe("public sample routes", () => {
       await db
         .updateTable("sample")
         .set({
-          rep_current_archive_contact: "archivist@example.org",
-          rep_original_archive_contact: "museum@example.org",
+          rep_current_archive_contact_firstname: "Ada",
+          rep_current_archive_contact_lastname: "Archiviste",
+          rep_original_archive_contact_firstname: "Marie",
+          rep_original_archive_contact_lastname: "Museum",
         })
         .where("id", "=", published.id)
         .execute();
@@ -513,8 +515,10 @@ describe("public sample routes", () => {
       });
       // Assert
       const redacted = {
-        currentArchiveContact: null,
-        originalArchiveContact: null,
+        currentArchiveContactFirstname: null,
+        currentArchiveContactLastname: null,
+        originalArchiveContactFirstname: null,
+        originalArchiveContactLastname: null,
       };
       expect(await detail.json()).toMatchObject({
         data: { repository: redacted },

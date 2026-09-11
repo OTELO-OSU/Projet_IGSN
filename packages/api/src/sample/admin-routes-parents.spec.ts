@@ -367,8 +367,10 @@ describe("the parent read for prefill", () => {
         ...publishableSample,
         repository: {
           currentArchive: "02feahw73",
-          currentArchiveContact: "curator@univ-lorraine.fr",
-          originalArchiveContact: "collector@univ-lorraine.fr",
+          currentArchiveContactFirstname: "Camille",
+          currentArchiveContactLastname: "Durand",
+          originalArchiveContactFirstname: "Louise",
+          originalArchiveContactLastname: "Mercier",
         },
       });
       await insertSampleOwner(db, created.id, stranger.id);

@@ -6,23 +6,27 @@ const sample = {
   name: "Rhyolite 11",
   repository: {
     currentArchive: "03fd77x13",
-    currentArchiveContact: "archivist@example.org",
+    currentArchiveContactFirstname: "Ada",
+    currentArchiveContactLastname: "Lovelace",
     collectionName: "Historic basalts",
     originalArchive: "Museum of Nancy",
-    originalArchiveContact: "museum@example.org",
+    originalArchiveContactFirstname: "Marie",
+    originalArchiveContactLastname: "Curie",
   },
 } as Sample;
 
 describe("redactArchiveContacts", () => {
-  it("should drop both archive contacts and keep the rest of the repository", () => {
+  it("should drop both archive contact names and keep the rest of the repository", () => {
     expect(redactArchiveContacts(sample)).toEqual({
       name: "Rhyolite 11",
       repository: {
         currentArchive: "03fd77x13",
-        currentArchiveContact: null,
+        currentArchiveContactFirstname: null,
+        currentArchiveContactLastname: null,
         collectionName: "Historic basalts",
         originalArchive: "Museum of Nancy",
-        originalArchiveContact: null,
+        originalArchiveContactFirstname: null,
+        originalArchiveContactLastname: null,
       },
     });
   });

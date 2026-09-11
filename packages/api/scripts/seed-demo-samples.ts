@@ -1469,7 +1469,8 @@ const FIELD_SAMPLE_CONTEXT: SampleRow["scientificContext"] = {
 
 const DEMO_REPOSITORY: SampleRow["repository"] = {
   currentArchive: "02feahw73",
-  currentArchiveContact: "collections@insu.cnrs.fr",
+  currentArchiveContactFirstname: "Camille",
+  currentArchiveContactLastname: "Durand",
   collectionName: "Solid Earth demo collection",
 };
 

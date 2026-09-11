@@ -17,11 +17,21 @@ describe("toPublicSample", () => {
   it("should redact the archive contacts of a published sample", () => {
     const archived = {
       ...sample,
-      repository: { currentArchiveContact: "archivist@example.org" },
+      repository: {
+        currentArchiveContactFirstname: "Ada",
+        currentArchiveContactLastname: "Lovelace",
+        originalArchiveContactFirstname: "Marie",
+        originalArchiveContactLastname: "Curie",
+      },
     } as Sample;
 
     expect(toPublicSample(archived)).toMatchObject({
-      repository: { currentArchiveContact: null },
+      repository: {
+        currentArchiveContactFirstname: null,
+        currentArchiveContactLastname: null,
+        originalArchiveContactFirstname: null,
+        originalArchiveContactLastname: null,
+      },
     });
   });
 

@@ -34,25 +34,39 @@ describe("SampleRepositoryFields", () => {
     const onSubmit = vi.fn();
     const screen = await renderRepositorySection(onSubmit);
 
-    await screen.getByRole("combobox", { name: "Current archive" }).click();
+    const currentArchive = screen.getByRole("region", {
+      name: "Current archive",
+    });
+    await currentArchive
+      .getByRole("combobox", { name: "Organization" })
+      .click();
     await screen
       .getByPlaceholder("Search organizations...")
       .fill(organizationLabel("02feahw73"));
     await screen
       .getByRole("option", { name: organizationLabel("02feahw73") })
       .click();
-    await screen
-      .getByRole("textbox", { name: "Current archive contact" })
-      .fill("curator@example.org");
+    await currentArchive
+      .getByRole("textbox", { name: "First name" })
+      .fill("Ada");
+    await currentArchive
+      .getByRole("textbox", { name: "Last name" })
+      .fill("Lovelace");
     await screen
       .getByRole("textbox", { name: "Collection name" })
       .fill("Massif Central basalts");
-    await screen
-      .getByRole("textbox", { name: "Original archive", exact: true })
+    const originalArchive = screen.getByRole("region", {
+      name: "Original archive",
+    });
+    await originalArchive
+      .getByRole("textbox", { name: "Organization" })
       .fill("Museum of Clermont-Ferrand");
-    await screen
-      .getByRole("textbox", { name: "Original archive contact" })
-      .fill("archives@example.org");
+    await originalArchive
+      .getByRole("textbox", { name: "First name" })
+      .fill("Marie");
+    await originalArchive
+      .getByRole("textbox", { name: "Last name" })
+      .fill("Curie");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -60,10 +74,12 @@ describe("SampleRepositoryFields", () => {
         expect.objectContaining({
           repository: {
             currentArchive: "02feahw73",
-            currentArchiveContact: "curator@example.org",
+            currentArchiveContactFirstname: "Ada",
+            currentArchiveContactLastname: "Lovelace",
             collectionName: "Massif Central basalts",
             originalArchive: "Museum of Clermont-Ferrand",
-            originalArchiveContact: "archives@example.org",
+            originalArchiveContactFirstname: "Marie",
+            originalArchiveContactLastname: "Curie",
           },
         }),
       ),

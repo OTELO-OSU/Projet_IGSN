@@ -352,7 +352,8 @@ const SEED_PUBLICATION_YEAR = 2025;
 
 const SEED_REPOSITORY = {
   currentArchive: "02feahw73",
-  currentArchiveContact: "collections@insu.cnrs.fr",
+  currentArchiveContactFirstname: "Camille",
+  currentArchiveContactLastname: "Durand",
   collectionName: "National rock reference collection",
 };
 
