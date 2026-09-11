@@ -34,10 +34,7 @@ function ServiceAccountDetailPage() {
   return (
     <>
       <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold">{account.name}</h1>
-          <ServiceAccountActiveMark active={account.hasApiKey} />
-        </div>
+        <h1 className="text-2xl font-bold">{account.name}</h1>
         <ConfirmButton
           variant="destructive"
           title={m.service_account_delete_title()}
@@ -67,6 +64,12 @@ function ServiceAccountDetailPage() {
 
       <ServiceAccountForm
         draft={account}
+        afterName={
+          <p className="flex items-center gap-2 text-sm font-medium">
+            {m.column_active()}
+            <ServiceAccountActiveMark active={account.hasApiKey} />
+          </p>
+        }
         submitLabel={m.action_save()}
         onSave={(body) => update.mutateAsync(body)}
       />

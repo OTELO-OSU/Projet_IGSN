@@ -104,7 +104,7 @@ describe("ServiceAccountDetailPage", () => {
       ]);
   });
 
-  it("should mark an account without an api key as inactive", async () => {
+  it("should mark an account without an api key as inactive after its name field", async () => {
     fakeApi();
 
     const { screen } = await renderRoute(`/service-accounts/${ACCOUNT_ID}`);

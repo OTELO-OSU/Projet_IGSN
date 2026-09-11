@@ -2,6 +2,7 @@ import type {
   ServiceAccountBody,
   ServiceAccountDraft,
 } from "@projet-igsn/domain/service-account/service-account-validator";
+import type { ReactNode } from "react";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
@@ -55,10 +56,12 @@ const validateDraft = ({ value }: { value: ServiceAccountDraft }) => {
 
 export function ServiceAccountForm({
   draft,
+  afterName,
   submitLabel,
   onSave,
 }: {
   draft?: ServiceAccountDraft;
+  afterName?: ReactNode;
   submitLabel: string;
   onSave: (body: ServiceAccountBody) => Promise<unknown>;
 }) {
@@ -98,6 +101,8 @@ export function ServiceAccountForm({
           />
         )}
       </form.AppField>
+
+      {afterName}
 
       <div className="grid gap-2">
         <Label htmlFor={OWNER_FIELD_ID}>
