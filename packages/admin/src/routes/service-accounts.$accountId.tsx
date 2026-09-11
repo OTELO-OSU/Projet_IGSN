@@ -7,7 +7,6 @@ import { m } from "#/paraglide/messages.js";
 import { useDeleteServiceAccount } from "#/service-accounts/hook/delete-service-account.ts";
 import { useGetServiceAccountById } from "#/service-accounts/hook/get-service-account-by-id.ts";
 import { useUpdateServiceAccount } from "#/service-accounts/hook/update-service-account.ts";
-import { ServiceAccountActiveMark } from "#/service-accounts/service-account-active-mark.tsx";
 import { ServiceAccountForm } from "#/service-accounts/service-account-form.tsx";
 
 export const Route = createFileRoute("/service-accounts/$accountId")({
@@ -64,12 +63,6 @@ function ServiceAccountDetailPage() {
 
       <ServiceAccountForm
         draft={account}
-        afterName={
-          <p className="flex items-center gap-2 text-sm font-medium">
-            {m.column_active()}
-            <ServiceAccountActiveMark active={account.hasApiKey} />
-          </p>
-        }
         submitLabel={m.action_save()}
         onSave={(body) => update.mutateAsync(body)}
       />
