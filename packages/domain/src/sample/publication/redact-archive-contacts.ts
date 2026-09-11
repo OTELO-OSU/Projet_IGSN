@@ -6,8 +6,10 @@ export function redactArchiveContacts(sample: Sample): Sample {
     ...sample,
     repository: {
       ...sample.repository,
-      currentArchiveContact: null,
-      originalArchiveContact: null,
+      currentArchiveContactFirstname: null,
+      currentArchiveContactLastname: null,
+      originalArchiveContactFirstname: null,
+      originalArchiveContactLastname: null,
     },
   };
 }
