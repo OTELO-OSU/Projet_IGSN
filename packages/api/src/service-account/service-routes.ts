@@ -5,9 +5,15 @@ import type {
   SampleResponse,
 } from "@projet-igsn/domain/sample/sample-validator";
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
-import type { InvalidServiceSample } from "@projet-igsn/domain/service-account/service-sample-validator";
+import type {
+  FrozenServiceSample,
+  InvalidServiceSample,
+} from "@projet-igsn/domain/service-account/service-sample-validator";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
+import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
+import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
+import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
 import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
 import { Hono } from "hono";
 
@@ -15,10 +21,14 @@ import {
   type ServiceEnv,
   requireServiceAccount,
 } from "../auth/require-service-account.ts";
+import { uploadLimit } from "../sample/upload-limit.ts";
+import { validateIgsnParam } from "../sample/validator.ts";
 import { createServiceSampleIssues } from "./create-service-sample-issues.ts";
+import { publishBlockerIssues } from "./service-sample-issue.ts";
 import {
   validateCreateServiceSampleBody,
   validateListServiceSamplesQuery,
+  validateUpdateServiceSampleBody,
 } from "./validator.ts";
 
 export function createServiceRoutes(
@@ -56,5 +66,51 @@ export function createServiceRoutes(
         data: await samples.createPublished(input, account.owner.id, account),
       };
       return c.json(body, 201);
-    });
+    })
+    .put(
+      "/samples/:igsn",
+      validateIgsnParam,
+      validateUpdateServiceSampleBody,
+      async (c) => {
+        const account = c.get("serviceAccount");
+        const current = await samples.getPublicByIgsn(
+          c.req.valid("param").igsn,
+        );
+        if (!current || current.status !== "published") {
+          return c.json({ error: "Not found" }, 404);
+        }
+        if (
+          !(await samples.isModerated(
+            current.id,
+            managerScope(account.id, account.managedGroups),
+          ))
+        ) {
+          return c.json({ error: "Forbidden" }, 403);
+        }
+        const input = c.req.valid("json");
+        const merged = mergePublishedEdit(current, input);
+        const frozen = frozenFieldEdits(input, merged);
+        if (frozen.length > 0) {
+          const body: FrozenServiceSample = {
+            error: "Forbidden",
+            issues: frozen.map((path) => ({ path, code: "field_frozen" })),
+          };
+          return c.json(body, 403);
+        }
+        const blockers = newPublishBlockers(current, merged, uploadLimit);
+        if (blockers.length > 0) {
+          const body: InvalidServiceSample = {
+            error: "Invalid sample",
+            issues: publishBlockerIssues(blockers),
+          };
+          return c.json(body, 422);
+        }
+        const data = await samples.update(current.id, merged);
+        if (!data) {
+          return c.json({ error: "Not found" }, 404);
+        }
+        const body: SampleResponse = { data };
+        return c.json(body);
+      },
+    );
 }

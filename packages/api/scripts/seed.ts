@@ -246,7 +246,7 @@ async function seedServiceAccounts(
     .values({
       service_account_id: MOCK_SERVICE_ACCOUNT.id,
       kind: "laboratory",
-      code: "UMR7327",
+      code: "UMR7358",
     })
     .onConflict((oc) => oc.doNothing())
     .execute();

@@ -2,18 +2,27 @@ import { z } from "zod";
 
 import type { PublishBlocker } from "../sample/publication/sample-publish-blockers.ts";
 
-import { createSampleSchema } from "../sample/sample.ts";
+import { createSampleSchema, updateSampleSchema } from "../sample/sample.ts";
+
+const NO_ATTACHMENTS = { attachments: z.never().optional() };
 
 export const createServiceSampleSchema = createSampleSchema.safeExtend({
+  ...NO_ATTACHMENTS,
   parentIds: z.array(z.string().trim().min(1)).max(1).optional(),
 });
 
 export type CreateServiceSample = z.infer<typeof createServiceSampleSchema>;
 
+export const updateServiceSampleSchema =
+  updateSampleSchema.safeExtend(NO_ATTACHMENTS);
+
+export type UpdateServiceSample = z.infer<typeof updateServiceSampleSchema>;
+
 export type ServiceSampleIssueCode =
   | PublishBlocker
   | "location_inherited_from_parent"
-  | "manual_group_not_attachable";
+  | "manual_group_not_attachable"
+  | "field_frozen";
 
 export const serviceSampleIssueSchema = z.object({
   path: z.string().optional(),
@@ -29,3 +38,9 @@ export const invalidServiceSampleSchema = z.object({
 });
 
 export type InvalidServiceSample = z.infer<typeof invalidServiceSampleSchema>;
+
+export const frozenServiceSampleSchema = invalidServiceSampleSchema.extend({
+  error: z.literal("Forbidden"),
+});
+
+export type FrozenServiceSample = z.infer<typeof frozenServiceSampleSchema>;
