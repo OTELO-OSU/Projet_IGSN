@@ -35,6 +35,7 @@ const ACCOUNT = {
   institutionalOsu: null,
   institutionalLaboratory: "UMR7358",
   managedGroups: NO_MANAGED_GROUPS,
+  hasApiKey: false,
   owner: OWNER,
 };
 
@@ -101,6 +102,19 @@ describe("ServiceAccountDetailPage", () => {
           },
         },
       ]);
+  });
+
+  it("should mark an account without an api key as inactive after its name field", async () => {
+    fakeApi();
+
+    const { screen } = await renderRoute(`/service-accounts/${ACCOUNT_ID}`);
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Gaia harvester" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("img", { name: "Inactive" }))
+      .toBeVisible();
   });
 
   it("should flag the name as taken when the api refuses it", async () => {

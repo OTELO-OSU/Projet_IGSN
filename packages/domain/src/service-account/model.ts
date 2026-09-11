@@ -14,6 +14,7 @@ export const serviceAccountSchema = z.object({
   institutionalLaboratory: laboratoryCodeSchema,
   managedGroups: managedGroupsSchema,
   owner: userIdentitySchema,
+  hasApiKey: z.boolean(),
 });
 
 export type ServiceAccount = z.infer<typeof serviceAccountSchema>;

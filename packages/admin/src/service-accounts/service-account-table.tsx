@@ -14,6 +14,7 @@ import {
 } from "@tanstack/react-table";
 
 import { m } from "#/paraglide/messages.js";
+import { ServiceAccountActiveMark } from "#/service-accounts/service-account-active-mark.tsx";
 
 const columns: ColumnDef<ServiceAccount>[] = [
   {
@@ -27,6 +28,13 @@ const columns: ColumnDef<ServiceAccount>[] = [
       >
         {row.original.name}
       </Link>
+    ),
+  },
+  {
+    id: "active",
+    header: () => m.column_active(),
+    cell: ({ row }) => (
+      <ServiceAccountActiveMark active={row.original.hasApiKey} />
     ),
   },
   {

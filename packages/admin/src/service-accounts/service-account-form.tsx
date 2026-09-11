@@ -1,3 +1,4 @@
+import type { ServiceAccount } from "@projet-igsn/domain/service-account/model";
 import type {
   ServiceAccountBody,
   ServiceAccountDraft,
@@ -18,6 +19,7 @@ import {
   useManualGroups,
 } from "#/manual-groups/use-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
+import { ServiceAccountActiveMark } from "#/service-accounts/service-account-active-mark.tsx";
 import { ManagedGroupsFields } from "#/users/managed-groups-fields.tsx";
 import { UserField } from "#/users/user-field.tsx";
 
@@ -58,7 +60,7 @@ export function ServiceAccountForm({
   submitLabel,
   onSave,
 }: {
-  draft?: ServiceAccountDraft;
+  draft?: ServiceAccountDraft & Partial<Pick<ServiceAccount, "hasApiKey">>;
   submitLabel: string;
   onSave: (body: ServiceAccountBody) => Promise<unknown>;
 }) {
@@ -98,6 +100,13 @@ export function ServiceAccountForm({
           />
         )}
       </form.AppField>
+
+      {draft?.hasApiKey !== undefined && (
+        <p className="flex items-center gap-2 text-sm font-medium">
+          {m.column_active()}
+          <ServiceAccountActiveMark active={draft.hasApiKey} />
+        </p>
+      )}
 
       <div className="grid gap-2">
         <Label htmlFor={OWNER_FIELD_ID}>

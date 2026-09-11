@@ -49,13 +49,13 @@ function fakeApi() {
     ),
     http.get("*/admin/service-accounts/:id", () =>
       HttpResponse.json({
-        data: { id: ACCOUNT_ID, ...REQUEST },
+        data: { id: ACCOUNT_ID, ...REQUEST, hasApiKey: false },
       }),
     ),
     http.post("*/admin/service-accounts", async ({ request }) => {
       posts.push(await request.json());
       return HttpResponse.json({
-        data: { id: ACCOUNT_ID, ...REQUEST },
+        data: { id: ACCOUNT_ID, ...REQUEST, hasApiKey: false },
       });
     }),
   );
