@@ -8,12 +8,8 @@ import { toSampleDraft } from "#/samples/sample-draft-schema.ts";
 import { toSubSampleDefaults } from "#/samples/to-sub-sample-defaults.ts";
 
 const NOT_INHERITED_FIELDS = new Set([
-  "name",
-  "nature",
   "materialPath",
   "parentIds",
-  "manualGroupIds",
-  "relations",
   "geologicalContextDescription",
   "geomorphologicalEnvironmentPath",
 ]);

@@ -476,6 +476,25 @@ describe("POST /service/samples", () => {
     },
   );
 
+  pgTest("should refuse the same parent listed twice", async ({ db }) => {
+    // Arrange
+    const { app, owner } = await arrangeAccount(db);
+    const parent = await ownedParent(db, owner.id);
+    // Act
+    const res = await postSample(app, {
+      ...syntheticSubSample,
+      parentIds: [parent.id, parent.id],
+    });
+    // Assert
+    expect(res.status).toBe(422);
+    expect(await res.json()).toEqual({
+      error: "Invalid sample",
+      issues: [
+        { path: "parentIds", code: "custom", message: expect.any(String) },
+      ],
+    });
+  });
+
   pgTest(
     "should refuse two parents on a non-synthetic material",
     async ({ db }) => {

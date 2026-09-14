@@ -162,10 +162,7 @@ export function createSampleAdminRoutes(
           findEligibleParent(repository, users, user, parentId),
         ),
       );
-      if (
-        new Set(parentIds).size !== parentIds.length ||
-        parents.includes(null)
-      ) {
+      if (parents.includes(null)) {
         return c.json(PARENT_NOT_ELIGIBLE, 422);
       }
       const sample = await repository.create(input, user);

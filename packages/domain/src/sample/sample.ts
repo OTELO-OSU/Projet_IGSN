@@ -211,6 +211,16 @@ const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
     }
   }
   if (
+    value.parentIds != null &&
+    new Set(value.parentIds).size !== value.parentIds.length
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["parentIds"],
+      message: "a parent is listed twice",
+    });
+  }
+  if (
     (value.parentIds?.length ?? 0) > 1 &&
     !isSyntheticMaterial(value.material ?? null)
   ) {

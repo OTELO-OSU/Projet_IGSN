@@ -20,7 +20,7 @@ function declarableWhere(
   scope: ModerationScope | null,
 ): Expression<SqlBool> {
   const eb = expressionBuilder<DB, "sample">();
-  const moderated = scope === null ? [] : [moderatedSampleWhere(scope)];
+  const moderated = scope ? moderatedSampleWhere(scope) : eb.lit(false);
   return eb.or([
     eb("sample.status", "=", "published"),
     eb.and([
@@ -33,12 +33,10 @@ function declarableWhere(
             .whereRef("user_sample.sample_id", "=", "sample.id")
             .where("user_sample.user_id", "=", userId),
         ),
-        ...moderated,
+        moderated,
       ]),
     ]),
-    ...(moderated.length === 0
-      ? []
-      : [eb.and([eb("sample.status", "=", "tombstone"), ...moderated])]),
+    eb.and([eb("sample.status", "=", "tombstone"), moderated]),
   ]);
 }
 

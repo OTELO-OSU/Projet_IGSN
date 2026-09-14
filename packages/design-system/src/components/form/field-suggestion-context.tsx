@@ -9,10 +9,13 @@ export type FieldSuggestionRule = {
   forField: (name: string) => FieldSuggestion[];
 };
 
-const FieldSuggestionContext = createContext<FieldSuggestionRule>({
+export const NO_FIELD_SUGGESTIONS: FieldSuggestionRule = {
   label: "",
   forField: () => [],
-});
+};
+
+const FieldSuggestionContext =
+  createContext<FieldSuggestionRule>(NO_FIELD_SUGGESTIONS);
 
 export const FieldSuggestionProvider = FieldSuggestionContext.Provider;
 

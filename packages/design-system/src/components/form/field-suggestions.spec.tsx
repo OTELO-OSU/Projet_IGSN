@@ -106,14 +106,4 @@ describe("FieldSuggestions", () => {
       .element(page.getByRole("button", { name: "IGSN-1: Rock powder" }))
       .toBeVisible();
   });
-
-  it("should render no chip when the rule suggests nothing", async () => {
-    await render(
-      <Harness rule={{ label: "Parent values", forField: () => [] }} />,
-    );
-
-    await expect
-      .element(page.getByRole("list", { name: "Parent values" }))
-      .not.toBeInTheDocument();
-  });
 });

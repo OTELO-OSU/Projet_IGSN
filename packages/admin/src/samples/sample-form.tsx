@@ -9,6 +9,7 @@ import { FieldDisabledProvider } from "@projet-igsn/design-system/components/for
 import {
   type FieldSuggestionRule,
   FieldSuggestionProvider,
+  NO_FIELD_SUGGESTIONS,
 } from "@projet-igsn/design-system/components/form/field-suggestion-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
@@ -104,11 +105,6 @@ const DEFAULT_TAB = "identity";
 const natureItems = toComboboxItems(natureSchema.options, natureLabel);
 
 export type SampleFormParent = Omit<SampleParent, "id">;
-
-const NO_FIELD_SUGGESTIONS: FieldSuggestionRule = {
-  label: "",
-  forField: () => [],
-};
 
 function ParentSampleLink({ parent }: { parent: SampleFormParent }) {
   return (

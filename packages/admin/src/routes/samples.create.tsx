@@ -12,7 +12,6 @@ import { parentFieldSuggestions } from "#/samples/parent-field-suggestions.ts";
 import { SampleForm } from "#/samples/sample-form.tsx";
 import { SecondParentDialog } from "#/samples/second-parent-dialog.tsx";
 import { toSubSampleDefaults } from "#/samples/to-sub-sample-defaults.ts";
-import { toTwoParentDefaults } from "#/samples/to-two-parent-defaults.ts";
 import { useCreateSample } from "#/samples/use-create-sample.ts";
 import { useParentSample } from "#/samples/use-parent-sample.ts";
 import { usePublishSample } from "#/samples/use-publish-sample.ts";
@@ -73,7 +72,10 @@ function CreateSamplePage() {
         currentUser={me.data}
         defaultValues={
           first && second
-            ? toTwoParentDefaults(first, second)
+            ? {
+                material: "rock_and_sediment.synthetic_rock_mineral",
+                parentIds: [first.id, second.id],
+              }
             : first
               ? toSubSampleDefaults(first)
               : undefined

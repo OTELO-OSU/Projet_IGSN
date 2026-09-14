@@ -438,6 +438,17 @@ describe("createSampleSchema", () => {
     expect(result.error?.issues).toMatchObject([{ path: ["material"] }]);
   });
 
+  it("should reject the same parent listed twice", () => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Sub-sample of Basalt 42",
+      material: "rock_and_sediment.synthetic_rock_mineral",
+      parentIds: [PARENT_ID, PARENT_ID],
+    });
+    // Assert
+    expect(result.error?.issues).toMatchObject([{ path: ["parentIds"] }]);
+  });
+
   it("should reject unknown fields", () => {
     // Arrange / Act
     const result = createSampleSchema.safeParse({

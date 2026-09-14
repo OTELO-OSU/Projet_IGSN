@@ -290,25 +290,6 @@ describe("a sample's parents", () => {
   );
 
   pgTest(
-    "should answer 422 when the same parent is given twice",
-    async ({ db }) => {
-      // Arrange
-      const caller = await provisionUser(db, "test-token", {
-        status: "accepted",
-      });
-      const parent = await insertParent(db, caller.id);
-      // Act
-      const res = await createSyntheticChild(db, [parent.id, parent.id]);
-      // Assert
-      expect(res.status).toBe(422);
-      expect(await res.json()).toEqual(PARENT_NOT_ELIGIBLE);
-      expect(
-        await db.selectFrom("sample_parent").select("sample_id").execute(),
-      ).toEqual([]);
-    },
-  );
-
-  pgTest(
     "should inherit no location when the sample has two parents",
     async ({ db }) => {
       // Arrange
