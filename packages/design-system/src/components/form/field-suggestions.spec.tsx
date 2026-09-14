@@ -7,10 +7,7 @@ import type { FieldSuggestionRule } from "./field-suggestion-context.tsx";
 import { TooltipProvider } from "../ui/tooltip.tsx";
 import { useAppForm } from "./app-form.tsx";
 import { FieldDisabledProvider } from "./field-disabled-context.tsx";
-import {
-  FieldSuggestionCascadeProvider,
-  FieldSuggestionProvider,
-} from "./field-suggestion-context.tsx";
+import { FieldSuggestionProvider } from "./field-suggestion-context.tsx";
 
 const items = [
   { value: "rock_powder", label: "Rock powder" },
@@ -78,33 +75,6 @@ function SwitchHarness({ rule }: { rule: FieldSuggestionRule }) {
     </TooltipProvider>
   );
 }
-
-function CascadeHarness({ rule }: { rule: FieldSuggestionRule }) {
-  const form = useAppForm({ defaultValues: { gate: false, explanation: "" } });
-  return (
-    <TooltipProvider>
-      <FieldSuggestionProvider value={rule}>
-        <form.AppField name="gate">
-          {(field) => <field.SwitchField label="Gate" />}
-        </form.AppField>
-        <FieldSuggestionCascadeProvider value={["gate"]}>
-          <form.AppField name="explanation">
-            {(field) => <field.TextField label="Explanation" />}
-          </form.AppField>
-        </FieldSuggestionCascadeProvider>
-      </FieldSuggestionProvider>
-    </TooltipProvider>
-  );
-}
-
-const cascadeRule = parentRule((name) =>
-  name === "gate"
-    ? [{ source: "IGSN-1", value: true }]
-    : [
-        { source: "IGSN-1", value: "from one" },
-        { source: "IGSN-2", value: "from two" },
-      ],
-);
 
 describe("FieldSuggestions", () => {
   it("should fill the field with the suggested value when its chip is clicked", async () => {
@@ -258,31 +228,5 @@ describe("FieldSuggestions", () => {
     await expect
       .element(page.getByRole("switch", { name: "Oriented" }))
       .toBeChecked();
-  });
-
-  it("should set the gate fields of the clicked source before the field itself", async () => {
-    await render(<CascadeHarness rule={cascadeRule} />);
-
-    await page.getByRole("button", { name: "IGSN-1: from one" }).click();
-
-    await expect
-      .element(page.getByRole("switch", { name: "Gate" }))
-      .toBeChecked();
-    await expect
-      .element(page.getByLabelText("Explanation"))
-      .toHaveValue("from one");
-  });
-
-  it("should leave the gate fields alone when the clicked source has no value for them", async () => {
-    await render(<CascadeHarness rule={cascadeRule} />);
-
-    await page.getByRole("button", { name: "IGSN-2: from two" }).click();
-
-    await expect
-      .element(page.getByLabelText("Explanation"))
-      .toHaveValue("from two");
-    await expect
-      .element(page.getByRole("switch", { name: "Gate" }))
-      .not.toBeChecked();
   });
 });

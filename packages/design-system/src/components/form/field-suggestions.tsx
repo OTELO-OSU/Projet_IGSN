@@ -4,10 +4,7 @@ import { Button } from "../ui/button.tsx";
 import { Label } from "../ui/label.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
-import {
-  useFieldSuggestionCascade,
-  useFieldSuggestions,
-} from "./field-suggestion-context.tsx";
+import { useFieldSuggestions } from "./field-suggestion-context.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 const slotText = (
@@ -22,7 +19,6 @@ export function FieldSuggestions({
 }): ReactNode {
   const field = useFieldContext<unknown>();
   const { rule, suggestions } = useFieldSuggestions();
-  const cascade = useFieldSuggestionCascade();
   const isDisabled = useFieldDisabled();
   if (isDisabled || suggestions.length === 0) return null;
   return (
@@ -39,15 +35,6 @@ export function FieldSuggestions({
             disabled={value === undefined}
             aria-label={`${source}: ${text}`}
             onClick={() => {
-              for (const name of cascade) {
-                const gate = rule
-                  .forField(name)
-                  .find(
-                    (entry) =>
-                      entry.source === source && entry.value !== undefined,
-                  );
-                if (gate) field.form.setFieldValue(name, gate.value);
-              }
               field.handleChange(value);
               field.handleBlur();
             }}

@@ -1,7 +1,5 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
-import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
-import { comboboxItemFormat } from "@projet-igsn/design-system/components/ui/combobox";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { numericUnitSchema } from "@projet-igsn/domain/sample/age/numeric-unit";
 import { yearsUnitSchema } from "@projet-igsn/domain/sample/age/years-unit";
@@ -11,7 +9,6 @@ import { AgeBoundField } from "#/samples/age-bound-field.tsx";
 import { hasNumericAgeValue, numericAgeUnitOf } from "#/samples/age-form.ts";
 import { AgeModeRadio } from "#/samples/age-mode-radio.tsx";
 import { numericUnitLabel, yearsUnitLabel } from "#/samples/sample-labels.ts";
-import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";
 import { useAgeSection } from "#/samples/use-age-section.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
@@ -23,9 +20,6 @@ const yearsUnitItems = yearsUnitSchema.options.map((unit) => ({
   value: unit,
   label: yearsUnitLabel(unit),
 }));
-
-const NUMERIC_VALUE_GATE = ["age.numericAgeMin"];
-const NUMERIC_UNIT_GATE = ["age.numericAgeMin", "age.numericAgeUnit"];
 
 export function NumericAgeFormSection() {
   const isDisabled = useIsFieldDisabled("age.numericAgeMin");
@@ -83,65 +77,48 @@ export function NumericAgeFormSection() {
               />
             )}
 
-            <FieldSuggestionCascadeProvider value={NUMERIC_VALUE_GATE}>
-              <form.Subscribe
-                selector={(state) => hasNumericAgeValue(state.values.age)}
-              >
-                {(hasValue) =>
-                  hasValue ? (
-                    <form.AppField name="age.numericAgeUnit">
-                      {(field) => (
-                        <field.ComboboxField
-                          label={m.field_numeric_unit()}
-                          requiredToPublish
-                          items={numericUnitItems}
-                          placeholder={m.age_unit_placeholder()}
-                          searchPlaceholder={m.age_unit_search_placeholder()}
-                          emptyText={m.age_unit_empty()}
-                        />
-                      )}
-                    </form.AppField>
-                  ) : (
-                    <SuggestionOnlyRow
-                      name="age.numericAgeUnit"
-                      label={m.field_numeric_unit()}
-                      format={comboboxItemFormat(numericUnitItems)}
-                    />
-                  )
-                }
-              </form.Subscribe>
-            </FieldSuggestionCascadeProvider>
-            <FieldSuggestionCascadeProvider value={NUMERIC_UNIT_GATE}>
-              <form.Subscribe
-                selector={(state) =>
-                  numericAgeUnitOf(state.values.age) ===
-                  numericUnitSchema.enum.a
-                }
-              >
-                {(isAnnum) =>
-                  isAnnum ? (
-                    <form.AppField name="age.numericAgeYearsUnit">
-                      {(field) => (
-                        <field.ComboboxField
-                          label={m.field_numeric_years_unit()}
-                          requiredToPublish
-                          items={yearsUnitItems}
-                          placeholder={m.age_years_placeholder()}
-                          searchPlaceholder={m.age_years_search_placeholder()}
-                          emptyText={m.age_years_empty()}
-                        />
-                      )}
-                    </form.AppField>
-                  ) : (
-                    <SuggestionOnlyRow
-                      name="age.numericAgeYearsUnit"
-                      label={m.field_numeric_years_unit()}
-                      format={comboboxItemFormat(yearsUnitItems)}
-                    />
-                  )
-                }
-              </form.Subscribe>
-            </FieldSuggestionCascadeProvider>
+            <form.Subscribe
+              selector={(state) => hasNumericAgeValue(state.values.age)}
+            >
+              {(hasValue) =>
+                hasValue ? (
+                  <form.AppField name="age.numericAgeUnit">
+                    {(field) => (
+                      <field.ComboboxField
+                        label={m.field_numeric_unit()}
+                        requiredToPublish
+                        items={numericUnitItems}
+                        placeholder={m.age_unit_placeholder()}
+                        searchPlaceholder={m.age_unit_search_placeholder()}
+                        emptyText={m.age_unit_empty()}
+                      />
+                    )}
+                  </form.AppField>
+                ) : null
+              }
+            </form.Subscribe>
+            <form.Subscribe
+              selector={(state) =>
+                numericAgeUnitOf(state.values.age) === numericUnitSchema.enum.a
+              }
+            >
+              {(isAnnum) =>
+                isAnnum ? (
+                  <form.AppField name="age.numericAgeYearsUnit">
+                    {(field) => (
+                      <field.ComboboxField
+                        label={m.field_numeric_years_unit()}
+                        requiredToPublish
+                        items={yearsUnitItems}
+                        placeholder={m.age_years_placeholder()}
+                        searchPlaceholder={m.age_years_search_placeholder()}
+                        emptyText={m.age_years_empty()}
+                      />
+                    )}
+                  </form.AppField>
+                ) : null
+              }
+            </form.Subscribe>
           </div>
         </>
       ) : null}

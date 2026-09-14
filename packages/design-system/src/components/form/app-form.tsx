@@ -7,7 +7,6 @@ import { HierarchyField } from "./hierarchy-field.tsx";
 import { MultiComboboxField } from "./multi-combobox-field.tsx";
 import { NumberField } from "./number-field.tsx";
 import { SubmitButton } from "./submit-button.tsx";
-import { SuggestionRow } from "./suggestion-row.tsx";
 import { SwitchField } from "./switch-field.tsx";
 import { TextField } from "./text-field.tsx";
 
@@ -20,7 +19,6 @@ export const { useAppForm, useTypedAppFormContext } = createFormHook({
     HierarchyField,
     DateField,
     SwitchField,
-    SuggestionRow,
   },
   formComponents: { SubmitButton },
   fieldContext,

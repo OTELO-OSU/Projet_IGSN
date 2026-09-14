@@ -442,24 +442,30 @@ describe("CreateSamplePage", () => {
       .toBeDisabled();
   });
 
-  it("should turn the gate on and fill the field when a chip of a gated row is clicked", async () => {
+  it("should hide a gated row until its own gate chip opens it, then fill it without touching the gate", async () => {
     const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
     await continueWithTwoParents(screen);
     await openTab(screen, "Physical description");
 
     await expect
-      .element(screen.getByLabelText("Orientation explanation"))
+      .element(
+        screen.getByRole("button", { name: "Massif Central 2026: North up" }),
+      )
       .not.toBeInTheDocument();
+
+    await screen
+      .getByRole("button", { name: "Massif Central 2026: Yes" })
+      .click();
     await screen
       .getByRole("button", { name: "Massif Central 2026: North up" })
       .click();
 
     await expect
-      .element(screen.getByRole("switch", { name: "Oriented sample" }))
-      .toBeChecked();
-    await expect
       .element(screen.getByLabelText("Orientation explanation"))
       .toHaveValue("North up");
+    await expect
+      .element(screen.getByRole("switch", { name: "Oriented sample" }))
+      .toBeChecked();
   });
 
   it("should open the numeric age section with the parent's suggestion", async () => {
@@ -473,20 +479,6 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByRole("button", { name: "Massif Central 2026: 12" }))
       .toBeVisible();
-  });
-
-  it("should switch the provenance branch when a chip of the other branch is clicked", async () => {
-    const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
-    await continueWithTwoParents(screen);
-    await openTab(screen, "Scientific context");
-
-    await screen
-      .getByRole("button", { name: "Massif Central 2026: Paul Bernard" })
-      .click();
-
-    await expect
-      .element(screen.getByLabelText(/collection curator/i))
-      .toHaveValue("Paul Bernard");
   });
 
   it("should offer no suggestion slot when the sub sample has a single parent", async () => {

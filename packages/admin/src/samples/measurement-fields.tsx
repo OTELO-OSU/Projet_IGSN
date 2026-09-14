@@ -1,7 +1,5 @@
-import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
 import {
   type ComboboxItem,
-  comboboxItemFormat,
   toComboboxItems,
 } from "@projet-igsn/design-system/components/ui/combobox";
 import { MASS_UNITS } from "@projet-igsn/domain/sample/description/mass-unit";
@@ -14,7 +12,6 @@ import {
 import { m } from "#/paraglide/messages.js";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import { type SampleDraft } from "#/samples/sample-draft-schema.ts";
-import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const sizeUnitItems = toComboboxItems(SIZE_UNITS, (value) => value);
@@ -87,34 +84,26 @@ export function MeasurementFieldPair({
           />
         )}
       </form.AppField>
-      <FieldSuggestionCascadeProvider value={[`${name}Value`]}>
-        <form.Subscribe
-          selector={(state) => hasMeasurementValue(selectValue(state.values))}
-        >
-          {(hasValue) =>
-            hasValue ? (
-              <form.AppField name={`${name}Unit`}>
-                {(field) => (
-                  <field.ComboboxField
-                    label={unitLabel()}
-                    requiredToPublish
-                    items={items}
-                    placeholder={m.unit_placeholder()}
-                    searchPlaceholder={m.unit_search_placeholder()}
-                    emptyText={m.unit_empty()}
-                  />
-                )}
-              </form.AppField>
-            ) : (
-              <SuggestionOnlyRow
-                name={`${name}Unit`}
-                label={unitLabel()}
-                format={comboboxItemFormat(items)}
-              />
-            )
-          }
-        </form.Subscribe>
-      </FieldSuggestionCascadeProvider>
+      <form.Subscribe
+        selector={(state) => hasMeasurementValue(selectValue(state.values))}
+      >
+        {(hasValue) =>
+          hasValue ? (
+            <form.AppField name={`${name}Unit`}>
+              {(field) => (
+                <field.ComboboxField
+                  label={unitLabel()}
+                  requiredToPublish
+                  items={items}
+                  placeholder={m.unit_placeholder()}
+                  searchPlaceholder={m.unit_search_placeholder()}
+                  emptyText={m.unit_empty()}
+                />
+              )}
+            </form.AppField>
+          ) : null
+        }
+      </form.Subscribe>
     </div>
   );
 }

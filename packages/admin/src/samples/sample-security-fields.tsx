@@ -1,7 +1,4 @@
-import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
-
 import { m } from "#/paraglide/messages.js";
-import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const hazards = [
@@ -34,29 +31,22 @@ export function SampleSecurityFields() {
           <form.AppField name={`security.${hazard.flag}`}>
             {(field) => <field.SwitchField label={hazard.label()} />}
           </form.AppField>
-          <FieldSuggestionCascadeProvider value={[`security.${hazard.flag}`]}>
-            <form.Subscribe
-              selector={(state) => state.values.security[hazard.flag]}
-            >
-              {(declared) =>
-                declared ? (
-                  <form.AppField name={`security.${hazard.explanation}`}>
-                    {(field) => (
-                      <field.TextField
-                        label={hazard.explanationLabel()}
-                        multiline
-                      />
-                    )}
-                  </form.AppField>
-                ) : (
-                  <SuggestionOnlyRow
-                    name={`security.${hazard.explanation}`}
-                    label={hazard.explanationLabel()}
-                  />
-                )
-              }
-            </form.Subscribe>
-          </FieldSuggestionCascadeProvider>
+          <form.Subscribe
+            selector={(state) => state.values.security[hazard.flag]}
+          >
+            {(declared) =>
+              declared ? (
+                <form.AppField name={`security.${hazard.explanation}`}>
+                  {(field) => (
+                    <field.TextField
+                      label={hazard.explanationLabel()}
+                      multiline
+                    />
+                  )}
+                </form.AppField>
+              ) : null
+            }
+          </form.Subscribe>
         </div>
       ))}
     </div>

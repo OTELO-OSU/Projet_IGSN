@@ -175,6 +175,7 @@ test.describe("sub samples", () => {
     await create.expectParentsTab([first, second]);
 
     await create.openTab("Physical description");
+    await create.fillFromParent(first.name, "Yes");
     await create.expectParentSlots(
       { source: first.name, value: "North up" },
       second.name,

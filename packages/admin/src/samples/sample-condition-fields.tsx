@@ -1,10 +1,6 @@
 import type { ReactNode } from "react";
 
-import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
-import {
-  comboboxItemFormat,
-  toComboboxItems,
-} from "@projet-igsn/design-system/components/ui/combobox";
+import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import {
   type ControlledReading,
   hasStorageCondition,
@@ -36,7 +32,6 @@ import {
   storageConditionLabel,
   temperatureTypeLabel,
 } from "#/samples/sample-labels.ts";
-import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const packagingItems = toComboboxItems(PACKAGINGS, packagingLabel);
@@ -46,8 +41,6 @@ const storageConditionItems = toComboboxItems(
   STORAGE_CONDITIONS,
   storageConditionLabel,
 );
-
-const HUMIDITY_GATE = ["condition.humidityType"];
 
 const readings = [
   {
@@ -142,67 +135,45 @@ export function SampleConditionFields() {
                 />
               )}
             </form.AppField>
-            <FieldSuggestionCascadeProvider
-              value={[`condition.${reading.key}Type`]}
+            <form.Subscribe
+              selector={(state) =>
+                hasReadingType(state.values.condition[`${reading.key}Type`])
+              }
             >
-              <form.Subscribe
-                selector={(state) =>
-                  hasReadingType(state.values.condition[`${reading.key}Type`])
-                }
-              >
-                {(hasType) =>
-                  hasType ? (
-                    <form.AppField name={`condition.${reading.key}Value`}>
-                      {(field) => (
-                        <field.NumberField label={reading.valueLabel()} />
-                      )}
-                    </form.AppField>
-                  ) : (
-                    <SuggestionOnlyRow
-                      name={`condition.${reading.key}Value`}
-                      label={reading.valueLabel()}
-                    />
-                  )
-                }
-              </form.Subscribe>
-            </FieldSuggestionCascadeProvider>
-            <FieldSuggestionCascadeProvider
-              value={[
-                `condition.${reading.key}Type`,
-                `condition.${reading.key}Value`,
-              ]}
+              {(hasType) =>
+                hasType ? (
+                  <form.AppField name={`condition.${reading.key}Value`}>
+                    {(field) => (
+                      <field.NumberField label={reading.valueLabel()} />
+                    )}
+                  </form.AppField>
+                ) : null
+              }
+            </form.Subscribe>
+            <form.Subscribe
+              selector={(state) =>
+                hasMeasurementValue(
+                  state.values.condition[`${reading.key}Value`],
+                )
+              }
             >
-              <form.Subscribe
-                selector={(state) =>
-                  hasMeasurementValue(
-                    state.values.condition[`${reading.key}Value`],
-                  )
-                }
-              >
-                {(hasValue) =>
-                  hasValue ? (
-                    <form.AppField name={`condition.${reading.key}Unit`}>
-                      {(field) => (
-                        <field.ComboboxField
-                          label={reading.unitLabel()}
-                          requiredToPublish
-                          items={reading.unitItems}
-                          placeholder={m.unit_placeholder()}
-                          searchPlaceholder={m.unit_search_placeholder()}
-                          emptyText={m.unit_empty()}
-                        />
-                      )}
-                    </form.AppField>
-                  ) : (
-                    <SuggestionOnlyRow
-                      name={`condition.${reading.key}Unit`}
-                      label={reading.unitLabel()}
-                      format={comboboxItemFormat(reading.unitItems)}
-                    />
-                  )
-                }
-              </form.Subscribe>
-            </FieldSuggestionCascadeProvider>
+              {(hasValue) =>
+                hasValue ? (
+                  <form.AppField name={`condition.${reading.key}Unit`}>
+                    {(field) => (
+                      <field.ComboboxField
+                        label={reading.unitLabel()}
+                        requiredToPublish
+                        items={reading.unitItems}
+                        placeholder={m.unit_placeholder()}
+                        searchPlaceholder={m.unit_search_placeholder()}
+                        emptyText={m.unit_empty()}
+                      />
+                    )}
+                  </form.AppField>
+                ) : null
+              }
+            </form.Subscribe>
           </div>
         </ControlledReadingFields>
       ))}
@@ -220,30 +191,21 @@ export function SampleConditionFields() {
               />
             )}
           </form.AppField>
-          <FieldSuggestionCascadeProvider value={HUMIDITY_GATE}>
-            <form.Subscribe
-              selector={(state) =>
-                hasReadingType(state.values.condition.humidityType)
-              }
-            >
-              {(hasType) =>
-                hasType ? (
-                  <form.AppField name="condition.humidityPercentage">
-                    {(field) => (
-                      <field.NumberField
-                        label={m.field_humidity_percentage()}
-                      />
-                    )}
-                  </form.AppField>
-                ) : (
-                  <SuggestionOnlyRow
-                    name="condition.humidityPercentage"
-                    label={m.field_humidity_percentage()}
-                  />
-                )
-              }
-            </form.Subscribe>
-          </FieldSuggestionCascadeProvider>
+          <form.Subscribe
+            selector={(state) =>
+              hasReadingType(state.values.condition.humidityType)
+            }
+          >
+            {(hasType) =>
+              hasType ? (
+                <form.AppField name="condition.humidityPercentage">
+                  {(field) => (
+                    <field.NumberField label={m.field_humidity_percentage()} />
+                  )}
+                </form.AppField>
+              ) : null
+            }
+          </form.Subscribe>
         </div>
       </ControlledReadingFields>
 

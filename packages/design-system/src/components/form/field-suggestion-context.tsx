@@ -23,17 +23,8 @@ const FieldSuggestionContext =
 
 export const FieldSuggestionProvider = FieldSuggestionContext.Provider;
 
-const FieldSuggestionCascadeContext = createContext<string[]>([]);
-
-export const FieldSuggestionCascadeProvider =
-  FieldSuggestionCascadeContext.Provider;
-
 export function useFieldSuggestionRule(): FieldSuggestionRule {
   return useContext(FieldSuggestionContext);
-}
-
-export function useFieldSuggestionCascade(): string[] {
-  return useContext(FieldSuggestionCascadeContext);
 }
 
 export function useFieldSuggestions(): {
