@@ -1,9 +1,9 @@
 import { useDebouncedValue } from "@tanstack/react-pacer";
 import { useState } from "react";
 
-import { MIN_SEARCH_LENGTH } from "#/users/use-search-users.ts";
-
 const DEBOUNCE_MS = 300;
+
+export const MIN_SEARCH_LENGTH = 2;
 
 export type PickerState<T> = {
   isOpen: boolean;

@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
+import { MIN_SEARCH_LENGTH } from "#/search-picker/use-picker-search.ts";
 import { useApiClient } from "#/use-api-client.ts";
-import { MIN_SEARCH_LENGTH } from "#/users/use-search-users.ts";
 
 export function useSearchEligibleParents(
   search: string,

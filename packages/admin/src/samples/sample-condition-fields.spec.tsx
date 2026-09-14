@@ -208,6 +208,33 @@ describe("SampleConditionFields", () => {
       .not.toBeInTheDocument();
   });
 
+  it("should hide the unit once its type is cleared", async () => {
+    const screen = await renderConditionTab();
+
+    await pickStorageConditions(screen, "Temperature controlled");
+    const type = screen.getByRole("combobox", {
+      name: "Temperature",
+      exact: true,
+    });
+    await type.click();
+    await screen.getByRole("option", { name: "Ambient" }).click();
+    await screen.getByLabelText("Temperature value").fill("21");
+
+    await expect
+      .element(screen.getByLabelText("Temperature unit"))
+      .toBeVisible();
+
+    await type.click();
+    await screen.getByRole("option", { name: "Ambient" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Temperature value"))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByLabelText("Temperature unit"))
+      .not.toBeInTheDocument();
+  });
+
   it("should block submit with an error on the unit when a value has no unit", async () => {
     const onSubmit = vi.fn();
     const screen = await renderConditionTab(onSubmit);

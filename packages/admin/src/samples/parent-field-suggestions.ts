@@ -15,12 +15,15 @@ const NOT_INHERITED_FIELDS = new Set([
   "parentIds",
   "manualGroupIds",
   "relations",
+  "location",
   "geologicalContextDescription",
   "geomorphologicalEnvironmentPath",
 ]);
 
-const isInheritable = (name: string) =>
-  !NOT_INHERITED_FIELDS.has(name) && !name.startsWith("location.");
+const isInheritable = (name: string) => {
+  const [root = name] = name.split(/[.[]/);
+  return !NOT_INHERITED_FIELDS.has(root);
+};
 
 const hasValue = (value: unknown) =>
   value != null &&

@@ -142,35 +142,37 @@ export function SampleConditionFields() {
             >
               {(hasType) =>
                 hasType ? (
-                  <form.AppField name={`condition.${reading.key}Value`}>
-                    {(field) => (
-                      <field.NumberField label={reading.valueLabel()} />
-                    )}
-                  </form.AppField>
-                ) : null
-              }
-            </form.Subscribe>
-            <form.Subscribe
-              selector={(state) =>
-                hasMeasurementValue(
-                  state.values.condition[`${reading.key}Value`],
-                )
-              }
-            >
-              {(hasValue) =>
-                hasValue ? (
-                  <form.AppField name={`condition.${reading.key}Unit`}>
-                    {(field) => (
-                      <field.ComboboxField
-                        label={reading.unitLabel()}
-                        requiredToPublish
-                        items={reading.unitItems}
-                        placeholder={m.unit_placeholder()}
-                        searchPlaceholder={m.unit_search_placeholder()}
-                        emptyText={m.unit_empty()}
-                      />
-                    )}
-                  </form.AppField>
+                  <>
+                    <form.AppField name={`condition.${reading.key}Value`}>
+                      {(field) => (
+                        <field.NumberField label={reading.valueLabel()} />
+                      )}
+                    </form.AppField>
+                    <form.Subscribe
+                      selector={(state) =>
+                        hasMeasurementValue(
+                          state.values.condition[`${reading.key}Value`],
+                        )
+                      }
+                    >
+                      {(hasValue) =>
+                        hasValue ? (
+                          <form.AppField name={`condition.${reading.key}Unit`}>
+                            {(field) => (
+                              <field.ComboboxField
+                                label={reading.unitLabel()}
+                                requiredToPublish
+                                items={reading.unitItems}
+                                placeholder={m.unit_placeholder()}
+                                searchPlaceholder={m.unit_search_placeholder()}
+                                emptyText={m.unit_empty()}
+                              />
+                            )}
+                          </form.AppField>
+                        ) : null
+                      }
+                    </form.Subscribe>
+                  </>
                 ) : null
               }
             </form.Subscribe>

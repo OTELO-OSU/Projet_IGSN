@@ -5,9 +5,8 @@ import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
 import { HttpError } from "#/http-error.ts";
+import { MIN_SEARCH_LENGTH } from "#/search-picker/use-picker-search.ts";
 import { useApiClient } from "#/use-api-client.ts";
-
-export const MIN_SEARCH_LENGTH = 2;
 
 export function useSearchUsers(
   search: string,
