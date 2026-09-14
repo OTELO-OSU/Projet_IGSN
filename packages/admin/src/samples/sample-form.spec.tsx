@@ -2357,10 +2357,7 @@ describe("SampleForm post-publication field lock", () => {
     await expect.element(screen.getByLabelText(/longitude/i)).toBeEnabled();
     await expect.element(screen.getByLabelText(/latitude/i)).toBeEnabled();
     await expect
-      .element(screen.getByRole("combobox", { name: "Region kind" }))
-      .toBeEnabled();
-    await expect
-      .element(screen.getByRole("combobox", { name: "Country" }))
+      .element(screen.getByRole("button", { name: "France", exact: true }))
       .toBeEnabled();
     await expect.element(screen.getByLabelText("Locality name")).toBeEnabled();
     await expect
