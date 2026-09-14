@@ -8,6 +8,7 @@ import {
   useFieldDisabledRule,
 } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
+import { FieldSuggestions } from "./field-suggestions.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 type HierarchyFieldProps = {
@@ -25,8 +26,12 @@ type HierarchyFieldProps = {
   disabled?: boolean;
 };
 
+const toPath = (value: unknown): string[] =>
+  Array.isArray(value) ? value.map(String) : [];
+
 export function HierarchyField({
   label,
+  translate,
   requiredToPublish,
   mustRefineText,
   canRefineText,
@@ -55,8 +60,12 @@ export function HierarchyField({
         disabled={isDisabled}
         isLevelLocked={(depth) => isLevelDisabled(`${field.name}[${depth}]`)}
         hint={{ id: hintId, mustRefineText, canRefineText }}
+        translate={translate}
         {...ariaProps}
         {...hierarchyInput}
+      />
+      <FieldSuggestions
+        format={(value) => toPath(value).map(translate).join(" / ")}
       />
       <FieldError error={error} errorId={errorId} />
     </div>

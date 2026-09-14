@@ -5,6 +5,7 @@ import { Label } from "../ui/label.tsx";
 import { MultiCombobox } from "../ui/multi-combobox.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
+import { FieldSuggestions } from "./field-suggestions.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 type MultiComboboxFieldProps = {
@@ -20,8 +21,12 @@ type MultiComboboxFieldProps = {
   requiredToPublish?: boolean;
 };
 
+const toValues = (value: unknown): string[] =>
+  Array.isArray(value) ? value.map(String) : [];
+
 export function MultiComboboxField({
   label,
+  items,
   requiredToPublish = false,
   disabled,
   ...combobox
@@ -40,8 +45,19 @@ export function MultiComboboxField({
         onChange={field.handleChange}
         onBlur={field.handleBlur}
         disabled={isDisabled}
+        items={items}
         {...ariaProps}
         {...combobox}
+      />
+      <FieldSuggestions
+        format={(value) =>
+          toValues(value)
+            .map(
+              (entry) =>
+                items.find((item) => item.value === entry)?.label ?? entry,
+            )
+            .join(", ")
+        }
       />
       <FieldError error={error} errorId={errorId} />
     </div>

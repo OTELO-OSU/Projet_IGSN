@@ -3,6 +3,7 @@ import { Combobox, type ComboboxItem } from "../ui/combobox.tsx";
 import { Label } from "../ui/label.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
+import { FieldSuggestions } from "./field-suggestions.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 type ComboboxFieldProps = {
@@ -18,6 +19,7 @@ type ComboboxFieldProps = {
 
 export function ComboboxField({
   label,
+  items,
   requiredToPublish = false,
   disabled,
   ...combobox
@@ -38,8 +40,14 @@ export function ComboboxField({
         onChange={(value) => field.handleChange(value || undefined)}
         onBlur={field.handleBlur}
         disabled={isDisabled}
+        items={items}
         {...ariaProps}
         {...combobox}
+      />
+      <FieldSuggestions
+        format={(value) =>
+          items.find((item) => item.value === value)?.label ?? String(value)
+        }
       />
       <FieldError error={error} errorId={errorId} />
     </div>
