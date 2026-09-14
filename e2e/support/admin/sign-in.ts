@@ -39,6 +39,7 @@ export async function signInAsResearcher(page: Page, researcher: Researcher) {
   await admin.goto();
   await completeIdpLogin(page, researcher);
   await admin.expectSignedIn();
+  await admin.expectCallbackDone();
 }
 
 export async function signInAsResearcherInOwnSession(
