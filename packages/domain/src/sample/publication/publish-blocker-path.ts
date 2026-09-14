@@ -38,7 +38,7 @@ export const PUBLISH_BLOCKER_PATH: Record<PublishBlocker, (string | number)[]> =
     synthetic_synthesis_date_missing: ["syntheticDetails", "synthesisDate"],
     synthetic_operator_name_missing: ["syntheticDetails", "operatorName"],
     relation_resource_type_missing: ["relations"],
-    parent_not_found: ["parentIds", 0],
+    parent_not_found: ["parentIds"],
     attachment_metadata_missing: ["attachments"],
     attachment_limit_exceeded: ["attachments"],
     user_not_verified: [],

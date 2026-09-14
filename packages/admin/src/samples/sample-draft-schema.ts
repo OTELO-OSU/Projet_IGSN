@@ -64,6 +64,7 @@ import {
   type SyntheticDetailsDraft,
   toSyntheticDetailsDraft,
 } from "#/samples/compose-synthetic-details.ts";
+import { draftDefault, type DraftOptions } from "#/samples/draft-defaults.ts";
 
 export type RelationDraft = {
   key: string;
@@ -123,11 +124,16 @@ export type SampleDraft = {
   parentIds: string[];
 } & EconomicInterestDraft;
 
-export const toSampleDraft = (value?: Partial<CreateSample>): SampleDraft => ({
+export const toSampleDraft = (
+  value?: Partial<CreateSample>,
+  options: DraftOptions = {},
+): SampleDraft => ({
   name: value?.name,
   nature: value?.nature,
   typePath: toHierarchyPath(value?.type ?? null),
-  materialPath: toHierarchyPath(value?.material ?? MATERIAL_ROOTS[0]),
+  materialPath: toHierarchyPath(
+    value?.material ?? draftDefault<string | null>(options, MATERIAL_ROOTS[0]),
+  ),
   materialOtherName: value?.materialOtherName,
   texture: value?.texture,
   metamorphicFacies: value?.metamorphicFacies,
@@ -140,14 +146,18 @@ export const toSampleDraft = (value?: Partial<CreateSample>): SampleDraft => ({
     value?.geomorphologicalEnvironment ?? null,
   ),
   location: toLocationDraft(value?.location),
-  description: toDescriptionDraft(value?.description),
+  description: toDescriptionDraft(value?.description, options),
   condition: toConditionDraft(value?.condition),
-  security: toSecurityDraft(value?.security),
-  scientificContext: toScientificContextDraft(value?.scientificContext),
+  security: toSecurityDraft(value?.security, options),
+  scientificContext: toScientificContextDraft(
+    value?.scientificContext,
+    options,
+  ),
   repository: toRepositoryDraft(value?.repository),
   syntheticDetails: toSyntheticDetailsDraft(value?.syntheticDetails),
-  existenceStatus: value?.existenceStatus ?? "exists",
-  availabilityStatus: value?.availabilityStatus ?? "available",
+  existenceStatus: value?.existenceStatus ?? draftDefault(options, "exists"),
+  availabilityStatus:
+    value?.availabilityStatus ?? draftDefault(options, "available"),
   age: ageFormValues(value?.age),
   relations: (value?.relations ?? []).map((relation) => ({
     key: crypto.randomUUID(),

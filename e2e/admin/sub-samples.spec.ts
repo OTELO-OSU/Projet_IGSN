@@ -42,11 +42,12 @@ test.describe("sub samples", () => {
     await edit.goToList();
 
     await list.addSubSample(parentName);
+    await create.continueWithOneParent();
     await create.expectSubSampleVisible(parentName);
     await create.expectName("");
     await create.expectNatureEmpty();
     await create.expectHierarchyLevel("Dredge");
-    await create.expectParentTab(parent);
+    await create.expectParentTab([parent]);
     await create.expectInheritedLocation(parentName);
 
     const subSampleName = `Sub sample ${Date.now()}`;
@@ -58,7 +59,7 @@ test.describe("sub samples", () => {
     await edit.goToList();
     await list.openSample(subSampleName);
     await edit.expectVisible();
-    await edit.expectParentTab(parent);
+    await edit.expectParentTab([parent]);
     await edit.expectInheritedLocation(parentName);
 
     await edit.openTab("Identity");
@@ -119,8 +120,9 @@ test.describe("sub samples", () => {
     await header.expectNoEditLink();
 
     await detail.addSubSample();
+    await strangerCreate.continueWithOneParent();
     await strangerCreate.expectSubSampleVisible(parent.name);
-    await strangerCreate.expectParentTab(parent);
+    await strangerCreate.expectParentTab([parent]);
     await strangerCreate.expectInheritedLocation(parent.name);
 
     const subSampleName = `Stranger sub sample ${Date.now()}`;
@@ -133,6 +135,74 @@ test.describe("sub samples", () => {
     await edit.goToList();
     await list.filterByOwnership("Shared with me");
     await list.expectSampleRow(subSampleName);
+  });
+
+  test("a researcher declares a synthetic sub sample of two published samples", async ({
+    page,
+  }) => {
+    test.slow();
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    const list = sampleListPage(page);
+    const create = sampleCreatePage(page);
+    const edit = sampleEditPage(page);
+
+    const publishParent = async (name: string, orientation?: string) => {
+      await list.goToCreate();
+      await create.expectVisible();
+      await create.fillName(name);
+      await create.selectNature("Thin section");
+      await create.fillPublishableFields({ material: "Mineral" });
+      if (orientation) await create.setOriented(orientation);
+      await create.publish();
+      await list.expectVisible();
+      await list.openSample(name);
+      await edit.expectVisible();
+      const igsn = await edit.publicPageIgsn();
+      await edit.goToList();
+      return { name, igsn };
+    };
+
+    const stamp = Date.now();
+    const first = await publishParent(`Two parent one ${stamp}`, "North up");
+    const second = await publishParent(`Two parent two ${stamp}`);
+
+    await list.addSubSample(first.name);
+    await create.continueWithSecondParent(second.name);
+    await create.expectTwoParentSubSampleVisible(first.name, second.name);
+    await create.expectName("");
+    await create.expectNatureEmpty();
+    await create.expectNoLocationTab();
+    await create.expectParentTab([first, second]);
+
+    await create.openTab("Physical description");
+    await create.fillFromParent(first.name, "Yes");
+    await create.expectParentSlots(
+      { source: first.name, value: "North up" },
+      second.name,
+    );
+    await create.fillFromParent(first.name, "North up");
+    await create.expectOriented("North up");
+
+    const subSampleName = `Two parent sub sample ${stamp}`;
+    await create.openTab("Identity");
+    await create.fillName(subSampleName);
+    await create.selectNature("Thin section");
+    await create.fillFromParent(first.name, "Dredge");
+    await create.expectHierarchyLevel("Dredge");
+    await create.fillPublishableFields({ material: null });
+    await create.expectMaterialLockedToSynthetic();
+    await create.publish();
+
+    await list.expectVisible();
+    await list.openSample(subSampleName);
+    await edit.expectVisible();
+    const subSampleIgsn = await edit.publicPageIgsn();
+
+    const detail = sampleDetailPage(page);
+    await detail.goto(subSampleIgsn);
+    await detail.expectSample(subSampleName, subSampleIgsn);
+    await detail.expectParent(first.name, first.igsn);
+    await detail.expectParent(second.name, second.igsn);
   });
 
   test("the edit page of a published sample offers to add a sub sample", async ({

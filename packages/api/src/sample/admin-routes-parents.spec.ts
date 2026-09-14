@@ -1,4 +1,4 @@
-import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
 import {
@@ -14,6 +14,7 @@ import { describe, expect } from "vitest";
 import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
+import { insertParent } from "../tests/insert-parent.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
@@ -21,7 +22,6 @@ import { draft, publishableSample } from "../tests/sample-fixtures.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./service/insert-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
-import { setSampleStatus } from "./service/set-sample-status.ts";
 
 type Db = Kysely<DB>;
 
@@ -29,37 +29,24 @@ const authHeader = { Authorization: "Bearer test-token" };
 
 const PARENT_NOT_ELIGIBLE = { error: "Parent sample not eligible" };
 
-async function insertParent(
-  db: Db,
-  ownerId: string,
-  status: Sample["status"] = "published",
-): Promise<Sample> {
-  const created = await insertSample(db, publishableSample);
-  await insertSampleOwner(db, created.id, ownerId);
-  if (status === "draft") return created;
-  const published = await publishSample(
-    db,
-    created.id,
-    status === "tombstone" ? "published" : status,
-  );
-  if (status !== "tombstone") return published!;
-  return (await setSampleStatus(db, created.id, "tombstone"))!;
-}
-
-const parentOf = (parent: Sample) => [
-  {
+const parentOf = (...parents: Sample[]) =>
+  parents.map((parent) => ({
     id: parent.id,
     igsn: parent.igsn,
     name: parent.name,
     material: parent.material,
-  },
-];
+  }));
 
-const createChild = (db: Db, parentIds: string[]) =>
+const createChild = (db: Db, parentIds: string[], body: CreateSample = draft) =>
   testClient(createApp(db).app).admin.samples.$post(
-    { json: { ...draft, parentIds } },
+    { json: { ...body, parentIds } },
     { headers: authHeader },
   );
+
+const syntheticDraft = {
+  ...draft,
+  material: "rock_and_sediment.synthetic_rock_mineral",
+} satisfies CreateSample;
 
 const collaboratorsOf = async (db: Db, id: string) => {
   const res = await testClient(createApp(db).app).admin.samples[
@@ -223,21 +210,84 @@ describe("a sample's parents", () => {
     },
   );
 
-  pgTest("should answer 400 when a second parent is given", async ({ db }) => {
+  pgTest(
+    "should answer 400 when two parents come with a non-synthetic material",
+    async ({ db }) => {
+      // Arrange
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const first = await insertParent(db, caller.id);
+      const second = await insertParent(db, caller.id);
+      // Act
+      const res = await createChild(db, [first.id, second.id]);
+      // Assert
+      expect(res.status).toBe(400);
+      expect(
+        await db.selectFrom("sample_parent").select("sample_id").execute(),
+      ).toEqual([]);
+    },
+  );
+
+  pgTest("should attach both parents on create", async ({ db }) => {
     // Arrange
     const caller = await provisionUser(db, "test-token", {
       status: "accepted",
     });
-    const first = await insertParent(db, caller.id);
-    const second = await insertParent(db, caller.id);
+    const first = await insertParent(db, caller.id, "published", "Andésite");
+    const second = await insertParent(db, caller.id, "published", "Basalte");
     // Act
-    const res = await createChild(db, [first.id, second.id]);
+    const res = await createChild(db, [second.id, first.id], syntheticDraft);
     // Assert
-    expect(res.status).toBe(400);
-    expect(
-      await db.selectFrom("sample_parent").select("sample_id").execute(),
-    ).toEqual([]);
+    expect(res.status).toBe(201);
+    expect(sampleResponseSchema.parse(await res.json()).data.parents).toEqual(
+      parentOf(first, second),
+    );
   });
+
+  pgTest(
+    "should answer 422 when one of the two parents is not eligible",
+    async ({ db }) => {
+      // Arrange
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const eligible = await insertParent(db, caller.id);
+      const ineligible = await insertParent(db, caller.id, "draft");
+      // Act
+      const res = await createChild(
+        db,
+        [eligible.id, ineligible.id],
+        syntheticDraft,
+      );
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual(PARENT_NOT_ELIGIBLE);
+      expect(
+        await db.selectFrom("sample_parent").select("sample_id").execute(),
+      ).toEqual([]);
+    },
+  );
+
+  pgTest(
+    "should inherit no location when the sample has two parents",
+    async ({ db }) => {
+      // Arrange
+      const caller = await provisionUser(db, "test-token", {
+        status: "accepted",
+      });
+      const first = await insertParent(db, caller.id, "published", "Andésite");
+      const second = await insertParent(db, caller.id, "published", "Basalte");
+      expect(first.location).not.toBeNull();
+      // Act
+      const res = await createChild(db, [first.id, second.id], syntheticDraft);
+      // Assert
+      expect(res.status).toBe(201);
+      expect(sampleResponseSchema.parse(await res.json()).data.location).toBe(
+        null,
+      );
+    },
+  );
 
   pgTest(
     "should answer 400 when an update body carries parentIds",

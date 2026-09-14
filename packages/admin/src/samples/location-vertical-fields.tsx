@@ -27,7 +27,7 @@ export function LocationVerticalFields() {
     >
       {(entered) =>
         entered ? (
-          <div className="grid gap-4 sm:col-span-3">
+          <div className="grid gap-4">
             <form.AppField name="location.verticalReference">
               {(field) => (
                 <field.ComboboxField

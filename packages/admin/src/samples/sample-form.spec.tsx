@@ -2577,7 +2577,7 @@ describe("SampleForm post-publication field lock", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        parent={NATURAL_PARENT}
+        parents={[NATURAL_PARENT]}
         primaryAction={createAction(noop)}
       />,
     );
@@ -2593,7 +2593,7 @@ describe("SampleForm post-publication field lock", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        parent={NATURAL_PARENT}
+        parents={[NATURAL_PARENT]}
         defaultValues={{ material: "rock_and_sediment.mineral" }}
         primaryAction={createAction(noop)}
       />,
@@ -2613,10 +2613,12 @@ describe("SampleForm post-publication field lock", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        parent={{
-          ...NATURAL_PARENT,
-          material: "rock_and_sediment.synthetic_rock_mineral",
-        }}
+        parents={[
+          {
+            ...NATURAL_PARENT,
+            material: "rock_and_sediment.synthetic_rock_mineral",
+          },
+        ]}
         defaultValues={{ material: "rock_and_sediment.synthetic_rock_mineral" }}
         primaryAction={createAction(noop)}
       />,
@@ -2638,7 +2640,7 @@ describe("SampleForm post-publication field lock", () => {
     const screen = await render(
       <SampleForm
         onCancel={noop}
-        parent={NATURAL_PARENT}
+        parents={[NATURAL_PARENT]}
         defaultValues={{ material: "rock_and_sediment.mineral" }}
         primaryAction={createAction(noop)}
       />,

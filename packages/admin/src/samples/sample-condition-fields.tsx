@@ -123,7 +123,7 @@ export function SampleConditionFields() {
 
       {readings.map((reading) => (
         <ControlledReadingFields key={reading.key} reading={reading.key}>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4">
             <form.AppField name={`condition.${reading.key}Type`}>
               {(field) => (
                 <field.ComboboxField
@@ -181,7 +181,7 @@ export function SampleConditionFields() {
       ))}
 
       <ControlledReadingFields reading="humidity">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <form.AppField name="condition.humidityType">
             {(field) => (
               <field.ComboboxField

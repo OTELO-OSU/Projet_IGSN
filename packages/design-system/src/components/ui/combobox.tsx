@@ -26,6 +26,16 @@ export const toComboboxItems = <Value extends string>(
   label: (value: Value) => string,
 ): ComboboxItem[] => values.map((value) => ({ value, label: label(value) }));
 
+export const comboboxItemFormat =
+  (items: ComboboxItem[]) =>
+  (value: unknown): string =>
+    (Array.isArray(value) ? value : [value])
+      .map(
+        (entry) =>
+          items.find((item) => item.value === entry)?.label ?? String(entry),
+      )
+      .join(", ");
+
 type ComboboxTriggerProps = {
   id?: string;
   open: boolean;

@@ -3,6 +3,7 @@ import { Input } from "../ui/input.tsx";
 import { Label } from "../ui/label.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
+import { FieldRow } from "./field-row.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 export function DateField({
@@ -20,7 +21,7 @@ export function DateField({
   const { error, errorId, ariaProps } = useFieldError();
   const isDisabled = useFieldDisabled(disabled);
   return (
-    <div className="grid gap-2">
+    <FieldRow>
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
       </Label>
@@ -36,6 +37,6 @@ export function DateField({
         {...ariaProps}
       />
       <FieldError error={error} errorId={errorId} />
-    </div>
+    </FieldRow>
   );
 }

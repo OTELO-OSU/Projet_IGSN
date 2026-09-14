@@ -6,6 +6,11 @@ import type { ReactNode } from "react";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
 import { FieldDisabledProvider } from "@projet-igsn/design-system/components/form/field-disabled-context";
+import {
+  type FieldSuggestionRule,
+  FieldSuggestionProvider,
+  NO_FIELD_SUGGESTIONS,
+} from "@projet-igsn/design-system/components/form/field-suggestion-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
@@ -25,6 +30,7 @@ import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy"
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { type SampleParent } from "@projet-igsn/domain/sample/parent/model";
+import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import {
   type PublishableFields,
@@ -38,7 +44,7 @@ import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-detail
 import { isSampleEditor } from "@projet-igsn/domain/user-sample/is-sample-editor";
 import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
@@ -151,7 +157,8 @@ export type SampleFormProps = {
   onCancel: () => void;
   isPending?: boolean;
   defaultValues?: Partial<CreateSample>;
-  parent?: SampleFormParent;
+  parents?: SampleFormParent[];
+  fieldSuggestions?: FieldSuggestionRule;
   status?: SampleStatus;
   primaryAction?: SampleFormAction;
   secondaryAction?: SampleFormAction;
@@ -168,7 +175,8 @@ export function SampleForm({
   onCancel,
   isPending,
   defaultValues,
-  parent,
+  parents = [],
+  fieldSuggestions = NO_FIELD_SUGGESTIONS,
   status = "draft",
   primaryAction,
   secondaryAction,
@@ -198,15 +206,18 @@ export function SampleForm({
       : () => false;
   const areManualGroupsFrozen =
     roleOnSample !== null && !isSampleOwner(roleOnSample);
+  const onlyParent = soleParent(parents);
   const isMaterialFrozenByParent =
-    parent !== undefined && isSyntheticMaterial(parent.material);
+    onlyParent !== undefined && isSyntheticMaterial(onlyParent.material);
+  const hasTwoParents = parents.length > 1;
   const isFieldFrozen = isReadOnly
     ? () => true
     : (name: string) =>
         isFrozenByPublication(name) ||
         name === "materialPath[0]" ||
         (name === "manualGroupIds" && areManualGroupsFrozen) ||
-        (isMaterialFrozenByParent && name.startsWith("materialPath"));
+        (isMaterialFrozenByParent && name.startsWith("materialPath")) ||
+        (hasTwoParents && name === "materialPath[1]");
   const defaultSubmit =
     primaryAction?.kind === "submit"
       ? primaryAction.onSubmit
@@ -431,283 +442,297 @@ export function SampleForm({
 
   return (
     <FieldDisabledProvider value={isFieldFrozen}>
-      <form
-        noValidate
-        onSubmit={(event) => {
-          event.preventDefault();
-          void form.handleSubmit();
-        }}
-        className="flex flex-col gap-6"
-      >
-        <form.Subscribe
-          selector={(state) => ({
-            material: composeHierarchyValue(state.values.materialPath),
-            provenanceStatus: state.values.scientificContext.provenanceStatus,
-          })}
+      <FieldSuggestionProvider value={fieldSuggestions}>
+        <form
+          noValidate
+          onSubmit={(event) => {
+            event.preventDefault();
+            void form.handleSubmit();
+          }}
+          className="flex flex-col gap-6"
         >
-          {({ material, provenanceStatus }) => {
-            const showSynthetic = isSyntheticMaterial(material);
-            const isTabDisabled = (value: string) =>
-              (value === "location" && !allowsLocation(material)) ||
-              (value === "scientific-context" && !provenanceStatus);
-            return (
-              <Tabs
-                value={isTabDisabled(tab) ? DEFAULT_TAB : tab}
-                onValueChange={setTab}
-              >
-                <TabsList>
-                  {parent ? (
-                    <TabsTrigger value="parent">{m.tab_parent()}</TabsTrigger>
-                  ) : null}
-                  <TabsTrigger value={DEFAULT_TAB}>
-                    {m.tab_identity()}
-                  </TabsTrigger>
-                  <TabsTrigger value="classification">
-                    {m.tab_sample_classification()}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="location"
-                    disabled={isTabDisabled("location")}
-                  >
-                    {m.tab_location()}
-                  </TabsTrigger>
-                  <TabsTrigger value="age">{m.tab_age()}</TabsTrigger>
-                  <TabsTrigger value="physical-description">
-                    {m.tab_physical_description()}
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="scientific-context"
-                    disabled={isTabDisabled("scientific-context")}
-                  >
-                    {m.tab_scientific_context()}
-                  </TabsTrigger>
-                  <TabsTrigger value="conservation">
-                    {m.tab_conservation_security()}
-                  </TabsTrigger>
-                  <TabsTrigger value="curation">
-                    {m.tab_curation_repository()}
-                  </TabsTrigger>
-                  <TabsTrigger value="related-resources">
-                    {m.tab_related_resources()}
-                  </TabsTrigger>
-                </TabsList>
-
-                {parent ? (
-                  <TabsContent value="parent" className="grid gap-4">
-                    <p>
-                      {m.parent_sample_hint()}{" "}
-                      <ParentSampleLink parent={parent} />
-                    </p>
-                  </TabsContent>
-                ) : null}
-
-                <TabsContent value={DEFAULT_TAB} className="grid gap-4">
-                  <FormSection title={m.section_sample()}>
-                    <form.AppField
-                      name="name"
-                      validators={{
-                        onChange: ({ value }) =>
-                          value?.trim()
-                            ? undefined
-                            : { message: m.field_name_required() },
-                      }}
+          <form.Subscribe
+            selector={(state) => ({
+              material: composeHierarchyValue(state.values.materialPath),
+              provenanceStatus: state.values.scientificContext.provenanceStatus,
+            })}
+          >
+            {({ material, provenanceStatus }) => {
+              const showSynthetic = isSyntheticMaterial(material);
+              const isTabDisabled = (value: string) =>
+                (value === "location" && !allowsLocation(material)) ||
+                (value === "scientific-context" && !provenanceStatus);
+              return (
+                <Tabs
+                  value={isTabDisabled(tab) ? DEFAULT_TAB : tab}
+                  onValueChange={setTab}
+                >
+                  <TabsList>
+                    {parents.length > 0 ? (
+                      <TabsTrigger value="parent">
+                        {hasTwoParents ? m.tab_parents() : m.tab_parent()}
+                      </TabsTrigger>
+                    ) : null}
+                    <TabsTrigger value={DEFAULT_TAB}>
+                      {m.tab_identity()}
+                    </TabsTrigger>
+                    <TabsTrigger value="classification">
+                      {m.tab_sample_classification()}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="location"
+                      disabled={isTabDisabled("location")}
                     >
-                      {(field) => (
-                        <field.TextField
-                          label={m.field_name()}
-                          requiredToPublish
-                        />
-                      )}
-                    </form.AppField>
+                      {m.tab_location()}
+                    </TabsTrigger>
+                    <TabsTrigger value="age">{m.tab_age()}</TabsTrigger>
+                    <TabsTrigger value="physical-description">
+                      {m.tab_physical_description()}
+                    </TabsTrigger>
+                    <TabsTrigger
+                      value="scientific-context"
+                      disabled={isTabDisabled("scientific-context")}
+                    >
+                      {m.tab_scientific_context()}
+                    </TabsTrigger>
+                    <TabsTrigger value="conservation">
+                      {m.tab_conservation_security()}
+                    </TabsTrigger>
+                    <TabsTrigger value="curation">
+                      {m.tab_curation_repository()}
+                    </TabsTrigger>
+                    <TabsTrigger value="related-resources">
+                      {m.tab_related_resources()}
+                    </TabsTrigger>
+                  </TabsList>
 
-                    <form.AppForm>
-                      <SampleTypeFields />
-                    </form.AppForm>
+                  {parents.length > 0 ? (
+                    <TabsContent value="parent" className="grid gap-4">
+                      <p>
+                        {m.parent_sample_hint()}{" "}
+                        {parents.map((each, index) => (
+                          <Fragment key={each.igsn}>
+                            {index > 0 ? ", " : null}
+                            <ParentSampleLink parent={each} />
+                          </Fragment>
+                        ))}
+                      </p>
+                    </TabsContent>
+                  ) : null}
 
-                    <form.AppField name="nature">
-                      {(field) => (
-                        <field.ComboboxField
-                          label={m.field_nature()}
-                          requiredToPublish
-                          items={natureItems}
-                          placeholder={m.nature_placeholder()}
-                          searchPlaceholder={m.nature_search_placeholder()}
-                          emptyText={m.nature_empty()}
-                        />
-                      )}
-                    </form.AppField>
+                  <TabsContent value={DEFAULT_TAB} className="grid gap-4">
+                    <FormSection title={m.section_sample()}>
+                      <form.AppField
+                        name="name"
+                        validators={{
+                          onChange: ({ value }) =>
+                            value?.trim()
+                              ? undefined
+                              : { message: m.field_name_required() },
+                        }}
+                      >
+                        {(field) => (
+                          <field.TextField
+                            label={m.field_name()}
+                            requiredToPublish
+                          />
+                        )}
+                      </form.AppField>
 
-                    <form.AppForm>
-                      <CollectionMethodField />
-                    </form.AppForm>
-
-                    <form.AppField name="collectionMethodDescription">
-                      {(field) => (
-                        <field.TextField
-                          label={m.field_collection_method_description()}
-                          multiline
-                        />
-                      )}
-                    </form.AppField>
-
-                    <form.AppForm>
-                      <ProvenanceStatusField />
-                    </form.AppForm>
-
-                    <form.AppForm>
-                      <CollectionDateField />
-                    </form.AppForm>
-                  </FormSection>
-
-                  <form.AppForm>
-                    <SampleManualGroupsField options={manualGroupOptions} />
-                  </form.AppForm>
-                </TabsContent>
-
-                <TabsContent value="classification" className="grid gap-4">
-                  <FormSection title={m.section_material()}>
-                    <form.AppForm>
-                      <MaterialField />
-                    </form.AppForm>
-                    <form.AppForm>
-                      <TextureField />
-                    </form.AppForm>
-                    <form.AppForm>
-                      <MetamorphicDetails />
-                    </form.AppForm>
-                    <form.AppField name="specificName">
-                      {(field) => (
-                        <field.TextField label={m.field_specific_name()} />
-                      )}
-                    </form.AppField>
-                  </FormSection>
-
-                  <form.AppForm>
-                    <SampleEconomicInterestFields />
-                  </form.AppForm>
-
-                  {showSynthetic ? (
-                    <FormSection title={m.section_synthetic_details()}>
                       <form.AppForm>
-                        <SampleSyntheticDetailsFields />
+                        <SampleTypeFields />
+                      </form.AppForm>
+
+                      <form.AppField name="nature">
+                        {(field) => (
+                          <field.ComboboxField
+                            label={m.field_nature()}
+                            requiredToPublish
+                            items={natureItems}
+                            placeholder={m.nature_placeholder()}
+                            searchPlaceholder={m.nature_search_placeholder()}
+                            emptyText={m.nature_empty()}
+                          />
+                        )}
+                      </form.AppField>
+
+                      <form.AppForm>
+                        <CollectionMethodField />
+                      </form.AppForm>
+
+                      <form.AppField name="collectionMethodDescription">
+                        {(field) => (
+                          <field.TextField
+                            label={m.field_collection_method_description()}
+                            multiline
+                          />
+                        )}
+                      </form.AppField>
+
+                      <form.AppForm>
+                        <ProvenanceStatusField />
+                      </form.AppForm>
+
+                      <form.AppForm>
+                        <CollectionDateField />
                       </form.AppForm>
                     </FormSection>
-                  ) : null}
-                </TabsContent>
 
-                <TabsContent value="location" className="grid gap-4">
-                  {parent && allowsLocation(parent.material) ? (
-                    <p>
-                      {m.location_inherited_from()}{" "}
-                      <ParentSampleLink parent={parent} />
-                    </p>
-                  ) : (
-                    <>
-                      <FormSection title={m.section_location()}>
-                        <form.AppForm>
-                          <LocationFields />
-                        </form.AppForm>
-                      </FormSection>
-
-                      <FormSection title={m.section_geomorphological_context()}>
-                        <form.AppForm>
-                          <SampleGeologicalContextFields />
-                        </form.AppForm>
-                      </FormSection>
-                    </>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="age" className="grid gap-4">
-                  <form.AppForm>
-                    <AgeFields />
-                  </form.AppForm>
-                </TabsContent>
-
-                <TabsContent
-                  value="physical-description"
-                  className="grid gap-4"
-                >
-                  <FormSection title={m.section_description()}>
                     <form.AppForm>
-                      <SampleDescriptionFields />
+                      <SampleManualGroupsField options={manualGroupOptions} />
                     </form.AppForm>
-                  </FormSection>
-                </TabsContent>
+                  </TabsContent>
 
-                <TabsContent value="scientific-context" className="grid gap-4">
-                  <FormSection title={m.section_scientific_context()}>
-                    <form.AppForm>
-                      <SampleScientificContextFields />
-                    </form.AppForm>
-                  </FormSection>
-                </TabsContent>
-
-                <TabsContent value="conservation" className="grid gap-4">
-                  <FormSection title={m.section_condition()}>
-                    <form.AppForm>
-                      <SampleConditionFields />
-                    </form.AppForm>
-                  </FormSection>
-
-                  <FormSection title={m.section_security()}>
-                    <form.AppForm>
-                      <SampleSecurityFields />
-                    </form.AppForm>
-                  </FormSection>
-                </TabsContent>
-
-                <TabsContent value="curation" className="grid gap-4">
-                  <FormSection title={m.section_curation()}>
-                    <form.AppForm>
-                      <ExistenceStatusField />
-                      <AvailabilityStatusField />
-                    </form.AppForm>
-                  </FormSection>
-
-                  <FormSection title={m.section_repository()}>
-                    <form.AppForm>
-                      <SampleRepositoryFields />
-                    </form.AppForm>
-                  </FormSection>
-                </TabsContent>
-
-                <TabsContent value="related-resources" className="grid gap-6">
-                  <form.AppForm>
-                    <SampleRelationsFields />
-                  </form.AppForm>
-                  {sampleId && attachmentChanges ? (
-                    <SampleAttachments
-                      sampleId={sampleId}
-                      attachments={attachments}
-                      changes={attachmentChanges}
-                    />
-                  ) : (
-                    <FormSection title={m.section_attachments()}>
-                      <p className="text-muted-foreground text-sm">
-                        {m.attachments_unsaved_hint()}
-                      </p>
+                  <TabsContent value="classification" className="grid gap-4">
+                    <FormSection title={m.section_material()}>
+                      <form.AppForm>
+                        <MaterialField />
+                      </form.AppForm>
+                      <form.AppForm>
+                        <TextureField />
+                      </form.AppForm>
+                      <form.AppForm>
+                        <MetamorphicDetails />
+                      </form.AppForm>
+                      <form.AppField name="specificName">
+                        {(field) => (
+                          <field.TextField label={m.field_specific_name()} />
+                        )}
+                      </form.AppField>
                     </FormSection>
-                  )}
-                </TabsContent>
-              </Tabs>
-            );
-          }}
-        </form.Subscribe>
 
-        {attachmentChanges ? (
-          <SampleAttachmentUploadDialog changes={attachmentChanges} />
-        ) : null}
+                    <form.AppForm>
+                      <SampleEconomicInterestFields />
+                    </form.AppForm>
 
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onCancel}>
-            {m.action_cancel()}
-          </Button>
-          {secondaryAction ? renderAction(secondaryAction, "outline") : null}
-          {statusAction}
-          {primaryAction ? renderAction(primaryAction) : null}
-        </div>
-      </form>
+                    {showSynthetic ? (
+                      <FormSection title={m.section_synthetic_details()}>
+                        <form.AppForm>
+                          <SampleSyntheticDetailsFields />
+                        </form.AppForm>
+                      </FormSection>
+                    ) : null}
+                  </TabsContent>
+
+                  <TabsContent value="location" className="grid gap-4">
+                    {onlyParent && allowsLocation(onlyParent.material) ? (
+                      <p>
+                        {m.location_inherited_from()}{" "}
+                        <ParentSampleLink parent={onlyParent} />
+                      </p>
+                    ) : (
+                      <>
+                        <FormSection title={m.section_location()}>
+                          <form.AppForm>
+                            <LocationFields />
+                          </form.AppForm>
+                        </FormSection>
+
+                        <FormSection
+                          title={m.section_geomorphological_context()}
+                        >
+                          <form.AppForm>
+                            <SampleGeologicalContextFields />
+                          </form.AppForm>
+                        </FormSection>
+                      </>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="age" className="grid gap-4">
+                    <form.AppForm>
+                      <AgeFields />
+                    </form.AppForm>
+                  </TabsContent>
+
+                  <TabsContent
+                    value="physical-description"
+                    className="grid gap-4"
+                  >
+                    <FormSection title={m.section_description()}>
+                      <form.AppForm>
+                        <SampleDescriptionFields />
+                      </form.AppForm>
+                    </FormSection>
+                  </TabsContent>
+
+                  <TabsContent
+                    value="scientific-context"
+                    className="grid gap-4"
+                  >
+                    <FormSection title={m.section_scientific_context()}>
+                      <form.AppForm>
+                        <SampleScientificContextFields />
+                      </form.AppForm>
+                    </FormSection>
+                  </TabsContent>
+
+                  <TabsContent value="conservation" className="grid gap-4">
+                    <FormSection title={m.section_condition()}>
+                      <form.AppForm>
+                        <SampleConditionFields />
+                      </form.AppForm>
+                    </FormSection>
+
+                    <FormSection title={m.section_security()}>
+                      <form.AppForm>
+                        <SampleSecurityFields />
+                      </form.AppForm>
+                    </FormSection>
+                  </TabsContent>
+
+                  <TabsContent value="curation" className="grid gap-4">
+                    <FormSection title={m.section_curation()}>
+                      <form.AppForm>
+                        <ExistenceStatusField />
+                        <AvailabilityStatusField />
+                      </form.AppForm>
+                    </FormSection>
+
+                    <FormSection title={m.section_repository()}>
+                      <form.AppForm>
+                        <SampleRepositoryFields />
+                      </form.AppForm>
+                    </FormSection>
+                  </TabsContent>
+
+                  <TabsContent value="related-resources" className="grid gap-6">
+                    <form.AppForm>
+                      <SampleRelationsFields />
+                    </form.AppForm>
+                    {sampleId && attachmentChanges ? (
+                      <SampleAttachments
+                        sampleId={sampleId}
+                        attachments={attachments}
+                        changes={attachmentChanges}
+                      />
+                    ) : (
+                      <FormSection title={m.section_attachments()}>
+                        <p className="text-muted-foreground text-sm">
+                          {m.attachments_unsaved_hint()}
+                        </p>
+                      </FormSection>
+                    )}
+                  </TabsContent>
+                </Tabs>
+              );
+            }}
+          </form.Subscribe>
+
+          {attachmentChanges ? (
+            <SampleAttachmentUploadDialog changes={attachmentChanges} />
+          ) : null}
+
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="ghost" onClick={onCancel}>
+              {m.action_cancel()}
+            </Button>
+            {secondaryAction ? renderAction(secondaryAction, "outline") : null}
+            {statusAction}
+            {primaryAction ? renderAction(primaryAction) : null}
+          </div>
+        </form>
+      </FieldSuggestionProvider>
     </FieldDisabledProvider>
   );
 }

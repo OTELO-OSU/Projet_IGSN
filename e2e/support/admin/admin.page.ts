@@ -33,6 +33,8 @@ export function adminPage(page: Page) {
     expectUnsupportedProvider: () =>
       expect(page.getByRole("alert")).toContainText(/eduGAIN.*ORCID iD/is),
     expectSignedIn: () => expect(signedInLocator(page).first()).toBeVisible(),
+    expectCallbackDone: () =>
+      page.waitForURL((url) => !url.pathname.endsWith("/auth/callback")),
     expectSignedOut: () =>
       expect(page.getByRole("button", { name: "Sign in" })).toBeVisible(),
     expectUserName: (name: string) =>

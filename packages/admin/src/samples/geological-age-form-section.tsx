@@ -40,7 +40,7 @@ export function GeologicalAgeFormSection() {
           />
 
           {mode === "range" ? (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4">
               <AgeBoundField
                 control="geological"
                 name="geologicalAgeMin"

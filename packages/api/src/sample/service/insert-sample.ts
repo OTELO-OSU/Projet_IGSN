@@ -1,6 +1,7 @@
 import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 
+import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
 import { v7 as uuidv7 } from "uuid";
 
 import type { DB } from "../../db.ts";
@@ -40,11 +41,11 @@ export async function insertSampleRows(
     .executeTakeFirstOrThrow();
   const parentIds = input.parentIds ?? [];
   await insertSampleParents(db, row.id, parentIds);
-  const [parentId] = parentIds;
-  if (parentId === undefined) {
+  const locationParent = soleParent(parentIds);
+  if (locationParent === undefined) {
     await writeSampleLocation(db, row.id, input.location);
   } else {
-    await inheritParentLocation(db, row.id, parentId);
+    await inheritParentLocation(db, row.id, locationParent);
   }
   await replaceSampleRelations(db, row.id, input.relations ?? []);
   await replaceSampleManualGroups(db, row.id, input.manualGroupIds ?? []);

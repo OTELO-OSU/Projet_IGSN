@@ -52,9 +52,9 @@ export function NumericAgeFormSection() {
             disabled={isDisabled}
           />
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4">
             {mode === "range" ? (
-              <div className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+              <>
                 <AgeBoundField
                   control="numeric"
                   name="numericAgeMin"
@@ -67,16 +67,14 @@ export function NumericAgeFormSection() {
                   label={m.field_numeric_age_max()}
                   requiredWhenName="numericAgeMin"
                 />
-              </div>
+              </>
             ) : (
-              <div className="sm:col-span-2">
-                <AgeBoundField
-                  control="numeric"
-                  name="numericAgeMin"
-                  label={m.field_numeric_age()}
-                  mirrorName="numericAgeMax"
-                />
-              </div>
+              <AgeBoundField
+                control="numeric"
+                name="numericAgeMin"
+                label={m.field_numeric_age()}
+                mirrorName="numericAgeMax"
+              />
             )}
 
             <form.Subscribe

@@ -306,6 +306,8 @@ Two things that must go with any hide:
 
 A requirement driven by another field (for example `allowsLocation(material)`, or `requiresLocation(provenanceStatus)` which drops the requirement for a `collection_specimen`) lives in `domain`, so the form and the publish tooltip always agree.
 
+A field hidden by a display condition needs no suggestion wiring: it shows its parent slots once its condition holds, same as any other inheritable field.
+
 ## Verify
 
 ```

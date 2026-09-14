@@ -90,6 +90,13 @@ const PARENT: SampleParent = {
   material: "rock_and_sediment.mineral",
 };
 
+const SECOND_PARENT: SampleParent = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
+  igsn: "01K072TVWVFK5A1RRZ5MY4PPKA",
+  name: "Vosges 2026",
+  material: "rock_and_sediment.mineral",
+};
+
 beforeEach(() => {
   callerStatus = "accepted";
   callerUnknown = false;
@@ -459,6 +466,20 @@ describe("EditSamplePage", () => {
     await expect
       .element(screen.getByRole("heading", { name: "Location" }))
       .not.toBeInTheDocument();
+  });
+
+  it("should list both parents of a sample declared from two of them", async () => {
+    sampleParents = [PARENT, SECOND_PARENT];
+    const { screen } = await renderEditPage();
+
+    await screen.getByRole("tab", { name: "Parent samples" }).click();
+
+    await expect
+      .element(screen.getByRole("link", { name: PARENT.name }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("link", { name: SECOND_PARENT.name }))
+      .toBeVisible();
   });
 
   it("should chip the attached manual groups but freeze them to a contributor", async () => {

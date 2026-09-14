@@ -105,6 +105,8 @@ export const sampleSchema = z.object({
 
 export type Sample = z.infer<typeof sampleSchema>;
 
+export const MAX_SAMPLE_PARENTS = 2;
+
 const createSampleFieldsSchema = z.strictObject({
   name: nameSchema,
   nature: natureSchema.nullable().default(null),
@@ -137,10 +139,13 @@ const createSampleFieldsSchema = z.strictObject({
   economicDepositName: nameSchema.nullish(),
   economicDepositDescription: nameSchema.nullish(),
   manualGroupIds: z.array(z.uuid()).optional(),
-  parentIds: z.array(z.uuid()).max(1).optional(),
+  parentIds: z.array(z.uuid()).max(MAX_SAMPLE_PARENTS).optional(),
 });
 
-type SampleCheck = Omit<z.infer<typeof createSampleFieldsSchema>, "parentIds">;
+type SampleCheck = Omit<
+  z.infer<typeof createSampleFieldsSchema>,
+  "parentIds"
+> & { parentIds?: string[] };
 
 const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
   if (
@@ -206,6 +211,26 @@ const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
         });
       }
     }
+  }
+  if (
+    value.parentIds != null &&
+    new Set(value.parentIds).size !== value.parentIds.length
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["parentIds"],
+      message: "a parent is listed twice",
+    });
+  }
+  if (
+    (value.parentIds?.length ?? 0) > 1 &&
+    !isSyntheticMaterial(value.material ?? null)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["material"],
+      message: "a sample with two parents must be synthetic",
+    });
   }
   if (
     value.syntheticDetails != null &&

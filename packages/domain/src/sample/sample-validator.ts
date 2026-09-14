@@ -4,6 +4,7 @@ import { institutionFilterSchema } from "../institutional-group/institution-filt
 import { manualGroupSchema } from "../manual-group/model.ts";
 import { userSampleRoleSchema } from "../user-sample/model.ts";
 import { userSchema } from "../user/model.ts";
+import { sampleParentSchema } from "./parent/model.ts";
 import { withdrawnSampleSchema } from "./publication/withdrawn-sample.ts";
 import {
   sampleSchema,
@@ -11,7 +12,7 @@ import {
   updateSampleSchema,
 } from "./sample.ts";
 import { facetQueryFields } from "./search/facets.ts";
-import { MAX_SEARCH_LENGTH } from "./search/search-tokens.ts";
+import { searchTermSchema } from "./search/search-tokens.ts";
 
 export const updateSampleBodySchema = updateSampleSchema.extend({
   expectedUpdatedAt: z.coerce.date(),
@@ -91,12 +92,7 @@ export const listSamplesQuerySchema = z.object({
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
   sort: z.enum(["status", "igsn"]).optional().catch(undefined),
   order: z.enum(["asc", "desc"]).optional().catch(undefined),
-  search: z
-    .string()
-    .trim()
-    .transform((value) => value.slice(0, MAX_SEARCH_LENGTH))
-    .optional()
-    .catch(undefined),
+  search: searchTermSchema,
   ownership: z.enum(["mine", "shared"]).optional().catch(undefined),
   status: sampleStatusSchema.optional().catch(undefined),
   ownerId: z.uuid().optional().catch(undefined),
@@ -117,6 +113,23 @@ export type ListSamplesResponse = z.infer<typeof listSamplesResponseSchema>;
 export const sampleResponseSchema = z.object({ data: sampleSchema });
 
 export type SampleResponse = z.infer<typeof sampleResponseSchema>;
+
+export const searchEligibleParentsQuerySchema = z.object({
+  search: searchTermSchema,
+  exclude: z.uuid().optional().catch(undefined),
+});
+
+export type SearchEligibleParentsQuery = z.infer<
+  typeof searchEligibleParentsQuerySchema
+>;
+
+export const eligibleParentsResponseSchema = z.object({
+  data: z.array(sampleParentSchema),
+});
+
+export type EligibleParentsResponse = z.infer<
+  typeof eligibleParentsResponseSchema
+>;
 
 export const publicSampleResponseSchema = z.object({
   data: z.discriminatedUnion("status", [

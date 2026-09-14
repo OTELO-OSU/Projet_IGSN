@@ -156,11 +156,13 @@ export function createSampleAdminRoutes(
           return c.json(NOT_ATTACHABLE, 422);
         }
       }
-      const [parentId] = input.parentIds ?? [];
-      if (
-        parentId !== undefined &&
-        !(await findEligibleParent(repository, users, user, parentId))
-      ) {
+      const parentIds = input.parentIds ?? [];
+      const parents = await Promise.all(
+        parentIds.map((parentId) =>
+          findEligibleParent(repository, users, user, parentId),
+        ),
+      );
+      if (parents.includes(null)) {
         return c.json(PARENT_NOT_ELIGIBLE, 422);
       }
       const sample = await repository.create(input, user);

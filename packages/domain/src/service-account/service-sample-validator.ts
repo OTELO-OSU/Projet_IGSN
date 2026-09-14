@@ -2,13 +2,20 @@ import { z } from "zod";
 
 import type { PublishBlocker } from "../sample/publication/sample-publish-blockers.ts";
 
-import { createSampleSchema, updateSampleSchema } from "../sample/sample.ts";
+import {
+  createSampleSchema,
+  MAX_SAMPLE_PARENTS,
+  updateSampleSchema,
+} from "../sample/sample.ts";
 
 const NO_ATTACHMENTS = { attachments: z.never().optional() };
 
 export const createServiceSampleSchema = createSampleSchema.safeExtend({
   ...NO_ATTACHMENTS,
-  parentIds: z.array(z.string().trim().min(1)).max(1).optional(),
+  parentIds: z
+    .array(z.string().trim().min(1))
+    .max(MAX_SAMPLE_PARENTS)
+    .optional(),
 });
 
 export type CreateServiceSample = z.infer<typeof createServiceSampleSchema>;

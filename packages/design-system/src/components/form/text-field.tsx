@@ -6,6 +6,7 @@ import { Label } from "../ui/label.tsx";
 import { Textarea } from "../ui/textarea.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
+import { FieldRow } from "./field-row.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 const toNumber = (text: string): number | undefined => {
@@ -37,7 +38,7 @@ export function TextField({
   const [isBadInput, setIsBadInput] = useState(false);
   const Control = multiline ? Textarea : Input;
   return (
-    <div className="grid content-start gap-2">
+    <FieldRow>
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
       </Label>
@@ -70,6 +71,6 @@ export function TextField({
           {hint}
         </p>
       )}
-    </div>
+    </FieldRow>
   );
 }

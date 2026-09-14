@@ -6,6 +6,7 @@ import type {
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import type { UserRepository } from "@projet-igsn/domain/user/repository";
 
+import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
 import { publishBlockersOf } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { z } from "zod";
 
@@ -38,7 +39,8 @@ export async function createServiceSampleIssues(
         : null,
     ),
   );
-  if (parentIds.length > 0 && input.location != null) {
+  const locationParent = soleParent(parents);
+  if (locationParent !== undefined && input.location != null) {
     issues.push(
       serviceSampleIssue("location_inherited_from_parent", ["location"]),
     );
@@ -46,10 +48,15 @@ export async function createServiceSampleIssues(
   issues.push(
     ...publishBlockerIssues(
       publishBlockersOf(
-        { ...input, location: parents[0]?.location ?? input.location },
+        { ...input, location: locationParent?.location ?? input.location },
         uploadLimit,
         parents,
-      ),
+      ).filter((blocker) => blocker !== "parent_not_found"),
+    ),
+    ...parents.flatMap((parent, index) =>
+      parent === null
+        ? [serviceSampleIssue("parent_not_found", ["parentIds", index])]
+        : [],
     ),
   );
   const submitted = input.manualGroupIds ?? [];

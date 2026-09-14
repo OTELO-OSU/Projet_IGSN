@@ -2,6 +2,7 @@ import { createSampleSchema, sampleSchema } from "./sample";
 
 const PARENT_ID = "11111111-1111-4111-8111-111111111111";
 const OTHER_PARENT_ID = "22222222-2222-4222-8222-222222222222";
+const THIRD_PARENT_ID = "33333333-3333-4333-8333-333333333333";
 
 const validSample = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
@@ -382,12 +383,21 @@ describe("createSampleSchema", () => {
     expect(result).toMatchObject({ success: true });
   });
 
-  it.each([{ parentIds: [] }, { parentIds: [PARENT_ID] }])(
-    "should accept a sub-sample declaring up to one parent: %j",
-    ({ parentIds }) => {
+  it.each([
+    { reason: "no parent", parentIds: [], material: null },
+    { reason: "one parent", parentIds: [PARENT_ID], material: null },
+    {
+      reason: "two parents on a synthetic material",
+      parentIds: [PARENT_ID, OTHER_PARENT_ID],
+      material: "rock_and_sediment.synthetic_rock_mineral",
+    },
+  ])(
+    "should accept a sub-sample declaring $reason",
+    ({ parentIds, material }) => {
       // Arrange / Act
       const result = createSampleSchema.safeParse({
         name: "Sub-sample of Basalt 42",
+        material,
         parentIds,
       });
       // Assert
@@ -398,17 +408,45 @@ describe("createSampleSchema", () => {
   it.each([
     {
       reason: "more parents than the cap",
-      parentIds: [PARENT_ID, OTHER_PARENT_ID],
+      parentIds: [PARENT_ID, OTHER_PARENT_ID, THIRD_PARENT_ID],
+      material: "rock_and_sediment.synthetic_rock_mineral",
     },
-    { reason: "a parent id that is not a uuid", parentIds: ["not-a-uuid"] },
-  ])("should reject $reason", ({ parentIds }) => {
+    {
+      reason: "a parent id that is not a uuid",
+      parentIds: ["not-a-uuid"],
+      material: null,
+    },
+  ])("should reject $reason", ({ parentIds, material }) => {
     // Arrange / Act
     const result = createSampleSchema.safeParse({
       name: "Sub-sample of Basalt 42",
+      material,
       parentIds,
     });
     // Assert
     expect(result.success).toBe(false);
+  });
+
+  it("should reject two parents on a material that is not synthetic", () => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Sub-sample of Basalt 42",
+      material: "rock_and_sediment.rock",
+      parentIds: [PARENT_ID, OTHER_PARENT_ID],
+    });
+    // Assert
+    expect(result.error?.issues).toMatchObject([{ path: ["material"] }]);
+  });
+
+  it("should reject the same parent listed twice", () => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Sub-sample of Basalt 42",
+      material: "rock_and_sediment.synthetic_rock_mineral",
+      parentIds: [PARENT_ID, PARENT_ID],
+    });
+    // Assert
+    expect(result.error?.issues).toMatchObject([{ path: ["parentIds"] }]);
   });
 
   it("should reject unknown fields", () => {

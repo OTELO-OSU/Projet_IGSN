@@ -15,8 +15,8 @@ export async function findEligibleParent(
 ): Promise<Sample | null> {
   const found = await repository.get(parentId, user.id);
   if (!found) return null;
+  const { sample, role } = found;
+  if (canDeclareSubSample(sample, { role, managed: false })) return sample;
   const managed = await inModerationReach(repository, users, user, parentId);
-  return canDeclareSubSample(found.sample, { role: found.role, managed })
-    ? found.sample
-    : null;
+  return canDeclareSubSample(sample, { role, managed }) ? sample : null;
 }

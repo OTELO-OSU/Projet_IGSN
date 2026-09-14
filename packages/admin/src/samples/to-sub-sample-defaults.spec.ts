@@ -95,7 +95,7 @@ const parent: Sample = {
 };
 
 it("should inherit every block of the parent but its identity, its collections and its own parentage", () => {
-  expect(toSubSampleDefaults(parent)).toEqual({
+  expect(toSubSampleDefaults([parent])).toEqual({
     parentIds: [PARENT_ID],
     relations: [],
     attachments: [],
