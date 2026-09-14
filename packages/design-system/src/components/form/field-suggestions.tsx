@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 
 import { Button } from "../ui/button.tsx";
+import { Label } from "../ui/label.tsx";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import {
   useFieldSuggestionCascade,
@@ -28,32 +30,44 @@ export function FieldSuggestions({
       {suggestions.map(({ source, value }, index) => {
         const text =
           value === undefined ? rule.noValueLabel : slotText(value, format);
+        const chip = (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-36 justify-start"
+            disabled={value === undefined}
+            aria-label={`${source}: ${text}`}
+            onClick={() => {
+              for (const name of cascade) {
+                const gate = rule
+                  .forField(name)
+                  .find(
+                    (entry) =>
+                      entry.source === source && entry.value !== undefined,
+                  );
+                if (gate) field.form.setFieldValue(name, gate.value);
+              }
+              field.handleChange(value);
+              field.handleBlur();
+            }}
+          >
+            <span className="min-w-0 truncate">{text}</span>
+          </Button>
+        );
         return (
-          <li key={`${index}-${source}`}>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="w-36 truncate"
-              disabled={value === undefined}
-              title={text}
-              aria-label={`${source}: ${text}`}
-              onClick={() => {
-                for (const name of cascade) {
-                  const gate = rule
-                    .forField(name)
-                    .find(
-                      (entry) =>
-                        entry.source === source && entry.value !== undefined,
-                    );
-                  if (gate) field.form.setFieldValue(name, gate.value);
-                }
-                field.handleChange(value);
-                field.handleBlur();
-              }}
-            >
-              {text}
-            </Button>
+          <li className="grid content-start gap-2" key={`${index}-${source}`}>
+            <Label asChild>
+              <span>{source}</span>
+            </Label>
+            {value === undefined ? (
+              chip
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>{chip}</TooltipTrigger>
+                <TooltipContent>{text}</TooltipContent>
+              </Tooltip>
+            )}
           </li>
         );
       })}

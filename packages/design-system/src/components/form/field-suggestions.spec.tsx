@@ -4,6 +4,7 @@ import { page } from "vitest/browser";
 
 import type { FieldSuggestionRule } from "./field-suggestion-context.tsx";
 
+import { TooltipProvider } from "../ui/tooltip.tsx";
 import { useAppForm } from "./app-form.tsx";
 import { FieldDisabledProvider } from "./field-disabled-context.tsx";
 import {
@@ -40,53 +41,59 @@ function Harness({
 }) {
   const form = useAppForm({ defaultValues: { name: "", nature: "" } });
   return (
-    <FieldDisabledProvider value={isFieldDisabled}>
-      <FieldSuggestionProvider value={rule}>
-        <form>
-          <form.AppField name="name">
-            {(field) => <field.TextField label="Sample name" />}
-          </form.AppField>
-          <form.AppField name="nature">
-            {(field) => (
-              <field.ComboboxField
-                label="Nature"
-                items={items}
-                placeholder="Select a nature"
-                searchPlaceholder="Search nature..."
-                emptyText="No nature found"
-              />
-            )}
-          </form.AppField>
-        </form>
-      </FieldSuggestionProvider>
-    </FieldDisabledProvider>
+    <TooltipProvider>
+      <FieldDisabledProvider value={isFieldDisabled}>
+        <FieldSuggestionProvider value={rule}>
+          <form>
+            <form.AppField name="name">
+              {(field) => <field.TextField label="Sample name" />}
+            </form.AppField>
+            <form.AppField name="nature">
+              {(field) => (
+                <field.ComboboxField
+                  label="Nature"
+                  items={items}
+                  placeholder="Select a nature"
+                  searchPlaceholder="Search nature..."
+                  emptyText="No nature found"
+                />
+              )}
+            </form.AppField>
+          </form>
+        </FieldSuggestionProvider>
+      </FieldDisabledProvider>
+    </TooltipProvider>
   );
 }
 
 function SwitchHarness({ rule }: { rule: FieldSuggestionRule }) {
   const form = useAppForm({ defaultValues: { oriented: false } });
   return (
-    <FieldSuggestionProvider value={rule}>
-      <form.AppField name="oriented">
-        {(field) => <field.SwitchField label="Oriented" />}
-      </form.AppField>
-    </FieldSuggestionProvider>
+    <TooltipProvider>
+      <FieldSuggestionProvider value={rule}>
+        <form.AppField name="oriented">
+          {(field) => <field.SwitchField label="Oriented" />}
+        </form.AppField>
+      </FieldSuggestionProvider>
+    </TooltipProvider>
   );
 }
 
 function CascadeHarness({ rule }: { rule: FieldSuggestionRule }) {
   const form = useAppForm({ defaultValues: { gate: false, explanation: "" } });
   return (
-    <FieldSuggestionProvider value={rule}>
-      <form.AppField name="gate">
-        {(field) => <field.SwitchField label="Gate" />}
-      </form.AppField>
-      <FieldSuggestionCascadeProvider value={["gate"]}>
-        <form.AppField name="explanation">
-          {(field) => <field.TextField label="Explanation" />}
+    <TooltipProvider>
+      <FieldSuggestionProvider value={rule}>
+        <form.AppField name="gate">
+          {(field) => <field.SwitchField label="Gate" />}
         </form.AppField>
-      </FieldSuggestionCascadeProvider>
-    </FieldSuggestionProvider>
+        <FieldSuggestionCascadeProvider value={["gate"]}>
+          <form.AppField name="explanation">
+            {(field) => <field.TextField label="Explanation" />}
+          </form.AppField>
+        </FieldSuggestionCascadeProvider>
+      </FieldSuggestionProvider>
+    </TooltipProvider>
   );
 }
 
@@ -173,6 +180,56 @@ describe("FieldSuggestions", () => {
     await expect
       .element(slots.nth(1))
       .toHaveAccessibleName("IGSN-2: Basalt 42");
+  });
+
+  it("should show each slot's parent name as a label above its button", async () => {
+    await render(
+      <Harness
+        rule={parentRule((field) =>
+          field === "name"
+            ? [
+                { source: "IGSN-1", value: "Basalt 42" },
+                { source: "IGSN-2", value: undefined },
+              ]
+            : [],
+        )}
+      />,
+    );
+
+    const slots = page.getByRole("list", { name: "Parent values" });
+    await expect
+      .element(slots.getByText("IGSN-1", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(slots.getByText("IGSN-2", { exact: true }))
+      .toBeVisible();
+  });
+
+  it("should show the full value in a tooltip when a valued chip is hovered", async () => {
+    await render(
+      <Harness
+        rule={parentRule((field) =>
+          field === "name"
+            ? [
+                {
+                  source: "IGSN-1",
+                  value: "A basalt sampled in the Massif Central",
+                },
+              ]
+            : [],
+        )}
+      />,
+    );
+
+    await page
+      .getByRole("button", {
+        name: "IGSN-1: A basalt sampled in the Massif Central",
+      })
+      .hover();
+
+    await expect
+      .element(page.getByRole("tooltip"))
+      .toHaveTextContent("A basalt sampled in the Massif Central");
   });
 
   it("should render no slot list for a field no source can fill", async () => {

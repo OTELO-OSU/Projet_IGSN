@@ -4,6 +4,7 @@ import { page } from "vitest/browser";
 
 import type { FieldSuggestionRule } from "./field-suggestion-context.tsx";
 
+import { TooltipProvider } from "../ui/tooltip.tsx";
 import { useAppForm } from "./app-form.tsx";
 import { FieldSuggestionProvider } from "./field-suggestion-context.tsx";
 
@@ -21,11 +22,13 @@ function Harness({ rule }: { rule: FieldSuggestionRule }) {
     defaultValues: { humidity: undefined as number | undefined },
   });
   return (
-    <FieldSuggestionProvider value={rule}>
-      <form.AppField name="humidity">
-        {(field) => <field.SuggestionRow label="Humidity (%)" />}
-      </form.AppField>
-    </FieldSuggestionProvider>
+    <TooltipProvider>
+      <FieldSuggestionProvider value={rule}>
+        <form.AppField name="humidity">
+          {(field) => <field.SuggestionRow label="Humidity (%)" />}
+        </form.AppField>
+      </FieldSuggestionProvider>
+    </TooltipProvider>
   );
 }
 
