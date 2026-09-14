@@ -30,6 +30,7 @@ import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy"
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { type SampleParent } from "@projet-igsn/domain/sample/parent/model";
+import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import {
   type PublishableFields,
@@ -175,7 +176,7 @@ export function SampleForm({
   isPending,
   defaultValues,
   parents = [],
-  fieldSuggestions,
+  fieldSuggestions = NO_FIELD_SUGGESTIONS,
   status = "draft",
   primaryAction,
   secondaryAction,
@@ -205,7 +206,7 @@ export function SampleForm({
       : () => false;
   const areManualGroupsFrozen =
     roleOnSample !== null && !isSampleOwner(roleOnSample);
-  const onlyParent = parents.length === 1 ? parents[0] : undefined;
+  const onlyParent = soleParent(parents);
   const isMaterialFrozenByParent =
     onlyParent !== undefined && isSyntheticMaterial(onlyParent.material);
   const hasTwoParents = parents.length > 1;
@@ -441,7 +442,7 @@ export function SampleForm({
 
   return (
     <FieldDisabledProvider value={isFieldFrozen}>
-      <FieldSuggestionProvider value={fieldSuggestions ?? NO_FIELD_SUGGESTIONS}>
+      <FieldSuggestionProvider value={fieldSuggestions}>
         <form
           noValidate
           onSubmit={(event) => {

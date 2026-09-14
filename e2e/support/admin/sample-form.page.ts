@@ -51,24 +51,14 @@ export function sampleFormPage(page: Page) {
         page.getByRole("button", { name: `Remove ${label}`, exact: true }),
       ).toBeVisible(),
 
-    expectParentTab: async (parent: { name: string; igsn: string }) => {
+    expectParentTab: async (parents: { name: string; igsn: string }[]) => {
+      const label = parents.length > 1 ? "Parent samples" : "Parent sample";
       await expect(
         page.getByRole("tablist").getByRole("tab").first(),
-      ).toHaveText("Parent sample");
-      await openTab("Parent sample");
+      ).toHaveText(label);
+      await openTab(label);
       const panel = page.getByRole("tabpanel");
       await expect(panel).toContainText("This sample is a sub sample of");
-      await expect(
-        panel.getByRole("link", { name: parent.name }),
-      ).toHaveAttribute("href", `${frontendUrl}/samples/${parent.igsn}`);
-    },
-
-    expectParentsTab: async (parents: { name: string; igsn: string }[]) => {
-      await expect(
-        page.getByRole("tablist").getByRole("tab").first(),
-      ).toHaveText("Parent samples");
-      await openTab("Parent samples");
-      const panel = page.getByRole("tabpanel");
       for (const parent of parents) {
         await expect(
           panel.getByRole("link", { name: parent.name }),

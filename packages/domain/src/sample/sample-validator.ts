@@ -12,7 +12,7 @@ import {
   updateSampleSchema,
 } from "./sample.ts";
 import { facetQueryFields } from "./search/facets.ts";
-import { MAX_SEARCH_LENGTH } from "./search/search-tokens.ts";
+import { searchTermSchema } from "./search/search-tokens.ts";
 
 export const updateSampleBodySchema = updateSampleSchema.extend({
   expectedUpdatedAt: z.coerce.date(),
@@ -86,13 +86,6 @@ export const pageSizeSchema = (fallback: (typeof PAGE_SIZES)[number]) =>
     .transform((size): number =>
       PAGE_SIZES.some((allowed) => allowed === size) ? size : fallback,
     );
-
-const searchTermSchema = z
-  .string()
-  .trim()
-  .transform((value) => value.slice(0, MAX_SEARCH_LENGTH))
-  .optional()
-  .catch(undefined);
 
 export const listSamplesQuerySchema = z.object({
   page: pageSchema,

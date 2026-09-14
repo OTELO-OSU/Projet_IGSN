@@ -5,7 +5,7 @@ import {
   pageSchema,
   pageSizeSchema,
 } from "../sample/sample-validator.ts";
-import { MAX_SEARCH_LENGTH } from "../sample/search/search-tokens.ts";
+import { searchTermSchema } from "../sample/search/search-tokens.ts";
 import { userStatusSchema } from "../user/model.ts";
 import { userIdentitySchema } from "../user/user-validator.ts";
 import { manualGroupNameSchema, manualGroupSchema } from "./model.ts";
@@ -43,12 +43,7 @@ export type AddManualGroupMemberBody = z.infer<
 export const listManualGroupsQuerySchema = z.object({
   page: pageSchema,
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),
-  search: z
-    .string()
-    .trim()
-    .transform((value) => value.slice(0, MAX_SEARCH_LENGTH))
-    .optional()
-    .catch(undefined),
+  search: searchTermSchema,
   noManager: z.stringbool().optional().catch(undefined),
 });
 

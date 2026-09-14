@@ -47,7 +47,7 @@ test.describe("sub samples", () => {
     await create.expectName("");
     await create.expectNatureEmpty();
     await create.expectHierarchyLevel("Dredge");
-    await create.expectParentTab(parent);
+    await create.expectParentTab([parent]);
     await create.expectInheritedLocation(parentName);
 
     const subSampleName = `Sub sample ${Date.now()}`;
@@ -59,7 +59,7 @@ test.describe("sub samples", () => {
     await edit.goToList();
     await list.openSample(subSampleName);
     await edit.expectVisible();
-    await edit.expectParentTab(parent);
+    await edit.expectParentTab([parent]);
     await edit.expectInheritedLocation(parentName);
 
     await edit.openTab("Identity");
@@ -122,7 +122,7 @@ test.describe("sub samples", () => {
     await detail.addSubSample();
     await strangerCreate.continueWithOneParent();
     await strangerCreate.expectSubSampleVisible(parent.name);
-    await strangerCreate.expectParentTab(parent);
+    await strangerCreate.expectParentTab([parent]);
     await strangerCreate.expectInheritedLocation(parent.name);
 
     const subSampleName = `Stranger sub sample ${Date.now()}`;
@@ -172,7 +172,7 @@ test.describe("sub samples", () => {
     await create.expectName("");
     await create.expectNatureEmpty();
     await create.expectNoLocationTab();
-    await create.expectParentsTab([first, second]);
+    await create.expectParentTab([first, second]);
 
     await create.openTab("Physical description");
     await create.fillFromParent(first.name, "Yes");

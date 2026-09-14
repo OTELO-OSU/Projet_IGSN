@@ -52,8 +52,9 @@ function CreateSamplePage() {
   if (picked != null && secondParentQuery.isPending) {
     return <p>{m.samples_loading()}</p>;
   }
-  const second = (picked != null && secondParentQuery.data) || undefined;
+  const second = secondParentQuery.data ?? undefined;
   const parents = [first, second].filter((parent) => parent !== undefined);
+  const hasTwoParents = parents.length === 2;
 
   return (
     <>
@@ -71,18 +72,11 @@ function CreateSamplePage() {
       <SampleForm
         currentUser={me.data}
         defaultValues={
-          first && second
-            ? {
-                material: "rock_and_sediment.synthetic_rock_mineral",
-                parentIds: [first.id, second.id],
-              }
-            : first
-              ? toSubSampleDefaults(first)
-              : undefined
+          parents.length > 0 ? toSubSampleDefaults(parents) : undefined
         }
         parents={parents.map((parent) => sampleParentSchema.parse(parent))}
         fieldSuggestions={
-          first && second ? parentFieldSuggestions([first, second]) : undefined
+          hasTwoParents ? parentFieldSuggestions(parents) : undefined
         }
         isPending={createSample.isPending || publishSample.isPending}
         manualGroupOptions={attachableManualGroups.data?.data ?? []}

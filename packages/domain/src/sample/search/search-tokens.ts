@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export function searchTokens(search: string): string[] {
   return search
     .trim()
@@ -10,6 +12,13 @@ export function searchTokens(search: string): string[] {
 export const MAX_WILDCARDS = 2;
 
 export const MAX_SEARCH_LENGTH = 200;
+
+export const searchTermSchema = z
+  .string()
+  .trim()
+  .transform((value) => value.slice(0, MAX_SEARCH_LENGTH))
+  .optional()
+  .catch(undefined);
 
 export type SearchToken = {
   segments: string[];

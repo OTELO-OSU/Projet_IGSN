@@ -4,7 +4,7 @@ import { Button } from "../ui/button.tsx";
 import { Label } from "../ui/label.tsx";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
-import { useFieldSuggestions } from "./field-suggestion-context.tsx";
+import { useFieldSuggestionRule } from "./field-suggestion-context.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 const slotText = (
@@ -18,7 +18,8 @@ export function FieldSuggestions({
   format?: (value: unknown) => string;
 }): ReactNode {
   const field = useFieldContext<unknown>();
-  const { rule, suggestions } = useFieldSuggestions();
+  const rule = useFieldSuggestionRule();
+  const suggestions = rule.forField(field.name);
   const isDisabled = useFieldDisabled();
   if (isDisabled || suggestions.length === 0) return null;
   return (
@@ -47,7 +48,7 @@ export function FieldSuggestions({
         return (
           <li
             className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] content-start gap-2"
-            key={`${index}-${source}`}
+            key={index}
           >
             <Tooltip>
               <TooltipTrigger asChild>

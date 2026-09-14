@@ -40,7 +40,6 @@ export function SecondParentDialog({
           <Label htmlFor="second-parent-first">{m.field_first_parent()}</Label>
           <Input
             id="second-parent-first"
-            readOnly
             disabled
             value={`${firstParent.name} (${firstParent.igsn})`}
           />

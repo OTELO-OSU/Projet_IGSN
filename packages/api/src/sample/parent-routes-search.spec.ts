@@ -1,4 +1,3 @@
-import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
 import { eligibleParentsResponseSchema } from "@projet-igsn/domain/sample/sample-validator";
@@ -8,36 +7,14 @@ import { describe, expect } from "vitest";
 import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
+import { insertParent } from "../tests/insert-parent.ts";
 import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
-import { publishableSample } from "../tests/sample-fixtures.ts";
-import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
-import { insertSample } from "./service/insert-sample.ts";
-import { publishSample } from "./service/publish-sample.ts";
-import { setSampleStatus } from "./service/set-sample-status.ts";
 
 type Db = Kysely<DB>;
 
 const authHeader = { Authorization: "Bearer test-token" };
-
-async function insertNamedSample(
-  db: Db,
-  ownerId: string,
-  status: Sample["status"],
-  name: string,
-): Promise<Sample> {
-  const created = await insertSample(db, { ...publishableSample, name });
-  await insertSampleOwner(db, created.id, ownerId);
-  if (status === "draft") return created;
-  const published = (await publishSample(
-    db,
-    created.id,
-    status === "tombstone" ? "published" : status,
-  ))!;
-  if (status !== "tombstone") return published;
-  return (await setSampleStatus(db, created.id, "tombstone"))!;
-}
 
 const search = async (db: Db, query: Record<string, string>) => {
   const res = await testClient(createApp(db).app).admin.samples.parents.$get(
@@ -60,7 +37,7 @@ describe("the eligible parent search", () => {
       // Arrange
       await provisionUser(db, "test-token", { status: "accepted" });
       const stranger = await insertUser(db, "stranger@univ-lorraine.fr");
-      const sample = await insertNamedSample(
+      const sample = await insertParent(
         db,
         stranger.id,
         status,
@@ -78,7 +55,7 @@ describe("the eligible parent search", () => {
     const caller = await provisionUser(db, "test-token", {
       status: "accepted",
     });
-    const sample = await insertNamedSample(
+    const sample = await insertParent(
       db,
       caller.id,
       "withdrawn",
@@ -106,7 +83,7 @@ describe("the eligible parent search", () => {
         superAdmin: true,
       });
       const stranger = await insertUser(db, "stranger@univ-lorraine.fr");
-      const sample = await insertNamedSample(
+      const sample = await insertParent(
         db,
         stranger.id,
         status,
@@ -124,13 +101,13 @@ describe("the eligible parent search", () => {
     const caller = await provisionUser(db, "test-token", {
       status: "accepted",
     });
-    const first = await insertNamedSample(
+    const first = await insertParent(
       db,
       caller.id,
       "published",
       "Gabbro des Vosges",
     );
-    const second = await insertNamedSample(
+    const second = await insertParent(
       db,
       caller.id,
       "published",
@@ -147,13 +124,13 @@ describe("the eligible parent search", () => {
     const caller = await provisionUser(db, "test-token", {
       status: "accepted",
     });
-    const sample = await insertNamedSample(
+    const sample = await insertParent(
       db,
       caller.id,
       "published",
       "Gabbro des Vosges",
     );
-    await insertNamedSample(db, caller.id, "published", "Basalte du Cantal");
+    await insertParent(db, caller.id, "published", "Basalte du Cantal");
     // Act
     const data = await search(db, { search: sample.igsn! });
     // Assert
@@ -165,13 +142,13 @@ describe("the eligible parent search", () => {
     const caller = await provisionUser(db, "test-token", {
       status: "accepted",
     });
-    const morvan = await insertNamedSample(
+    const morvan = await insertParent(
       db,
       caller.id,
       "published",
       "Gabbro du Morvan",
     );
-    const vosges = await insertNamedSample(
+    const vosges = await insertParent(
       db,
       caller.id,
       "published",

@@ -1,34 +1,48 @@
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 
-export const toSubSampleDefaults = (parent: Sample): Partial<CreateSample> => ({
-  type: parent.type,
-  material: parent.material,
-  texture: parent.texture,
-  metamorphicFacies: parent.metamorphicFacies,
-  metamorphicFabric: parent.metamorphicFabric,
-  collectionMethod: parent.collectionMethod,
-  collectionMethodDescription: parent.collectionMethodDescription,
-  specificName: parent.specificName,
-  materialOtherName: parent.materialOtherName,
-  location: parent.location,
-  description: parent.description,
-  condition: parent.condition,
-  repository: parent.repository,
-  geologicalContextDescription: parent.geologicalContextDescription,
-  geomorphologicalEnvironment: parent.geomorphologicalEnvironment,
-  scientificContext: parent.scientificContext,
-  syntheticDetails: parent.syntheticDetails,
-  age: parent.age,
-  security: parent.security,
-  existenceStatus: parent.existenceStatus,
-  availabilityStatus: parent.availabilityStatus,
-  resourceType: parent.resourceType,
-  economicInterestElements: parent.economicInterestElements,
-  economicResourceTypePrecision: parent.economicResourceTypePrecision,
-  economicDepositName: parent.economicDepositName,
-  economicDepositDescription: parent.economicDepositDescription,
-  relations: [],
-  attachments: [],
-  manualGroupIds: [],
-  parentIds: [parent.id],
-});
+import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
+import { SYNTHETIC_MATERIAL_ROOT } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
+
+export const toSubSampleDefaults = (
+  parents: Sample[],
+): Partial<CreateSample> => {
+  const parent = soleParent(parents);
+  if (parent === undefined) {
+    return {
+      material: SYNTHETIC_MATERIAL_ROOT,
+      parentIds: parents.map(({ id }) => id),
+    };
+  }
+  return {
+    type: parent.type,
+    material: parent.material,
+    texture: parent.texture,
+    metamorphicFacies: parent.metamorphicFacies,
+    metamorphicFabric: parent.metamorphicFabric,
+    collectionMethod: parent.collectionMethod,
+    collectionMethodDescription: parent.collectionMethodDescription,
+    specificName: parent.specificName,
+    materialOtherName: parent.materialOtherName,
+    location: parent.location,
+    description: parent.description,
+    condition: parent.condition,
+    repository: parent.repository,
+    geologicalContextDescription: parent.geologicalContextDescription,
+    geomorphologicalEnvironment: parent.geomorphologicalEnvironment,
+    scientificContext: parent.scientificContext,
+    syntheticDetails: parent.syntheticDetails,
+    age: parent.age,
+    security: parent.security,
+    existenceStatus: parent.existenceStatus,
+    availabilityStatus: parent.availabilityStatus,
+    resourceType: parent.resourceType,
+    economicInterestElements: parent.economicInterestElements,
+    economicResourceTypePrecision: parent.economicResourceTypePrecision,
+    economicDepositName: parent.economicDepositName,
+    economicDepositDescription: parent.economicDepositDescription,
+    relations: [],
+    attachments: [],
+    manualGroupIds: [],
+    parentIds: [parent.id],
+  };
+};

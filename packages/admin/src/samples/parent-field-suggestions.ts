@@ -34,14 +34,13 @@ const toFormFields = (
   values: Record<string, unknown>,
   prefix = "",
 ): Record<string, unknown> =>
-  Object.entries(values).reduce<Record<string, unknown>>(
-    (fields, [key, value]) => {
+  Object.fromEntries(
+    Object.entries(values).flatMap(([key, value]) => {
       const name = prefix === "" ? key : `${prefix}.${key}`;
       return isPlainObject(value)
-        ? { ...fields, ...toFormFields(value, name) }
-        : { ...fields, [name]: value };
-    },
-    {},
+        ? Object.entries(toFormFields(value, name))
+        : [[name, value]];
+    }),
   );
 
 export const parentFieldSuggestions = (
@@ -50,7 +49,7 @@ export const parentFieldSuggestions = (
   const inherited = parents.map((parent) => ({
     source: parent.name,
     fields: toFormFields(
-      toSampleDraft(toSubSampleDefaults(parent), { defaults: false }),
+      toSampleDraft(toSubSampleDefaults([parent]), { defaults: false }),
     ),
   }));
   return {

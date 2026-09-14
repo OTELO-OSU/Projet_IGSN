@@ -105,6 +105,8 @@ export const sampleSchema = z.object({
 
 export type Sample = z.infer<typeof sampleSchema>;
 
+export const MAX_SAMPLE_PARENTS = 2;
+
 const createSampleFieldsSchema = z.strictObject({
   name: nameSchema,
   nature: natureSchema.nullable().default(null),
@@ -137,7 +139,7 @@ const createSampleFieldsSchema = z.strictObject({
   economicDepositName: nameSchema.nullish(),
   economicDepositDescription: nameSchema.nullish(),
   manualGroupIds: z.array(z.uuid()).optional(),
-  parentIds: z.array(z.uuid()).max(2).optional(),
+  parentIds: z.array(z.uuid()).max(MAX_SAMPLE_PARENTS).optional(),
 });
 
 type SampleCheck = Omit<

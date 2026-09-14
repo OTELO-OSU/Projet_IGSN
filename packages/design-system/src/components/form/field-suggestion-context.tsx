@@ -1,7 +1,5 @@
 import { createContext, useContext } from "react";
 
-import { useFieldContext } from "./form-hook-contexts.tsx";
-
 export type FieldSuggestion = { source: string; value: unknown };
 
 export type FieldSuggestionRule = {
@@ -25,13 +23,4 @@ export const FieldSuggestionProvider = FieldSuggestionContext.Provider;
 
 export function useFieldSuggestionRule(): FieldSuggestionRule {
   return useContext(FieldSuggestionContext);
-}
-
-export function useFieldSuggestions(): {
-  rule: FieldSuggestionRule;
-  suggestions: FieldSuggestion[];
-} {
-  const rule = useFieldSuggestionRule();
-  const field = useFieldContext();
-  return { rule, suggestions: rule.forField(field.name) };
 }
