@@ -98,7 +98,7 @@ export function LocationPositionFields({
 }) {
   const form = useSampleForm();
   return (
-    <div className="grid gap-4 sm:grid-cols-3">
+    <div className="grid gap-4">
       {ROWS[type].map(
         ({ coordinates, vertical: { key, label, siblingKey } }) => (
           <Fragment key={key}>

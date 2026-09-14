@@ -146,12 +146,13 @@ test.describe("sub samples", () => {
     const create = sampleCreatePage(page);
     const edit = sampleEditPage(page);
 
-    const publishParent = async (name: string) => {
+    const publishParent = async (name: string, orientation?: string) => {
       await list.goToCreate();
       await create.expectVisible();
       await create.fillName(name);
       await create.selectNature("Thin section");
       await create.fillPublishableFields({ material: "Mineral" });
+      if (orientation) await create.setOriented(orientation);
       await create.publish();
       await list.expectVisible();
       await list.openSample(name);
@@ -162,7 +163,7 @@ test.describe("sub samples", () => {
     };
 
     const stamp = Date.now();
-    const first = await publishParent(`Two parent one ${stamp}`);
+    const first = await publishParent(`Two parent one ${stamp}`, "North up");
     const second = await publishParent(`Two parent two ${stamp}`);
 
     await list.addSubSample(first.name);
@@ -172,6 +173,14 @@ test.describe("sub samples", () => {
     await create.expectNatureEmpty();
     await create.expectNoLocationTab();
     await create.expectParentsTab([first, second]);
+
+    await create.openTab("Physical description");
+    await create.expectParentSlots(
+      { source: first.name, value: "North up" },
+      second.name,
+    );
+    await create.fillFromParent(first.name, "North up");
+    await create.expectOriented("North up");
 
     const subSampleName = `Two parent sub sample ${stamp}`;
     await create.openTab("Identity");

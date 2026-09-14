@@ -57,10 +57,26 @@ const PARENT = {
   collectionMethodDescription: null,
   specificName: "MC-2026-007",
   location: { position: { type: "point", longitude: 3, latitude: 45 } },
-  description: null,
+  description: {
+    openDescription: "Fine grained",
+    oriented: true,
+    orientationExplanation: "North up",
+  },
   condition: null,
   security: null,
-  scientificContext: null,
+  scientificContext: {
+    provenanceStatus: "collection_specimen",
+    collectionCurator: "Paul Bernard",
+  },
+  age: {
+    numericAgeMin: 12,
+    numericAgeMax: 12,
+    numericAgeUnit: "ma",
+    numericAgeYearsUnit: null,
+    geologicalAgeMin: null,
+    geologicalAgeMax: null,
+    geologicalUnit: null,
+  },
   repository: null,
   existenceStatus: "exists",
   availabilityStatus: "available",
@@ -85,6 +101,9 @@ const SECOND_PARENT = {
   igsn: SECOND_PARENT_IGSN,
   name: "Vosges 2026",
   specificName: "VG-2026-001",
+  description: null,
+  scientificContext: null,
+  age: null,
 };
 
 function fakeApi(
@@ -401,6 +420,85 @@ describe("CreateSamplePage", () => {
       specificName: "VG-2026-001",
       location: null,
     });
+  });
+
+  it("should offer a yes/no chip for a parent's switch and a disabled slot for the parent with no value", async () => {
+    const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
+    await continueWithTwoParents(screen);
+    await openTab(screen, "Physical description");
+
+    const orientedSlots = screen
+      .getByRole("list", { name: "Values from the parent samples" })
+      .filter({ hasText: "Yes" });
+    await expect
+      .element(
+        orientedSlots.getByRole("button", { name: "Massif Central 2026: Yes" }),
+      )
+      .toBeVisible();
+    await expect
+      .element(
+        orientedSlots.getByRole("button", { name: "Vosges 2026: No value" }),
+      )
+      .toBeDisabled();
+  });
+
+  it("should turn the gate on and fill the field when a chip of a gated row is clicked", async () => {
+    const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
+    await continueWithTwoParents(screen);
+    await openTab(screen, "Physical description");
+
+    await expect
+      .element(screen.getByLabelText("Orientation explanation"))
+      .not.toBeInTheDocument();
+    await screen
+      .getByRole("button", { name: "Massif Central 2026: North up" })
+      .click();
+
+    await expect
+      .element(screen.getByRole("switch", { name: "Oriented sample" }))
+      .toBeChecked();
+    await expect
+      .element(screen.getByLabelText("Orientation explanation"))
+      .toHaveValue("North up");
+  });
+
+  it("should open the numeric age section with the parent's suggestion", async () => {
+    const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
+    await continueWithTwoParents(screen);
+    await openTab(screen, "Age");
+
+    await expect
+      .element(screen.getByRole("switch", { name: "Record a numeric age" }))
+      .toBeChecked();
+    await expect
+      .element(screen.getByRole("button", { name: "Massif Central 2026: 12" }))
+      .toBeVisible();
+  });
+
+  it("should switch the provenance branch when a chip of the other branch is clicked", async () => {
+    const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
+    await continueWithTwoParents(screen);
+    await openTab(screen, "Scientific context");
+
+    await screen
+      .getByRole("button", { name: "Massif Central 2026: Paul Bernard" })
+      .click();
+
+    await expect
+      .element(screen.getByLabelText(/collection curator/i))
+      .toHaveValue("Paul Bernard");
+  });
+
+  it("should offer no suggestion slot when the sub sample has a single parent", async () => {
+    const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
+    await continueWithOneParent(screen);
+    await openTab(screen, "Physical description");
+
+    await expect
+      .element(
+        screen.getByRole("list", { name: "Values from the parent samples" }),
+      )
+      .not.toBeInTheDocument();
   });
 
   it("should render the plain create form when the parent is out of reach", async () => {

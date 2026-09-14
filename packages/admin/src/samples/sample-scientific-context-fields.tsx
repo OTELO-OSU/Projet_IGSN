@@ -1,15 +1,70 @@
+import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { ALL_ORGANIZATION_ITEMS } from "@projet-igsn/domain/institutional-group/managed-group-items";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 
 import { m } from "#/paraglide/messages.js";
+import { comboboxItemFormat } from "#/samples/combobox-item-format.ts";
 import { collectionOriginLabel } from "#/samples/sample-labels.ts";
+import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const collectionOriginItems = toComboboxItems(
   COLLECTION_ORIGINS,
   collectionOriginLabel,
 );
+
+const PROVENANCE_GATE = ["scientificContext.provenanceStatus"];
+
+const organizationFormat = comboboxItemFormat(ALL_ORGANIZATION_ITEMS);
+
+const FIELD_SAMPLE_ONLY = [
+  [
+    "scientificContext.funderOrganizations",
+    m.field_funder_organizations,
+    organizationFormat,
+  ],
+  ["scientificContext.researchProgramName", m.field_research_program_name],
+  ["scientificContext.chiefScientist", m.field_chief_scientist],
+  ["scientificContext.chiefScientistOrcid", m.field_chief_scientist_orcid],
+  [
+    "scientificContext.hostInstitution",
+    m.field_host_institution,
+    organizationFormat,
+  ],
+  ["scientificContext.collectorOrcid", m.field_collector_orcid],
+  ["scientificContext.researchCampaign", m.field_research_campaign],
+  ["scientificContext.funding", m.field_funding],
+  [
+    "scientificContext.researchProgramDescription",
+    m.field_research_program_description,
+  ],
+  ["scientificContext.fieldName", m.field_field_name],
+  ["scientificContext.missionDescription", m.field_mission_description],
+] as const;
+
+const COLLECTION_SPECIMEN_ONLY = [
+  ["scientificContext.collectionCurator", m.field_collection_curator],
+  [
+    "scientificContext.collectionOrigin",
+    m.field_collection_origin,
+    comboboxItemFormat(collectionOriginItems),
+  ],
+  [
+    "scientificContext.collectionContextDescription",
+    m.field_collection_context_description,
+  ],
+] as const;
+
+function BranchSuggestionRows({
+  fields,
+}: {
+  fields: typeof FIELD_SAMPLE_ONLY | typeof COLLECTION_SPECIMEN_ONLY;
+}) {
+  return fields.map(([name, label, format]) => (
+    <SuggestionOnlyRow key={name} name={name} label={label()} format={format} />
+  ));
+}
 
 export function SampleScientificContextFields() {
   const form = useSampleForm();
@@ -116,6 +171,10 @@ export function SampleScientificContextFields() {
                     />
                   )}
                 </form.AppField>
+
+                <FieldSuggestionCascadeProvider value={PROVENANCE_GATE}>
+                  <BranchSuggestionRows fields={COLLECTION_SPECIMEN_ONLY} />
+                </FieldSuggestionCascadeProvider>
               </>
             );
           }
@@ -158,6 +217,10 @@ export function SampleScientificContextFields() {
                     />
                   )}
                 </form.AppField>
+
+                <FieldSuggestionCascadeProvider value={PROVENANCE_GATE}>
+                  <BranchSuggestionRows fields={FIELD_SAMPLE_ONLY} />
+                </FieldSuggestionCascadeProvider>
               </>
             );
           }

@@ -115,6 +115,11 @@ export function sampleFormPage(page: Page) {
         .fill("2025-06-15");
       await page.getByLabel(/operator name/i).fill("Paul Bernard");
     },
+    setOriented: async (explanation: string) => {
+      await openTab("Physical description");
+      await page.getByRole("switch", { name: "Oriented sample" }).click();
+      await page.getByLabel("Orientation explanation").fill(explanation);
+    },
     publish: () => confirmStatusChange("Publish", "Publish sample"),
     publishAsWithdrawn: async () => {
       await page

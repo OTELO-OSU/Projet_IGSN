@@ -1,6 +1,11 @@
+import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
+
 import { m } from "#/paraglide/messages.js";
 import { MeasurementFields } from "#/samples/measurement-fields.tsx";
+import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
+
+const ORIENTED_GATE = ["description.oriented"];
 
 export function SampleDescriptionFields() {
   const form = useSampleForm();
@@ -18,20 +23,27 @@ export function SampleDescriptionFields() {
         {(field) => <field.SwitchField label={m.field_oriented()} />}
       </form.AppField>
 
-      <form.Subscribe selector={(state) => state.values.description.oriented}>
-        {(oriented) =>
-          oriented ? (
-            <form.AppField name="description.orientationExplanation">
-              {(field) => (
-                <field.TextField
-                  label={m.field_orientation_explanation()}
-                  multiline
-                />
-              )}
-            </form.AppField>
-          ) : null
-        }
-      </form.Subscribe>
+      <FieldSuggestionCascadeProvider value={ORIENTED_GATE}>
+        <form.Subscribe selector={(state) => state.values.description.oriented}>
+          {(oriented) =>
+            oriented ? (
+              <form.AppField name="description.orientationExplanation">
+                {(field) => (
+                  <field.TextField
+                    label={m.field_orientation_explanation()}
+                    multiline
+                  />
+                )}
+              </form.AppField>
+            ) : (
+              <SuggestionOnlyRow
+                name="description.orientationExplanation"
+                label={m.field_orientation_explanation()}
+              />
+            )
+          }
+        </form.Subscribe>
+      </FieldSuggestionCascadeProvider>
     </div>
   );
 }

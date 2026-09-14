@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import {
   type ControlledReading,
@@ -22,6 +23,7 @@ import {
 } from "@projet-igsn/domain/sample/condition/temperature-unit";
 
 import { m } from "#/paraglide/messages.js";
+import { comboboxItemFormat } from "#/samples/combobox-item-format.ts";
 import { hasReadingType } from "#/samples/compose-condition.ts";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import {
@@ -32,6 +34,7 @@ import {
   storageConditionLabel,
   temperatureTypeLabel,
 } from "#/samples/sample-labels.ts";
+import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const packagingItems = toComboboxItems(PACKAGINGS, packagingLabel);
@@ -41,6 +44,8 @@ const storageConditionItems = toComboboxItems(
   STORAGE_CONDITIONS,
   storageConditionLabel,
 );
+
+const HUMIDITY_GATE = ["condition.humidityType"];
 
 const readings = [
   {
@@ -123,7 +128,7 @@ export function SampleConditionFields() {
 
       {readings.map((reading) => (
         <ControlledReadingFields key={reading.key} reading={reading.key}>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-4">
             <form.AppField name={`condition.${reading.key}Type`}>
               {(field) => (
                 <field.ComboboxField
@@ -135,53 +140,73 @@ export function SampleConditionFields() {
                 />
               )}
             </form.AppField>
-            <form.Subscribe
-              selector={(state) =>
-                hasReadingType(state.values.condition[`${reading.key}Type`])
-              }
+            <FieldSuggestionCascadeProvider
+              value={[`condition.${reading.key}Type`]}
             >
-              {(hasType) =>
-                hasType ? (
-                  <>
+              <form.Subscribe
+                selector={(state) =>
+                  hasReadingType(state.values.condition[`${reading.key}Type`])
+                }
+              >
+                {(hasType) =>
+                  hasType ? (
                     <form.AppField name={`condition.${reading.key}Value`}>
                       {(field) => (
                         <field.NumberField label={reading.valueLabel()} />
                       )}
                     </form.AppField>
-                    <form.Subscribe
-                      selector={(state) =>
-                        hasMeasurementValue(
-                          state.values.condition[`${reading.key}Value`],
-                        )
-                      }
-                    >
-                      {(hasValue) =>
-                        hasValue ? (
-                          <form.AppField name={`condition.${reading.key}Unit`}>
-                            {(field) => (
-                              <field.ComboboxField
-                                label={reading.unitLabel()}
-                                requiredToPublish
-                                items={reading.unitItems}
-                                placeholder={m.unit_placeholder()}
-                                searchPlaceholder={m.unit_search_placeholder()}
-                                emptyText={m.unit_empty()}
-                              />
-                            )}
-                          </form.AppField>
-                        ) : null
-                      }
-                    </form.Subscribe>
-                  </>
-                ) : null
-              }
-            </form.Subscribe>
+                  ) : (
+                    <SuggestionOnlyRow
+                      name={`condition.${reading.key}Value`}
+                      label={reading.valueLabel()}
+                    />
+                  )
+                }
+              </form.Subscribe>
+            </FieldSuggestionCascadeProvider>
+            <FieldSuggestionCascadeProvider
+              value={[
+                `condition.${reading.key}Type`,
+                `condition.${reading.key}Value`,
+              ]}
+            >
+              <form.Subscribe
+                selector={(state) =>
+                  hasMeasurementValue(
+                    state.values.condition[`${reading.key}Value`],
+                  )
+                }
+              >
+                {(hasValue) =>
+                  hasValue ? (
+                    <form.AppField name={`condition.${reading.key}Unit`}>
+                      {(field) => (
+                        <field.ComboboxField
+                          label={reading.unitLabel()}
+                          requiredToPublish
+                          items={reading.unitItems}
+                          placeholder={m.unit_placeholder()}
+                          searchPlaceholder={m.unit_search_placeholder()}
+                          emptyText={m.unit_empty()}
+                        />
+                      )}
+                    </form.AppField>
+                  ) : (
+                    <SuggestionOnlyRow
+                      name={`condition.${reading.key}Unit`}
+                      label={reading.unitLabel()}
+                      format={comboboxItemFormat(reading.unitItems)}
+                    />
+                  )
+                }
+              </form.Subscribe>
+            </FieldSuggestionCascadeProvider>
           </div>
         </ControlledReadingFields>
       ))}
 
       <ControlledReadingFields reading="humidity">
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4">
           <form.AppField name="condition.humidityType">
             {(field) => (
               <field.ComboboxField
@@ -193,21 +218,30 @@ export function SampleConditionFields() {
               />
             )}
           </form.AppField>
-          <form.Subscribe
-            selector={(state) =>
-              hasReadingType(state.values.condition.humidityType)
-            }
-          >
-            {(hasType) =>
-              hasType ? (
-                <form.AppField name="condition.humidityPercentage">
-                  {(field) => (
-                    <field.NumberField label={m.field_humidity_percentage()} />
-                  )}
-                </form.AppField>
-              ) : null
-            }
-          </form.Subscribe>
+          <FieldSuggestionCascadeProvider value={HUMIDITY_GATE}>
+            <form.Subscribe
+              selector={(state) =>
+                hasReadingType(state.values.condition.humidityType)
+              }
+            >
+              {(hasType) =>
+                hasType ? (
+                  <form.AppField name="condition.humidityPercentage">
+                    {(field) => (
+                      <field.NumberField
+                        label={m.field_humidity_percentage()}
+                      />
+                    )}
+                  </form.AppField>
+                ) : (
+                  <SuggestionOnlyRow
+                    name="condition.humidityPercentage"
+                    label={m.field_humidity_percentage()}
+                  />
+                )
+              }
+            </form.Subscribe>
+          </FieldSuggestionCascadeProvider>
         </div>
       </ControlledReadingFields>
 

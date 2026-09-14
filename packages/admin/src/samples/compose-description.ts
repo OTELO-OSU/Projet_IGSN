@@ -8,6 +8,7 @@ import {
   composeMeasurement,
   type MeasurementCandidate,
 } from "#/samples/compose-measurement.ts";
+import { draftDefault, type DraftOptions } from "#/samples/draft-defaults.ts";
 
 export type DescriptionDraft = {
   collectionDateStart: string | undefined;
@@ -86,17 +87,19 @@ export function composeDescription(
 
 export function toDescriptionDraft(
   description: Description | null | undefined,
+  options: DraftOptions = {},
 ): DescriptionDraft {
   const collectionDate = description?.collectionDate;
   return {
     collectionDateStart: collectionDate?.start,
     collectionDateEnd: collectionDate?.end,
-    collectionDatePrecision: collectionDate?.precision ?? "day",
+    collectionDatePrecision:
+      collectionDate?.precision ?? draftDefault(options, "day"),
     collectionDateTimeZone:
       collectionDate?.precision === "hour"
         ? collectionDate.timeZone
         : undefined,
-    oriented: description?.oriented ?? false,
+    oriented: description?.oriented ?? draftDefault(options, false),
     orientationExplanation: description?.orientationExplanation ?? undefined,
     openDescription: description?.openDescription ?? undefined,
     lengthValue: description?.length?.value,

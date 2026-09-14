@@ -30,7 +30,7 @@ export function SampleRepositoryFields() {
             <legend className="text-sm font-medium">
               {m.legend_contact()}
             </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4">
               <form.AppField name="repository.currentArchiveContactFirstname">
                 {(field) => <field.TextField label={m.field_firstname()} />}
               </form.AppField>
@@ -55,7 +55,7 @@ export function SampleRepositoryFields() {
             <legend className="text-sm font-medium">
               {m.legend_contact()}
             </legend>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4">
               <form.AppField name="repository.originalArchiveContactFirstname">
                 {(field) => <field.TextField label={m.field_firstname()} />}
               </form.AppField>

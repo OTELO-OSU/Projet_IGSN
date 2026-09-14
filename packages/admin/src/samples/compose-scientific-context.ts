@@ -2,6 +2,8 @@ import type { CollectionOrigin } from "@projet-igsn/domain/sample/scientific-con
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
+import { draftDefault, type DraftOptions } from "#/samples/draft-defaults.ts";
+
 export type ScientificContextDraft = {
   provenanceStatus: ProvenanceStatus | undefined;
   funderOrganizations: string[];
@@ -83,13 +85,15 @@ export function composeScientificContext(
 
 export function toScientificContextDraft(
   value: ScientificContext | null | undefined,
+  options: DraftOptions = {},
 ): ScientificContextDraft {
   const fieldSample =
     value?.provenanceStatus === "field_sample" ? value : undefined;
   const collectionSpecimen =
     value?.provenanceStatus === "collection_specimen" ? value : undefined;
   return {
-    provenanceStatus: value?.provenanceStatus ?? "field_sample",
+    provenanceStatus:
+      value?.provenanceStatus ?? draftDefault(options, "field_sample"),
     funderOrganizations: fieldSample?.funderOrganizations ?? [],
     researchProgramName: fieldSample?.researchProgramName ?? undefined,
     chiefScientist: fieldSample?.chiefScientist ?? undefined,

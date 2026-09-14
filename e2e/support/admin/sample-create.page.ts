@@ -35,6 +35,29 @@ export function sampleCreatePage(page: Page) {
     },
     fillFromParent: (source: string, value: string) =>
       page.getByRole("button", { name: `${source}: ${value}` }).click(),
+    expectParentSlots: async (
+      filled: { source: string; value: string },
+      emptySource: string,
+    ) => {
+      const slots = page
+        .getByRole("list", { name: "Values from the parent samples" })
+        .filter({
+          has: page.getByRole("button", {
+            name: `${filled.source}: ${filled.value}`,
+          }),
+        });
+      await expect(
+        slots.getByRole("button", { name: `${emptySource}: No value` }),
+      ).toBeDisabled();
+    },
+    expectOriented: async (explanation: string) => {
+      await expect(
+        page.getByRole("switch", { name: "Oriented sample" }),
+      ).toBeChecked();
+      await expect(page.getByLabel("Orientation explanation")).toHaveValue(
+        explanation,
+      );
+    },
     expectMaterialLockedToSynthetic: async () => {
       await expect(page.getByText("Synthetic rock / mineral")).toBeVisible();
       await expect(

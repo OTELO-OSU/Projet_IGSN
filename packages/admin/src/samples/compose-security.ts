@@ -1,5 +1,7 @@
 import type { Security } from "@projet-igsn/domain/sample/security/model";
 
+import { draftDefault, type DraftOptions } from "#/samples/draft-defaults.ts";
+
 export type SecurityDraft = {
   radioactivity: boolean;
   radioactivityExplanation: string | null | undefined;
@@ -37,10 +39,11 @@ export function composeSecurity(draft: SecurityDraft): SecurityCandidate {
 
 export function toSecurityDraft(
   security: Security | null | undefined,
+  options: DraftOptions = {},
 ): SecurityDraft {
   const draft = {} as SecurityDraft;
   for (const { flag, explanation } of HAZARDS) {
-    draft[flag] = security?.[flag] ?? false;
+    draft[flag] = security?.[flag] ?? draftDefault(options, false);
     draft[explanation] = security?.[explanation] ?? undefined;
   }
   return draft;

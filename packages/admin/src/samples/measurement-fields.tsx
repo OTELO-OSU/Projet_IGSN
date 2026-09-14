@@ -1,3 +1,4 @@
+import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
 import {
   type ComboboxItem,
   toComboboxItems,
@@ -10,8 +11,10 @@ import {
 } from "@projet-igsn/domain/sample/description/volume-unit";
 
 import { m } from "#/paraglide/messages.js";
+import { comboboxItemFormat } from "#/samples/combobox-item-format.ts";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import { type SampleDraft } from "#/samples/sample-draft-schema.ts";
+import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const sizeUnitItems = toComboboxItems(SIZE_UNITS, (value) => value);
@@ -75,7 +78,7 @@ export function MeasurementFieldPair({
 }) {
   const form = useSampleForm();
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4">
       <form.AppField name={`${name}Value`}>
         {(field) => (
           <field.NumberField
@@ -84,26 +87,34 @@ export function MeasurementFieldPair({
           />
         )}
       </form.AppField>
-      <form.Subscribe
-        selector={(state) => hasMeasurementValue(selectValue(state.values))}
-      >
-        {(hasValue) =>
-          hasValue ? (
-            <form.AppField name={`${name}Unit`}>
-              {(field) => (
-                <field.ComboboxField
-                  label={unitLabel()}
-                  requiredToPublish
-                  items={items}
-                  placeholder={m.unit_placeholder()}
-                  searchPlaceholder={m.unit_search_placeholder()}
-                  emptyText={m.unit_empty()}
-                />
-              )}
-            </form.AppField>
-          ) : null
-        }
-      </form.Subscribe>
+      <FieldSuggestionCascadeProvider value={[`${name}Value`]}>
+        <form.Subscribe
+          selector={(state) => hasMeasurementValue(selectValue(state.values))}
+        >
+          {(hasValue) =>
+            hasValue ? (
+              <form.AppField name={`${name}Unit`}>
+                {(field) => (
+                  <field.ComboboxField
+                    label={unitLabel()}
+                    requiredToPublish
+                    items={items}
+                    placeholder={m.unit_placeholder()}
+                    searchPlaceholder={m.unit_search_placeholder()}
+                    emptyText={m.unit_empty()}
+                  />
+                )}
+              </form.AppField>
+            ) : (
+              <SuggestionOnlyRow
+                name={`${name}Unit`}
+                label={unitLabel()}
+                format={comboboxItemFormat(items)}
+              />
+            )
+          }
+        </form.Subscribe>
+      </FieldSuggestionCascadeProvider>
     </div>
   );
 }

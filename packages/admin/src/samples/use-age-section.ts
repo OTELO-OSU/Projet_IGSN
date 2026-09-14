@@ -1,3 +1,4 @@
+import { useFieldSuggestionRule } from "@projet-igsn/design-system/components/form/field-suggestion-context";
 import { useState } from "react";
 
 import type { AgeFormValues } from "#/samples/age-form.ts";
@@ -13,11 +14,15 @@ export function useAgeSection(
   allFields: (keyof AgeFormValues)[] = boundFields,
 ) {
   const form = useSampleForm();
+  const { forField } = useFieldSuggestionRule();
   const values = form.state.values.age;
   const [min, max] = boundFields;
 
+  const isSuggested = (name: keyof AgeFormValues) =>
+    forField(`age.${name}`).some(({ value }) => value !== undefined);
+
   const [enabled, setEnabled] = useState(() =>
-    allFields.some((name) => isSet(values[name])),
+    allFields.some((name) => isSet(values[name]) || isSuggested(name)),
   );
   const [mode, setMode] = useState<AgeMode>(() => {
     if (isSet(values[min]) && values[min] === values[max]) return "fixed";

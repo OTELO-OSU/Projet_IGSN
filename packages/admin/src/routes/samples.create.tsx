@@ -82,12 +82,7 @@ function CreateSamplePage() {
         }
         parents={parents.map((parent) => sampleParentSchema.parse(parent))}
         fieldSuggestions={
-          first && second
-            ? {
-                label: m.field_suggestions_from_parents(),
-                forField: parentFieldSuggestions([first, second]),
-              }
-            : undefined
+          first && second ? parentFieldSuggestions([first, second]) : undefined
         }
         isPending={createSample.isPending || publishSample.isPending}
         manualGroupOptions={attachableManualGroups.data?.data ?? []}

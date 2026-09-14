@@ -21,7 +21,7 @@ const sample = (overrides: Partial<Sample>): Sample => ({
   collectionMethodDescription: null,
   specificName: "MC-2026-007",
   location: { position: { type: "point", longitude: 3, latitude: 45 } },
-  description: { openDescription: "Fine grained" },
+  description: { openDescription: "Fine grained", oriented: false },
   condition: null,
   repository: null,
   geologicalContextDescription: "Volcanic plateau",
@@ -53,7 +53,7 @@ const sample = (overrides: Partial<Sample>): Sample => ({
   ...overrides,
 });
 
-const first = sample({ name: "Parent one" });
+const first = sample({ name: "Parent one", existenceStatus: null });
 const second = sample({
   id: SECOND_ID,
   name: "Parent two",
@@ -61,11 +61,16 @@ const second = sample({
   description: { openDescription: "Coarse grained" },
 });
 
-it("should suggest each parent's own value per form field, skipping what a sub sample must not inherit", () => {
-  const forField = parentFieldSuggestions([first, second]);
+it("should suggest each parent's own stored value per form field, with no slot on what a sub sample must not inherit", () => {
+  const { forField } = parentFieldSuggestions([first, second]);
   const names = [
     "specificName",
     "description.openDescription",
+    "description.oriented",
+    "description.collectionDatePrecision",
+    "scientificContext.provenanceStatus",
+    "security.radioactivity",
+    "existenceStatus",
     "collectionMethodPath",
     "texture",
     "name",
@@ -90,10 +95,34 @@ it("should suggest each parent's own value per form field, skipping what a sub s
       { source: "Parent one", value: "Fine grained" },
       { source: "Parent two", value: "Coarse grained" },
     ],
+    "description.oriented": [
+      { source: "Parent one", value: false },
+      { source: "Parent two", value: undefined },
+    ],
+    "description.collectionDatePrecision": [
+      { source: "Parent one", value: undefined },
+      { source: "Parent two", value: undefined },
+    ],
+    "scientificContext.provenanceStatus": [
+      { source: "Parent one", value: undefined },
+      { source: "Parent two", value: undefined },
+    ],
+    "security.radioactivity": [
+      { source: "Parent one", value: undefined },
+      { source: "Parent two", value: undefined },
+    ],
+    existenceStatus: [
+      { source: "Parent one", value: undefined },
+      { source: "Parent two", value: "exists" },
+    ],
     collectionMethodPath: [
       { source: "Parent one", value: ["coring", "coring.gravity_corer"] },
+      { source: "Parent two", value: undefined },
     ],
-    texture: [],
+    texture: [
+      { source: "Parent one", value: undefined },
+      { source: "Parent two", value: undefined },
+    ],
     name: [],
     nature: [],
     materialPath: [],
