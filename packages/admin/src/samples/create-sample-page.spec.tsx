@@ -39,6 +39,10 @@ const PARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f0";
 
 const OUT_OF_REACH_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f1";
 
+const SECOND_PARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f2";
+
+const SECOND_PARENT_IGSN = "01K072TVWVFK5A1RRZ5MY4PPKA";
+
 const PARENT = {
   id: PARENT_ID,
   name: "Massif Central 2026",
@@ -73,6 +77,14 @@ const PARENT = {
   status: "published",
   createdAt: "2026-06-01T00:00:00.000Z",
   updatedAt: "2026-07-01T10:00:00.000Z",
+};
+
+const SECOND_PARENT = {
+  ...PARENT,
+  id: SECOND_PARENT_ID,
+  igsn: SECOND_PARENT_IGSN,
+  name: "Vosges 2026",
+  specificName: "VG-2026-001",
 };
 
 function fakeApi(
@@ -180,11 +192,24 @@ async function renderCreatePage(
   );
   if (parentId) {
     worker.use(
-      http.get("*/admin/samples/parents/:id", ({ params }) =>
-        params.id === PARENT_ID
-          ? HttpResponse.json({ data: PARENT })
-          : new HttpResponse(null, { status: 404 }),
+      http.get("*/admin/samples/parents", () =>
+        HttpResponse.json({
+          data: [
+            {
+              id: SECOND_PARENT_ID,
+              igsn: SECOND_PARENT_IGSN,
+              name: SECOND_PARENT.name,
+              material: SECOND_PARENT.material,
+            },
+          ],
+        }),
       ),
+      http.get("*/admin/samples/parents/:id", ({ params }) => {
+        if (params.id === PARENT_ID) return HttpResponse.json({ data: PARENT });
+        if (params.id === SECOND_PARENT_ID)
+          return HttpResponse.json({ data: SECOND_PARENT });
+        return new HttpResponse(null, { status: 404 });
+      }),
     );
   }
   const queryClient = new QueryClient({
@@ -218,6 +243,16 @@ const pick = async (screen: CreateScreen, field: string, option: string) => {
 
 const openTab = (screen: CreateScreen, name: string) =>
   screen.getByRole("tab", { name }).click();
+
+const continueWithOneParent = (screen: CreateScreen) =>
+  screen.getByRole("button", { name: "Continue" }).click();
+
+const continueWithTwoParents = async (screen: CreateScreen) => {
+  await screen.getByLabelText("Second parent (optional)").click();
+  await screen.getByPlaceholder("Search by name or IGSN").fill("Vosges");
+  await screen.getByRole("option", { name: /Vosges 2026/ }).click();
+  await continueWithOneParent(screen);
+};
 
 async function fillPublishableSample(screen: CreateScreen) {
   await screen.getByLabelText(/name/i).fill("Basalte du Massif Central");
@@ -261,8 +296,23 @@ describe("CreateSamplePage", () => {
       .toHaveTextContent("Sample created");
   });
 
+  it("should ask for an optional second parent before offering any form", async () => {
+    const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
+
+    await expect
+      .element(screen.getByRole("dialog", { name: "Add a sub sample" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByLabelText("First parent"))
+      .toHaveValue(`Massif Central 2026 (${IGSN})`);
+    await expect
+      .element(screen.getByRole("button", { name: "Save", exact: true }))
+      .not.toBeInTheDocument();
+  });
+
   it("should create a sub sample carrying the parent id and the location it inherits", async () => {
     const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
+    await continueWithOneParent(screen);
 
     await expect
       .element(
@@ -286,6 +336,70 @@ describe("CreateSamplePage", () => {
       parentIds: [PARENT_ID],
       specificName: "MC-2026-007",
       location: { position: { type: "point", longitude: 3, latitude: 45 } },
+    });
+  });
+
+  it("should force a synthetic material and prefill nothing else when a second parent is picked", async () => {
+    const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
+    await continueWithTwoParents(screen);
+
+    await expect
+      .element(
+        screen.getByRole("heading", {
+          name: "Create sub sample of Massif Central 2026 and Vosges 2026",
+        }),
+      )
+      .toBeVisible();
+    await expect.element(screen.getByLabelText(/name/i)).toHaveValue("");
+    await expect
+      .element(screen.getByRole("combobox", { name: "Nature *", exact: true }))
+      .toHaveTextContent("Select a nature");
+    await expect
+      .element(screen.getByRole("tab", { name: "Location" }))
+      .toBeDisabled();
+
+    await openTab(screen, "Sample classification");
+    await expect
+      .element(screen.getByText("Synthetic rock / mineral"))
+      .toBeVisible();
+    await expect
+      .element(
+        screen.getByRole("button", { name: "Remove Synthetic rock / mineral" }),
+      )
+      .not.toBeInTheDocument();
+  });
+
+  it("should fill a field from a parent's suggestion and submit both parent ids", async () => {
+    const screen = await renderCreatePage(false, false, undefined, PARENT_ID);
+    await continueWithTwoParents(screen);
+
+    await screen.getByLabelText(/name/i).fill("Synthetic MC x VG");
+    await openTab(screen, "Sample classification");
+    await expect
+      .element(
+        screen.getByRole("button", {
+          name: "Massif Central 2026: MC-2026-007",
+        }),
+      )
+      .toBeVisible();
+    await screen
+      .getByRole("button", { name: "Vosges 2026: VG-2026-001" })
+      .click();
+
+    await expect
+      .element(screen.getByLabelText("Specific Name"))
+      .toHaveValue("VG-2026-001");
+
+    await screen.getByRole("button", { name: "Save", exact: true }).click();
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    expect(screen.created()).toMatchObject({
+      parentIds: [PARENT_ID, SECOND_PARENT_ID],
+      material: "rock_and_sediment.synthetic_rock_mineral",
+      specificName: "VG-2026-001",
+      location: null,
     });
   });
 

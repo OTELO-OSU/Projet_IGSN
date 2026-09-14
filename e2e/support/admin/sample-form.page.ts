@@ -63,6 +63,19 @@ export function sampleFormPage(page: Page) {
       ).toHaveAttribute("href", `${frontendUrl}/samples/${parent.igsn}`);
     },
 
+    expectParentsTab: async (parents: { name: string; igsn: string }[]) => {
+      await expect(
+        page.getByRole("tablist").getByRole("tab").first(),
+      ).toHaveText("Parent samples");
+      await openTab("Parent samples");
+      const panel = page.getByRole("tabpanel");
+      for (const parent of parents) {
+        await expect(
+          panel.getByRole("link", { name: parent.name }),
+        ).toHaveAttribute("href", `${frontendUrl}/samples/${parent.igsn}`);
+      }
+    },
+
     expectInheritedLocation: async (parentName: string) => {
       await openTab("Location");
       const panel = page.getByRole("tabpanel");
@@ -77,7 +90,7 @@ export function sampleFormPage(page: Page) {
 
     fillPublishableFields: async ({
       material = SYNTHETIC_MATERIAL,
-    }: { material?: string } = {}) => {
+    }: { material?: string | null } = {}) => {
       await pickHierarchy("Type", "Dredge");
       await pick("Provenance status", "Collection specimen");
       await page
@@ -85,14 +98,14 @@ export function sampleFormPage(page: Page) {
         .getByRole("textbox", { name: /^Date/ })
         .fill("2025-06-15");
       await openTab("Sample classification");
-      await pickHierarchy("Material", material);
+      if (material !== null) await pickHierarchy("Material", material);
       await openTab("Scientific context");
       await page.getByLabel(/collection curator/i).fill("Paul Bernard");
       await pick("Collection origin", "Scientific expedition");
       await openTab("Curation and repository");
       await pick("Existence status", "Exists");
       await pick("Availability status", "Available");
-      if (material !== SYNTHETIC_MATERIAL) return;
+      if (material !== null && material !== SYNTHETIC_MATERIAL) return;
       await openTab("Sample classification");
       await pick("Starting material", "Natural");
       await pick("Final product", "Glass");

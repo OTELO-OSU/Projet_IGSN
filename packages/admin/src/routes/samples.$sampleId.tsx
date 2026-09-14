@@ -283,7 +283,7 @@ function EditSamplePage() {
           query.data
         }
         manualGroupOptions={query.data.manualGroupOptions}
-        parent={query.data.parents[0]}
+        parents={query.data.parents}
         sampleId={query.data.id}
         attachments={query.data.attachments}
         attachmentChanges={attachmentChanges}

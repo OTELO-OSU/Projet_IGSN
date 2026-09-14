@@ -42,6 +42,7 @@ test.describe("sub samples", () => {
     await edit.goToList();
 
     await list.addSubSample(parentName);
+    await create.continueWithOneParent();
     await create.expectSubSampleVisible(parentName);
     await create.expectName("");
     await create.expectNatureEmpty();
@@ -119,6 +120,7 @@ test.describe("sub samples", () => {
     await header.expectNoEditLink();
 
     await detail.addSubSample();
+    await strangerCreate.continueWithOneParent();
     await strangerCreate.expectSubSampleVisible(parent.name);
     await strangerCreate.expectParentTab(parent);
     await strangerCreate.expectInheritedLocation(parent.name);
@@ -133,6 +135,64 @@ test.describe("sub samples", () => {
     await edit.goToList();
     await list.filterByOwnership("Shared with me");
     await list.expectSampleRow(subSampleName);
+  });
+
+  test("a researcher declares a synthetic sub sample of two published samples", async ({
+    page,
+  }) => {
+    test.slow();
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    const list = sampleListPage(page);
+    const create = sampleCreatePage(page);
+    const edit = sampleEditPage(page);
+
+    const publishParent = async (name: string) => {
+      await list.goToCreate();
+      await create.expectVisible();
+      await create.fillName(name);
+      await create.selectNature("Thin section");
+      await create.fillPublishableFields({ material: "Mineral" });
+      await create.publish();
+      await list.expectVisible();
+      await list.openSample(name);
+      await edit.expectVisible();
+      const igsn = await edit.publicPageIgsn();
+      await edit.goToList();
+      return { name, igsn };
+    };
+
+    const stamp = Date.now();
+    const first = await publishParent(`Two parent one ${stamp}`);
+    const second = await publishParent(`Two parent two ${stamp}`);
+
+    await list.addSubSample(first.name);
+    await create.continueWithSecondParent(second.name);
+    await create.expectTwoParentSubSampleVisible(first.name, second.name);
+    await create.expectName("");
+    await create.expectNatureEmpty();
+    await create.expectNoLocationTab();
+    await create.expectParentsTab([first, second]);
+
+    const subSampleName = `Two parent sub sample ${stamp}`;
+    await create.openTab("Identity");
+    await create.fillName(subSampleName);
+    await create.selectNature("Thin section");
+    await create.fillFromParent(first.name, "Dredge");
+    await create.expectHierarchyLevel("Dredge");
+    await create.fillPublishableFields({ material: null });
+    await create.expectMaterialLockedToSynthetic();
+    await create.publish();
+
+    await list.expectVisible();
+    await list.openSample(subSampleName);
+    await edit.expectVisible();
+    const subSampleIgsn = await edit.publicPageIgsn();
+
+    const detail = sampleDetailPage(page);
+    await detail.goto(subSampleIgsn);
+    await detail.expectSample(subSampleName, subSampleIgsn);
+    await detail.expectParent(first.name, first.igsn);
+    await detail.expectParent(second.name, second.igsn);
   });
 
   test("the edit page of a published sample offers to add a sub sample", async ({

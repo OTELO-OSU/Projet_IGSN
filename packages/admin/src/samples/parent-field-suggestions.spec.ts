@@ -1,0 +1,107 @@
+import type { Sample } from "@projet-igsn/domain/sample/sample";
+
+import { expect, it } from "vitest";
+
+import { parentFieldSuggestions } from "./parent-field-suggestions.ts";
+
+const FIRST_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
+const SECOND_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3302";
+
+const sample = (overrides: Partial<Sample>): Sample => ({
+  id: FIRST_ID,
+  name: "Massif Central 2026",
+  nature: "thin_section",
+  type: "dredge",
+  material: "rock_and_sediment.mineral",
+  materialOtherName: null,
+  texture: null,
+  metamorphicFacies: null,
+  metamorphicFabric: null,
+  collectionMethod: "coring.gravity_corer",
+  collectionMethodDescription: null,
+  specificName: "MC-2026-007",
+  location: { position: { type: "point", longitude: 3, latitude: 45 } },
+  description: { openDescription: "Fine grained" },
+  condition: null,
+  repository: null,
+  geologicalContextDescription: "Volcanic plateau",
+  geomorphologicalEnvironment: "continental.plateau",
+  scientificContext: null,
+  syntheticDetails: null,
+  age: null,
+  relations: [],
+  attachments: [],
+  security: null,
+  existenceStatus: "exists",
+  availabilityStatus: "available",
+  publicationYear: 2026,
+  resourceType: null,
+  economicInterestElements: [],
+  economicResourceTypePrecision: null,
+  economicDepositName: null,
+  economicDepositDescription: null,
+  igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
+  owner: { name: "Curie", firstname: "Marie" },
+  manualGroups: [],
+  parents: [],
+  institutionalOrganization: null,
+  institutionalOsu: null,
+  institutionalLaboratory: null,
+  status: "published",
+  createdAt: new Date("2026-06-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-07-01T10:00:00.000Z"),
+  ...overrides,
+});
+
+const first = sample({ name: "Parent one" });
+const second = sample({
+  id: SECOND_ID,
+  name: "Parent two",
+  collectionMethod: null,
+  description: { openDescription: "Coarse grained" },
+});
+
+it("should suggest each parent's own value per form field, skipping what a sub sample must not inherit", () => {
+  const forField = parentFieldSuggestions([first, second]);
+  const names = [
+    "specificName",
+    "description.openDescription",
+    "collectionMethodPath",
+    "texture",
+    "name",
+    "nature",
+    "materialPath",
+    "parentIds",
+    "manualGroupIds",
+    "relations",
+    "location.longitude",
+    "geologicalContextDescription",
+    "geomorphologicalEnvironmentPath",
+  ];
+
+  expect(
+    Object.fromEntries(names.map((name) => [name, forField(name)])),
+  ).toEqual({
+    specificName: [
+      { source: "Parent one", value: "MC-2026-007" },
+      { source: "Parent two", value: "MC-2026-007" },
+    ],
+    "description.openDescription": [
+      { source: "Parent one", value: "Fine grained" },
+      { source: "Parent two", value: "Coarse grained" },
+    ],
+    collectionMethodPath: [
+      { source: "Parent one", value: ["coring", "coring.gravity_corer"] },
+    ],
+    texture: [],
+    name: [],
+    nature: [],
+    materialPath: [],
+    parentIds: [],
+    manualGroupIds: [],
+    relations: [],
+    "location.longitude": [],
+    geologicalContextDescription: [],
+    geomorphologicalEnvironmentPath: [],
+  });
+});
