@@ -48,6 +48,8 @@ A sample's `status` (`draft | published | withdrawn | tombstone`) drives three s
 
 A published sample is public whole but for the fields `domain/sample/publication/redact-archive-contacts.ts` drops (the two archive contacts), called by `toPublicSample` and by the public list route, the two public payloads; the key-authenticated `/service` list emits them, so they are kept from the public web rather than admin-only.
 
+A sample carries 0, 1 or 2 parents, capped in `createSampleSchema` and `createServiceSampleSchema`, set at creation and never edited; two parents force a synthetic material (frozen and location-less), see ADR 0039.
+
 Why a sample cannot be published lives in ONE place, `domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`).
 
 - The api publish guard and the admin publish tooltip both derive from it.
