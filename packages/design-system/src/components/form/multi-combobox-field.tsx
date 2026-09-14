@@ -5,7 +5,7 @@ import { Label } from "../ui/label.tsx";
 import { MultiCombobox } from "../ui/multi-combobox.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
-import { FieldSuggestions } from "./field-suggestions.tsx";
+import { FieldRow } from "./field-row.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 type MultiComboboxFieldProps = {
@@ -35,7 +35,16 @@ export function MultiComboboxField({
   const { error, errorId, ariaProps } = useFieldError({ waitForTouch: true });
   const isDisabled = useFieldDisabled(disabled);
   return (
-    <div className="grid gap-2">
+    <FieldRow
+      format={(value) =>
+        toValues(value)
+          .map(
+            (entry) =>
+              items.find((item) => item.value === entry)?.label ?? entry,
+          )
+          .join(", ")
+      }
+    >
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
       </Label>
@@ -49,17 +58,7 @@ export function MultiComboboxField({
         {...ariaProps}
         {...combobox}
       />
-      <FieldSuggestions
-        format={(value) =>
-          toValues(value)
-            .map(
-              (entry) =>
-                items.find((item) => item.value === entry)?.label ?? entry,
-            )
-            .join(", ")
-        }
-      />
       <FieldError error={error} errorId={errorId} />
-    </div>
+    </FieldRow>
   );
 }

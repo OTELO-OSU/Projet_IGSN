@@ -8,7 +8,7 @@ import {
   useFieldDisabledRule,
 } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
-import { FieldSuggestions } from "./field-suggestions.tsx";
+import { FieldRow } from "./field-row.tsx";
 import { useFieldContext } from "./form-hook-contexts.tsx";
 
 type HierarchyFieldProps = {
@@ -48,7 +48,7 @@ export function HierarchyField({
   const isLevelDisabled = useFieldDisabledRule();
 
   return (
-    <div className="grid gap-2">
+    <FieldRow format={(value) => toPath(value).map(translate).join(" / ")}>
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish === true)}
       </Label>
@@ -64,10 +64,7 @@ export function HierarchyField({
         {...ariaProps}
         {...hierarchyInput}
       />
-      <FieldSuggestions
-        format={(value) => toPath(value).map(translate).join(" / ")}
-      />
       <FieldError error={error} errorId={errorId} />
-    </div>
+    </FieldRow>
   );
 }

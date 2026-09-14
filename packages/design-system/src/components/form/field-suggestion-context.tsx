@@ -6,11 +6,15 @@ export type FieldSuggestion = { source: string; value: unknown };
 
 export type FieldSuggestionRule = {
   label: string;
+  noValueLabel: string;
+  booleanLabel: (value: boolean) => string;
   forField: (name: string) => FieldSuggestion[];
 };
 
 export const NO_FIELD_SUGGESTIONS: FieldSuggestionRule = {
   label: "",
+  noValueLabel: "",
+  booleanLabel: String,
   forField: () => [],
 };
 
@@ -19,11 +23,24 @@ const FieldSuggestionContext =
 
 export const FieldSuggestionProvider = FieldSuggestionContext.Provider;
 
+const FieldSuggestionCascadeContext = createContext<string[]>([]);
+
+export const FieldSuggestionCascadeProvider =
+  FieldSuggestionCascadeContext.Provider;
+
+export function useFieldSuggestionRule(): FieldSuggestionRule {
+  return useContext(FieldSuggestionContext);
+}
+
+export function useFieldSuggestionCascade(): string[] {
+  return useContext(FieldSuggestionCascadeContext);
+}
+
 export function useFieldSuggestions(): {
-  label: string;
+  rule: FieldSuggestionRule;
   suggestions: FieldSuggestion[];
 } {
-  const { label, forField } = useContext(FieldSuggestionContext);
+  const rule = useFieldSuggestionRule();
   const field = useFieldContext();
-  return { label, suggestions: forField(field.name) };
+  return { rule, suggestions: rule.forField(field.name) };
 }
