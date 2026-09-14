@@ -202,6 +202,31 @@ describe("FieldSuggestions", () => {
       .toHaveTextContent("A basalt sampled in the Massif Central");
   });
 
+  it("should show the full parent name in a tooltip when its label is hovered", async () => {
+    await render(
+      <Harness
+        rule={parentRule((field) =>
+          field === "name"
+            ? [
+                {
+                  source: "IGSN-FR-A-VERY-LONG-PARENT-SAMPLE-NAME",
+                  value: "Basalt 42",
+                },
+              ]
+            : [],
+        )}
+      />,
+    );
+
+    await page
+      .getByText("IGSN-FR-A-VERY-LONG-PARENT-SAMPLE-NAME", { exact: true })
+      .hover();
+
+    await expect
+      .element(page.getByRole("tooltip"))
+      .toHaveTextContent("IGSN-FR-A-VERY-LONG-PARENT-SAMPLE-NAME");
+  });
+
   it("should render no slot list for a field no source can fill", async () => {
     await render(<Harness rule={parentRule(() => [])} />);
 

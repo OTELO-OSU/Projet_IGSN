@@ -22,7 +22,10 @@ export function FieldSuggestions({
   const isDisabled = useFieldDisabled();
   if (isDisabled || suggestions.length === 0) return null;
   return (
-    <ul aria-label={rule.label} className="flex flex-wrap gap-2">
+    <ul
+      aria-label={rule.label}
+      className="flex min-w-0 gap-2 sm:flex-none sm:basis-1/2"
+    >
       {suggestions.map(({ source, value }, index) => {
         const text =
           value === undefined ? rule.noValueLabel : slotText(value, format);
@@ -30,8 +33,7 @@ export function FieldSuggestions({
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="w-36 justify-start"
+            className="w-full justify-start"
             disabled={value === undefined}
             aria-label={`${source}: ${text}`}
             onClick={() => {
@@ -43,10 +45,18 @@ export function FieldSuggestions({
           </Button>
         );
         return (
-          <li className="grid content-start gap-2" key={`${index}-${source}`}>
-            <Label asChild>
-              <span>{source}</span>
-            </Label>
+          <li
+            className="grid min-w-0 flex-1 content-start gap-2"
+            key={`${index}-${source}`}
+          >
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Label asChild>
+                  <span className="block truncate">{source}</span>
+                </Label>
+              </TooltipTrigger>
+              <TooltipContent>{source}</TooltipContent>
+            </Tooltip>
             {value === undefined ? (
               chip
             ) : (
