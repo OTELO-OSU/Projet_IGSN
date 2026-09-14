@@ -306,6 +306,8 @@ Two things that must go with any hide:
 
 A requirement driven by another field (for example `allowsLocation(material)`, or `requiresLocation(provenanceStatus)` which drops the requirement for a `collection_specimen`) lives in `domain`, so the form and the publish tooltip always agree.
 
+A field hidden this way in a two-parent form still needs a suggestion row while its gate is off: add a `SuggestionOnlyRow` at the hidden spot and name the gate's own fields in `FieldSuggestionCascadeProvider` at the gate site, so a chip click sets the gate before the leaf. A plain inheritable field (never hidden) needs no such wiring: it gets its parent slots for free through the form kit.
+
 ## Verify
 
 ```
