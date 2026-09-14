@@ -24,6 +24,7 @@ import {
 } from "./service/list-sample.ts";
 import { publishSample } from "./service/publish-sample.ts";
 import { releaseEditLock } from "./service/release-edit-lock.ts";
+import { searchEligibleParents } from "./service/search-eligible-parents.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
 import { updateSample } from "./service/update-sample.ts";
 
@@ -48,6 +49,10 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
     listPublishedForService: (params, scope, editableOnly) =>
       withTransaction(db, (trx) =>
         listPublishedSamplesForService(trx, params, scope, editableOnly),
+      ),
+    searchEligibleParents: (params, userId, scope) =>
+      withTransaction(db, (trx) =>
+        searchEligibleParents(trx, params, userId, scope),
       ),
     isModerated: (id, scope) =>
       withTransaction(db, (trx) => isSampleModerated(trx, id, scope)),

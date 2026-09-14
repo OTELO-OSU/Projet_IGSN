@@ -41,6 +41,18 @@ const archivedSample = {
 
 const { location: _location, ...subSample } = publishableSample;
 
+const syntheticSubSample = {
+  ...subSample,
+  material: "rock_and_sediment.synthetic_rock_mineral",
+  syntheticDetails: {
+    startingMaterial: "mixture",
+    startingMaterialComposition: "MgO + SiO2",
+    finalProduct: "mineral",
+    synthesisDate: { start: "2025-01-10", end: "2025-01-12" },
+    operatorName: "Marie Curie",
+  },
+} satisfies CreateSample;
+
 async function arrangeAccount(db: Kysely<DB>) {
   const owner = await insertUser(db, "jean.martin@univ-lorraine.fr");
   const account = await insertServiceAccount(
@@ -419,6 +431,71 @@ describe("POST /service/samples", () => {
       const { data } = sampleResponseSchema.parse(await res.json());
       expect(data.location).toEqual(parent.location);
       expect(data.parents.map((sample) => sample.id)).toEqual([parent.id]);
+    },
+  );
+
+  pgTest(
+    "should publish a synthetic sub-sample linked to both its parents",
+    async ({ db }) => {
+      // Arrange
+      const { app, owner } = await arrangeAccount(db);
+      const first = await ownedParent(db, owner.id);
+      const second = await ownedParent(db, owner.id);
+      // Act
+      const res = await postSample(app, {
+        ...syntheticSubSample,
+        parentIds: [first.id, second.id],
+      });
+      // Assert
+      expect(res.status).toBe(201);
+      const { data } = sampleResponseSchema.parse(await res.json());
+      expect(data.parents.map((sample) => sample.id).sort()).toEqual(
+        [first.id, second.id].sort(),
+      );
+      expect(data.location).toBe(null);
+    },
+  );
+
+  pgTest(
+    "should name the index of the parent that does not resolve",
+    async ({ db }) => {
+      // Arrange
+      const { app, owner } = await arrangeAccount(db);
+      const parent = await ownedParent(db, owner.id);
+      // Act
+      const res = await postSample(app, {
+        ...syntheticSubSample,
+        parentIds: [parent.id, "01990000-0000-7000-8000-000000000000"],
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [{ path: "parentIds.1", code: "parent_not_found" }],
+      });
+    },
+  );
+
+  pgTest(
+    "should refuse two parents on a non-synthetic material",
+    async ({ db }) => {
+      // Arrange
+      const { app, owner } = await arrangeAccount(db);
+      const first = await ownedParent(db, owner.id);
+      const second = await ownedParent(db, owner.id);
+      // Act
+      const res = await postSample(app, {
+        ...subSample,
+        parentIds: [first.id, second.id],
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [
+          { path: "material", code: "custom", message: expect.any(String) },
+        ],
+      });
     },
   );
 });

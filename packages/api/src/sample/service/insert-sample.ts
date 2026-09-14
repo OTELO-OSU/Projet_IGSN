@@ -40,11 +40,11 @@ export async function insertSampleRows(
     .executeTakeFirstOrThrow();
   const parentIds = input.parentIds ?? [];
   await insertSampleParents(db, row.id, parentIds);
-  const [parentId] = parentIds;
-  if (parentId === undefined) {
+  const soleParent = parentIds.length === 1 ? parentIds[0] : undefined;
+  if (soleParent === undefined) {
     await writeSampleLocation(db, row.id, input.location);
   } else {
-    await inheritParentLocation(db, row.id, parentId);
+    await inheritParentLocation(db, row.id, soleParent);
   }
   await replaceSampleRelations(db, row.id, input.relations ?? []);
   await replaceSampleManualGroups(db, row.id, input.manualGroupIds ?? []);

@@ -46,10 +46,21 @@ export async function createServiceSampleIssues(
   issues.push(
     ...publishBlockerIssues(
       publishBlockersOf(
-        { ...input, location: parents[0]?.location ?? input.location },
+        {
+          ...input,
+          location:
+            parentIds.length === 1
+              ? (parents[0]?.location ?? input.location)
+              : input.location,
+        },
         uploadLimit,
         parents,
-      ),
+      ).filter((blocker) => blocker !== "parent_not_found"),
+    ),
+    ...parents.flatMap((parent, index) =>
+      parent === null
+        ? [serviceSampleIssue("parent_not_found", ["parentIds", index])]
+        : [],
     ),
   );
   const submitted = input.manualGroupIds ?? [];

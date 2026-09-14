@@ -6,6 +6,7 @@ import {
   listSamplesQuerySchema,
   publishStatusSchema,
   requestSampleDeletionBodySchema,
+  searchEligibleParentsQuerySchema,
   setSampleStatusBodySchema,
   updateSampleBodySchema,
 } from "@projet-igsn/domain/sample/sample-validator";
@@ -14,6 +15,7 @@ import { validator } from "hono/validator";
 import { z } from "zod";
 
 import { idParamSchema, validateUuidIdParam } from "../uuid-param.ts";
+import { zodValidator } from "../zod-validator.ts";
 import { uploadLimit } from "./upload-limit.ts";
 
 const igsnParamSchema = z.object({ igsn: igsnSchema });
@@ -39,6 +41,12 @@ export const validateIgsnParam = validator("param", (value, c) => {
   }
   return parsed.data;
 });
+
+export const validateSearchEligibleParentsQuery = zodValidator(
+  "query",
+  searchEligibleParentsQuerySchema,
+  "Invalid query parameters",
+);
 
 export const validateListQuery = validator("query", (value, c) => {
   const parsed = listSamplesQuerySchema.safeParse(value);
