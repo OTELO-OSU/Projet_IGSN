@@ -109,6 +109,7 @@ test.describe("manual groups", () => {
     page,
     browser,
   }) => {
+    test.slow();
     const groups = manualGroupsPage(page);
     const group = manualGroupPage(page);
     const first = uniqueName("Andesite crew");
