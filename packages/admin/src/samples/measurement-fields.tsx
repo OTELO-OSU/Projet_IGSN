@@ -1,6 +1,7 @@
 import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
 import {
   type ComboboxItem,
+  comboboxItemFormat,
   toComboboxItems,
 } from "@projet-igsn/design-system/components/ui/combobox";
 import { MASS_UNITS } from "@projet-igsn/domain/sample/description/mass-unit";
@@ -11,7 +12,6 @@ import {
 } from "@projet-igsn/domain/sample/description/volume-unit";
 
 import { m } from "#/paraglide/messages.js";
-import { comboboxItemFormat } from "#/samples/combobox-item-format.ts";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import { type SampleDraft } from "#/samples/sample-draft-schema.ts";
 import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";

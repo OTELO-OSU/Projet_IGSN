@@ -1,5 +1,9 @@
 import { withRequired } from "../../lib/with-required.ts";
-import { Combobox, type ComboboxItem } from "../ui/combobox.tsx";
+import {
+  Combobox,
+  type ComboboxItem,
+  comboboxItemFormat,
+} from "../ui/combobox.tsx";
 import { Label } from "../ui/label.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
 import { FieldError, useFieldError } from "./field-error.tsx";
@@ -28,11 +32,7 @@ export function ComboboxField({
   const { error, errorId, ariaProps } = useFieldError({ waitForTouch: true });
   const isDisabled = useFieldDisabled(disabled);
   return (
-    <FieldRow
-      format={(value) =>
-        items.find((item) => item.value === value)?.label ?? String(value)
-      }
-    >
+    <FieldRow format={comboboxItemFormat(items)}>
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
       </Label>

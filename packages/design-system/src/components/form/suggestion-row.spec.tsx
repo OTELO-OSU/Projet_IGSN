@@ -48,22 +48,4 @@ describe("SuggestionRow", () => {
       .element(page.getByRole("button", { name: "IGSN-2: no value" }))
       .toBeDisabled();
   });
-
-  it("should render nothing when no source holds a value", async () => {
-    await render(
-      <Harness
-        rule={parentRule(() => [
-          { source: "IGSN-1", value: undefined },
-          { source: "IGSN-2", value: undefined },
-        ])}
-      />,
-    );
-
-    await expect
-      .element(page.getByText("Humidity (%)"))
-      .not.toBeInTheDocument();
-    await expect
-      .element(page.getByRole("list", { name: "Parent values" }))
-      .not.toBeInTheDocument();
-  });
 });

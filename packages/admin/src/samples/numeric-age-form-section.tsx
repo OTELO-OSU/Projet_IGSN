@@ -1,6 +1,7 @@
 import { useIsFieldDisabled } from "@projet-igsn/design-system/components/form/field-disabled-context";
 import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
+import { comboboxItemFormat } from "@projet-igsn/design-system/components/ui/combobox";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { numericUnitSchema } from "@projet-igsn/domain/sample/age/numeric-unit";
 import { yearsUnitSchema } from "@projet-igsn/domain/sample/age/years-unit";
@@ -9,7 +10,6 @@ import { m } from "#/paraglide/messages.js";
 import { AgeBoundField } from "#/samples/age-bound-field.tsx";
 import { hasNumericAgeValue, numericAgeUnitOf } from "#/samples/age-form.ts";
 import { AgeModeRadio } from "#/samples/age-mode-radio.tsx";
-import { comboboxItemFormat } from "#/samples/combobox-item-format.ts";
 import { numericUnitLabel, yearsUnitLabel } from "#/samples/sample-labels.ts";
 import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";
 import { useAgeSection } from "#/samples/use-age-section.ts";

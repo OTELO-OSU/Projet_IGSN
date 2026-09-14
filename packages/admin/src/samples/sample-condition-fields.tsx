@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 
 import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
-import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
+import {
+  comboboxItemFormat,
+  toComboboxItems,
+} from "@projet-igsn/design-system/components/ui/combobox";
 import {
   type ControlledReading,
   hasStorageCondition,
@@ -23,7 +26,6 @@ import {
 } from "@projet-igsn/domain/sample/condition/temperature-unit";
 
 import { m } from "#/paraglide/messages.js";
-import { comboboxItemFormat } from "#/samples/combobox-item-format.ts";
 import { hasReadingType } from "#/samples/compose-condition.ts";
 import { hasMeasurementValue } from "#/samples/compose-measurement.ts";
 import {

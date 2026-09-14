@@ -1,6 +1,7 @@
 import type { ComboboxItem } from "../ui/combobox.tsx";
 
 import { withRequired } from "../../lib/with-required.ts";
+import { comboboxItemFormat } from "../ui/combobox.tsx";
 import { Label } from "../ui/label.tsx";
 import { MultiCombobox } from "../ui/multi-combobox.tsx";
 import { useFieldDisabled } from "./field-disabled-context.tsx";
@@ -21,9 +22,6 @@ type MultiComboboxFieldProps = {
   requiredToPublish?: boolean;
 };
 
-const toValues = (value: unknown): string[] =>
-  Array.isArray(value) ? value.map(String) : [];
-
 export function MultiComboboxField({
   label,
   items,
@@ -35,16 +33,7 @@ export function MultiComboboxField({
   const { error, errorId, ariaProps } = useFieldError({ waitForTouch: true });
   const isDisabled = useFieldDisabled(disabled);
   return (
-    <FieldRow
-      format={(value) =>
-        toValues(value)
-          .map(
-            (entry) =>
-              items.find((item) => item.value === entry)?.label ?? entry,
-          )
-          .join(", ")
-      }
-    >
+    <FieldRow format={comboboxItemFormat(items)}>
       <Label htmlFor={field.name}>
         {withRequired(label, requiredToPublish)}
       </Label>

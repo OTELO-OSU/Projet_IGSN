@@ -1,10 +1,12 @@
 import { FieldSuggestionCascadeProvider } from "@projet-igsn/design-system/components/form/field-suggestion-context";
-import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
+import {
+  comboboxItemFormat,
+  toComboboxItems,
+} from "@projet-igsn/design-system/components/ui/combobox";
 import { ALL_ORGANIZATION_ITEMS } from "@projet-igsn/domain/institutional-group/managed-group-items";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 
 import { m } from "#/paraglide/messages.js";
-import { comboboxItemFormat } from "#/samples/combobox-item-format.ts";
 import { collectionOriginLabel } from "#/samples/sample-labels.ts";
 import { SuggestionOnlyRow } from "#/samples/suggestion-only-row.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
