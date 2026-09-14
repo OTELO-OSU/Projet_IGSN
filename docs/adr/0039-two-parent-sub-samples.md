@@ -6,7 +6,9 @@ Date: 2026-09-14
 
 Accepted.
 
-Amended 2026-09-14: aligned per-parent slots, gated-row cascade and one-field-per-row layout, after PO feedback on the first delivery.
+Amended 2026-09-14: aligned per-parent slots and one-field-per-row layout, after PO feedback on the first delivery.
+
+Amended 2026-09-14: a chip fills only its own field, no gate cascade, after a PO bug report on the first amendment.
 
 ## Context
 
@@ -24,9 +26,9 @@ The one-parent create form prefills the child from its parent by copying its fie
 - The second parent is picked from `searchEligibleParents`, a repository search by name or exact IGSN over the samples the caller may declare a sub-sample of, the first parent excluded.
 - One parent keeps prefilling by copy, including the inherited location; two parents prefill only `material` and `parentIds` and suggest the rest.
 - A suggestion is the parent's stored value: a defaulted leaf with no stored value (`toSampleDraft(value, { defaults: false })`) yields "No value", never a draft default, while a stored value equal to the form default still gets a chip.
-- In a two-parent form every inheritable field's row ends with two fixed-width slots, `[parent 1 | parent 2]`, aligned across rows, a chip when that parent holds a stored value and a disabled "No value" button otherwise.
+- In a two-parent form every inheritable field's row ends with two fixed-width slots, `[parent 1 | parent 2]`, aligned across rows and with the input, each labelled with its parent's name above the chip, ellipsis-truncated with a tooltip for the full value; a chip when that parent holds a stored value and a disabled "No value" button otherwise.
 - Non-inheritable fields (name, nature, material, parents, manual groups, relations, attachments, location and geological/geomorphological context) render no slots, and a form with no parent rule (edit, one parent) renders no slot column at all.
-- A field hidden behind a gate (orientation explanation, hazard explanation, humidity %, temperature/pressure value and unit, non-selected scientific-context branch fields, numeric age unit) still shows a label + slots row while its gate is off, only when a parent has a value for it; clicking a chip applies that same parent's gate value(s) first, then the leaf, so the gate chain always comes from one parent (`FieldSuggestionCascadeProvider` names the gate fields).
+- A field hidden behind a gate (orientation explanation, hazard explanation, humidity %, temperature/pressure value and unit, non-selected scientific-context branch fields, numeric age unit) shows no row while its gate is closed; the user opens the gate through the gate's own chips (Oriented "Yes", a type, a Provenance value) or by hand, and the field then appears with its chips. A chip fills only its own field, with no side effect beyond what the same edit would have on a no-parent sample.
 - Switches (Oriented, hazard flags) are inheritable rows with yes/no chips; the copy comes from admin i18n, the kit stays label-agnostic.
 - Every sample form (create with 0/1/2 parents, edit) lays out one field per row; the former multi-column groupings (temperature, humidity, pressure, measurements, age bounds, coordinates...) are gone.
 - `/service` follows the same rules, `parent_not_found` naming the failing index, so `PUBLISH_BLOCKER_PATH.parent_not_found` is `["parentIds"]` and the caller appends the index.
@@ -36,7 +38,7 @@ The one-parent create form prefills the child from its parent by copying its fie
 - A third parent and beyond: no use case, and the cap keeps the chip UI readable.
 - Copying one parent's fields and ignoring the other: silent data loss, the user cannot see which origin won.
 - A per-block "use parent A" button: all-or-nothing, while a real blend takes its name from one parent and its curation from the other.
-- Chips hidden until the user opens the gate by hand: two clicks to apply a suggestion behind a gate, rejected by the PO in favour of the gate cascade above.
+- One click, cascade the gate: applying a chip also opened its gate (and set the gate value), rejected by the PO because a decision down the line must not change an earlier one; a chip fills its target field only.
 
 ## Consequences
 
