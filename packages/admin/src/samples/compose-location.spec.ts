@@ -74,7 +74,7 @@ describe("composeLocation", () => {
   });
 
   it("should keep an incomplete region for the schema to reject", () => {
-    expect(composeLocation(draft({ regionKind: "continent" }))).toEqual({
+    expect(composeLocation(draft({ regionPath: ["continent"] }))).toEqual({
       region: { kind: "continent" },
     });
   });
@@ -82,16 +82,17 @@ describe("composeLocation", () => {
   it("should compose a continent region and drop a blank locality", () => {
     expect(
       composeLocation(
-        draft({ regionKind: "continent", country: "FR", localityName: "  " }),
+        draft({
+          regionPath: ["continent", "continent.FR"],
+          localityName: "  ",
+        }),
       ),
     ).toEqual({ region: { kind: "continent", country: "FR" } });
   });
 
   it("should compose an ocean region", () => {
     expect(
-      composeLocation(
-        draft({ regionKind: "ocean", oceanSea: "atlantic_ocean" }),
-      ),
+      composeLocation(draft({ regionPath: ["ocean", "ocean.atlantic_ocean"] })),
     ).toEqual({ region: { kind: "ocean", oceanSea: "atlantic_ocean" } });
   });
 
@@ -162,7 +163,7 @@ describe("toLocationDraft", () => {
     const set = Object.entries(toLocationDraft(null)).filter(
       ([, value]) => value !== undefined,
     );
-    expect(set).toEqual([]);
+    expect(set).toEqual([["regionPath", []]]);
   });
 
   it.each<Location>([
@@ -193,6 +194,7 @@ describe("toLocationDraft", () => {
       },
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
     },
+    { region: { kind: "continent" } },
     {
       position: {
         type: "line",

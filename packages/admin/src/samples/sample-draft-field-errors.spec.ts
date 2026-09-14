@@ -54,7 +54,7 @@ describe("sampleDraftFieldErrors", () => {
       "location.longitude": { message: "Invalid value." },
       "location.verticalPositionMin": { message: "Invalid value." },
       "location.verticalReferenceSystem": { message: "Invalid value." },
-      "location.regionKind": { message: "Invalid value." },
+      "location.regionPath": { message: "Invalid value." },
     });
   });
 

@@ -52,9 +52,7 @@ const draftFieldName = (path: string): string => {
   }
   if (path.startsWith("location.position."))
     return `location.${path.slice("location.position.".length)}`;
-  if (path === "location.region.kind") return "location.regionKind";
-  if (path.startsWith("location.region."))
-    return `location.${path.slice("location.region.".length)}`;
+  if (path.startsWith("location.region")) return "location.regionPath";
   if (path === "location") return "location.type";
   const range = DATE_RANGE_PATH.exec(path);
   if (range) return `${range[1]}${DATE_RANGE_SUFFIXES[range[2] ?? "start"]}`;

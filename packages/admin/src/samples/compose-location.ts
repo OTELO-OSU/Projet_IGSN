@@ -6,6 +6,13 @@ import type { OceanSea } from "@projet-igsn/domain/sample/location/ocean-sea";
 import type { VerticalReference } from "@projet-igsn/domain/sample/location/vertical-reference";
 import type { VerticalReferenceSystem } from "@projet-igsn/domain/sample/location/vertical-reference-system";
 
+import {
+  composeHierarchyValue,
+  toHierarchyPath,
+} from "@projet-igsn/design-system/lib/hierarchy";
+import { countrySchema } from "@projet-igsn/domain/sample/location/country";
+import { oceanSeaSchema } from "@projet-igsn/domain/sample/location/ocean-sea";
+
 export type LocationDraft = {
   type: LocationType | null | undefined;
   longitude: number | undefined;
@@ -25,9 +32,7 @@ export type LocationDraft = {
   endVerticalPosition: number | undefined;
   verticalReference: VerticalReference | null | undefined;
   verticalReferenceSystem: VerticalReferenceSystem | null | undefined;
-  regionKind: "continent" | "ocean" | null | undefined;
-  country: Country | null | undefined;
-  oceanSea: OceanSea | null | undefined;
+  regionPath: string[];
   navigationType: NavigationType | null | undefined;
   localityName: string | null | undefined;
   localityDescription: string | null | undefined;
@@ -151,10 +156,12 @@ function composePosition(draft: LocationDraft): LocationCandidate["position"] {
 }
 
 function composeRegion(draft: LocationDraft): LocationCandidate["region"] {
-  if (draft.regionKind === "continent")
-    return { kind: "continent", country: draft.country || undefined };
-  if (draft.regionKind === "ocean")
-    return { kind: "ocean", oceanSea: draft.oceanSea || undefined };
+  const [kind, leaf] =
+    composeHierarchyValue(draft.regionPath)?.split(".") ?? [];
+  if (kind === "continent")
+    return { kind: "continent", country: countrySchema.safeParse(leaf).data };
+  if (kind === "ocean")
+    return { kind: "ocean", oceanSea: oceanSeaSchema.safeParse(leaf).data };
   return undefined;
 }
 
@@ -178,6 +185,12 @@ export function composeLocation(
   return Object.values(location).some((part) => part !== undefined)
     ? location
     : null;
+}
+
+function regionValue(region: Location["region"]): string | null {
+  if (!region) return null;
+  const leaf = region.kind === "continent" ? region.country : region.oceanSea;
+  return leaf ? `${region.kind}.${leaf}` : region.kind;
 }
 
 export function toLocationDraft(
@@ -207,9 +220,7 @@ export function toLocationDraft(
     endVerticalPosition: line?.vertical?.end ?? undefined,
     verticalReference: position?.vertical?.reference,
     verticalReferenceSystem: position?.vertical?.system,
-    regionKind: region?.kind,
-    country: region?.kind === "continent" ? region.country : undefined,
-    oceanSea: region?.kind === "ocean" ? region.oceanSea : undefined,
+    regionPath: toHierarchyPath(regionValue(region)),
     navigationType: location?.navigationType,
     localityName: location?.localityName,
     localityDescription: location?.localityDescription,
