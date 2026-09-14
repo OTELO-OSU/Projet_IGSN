@@ -8,7 +8,7 @@ const NO_ATTACHMENTS = { attachments: z.never().optional() };
 
 export const createServiceSampleSchema = createSampleSchema.safeExtend({
   ...NO_ATTACHMENTS,
-  parentIds: z.array(z.string().trim().min(1)).max(1).optional(),
+  parentIds: z.array(z.string().trim().min(1)).max(2).optional(),
 });
 
 export type CreateServiceSample = z.infer<typeof createServiceSampleSchema>;

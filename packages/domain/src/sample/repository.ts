@@ -3,10 +3,12 @@ import type { UserSampleRole } from "../user-sample/model.ts";
 import type { User } from "../user/model.ts";
 import type { ModerationScope } from "../user/moderation-scope.ts";
 import type { SampleEditLock } from "./edit-lock.ts";
+import type { SampleParent } from "./parent/model.ts";
 import type {
   AdminSampleListItem,
   ListSamplesQuery,
   PublishStatus,
+  SearchEligibleParentsQuery,
   SetSampleStatusBody,
 } from "./sample-validator.ts";
 import type { CreateSample, Sample } from "./sample.ts";
@@ -36,6 +38,11 @@ export type SampleRepository = {
     editableOnly: boolean,
   ): Promise<AdminListSamplesResult>;
   isModerated(id: string, scope: ModerationScope): Promise<boolean>;
+  searchEligibleParents(
+    params: SearchEligibleParentsQuery,
+    userId: string,
+    scope: ModerationScope | null,
+  ): Promise<SampleParent[]>;
   listPublished(params: ListSamplesQuery): Promise<ListSamplesResult>;
   get(
     id: string,

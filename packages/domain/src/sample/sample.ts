@@ -137,10 +137,13 @@ const createSampleFieldsSchema = z.strictObject({
   economicDepositName: nameSchema.nullish(),
   economicDepositDescription: nameSchema.nullish(),
   manualGroupIds: z.array(z.uuid()).optional(),
-  parentIds: z.array(z.uuid()).max(1).optional(),
+  parentIds: z.array(z.uuid()).max(2).optional(),
 });
 
-type SampleCheck = Omit<z.infer<typeof createSampleFieldsSchema>, "parentIds">;
+type SampleCheck = Omit<
+  z.infer<typeof createSampleFieldsSchema>,
+  "parentIds"
+> & { parentIds?: string[] };
 
 const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
   if (
@@ -206,6 +209,16 @@ const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
         });
       }
     }
+  }
+  if (
+    (value.parentIds?.length ?? 0) > 1 &&
+    !isSyntheticMaterial(value.material ?? null)
+  ) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["material"],
+      message: "a sample with two parents must be synthetic",
+    });
   }
   if (
     value.syntheticDetails != null &&
