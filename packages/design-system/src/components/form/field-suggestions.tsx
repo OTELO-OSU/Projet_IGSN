@@ -46,7 +46,7 @@ export function FieldSuggestions({
         );
         return (
           <li
-            className="grid min-w-0 flex-1 content-start gap-2"
+            className="grid min-w-0 flex-1 grid-cols-[minmax(0,1fr)] content-start gap-2"
             key={`${index}-${source}`}
           >
             <Tooltip>
