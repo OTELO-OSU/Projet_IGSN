@@ -58,12 +58,16 @@ function RootLayout() {
   return (
     <AuthProvider userManager={userManager} onSigninCallback={onSigninCallback}>
       <div className="flex min-h-svh flex-col">
-        <header className="bg-background/80 sticky top-0 z-40 flex h-24 items-center gap-3 border-b px-4 backdrop-blur">
-          <Link to="/" aria-label={m.app_title()} className="flex items-center">
+        <header className="bg-background/80 sticky top-0 z-40 flex h-24 items-center border-b pr-4 backdrop-blur">
+          <Link
+            to="/"
+            aria-label={m.app_title()}
+            className="flex h-full items-center"
+          >
             <img
               src={`${import.meta.env.BASE_URL}logo-igsn.png`}
               alt=""
-              className="h-16 w-auto"
+              className="h-full w-auto"
             />
           </Link>
           <div className="ml-auto">
