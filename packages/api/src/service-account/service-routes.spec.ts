@@ -3,6 +3,7 @@ import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
+import { ageSchema } from "@projet-igsn/domain/sample/age/model";
 import { toConcept } from "@projet-igsn/domain/sample/core/concept";
 import {
   parentIgsnOf,
@@ -294,6 +295,150 @@ describe("GET /service/samples", () => {
     ]);
     expect(body.meta.total).toBe(1);
   });
+
+  pgTest.for([
+    {
+      rule: "the nature vocabulary",
+      param: "natureOfSample",
+      value: "rock_powder",
+      matching: { nature: "rock_powder" as const },
+      other: { nature: "thin_section" as const },
+    },
+    {
+      rule: "an ancestor material path, keeping its whole subtree",
+      param: "materialCategory",
+      value: "rock_and_sediment.sediment",
+      matching: {
+        material: "rock_and_sediment.sediment.exogenous_detritic.clay",
+      },
+      other: { material: "rock_and_sediment.rock.igneous" },
+    },
+    {
+      rule: "a fragment of the collector name",
+      param: "collector",
+      value: "cuvier",
+      matching: { scientificContext: fieldSample.scientificContext },
+      other: {
+        scientificContext: {
+          ...fieldSample.scientificContext,
+          collectorName: "Alfred Wegener",
+        },
+      },
+    },
+    {
+      rule: "a lower bound on the numeric age",
+      param: "numericAgeMin",
+      value: "100",
+      matching: {
+        age: ageSchema.parse({
+          numericAgeMin: 150,
+          numericAgeMax: 200,
+          numericAgeUnit: "ma",
+        }),
+      },
+      other: {
+        age: ageSchema.parse({
+          numericAgeMin: 1,
+          numericAgeMax: 2,
+          numericAgeUnit: "ma",
+        }),
+      },
+    },
+    {
+      rule: "a manual group of the sample",
+      param: "manualGroup",
+      value: FOREIGN_GROUP_ID,
+      matching: { manualGroupIds: [FOREIGN_GROUP_ID] },
+      other: { manualGroupIds: [] },
+    },
+    {
+      rule: "a free-text search",
+      param: "search",
+      value: "gres",
+      matching: { name: "Grès de Fontainebleau" },
+      other: { name: "Basalte du Massif Central" },
+    },
+    {
+      rule: "a bounding box",
+      param: "bbox",
+      value: "2,44,4,46",
+      matching: {
+        location: {
+          position: { type: "point" as const, longitude: 3, latitude: 45 },
+        },
+      },
+      other: {
+        location: {
+          position: { type: "point" as const, longitude: -60, latitude: 10 },
+        },
+      },
+    },
+  ])(
+    "should keep only the samples matching $rule",
+    async ({ param, value, matching, other }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      await db
+        .insertInto("manual_group")
+        .values({ id: FOREIGN_GROUP_ID, name: FOREIGN_GROUP_NAME })
+        .execute();
+      const kept = await inLaboratory(
+        db,
+        { ...publishableSample, ...matching },
+        IN_REACH,
+      );
+      const dropped = await inLaboratory(
+        db,
+        { ...publishableSample, ...other },
+        IN_REACH,
+      );
+      await publishSample(db, kept.id);
+      await publishSample(db, dropped.id);
+      // Act
+      const res = await listSamples(app, { [param]: value });
+      // Assert
+      expect(res.status).toBe(200);
+      const body = coreListSamplesResponseSchema.parse(await res.json());
+      expect(body.data.map((sample) => sample.record.recordId)).toEqual([
+        `urn:uuid:${kept.id}`,
+      ]);
+    },
+  );
+
+  pgTest("should count only the filtered samples", async ({ db }) => {
+    // Arrange
+    const { app } = await arrangeAccount(db);
+    for (const nature of [
+      "rock_powder",
+      "rock_powder",
+      "thin_section",
+    ] as const) {
+      const sample = await inLaboratory(
+        db,
+        { ...publishableSample, nature },
+        IN_REACH,
+      );
+      await publishSample(db, sample.id);
+    }
+    // Act
+    const res = await listSamples(app, { natureOfSample: "rock_powder" });
+    // Assert
+    const body = coreListSamplesResponseSchema.parse(await res.json());
+    expect(body.meta.total).toBe(2);
+  });
+
+  pgTest(
+    "should answer 400 for a filter value outside its vocabulary",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await listSamples(app, { natureOfSample: "lava" });
+      // Assert
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "Invalid query parameters" });
+    },
+  );
 });
 
 describe("GET /service/samples/:igsn", () => {

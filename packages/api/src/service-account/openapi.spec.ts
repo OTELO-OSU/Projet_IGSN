@@ -77,6 +77,17 @@ describe("the /service OpenAPI document", () => {
     const missing = undescribedProperties(document.components.schemas, "");
     expect(missing, `undescribed: ${missing.join(", ")}`).toEqual([]);
   });
+
+  it("should publish the vocabulary of a controlled filter as an enum", async () => {
+    const document = await serviceDocument();
+
+    const { parameters } = document.paths["/samples"]!.get as {
+      parameters: { name: string; schema: { enum?: string[] } }[];
+    };
+    expect(
+      parameters.find(({ name }) => name === "natureOfSample")?.schema.enum,
+    ).toContain("thin_section");
+  });
 });
 
 const externalTags = (html: string) =>

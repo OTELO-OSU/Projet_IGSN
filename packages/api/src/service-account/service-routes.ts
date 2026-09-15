@@ -12,6 +12,7 @@ import type { Context } from "hono";
 import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
+import { toListSamplesQuery } from "@projet-igsn/domain/sample/core/core-list-samples-query";
 import { CORE_SCHEMA_VERSION } from "@projet-igsn/domain/sample/core/core-sample-schema";
 import { fromCoreSample } from "@projet-igsn/domain/sample/core/from-core-sample";
 import { toCoreSample } from "@projet-igsn/domain/sample/core/to-core-sample";
@@ -135,7 +136,7 @@ export function createServiceRoutes(
       const account = c.get("serviceAccount");
       const { editable, ...query } = c.req.valid("query");
       const { data, total } = await samples.listPublishedForService(
-        { ...query, sort: "igsn" },
+        { ...toListSamplesQuery(query), sort: "igsn" },
         managerScope(account.id, account.managedGroups),
         editable === true,
       );
