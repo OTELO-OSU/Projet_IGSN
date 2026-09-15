@@ -4,7 +4,7 @@ Date: 2026-09-03
 
 ## Status
 
-Accepted.
+Accepted. Amended by ADR [0041](0041-synthesis-date-precision.md) (`synthesisDate` gains the same `day | hour` precision and time zone).
 
 ## Context
 
@@ -16,7 +16,7 @@ A sample's `collectionDate` was `{ start, end }` of `YYYY-MM-DD` strings (a sing
 
 **The wall clock is stored as the text the researcher entered, with no conversion anywhere.** The two columns become `text` holding the bound in its API shape (`YYYY-MM-DD` or `YYYY-MM-DDTHH:mm`); two new columns, `collection_date_precision` and `collection_date_time_zone`, say how to read it, the zone written only at `hour` precision and enforced by a CHECK. Zod validates the shape at the trust boundary, and no query sorts, filters, or facets on the bound, so Postgres typing it buys nothing today.
 
-`synthesisDate` (synthetic samples) stays day-only: nothing in this ticket asked for an hour-precision synthesis date, and it keeps its own `dateRangeSchema` sharing only the extracted order/future check (`dateRangeIssues`) with `collectionDate`.
+`synthesisDate` (synthetic samples) stays day-only for now: nothing in this ticket asked for an hour-precision synthesis date, and it keeps its own `dateRangeSchema` sharing only the extracted order/future check (`dateRangeIssues`) with `collectionDate`. ADR [0041](0041-synthesis-date-precision.md) later gives it the same precision and time zone.
 
 **Public `GET /samples/:igsn` returns `collectionDate` as the same discriminated union**, so a consumer reading `precision` gets the right shape without a separate flag.
 
