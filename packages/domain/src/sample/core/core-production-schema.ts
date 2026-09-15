@@ -3,6 +3,7 @@ import { z } from "zod";
 import { timeZoneSchema } from "../../date/time-zone.ts";
 import { organizationRorSchema } from "../../institutional-group/organization.ts";
 import { collectionMethodSchema } from "../collection-method/vocabulary.ts";
+import { localDateTimeSchema } from "../date-range.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { countrySchema } from "../location/country.ts";
 import { navigationTypeSchema } from "../location/navigation-type.ts";
@@ -122,13 +123,39 @@ const coreProjectSchema = z.strictObject({
   campaign: freeTextSchema.optional(),
 });
 
-const coreProcessStepSchema = z.strictObject({
-  stepType: z.literal("Synthesis"),
-  description: freeTextSchema.optional(),
-  timestampStart: z.iso.date().optional(),
-  timestampEnd: z.iso.date().optional(),
-  method: conceptSchema("experiment-type", experimentTypeSchema).optional(),
-});
+const coreTimestampSchema = z.union([z.iso.date(), localDateTimeSchema]);
+
+export const coreProcessStepSchema = z
+  .strictObject({
+    stepType: z.literal("Synthesis"),
+    description: freeTextSchema.optional(),
+    timestampStart: coreTimestampSchema.optional(),
+    timestampEnd: coreTimestampSchema.optional(),
+    timestampPrecision: z.enum(["day", "hour"]).optional(),
+    timestampTimeZone: timeZoneSchema.optional(),
+    method: conceptSchema("experiment-type", experimentTypeSchema).optional(),
+  })
+  .superRefine((step, ctx) => {
+    if ((step.timestampPrecision != null) !== (step.timestampStart != null)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["timestampPrecision"],
+        message: "a step timestamp carries its precision",
+      });
+    }
+    if (
+      (step.timestampPrecision === "hour") !==
+      (step.timestampTimeZone != null)
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["timestampTimeZone"],
+        message: "an hour precision date carries its time zone, a day does not",
+      });
+    }
+  });
+
+export type CoreProcessStep = z.infer<typeof coreProcessStepSchema>;
 
 const ROR_PREFIX = "https://ror.org/";
 

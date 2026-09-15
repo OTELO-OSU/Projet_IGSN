@@ -434,6 +434,7 @@ const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
         description: "Piston cylinder run held at 2 GPa",
         timestampStart: "2025-01-10",
         timestampEnd: "2025-01-12",
+        timestampPrecision: "day",
         method: concept("experiment-type", "fusion"),
       },
     ],

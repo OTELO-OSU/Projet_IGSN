@@ -1,8 +1,27 @@
 import type { CreateSample, Sample } from "../sample.ts";
+import type { SyntheticDetails } from "../synthetic-details/model.ts";
 
 const ORGANIZATION_ROR = "02feahw73";
 const OSU_CODE = "OMP";
 const LABORATORY_CODE = "UMR3589";
+
+export const SYNTHETIC_DETAILS: SyntheticDetails = {
+  startingMaterial: "synthetic",
+  startingMaterialNature: "powder",
+  startingMaterialComposition: "Silica and alumina powders",
+  finalProduct: "glass",
+  experimentType: "fusion",
+  experimentDuration: { value: 90, unit: "minute" },
+  synthesisDate: { precision: "day", start: "2025-01-10", end: "2025-01-12" },
+  operatorName: "Rosalind Franklin",
+  operatorOrcid: "0000-0003-1415-9269",
+  researchStructure: [ORGANIZATION_ROR],
+  temperature: { value: 1450, unit: "celsius" },
+  pressure: { value: 2, unit: "gpa" },
+  experimentalProtocol: "Piston cylinder run held at 2 GPa",
+  experimentPurpose: "Calibrate the melting curve",
+  equipmentUsed: "Piston cylinder press",
+};
 
 export const FIELD_SAMPLE: Sample = {
   id: "11111111-1111-4111-8111-111111111111",
@@ -312,23 +331,7 @@ export const SYNTHETIC_SAMPLE: Sample = {
     fieldName: null,
     missionDescription: null,
   },
-  syntheticDetails: {
-    startingMaterial: "synthetic",
-    startingMaterialNature: "powder",
-    startingMaterialComposition: "Silica and alumina powders",
-    finalProduct: "glass",
-    experimentType: "fusion",
-    experimentDuration: { value: 90, unit: "minute" },
-    synthesisDate: { start: "2025-01-10", end: "2025-01-12" },
-    operatorName: "Rosalind Franklin",
-    operatorOrcid: "0000-0003-1415-9269",
-    researchStructure: [ORGANIZATION_ROR],
-    temperature: { value: 1450, unit: "celsius" },
-    pressure: { value: 2, unit: "gpa" },
-    experimentalProtocol: "Piston cylinder run held at 2 GPa",
-    experimentPurpose: "Calibrate the melting curve",
-    equipmentUsed: "Piston cylinder press",
-  },
+  syntheticDetails: SYNTHETIC_DETAILS,
   age: null,
   relations: [],
   attachments: [],

@@ -1,10 +1,30 @@
 import type { SyntheticDetails } from "../synthetic-details/model.ts";
+import type { CoreProcessStep } from "./core-production-schema.ts";
 import type { CoreSampleBody } from "./core-sample-schema.ts";
 
 import { orNull } from "./core-optional.ts";
 import { fromRorUri } from "./core-production-schema.ts";
 import { responsibilityFinders } from "./from-core-responsibility.ts";
 import { fromQuantity } from "./quantity.ts";
+
+function fromCoreSynthesisDate(
+  step: CoreProcessStep | undefined,
+): SyntheticDetails["synthesisDate"] {
+  if (step?.timestampStart == null || step.timestampEnd == null) return null;
+  if (step.timestampPrecision === "hour") {
+    return {
+      precision: "hour",
+      start: step.timestampStart,
+      end: step.timestampEnd,
+      timeZone: step.timestampTimeZone ?? "",
+    };
+  }
+  return {
+    precision: "day",
+    start: step.timestampStart,
+    end: step.timestampEnd,
+  };
+}
 
 export function fromCoreSyntheticDetails(
   body: CoreSampleBody,
@@ -22,10 +42,7 @@ export function fromCoreSyntheticDetails(
     finalProduct: experiment?.finalProduct ?? null,
     experimentType: experiment?.experimentType?.id ?? null,
     experimentDuration: orNull(experiment?.duration, fromQuantity),
-    synthesisDate:
-      step?.timestampStart == null || step.timestampEnd == null
-        ? null
-        : { start: step.timestampStart, end: step.timestampEnd },
+    synthesisDate: fromCoreSynthesisDate(step),
     operatorName: researcher?.name ?? null,
     operatorOrcid: orcidOf("Researcher"),
     researchStructure:
