@@ -58,6 +58,9 @@ routes. Each entity is a folder in both.
 
 6. **Refactor** as it grows (coding-style rule).
 
+- A `/service` route is the one exception to step 4: it is declared with `createRoute` + `app.openapi` from `@hono/zod-openapi`, never a plain `new Hono()` chain (ADR 0041).
+- Declare its request schemas and every status it answers, or `openapi.spec.ts` fails the build.
+
 ## Verification gate
 
 - `pnpm test packages/domain` and `pnpm test packages/api` both green.

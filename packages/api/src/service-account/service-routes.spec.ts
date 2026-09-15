@@ -100,13 +100,18 @@ const ownedParent = async (db: Kysely<DB>, ownerId: string) => {
   return (await publishSample(db, parent.id))!;
 };
 
-const serviceRequest = (
+const observedStatuses = new Set<string>();
+
+const operationOf = (path: string) =>
+  path.startsWith("/") ? "/samples/{igsn}" : "/samples";
+
+const serviceRequest = async (
   app: ReturnType<typeof createApp>["app"],
   method: "GET" | "POST" | "PUT",
   path: string,
   input?: unknown,
-) =>
-  app.request(`/service/samples${path}`, {
+) => {
+  const res = await app.request(`/service/samples${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${KEY}`,
@@ -114,6 +119,9 @@ const serviceRequest = (
     },
     body: input === undefined ? undefined : JSON.stringify(input),
   });
+  observedStatuses.add(`${method} ${operationOf(path)} ${res.status}`);
+  return res;
+};
 
 const postSample = (app: ReturnType<typeof createApp>["app"], input: unknown) =>
   serviceRequest(app, "POST", "", input);
@@ -724,6 +732,52 @@ describe("the /service mount", () => {
       expect(res.status).toBe(403);
     },
   );
+
+  pgTest.for(["/service/openapi.json", "/service/docs"])(
+    "should serve %s with no Authorization header, being mounted before the api key guard",
+    async (path, { db }) => {
+      // Arrange
+      const { app } = createApp(db);
+      // Act
+      const res = await app.request(path);
+      // Assert
+      expect(res.status).toBe(200);
+    },
+  );
+
+  pgTest.for(
+    (
+      [
+        { rule: "no Content-Type", headers: {} },
+        {
+          rule: "a text/plain body",
+          headers: { "Content-Type": "text/plain" },
+        },
+      ] as const
+    ).flatMap((mediaType) =>
+      (
+        [
+          { method: "POST", path: "/service/samples" },
+          { method: "PUT", path: `/service/samples/${"A".repeat(26)}` },
+        ] as const
+      ).map((target) => ({ ...mediaType, ...target })),
+    ),
+  )(
+    "should answer 415 to $method with $rule",
+    async ({ headers, method, path }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await app.request(path, {
+        method,
+        headers: { Authorization: `Bearer ${KEY}`, ...headers },
+        body: JSON.stringify(NEW_BODY),
+      });
+      // Assert
+      expect(res.status).toBe(415);
+      expect(await res.json()).toEqual({ error: "Unsupported Media Type" });
+    },
+  );
 });
 
 const publishedInReach = async (
@@ -897,6 +951,37 @@ describe("PUT /service/samples/:igsn", () => {
         ],
       });
       expect(await storedNames(db)).toEqual([{ name: publishableSample.name }]);
+    },
+  );
+});
+
+describe("the /service OpenAPI responses", () => {
+  pgTest(
+    "should declare every status this suite observed, which provokes neither 429 nor 500",
+    async ({ db }) => {
+      // Arrange
+      const res = await createApp(db).app.request("/service/openapi.json");
+      const { paths } = (await res.json()) as {
+        paths: Record<
+          string,
+          Record<string, { responses: Record<string, unknown> }>
+        >;
+      };
+      const declared = new Set(
+        Object.entries(paths).flatMap(([path, operations]) =>
+          Object.entries(operations).flatMap(([method, operation]) =>
+            Object.keys(operation.responses).map(
+              (status) => `${method.toUpperCase()} ${path} ${status}`,
+            ),
+          ),
+        ),
+      );
+      // Act
+      const undeclared = [...observedStatuses].filter(
+        (observed) => !declared.has(observed),
+      );
+      // Assert
+      expect(undeclared).toEqual([]);
     },
   );
 });

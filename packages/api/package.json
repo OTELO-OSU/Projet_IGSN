@@ -11,10 +11,13 @@
     "seed:demo": "node scripts/seed-demo.ts",
     "seed:e2e": "node scripts/reset-and-seed.ts",
     "digest:send": "node scripts/send-pending-users-digest.ts",
-    "import:legacy": "node scripts/import-legacy.ts"
+    "import:legacy": "node scripts/import-legacy.ts",
+    "openapi": "node scripts/write-openapi.ts && oxfmt openapi.json"
   },
   "dependencies": {
     "@hono/node-server": "catalog:",
+    "@hono/swagger-ui": "catalog:",
+    "@hono/zod-openapi": "catalog:",
     "@projet-igsn/domain": "workspace:*",
     "croner": "catalog:",
     "hono": "catalog:",

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-const IGSN_SUFFIX_PATTERN = /^[0-9A-HJKMNP-TV-Z]{26}$/i;
+const IGSN_SUFFIX_PATTERN = /^[0-9A-HJKMNP-TV-Z]{26}$/;
 
 const INVALID_IGSN_SUFFIX_MESSAGE =
   "Invalid IGSN suffix: expected 26 Crockford base32 characters";
@@ -8,8 +8,8 @@ const INVALID_IGSN_SUFFIX_MESSAGE =
 export const igsnSuffixSchema = z
   .string()
   .trim()
-  .regex(IGSN_SUFFIX_PATTERN, INVALID_IGSN_SUFFIX_MESSAGE)
-  .toUpperCase();
+  .toUpperCase()
+  .regex(IGSN_SUFFIX_PATTERN, INVALID_IGSN_SUFFIX_MESSAGE);
 
 export type IgsnSuffix = z.infer<typeof igsnSuffixSchema>;
 

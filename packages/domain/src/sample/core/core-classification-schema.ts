@@ -19,9 +19,14 @@ const scientificContextConceptSchema = <N extends string, T extends z.ZodType>(
   id: T,
 ) =>
   z.strictObject({
-    id,
+    id: id.meta({
+      description:
+        "Our code, or the free text, for the scientific-context entry this notation names.",
+    }),
     ...conceptShape("scientificContext"),
-    notation: z.literal(notation),
+    notation: z.literal(notation).meta({
+      description: "Which scientific-context entry this concept carries.",
+    }),
   });
 
 const coreContextCategorySchema = z.discriminatedUnion("schemeName", [
@@ -49,14 +54,28 @@ export type CoreContextCategory = z.infer<typeof coreContextCategorySchema>;
 
 export const coreClassificationSchema = z
   .strictObject({
-    natureOfSample: conceptSchema("nature-of-sample", natureSchema),
+    natureOfSample: conceptSchema("nature-of-sample", natureSchema).meta({
+      description:
+        "What the sample physically is; required on a published sample.",
+    }),
     sampleObjectTypes: z
       .array(conceptSchema("sample-type", sampleTypeSchema))
-      .length(1),
+      .length(1)
+      .meta({
+        description:
+          "Type of object the sample is, exactly one concept; required on a published sample.",
+      }),
     materialCategories: z
       .array(conceptSchema("material", materialPathSchema))
-      .length(1),
-    contextCategories: z.array(coreContextCategorySchema).min(1),
+      .length(1)
+      .meta({
+        description:
+          "Head material of the sample, the first level of its material path; required on a published sample.",
+      }),
+    contextCategories: z.array(coreContextCategorySchema).min(1).meta({
+      description:
+        "Scientific context of the sample: its full material path and its provenance status, both required, plus its texture, metamorphic facies and fabric, geomorphological context, resource type, geological context, collection origin and collection context when set.",
+    }),
   })
   .superRefine((classification, ctx) => {
     const seen = new Set<string>();

@@ -46,80 +46,187 @@ export type CoreRole = (typeof CORE_ROLES)[number];
 const REPEATABLE_ROLES: readonly CoreRole[] = ["HostingInstitution"];
 
 const coreOrganizationSchema = z.strictObject({
-  id: z.string().min(1).optional(),
-  name: freeTextSchema,
+  id: z
+    .string()
+    .min(1)
+    .meta({
+      description:
+        "Identifier of the organization, a ROR URI or one of our urn:otelo: URNs for an OSU or a laboratory.",
+    })
+    .optional(),
+  name: freeTextSchema.meta({ description: "Name of the organization." }),
 });
 
 export const coreAgentRoleSchema = z.strictObject({
-  agent: z.strictObject({
-    id: z.string().min(1).optional(),
-    name: freeTextSchema,
-    agentType: z.enum(["Person", "Organization"]),
-    affiliations: z.array(coreOrganizationSchema).min(1).optional(),
+  agent: z
+    .strictObject({
+      id: z
+        .string()
+        .min(1)
+        .meta({
+          description:
+            "Identifier of the agent, an ORCID URI for a person and a ROR URI for an organization.",
+        })
+        .optional(),
+      name: freeTextSchema.meta({ description: "Full name of the agent." }),
+      agentType: z.enum(["Person", "Organization"]).meta({
+        description: "Whether the agent is a person or an organization.",
+      }),
+      affiliations: z
+        .array(coreOrganizationSchema)
+        .min(1)
+        .meta({
+          description:
+            "Organizations the agent belongs to, the institutional trio of the creator or the research structures of a researcher.",
+        })
+        .optional(),
+    })
+    .meta({ description: "Person or organization holding the role." }),
+  roles: z.array(z.enum(CORE_ROLES)).length(1).meta({
+    description:
+      "The single role the agent holds; only HostingInstitution is held by several agents.",
   }),
-  roles: z.array(z.enum(CORE_ROLES)).length(1),
 });
 
 export type CoreAgentRole = z.infer<typeof coreAgentRoleSchema>;
 
 const coreRecordSchema = z.strictObject({
-  recordId: z.string().startsWith("urn:uuid:"),
-  createdAt: z.iso.datetime(),
-  updatedAt: z.iso.datetime(),
-  metadataLanguage: z.array(z.string().min(1)).min(1),
-  metadataVersion: z.string().min(1),
+  recordId: z.string().startsWith("urn:uuid:").meta({
+    description: "Internal identifier of the record; emit only.",
+  }),
+  createdAt: z.iso.datetime().meta({
+    description: "When the sample was first created; emit only.",
+  }),
+  updatedAt: z.iso.datetime().meta({
+    description: "When the sample was last updated; emit only.",
+  }),
+  metadataLanguage: z.array(z.string().min(1)).min(1).meta({
+    description: "Languages the metadata is written in; emit only.",
+  }),
+  metadataVersion: z.string().min(1).meta({
+    description: "Version of the metadata record; emit only.",
+  }),
   lifecycleEvents: z
     .array(
       z.strictObject({
-        eventType: z.enum([
-          "created",
-          "validated",
-          "registered",
-          "published",
-          "updated",
-          "withdrawn",
-          "tombstone",
-        ]),
-        timestamp: z.iso.datetime(),
+        eventType: z
+          .enum([
+            "created",
+            "validated",
+            "registered",
+            "published",
+            "updated",
+            "withdrawn",
+            "tombstone",
+          ])
+          .meta({
+            description:
+              "What happened to the sample, only created, published and updated ever being emitted.",
+          }),
+        timestamp: z.iso
+          .datetime()
+          .meta({ description: "When that event happened." }),
       }),
     )
-    .min(1),
+    .min(1)
+    .meta({
+      description: "Dated history of the sample; emit only.",
+    }),
 });
 
 const coreIdentificationFields = {
-  sampleIdentifier: igsnSchema,
-  landingPage: z.url(),
-  titles: z.array(coreTitleSchema).length(1),
-  localName: nameSchema.optional(),
+  sampleIdentifier: igsnSchema.meta({
+    description:
+      "IGSN of the sample, minted by the registry; emit only, ignored on input.",
+  }),
+  landingPage: z.url().meta({
+    description: "Public page of the sample on the registry; emit only.",
+  }),
+  titles: z.array(coreTitleSchema).length(1).meta({
+    description: "Name of the sample, exactly one title.",
+  }),
+  localName: nameSchema
+    .meta({ description: "Name the sample carries in its own collection." })
+    .optional(),
 };
 
 const coreIdentificationSchema = z.strictObject(coreIdentificationFields);
 
 const corePublicationSchema = z.strictObject({
-  publisher: coreOrganizationSchema,
-  publicationYear: publicationYearSchema,
+  publisher: coreOrganizationSchema.meta({
+    description: "Organization publishing the sample, always OTELo.",
+  }),
+  publicationYear: publicationYearSchema.meta({
+    description:
+      "Year the sample was published, set when the IGSN is minted; emit only.",
+  }),
 });
 
 const coreRightsAndAccessSchema = z.strictObject({
-  rightsURIs: z.array(z.url()).min(1),
-  metadataVisibility: z.literal("public"),
-  sensitiveLocation: z.boolean(),
+  rightsURIs: z.array(z.url()).min(1).meta({
+    description: "Licences the metadata is released under; emit only.",
+  }),
+  metadataVisibility: z.literal("public").meta({
+    description: "Who may read the metadata, always everyone; emit only.",
+  }),
+  sensitiveLocation: z.boolean().meta({
+    description:
+      "Whether the collection place is withheld, always false; emit only.",
+  }),
 });
 
+const RESPONSIBILITY_DESCRIPTION =
+  "Agents involved with the sample, one role each; the Creator and the Registrant are emit only, since a sample created here belongs to the account's owner.";
+
 const coreSampleFields = {
-  schemaVersion: z.literal(CORE_SCHEMA_VERSION),
-  record: coreRecordSchema,
-  identification: coreIdentificationSchema,
-  classification: coreClassificationSchema,
-  responsibility: z.array(coreAgentRoleSchema).min(1),
-  publication: corePublicationSchema,
-  production: coreProductionSchema,
-  physicalDescription: corePhysicalDescriptionSchema.optional(),
-  relations: z.array(coreRelationSchema).optional(),
-  curation: coreCurationSchema,
-  rightsAndAccess: coreRightsAndAccessSchema,
-  manualGroups: z.array(coreManualGroupSchema).optional(),
-  extensions: coreExtensionsSchema.optional(),
+  schemaVersion: z.literal(CORE_SCHEMA_VERSION).meta({
+    description: "Version of IGSN Core the record follows.",
+  }),
+  record: coreRecordSchema.meta({
+    description: "Lifecycle metadata the registry owns; emit only.",
+  }),
+  identification: coreIdentificationSchema.meta({
+    description: "Identifiers and names of the sample.",
+  }),
+  classification: coreClassificationSchema.meta({
+    description: "What the sample is and the scientific context it comes from.",
+  }),
+  responsibility: z
+    .array(coreAgentRoleSchema)
+    .min(1)
+    .meta({ description: RESPONSIBILITY_DESCRIPTION }),
+  publication: corePublicationSchema.meta({
+    description: "Who published the sample and when; emit only.",
+  }),
+  production: coreProductionSchema.meta({
+    description: "How, when and where the sample was produced.",
+  }),
+  physicalDescription: corePhysicalDescriptionSchema
+    .meta({ description: "Physical form of the sample." })
+    .optional(),
+  relations: z
+    .array(coreRelationSchema)
+    .meta({
+      description:
+        "Resources the sample relates to, a parent sample riding as an IsDerivedFrom relation, two at most.",
+    })
+    .optional(),
+  curation: coreCurationSchema.meta({
+    description: "Who holds the sample and under which conditions.",
+  }),
+  rightsAndAccess: coreRightsAndAccessSchema.meta({
+    description: "Licence and visibility of the metadata; emit only.",
+  }),
+  manualGroups: z
+    .array(coreManualGroupSchema)
+    .meta({ description: "Manual groups the sample is attached to." })
+    .optional(),
+  extensions: coreExtensionsSchema
+    .meta({
+      description:
+        "Metadata IGSN Core has no slot for: geology, safety and synthesis.",
+    })
+    .optional(),
 };
 
 type CoreSampleCheck = {
@@ -157,23 +264,36 @@ const checkCoreSample = (value: CoreSampleCheck, ctx: z.RefinementCtx) => {
 
 export const coreSampleSchema = z
   .strictObject(coreSampleFields)
-  .superRefine(checkCoreSample);
+  .superRefine(checkCoreSample)
+  .meta({
+    id: "CoreSample",
+    description: "A published sample as an IGSN Core v0.10.0 record.",
+  });
 
 export type CoreSample = z.infer<typeof coreSampleSchema>;
 
 export const coreSampleBodySchema = z
   .strictObject({
     ...coreSampleFields,
-    record: coreRecordSchema.optional(),
-    identification: z.strictObject({
-      ...coreIdentificationFields,
-      sampleIdentifier: igsnSchema.optional(),
-      landingPage: z.url().optional(),
-    }),
-    responsibility: z.array(coreAgentRoleSchema),
-    publication: corePublicationSchema.optional(),
-    rightsAndAccess: coreRightsAndAccessSchema.optional(),
+    record: coreSampleFields.record.optional(),
+    identification: z
+      .strictObject({
+        ...coreIdentificationFields,
+        sampleIdentifier: coreIdentificationFields.sampleIdentifier.optional(),
+        landingPage: coreIdentificationFields.landingPage.optional(),
+      })
+      .meta({ description: "Identifiers and names of the sample." }),
+    responsibility: z
+      .array(coreAgentRoleSchema)
+      .meta({ description: RESPONSIBILITY_DESCRIPTION }),
+    publication: coreSampleFields.publication.optional(),
+    rightsAndAccess: coreSampleFields.rightsAndAccess.optional(),
   })
-  .superRefine(checkCoreSample);
+  .superRefine(checkCoreSample)
+  .meta({
+    id: "CoreSampleBody",
+    description:
+      "An IGSN Core v0.10.0 record submitted to create or update a sample.",
+  });
 
 export type CoreSampleBody = z.infer<typeof coreSampleBodySchema>;

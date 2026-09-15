@@ -42,13 +42,24 @@ const isUcumConsistent = (quantity: unknown): boolean => {
 export const quantitySchema = <T extends z.ZodType<string>>(unit: T) =>
   z
     .strictObject({
-      value: z.number(),
-      unitCode: z.string().min(1),
-      unitLabel: unit,
+      value: z
+        .number()
+        .meta({ description: "Measured value, expressed in unitCode." }),
+      unitCode: z.string().min(1).meta({
+        description:
+          "UCUM code of the unit, derived from unitLabel, with kbar scaled to bar and GPa to Pa.",
+      }),
+      unitLabel: unit.meta({
+        description:
+          "Our own unit code, the one the reverse mapping reads to restore the measurement.",
+      }),
     })
     .refine(isUcumConsistent, {
       path: ["unitCode"],
       error: "unitCode must be the UCUM code of unitLabel",
+    })
+    .meta({
+      description: "Measurement expressed in our unit and its UCUM code.",
     });
 
 export function toQuantity<U extends string>(measurement: {

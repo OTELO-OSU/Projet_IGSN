@@ -9,7 +9,10 @@ import type {
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import type { Context } from "hono";
 
+import { swaggerUI } from "@hono/swagger-ui";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
+import { CORE_SCHEMA_VERSION } from "@projet-igsn/domain/sample/core/core-sample-schema";
 import { fromCoreSample } from "@projet-igsn/domain/sample/core/from-core-sample";
 import { toCoreSample } from "@projet-igsn/domain/sample/core/to-core-sample";
 import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
@@ -20,28 +23,44 @@ import {
   updateSampleSchema,
 } from "@projet-igsn/domain/sample/sample";
 import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
-import { Hono } from "hono";
 
 import {
   type ServiceEnv,
   requireServiceAccount,
 } from "../auth/require-service-account.ts";
 import { uploadLimit } from "../sample/upload-limit.ts";
-import { validateIgsnParam } from "../sample/validator.ts";
 import {
   type ResolvedParent,
   createServiceSampleIssues,
 } from "./create-service-sample-issues.ts";
+import {
+  SERVICE_API_KEY_SCHEME,
+  createSampleRoute,
+  getSampleRoute,
+  listSamplesRoute,
+  updateSampleRoute,
+} from "./service-route-definitions.ts";
 import {
   frozenFieldIssues,
   publishBlockerIssues,
   serviceSampleIssue,
   zodIssues,
 } from "./service-sample-issue.ts";
-import {
-  validateCoreSampleBody,
-  validateListServiceSamplesQuery,
-} from "./validator.ts";
+import { serviceValidationHook } from "./service-validation-hook.ts";
+
+const SWAGGER_UI_VERSION = "5.32.15";
+
+const OPENAPI_URL = "./openapi.json";
+
+const SWAGGER_UI_INTEGRITY: Record<string, string> = {
+  "swagger-ui-bundle.js":
+    "sha384-m7zaGj7MPzU+G4lz2eyy73GxK9bbRDr9bB2CSdj8wodg2wu/Wnt6wsoLP3JD+RS9",
+  "swagger-ui.css":
+    "sha384-fgyWYkUAamzuI8mJFu/xpRP0JWCJRwkwUwsYDoOYVHUJ8NQE5cENn8ib3ppwFFSX",
+};
+
+const subresource = (url: string) =>
+  `integrity="${SWAGGER_UI_INTEGRITY[url.slice(url.lastIndexOf("/") + 1)]}" crossorigin="anonymous"`;
 
 const invalid = (c: Context<ServiceEnv>, issues: ServiceSampleIssue[]) =>
   c.json(
@@ -66,9 +85,49 @@ export function createServiceRoutes(
     const parsed = igsnSchema.safeParse(igsn);
     return parsed.success ? findPublished(parsed.data) : null;
   };
-  return new Hono<ServiceEnv>()
-    .use("*", requireServiceAccount(serviceAccounts))
-    .get("/samples", validateListServiceSamplesQuery, async (c) => {
+  const app = new OpenAPIHono<ServiceEnv>({
+    defaultHook: serviceValidationHook,
+  });
+  app.openAPIRegistry.registerComponent(
+    "securitySchemes",
+    "apiKey",
+    SERVICE_API_KEY_SCHEME,
+  );
+  let document: ReturnType<typeof app.getOpenAPI31Document> | undefined;
+  app.get("/openapi.json", (c) =>
+    c.json(
+      (document ??= app.getOpenAPI31Document({
+        openapi: "3.1.0",
+        info: {
+          title: "IGSN service API",
+          version: CORE_SCHEMA_VERSION,
+          description:
+            "Machine API of the IGSN registry, reading and writing published samples as IGSN Core v0.10.0 records. A service account authenticates every call with its api key.",
+        },
+        servers: [{ url: new URL("api/service", frontendUrl).toString() }],
+      })),
+    ),
+  );
+  app.get(
+    "/docs",
+    swaggerUI({
+      url: OPENAPI_URL,
+      version: SWAGGER_UI_VERSION,
+      manuallySwaggerUIHtml: ({ css, js }) => `
+        <div id="swagger-ui"></div>
+        ${css.map((url) => `<link rel="stylesheet" href="${url}" ${subresource(url)} />`).join("")}
+        ${js.map((url) => `<script src="${url}" ${subresource(url)}></script>`).join("")}
+        <script>
+          window.onload = () => {
+            window.ui = SwaggerUIBundle({ dom_id: '#swagger-ui', url: '${OPENAPI_URL}' })
+          }
+        </script>
+      `,
+    }),
+  );
+  app.use("*", requireServiceAccount(serviceAccounts));
+  return app
+    .openapi(listSamplesRoute, async (c) => {
       const account = c.get("serviceAccount");
       const { editable, ...query } = c.req.valid("query");
       const { data, total } = await samples.listPublishedForService(
@@ -80,16 +139,16 @@ export function createServiceRoutes(
         data: data.map((sample) => toCoreSample(sample, frontendUrl)),
         meta: { total },
       };
-      return c.json(body);
+      return c.json(body, 200);
     })
-    .get("/samples/:igsn", validateIgsnParam, async (c) => {
+    .openapi(getSampleRoute, async (c) => {
       const sample = await findPublished(c.req.valid("param").igsn);
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
-      return c.json(toCoreSample(sample, frontendUrl));
+      return c.json(toCoreSample(sample, frontendUrl), 200);
     })
-    .post("/samples", validateCoreSampleBody, async (c) => {
+    .openapi(createSampleRoute, async (c) => {
       const account = c.get("serviceAccount");
       const { sample, parents } = fromCoreSample(c.req.valid("json"));
       const resolved: ResolvedParent[] = await Promise.all(
@@ -135,57 +194,53 @@ export function createServiceRoutes(
         201,
       );
     })
-    .put(
-      "/samples/:igsn",
-      validateIgsnParam,
-      validateCoreSampleBody,
-      async (c) => {
-        const account = c.get("serviceAccount");
-        const current = await findPublished(c.req.valid("param").igsn);
-        if (!current) {
-          return c.json({ error: "Not found" }, 404);
-        }
-        if (
-          !(await samples.isModerated(
-            current.id,
-            managerScope(account.id, account.managedGroups),
-          ))
-        ) {
-          return c.json({ error: "Forbidden" }, 403);
-        }
-        const { sample, parents } = fromCoreSample(c.req.valid("json"));
-        const stored = new Set(current.parents.map(({ igsn }) => igsn));
-        const changed = parents.findIndex(
-          ({ igsn }) => !stored.has(igsnSchema.parse(igsn)),
-        );
-        if (changed !== -1 || parents.length !== stored.size) {
-          return forbidden(c, [
-            serviceSampleIssue("field_frozen", [
-              "relations",
-              parents[changed]?.relationIndex ?? 0,
-            ]),
-          ]);
-        }
-        const parsed = updateSampleSchema.safeParse(sample);
-        if (!parsed.success) {
-          return invalid(c, zodIssues(parsed.error));
-        }
-        const merged = mergePublishedEdit(current, parsed.data);
-        const frozen = frozenFieldEdits(parsed.data, merged);
-        if (frozen.length > 0) {
-          return forbidden(c, frozenFieldIssues(frozen));
-        }
-        const blockers = newPublishBlockers(current, merged, uploadLimit);
-        if (blockers.length > 0) {
-          return invalid(c, publishBlockerIssues(blockers));
-        }
-        const updated = await samples.update(current.id, merged);
-        if (!updated) {
-          return c.json({ error: "Not found" }, 404);
-        }
-        return c.json(
-          toCoreSample({ ...updated, owner: current.owner }, frontendUrl),
-        );
-      },
-    );
+    .openapi(updateSampleRoute, async (c) => {
+      const account = c.get("serviceAccount");
+      const current = await findPublished(c.req.valid("param").igsn);
+      if (!current) {
+        return c.json({ error: "Not found" }, 404);
+      }
+      if (
+        !(await samples.isModerated(
+          current.id,
+          managerScope(account.id, account.managedGroups),
+        ))
+      ) {
+        return c.json({ error: "Forbidden" }, 403);
+      }
+      const { sample, parents } = fromCoreSample(c.req.valid("json"));
+      const stored = new Set(current.parents.map(({ igsn }) => igsn));
+      const changed = parents.findIndex(
+        ({ igsn }) => !stored.has(igsnSchema.parse(igsn)),
+      );
+      if (changed !== -1 || parents.length !== stored.size) {
+        return forbidden(c, [
+          serviceSampleIssue("field_frozen", [
+            "relations",
+            parents[changed]?.relationIndex ?? 0,
+          ]),
+        ]);
+      }
+      const parsed = updateSampleSchema.safeParse(sample);
+      if (!parsed.success) {
+        return invalid(c, zodIssues(parsed.error));
+      }
+      const merged = mergePublishedEdit(current, parsed.data);
+      const frozen = frozenFieldEdits(parsed.data, merged);
+      if (frozen.length > 0) {
+        return forbidden(c, frozenFieldIssues(frozen));
+      }
+      const blockers = newPublishBlockers(current, merged, uploadLimit);
+      if (blockers.length > 0) {
+        return invalid(c, publishBlockerIssues(blockers));
+      }
+      const updated = await samples.update(current.id, merged);
+      if (!updated) {
+        return c.json({ error: "Not found" }, 404);
+      }
+      return c.json(
+        toCoreSample({ ...updated, owner: current.owner }, frontendUrl),
+        200,
+      );
+    });
 }

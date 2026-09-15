@@ -37,8 +37,15 @@ export const fromChronostratigraphy = (value: string): GeologicalAge =>
   geologicalAgeSchema.parse(Number(value.slice("ICS".length)));
 
 const hazardSchema = z.strictObject({
-  flag: z.boolean(),
-  explanation: freeTextSchema.optional(),
+  flag: z
+    .boolean()
+    .meta({ description: "Whether the sample presents that hazard." }),
+  explanation: freeTextSchema
+    .meta({
+      description:
+        "Free text about that hazard, accepted only once the flag is set.",
+    })
+    .optional(),
 });
 
 export const coreExtensionsSchema = z.strictObject({
@@ -46,55 +53,128 @@ export const coreExtensionsSchema = z.strictObject({
     .strictObject({
       numericAge: z
         .strictObject({
-          min: z.number().optional(),
-          max: z.number().optional(),
-          unit: coreNumericAgeUnit.schema.optional(),
-          era: coreNumericAgeEra.schema.optional(),
+          min: z
+            .number()
+            .meta({ description: "Lower bound of the numeric age." })
+            .optional(),
+          max: z
+            .number()
+            .meta({ description: "Upper bound of the numeric age." })
+            .optional(),
+          unit: coreNumericAgeUnit.schema
+            .meta({ description: "Unit both bounds are counted in." })
+            .optional(),
+          era: coreNumericAgeEra.schema
+            .meta({
+              description:
+                "Reference both bounds are counted from, calBP being ours.",
+            })
+            .optional(),
         })
+        .meta({ description: "Numeric age of the sample." })
         .optional(),
       chronostratigraphy: z
         .strictObject({
-          min: chronostratigraphySchema.optional(),
-          max: chronostratigraphySchema.optional(),
-          unit: freeTextSchema.optional(),
+          min: chronostratigraphySchema
+            .meta({
+              description:
+                "Youngest stratigraphic stage of the sample, ICS1 to ICS49 down the time scale.",
+            })
+            .optional(),
+          max: chronostratigraphySchema
+            .meta({
+              description:
+                "Oldest stratigraphic stage of the sample, ICS1 to ICS49 down the time scale.",
+            })
+            .optional(),
+          unit: freeTextSchema
+            .meta({
+              description:
+                "Name of the stratigraphic unit the sample belongs to.",
+            })
+            .optional(),
         })
+        .meta({ description: "Stratigraphic age of the sample." })
         .optional(),
       economic: z
         .strictObject({
-          depositName: freeTextSchema.optional(),
-          depositDescription: freeTextSchema.optional(),
-          resourceTypePrecision: freeTextSchema.optional(),
+          depositName: freeTextSchema
+            .meta({ description: "Name of the deposit the sample comes from." })
+            .optional(),
+          depositDescription: freeTextSchema
+            .meta({ description: "Free-text description of that deposit." })
+            .optional(),
+          resourceTypePrecision: freeTextSchema
+            .meta({
+              description:
+                "Free text refining the resource type of the sample.",
+            })
+            .optional(),
           interestElements: z
             .array(conceptSchema("element", elementSchema))
             .min(1)
+            .meta({
+              description:
+                "Chemical elements the sample is of economic interest for.",
+            })
             .optional(),
         })
+        .meta({ description: "Economic interest of the sample." })
         .optional(),
     })
+    .meta({ description: "Geological metadata of the sample." })
     .optional(),
   safety: z
     .strictObject({
-      radioactivity: hazardSchema.optional(),
-      asbestos: hazardSchema.optional(),
-      chemical: hazardSchema.optional(),
+      radioactivity: hazardSchema
+        .meta({ description: "Radioactivity hazard of the sample." })
+        .optional(),
+      asbestos: hazardSchema
+        .meta({ description: "Asbestos hazard of the sample." })
+        .optional(),
+      chemical: hazardSchema
+        .meta({ description: "Chemical hazard of the sample." })
+        .optional(),
     })
+    .meta({ description: "Hazards handling the sample presents." })
     .optional(),
   experiment: z
     .strictObject({
-      startingMaterial: startingMaterialSchema.optional(),
-      startingMaterialNature: startingMaterialNatureSchema.optional(),
-      startingMaterialComposition: freeTextSchema.optional(),
-      finalProduct: finalProductSchema.optional(),
-      experimentType: conceptSchema(
-        "experiment-type",
-        experimentTypeSchema,
-      ).optional(),
-      duration: quantitySchema(experimentDurationUnitSchema).optional(),
-      temperature: quantitySchema(temperatureUnitSchema).optional(),
-      pressure: quantitySchema(pressureUnitSchema).optional(),
-      purpose: freeTextSchema.optional(),
-      equipment: freeTextSchema.optional(),
+      startingMaterial: startingMaterialSchema
+        .meta({ description: "Material the synthesis started from." })
+        .optional(),
+      startingMaterialNature: startingMaterialNatureSchema
+        .meta({ description: "Nature of that starting material." })
+        .optional(),
+      startingMaterialComposition: freeTextSchema
+        .meta({ description: "Composition of that starting material." })
+        .optional(),
+      finalProduct: finalProductSchema
+        .meta({ description: "Product the synthesis yielded." })
+        .optional(),
+      experimentType: conceptSchema("experiment-type", experimentTypeSchema)
+        .meta({
+          description:
+            "Type of experiment the sample was synthesized by, the value the reverse mapping reads.",
+        })
+        .optional(),
+      duration: quantitySchema(experimentDurationUnitSchema)
+        .meta({ description: "How long the synthesis lasted." })
+        .optional(),
+      temperature: quantitySchema(temperatureUnitSchema)
+        .meta({ description: "Temperature the synthesis ran at." })
+        .optional(),
+      pressure: quantitySchema(pressureUnitSchema)
+        .meta({ description: "Pressure the synthesis ran at." })
+        .optional(),
+      purpose: freeTextSchema
+        .meta({ description: "Purpose the sample was synthesized for." })
+        .optional(),
+      equipment: freeTextSchema
+        .meta({ description: "Equipment the synthesis used." })
+        .optional(),
     })
+    .meta({ description: "Synthesis parameters of a synthetic sample." })
     .optional(),
 });
 
