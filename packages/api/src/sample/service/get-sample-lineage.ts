@@ -1,0 +1,172 @@
+import type { SampleLineage } from "@projet-igsn/domain/sample/lineage/model";
+
+import { sampleLineageSchema } from "@projet-igsn/domain/sample/lineage/model";
+import { sql } from "kysely";
+
+import type { DB } from "../../db.ts";
+
+import { type Transactional } from "../../transaction.ts";
+
+const MAX_LINEAGE_DEPTH = 10;
+const MAX_LINEAGE_EDGES = 500;
+
+type LineageRow = {
+  parent_id: string;
+  child_id: string;
+  generation: number;
+  igsn: string;
+  name: string;
+  material: string | null;
+  tombstone: boolean;
+};
+
+export async function getSampleLineage(
+  db: Transactional<DB>,
+  igsn: string,
+): Promise<SampleLineage | null> {
+  const root = await db
+    .selectFrom("sample")
+    .select(["id", "igsn", "name", "material"])
+    .where("igsn", "=", igsn)
+    .where("status", "in", ["published", "withdrawn"])
+    .executeTakeFirst();
+  if (!root) return null;
+
+  // ADR 0033: a published sample names its relatives whatever their status, draft excepted.
+  const rows = (await db
+    .withRecursive(
+      "ancestor(parent_id, child_id, generation, igsn, name, material, tombstone)",
+      (qb) =>
+        qb
+          .selectFrom("sample_parent")
+          .innerJoin("sample", (join) =>
+            join
+              .onRef("sample.id", "=", "sample_parent.parent_id")
+              .on("sample.status", "<>", "draft"),
+          )
+          .select([
+            "sample_parent.parent_id",
+            "sample_parent.sample_id as child_id",
+            sql<number>`-1`.as("generation"),
+            "sample.igsn",
+            "sample.name",
+            "sample.material",
+            sql<boolean>`sample.status = 'tombstone'`.as("tombstone"),
+          ])
+          .where("sample_parent.sample_id", "=", root.id)
+          .union(
+            qb
+              .selectFrom("ancestor")
+              .innerJoin(
+                "sample_parent",
+                "sample_parent.sample_id",
+                "ancestor.parent_id",
+              )
+              .innerJoin("sample", (join) =>
+                join
+                  .onRef("sample.id", "=", "sample_parent.parent_id")
+                  .on("sample.status", "<>", "draft"),
+              )
+              .select([
+                "sample_parent.parent_id",
+                "sample_parent.sample_id as child_id",
+                sql<number>`ancestor.generation - 1`.as("generation"),
+                "sample.igsn",
+                "sample.name",
+                "sample.material",
+                sql<boolean>`sample.status = 'tombstone'`.as("tombstone"),
+              ])
+              .where(sql<boolean>`ancestor.generation > ${-MAX_LINEAGE_DEPTH}`),
+          ),
+    )
+    .withRecursive(
+      "descendant(parent_id, child_id, generation, igsn, name, material, tombstone)",
+      (qb) =>
+        qb
+          .selectFrom("sample_parent")
+          .innerJoin("sample", (join) =>
+            join
+              .onRef("sample.id", "=", "sample_parent.sample_id")
+              .on("sample.status", "<>", "draft"),
+          )
+          .select([
+            "sample_parent.parent_id",
+            "sample_parent.sample_id as child_id",
+            sql<number>`1`.as("generation"),
+            "sample.igsn",
+            "sample.name",
+            "sample.material",
+            sql<boolean>`sample.status = 'tombstone'`.as("tombstone"),
+          ])
+          .where("sample_parent.parent_id", "=", root.id)
+          .union(
+            qb
+              .selectFrom("descendant")
+              .innerJoin(
+                "sample_parent",
+                "sample_parent.parent_id",
+                "descendant.child_id",
+              )
+              .innerJoin("sample", (join) =>
+                join
+                  .onRef("sample.id", "=", "sample_parent.sample_id")
+                  .on("sample.status", "<>", "draft"),
+              )
+              .select([
+                "sample_parent.parent_id",
+                "sample_parent.sample_id as child_id",
+                sql<number>`descendant.generation + 1`.as("generation"),
+                "sample.igsn",
+                "sample.name",
+                "sample.material",
+                sql<boolean>`sample.status = 'tombstone'`.as("tombstone"),
+              ])
+              .where(
+                sql<boolean>`descendant.generation < ${MAX_LINEAGE_DEPTH}`,
+              ),
+          ),
+    )
+    .selectFrom("ancestor")
+    .selectAll()
+    .unionAll((eb) => eb.selectFrom("descendant").selectAll())
+    .orderBy("generation")
+    .orderBy("name")
+    .limit(MAX_LINEAGE_EDGES)
+    .execute()) as LineageRow[];
+
+  const nodes = new Map([
+    [root.id, { ...root, igsn, generation: 0, tombstone: false }],
+  ]);
+  for (const row of rows) {
+    const id = row.generation < 0 ? row.parent_id : row.child_id;
+    const known = nodes.get(id);
+    if (known && Math.abs(known.generation) <= Math.abs(row.generation)) {
+      continue;
+    }
+    nodes.set(id, {
+      id,
+      igsn: row.igsn,
+      name: row.name,
+      material: row.material,
+      generation: row.generation,
+      tombstone: row.tombstone,
+    });
+  }
+
+  const edges = new Map(
+    rows
+      .filter((row) => nodes.has(row.parent_id) && nodes.has(row.child_id))
+      .map((row) => [
+        `${row.parent_id}/${row.child_id}`,
+        { parentId: row.parent_id, childId: row.child_id },
+      ]),
+  );
+
+  return sampleLineageSchema.parse({
+    nodes: [...nodes.values()].sort((a, b) => a.generation - b.generation),
+    edges: [...edges.values()],
+    truncated:
+      rows.length === MAX_LINEAGE_EDGES ||
+      rows.some((row) => Math.abs(row.generation) === MAX_LINEAGE_DEPTH),
+  });
+}

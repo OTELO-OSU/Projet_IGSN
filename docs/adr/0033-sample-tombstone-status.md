@@ -38,6 +38,8 @@ A published or withdrawn sample keeps a permanent IGSN (ADR 0032), so it cannot 
 
 A published sub-sample's public page names its parent and links to the parent's IGSN page whatever the parent's status (product decision, over redacting the parent publicly). So a tombstoned parent's `name`, `igsn` and `material` stay visible through a published child, even though the parent's own page still 404s. The 404 on follow-through holds; only the "leaks nothing" claim above no longer holds without this exception.
 
+**Carried forward 2026-09-15 by [ADR 0043](0043-public-lineage-visibility.md)**: the lineage graph replaced this direct parent link and keeps the exception, naming any ancestor that left draft. Descendants are published only, so the exception runs upward alone.
+
 ## Consequences
 
 - An owner without management reach loses the sample from their list and cannot open its edit page, even though they created it: tombstoning outranks ownership.

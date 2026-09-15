@@ -43,11 +43,13 @@
 
 ## Publish constraints
 
-A sample's `status` (`draft | published | withdrawn | tombstone`) drives three separate predicates: `status <> 'draft'` (`hasPermanentIgsn` in `domain/sample/publication/has-permanent-igsn.ts`, inline in SQL) gates IGSN permanence (frozen fields, contributor edit rights, manual-group deletion/detach), `status = 'published'` gates public visibility (search, contributor facet, manual-group facet), `status in ('published', 'withdrawn')` gates public resolution at `GET /samples/:igsn` (also the contact form and attachments); see ADR 0032 and ADR 0033.
+A sample's `status` (`draft | published | withdrawn | tombstone`) drives three separate predicates: `status <> 'draft'` (`hasPermanentIgsn` in `domain/sample/publication/has-permanent-igsn.ts`, inline in SQL) gates IGSN permanence (frozen fields, contributor edit rights, manual-group deletion/detach), `status = 'published'` gates public visibility (search, contributor facet, manual-group facet), `status in ('published', 'withdrawn')` gates public resolution at `GET /samples/:igsn` (also the contact form, the attachments and the lineage graph's root); see ADR 0032 and ADR 0033.
 
 `domain/sample/publication/withdrawn-sample.ts` (`toWithdrawnSample`) is the only place that redacts a withdrawn sample, a field-by-field whitelist so a new `Sample` field stays private by default, and `public-sample.ts` (`toPublicSample`) picks it by status for the public `GET /samples/:igsn`; see ADR 0032.
 
 A published sample is public whole but for the fields `domain/sample/publication/redact-archive-contacts.ts` drops (the two archive contacts), called by `toPublicSample` and by the public list route, the two public payloads; the key-authenticated `/service` list emits them, so they are kept from the public web rather than admin-only.
+
+`GET /samples/:igsn/lineage` walks both directions under one rule: a relative appears if it left draft (`hasPermanentIgsn`, inline in SQL), carrying ADR 0033's parent exception onto the whole graph, a draft relative being absent and stopping traversal past it. The root resolves for `published` and `withdrawn` alike, the pair `GET /samples/:igsn` answers, and a tombstoned root 404s; a tombstoned node carries a `tombstone` flag so the graph names it without linking to its 404; see ADR 0043.
 
 A sample carries 0, 1 or 2 parents, capped in `createSampleSchema` and `coreSampleSchema`, set at creation and never edited; two parents force a synthetic material (frozen and location-less), see ADR 0039.
 

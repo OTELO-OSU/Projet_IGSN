@@ -73,6 +73,15 @@ test.describe("sub samples", () => {
     await detail.goto(subSampleIgsn);
     await detail.expectSample(subSampleName, subSampleIgsn);
     await detail.expectParent(parent.name, parent.igsn);
+    await detail.expectLineageGraph(2);
+
+    await detail.goto(parent.igsn);
+    await detail.expectChild(subSampleName, subSampleIgsn);
+    await detail.expectLineageGraph(2);
+
+    await detail.goto(subSampleIgsn);
+    await detail.openParentFromGraph(parent.name);
+    await detail.expectSample(parent.name, parent.igsn);
   });
 
   test("a stranger declares a sub sample from the public page, making the parent owner a contributor", async ({
