@@ -14,7 +14,11 @@ describe("SyntheticDetailsView", () => {
           finalProduct: "glass",
           experimentType: "fusion",
           experimentDuration: { value: 30, unit: "minute" },
-          synthesisDate: { start: "2020-01-01", end: "2020-01-05" },
+          synthesisDate: {
+            precision: "day",
+            start: "2020-01-01",
+            end: "2020-01-05",
+          },
           operatorName: "Marie Curie",
           operatorOrcid: "0000-0002-1825-0097",
           researchStructure: ["043htjv09", "00z54nq84"],
@@ -62,13 +66,38 @@ describe("SyntheticDetailsView", () => {
     const screen = await render(
       <SyntheticDetailsView
         syntheticDetails={{
-          synthesisDate: { start: "2020-01-01", end: "2020-01-01" },
+          synthesisDate: {
+            precision: "day",
+            start: "2020-01-01",
+            end: "2020-01-01",
+          },
         }}
       />,
     );
 
     await expect
       .element(screen.getByText("2020-01-01", { exact: true }))
+      .toBeInTheDocument();
+  });
+
+  it("should render the synthesis date time and time zone at hour precision", async () => {
+    const screen = await render(
+      <SyntheticDetailsView
+        syntheticDetails={{
+          synthesisDate: {
+            precision: "hour",
+            start: "2024-03-05T14:30",
+            end: "2024-03-06T09:05",
+            timeZone: "Europe/Paris",
+          },
+        }}
+      />,
+    );
+
+    await expect
+      .element(
+        screen.getByText("2024-03-05 14:30 - 2024-03-06 09:05 (Europe/Paris)"),
+      )
       .toBeInTheDocument();
   });
 });
