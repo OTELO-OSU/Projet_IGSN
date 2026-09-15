@@ -1,4 +1,4 @@
-import type { DatePrecision } from "@projet-igsn/domain/sample/description/collection-date";
+import type { DatePrecision } from "@projet-igsn/domain/sample/date-range";
 import type { MassUnit } from "@projet-igsn/domain/sample/description/mass-unit";
 import type { Description } from "@projet-igsn/domain/sample/description/model";
 import type { SizeUnit } from "@projet-igsn/domain/sample/description/size-unit";
@@ -6,6 +6,7 @@ import type { VolumeUnit } from "@projet-igsn/domain/sample/description/volume-u
 
 import {
   composeDateRange,
+  type DateRangeCandidate,
   toDateRangeDraft,
 } from "#/samples/compose-date-range.ts";
 import {
@@ -35,14 +36,7 @@ export type DescriptionDraft = {
 };
 
 type DescriptionCandidate = {
-  collectionDate:
-    | {
-        precision: DatePrecision;
-        start: string | undefined;
-        end: string | undefined;
-        timeZone: string | undefined;
-      }
-    | undefined;
+  collectionDate: DateRangeCandidate;
   oriented: boolean;
   orientationExplanation: string | undefined;
   openDescription: string | undefined;

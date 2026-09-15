@@ -25,16 +25,20 @@ function omitNull(parts: Record<string, unknown>) {
 
 function toDateRange(
   sampleId: string,
-  start: string | null,
-  end: string | null,
-  precision: string | null,
-  timeZone: string | null,
+  field: string,
+  columns: {
+    start: string | null;
+    end: string | null;
+    precision: string | null;
+    timeZone: string | null;
+  },
 ) {
+  const { start, end, timeZone } = columns;
   if (start === null || end === null) return null;
-  if (precision !== "hour") return { precision: "day", start, end };
+  if (columns.precision !== "hour") return { precision: "day", start, end };
   if (timeZone === null) {
     throw new Error(
-      `sample ${sampleId} has an hour-precision date without a time zone`,
+      `sample ${sampleId} has an hour-precision ${field} without a time zone`,
     );
   }
   return { precision: "hour", start, end, timeZone };
@@ -42,13 +46,12 @@ function toDateRange(
 
 function toDescription(row: Selectable<DB["sample"]>) {
   return prune({
-    collectionDate: toDateRange(
-      row.id,
-      row.collection_date_start,
-      row.collection_date_end,
-      row.collection_date_precision,
-      row.collection_date_time_zone,
-    ),
+    collectionDate: toDateRange(row.id, "collection date", {
+      start: row.collection_date_start,
+      end: row.collection_date_end,
+      precision: row.collection_date_precision,
+      timeZone: row.collection_date_time_zone,
+    }),
     oriented: row.oriented,
     orientationExplanation: row.orientation_explanation,
     openDescription: row.open_description,
@@ -161,13 +164,12 @@ function toSyntheticDetails(row: Selectable<DB["sample"]>) {
       row.syn_experiment_duration_value,
       row.syn_experiment_duration_unit,
     ),
-    synthesisDate: toDateRange(
-      row.id,
-      row.syn_synthesis_date_start,
-      row.syn_synthesis_date_end,
-      row.syn_synthesis_date_precision,
-      row.syn_synthesis_date_time_zone,
-    ),
+    synthesisDate: toDateRange(row.id, "synthesis date", {
+      start: row.syn_synthesis_date_start,
+      end: row.syn_synthesis_date_end,
+      precision: row.syn_synthesis_date_precision,
+      timeZone: row.syn_synthesis_date_time_zone,
+    }),
     operatorName: row.syn_operator_name,
     operatorOrcid: row.syn_operator_orcid,
     researchStructure: row.syn_research_structure,

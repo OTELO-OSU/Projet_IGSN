@@ -4,6 +4,7 @@ import type { CoreSampleBody } from "./core-sample-schema.ts";
 
 import { orNull } from "./core-optional.ts";
 import { fromRorUri } from "./core-production-schema.ts";
+import { fromCoreDateRange } from "./from-core-date-range.ts";
 import { responsibilityFinders } from "./from-core-responsibility.ts";
 import { fromQuantity } from "./quantity.ts";
 
@@ -11,19 +12,12 @@ function fromCoreSynthesisDate(
   step: CoreProcessStep | undefined,
 ): SyntheticDetails["synthesisDate"] {
   if (step?.timestampStart == null || step.timestampEnd == null) return null;
-  if (step.timestampPrecision === "hour") {
-    return {
-      precision: "hour",
-      start: step.timestampStart,
-      end: step.timestampEnd,
-      timeZone: step.timestampTimeZone ?? "",
-    };
-  }
-  return {
-    precision: "day",
+  return fromCoreDateRange({
     start: step.timestampStart,
     end: step.timestampEnd,
-  };
+    precision: step.timestampPrecision,
+    timeZone: step.timestampTimeZone,
+  });
 }
 
 export function fromCoreSyntheticDetails(

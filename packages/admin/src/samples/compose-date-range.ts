@@ -5,7 +5,7 @@ import type {
 
 import { draftDefault, type DraftOptions } from "#/samples/draft-defaults.ts";
 
-export type DateRangeDraft = {
+type DateRangeDraft = {
   start: string | undefined;
   end: string | undefined;
   precision: DatePrecision;
@@ -21,6 +21,8 @@ export function composeDateRange(draft: DateRangeDraft) {
     timeZone: draft.precision === "hour" ? draft.timeZone : undefined,
   };
 }
+
+export type DateRangeCandidate = ReturnType<typeof composeDateRange>;
 
 export function toDateRangeDraft(
   range: DateRange | null | undefined,

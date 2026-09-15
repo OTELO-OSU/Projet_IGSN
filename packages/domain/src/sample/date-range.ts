@@ -3,7 +3,7 @@ import { z } from "zod";
 import { timeZoneSchema } from "../date/time-zone.ts";
 import { isFutureDate } from "./description/is-future-date.ts";
 
-export const dateRangeIssues =
+const dateRangeIssues =
   (codePrefix: string) =>
   (period: { start: string; end: string }, ctx: z.RefinementCtx): void => {
     if (period.start > period.end) {

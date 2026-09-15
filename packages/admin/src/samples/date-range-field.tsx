@@ -3,29 +3,24 @@ import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combob
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
+import { getBy } from "@tanstack/react-form";
 import { useState } from "react";
 
+import { m } from "#/paraglide/messages.js";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
-
-type TimeLabels = {
-  modeLabel: string;
-  zoneLabel: string;
-  zonePlaceholder: string;
-  zoneSearchPlaceholder: string;
-  zoneEmptyText: string;
-};
 
 type DateRangeFieldProps = {
   prefix: "description.collectionDate" | "syntheticDetails.synthesisDate";
   id: string;
   groupLabel: string;
   rangeModeLabel: string;
+  timeModeLabel: string;
+  timeZoneLabel: string;
   singleLabel: string;
   startLabel: string;
   endLabel: string;
   identicalMessage: () => string;
   requiredToPublish?: boolean;
-  time?: TimeLabels;
 };
 
 const timeZoneItems = toComboboxItems(
@@ -38,12 +33,13 @@ export function DateRangeField({
   id,
   groupLabel,
   rangeModeLabel,
+  timeModeLabel,
+  timeZoneLabel,
   singleLabel,
   startLabel,
   endLabel,
   identicalMessage,
   requiredToPublish = true,
-  time,
 }: DateRangeFieldProps) {
   const startName = `${prefix}Start` as const;
   const endName = `${prefix}End` as const;
@@ -69,18 +65,19 @@ export function DateRangeField({
   };
 
   const togglePrecision = (checked: boolean) => {
-    const names = [startName, endName];
-    const bounds = names.map((name) => form.getFieldValue(name));
+    // Snapshot both bounds first: setting the start rewrites the end in single-date mode.
+    const bounds = [startName, endName].map(
+      (name) => [name, form.getFieldValue(name)] as const,
+    );
     form.setFieldValue(precisionName, checked ? "hour" : "day");
-    names.forEach((name, index) => {
-      const bound = bounds[index];
+    for (const [name, bound] of bounds) {
       if (bound !== undefined) {
         form.setFieldValue(
           name,
           checked ? `${bound}T00:00` : bound.slice(0, 10),
         );
       }
-    });
+    }
     if (checked && !form.getFieldValue(timeZoneName)) {
       form.setFieldValue(
         timeZoneName,
@@ -99,119 +96,114 @@ export function DateRangeField({
   };
 
   return (
-    <form.Field name={precisionName}>
-      {(precisionField) => {
-        const isHour =
-          time !== undefined && precisionField.state.value === "hour";
-        return (
-          <div
-            role="group"
-            aria-labelledby={`${id}-label`}
-            className="grid gap-2"
-          >
-            <div className="flex items-center gap-4">
-              <span
-                id={`${id}-label`}
-                className="text-sm leading-none font-medium"
-              >
-                {withRequired(groupLabel, requiredToPublish)}
-              </span>
-              <div className="flex items-center gap-2">
-                <Switch
-                  id={`${id}-mode`}
-                  checked={isRange}
-                  onCheckedChange={toggleRange}
-                  disabled={isDateDisabled}
-                />
-                <Label htmlFor={`${id}-mode`}>{rangeModeLabel}</Label>
-              </div>
-              {time ? (
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id={`${id}-time-mode`}
-                    checked={isHour}
-                    onCheckedChange={togglePrecision}
-                    disabled={isDateDisabled}
-                  />
-                  <Label htmlFor={`${id}-time-mode`}>{time.modeLabel}</Label>
-                </div>
-              ) : null}
+    <form.Subscribe
+      selector={(state) => getBy(state.values, precisionName) === "hour"}
+    >
+      {(isHour) => (
+        <div
+          role="group"
+          aria-labelledby={`${id}-label`}
+          className="grid gap-2"
+        >
+          <div className="flex items-center gap-4">
+            <span
+              id={`${id}-label`}
+              className="text-sm leading-none font-medium"
+            >
+              {withRequired(groupLabel, requiredToPublish)}
+            </span>
+            <div className="flex items-center gap-2">
+              <Switch
+                id={`${id}-mode`}
+                checked={isRange}
+                onCheckedChange={toggleRange}
+                disabled={isDateDisabled}
+              />
+              <Label htmlFor={`${id}-mode`}>{rangeModeLabel}</Label>
             </div>
-            <div className="flex flex-wrap items-start gap-4">
-              {isRange ? (
-                <>
-                  <div className="flex-1">
-                    <form.AppField
-                      name={startName}
-                      validators={{
-                        onChangeListenTo: [endName],
-                        onChange: identicalRange,
-                      }}
-                    >
-                      {(field) => (
-                        <field.DateField
-                          label={startLabel}
-                          requiredToPublish
-                          withTime={isHour}
-                        />
-                      )}
-                    </form.AppField>
-                  </div>
-                  <div className="flex-1">
-                    <form.AppField
-                      name={endName}
-                      validators={{
-                        onChangeListenTo: [startName],
-                        onChange: identicalRange,
-                      }}
-                    >
-                      {(field) => (
-                        <field.DateField
-                          label={endLabel}
-                          requiredToPublish
-                          withTime={isHour}
-                        />
-                      )}
-                    </form.AppField>
-                  </div>
-                </>
-              ) : (
+            <div className="flex items-center gap-2">
+              <Switch
+                id={`${id}-time-mode`}
+                checked={isHour}
+                onCheckedChange={togglePrecision}
+                disabled={isDateDisabled}
+              />
+              <Label htmlFor={`${id}-time-mode`}>{timeModeLabel}</Label>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-start gap-4">
+            {isRange ? (
+              <>
                 <div className="flex-1">
                   <form.AppField
                     name={startName}
-                    listeners={{
-                      onChange: ({ value }) =>
-                        form.setFieldValue(endName, value),
+                    validators={{
+                      onChangeListenTo: [endName],
+                      onChange: identicalRange,
                     }}
                   >
                     {(field) => (
                       <field.DateField
-                        label={singleLabel}
+                        label={startLabel}
                         requiredToPublish
                         withTime={isHour}
                       />
                     )}
                   </form.AppField>
                 </div>
-              )}
-            </div>
-            {time && isHour ? (
-              <form.AppField name={timeZoneName}>
-                {(field) => (
-                  <field.ComboboxField
-                    label={time.zoneLabel}
-                    requiredToPublish
-                    items={timeZoneItems}
-                    placeholder={time.zonePlaceholder}
-                    searchPlaceholder={time.zoneSearchPlaceholder}
-                    emptyText={time.zoneEmptyText}
-                  />
-                )}
-              </form.AppField>
-            ) : null}
+                <div className="flex-1">
+                  <form.AppField
+                    name={endName}
+                    validators={{
+                      onChangeListenTo: [startName],
+                      onChange: identicalRange,
+                    }}
+                  >
+                    {(field) => (
+                      <field.DateField
+                        label={endLabel}
+                        requiredToPublish
+                        withTime={isHour}
+                      />
+                    )}
+                  </form.AppField>
+                </div>
+              </>
+            ) : (
+              <div className="flex-1">
+                <form.AppField
+                  name={startName}
+                  listeners={{
+                    onChange: ({ value }) => form.setFieldValue(endName, value),
+                  }}
+                >
+                  {(field) => (
+                    <field.DateField
+                      label={singleLabel}
+                      requiredToPublish
+                      withTime={isHour}
+                    />
+                  )}
+                </form.AppField>
+              </div>
+            )}
           </div>
-        );
-      }}
-    </form.Field>
+          {isHour ? (
+            <form.AppField name={timeZoneName}>
+              {(field) => (
+                <field.ComboboxField
+                  label={timeZoneLabel}
+                  requiredToPublish
+                  items={timeZoneItems}
+                  placeholder={m.time_zone_placeholder()}
+                  searchPlaceholder={m.time_zone_search_placeholder()}
+                  emptyText={m.time_zone_empty()}
+                />
+              )}
+            </form.AppField>
+          ) : null}
+        </div>
+      )}
+    </form.Subscribe>
   );
 }

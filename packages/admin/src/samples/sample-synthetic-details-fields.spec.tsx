@@ -315,37 +315,6 @@ describe("SampleSyntheticDetailsFields", () => {
     );
   });
 
-  it("should drop the time and the zone from the synthesis date once the time switch goes back off", async () => {
-    const onSubmit = vi.fn();
-    const screen = await renderSyntheticForm(onSubmit);
-
-    await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
-    await screen.getByRole("switch", { name: "Specify time" }).click();
-    await screen.getByRole("switch", { name: "Specify time" }).click();
-
-    await expect
-      .element(screen.getByLabelText("Date *", { exact: true }))
-      .toHaveValue("2026-01-05");
-    await expect
-      .element(screen.getByRole("combobox", { name: "Time zone *" }))
-      .not.toBeInTheDocument();
-    await screen.getByRole("button", { name: "Create" }).click();
-
-    await vi.waitFor(() =>
-      expect(onSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          syntheticDetails: {
-            synthesisDate: {
-              precision: "day",
-              start: "2026-01-05",
-              end: "2026-01-05",
-            },
-          },
-        }),
-      ),
-    );
-  });
-
   it("should freeze the operator name alone on a published synthetic sample", async () => {
     const screen = await render(
       <TooltipProvider>

@@ -13,6 +13,7 @@ import { needsStartingMaterialComposition } from "@projet-igsn/domain/sample/syn
 
 import {
   composeDateRange,
+  type DateRangeCandidate,
   toDateRangeDraft,
 } from "#/samples/compose-date-range.ts";
 import {
@@ -53,14 +54,7 @@ type SyntheticDetailsCandidate = {
   finalProduct: FinalProduct | undefined;
   experimentType: ExperimentType | undefined;
   experimentDuration: MeasurementCandidate<ExperimentDurationUnit> | undefined;
-  synthesisDate:
-    | {
-        precision: DatePrecision;
-        start: string | undefined;
-        end: string | undefined;
-        timeZone: string | undefined;
-      }
-    | undefined;
+  synthesisDate: DateRangeCandidate;
   operatorName: string | undefined;
   operatorOrcid: string | undefined;
   researchStructure: string[] | undefined;

@@ -125,6 +125,21 @@ const coreProjectSchema = z.strictObject({
 
 const coreTimestampSchema = z.union([z.iso.date(), localDateTimeSchema]);
 
+const hourPrecisionHasTimeZone = (
+  ctx: z.RefinementCtx,
+  precision: string | undefined,
+  timeZone: string | undefined,
+  path: string,
+): void => {
+  if ((precision === "hour") !== (timeZone != null)) {
+    ctx.addIssue({
+      code: "custom",
+      path: [path],
+      message: "an hour precision date carries its time zone, a day does not",
+    });
+  }
+};
+
 export const coreProcessStepSchema = z
   .strictObject({
     stepType: z.literal("Synthesis"),
@@ -143,16 +158,12 @@ export const coreProcessStepSchema = z
         message: "a step timestamp carries its precision",
       });
     }
-    if (
-      (step.timestampPrecision === "hour") !==
-      (step.timestampTimeZone != null)
-    ) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["timestampTimeZone"],
-        message: "an hour precision date carries its time zone, a day does not",
-      });
-    }
+    hourPrecisionHasTimeZone(
+      ctx,
+      step.timestampPrecision,
+      step.timestampTimeZone,
+      "timestampTimeZone",
+    );
   });
 
 export type CoreProcessStep = z.infer<typeof coreProcessStepSchema>;
@@ -182,14 +193,12 @@ export const coreProductionSchema = z
     location: coreLocationSchema.optional(),
   })
   .superRefine((production, ctx) => {
-    const hourly = production.collectionDatePrecision === "hour";
-    if (hourly !== (production.collectionDateTimeZone != null)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["collectionDateTimeZone"],
-        message: "an hour precision date carries its time zone, a day does not",
-      });
-    }
+    hourPrecisionHasTimeZone(
+      ctx,
+      production.collectionDatePrecision,
+      production.collectionDateTimeZone,
+      "collectionDateTimeZone",
+    );
   });
 
 export type CoreProduction = z.infer<typeof coreProductionSchema>;

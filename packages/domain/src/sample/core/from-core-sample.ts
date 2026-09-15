@@ -12,6 +12,7 @@ import { orNull } from "./core-optional.ts";
 import { parentIgsnOf } from "./core-relation-schema.ts";
 import { contextCategoryFinders } from "./from-core-context-category.ts";
 import { fromCoreCondition, fromCoreRepository } from "./from-core-curation.ts";
+import { fromCoreDateRange } from "./from-core-date-range.ts";
 import { fromCoreAge, fromCoreSecurity } from "./from-core-extensions.ts";
 import { fromCoreLocation } from "./from-core-location.ts";
 import { fromCoreRelation } from "./from-core-relation.ts";
@@ -68,19 +69,12 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
       specificName: body.identification.localName ?? null,
       location: fromCoreLocation(production.location),
       description: {
-        collectionDate:
-          production.collectionDatePrecision === "hour"
-            ? {
-                precision: "hour",
-                start: production.collection_date_start,
-                end: production.collection_date_end,
-                timeZone: production.collectionDateTimeZone ?? "",
-              }
-            : {
-                precision: "day",
-                start: production.collection_date_start,
-                end: production.collection_date_end,
-              },
+        collectionDate: fromCoreDateRange({
+          start: production.collection_date_start,
+          end: production.collection_date_end,
+          precision: production.collectionDatePrecision,
+          timeZone: production.collectionDateTimeZone,
+        }),
         oriented: physical?.orientation?.oriented ?? null,
         orientationExplanation: physical?.orientation?.description ?? null,
         openDescription: physical?.openPhysicalDescription ?? null,

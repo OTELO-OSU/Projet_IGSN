@@ -12,7 +12,7 @@ ADR 0034 gave `collectionDate` an explicit `day | hour` precision and a required
 
 ## Decision
 
-**`syntheticDetails.synthesisDate` becomes the same discriminated union as `collectionDate`.** `domain/sample/date-range.ts` now holds one `dateRangeSchema(codePrefix)` factory carrying the union; `description/collection-date.ts` re-exports it, so `CollectionDate` is an alias of `DateRange`. `day` keeps `YYYY-MM-DD` bounds, `hour` adds `YYYY-MM-DDTHH:mm` wall-clock bounds and a required IANA `timeZone`, stored as entered with no conversion, exactly as ADR 0034 decided.
+**`syntheticDetails.synthesisDate` becomes the same discriminated union as `collectionDate`.** `domain/sample/date-range.ts` now holds one `dateRangeSchema(codePrefix)` factory carrying the union, and both dates instantiate it with their own error-code prefix. `day` keeps `YYYY-MM-DD` bounds, `hour` adds `YYYY-MM-DDTHH:mm` wall-clock bounds and a required IANA `timeZone`, stored as entered with no conversion, exactly as ADR 0034 decided.
 
 Persistence mirrors the collection-date migration: the two `syn_synthesis_date_*` columns become `text`, and `syn_synthesis_date_precision` / `syn_synthesis_date_time_zone` are added with the same CHECK.
 
