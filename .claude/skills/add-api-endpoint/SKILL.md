@@ -59,7 +59,8 @@ routes. Each entity is a folder in both.
 6. **Refactor** as it grows (coding-style rule).
 
 - A `/service` route is the one exception to step 4: it is declared with `createRoute` + `app.openapi` from `@hono/zod-openapi`, never a plain `new Hono()` chain (ADR 0041).
-- Declare its request schemas and every status it answers, or `openapi.spec.ts` fails the build.
+- Declare its request schemas and every status it answers: an undeclared route fails `openapi.spec.ts`, and an undeclared status the handler returns is a type error.
+- Nothing checks a status the middleware answers (400, 415 and 422 from the validation hook, 403 and 429 from the guards), so declare those by hand.
 
 ## Verification gate
 
