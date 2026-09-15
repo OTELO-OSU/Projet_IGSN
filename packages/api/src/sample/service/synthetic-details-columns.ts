@@ -3,6 +3,7 @@ import type { SyntheticDetails } from "@projet-igsn/domain/sample/synthetic-deta
 export function syntheticDetailsColumns(
   details: SyntheticDetails | null | undefined,
 ) {
+  const synthesisDate = details?.synthesisDate;
   return {
     syn_starting_material: details?.startingMaterial ?? null,
     syn_starting_material_nature: details?.startingMaterialNature ?? null,
@@ -12,8 +13,11 @@ export function syntheticDetailsColumns(
     syn_experiment_type: details?.experimentType ?? null,
     syn_experiment_duration_value: details?.experimentDuration?.value ?? null,
     syn_experiment_duration_unit: details?.experimentDuration?.unit ?? null,
-    syn_synthesis_date_start: details?.synthesisDate?.start ?? null,
-    syn_synthesis_date_end: details?.synthesisDate?.end ?? null,
+    syn_synthesis_date_start: synthesisDate?.start ?? null,
+    syn_synthesis_date_end: synthesisDate?.end ?? null,
+    syn_synthesis_date_precision: synthesisDate?.precision ?? null,
+    syn_synthesis_date_time_zone:
+      synthesisDate?.precision === "hour" ? synthesisDate.timeZone : null,
     syn_operator_name: details?.operatorName ?? null,
     syn_operator_orcid: details?.operatorOrcid ?? null,
     syn_research_structure: details?.researchStructure ?? null,

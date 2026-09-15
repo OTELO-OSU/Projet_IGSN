@@ -1,7 +1,6 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { Selectable } from "kysely";
 
-import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { type Sample, sampleSchema } from "@projet-igsn/domain/sample/sample";
 import { scientificContextSchema } from "@projet-igsn/domain/sample/scientific-context/model";
 
@@ -24,24 +23,32 @@ function omitNull(parts: Record<string, unknown>) {
   );
 }
 
-function toCollectionDate(row: Selectable<DB["sample"]>) {
-  const { collection_date_start: start, collection_date_end: end } = row;
+function toDateRange(
+  sampleId: string,
+  start: string | null,
+  end: string | null,
+  precision: string | null,
+  timeZone: string | null,
+) {
   if (start === null || end === null) return null;
-  if (row.collection_date_precision === "hour") {
-    const timeZone = row.collection_date_time_zone;
-    if (timeZone === null) {
-      throw new Error(
-        `sample ${row.id} has an hour-precision collection date without a time zone`,
-      );
-    }
-    return { precision: "hour", start, end, timeZone };
+  if (precision !== "hour") return { precision: "day", start, end };
+  if (timeZone === null) {
+    throw new Error(
+      `sample ${sampleId} has an hour-precision date without a time zone`,
+    );
   }
-  return { precision: "day", start, end };
+  return { precision: "hour", start, end, timeZone };
 }
 
 function toDescription(row: Selectable<DB["sample"]>) {
   return prune({
-    collectionDate: toCollectionDate(row),
+    collectionDate: toDateRange(
+      row.id,
+      row.collection_date_start,
+      row.collection_date_end,
+      row.collection_date_precision,
+      row.collection_date_time_zone,
+    ),
     oriented: row.oriented,
     orientationExplanation: row.orientation_explanation,
     openDescription: row.open_description,
@@ -154,14 +161,13 @@ function toSyntheticDetails(row: Selectable<DB["sample"]>) {
       row.syn_experiment_duration_value,
       row.syn_experiment_duration_unit,
     ),
-    synthesisDate:
-      row.syn_synthesis_date_start !== null &&
-      row.syn_synthesis_date_end !== null
-        ? {
-            start: formatDate(row.syn_synthesis_date_start),
-            end: formatDate(row.syn_synthesis_date_end),
-          }
-        : null,
+    synthesisDate: toDateRange(
+      row.id,
+      row.syn_synthesis_date_start,
+      row.syn_synthesis_date_end,
+      row.syn_synthesis_date_precision,
+      row.syn_synthesis_date_time_zone,
+    ),
     operatorName: row.syn_operator_name,
     operatorOrcid: row.syn_operator_orcid,
     researchStructure: row.syn_research_structure,

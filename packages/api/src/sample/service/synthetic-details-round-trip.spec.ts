@@ -24,7 +24,11 @@ describe("sample synthetic details persistence", () => {
         finalProduct: "mineral" as const,
         experimentType: "crystallization_dynamic" as const,
         experimentDuration: { value: 12, unit: "hour" as const },
-        synthesisDate: { start: "2025-01-10", end: "2025-01-12" },
+        synthesisDate: {
+          precision: "day" as const,
+          start: "2025-01-10",
+          end: "2025-01-12",
+        },
         operatorName: "Marie Curie",
         operatorOrcid: "0000-0002-1825-0097",
         researchStructure: ["04kdfz702", "02feahw73"],
@@ -33,6 +37,23 @@ describe("sample synthetic details persistence", () => {
         experimentalProtocol: "Piston-cylinder run,\nquenched in water",
         experimentPurpose: "Phase stability of forsterite",
         equipmentUsed: "Piston cylinder press",
+      };
+      const created = await insertSample(db, { ...base, syntheticDetails });
+      expect(created.syntheticDetails).toEqual(syntheticDetails);
+      expect(await readSample(db, created.id)).toEqual(created);
+    },
+  );
+
+  pgTest(
+    "should round-trip an hour-precision synthesis date in its own time zone",
+    async ({ db }) => {
+      const syntheticDetails = {
+        synthesisDate: {
+          precision: "hour" as const,
+          start: "2025-01-10T08:45",
+          end: "2025-01-10T19:05",
+          timeZone: "Pacific/Auckland",
+        },
       };
       const created = await insertSample(db, { ...base, syntheticDetails });
       expect(created.syntheticDetails).toEqual(syntheticDetails);
