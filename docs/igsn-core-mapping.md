@@ -194,6 +194,43 @@ Reading-requires-storage-condition rules stay in `conditionSchema`, applied at s
 
 Every internal path the `/service` routes report (blocker paths from `publish-blocker-path.ts`, `frozenFieldEdits` results, stage-2 zod issues) goes through `toCorePath` (`domain/sample/core/core-path.ts`, `CORE_PATH_BY_FIELD`, longest-prefix match, trailing index kept). A path with no entry is returned unchanged (`ponytail:` ceiling, revisit if issue paths start looking wrong). Examples: `type -> classification.sampleObjectTypes.0`, `material -> classification.contextCategories`, `description.collectionDate -> production.collection_date_start`, `location -> production.location`, `existenceStatus -> curation.existenceStatus`, `scientificContext.collectorName -> responsibility`, `syntheticDetails.startingMaterial -> extensions.experiment.startingMaterial`, `manualGroupIds.0 -> manualGroups.0`. `publish-blocker-path.ts` itself is untouched; `toCorePath` is a layer on top of it.
 
+## List filter parameters
+
+`GET /service/samples` accepts the same filters as the public `GET /samples`, renamed to their Core param. The contract lives in `packages/domain/src/sample/core/core-list-samples-query.ts`: `CORE_FILTER_PARAM` maps each Core name to the internal one, `coreFilterFields()` builds the OpenAPI/Zod fields the route declares, and `toListSamplesQuery()` renames an incoming query before it reaches the repository. A spec checks `CORE_FILTER_PARAM` against `facetParamKeys()` so the two never drift.
+
+An invalid filter value answers 400 `{ error: "Invalid query parameters" }`, unlike the public route, whose facet fields end in `.catch(undefined)` and silently drop a bad value. A service-account integration gets a loud failure instead of a quietly wider result set.
+
+`sampleObjectType`, `materialCategory` and `collectionMethod` match a subtree: the SQL is `col <@ $value::ltree`, so a path matches itself and everything under it.
+
+Every controlled vocabulary (nature, texture, the three hierarchies, ROR/OSU/laboratory codes, numeric age unit) is published as a full OpenAPI `enum` in the served document.
+
+`status`, `sort`, `order`, `ownership`, `ownerId` and `institution` are deliberately not exposed: the list stays published-only, ordered by IGSN, and unscoped by ownership beyond `editable`.
+
+| Core param                | internal param              | Core location                                        |
+| ------------------------- | --------------------------- | ---------------------------------------------------- |
+| `search`                  | `search`                    | (no Core field)                                      |
+| `bbox`                    | `bbox`                      | `production.location.geometry`                       |
+| `sampleObjectType`        | `type`                      | `classification.sampleObjectTypes[0]`                |
+| `materialCategory`        | `material`                  | `classification.materialCategories[0]`               |
+| `collectionMethod`        | `collectionMethod`          | `production.collectionMethod`                        |
+| `natureOfSample`          | `nature`                    | `classification.natureOfSample`                      |
+| `texture`                 | `texture`                   | `classification.contextCategories` (`otelo:texture`) |
+| `projectName`             | `researchProgramName`       | `production.projects[0].name`                        |
+| `chiefScientist`          | `chiefScientist`            | `responsibility[]` role `ChiefScientist`             |
+| `hostingInstitution`      | `hostInstitution`           | `responsibility[]` role `HostingInstitution`         |
+| `collector`               | `collectorName`             | `responsibility[]` role `Collector`                  |
+| `curator`                 | `collectionCurator`         | `responsibility[]` role `Curator`                    |
+| `numericAgeMin`           | `ageMin`                    | `extensions.geology.numericAge.min`                  |
+| `numericAgeMax`           | `ageMax`                    | `extensions.geology.numericAge.max`                  |
+| `numericAgeUnit`          | `ageUnit`                   | `extensions.geology.numericAge.unit`                 |
+| `affiliationOrganization` | `institutionalOrganization` | `responsibility[].agent.affiliations` (ROR)          |
+| `affiliationOsu`          | `institutionalOsu`          | affiliation `urn:otelo:osu:<code>`                   |
+| `affiliationLaboratory`   | `institutionalLaboratory`   | affiliation `urn:otelo:laboratory:<code>`            |
+| `manualGroup`             | `manualGroup`               | `manualGroups[].id`                                  |
+| `contributor`             | `contributor`               | (no Core field)                                      |
+
+`CORE_PATH_BY_FIELD`/`toCorePath` (see [Error-path translation](#error-path-translation)) could not drive this rename: it is lossy, since `material`, `texture`, `metamorphicFacies` and `resourceType` all resolve to `classification.contextCategories`, and `chiefScientist`, `collectorName`, `hostInstitution` and `collectionCurator` all resolve to `responsibility`. `CORE_FILTER_PARAM` is hand-written instead.
+
 ## Deviations recorded for the Core authors
 
 - `extensions.geology.chronostratigraphy` is `{ min: "ICS<n>", max: "ICS<n>", unit }`, a PO decision for a lossless mapping rather than a flatter shape.
