@@ -15,6 +15,8 @@
   },
   "dependencies": {
     "@hono/node-server": "catalog:",
+    "@hono/swagger-ui": "catalog:",
+    "@hono/zod-openapi": "catalog:",
     "@projet-igsn/domain": "workspace:*",
     "croner": "catalog:",
     "hono": "catalog:",

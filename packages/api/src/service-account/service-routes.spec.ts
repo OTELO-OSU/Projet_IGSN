@@ -724,6 +724,49 @@ describe("the /service mount", () => {
       expect(res.status).toBe(403);
     },
   );
+
+  pgTest.for(["/service/openapi.json", "/service/docs"])(
+    "should serve %s with no Authorization header, being mounted before the api key guard",
+    async (path, { db }) => {
+      // Arrange
+      const { app } = createApp(db);
+      // Act
+      const res = await app.request(path);
+      // Assert
+      expect(res.status).toBe(200);
+    },
+  );
+
+  const SAMPLES = "/service/samples";
+  const ONE_SAMPLE = `/service/samples/${"A".repeat(26)}`;
+  const TEXT = { "Content-Type": "text/plain" };
+
+  pgTest.for([
+    { rule: "no Content-Type", headers: {}, method: "POST", path: SAMPLES },
+    { rule: "no Content-Type", headers: {}, method: "PUT", path: ONE_SAMPLE },
+    { rule: "a text/plain body", headers: TEXT, method: "POST", path: SAMPLES },
+    {
+      rule: "a text/plain body",
+      headers: TEXT,
+      method: "PUT",
+      path: ONE_SAMPLE,
+    },
+  ] as const)(
+    "should answer 415 to $method with $rule",
+    async ({ headers, method, path }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await app.request(path, {
+        method,
+        headers: { Authorization: `Bearer ${KEY}`, ...headers },
+        body: JSON.stringify(NEW_BODY),
+      });
+      // Assert
+      expect(res.status).toBe(415);
+      expect(await res.json()).toEqual({ error: "Unsupported Media Type" });
+    },
+  );
 });
 
 const publishedInReach = async (

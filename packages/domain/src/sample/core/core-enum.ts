@@ -12,7 +12,9 @@ export function coreEnum<T extends string>(
 ): CoreEnum<T> {
   const byCore = new Map(values.map((value) => [format(value), value]));
   return {
-    schema: z.enum([...byCore.keys()] as [string, ...string[]]),
+    schema: z.enum([...byCore.keys()] as [string, ...string[]]).meta({
+      description: "Our own code, spelled the IGSN Core way.",
+    }),
     toCore: format,
     fromCore: (value) => byCore.get(value) as T,
   };

@@ -5,9 +5,16 @@ import { pathSegment } from "../path/segment.ts";
 
 export function conceptShape<S extends string>(scheme: S) {
   return {
-    label: z.string().min(1),
-    schemeName: z.literal(`otelo:${scheme}`),
-    schemeURI: z.literal(`urn:otelo:vocabulary:${scheme}`),
+    label: z.string().min(1).meta({
+      description:
+        "Leaf segment of the id, ignored on input since the reverse mapping reads the id alone.",
+    }),
+    schemeName: z.literal(`otelo:${scheme}`).meta({
+      description: "OTELo vocabulary the id belongs to.",
+    }),
+    schemeURI: z.literal(`urn:otelo:vocabulary:${scheme}`).meta({
+      description: "Constant URN naming that vocabulary.",
+    }),
   };
 }
 
@@ -16,9 +23,17 @@ export function conceptSchema<S extends string, T extends z.ZodType>(
   id: T,
 ) {
   return z.strictObject({
-    id,
+    id: id.meta({
+      description:
+        "Our code or dot path for this concept, validated against the vocabulary named by schemeName.",
+    }),
     ...conceptShape(scheme),
-    notation: freeTextSchema.optional(),
+    notation: freeTextSchema
+      .meta({
+        description:
+          "Qualifier telling two concepts of the same vocabulary apart, one concept per scheme and notation pair at most.",
+      })
+      .optional(),
   });
 }
 

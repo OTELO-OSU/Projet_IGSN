@@ -30,6 +30,9 @@ The mapping lives in `packages/domain/src/sample/core/`, pure and I/O-free:
 
 Our field paths are leaves of `sampleSchema` (`packages/domain/src/sample/sample.ts`).
 
+The field descriptions of the published `/service` OpenAPI spec (ADR [0041](adr/0041-openapi-for-the-service-api.md)) live on each field's own `.meta({ description })` in `packages/domain/src/sample/core/`, not here.
+The "Comment" column is mapping notes, written for a reviewer of the mapping rather than for an integrator.
+
 ### Root and identification
 
 | Our field      | Core field                                                                       | Comment                                                                |
