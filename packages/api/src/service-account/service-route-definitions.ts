@@ -71,8 +71,6 @@ const igsnParamSchema = z.object({
   }),
 });
 
-const { search, ...coreFilters } = coreFilterFields();
-
 const coreSampleBody = {
   required: true,
   content: { "application/json": { schema: coreSampleBodySchema } },
@@ -105,8 +103,7 @@ export const listSamplesRoute = createRoute({
         description:
           "Set to true to list only the samples the account's managed groups reach, so only those it may update; left out, every published sample is listed.",
       }),
-      ...coreFilters,
-      search: search.meta({ type: "string" }),
+      ...coreFilterFields(),
     }),
   },
   responses: {

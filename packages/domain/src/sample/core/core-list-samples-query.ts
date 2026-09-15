@@ -55,8 +55,9 @@ const textFilter = (description: string) =>
 export function coreFilterFields() {
   return {
     search: searchTermSchema.meta({
+      type: "string",
       description:
-        "Free-text search over the sample identifier, names and descriptions, truncated past 200 characters.",
+        "Free-text search matching the sample identifier exactly, or the sample name and specific name on a fragment, truncated past 200 characters.",
     }),
     bbox: bboxSchema.optional().meta({
       type: "string",
