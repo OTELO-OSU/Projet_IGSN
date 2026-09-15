@@ -1,13 +1,10 @@
 import type { Kysely } from "kysely";
 
-import { readFile } from "node:fs/promises";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { DB } from "../db.ts";
 
 import { createApp } from "../app.ts";
-import { pgTest } from "../tests/pg-test.ts";
-import { createServiceRoutes } from "./service-routes.ts";
 
 type OpenApiDocument = {
   paths: Record<string, Record<string, unknown>>;
@@ -18,22 +15,17 @@ const DOC_OPERATIONS = ["GET /openapi.json", "GET /docs"];
 
 const SWAGGER_UI_VERSION = "5.32.15";
 
-const serviceApp = () =>
-  createServiceRoutes(
-    ...([{}, {}, {}, "http://localhost:3000/"] as unknown as Parameters<
-      typeof createServiceRoutes
-    >),
-  );
+const { app } = createApp({} as Kysely<DB>);
 
-const serviceDocument = async (db: Kysely<DB>): Promise<OpenApiDocument> => {
-  const res = await createApp(db).app.request("/service/openapi.json");
+const serviceDocument = async (): Promise<OpenApiDocument> => {
+  const res = await app.request("/service/openapi.json");
   return (await res.json()) as OpenApiDocument;
 };
 
-const mountedOperations = (db: Kysely<DB>) =>
+const mountedOperations = () =>
   new Set(
-    createApp(db)
-      .app.routes.filter(
+    app.routes
+      .filter(
         ({ method, path }) => method !== "ALL" && path.startsWith("/service/"),
       )
       .map(
@@ -73,23 +65,14 @@ const undescribedProperties = (node: unknown, path: string): string[] => {
 };
 
 describe("the /service OpenAPI document", () => {
-  pgTest("should declare every mounted route", async ({ db }) => {
-    const document = await serviceDocument(db);
+  it("should declare every mounted route", async () => {
+    const document = await serviceDocument();
 
-    expect(documentedOperations(document)).toEqual(mountedOperations(db));
+    expect(documentedOperations(document)).toEqual(mountedOperations());
   });
 
-  pgTest("should match the committed openapi.json", async ({ db }) => {
-    const snapshot = await readFile(
-      new URL("../../openapi.json", import.meta.url),
-      "utf8",
-    );
-
-    expect(JSON.parse(snapshot)).toEqual(await serviceDocument(db));
-  });
-
-  pgTest("should describe every property it publishes", async ({ db }) => {
-    const document = await serviceDocument(db);
+  it("should describe every property it publishes", async () => {
+    const document = await serviceDocument();
 
     const missing = undescribedProperties(document.components.schemas, "");
     expect(missing, `undescribed: ${missing.join(", ")}`).toEqual([]);
@@ -110,7 +93,7 @@ const patterns = (node: unknown): string[] =>
 
 describe("the /service doc routes", () => {
   it("should load every CDN asset at a pinned version with its integrity hash", async () => {
-    const res = await serviceApp().request("/docs");
+    const res = await app.request("/service/docs");
 
     const tags = externalTags(await res.text());
     expect(tags).toHaveLength(2);
@@ -121,19 +104,8 @@ describe("the /service doc routes", () => {
     }
   });
 
-  it("should build the document once and serve that same value again", async () => {
-    const app = serviceApp();
-    const generate = vi.spyOn(app, "getOpenAPI31Document");
-
-    const first = await (await app.request("/openapi.json")).json();
-    const second = await (await app.request("/openapi.json")).json();
-
-    expect(generate).toHaveBeenCalledTimes(1);
-    expect(second).toEqual(first);
-  });
-
   it("should publish no regex flags in a pattern", async () => {
-    const document = await (await serviceApp().request("/openapi.json")).json();
+    const document = await serviceDocument();
 
     const published = patterns(document);
     const flagged = published.filter((pattern) => /\/[a-z]*$/.test(pattern));

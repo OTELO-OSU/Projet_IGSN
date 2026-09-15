@@ -93,19 +93,23 @@ export function createServiceRoutes(
     "apiKey",
     SERVICE_API_KEY_SCHEME,
   );
-  let document: ReturnType<typeof app.getOpenAPI31Document> | undefined;
+  let document: string | undefined;
   app.get("/openapi.json", (c) =>
-    c.json(
-      (document ??= app.getOpenAPI31Document({
-        openapi: "3.1.0",
-        info: {
-          title: "IGSN service API",
-          version: CORE_SCHEMA_VERSION,
-          description:
-            "Machine API of the IGSN registry, reading and writing published samples as IGSN Core v0.10.0 records. A service account authenticates every call with its api key.",
-        },
-        servers: [{ url: new URL("api/service", frontendUrl).toString() }],
-      })),
+    c.body(
+      (document ??= JSON.stringify(
+        app.getOpenAPI31Document({
+          openapi: "3.1.0",
+          info: {
+            title: "IGSN service API",
+            version: CORE_SCHEMA_VERSION,
+            description:
+              "Machine API of the IGSN registry, reading and writing published samples as IGSN Core v0.10.0 records. A service account authenticates every call with its api key.",
+          },
+          servers: [{ url: new URL("api/service", frontendUrl).toString() }],
+        }),
+      )),
+      200,
+      { "content-type": "application/json" },
     ),
   );
   app.get(

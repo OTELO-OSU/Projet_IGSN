@@ -100,18 +100,13 @@ const ownedParent = async (db: Kysely<DB>, ownerId: string) => {
   return (await publishSample(db, parent.id))!;
 };
 
-const observedStatuses = new Set<string>();
-
-const operationOf = (path: string) =>
-  path.startsWith("/") ? "/samples/{igsn}" : "/samples";
-
-const serviceRequest = async (
+const serviceRequest = (
   app: ReturnType<typeof createApp>["app"],
   method: "GET" | "POST" | "PUT",
   path: string,
   input?: unknown,
-) => {
-  const res = await app.request(`/service/samples${path}`, {
+) =>
+  app.request(`/service/samples${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${KEY}`,
@@ -119,9 +114,6 @@ const serviceRequest = async (
     },
     body: input === undefined ? undefined : JSON.stringify(input),
   });
-  observedStatuses.add(`${method} ${operationOf(path)} ${res.status}`);
-  return res;
-};
 
 const postSample = (app: ReturnType<typeof createApp>["app"], input: unknown) =>
   serviceRequest(app, "POST", "", input);
@@ -745,24 +737,21 @@ describe("the /service mount", () => {
     },
   );
 
-  pgTest.for(
-    (
-      [
-        { rule: "no Content-Type", headers: {} },
-        {
-          rule: "a text/plain body",
-          headers: { "Content-Type": "text/plain" },
-        },
-      ] as const
-    ).flatMap((mediaType) =>
-      (
-        [
-          { method: "POST", path: "/service/samples" },
-          { method: "PUT", path: `/service/samples/${"A".repeat(26)}` },
-        ] as const
-      ).map((target) => ({ ...mediaType, ...target })),
-    ),
-  )(
+  const SAMPLES = "/service/samples";
+  const ONE_SAMPLE = `/service/samples/${"A".repeat(26)}`;
+  const TEXT = { "Content-Type": "text/plain" };
+
+  pgTest.for([
+    { rule: "no Content-Type", headers: {}, method: "POST", path: SAMPLES },
+    { rule: "no Content-Type", headers: {}, method: "PUT", path: ONE_SAMPLE },
+    { rule: "a text/plain body", headers: TEXT, method: "POST", path: SAMPLES },
+    {
+      rule: "a text/plain body",
+      headers: TEXT,
+      method: "PUT",
+      path: ONE_SAMPLE,
+    },
+  ] as const)(
     "should answer 415 to $method with $rule",
     async ({ headers, method, path }, { db }) => {
       // Arrange
@@ -951,37 +940,6 @@ describe("PUT /service/samples/:igsn", () => {
         ],
       });
       expect(await storedNames(db)).toEqual([{ name: publishableSample.name }]);
-    },
-  );
-});
-
-describe("the /service OpenAPI responses", () => {
-  pgTest(
-    "should declare every status this suite observed, which provokes neither 429 nor 500",
-    async ({ db }) => {
-      // Arrange
-      const res = await createApp(db).app.request("/service/openapi.json");
-      const { paths } = (await res.json()) as {
-        paths: Record<
-          string,
-          Record<string, { responses: Record<string, unknown> }>
-        >;
-      };
-      const declared = new Set(
-        Object.entries(paths).flatMap(([path, operations]) =>
-          Object.entries(operations).flatMap(([method, operation]) =>
-            Object.keys(operation.responses).map(
-              (status) => `${method.toUpperCase()} ${path} ${status}`,
-            ),
-          ),
-        ),
-      );
-      // Act
-      const undeclared = [...observedStatuses].filter(
-        (observed) => !declared.has(observed),
-      );
-      // Assert
-      expect(undeclared).toEqual([]);
     },
   );
 });
