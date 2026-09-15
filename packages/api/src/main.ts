@@ -14,7 +14,10 @@ const db = createDb();
 const sendMail = createSendMail();
 const adminUrl = appUrl("ADMIN_URL");
 const frontendUrl = appUrl("FRONTEND_URL");
-const { app } = createApp(db, { mail: { sendMail, adminUrl, frontendUrl } });
+const { app } = createApp(db, {
+  frontendUrl,
+  mail: { sendMail, adminUrl, frontendUrl },
+});
 schedulePendingUsersDigest(() => {
   void sendPendingUsersDigest(
     {

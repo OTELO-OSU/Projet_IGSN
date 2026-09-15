@@ -116,6 +116,48 @@ describe("publishSample", () => {
     },
   );
 
+  pgTest("should stamp the publication instant", async ({ db }) => {
+    // Arrange
+    const created = await insertSample(db, {
+      name: "Basalt 42",
+      nature: "hand_sample",
+      type: null,
+    });
+    // Act
+    const published = await publishSample(db, created.id);
+    // Assert
+    const { published_at: publishedAt } = await db
+      .selectFrom("sample")
+      .select("published_at")
+      .where("id", "=", created.id)
+      .executeTakeFirstOrThrow();
+    expect(publishedAt).toBeInstanceOf(Date);
+    expect(published?.publishedAt).toEqual(publishedAt);
+  });
+
+  pgTest(
+    "should keep the first publication instant when published twice",
+    async ({ db }) => {
+      // Arrange
+      const created = await insertSample(db, {
+        name: "Basalt 42",
+        nature: "hand_sample",
+        type: null,
+      });
+      await publishSample(db, created.id);
+      const first = new Date("2024-06-03T10:00:00.000Z");
+      await db
+        .updateTable("sample")
+        .set({ published_at: first })
+        .where("id", "=", created.id)
+        .execute();
+      // Act
+      const republished = await publishSample(db, created.id);
+      // Assert
+      expect(republished?.publishedAt).toEqual(first);
+    },
+  );
+
   pgTest("should keep the same igsn when published twice", async ({ db }) => {
     // Arrange
     const created = await insertSample(db, {

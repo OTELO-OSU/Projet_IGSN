@@ -1,62 +1,62 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
-import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
-import type {
-  CreateServiceSample,
-  ServiceSampleIssue,
-} from "@projet-igsn/domain/service-account/service-sample-validator";
-import type { UserRepository } from "@projet-igsn/domain/user/repository";
+import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
+import type { ServiceSampleIssue } from "@projet-igsn/domain/service-account/service-sample-validator";
 
 import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
 import { publishBlockersOf } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
-import { z } from "zod";
 
 import { unattachableIndexes } from "../manual-group/has-unattachable.ts";
-import { findEligibleParent } from "../sample/find-eligible-parent.ts";
 import { uploadLimit } from "../sample/upload-limit.ts";
 import {
+  coreSampleIssue,
   publishBlockerIssues,
   serviceSampleIssue,
 } from "./service-sample-issue.ts";
 
+export type ResolvedParent = {
+  sample: Sample | null;
+  relationIndex: number;
+};
+
 type Deps = {
-  samples: SampleRepository;
-  users: UserRepository;
   manualGroups: Pick<ManualGroupRepository, "listAttachableForUser">;
 };
 
 export async function createServiceSampleIssues(
-  { samples, users, manualGroups }: Deps,
+  { manualGroups }: Deps,
   ownerId: string,
-  input: CreateServiceSample,
+  input: CreateSample,
+  parents: readonly ResolvedParent[],
 ): Promise<ServiceSampleIssue[]> {
-  const owner = { id: ownerId, superAdmin: false };
   const issues: ServiceSampleIssue[] = [];
-  const parentIds = input.parentIds ?? [];
-  const parents = await Promise.all(
-    parentIds.map(async (id) =>
-      z.uuid().safeParse(id).success
-        ? findEligibleParent(samples, users, owner, id)
-        : null,
-    ),
-  );
-  const locationParent = soleParent(parents);
-  if (locationParent !== undefined && input.location != null) {
+  for (const { sample, relationIndex } of parents) {
+    if (sample === null) {
+      issues.push(
+        serviceSampleIssue("parent_not_found", [
+          "relations",
+          relationIndex,
+          "targetIdentifier",
+          "value",
+        ]),
+      );
+    }
+  }
+  const sole = soleParent(parents);
+  if (sole !== undefined && input.location != null) {
     issues.push(
-      serviceSampleIssue("location_inherited_from_parent", ["location"]),
+      coreSampleIssue("location_inherited_from_parent", ["location"]),
     );
   }
+  const resolved = parents
+    .map(({ sample }) => sample)
+    .filter((sample) => sample !== null);
   issues.push(
     ...publishBlockerIssues(
       publishBlockersOf(
-        { ...input, location: locationParent?.location ?? input.location },
+        { ...input, location: sole?.sample?.location ?? input.location },
         uploadLimit,
-        parents,
-      ).filter((blocker) => blocker !== "parent_not_found"),
-    ),
-    ...parents.flatMap((parent, index) =>
-      parent === null
-        ? [serviceSampleIssue("parent_not_found", ["parentIds", index])]
-        : [],
+        resolved,
+      ),
     ),
   );
   const submitted = input.manualGroupIds ?? [];
@@ -68,8 +68,9 @@ export async function createServiceSampleIssues(
     )) {
       issues.push(
         serviceSampleIssue("manual_group_not_attachable", [
-          "manualGroupIds",
+          "manualGroups",
           index,
+          "id",
         ]),
       );
     }

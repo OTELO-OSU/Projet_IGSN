@@ -54,6 +54,8 @@ export const sampleStatusSchema = z.enum([
 
 export type SampleStatus = z.infer<typeof sampleStatusSchema>;
 
+export const publicationYearSchema = z.number().int().positive();
+
 export const sampleSchema = z.object({
   id: z.uuid(),
   name: nameSchema,
@@ -83,7 +85,7 @@ export const sampleSchema = z.object({
   security: securitySchema.nullable(),
   existenceStatus: existenceStatusSchema.nullable(),
   availabilityStatus: availabilityStatusSchema.nullable(),
-  publicationYear: z.number().int().positive().nullable(),
+  publicationYear: publicationYearSchema.nullable(),
   resourceType: resourceTypeSchema.nullable(),
   economicInterestElements: z.array(elementSchema).default([]),
   economicResourceTypePrecision: nameSchema.nullable(),
@@ -100,6 +102,7 @@ export const sampleSchema = z.object({
   ...institutionalGroupsFields,
   status: sampleStatusSchema,
   createdAt: z.coerce.date(),
+  publishedAt: z.coerce.date().nullable().optional(),
   updatedAt: z.coerce.date(),
 });
 

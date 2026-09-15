@@ -2,28 +2,16 @@ import { z } from "zod";
 
 import type { PublishBlocker } from "../sample/publication/sample-publish-blockers.ts";
 
-import {
-  createSampleSchema,
-  MAX_SAMPLE_PARENTS,
-  updateSampleSchema,
-} from "../sample/sample.ts";
+import { coreSampleSchema } from "../sample/core/core-sample-schema.ts";
 
-const NO_ATTACHMENTS = { attachments: z.never().optional() };
-
-export const createServiceSampleSchema = createSampleSchema.safeExtend({
-  ...NO_ATTACHMENTS,
-  parentIds: z
-    .array(z.string().trim().min(1))
-    .max(MAX_SAMPLE_PARENTS)
-    .optional(),
+export const coreListSamplesResponseSchema = z.object({
+  data: z.array(coreSampleSchema),
+  meta: z.object({ total: z.number().int().nonnegative() }),
 });
 
-export type CreateServiceSample = z.infer<typeof createServiceSampleSchema>;
-
-export const updateServiceSampleSchema =
-  updateSampleSchema.safeExtend(NO_ATTACHMENTS);
-
-export type UpdateServiceSample = z.infer<typeof updateServiceSampleSchema>;
+export type CoreListSamplesResponse = z.infer<
+  typeof coreListSamplesResponseSchema
+>;
 
 export type ServiceSampleIssueCode =
   | PublishBlocker

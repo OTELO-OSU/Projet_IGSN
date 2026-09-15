@@ -268,6 +268,7 @@ export function toSample(row: SampleRow): Sample {
     institutionalLaboratory: row.institutional_laboratory,
     status: row.status,
     createdAt: row.created_at,
+    publishedAt: row.published_at,
     updatedAt: row.updated_at,
   });
 }

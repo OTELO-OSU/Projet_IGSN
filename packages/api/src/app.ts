@@ -43,9 +43,11 @@ export function createApp(
   database: Kysely<DB>,
   {
     attachmentsDir = process.env.ATTACHMENTS_DIR ?? "attachments",
+    frontendUrl = "http://localhost:3000/",
     mail,
   }: {
     attachmentsDir?: string;
+    frontendUrl?: string;
     mail?: { sendMail: SendMail; adminUrl: string; frontendUrl: string };
   } = {},
 ) {
@@ -100,7 +102,7 @@ export function createApp(
         serviceAccountRepository,
         sampleRepository,
         manualGroupRepository,
-        userRepository,
+        frontendUrl,
       ),
     );
 

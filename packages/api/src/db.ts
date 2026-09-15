@@ -153,6 +153,7 @@ type SampleTable = {
   institutional_laboratory: string | null;
   status: Generated<SampleStatus>;
   created_at: Generated<Date>;
+  published_at: Generated<Date | null>;
   updated_at: Generated<Date>;
 };
 

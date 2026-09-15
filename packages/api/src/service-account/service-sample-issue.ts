@@ -5,6 +5,7 @@ import type {
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import type { z } from "zod";
 
+import { toCorePath } from "@projet-igsn/domain/sample/core/core-path";
 import { PUBLISH_BLOCKER_PATH } from "@projet-igsn/domain/sample/publication/publish-blocker-path";
 
 export function serviceSampleIssue(
@@ -19,10 +20,31 @@ export function serviceSampleIssue(
   };
 }
 
+export function coreSampleIssue(
+  code: ServiceSampleIssueCode | z.core.$ZodIssueCode,
+  path: readonly PropertyKey[] | string,
+  message?: string,
+): ServiceSampleIssue {
+  const corePath = toCorePath(path);
+  return { path: corePath === "" ? undefined : corePath, code, message };
+}
+
 export function publishBlockerIssues(
   blockers: readonly PublishBlocker[],
 ): ServiceSampleIssue[] {
   return blockers.map((blocker) =>
-    serviceSampleIssue(blocker, PUBLISH_BLOCKER_PATH[blocker]),
+    coreSampleIssue(blocker, PUBLISH_BLOCKER_PATH[blocker]),
   );
+}
+
+export function zodIssues(error: z.ZodError): ServiceSampleIssue[] {
+  return error.issues.map(({ path, code, message }) =>
+    coreSampleIssue(code, path, message),
+  );
+}
+
+export function frozenFieldIssues(
+  paths: readonly string[],
+): ServiceSampleIssue[] {
+  return paths.map((path) => coreSampleIssue("field_frozen", path));
 }

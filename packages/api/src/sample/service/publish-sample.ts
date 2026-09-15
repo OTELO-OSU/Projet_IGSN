@@ -20,6 +20,7 @@ export async function publishSample(
       status,
       igsn: generateIgsnSuffix(id),
       publication_year: sql`coalesce(publication_year, extract(year from now())::int)`,
+      published_at: sql`coalesce(published_at, now())`,
     })
     .where("id", "=", id)
     .returning("id")
