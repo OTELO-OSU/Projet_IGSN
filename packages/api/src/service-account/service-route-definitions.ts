@@ -1,5 +1,6 @@
 import { createRoute } from "@hono/zod-openapi";
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
+import { coreFilterFields } from "@projet-igsn/domain/sample/core/core-list-samples-query";
 import {
   coreSampleBodySchema,
   coreSampleSchema,
@@ -81,7 +82,7 @@ export const listSamplesRoute = createRoute({
   tags: TAGS,
   summary: "List published samples",
   description:
-    "Lists every published sample of the registry as IGSN Core records, ordered by IGSN. Pass editable=true to narrow the list to the samples the service account itself may update.",
+    "Lists every published sample of the registry as IGSN Core records, ordered by IGSN. Pass editable=true to narrow the list to the samples the service account itself may update, and any other parameter to filter it, several of them narrowing the list together.",
   security: SECURITY,
   request: {
     query: z.object({
@@ -102,6 +103,7 @@ export const listSamplesRoute = createRoute({
         description:
           "Set to true to list only the samples the account's managed groups reach, so only those it may update; left out, every published sample is listed.",
       }),
+      ...coreFilterFields(),
     }),
   },
   responses: {
