@@ -2,68 +2,18 @@ import type { Sample } from "@projet-igsn/domain/sample/sample";
 
 import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 
+import type { PublishedSample } from "./sample-sections.tsx";
+
+import {
+  emptyAge,
+  publishedSample as sample,
+} from "../../../test/published-sample.ts";
 import { renderWithRouter } from "../../../test/render-with-router.tsx";
 import { stubAuth } from "../../../test/stub-auth.tsx";
 import { SampleView } from "./sample-view.tsx";
 
 const render = (ui: React.ReactNode, stubPaths?: string[]) =>
   renderWithRouter(stubAuth(ui), stubPaths);
-
-const emptyAge = {
-  numericAgeMin: null,
-  numericAgeMax: null,
-  numericAgeUnit: null,
-  numericAgeYearsUnit: null,
-  geologicalAgeMin: null,
-  geologicalAgeMax: null,
-  geologicalUnit: null,
-};
-
-const sample = (overrides: Partial<Sample> = {}): Sample => ({
-  id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
-  name: "Basalt 42",
-  igsn: "0123456789ABCDEFGHJKMNPQRS",
-  institutionalOrganization: null,
-  institutionalOsu: null,
-  institutionalLaboratory: null,
-  nature: "rock_powder",
-  type: null,
-  material: null,
-  materialOtherName: null,
-  texture: null,
-  metamorphicFacies: null,
-  metamorphicFabric: null,
-  specificName: null,
-  collectionMethod: null,
-  collectionMethodDescription: null,
-  description: null,
-  condition: null,
-  scientificContext: null,
-  repository: null,
-  geologicalContextDescription: null,
-  geomorphologicalEnvironment: null,
-  syntheticDetails: null,
-  location: null,
-  age: null,
-  relations: [],
-  attachments: [],
-  security: null,
-  existenceStatus: null,
-  availabilityStatus: null,
-  publicationYear: null,
-  resourceType: null,
-  economicInterestElements: [],
-  economicResourceTypePrecision: null,
-  economicDepositName: null,
-  economicDepositDescription: null,
-  manualGroups: [],
-  parents: [],
-  owner: null,
-  status: "published",
-  createdAt: new Date("2024-01-01"),
-  updatedAt: new Date("2024-01-01"),
-  ...overrides,
-});
 
 describe("SampleView", () => {
   it("should show the name as the heading and the igsn as subtitle", async () => {
@@ -141,7 +91,7 @@ describe("SampleView", () => {
       "Synthetic details",
       "Institution",
       "Groups",
-      "Parent samples",
+      "Lineage",
       "Age",
       "Security",
       "Economic interest",
@@ -163,7 +113,7 @@ describe("SampleView", () => {
     expect(shown).toEqual([]);
   });
 
-  it.each<[string, Partial<Sample>, string, string]>([
+  it.each<[string, Partial<PublishedSample>, string, string]>([
     ["Type", { type: "core.half_round" }, "Core", "Core Half round"],
     [
       "Material",
@@ -193,7 +143,7 @@ describe("SampleView", () => {
     },
   );
 
-  it.each<[string, Partial<Sample>, string[]]>([
+  it.each<[string, Partial<PublishedSample>, string[]]>([
     [
       "the other material free text as the last material step",
       {
@@ -217,7 +167,7 @@ describe("SampleView", () => {
     expect(items.map((item) => item.textContent)).toEqual(steps);
   });
 
-  it.each<[string, Partial<Sample>, (string | RegExp)[]]>([
+  it.each<[string, Partial<PublishedSample>, (string | RegExp)[]]>([
     ["the translated nature", {}, ["Rock powder"]],
     [
       "the translated texture",
@@ -369,37 +319,77 @@ describe("SampleView", () => {
     await expect.element(screen.getByText("Deep sea")).toBeInTheDocument();
   });
 
-  it("should show the parents as their own section, in the nav, each linking to its sample page", async () => {
+  it("should omit the lineage section when the lineage holds the sample alone", async () => {
     const screen = await render(
       <SampleView
-        sample={sample({
-          parents: [
+        sample={sample()}
+        lineage={{
+          nodes: [
+            {
+              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
+              igsn: "0123456789ABCDEFGHJKMNPQRS",
+              name: "Basalt 42",
+              material: null,
+              generation: 0,
+              tombstone: false,
+            },
+          ],
+          edges: [],
+          truncated: false,
+        }}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Lineage" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should show the lineage as its own section, in the nav, listing the related samples", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample()}
+        lineage={{
+          nodes: [
             {
               id: "3f2504e0-4f89-41d3-9a0c-0305e82c3304",
               igsn: "0123456789ABCDEFGHJKMNPQRT",
               name: "Basalt 41",
               material: null,
+              generation: -1,
+              tombstone: false,
+            },
+            {
+              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
+              igsn: "0123456789ABCDEFGHJKMNPQRS",
+              name: "Basalt 42",
+              material: null,
+              generation: 0,
+              tombstone: false,
             },
           ],
-        })}
+          edges: [
+            {
+              parentId: "3f2504e0-4f89-41d3-9a0c-0305e82c3304",
+              childId: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
+            },
+          ],
+          truncated: false,
+        }}
       />,
       ["/samples/$igsn"],
     );
 
     await expect
-      .element(
-        screen.getByRole("heading", { level: 2, name: "Parent samples" }),
-      )
+      .element(screen.getByRole("heading", { level: 2, name: "Lineage" }))
       .toBeVisible();
     await expect
       .element(
-        screen
-          .getByRole("navigation")
-          .getByRole("link", { name: "Parent samples" }),
+        screen.getByRole("navigation").getByRole("link", { name: "Lineage" }),
       )
       .toBeInTheDocument();
     await expect
-      .element(screen.getByRole("link", { name: "Basalt 41" }))
+      .element(screen.getByRole("link", { name: "Basalt 41 Parent sample" }))
       .toHaveAttribute("href", "/samples/0123456789ABCDEFGHJKMNPQRT");
   });
 

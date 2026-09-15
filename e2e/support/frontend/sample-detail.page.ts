@@ -86,9 +86,28 @@ export function sampleDetailPage(page: Page) {
     expectParent: (name: string, igsn: string) =>
       expect(
         page
-          .getByRole("region", { name: "Parent samples" })
-          .getByRole("link", { name }),
+          .getByRole("region", { name: "Lineage" })
+          .getByRole("link", { name: `${name} Parent sample` }),
       ).toHaveAttribute("href", new RegExp(`/samples/${igsn}$`)),
+    expectChild: (name: string, igsn: string) =>
+      expect(
+        page
+          .getByRole("region", { name: "Lineage" })
+          .getByRole("link", { name: `${name} Sub-sample` }),
+      ).toHaveAttribute("href", new RegExp(`/samples/${igsn}$`)),
+    openParentFromGraph: async (name: string) => {
+      await page
+        .getByRole("region", { name: "Lineage" })
+        .getByRole("link", { name: `${name} Parent sample` })
+        .click();
+    },
+    expectLineageGraph: async (nodeCount: number) => {
+      const graph = page.getByRole("region", { name: "Lineage" });
+      await expect(graph.locator(".react-flow__node")).toHaveCount(nodeCount);
+      await expect(graph.locator(".react-flow__edge")).not.toHaveCount(0);
+    },
+    expectNoLineage: () =>
+      expect(page.getByRole("region", { name: "Lineage" })).toHaveCount(0),
     expectAttachment: (label: string) =>
       expect(page.getByText(label, { exact: true })).toBeVisible(),
     attachmentDownloadHref: (name: string) =>

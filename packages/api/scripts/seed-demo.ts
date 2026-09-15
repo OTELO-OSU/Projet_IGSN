@@ -6,7 +6,7 @@ import type { DB } from "../src/db.ts";
 import type { SampleOwner } from "./seed.ts";
 
 import { createDb } from "../src/db.ts";
-import { DEMO_SAMPLES } from "./seed-demo-samples.ts";
+import { DEMO_PARENTS, DEMO_SAMPLES } from "./seed-demo-samples.ts";
 import { insertSamples, seedMockUsers } from "./seed.ts";
 
 const listAcceptedOwners = (db: Kysely<DB>): Promise<SampleOwner[]> =>
@@ -51,6 +51,26 @@ const created = await insertSamples(
     owner: owners[index % owners.length]!,
   })),
 );
+
+const idByName = new Map(created.map(({ id, name }) => [name, id]));
+const sampleId = (name: string): string => {
+  const id = idByName.get(name);
+  if (!id) {
+    throw new Error(`DEMO_PARENTS names an unknown sample: "${name}"`);
+  }
+  return id;
+};
+const parentRows = Object.entries(DEMO_PARENTS).flatMap(([child, parents]) =>
+  parents.map((parent) => ({
+    sample_id: sampleId(child),
+    parent_id: sampleId(parent),
+  })),
+);
+if (parentRows.length > 0) {
+  await db.insertInto("sample_parent").values(parentRows).execute();
+}
 await db.destroy();
 
-console.info(`seeded ${created.length} demo samples`);
+console.info(
+  `seeded ${created.length} demo samples and ${parentRows.length} parent links`,
+);
