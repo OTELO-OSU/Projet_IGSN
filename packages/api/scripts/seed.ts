@@ -11,6 +11,7 @@ import {
   sampleStatusSchema,
 } from "@projet-igsn/domain/sample/sample";
 import { collaboratorRoleSchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
+import { sql } from "kysely";
 import { fileURLToPath } from "node:url";
 import { z } from "zod";
 
@@ -394,6 +395,9 @@ export async function insertSamples(
           publication_year: hasPermanentIgsn({ status })
             ? SEED_PUBLICATION_YEAR
             : null,
+          // now() is the transaction instant, the same one created_at and
+          // updated_at take, so a seeded row shows no spurious update event
+          published_at: hasPermanentIgsn({ status }) ? sql`now()` : null,
           ...sampleColumns({ ...create, type: create.type ?? null }),
           institutional_organization: owner.institutionalOrganization,
           institutional_osu: owner.institutionalOsu,

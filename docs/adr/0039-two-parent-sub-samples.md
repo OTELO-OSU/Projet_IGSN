@@ -20,7 +20,7 @@ The one-parent create form prefills the child from its parent by copying its fie
 
 ## Decision
 
-- A sample carries 0, 1 or 2 parents, `parentIds` capped at 2 in `createSampleSchema` and in `createServiceSampleSchema`.
+- A sample carries 0, 1 or 2 parents, `parentIds` capped at 2 in `createSampleSchema` and the parent relations capped at 2 in `coreSampleSchema`.
 - Two parents force a synthetic material (`rock_and_sediment.synthetic_rock_mineral` or below), a `createSampleSchema` refinement reported at `material`, which drops location, geological context and geomorphological environment through the existing `allowsLocation` rule.
 - Parents stay write-once: `updateSampleSchema` still omits `parentIds`, so parentage is set at creation and never edited.
 - The second parent is picked from `searchEligibleParents`, a repository search by name or exact IGSN over the samples the caller may declare a sub-sample of, the first parent excluded.
@@ -31,7 +31,7 @@ The one-parent create form prefills the child from its parent by copying its fie
 - A field hidden behind a gate (orientation explanation, hazard explanation, humidity %, temperature/pressure value and unit, non-selected scientific-context branch fields, numeric age unit) shows no row while its gate is closed; the user opens the gate through the gate's own chips (Oriented "Yes", a type, a Provenance value) or by hand, and the field then appears with its chips. A chip fills only its own field, with no side effect beyond what the same edit would have on a no-parent sample.
 - Switches (Oriented, hazard flags) are inheritable rows with yes/no chips; the copy comes from admin i18n, the kit stays label-agnostic.
 - Every sample form (create with 0/1/2 parents, edit) lays out one field per row; the former multi-column groupings (temperature, humidity, pressure, measurements, age bounds, coordinates...) are gone.
-- `/service` follows the same rules, `parent_not_found` naming the failing index, so `PUBLISH_BLOCKER_PATH.parent_not_found` is `["parentIds"]` and the caller appends the index.
+- `/service` follows the same rules, `parent_not_found` naming the failing relation at `relations.<i>.targetIdentifier.value`.
 
 ### Rejected
 
@@ -42,6 +42,6 @@ The one-parent create form prefills the child from its parent by copying its fie
 
 ## Consequences
 
-- `createServiceSampleSchema` uses `safeExtend`, which inherits the base refinements, so `/service` rejects two non-synthetic parents with the same issue rather than a rule of its own.
+- `/service` reshapes its Core body through `fromCoreSample` and runs `createSampleSchema` itself, so it rejects two non-synthetic parents with the same issue rather than a rule of its own.
 - The material of a two-parent child is locked to the synthetic branch down to niveau 1 and open below, per ADR 0037.
 - A duplicate parent id is refused by `createSampleSchema` itself (issue at `parentIds`); only per-parent eligibility stays an api check, since it needs I/O.
