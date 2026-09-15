@@ -1,5 +1,6 @@
 import type { PressureUnit } from "@projet-igsn/domain/sample/condition/pressure-unit";
 import type { TemperatureUnit } from "@projet-igsn/domain/sample/condition/temperature-unit";
+import type { DatePrecision } from "@projet-igsn/domain/sample/date-range";
 import type { ExperimentDurationUnit } from "@projet-igsn/domain/sample/synthetic-details/experiment-duration-unit";
 import type { ExperimentType } from "@projet-igsn/domain/sample/synthetic-details/experiment-type";
 import type { FinalProduct } from "@projet-igsn/domain/sample/synthetic-details/final-product";
@@ -11,10 +12,16 @@ import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-detail
 import { needsStartingMaterialComposition } from "@projet-igsn/domain/sample/synthetic-details/needs-starting-material-composition";
 
 import {
+  composeDateRange,
+  type DateRangeCandidate,
+  toDateRangeDraft,
+} from "#/samples/compose-date-range.ts";
+import {
   composeMeasurement,
   type MeasurementCandidate,
 } from "#/samples/compose-measurement.ts";
 import { nonEmpty } from "#/samples/compose-scientific-context.ts";
+import { type DraftOptions } from "#/samples/draft-defaults.ts";
 
 export type SyntheticDetailsDraft = {
   startingMaterial: StartingMaterial | undefined;
@@ -26,6 +33,8 @@ export type SyntheticDetailsDraft = {
   experimentDurationUnit: ExperimentDurationUnit | null | undefined;
   synthesisDateStart: string | undefined;
   synthesisDateEnd: string | undefined;
+  synthesisDatePrecision: DatePrecision;
+  synthesisDateTimeZone: string | undefined;
   operatorName: string | null | undefined;
   operatorOrcid: string | null | undefined;
   researchStructure: string[];
@@ -45,7 +54,7 @@ type SyntheticDetailsCandidate = {
   finalProduct: FinalProduct | undefined;
   experimentType: ExperimentType | undefined;
   experimentDuration: MeasurementCandidate<ExperimentDurationUnit> | undefined;
-  synthesisDate: { start: string; end: string } | undefined;
+  synthesisDate: DateRangeCandidate;
   operatorName: string | undefined;
   operatorOrcid: string | undefined;
   researchStructure: string[] | undefined;
@@ -75,11 +84,12 @@ export function composeSyntheticDetails(
       draft.experimentDurationValue,
       draft.experimentDurationUnit,
     ),
-    synthesisDate:
-      draft.synthesisDateStart !== undefined &&
-      draft.synthesisDateEnd !== undefined
-        ? { start: draft.synthesisDateStart, end: draft.synthesisDateEnd }
-        : undefined,
+    synthesisDate: composeDateRange({
+      start: draft.synthesisDateStart,
+      end: draft.synthesisDateEnd,
+      precision: draft.synthesisDatePrecision,
+      timeZone: draft.synthesisDateTimeZone,
+    }),
     operatorName: draft.operatorName?.trim() || undefined,
     operatorOrcid: draft.operatorOrcid?.trim() || undefined,
     researchStructure: nonEmpty(draft.researchStructure),
@@ -99,7 +109,9 @@ export function composeSyntheticDetails(
 
 export function toSyntheticDetailsDraft(
   value?: SyntheticDetails | null,
+  options: DraftOptions = {},
 ): SyntheticDetailsDraft {
+  const synthesisDate = toDateRangeDraft(value?.synthesisDate, options);
   return {
     startingMaterial: value?.startingMaterial ?? undefined,
     startingMaterialNature: value?.startingMaterialNature ?? undefined,
@@ -109,8 +121,10 @@ export function toSyntheticDetailsDraft(
     experimentType: value?.experimentType ?? undefined,
     experimentDurationValue: value?.experimentDuration?.value,
     experimentDurationUnit: value?.experimentDuration?.unit,
-    synthesisDateStart: value?.synthesisDate?.start,
-    synthesisDateEnd: value?.synthesisDate?.end,
+    synthesisDateStart: synthesisDate.start,
+    synthesisDateEnd: synthesisDate.end,
+    synthesisDatePrecision: synthesisDate.precision,
+    synthesisDateTimeZone: synthesisDate.timeZone,
     operatorName: value?.operatorName ?? undefined,
     operatorOrcid: value?.operatorOrcid ?? undefined,
     researchStructure: value?.researchStructure ?? [],

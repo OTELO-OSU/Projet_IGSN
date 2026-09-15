@@ -94,6 +94,8 @@ const row = {
   syn_experiment_duration_unit: null,
   syn_synthesis_date_start: null,
   syn_synthesis_date_end: null,
+  syn_synthesis_date_precision: null,
+  syn_synthesis_date_time_zone: null,
   syn_operator_name: null,
   syn_operator_orcid: null,
   syn_research_structure: null,
@@ -302,6 +304,18 @@ describe("toSample", () => {
 
   it("should throw when the age carries an out-of-scale geological rank", () => {
     expect(() => toSample({ ...ageRow, geological_age_min: 99 })).toThrow();
+  });
+
+  it("should throw when an hour-precision synthesis date has no time zone", () => {
+    expect(() =>
+      toSample({
+        ...row,
+        syn_synthesis_date_start: "2025-01-10T08:45",
+        syn_synthesis_date_end: "2025-01-10T19:05",
+        syn_synthesis_date_precision: "hour",
+        syn_synthesis_date_time_zone: null,
+      }),
+    ).toThrow("time zone");
   });
 
   it("should throw on a row the sample schema rejects", () => {

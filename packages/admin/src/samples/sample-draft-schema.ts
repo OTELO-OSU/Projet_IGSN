@@ -154,7 +154,7 @@ export const toSampleDraft = (
     options,
   ),
   repository: toRepositoryDraft(value?.repository),
-  syntheticDetails: toSyntheticDetailsDraft(value?.syntheticDetails),
+  syntheticDetails: toSyntheticDetailsDraft(value?.syntheticDetails, options),
   existenceStatus: value?.existenceStatus ?? draftDefault(options, "exists"),
   availabilityStatus:
     value?.availabilityStatus ?? draftDefault(options, "available"),

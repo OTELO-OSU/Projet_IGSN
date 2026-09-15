@@ -194,6 +194,28 @@ describe("sampleDraftSchema", () => {
     });
   });
 
+  it("should round-trip an hour-precision synthesis date through the draft", () => {
+    const synthesisDate = {
+      precision: "hour",
+      start: "2026-01-05T08:30",
+      end: "2026-01-06T17:00",
+      timeZone: "Europe/Paris",
+    } as const;
+
+    expect(
+      sampleDraftSchema.parse({
+        ...draft,
+        materialPath: toHierarchyPath(
+          "rock_and_sediment.synthetic_rock_mineral",
+        ),
+        syntheticDetails: toSyntheticDetailsDraft({
+          synthesisDate,
+          researchStructure: [],
+        }),
+      }),
+    ).toMatchObject({ syntheticDetails: { synthesisDate } });
+  });
+
   it("should reject a value only the domain schema constrains", () => {
     const result = sampleDraftSchema.safeParse({
       ...draft,

@@ -69,7 +69,7 @@ const syntheticDetails = {
   startingMaterialNature: "rock",
   finalProduct: "glass",
   experimentDuration: { value: 2, unit: "hour" },
-  synthesisDate: { start: "2020-01-01", end: "2020-01-02" },
+  synthesisDate: { precision: "day", start: "2020-01-01", end: "2020-01-02" },
   operatorName: "Marie Curie",
 } as const;
 

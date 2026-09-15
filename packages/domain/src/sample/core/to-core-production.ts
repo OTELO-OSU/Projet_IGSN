@@ -25,11 +25,15 @@ function toCoreProjects(sample: Sample): CoreProduction["projects"] {
 function toCoreProcessSteps(sample: Sample): CoreProduction["processSteps"] {
   const details = sample.syntheticDetails;
   if (details == null) return undefined;
+  const synthesisDate = details.synthesisDate;
   const step = {
     stepType: "Synthesis" as const,
     description: details.experimentalProtocol ?? undefined,
-    timestampStart: details.synthesisDate?.start,
-    timestampEnd: details.synthesisDate?.end,
+    timestampStart: synthesisDate?.start,
+    timestampEnd: synthesisDate?.end,
+    timestampPrecision: synthesisDate?.precision,
+    timestampTimeZone:
+      synthesisDate?.precision === "hour" ? synthesisDate.timeZone : undefined,
     method: optionalConcept("experiment-type", details.experimentType),
   };
   return step.description == null &&

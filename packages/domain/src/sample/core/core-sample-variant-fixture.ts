@@ -5,6 +5,7 @@ import {
   COLLECTION_SPECIMEN,
   FIELD_SAMPLE,
   LINE_SAMPLE,
+  SYNTHETIC_DETAILS,
   SYNTHETIC_SAMPLE,
 } from "./core-sample-fixture.ts";
 
@@ -212,6 +213,20 @@ const RELATED_SAMPLE: Sample = {
   ],
 };
 
+const HOUR_SYNTHESIS_SAMPLE: Sample = {
+  ...SYNTHETIC_SAMPLE,
+  name: "Run timed to the hour",
+  syntheticDetails: {
+    ...SYNTHETIC_DETAILS,
+    synthesisDate: {
+      precision: "hour",
+      start: "2025-01-10T09:00",
+      end: "2025-01-12T17:30",
+      timeZone: "Europe/Paris",
+    },
+  },
+};
+
 const TWO_PARENT_SAMPLE: Sample = {
   ...SYNTHETIC_SAMPLE,
   name: "Blend of two parent blocks",
@@ -236,6 +251,7 @@ export const CORE_SAMPLE_FIXTURES: readonly Sample[] = [
   COLLECTION_SPECIMEN,
   LINE_SAMPLE,
   SYNTHETIC_SAMPLE,
+  HOUR_SYNTHESIS_SAMPLE,
   TWO_PARENT_SAMPLE,
   VOLCANIC_SAMPLE,
   METAMORPHIC_SAMPLE,

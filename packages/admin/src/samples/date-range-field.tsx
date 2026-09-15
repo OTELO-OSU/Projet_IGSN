@@ -3,34 +3,25 @@ import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combob
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { withRequired } from "@projet-igsn/design-system/lib/with-required";
+import { getBy } from "@tanstack/react-form";
 import { useState } from "react";
 
+import { m } from "#/paraglide/messages.js";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
-type TimeLabels = {
-  modeLabel: string;
-  zoneLabel: string;
-  zonePlaceholder: string;
-  zoneSearchPlaceholder: string;
-  zoneEmptyText: string;
-};
-
 type DateRangeFieldProps = {
+  prefix: "description.collectionDate" | "syntheticDetails.synthesisDate";
   id: string;
   groupLabel: string;
   rangeModeLabel: string;
+  timeModeLabel: string;
+  timeZoneLabel: string;
   singleLabel: string;
   startLabel: string;
   endLabel: string;
   identicalMessage: () => string;
   requiredToPublish?: boolean;
-} & (
-  | { prefix: "description.collectionDate"; time?: TimeLabels }
-  | { prefix: "syntheticDetails.synthesisDate"; time?: never }
-);
-
-const PRECISION_NAME = "description.collectionDatePrecision";
-const TIME_ZONE_NAME = "description.collectionDateTimeZone";
+};
 
 const timeZoneItems = toComboboxItems(
   Intl.supportedValuesOf("timeZone"),
@@ -42,15 +33,18 @@ export function DateRangeField({
   id,
   groupLabel,
   rangeModeLabel,
+  timeModeLabel,
+  timeZoneLabel,
   singleLabel,
   startLabel,
   endLabel,
   identicalMessage,
   requiredToPublish = true,
-  time,
 }: DateRangeFieldProps) {
   const startName = `${prefix}Start` as const;
   const endName = `${prefix}End` as const;
+  const precisionName = `${prefix}Precision` as const;
+  const timeZoneName = `${prefix}TimeZone` as const;
   const isDateDisabled = useIsFieldDisabled(startName);
   const form = useSampleForm();
   const [isRange, setIsRange] = useState(
@@ -71,9 +65,12 @@ export function DateRangeField({
   };
 
   const togglePrecision = (checked: boolean) => {
-    form.setFieldValue(PRECISION_NAME, checked ? "hour" : "day");
-    for (const name of [startName, endName]) {
-      const bound = form.getFieldValue(name);
+    // Snapshot both bounds first: setting the start rewrites the end in single-date mode.
+    const bounds = [startName, endName].map(
+      (name) => [name, form.getFieldValue(name)] as const,
+    );
+    form.setFieldValue(precisionName, checked ? "hour" : "day");
+    for (const [name, bound] of bounds) {
       if (bound !== undefined) {
         form.setFieldValue(
           name,
@@ -81,9 +78,9 @@ export function DateRangeField({
         );
       }
     }
-    if (checked && !form.getFieldValue(TIME_ZONE_NAME)) {
+    if (checked && !form.getFieldValue(timeZoneName)) {
       form.setFieldValue(
-        TIME_ZONE_NAME,
+        timeZoneName,
         Intl.DateTimeFormat().resolvedOptions().timeZone,
       );
     }
@@ -100,10 +97,7 @@ export function DateRangeField({
 
   return (
     <form.Subscribe
-      selector={(state) =>
-        time !== undefined &&
-        state.values.description.collectionDatePrecision === "hour"
-      }
+      selector={(state) => getBy(state.values, precisionName) === "hour"}
     >
       {(isHour) => (
         <div
@@ -127,17 +121,15 @@ export function DateRangeField({
               />
               <Label htmlFor={`${id}-mode`}>{rangeModeLabel}</Label>
             </div>
-            {time ? (
-              <div className="flex items-center gap-2">
-                <Switch
-                  id={`${id}-time-mode`}
-                  checked={isHour}
-                  onCheckedChange={togglePrecision}
-                  disabled={isDateDisabled}
-                />
-                <Label htmlFor={`${id}-time-mode`}>{time.modeLabel}</Label>
-              </div>
-            ) : null}
+            <div className="flex items-center gap-2">
+              <Switch
+                id={`${id}-time-mode`}
+                checked={isHour}
+                onCheckedChange={togglePrecision}
+                disabled={isDateDisabled}
+              />
+              <Label htmlFor={`${id}-time-mode`}>{timeModeLabel}</Label>
+            </div>
           </div>
           <div className="flex flex-wrap items-start gap-4">
             {isRange ? (
@@ -196,16 +188,16 @@ export function DateRangeField({
               </div>
             )}
           </div>
-          {time && isHour ? (
-            <form.AppField name={TIME_ZONE_NAME}>
+          {isHour ? (
+            <form.AppField name={timeZoneName}>
               {(field) => (
                 <field.ComboboxField
-                  label={time.zoneLabel}
+                  label={timeZoneLabel}
                   requiredToPublish
                   items={timeZoneItems}
-                  placeholder={time.zonePlaceholder}
-                  searchPlaceholder={time.zoneSearchPlaceholder}
-                  emptyText={time.zoneEmptyText}
+                  placeholder={m.time_zone_placeholder()}
+                  searchPlaceholder={m.time_zone_search_placeholder()}
+                  emptyText={m.time_zone_empty()}
                 />
               )}
             </form.AppField>

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { timeZoneSchema } from "../../date/time-zone.ts";
 import { organizationRorSchema } from "../../institutional-group/organization.ts";
 import { collectionMethodSchema } from "../collection-method/vocabulary.ts";
+import { localDateTimeSchema } from "../date-range.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { countrySchema } from "../location/country.ts";
 import { navigationTypeSchema } from "../location/navigation-type.ts";
@@ -122,13 +123,50 @@ const coreProjectSchema = z.strictObject({
   campaign: freeTextSchema.optional(),
 });
 
-const coreProcessStepSchema = z.strictObject({
-  stepType: z.literal("Synthesis"),
-  description: freeTextSchema.optional(),
-  timestampStart: z.iso.date().optional(),
-  timestampEnd: z.iso.date().optional(),
-  method: conceptSchema("experiment-type", experimentTypeSchema).optional(),
-});
+const coreTimestampSchema = z.union([z.iso.date(), localDateTimeSchema]);
+
+const hourPrecisionHasTimeZone = (
+  ctx: z.RefinementCtx,
+  precision: string | undefined,
+  timeZone: string | undefined,
+  path: string,
+): void => {
+  if ((precision === "hour") !== (timeZone != null)) {
+    ctx.addIssue({
+      code: "custom",
+      path: [path],
+      message: "an hour precision date carries its time zone, a day does not",
+    });
+  }
+};
+
+export const coreProcessStepSchema = z
+  .strictObject({
+    stepType: z.literal("Synthesis"),
+    description: freeTextSchema.optional(),
+    timestampStart: coreTimestampSchema.optional(),
+    timestampEnd: coreTimestampSchema.optional(),
+    timestampPrecision: z.enum(["day", "hour"]).optional(),
+    timestampTimeZone: timeZoneSchema.optional(),
+    method: conceptSchema("experiment-type", experimentTypeSchema).optional(),
+  })
+  .superRefine((step, ctx) => {
+    if ((step.timestampPrecision != null) !== (step.timestampStart != null)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["timestampPrecision"],
+        message: "a step timestamp carries its precision",
+      });
+    }
+    hourPrecisionHasTimeZone(
+      ctx,
+      step.timestampPrecision,
+      step.timestampTimeZone,
+      "timestampTimeZone",
+    );
+  });
+
+export type CoreProcessStep = z.infer<typeof coreProcessStepSchema>;
 
 const ROR_PREFIX = "https://ror.org/";
 
@@ -155,14 +193,12 @@ export const coreProductionSchema = z
     location: coreLocationSchema.optional(),
   })
   .superRefine((production, ctx) => {
-    const hourly = production.collectionDatePrecision === "hour";
-    if (hourly !== (production.collectionDateTimeZone != null)) {
-      ctx.addIssue({
-        code: "custom",
-        path: ["collectionDateTimeZone"],
-        message: "an hour precision date carries its time zone, a day does not",
-      });
-    }
+    hourPrecisionHasTimeZone(
+      ctx,
+      production.collectionDatePrecision,
+      production.collectionDateTimeZone,
+      "collectionDateTimeZone",
+    );
   });
 
 export type CoreProduction = z.infer<typeof coreProductionSchema>;

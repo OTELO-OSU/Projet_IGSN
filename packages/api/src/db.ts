@@ -2,7 +2,7 @@ import type { InstitutionalGroupKind } from "@projet-igsn/domain/institutional-g
 import type { SampleStatus } from "@projet-igsn/domain/sample/sample";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 
-import { Kysely, type ColumnType, type Generated } from "kysely";
+import { Kysely, type Generated } from "kysely";
 import { PostgresJSDialect } from "kysely-postgres-js";
 import postgres from "postgres";
 import { z } from "zod";
@@ -126,8 +126,10 @@ type SampleTable = {
   syn_experiment_type: string | null;
   syn_experiment_duration_value: number | null;
   syn_experiment_duration_unit: string | null;
-  syn_synthesis_date_start: ColumnType<Date, string, string> | null;
-  syn_synthesis_date_end: ColumnType<Date, string, string> | null;
+  syn_synthesis_date_start: string | null;
+  syn_synthesis_date_end: string | null;
+  syn_synthesis_date_precision: string | null;
+  syn_synthesis_date_time_zone: string | null;
   syn_operator_name: string | null;
   syn_operator_orcid: string | null;
   syn_research_structure: string[] | null;

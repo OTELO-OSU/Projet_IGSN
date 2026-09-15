@@ -110,7 +110,7 @@ const SYNTHESIS: SampleRow["syntheticDetails"] = {
   startingMaterialComposition: "MgO + SiO2 oxide mix",
   finalProduct: "mineral",
   experimentType: "crystallization_dynamic",
-  synthesisDate: { start: "2025-03-03", end: "2025-03-05" },
+  synthesisDate: { precision: "day", start: "2025-03-03", end: "2025-03-05" },
   operatorName: "Claire Martin",
   operatorOrcid: "0000-0002-1825-0097",
   researchStructure: ["02rx3b187"],
@@ -815,6 +815,12 @@ const PUBLISHED: DemoRow[] = [
     syntheticDetails: {
       ...SYNTHESIS,
       experimentDuration: { value: 12, unit: "hour" },
+      synthesisDate: {
+        precision: "hour",
+        start: "2025-03-03T08:00",
+        end: "2025-03-03T20:00",
+        timeZone: "Europe/Paris",
+      },
     },
   },
   {

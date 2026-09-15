@@ -9,7 +9,12 @@ const syntheticDetails = {
   finalProduct: "glass",
   experimentType: "fusion",
   experimentDuration: { value: 30, unit: "minute" },
-  synthesisDate: { start: "2020-01-01", end: "2020-01-02" },
+  synthesisDate: {
+    precision: "hour",
+    start: "2020-01-01T09:00",
+    end: "2020-01-02T18:30",
+    timeZone: "Europe/Paris",
+  },
   operatorName: "Marie Curie",
   operatorOrcid: "0000-0002-1825-0097",
   researchStructure: ["04kdfz702", "02feahw73"],
@@ -33,7 +38,11 @@ describe("syntheticDetailsSchema", () => {
 
   it("should reject a synthesis period ending before it starts", () => {
     const result = syntheticDetailsSchema.safeParse({
-      synthesisDate: { start: "2020-01-02", end: "2020-01-01" },
+      synthesisDate: {
+        precision: "day",
+        start: "2020-01-02",
+        end: "2020-01-01",
+      },
     });
 
     expect(result.error?.issues).toMatchObject([
@@ -43,7 +52,11 @@ describe("syntheticDetailsSchema", () => {
 
   it("should reject a synthesis date in the future", () => {
     const result = syntheticDetailsSchema.safeParse({
-      synthesisDate: { start: "2999-01-01", end: "2999-01-02" },
+      synthesisDate: {
+        precision: "day",
+        start: "2999-01-01",
+        end: "2999-01-02",
+      },
     });
 
     expect(result.error?.issues).toMatchObject([

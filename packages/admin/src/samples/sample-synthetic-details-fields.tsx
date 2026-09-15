@@ -157,6 +157,8 @@ export function SampleSyntheticDetailsFields() {
         id="synthesis-dates"
         groupLabel={m.field_synthesis_dates()}
         rangeModeLabel={m.synthesis_date_mode_range()}
+        timeModeLabel={m.synthesis_date_mode_time()}
+        timeZoneLabel={m.field_synthesis_time_zone()}
         singleLabel={m.field_synthesis_date()}
         startLabel={m.field_synthesis_date_start()}
         endLabel={m.field_synthesis_date_end()}
