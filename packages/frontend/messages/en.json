@@ -1,7 +1,6 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
   "app_title": "IGSN",
-  "app_subtitle": "Sample Library",
   "auth_sign_in": "Sign in",
   "auth_sign_out": "Sign out",
   "auth_go_to_dashboard": "Go to Dashboard",
@@ -149,7 +148,7 @@
   "pagination_label": "Pagination",
   "pagination_previous": "Previous",
   "pagination_next": "Next",
-  "footer_logo_republique_francaise": "République Française",
+  "footer_logo_cnrs_insu": "CNRS Terre & Univers",
   "footer_logo_gaia_data": "Gaia Data",
   "sample_section_age": "Age",
   "sample_field_numeric_age": "Numeric age",

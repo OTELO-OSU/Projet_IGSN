@@ -6,7 +6,6 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
-import { Mountain } from "lucide-react";
 import { AuthProvider } from "react-oidc-context";
 
 import type { MyRouterContext } from "../router-context";
@@ -41,8 +40,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         },
         {
           rel: "icon",
-          type: "image/svg+xml",
-          href: "/favicon.svg",
+          type: "image/png",
+          href: "/favicon.png",
         },
         {
           rel: "manifest",
@@ -60,18 +59,12 @@ function RootLayout() {
     <AuthProvider userManager={userManager} onSigninCallback={onSigninCallback}>
       <div className="flex min-h-svh flex-col">
         <header className="bg-background/80 sticky top-0 z-40 flex h-24 items-center gap-3 border-b px-4 backdrop-blur">
-          <Link
-            to="/"
-            aria-label={m.app_title()}
-            className="flex items-center gap-3 text-sky-900"
-          >
-            <Mountain className="text-foreground size-9" aria-hidden="true" />
-            <span className="flex flex-col leading-tight">
-              <span className="text-2xl font-bold">{m.app_title()}</span>
-              <span className="text-muted-foreground text-sm">
-                {m.app_subtitle()}
-              </span>
-            </span>
+          <Link to="/" aria-label={m.app_title()} className="flex items-center">
+            <img
+              src={`${import.meta.env.BASE_URL}logo-igsn.png`}
+              alt=""
+              className="h-16 w-auto"
+            />
           </Link>
           <div className="ml-auto">
             <AuthControls />
@@ -87,8 +80,8 @@ function RootLayout() {
           <div className="flex flex-col gap-8 px-6 py-10 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-8">
               <img
-                src={`${import.meta.env.BASE_URL}republique-francaise.svg`}
-                alt={m.footer_logo_republique_francaise()}
+                src={`${import.meta.env.BASE_URL}logo_cnrs-insu.png`}
+                alt={m.footer_logo_cnrs_insu()}
                 className="h-20 w-auto"
               />
               <img
