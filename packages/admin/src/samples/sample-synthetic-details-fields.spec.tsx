@@ -147,7 +147,11 @@ describe("SampleSyntheticDetailsFields", () => {
             finalProduct: "glass",
             experimentType: "fusion",
             experimentDuration: { value: 3, unit: "hour" },
-            synthesisDate: { start: "2026-01-05", end: "2026-01-05" },
+            synthesisDate: {
+              precision: "day",
+              start: "2026-01-05",
+              end: "2026-01-05",
+            },
             operatorName: "Marie Curie",
             operatorOrcid: "0000-0002-1825-0097",
             researchStructure: ["02feahw73"],
@@ -268,7 +272,74 @@ describe("SampleSyntheticDetailsFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           syntheticDetails: {
-            synthesisDate: { start: "2026-02-10", end: "2026-03-10" },
+            synthesisDate: {
+              precision: "day",
+              start: "2026-02-10",
+              end: "2026-03-10",
+            },
+          },
+        }),
+      ),
+    );
+  });
+
+  it("should submit an hour-precision synthesis date with the picked time zone", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderSyntheticForm(onSubmit);
+
+    await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
+    await screen.getByRole("switch", { name: "Specify time" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Date *", { exact: true }))
+      .toHaveValue("2026-01-05T00:00");
+
+    await screen.getByRole("combobox", { name: "Time zone *" }).click();
+    await screen.getByPlaceholder("Search a time zone...").fill("Europe/Paris");
+    await screen.getByRole("option", { name: "Europe/Paris" }).click();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          syntheticDetails: {
+            synthesisDate: {
+              precision: "hour",
+              start: "2026-01-05T00:00",
+              end: "2026-01-05T00:00",
+              timeZone: "Europe/Paris",
+            },
+          },
+        }),
+      ),
+    );
+  });
+
+  it("should drop the time and the zone from the synthesis date once the time switch goes back off", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderSyntheticForm(onSubmit);
+
+    await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
+    await screen.getByRole("switch", { name: "Specify time" }).click();
+    await screen.getByRole("switch", { name: "Specify time" }).click();
+
+    await expect
+      .element(screen.getByLabelText("Date *", { exact: true }))
+      .toHaveValue("2026-01-05");
+    await expect
+      .element(screen.getByRole("combobox", { name: "Time zone *" }))
+      .not.toBeInTheDocument();
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          syntheticDetails: {
+            synthesisDate: {
+              precision: "day",
+              start: "2026-01-05",
+              end: "2026-01-05",
+            },
           },
         }),
       ),
@@ -294,7 +365,11 @@ describe("SampleSyntheticDetailsFields", () => {
               startingMaterialComposition: "SiO2 + MgO",
               finalProduct: "glass",
               experimentType: "fusion",
-              synthesisDate: { start: "2026-01-05", end: "2026-01-05" },
+              synthesisDate: {
+                precision: "day",
+                start: "2026-01-05",
+                end: "2026-01-05",
+              },
               operatorName: "Marie Curie",
               researchStructure: ["02feahw73"],
               temperature: { value: 1200, unit: "celsius" },

@@ -730,6 +730,8 @@
   "field_experiment_duration_unit": "Experiment duration unit",
   "field_synthesis_dates": "Synthesis date",
   "synthesis_date_mode_range": "Date range",
+  "synthesis_date_mode_time": "Specify time",
+  "field_synthesis_time_zone": "Time zone",
   "field_synthesis_date": "Date",
   "field_synthesis_date_start": "Start date",
   "field_synthesis_date_end": "End date",

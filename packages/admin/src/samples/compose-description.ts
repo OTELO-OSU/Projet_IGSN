@@ -5,6 +5,10 @@ import type { SizeUnit } from "@projet-igsn/domain/sample/description/size-unit"
 import type { VolumeUnit } from "@projet-igsn/domain/sample/description/volume-unit";
 
 import {
+  composeDateRange,
+  toDateRangeDraft,
+} from "#/samples/compose-date-range.ts";
+import {
   composeMeasurement,
   type MeasurementCandidate,
 } from "#/samples/compose-measurement.ts";
@@ -49,29 +53,16 @@ type DescriptionCandidate = {
   volume: MeasurementCandidate<VolumeUnit> | undefined;
 };
 
-function composeCollectionDate(draft: DescriptionDraft) {
-  if (
-    draft.collectionDateStart === undefined &&
-    draft.collectionDateEnd === undefined
-  ) {
-    return undefined;
-  }
-  return {
-    precision: draft.collectionDatePrecision,
-    start: draft.collectionDateStart,
-    end: draft.collectionDateEnd,
-    timeZone:
-      draft.collectionDatePrecision === "hour"
-        ? draft.collectionDateTimeZone
-        : undefined,
-  };
-}
-
 export function composeDescription(
   draft: DescriptionDraft,
 ): DescriptionCandidate {
   return {
-    collectionDate: composeCollectionDate(draft),
+    collectionDate: composeDateRange({
+      start: draft.collectionDateStart,
+      end: draft.collectionDateEnd,
+      precision: draft.collectionDatePrecision,
+      timeZone: draft.collectionDateTimeZone,
+    }),
     oriented: draft.oriented,
     orientationExplanation: draft.oriented
       ? draft.orientationExplanation?.trim() || undefined
@@ -89,16 +80,12 @@ export function toDescriptionDraft(
   description: Description | null | undefined,
   options: DraftOptions = {},
 ): DescriptionDraft {
-  const collectionDate = description?.collectionDate;
+  const collectionDate = toDateRangeDraft(description?.collectionDate, options);
   return {
-    collectionDateStart: collectionDate?.start,
-    collectionDateEnd: collectionDate?.end,
-    collectionDatePrecision:
-      collectionDate?.precision ?? draftDefault(options, "day"),
-    collectionDateTimeZone:
-      collectionDate?.precision === "hour"
-        ? collectionDate.timeZone
-        : undefined,
+    collectionDateStart: collectionDate.start,
+    collectionDateEnd: collectionDate.end,
+    collectionDatePrecision: collectionDate.precision,
+    collectionDateTimeZone: collectionDate.timeZone,
     oriented: description?.oriented ?? draftDefault(options, false),
     orientationExplanation: description?.orientationExplanation ?? undefined,
     openDescription: description?.openDescription ?? undefined,

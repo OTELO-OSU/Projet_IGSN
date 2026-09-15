@@ -16,6 +16,7 @@ type TimeLabels = {
 };
 
 type DateRangeFieldProps = {
+  prefix: "description.collectionDate" | "syntheticDetails.synthesisDate";
   id: string;
   groupLabel: string;
   rangeModeLabel: string;
@@ -24,13 +25,8 @@ type DateRangeFieldProps = {
   endLabel: string;
   identicalMessage: () => string;
   requiredToPublish?: boolean;
-} & (
-  | { prefix: "description.collectionDate"; time?: TimeLabels }
-  | { prefix: "syntheticDetails.synthesisDate"; time?: never }
-);
-
-const PRECISION_NAME = "description.collectionDatePrecision";
-const TIME_ZONE_NAME = "description.collectionDateTimeZone";
+  time?: TimeLabels;
+};
 
 const timeZoneItems = toComboboxItems(
   Intl.supportedValuesOf("timeZone"),
@@ -51,6 +47,8 @@ export function DateRangeField({
 }: DateRangeFieldProps) {
   const startName = `${prefix}Start` as const;
   const endName = `${prefix}End` as const;
+  const precisionName = `${prefix}Precision` as const;
+  const timeZoneName = `${prefix}TimeZone` as const;
   const isDateDisabled = useIsFieldDisabled(startName);
   const form = useSampleForm();
   const [isRange, setIsRange] = useState(
@@ -71,19 +69,21 @@ export function DateRangeField({
   };
 
   const togglePrecision = (checked: boolean) => {
-    form.setFieldValue(PRECISION_NAME, checked ? "hour" : "day");
-    for (const name of [startName, endName]) {
-      const bound = form.getFieldValue(name);
+    const names = [startName, endName];
+    const bounds = names.map((name) => form.getFieldValue(name));
+    form.setFieldValue(precisionName, checked ? "hour" : "day");
+    names.forEach((name, index) => {
+      const bound = bounds[index];
       if (bound !== undefined) {
         form.setFieldValue(
           name,
           checked ? `${bound}T00:00` : bound.slice(0, 10),
         );
       }
-    }
-    if (checked && !form.getFieldValue(TIME_ZONE_NAME)) {
+    });
+    if (checked && !form.getFieldValue(timeZoneName)) {
       form.setFieldValue(
-        TIME_ZONE_NAME,
+        timeZoneName,
         Intl.DateTimeFormat().resolvedOptions().timeZone,
       );
     }
@@ -99,119 +99,119 @@ export function DateRangeField({
   };
 
   return (
-    <form.Subscribe
-      selector={(state) =>
-        time !== undefined &&
-        state.values.description.collectionDatePrecision === "hour"
-      }
-    >
-      {(isHour) => (
-        <div
-          role="group"
-          aria-labelledby={`${id}-label`}
-          className="grid gap-2"
-        >
-          <div className="flex items-center gap-4">
-            <span
-              id={`${id}-label`}
-              className="text-sm leading-none font-medium"
-            >
-              {withRequired(groupLabel, requiredToPublish)}
-            </span>
-            <div className="flex items-center gap-2">
-              <Switch
-                id={`${id}-mode`}
-                checked={isRange}
-                onCheckedChange={toggleRange}
-                disabled={isDateDisabled}
-              />
-              <Label htmlFor={`${id}-mode`}>{rangeModeLabel}</Label>
-            </div>
-            {time ? (
+    <form.Field name={precisionName}>
+      {(precisionField) => {
+        const isHour =
+          time !== undefined && precisionField.state.value === "hour";
+        return (
+          <div
+            role="group"
+            aria-labelledby={`${id}-label`}
+            className="grid gap-2"
+          >
+            <div className="flex items-center gap-4">
+              <span
+                id={`${id}-label`}
+                className="text-sm leading-none font-medium"
+              >
+                {withRequired(groupLabel, requiredToPublish)}
+              </span>
               <div className="flex items-center gap-2">
                 <Switch
-                  id={`${id}-time-mode`}
-                  checked={isHour}
-                  onCheckedChange={togglePrecision}
+                  id={`${id}-mode`}
+                  checked={isRange}
+                  onCheckedChange={toggleRange}
                   disabled={isDateDisabled}
                 />
-                <Label htmlFor={`${id}-time-mode`}>{time.modeLabel}</Label>
+                <Label htmlFor={`${id}-mode`}>{rangeModeLabel}</Label>
               </div>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap items-start gap-4">
-            {isRange ? (
-              <>
+              {time ? (
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id={`${id}-time-mode`}
+                    checked={isHour}
+                    onCheckedChange={togglePrecision}
+                    disabled={isDateDisabled}
+                  />
+                  <Label htmlFor={`${id}-time-mode`}>{time.modeLabel}</Label>
+                </div>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap items-start gap-4">
+              {isRange ? (
+                <>
+                  <div className="flex-1">
+                    <form.AppField
+                      name={startName}
+                      validators={{
+                        onChangeListenTo: [endName],
+                        onChange: identicalRange,
+                      }}
+                    >
+                      {(field) => (
+                        <field.DateField
+                          label={startLabel}
+                          requiredToPublish
+                          withTime={isHour}
+                        />
+                      )}
+                    </form.AppField>
+                  </div>
+                  <div className="flex-1">
+                    <form.AppField
+                      name={endName}
+                      validators={{
+                        onChangeListenTo: [startName],
+                        onChange: identicalRange,
+                      }}
+                    >
+                      {(field) => (
+                        <field.DateField
+                          label={endLabel}
+                          requiredToPublish
+                          withTime={isHour}
+                        />
+                      )}
+                    </form.AppField>
+                  </div>
+                </>
+              ) : (
                 <div className="flex-1">
                   <form.AppField
                     name={startName}
-                    validators={{
-                      onChangeListenTo: [endName],
-                      onChange: identicalRange,
+                    listeners={{
+                      onChange: ({ value }) =>
+                        form.setFieldValue(endName, value),
                     }}
                   >
                     {(field) => (
                       <field.DateField
-                        label={startLabel}
+                        label={singleLabel}
                         requiredToPublish
                         withTime={isHour}
                       />
                     )}
                   </form.AppField>
                 </div>
-                <div className="flex-1">
-                  <form.AppField
-                    name={endName}
-                    validators={{
-                      onChangeListenTo: [startName],
-                      onChange: identicalRange,
-                    }}
-                  >
-                    {(field) => (
-                      <field.DateField
-                        label={endLabel}
-                        requiredToPublish
-                        withTime={isHour}
-                      />
-                    )}
-                  </form.AppField>
-                </div>
-              </>
-            ) : (
-              <div className="flex-1">
-                <form.AppField
-                  name={startName}
-                  listeners={{
-                    onChange: ({ value }) => form.setFieldValue(endName, value),
-                  }}
-                >
-                  {(field) => (
-                    <field.DateField
-                      label={singleLabel}
-                      requiredToPublish
-                      withTime={isHour}
-                    />
-                  )}
-                </form.AppField>
-              </div>
-            )}
-          </div>
-          {time && isHour ? (
-            <form.AppField name={TIME_ZONE_NAME}>
-              {(field) => (
-                <field.ComboboxField
-                  label={time.zoneLabel}
-                  requiredToPublish
-                  items={timeZoneItems}
-                  placeholder={time.zonePlaceholder}
-                  searchPlaceholder={time.zoneSearchPlaceholder}
-                  emptyText={time.zoneEmptyText}
-                />
               )}
-            </form.AppField>
-          ) : null}
-        </div>
-      )}
-    </form.Subscribe>
+            </div>
+            {time && isHour ? (
+              <form.AppField name={timeZoneName}>
+                {(field) => (
+                  <field.ComboboxField
+                    label={time.zoneLabel}
+                    requiredToPublish
+                    items={timeZoneItems}
+                    placeholder={time.zonePlaceholder}
+                    searchPlaceholder={time.zoneSearchPlaceholder}
+                    emptyText={time.zoneEmptyText}
+                  />
+                )}
+              </form.AppField>
+            ) : null}
+          </div>
+        );
+      }}
+    </form.Field>
   );
 }
