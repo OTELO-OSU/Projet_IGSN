@@ -5,45 +5,11 @@ name: "Sync organizations"
 #   approve pull requests" must be enabled, or `gh pr create` below 403s.
 on:
   schedule:
-    # GitHub requires a literal cron, so it cannot read the interval variable.
-    - cron: "0 3 1 * *"
+    - cron: "0 3 1 1 *"
   workflow_dispatch:
 
 jobs:
-  due:
-    runs-on: ubuntu-latest
-    permissions: {}
-
-    outputs:
-      due: ${{ steps.interval.outputs.due }}
-
-    steps:
-      - name: Check the sync interval
-        id: interval
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          INTERVAL: ${{ vars.ORGANIZATION_SYNC_INTERVAL_MONTHS || 12 }}
-        run: |
-          if [ "$EVENT_NAME" != "schedule" ]; then
-            echo "due=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          # Bash evaluates a variable's value as an expression inside $(( )), so
-          # anything but a positive integer is rejected before the arithmetic.
-          case "$INTERVAL" in '' | *[!0-9]* | 0) INTERVAL=12 ;; esac
-          # All digits by now, but a leading zero would read as octal: 06 aborts
-          # the step and 012 would silently mean 10 months.
-          INTERVAL=$((10#$INTERVAL))
-          month=$(date -u +%-m)
-          if [ $(( (month - 1) % INTERVAL )) -eq 0 ]; then
-            echo "due=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "due=false" >> "$GITHUB_OUTPUT"
-          fi
-
   sync:
-    needs: due
-    if: needs.due.outputs.due == 'true'
     runs-on: ubuntu-latest
 
     permissions:
