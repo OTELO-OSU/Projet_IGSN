@@ -101,18 +101,18 @@ One folder per entity, one concern per file, kebab-case folder, no barrel/index.
 - `<entity>/routes.ts`: Hono sub-app mounted in `app.ts`.
 - `<entity>/validator.ts`: request validators used only by `api`, anything a second package needs going to `domain/<entity>/<model>-validator.ts`.
 
-`frontend` / `admin` keep entity code under `src/domain/<entity>/`, one concern per file, with routes in `src/routes/` wiring data to components and holding no business logic:
+`frontend` keeps entity code under `src/domain/<entity>/` and `admin` under `src/<entity>/`, one concern per file, with routes in `src/routes/` wiring data to components and holding no business logic:
 
-- `client/`: one API fetch helper per operation (the `fetch` call + response Zod parse).
-- `hook/`: one react-query file per operation, holding that operation's `queryOptions` factory and its hook.
+- `frontend` splits each operation in two: `client/` holds the fetch call and the response Zod parse, `hook/` the react-query file with that operation's `queryOptions` factory and its hook.
+- The split exists so `frontend` route loaders can prefetch, so `admin` does not use it: one `use-<operation>.ts` holds the fetch, the parse and the hook.
 - Presentational components stay at the entity root (`sample-list.tsx`, `sample-view.tsx`).
 
 API client naming:
 
 - The fetch function is `getXxxByYyy` / `listXxx`, its react-query hook `useGetXxxByYyy` / `useListXxx`.
-- Both files share the kebab-case fetch-function name (`client/get-sample-by-id.ts`, `hook/get-sample-by-id.ts`).
-- One operation per hook file, never a combined `sample-query.ts`.
-- Keep the `queryOptions` factory (`getXxxByYyyQueryOptions`) in the hook file so route loaders can prefetch.
+- In `frontend` both files share the kebab-case fetch-function name (`client/get-sample-by-id.ts`, `hook/get-sample-by-id.ts`).
+- One operation per file, never a combined `sample-query.ts`.
+- Keep the `queryOptions` factory (`getXxxByYyyQueryOptions`) in the `frontend` hook file so route loaders can prefetch.
 
 ## Decision records (ADR)
 
