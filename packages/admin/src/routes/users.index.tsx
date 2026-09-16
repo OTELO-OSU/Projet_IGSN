@@ -1,11 +1,12 @@
 import type { z } from "zod";
 
 import { institutionFilterSchema } from "@projet-igsn/domain/institutional-group/institution-filter";
+import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
 import { USER_STATUSES } from "@projet-igsn/domain/user/model";
 import { listUsersQuerySchema } from "@projet-igsn/domain/user/user-validator";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { UserModerationOnly } from "#/auth/user-moderation-only.tsx";
+import { RouteGuard } from "#/auth/route-guard.tsx";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
 import { SelectFilter } from "#/filters/select-filter.tsx";
@@ -25,9 +26,9 @@ const searchSchema = listUsersQuerySchema.extend({
 export const Route = createFileRoute("/users/")({
   validateSearch: searchSchema,
   component: () => (
-    <UserModerationOnly>
+    <RouteGuard allow={canModerateUsers}>
       <UsersPage />
-    </UserModerationOnly>
+    </RouteGuard>
   ),
 });
 

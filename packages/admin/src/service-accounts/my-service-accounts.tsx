@@ -1,10 +1,10 @@
 import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import { useState } from "react";
 
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { m } from "#/paraglide/messages.js";
-import { useListMyServiceAccounts } from "#/service-accounts/hook/list-my-service-accounts.ts";
-import { useRotateApiKey } from "#/service-accounts/hook/rotate-api-key.ts";
+import { useListMyServiceAccounts } from "#/service-accounts/use-list-my-service-accounts.ts";
+import { useRotateApiKey } from "#/service-accounts/use-rotate-api-key.ts";
 import { ShareLink } from "#/settings/share-link.tsx";
 
 export function MyServiceAccounts() {
@@ -41,8 +41,6 @@ export function MyServiceAccounts() {
                     title={m.service_account_api_key_regenerate_title()}
                     description={m.service_account_api_key_regenerate_description()}
                     confirmLabel={m.service_account_api_key_regenerate()}
-                    cancelLabel={m.action_cancel()}
-                    closeLabel={m.action_close()}
                     onConfirm={() => generate(account.id)}
                   >
                     {m.service_account_api_key_regenerate()}

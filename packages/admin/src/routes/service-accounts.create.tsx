@@ -4,8 +4,8 @@ import { z } from "zod";
 
 import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { m } from "#/paraglide/messages.js";
-import { useCreateServiceAccount } from "#/service-accounts/hook/create-service-account.ts";
 import { ServiceAccountForm } from "#/service-accounts/service-account-form.tsx";
+import { useCreateServiceAccount } from "#/service-accounts/use-create-service-account.ts";
 
 export const Route = createFileRoute("/service-accounts/create")({
   validateSearch: z.object({

@@ -4,8 +4,8 @@ import { userIdentitiesResponseSchema } from "@projet-igsn/domain/user/user-vali
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
-import { MIN_SEARCH_LENGTH } from "#/search-picker/use-picker-search.ts";
+import { apiJson } from "#/http-error.ts";
+import { MIN_SEARCH_LENGTH } from "#/search-picker/use-picker.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 export function useSearchUsers(
@@ -59,14 +59,13 @@ export function useSearchUsers(
       if (includeSelf) {
         url.searchParams.set("includeSelf", "true");
       }
-      const res = await apiFetch(url);
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to search researchers (${res.status})`,
-        );
-      }
-      return userIdentitiesResponseSchema.parse(await res.json()).data;
+      const { data } = await apiJson(
+        apiFetch,
+        url,
+        userIdentitiesResponseSchema,
+        "Failed to search researchers",
+      );
+      return data;
     },
   });
 }

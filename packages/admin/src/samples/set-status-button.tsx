@@ -1,7 +1,6 @@
 import type { PublishStatus } from "@projet-igsn/domain/sample/sample-validator";
 
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
-
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { m } from "#/paraglide/messages.js";
 import { ConfirmMenuButton } from "#/samples/confirm-menu-button.tsx";
 
@@ -39,9 +38,6 @@ export function SetStatusButton({
       className={menuStatus ? "rounded-r-none" : undefined}
       title={text.title()}
       description={text.description()}
-      confirmLabel={m.action_confirm()}
-      cancelLabel={m.action_cancel()}
-      closeLabel={m.action_close()}
       disabled={disabled}
       onConfirm={() => onConfirm(status)}
     >

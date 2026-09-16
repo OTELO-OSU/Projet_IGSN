@@ -1,7 +1,8 @@
+import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
 import { fullName } from "@projet-igsn/domain/user/full-name";
 import { createFileRoute } from "@tanstack/react-router";
 
-import { UserModerationOnly } from "#/auth/user-moderation-only.tsx";
+import { RouteGuard } from "#/auth/route-guard.tsx";
 import { m } from "#/paraglide/messages.js";
 import { useUpdateUser } from "#/users/use-update-user.ts";
 import { useUser } from "#/users/use-user.ts";
@@ -9,9 +10,9 @@ import { UserForm } from "#/users/user-form.tsx";
 
 export const Route = createFileRoute("/users/$userId")({
   component: () => (
-    <UserModerationOnly>
+    <RouteGuard allow={canModerateUsers}>
       <UserDetailPage />
-    </UserModerationOnly>
+    </RouteGuard>
   ),
 });
 

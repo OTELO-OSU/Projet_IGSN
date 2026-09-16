@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { canModerateUsers } from "@projet-igsn/domain/user/can-moderate-users";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -16,8 +17,12 @@ import { render } from "vitest-browser-react";
 
 import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { worker } from "../../test/msw.ts";
+import { RouteGuard } from "./route-guard.tsx";
 import { SuperAdminOnly } from "./super-admin-only.tsx";
-import { UserModerationOnly } from "./user-moderation-only.tsx";
+
+const UserModerationOnly = ({ children }: { children?: ReactNode }) => (
+  <RouteGuard allow={canModerateUsers}>{children}</RouteGuard>
+);
 
 vi.mock("react-oidc-context", () => ({
   useAuth: () => ({ user: { access_token: "tok" } }),

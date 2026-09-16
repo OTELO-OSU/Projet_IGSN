@@ -2,7 +2,7 @@ import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
+import { apiOk, HttpError } from "#/http-error.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
 import { invalidateUserAndGroups } from "#/users/invalidate-user-and-groups.ts";
@@ -14,20 +14,16 @@ export function useAddManualGroupManager() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ groupId, userId }: ManualGroupManagement) => {
-      const res = await apiFetch(
+      await apiOk(
+        apiFetch,
         new URL(`admin/manual-groups/${groupId}/managers`, API_URL),
+        "Failed to add the manager",
         {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ userId }),
         },
       );
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to add the manager (${res.status})`,
-        );
-      }
     },
     onSuccess: async (_data, { userId }) => {
       toast.success(m.group_manager_added());

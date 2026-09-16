@@ -1,6 +1,5 @@
 import type { GroupManager } from "@projet-igsn/domain/user/user-validator";
 
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import {
   Table,
   TableBody,
@@ -11,6 +10,7 @@ import {
 } from "@projet-igsn/design-system/components/ui/table";
 import { fullName } from "@projet-igsn/domain/user/full-name";
 
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { AddManagerDialog } from "#/managers/add-manager-dialog.tsx";
 import { m } from "#/paraglide/messages.js";
 import { UserStatusBadge } from "#/users/user-status-badge.tsx";
@@ -78,8 +78,6 @@ export function ManagersSection({
                           name,
                         })}
                         confirmLabel={m.group_manager_remove_action()}
-                        cancelLabel={m.action_cancel()}
-                        closeLabel={m.action_close()}
                         onConfirm={() => onRemove(manager.id)}
                       >
                         {m.group_manager_remove_action()}

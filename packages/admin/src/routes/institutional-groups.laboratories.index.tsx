@@ -9,12 +9,15 @@ import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { matchesSearch } from "#/filters/matches-search.ts";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
+import {
+  InstitutionGroupTable,
+  laboratoryColumns,
+} from "#/institutional-groups/institution-group-table.tsx";
 import { institutionFilterEntry } from "#/institutional-groups/institution-tree-filter.tsx";
-import { LaboratoryTable } from "#/institutional-groups/laboratory-table.tsx";
 import { useInstitutionalGroupManagerCounts } from "#/institutional-groups/use-institutional-group-manager-counts.ts";
 import { noManagerFilterEntry } from "#/managers/no-manager-filter-entry.tsx";
 import { m } from "#/paraglide/messages.js";
-import { useGetInstitutionalGroupCounts } from "#/users/hook/get-institutional-group-counts.ts";
+import { useGetInstitutionalGroupCounts } from "#/users/use-get-institutional-group-counts.ts";
 
 export const Route = createFileRoute("/institutional-groups/laboratories/")({
   validateSearch: z.object({
@@ -84,10 +87,16 @@ function LaboratoriesPage() {
         ]}
       />
 
-      <LaboratoryTable
-        laboratories={laboratories}
-        memberCounts={counts.data?.laboratories ?? {}}
-        managerCounts={managers}
+      <InstitutionGroupTable
+        rows={laboratories}
+        columns={laboratoryColumns(counts.data?.laboratories ?? {}, managers)}
+        emptyLabel={m.group_laboratories_empty()}
+        onRowClick={(laboratory) =>
+          void navigate({
+            to: "/institutional-groups/laboratories/$code",
+            params: { code: laboratory.code },
+          })
+        }
       />
     </>
   );

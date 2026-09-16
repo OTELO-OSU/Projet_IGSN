@@ -1,3 +1,5 @@
+import type { z } from "zod";
+
 export function parseRetryAfter(header: string): number {
   const seconds = Number(header);
   return Number.isFinite(seconds) && seconds > 0 ? seconds * 1000 : 1000;
@@ -20,6 +22,30 @@ export class HttpError extends Error {
       header === null ? undefined : parseRetryAfter(header),
     );
   }
+}
+
+export async function apiOk(
+  apiFetch: typeof fetch,
+  url: URL,
+  message: string,
+  init?: RequestInit,
+): Promise<Response> {
+  const res = await apiFetch(url, init);
+  if (!res.ok) {
+    throw HttpError.fromResponse(res, `${message} (${res.status})`);
+  }
+  return res;
+}
+
+export async function apiJson<T>(
+  apiFetch: typeof fetch,
+  url: URL,
+  schema: z.ZodType<T>,
+  message: string,
+  init?: RequestInit,
+): Promise<T> {
+  const res = await apiOk(apiFetch, url, message, init);
+  return schema.parse(await res.json());
 }
 
 export function shouldRetry(failureCount: number, error: Error): boolean {

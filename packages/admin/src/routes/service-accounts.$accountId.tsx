@@ -1,13 +1,13 @@
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import { DEFAULT_PAGE_SIZE } from "@projet-igsn/domain/sample/sample-validator";
 import { createFileRoute } from "@tanstack/react-router";
 
 import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { m } from "#/paraglide/messages.js";
-import { useDeleteServiceAccount } from "#/service-accounts/hook/delete-service-account.ts";
-import { useGetServiceAccountById } from "#/service-accounts/hook/get-service-account-by-id.ts";
-import { useUpdateServiceAccount } from "#/service-accounts/hook/update-service-account.ts";
 import { ServiceAccountForm } from "#/service-accounts/service-account-form.tsx";
+import { useDeleteServiceAccount } from "#/service-accounts/use-delete-service-account.ts";
+import { useGetServiceAccountById } from "#/service-accounts/use-get-service-account-by-id.ts";
+import { useUpdateServiceAccount } from "#/service-accounts/use-update-service-account.ts";
 
 export const Route = createFileRoute("/service-accounts/$accountId")({
   component: () => (
@@ -39,8 +39,6 @@ function ServiceAccountDetailPage() {
           title={m.service_account_delete_title()}
           description={m.service_account_delete_description()}
           confirmLabel={m.action_delete()}
-          cancelLabel={m.action_cancel()}
-          closeLabel={m.action_close()}
           confirmPhrase={{
             text: m.action_delete_confirm_phrase(),
             label: m.action_delete_confirm_phrase_label({

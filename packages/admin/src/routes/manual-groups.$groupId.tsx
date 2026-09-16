@@ -1,4 +1,3 @@
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import {
   Tooltip,
   TooltipContent,
@@ -12,6 +11,7 @@ import { z } from "zod";
 
 import { RouteGuard } from "#/auth/route-guard.tsx";
 import { useCurrentUser } from "#/auth/use-current-user.ts";
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { HttpError } from "#/http-error.ts";
 import { ManualGroupManagers } from "#/manual-groups/manual-group-managers.tsx";
 import { ManualGroupMembers } from "#/manual-groups/manual-group-members.tsx";
@@ -79,8 +79,6 @@ function ManualGroupDetailPage() {
                   title={m.manual_group_delete_title()}
                   description={m.manual_group_delete_description()}
                   confirmLabel={m.action_delete()}
-                  cancelLabel={m.action_cancel()}
-                  closeLabel={m.action_close()}
                   confirmPhrase={{
                     text: m.action_delete_confirm_phrase(),
                     label: m.action_delete_confirm_phrase_label({

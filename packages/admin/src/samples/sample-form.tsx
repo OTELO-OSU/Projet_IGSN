@@ -14,7 +14,6 @@ import {
 import { FormSection } from "@projet-igsn/design-system/components/form/form-section";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import {
   Tabs,
   TabsContent,
@@ -46,6 +45,7 @@ import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
 import { Fragment, useState } from "react";
 
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { AgeFields } from "#/samples/age-fields.tsx";
@@ -274,54 +274,29 @@ export function SampleForm({
     <form.Subscribe
       selector={(state) => ({
         canSubmit: state.canSubmit,
-        nature: state.values.nature ?? null,
-        typePath: state.values.typePath,
-        materialPath: state.values.materialPath,
-        materialOtherName: state.values.materialOtherName ?? null,
-        relations: state.values.relations,
-        location: state.values.location,
-        description: state.values.description,
-        existenceStatus: state.values.existenceStatus,
-        availabilityStatus: state.values.availabilityStatus,
-        age: toAgeInput(state.values.age),
-        scientificContext: composeScientificContext(
-          state.values.scientificContext,
-        ),
-        syntheticDetails: composeSyntheticDetails(
-          state.values.syntheticDetails,
-          composeHierarchyValue(state.values.materialPath),
-        ),
+        values: state.values,
       })}
     >
-      {({
-        canSubmit,
-        nature,
-        typePath,
-        materialPath,
-        materialOtherName,
-        relations,
-        location,
-        description,
-        existenceStatus,
-        availabilityStatus,
-        age,
-        scientificContext,
-        syntheticDetails,
-      }) => {
+      {({ canSubmit, values }) => {
         const reasons = samplePublishBlockers(
           {
-            nature,
-            type: composeHierarchyValue(typePath),
-            material: composeHierarchyValue(materialPath),
-            materialOtherName,
-            location: composeLocation(location),
-            description: composeDescription(description),
-            age,
-            existenceStatus: existenceStatus ?? null,
-            availabilityStatus: availabilityStatus ?? null,
-            scientificContext,
-            syntheticDetails,
-            relations: relations.map(({ targetResourceType }) => ({
+            nature: values.nature ?? null,
+            type: composeHierarchyValue(values.typePath),
+            material: composeHierarchyValue(values.materialPath),
+            materialOtherName: values.materialOtherName ?? null,
+            location: composeLocation(values.location),
+            description: composeDescription(values.description),
+            age: toAgeInput(values.age),
+            existenceStatus: values.existenceStatus ?? null,
+            availabilityStatus: values.availabilityStatus ?? null,
+            scientificContext: composeScientificContext(
+              values.scientificContext,
+            ),
+            syntheticDetails: composeSyntheticDetails(
+              values.syntheticDetails,
+              composeHierarchyValue(values.materialPath),
+            ),
+            relations: values.relations.map(({ targetResourceType }) => ({
               targetResourceType: targetResourceType || null,
             })),
             attachments: keptAttachmentMetadata(attachments, attachmentChanges),
@@ -380,9 +355,6 @@ export function SampleForm({
               disabled={disabled}
               title={m.publish_sample_title()}
               description={m.publish_sample_warning()}
-              confirmLabel={m.action_confirm()}
-              cancelLabel={m.action_cancel()}
-              closeLabel={m.action_close()}
               onConfirm={() => publish("published")}
             >
               {action.label}

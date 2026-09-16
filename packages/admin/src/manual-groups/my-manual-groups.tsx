@@ -1,5 +1,4 @@
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
-
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { m } from "#/paraglide/messages.js";
 
 import { useLeaveManualGroup } from "./use-leave-manual-group.ts";
@@ -31,8 +30,6 @@ export function MyManualGroups() {
                 name: group.name,
               })}
               confirmLabel={m.manual_group_leave_action()}
-              cancelLabel={m.action_cancel()}
-              closeLabel={m.action_close()}
               onConfirm={() => leaveGroup.mutate(group.id)}
             >
               {m.manual_group_leave_action()}

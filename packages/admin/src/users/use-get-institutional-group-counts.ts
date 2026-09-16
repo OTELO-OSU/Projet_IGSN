@@ -5,16 +5,16 @@ import { API_URL } from "#/api-url.ts";
 import { apiJson } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useInstitutionalGroupManagerCounts() {
+export function useGetInstitutionalGroupCounts() {
   const apiFetch = useApiClient();
   return useQuery({
-    queryKey: ["institutional-group-manager-counts"],
+    queryKey: ["institutional-group-counts"],
     queryFn: async () => {
       const { data } = await apiJson(
         apiFetch,
-        new URL("admin/institutional-groups/manager-counts", API_URL),
+        new URL("admin/users/institutional-counts", API_URL),
         institutionalGroupCountsResponseSchema,
-        "Failed to load the institutional group manager counts",
+        "Failed to load the institutional group member counts",
       );
       return data;
     },
