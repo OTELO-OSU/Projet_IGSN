@@ -46,8 +46,6 @@ export type GroupManagersResponse = z.infer<typeof groupManagersResponseSchema>;
 
 export const addGroupManagerBodySchema = z.strictObject({ userId: z.uuid() });
 
-export type AddGroupManagerBody = z.infer<typeof addGroupManagerBodySchema>;
-
 export const publicUserSchema = userSchema.pick({
   id: true,
   name: true,
@@ -85,7 +83,7 @@ export const listUsersQuerySchema = z.object({
 
 export type ListUsersQuery = z.infer<typeof listUsersQuerySchema>;
 
-export const institutionalGroupCountsSchema = z.object({
+const institutionalGroupCountsSchema = z.object({
   organizations: z.record(z.string(), z.number()),
   osus: z.record(z.string(), z.number()),
   laboratories: z.record(z.string(), z.number()),

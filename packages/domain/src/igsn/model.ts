@@ -11,8 +11,6 @@ export const igsnSuffixSchema = z
   .toUpperCase()
   .regex(IGSN_SUFFIX_PATTERN, INVALID_IGSN_SUFFIX_MESSAGE);
 
-export type IgsnSuffix = z.infer<typeof igsnSuffixSchema>;
-
 // Legacy IGSNs imported from the old registry predate our format. They are
 // already published, so already valid.
 const legacyIgsnSchema = z

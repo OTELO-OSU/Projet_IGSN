@@ -76,7 +76,7 @@ export type Messages = Record<
   (() => string) | undefined
 >;
 
-export type SampleLabels = {
+type SampleLabels = {
   materialPathLabel: (path: string) => string;
   typeLabel: (path: string) => string;
   collectionMethodLabel: (path: string) => string;

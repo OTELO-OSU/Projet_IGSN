@@ -1,7 +1,7 @@
 import { filterLaboratoriesByOrgAndOsu } from "./filter-laboratories-by-org-and-osu.ts";
 import { filterOrganizationsWithLaboratory } from "./filter-organizations-with-laboratory.ts";
 
-export type InstitutionTreeOrganization = {
+type InstitutionTreeOrganization = {
   ror: string;
   osus: { code: string | null; laboratories: string[] }[];
 };

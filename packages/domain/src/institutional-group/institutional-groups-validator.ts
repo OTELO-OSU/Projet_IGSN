@@ -22,7 +22,7 @@ type InstitutionalGroupIssue = {
   message: string;
 };
 
-export function institutionalGroupIssues(
+function institutionalGroupIssues(
   groups: DeclaredInstitutionalGroups,
 ): InstitutionalGroupIssue[] {
   const { institutionalOrganization: ror, institutionalOsu: osu } = groups;

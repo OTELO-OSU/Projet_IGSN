@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export type CoreEnum<T extends string> = {
+type CoreEnum<T extends string> = {
   schema: z.ZodType<string>;
   toCore: (value: T) => string;
   fromCore: (value: string) => T;

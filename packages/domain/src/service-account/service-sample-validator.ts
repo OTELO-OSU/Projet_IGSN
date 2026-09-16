@@ -34,7 +34,7 @@ export type ServiceSampleIssueCode =
   | "manual_group_not_attachable"
   | "field_frozen";
 
-export const serviceSampleIssueSchema = z.object({
+const serviceSampleIssueSchema = z.object({
   path: z
     .string()
     .meta({

@@ -57,7 +57,7 @@ const coreOrganizationSchema = z.strictObject({
   name: freeTextSchema.meta({ description: "Name of the organization." }),
 });
 
-export const coreAgentRoleSchema = z.strictObject({
+const coreAgentRoleSchema = z.strictObject({
   agent: z
     .strictObject({
       id: z

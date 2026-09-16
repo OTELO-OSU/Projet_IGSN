@@ -52,7 +52,7 @@ const materialTree = {
   ...extraterrestrialRockTree,
 } satisfies Record<string, TreeNode>;
 
-export type MaterialSegment = keyof typeof materialTree;
+type MaterialSegment = keyof typeof materialTree;
 
 export const MATERIAL_TREE: Record<MaterialSegment, TreeNode> = materialTree;
 

@@ -16,10 +16,6 @@ export const uploadSampleAttachmentSchema = z.strictObject({
   description: z.string().trim().min(1).optional(),
 });
 
-export type UploadSampleAttachment = z.infer<
-  typeof uploadSampleAttachmentSchema
->;
-
 export const updateSampleAttachmentSchema = z.strictObject({
   id: z.uuid(),
   title: z.string().trim().min(1).nullable(),

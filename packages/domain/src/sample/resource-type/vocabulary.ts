@@ -90,12 +90,12 @@ const resourceTypeTree = {
   },
 } satisfies Record<string, TreeNode>;
 
-export type ResourceTypeSegment = keyof typeof resourceTypeTree;
+type ResourceTypeSegment = keyof typeof resourceTypeTree;
 
 export const RESOURCE_TYPE_TREE: Record<ResourceTypeSegment, TreeNode> =
   resourceTypeTree;
 
-export const RESOURCE_TYPE_ROOTS = [
+const RESOURCE_TYPE_ROOTS = [
   "mineral_and_ore",
   "non_metallic",
   "hydrocarbon",
@@ -112,8 +112,6 @@ export const RESOURCE_TYPE_HIERARCHY = {
   nodes: RESOURCE_TYPE_TREE,
 };
 
-export type ResourceType = string;
-
 export const resourceTypeSchema = z
   .string()
-  .refine((path): path is ResourceType => RESOURCE_TYPE_PATHS.includes(path));
+  .refine((path) => RESOURCE_TYPE_PATHS.includes(path));

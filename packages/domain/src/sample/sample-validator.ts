@@ -18,8 +18,6 @@ export const updateSampleBodySchema = updateSampleSchema.extend({
   expectedUpdatedAt: z.coerce.date(),
 });
 
-export type UpdateSampleBody = z.infer<typeof updateSampleBodySchema>;
-
 export const contactSampleOwnerBodySchema = z.strictObject({
   name: z.string().trim().min(1),
   firstname: z.string().trim().min(1),
@@ -153,7 +151,7 @@ export const publishStatusSchema =
 
 export type PublishStatus = z.infer<typeof publishStatusSchema>;
 
-export const adminSampleListItemSchema = sampleSchema.extend({
+const adminSampleListItemSchema = sampleSchema.extend({
   owner: userSchema
     .pick({ name: true, firstname: true })
     .extend({ status: userSchema.shape.status.optional() })

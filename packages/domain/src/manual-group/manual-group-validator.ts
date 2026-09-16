@@ -36,10 +36,6 @@ export const addManualGroupMemberBodySchema = z.strictObject({
   userId: z.uuid(),
 });
 
-export type AddManualGroupMemberBody = z.infer<
-  typeof addManualGroupMemberBodySchema
->;
-
 export const listManualGroupsQuerySchema = z.object({
   page: pageSchema,
   perPage: pageSizeSchema(DEFAULT_PAGE_SIZE),

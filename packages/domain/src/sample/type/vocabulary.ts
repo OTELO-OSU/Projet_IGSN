@@ -50,11 +50,11 @@ const typeTree = {
   outcrop_preserved_stratigraphy: { searchable: true },
 } satisfies Record<string, TreeNode>;
 
-export type SampleTypeKey = keyof typeof typeTree;
+type SampleTypeKey = keyof typeof typeTree;
 
 export const SAMPLE_TYPE_TREE: Record<SampleTypeKey, TreeNode> = typeTree;
 
-export const SAMPLE_TYPE_ROOTS = [
+const SAMPLE_TYPE_ROOTS = [
   "core",
   "dredge",
   "individual_sample",

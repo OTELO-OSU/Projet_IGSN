@@ -1,5 +1,3 @@
-import type { z } from "zod";
-
 import { createSampleSchema } from "../sample.ts";
 import { PUBLISH_BLOCKER_PATH } from "./publish-blocker-path.ts";
 import {
@@ -20,5 +18,3 @@ export const publishedSampleSchema = createSampleSchema.superRefine(
     }
   },
 );
-
-export type PublishedSample = z.infer<typeof publishedSampleSchema>;
