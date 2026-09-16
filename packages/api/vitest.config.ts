@@ -25,8 +25,5 @@ export default defineConfig({
     maxConcurrency: 2,
     testTimeout: 2500,
     setupFiles: ["test/setup.ts"],
-    coverage: {
-      provider: "v8",
-    },
   },
 });

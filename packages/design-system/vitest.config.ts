@@ -21,8 +21,5 @@ export default defineConfig({
     maxWorkers: 2,
     maxConcurrency: 2,
     testTimeout: 5000,
-    coverage: {
-      provider: "v8",
-    },
   },
 });

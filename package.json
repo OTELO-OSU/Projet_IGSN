@@ -2,9 +2,6 @@
   "name": "@projet-igsn/workspace",
   "version": "0.0.0",
   "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
     "lint:apply": "oxlint --fix",
     "lint:check": "oxlint",
@@ -26,7 +23,6 @@
     "oxfmt": "catalog:",
     "oxlint": "catalog:",
     "oxlint-tsgolint": "catalog:",
-    "playwright": "catalog:",
     "shadcn": "catalog:",
     "vitest": "catalog:"
   },
