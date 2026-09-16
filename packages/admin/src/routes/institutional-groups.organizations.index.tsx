@@ -7,10 +7,7 @@ import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { matchesSearch } from "#/filters/matches-search.ts";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
-import {
-  InstitutionGroupTable,
-  organizationColumns,
-} from "#/institutional-groups/institution-group-table.tsx";
+import { OrganizationTable } from "#/institutional-groups/organization-table.tsx";
 import { useInstitutionalGroupManagerCounts } from "#/institutional-groups/use-institutional-group-manager-counts.ts";
 import { noManagerFilterEntry } from "#/managers/no-manager-filter-entry.tsx";
 import { m } from "#/paraglide/messages.js";
@@ -72,19 +69,10 @@ function OrganizationsPage() {
         ]}
       />
 
-      <InstitutionGroupTable
-        rows={organizations}
-        columns={organizationColumns(
-          counts.data?.organizations ?? {},
-          managers,
-        )}
-        emptyLabel={m.group_organizations_empty()}
-        onRowClick={(organization) =>
-          void navigate({
-            to: "/institutional-groups/organizations/$ror",
-            params: { ror: organization.ror },
-          })
-        }
+      <OrganizationTable
+        organizations={organizations}
+        memberCounts={counts.data?.organizations ?? {}}
+        managerCounts={managers}
       />
     </>
   );
