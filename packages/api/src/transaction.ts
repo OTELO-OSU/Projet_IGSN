@@ -10,3 +10,11 @@ export function withTransaction<DB, T>(
     ? fn(db as Transaction<DB>)
     : db.transaction().execute(fn);
 }
+
+export const transactionally =
+  <DB>(db: Transactional<DB>) =>
+  <A extends unknown[], R>(
+    fn: (trx: Transaction<DB>, ...args: A) => Promise<R>,
+  ) =>
+  (...args: A): Promise<R> =>
+    withTransaction(db, (trx) => fn(trx, ...args));

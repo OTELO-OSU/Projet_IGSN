@@ -1,11 +1,15 @@
 import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
-import type { Kysely, Transaction } from "kysely";
+import type { Kysely } from "kysely";
 
 import type { DB } from "../db.ts";
 
-import { type Transactional, withTransaction } from "../transaction.ts";
+import {
+  type Transactional,
+  transactionally,
+  withTransaction,
+} from "../transaction.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { addParentOwnerAsContributor } from "./service/add-parent-owner-as-contributor.ts";
@@ -41,12 +45,7 @@ async function insertOwnedSample(
 }
 
 export function createSampleRepository(db: Kysely<DB>): SampleRepository {
-  const tx =
-    <A extends unknown[], R>(
-      fn: (trx: Transaction<DB>, ...args: A) => Promise<R>,
-    ) =>
-    (...args: A) =>
-      withTransaction(db, (trx) => fn(trx, ...args));
+  const tx = transactionally(db);
   return {
     listAssignedTo: tx(listSamplesAssignedTo),
     listModerated: tx(listModeratedSamples),
