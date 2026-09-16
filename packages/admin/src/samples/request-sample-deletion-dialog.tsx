@@ -15,6 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
+import { zodFieldErrors } from "@projet-igsn/domain/form/zod-field-errors";
 import { requestSampleDeletionBodySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
@@ -22,25 +23,11 @@ import { useState } from "react";
 import { m } from "#/paraglide/messages.js";
 import { useRequestSampleDeletion } from "#/samples/use-request-sample-deletion.ts";
 
-const validate = ({ value }: { value: unknown }) => {
-  const parsed = requestSampleDeletionBodySchema.safeParse(value);
-  if (parsed.success) {
-    return undefined;
-  }
-  return {
-    fields: Object.fromEntries(
-      parsed.error.issues.map((issue) => [
-        issue.path.join("."),
-        {
-          message:
-            issue.code === "too_big"
-              ? m.sample_deletion_request_reason_too_long()
-              : m.sample_deletion_request_reason_required(),
-        },
-      ]),
-    ),
-  };
-};
+const validate = zodFieldErrors(requestSampleDeletionBodySchema, (issue) =>
+  issue.code === "too_big"
+    ? m.sample_deletion_request_reason_too_long()
+    : m.sample_deletion_request_reason_required(),
+);
 
 export function RequestSampleDeletionDialog({
   sampleId,

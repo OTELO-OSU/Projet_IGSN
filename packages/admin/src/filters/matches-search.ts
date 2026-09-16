@@ -1,8 +1,4 @@
-const DIACRITICS = /\p{Diacritic}/gu;
-
-export function normalizeSearch(input: string): string {
-  return input.normalize("NFD").replace(DIACRITICS, "").toLowerCase();
-}
+import { normalizeSearch } from "@projet-igsn/domain/text/normalize-search";
 
 export function matchesSearch(haystack: string, search: string): boolean {
   return normalizeSearch(haystack).includes(normalizeSearch(search));

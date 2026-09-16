@@ -1,10 +1,10 @@
 import type { ContactSampleOwnerBody } from "@projet-igsn/domain/sample/sample-validator";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
+import { zodFieldErrors } from "@projet-igsn/domain/form/zod-field-errors";
 import { contactSampleOwnerBodySchema } from "@projet-igsn/domain/sample/sample-validator";
 import { useState } from "react";
 
-import { zodFieldErrors } from "#/domain/zod-field-errors.ts";
 import { m } from "#/paraglide/messages.js";
 
 const ISSUE_MESSAGE: Record<string, () => string> = {

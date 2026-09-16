@@ -1,5 +1,7 @@
 import type { ZodType } from "zod";
 
+import { zodFieldErrors } from "@projet-igsn/domain/form/zod-field-errors";
+
 import { m } from "#/paraglide/messages.js";
 
 const INSTITUTIONAL_FIELDS = new Set([
@@ -8,24 +10,9 @@ const INSTITUTIONAL_FIELDS = new Set([
   "institutionalLaboratory",
 ]);
 
-export const institutionalGroupsFieldErrors =
-  (schema: ZodType) =>
-  ({ value }: { value: unknown }) => {
-    const parsed = schema.safeParse(value);
-    if (parsed.success) return undefined;
-    return {
-      fields: Object.fromEntries(
-        parsed.error.issues.map((issue) => {
-          const path = issue.path.join(".");
-          return [
-            path,
-            {
-              message: INSTITUTIONAL_FIELDS.has(path)
-                ? m.institutional_groups_required()
-                : issue.message,
-            },
-          ];
-        }),
-      ),
-    };
-  };
+export const institutionalGroupsFieldErrors = (schema: ZodType) =>
+  zodFieldErrors(schema, (issue) =>
+    INSTITUTIONAL_FIELDS.has(issue.path.join("."))
+      ? m.institutional_groups_required()
+      : issue.message,
+  );
