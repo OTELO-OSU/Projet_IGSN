@@ -1,3 +1,5 @@
+import type { Description } from "@projet-igsn/domain/sample/description/model";
+
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
@@ -12,55 +14,52 @@ const base = {
   collectionMethod: null,
 };
 
-describe("sample description persistence", () => {
-  pgTest("should round-trip a full description", async ({ db }) => {
-    const description = {
+const roundTripped: [string, Description][] = [
+  [
+    "a full description",
+    {
       collectionDate: {
-        precision: "day" as const,
+        precision: "day",
         start: "2014-10-01",
         end: "2014-10-24",
       },
       oriented: true,
       orientationExplanation: "Oriented with a compass on the north face",
       openDescription: "Coarse-grained, weathered surface",
-      length: { value: 30, unit: "cm" as const },
-      width: { value: 12.5, unit: "cm" as const },
-      thickness: { value: 8, unit: "mm" as const },
-      mass: { value: 1.2, unit: "kg" as const },
-      volume: { value: 350, unit: "cm3" as const },
-    };
-    const created = await insertSample(db, { ...base, description });
-    expect(created.description).toEqual(description);
-    expect(await readSample(db, created.id)).toEqual(created);
-  });
-
-  pgTest(
-    "should round-trip a single-date collection as start === end",
-    async ({ db }) => {
-      const description = {
-        collectionDate: {
-          precision: "day" as const,
-          start: "2014-10-24",
-          end: "2014-10-24",
-        },
-      };
-      const created = await insertSample(db, { ...base, description });
-      expect(created.description).toEqual(description);
-      expect(await readSample(db, created.id)).toEqual(created);
+      length: { value: 30, unit: "cm" },
+      width: { value: 12.5, unit: "cm" },
+      thickness: { value: 8, unit: "mm" },
+      mass: { value: 1.2, unit: "kg" },
+      volume: { value: 350, unit: "cm3" },
     },
-  );
+  ],
+  [
+    "a single-date collection as start === end",
+    {
+      collectionDate: {
+        precision: "day",
+        start: "2014-10-24",
+        end: "2014-10-24",
+      },
+    },
+  ],
+  [
+    "an hour-precision collection date in its own time zone",
+    {
+      collectionDate: {
+        precision: "hour",
+        start: "2025-06-15T14:30",
+        end: "2025-06-16T09:00",
+        timeZone: "Europe/Paris",
+      },
+    },
+  ],
+];
 
-  pgTest(
-    "should round-trip an hour-precision collection date in its own time zone",
-    async ({ db }) => {
-      const description = {
-        collectionDate: {
-          precision: "hour" as const,
-          start: "2025-06-15T14:30",
-          end: "2025-06-16T09:00",
-          timeZone: "Europe/Paris",
-        },
-      };
+describe("sample description persistence", () => {
+  pgTest.for(roundTripped)(
+    "should round-trip %s",
+    async ([, description], { db }) => {
       const created = await insertSample(db, { ...base, description });
       expect(created.description).toEqual(description);
       expect(await readSample(db, created.id)).toEqual(created);

@@ -1,7 +1,7 @@
 import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
-import type { Kysely } from "kysely";
+import type { Kysely, Transaction } from "kysely";
 
 import type { DB } from "../db.ts";
 
@@ -41,27 +41,21 @@ async function insertOwnedSample(
 }
 
 export function createSampleRepository(db: Kysely<DB>): SampleRepository {
+  const tx =
+    <A extends unknown[], R>(
+      fn: (trx: Transaction<DB>, ...args: A) => Promise<R>,
+    ) =>
+    (...args: A) =>
+      withTransaction(db, (trx) => fn(trx, ...args));
   return {
-    listAssignedTo: (params, userId) =>
-      withTransaction(db, (trx) => listSamplesAssignedTo(trx, params, userId)),
-    listModerated: (params, scope) =>
-      withTransaction(db, (trx) => listModeratedSamples(trx, params, scope)),
-    listPublishedForService: (params, scope, editableOnly) =>
-      withTransaction(db, (trx) =>
-        listPublishedSamplesForService(trx, params, scope, editableOnly),
-      ),
-    searchEligibleParents: (params, userId, scope) =>
-      withTransaction(db, (trx) =>
-        searchEligibleParents(trx, params, userId, scope),
-      ),
-    isModerated: (id, scope) =>
-      withTransaction(db, (trx) => isSampleModerated(trx, id, scope)),
-    listPublished: (params) =>
-      withTransaction(db, (trx) => listPublishedSamples(trx, params)),
-    get: (id, userId) =>
-      withTransaction(db, (trx) => getSample(trx, id, userId)),
-    getPublicByIgsn: (igsn) =>
-      withTransaction(db, (trx) => getPublicSampleByIgsn(trx, igsn)),
+    listAssignedTo: tx(listSamplesAssignedTo),
+    listModerated: tx(listModeratedSamples),
+    listPublishedForService: tx(listPublishedSamplesForService),
+    searchEligibleParents: tx(searchEligibleParents),
+    isModerated: tx(isSampleModerated),
+    listPublished: tx(listPublishedSamples),
+    get: tx(getSample),
+    getPublicByIgsn: tx(getPublicSampleByIgsn),
     create: (input, owner) =>
       withTransaction(db, async (trx) =>
         getSampleById(
@@ -76,17 +70,12 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
         if (!published) throw new Error("Sample vanished before publish");
         return published;
       }),
-    update: (id, input) =>
-      withTransaction(db, (trx) => updateSample(trx, id, input)),
-    publish: (id, status) =>
-      withTransaction(db, (trx) => publishSample(trx, id, status)),
-    setStatus: (id, status) =>
-      withTransaction(db, (trx) => setSampleStatus(trx, id, status)),
-    remove: (id) => withTransaction(db, (trx) => deleteSample(trx, id)),
-    getEditLock: (id) => withTransaction(db, (trx) => getEditLock(trx, id)),
-    acquireEditLock: (id, userId) =>
-      withTransaction(db, (trx) => acquireEditLock(trx, id, userId)),
-    releaseEditLock: (id, userId) =>
-      withTransaction(db, (trx) => releaseEditLock(trx, id, userId)),
+    update: tx(updateSample),
+    publish: tx(publishSample),
+    setStatus: tx(setSampleStatus),
+    remove: tx(deleteSample),
+    getEditLock: tx(getEditLock),
+    acquireEditLock: tx(acquireEditLock),
+    releaseEditLock: tx(releaseEditLock),
   };
 }

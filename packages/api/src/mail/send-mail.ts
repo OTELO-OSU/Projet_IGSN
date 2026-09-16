@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-export type SmtpTransportOptions = {
+type SmtpTransportOptions = {
   host: string;
   port: number;
   secure: boolean;
@@ -8,9 +8,9 @@ export type SmtpTransportOptions = {
   auth?: { user: string; pass?: string };
 };
 
-export type MailAudience = "user" | "admin";
+type MailAudience = "user" | "admin";
 
-export type MailFrom = { name: string; address: string };
+type MailFrom = { name: string; address: string };
 
 export type Mail = {
   to: string[];

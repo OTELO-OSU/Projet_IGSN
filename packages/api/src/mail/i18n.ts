@@ -2,7 +2,7 @@ import i18next from "i18next";
 
 import en from "../../messages/en.json" with { type: "json" };
 
-export const DEFAULT_LOCALE = "en";
+const DEFAULT_LOCALE = "en";
 
 declare module "i18next" {
   interface CustomTypeOptions {

@@ -1,3 +1,5 @@
+import type { Security } from "@projet-igsn/domain/sample/security/model";
+
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
@@ -12,29 +14,28 @@ const base = {
   collectionMethod: null,
 };
 
-describe("sample security persistence", () => {
-  pgTest("should round-trip a full security block", async ({ db }) => {
-    const security = {
+const roundTripped: [string, Security][] = [
+  [
+    "a full security block",
+    {
       radioactivity: true,
       radioactivityExplanation: "0.5 Bq/g",
       asbestosRich: true,
       asbestosExplanation: "~3% chrysotile",
       chemicalRisk: true,
       chemicalRiskExplanation: "Toxic metals, flammable solvents",
-    };
-    const created = await insertSample(db, { ...base, security });
-    expect(created.security).toEqual(security);
-    expect(await readSample(db, created.id)).toEqual(created);
-  });
+    },
+  ],
+  [
+    "a hazard flagged false without an explanation",
+    { radioactivity: false, asbestosRich: false, chemicalRisk: false },
+  ],
+];
 
-  pgTest(
-    "should round-trip a hazard flagged false without an explanation",
-    async ({ db }) => {
-      const security = {
-        radioactivity: false,
-        asbestosRich: false,
-        chemicalRisk: false,
-      };
+describe("sample security persistence", () => {
+  pgTest.for(roundTripped)(
+    "should round-trip %s",
+    async ([, security], { db }) => {
       const created = await insertSample(db, { ...base, security });
       expect(created.security).toEqual(security);
       expect(await readSample(db, created.id)).toEqual(created);

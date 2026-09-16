@@ -1,3 +1,5 @@
+import type { SyntheticDetails } from "@projet-igsn/domain/sample/synthetic-details/model";
+
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
@@ -13,58 +15,49 @@ const base = {
   collectionMethod: null,
 };
 
+const roundTripped: [string, SyntheticDetails][] = [
+  [
+    "a full synthetic details section",
+    {
+      startingMaterial: "mixture",
+      startingMaterialNature: "powder",
+      startingMaterialComposition: "MgO + SiO2,\nground together",
+      finalProduct: "mineral",
+      experimentType: "crystallization_dynamic",
+      experimentDuration: { value: 12, unit: "hour" },
+      synthesisDate: {
+        precision: "day",
+        start: "2025-01-10",
+        end: "2025-01-12",
+      },
+      operatorName: "Marie Curie",
+      operatorOrcid: "0000-0002-1825-0097",
+      researchStructure: ["04kdfz702", "02feahw73"],
+      temperature: { value: 1200, unit: "celsius" },
+      pressure: { value: 1.5, unit: "gpa" },
+      experimentalProtocol: "Piston-cylinder run,\nquenched in water",
+      experimentPurpose: "Phase stability of forsterite",
+      equipmentUsed: "Piston cylinder press",
+    },
+  ],
+  [
+    "an hour-precision synthesis date in its own time zone",
+    {
+      synthesisDate: {
+        precision: "hour",
+        start: "2025-01-10T08:45",
+        end: "2025-01-10T19:05",
+        timeZone: "Pacific/Auckland",
+      },
+    },
+  ],
+  ["a section holding a single field", { startingMaterial: "natural" }],
+];
+
 describe("sample synthetic details persistence", () => {
-  pgTest(
-    "should round-trip a full synthetic details section",
-    async ({ db }) => {
-      const syntheticDetails = {
-        startingMaterial: "mixture" as const,
-        startingMaterialNature: "powder" as const,
-        startingMaterialComposition: "MgO + SiO2,\nground together",
-        finalProduct: "mineral" as const,
-        experimentType: "crystallization_dynamic" as const,
-        experimentDuration: { value: 12, unit: "hour" as const },
-        synthesisDate: {
-          precision: "day" as const,
-          start: "2025-01-10",
-          end: "2025-01-12",
-        },
-        operatorName: "Marie Curie",
-        operatorOrcid: "0000-0002-1825-0097",
-        researchStructure: ["04kdfz702", "02feahw73"],
-        temperature: { value: 1200, unit: "celsius" as const },
-        pressure: { value: 1.5, unit: "gpa" as const },
-        experimentalProtocol: "Piston-cylinder run,\nquenched in water",
-        experimentPurpose: "Phase stability of forsterite",
-        equipmentUsed: "Piston cylinder press",
-      };
-      const created = await insertSample(db, { ...base, syntheticDetails });
-      expect(created.syntheticDetails).toEqual(syntheticDetails);
-      expect(await readSample(db, created.id)).toEqual(created);
-    },
-  );
-
-  pgTest(
-    "should round-trip an hour-precision synthesis date in its own time zone",
-    async ({ db }) => {
-      const syntheticDetails = {
-        synthesisDate: {
-          precision: "hour" as const,
-          start: "2025-01-10T08:45",
-          end: "2025-01-10T19:05",
-          timeZone: "Pacific/Auckland",
-        },
-      };
-      const created = await insertSample(db, { ...base, syntheticDetails });
-      expect(created.syntheticDetails).toEqual(syntheticDetails);
-      expect(await readSample(db, created.id)).toEqual(created);
-    },
-  );
-
-  pgTest(
-    "should round-trip a section holding a single field",
-    async ({ db }) => {
-      const syntheticDetails = { startingMaterial: "natural" as const };
+  pgTest.for(roundTripped)(
+    "should round-trip %s",
+    async ([, syntheticDetails], { db }) => {
       const created = await insertSample(db, { ...base, syntheticDetails });
       expect(created.syntheticDetails).toEqual(syntheticDetails);
       expect(await readSample(db, created.id)).toEqual(created);

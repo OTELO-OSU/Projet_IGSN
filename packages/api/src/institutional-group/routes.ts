@@ -4,13 +4,14 @@ import type {
   InstitutionalGroupCountsResponse,
 } from "@projet-igsn/domain/user/user-validator";
 
+import { addGroupManagerBodySchema } from "@projet-igsn/domain/user/user-validator";
 import { Hono } from "hono";
 
 import type { AuthenticatedEnv } from "../auth/current-user.ts";
 
-import { validateAddGroupManagerBody } from "../add-group-manager-body.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireSuperAdmin } from "../auth/require-super-admin.ts";
+import { zodValidator } from "../zod-validator.ts";
 import {
   validateInstitutionalGroupManagerParams,
   validateInstitutionalGroupRefParams,
@@ -52,7 +53,7 @@ export function createInstitutionalGroupRoutes(
       "/:kind/:code/managers",
       requireActiveSession,
       validateInstitutionalGroupRefParams,
-      validateAddGroupManagerBody,
+      zodValidator("json", addGroupManagerBodySchema, "Invalid user id"),
       async (c) => {
         const ref = c.req.valid("param");
         const { userId } = c.req.valid("json");

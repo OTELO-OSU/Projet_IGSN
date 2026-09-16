@@ -1,5 +1,5 @@
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
-import type { Kysely } from "kysely";
+import type { Kysely, Transaction } from "kysely";
 
 import type { DB } from "../db.ts";
 
@@ -13,20 +13,17 @@ import { listSampleCollaborators } from "./list-sample-collaborators.ts";
 export function createUserSampleRepository(
   db: Kysely<DB>,
 ): UserSampleRepository {
+  const tx =
+    <A extends unknown[], R>(
+      fn: (trx: Transaction<DB>, ...args: A) => Promise<R>,
+    ) =>
+    (...args: A) =>
+      withTransaction(db, (trx) => fn(trx, ...args));
   return {
-    addOwner: (sampleId, userId) =>
-      withTransaction(db, (trx) => insertSampleOwner(trx, sampleId, userId)),
-    addCollaborator: (sampleId, userId, role, options) =>
-      withTransaction(db, (trx) =>
-        insertSampleCollaborator(trx, sampleId, userId, role, options),
-      ),
-    removeCollaborator: (sampleId, userId) =>
-      withTransaction(db, (trx) =>
-        deleteSampleCollaborator(trx, sampleId, userId),
-      ),
-    listCollaborators: (sampleId) =>
-      withTransaction(db, (trx) => listSampleCollaborators(trx, sampleId)),
-    listContactRecipients: (sample) =>
-      withTransaction(db, (trx) => listContactRecipients(trx, sample)),
+    addOwner: tx(insertSampleOwner),
+    addCollaborator: tx(insertSampleCollaborator),
+    removeCollaborator: tx(deleteSampleCollaborator),
+    listCollaborators: tx(listSampleCollaborators),
+    listContactRecipients: tx(listContactRecipients),
   };
 }

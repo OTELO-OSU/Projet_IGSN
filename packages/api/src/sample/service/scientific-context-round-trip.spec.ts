@@ -1,3 +1,5 @@
+import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
+
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
@@ -12,10 +14,11 @@ const base = {
   collectionMethod: null,
 };
 
-describe("sample scientific context persistence", () => {
-  pgTest("should round-trip a full field-sample context", async ({ db }) => {
-    const scientificContext = {
-      provenanceStatus: "field_sample" as const,
+const roundTripped: [string, ScientificContext][] = [
+  [
+    "a full field-sample context",
+    {
+      provenanceStatus: "field_sample",
       funderOrganizations: ["02feahw73", "04kdfz702"],
       researchProgramName: "Deep Biosphere Survey",
       chiefScientist: "Marie Curie",
@@ -28,34 +31,28 @@ describe("sample scientific context persistence", () => {
       researchProgramDescription: "Multi-year survey of\nsub-seafloor life",
       fieldName: "Site A",
       missionDescription: "Coring campaign in\nthe North Atlantic",
-    };
-    const created = await insertSample(db, { ...base, scientificContext });
-    expect(created.scientificContext).toEqual(scientificContext);
-    expect(await readSample(db, created.id)).toEqual(created);
-  });
-
-  pgTest(
-    "should round-trip a full collection-specimen context",
-    async ({ db }) => {
-      const scientificContext = {
-        provenanceStatus: "collection_specimen" as const,
-        collectionCurator: "Georges Cuvier",
-        collectionOrigin: "scientific_expedition" as const,
-        collectorName: "Alexander von Humboldt",
-        collectionContextDescription: "Assembled during the\n1799 expedition",
-      };
-      const created = await insertSample(db, { ...base, scientificContext });
-      expect(created.scientificContext).toEqual(scientificContext);
-      expect(await readSample(db, created.id)).toEqual(created);
     },
-  );
+  ],
+  [
+    "a full collection-specimen context",
+    {
+      provenanceStatus: "collection_specimen",
+      collectionCurator: "Georges Cuvier",
+      collectionOrigin: "scientific_expedition",
+      collectorName: "Alexander von Humboldt",
+      collectionContextDescription: "Assembled during the\n1799 expedition",
+    },
+  ],
+  [
+    "a context holding only its provenance status",
+    { provenanceStatus: "field_sample" },
+  ],
+];
 
-  pgTest(
-    "should round-trip a context holding only its provenance status",
-    async ({ db }) => {
-      const scientificContext = {
-        provenanceStatus: "field_sample" as const,
-      };
+describe("sample scientific context persistence", () => {
+  pgTest.for(roundTripped)(
+    "should round-trip %s",
+    async ([, scientificContext], { db }) => {
       const created = await insertSample(db, { ...base, scientificContext });
       expect(created.scientificContext).toEqual(scientificContext);
       expect(await readSample(db, created.id)).toEqual(created);

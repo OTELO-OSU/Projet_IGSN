@@ -8,6 +8,7 @@ import type { UserRepository } from "@projet-igsn/domain/user/repository";
 import type { GroupManagersResponse } from "@projet-igsn/domain/user/user-validator";
 
 import { canManageManualGroup } from "@projet-igsn/domain/user/can-manage-manual-group";
+import { addGroupManagerBodySchema } from "@projet-igsn/domain/user/user-validator";
 import { Hono } from "hono";
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
@@ -15,11 +16,11 @@ import { HTTPException } from "hono/http-exception";
 import type { ModerationEnv } from "../auth/require-user-moderation.ts";
 import type { SendMail } from "../mail/send-mail.ts";
 
-import { validateAddGroupManagerBody } from "../add-group-manager-body.ts";
 import { requireActiveSession } from "../auth/active-session.ts";
 import { requireSuperAdmin } from "../auth/require-super-admin.ts";
 import { requireUserModeration } from "../auth/require-user-moderation.ts";
 import { notifySuperAdmins } from "../mail/notify-super-admins.ts";
+import { zodValidator } from "../zod-validator.ts";
 import { manualGroupRequestMail } from "./manual-group-request-mail.ts";
 import {
   logMembershipChange,
@@ -175,7 +176,7 @@ export function createManualGroupRoutes(
       requireSuperAdmin,
       requireActiveSession,
       validateManualGroupIdParam,
-      validateAddGroupManagerBody,
+      zodValidator("json", addGroupManagerBodySchema, "Invalid user id"),
       async (c) => {
         const { id } = c.req.valid("param");
         const { userId } = c.req.valid("json");
