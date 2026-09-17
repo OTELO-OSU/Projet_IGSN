@@ -280,7 +280,7 @@ const isNameSegment = (segment: string): boolean => {
   );
 };
 
-export type ParsedCollector =
+type ParsedCollector =
   | { name: string | null; orcid: string | null }
   | { invalid: string };
 
@@ -418,7 +418,7 @@ function inLatitude(value: number | null): value is number {
 
 type Position = NonNullable<CreateSample["location"]>["position"];
 
-export function mapPosition(row: LegacyRow): Position | null {
+function mapPosition(row: LegacyRow): Position | null {
   if (!inLongitude(row.longitude) || !inLatitude(row.latitude)) return null;
   const { longitude_end: longitudeEnd, latitude_end: latitudeEnd } = row;
   const isArea =
@@ -477,7 +477,7 @@ export function mapCountry(country: string | null): Country | null {
   return COUNTRY_CODE_BY_NAME.get(normalizeCountry(country)) ?? null;
 }
 
-export function mapLocation(row: LegacyRow): CreateSample["location"] | null {
+function mapLocation(row: LegacyRow): CreateSample["location"] | null {
   const position = mapPosition(row);
   const country = mapCountry(row.country);
   const parsedNav =
@@ -498,9 +498,7 @@ export function mapLocation(row: LegacyRow): CreateSample["location"] | null {
   return Object.keys(location).length > 0 ? location : null;
 }
 
-export function mapDescription(
-  row: LegacyRow,
-): CreateSample["description"] | null {
+function mapDescription(row: LegacyRow): CreateSample["description"] | null {
   const collectionDate = mapCollectionDate(
     row.collection_start_date,
     row.collection_end_date,
@@ -578,7 +576,7 @@ export function mapAge(row: LegacyRow): CreateSample["age"] | null {
   };
 }
 
-export function mapScientificContext(row: LegacyRow): ScientificContext | null {
+function mapScientificContext(row: LegacyRow): ScientificContext | null {
   const collector = parseCollector(row.collector);
   const collectorName = "invalid" in collector ? null : collector.name;
   const collectorOrcid = "invalid" in collector ? null : collector.orcid;
@@ -604,7 +602,7 @@ export function mapScientificContext(row: LegacyRow): ScientificContext | null {
   };
 }
 
-export type SkipField =
+type SkipField =
   | "material"
   | "collection_method"
   | "resource_type"
@@ -617,7 +615,7 @@ export type SkipField =
   | "bathy_unit"
   | "age_unit";
 
-export type SkipIssue = { field: SkipField; value: string };
+type SkipIssue = { field: SkipField; value: string };
 
 export function unmappableValues(row: LegacyRow): SkipIssue[] {
   const issues: SkipIssue[] = [];

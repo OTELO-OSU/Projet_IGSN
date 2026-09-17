@@ -10,10 +10,10 @@ import { fullName } from "@projet-igsn/domain/user/full-name";
 
 import type { RenderedMail } from "../mail/send-mail.ts";
 
-import { ctaMail } from "../mail/cta-mail.ts";
+import { ctaMailFor } from "../mail/cta-mail.ts";
 import { type Translator, translator } from "../mail/i18n.ts";
 
-export type ServiceAccountRequestMail = {
+type ServiceAccountRequestMail = {
   requester: Pick<User, "email" | "name" | "firstname">;
   draft: ServiceAccountDraft;
   reason: string;
@@ -68,12 +68,10 @@ export async function serviceAccountRequestMail({
   const quote = [reason, requestedGroups(t, draft, manualGroupNames)]
     .filter((part) => part.length > 0)
     .join("\n\n");
-  return ctaMail({
+  return ctaMailFor("service_account_request", {
     recipient: { name: null, firstname: null },
-    subject: t("mail_service_account_request_subject", params),
-    body: t("mail_service_account_request_body", params),
+    params,
     quote,
-    cta: t("mail_service_account_request_cta"),
     url: requestUrl(adminUrl, draft),
   });
 }

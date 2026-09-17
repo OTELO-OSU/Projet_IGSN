@@ -2,8 +2,8 @@ import { eligibleParentsResponseSchema } from "@projet-igsn/domain/sample/sample
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
-import { MIN_SEARCH_LENGTH } from "#/search-picker/use-picker-search.ts";
+import { apiJson } from "#/http-error.ts";
+import { MIN_SEARCH_LENGTH } from "#/search-picker/use-picker.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 export function useSearchEligibleParents(
@@ -24,14 +24,13 @@ export function useSearchEligibleParents(
       if (exclude !== undefined) {
         url.searchParams.set("exclude", exclude);
       }
-      const res = await apiFetch(url);
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to search eligible parents (${res.status})`,
-        );
-      }
-      return eligibleParentsResponseSchema.parse(await res.json()).data;
+      const { data } = await apiJson(
+        apiFetch,
+        url,
+        eligibleParentsResponseSchema,
+        "Failed to search eligible parents",
+      );
+      return data;
     },
   });
 }

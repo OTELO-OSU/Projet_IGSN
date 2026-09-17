@@ -1,12 +1,12 @@
 import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import {
   type SetInstitutionalGroups,
   setInstitutionalGroupsSchema,
 } from "@projet-igsn/domain/institutional-group/institutional-groups-validator";
 
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { institutionalGroupsFieldErrors } from "#/institutional-groups/institutional-groups-field-errors.ts";
 import { InstitutionalGroupsFields } from "#/institutional-groups/institutional-groups-fields.tsx";
 import { m } from "#/paraglide/messages.js";
@@ -73,9 +73,6 @@ export function InstitutionalGroupsForm({
               <ConfirmButton
                 title={m.settings_institution_change_title()}
                 description={m.settings_institution_change_description()}
-                confirmLabel={m.action_confirm()}
-                cancelLabel={m.action_cancel()}
-                closeLabel={m.action_close()}
                 disabled={save.isPending}
                 onConfirm={() => void form.handleSubmit()}
               >

@@ -8,7 +8,7 @@ import type { RenderedMail } from "../mail/send-mail.ts";
 import { ctaMail } from "../mail/cta-mail.ts";
 import { translator } from "../mail/i18n.ts";
 
-export type SampleInvitation = {
+type SampleInvitation = {
   invitee: Pick<User, "email" | "name" | "firstname">;
   inviter: Pick<User, "email" | "name" | "firstname">;
   role: CollaboratorRole;

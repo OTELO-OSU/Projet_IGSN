@@ -5,10 +5,7 @@ import { fullName } from "@projet-igsn/domain/user/full-name";
 
 import { m } from "#/paraglide/messages.js";
 import { SearchPicker } from "#/search-picker/search-picker.tsx";
-import {
-  pickerState,
-  usePickerSearch,
-} from "#/search-picker/use-picker-search.ts";
+import { usePicker } from "#/search-picker/use-picker.ts";
 import { useSearchUsers } from "#/users/use-search-users.ts";
 
 export function UserPicker({
@@ -16,7 +13,7 @@ export function UserPicker({
   sampleId,
   status,
   excludeMembersOf,
-  ...picker
+  ...props
 }: {
   id: string;
   value: UserIdentity | null;
@@ -29,16 +26,18 @@ export function UserPicker({
   "aria-invalid"?: true;
   "aria-describedby"?: string;
 }) {
-  const search = usePickerSearch();
-  const found = useSearchUsers(search.search, sampleId, {
-    enabled: search.isOpen,
+  const picker = usePicker();
+  const found = useSearchUsers(picker.search, sampleId, {
+    enabled: picker.isOpen,
     status,
     excludeMembersOf,
   });
   return (
     <SearchPicker
-      {...picker}
-      picker={pickerState(search, found, onChange)}
+      {...props}
+      picker={picker}
+      found={found}
+      onChange={onChange}
       labelOf={fullName}
       detailOf={(user) => user.email}
       searchPlaceholder={m.share_search_placeholder()}

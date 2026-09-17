@@ -2,7 +2,7 @@ import { manualGroupMembersResponseSchema } from "@projet-igsn/domain/manual-gro
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
+import { apiJson } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 export function useManualGroupMembers(groupId: string) {
@@ -10,16 +10,13 @@ export function useManualGroupMembers(groupId: string) {
   return useQuery({
     queryKey: ["manual-groups", groupId, "members"],
     queryFn: async () => {
-      const res = await apiFetch(
+      const { data } = await apiJson(
+        apiFetch,
         new URL(`admin/manual-groups/${groupId}/members`, API_URL),
+        manualGroupMembersResponseSchema,
+        "Failed to load the manual group members",
       );
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to load the manual group members (${res.status})`,
-        );
-      }
-      return manualGroupMembersResponseSchema.parse(await res.json()).data;
+      return data;
     },
   });
 }

@@ -4,16 +4,12 @@ import {
   parseSearchToken,
   searchTokens,
 } from "@projet-igsn/domain/sample/search/search-tokens";
+import { normalizeSearch } from "@projet-igsn/domain/text/normalize-search";
 
-const DIACRITICS = /\p{Diacritic}/gu;
 const RUNS = /\S+/g;
 const MAX_HIGHLIGHT_LENGTH = 300;
 
 type Range = [number, number];
-
-function normalize(input: string): string {
-  return input.normalize("NFD").replace(DIACRITICS, "").toLowerCase();
-}
 
 function substringRanges(haystack: string, needle: string): Range[] {
   if (needle === "") return [];
@@ -39,7 +35,7 @@ function chainSegments(
 }
 
 export function exactRanges(text: string, query: string): Range[] {
-  return searchTokens(normalize(query)).includes(normalize(text))
+  return searchTokens(normalizeSearch(query)).includes(normalizeSearch(text))
     ? [[0, text.length]]
     : [];
 }
@@ -71,7 +67,7 @@ function matchRun(
 }
 
 export function matchRanges(text: string, query: string): Range[] {
-  const tokens = searchTokens(normalize(query));
+  const tokens = searchTokens(normalizeSearch(query));
   if (tokens.length === 0) {
     return [];
   }
@@ -82,7 +78,7 @@ export function matchRanges(text: string, query: string): Range[] {
 
   const chars = Array.from({ length: searchable.length }, (_, i) =>
     Array.from(
-      normalize(searchable[i] ?? ""),
+      normalizeSearch(searchable[i] ?? ""),
       (codePoint) => [codePoint, i] as const,
     ),
   ).flat();

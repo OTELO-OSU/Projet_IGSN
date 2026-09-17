@@ -15,22 +15,6 @@ import {
 } from "#/domain/samples/card-fields.ts";
 import { m } from "#/paraglide/messages.js";
 
-type PickableFields = typeof PICKABLE_FIELDS;
-
-function groupBySection(fields: PickableFields) {
-  const sections = new Map<string, PickableFields[number][]>();
-  for (const field of fields) {
-    const section = field.section();
-    const group = sections.get(section);
-    if (group) {
-      group.push(field);
-    } else {
-      sections.set(section, [field]);
-    }
-  }
-  return sections;
-}
-
 export function CardFieldPicker({
   fields = [],
   onFieldsChange,
@@ -59,7 +43,7 @@ export function CardFieldPicker({
             {m.card_fields_legend()}
           </legend>
           <div className="columns-2 gap-6">
-            {[...groupBySection(PICKABLE_FIELDS)].map(
+            {[...Map.groupBy(PICKABLE_FIELDS, (field) => field.section())].map(
               ([section, sectionFields]) => (
                 <fieldset key={section} className="mb-4 break-inside-avoid">
                   <legend className="text-muted-foreground mb-2 text-xs font-medium">

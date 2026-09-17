@@ -1,9 +1,9 @@
 import { Badge } from "@projet-igsn/design-system/components/ui/badge";
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import { fullName } from "@projet-igsn/domain/user/full-name";
 import { X } from "lucide-react";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { m } from "#/paraglide/messages.js";
 import { collaboratorRoleLabel } from "#/samples/collaborator-role-label.ts";
 import { useCollaborators } from "#/samples/use-collaborators.ts";
@@ -77,9 +77,6 @@ export function CollaboratorList({
                 description={m.share_contributor_remove_description({
                   name: fullName(user),
                 })}
-                confirmLabel={m.action_confirm()}
-                cancelLabel={m.action_cancel()}
-                closeLabel={m.action_close()}
                 onConfirm={() => removeCollaborator.mutate(user.id)}
               >
                 <X aria-hidden />

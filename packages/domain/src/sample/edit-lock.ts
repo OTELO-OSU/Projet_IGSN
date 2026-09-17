@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { userSchema } from "../user/model.ts";
 
-export const sampleEditLockSchema = z.object({
+const sampleEditLockSchema = z.object({
   userId: z.uuid(),
   name: userSchema.shape.name,
   firstname: userSchema.shape.firstname,

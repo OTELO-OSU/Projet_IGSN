@@ -1,4 +1,4 @@
-export type EconomicInterestFields = {
+type EconomicInterestFields = {
   resourceType?: string | null;
   economicInterestElements?: string[];
   economicResourceTypePrecision?: string | null;

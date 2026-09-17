@@ -2,7 +2,7 @@ import { institutionalGroupCountsResponseSchema } from "@projet-igsn/domain/user
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
+import { apiJson } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 export function useInstitutionalGroupManagerCounts() {
@@ -10,17 +10,13 @@ export function useInstitutionalGroupManagerCounts() {
   return useQuery({
     queryKey: ["institutional-group-manager-counts"],
     queryFn: async () => {
-      const res = await apiFetch(
+      const { data } = await apiJson(
+        apiFetch,
         new URL("admin/institutional-groups/manager-counts", API_URL),
+        institutionalGroupCountsResponseSchema,
+        "Failed to load the institutional group manager counts",
       );
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to load the institutional group manager counts (${res.status})`,
-        );
-      }
-      return institutionalGroupCountsResponseSchema.parse(await res.json())
-        .data;
+      return data;
     },
   });
 }

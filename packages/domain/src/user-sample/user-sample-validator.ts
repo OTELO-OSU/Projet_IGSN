@@ -13,9 +13,7 @@ export const addCollaboratorBodySchema = z.strictObject({
   role: collaboratorRoleSchema,
 });
 
-export type AddCollaboratorBody = z.infer<typeof addCollaboratorBodySchema>;
-
-export const sampleCollaboratorSchema = userIdentitySchema.extend({
+const sampleCollaboratorSchema = userIdentitySchema.extend({
   role: userSampleRoleSchema,
   status: userStatusSchema,
 });

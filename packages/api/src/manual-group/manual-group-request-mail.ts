@@ -4,12 +4,11 @@ import { fullName } from "@projet-igsn/domain/user/full-name";
 
 import type { RenderedMail } from "../mail/send-mail.ts";
 
-import { ctaMail } from "../mail/cta-mail.ts";
-import { translator } from "../mail/i18n.ts";
+import { ctaMailFor } from "../mail/cta-mail.ts";
 
 type Requester = Pick<User, "email" | "name" | "firstname">;
 
-export type ManualGroupRequest = {
+type ManualGroupRequest = {
   requester: Requester;
   name: string;
   managers: (Requester & Pick<User, "id">)[];
@@ -38,17 +37,13 @@ export async function manualGroupRequestMail({
   managers,
   adminUrl,
 }: ManualGroupRequest): Promise<RenderedMail> {
-  const t = translator();
-  const params = {
-    requester: fullName(requester) || requester.email,
-    name,
-    managers: managers.map(withEmail).join(", "),
-  };
-  return ctaMail({
+  return ctaMailFor("manual_group_request", {
     recipient: { name: null, firstname: null },
-    subject: t("mail_manual_group_request_subject", params),
-    body: t("mail_manual_group_request_body", params),
-    cta: t("mail_manual_group_request_cta"),
+    params: {
+      requester: fullName(requester) || requester.email,
+      name,
+      managers: managers.map(withEmail).join(", "),
+    },
     url: requestUrl(
       adminUrl,
       name,

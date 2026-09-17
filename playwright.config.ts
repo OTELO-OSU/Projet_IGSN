@@ -13,17 +13,12 @@ export default defineConfig({
     {
       name: "admin",
       testDir: "./e2e/admin",
-      use: { ...devices["Desktop Chrome"], ...devices["Desktop Firefox"] },
+      use: { ...devices["Desktop Firefox"] },
     },
     {
       name: "frontend",
       testDir: "./e2e/frontend",
-      use: {
-        ...devices["Desktop Chrome"],
-        ...devices["Desktop Firefox"],
-        ...devices["Pixel 9"],
-        ...devices["iPhone 12"],
-      },
+      use: { ...devices["iPhone 12"] },
     },
   ],
 });

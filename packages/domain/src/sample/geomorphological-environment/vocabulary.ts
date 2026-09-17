@@ -101,7 +101,7 @@ const geomorphologicalEnvironmentTree = {
   },
 } satisfies Record<string, TreeNode>;
 
-export type GeomorphologicalEnvironmentSegment =
+type GeomorphologicalEnvironmentSegment =
   keyof typeof geomorphologicalEnvironmentTree;
 
 export const GEOMORPHOLOGICAL_ENVIRONMENT_TREE: Record<
@@ -109,7 +109,7 @@ export const GEOMORPHOLOGICAL_ENVIRONMENT_TREE: Record<
   TreeNode
 > = geomorphologicalEnvironmentTree;
 
-export const GEOMORPHOLOGICAL_ENVIRONMENT_ROOTS = Object.keys(
+const GEOMORPHOLOGICAL_ENVIRONMENT_ROOTS = Object.keys(
   GEOMORPHOLOGICAL_ENVIRONMENT_TREE,
 );
 

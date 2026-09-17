@@ -2,7 +2,7 @@ import { sampleCollaboratorsResponseSchema } from "@projet-igsn/domain/user-samp
 import { useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
+import { apiJson } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 export function useCollaborators(sampleId: string) {
@@ -10,16 +10,13 @@ export function useCollaborators(sampleId: string) {
   return useQuery({
     queryKey: ["samples", sampleId, "collaborators"],
     queryFn: async () => {
-      const res = await apiFetch(
+      const { data } = await apiJson(
+        apiFetch,
         new URL(`admin/samples/${sampleId}/collaborators`, API_URL),
+        sampleCollaboratorsResponseSchema,
+        "Failed to load collaborators",
       );
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to load collaborators (${res.status})`,
-        );
-      }
-      return sampleCollaboratorsResponseSchema.parse(await res.json()).data;
+      return data;
     },
   });
 }

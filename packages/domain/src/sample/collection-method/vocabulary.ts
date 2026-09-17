@@ -72,12 +72,12 @@ const collectionMethodTree = {
   unknown: { searchable: true },
 } satisfies Record<string, TreeNode>;
 
-export type CollectionMethodSegment = keyof typeof collectionMethodTree;
+type CollectionMethodSegment = keyof typeof collectionMethodTree;
 
 export const COLLECTION_METHOD_TREE: Record<CollectionMethodSegment, TreeNode> =
   collectionMethodTree;
 
-export const COLLECTION_METHOD_ROOTS = [
+const COLLECTION_METHOD_ROOTS = [
   "blasting",
   "camera_sled_camera_tow",
   "coring",
@@ -102,10 +102,6 @@ export const COLLECTION_METHOD_HIERARCHY = {
   nodes: COLLECTION_METHOD_TREE,
 };
 
-export type CollectionMethod = string;
-
 export const collectionMethodSchema = z
   .string()
-  .refine((path): path is CollectionMethod =>
-    COLLECTION_METHODS.includes(path),
-  );
+  .refine((path) => COLLECTION_METHODS.includes(path));

@@ -1,6 +1,7 @@
 import type { ComboboxItem } from "@projet-igsn/design-system/components/ui/combobox";
 
 import { useAppForm } from "@projet-igsn/design-system/components/form/app-form";
+import { zodFieldErrors } from "@projet-igsn/domain/form/zod-field-errors";
 import {
   MANAGED_LABORATORY_ITEMS,
   MANAGED_ORGANIZATION_ITEMS,
@@ -12,7 +13,6 @@ import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 import { useListAttachableManualGroups } from "#/domain/manual-groups/hook/list-attachable-manual-groups.ts";
 import { useListRequestableGroups } from "#/domain/service-accounts/hook/list-requestable-groups.ts";
 import { useRequestServiceAccount } from "#/domain/service-accounts/hook/request-service-account.ts";
-import { zodFieldErrors } from "#/domain/zod-field-errors.ts";
 import { m } from "#/paraglide/messages.js";
 
 const validate = zodFieldErrors(serviceAccountRequestSchema, () =>

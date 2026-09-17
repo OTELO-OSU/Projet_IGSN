@@ -1,4 +1,4 @@
-export const CORE_PATH_BY_FIELD: Record<string, string> = {
+const CORE_PATH_BY_FIELD: Record<string, string> = {
   igsn: "identification.sampleIdentifier",
   name: "identification.titles.0.value",
   specificName: "identification.localName",

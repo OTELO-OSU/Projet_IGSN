@@ -4,10 +4,9 @@ import { fullName } from "@projet-igsn/domain/user/full-name";
 
 import type { RenderedMail } from "../mail/send-mail.ts";
 
-import { ctaMail } from "../mail/cta-mail.ts";
-import { translator } from "../mail/i18n.ts";
+import { ctaMailFor } from "../mail/cta-mail.ts";
 
-export type SampleDeleted = {
+type SampleDeleted = {
   recipient: Pick<User, "email" | "name" | "firstname">;
   deleter: Pick<User, "email" | "name" | "firstname">;
   sampleName: string;
@@ -20,16 +19,12 @@ export async function sampleDeletedMail({
   sampleName,
   url,
 }: SampleDeleted): Promise<RenderedMail> {
-  const t = translator();
-  const params = {
-    deleter: fullName(deleter) || deleter.email,
-    sample: sampleName,
-  };
-  return ctaMail({
+  return ctaMailFor("sample_deleted", {
     recipient,
-    subject: t("mail_sample_deleted_subject", params),
-    body: t("mail_sample_deleted_body", params),
-    cta: t("mail_sample_deleted_cta"),
+    params: {
+      deleter: fullName(deleter) || deleter.email,
+      sample: sampleName,
+    },
     url,
   });
 }

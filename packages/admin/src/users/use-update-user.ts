@@ -5,7 +5,7 @@ import { adminUserResponseSchema } from "@projet-igsn/domain/user/user-validator
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
+import { apiJson, HttpError } from "#/http-error.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
 import { invalidateUserAndGroups } from "#/users/invalidate-user-and-groups.ts";
@@ -15,18 +15,18 @@ export function useUpdateUser(id: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (user: UpdateUser) => {
-      const res = await apiFetch(new URL(`admin/users/${id}`, API_URL), {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(user),
-      });
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to update the account (${res.status})`,
-        );
-      }
-      return adminUserResponseSchema.parse(await res.json()).data;
+      const { data } = await apiJson(
+        apiFetch,
+        new URL(`admin/users/${id}`, API_URL),
+        adminUserResponseSchema,
+        "Failed to update the account",
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(user),
+        },
+      );
+      return data;
     },
     onSuccess: async () => {
       toast.success(m.user_status_success());

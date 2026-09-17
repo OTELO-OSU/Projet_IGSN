@@ -100,7 +100,7 @@ const coreVerticalCoordinateSchema = z.strictObject({
     .optional(),
 });
 
-export const coreLocationSchema = z
+const coreLocationSchema = z
   .strictObject({
     geometry: coreGeometrySchema
       .meta({

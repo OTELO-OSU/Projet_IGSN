@@ -10,12 +10,17 @@ import {
   PopoverContent,
 } from "@projet-igsn/design-system/components/ui/popover";
 
-import type { PickerState } from "#/search-picker/use-picker-search.ts";
+import {
+  MIN_SEARCH_LENGTH,
+  type usePicker,
+} from "#/search-picker/use-picker.ts";
 
 export function SearchPicker<T extends { id: string }>({
   id,
   value,
   picker,
+  found,
+  onChange,
   labelOf,
   valueLabel = labelOf,
   detailOf,
@@ -28,7 +33,9 @@ export function SearchPicker<T extends { id: string }>({
 }: {
   id: string;
   value: T | null;
-  picker: PickerState<T>;
+  picker: ReturnType<typeof usePicker>;
+  found: { data?: T[]; isFetching: boolean };
+  onChange: (item: T | null) => void;
   labelOf: (item: T) => string;
   valueLabel?: (item: T) => string;
   detailOf: (item: T) => string;
@@ -40,6 +47,16 @@ export function SearchPicker<T extends { id: string }>({
   "aria-invalid"?: true;
   "aria-describedby"?: string;
 }) {
+  const items = found.data ?? [];
+  const hasNoResults =
+    picker.search.length >= MIN_SEARCH_LENGTH &&
+    !found.isFetching &&
+    items.length === 0;
+  const pick = (item: T | null) => {
+    onChange(item);
+    picker.setIsOpen(false);
+  };
+
   return (
     <Popover open={picker.isOpen} onOpenChange={picker.setIsOpen}>
       <ComboboxTrigger id={id} open={picker.isOpen} {...aria}>
@@ -57,19 +74,19 @@ export function SearchPicker<T extends { id: string }>({
             onValueChange={picker.setTerm}
           />
           <CommandList label={suggestionsLabel}>
-            {picker.hasNoResults ? (
+            {hasNoResults ? (
               <div className="py-6 text-center text-sm">{emptyText}</div>
             ) : null}
             {clearLabel === undefined ? null : (
-              <CommandItem value="any" onSelect={() => picker.pick(null)}>
+              <CommandItem value="any" onSelect={() => pick(null)}>
                 {clearLabel}
               </CommandItem>
             )}
-            {picker.items.map((item) => (
+            {items.map((item) => (
               <CommandItem
                 key={item.id}
                 value={item.id}
-                onSelect={() => picker.pick(item)}
+                onSelect={() => pick(item)}
               >
                 <span className="truncate">{labelOf(item)}</span>
                 <span className="text-muted-foreground truncate">

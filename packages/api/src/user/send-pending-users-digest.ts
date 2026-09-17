@@ -16,7 +16,7 @@ import { pendingUsersDigest } from "./pending-users-digest.ts";
 
 const FAILURE = "Could not mail the pending accounts digest";
 
-export type DigestRepositories = {
+type DigestRepositories = {
   users: Pick<
     UserRepository,
     "listPending" | "listSpaceManagers" | "listSuperAdminEmails"

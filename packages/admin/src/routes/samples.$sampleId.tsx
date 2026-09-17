@@ -9,7 +9,6 @@ import {
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
 import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import {
   Tooltip,
   TooltipContent,
@@ -25,6 +24,7 @@ import { GitBranchPlusIcon, InfoIcon, Trash2Icon } from "lucide-react";
 import { z } from "zod";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { RequestSampleDeletionDialog } from "#/samples/request-sample-deletion-dialog.tsx";
@@ -207,8 +207,6 @@ function EditSamplePage() {
                     title={m.sample_delete_title()}
                     description={m.sample_delete_description()}
                     confirmLabel={m.action_delete()}
-                    cancelLabel={m.action_cancel()}
-                    closeLabel={m.action_close()}
                     confirmPhrase={{
                       text: m.action_delete_confirm_phrase(),
                       label: m.action_delete_confirm_phrase_label({

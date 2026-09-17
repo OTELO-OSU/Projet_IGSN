@@ -3,7 +3,7 @@ import type { DB } from "../db.ts";
 import { type Transactional } from "../transaction.ts";
 import { canDetachFromGroup } from "./can-detach-from-group.ts";
 
-export type DetachResult = "detached" | "not_member" | "has_published_sample";
+type DetachResult = "detached" | "not_member" | "has_published_sample";
 
 export async function detachManualGroupMember(
   trx: Transactional<DB>,

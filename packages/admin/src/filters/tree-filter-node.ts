@@ -1,4 +1,4 @@
-import { normalizeSearch } from "#/filters/matches-search.ts";
+import { normalizeSearch } from "@projet-igsn/domain/text/normalize-search";
 
 export type TreeFilterNode = {
   key: string;

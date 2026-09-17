@@ -11,7 +11,7 @@ export const institutionalGroupsFields = {
   institutionalLaboratory: laboratoryCodeSchema.nullable().default(null),
 };
 
-export const institutionalGroupsSchema = z.object(institutionalGroupsFields);
+const institutionalGroupsSchema = z.object(institutionalGroupsFields);
 
 export type InstitutionalGroups = z.infer<typeof institutionalGroupsSchema>;
 

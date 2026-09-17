@@ -4,7 +4,7 @@ import { listUsersResponseSchema } from "@projet-igsn/domain/user/user-validator
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
+import { apiJson } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 export function useUsers(params: ListUsersQuery) {
@@ -17,14 +17,12 @@ export function useUsers(params: ListUsersQuery) {
         if (value !== undefined) url.searchParams.set(key, String(value));
       }
 
-      const res = await apiFetch(url);
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to load users (${res.status})`,
-        );
-      }
-      const { data, meta } = listUsersResponseSchema.parse(await res.json());
+      const { data, meta } = await apiJson(
+        apiFetch,
+        url,
+        listUsersResponseSchema,
+        "Failed to load users",
+      );
       return { data, total: meta.total };
     },
     placeholderData: keepPreviousData,

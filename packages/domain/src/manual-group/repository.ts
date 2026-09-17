@@ -12,9 +12,9 @@ export type AddManualGroupMemberResult =
   | "already_member"
   | { added: Pick<User, "email" | "name" | "firstname"> };
 
-export type CreateManualGroupResult = "name_taken" | { group: ManualGroup };
+type CreateManualGroupResult = "name_taken" | { group: ManualGroup };
 
-export type RenameManualGroupResult =
+type RenameManualGroupResult =
   | "name_taken"
   | "not_found"
   | { group: ManualGroup };

@@ -8,7 +8,7 @@ const institutionKindSchema = z.enum(["organization", "osu", "laboratory"]);
 
 export type InstitutionKind = z.infer<typeof institutionKindSchema>;
 
-export type InstitutionFilter =
+type InstitutionFilter =
   | { kind: "laboratory"; code: string }
   | { kind: "organization"; code: string }
   | { kind: "osu"; code: string; organizationRor: string };

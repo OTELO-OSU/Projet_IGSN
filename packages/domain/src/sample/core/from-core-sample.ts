@@ -20,9 +20,9 @@ import { fromCoreScientificContext } from "./from-core-scientific-context.ts";
 import { fromCoreSyntheticDetails } from "./from-core-synthetic-details.ts";
 import { fromQuantity } from "./quantity.ts";
 
-export type CoreSampleParent = { igsn: Igsn; relationIndex: number };
+type CoreSampleParent = { igsn: Igsn; relationIndex: number };
 
-export type ReversedCoreSample = {
+type ReversedCoreSample = {
   sample: z.input<typeof createSampleSchema>;
   parents: CoreSampleParent[];
 };

@@ -1,4 +1,5 @@
 import type { User } from "@projet-igsn/domain/user/model";
+import type { ParseKeys } from "i18next";
 
 import { fullName } from "@projet-igsn/domain/user/full-name";
 import { readFileSync } from "node:fs";
@@ -14,7 +15,7 @@ const TEMPLATE = readFileSync(
   "utf8",
 );
 
-export type CtaMail = {
+type CtaMail = {
   recipient: Pick<User, "name" | "firstname">;
   subject: string;
   body: string;
@@ -58,4 +59,33 @@ export async function ctaMail({
       __URL__: escapeHtml(url),
     }),
   };
+}
+
+type Stem<Key, Suffix extends string> = Key extends `mail_${infer S}_${Suffix}`
+  ? S
+  : never;
+type CtaMailKey = Stem<ParseKeys, "subject"> &
+  Stem<ParseKeys, "body"> &
+  Stem<ParseKeys, "cta">;
+
+export function ctaMailFor(
+  key: CtaMailKey,
+  {
+    recipient,
+    params,
+    url,
+    quote,
+  }: Pick<CtaMail, "recipient" | "quote" | "url"> & {
+    params?: Record<string, number | string>;
+  },
+): Promise<RenderedMail> {
+  const t = translator();
+  return ctaMail({
+    recipient,
+    subject: t(`mail_${key}_subject`, params),
+    body: t(`mail_${key}_body`, params),
+    cta: t(`mail_${key}_cta`),
+    quote,
+    url,
+  });
 }

@@ -7,11 +7,11 @@ const regionTree = {
   ocean: { optional: true, choices: OCEAN_SEAS },
 } satisfies Record<string, TreeNode>;
 
-export type RegionSegment = keyof typeof regionTree;
+type RegionSegment = keyof typeof regionTree;
 
 export const REGION_TREE: Record<RegionSegment, TreeNode> = regionTree;
 
-export const REGION_ROOTS = Object.keys(REGION_TREE);
+const REGION_ROOTS = Object.keys(REGION_TREE);
 
 export const REGION_HIERARCHY = {
   roots: REGION_ROOTS,

@@ -1,3 +1,5 @@
+import type { Condition } from "@projet-igsn/domain/sample/condition/model";
+
 import { STORAGE_CONDITIONS } from "@projet-igsn/domain/sample/condition/storage-condition";
 import { describe, expect } from "vitest";
 
@@ -13,41 +15,44 @@ const base = {
   collectionMethod: null,
 };
 
-describe("sample condition persistence", () => {
-  pgTest("should round-trip a full condition", async ({ db }) => {
-    const condition = {
-      packaging: "glass_bottle" as const,
+const roundTripped: [string, Condition][] = [
+  [
+    "a full condition",
+    {
+      packaging: "glass_bottle",
       storageConditions: [...STORAGE_CONDITIONS],
       temperature: {
-        type: "frozen" as const,
-        measurement: { value: -18, unit: "celsius" as const },
+        type: "frozen",
+        measurement: { value: -18, unit: "celsius" },
       },
-      humidity: { type: "controlled" as const, percentage: 40 },
-      light: "total_darkness" as const,
+      humidity: { type: "controlled", percentage: 40 },
+      light: "total_darkness",
       pressure: {
-        type: "controlled_gas" as const,
-        measurement: { value: 1.2, unit: "bar" as const },
+        type: "controlled_gas",
+        measurement: { value: 1.2, unit: "bar" },
       },
       specificConditions: "Stored under argon after freeze-drying",
-    };
-    const created = await insertSample(db, { ...base, condition });
-    expect(created.condition).toEqual(condition);
-    expect(await readSample(db, created.id)).toEqual(created);
-  });
+    },
+  ],
+  [
+    "a category without its numeric reading",
+    {
+      storageConditions: [
+        "temperature_controlled",
+        "moisture_controlled",
+        "pressure_controlled",
+      ],
+      temperature: { type: "ambient" },
+      humidity: { type: "dry" },
+      pressure: { type: "vacuum" },
+    },
+  ],
+];
 
-  pgTest(
-    "should round-trip a category without its numeric reading",
-    async ({ db }) => {
-      const condition = {
-        storageConditions: [
-          "temperature_controlled" as const,
-          "moisture_controlled" as const,
-          "pressure_controlled" as const,
-        ],
-        temperature: { type: "ambient" as const },
-        humidity: { type: "dry" as const },
-        pressure: { type: "vacuum" as const },
-      };
+describe("sample condition persistence", () => {
+  pgTest.for(roundTripped)(
+    "should round-trip %s",
+    async ([, condition], { db }) => {
       const created = await insertSample(db, { ...base, condition });
       expect(created.condition).toEqual(condition);
       expect(await readSample(db, created.id)).toEqual(created);

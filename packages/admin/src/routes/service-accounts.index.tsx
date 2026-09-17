@@ -6,8 +6,8 @@ import { SuperAdminOnly } from "#/auth/super-admin-only.tsx";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { Pagination } from "#/pagination/pagination.tsx";
 import { m } from "#/paraglide/messages.js";
-import { useListServiceAccounts } from "#/service-accounts/hook/list-service-accounts.ts";
 import { ServiceAccountTable } from "#/service-accounts/service-account-table.tsx";
+import { useListServiceAccounts } from "#/service-accounts/use-list-service-accounts.ts";
 
 export const Route = createFileRoute("/service-accounts/")({
   validateSearch: listServiceAccountsQuerySchema,

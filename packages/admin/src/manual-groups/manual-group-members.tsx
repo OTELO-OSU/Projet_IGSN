@@ -1,4 +1,3 @@
-import { ConfirmButton } from "@projet-igsn/design-system/components/ui/confirm-button";
 import { SearchField } from "@projet-igsn/design-system/components/ui/search-field";
 import {
   Table,
@@ -15,6 +14,7 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { fullName } from "@projet-igsn/domain/user/full-name";
 
+import { ConfirmButton } from "#/confirm-button.tsx";
 import { matchesSearch } from "#/filters/matches-search.ts";
 import { m } from "#/paraglide/messages.js";
 import { UserStatusBadge } from "#/users/user-status-badge.tsx";
@@ -96,8 +96,6 @@ export function ManualGroupMembers({
                     title={m.manual_group_detach_title()}
                     description={m.manual_group_detach_description({ name })}
                     confirmLabel={m.manual_group_detach_action()}
-                    cancelLabel={m.action_cancel()}
-                    closeLabel={m.action_close()}
                     onConfirm={() =>
                       removeMember.mutate({ groupId, userId: member.id })
                     }

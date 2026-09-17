@@ -33,12 +33,12 @@ const optionalFilter = <T extends z.ZodTypeAny>(schema: T) =>
   schema.optional().catch(undefined);
 const textFilter = () => optionalFilter(z.string().trim().min(1));
 
-export type SearchableHierarchy = {
+type SearchableHierarchy = {
   roots: readonly string[];
   nodes: Record<string, TreeNode | undefined>;
 };
 
-export type SampleFacet =
+type SampleFacet =
   | {
       key: string;
       kind: "hierarchy";

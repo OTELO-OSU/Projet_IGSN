@@ -34,7 +34,7 @@ type SeedUser = SampleOwner & {
   superAdmin: boolean;
 };
 
-export const researcherKeySchema = z.enum([
+const researcherKeySchema = z.enum([
   "marie",
   "jean",
   "sophie",
@@ -46,9 +46,9 @@ export const researcherKeySchema = z.enum([
   "chloe",
   "hugo",
 ]);
-export type ResearcherKey = z.infer<typeof researcherKeySchema>;
+type ResearcherKey = z.infer<typeof researcherKeySchema>;
 
-export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
+const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   marie: {
     id: "01980e2d-6f9b-7000-8000-000000000001",
     email: "marie.dupont@univ-lorraine.fr",
@@ -181,7 +181,7 @@ export const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   },
 };
 
-export const MOCK_MANUAL_GROUPS = [
+const MOCK_MANUAL_GROUPS = [
   { id: "01980e2d-6f9b-7000-9000-000000000001", name: "ANR CritMet" },
   { id: "01980e2d-6f9b-7000-9000-000000000002", name: "ProfilLoire 2024" },
   { id: "01980e2d-6f9b-7000-9000-000000000003", name: "OZCAR-RI" },
@@ -468,7 +468,7 @@ export async function seed(
   });
 }
 
-export const sampleRowSchema = sampleSchema
+const sampleRowSchema = sampleSchema
   .pick({
     id: true,
     name: true,
@@ -527,7 +527,7 @@ export type SampleOwner = InstitutionalGroups & {
   manualGroups: string[];
 };
 
-export type OwnedSampleRow = SampleRow & {
+type OwnedSampleRow = SampleRow & {
   owner: SampleOwner;
   collaborators?: {
     userId: string;
@@ -552,9 +552,9 @@ const seedSampleSchema = sampleRowSchema.extend({
     .optional(),
 });
 
-export type SeedSample = z.input<typeof seedSampleSchema>;
+type SeedSample = z.input<typeof seedSampleSchema>;
 
-export type SeedCollaborator = NonNullable<SeedSample["collaborators"]>[number];
+type SeedCollaborator = NonNullable<SeedSample["collaborators"]>[number];
 
 function parseSampleRow(row: SampleRow): z.output<typeof sampleRowSchema> {
   const parsed = sampleRowSchema.parse(row);

@@ -4,7 +4,7 @@ import { geologicalAgeSchema } from "./geological-age.ts";
 import { numericUnitSchema } from "./numeric-unit.ts";
 import { yearsUnitSchema } from "./years-unit.ts";
 
-export const ageErrorSchema = z.enum([
+const ageErrorSchema = z.enum([
   "numeric_range_order",
   "numeric_unit_without_value",
   "numeric_years_unit_requires_annum",

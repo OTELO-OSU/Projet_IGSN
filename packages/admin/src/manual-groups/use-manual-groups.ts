@@ -4,7 +4,7 @@ import { listManualGroupsResponseSchema } from "@projet-igsn/domain/manual-group
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
+import { apiJson } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
 // ponytail: one page of 50 groups, server-side search once the catalog outgrows it
@@ -20,15 +20,11 @@ export function useManualGroups(params: ListManualGroupsQuery, enabled = true) {
         if (value !== undefined) url.searchParams.set(key, String(value));
       }
 
-      const res = await apiFetch(url);
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to load manual groups (${res.status})`,
-        );
-      }
-      const { data, meta } = listManualGroupsResponseSchema.parse(
-        await res.json(),
+      const { data, meta } = await apiJson(
+        apiFetch,
+        url,
+        listManualGroupsResponseSchema,
+        "Failed to load manual groups",
       );
       return { data, total: meta.total };
     },

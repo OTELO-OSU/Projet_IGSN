@@ -1,4 +1,12 @@
-import { HttpError, retryDelay, shouldRetry } from "./http-error.ts";
+import { z } from "zod";
+
+import {
+  apiJson,
+  apiOk,
+  HttpError,
+  retryDelay,
+  shouldRetry,
+} from "./http-error.ts";
 
 const responded = (status: number, retryAfter?: string) =>
   HttpError.fromResponse(
@@ -64,5 +72,56 @@ describe("retryDelay", () => {
 
   it("should cap the backoff at thirty seconds", () => {
     expect(retryDelay(10, new Error("fetch failed"))).toBe(30_000);
+  });
+});
+
+describe("apiJson", () => {
+  const url = new URL("https://api.test/samples");
+  const bodySchema = z.object({ name: z.string() });
+
+  it("should return the body parsed by the schema", async () => {
+    const parsed = await apiJson(
+      async () => Response.json({ name: "Ada", extra: 1 }),
+      url,
+      bodySchema,
+      "Failed to load the sample",
+    );
+    expect(parsed).toEqual({ name: "Ada" });
+  });
+
+  it("should throw the given message with the status appended", async () => {
+    const rejection = await apiJson(
+      async () => new Response(null, { status: 404 }),
+      url,
+      bodySchema,
+      "Failed to load the sample",
+    ).catch((error: unknown) => error);
+    expect(rejection).toMatchObject({
+      status: 404,
+      message: "Failed to load the sample (404)",
+    });
+  });
+
+  it("should carry the delay the response asks for", async () => {
+    const rejection = await apiJson(
+      async () =>
+        new Response(null, { status: 429, headers: { "Retry-After": "60" } }),
+      url,
+      bodySchema,
+      "Failed to load the sample",
+    ).catch((error: unknown) => error);
+    expect(rejection).toMatchObject({ retryAfterMs: 60_000 });
+  });
+});
+
+describe("apiOk", () => {
+  it("should resolve a response carrying no body", async () => {
+    const res = await apiOk(
+      async () => new Response(null, { status: 204 }),
+      new URL("https://api.test/samples/1"),
+      "Failed to delete the sample",
+      { method: "DELETE" },
+    );
+    expect(res.status).toBe(204);
   });
 });

@@ -6,7 +6,7 @@ import { settableUserStatuses } from "@projet-igsn/domain/user/settable-user-sta
 import { shouldRePendOnInstitutionsUpdate } from "@projet-igsn/domain/user/should-re-pend-on-institutions-update";
 import { HTTPException } from "hono/http-exception";
 
-export type UserStatusAndInstitutions = {
+type UserStatusAndInstitutions = {
   status: UserStatus;
   institutionalOrganization: string | null;
   institutionalOsu: string | null;

@@ -2,7 +2,7 @@ import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
+import { apiOk } from "#/http-error.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
 import { invalidateUserAndGroups } from "#/users/invalidate-user-and-groups.ts";
@@ -12,16 +12,12 @@ export function useRemoveUserInstitution() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (userId: string) => {
-      const res = await apiFetch(
+      await apiOk(
+        apiFetch,
         new URL(`admin/users/${userId}/institutional-groups`, API_URL),
+        "Failed to remove the institution",
         { method: "DELETE" },
       );
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to remove the institution (${res.status})`,
-        );
-      }
     },
     onSuccess: async (_data, userId) => {
       toast.success(m.user_remove_institution_success());

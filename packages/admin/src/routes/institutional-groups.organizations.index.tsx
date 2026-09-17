@@ -11,7 +11,7 @@ import { OrganizationTable } from "#/institutional-groups/organization-table.tsx
 import { useInstitutionalGroupManagerCounts } from "#/institutional-groups/use-institutional-group-manager-counts.ts";
 import { noManagerFilterEntry } from "#/managers/no-manager-filter-entry.tsx";
 import { m } from "#/paraglide/messages.js";
-import { useGetInstitutionalGroupCounts } from "#/users/hook/get-institutional-group-counts.ts";
+import { useGetInstitutionalGroupCounts } from "#/users/use-get-institutional-group-counts.ts";
 
 export const Route = createFileRoute("/institutional-groups/organizations/")({
   validateSearch: z.object({

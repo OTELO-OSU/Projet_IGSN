@@ -1,7 +1,6 @@
 import type { ComponentProps } from "react";
 
 import { Button } from "@projet-igsn/design-system/components/ui/button";
-import { ConfirmDialog } from "@projet-igsn/design-system/components/ui/confirm-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +10,7 @@ import {
 import { ChevronDownIcon } from "lucide-react";
 import { useState } from "react";
 
-import { m } from "#/paraglide/messages.js";
+import { ConfirmDialog } from "#/confirm-button.tsx";
 
 export type ConfirmMenuItem = {
   label: string;
@@ -67,9 +66,6 @@ export function ConfirmMenuButton({
           onOpenChange={() => setPending(undefined)}
           title={pending.title}
           description={pending.description}
-          confirmLabel={m.action_confirm()}
-          cancelLabel={m.action_cancel()}
-          closeLabel={m.action_close()}
           onConfirm={pending.onConfirm}
         />
       ) : null}

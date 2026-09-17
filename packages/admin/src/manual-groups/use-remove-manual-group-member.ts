@@ -2,7 +2,7 @@ import { toast } from "@projet-igsn/design-system/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { API_URL } from "#/api-url.ts";
-import { HttpError } from "#/http-error.ts";
+import { apiOk, HttpError } from "#/http-error.ts";
 import { m } from "#/paraglide/messages.js";
 import { useApiClient } from "#/use-api-client.ts";
 import { invalidateUserAndGroups } from "#/users/invalidate-user-and-groups.ts";
@@ -14,16 +14,12 @@ export function useRemoveManualGroupMember() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ groupId, userId }: ManualGroupMembership) => {
-      const res = await apiFetch(
+      await apiOk(
+        apiFetch,
         new URL(`admin/manual-groups/${groupId}/members/${userId}`, API_URL),
+        "Failed to detach the member",
         { method: "DELETE" },
       );
-      if (!res.ok) {
-        throw HttpError.fromResponse(
-          res,
-          `Failed to detach the member (${res.status})`,
-        );
-      }
     },
     onSuccess: async (_data, { userId }) => {
       toast.success(m.manual_group_member_removed());

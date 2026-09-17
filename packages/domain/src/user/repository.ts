@@ -14,7 +14,7 @@ import type {
   UserIdentity,
 } from "./user-validator.ts";
 
-export type UpsertUser = Pick<User, "email" | "name" | "firstname">;
+type UpsertUser = Pick<User, "email" | "name" | "firstname">;
 
 export type PendingUser = Pick<
   User,
@@ -23,7 +23,7 @@ export type PendingUser = Pick<
   createdAt: Date;
 };
 
-export type SpaceManager = {
+type SpaceManager = {
   id: string;
   email: string;
   groups: ManagedGroups;
@@ -78,7 +78,7 @@ export type UserRepository = {
   getModerationScope(userId: string): Promise<ManagedGroups>;
 };
 
-export type UpdateUserResult = {
+type UpdateUserResult = {
   user: AdminUser;
   previousStatus: UserStatus;
   joinedGroups: ManualGroup[];

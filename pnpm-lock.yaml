@@ -30,9 +30,6 @@ catalogs:
     '@rolldown/plugin-babel':
       specifier: ^0.2.3
       version: 0.2.3
-    '@tailwindcss/typography':
-      specifier: ^0.5.20
-      version: 0.5.20
     '@tailwindcss/vite':
       specifier: ^4.3.1
       version: 4.3.3
@@ -66,9 +63,6 @@ catalogs:
     '@tanstack/router-plugin':
       specifier: ^1.168.18
       version: 1.168.20
-    '@types/babel__core':
-      specifier: ^7.20.5
-      version: 7.20.5
     '@types/leaflet':
       specifier: ^1.9.20
       version: 1.9.21
@@ -165,9 +159,6 @@ catalogs:
     papaparse:
       specifier: ^5.5.4
       version: 5.5.4
-    playwright:
-      specifier: ^1.61.1
-      version: 1.61.1
     postgres:
       specifier: ^3.4.9
       version: 3.4.9
@@ -248,9 +239,6 @@ importers:
       oxlint-tsgolint:
         specifier: 'catalog:'
         version: 0.23.0
-      playwright:
-        specifier: 'catalog:'
-        version: 1.61.1
       shadcn:
         specifier: 'catalog:'
         version: 4.13.0(typescript@6.0.3)
@@ -284,12 +272,6 @@ importers:
       '@tanstack/react-table':
         specifier: 'catalog:'
         version: 8.21.3(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      class-variance-authority:
-        specifier: 'catalog:'
-        version: 0.7.1
-      clsx:
-        specifier: 'catalog:'
-        version: 2.1.1
       lucide-react:
         specifier: 'catalog:'
         version: 1.24.0(react@19.2.7)
@@ -308,15 +290,9 @@ importers:
       react-oidc-context:
         specifier: 'catalog:'
         version: 3.3.1(oidc-client-ts@3.5.0)(react@19.2.7)
-      tailwind-merge:
-        specifier: 'catalog:'
-        version: 3.6.0
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.3
-      tw-animate-css:
-        specifier: 'catalog:'
-        version: 1.4.0
       zod:
         specifier: 'catalog:'
         version: 4.4.3
@@ -327,9 +303,6 @@ importers:
       '@rolldown/plugin-babel':
         specifier: 'catalog:'
         version: 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.2.0)(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.1))
-      '@tailwindcss/typography':
-        specifier: 'catalog:'
-        version: 0.5.20(tailwindcss@4.3.3)
       '@tailwindcss/vite':
         specifier: 'catalog:'
         version: 4.3.3(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.1))
@@ -339,9 +312,6 @@ importers:
       '@tanstack/router-plugin':
         specifier: 'catalog:'
         version: 1.168.20(@tanstack/react-router@1.170.18(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(rolldown@1.2.0)(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.1))
-      '@types/babel__core':
-        specifier: 'catalog:'
-        version: 7.20.5
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.3
@@ -552,15 +522,6 @@ importers:
       '@tanstack/react-start':
         specifier: 'catalog:'
         version: 1.168.28(crossws@0.4.10(srvx@0.11.22))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(rolldown@1.2.0)(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.1))
-      '@tanstack/router-plugin':
-        specifier: 'catalog:'
-        version: 1.168.20(@tanstack/react-router@1.170.18(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(rolldown@1.2.0)(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.1))
-      class-variance-authority:
-        specifier: 'catalog:'
-        version: 0.7.1
-      clsx:
-        specifier: 'catalog:'
-        version: 2.1.1
       leaflet:
         specifier: 'catalog:'
         version: 1.9.4
@@ -588,15 +549,9 @@ importers:
       react-oidc-context:
         specifier: 'catalog:'
         version: 3.3.1(oidc-client-ts@3.5.0)(react@19.2.7)
-      tailwind-merge:
-        specifier: 'catalog:'
-        version: 3.6.0
       tailwindcss:
         specifier: 'catalog:'
         version: 4.3.3
-      tw-animate-css:
-        specifier: 'catalog:'
-        version: 1.4.0
       zod:
         specifier: 'catalog:'
         version: 4.4.3
@@ -604,9 +559,6 @@ importers:
       '@rolldown/plugin-babel':
         specifier: 'catalog:'
         version: 0.2.3(@babel/core@7.29.7)(@babel/runtime@7.29.7)(rolldown@1.2.0)(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.1))
-      '@tailwindcss/typography':
-        specifier: 'catalog:'
-        version: 0.5.20(tailwindcss@4.3.3)
       '@tailwindcss/vite':
         specifier: 'catalog:'
         version: 4.3.3(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.1))
@@ -2476,11 +2428,6 @@ packages:
     resolution: {integrity: sha512-krXjAikiaFSPaK/FkAQT5UTx3VormQaiZ5hBFlJZ9UFQGB/rwg1MZIhHAG9smMQRTdyJxP6Qt5MwMtdyU5FWrA==}
     engines: {node: '>= 20'}
 
-  '@tailwindcss/typography@0.5.20':
-    resolution: {integrity: sha512-hwbzQuNUfcPvbegQFatVPl/MY/tcM9KLl963hQ5laJKPh81TEZ1+dNG9PirGvcaDBkp+BCshExAyKVPW91dozw==}
-    peerDependencies:
-      tailwindcss: '>=3.0.0 || >=4.0.0 || insiders'
-
   '@tailwindcss/vite@4.3.3':
     resolution: {integrity: sha512-yYU8cogLeSh/ms2jh8Fj7jaba/EWa7Ja6GoUqYZaraEuCI5YS6ms6ObZgjjedm+jm6XZjdNRWBpPP6Z86oOxcw==}
     peerDependencies:
@@ -2726,18 +2673,6 @@ packages:
 
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
-
-  '@types/babel__core@7.20.5':
-    resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
-
-  '@types/babel__generator@7.27.0':
-    resolution: {integrity: sha512-ufFd2Xi92OAVPYsy+P4n7/U7e68fex0+Ee8gSG9KX7eo084CWiQ4sdxktvdl0bOPupXtVJPY19zk6EwWqUQ8lg==}
-
-  '@types/babel__template@7.4.4':
-    resolution: {integrity: sha512-h/NUaSyG5EyxBIp8YRxo4RMe2/qQgvyowRwVMzhYhBCONbW8PUsg4lkFMrhgZhUe5z3L3MiLDuvyJ/CaPa2A8A==}
-
-  '@types/babel__traverse@7.28.0':
-    resolution: {integrity: sha512-8PvcXf70gTDZBgt9ptxJ8elBeBjcLOAcOtoO/mPJjtji1+CdGbHgm77om1GrsPxsiE+uXIpNSK64UYaIwQXd4Q==}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -4717,10 +4652,6 @@ packages:
     engines: {node: ^18.12.0 || ^20.9.0 || >=22.0}
     peerDependencies:
       postcss: ^8.5.13
-
-  postcss-selector-parser@6.0.10:
-    resolution: {integrity: sha512-IQ7TZdoaqbT+LCpShg46jnZVlhWD2w6iQYAcYXfHARZ7X1t/UGhhceQDs5X0cGqKvYlHNOuv7Oa1xmb0oQuA3w==}
-    engines: {node: '>=4'}
 
   postcss-selector-parser@7.1.4:
     resolution: {integrity: sha512-HeP7D2wyhkR+XaK6v4W8oRF62Dsz4flyuczALJp61GckGm42u1saSSJ/0auvcBqxs3jMRFEcPK34At/0JBKdOg==}
@@ -7286,11 +7217,6 @@ snapshots:
       '@tailwindcss/oxide-win32-arm64-msvc': 4.3.3
       '@tailwindcss/oxide-win32-x64-msvc': 4.3.3
 
-  '@tailwindcss/typography@0.5.20(tailwindcss@4.3.3)':
-    dependencies:
-      postcss-selector-parser: 6.0.10
-      tailwindcss: 4.3.3
-
   '@tailwindcss/vite@4.3.3(vite@8.1.5(@types/node@24.13.3)(jiti@2.7.0)(yaml@2.9.1))':
     dependencies:
       '@tailwindcss/node': 4.3.3
@@ -7633,27 +7559,6 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
-
-  '@types/babel__core@7.20.5':
-    dependencies:
-      '@babel/parser': 7.29.7
-      '@babel/types': 7.29.7
-      '@types/babel__generator': 7.27.0
-      '@types/babel__template': 7.4.4
-      '@types/babel__traverse': 7.28.0
-
-  '@types/babel__generator@7.27.0':
-    dependencies:
-      '@babel/types': 7.29.7
-
-  '@types/babel__template@7.4.4':
-    dependencies:
-      '@babel/parser': 7.29.7
-      '@babel/types': 7.29.7
-
-  '@types/babel__traverse@7.28.0':
-    dependencies:
-      '@babel/types': 7.29.7
 
   '@types/chai@5.2.3':
     dependencies:
@@ -9908,11 +9813,6 @@ snapshots:
     dependencies:
       postcss: 8.5.19
       postcss-value-parser: 4.2.0
-
-  postcss-selector-parser@6.0.10:
-    dependencies:
-      cssesc: 3.0.0
-      util-deprecate: 1.0.2
 
   postcss-selector-parser@7.1.4:
     dependencies:
