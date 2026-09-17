@@ -1,5 +1,6 @@
 import type { Kysely } from "kysely";
 
+import { DATACITE_MEDIA_TYPE } from "@projet-igsn/domain/sample/datacite/datacite-schema";
 import { describe, expect, it } from "vitest";
 
 import type { DB } from "../db.ts";
@@ -77,6 +78,28 @@ describe("the /service OpenAPI document", () => {
     const missing = undescribedProperties(document.components.schemas, "");
     expect(missing, `undescribed: ${missing.join(", ")}`).toEqual([]);
   });
+
+  it.each(["/samples", "/samples/{igsn}"])(
+    "should offer both served formats on the Accept header of %s",
+    async (path) => {
+      const document = await serviceDocument();
+
+      const { parameters, responses } = document.paths[path]!.get as {
+        parameters: { name: string; in: string; schema: { enum?: string[] } }[];
+        responses: Record<string, { content: Record<string, unknown> }>;
+      };
+      const accept = parameters.find(
+        ({ name, in: location }) => name === "accept" && location === "header",
+      );
+      expect(accept?.schema.enum).toEqual([
+        "application/json",
+        DATACITE_MEDIA_TYPE,
+      ]);
+      expect(Object.keys(responses["200"]!.content)).toEqual(
+        accept?.schema.enum,
+      );
+    },
+  );
 
   it("should publish the vocabulary of a controlled filter as an enum", async () => {
     const document = await serviceDocument();

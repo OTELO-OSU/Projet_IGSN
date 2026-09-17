@@ -17,6 +17,7 @@ The mapping lives in `packages/domain/src/sample/datacite/`, pure and I/O-free:
 - `application/vnd.otelo.datacite+json` on the two `/service` GET routes.
 - A Core record (`application/json`) is the default: an `Accept` of `application/json`, `application/*`, `*/*` or no header at all serves Core.
 - An unserved `Accept` answers `406`.
+- Both GET routes publish `Accept` as a documented header parameter, so `/service/docs` offers the two formats and `/service/openapi.json` carries a schema for each.
 
 ## Sensitive-location masking
 

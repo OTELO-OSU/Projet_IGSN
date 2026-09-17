@@ -87,6 +87,18 @@ const UNSUPPORTED_MEDIA_TYPE = json(
   "The request carries a body that is not application/json.",
 );
 
+const acceptHeaderSchema = z.object({
+  accept: z
+    .string()
+    .optional()
+    .meta({
+      enum: ["application/json", DATACITE_MEDIA_TYPE],
+      default: "application/json",
+      description:
+        "Format the response is served in. Left out, set to application/json, application/* or */*, the sample is an IGSN Core record; set to the DataCite media type, it is a DataCite 4.7 record. Any other value answers 406.",
+    }),
+});
+
 const igsnParamSchema = z.object({
   igsn: igsnSchema.meta({
     description: "IGSN of the sample, with no doi.org or igsn: prefix.",
@@ -107,6 +119,7 @@ export const listSamplesRoute = createRoute({
     "Lists every published sample of the registry as IGSN Core records, ordered by IGSN. Pass editable=true to narrow the list to the samples the service account itself may update, and any other parameter to filter it, several of them narrowing the list together.",
   security: SECURITY,
   request: {
+    headers: acceptHeaderSchema,
     query: z.object({
       page: pageSchema.meta({
         type: "integer",
@@ -149,7 +162,7 @@ export const getSampleRoute = createRoute({
   description:
     "Returns the published sample carrying this IGSN as an IGSN Core record, whatever the account's reach. A sample that is not published answers 404.",
   security: SECURITY,
-  request: { params: igsnParamSchema },
+  request: { headers: acceptHeaderSchema, params: igsnParamSchema },
   responses: {
     200: negotiated(
       coreSampleSchema,
