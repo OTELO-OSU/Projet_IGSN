@@ -34,14 +34,14 @@ Three predicates, all read off `status`:
 
 - `status <> 'draft'` (`hasPermanentIgsn`, `domain/sample/publication/has-permanent-igsn.ts`, inline in SQL): IGSN permanence. Frozen fields, contributor edit rights, the non-GET `canPublishSamples` guard, manual-group deletion and detach guards.
 - `status = 'published'`: public visibility. Public search list, public contributor facet, public manual-group facet.
-- `status in ('published', 'withdrawn')`: public resolution at `GET /samples/:igsn`, plus the contact form and attachments (`getPublicSampleByIgsn`).
+- `status in ('published', 'withdrawn')`: public resolution at `GET /samples/:igsn`, plus the contact form, the attachments (`getPublicSampleByIgsn`) and the root of `GET /samples/:igsn/lineage`.
 
 Redaction and visibility:
 
 - A withdrawn sample resolves as a redacted payload built by `toWithdrawnSample` (`withdrawn-sample.ts`), a field-by-field whitelist and never a spread, so a new `Sample` field stays private by default. `toPublicSample` (`public-sample.ts`) picks by status; `GET /samples/:igsn` answers a discriminated union on `status`.
 - A published sample is public whole but for the fields `redact-archive-contacts.ts` drops (the two archive contacts, admin-only), applied by `toPublicSample` and the public list route.
 - A tombstone is a 404 to everyone but a super admin or an in-reach space manager ([[space-manager-scope]]); a caller with no access at all still gets 403 first, so a stranger cannot distinguish a tombstone from a forbidden sample. Non-GET answers 409 except the status endpoint. "My samples" hides tombstones, the moderation list shows them.
-- One exception: a published sub-sample's public page names its parent and links to its IGSN page whatever the parent's status, so a tombstoned parent's `name`, `igsn` and `material` stay visible through a published child even though the parent's own page still 404s; see [[sample-parentage]] and ADR 0033's amendment.
+- The public lineage graph (`GET /samples/:igsn/lineage`) keeps that exception in both directions: a relative appears if it left draft, so a tombstoned parent or child stays named through a published sample, flagged `tombstone` and left unlinked since its own page 404s, and a draft relative stops traversal past it; the endpoint answers for a published or withdrawn root, so the reduced withdrawn page shows its graph, and 404s for a tombstoned one; see [[sample-parentage]] and ADR 0043.
 - Who may move a sample between permanent statuses is `domain/user-sample/can-set-sample-status.ts`, read by both the api route and the admin status menu; tombstoning is gated on management reach, not the editor role, and outranks ownership.
 - `sort=status` orders by lifecycle position over `sampleStatusSchema.options`.
 - No mail and no audit trail on withdraw, republish, tombstone or restore.

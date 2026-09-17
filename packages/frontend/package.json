@@ -22,6 +22,7 @@
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-router-ssr-query": "catalog:",
     "@tanstack/react-start": "catalog:",
+    "@xyflow/react": "catalog:",
     "leaflet": "catalog:",
     "lucide-react": "catalog:",
     "nitro": "catalog:",

@@ -1,348 +1,83 @@
-import type { Sample } from "@projet-igsn/domain/sample/sample";
+import type { SampleLineage } from "@projet-igsn/domain/sample/lineage/model";
+import type { PublicSample } from "@projet-igsn/domain/sample/sample-validator";
 
-import {
-  laboratoryLabel,
-  organizationLabel,
-  osuLabel,
-} from "@projet-igsn/domain/institutional-group/label";
-import { hasEconomicInterest } from "@projet-igsn/domain/sample/resource-type/has-economic-interest";
 import { fullName } from "@projet-igsn/domain/user/full-name";
-import { Link } from "@tanstack/react-router";
 
 import { AddSubSampleLink } from "#/domain/samples/add-sub-sample-link.tsx";
-import { AgeView, hasAge } from "#/domain/samples/age-view.tsx";
-import { BreadcrumbFieldRow } from "#/domain/samples/breadcrumb-field-row.tsx";
-import { ConditionView } from "#/domain/samples/condition-view.tsx";
 import { ContactOwnerDialog } from "#/domain/samples/contact-owner-dialog.tsx";
-import { DescriptionView } from "#/domain/samples/description-view.tsx";
-import { EconomicInterestView } from "#/domain/samples/economic-interest-view.tsx";
 import { EditSampleLink } from "#/domain/samples/edit-sample-link.tsx";
-import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
-import { LocationView } from "#/domain/samples/location-view.tsx";
-import { RelationsView } from "#/domain/samples/relations-view.tsx";
-import { RepositoryView } from "#/domain/samples/repository-view.tsx";
+import { LineageView } from "#/domain/samples/lineage-view.tsx";
 import { SampleHero } from "#/domain/samples/sample-hero.tsx";
-import {
-  availabilityStatusLabel,
-  collectionMethodLabel,
-  existenceStatusLabel,
-  geomorphologicalEnvironmentLabel,
-  materialPathLabel,
-  metamorphicFabricLabel,
-  metamorphicFaciesLabel,
-  natureLabel,
-  textureLabel,
-  typeLabel,
-} from "#/domain/samples/sample-labels.ts";
-import { ScientificContextView } from "#/domain/samples/scientific-context-view.tsx";
+import { sampleSections } from "#/domain/samples/sample-sections.tsx";
 import { SectionHeading } from "#/domain/samples/section-heading.tsx";
-import { SecurityView } from "#/domain/samples/security-view.tsx";
-import { SyntheticDetailsView } from "#/domain/samples/synthetic-details-view.tsx";
 import { useActiveSection } from "#/domain/samples/use-active-section.ts";
+import { withdrawnSampleSections } from "#/domain/samples/withdrawn-sample-sections.tsx";
 import { m } from "#/paraglide/messages.js";
 
 export function SampleView({
-  sample: {
-    id,
-    name,
-    igsn,
-    nature,
-    type,
-    material,
-    materialOtherName,
-    texture,
-    metamorphicFacies,
-    metamorphicFabric,
-    specificName,
-    collectionMethod,
-    collectionMethodDescription,
-    description,
-    condition,
-    scientificContext,
-    repository,
-    geologicalContextDescription,
-    geomorphologicalEnvironment,
-    syntheticDetails,
-    institutionalOrganization,
-    institutionalOsu,
-    institutionalLaboratory,
-    manualGroups,
-    parents,
-    owner,
-    location,
-    security,
-    existenceStatus,
-    availabilityStatus,
-    publicationYear,
-    age,
-    relations,
-    attachments,
-    resourceType,
-    economicInterestElements,
-    economicResourceTypePrecision,
-    economicDepositName,
-    economicDepositDescription,
-  },
+  sample,
+  lineage,
 }: {
-  sample: Sample;
+  sample: PublicSample;
+  lineage?: SampleLineage;
 }) {
-  const sections = [
-    {
-      id: "sample",
-      title: m.sample_section_sample(),
-      content: (
-        <FieldRows>
-          <FieldRow
-            label={m.sample_field_nature()}
-            value={nature ? natureLabel(nature) : null}
-          />
-          <BreadcrumbFieldRow
-            id="sample-field-type"
-            label={m.sample_field_type()}
-            path={type}
-            pathLabel={typeLabel}
-          />
-          <BreadcrumbFieldRow
-            id="sample-field-material"
-            label={m.sample_field_material()}
-            path={material}
-            pathLabel={materialPathLabel}
-            suffix={materialOtherName}
-          />
-          <FieldRow
-            label={m.sample_field_texture()}
-            value={texture && textureLabel(texture)}
-          />
-          <FieldRow
-            label={m.sample_field_metamorphic_facies()}
-            value={
-              metamorphicFacies && metamorphicFaciesLabel(metamorphicFacies)
-            }
-          />
-          <FieldRow
-            label={m.sample_field_metamorphic_fabric()}
-            value={
-              metamorphicFabric && metamorphicFabricLabel(metamorphicFabric)
-            }
-          />
-          <FieldRow
-            label={m.sample_field_specific_name()}
-            value={specificName}
-          />
-          <BreadcrumbFieldRow
-            id="sample-field-collection-method"
-            label={m.sample_field_collection_method()}
-            path={collectionMethod}
-            pathLabel={collectionMethodLabel}
-          />
-          <FieldRow
-            label={m.sample_field_collection_method_description()}
-            value={collectionMethodDescription}
-          />
-          <FieldRow
-            label={m.sample_field_existence_status()}
-            value={existenceStatus && existenceStatusLabel(existenceStatus)}
-          />
-          <FieldRow
-            label={m.sample_field_availability_status()}
-            value={
-              availabilityStatus && availabilityStatusLabel(availabilityStatus)
-            }
-          />
-          <FieldRow
-            label={m.sample_field_publication_year()}
-            value={publicationYear}
-          />
-        </FieldRows>
-      ),
-    },
-    description && {
-      id: "description",
-      title: m.sample_section_description(),
-      content: <DescriptionView description={description} />,
-    },
-    location && {
-      id: "location",
-      title: m.sample_section_location(),
-      content: <LocationView location={location} />,
-    },
-    (geologicalContextDescription != null ||
-      geomorphologicalEnvironment != null) && {
-      id: "geological-context",
-      title: m.sample_section_geological_context(),
-      content: (
-        <FieldRows>
-          <FieldRow
-            label={m.sample_field_geological_context_description()}
-            value={geologicalContextDescription}
-          />
-          <BreadcrumbFieldRow
-            id="sample-field-environment"
-            label={m.sample_field_environment()}
-            path={geomorphologicalEnvironment}
-            pathLabel={geomorphologicalEnvironmentLabel}
-          />
-        </FieldRows>
-      ),
-    },
-    condition && {
-      id: "condition",
-      title: m.sample_section_condition(),
-      content: <ConditionView condition={condition} />,
-    },
-    scientificContext && {
-      id: "scientific-context",
-      title: m.sample_section_scientific_context(),
-      content: <ScientificContextView scientificContext={scientificContext} />,
-    },
-    repository && {
-      id: "repository",
-      title: m.sample_section_repository(),
-      content: <RepositoryView repository={repository} />,
-    },
-    syntheticDetails && {
-      id: "synthetic-details",
-      title: m.sample_section_synthetic_details(),
-      content: <SyntheticDetailsView syntheticDetails={syntheticDetails} />,
-    },
-    institutionalOrganization !== null && {
-      id: "institution",
-      title: m.sample_section_institution(),
-      content: (
-        <FieldRows>
-          <FieldRow
-            label={m.sample_field_institutional_organization()}
-            value={organizationLabel(institutionalOrganization)}
-          />
-          <FieldRow
-            label={m.sample_field_institutional_osu()}
-            value={institutionalOsu && osuLabel(institutionalOsu)}
-          />
-          <FieldRow
-            label={m.sample_field_institutional_laboratory()}
-            value={
-              institutionalLaboratory &&
-              laboratoryLabel(institutionalLaboratory)
-            }
-          />
-        </FieldRows>
-      ),
-    },
-    manualGroups.length > 0 && {
-      id: "manual-groups",
-      title: m.sample_section_manual_groups(),
-      content: (
-        <ul className="mt-2 divide-y">
-          {manualGroups.map(({ id, name }) => (
-            <li key={id} className="px-4 py-3 font-medium">
-              {name}
-            </li>
-          ))}
-        </ul>
-      ),
-    },
-    parents.length > 0 && {
-      id: "parents",
-      title: m.sample_section_parents(),
-      content: (
-        <ul className="mt-2 divide-y">
-          {parents.map((parent) => (
-            <li key={parent.id} className="px-4 py-3">
-              <Link
-                to="/samples/$igsn"
-                params={{ igsn: parent.igsn }}
-                className="font-medium break-all text-sky-800 underline"
-              >
-                {parent.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      ),
-    },
-    hasAge(age)
+  // Both statuses render through this one component, so the fullscreen graph
+  // survives a jump from a published sample to a withdrawn one.
+  const lineageSection =
+    lineage != null && lineage.nodes.length > 1
       ? {
-          id: "age",
-          title: m.sample_section_age(),
-          content: <AgeView age={age} />,
+          id: "lineage",
+          title: m.sample_section_lineage(),
+          content: <LineageView lineage={lineage} />,
         }
-      : null,
-    security && {
-      id: "security",
-      title: m.sample_section_security(),
-      content: <SecurityView security={security} />,
-    },
-    hasEconomicInterest({
-      resourceType,
-      economicInterestElements,
-      economicResourceTypePrecision,
-      economicDepositName,
-      economicDepositDescription,
-    }) && {
-      id: "economic-interest",
-      title: m.sample_section_economic_interest(),
-      content: (
-        <EconomicInterestView
-          resourceType={resourceType}
-          economicInterestElements={economicInterestElements}
-          economicResourceTypePrecision={economicResourceTypePrecision}
-          economicDepositName={economicDepositName}
-          economicDepositDescription={economicDepositDescription}
-        />
-      ),
-    },
-    igsn != null &&
-      (relations.length > 0 || attachments.length > 0) && {
-        id: "related-resources",
-        title: m.sample_section_related_resources(),
-        content: (
-          <RelationsView
-            igsn={igsn}
-            relations={relations}
-            attachments={attachments}
-          />
-        ),
-      },
-  ].filter((section) => section != null && section !== false);
+      : null;
+  const withdrawn = sample.status === "withdrawn";
+  const sections = withdrawn
+    ? withdrawnSampleSections(sample, lineageSection)
+    : sampleSections(sample, lineageSection);
 
   const activeId = useActiveSection(sections.map(({ id }) => id));
 
   return (
     <div>
       <SampleHero
-        name={name}
-        igsn={igsn}
+        name={sample.name}
+        igsn={sample.igsn}
         actions={
-          <div className="flex flex-wrap gap-2">
-            <EditSampleLink sampleId={id} />
-            <AddSubSampleLink sampleId={id} />
-          </div>
+          withdrawn ? undefined : (
+            <div className="flex flex-wrap gap-2">
+              <EditSampleLink sampleId={sample.id} />
+              <AddSubSampleLink sampleId={sample.id} />
+            </div>
+          )
         }
       />
 
       <div className="mx-auto flex max-w-6xl gap-8 px-6 py-10">
-        <nav
-          aria-label={m.sample_section_sample()}
-          className="sticky top-28 hidden w-40 shrink-0 self-start md:block"
-        >
-          <ul className="grid gap-2">
-            {sections.map(({ id, title }) => (
-              <li key={id}>
-                <a
-                  href={`#${id}`}
-                  aria-current={id === activeId ? "location" : undefined}
-                  className={`border-l-2 pl-3 ${
-                    id === activeId
-                      ? "border-sky-800 font-medium text-sky-900"
-                      : "border-sky-200 text-sky-900/60"
-                  }`}
-                >
-                  {title}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {withdrawn ? null : (
+          <nav
+            aria-label={m.sample_section_sample()}
+            className="sticky top-28 hidden w-40 shrink-0 self-start md:block"
+          >
+            <ul className="grid gap-2">
+              {sections.map(({ id, title }) => (
+                <li key={id}>
+                  <a
+                    href={`#${id}`}
+                    aria-current={id === activeId ? "location" : undefined}
+                    className={`border-l-2 pl-3 ${
+                      id === activeId
+                        ? "border-sky-800 font-medium text-sky-900"
+                        : "border-sky-200 text-sky-900/60"
+                    }`}
+                  >
+                    {title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
         <div className="flex-1">
           {sections.map(({ id, title, content }) => (
@@ -357,17 +92,21 @@ export function SampleView({
             </section>
           ))}
 
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            {owner && publicationYear ? (
-              <p className="text-muted-foreground">
-                {m.sample_declared_by({
-                  year: publicationYear,
-                  owner: fullName(owner),
-                })}
-              </p>
-            ) : null}
-            {igsn != null ? <ContactOwnerDialog igsn={igsn} /> : null}
-          </div>
+          {withdrawn ? null : (
+            <div className="mt-8 flex flex-wrap items-center gap-4">
+              {sample.owner && sample.publicationYear ? (
+                <p className="text-muted-foreground">
+                  {m.sample_declared_by({
+                    year: sample.publicationYear,
+                    owner: fullName(sample.owner),
+                  })}
+                </p>
+              ) : null}
+              {sample.igsn != null ? (
+                <ContactOwnerDialog igsn={sample.igsn} />
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
     </div>
