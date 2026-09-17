@@ -6,6 +6,10 @@ import {
   coreSampleSchema,
 } from "@projet-igsn/domain/sample/core/core-sample-schema";
 import {
+  DATACITE_MEDIA_TYPE,
+  dataCiteSampleSchema,
+} from "@projet-igsn/domain/sample/datacite/datacite-schema";
+import {
   DEFAULT_PAGE_SIZE,
   PAGE_SIZES,
   pageSchema,
@@ -13,6 +17,7 @@ import {
 } from "@projet-igsn/domain/sample/sample-validator";
 import {
   coreListSamplesResponseSchema,
+  dataCiteListSamplesResponseSchema,
   frozenServiceSampleSchema,
   invalidServiceSampleSchema,
   serviceErrorSchema,
@@ -37,6 +42,23 @@ const json = <Schema extends z.ZodType>(
   description,
   content: { "application/json": { schema } },
 });
+
+const negotiated = <Core extends z.ZodType, DataCite extends z.ZodType>(
+  core: Core,
+  dataCite: DataCite,
+  description: string,
+) => ({
+  description,
+  content: {
+    "application/json": { schema: core },
+    [DATACITE_MEDIA_TYPE]: { schema: dataCite },
+  },
+});
+
+const NOT_ACCEPTABLE = json(
+  serviceErrorSchema,
+  "The Accept header asks for a format the api does not serve.",
+);
 
 const FORBIDDEN = json(
   serviceErrorSchema,
@@ -107,8 +129,13 @@ export const listSamplesRoute = createRoute({
     }),
   },
   responses: {
-    200: json(coreListSamplesResponseSchema, "One page of published samples."),
+    200: negotiated(
+      coreListSamplesResponseSchema,
+      dataCiteListSamplesResponseSchema,
+      "One page of published samples.",
+    ),
     403: FORBIDDEN,
+    406: NOT_ACCEPTABLE,
     429: THROTTLED,
     500: FAILED,
   },
@@ -124,10 +151,15 @@ export const getSampleRoute = createRoute({
   security: SECURITY,
   request: { params: igsnParamSchema },
   responses: {
-    200: json(coreSampleSchema, "The published sample."),
+    200: negotiated(
+      coreSampleSchema,
+      dataCiteSampleSchema,
+      "The published sample.",
+    ),
     400: INVALID_IGSN,
     403: FORBIDDEN,
     404: NOT_FOUND,
+    406: NOT_ACCEPTABLE,
     429: THROTTLED,
     500: FAILED,
   },

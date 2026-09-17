@@ -3,6 +3,7 @@ import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
 import type {
   CoreListSamplesResponse,
+  DataCiteListSamplesResponse,
   FrozenServiceSample,
   InvalidServiceSample,
   ServiceSampleIssue,
@@ -16,6 +17,8 @@ import { toListSamplesQuery } from "@projet-igsn/domain/sample/core/core-list-sa
 import { CORE_SCHEMA_VERSION } from "@projet-igsn/domain/sample/core/core-sample-schema";
 import { fromCoreSample } from "@projet-igsn/domain/sample/core/from-core-sample";
 import { toCoreSample } from "@projet-igsn/domain/sample/core/to-core-sample";
+import { DATACITE_MEDIA_TYPE } from "@projet-igsn/domain/sample/datacite/datacite-schema";
+import { toDataCiteSample } from "@projet-igsn/domain/sample/datacite/to-datacite-sample";
 import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
 import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
@@ -24,6 +27,7 @@ import {
   updateSampleSchema,
 } from "@projet-igsn/domain/sample/sample";
 import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
+import { accepts } from "hono/accepts";
 
 import {
   type ServiceEnv,
@@ -62,6 +66,21 @@ const SWAGGER_UI_INTEGRITY: Record<string, string> = {
 
 const subresource = (url: string) =>
   `integrity="${SWAGGER_UI_INTEGRITY[url.slice(url.lastIndexOf("/") + 1)]}" crossorigin="anonymous"`;
+
+// ponytail: Accept: application/json;q=0 reads as unranked, not as explicitly unacceptable; write an RFC 9110 parser if a caller ever needs it
+const negotiate = (c: Context<ServiceEnv>) =>
+  accepts(c, {
+    header: "Accept",
+    supports: ["*/*", "application/*", "application/json", DATACITE_MEDIA_TYPE],
+    default: "*/*",
+    match: (candidates, { supports }) =>
+      [...candidates]
+        .sort((a, b) => b.q - a.q)
+        .find(({ type }) => supports.includes(type))?.type ?? "",
+  });
+
+const notAcceptable = (c: Context<ServiceEnv>) =>
+  c.json({ error: "Not acceptable" }, 406);
 
 const invalid = (c: Context<ServiceEnv>, issues: ServiceSampleIssue[]) =>
   c.json(
@@ -133,6 +152,10 @@ export function createServiceRoutes(
   app.use("*", requireServiceAccount(serviceAccounts));
   return app
     .openapi(listSamplesRoute, async (c) => {
+      const format = negotiate(c);
+      if (!format) {
+        return notAcceptable(c);
+      }
       const account = c.get("serviceAccount");
       const { editable, ...query } = c.req.valid("query");
       const { data, total } = await samples.listPublishedForService(
@@ -140,18 +163,32 @@ export function createServiceRoutes(
         managerScope(account.id, account.managedGroups),
         editable === true,
       );
-      const body: CoreListSamplesResponse = {
-        data: data.map((sample) => toCoreSample(sample, frontendUrl)),
-        meta: { total },
-      };
+      const records = data.map((sample) => toCoreSample(sample, frontendUrl));
+      if (format === DATACITE_MEDIA_TYPE) {
+        const dataCite: DataCiteListSamplesResponse = {
+          data: records.map(toDataCiteSample),
+          meta: { total },
+        };
+        return c.json(dataCite, 200, { "content-type": DATACITE_MEDIA_TYPE });
+      }
+      const body: CoreListSamplesResponse = { data: records, meta: { total } };
       return c.json(body, 200);
     })
     .openapi(getSampleRoute, async (c) => {
+      const format = negotiate(c);
+      if (!format) {
+        return notAcceptable(c);
+      }
       const sample = await findPublished(c.req.valid("param").igsn);
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
-      return c.json(toCoreSample(sample, frontendUrl), 200);
+      const record = toCoreSample(sample, frontendUrl);
+      return format === DATACITE_MEDIA_TYPE
+        ? c.json(toDataCiteSample(record), 200, {
+            "content-type": DATACITE_MEDIA_TYPE,
+          })
+        : c.json(record, 200);
     })
     .openapi(createSampleRoute, async (c) => {
       const account = c.get("serviceAccount");

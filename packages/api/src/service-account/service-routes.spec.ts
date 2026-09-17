@@ -16,7 +16,13 @@ import {
 import { coreSampleSchema } from "@projet-igsn/domain/sample/core/core-sample-schema";
 import { toCoreSample } from "@projet-igsn/domain/sample/core/to-core-sample";
 import {
+  DATACITE_MEDIA_TYPE,
+  dataCiteSampleSchema,
+} from "@projet-igsn/domain/sample/datacite/datacite-schema";
+import { toDataCiteSample } from "@projet-igsn/domain/sample/datacite/to-datacite-sample";
+import {
   coreListSamplesResponseSchema,
+  dataCiteListSamplesResponseSchema,
   frozenServiceSampleSchema,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import { describe, expect } from "vitest";
@@ -106,12 +112,14 @@ const serviceRequest = (
   method: "GET" | "POST" | "PUT",
   path: string,
   input?: unknown,
+  accept?: string,
 ) =>
   app.request(`/service/samples${path}`, {
     method,
     headers: {
       Authorization: `Bearer ${KEY}`,
       "Content-Type": "application/json",
+      ...(accept === undefined ? {} : { Accept: accept }),
     },
     body: input === undefined ? undefined : JSON.stringify(input),
   });
@@ -125,17 +133,23 @@ const putSample = (
   input: unknown,
 ) => serviceRequest(app, "PUT", `/${igsn}`, input);
 
-const getSample = (app: ReturnType<typeof createApp>["app"], igsn: string) =>
-  serviceRequest(app, "GET", `/${igsn}`);
+const getSample = (
+  app: ReturnType<typeof createApp>["app"],
+  igsn: string,
+  accept?: string,
+) => serviceRequest(app, "GET", `/${igsn}`, undefined, accept);
 
 const listSamples = (
   app: ReturnType<typeof createApp>["app"],
   params: Record<string, string> = {},
+  accept?: string,
 ) =>
   serviceRequest(
     app,
     "GET",
     `?${new URLSearchParams({ page: "1", perPage: "10", ...params }).toString()}`,
+    undefined,
+    accept,
   );
 
 const fieldSample = {
@@ -482,6 +496,90 @@ describe("GET /service/samples/:igsn", () => {
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "Not found" });
   });
+});
+
+describe("the Accept header of the /service GET routes", () => {
+  pgTest(
+    "should answer the list as DataCite records under the DataCite media type",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const sample = await inLaboratory(db, archivedSample, IN_REACH);
+      const published = (await publishSample(db, sample.id))!;
+      // Act
+      const res = await listSamples(app, {}, DATACITE_MEDIA_TYPE);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toBe(DATACITE_MEDIA_TYPE);
+      expect(dataCiteListSamplesResponseSchema.parse(await res.json())).toEqual(
+        {
+          data: [toDataCiteSample(core(published))],
+          meta: { total: 1 },
+        },
+      );
+    },
+  );
+
+  pgTest(
+    "should answer one sample as a DataCite record under the DataCite media type",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const sample = await inLaboratory(db, archivedSample, IN_REACH);
+      const published = (await publishSample(db, sample.id))!;
+      // Act
+      const res = await getSample(app, published.igsn!, DATACITE_MEDIA_TYPE);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toBe(DATACITE_MEDIA_TYPE);
+      expect(dataCiteSampleSchema.parse(await res.json())).toEqual(
+        toDataCiteSample(await storedCore(db, sample.id)),
+      );
+    },
+  );
+
+  pgTest.for([
+    {
+      route: "the list",
+      request: (app: ReturnType<typeof createApp>["app"]) =>
+        listSamples(app, {}, "text/csv"),
+    },
+    {
+      route: "one sample",
+      request: (app: ReturnType<typeof createApp>["app"]) =>
+        getSample(app, "A".repeat(26), "text/csv"),
+    },
+  ])(
+    "should answer 406 to an Accept it does not serve on $route",
+    async ({ request }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await request(app);
+      // Assert
+      expect(res.status).toBe(406);
+      expect(await res.json()).toEqual({ error: "Not acceptable" });
+    },
+  );
+
+  pgTest.for([undefined, "application/json", "application/*", "*/*"])(
+    "should answer Core records as application/json for Accept %s",
+    async (accept, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const sample = await inLaboratory(db, archivedSample, IN_REACH);
+      const published = (await publishSample(db, sample.id))!;
+      // Act
+      const res = await listSamples(app, {}, accept);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("application/json");
+      expect(coreListSamplesResponseSchema.parse(await res.json())).toEqual({
+        data: [core(published)],
+        meta: { total: 1 },
+      });
+    },
+  );
 });
 
 const createdId = (body: CoreSample) =>
