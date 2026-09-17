@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { PublishBlocker } from "../sample/publication/sample-publish-blockers.ts";
 
 import { coreSampleSchema } from "../sample/core/core-sample-schema.ts";
+import { dataCiteSampleSchema } from "../sample/datacite/datacite-schema.ts";
 
 export const coreListSamplesResponseSchema = z
   .object({
@@ -26,6 +27,30 @@ export const coreListSamplesResponseSchema = z
 
 export type CoreListSamplesResponse = z.infer<
   typeof coreListSamplesResponseSchema
+>;
+
+export const dataCiteListSamplesResponseSchema = z
+  .object({
+    data: z.array(dataCiteSampleSchema).meta({
+      description:
+        "Published samples the account can read, one DataCite 4.7 record each.",
+    }),
+    meta: z
+      .object({
+        total: z.number().int().nonnegative().meta({
+          description:
+            "Number of samples matching the query, every page taken together.",
+        }),
+      })
+      .meta({ description: "Counters describing the whole result set." }),
+  })
+  .meta({
+    id: "DataCiteSampleList",
+    description: "One page of DataCite 4.7 sample records.",
+  });
+
+export type DataCiteListSamplesResponse = z.infer<
+  typeof dataCiteListSamplesResponseSchema
 >;
 
 export type ServiceSampleIssueCode =
