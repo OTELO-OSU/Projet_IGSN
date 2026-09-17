@@ -39,6 +39,7 @@ import {
   createServiceSampleIssues,
 } from "./create-service-sample-issues.ts";
 import {
+  SERVED_MEDIA_TYPES,
   SERVICE_API_KEY_SCHEME,
   createSampleRoute,
   getSampleRoute,
@@ -71,7 +72,7 @@ const subresource = (url: string) =>
 const negotiate = (c: Context<ServiceEnv>) =>
   accepts(c, {
     header: "Accept",
-    supports: ["*/*", "application/*", "application/json", DATACITE_MEDIA_TYPE],
+    supports: ["*/*", "application/*", ...SERVED_MEDIA_TYPES],
     default: "*/*",
     match: (candidates, { supports }) =>
       [...candidates]
@@ -81,6 +82,16 @@ const negotiate = (c: Context<ServiceEnv>) =>
 
 const notAcceptable = (c: Context<ServiceEnv>) =>
   c.json({ error: "Not acceptable" }, 406);
+
+const serve = <Core, DataCite>(
+  c: Context<ServiceEnv>,
+  format: string,
+  core: Core,
+  toDataCite: (core: Core) => DataCite,
+) =>
+  format === DATACITE_MEDIA_TYPE
+    ? c.json(toDataCite(core), 200, { "content-type": DATACITE_MEDIA_TYPE })
+    : c.json(core, 200);
 
 const invalid = (c: Context<ServiceEnv>, issues: ServiceSampleIssue[]) =>
   c.json(
@@ -164,15 +175,16 @@ export function createServiceRoutes(
         editable === true,
       );
       const records = data.map((sample) => toCoreSample(sample, frontendUrl));
-      if (format === DATACITE_MEDIA_TYPE) {
-        const dataCite: DataCiteListSamplesResponse = {
-          data: records.map(toDataCiteSample),
-          meta: { total },
-        };
-        return c.json(dataCite, 200, { "content-type": DATACITE_MEDIA_TYPE });
-      }
       const body: CoreListSamplesResponse = { data: records, meta: { total } };
-      return c.json(body, 200);
+      return serve(
+        c,
+        format,
+        body,
+        ({ data: core, meta }): DataCiteListSamplesResponse => ({
+          data: core.map(toDataCiteSample),
+          meta,
+        }),
+      );
     })
     .openapi(getSampleRoute, async (c) => {
       const format = negotiate(c);
@@ -183,12 +195,12 @@ export function createServiceRoutes(
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
-      const record = toCoreSample(sample, frontendUrl);
-      return format === DATACITE_MEDIA_TYPE
-        ? c.json(toDataCiteSample(record), 200, {
-            "content-type": DATACITE_MEDIA_TYPE,
-          })
-        : c.json(record, 200);
+      return serve(
+        c,
+        format,
+        toCoreSample(sample, frontendUrl),
+        toDataCiteSample,
+      );
     })
     .openapi(createSampleRoute, async (c) => {
       const account = c.get("serviceAccount");

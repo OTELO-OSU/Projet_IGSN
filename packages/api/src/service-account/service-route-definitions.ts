@@ -43,6 +43,11 @@ const json = <Schema extends z.ZodType>(
   content: { "application/json": { schema } },
 });
 
+export const SERVED_MEDIA_TYPES = [
+  "application/json",
+  DATACITE_MEDIA_TYPE,
+] as const;
+
 const negotiated = <Core extends z.ZodType, DataCite extends z.ZodType>(
   core: Core,
   dataCite: DataCite,
@@ -92,8 +97,8 @@ const acceptHeaderSchema = z.object({
     .string()
     .optional()
     .meta({
-      enum: ["application/json", DATACITE_MEDIA_TYPE],
-      default: "application/json",
+      enum: [...SERVED_MEDIA_TYPES],
+      default: SERVED_MEDIA_TYPES[0],
       description:
         "Format the response is served in. Left out, set to application/json, application/* or */*, the sample is an IGSN Core record; set to the DataCite media type, it is a DataCite 4.7 record. Any other value answers 406.",
     }),
