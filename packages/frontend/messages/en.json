@@ -6,6 +6,7 @@
   "auth_go_to_dashboard": "Go to Dashboard",
   "sample_edit": "Edit",
   "sample_add_sub_sample": "Add a sub sample",
+  "sample_duplicate": "Duplicate",
   "samples_search_label": "Search samples",
   "card_field_line": "{label}: {value}",
   "card_field_name": "Sample name",

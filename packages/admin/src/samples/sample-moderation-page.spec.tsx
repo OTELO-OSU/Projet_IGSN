@@ -79,7 +79,9 @@ describe("SampleModerationPage", () => {
       .element(screen.getByRole("heading", { name: "Sample moderation" }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("cell", { name: "Sample of Jean" }))
+      .element(
+        screen.getByRole("cell", { name: "Sample of Jean", exact: true }),
+      )
       .toBeVisible();
     await expect
       .element(screen.getByRole("cell", { name: /Jean Martin\s*Active/ }))

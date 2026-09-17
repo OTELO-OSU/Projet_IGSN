@@ -43,6 +43,12 @@ const SECOND_PARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f2";
 
 const SECOND_PARENT_IGSN = "01K072TVWVFK5A1RRZ5MY4PPKA";
 
+const SOURCE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f3";
+
+const FORBIDDEN_SOURCE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f4";
+
+const OUT_OF_REACH_SOURCE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f5";
+
 const PARENT = {
   id: PARENT_ID,
   name: "Massif Central 2026",
@@ -93,6 +99,34 @@ const PARENT = {
   status: "published",
   createdAt: "2026-06-01T00:00:00.000Z",
   updatedAt: "2026-07-01T10:00:00.000Z",
+};
+
+const SOURCE = {
+  ...PARENT,
+  id: SOURCE_ID,
+  name: "Basalte du Massif Central",
+  manualGroups: [BASALT_TEAM],
+  parents: [
+    {
+      id: PARENT_ID,
+      igsn: IGSN,
+      name: PARENT.name,
+      material: PARENT.material,
+    },
+  ],
+};
+
+const OUT_OF_REACH_SOURCE = {
+  ...SOURCE,
+  id: OUT_OF_REACH_SOURCE_ID,
+  parents: [
+    {
+      id: OUT_OF_REACH_ID,
+      igsn: IGSN,
+      name: "Sample out of reach",
+      material: PARENT.material,
+    },
+  ],
 };
 
 const SECOND_PARENT = {
@@ -203,12 +237,47 @@ async function renderCreatePage(
   failPublish = false,
   currentUserGate?: Promise<void>,
   parentId?: string,
+  duplicateId?: string,
 ) {
   const { lockCalls, calls, created } = fakeApi(
     failWrites,
     failPublish,
     currentUserGate,
   );
+  worker.use(
+    http.get("*/admin/samples/parents/:id", ({ params }) => {
+      if (params.id === PARENT_ID) return HttpResponse.json({ data: PARENT });
+      if (params.id === SECOND_PARENT_ID)
+        return HttpResponse.json({ data: SECOND_PARENT });
+      return new HttpResponse(null, { status: 404 });
+    }),
+  );
+  if (duplicateId) {
+    worker.use(
+      http.get("*/admin/samples/:id", ({ params }) => {
+        if (params.id === SOURCE_ID) {
+          return HttpResponse.json({
+            data: SOURCE,
+            role: "owner",
+            managed: false,
+            manualGroupOptions: [],
+          });
+        }
+        if (params.id === OUT_OF_REACH_SOURCE_ID) {
+          return HttpResponse.json({
+            data: OUT_OF_REACH_SOURCE,
+            role: "owner",
+            managed: false,
+            manualGroupOptions: [],
+          });
+        }
+        if (params.id === FORBIDDEN_SOURCE_ID) {
+          return new HttpResponse(null, { status: 403 });
+        }
+        return undefined;
+      }),
+    );
+  }
   if (parentId) {
     worker.use(
       http.get("*/admin/samples/parents", () =>
@@ -223,12 +292,6 @@ async function renderCreatePage(
           ],
         }),
       ),
-      http.get("*/admin/samples/parents/:id", ({ params }) => {
-        if (params.id === PARENT_ID) return HttpResponse.json({ data: PARENT });
-        if (params.id === SECOND_PARENT_ID)
-          return HttpResponse.json({ data: SECOND_PARENT });
-        return new HttpResponse(null, { status: 404 });
-      }),
     );
   }
   const queryClient = new QueryClient({
@@ -239,7 +302,11 @@ async function renderCreatePage(
     context: { queryClient },
     history: createMemoryHistory({
       initialEntries: [
-        parentId ? `/samples/create?parent=${parentId}` : "/samples/create",
+        parentId
+          ? `/samples/create?parent=${parentId}`
+          : duplicateId
+            ? `/samples/create?duplicate=${duplicateId}`
+            : "/samples/create",
       ],
     }),
   });
@@ -295,6 +362,9 @@ async function fillPublishableSample(screen: CreateScreen) {
 }
 
 beforeAll(() => page.viewport(1280, 1600));
+
+const renderDuplicatePage = (duplicateId: string) =>
+  renderCreatePage(false, false, undefined, undefined, duplicateId);
 
 describe("CreateSamplePage", () => {
   it("should redirect to the new sample's edit page after creation, with a toast", async () => {
@@ -507,6 +577,52 @@ describe("CreateSamplePage", () => {
     await expect
       .element(screen.getByRole("tab", { name: "Parent sample" }))
       .not.toBeInTheDocument();
+  });
+
+  it("should prefill the form from the duplicated sample without asking for a second parent", async () => {
+    const screen = await renderDuplicatePage(SOURCE_ID);
+
+    await expect
+      .element(
+        screen.getByRole("heading", {
+          name: "Duplicate Basalte du Massif Central",
+        }),
+      )
+      .toBeVisible();
+    await expect
+      .element(screen.getByRole("dialog", { name: "Add a sub sample" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(screen.getByLabelText(/name/i))
+      .toHaveValue("Basalte du Massif Central (copy)");
+    await expect
+      .element(screen.getByRole("combobox", { name: "Nature *", exact: true }))
+      .toHaveTextContent("Thin section");
+    await expect
+      .element(screen.getByRole("button", { name: "Detach Basalt team" }))
+      .toBeVisible();
+
+    await openTab(screen, "Parent sample");
+    await expect.element(screen.getByText("Massif Central 2026")).toBeVisible();
+  });
+
+  it("should drop a copied parent the duplicator may declare no sub sample of", async () => {
+    const screen = await renderDuplicatePage(OUT_OF_REACH_SOURCE_ID);
+
+    await expect
+      .element(screen.getByLabelText(/name/i))
+      .toHaveValue("Basalte du Massif Central (copy)");
+    await expect
+      .element(screen.getByRole("tab", { name: "Parent sample" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should refuse to duplicate a sample out of reach", async () => {
+    const screen = await renderDuplicatePage(FORBIDDEN_SOURCE_ID);
+
+    await expect
+      .element(screen.getByRole("alert"))
+      .toHaveTextContent("You do not have access to this sample.");
   });
 
   it("should claim no edit lock: the sample has no id yet", async () => {

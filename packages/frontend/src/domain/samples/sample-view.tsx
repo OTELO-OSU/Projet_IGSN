@@ -4,8 +4,8 @@ import type { PublicSample } from "@projet-igsn/domain/sample/sample-validator";
 import { fullName } from "@projet-igsn/domain/user/full-name";
 
 import { AddSubSampleLink } from "#/domain/samples/add-sub-sample-link.tsx";
+import { AdminSampleLink } from "#/domain/samples/admin-sample-link.tsx";
 import { ContactOwnerDialog } from "#/domain/samples/contact-owner-dialog.tsx";
-import { EditSampleLink } from "#/domain/samples/edit-sample-link.tsx";
 import { LineageView } from "#/domain/samples/lineage-view.tsx";
 import { SampleHero } from "#/domain/samples/sample-hero.tsx";
 import { sampleSections } from "#/domain/samples/sample-sections.tsx";
@@ -21,8 +21,6 @@ export function SampleView({
   sample: PublicSample;
   lineage?: SampleLineage;
 }) {
-  // Both statuses render through this one component, so the fullscreen graph
-  // survives a jump from a published sample to a withdrawn one.
   const lineageSection =
     lineage != null && lineage.nodes.length > 1
       ? {
@@ -46,8 +44,17 @@ export function SampleView({
         actions={
           withdrawn ? undefined : (
             <div className="flex flex-wrap gap-2">
-              <EditSampleLink sampleId={sample.id} />
+              <AdminSampleLink
+                sampleId={sample.id}
+                path={`/samples/${sample.id}`}
+                label={m.sample_edit()}
+              />
               <AddSubSampleLink sampleId={sample.id} />
+              <AdminSampleLink
+                sampleId={sample.id}
+                path={`/samples/create?duplicate=${sample.id}`}
+                label={m.sample_duplicate()}
+              />
             </div>
           )
         }

@@ -2,9 +2,16 @@ import { Button } from "@projet-igsn/design-system/components/ui/button";
 
 import { ADMIN_URL } from "#/admin-url.ts";
 import { useGetSampleAccess } from "#/domain/samples/hook/get-sample-access.ts";
-import { m } from "#/paraglide/messages.js";
 
-export function EditSampleLink({ sampleId }: { sampleId: string }) {
+export function AdminSampleLink({
+  sampleId,
+  path,
+  label,
+}: {
+  sampleId: string;
+  path: string;
+  label: string;
+}) {
   const hasAccess = useGetSampleAccess(sampleId);
   if (!hasAccess) {
     return null;
@@ -12,7 +19,7 @@ export function EditSampleLink({ sampleId }: { sampleId: string }) {
 
   return (
     <Button asChild variant="secondary">
-      <a href={`${ADMIN_URL}/samples/${sampleId}`}>{m.sample_edit()}</a>
+      <a href={`${ADMIN_URL}${path}`}>{label}</a>
     </Button>
   );
 }

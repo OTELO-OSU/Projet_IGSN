@@ -66,14 +66,18 @@ describe("SampleListPage", () => {
     );
 
     await expect
-      .element(screen.getByRole("cell", { name: "Sample 11 mine" }))
+      .element(
+        screen.getByRole("cell", { name: "Sample 11 mine", exact: true }),
+      )
       .toBeVisible();
 
     await screen.getByRole("combobox", { name: "Ownership" }).click();
     await screen.getByRole("option", { name: "Shared with me" }).click();
 
     await expect
-      .element(screen.getByRole("cell", { name: "Sample 12 shared" }))
+      .element(
+        screen.getByRole("cell", { name: "Sample 12 shared", exact: true }),
+      )
       .toBeVisible();
     expect(requested.at(-1)).toContain("ownership=shared");
     await expect
@@ -93,10 +97,14 @@ describe("SampleListPage", () => {
     const { screen } = await renderRoute("/?ownership=shared");
 
     await expect
-      .element(screen.getByRole("cell", { name: "Sample 12 shared" }))
+      .element(
+        screen.getByRole("cell", { name: "Sample 12 shared", exact: true }),
+      )
       .toBeVisible();
     expect(
-      screen.getByRole("cell", { name: "Sample 1 mine" }).elements(),
+      screen
+        .getByRole("cell", { name: "Sample 1 mine", exact: true })
+        .elements(),
     ).toHaveLength(0);
     expect(requested.at(-1)).toContain("ownership=shared");
   });
@@ -122,7 +130,7 @@ describe("SampleListPage", () => {
     const { screen } = await renderRoute("/?ownership=mine&perPage=10");
 
     await expect
-      .element(screen.getByRole("cell", { name: "Sample 1 mine" }))
+      .element(screen.getByRole("cell", { name: "Sample 1 mine", exact: true }))
       .toBeVisible();
 
     await act(screen);
@@ -189,7 +197,9 @@ describe("SampleListPage", () => {
       const { requested } = fakeApi();
       const { screen, router } = await renderRoute("/?page=2&perPage=10");
       await expect
-        .element(screen.getByRole("cell", { name: "Sample 11 mine" }))
+        .element(
+          screen.getByRole("cell", { name: "Sample 11 mine", exact: true }),
+        )
         .toBeVisible();
 
       await act(screen);

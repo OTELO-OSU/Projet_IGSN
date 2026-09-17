@@ -54,6 +54,6 @@ export function sampleQueryOptions(
   });
 }
 
-export function useSample(id: string) {
+export function useSample(id: string | undefined) {
   return useQuery(sampleQueryOptions(useApiClient(), id));
 }
