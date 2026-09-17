@@ -1,6 +1,8 @@
 import type { CoreLocation } from "../core/core-production-schema.ts";
 import type { DataCiteGeoLocation } from "./datacite-schema.ts";
 
+import { isEmpty } from "../core/core-optional.ts";
+
 type CoreGeometry = NonNullable<CoreLocation["geometry"]>;
 
 type CorePosition = Extract<
@@ -47,11 +49,9 @@ export function toDataCiteGeoLocations(
   sensitiveLocation: boolean,
 ): DataCiteGeoLocation[] {
   if (location == null) return [];
-  return [
-    {
-      geoLocationPlace:
-        location.placeNames?.[0] ?? location.locationDescription,
-      ...(sensitiveLocation ? {} : toCoordinates(location.geometry)),
-    },
-  ];
+  const geoLocation = {
+    geoLocationPlace: location.placeNames?.[0] ?? location.locationDescription,
+    ...(sensitiveLocation ? {} : toCoordinates(location.geometry)),
+  };
+  return isEmpty(geoLocation) ? [] : [geoLocation];
 }

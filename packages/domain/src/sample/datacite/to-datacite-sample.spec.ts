@@ -412,6 +412,17 @@ describe("the geolocation of a DataCite record", () => {
     expect(toDataCiteSample(core(sample)).geoLocations).toEqual([geoLocation]);
   });
 
+  it("should carry no geolocation when the location names no place and no coordinates", () => {
+    expect(
+      toDataCiteSample(
+        core({
+          ...FIELD_SAMPLE,
+          location: { region: { kind: "continent", country: "FR" } },
+        }),
+      ).geoLocations,
+    ).toEqual([]);
+  });
+
   it("should keep the place alone when the location is sensitive", () => {
     const sensitive = core(FIELD_SAMPLE);
 
