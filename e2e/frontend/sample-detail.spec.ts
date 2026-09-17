@@ -14,6 +14,7 @@ test.describe("sample detail", () => {
 
     await detail.expectSample(sample.name, sample.igsn);
     await detail.expectNature("Hand sample");
+    await detail.expectNoLineage();
   });
 
   test("a reader who is not signed in is not offered a sub sample", async ({

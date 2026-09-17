@@ -4,6 +4,7 @@ import { institutionFilterSchema } from "../institutional-group/institution-filt
 import { manualGroupSchema } from "../manual-group/model.ts";
 import { userSampleRoleSchema } from "../user-sample/model.ts";
 import { userSchema } from "../user/model.ts";
+import { sampleLineageSchema } from "./lineage/model.ts";
 import { sampleParentSchema } from "./parent/model.ts";
 import { withdrawnSampleSchema } from "./publication/withdrawn-sample.ts";
 import {
@@ -139,6 +140,12 @@ export const publicSampleResponseSchema = z.object({
 export type PublicSampleResponse = z.infer<typeof publicSampleResponseSchema>;
 
 export type PublicSample = PublicSampleResponse["data"];
+
+export const sampleLineageResponseSchema = z.object({
+  data: sampleLineageSchema,
+});
+
+export type SampleLineageResponse = z.infer<typeof sampleLineageResponseSchema>;
 
 export const setSampleStatusBodySchema = z.strictObject({
   status: z.enum(["published", "withdrawn", "tombstone"]),

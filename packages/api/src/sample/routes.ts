@@ -3,6 +3,7 @@ import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type {
   ListSamplesResponse,
   PublicSampleResponse,
+  SampleLineageResponse,
 } from "@projet-igsn/domain/sample/sample-validator";
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 
@@ -46,6 +47,16 @@ export function createSampleRoutes(
         return c.json({ error: "Sample not found" }, 404);
       }
       const body: PublicSampleResponse = { data: toPublicSample(sample) };
+      return c.json(body);
+    })
+    .get("/:igsn/lineage", validateIgsnParam, async (c) => {
+      const lineage = await repository.getPublicLineage(
+        c.req.valid("param").igsn,
+      );
+      if (!lineage) {
+        return c.json({ error: "Sample not found" }, 404);
+      }
+      const body: SampleLineageResponse = { data: lineage };
       return c.json(body);
     })
     .post(

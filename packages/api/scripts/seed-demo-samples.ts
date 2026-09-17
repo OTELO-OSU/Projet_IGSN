@@ -1308,6 +1308,129 @@ const PUBLISHED: DemoRow[] = [
   },
 ];
 
+const MONT_DORE: DemoRow["location"] = {
+  position: point(2.81, 45.57, elev(1400)),
+  region: { kind: "continent", country: "FR" },
+  localityName: "Mont-Dore massif",
+};
+
+const corePiece = (
+  name: string,
+  nature: DemoRow["nature"],
+  type: DemoRow["type"],
+): DemoRow => ({
+  name,
+  nature,
+  type,
+  material: "rock_and_sediment.rock.igneous.volcanic.mafic.basalt",
+  texture: "aphanitic",
+  collectionMethod: "coring.drill_corer",
+  location: MONT_DORE,
+  description: on("2025-04-08"),
+  age: numericAge(2, 3),
+});
+
+const synthetic = (name: string, synthesisDay: string): DemoRow => ({
+  name,
+  nature: "inapplicable",
+  type: "inapplicable",
+  material: "rock_and_sediment.synthetic_rock_mineral",
+  collectionMethod: "experimental_apparatus",
+  description: on(synthesisDay),
+  syntheticDetails: SYNTHESIS,
+});
+
+const THIN_SECTIONS = 6;
+
+const thinSection = (index: number) =>
+  `Mont-Dore MD-01 S3A Thin Section ${index + 1}`;
+
+// One drill core split down to powders and recombined into a synthetic glass,
+// so the public lineage graph has a deep, wide, two-parent tree to draw.
+const LINEAGE: DemoRow[] = [
+  corePiece(
+    "Mont-Dore Drill Core MD-01",
+    "multiple_sample",
+    "core.whole_round",
+  ),
+  corePiece(
+    "Mont-Dore Core MD-01 Section 3",
+    "sample_fragment",
+    "core.section",
+  ),
+  corePiece(
+    "Mont-Dore Core MD-01 Section 7",
+    "sample_fragment",
+    "core.section",
+  ),
+  corePiece(
+    "Mont-Dore MD-01 S3 Half-Core A",
+    "sample_fragment",
+    "core.half_round",
+  ),
+  corePiece(
+    "Mont-Dore MD-01 S7 Half-Core B",
+    "sample_fragment",
+    "core.half_round",
+  ),
+  ...Array.from({ length: THIN_SECTIONS }, (_, index) =>
+    corePiece(thinSection(index), "thin_section", "core.piece"),
+  ),
+  corePiece(
+    "Mont-Dore MD-01 S3A-1 Powder Aliquot A",
+    "rock_powder",
+    "core.piece",
+  ),
+  corePiece(
+    "Mont-Dore MD-01 S3A-1 Powder Aliquot B",
+    "rock_powder",
+    "core.piece",
+  ),
+  corePiece(
+    "Mont-Dore MD-01 S3A-2 Powder Aliquot C",
+    "rock_powder",
+    "core.piece",
+  ),
+  corePiece(
+    "Mont-Dore MD-01 S3A-2 Powder Aliquot D",
+    "rock_powder",
+    "core.piece",
+  ),
+  synthetic("Mont-Dore MD-01 Synthetic Glass SG-2", "2025-09-04"),
+  synthetic("Mont-Dore MD-01 Synthetic Composite SC-1", "2025-09-08"),
+  synthetic("Mont-Dore MD-01 Synthetic Glass SG-1", "2025-09-02"),
+];
+
+/** Child sample name to its parent names, inserted into `sample_parent`. */
+export const DEMO_PARENTS: Record<string, string[]> = {
+  "Mont-Dore Core MD-01 Section 3": ["Mont-Dore Drill Core MD-01"],
+  "Mont-Dore Core MD-01 Section 7": ["Mont-Dore Drill Core MD-01"],
+  "Mont-Dore MD-01 S3 Half-Core A": ["Mont-Dore Core MD-01 Section 3"],
+  "Mont-Dore MD-01 S7 Half-Core B": ["Mont-Dore Core MD-01 Section 7"],
+  ...Object.fromEntries(
+    Array.from({ length: THIN_SECTIONS }, (_, index) => [
+      thinSection(index),
+      ["Mont-Dore MD-01 S3 Half-Core A"],
+    ]),
+  ),
+  "Mont-Dore MD-01 S3A-1 Powder Aliquot A": [thinSection(0)],
+  "Mont-Dore MD-01 S3A-1 Powder Aliquot B": [thinSection(0)],
+  "Mont-Dore MD-01 S3A-2 Powder Aliquot C": [thinSection(1)],
+  "Mont-Dore MD-01 S3A-2 Powder Aliquot D": [thinSection(1)],
+  "Mont-Dore MD-01 Synthetic Glass SG-1": [
+    "Mont-Dore MD-01 S3A-1 Powder Aliquot A",
+    "Mont-Dore MD-01 S3A-1 Powder Aliquot B",
+  ],
+  "Mont-Dore MD-01 Synthetic Glass SG-2": [
+    "Mont-Dore MD-01 S3A-2 Powder Aliquot C",
+    "Mont-Dore MD-01 S3A-2 Powder Aliquot D",
+  ],
+  "Mont-Dore MD-01 Synthetic Composite SC-1": [
+    "Mont-Dore MD-01 Synthetic Glass SG-1",
+    "Mont-Dore MD-01 Synthetic Glass SG-2",
+  ],
+};
+
 const DRAFTS: DemoRow[] = [
   {
     name: "Unclassified field sample 001",
@@ -1510,10 +1633,12 @@ const COLLECTION_SPECIMEN_CONTEXT: SampleRow["scientificContext"] = {
   collectionOrigin: "scientific_expedition",
 };
 
-export const DEMO_SAMPLES: SampleRow[] = [...PUBLISHED, ...DRAFTS].map(
+const PUBLISHED_ROWS = [...PUBLISHED, ...LINEAGE];
+
+export const DEMO_SAMPLES: SampleRow[] = [...PUBLISHED_ROWS, ...DRAFTS].map(
   (row, index) => {
     const id = demoId(index);
-    const published = index < PUBLISHED.length;
+    const published = index < PUBLISHED_ROWS.length;
     return {
       ...row,
       id,

@@ -20,6 +20,7 @@ export default defineConfig({
     include: [
       "@inlang/paraglide-js/urlpattern-polyfill",
       "@tanstack/react-query",
+      "@xyflow/react",
     ],
   },
   test: {

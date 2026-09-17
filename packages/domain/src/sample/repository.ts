@@ -3,6 +3,7 @@ import type { UserSampleRole } from "../user-sample/model.ts";
 import type { User } from "../user/model.ts";
 import type { ModerationScope } from "../user/moderation-scope.ts";
 import type { SampleEditLock } from "./edit-lock.ts";
+import type { SampleLineage } from "./lineage/model.ts";
 import type { SampleParent } from "./parent/model.ts";
 import type {
   AdminSampleListItem,
@@ -49,6 +50,7 @@ export type SampleRepository = {
     userId: string,
   ): Promise<{ sample: Sample; role: UserSampleRole | null } | null>;
   getPublicByIgsn(igsn: string): Promise<Sample | null>;
+  getPublicLineage(igsn: string): Promise<SampleLineage | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
   createPublished(
     input: CreateSample,
