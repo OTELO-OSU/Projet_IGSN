@@ -8,17 +8,9 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@projet-igsn/design-system/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@projet-igsn/design-system/components/ui/tooltip";
 import { zodFieldErrors } from "@projet-igsn/domain/form/zod-field-errors";
 import { requestSampleDeletionBodySchema } from "@projet-igsn/domain/sample/sample-validator";
-import { Trash2Icon } from "lucide-react";
-import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
 import { useRequestSampleDeletion } from "#/samples/use-request-sample-deletion.ts";
@@ -31,10 +23,13 @@ const validate = zodFieldErrors(requestSampleDeletionBodySchema, (issue) =>
 
 export function RequestSampleDeletionDialog({
   sampleId,
+  open,
+  onOpenChange,
 }: {
   sampleId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
   const requestDeletion = useRequestSampleDeletion(sampleId);
   const form = useAppForm({
     defaultValues: { reason: "" },
@@ -44,30 +39,12 @@ export function RequestSampleDeletionDialog({
   });
 
   function close() {
-    setIsOpen(false);
+    onOpenChange(false);
     form.reset();
   }
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => (open ? setIsOpen(true) : close())}
-    >
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DialogTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              aria-label={m.sample_deletion_request_action()}
-            >
-              <Trash2Icon aria-hidden />
-            </Button>
-          </DialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>{m.sample_deletion_request_action()}</TooltipContent>
-      </Tooltip>
+    <Dialog open={open} onOpenChange={(next) => (next ? null : close())}>
       <DialogContent closeLabel={m.action_close()}>
         <DialogHeader>
           <DialogTitle>{m.sample_deletion_request_title()}</DialogTitle>

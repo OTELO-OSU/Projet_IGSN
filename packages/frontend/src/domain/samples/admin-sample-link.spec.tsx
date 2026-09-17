@@ -1,7 +1,7 @@
 import { vi } from "vitest";
 
 import { ADMIN_URL } from "#/admin-url.ts";
-import { EditSampleLink } from "#/domain/samples/edit-sample-link.tsx";
+import { AdminSampleLink } from "#/domain/samples/admin-sample-link.tsx";
 
 import { renderWithRouter } from "../../../test/render-with-router.tsx";
 import { stubAuth } from "../../../test/stub-auth.tsx";
@@ -18,22 +18,27 @@ const signedIn = {
   user: { access_token: "a-token", profile: { sub: "jean" } },
 } as Parameters<typeof stubAuth>[1];
 
-describe("EditSampleLink", () => {
-  it("should link to the admin sample page when the signed-in visitor may reach it", async () => {
+const link = (path: string, label: string) => (
+  <AdminSampleLink sampleId={id} path={path} label={label} />
+);
+
+describe("AdminSampleLink", () => {
+  it("should link to the admin app when the signed-in visitor may reach the sample", async () => {
+    const path = `/samples/${id}`;
     stubApi(200);
     const screen = await renderWithRouter(
-      stubAuth(<EditSampleLink sampleId={id} />, signedIn),
+      stubAuth(link(path, "Edit"), signedIn),
     );
 
     await expect
       .element(screen.getByRole("link", { name: "Edit" }))
-      .toHaveAttribute("href", `${ADMIN_URL}/samples/${id}`);
+      .toHaveAttribute("href", `${ADMIN_URL}${path}`);
   });
 
   it("should hide the link when the api refuses access to the sample", async () => {
     const fetchSpy = stubApi(403);
     const screen = await renderWithRouter(
-      stubAuth(<EditSampleLink sampleId={id} />, signedIn),
+      stubAuth(link(`/samples/${id}`, "Edit"), signedIn),
     );
 
     await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalled());
@@ -46,7 +51,7 @@ describe("EditSampleLink", () => {
   it("should hide the link from a signed-out visitor", async () => {
     stubApi(200);
     const screen = await renderWithRouter(
-      stubAuth(<EditSampleLink sampleId={id} />),
+      stubAuth(link(`/samples/${id}`, "Edit")),
     );
 
     await expect

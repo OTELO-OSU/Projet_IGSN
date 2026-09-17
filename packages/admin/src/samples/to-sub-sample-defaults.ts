@@ -3,6 +3,8 @@ import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
 import { SYNTHETIC_MATERIAL_ROOT } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
 
+import { copiedSampleFields } from "#/samples/copied-sample-fields.ts";
+
 export const toSubSampleDefaults = (
   parents: Sample[],
 ): Partial<CreateSample> => {
@@ -14,32 +16,7 @@ export const toSubSampleDefaults = (
     };
   }
   return {
-    type: parent.type,
-    material: parent.material,
-    texture: parent.texture,
-    metamorphicFacies: parent.metamorphicFacies,
-    metamorphicFabric: parent.metamorphicFabric,
-    collectionMethod: parent.collectionMethod,
-    collectionMethodDescription: parent.collectionMethodDescription,
-    specificName: parent.specificName,
-    materialOtherName: parent.materialOtherName,
-    location: parent.location,
-    description: parent.description,
-    condition: parent.condition,
-    repository: parent.repository,
-    geologicalContextDescription: parent.geologicalContextDescription,
-    geomorphologicalEnvironment: parent.geomorphologicalEnvironment,
-    scientificContext: parent.scientificContext,
-    syntheticDetails: parent.syntheticDetails,
-    age: parent.age,
-    security: parent.security,
-    existenceStatus: parent.existenceStatus,
-    availabilityStatus: parent.availabilityStatus,
-    resourceType: parent.resourceType,
-    economicInterestElements: parent.economicInterestElements,
-    economicResourceTypePrecision: parent.economicResourceTypePrecision,
-    economicDepositName: parent.economicDepositName,
-    economicDepositDescription: parent.economicDepositDescription,
+    ...copiedSampleFields(parent),
     relations: [],
     attachments: [],
     manualGroupIds: [],

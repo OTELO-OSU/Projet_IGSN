@@ -438,16 +438,33 @@ const renderEditPageAsEditor = (status: SampleStatus) =>
 describe("EditSamplePage", () => {
   it("should offer a sub sample link on a sample holding a permanent IGSN", async () => {
     const { screen } = await renderEditPage("published");
+    await screen.getByRole("button", { name: "Sample actions" }).click();
 
     await expect
       .element(
-        screen.getByRole("link", {
+        screen.getByRole("menuitem", {
           name: "Add a sub sample of Basalte du Massif Central",
         }),
       )
       .toHaveAttribute(
         "href",
         "/samples/create?parent=3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+      );
+  });
+
+  it("should offer a duplicate link to the sample's create form", async () => {
+    const { screen } = await renderEditPage("published");
+    await screen.getByRole("button", { name: "Sample actions" }).click();
+
+    await expect
+      .element(
+        screen.getByRole("menuitem", {
+          name: "Duplicate Basalte du Massif Central",
+        }),
+      )
+      .toHaveAttribute(
+        "href",
+        "/samples/create?duplicate=3f2504e0-4f89-41d3-9a0c-0305e82c3301",
       );
   });
 
@@ -685,6 +702,16 @@ describe("EditSamplePage", () => {
       screen.getByRole("button", { name: /save|share/i }).elements(),
     ).toHaveLength(0);
     expect(lockCalls).toEqual([]);
+  });
+
+  it("should offer no duplicate of a tombstoned sample", async () => {
+    callerManaged = true;
+    const { screen } = await renderEditPage("tombstone");
+    await screen.getByRole("button", { name: "Sample actions" }).click();
+
+    expect(
+      screen.getByRole("menuitem", { name: /^Duplicate/ }).elements(),
+    ).toHaveLength(0);
   });
 
   it("should republish a tombstoned sample from the restore button", async () => {
@@ -1015,6 +1042,7 @@ describe("EditSamplePage", () => {
     await screen.getByRole("tab", { name: "Related URL or document" }).click();
     await screen.getByLabelText("Title *").fill("Orphan run");
     await screen.getByRole("combobox", { name: "Resource type *" }).click();
+    await screen.getByPlaceholder("Search resource type...").fill("Dataset");
     await screen.getByRole("option", { name: "Dataset", exact: true }).click();
     await screen
       .getByLabelText("Description of orphan.csv")
@@ -1370,8 +1398,11 @@ describe("EditSamplePage", () => {
   });
 
   describe("deleting a draft", () => {
+    const openActions = (screen: EditPageScreen) =>
+      screen.getByRole("button", { name: "Sample actions" }).click();
+
     const deleteButton = (screen: EditPageScreen) =>
-      screen.getByRole("button", { name: "Delete this draft", exact: true });
+      screen.getByRole("menuitem", { name: "Delete this draft", exact: true });
 
     const fillConfirmation = (screen: EditPageScreen, phrase: string) =>
       screen.getByLabelText("Type DELETE to confirm").fill(phrase);
@@ -1383,6 +1414,7 @@ describe("EditSamplePage", () => {
 
     it("should offer Delete to the owner of a draft", async () => {
       const { screen } = await renderEditPage();
+      await openActions(screen);
 
       await expect.element(deleteButton(screen)).toBeEnabled();
     });
@@ -1392,15 +1424,17 @@ describe("EditSamplePage", () => {
       ["the owner of a published sample", () => renderEditPage("published")],
     ])("should offer no Delete to %s", async (_case, renderPage) => {
       const { screen } = await renderPage();
+      await openActions(screen);
 
       await expect
-        .element(screen.getByRole("button", { name: "Share" }))
+        .element(screen.getByRole("menuitem", { name: /^Duplicate/ }))
         .toBeVisible();
       expect(deleteButton(screen).elements()).toHaveLength(0);
     });
 
     it("should delete the draft and land on the list", async () => {
       const { screen, calls } = await renderEditPage();
+      await openActions(screen);
       await deleteButton(screen).click();
 
       await fillConfirmation(screen, "DELETE");
@@ -1421,6 +1455,7 @@ describe("EditSamplePage", () => {
         "rock_and_sediment.mineral",
         "delete-locked",
       );
+      await openActions(screen);
       await deleteButton(screen).click();
       await fillConfirmation(screen, "DELETE");
       await confirmButton(screen).click();
@@ -1438,11 +1473,15 @@ describe("EditSamplePage", () => {
   });
 
   describe("requesting the deletion of a published sample", () => {
+    const openActions = (screen: EditPageScreen) =>
+      screen.getByRole("button", { name: "Sample actions" }).click();
+
     const requestButton = (screen: EditPageScreen) =>
-      screen.getByRole("button", { name: "Request deletion" });
+      screen.getByRole("menuitem", { name: "Request deletion" });
 
     it("should offer the request to the owner of a published sample", async () => {
       const { screen } = await renderEditPage("published");
+      await openActions(screen);
 
       await expect.element(requestButton(screen)).toBeEnabled();
     });
@@ -1455,9 +1494,10 @@ describe("EditSamplePage", () => {
       ],
     ])("should offer no request to %s", async (_case, renderPage) => {
       const { screen } = await renderPage();
+      await openActions(screen);
 
       await expect
-        .element(screen.getByRole("button", { name: "Share" }))
+        .element(screen.getByRole("menuitem", { name: /^Duplicate/ }))
         .toBeVisible();
       expect(requestButton(screen).elements()).toHaveLength(0);
     });

@@ -50,24 +50,25 @@ export function sampleEditPage(page: Page) {
   const openActionsMenu = () =>
     page.getByRole("button", { name: "More actions" }).click();
 
-  const deleteButton = page.getByRole("button", {
-    name: "Delete this draft",
-    exact: true,
-  });
+  const openSampleMenu = () =>
+    page.getByRole("button", { name: "Sample actions" }).click();
+  const closeSampleMenu = () => page.keyboard.press("Escape");
+  const sampleMenuItem = (name: string) =>
+    page.getByRole("menuitem", { name, exact: true });
+
+  const deleteItem = sampleMenuItem("Delete this draft");
   const deleteDialog = page.getByRole("dialog", { name: "Delete this draft?" });
   const confirmButton = deleteDialog.getByRole("button", {
     name: "Delete",
     exact: true,
   });
   const openDialogAndType = async (phrase: string) => {
-    await deleteButton.click();
+    await openSampleMenu();
+    await deleteItem.click();
     await deleteDialog.getByLabel("Type DELETE to confirm").fill(phrase);
   };
 
-  const requestDeletionButton = page.getByRole("button", {
-    name: "Request deletion",
-    exact: true,
-  });
+  const requestDeletionItem = sampleMenuItem("Request deletion");
   const requestDeletionDialog = page.getByRole("dialog", {
     name: "Request the deletion of this sample",
   });
@@ -88,10 +89,11 @@ export function sampleEditPage(page: Page) {
       await page.getByLabel("Specific Name").fill(value);
     },
     goToList: () => page.getByRole("link", { name: "IGSN Dashboard" }).click(),
-    expectAddSubSampleAction: (name: string) =>
-      expect(
-        page.getByRole("link", { name: `Add a sub sample of ${name}` }),
-      ).toBeVisible(),
+    expectAddSubSampleAction: async (name: string) => {
+      await openSampleMenu();
+      await expect(sampleMenuItem(`Add a sub sample of ${name}`)).toBeVisible();
+      await closeSampleMenu();
+    },
 
     expectNotFound: () =>
       expect(page.getByText("Sample not found")).toBeVisible(),
@@ -105,10 +107,15 @@ export function sampleEditPage(page: Page) {
       await deleteDialog.getByRole("button", { name: "Cancel" }).click();
       await expect(deleteDialog).toBeHidden();
     },
-    expectNoDeleteAction: () => expect(deleteButton).toHaveCount(0),
+    expectNoDeleteAction: async () => {
+      await openSampleMenu();
+      await expect(deleteItem).toHaveCount(0);
+      await closeSampleMenu();
+    },
 
     requestDeletion: async (reason: string) => {
-      await requestDeletionButton.click();
+      await openSampleMenu();
+      await requestDeletionItem.click();
       await requestDeletionDialog
         .getByLabel("Why do you want to delete this sample?")
         .fill(reason);
@@ -124,7 +131,8 @@ export function sampleEditPage(page: Page) {
         ),
       ).toBeVisible(),
     expectDeletionRequestRefused: async () => {
-      await requestDeletionButton.click();
+      await openSampleMenu();
+      await requestDeletionItem.click();
       await requestDeletionDialog
         .getByRole("button", { name: "Submit request" })
         .click();

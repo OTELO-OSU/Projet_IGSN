@@ -10,6 +10,7 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
+import { canDuplicateSample } from "@projet-igsn/domain/user-sample/can-duplicate-sample";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   type ColumnDef,
@@ -18,7 +19,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { GitBranchPlusIcon } from "lucide-react";
+import { CopyIcon, GitBranchPlusIcon } from "lucide-react";
 
 import { m } from "#/paraglide/messages.js";
 import { collectionMethodLabel, natureLabel } from "#/samples/sample-labels.ts";
@@ -43,6 +44,31 @@ function TruncatedCell({
 
 const editSampleSearch = (moderated: boolean) =>
   moderated ? { from: "moderation" as const } : {};
+
+function RowAction({
+  label,
+  search,
+  icon: Icon,
+}: {
+  label: string;
+  search: { parent: string } | { duplicate: string };
+  icon: typeof CopyIcon;
+}) {
+  return (
+    <TruncatedCell text={label}>
+      <Button asChild variant="ghost" size="icon">
+        <Link
+          to="/samples/create"
+          search={search}
+          aria-label={label}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <Icon aria-hidden />
+        </Link>
+      </Button>
+    </TruncatedCell>
+  );
+}
 
 function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
   return [
@@ -138,26 +164,25 @@ function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
     {
       id: "actions",
       header: () => null,
-      cell: ({ row }) =>
-        hasPermanentIgsn(row.original) ? (
-          <TruncatedCell
-            text={m.sample_add_sub_sample({ name: row.original.name })}
-          >
-            <Button asChild variant="ghost" size="icon">
-              <Link
-                to="/samples/create"
-                search={{ parent: row.original.id }}
-                aria-label={m.sample_add_sub_sample({
-                  name: row.original.name,
-                })}
-                onClick={(event) => event.stopPropagation()}
-              >
-                <GitBranchPlusIcon aria-hidden />
-              </Link>
-            </Button>
-          </TruncatedCell>
-        ) : null,
-      meta: { className: "w-12" },
+      cell: ({ row }) => (
+        <span className="flex items-center">
+          {hasPermanentIgsn(row.original) ? (
+            <RowAction
+              label={m.sample_add_sub_sample({ name: row.original.name })}
+              search={{ parent: row.original.id }}
+              icon={GitBranchPlusIcon}
+            />
+          ) : null}
+          {canDuplicateSample(row.original) ? (
+            <RowAction
+              label={m.sample_duplicate({ name: row.original.name })}
+              search={{ duplicate: row.original.id }}
+              icon={CopyIcon}
+            />
+          ) : null}
+        </span>
+      ),
+      meta: { className: "w-20" },
     },
   ];
 }

@@ -8,26 +8,20 @@ import {
   Alert,
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
-import { Button } from "@projet-igsn/design-system/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@projet-igsn/design-system/components/ui/tooltip";
 import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare-sub-sample";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
+import { canDuplicateSample } from "@projet-igsn/domain/user-sample/can-duplicate-sample";
 import { canRequestSampleDeletion } from "@projet-igsn/domain/user-sample/can-request-sample-deletion";
 import { canSetSampleStatus } from "@projet-igsn/domain/user-sample/can-set-sample-status";
 import { canUpdateSample } from "@projet-igsn/domain/user-sample/can-update-sample";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { GitBranchPlusIcon, InfoIcon, Trash2Icon } from "lucide-react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { InfoIcon } from "lucide-react";
 import { z } from "zod";
 
 import { useCurrentUser } from "#/auth/use-current-user.ts";
-import { ConfirmButton } from "#/confirm-button.tsx";
 import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
-import { RequestSampleDeletionDialog } from "#/samples/request-sample-deletion-dialog.tsx";
+import { SampleActionsMenu } from "#/samples/sample-actions-menu.tsx";
 import {
   SampleForm,
   type SampleFormProps,
@@ -194,44 +188,7 @@ function EditSamplePage() {
     <>
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
-            {canDeleteSample(query.data.role, query.data) && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <ConfirmButton
-                    variant="ghost"
-                    size="icon"
-                    aria-label={m.sample_delete_action()}
-                    disabled={deleteSample.isPending || heldByOther != null}
-                    title={m.sample_delete_title()}
-                    description={m.sample_delete_description()}
-                    confirmLabel={m.action_delete()}
-                    confirmPhrase={{
-                      text: m.action_delete_confirm_phrase(),
-                      label: m.action_delete_confirm_phrase_label({
-                        phrase: m.action_delete_confirm_phrase(),
-                      }),
-                    }}
-                    onConfirm={() =>
-                      deleteSample.mutate(undefined, {
-                        onSuccess: () => void navigate({ to: listRoute }),
-                      })
-                    }
-                  >
-                    <Trash2Icon aria-hidden />
-                  </ConfirmButton>
-                </TooltipTrigger>
-                <TooltipContent>{m.sample_delete_action()}</TooltipContent>
-              </Tooltip>
-            )}
-            {me.data != null &&
-              canRequestSampleDeletion(
-                query.data.role,
-                query.data,
-                me.data,
-              ) && <RequestSampleDeletionDialog sampleId={sampleId} />}
-          </div>
+          <h1 className="text-2xl font-bold">{m.edit_sample_title()}</h1>
           {query.data.igsn ? (
             <p
               aria-label={m.field_igsn()}
@@ -247,15 +204,24 @@ function EditSamplePage() {
           ) : null}
         </div>
         <div className="flex items-center gap-2">
-          {canDeclareSubSample(query.data, { role, managed }) && (
-            <Button asChild variant="outline">
-              <Link to="/samples/create" search={{ parent: sampleId }}>
-                <GitBranchPlusIcon aria-hidden />
-                {m.sample_add_sub_sample({ name: query.data.name })}
-              </Link>
-            </Button>
-          )}
           {isTombstone ? null : <ShareSampleButton sampleId={sampleId} />}
+          <SampleActionsMenu
+            sampleId={sampleId}
+            sampleName={query.data.name}
+            canDuplicate={canDuplicateSample(query.data)}
+            canAddSubSample={canDeclareSubSample(query.data, { role, managed })}
+            canDelete={canDeleteSample(query.data.role, query.data)}
+            canRequestDeletion={
+              me.data != null &&
+              canRequestSampleDeletion(query.data.role, query.data, me.data)
+            }
+            isDeleteDisabled={deleteSample.isPending || heldByOther != null}
+            onDelete={() =>
+              deleteSample.mutate(undefined, {
+                onSuccess: () => void navigate({ to: listRoute }),
+              })
+            }
+          />
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { Toaster } from "@projet-igsn/design-system/components/ui/sonner";
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import { HttpResponse, http } from "msw";
+import { useState } from "react";
 import { vi } from "vitest";
 
 import { fakeSample } from "../../test/fake-sample.ts";
@@ -28,15 +29,30 @@ function fakeApi() {
   return reasons;
 }
 
+function OpenDialog() {
+  const [isOpen, setIsOpen] = useState(true);
+  return (
+    <>
+      <button type="button" onClick={() => setIsOpen(true)}>
+        Request deletion
+      </button>
+      <RequestSampleDeletionDialog
+        sampleId={fakeSample.id}
+        open={isOpen}
+        onOpenChange={setIsOpen}
+      />
+    </>
+  );
+}
+
 async function openDialog() {
   const reasons = fakeApi();
   const screen = await render(
     <TooltipProvider>
-      <RequestSampleDeletionDialog sampleId={fakeSample.id} />
+      <OpenDialog />
       <Toaster />
     </TooltipProvider>,
   );
-  await screen.getByRole("button", { name: "Request deletion" }).click();
   return { screen, reasons };
 }
 

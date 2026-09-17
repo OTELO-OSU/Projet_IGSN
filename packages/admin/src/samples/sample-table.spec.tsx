@@ -63,6 +63,8 @@ const samples = [sample];
 
 const SUB_SAMPLE_ACTION = `Add a sub sample of ${sample.name}`;
 
+const DUPLICATE_ACTION = `Duplicate ${sample.name}`;
+
 function renderTable(
   data: AdminSampleListItem[],
   onSortingChange = vi.fn(),
@@ -182,7 +184,7 @@ describe("SampleTable", () => {
     const screen = await renderTable(samples);
 
     await screen
-      .getByRole("link", { name: "Basalte du Massif Central" })
+      .getByRole("link", { name: "Basalte du Massif Central", exact: true })
       .hover();
 
     await expect
@@ -245,14 +247,24 @@ describe("SampleTable", () => {
   it("should link the sample name to its edit page", async () => {
     const screen = await renderTable(samples);
     await expect
-      .element(screen.getByRole("link", { name: "Basalte du Massif Central" }))
+      .element(
+        screen.getByRole("link", {
+          name: "Basalte du Massif Central",
+          exact: true,
+        }),
+      )
       .toHaveAttribute("href", "/samples/3f2504e0-4f89-41d3-9a0c-0305e82c3301");
   });
 
   it("should send a moderated sample's edit page back to the moderation list", async () => {
     const screen = await renderTable(samples, vi.fn(), true);
     await expect
-      .element(screen.getByRole("link", { name: "Basalte du Massif Central" }))
+      .element(
+        screen.getByRole("link", {
+          name: "Basalte du Massif Central",
+          exact: true,
+        }),
+      )
       .toHaveAttribute(
         "href",
         "/samples/3f2504e0-4f89-41d3-9a0c-0305e82c3301?from=moderation",
@@ -273,10 +285,26 @@ describe("SampleTable", () => {
     const screen = await renderTable(samples);
 
     await expect
-      .element(screen.getByRole("link", { name: sample.name }))
+      .element(screen.getByRole("link", { name: sample.name, exact: true }))
       .toBeVisible();
     await expect
       .element(screen.getByRole("link", { name: SUB_SAMPLE_ACTION }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should offer a duplicate link on a draft sample", async () => {
+    const screen = await renderTable(samples);
+
+    await expect
+      .element(screen.getByRole("link", { name: DUPLICATE_ACTION }))
+      .toHaveAttribute("href", `/samples/create?duplicate=${sample.id}`);
+  });
+
+  it("should offer no duplicate link on a tombstoned sample", async () => {
+    const screen = await renderTable([{ ...sample, status: "tombstone" }]);
+
+    await expect
+      .element(screen.getByRole("link", { name: DUPLICATE_ACTION }))
       .not.toBeInTheDocument();
   });
 
