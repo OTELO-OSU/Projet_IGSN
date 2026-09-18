@@ -36,5 +36,6 @@ The PO scoped this change to DataCite alone, on the two GET routes only. OMS and
 
 - Adding a `/service` route or a new served format still means declaring it in `service-route-definitions.ts` (ADR 0041), now through the `negotiated()` helper listing both media types under one `200`.
 - The compiler cannot bind a response body to its media type under `@hono/zod-openapi`: both declared media types infer as `"json"`, so the handler's return type is a union. The header assertions in `service-routes.spec.ts` are the only guard against emitting Core under the DataCite type or vice versa.
+- A served media type outranks a wildcard of the same `q` (RFC 9110 section 12.5.1), but two served media types of the same `q` fall to header order, so `Accept: application/json, application/vnd.otelo.datacite+json` serves Core.
 - `Accept: application/json;q=0` is not honoured as "explicitly unacceptable" (`ponytail:` in `service-routes.ts`); revisit with a full RFC 9110 parser only if a caller needs it.
 - `docs/datacite-mapping.md` records the implemented mapping and its deviations from the contract document.
