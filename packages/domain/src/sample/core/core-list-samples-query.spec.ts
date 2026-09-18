@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { facetParamKeys } from "../search/facets.ts";
+import { MAX_SEARCH_LENGTH } from "../search/search-tokens.ts";
 import {
   CORE_FILTER_PARAM,
   coreFilterFields,
@@ -21,6 +22,18 @@ describe("coreFilterFields", () => {
       Object.keys(CORE_FILTER_PARAM).sort(),
     );
   });
+
+  it.each(["projectName", "chiefScientist", "collector", "curator"])(
+    "should truncate an over-long %s value",
+    (key) => {
+      const fields = coreFilterFields();
+      expect(
+        fields[key as keyof typeof fields].parse(
+          "a".repeat(MAX_SEARCH_LENGTH + 50),
+        ),
+      ).toBe("a".repeat(MAX_SEARCH_LENGTH));
+    },
+  );
 
   it.each([
     ["materialCategory", "definitely_not_a_material"],

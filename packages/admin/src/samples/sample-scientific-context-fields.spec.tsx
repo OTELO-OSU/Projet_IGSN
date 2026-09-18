@@ -3,6 +3,7 @@ import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 import { vi } from "vitest";
 
+import { fillPersonName } from "../../test/fill-person-name.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
@@ -103,7 +104,13 @@ describe("SampleScientificContextFields", () => {
       .click();
     await pickOrganization(screen, "04kdfz702");
     await pickOrganization(screen, "05hnb7x64");
-    await screen.getByLabelText("Collector name *").fill("Pierre Curie");
+    await fillPersonName(screen, "Collector name", "Pierre", "Curie");
+    await fillPersonName(
+      screen,
+      "Chief scientist / Project leader",
+      "Marie",
+      "Tharp",
+    );
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -114,7 +121,10 @@ describe("SampleScientificContextFields", () => {
             funderOrganizations: ["02feahw73", "04kdfz702"],
             researchProgramName: "Deep Biosphere Survey",
             hostInstitution: ["04kdfz702", "05hnb7x64"],
-            collectorName: "Pierre Curie",
+            chiefScientistFirstname: "Marie",
+            chiefScientistLastname: "Tharp",
+            collectorFirstname: "Pierre",
+            collectorLastname: "Curie",
           },
         }),
       ),
@@ -126,9 +136,12 @@ describe("SampleScientificContextFields", () => {
     const screen = await renderScientificContextSection(onSubmit);
 
     await pickProvenance(screen, "Collection specimen");
-    await screen
-      .getByLabelText("Name of the collection curator *")
-      .fill("Georges Cuvier");
+    await fillPersonName(
+      screen,
+      "Name of the collection curator",
+      "Georges",
+      "Cuvier",
+    );
     await screen.getByRole("combobox", { name: "Collection origin *" }).click();
     await screen.getByRole("option", { name: "Purchase" }).click();
     await screen
@@ -141,7 +154,8 @@ describe("SampleScientificContextFields", () => {
         expect.objectContaining({
           scientificContext: {
             provenanceStatus: "collection_specimen",
-            collectionCurator: "Georges Cuvier",
+            collectionCuratorFirstname: "Georges",
+            collectionCuratorLastname: "Cuvier",
             collectionOrigin: "purchase",
             collectionContextDescription: "Bought at auction in 1902",
           },
@@ -169,14 +183,18 @@ describe("SampleScientificContextFields", () => {
     await screen
       .getByLabelText("Name of the research programme")
       .fill("Deep Biosphere Survey");
-    await screen.getByLabelText("Collector name *").fill("Pierre Curie");
+    await fillPersonName(screen, "Collector name", "Pierre", "Curie");
     await pickProvenance(screen, "Collection specimen");
     await expect
       .element(screen.getByLabelText("Name of the research programme"))
       .not.toBeInTheDocument();
     await expect
-      .element(screen.getByLabelText("Collector name"))
-      .toHaveValue("Pierre Curie");
+      .element(
+        screen
+          .getByRole("group", { name: "Collector name" })
+          .getByRole("textbox", { name: /last name/i }),
+      )
+      .toHaveValue("Curie");
 
     await pickProvenance(screen, "Field sample");
     await expect
@@ -184,9 +202,12 @@ describe("SampleScientificContextFields", () => {
       .toHaveValue("Deep Biosphere Survey");
 
     await pickProvenance(screen, "Collection specimen");
-    await screen
-      .getByLabelText("Name of the collection curator *")
-      .fill("Georges Cuvier");
+    await fillPersonName(
+      screen,
+      "Name of the collection curator",
+      "Georges",
+      "Cuvier",
+    );
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -194,8 +215,10 @@ describe("SampleScientificContextFields", () => {
         expect.objectContaining({
           scientificContext: {
             provenanceStatus: "collection_specimen",
-            collectionCurator: "Georges Cuvier",
-            collectorName: "Pierre Curie",
+            collectionCuratorFirstname: "Georges",
+            collectionCuratorLastname: "Cuvier",
+            collectorFirstname: "Pierre",
+            collectorLastname: "Curie",
           },
         }),
       ),

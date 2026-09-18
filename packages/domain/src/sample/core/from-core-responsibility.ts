@@ -6,8 +6,13 @@ import { ORCID_PREFIX } from "./core-sample-schema.ts";
 export function responsibilityFinders(responsibility: CoreAgentRole[]) {
   const agentOf = (role: CoreRole) =>
     responsibility.find((agentRole) => agentRole.roles[0] === role)?.agent;
+  const personOf = (role: CoreRole) => {
+    const agent = agentOf(role);
+    return agent?.agentType === "Person" ? agent : undefined;
+  };
   return {
     agentOf,
+    personOf,
     orcidOf: (role: CoreRole) =>
       agentOf(role)?.id?.replace(ORCID_PREFIX, "") ?? null,
     rorsOf: (role: CoreRole) => {

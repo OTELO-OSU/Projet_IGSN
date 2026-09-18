@@ -7,7 +7,7 @@ describe("toCorePath", () => {
     ["type", "classification.sampleObjectTypes.0"],
     ["existenceStatus", "curation.existenceStatus"],
     ["description.collectionDate", "production.collection_date_start"],
-    ["scientificContext.collectorName", "responsibility"],
+    ["scientificContext.collectorLastname", "responsibility"],
     ["manualGroupIds.0", "manualGroups.0"],
     ["relations.0.identifier", "relations.0"],
   ])("should map the internal path %s to %s", (path, expected) => {

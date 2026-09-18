@@ -50,7 +50,8 @@ const source: Sample = {
   geomorphologicalEnvironment: null,
   scientificContext: {
     provenanceStatus: "collection_specimen",
-    collectionCurator: "Georges Cuvier",
+    collectionCuratorFirstname: "Georges",
+    collectionCuratorLastname: "Cuvier",
     collectionOrigin: "scientific_expedition",
   },
   syntheticDetails: null,
@@ -126,7 +127,8 @@ it("should copy every declared field under a copy name, keeping no attachment, n
     geomorphologicalEnvironment: null,
     scientificContext: {
       provenanceStatus: "collection_specimen",
-      collectionCurator: "Georges Cuvier",
+      collectionCuratorFirstname: "Georges",
+      collectionCuratorLastname: "Cuvier",
       collectionOrigin: "scientific_expedition",
     },
     syntheticDetails: null,

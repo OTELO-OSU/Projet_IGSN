@@ -21,10 +21,12 @@ const roundTripped: [string, ScientificContext][] = [
       provenanceStatus: "field_sample",
       funderOrganizations: ["02feahw73", "04kdfz702"],
       researchProgramName: "Deep Biosphere Survey",
-      chiefScientist: "Marie Curie",
+      chiefScientistFirstname: "Marie",
+      chiefScientistLastname: "Curie",
       chiefScientistOrcid: "0000-0002-1825-0097",
       hostInstitution: ["04kdfz702", "02feahw73"],
-      collectorName: "Pierre Curie",
+      collectorFirstname: "Pierre",
+      collectorLastname: "Curie",
       collectorOrcid: "0000-0001-2345-6789",
       researchCampaign: "MD 209 / 2021",
       funding: "ANR grant 42",
@@ -37,9 +39,11 @@ const roundTripped: [string, ScientificContext][] = [
     "a full collection-specimen context",
     {
       provenanceStatus: "collection_specimen",
-      collectionCurator: "Georges Cuvier",
+      collectionCuratorFirstname: "Georges",
+      collectionCuratorLastname: "Cuvier",
       collectionOrigin: "scientific_expedition",
-      collectorName: "Alexander von Humboldt",
+      collectorFirstname: "Alexander",
+      collectorLastname: "von Humboldt",
       collectionContextDescription: "Assembled during the\n1799 expedition",
     },
   ],
@@ -74,19 +78,22 @@ describe("sample scientific context persistence", () => {
       scientificContext: {
         provenanceStatus: "field_sample" as const,
         researchProgramName: "Old programme",
-        collectorName: "Someone",
+        collectorFirstname: "Some",
+        collectorLastname: "One",
       },
     });
     const updated = await updateSample(db, created.id, {
       ...base,
       scientificContext: {
         provenanceStatus: "collection_specimen" as const,
-        collectionCurator: "Georges Cuvier",
+        collectionCuratorFirstname: "Georges",
+        collectionCuratorLastname: "Cuvier",
       },
     });
     expect(updated?.scientificContext).toEqual({
       provenanceStatus: "collection_specimen",
-      collectionCurator: "Georges Cuvier",
+      collectionCuratorFirstname: "Georges",
+      collectionCuratorLastname: "Cuvier",
     });
     expect(await readSample(db, created.id)).toEqual(updated);
   });
@@ -96,7 +103,8 @@ describe("sample scientific context persistence", () => {
       ...base,
       scientificContext: {
         provenanceStatus: "collection_specimen" as const,
-        collectionCurator: "Georges Cuvier",
+        collectionCuratorFirstname: "Georges",
+        collectionCuratorLastname: "Cuvier",
       },
     });
     const updated = await updateSample(db, created.id, {

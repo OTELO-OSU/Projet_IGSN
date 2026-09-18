@@ -1,7 +1,11 @@
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { describe, expect, it } from "vitest";
 
-import { FACET_COLUMN, FACET_JOIN } from "./facet-filter.ts";
+import {
+  FACET_COLUMN,
+  FACET_JOIN,
+  PERSON_FACET_COLUMNS,
+} from "./facet-filter.ts";
 
 const COLUMN_LESS_KINDS = ["numericRange", "linked"];
 
@@ -11,7 +15,12 @@ describe("facet allow-lists", () => {
       (facet) => !COLUMN_LESS_KINDS.includes(facet.kind),
     ).map((facet) => facet.key);
 
-    expect(Object.keys(FACET_COLUMN).sort()).toEqual(expected.sort());
+    const mapped = [
+      ...Object.keys(FACET_COLUMN),
+      ...Object.keys(PERSON_FACET_COLUMNS),
+    ];
+
+    expect(mapped.sort()).toEqual(expected.sort());
   });
 
   it("should map every linked facet to a join", () => {

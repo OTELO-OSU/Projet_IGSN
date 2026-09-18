@@ -11,6 +11,7 @@ import { render } from "vitest-browser-react";
 import { page } from "vitest/browser";
 
 import { fakeCurrentUser } from "../../test/fake-current-user.ts";
+import { fillPersonName } from "../../test/fill-person-name.ts";
 import { worker } from "../../test/msw.ts";
 import { pickPath } from "../../test/pick-hierarchy.ts";
 import { routeTree } from "../routeTree.gen.ts";
@@ -72,7 +73,8 @@ const PARENT = {
   security: null,
   scientificContext: {
     provenanceStatus: "collection_specimen",
-    collectionCurator: "Paul Bernard",
+    collectionCuratorFirstname: "Paul",
+    collectionCuratorLastname: "Bernard",
   },
   age: {
     numericAgeMin: 12,
@@ -352,12 +354,15 @@ async function fillPublishableSample(screen: CreateScreen) {
   await pick(screen, "Starting material *", "Natural");
   await pick(screen, "Final product *", "Glass");
   await screen.getByLabelText("Date *", { exact: true }).fill("2025-06-15");
-  await screen
-    .getByLabelText("Operator name *", { exact: true })
-    .fill("Paul Bernard");
+  await fillPersonName(screen, "Operator name", "Paul", "Bernard");
 
   await openTab(screen, "Scientific context");
-  await screen.getByLabelText(/collection curator/i).fill("Paul Bernard");
+  await fillPersonName(
+    screen,
+    "Name of the collection curator",
+    "Paul",
+    "Bernard",
+  );
   await pick(screen, "Collection origin *", "Scientific expedition");
 }
 

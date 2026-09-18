@@ -1,3 +1,4 @@
+import { joinContactName } from "@projet-igsn/domain/sample/contact-name";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
@@ -81,7 +82,10 @@ export function SampleList({
         const kind = typeNatureText(sample);
         const material = materialText(sample);
         const place = locationText(location);
-        const collector = scientificContext?.collectorName;
+        const collector = joinContactName(
+          scientificContext?.collectorFirstname,
+          scientificContext?.collectorLastname,
+        );
         return (
           <li key={igsn}>
             <Link

@@ -71,7 +71,8 @@ const sampleBody = {
   },
   scientificContext: {
     provenanceStatus: "collection_specimen",
-    collectionCurator: "Georges Cuvier",
+    collectionCuratorFirstname: "Georges",
+    collectionCuratorLastname: "Cuvier",
     collectionOrigin: "scientific_expedition",
   },
   repository: { currentArchive: "02feahw73" },

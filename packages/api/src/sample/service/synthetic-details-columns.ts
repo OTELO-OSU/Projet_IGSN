@@ -18,7 +18,8 @@ export function syntheticDetailsColumns(
     syn_synthesis_date_precision: synthesisDate?.precision ?? null,
     syn_synthesis_date_time_zone:
       synthesisDate?.precision === "hour" ? synthesisDate.timeZone : null,
-    syn_operator_name: details?.operatorName ?? null,
+    syn_operator_firstname: details?.operatorFirstname ?? null,
+    syn_operator_lastname: details?.operatorLastname ?? null,
     syn_operator_orcid: details?.operatorOrcid ?? null,
     syn_research_structure: details?.researchStructure ?? null,
     syn_temperature_value: details?.temperature?.value ?? null,

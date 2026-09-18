@@ -8,17 +8,20 @@ export type ScientificContextDraft = {
   provenanceStatus: ProvenanceStatus | undefined;
   funderOrganizations: string[];
   researchProgramName: string | null | undefined;
-  chiefScientist: string | null | undefined;
+  chiefScientistFirstname: string | null | undefined;
+  chiefScientistLastname: string | null | undefined;
   chiefScientistOrcid: string | null | undefined;
   hostInstitution: string[];
-  collectorName: string | null | undefined;
+  collectorFirstname: string | null | undefined;
+  collectorLastname: string | null | undefined;
   collectorOrcid: string | null | undefined;
   researchCampaign: string | null | undefined;
   funding: string | null | undefined;
   researchProgramDescription: string | null | undefined;
   fieldName: string | null | undefined;
   missionDescription: string | null | undefined;
-  collectionCurator: string | null | undefined;
+  collectionCuratorFirstname: string | null | undefined;
+  collectionCuratorLastname: string | null | undefined;
   collectionOrigin: CollectionOrigin | undefined;
   collectionContextDescription: string | null | undefined;
 };
@@ -28,10 +31,12 @@ type ScientificContextCandidate =
       provenanceStatus: "field_sample";
       funderOrganizations: string[] | undefined;
       researchProgramName: string | undefined;
-      chiefScientist: string | undefined;
+      chiefScientistFirstname: string | undefined;
+      chiefScientistLastname: string | undefined;
       chiefScientistOrcid: string | undefined;
       hostInstitution: string[] | undefined;
-      collectorName: string | undefined;
+      collectorFirstname: string | undefined;
+      collectorLastname: string | undefined;
       collectorOrcid: string | undefined;
       researchCampaign: string | undefined;
       funding: string | undefined;
@@ -41,9 +46,11 @@ type ScientificContextCandidate =
     }
   | {
       provenanceStatus: "collection_specimen";
-      collectionCurator: string | undefined;
+      collectionCuratorFirstname: string | undefined;
+      collectionCuratorLastname: string | undefined;
       collectionOrigin: CollectionOrigin | undefined;
-      collectorName: string | undefined;
+      collectorFirstname: string | undefined;
+      collectorLastname: string | undefined;
       collectionContextDescription: string | undefined;
     };
 
@@ -58,10 +65,12 @@ export function composeScientificContext(
       provenanceStatus: "field_sample",
       funderOrganizations: nonEmpty(draft.funderOrganizations),
       researchProgramName: draft.researchProgramName || undefined,
-      chiefScientist: draft.chiefScientist || undefined,
+      chiefScientistFirstname: draft.chiefScientistFirstname || undefined,
+      chiefScientistLastname: draft.chiefScientistLastname || undefined,
       chiefScientistOrcid: draft.chiefScientistOrcid || undefined,
       hostInstitution: nonEmpty(draft.hostInstitution),
-      collectorName: draft.collectorName || undefined,
+      collectorFirstname: draft.collectorFirstname || undefined,
+      collectorLastname: draft.collectorLastname || undefined,
       collectorOrcid: draft.collectorOrcid || undefined,
       researchCampaign: draft.researchCampaign || undefined,
       funding: draft.funding || undefined,
@@ -73,9 +82,11 @@ export function composeScientificContext(
   if (draft.provenanceStatus === "collection_specimen") {
     return {
       provenanceStatus: "collection_specimen",
-      collectionCurator: draft.collectionCurator || undefined,
+      collectionCuratorFirstname: draft.collectionCuratorFirstname || undefined,
+      collectionCuratorLastname: draft.collectionCuratorLastname || undefined,
       collectionOrigin: draft.collectionOrigin,
-      collectorName: draft.collectorName || undefined,
+      collectorFirstname: draft.collectorFirstname || undefined,
+      collectorLastname: draft.collectorLastname || undefined,
       collectionContextDescription:
         draft.collectionContextDescription || undefined,
     };
@@ -96,12 +107,17 @@ export function toScientificContextDraft(
       value?.provenanceStatus ?? draftDefault(options, "field_sample"),
     funderOrganizations: fieldSample?.funderOrganizations ?? [],
     researchProgramName: fieldSample?.researchProgramName ?? undefined,
-    chiefScientist: fieldSample?.chiefScientist ?? undefined,
+    chiefScientistFirstname: fieldSample?.chiefScientistFirstname ?? undefined,
+    chiefScientistLastname: fieldSample?.chiefScientistLastname ?? undefined,
     chiefScientistOrcid: fieldSample?.chiefScientistOrcid ?? undefined,
     hostInstitution: fieldSample?.hostInstitution ?? [],
-    collectorName:
-      fieldSample?.collectorName ??
-      collectionSpecimen?.collectorName ??
+    collectorFirstname:
+      fieldSample?.collectorFirstname ??
+      collectionSpecimen?.collectorFirstname ??
+      undefined,
+    collectorLastname:
+      fieldSample?.collectorLastname ??
+      collectionSpecimen?.collectorLastname ??
       undefined,
     collectorOrcid: fieldSample?.collectorOrcid ?? undefined,
     researchCampaign: fieldSample?.researchCampaign ?? undefined,
@@ -110,7 +126,10 @@ export function toScientificContextDraft(
       fieldSample?.researchProgramDescription ?? undefined,
     fieldName: fieldSample?.fieldName ?? undefined,
     missionDescription: fieldSample?.missionDescription ?? undefined,
-    collectionCurator: collectionSpecimen?.collectionCurator ?? undefined,
+    collectionCuratorFirstname:
+      collectionSpecimen?.collectionCuratorFirstname ?? undefined,
+    collectionCuratorLastname:
+      collectionSpecimen?.collectionCuratorLastname ?? undefined,
     collectionOrigin: collectionSpecimen?.collectionOrigin ?? undefined,
     collectionContextDescription:
       collectionSpecimen?.collectionContextDescription ?? undefined,

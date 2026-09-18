@@ -57,31 +57,49 @@ const coreOrganizationSchema = z.strictObject({
   name: freeTextSchema.meta({ description: "Name of the organization." }),
 });
 
-const coreAgentRoleSchema = z.strictObject({
-  agent: z
-    .strictObject({
-      id: z
-        .string()
-        .min(1)
-        .meta({
-          description:
-            "Identifier of the agent, an ORCID URI for a person and a ROR URI for an organization.",
-        })
-        .optional(),
-      name: freeTextSchema.meta({ description: "Full name of the agent." }),
-      agentType: z.enum(["Person", "Organization"]).meta({
+const agentIdSchema = z
+  .string()
+  .min(1)
+  .meta({
+    description:
+      "Identifier of the agent, an ORCID URI for a person and a ROR URI for an organization.",
+  })
+  .optional();
+
+const coreAgentSchema = z
+  .discriminatedUnion("agentType", [
+    z.strictObject({
+      agentType: z.literal("Person").meta({
         description: "Whether the agent is a person or an organization.",
       }),
+      id: agentIdSchema,
+      firstname: freeTextSchema
+        .meta({ description: "First name of the person." })
+        .optional(),
+      lastname: freeTextSchema
+        .meta({ description: "Last name of the person." })
+        .optional(),
       affiliations: z
         .array(coreOrganizationSchema)
         .min(1)
         .meta({
           description:
-            "Organizations the agent belongs to, the institutional trio of the creator or the research structures of a researcher.",
+            "Organizations the person belongs to, the institutional trio of the creator or the research structures of a researcher.",
         })
         .optional(),
-    })
-    .meta({ description: "Person or organization holding the role." }),
+    }),
+    z.strictObject({
+      agentType: z.literal("Organization").meta({
+        description: "Whether the agent is a person or an organization.",
+      }),
+      id: agentIdSchema,
+      name: freeTextSchema.meta({ description: "Name of the organization." }),
+    }),
+  ])
+  .meta({ description: "Person or organization holding the role." });
+
+const coreAgentRoleSchema = z.strictObject({
+  agent: coreAgentSchema,
   roles: z.array(z.enum(CORE_ROLES)).length(1).meta({
     description:
       "The single role the agent holds; only HostingInstitution is held by several agents.",

@@ -11,10 +11,12 @@ export function fromCoreScientificContext(
   const { byNotation } = contextCategoryFinders(
     body.classification.contextCategories,
   );
-  const { agentOf, orcidOf, rorsOf } = responsibilityFinders(
+  const { personOf, orcidOf, rorsOf } = responsibilityFinders(
     body.responsibility,
   );
   const provenanceStatus = byNotation("provenance-status")?.id;
+  const chiefScientist = personOf("ChiefScientist");
+  const collector = personOf("Collector");
   const production = body.production;
   const project = production.projects?.[0];
 
@@ -26,10 +28,12 @@ export function fromCoreScientificContext(
           fromRorUri(reference.value),
         ) ?? null,
       researchProgramName: project?.name ?? null,
-      chiefScientist: agentOf("ChiefScientist")?.name ?? null,
+      chiefScientistFirstname: chiefScientist?.firstname ?? null,
+      chiefScientistLastname: chiefScientist?.lastname ?? null,
       chiefScientistOrcid: orcidOf("ChiefScientist"),
       hostInstitution: rorsOf("HostingInstitution"),
-      collectorName: agentOf("Collector")?.name ?? null,
+      collectorFirstname: collector?.firstname ?? null,
+      collectorLastname: collector?.lastname ?? null,
       collectorOrcid: orcidOf("Collector"),
       researchCampaign: project?.campaign ?? null,
       funding: project?.funding ?? null,
@@ -39,11 +43,14 @@ export function fromCoreScientificContext(
     };
   }
   if (provenanceStatus === "collection_specimen") {
+    const curator = personOf("Curator");
     return {
       provenanceStatus,
-      collectionCurator: agentOf("Curator")?.name ?? null,
+      collectionCuratorFirstname: curator?.firstname ?? null,
+      collectionCuratorLastname: curator?.lastname ?? null,
       collectionOrigin: byNotation("collection-origin")?.id ?? null,
-      collectorName: agentOf("Collector")?.name ?? null,
+      collectorFirstname: collector?.firstname ?? null,
+      collectorLastname: collector?.lastname ?? null,
       collectionContextDescription:
         byNotation("collection-context-description")?.id ?? null,
     };

@@ -28,10 +28,11 @@ import {
 import { NATURES, natureSchema } from "../nature.ts";
 import { TEXTURES, textureSchema } from "../texture/vocabulary.ts";
 import { sampleTypeSchema, SAMPLE_TYPE_HIERARCHY } from "../type/vocabulary.ts";
+import { truncatedTextSchema } from "./search-tokens.ts";
 
 const optionalFilter = <T extends z.ZodTypeAny>(schema: T) =>
   schema.optional().catch(undefined);
-const textFilter = () => optionalFilter(z.string().trim().min(1));
+const textFilter = () => optionalFilter(truncatedTextSchema);
 
 type SearchableHierarchy = {
   roots: readonly string[];

@@ -5,8 +5,8 @@ export function joinContactName(
   return [firstname, lastname].filter(Boolean).join(" ");
 }
 
-// ponytail: a single space splits the pair back, so a compound first name lands
-// on the last name; store the two parts in Core if that ever matters
+// ponytail: a single space splits the pair, so a compound first name lands on the
+// last name; only the legacy import feeds this, where no split pair exists
 export function splitContactName(contact: string | null | undefined): {
   firstname: string | null;
   lastname: string | null;

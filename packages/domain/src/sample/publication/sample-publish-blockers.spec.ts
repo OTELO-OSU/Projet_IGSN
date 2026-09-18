@@ -35,9 +35,11 @@ const base: Sample = {
     provenanceStatus: "field_sample",
     funderOrganizations: ["02feahw73"],
     researchProgramName: "Deep Biosphere Survey",
-    chiefScientist: "Marie Curie",
+    chiefScientistFirstname: "Marie",
+    chiefScientistLastname: "Curie",
     hostInstitution: ["04kdfz702"],
-    collectorName: "Pierre Curie",
+    collectorFirstname: "Pierre",
+    collectorLastname: "Curie",
   },
   syntheticDetails: null,
   age: null,
@@ -70,7 +72,8 @@ const syntheticDetails = {
   finalProduct: "glass",
   experimentDuration: { value: 2, unit: "hour" },
   synthesisDate: { precision: "day", start: "2020-01-01", end: "2020-01-02" },
-  operatorName: "Marie Curie",
+  operatorFirstname: "Marie",
+  operatorLastname: "Curie",
 } as const;
 
 const synthetic: Sample = {
@@ -196,7 +199,8 @@ describe("samplePublishBlockers", () => {
         location: null,
         scientificContext: {
           provenanceStatus: "collection_specimen",
-          collectionCurator: "Alexander von Humboldt",
+          collectionCuratorFirstname: "Alexander",
+          collectionCuratorLastname: "von Humboldt",
           collectionOrigin: "scientific_expedition",
         },
       }),
@@ -451,7 +455,71 @@ describe("samplePublishBlockers", () => {
         ...base,
         scientificContext: { provenanceStatus: "field_sample" },
       }),
-    ).toEqual(["collector_name_missing"]);
+    ).toEqual(["collector_firstname_missing", "collector_lastname_missing"]);
+  });
+
+  it.each([
+    [
+      "the firstname alone",
+      { collectorFirstname: "Pierre" },
+      "collector_lastname_missing",
+    ],
+    [
+      "the lastname alone",
+      { collectorLastname: "Curie" },
+      "collector_firstname_missing",
+    ],
+  ] as const)(
+    "should report the missing half when a field sample names %s of the collector",
+    (_case, collector, blocker) => {
+      expect(
+        samplePublishBlockers({
+          ...base,
+          scientificContext: { provenanceStatus: "field_sample", ...collector },
+        }),
+      ).toEqual([blocker]);
+    },
+  );
+
+  it.each([
+    [
+      "the firstname alone",
+      { chiefScientistFirstname: "Marie" },
+      "chief_scientist_lastname_missing",
+    ],
+    [
+      "the lastname alone",
+      { chiefScientistLastname: "Curie" },
+      "chief_scientist_firstname_missing",
+    ],
+  ] as const)(
+    "should report the missing half when a field sample names %s of the chief scientist",
+    (_case, chiefScientist, blocker) => {
+      expect(
+        samplePublishBlockers({
+          ...base,
+          scientificContext: {
+            provenanceStatus: "field_sample",
+            collectorFirstname: "Pierre",
+            collectorLastname: "Curie",
+            ...chiefScientist,
+          },
+        }),
+      ).toEqual([blocker]);
+    },
+  );
+
+  it("should report no blocker for a field sample naming no chief scientist at all", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorFirstname: "Pierre",
+          collectorLastname: "Curie",
+        },
+      }),
+    ).toEqual([]);
   });
 
   it("should report the missing mandatory fields of the collection-specimen branch", () => {
@@ -460,7 +528,11 @@ describe("samplePublishBlockers", () => {
         ...base,
         scientificContext: { provenanceStatus: "collection_specimen" },
       }),
-    ).toEqual(["collection_curator_missing", "collection_origin_missing"]);
+    ).toEqual([
+      "collection_curator_firstname_missing",
+      "collection_curator_lastname_missing",
+      "collection_origin_missing",
+    ]);
   });
 
   it("should report no blocker for a complete collection-specimen context", () => {
@@ -469,12 +541,69 @@ describe("samplePublishBlockers", () => {
         ...base,
         scientificContext: {
           provenanceStatus: "collection_specimen",
-          collectionCurator: "Georges Cuvier",
+          collectionCuratorFirstname: "Georges",
+          collectionCuratorLastname: "Cuvier",
           collectionOrigin: "scientific_expedition",
         },
       }),
     ).toEqual([]);
   });
+
+  it.each([
+    [
+      "the firstname alone",
+      { collectionCuratorFirstname: "Georges" },
+      "collection_curator_lastname_missing",
+    ],
+    [
+      "the lastname alone",
+      { collectionCuratorLastname: "Cuvier" },
+      "collection_curator_firstname_missing",
+    ],
+  ] as const)(
+    "should report the missing half when a collection specimen names %s of the curator",
+    (_case, curator, blocker) => {
+      expect(
+        samplePublishBlockers({
+          ...base,
+          scientificContext: {
+            provenanceStatus: "collection_specimen",
+            collectionOrigin: "scientific_expedition",
+            ...curator,
+          },
+        }),
+      ).toEqual([blocker]);
+    },
+  );
+
+  it.each([
+    [
+      "the firstname alone",
+      { collectorFirstname: "Jacques" },
+      "collector_lastname_missing",
+    ],
+    [
+      "the lastname alone",
+      { collectorLastname: "Cousteau" },
+      "collector_firstname_missing",
+    ],
+  ] as const)(
+    "should report the missing half when a collection specimen names %s of the collector",
+    (_case, collector, blocker) => {
+      expect(
+        samplePublishBlockers({
+          ...base,
+          scientificContext: {
+            provenanceStatus: "collection_specimen",
+            collectionCuratorFirstname: "Georges",
+            collectionCuratorLastname: "Cuvier",
+            collectionOrigin: "scientific_expedition",
+            ...collector,
+          },
+        }),
+      ).toEqual([blocker]);
+    },
+  );
 
   it("should not report a synthetic blocker for a non-synthetic material", () => {
     expect(
@@ -492,9 +621,38 @@ describe("samplePublishBlockers", () => {
       "synthetic_starting_material_missing",
       "synthetic_final_product_missing",
       "synthetic_synthesis_date_missing",
-      "synthetic_operator_name_missing",
+      "synthetic_operator_firstname_missing",
+      "synthetic_operator_lastname_missing",
     ]);
   });
+
+  it.each([
+    [
+      "the firstname alone",
+      { operatorFirstname: "Marie" },
+      "synthetic_operator_lastname_missing",
+    ],
+    [
+      "the lastname alone",
+      { operatorLastname: "Curie" },
+      "synthetic_operator_firstname_missing",
+    ],
+  ] as const)(
+    "should report the missing half when the synthesis names %s of the operator",
+    (_case, operator, blocker) => {
+      expect(
+        samplePublishBlockers({
+          ...synthetic,
+          syntheticDetails: {
+            ...syntheticDetails,
+            operatorFirstname: null,
+            operatorLastname: null,
+            ...operator,
+          },
+        }),
+      ).toEqual([blocker]);
+    },
+  );
 
   it.each(["synthetic", "mixture"] as const)(
     "should require the starting material composition of a %s starting material",

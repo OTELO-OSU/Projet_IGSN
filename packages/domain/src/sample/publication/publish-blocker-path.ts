@@ -23,8 +23,24 @@ export const PUBLISH_BLOCKER_PATH: Record<PublishBlocker, (string | number)[]> =
     existence_status_missing: ["existenceStatus"],
     availability_status_missing: ["availabilityStatus"],
     scientific_context_missing: ["scientificContext", "provenanceStatus"],
-    collector_name_missing: ["scientificContext", "collectorName"],
-    collection_curator_missing: ["scientificContext", "collectionCurator"],
+    collector_firstname_missing: ["scientificContext", "collectorFirstname"],
+    collector_lastname_missing: ["scientificContext", "collectorLastname"],
+    chief_scientist_firstname_missing: [
+      "scientificContext",
+      "chiefScientistFirstname",
+    ],
+    chief_scientist_lastname_missing: [
+      "scientificContext",
+      "chiefScientistLastname",
+    ],
+    collection_curator_firstname_missing: [
+      "scientificContext",
+      "collectionCuratorFirstname",
+    ],
+    collection_curator_lastname_missing: [
+      "scientificContext",
+      "collectionCuratorLastname",
+    ],
     collection_origin_missing: ["scientificContext", "collectionOrigin"],
     synthetic_starting_material_missing: [
       "syntheticDetails",
@@ -36,7 +52,14 @@ export const PUBLISH_BLOCKER_PATH: Record<PublishBlocker, (string | number)[]> =
     ],
     synthetic_final_product_missing: ["syntheticDetails", "finalProduct"],
     synthetic_synthesis_date_missing: ["syntheticDetails", "synthesisDate"],
-    synthetic_operator_name_missing: ["syntheticDetails", "operatorName"],
+    synthetic_operator_firstname_missing: [
+      "syntheticDetails",
+      "operatorFirstname",
+    ],
+    synthetic_operator_lastname_missing: [
+      "syntheticDetails",
+      "operatorLastname",
+    ],
     relation_resource_type_missing: ["relations"],
     parent_not_found: ["parentIds"],
     attachment_metadata_missing: ["attachments"],

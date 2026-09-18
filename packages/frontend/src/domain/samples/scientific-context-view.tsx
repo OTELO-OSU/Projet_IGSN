@@ -1,5 +1,7 @@
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 
+import { joinContactName } from "@projet-igsn/domain/sample/contact-name";
+
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { OrcidLink } from "#/domain/samples/orcid-link.tsx";
 import { OrgLinksRow } from "#/domain/samples/org-links-row.tsx";
@@ -31,7 +33,10 @@ function FieldSampleRows({ context }: { context: FieldSample }) {
       />
       <FieldRow
         label={m.sample_field_chief_scientist()}
-        value={context.chiefScientist}
+        value={joinContactName(
+          context.chiefScientistFirstname,
+          context.chiefScientistLastname,
+        )}
       />
       <FieldRow
         label={m.sample_field_chief_scientist_orcid()}
@@ -47,7 +52,10 @@ function FieldSampleRows({ context }: { context: FieldSample }) {
       />
       <FieldRow
         label={m.sample_field_collector_name()}
-        value={context.collectorName}
+        value={joinContactName(
+          context.collectorFirstname,
+          context.collectorLastname,
+        )}
       />
       <FieldRow
         label={m.sample_field_collector_orcid()}
@@ -78,7 +86,10 @@ function CollectionSpecimenRows({ context }: { context: CollectionSpecimen }) {
     <>
       <FieldRow
         label={m.sample_field_collection_curator()}
-        value={context.collectionCurator}
+        value={joinContactName(
+          context.collectionCuratorFirstname,
+          context.collectionCuratorLastname,
+        )}
       />
       <FieldRow
         label={m.sample_field_collection_origin()}
@@ -89,7 +100,10 @@ function CollectionSpecimenRows({ context }: { context: CollectionSpecimen }) {
       />
       <FieldRow
         label={m.sample_field_collector_name()}
-        value={context.collectorName}
+        value={joinContactName(
+          context.collectorFirstname,
+          context.collectorLastname,
+        )}
       />
       <FieldRow
         label={m.sample_field_collection_context_description()}

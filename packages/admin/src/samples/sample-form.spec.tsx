@@ -18,7 +18,8 @@ const createAction = (onSubmit: (value: CreateSample) => void) =>
 
 const publishableScientificContext = {
   provenanceStatus: "collection_specimen",
-  collectionCurator: "Georges Cuvier",
+  collectionCuratorFirstname: "Georges",
+  collectionCuratorLastname: "Cuvier",
   collectionOrigin: "scientific_expedition",
 } as const;
 
@@ -2135,10 +2136,12 @@ const publishedFieldSampleFixture: CreateSample = {
     provenanceStatus: "field_sample",
     funderOrganizations: ["03fd77x13"],
     researchProgramName: "GEOSAMPLE",
-    chiefScientist: "Marie Tharp",
+    chiefScientistFirstname: "Marie",
+    chiefScientistLastname: "Tharp",
     chiefScientistOrcid: "0000-0002-1825-0097",
     hostInstitution: ["02cte4b68"],
-    collectorName: "Alfred Wegener",
+    collectorFirstname: "Alfred",
+    collectorLastname: "Wegener",
   },
 };
 
@@ -2448,17 +2451,27 @@ describe("SampleForm post-publication field lock", () => {
     );
 
     await screen.getByRole("tab", { name: "Scientific context" }).click();
-    await expect
-      .element(screen.getByLabelText("Collector name *"))
-      .toBeDisabled();
+    for (const half of [/first name/i, /last name/i]) {
+      await expect
+        .element(
+          screen
+            .getByRole("group", { name: "Collector name" })
+            .getByRole("textbox", { name: half }),
+        )
+        .toBeDisabled();
+      await expect
+        .element(
+          screen
+            .getByRole("group", { name: "Chief scientist / Project leader" })
+            .getByRole("textbox", { name: half }),
+        )
+        .toBeEnabled();
+    }
     await expect
       .element(screen.getByRole("combobox", { name: "Funder organizations" }))
       .toBeEnabled();
     await expect
       .element(screen.getByLabelText("Name of the research programme"))
-      .toBeEnabled();
-    await expect
-      .element(screen.getByLabelText("Chief scientist / Project leader"))
       .toBeEnabled();
     await expect
       .element(
@@ -2521,10 +2534,15 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Collection origin *" }))
       .toBeDisabled();
-    await expect.element(screen.getByLabelText("Collector name")).toBeEnabled();
-    await expect
-      .element(screen.getByLabelText(/name of the collection curator/i))
-      .toBeEnabled();
+    for (const person of ["Collector name", "Name of the collection curator"]) {
+      await expect
+        .element(
+          screen
+            .getByRole("group", { name: person })
+            .getByRole("textbox", { name: /last name/i }),
+        )
+        .toBeEnabled();
+    }
   });
 
   it("blocks saving a published sample whose relation has no resource type", async () => {

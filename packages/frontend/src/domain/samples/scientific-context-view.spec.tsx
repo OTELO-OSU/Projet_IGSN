@@ -11,10 +11,12 @@ describe("ScientificContextView", () => {
           provenanceStatus: "field_sample",
           funderOrganizations: ["03fd77x13", "02cte4b68"],
           researchProgramName: "Deep Earth Sampling",
-          chiefScientist: "Marie Curie",
+          chiefScientistFirstname: "Marie",
+          chiefScientistLastname: "Curie",
           chiefScientistOrcid: "0000-0002-1825-0097",
           hostInstitution: ["043htjv09", "00z54nq84"],
-          collectorName: "John Field",
+          collectorFirstname: "John",
+          collectorLastname: "Field",
           collectorOrcid: "0000-0001-2345-6789",
           researchCampaign: "Atlantic 2025",
           funding: "ANR grant 42",
@@ -40,6 +42,7 @@ describe("ScientificContextView", () => {
       .element(screen.getByRole("link", { name: "0000-0002-1825-0097" }))
       .toHaveAttribute("href", "https://orcid.org/0000-0002-1825-0097");
 
+    await expect.element(screen.getByText("Marie Curie")).toBeInTheDocument();
     await expect.element(screen.getByText("John Field")).toBeInTheDocument();
     await expect.element(screen.getByText("Atlantic 2025")).toBeInTheDocument();
     await expect
@@ -52,9 +55,11 @@ describe("ScientificContextView", () => {
       <ScientificContextView
         scientificContext={{
           provenanceStatus: "collection_specimen",
-          collectionCurator: "Alfred Curator",
+          collectionCuratorFirstname: "Alfred",
+          collectionCuratorLastname: "Curator",
           collectionOrigin: "scientific_expedition",
-          collectorName: "Old Collector",
+          collectorFirstname: "Old",
+          collectorLastname: "Collector",
           collectionContextDescription: "Collected during the 1890 expedition.",
         }}
       />,
@@ -69,6 +74,7 @@ describe("ScientificContextView", () => {
     await expect
       .element(screen.getByText("Alfred Curator"))
       .toBeInTheDocument();
+    await expect.element(screen.getByText("Old Collector")).toBeInTheDocument();
     await expect
       .element(screen.getByText("Funder organizations"))
       .not.toBeInTheDocument();
@@ -92,4 +98,44 @@ describe("ScientificContextView", () => {
       .element(screen.getByText("Collector name"))
       .not.toBeInTheDocument();
   });
+
+  it.each([
+    [
+      "chief scientist",
+      { provenanceStatus: "field_sample", chiefScientistLastname: "Curie" },
+      "Curie",
+    ],
+    [
+      "collector of a field sample",
+      { provenanceStatus: "field_sample", collectorLastname: "Field" },
+      "Field",
+    ],
+    [
+      "collector of a collection specimen",
+      {
+        provenanceStatus: "collection_specimen",
+        collectorLastname: "Collector",
+      },
+      "Collector",
+    ],
+    [
+      "collection curator",
+      {
+        provenanceStatus: "collection_specimen",
+        collectionCuratorLastname: "Curator",
+      },
+      "Curator",
+    ],
+  ] as const)(
+    "should render a %s without a firstname as the lastname alone",
+    async (_case, scientificContext, expected) => {
+      const screen = await render(
+        <ScientificContextView scientificContext={scientificContext} />,
+      );
+
+      await expect
+        .element(screen.getByText(expected, { exact: true }))
+        .toBeInTheDocument();
+    },
+  );
 });

@@ -72,17 +72,17 @@ The "Comment" column is mapping notes, written for a reviewer of the mapping rat
 
 ### Responsibility
 
-| Our field                                                | Core field                                        | Comment                                                                                                    |
-| -------------------------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `owner.firstname`, `owner.name`                          | `responsibility[roles=[Creator]].agent.name`      | emit only, ignored on input (the owner is always the account's owner)                                      |
-| institutional trio                                       | `responsibility[Creator].agent.affiliations[]`    | ROR / `urn:otelo:osu:<code>` / `urn:otelo:laboratory:<code>`; emit only, trio snapshotted from the account |
-| (constant)                                               | `responsibility[roles=[Registrant]].agent`        | `{ name: "OTELo", id: https://ror.org/02cyw3861 }`; emit only                                              |
-| `scientificContext.collectorName`/`collectorOrcid`       | `responsibility[Collector]`                       | both provenance branches                                                                                   |
-| `scientificContext.chiefScientist`/`chiefScientistOrcid` | `responsibility[ChiefScientist]`                  | field sample only                                                                                          |
-| `scientificContext.hostInstitution[]`                    | `responsibility[HostingInstitution]`              | one AgentRole per ROR; field sample only                                                                   |
-| `scientificContext.collectionCurator`                    | `responsibility[Curator]`                         | collection specimen only                                                                                   |
-| `syntheticDetails.operatorName`/`operatorOrcid`          | `responsibility[Researcher]`                      | synthetic only                                                                                             |
-| `syntheticDetails.researchStructure[]`                   | `responsibility[Researcher].agent.affiliations[]` |                                                                                                            |
+| Our field                                                                                  | Core field                                                    | Comment                                                                                                    |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `owner.firstname`, `owner.name`                                                            | `responsibility[roles=[Creator]].agent.firstname`/`.lastname` | emit only, ignored on input (the owner is always the account's owner)                                      |
+| institutional trio                                                                         | `responsibility[Creator].agent.affiliations[]`                | ROR / `urn:otelo:osu:<code>` / `urn:otelo:laboratory:<code>`; emit only, trio snapshotted from the account |
+| (constant)                                                                                 | `responsibility[roles=[Registrant]].agent`                    | `{ name: "OTELo", id: https://ror.org/02cyw3861 }`; emit only                                              |
+| `scientificContext.collectorFirstname`/`collectorLastname`/`collectorOrcid`                | `responsibility[Collector]`                                   | both provenance branches                                                                                   |
+| `scientificContext.chiefScientistFirstname`/`chiefScientistLastname`/`chiefScientistOrcid` | `responsibility[ChiefScientist]`                              | field sample only                                                                                          |
+| `scientificContext.hostInstitution[]`                                                      | `responsibility[HostingInstitution]`                          | one AgentRole per ROR; field sample only                                                                   |
+| `scientificContext.collectionCuratorFirstname`/`collectionCuratorLastname`                 | `responsibility[Curator]`                                     | collection specimen only                                                                                   |
+| `syntheticDetails.operatorFirstname`/`operatorLastname`/`operatorOrcid`                    | `responsibility[Researcher]`                                  | synthetic only                                                                                             |
+| `syntheticDetails.researchStructure[]`                                                     | `responsibility[Researcher].agent.affiliations[]`             |                                                                                                            |
 
 `roles` enum is the 7 roles above; any other Core role is a 422 `invalid_value`. At most one agent per Person role. The reverse mapper ignores Creator and Registrant.
 
@@ -143,17 +143,17 @@ Core's "at least one of geometry / verticalExtent / region" is not enforced (dev
 
 ### Curation (`curation`)
 
-| Our field                                                                    | Core field                                                                          | Comment                                                                                                                      |
-| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `existenceStatus`/`availabilityStatus`                                       | `existenceStatus`/`availabilityStatus`                                              | snake to camel; required; existence/availability compatibility re-checked at stage 2                                         |
-| `repository.currentArchive`                                                  | `currentRepository.organization`                                                    | optional in the pivot (deviation, Core requires it)                                                                          |
-| `repository.currentArchiveContactFirstname`/`.currentArchiveContactLastname` | `currentRepository.contact`                                                         | joined name; reverse splits on the first space, a single token is the last name (`ponytail:` lossy for compound first names) |
-| `repository.collectionName`                                                  | `currentRepository.collectionName`                                                  |                                                                                                                              |
-| `repository.originalArchive`                                                 | `originalRepository.organization.name`                                              | free text, no `id`                                                                                                           |
-| `repository.originalArchiveContact*`                                         | `originalRepository.contact`                                                        | same join/split                                                                                                              |
-| `condition.storageConditions[]`                                              | `sampleCondition.storageCondition[]`                                                | Concept `otelo:sample_condition`; min 1 when present                                                                         |
-| `condition.temperature`/`.humidity`/`.pressure`                              | `sampleCondition.temperature`/`.humidityType`+`relativeHumidityPercent`/`.pressure` | each requires its `*_type` sibling; pressure: `kbar -> bar` (x1e3), `gpa -> Pa` (x1e9), `mmhg -> mm[Hg]`                     |
-| `condition.light`/`.packaging`/`.specificConditions`                         | `sampleCondition.lightCondition`/`.packaging`/`.description`                        |                                                                                                                              |
+| Our field                                                                    | Core field                                                                          | Comment                                                                                                  |
+| ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `existenceStatus`/`availabilityStatus`                                       | `existenceStatus`/`availabilityStatus`                                              | snake to camel; required; existence/availability compatibility re-checked at stage 2                     |
+| `repository.currentArchive`                                                  | `currentRepository.organization`                                                    | optional in the pivot (deviation, Core requires it)                                                      |
+| `repository.currentArchiveContactFirstname`/`.currentArchiveContactLastname` | `currentRepository.contactFirstName`/`.contactLastName`                             | each half its own field, both optional                                                                   |
+| `repository.collectionName`                                                  | `currentRepository.collectionName`                                                  |                                                                                                          |
+| `repository.originalArchive`                                                 | `originalRepository.organization.name`                                              | free text, no `id`                                                                                       |
+| `repository.originalArchiveContact*`                                         | `originalRepository.contactFirstName`/`.contactLastName`                            | same pair                                                                                                |
+| `condition.storageConditions[]`                                              | `sampleCondition.storageCondition[]`                                                | Concept `otelo:sample_condition`; min 1 when present                                                     |
+| `condition.temperature`/`.humidity`/`.pressure`                              | `sampleCondition.temperature`/`.humidityType`+`relativeHumidityPercent`/`.pressure` | each requires its `*_type` sibling; pressure: `kbar -> bar` (x1e3), `gpa -> Pa` (x1e9), `mmhg -> mm[Hg]` |
+| `condition.light`/`.packaging`/`.specificConditions`                         | `sampleCondition.lightCondition`/`.packaging`/`.description`                        |                                                                                                          |
 
 Reading-requires-storage-condition rules stay in `conditionSchema`, applied at stage 2.
 
@@ -192,7 +192,7 @@ Reading-requires-storage-condition rules stay in `conditionSchema`, applied at s
 
 ## Error-path translation
 
-Every internal path the `/service` routes report (blocker paths from `publish-blocker-path.ts`, `frozenFieldEdits` results, stage-2 zod issues) goes through `toCorePath` (`domain/sample/core/core-path.ts`, `CORE_PATH_BY_FIELD`, longest-prefix match, trailing index kept). A path with no entry is returned unchanged (`ponytail:` ceiling, revisit if issue paths start looking wrong). Examples: `type -> classification.sampleObjectTypes.0`, `material -> classification.contextCategories`, `description.collectionDate -> production.collection_date_start`, `location -> production.location`, `existenceStatus -> curation.existenceStatus`, `scientificContext.collectorName -> responsibility`, `syntheticDetails.startingMaterial -> extensions.experiment.startingMaterial`, `manualGroupIds.0 -> manualGroups.0`. `publish-blocker-path.ts` itself is untouched; `toCorePath` is a layer on top of it.
+Every internal path the `/service` routes report (blocker paths from `publish-blocker-path.ts`, `frozenFieldEdits` results, stage-2 zod issues) goes through `toCorePath` (`domain/sample/core/core-path.ts`, `CORE_PATH_BY_FIELD`, longest-prefix match, trailing index kept). A path with no entry is returned unchanged (`ponytail:` ceiling, revisit if issue paths start looking wrong). Examples: `type -> classification.sampleObjectTypes.0`, `material -> classification.contextCategories`, `description.collectionDate -> production.collection_date_start`, `location -> production.location`, `existenceStatus -> curation.existenceStatus`, `scientificContext.collectorLastname -> responsibility`, `syntheticDetails.startingMaterial -> extensions.experiment.startingMaterial`, `manualGroupIds.0 -> manualGroups.0`. `publish-blocker-path.ts` itself is untouched; `toCorePath` is a layer on top of it.
 
 ## List filter parameters
 
@@ -231,6 +231,8 @@ Every controlled vocabulary (nature, texture, the three hierarchies, ROR/OSU/lab
 
 `CORE_PATH_BY_FIELD`/`toCorePath` (see [Error-path translation](#error-path-translation)) could not drive this rename: it is lossy, since `material`, `texture`, `metamorphicFacies` and `resourceType` all resolve to `classification.contextCategories`, and `chiefScientist`, `collectorName`, `hostInstitution` and `collectionCurator` all resolve to `responsibility`. `CORE_FILTER_PARAM` is hand-written instead.
 
+`collector`, `curator` and `chiefScientist` are no longer matched on a fragment of a single column: each name is a firstname/lastname pair, and the value is matched token by token against both columns, in any order, accent-insensitive, with a fuzzy fallback (same rule as the public person facets).
+
 ## Deviations recorded for the Core authors
 
 - `extensions.geology.chronostratigraphy` is `{ min: "ICS<n>", max: "ICS<n>", unit }`, a PO decision for a lossless mapping rather than a flatter shape.
@@ -239,6 +241,7 @@ Every controlled vocabulary (nature, texture, the three hierarchies, ROR/OSU/lab
 - `production.processSteps[0].timestampPrecision`/`.timestampTimeZone` have no Core slot; same deviation as `collectionDateTimeZone`, see ADR [0041](adr/0041-synthesis-date-precision.md).
 - `Concept.schemeURI` is the constant URN `urn:otelo:vocabulary:<scheme>`, not a resolvable URI.
 - `Project.campaign` carries the research campaign, which Core has no slot for; dropping it would erase the field on a `GET` then `PUT` round trip.
+- A Person agent carries `firstname`/`lastname` and no `name`, an Organization agent only `name`; `agent` is a union discriminated on `agentType`, a deviation from Core's single `name`, so a name round-trips through `GET` then `PUT` unchanged.
 - `responsibility[roles=[Registrant]]` is always the constant OTELo agent, so publisher matches Registrant.
 - Only `created`, `published` and `updated` lifecycle events are ever emitted; no `registered` or `validated` event exists, since no DataCite registration exists.
 - OSU and laboratory affiliations use our own URNs (`urn:otelo:osu:<code>`, `urn:otelo:laboratory:<code>`), since no ROR exists for either.

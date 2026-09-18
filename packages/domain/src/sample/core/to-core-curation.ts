@@ -5,7 +5,6 @@ import { organizationLabel } from "../../institutional-group/label.ts";
 import { availabilityStatusSchema } from "../curation/availability-status.ts";
 import { existenceStatusSchema } from "../curation/existence-status.ts";
 import { toConcept } from "./concept.ts";
-import { joinContactName } from "./contact-name.ts";
 import {
   coreAvailabilityStatus,
   coreExistenceStatus,
@@ -25,22 +24,16 @@ export function toCoreCuration(sample: Sample): CoreCuration {
             name: organizationLabel(repository.currentArchive),
           },
     collectionName: repository?.collectionName ?? undefined,
-    contact:
-      joinContactName(
-        repository?.currentArchiveContactFirstname,
-        repository?.currentArchiveContactLastname,
-      ) || undefined,
+    contactFirstName: repository?.currentArchiveContactFirstname ?? undefined,
+    contactLastName: repository?.currentArchiveContactLastname ?? undefined,
   };
   const originalRepository = {
     organization:
       repository?.originalArchive == null
         ? undefined
         : { name: repository.originalArchive },
-    contact:
-      joinContactName(
-        repository?.originalArchiveContactFirstname,
-        repository?.originalArchiveContactLastname,
-      ) || undefined,
+    contactFirstName: repository?.originalArchiveContactFirstname ?? undefined,
+    contactLastName: repository?.originalArchiveContactLastname ?? undefined,
   };
   const sampleCondition = {
     storageCondition: condition?.storageConditions?.map((storage) =>

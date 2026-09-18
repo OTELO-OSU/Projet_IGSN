@@ -5,6 +5,7 @@ import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { type Expression, sql, type SqlBool } from "kysely";
 
 import { likePattern } from "../../like-pattern.ts";
+import { tokenFilters } from "./search-filter.ts";
 
 export const FACET_COLUMN: Record<string, string> = {
   type: "type",
@@ -13,13 +14,22 @@ export const FACET_COLUMN: Record<string, string> = {
   nature: "nature",
   texture: "texture",
   researchProgramName: "sc_research_program_name",
-  chiefScientist: "sc_chief_scientist",
   hostInstitution: "sc_host_institution",
-  collectorName: "sc_collector_name",
-  collectionCurator: "sc_collection_curator",
   institutionalOrganization: "institutional_organization",
   institutionalOsu: "institutional_osu",
   institutionalLaboratory: "institutional_laboratory",
+};
+
+export const PERSON_FACET_COLUMNS: Record<string, [string, string]> = {
+  chiefScientist: [
+    "sc_chief_scientist_firstname",
+    "sc_chief_scientist_lastname",
+  ],
+  collectorName: ["sc_collector_firstname", "sc_collector_lastname"],
+  collectionCurator: [
+    "sc_collection_curator_firstname",
+    "sc_collection_curator_lastname",
+  ],
 };
 
 export const FACET_JOIN: Record<string, { table: string; column: string }> = {
@@ -38,6 +48,10 @@ function facetFilter(
        where ${sql.ref(`${table}.sample_id`)} = sample.id
          and ${sql.ref(`${table}.${column}`)} = ${value}
     )`;
+  }
+  const pair = PERSON_FACET_COLUMNS[facet.key];
+  if (pair) {
+    return sql<SqlBool>`(${sql.join(tokenFilters(pair, value), sql` AND `)})`;
   }
   const column = FACET_COLUMN[facet.key]!;
   switch (facet.kind) {
@@ -64,6 +78,13 @@ function numericAgeFilters(params: ListSamplesQuery): Expression<SqlBool>[] {
       ? [sql<SqlBool>`annum_min <= ${numericAgeToAnnum(params.ageMax, unit)}`]
       : []),
   ];
+}
+
+export function personFacetValues(params: ListSamplesQuery): string[] {
+  const values: Record<string, unknown> = params;
+  return Object.keys(PERSON_FACET_COLUMNS)
+    .map((key) => values[key])
+    .filter((value) => typeof value === "string");
 }
 
 export function facetFilters(params: ListSamplesQuery): Expression<SqlBool>[] {

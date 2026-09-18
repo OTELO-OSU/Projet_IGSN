@@ -21,7 +21,8 @@ export const syntheticDetailsSchema = z.object({
   experimentType: experimentTypeSchema.nullish(),
   experimentDuration: measurementSchema(experimentDurationUnitSchema).nullish(),
   synthesisDate: dateRangeSchema("synthesis_date").nullish(),
-  operatorName: freeTextSchema.nullish(),
+  operatorFirstname: freeTextSchema.nullish(),
+  operatorLastname: freeTextSchema.nullish(),
   operatorOrcid: orcidSchema.nullish(),
   researchStructure: uniqueRorArraySchema(
     "synthetic_research_structure_duplicate",

@@ -3,6 +3,7 @@ import { ALL_ORGANIZATION_ITEMS } from "@projet-igsn/domain/institutional-group/
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 
 import { m } from "#/paraglide/messages.js";
+import { PersonNameFields } from "#/samples/person-name-fields.tsx";
 import { collectionOriginLabel } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
@@ -43,17 +44,18 @@ export function SampleScientificContextFields() {
                   )}
                 </form.AppField>
 
-                <form.AppField name="scientificContext.chiefScientist">
-                  {(field) => (
-                    <field.TextField label={m.field_chief_scientist()} />
-                  )}
-                </form.AppField>
-
-                <form.AppField name="scientificContext.chiefScientistOrcid">
-                  {(field) => (
-                    <field.TextField label={m.field_chief_scientist_orcid()} />
-                  )}
-                </form.AppField>
+                <PersonNameFields
+                  legend={m.field_chief_scientist()}
+                  person="scientificContext.chiefScientist"
+                >
+                  <form.AppField name="scientificContext.chiefScientistOrcid">
+                    {(field) => (
+                      <field.TextField
+                        label={m.field_chief_scientist_orcid()}
+                      />
+                    )}
+                  </form.AppField>
+                </PersonNameFields>
 
                 <form.AppField name="scientificContext.hostInstitution">
                   {(field) => (
@@ -70,20 +72,17 @@ export function SampleScientificContextFields() {
                   )}
                 </form.AppField>
 
-                <form.AppField name="scientificContext.collectorName">
-                  {(field) => (
-                    <field.TextField
-                      label={m.field_collector_name()}
-                      requiredToPublish
-                    />
-                  )}
-                </form.AppField>
-
-                <form.AppField name="scientificContext.collectorOrcid">
-                  {(field) => (
-                    <field.TextField label={m.field_collector_orcid()} />
-                  )}
-                </form.AppField>
+                <PersonNameFields
+                  legend={m.field_collector_name()}
+                  person="scientificContext.collector"
+                  requiredToPublish
+                >
+                  <form.AppField name="scientificContext.collectorOrcid">
+                    {(field) => (
+                      <field.TextField label={m.field_collector_orcid()} />
+                    )}
+                  </form.AppField>
+                </PersonNameFields>
 
                 <form.AppField name="scientificContext.researchCampaign">
                   {(field) => (
@@ -122,14 +121,11 @@ export function SampleScientificContextFields() {
           if (provenanceStatus === "collection_specimen") {
             return (
               <>
-                <form.AppField name="scientificContext.collectionCurator">
-                  {(field) => (
-                    <field.TextField
-                      label={m.field_collection_curator()}
-                      requiredToPublish
-                    />
-                  )}
-                </form.AppField>
+                <PersonNameFields
+                  legend={m.field_collection_curator()}
+                  person="scientificContext.collectionCurator"
+                  requiredToPublish
+                />
 
                 <form.AppField name="scientificContext.collectionOrigin">
                   {(field) => (
@@ -144,11 +140,10 @@ export function SampleScientificContextFields() {
                   )}
                 </form.AppField>
 
-                <form.AppField name="scientificContext.collectorName">
-                  {(field) => (
-                    <field.TextField label={m.field_collector_name()} />
-                  )}
-                </form.AppField>
+                <PersonNameFields
+                  legend={m.field_collector_name()}
+                  person="scientificContext.collector"
+                />
 
                 <form.AppField name="scientificContext.collectionContextDescription">
                   {(field) => (

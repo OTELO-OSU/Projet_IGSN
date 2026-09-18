@@ -156,7 +156,8 @@ const fieldSample = {
   ...publishableSample,
   scientificContext: {
     provenanceStatus: "field_sample" as const,
-    collectorName: "Georges Cuvier",
+    collectorFirstname: "Georges",
+    collectorLastname: "Cuvier",
   },
 } satisfies CreateSample;
 
@@ -328,14 +329,15 @@ describe("GET /service/samples", () => {
       other: { material: "rock_and_sediment.rock.igneous" },
     },
     {
-      rule: "a fragment of the collector name",
+      rule: "the collector full name in either order",
       param: "collector",
-      value: "cuvier",
+      value: "cuvier georges",
       matching: { scientificContext: fieldSample.scientificContext },
       other: {
         scientificContext: {
           ...fieldSample.scientificContext,
-          collectorName: "Alfred Wegener",
+          collectorFirstname: "Alfred",
+          collectorLastname: "Wegener",
         },
       },
     },
@@ -674,7 +676,14 @@ describe("POST /service/samples", () => {
             path: "classification.sampleObjectTypes.0",
             code: "type_incomplete",
           },
-          { path: "responsibility", code: "collection_curator_missing" },
+          {
+            path: "responsibility",
+            code: "collection_curator_firstname_missing",
+          },
+          {
+            path: "responsibility",
+            code: "collection_curator_lastname_missing",
+          },
           { path: "manualGroups.0.id", code: "manual_group_not_attachable" },
         ],
       });
@@ -1065,7 +1074,10 @@ const FROZEN_CASES: FrozenCase[] = [
       ...body,
       responsibility: body.responsibility.map((agentRole) =>
         agentRole.roles[0] === "Collector"
-          ? { ...agentRole, agent: { ...agentRole.agent, name: "Marie Curie" } }
+          ? {
+              ...agentRole,
+              agent: { ...agentRole.agent, lastname: "Curie" },
+            }
           : agentRole,
       ),
     }),

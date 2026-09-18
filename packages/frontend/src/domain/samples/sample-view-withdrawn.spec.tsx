@@ -19,8 +19,10 @@ const sample = (overrides: Partial<WithdrawnSample> = {}): WithdrawnSample => ({
     region: { kind: "continent", country: "FR" },
     localityName: "Mont-Dore",
   },
-  collectorName: "Claire Martin",
-  collectionCurator: "Paul Durand",
+  collectorFirstname: "Claire",
+  collectorLastname: "Martin",
+  collectionCuratorFirstname: "Paul",
+  collectionCuratorLastname: "Durand",
   ...overrides,
 });
 
@@ -150,6 +152,24 @@ describe("SampleView of a withdrawn sample", () => {
       .toBeVisible();
     await expect
       .element(screen.getByRole("button", { name: "Contact the record owner" }))
+      .toBeVisible();
+  });
+
+  it("should show a person without a firstname as the lastname alone", async () => {
+    const screen = await renderWithRouter(
+      <SampleView
+        sample={sample({
+          collectorFirstname: null,
+          collectionCuratorFirstname: null,
+        })}
+      />,
+    );
+
+    await expect
+      .element(screen.getByText("Martin", { exact: true }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByText("Durand", { exact: true }))
       .toBeVisible();
   });
 });

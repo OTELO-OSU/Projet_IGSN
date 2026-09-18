@@ -65,7 +65,8 @@ describe("toCoreSample", () => {
       toCoreSample(FIELD_SAMPLE, FRONTEND_URL).responsibility,
     ).toContainEqual({
       agent: {
-        name: "Marie Curie",
+        firstname: "Marie",
+        lastname: "Curie",
         agentType: "Person",
         affiliations: [
           {
@@ -123,11 +124,15 @@ describe("toCoreSample", () => {
     ).toEqual({ value: 1100, unitCode: "bar", unitLabel: "kbar" });
   });
 
-  it("should join the archive contact first and last names", () => {
-    expect(
-      toCoreSample(FIELD_SAMPLE, FRONTEND_URL).curation.currentRepository
-        ?.contact,
-    ).toBe("Pierre Curie");
+  it("should emit the archive contact first and last names apart", () => {
+    const { currentRepository } = toCoreSample(
+      FIELD_SAMPLE,
+      FRONTEND_URL,
+    ).curation;
+    expect(currentRepository).toMatchObject({
+      contactFirstName: "Pierre",
+      contactLastName: "Curie",
+    });
   });
 
   it("should describe the synthesis as one process step", () => {

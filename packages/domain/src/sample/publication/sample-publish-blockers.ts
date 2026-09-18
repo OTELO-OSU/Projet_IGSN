@@ -35,14 +35,19 @@ export const publishBlockerSchema = z.enum([
   "existence_status_missing",
   "availability_status_missing",
   "scientific_context_missing",
-  "collector_name_missing",
-  "collection_curator_missing",
+  "collector_firstname_missing",
+  "collector_lastname_missing",
+  "chief_scientist_firstname_missing",
+  "chief_scientist_lastname_missing",
+  "collection_curator_firstname_missing",
+  "collection_curator_lastname_missing",
   "collection_origin_missing",
   "synthetic_starting_material_missing",
   "synthetic_starting_material_composition_missing",
   "synthetic_final_product_missing",
   "synthetic_synthesis_date_missing",
-  "synthetic_operator_name_missing",
+  "synthetic_operator_firstname_missing",
+  "synthetic_operator_lastname_missing",
   "relation_resource_type_missing",
   "parent_not_found",
   "attachment_metadata_missing",
@@ -87,6 +92,26 @@ export function toPublishableFields(
     relations: sample.relations ?? [],
   };
 }
+
+type NamedPerson =
+  | "collector"
+  | "chief_scientist"
+  | "collection_curator"
+  | "synthetic_operator";
+
+const nameBlockers = (
+  person: NamedPerson,
+  firstname: string | null | undefined,
+  lastname: string | null | undefined,
+  presence: "required" | "optional",
+): PublishBlocker[] => {
+  if (presence === "optional" && firstname == null && lastname == null)
+    return [];
+  return [
+    ...(firstname == null ? ([`${person}_firstname_missing`] as const) : []),
+    ...(lastname == null ? ([`${person}_lastname_missing`] as const) : []),
+  ];
+};
 
 export function samplePublishBlockers(
   sample: PublishableFields & {
@@ -190,12 +215,39 @@ export function samplePublishBlockers(
   if (context == null) {
     blockers.push("scientific_context_missing");
   } else if (context.provenanceStatus === "field_sample") {
-    if (context.collectorName == null) blockers.push("collector_name_missing");
+    blockers.push(
+      ...nameBlockers(
+        "collector",
+        context.collectorFirstname,
+        context.collectorLastname,
+        "required",
+      ),
+      ...nameBlockers(
+        "chief_scientist",
+        context.chiefScientistFirstname,
+        context.chiefScientistLastname,
+        "optional",
+      ),
+    );
   } else {
-    if (context.collectionCurator == null)
-      blockers.push("collection_curator_missing");
+    blockers.push(
+      ...nameBlockers(
+        "collection_curator",
+        context.collectionCuratorFirstname,
+        context.collectionCuratorLastname,
+        "required",
+      ),
+    );
     if (context.collectionOrigin == null)
       blockers.push("collection_origin_missing");
+    blockers.push(
+      ...nameBlockers(
+        "collector",
+        context.collectorFirstname,
+        context.collectorLastname,
+        "optional",
+      ),
+    );
   }
 
   if (materialComplete && isSyntheticMaterial(sample.material)) {
@@ -216,9 +268,14 @@ export function samplePublishBlockers(
     if (details.synthesisDate == null) {
       blockers.push("synthetic_synthesis_date_missing");
     }
-    if (details.operatorName == null) {
-      blockers.push("synthetic_operator_name_missing");
-    }
+    blockers.push(
+      ...nameBlockers(
+        "synthetic_operator",
+        details.operatorFirstname,
+        details.operatorLastname,
+        "required",
+      ),
+    );
   }
 
   if (
