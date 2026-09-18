@@ -12,7 +12,7 @@ import {
 import { testClient } from "hono/testing";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect } from "vitest";
+import { describe, expect, onTestFinished, vi } from "vitest";
 
 import type { SendMail } from "../mail/send-mail.ts";
 
@@ -1039,6 +1039,33 @@ describe("admin sample routes", () => {
     // Assert
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ data: { id: data.id } });
+  });
+
+  pgTest("should answer 502 when DataCite refuses the DOI", async ({ db }) => {
+    // Arrange
+    const { app } = createApp(db);
+    const client = testClient(app);
+    const data = await createSample(db, client);
+    process.env.DATACITE_API_HOST = "http://datacite.test";
+    process.env.DATACITE_API_KEY = "topsecret";
+    process.env.DATACITE_DOI_PREFIX = "10.5072";
+    process.env.FRONTEND_URL = "http://localhost:3000";
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("nope", { status: 500 })),
+    );
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    onTestFinished(() => {
+      vi.unstubAllGlobals();
+    });
+    // Act
+    const res = await client.admin.samples[":id"].publish.$post(
+      { param: { id: data.id } },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: "DOI registration failed" });
   });
 
   pgTest("should publish a sample straight as withdrawn", async ({ db }) => {

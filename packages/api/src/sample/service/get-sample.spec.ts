@@ -24,7 +24,10 @@ describe("getSample", () => {
       // Act
       const found = await getSample(db, created.id, owner.id);
       // Assert
-      expect(found).toEqual({ sample: created, role: "owner" });
+      expect(found).toEqual({
+        sample: { ...created, owner: { name: null, firstname: null } },
+        role: "owner",
+      });
     },
   );
 
@@ -44,7 +47,10 @@ describe("getSample", () => {
 
     const found = await getSample(db, created.id, contributor.id);
 
-    expect(found).toEqual({ sample: created, role: "contributor" });
+    expect(found).toEqual({
+      sample: { ...created, owner: { name: null, firstname: null } },
+      role: "contributor",
+    });
   });
 
   pgTest(
@@ -58,7 +64,10 @@ describe("getSample", () => {
       // Act
       const found = await getSample(db, created.id, other.id);
       // Assert
-      expect(found).toEqual({ sample: created, role: null });
+      expect(found).toEqual({
+        sample: { ...created, owner: { name: null, firstname: null } },
+        role: null,
+      });
     },
   );
 

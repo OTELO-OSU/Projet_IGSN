@@ -67,6 +67,9 @@ services:
       SMTP_FROM: "${SMTP_FROM:-postmaster@igsn.${DOMAIN}}"
       SMTP_FROM_NAME: "${SMTP_FROM_NAME}"
       SMTP_FROM_NAME_ADMIN: "${SMTP_FROM_NAME_ADMIN}"
+      DATACITE_API_HOST: "${DATACITE_API_HOST}"
+      DATACITE_API_KEY: "${DATACITE_API_KEY}"
+      DATACITE_DOI_PREFIX: "${DATACITE_DOI_PREFIX}"
     healthcheck: *healthcheck
     volumes:
       - attachments:/data/attachments

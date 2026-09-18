@@ -49,6 +49,18 @@ describe("fromCoreSample", () => {
     ).toEqual(reversed(FIELD_SAMPLE));
   });
 
+  it("should ignore the doi a body carries", () => {
+    const body = coreSampleBodySchema.parse({
+      ...FIELD_SAMPLE_RECORD,
+      identification: {
+        ...FIELD_SAMPLE_RECORD.identification,
+        doi: "10.5072/OTHER",
+      },
+    });
+
+    expect(fromCoreSample(body)).toEqual(reversed(FIELD_SAMPLE));
+  });
+
   it.each([
     ["0123456789ABCDEFGHJKMNPQRS", "DOI"],
     ["CNRS1234567890", "IGSN"],

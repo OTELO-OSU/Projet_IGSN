@@ -558,6 +558,39 @@ describe("the Accept header of the /service GET routes", () => {
 
   pgTest.for([
     {
+      rule: "its DOI when the sample carries a prefix",
+      prefix: "10.5072",
+      doi: (igsn: string) => `10.5072/${igsn}`,
+    },
+    {
+      rule: "its bare IGSN when it carries none",
+      prefix: null,
+      doi: (igsn: string) => igsn,
+    },
+  ])(
+    "should identify the DataCite record by $rule",
+    async ({ prefix, doi }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const sample = await inLaboratory(db, archivedSample, IN_REACH);
+      const published = (await publishSample(db, sample.id))!;
+      await db
+        .updateTable("sample")
+        .set({ doi_prefix: prefix })
+        .where("id", "=", sample.id)
+        .execute();
+      // Act
+      const res = await getSample(app, published.igsn!, DATACITE_MEDIA_TYPE);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(dataCiteSampleSchema.parse(await res.json())).toMatchObject({
+        doi: doi(published.igsn!),
+      });
+    },
+  );
+
+  pgTest.for([
+    {
       route: "the list",
       request: (app: ReturnType<typeof createApp>["app"]) =>
         listSamples(app, {}, "text/csv"),

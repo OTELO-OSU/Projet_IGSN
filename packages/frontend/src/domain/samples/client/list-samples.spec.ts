@@ -79,6 +79,7 @@ describe("listSamples", () => {
           economicDepositName: null,
           economicDepositDescription: null,
           igsn: "0123456789ABCDEFGHJKMNPQRS",
+          doiPrefix: null,
           institutionalOrganization: null,
           institutionalOsu: null,
           institutionalLaboratory: null,

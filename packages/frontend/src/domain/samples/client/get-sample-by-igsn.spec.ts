@@ -78,6 +78,7 @@ describe("getSampleByIgsn", () => {
       economicDepositName: null,
       economicDepositDescription: null,
       igsn,
+      doiPrefix: null,
       institutionalOrganization: null,
       institutionalOsu: null,
       institutionalLaboratory: null,

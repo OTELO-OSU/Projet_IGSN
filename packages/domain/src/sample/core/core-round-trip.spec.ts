@@ -13,6 +13,7 @@ import { toCoreSample } from "./to-core-sample.ts";
 const UNMAPPED_SAMPLE_FIELDS = [
   "id",
   "igsn",
+  "doiPrefix",
   "status",
   "createdAt",
   "publishedAt",
