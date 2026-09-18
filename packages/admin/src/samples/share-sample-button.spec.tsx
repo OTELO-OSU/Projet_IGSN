@@ -204,8 +204,12 @@ const openPicker = async (screen: Screen) => {
   await emailField(screen).click();
 };
 
-const invite = (screen: Screen) =>
-  screen.getByRole("button", { name: "Send invitation" }).click();
+const inviteSubmit = (screen: Screen) =>
+  screen
+    .getByRole("dialog", { name: "Invite a contributor" })
+    .getByRole("button", { name: "Share" });
+
+const invite = (screen: Screen) => inviteSubmit(screen).click();
 
 const pickAndInvite = async (screen: Screen, name: RegExp) => {
   await screen.getByRole("option", { name }).click();
@@ -526,9 +530,7 @@ describe("ShareSampleButton", () => {
       directory: [dupont],
     });
     await openInviteDialog(screen);
-    await expect
-      .element(screen.getByRole("button", { name: "Send invitation" }))
-      .toBeDisabled();
+    await expect.element(inviteSubmit(screen)).toBeDisabled();
 
     await emailField(screen).click();
     await screen.getByRole("option", { name: /Dupont/ }).click();
