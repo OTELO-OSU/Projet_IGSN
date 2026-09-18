@@ -10,14 +10,22 @@ type CorePosition = Extract<
   { type: "LineString" }
 >["coordinates"][number];
 
-const boxOfTrack = (positions: CorePosition[]): DataCiteGeoLocation => ({
-  geoLocationBox: {
-    westBoundLongitude: Math.min(...positions.map(([longitude]) => longitude)),
-    eastBoundLongitude: Math.max(...positions.map(([longitude]) => longitude)),
-    southBoundLatitude: Math.min(...positions.map(([, latitude]) => latitude)),
-    northBoundLatitude: Math.max(...positions.map(([, latitude]) => latitude)),
-  },
-});
+// A collection track never runs the long way round the globe, so a span over 180 degrees crossed the antimeridian.
+const boxOfTrack = (positions: CorePosition[]): DataCiteGeoLocation => {
+  const longitudes = positions.map(([longitude]) => longitude);
+  const latitudes = positions.map(([, latitude]) => latitude);
+  const west = Math.min(...longitudes);
+  const east = Math.max(...longitudes);
+  const crossesAntimeridian = east - west > 180;
+  return {
+    geoLocationBox: {
+      westBoundLongitude: crossesAntimeridian ? east : west,
+      eastBoundLongitude: crossesAntimeridian ? west : east,
+      southBoundLatitude: Math.min(...latitudes),
+      northBoundLatitude: Math.max(...latitudes),
+    },
+  };
+};
 
 const boxOfRing = (ring: CorePosition[]): DataCiteGeoLocation => {
   const [southWest, , northEast] = ring;

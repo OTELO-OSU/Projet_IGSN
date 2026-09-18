@@ -412,6 +412,31 @@ describe("the geolocation of a DataCite record", () => {
     expect(toDataCiteSample(core(sample)).geoLocations).toEqual([geoLocation]);
   });
 
+  it("should keep the west beyond the east for a track crossing the antimeridian", () => {
+    expect(
+      toDataCiteSample(
+        core({
+          ...LINE_SAMPLE,
+          location: {
+            ...LINE_SAMPLE.location,
+            position: {
+              type: "line",
+              startLongitude: 170,
+              startLatitude: 30,
+              endLongitude: -170,
+              endLatitude: 40,
+            },
+          },
+        }),
+      ).geoLocations[0]?.geoLocationBox,
+    ).toEqual({
+      westBoundLongitude: 170,
+      eastBoundLongitude: -170,
+      southBoundLatitude: 30,
+      northBoundLatitude: 40,
+    });
+  });
+
   it("should carry no geolocation when the location names no place and no coordinates", () => {
     expect(
       toDataCiteSample(
