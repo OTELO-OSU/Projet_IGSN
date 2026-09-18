@@ -6,6 +6,7 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 import { deleteOrphanLocations } from "./delete-orphan-locations.ts";
+import { hasParent } from "./has-parent.ts";
 import { hasLocationData, locationColumns } from "./to-location.ts";
 
 function setLocationId(
@@ -18,15 +19,6 @@ function setLocationId(
     .set({ location_id: locationId })
     .where("id", "=", sampleId)
     .execute();
-}
-
-async function hasParent(db: Transactional<DB>, sampleId: string) {
-  const parent = await db
-    .selectFrom("sample_parent")
-    .select("parent_id")
-    .where("sample_id", "=", sampleId)
-    .executeTakeFirst();
-  return parent !== undefined;
 }
 
 export async function writeSampleLocation(

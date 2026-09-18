@@ -52,6 +52,7 @@ const draft: SampleDraft = {
   availabilityStatus: "available",
   age: EMPTY_AGE_FORM_VALUES,
   relations: [],
+  processSteps: [],
   manualGroupIds: [],
   parentIds: [],
   ...toEconomicInterestDraft(undefined),

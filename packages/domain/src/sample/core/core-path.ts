@@ -129,6 +129,9 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   "security.chemicalRiskExplanation": "extensions.safety.chemical.explanation",
   security: "extensions.safety",
 
+  // ponytail: the index ignores the synthesis step Core emits first, so it is off by one on a synthetic sub-sample; thread the sample through toCorePath if a client needs it exact
+  processSteps: "production.processSteps",
+
   relations: "relations",
   parentIds: "relations",
   manualGroupIds: "manualGroups",

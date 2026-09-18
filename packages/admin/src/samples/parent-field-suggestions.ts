@@ -15,6 +15,7 @@ const NOT_INHERITED_FIELDS = new Set([
   "parentIds",
   "manualGroupIds",
   "relations",
+  "processSteps",
   "location",
   "geologicalContextDescription",
   "geomorphologicalEnvironmentPath",

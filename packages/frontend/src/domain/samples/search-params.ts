@@ -5,6 +5,7 @@ import {
 import {
   activeFacetKeys,
   facetQueryFields,
+  SAMPLE_FACETS,
 } from "@projet-igsn/domain/sample/search/facets";
 import { MAX_SEARCH_LENGTH } from "@projet-igsn/domain/sample/search/search-tokens";
 import { z } from "zod";
@@ -54,7 +55,10 @@ function hasValidBbox(bbox: string | undefined): boolean {
 
 export function toFilters(params: SearchParams): SampleFilters {
   const filters: SampleFilters = {};
-  const record = params as Record<string, string | number | undefined>;
+  const record = params as Record<
+    string,
+    string | number | boolean | undefined
+  >;
   for (const key of activeFacetKeys(record)) filters[key] = record[key];
   return filters;
 }
@@ -65,7 +69,10 @@ export function searchQueryParams(
   const search = params.q || undefined;
   const bbox = hasValidBbox(params.bbox) ? params.bbox : undefined;
   const filters = toFilters(params);
-  if (!search && !bbox && Object.keys(filters).length === 0) return undefined;
+  const narrows = Object.keys(filters).some(
+    (key) => !SAMPLE_FACETS.some((f) => f.key === key && f.kind === "boolean"),
+  );
+  if (!search && !bbox && !narrows) return undefined;
   return {
     page: params.page,
     perPage: params.perPage ?? PER_PAGE,

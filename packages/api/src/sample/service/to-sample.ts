@@ -1,6 +1,8 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
+import type { DateRange } from "@projet-igsn/domain/sample/date-range";
 import type { Selectable } from "kysely";
 
+import { compareProcessSteps } from "@projet-igsn/domain/sample/process-step/compare-process-steps";
 import { type Sample, sampleSchema } from "@projet-igsn/domain/sample/sample";
 import { scientificContextSchema } from "@projet-igsn/domain/sample/scientific-context/model";
 
@@ -32,7 +34,7 @@ function toDateRange(
     precision: string | null;
     timeZone: string | null;
   },
-) {
+): DateRange | null {
   const { start, end, timeZone } = columns;
   if (start === null || end === null) return null;
   if (columns.precision !== "hour") return { precision: "day", start, end };
@@ -44,14 +46,27 @@ function toDateRange(
   return { precision: "hour", start, end, timeZone };
 }
 
+export function toCollectionDate(
+  row: Pick<
+    Selectable<DB["sample"]>,
+    | "id"
+    | "collection_date_start"
+    | "collection_date_end"
+    | "collection_date_precision"
+    | "collection_date_time_zone"
+  >,
+): DateRange | null {
+  return toDateRange(row.id, "collection date", {
+    start: row.collection_date_start,
+    end: row.collection_date_end,
+    precision: row.collection_date_precision,
+    timeZone: row.collection_date_time_zone,
+  });
+}
+
 function toDescription(row: Selectable<DB["sample"]>) {
   return prune({
-    collectionDate: toDateRange(row.id, "collection date", {
-      start: row.collection_date_start,
-      end: row.collection_date_end,
-      precision: row.collection_date_precision,
-      timeZone: row.collection_date_time_zone,
-    }),
+    collectionDate: toCollectionDate(row),
     oriented: row.oriented,
     orientationExplanation: row.orientation_explanation,
     openDescription: row.open_description,
@@ -192,6 +207,7 @@ function toSyntheticDetails(row: Selectable<DB["sample"]>) {
 type SampleRow = Selectable<DB["sample"]> & {
   location?: LocationRow | null;
   relations?: Selectable<DB["sample_relation"]>[];
+  processSteps?: Selectable<DB["sample_process_step"]>[];
   attachments?: Selectable<DB["sample_attachment"]>[];
   manualGroups?: ManualGroup[];
   parents?: Pick<
@@ -221,7 +237,7 @@ export function toSample(row: SampleRow): Sample {
         geologicalAgeMax: row.geological_age_max,
         geologicalUnit: row.geological_unit,
       };
-  return sampleSchema.parse({
+  const sample = sampleSchema.parse({
     id: row.id,
     name: row.name,
     nature: row.nature,
@@ -256,6 +272,16 @@ export function toSample(row: SampleRow): Sample {
       schemeType: relation.scheme_type,
       description: relation.description,
     })),
+    processSteps: (row.processSteps ?? []).map((step) => ({
+      kind: step.kind,
+      date: toDateRange(row.id, "process step date", {
+        start: step.date_start,
+        end: step.date_end,
+        precision: step.date_precision,
+        timeZone: step.date_time_zone,
+      }),
+      description: step.description,
+    })),
     attachments: (row.attachments ?? []).map((attachment) => ({
       id: attachment.id,
       name: attachment.name,
@@ -284,4 +310,6 @@ export function toSample(row: SampleRow): Sample {
     publishedAt: row.published_at,
     updatedAt: row.updated_at,
   });
+  sample.processSteps.sort(compareProcessSteps);
+  return sample;
 }

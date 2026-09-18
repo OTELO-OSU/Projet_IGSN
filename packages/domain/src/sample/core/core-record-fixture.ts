@@ -9,6 +9,7 @@ import {
   FIELD_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "./core-sample-fixture.ts";
+import { SUB_SAMPLE } from "./core-sample-variant-fixture.ts";
 import { fromCoreSample } from "./from-core-sample.ts";
 
 export const FRONTEND_URL = "https://igsn.example.org/";
@@ -473,6 +474,27 @@ const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
   },
 };
 
+const SUB_SAMPLE_RECORD: CoreSample = {
+  ...FIELD_SAMPLE_RECORD,
+  identification: {
+    ...FIELD_SAMPLE_RECORD.identification,
+    titles: [{ value: "Thin section of the block", titleType: "Main" }],
+  },
+  production: {
+    ...FIELD_SAMPLE_RECORD.production,
+    processSteps: [
+      {
+        stepType: "Subsampling",
+        description: "Sawn into three slabs",
+        timestampStart: "2024-06-05",
+        timestampEnd: "2024-06-06",
+        timestampPrecision: "day",
+      },
+      { stepType: "Preparation" },
+    ],
+  },
+};
+
 export const CORE_RECORD_FIXTURES = [
   { name: "a field sample", record: FIELD_SAMPLE_RECORD, sample: FIELD_SAMPLE },
   {
@@ -485,4 +507,5 @@ export const CORE_RECORD_FIXTURES = [
     record: SYNTHETIC_SAMPLE_RECORD,
     sample: SYNTHETIC_SAMPLE,
   },
+  { name: "a sub-sample", record: SUB_SAMPLE_RECORD, sample: SUB_SAMPLE },
 ];

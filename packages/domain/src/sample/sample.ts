@@ -30,6 +30,7 @@ import {
 } from "./metamorphic-facies/vocabulary.ts";
 import { natureSchema } from "./nature.ts";
 import { sampleParentSchema } from "./parent/model.ts";
+import { sampleProcessStepSchema } from "./process-step/model.ts";
 import {
   createSampleRelationSchema,
   sampleRelationSchema,
@@ -81,6 +82,7 @@ export const sampleSchema = z.object({
   syntheticDetails: syntheticDetailsSchema.nullable().default(null),
   age: ageSchema.nullable().default(null),
   relations: z.array(sampleRelationSchema).default([]),
+  processSteps: z.array(sampleProcessStepSchema).default([]),
   attachments: z.array(sampleAttachmentSchema).default([]),
   security: securitySchema.nullable(),
   existenceStatus: existenceStatusSchema.nullable(),
@@ -132,6 +134,7 @@ const createSampleFieldsSchema = z.strictObject({
   syntheticDetails: syntheticDetailsSchema.nullish(),
   age: ageSchema.nullish(),
   relations: z.array(createSampleRelationSchema).optional(),
+  processSteps: z.array(sampleProcessStepSchema).optional(),
   attachments: z.array(updateSampleAttachmentSchema).optional(),
   security: securitySchema.nullish(),
   existenceStatus: existenceStatusSchema.nullish(),

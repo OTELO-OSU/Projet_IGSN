@@ -6,6 +6,7 @@ import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
 import { publishBlockersOf } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 
 import { unattachableIndexes } from "../manual-group/has-unattachable.ts";
+import { PROCESS_STEPS_NEED_PARENT } from "../sample/service/replace-sample-process-steps.ts";
 import { uploadLimit } from "../sample/upload-limit.ts";
 import {
   coreSampleIssue,
@@ -21,6 +22,9 @@ export type ResolvedParent = {
 type Deps = {
   manualGroups: Pick<ManualGroupRepository, "listAttachableForUser">;
 };
+
+export const processStepsOnRootIssue = () =>
+  coreSampleIssue("custom", "processSteps", PROCESS_STEPS_NEED_PARENT);
 
 export async function createServiceSampleIssues(
   { manualGroups }: Deps,
@@ -40,6 +44,9 @@ export async function createServiceSampleIssues(
         ]),
       );
     }
+  }
+  if ((input.processSteps?.length ?? 0) > 0 && parents.length === 0) {
+    issues.push(processStepsOnRootIssue());
   }
   const sole = soleParent(parents);
   if (sole !== undefined && input.location != null) {

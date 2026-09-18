@@ -4,13 +4,17 @@ import type { PublicUser } from "@projet-igsn/domain/user/user-validator";
 import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { render } from "vitest-browser-react";
 
-import { FACET_SECTIONS, SampleFacets } from "./sample-facets.tsx";
+import {
+  FACET_SECTIONS,
+  type FacetValues,
+  SampleFacets,
+} from "./sample-facets.tsx";
 
 const LORRAINE = "04vfs2w97";
 const TYPE_FACET = "Type";
 
 async function renderFacets(
-  values: Record<string, string | number | undefined> = {},
+  values: FacetValues = {},
   manualGroups: ManualGroup[] = [],
   contributors: PublicUser[] = [],
 ) {
@@ -146,6 +150,20 @@ describe("SampleFacets", () => {
 
     expect(onChange).toHaveBeenCalledWith("institutionalLaboratory", undefined);
   });
+
+  it.each([
+    { values: {}, reported: true },
+    { values: { includeSubSamples: true }, reported: undefined },
+  ])(
+    "should report the include-sub-samples toggle as $reported",
+    async ({ values, reported }) => {
+      const { screen, onChange } = await renderFacets(values);
+
+      await screen.getByRole("switch", { name: "Include sub-samples" }).click();
+
+      expect(onChange).toHaveBeenCalledWith("includeSubSamples", reported);
+    },
+  );
 
   it("should report the picked manual group", async () => {
     const group = {

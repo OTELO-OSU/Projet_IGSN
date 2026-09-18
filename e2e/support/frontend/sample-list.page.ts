@@ -30,6 +30,10 @@ export function sampleListPage(page: Page) {
       await page.getByRole("option", { name: option }).click();
       await page.waitForURL(new RegExp(`[?&]${param}=`));
     },
+    includeSubSamples: async () => {
+      await page.getByRole("switch", { name: "Include sub-samples" }).click();
+      await page.waitForURL(/[?&]includeSubSamples=true/);
+    },
     expectFacetValue: (facet: string, value: string) =>
       expect(page.getByRole("combobox", { name: facet })).toHaveText(value),
     expectFacetOptionAbsent: async (facet: string, option: string) => {

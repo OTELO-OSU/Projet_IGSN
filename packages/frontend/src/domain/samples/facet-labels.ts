@@ -30,6 +30,7 @@ const FACET_LABEL: Record<string, () => string> = {
   institutionalLaboratory: m.sample_field_institutional_laboratory,
   manualGroup: m.facet_manual_group,
   contributor: m.facet_contributor,
+  includeSubSamples: m.facet_include_sub_samples,
 };
 
 export const facetLabel = (key: string): string => FACET_LABEL[key]?.() ?? key;

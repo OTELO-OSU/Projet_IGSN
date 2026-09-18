@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { SampleAttachment } from "../attachment/model.ts";
+import type { SampleProcessStep } from "../process-step/model.ts";
 import type { SampleRelation } from "../relation/model.ts";
 import type { Sample } from "../sample.ts";
 
@@ -44,6 +45,7 @@ const base: Sample = {
   syntheticDetails: null,
   age: null,
   relations: [],
+  processSteps: [],
   attachments: [],
   security: null,
   existenceStatus: "exists",
@@ -694,6 +696,36 @@ describe("samplePublishBlockers", () => {
   it("should not report relation_resource_type_missing once every relation has one", () => {
     expect(
       samplePublishBlockers({ ...base, relations: [relation("dataset")] }),
+    ).toEqual([]);
+  });
+
+  const DATED = {
+    precision: "day",
+    start: "2026-01-02",
+    end: "2026-01-02",
+  } as const;
+
+  const processStep = (date: SampleProcessStep["date"]): SampleProcessStep => ({
+    kind: "preparation",
+    date,
+    description: null,
+  });
+
+  it("should report process_step_date_missing when a process step carries no date", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        processSteps: [processStep(DATED), processStep(null)],
+      }),
+    ).toEqual(["process_step_date_missing"]);
+  });
+
+  it("should not report process_step_date_missing when every process step is dated", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        processSteps: [processStep(DATED), processStep(DATED)],
+      }),
     ).toEqual([]);
   });
 

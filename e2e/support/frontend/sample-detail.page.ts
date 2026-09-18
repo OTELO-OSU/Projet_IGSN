@@ -36,6 +36,12 @@ export function sampleDetailPage(page: Page) {
           "This sample is private. For more information, please contact the owner of the sample listing.",
         ),
       ).toBeVisible(),
+    expectProcessStep: async (kind: string, description: string) => {
+      await expect(page.getByText(kind, { exact: true }).first()).toBeVisible();
+      await expect(page.getByText(description, { exact: true })).toBeVisible();
+    },
+    expectNoCollectionDate: () =>
+      expect(page.getByText("Collection date", { exact: true })).toHaveCount(0),
     expectNoSection: (title: string) =>
       expect(page.getByRole("heading", { name: title })).toHaveCount(0),
     expectNoIndex: () =>

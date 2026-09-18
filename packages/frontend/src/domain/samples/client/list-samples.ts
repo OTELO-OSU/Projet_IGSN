@@ -4,7 +4,10 @@ import { listSamplesResponseSchema } from "@projet-igsn/domain/sample/sample-val
 
 import { apiFetch, baseApiUrl } from "#/api.ts";
 
-export type SampleFilters = Record<string, string | number | undefined>;
+export type SampleFilters = Record<
+  string,
+  string | number | boolean | undefined
+>;
 
 export type ListSamplesParams = {
   page: number;

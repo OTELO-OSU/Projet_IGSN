@@ -66,6 +66,7 @@ describe("getSampleByIgsn", () => {
       syntheticDetails: null,
       age: null,
       relations: [],
+      processSteps: [],
       attachments: [],
       security: null,
       existenceStatus: "exists",

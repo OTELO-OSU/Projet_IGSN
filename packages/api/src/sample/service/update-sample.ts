@@ -6,7 +6,9 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
+import { inheritParentCollectionDate } from "./inherit-parent-collection-date.ts";
 import { replaceSampleManualGroups } from "./replace-sample-manual-groups.ts";
+import { replaceSampleProcessSteps } from "./replace-sample-process-steps.ts";
 import { replaceSampleRelations } from "./replace-sample-relations.ts";
 import { sampleColumns } from "./sample-columns.ts";
 import { writeSampleLocation } from "./write-sample-location.ts";
@@ -24,7 +26,9 @@ export async function updateSample(
     .executeTakeFirst();
   if (!row) return null;
   await writeSampleLocation(db, id, input.location);
+  await inheritParentCollectionDate(db, id);
   await replaceSampleRelations(db, id, input.relations ?? []);
+  await replaceSampleProcessSteps(db, id, input.processSteps ?? []);
   if (input.manualGroupIds) {
     await replaceSampleManualGroups(db, id, input.manualGroupIds);
   }

@@ -37,6 +37,7 @@ import { uploadLimit } from "../sample/upload-limit.ts";
 import {
   type ResolvedParent,
   createServiceSampleIssues,
+  processStepsOnRootIssue,
 } from "./create-service-sample-issues.ts";
 import {
   SERVED_MEDIA_TYPES,
@@ -290,6 +291,12 @@ export function createServiceRoutes(
       const blockers = newPublishBlockers(current, merged, uploadLimit);
       if (blockers.length > 0) {
         return invalid(c, publishBlockerIssues(blockers));
+      }
+      if (
+        (merged.processSteps?.length ?? 0) > 0 &&
+        current.parents.length === 0
+      ) {
+        return invalid(c, [processStepsOnRootIssue()]);
       }
       const updated = await samples.update(current.id, merged);
       if (!updated) {

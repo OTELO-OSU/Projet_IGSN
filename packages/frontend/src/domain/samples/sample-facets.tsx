@@ -10,6 +10,7 @@ import {
 import { Input } from "@projet-igsn/design-system/components/ui/input";
 import { Label } from "@projet-igsn/design-system/components/ui/label";
 import { SearchField } from "@projet-igsn/design-system/components/ui/search-field";
+import { Switch } from "@projet-igsn/design-system/components/ui/switch";
 import { filterLaboratoriesByOrgAndOsu } from "@projet-igsn/domain/institutional-group/filter-laboratories-by-org-and-osu";
 import { filterOsusByOrg } from "@projet-igsn/domain/institutional-group/filter-osus-by-org";
 import {
@@ -24,13 +25,16 @@ import { facetLabel, facetValueLabel } from "#/domain/samples/facet-labels.ts";
 import { numericUnitLabel } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
 
-export type FacetValues = Record<string, string | number | undefined>;
+export type FacetValues = Record<string, string | number | boolean | undefined>;
 
 export const FACET_SECTIONS: readonly {
   title: () => string;
   keys: readonly string[];
 }[] = [
-  { title: m.facet_section_classification, keys: ["type", "nature"] },
+  {
+    title: m.facet_section_classification,
+    keys: ["includeSubSamples", "type", "nature"],
+  },
   {
     title: m.facet_section_type,
     keys: ["material", "texture", "collectionMethod"],
@@ -94,7 +98,7 @@ function withSelected(
 
 type SampleFacetsProps = {
   values: FacetValues;
-  onChange: (key: string, value: string | number | undefined) => void;
+  onChange: (key: string, value: string | number | boolean | undefined) => void;
   onClearAll: () => void;
   manualGroups?: ManualGroup[];
   contributors?: PublicUser[];
@@ -163,6 +167,15 @@ export function SampleFacets({
           />
         );
       }
+      case "boolean":
+        return (
+          <BooleanFacet
+            key={facet.key}
+            label={label}
+            checked={values[facet.key] === true}
+            onChange={(checked) => onChange(facet.key, checked || undefined)}
+          />
+        );
       case "text":
         return (
           <TextFacet
@@ -267,6 +280,24 @@ function EnumFacet({
         searchPlaceholder={m.facet_search_placeholder()}
         emptyText={m.facet_empty()}
       />
+    </div>
+  );
+}
+
+function BooleanFacet({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="flex items-center gap-2">
+      <Switch id={id} checked={checked} onCheckedChange={onChange} />
+      <Label htmlFor={id}>{label}</Label>
     </div>
   );
 }

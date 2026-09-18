@@ -6,6 +6,7 @@ import { toSubSampleDefaults } from "./to-sub-sample-defaults.ts";
 
 const PARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301";
 const GRANDPARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3300";
+const SECOND_PARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3302";
 
 const parent: Sample = {
   id: PARENT_ID,
@@ -55,6 +56,7 @@ const parent: Sample = {
       description: null,
     },
   ],
+  processSteps: [{ kind: "preparation", description: "Powdered" }],
   attachments: [
     {
       id: "3f2504e0-4f89-41d3-9a0c-0305e82c33cc",
@@ -99,6 +101,7 @@ it("should inherit every block of the parent but its identity, its collections a
   expect(toSubSampleDefaults([parent])).toEqual({
     parentIds: [PARENT_ID],
     relations: [],
+    processSteps: [],
     attachments: [],
     manualGroupIds: [],
     type: "dredge",
@@ -142,5 +145,31 @@ it("should inherit every block of the parent but its identity, its collections a
     economicResourceTypePrecision: null,
     economicDepositName: null,
     economicDepositDescription: null,
+  });
+});
+
+const secondParent: Sample = {
+  ...parent,
+  id: SECOND_PARENT_ID,
+  description: {
+    collectionDate: {
+      precision: "day",
+      start: "2026-03-05",
+      end: "2026-03-05",
+    },
+  },
+};
+
+it("should give a sub sample of two parents a synthetic material and the span of their collection dates", () => {
+  expect(toSubSampleDefaults([parent, secondParent])).toEqual({
+    material: "rock_and_sediment.synthetic_rock_mineral",
+    parentIds: [PARENT_ID, SECOND_PARENT_ID],
+    description: {
+      collectionDate: {
+        precision: "day",
+        start: "2026-01-01",
+        end: "2026-03-05",
+      },
+    },
   });
 });

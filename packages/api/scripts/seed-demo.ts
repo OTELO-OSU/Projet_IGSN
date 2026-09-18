@@ -6,7 +6,12 @@ import type { DB } from "../src/db.ts";
 import type { SampleOwner } from "./seed.ts";
 
 import { createDb } from "../src/db.ts";
-import { DEMO_PARENTS, DEMO_SAMPLES } from "./seed-demo-samples.ts";
+import { replaceSampleProcessSteps } from "../src/sample/service/replace-sample-process-steps.ts";
+import {
+  DEMO_PARENTS,
+  DEMO_PROCESS_STEPS,
+  DEMO_SAMPLES,
+} from "./seed-demo-samples.ts";
 import { insertSamples, seedMockUsers } from "./seed.ts";
 
 const listAcceptedOwners = (db: Kysely<DB>): Promise<SampleOwner[]> =>
@@ -68,6 +73,9 @@ const parentRows = Object.entries(DEMO_PARENTS).flatMap(([child, parents]) =>
 );
 if (parentRows.length > 0) {
   await db.insertInto("sample_parent").values(parentRows).execute();
+}
+for (const [name, steps] of Object.entries(DEMO_PROCESS_STEPS)) {
+  await replaceSampleProcessSteps(db, sampleId(name), steps);
 }
 await db.destroy();
 

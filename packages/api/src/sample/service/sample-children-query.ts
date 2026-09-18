@@ -25,6 +25,15 @@ export function sampleRelationsQuery(eb: ExpressionBuilder<DB, "sample">) {
   ).as("relations");
 }
 
+export function sampleProcessStepsQuery(eb: ExpressionBuilder<DB, "sample">) {
+  return jsonArrayFrom(
+    eb
+      .selectFrom("sample_process_step")
+      .selectAll("sample_process_step")
+      .whereRef("sample_process_step.sample_id", "=", "sample.id"),
+  ).as("processSteps");
+}
+
 export function sampleManualGroupsQuery(eb: ExpressionBuilder<DB, "sample">) {
   return jsonArrayFrom(
     eb

@@ -120,6 +120,24 @@ describe("searchQueryParams", () => {
     });
   });
 
+  it("should not search on the include-sub-samples toggle alone", () => {
+    expect(
+      searchQueryParams({ includeSubSamples: true, page: 1 }),
+    ).toBeUndefined();
+  });
+
+  it("should send the include-sub-samples toggle alongside a real search", () => {
+    expect(
+      searchQueryParams({ q: "granite", includeSubSamples: true, page: 1 }),
+    ).toEqual({
+      page: 1,
+      perPage: PER_PAGE,
+      search: "granite",
+      bbox: undefined,
+      filters: { includeSubSamples: true },
+    });
+  });
+
   it("should return undefined when nothing is usable", () => {
     expect(
       searchQueryParams({ bbox: "-10,200,10,50", page: 1 }),

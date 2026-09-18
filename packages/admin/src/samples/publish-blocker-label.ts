@@ -47,6 +47,7 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
     m.publish_blocked_synthetic_operator_lastname_missing,
   relation_resource_type_missing:
     m.publish_blocked_relation_resource_type_missing,
+  process_step_date_missing: m.publish_blocked_process_step_date_missing,
   parent_not_found: m.publish_blocked_parent_not_found,
   attachment_metadata_missing: m.publish_blocked_attachment_metadata_missing,
   attachment_limit_exceeded: () =>

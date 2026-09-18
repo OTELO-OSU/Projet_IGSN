@@ -7,7 +7,7 @@ import {
   PERSON_FACET_COLUMNS,
 } from "./facet-filter.ts";
 
-const COLUMN_LESS_KINDS = ["numericRange", "linked"];
+const COLUMN_LESS_KINDS = ["numericRange", "linked", "boolean"];
 
 describe("facet allow-lists", () => {
   it("should map every column-backed facet to a column", () => {

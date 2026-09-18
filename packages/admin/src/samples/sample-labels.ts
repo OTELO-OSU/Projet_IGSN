@@ -36,6 +36,7 @@ export const {
   startingMaterialNatureLabel,
   finalProductLabel,
   experimentTypeLabel,
+  processStepKindLabel,
   relationTypeLabel,
   relationTargetResourceTypeLabel,
 } = createSampleLabels(m as unknown as Messages);

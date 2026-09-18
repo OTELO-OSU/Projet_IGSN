@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { User } from "../../user/model.ts";
 import type { SampleAttachment } from "../attachment/model.ts";
+import type { SampleProcessStep } from "../process-step/model.ts";
 import type { SampleRelation } from "../relation/model.ts";
 import type { Sample } from "../sample.ts";
 
@@ -49,6 +50,7 @@ export const publishBlockerSchema = z.enum([
   "synthetic_operator_firstname_missing",
   "synthetic_operator_lastname_missing",
   "relation_resource_type_missing",
+  "process_step_date_missing",
   "parent_not_found",
   "attachment_metadata_missing",
   "attachment_limit_exceeded",
@@ -72,6 +74,7 @@ export type PublishableFields = Pick<
   | "syntheticDetails"
 > & {
   relations: readonly Partial<Pick<SampleRelation, "targetResourceType">>[];
+  processSteps: readonly Partial<Pick<SampleProcessStep, "date">>[];
 };
 
 export function toPublishableFields(
@@ -90,6 +93,7 @@ export function toPublishableFields(
     scientificContext: sample.scientificContext ?? null,
     syntheticDetails: sample.syntheticDetails ?? null,
     relations: sample.relations ?? [],
+    processSteps: sample.processSteps ?? [],
   };
 }
 
@@ -282,6 +286,10 @@ export function samplePublishBlockers(
     sample.relations.some((relation) => relation.targetResourceType == null)
   ) {
     blockers.push("relation_resource_type_missing");
+  }
+
+  if (sample.processSteps.some((step) => step.date == null)) {
+    blockers.push("process_step_date_missing");
   }
 
   if (sample.parents?.some((parent) => parent === null)) {

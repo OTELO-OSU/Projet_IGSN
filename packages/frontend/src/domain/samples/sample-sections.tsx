@@ -16,6 +16,7 @@ import { DescriptionView } from "#/domain/samples/description-view.tsx";
 import { EconomicInterestView } from "#/domain/samples/economic-interest-view.tsx";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
+import { ProcessStepsView } from "#/domain/samples/process-steps-view.tsx";
 import { RelationsView } from "#/domain/samples/relations-view.tsx";
 import { RepositoryView } from "#/domain/samples/repository-view.tsx";
 import {
@@ -57,10 +58,12 @@ export function sampleSections(
     geologicalContextDescription,
     geomorphologicalEnvironment,
     syntheticDetails,
+    processSteps,
     institutionalOrganization,
     institutionalOsu,
     institutionalLaboratory,
     manualGroups,
+    parents,
     location,
     security,
     existenceStatus,
@@ -77,6 +80,11 @@ export function sampleSections(
   }: PublishedSample,
   lineage: SampleSection | null,
 ): SampleSection[] {
+  // A sub-sample's collection date is its parents', not information about itself (ADR 0045).
+  const shownDescription =
+    description && parents.length > 0
+      ? { ...description, collectionDate: null }
+      : description;
   return [
     {
       id: "sample",
@@ -147,11 +155,12 @@ export function sampleSections(
         </FieldRows>
       ),
     },
-    description && {
-      id: "description",
-      title: m.sample_section_description(),
-      content: <DescriptionView description={description} />,
-    },
+    shownDescription &&
+      Object.values(shownDescription).some((value) => value != null) && {
+        id: "description",
+        title: m.sample_section_description(),
+        content: <DescriptionView description={shownDescription} />,
+      },
     location && {
       id: "location",
       title: m.sample_section_location(),
@@ -195,6 +204,11 @@ export function sampleSections(
       id: "synthetic-details",
       title: m.sample_section_synthetic_details(),
       content: <SyntheticDetailsView syntheticDetails={syntheticDetails} />,
+    },
+    processSteps.length > 0 && {
+      id: "process-steps",
+      title: m.sample_section_process_steps(),
+      content: <ProcessStepsView processSteps={processSteps} />,
     },
     institutionalOrganization !== null && {
       id: "institution",

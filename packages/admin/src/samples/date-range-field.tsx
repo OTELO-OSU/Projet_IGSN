@@ -10,7 +10,10 @@ import { m } from "#/paraglide/messages.js";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 type DateRangeFieldProps = {
-  prefix: "description.collectionDate" | "syntheticDetails.synthesisDate";
+  prefix:
+    | "description.collectionDate"
+    | "syntheticDetails.synthesisDate"
+    | `processSteps[${number}].date`;
   id: string;
   groupLabel: string;
   rangeModeLabel: string;

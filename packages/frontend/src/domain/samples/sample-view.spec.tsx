@@ -89,6 +89,7 @@ describe("SampleView", () => {
       "Scientific context",
       "Repository",
       "Synthetic details",
+      "Process steps",
       "Institution",
       "Groups",
       "Lineage",
@@ -410,6 +411,25 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
+  it("should show the process steps as their own section", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          processSteps: [
+            { kind: "subsampling", description: "Split with a rock saw" },
+          ],
+        })}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 2, name: "Process steps" }))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Split with a rock saw"))
+      .toBeInTheDocument();
+  });
+
   it("should show the security as its own section with its hazards", async () => {
     const screen = await render(
       <SampleView
@@ -452,6 +472,67 @@ describe("SampleView", () => {
       .toBeInTheDocument();
     await expect.element(screen.getByText("2024-03-05")).toBeInTheDocument();
     await expect.element(screen.getByText("1.4 kg")).toBeInTheDocument();
+  });
+
+  it("should hide the collection date of a sub-sample, which inherits its parent's", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          parents: [
+            {
+              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
+              igsn: "0123456789ABCDEFGHJKMNPQRT",
+              name: "Basalt 41",
+              material: null,
+            },
+          ],
+          description: {
+            collectionDate: {
+              precision: "day",
+              start: "2024-03-05",
+              end: "2024-03-05",
+            },
+            mass: { value: 1.4, unit: "kg" },
+          },
+        })}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Description" }))
+      .toBeInTheDocument();
+    await expect.element(screen.getByText("1.4 kg")).toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Collection date"))
+      .not.toBeInTheDocument();
+  });
+
+  it("should omit the description section of a sub-sample described by its collection date alone", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          parents: [
+            {
+              id: "3f2504e0-4f89-41d3-9a0c-0305e82c3302",
+              igsn: "0123456789ABCDEFGHJKMNPQRT",
+              name: "Basalt 41",
+              material: null,
+            },
+          ],
+          description: {
+            collectionDate: {
+              precision: "day",
+              start: "2024-03-05",
+              end: "2024-03-05",
+            },
+          },
+        })}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { name: "Description" }))
+      .not.toBeInTheDocument();
   });
 
   it("should show the condition as its own section with its rows", async () => {
