@@ -6,6 +6,10 @@ import {
   coreSampleSchema,
 } from "@projet-igsn/domain/sample/core/core-sample-schema";
 import {
+  DATACITE_MEDIA_TYPE,
+  dataCiteSampleSchema,
+} from "@projet-igsn/domain/sample/datacite/datacite-schema";
+import {
   DEFAULT_PAGE_SIZE,
   PAGE_SIZES,
   pageSchema,
@@ -13,6 +17,7 @@ import {
 } from "@projet-igsn/domain/sample/sample-validator";
 import {
   coreListSamplesResponseSchema,
+  dataCiteListSamplesResponseSchema,
   frozenServiceSampleSchema,
   invalidServiceSampleSchema,
   serviceErrorSchema,
@@ -37,6 +42,28 @@ const json = <Schema extends z.ZodType>(
   description,
   content: { "application/json": { schema } },
 });
+
+export const SERVED_MEDIA_TYPES = [
+  "application/json",
+  DATACITE_MEDIA_TYPE,
+] as const;
+
+const negotiated = <Core extends z.ZodType, DataCite extends z.ZodType>(
+  core: Core,
+  dataCite: DataCite,
+  description: string,
+) => ({
+  description,
+  content: {
+    "application/json": { schema: core },
+    [DATACITE_MEDIA_TYPE]: { schema: dataCite },
+  },
+});
+
+const NOT_ACCEPTABLE = json(
+  serviceErrorSchema,
+  "The Accept header asks for a format the api does not serve.",
+);
 
 const FORBIDDEN = json(
   serviceErrorSchema,
@@ -65,6 +92,18 @@ const UNSUPPORTED_MEDIA_TYPE = json(
   "The request carries a body that is not application/json.",
 );
 
+const acceptHeaderSchema = z.object({
+  accept: z
+    .string()
+    .optional()
+    .meta({
+      enum: [...SERVED_MEDIA_TYPES],
+      default: SERVED_MEDIA_TYPES[0],
+      description:
+        "Format the response is served in. Left out, set to application/json, application/* or */*, the sample is an IGSN Core record; set to the DataCite media type, it is a DataCite 4.7 record. Any other value answers 406.",
+    }),
+});
+
 const igsnParamSchema = z.object({
   igsn: igsnSchema.meta({
     description: "IGSN of the sample, with no doi.org or igsn: prefix.",
@@ -85,6 +124,7 @@ export const listSamplesRoute = createRoute({
     "Lists every published sample of the registry as IGSN Core records, ordered by IGSN. Pass editable=true to narrow the list to the samples the service account itself may update, and any other parameter to filter it, several of them narrowing the list together.",
   security: SECURITY,
   request: {
+    headers: acceptHeaderSchema,
     query: z.object({
       page: pageSchema.meta({
         type: "integer",
@@ -107,8 +147,13 @@ export const listSamplesRoute = createRoute({
     }),
   },
   responses: {
-    200: json(coreListSamplesResponseSchema, "One page of published samples."),
+    200: negotiated(
+      coreListSamplesResponseSchema,
+      dataCiteListSamplesResponseSchema,
+      "One page of published samples.",
+    ),
     403: FORBIDDEN,
+    406: NOT_ACCEPTABLE,
     429: THROTTLED,
     500: FAILED,
   },
@@ -122,12 +167,17 @@ export const getSampleRoute = createRoute({
   description:
     "Returns the published sample carrying this IGSN as an IGSN Core record, whatever the account's reach. A sample that is not published answers 404.",
   security: SECURITY,
-  request: { params: igsnParamSchema },
+  request: { headers: acceptHeaderSchema, params: igsnParamSchema },
   responses: {
-    200: json(coreSampleSchema, "The published sample."),
+    200: negotiated(
+      coreSampleSchema,
+      dataCiteSampleSchema,
+      "The published sample.",
+    ),
     400: INVALID_IGSN,
     403: FORBIDDEN,
     404: NOT_FOUND,
+    406: NOT_ACCEPTABLE,
     429: THROTTLED,
     500: FAILED,
   },

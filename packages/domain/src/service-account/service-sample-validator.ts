@@ -3,29 +3,56 @@ import { z } from "zod";
 import type { PublishBlocker } from "../sample/publication/sample-publish-blockers.ts";
 
 import { coreSampleSchema } from "../sample/core/core-sample-schema.ts";
+import { dataCiteSampleSchema } from "../sample/datacite/datacite-schema.ts";
 
-export const coreListSamplesResponseSchema = z
-  .object({
-    data: z.array(coreSampleSchema).meta({
-      description:
-        "Published samples the account can read, one IGSN Core record each.",
-    }),
-    meta: z
-      .object({
-        total: z.number().int().nonnegative().meta({
-          description:
-            "Number of samples matching the query, every page taken together.",
-        }),
-      })
-      .meta({ description: "Counters describing the whole result set." }),
-  })
-  .meta({
+const listSamplesResponseSchema = <Record extends z.ZodType>(
+  record: Record,
+  {
+    id,
+    description,
+    format,
+  }: { id: string; description: string; format: string },
+) =>
+  z
+    .object({
+      data: z.array(record).meta({
+        description: `Published samples the account can read, one ${format} record each.`,
+      }),
+      meta: z
+        .object({
+          total: z.number().int().nonnegative().meta({
+            description:
+              "Number of samples matching the query, every page taken together.",
+          }),
+        })
+        .meta({ description: "Counters describing the whole result set." }),
+    })
+    .meta({ id, description });
+
+export const coreListSamplesResponseSchema = listSamplesResponseSchema(
+  coreSampleSchema,
+  {
     id: "CoreSampleList",
     description: "One page of IGSN Core sample records.",
-  });
+    format: "IGSN Core",
+  },
+);
 
 export type CoreListSamplesResponse = z.infer<
   typeof coreListSamplesResponseSchema
+>;
+
+export const dataCiteListSamplesResponseSchema = listSamplesResponseSchema(
+  dataCiteSampleSchema,
+  {
+    id: "DataCiteSampleList",
+    description: "One page of DataCite 4.7 sample records.",
+    format: "DataCite 4.7",
+  },
+);
+
+export type DataCiteListSamplesResponse = z.infer<
+  typeof dataCiteListSamplesResponseSchema
 >;
 
 export type ServiceSampleIssueCode =

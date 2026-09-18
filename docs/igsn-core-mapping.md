@@ -1,6 +1,6 @@
 # IGSN Core v0.10.0 pivot on the `/service` API
 
-Status: **implemented**. `GET/POST/PUT /service/samples` and `GET /service/samples/:igsn` (ADR 0036, amended by ADR 0040) emit and accept IGSN Sample Core v0.10.0 records.
+Status: **implemented**. `GET/POST/PUT /service/samples` and `GET /service/samples/:igsn` (ADR 0036, amended by ADR 0040) emit and accept IGSN Sample Core v0.10.0 records. The two GET routes also serve a DataCite 4.7 record on request; see [`docs/datacite-mapping.md`](datacite-mapping.md) and ADR [0042](adr/0042-format-negotiation-on-the-service-api.md).
 
 Source: `IGSN-Core_v0.10.0.docx` (gitignored) and the application mapping sheet `coreMapping_applicatif_v0.10.0.xlsx` (repo root, untracked). This replaces the earlier v0.7.0 study, which listed why the pivot could not ship (no slot for provenance status, collection origin, synthesis parameters, age, hazards, collection-date precision, programme description, and a foreign status model). v0.10.0 answers every one of those points: `extensions.geology / safety / experiment`, `lifecycleEvents` as the single state model, `production.collectionMethod`, `collectionDatePrecision`/`collectionDateTimeZone`, `Project.funding`/`description`, `samplingSite_name`, OTELo ROR, UCUM units.
 
