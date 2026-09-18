@@ -6,7 +6,7 @@ import { facetFilters } from "./facet-filter.ts";
 
 describe("facetFilters", () => {
   pgTest(
-    "should reach a trigram index on both halves of a person facet",
+    "should reach an index on both halves of a person facet and on its account link",
     async ({ db }) => {
       // Arrange
       await sql`set local enable_seqscan = off`.execute(db);
@@ -27,6 +27,9 @@ describe("facetFilters", () => {
       expect(JSON.stringify(plan)).toContain(
         "sample_sc_collector_lastname_trgm_idx",
       );
+      expect(JSON.stringify(plan)).toContain("sample_sc_collector_user_id_idx");
+      expect(JSON.stringify(plan)).toContain("user_firstname_trgm_idx");
+      expect(JSON.stringify(plan)).toContain("user_name_trgm_idx");
     },
   );
 });

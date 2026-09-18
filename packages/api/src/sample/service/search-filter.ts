@@ -6,6 +6,7 @@ import { type Expression, sql, type SqlBool, type Transaction } from "kysely";
 
 import type { DB } from "../../db.ts";
 
+import { unaccented } from "../../unaccented.ts";
 import { fuzzyThreshold } from "./fuzzy-threshold.ts";
 
 const SEARCHED_COLUMNS = ["name", "specific_name"] as const;
@@ -13,10 +14,6 @@ const SEARCHED_COLUMNS = ["name", "specific_name"] as const;
 const FUZZY_MIN_LENGTH = 5;
 
 const ESCAPED_GROUP = "\\\\\\1";
-
-function searchable(column: string) {
-  return sql`immutable_unaccent(coalesce(${sql.ref(column)}, ''))`;
-}
 
 function literalSegment(value: string) {
   return sql`regexp_replace(immutable_unaccent(${value}), '([^[:alnum:]])', ${ESCAPED_GROUP}, 'g')`;
@@ -44,19 +41,19 @@ function matchesIgsnExactly(token: string): Expression<SqlBool> {
   return sql<SqlBool>`igsn = upper(${token})`;
 }
 
-function matchesToken(
+export function matchesToken(
   columns: readonly string[],
   token: string,
-  extraArms: Expression<SqlBool>[],
+  extraArms: Expression<SqlBool>[] = [],
 ): Expression<SqlBool> {
   const pattern = tokenPattern(token);
   const arms = [
     ...extraArms,
-    ...columns.map((column) => sql`${searchable(column)} ~* ${pattern}`),
+    ...columns.map((column) => sql`${unaccented(column)} ~* ${pattern}`),
     ...(isFuzzyToken(token)
       ? columns.map(
           (column) =>
-            sql`${searchable(column)} %> immutable_unaccent(${token})`,
+            sql`${unaccented(column)} %> immutable_unaccent(${token})`,
         )
       : []),
   ];
@@ -101,7 +98,7 @@ export function relevanceScore(search: string): Expression<number> | undefined {
   return sql<number>`GREATEST(${sql.join(
     SEARCHED_COLUMNS.map(
       (column) =>
-        sql`word_similarity(immutable_unaccent(${needle}), ${searchable(column)})`,
+        sql`word_similarity(immutable_unaccent(${needle}), ${unaccented(column)})`,
     ),
   )})`;
 }

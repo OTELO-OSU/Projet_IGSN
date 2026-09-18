@@ -3,6 +3,7 @@ import type { ScientificContext } from "../scientific-context/model.ts";
 import type { ProvenanceStatus } from "../scientific-context/provenance-status.ts";
 import type { SyntheticDetails } from "../synthetic-details/model.ts";
 
+import { dropTypedNameWhenLinked } from "../contact-link.ts";
 import { isPathAtOrUnder } from "../path/is-at-or-under.ts";
 import { frozenMaterialPrefix } from "./frozen-material-prefix.ts";
 
@@ -10,16 +11,20 @@ const LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   manualGroupIds: ["manualGroupIds"],
 } as const;
 const LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS = {
+  collectorUserId: ["scientificContext.collectorUserId"],
   collectorFirstname: ["scientificContext.collectorFirstname"],
   collectorLastname: ["scientificContext.collectorLastname"],
+  collectorOrcid: ["scientificContext.collectorOrcid"],
 } as const;
 const LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS = {
   collectionOrigin: ["scientificContext.collectionOrigin"],
 } as const;
 
 const LOCKED_SYNTHETIC_DETAILS_FIELDS_TO_FORM_FIELDS = {
+  operatorUserId: ["syntheticDetails.operatorUserId"],
   operatorFirstname: ["syntheticDetails.operatorFirstname"],
   operatorLastname: ["syntheticDetails.operatorLastname"],
+  operatorOrcid: ["syntheticDetails.operatorOrcid"],
 } as const;
 
 const PROVENANCE_DISCRIMINANT_FORM_FIELD =
@@ -61,7 +66,7 @@ function freezeLocked<T extends object, K extends keyof T & string>(
 ): T {
   const frozen: Partial<T> = {};
   for (const key of Object.keys(locked) as K[]) frozen[key] = current[key];
-  return { ...incoming, ...frozen };
+  return dropTypedNameWhenLinked({ ...incoming, ...frozen });
 }
 
 function mergeMaterial(
@@ -94,7 +99,8 @@ function mergeScientificContext(
     return null;
   }
   if (current.provenanceStatus === "field_sample") {
-    if (incoming?.provenanceStatus !== "field_sample") return current;
+    if (incoming?.provenanceStatus !== "field_sample")
+      return dropTypedNameWhenLinked(current);
     const payload: FieldSample = { ...incoming };
     return freezeLocked(
       payload,
@@ -102,7 +108,8 @@ function mergeScientificContext(
       LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS,
     );
   }
-  if (incoming?.provenanceStatus !== "collection_specimen") return current;
+  if (incoming?.provenanceStatus !== "collection_specimen")
+    return dropTypedNameWhenLinked(current);
   const payload: CollectionSpecimen = { ...incoming };
   return freezeLocked(
     payload,

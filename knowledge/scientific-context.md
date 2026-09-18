@@ -34,22 +34,24 @@ Codes and labels (renamed 2026-09-04, data migration `20260904074005-rename-prov
 Field sample branch:
 
 - The four person fields (`chiefScientist`, `collector`, `collectionCurator`, `operator` on synthetic details) are each split into a `*Firstname`/`*Lastname` pair, indexed with a trigram index per column; see [[search-facets]].
-- Mandatory to publish ([[publish-blockers]]): `funderOrganizations` (multi ROR), `researchProgramName`, `hostInstitution` (multi ROR), `collectorFirstname` + `collectorLastname`. `chiefScientistFirstname`/`chiefScientistLastname` are not mandatory, but publishing blocks on the empty half once the other is filled (`chief_scientist_firstname_missing` / `chief_scientist_lastname_missing`).
-- Optional: `chiefScientistFirstname`, `chiefScientistLastname`, `chiefScientistOrcid`, `collectorOrcid`, `researchCampaign`, `funding`, `researchProgramDescription`, `fieldName`, `missionDescription`.
-- Frozen after publication ([[published-field-locks]], `LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS`): `collectorFirstname`, `collectorLastname` and `collectorOrcid`. The chief scientist's name and ORCID stay editable.
-- Public search facets ([[search-facets]]): `researchProgramName`, `chiefScientist`, `hostInstitution`, `collectorName`. The three person facets match a full name token by token against both the firstname and lastname columns. Funder organizations have none.
+- Each person is EITHER a link to a registry account (`*UserId`) OR a typed name, never both: `domain/sample/contact-link.ts` holds that exclusivity, enforced on the write schemas and by a Postgres CHECK per person. The read model resolves a link to the account's firstname/lastname/ORCID live, not snapshotted, so renaming an account changes a published sample's display and its public payload; accepted, see ADR 0032. A link is not a collaborator role and grants no `user_sample` row or contributor facet; deleting a linked account is refused at the database (`on delete restrict`).
+- Mandatory to publish ([[publish-blockers]]): `funderOrganizations` (multi ROR), `researchProgramName`, `hostInstitution` (multi ROR), a collector (a link, or the `collectorFirstname` + `collectorLastname` pair). `chiefScientistFirstname`/`chiefScientistLastname` are not mandatory, but publishing blocks on the empty half once the other is filled (`chief_scientist_firstname_missing` / `chief_scientist_lastname_missing`); a link always satisfies these blockers, whatever the account holds.
+- Optional: `chiefScientistFirstname`, `chiefScientistLastname`, `chiefScientistOrcid` (or `chiefScientistUserId`), `collectorOrcid`, `researchCampaign`, `funding`, `researchProgramDescription`, `fieldName`, `missionDescription`.
+- Frozen after publication ([[published-field-locks]], `LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS`): the collector as one unit, `collectorUserId`, `collectorFirstname`, `collectorLastname` and `collectorOrcid`. The merge keeps the link and nulls the three typed fields when `collectorUserId` is stored, or keeps the stored name and ORCID when it is not, never both. The chief scientist stays editable.
+- Public search facets ([[search-facets]]): `researchProgramName`, `chiefScientist`, `hostInstitution`, `collectorName`. The three person facets match a full name token by token against both the firstname and lastname columns, or against a linked account's own columns. Funder organizations have none.
 
 Collection specimen branch:
 
-- Mandatory: `collectionCuratorFirstname` + `collectionCuratorLastname`, `collectionOrigin` (enum `scientific_expedition | purchase | constitution | inheritance | unknown_origin`).
-- Optional: `collectorFirstname`, `collectorLastname`, `collectionContextDescription`; publishing blocks on the empty half once the other is filled (`collector_firstname_missing` / `collector_lastname_missing`).
-- Frozen after publication: `collectionCuratorFirstname`, `collectionCuratorLastname`, `collectionOrigin`.
+- Mandatory: a collection curator (a link, or the `collectionCuratorFirstname` + `collectionCuratorLastname` pair), `collectionOrigin` (enum `scientific_expedition | purchase | constitution | inheritance | unknown_origin`).
+- Optional: a collector (link or typed name), `collectionContextDescription`; publishing blocks on the empty typed half once the other is filled (`collector_firstname_missing` / `collector_lastname_missing`).
+- Frozen after publication: `collectionCuratorFirstname`, `collectionCuratorLastname`, `collectionOrigin`. The collection curator has no `*UserId`/`*Orcid` entry in the lock: it never carried one before this ticket and still does not.
 - Facet: `collectionCurator`.
 - A collection specimen publishes without a location: `requiresLocation(provenanceStatus)` is false for it alone ([[location-material-gate]]).
 
 Shared rules:
 
 - `provenanceStatus` itself is mandatory (`scientific_context_missing`) and frozen after publication; `mergeScientificContext` returns the stored branch whole when a payload disagrees on the discriminant.
-- `collectorFirstname`/`collectorLastname` are the one pair on both branches, `sc_collector_firstname`/`sc_collector_lastname` columns; mandatory and frozen on a field sample, optional and editable on a collection specimen.
+- `collectorFirstname`/`collectorLastname`/`collectorUserId` are the one triple on both branches, `sc_collector_firstname`/`sc_collector_lastname`/`sc_collector_user_id` columns; mandatory and frozen (as one unit) on a field sample, optional and editable on a collection specimen.
 - Switching the status in the admin form drops the other branch's values outright (owner's call, a deviation from [[form-kit-and-hidden-values]] keep-and-restore); the compose step emits the active branch only.
 - Organization names are reference data from `ORGANIZATIONS`, not i18n.
+- IGSN Core has no slot for a registry account, so a `/service` POST always lands a person as typed text.

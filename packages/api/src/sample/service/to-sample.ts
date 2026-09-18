@@ -122,20 +122,47 @@ function toSecurity(row: Selectable<DB["sample"]>) {
   });
 }
 
-function toScientificContext(row: Selectable<DB["sample"]>) {
+function resolveContact(
+  account: ContactAccount | null | undefined,
+  columns: {
+    firstname: string | null;
+    lastname: string | null;
+    orcid?: string | null;
+  },
+) {
+  return {
+    firstname: columns.firstname ?? account?.firstname ?? null,
+    lastname: columns.lastname ?? account?.name ?? null,
+    orcid: columns.orcid ?? account?.orcid ?? null,
+  };
+}
+
+function toScientificContext(row: SampleRow) {
+  const collector = resolveContact(row.collectorAccount, {
+    firstname: row.sc_collector_firstname,
+    lastname: row.sc_collector_lastname,
+    orcid: row.sc_collector_orcid,
+  });
   if (row.sc_provenance_status === "field_sample") {
+    const chiefScientist = resolveContact(row.chiefScientistAccount, {
+      firstname: row.sc_chief_scientist_firstname,
+      lastname: row.sc_chief_scientist_lastname,
+      orcid: row.sc_chief_scientist_orcid,
+    });
     return scientificContextSchema.parse({
       provenanceStatus: "field_sample",
       ...omitNull({
         funderOrganizations: row.sc_funder_organizations,
         researchProgramName: row.sc_research_program_name,
-        chiefScientistFirstname: row.sc_chief_scientist_firstname,
-        chiefScientistLastname: row.sc_chief_scientist_lastname,
-        chiefScientistOrcid: row.sc_chief_scientist_orcid,
+        chiefScientistUserId: row.sc_chief_scientist_user_id,
+        chiefScientistFirstname: chiefScientist.firstname,
+        chiefScientistLastname: chiefScientist.lastname,
+        chiefScientistOrcid: chiefScientist.orcid,
         hostInstitution: row.sc_host_institution,
-        collectorFirstname: row.sc_collector_firstname,
-        collectorLastname: row.sc_collector_lastname,
-        collectorOrcid: row.sc_collector_orcid,
+        collectorUserId: row.sc_collector_user_id,
+        collectorFirstname: collector.firstname,
+        collectorLastname: collector.lastname,
+        collectorOrcid: collector.orcid,
         researchCampaign: row.sc_research_campaign,
         funding: row.sc_funding,
         researchProgramDescription: row.sc_research_program_description,
@@ -145,14 +172,20 @@ function toScientificContext(row: Selectable<DB["sample"]>) {
     });
   }
   if (row.sc_provenance_status === "collection_specimen") {
+    const curator = resolveContact(row.collectionCuratorAccount, {
+      firstname: row.sc_collection_curator_firstname,
+      lastname: row.sc_collection_curator_lastname,
+    });
     return scientificContextSchema.parse({
       provenanceStatus: "collection_specimen",
       ...omitNull({
-        collectionCuratorFirstname: row.sc_collection_curator_firstname,
-        collectionCuratorLastname: row.sc_collection_curator_lastname,
+        collectionCuratorUserId: row.sc_collection_curator_user_id,
+        collectionCuratorFirstname: curator.firstname,
+        collectionCuratorLastname: curator.lastname,
         collectionOrigin: row.sc_collection_origin,
-        collectorFirstname: row.sc_collector_firstname,
-        collectorLastname: row.sc_collector_lastname,
+        collectorUserId: row.sc_collector_user_id,
+        collectorFirstname: collector.firstname,
+        collectorLastname: collector.lastname,
         collectionContextDescription: row.sc_collection_context_description,
       }),
     });
@@ -172,7 +205,12 @@ function toRepository(row: Selectable<DB["sample"]>) {
   });
 }
 
-function toSyntheticDetails(row: Selectable<DB["sample"]>) {
+function toSyntheticDetails(row: SampleRow) {
+  const operator = resolveContact(row.operatorAccount, {
+    firstname: row.syn_operator_firstname,
+    lastname: row.syn_operator_lastname,
+    orcid: row.syn_operator_orcid,
+  });
   return prune({
     startingMaterial: row.syn_starting_material,
     startingMaterialNature: row.syn_starting_material_nature,
@@ -189,9 +227,10 @@ function toSyntheticDetails(row: Selectable<DB["sample"]>) {
       precision: row.syn_synthesis_date_precision,
       timeZone: row.syn_synthesis_date_time_zone,
     }),
-    operatorFirstname: row.syn_operator_firstname,
-    operatorLastname: row.syn_operator_lastname,
-    operatorOrcid: row.syn_operator_orcid,
+    operatorUserId: row.syn_operator_user_id,
+    operatorFirstname: operator.firstname,
+    operatorLastname: operator.lastname,
+    operatorOrcid: operator.orcid,
     researchStructure: row.syn_research_structure,
     temperature: measurement(
       row.syn_temperature_value,
@@ -204,7 +243,17 @@ function toSyntheticDetails(row: Selectable<DB["sample"]>) {
   });
 }
 
+type ContactAccount = {
+  firstname: string | null;
+  name: string | null;
+  orcid: string | null;
+};
+
 type SampleRow = Selectable<DB["sample"]> & {
+  chiefScientistAccount?: ContactAccount | null;
+  collectorAccount?: ContactAccount | null;
+  collectionCuratorAccount?: ContactAccount | null;
+  operatorAccount?: ContactAccount | null;
   location?: LocationRow | null;
   relations?: Selectable<DB["sample_relation"]>[];
   processSteps?: Selectable<DB["sample_process_step"]>[];

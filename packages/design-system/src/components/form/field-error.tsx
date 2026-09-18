@@ -31,13 +31,10 @@ export function FieldError({
   error,
   errorId,
 }: Pick<FieldErrorState, "error" | "errorId">) {
+  if (!error) return null;
   return (
-    <div className="min-h-5">
-      {error ? (
-        <p id={errorId} role="alert" className="text-destructive text-sm">
-          {error.message}
-        </p>
-      ) : null}
-    </div>
+    <p id={errorId} role="alert" className="text-destructive text-sm">
+      {error.message}
+    </p>
   );
 }

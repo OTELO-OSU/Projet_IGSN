@@ -1,5 +1,6 @@
-import { createSampleSchema, sampleSchema } from "./sample";
+import { createSampleSchema, sampleSchema, updateSampleSchema } from "./sample";
 
+const LINKED_USER_ID = "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10";
 const PARENT_ID = "11111111-1111-4111-8111-111111111111";
 const OTHER_PARENT_ID = "22222222-2222-4222-8222-222222222222";
 const THIRD_PARENT_ID = "33333333-3333-4333-8333-333333333333";
@@ -90,6 +91,21 @@ describe("sampleSchema", () => {
       createdAt: new Date("2026-07-02T10:00:00.000Z"),
       updatedAt: new Date("2026-07-02T10:00:00.000Z"),
     });
+  });
+
+  it("should accept a linked person together with the names resolved from the account", () => {
+    // Arrange
+    const scientificContext = {
+      provenanceStatus: "field_sample",
+      collectorUserId: LINKED_USER_ID,
+      collectorFirstname: "Marie",
+      collectorLastname: "Curie",
+      collectorOrcid: "0000-0002-1825-0097",
+    };
+    // Act
+    const result = sampleSchema.parse({ ...validSample, scientificContext });
+    // Assert
+    expect(result.scientificContext).toEqual(scientificContext);
   });
 
   it.each([
@@ -461,5 +477,46 @@ describe("createSampleSchema", () => {
     });
     // Assert
     expect(result.success).toBe(false);
+  });
+});
+
+describe("the write schemas", () => {
+  it.each([
+    ["createSampleSchema", createSampleSchema],
+    ["updateSampleSchema", updateSampleSchema],
+  ])(
+    "should reject on %s a linked collector carrying a typed name",
+    (_name, schema) => {
+      // Arrange / Act
+      const result = schema.safeParse({
+        name: "Basalte du Massif Central",
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorUserId: LINKED_USER_ID,
+          collectorFirstname: "Marie",
+        },
+      });
+      // Assert
+      expect(result.error?.issues).toMatchObject([
+        { path: ["scientificContext", "collectorUserId"] },
+      ]);
+    },
+  );
+
+  it("should reject a linked synthesis operator carrying a typed name", () => {
+    // Arrange / Act
+    const result = createSampleSchema.safeParse({
+      name: "Synthetic 1",
+      nature: "hand_sample",
+      material: "rock_and_sediment.synthetic_rock_mineral",
+      syntheticDetails: {
+        operatorUserId: LINKED_USER_ID,
+        operatorFirstname: "Marie",
+      },
+    });
+    // Assert
+    expect(result.error?.issues).toMatchObject([
+      { path: ["syntheticDetails", "operatorUserId"] },
+    ]);
   });
 });
