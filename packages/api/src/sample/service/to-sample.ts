@@ -194,6 +194,7 @@ type SampleRow = Selectable<DB["sample"]> & {
   relations?: Selectable<DB["sample_relation"]>[];
   attachments?: Selectable<DB["sample_attachment"]>[];
   manualGroups?: ManualGroup[];
+  owner?: Pick<Selectable<DB["user"]>, "name" | "firstname"> | null;
   parents?: Pick<
     Selectable<DB["sample"]>,
     "id" | "igsn" | "name" | "material"
@@ -276,6 +277,9 @@ export function toSample(row: SampleRow): Sample {
     igsn: row.igsn,
     doiPrefix: row.doi_prefix,
     manualGroups: row.manualGroups ?? [],
+    owner: row.owner
+      ? { name: row.owner.name, firstname: row.owner.firstname }
+      : null,
     parents: row.parents ?? [],
     institutionalOrganization: row.institutional_organization,
     institutionalOsu: row.institutional_osu,

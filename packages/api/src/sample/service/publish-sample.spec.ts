@@ -2,8 +2,10 @@ import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffi
 import { sql } from "kysely";
 import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 
+import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { publishableSample } from "../../tests/sample-fixtures.ts";
+import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
@@ -243,4 +245,21 @@ describe("publishSample with DataCite configured", () => {
       expect(republished?.doiPrefix).toBe("10.5072");
     },
   );
+
+  pgTest("should name the owner as the DOI creator", async ({ db }) => {
+    // Arrange
+    const created = await insertSample(db, publishableSample);
+    const owner = await insertUser(db, "marie.dupont@univ-lorraine.fr", {
+      name: "Dupont",
+      firstname: "Marie",
+    });
+    await insertSampleOwner(db, created.id, owner.id);
+    // Act
+    await publishSample(db, created.id);
+    // Assert
+    const [, init] = fetchMock.mock.calls[0]!;
+    expect(JSON.parse(init.body).data.attributes.creators).toEqual([
+      expect.objectContaining({ name: "Marie Dupont", nameType: "Personal" }),
+    ]);
+  });
 });

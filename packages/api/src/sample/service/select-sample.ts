@@ -5,6 +5,7 @@ import {
   sampleAttachmentsQuery,
   sampleLocationQuery,
   sampleManualGroupsQuery,
+  sampleOwnerQuery,
   sampleParentsQuery,
   sampleRelationsQuery,
 } from "./sample-children-query.ts";
@@ -17,4 +18,5 @@ export const selectSample = (db: Transactional<DB>) =>
     .select(sampleRelationsQuery)
     .select(sampleAttachmentsQuery)
     .select(sampleManualGroupsQuery)
-    .select(sampleParentsQuery);
+    .select(sampleParentsQuery)
+    .select(sampleOwnerQuery);
