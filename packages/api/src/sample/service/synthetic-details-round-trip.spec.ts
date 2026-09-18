@@ -30,7 +30,8 @@ const roundTripped: [string, SyntheticDetails][] = [
         start: "2025-01-10",
         end: "2025-01-12",
       },
-      operatorName: "Marie Curie",
+      operatorFirstname: "Marie",
+      operatorLastname: "Curie",
       operatorOrcid: "0000-0002-1825-0097",
       researchStructure: ["04kdfz702", "02feahw73"],
       temperature: { value: 1200, unit: "celsius" },
@@ -78,7 +79,8 @@ describe("sample synthetic details persistence", () => {
       ...base,
       syntheticDetails: {
         startingMaterialNature: "glass",
-        operatorName: "Pierre Curie",
+        operatorFirstname: "Pierre",
+        operatorLastname: "Curie",
       },
     });
     const updated = await updateSample(db, created.id, {

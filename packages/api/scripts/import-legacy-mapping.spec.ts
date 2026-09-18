@@ -500,6 +500,18 @@ describe("droppedDoiLinks", () => {
 });
 
 describe("toCreateSample", () => {
+  it("should split a legacy collector name across the name pair", () => {
+    const row = legacyRow({
+      collector: "Jostein Bakke (ORCID:0000-0001-6114-0400)",
+    });
+    expect(toCreateSample(row).scientificContext).toEqual({
+      provenanceStatus: "field_sample",
+      collectorFirstname: "Jostein",
+      collectorLastname: "Bakke",
+      collectorOrcid: "0000-0001-6114-0400",
+    });
+  });
+
   it("should produce a valid create payload for a realistic row", () => {
     const row = legacyRow({
       name: "APO19-01",

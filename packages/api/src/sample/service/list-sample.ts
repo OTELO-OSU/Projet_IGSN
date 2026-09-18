@@ -12,7 +12,7 @@ import { type Expression, sql, type SqlBool } from "kysely";
 import type { DB } from "../../db.ts";
 
 import { type Transactional, withTransaction } from "../../transaction.ts";
-import { facetFilters } from "./facet-filter.ts";
+import { facetFilters, personFacetValues } from "./facet-filter.ts";
 import { institutionSampleWhere } from "./institution-sample-where.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
@@ -87,7 +87,7 @@ async function listSamplesWhere(
   const { page, perPage, search, sort, order = "asc" } = params;
 
   return withTransaction(db, async (trx) => {
-    await applyFuzzyThreshold(trx, search);
+    await applyFuzzyThreshold(trx, [search, ...personFacetValues(params)]);
 
     const filters = [
       ...(search === undefined ? [] : searchFilters(search)),

@@ -3,6 +3,7 @@ import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 
 import { COLLECTION_METHODS } from "@projet-igsn/domain/sample/collection-method/vocabulary";
+import { splitContactName } from "@projet-igsn/domain/sample/contact-name";
 import {
   type Country,
   COUNTRIES,
@@ -108,8 +109,6 @@ const MATERIAL_ROOT_BY_LEGACY: Record<string, string> = {
   mineral: "rock_and_sediment.mineral",
 };
 
-// Targets follow the domain expert's mapping table; the legacy values it leaves
-// undecided are absent here on purpose, so those rows keep skipping until reviewed.
 const MATERIAL_SPECIALS: Record<string, string> = {
   "rock.metamorphic.calc_silicate":
     "rock.metamorphic.strongly_metamorphosed.calc_silicate_rock",
@@ -210,8 +209,6 @@ export function mapResourceType(resourceType: string | null): {
   return { type, nature };
 }
 
-// Dantas 2007, a thesis with no DOI, is absent on purpose until the geologists
-// decide.
 const DOI_URL_BY_CITATION_PREFIX: [string, string][] = [
   ["Alard, O., Lorand, J.P., Reisberg", "10.1093/petrology/egr038"],
   ["Baptiste, V., Tommasi,A. (2014)", "10.5194/se-5-1-2014"],
@@ -578,13 +575,14 @@ export function mapAge(row: LegacyRow): CreateSample["age"] | null {
 
 function mapScientificContext(row: LegacyRow): ScientificContext | null {
   const collector = parseCollector(row.collector);
-  const collectorName = "invalid" in collector ? null : collector.name;
+  const { firstname: collectorFirstname, lastname: collectorLastname } =
+    splitContactName("invalid" in collector ? null : collector.name);
   const collectorOrcid = "invalid" in collector ? null : collector.orcid;
   const researchCampaign = clean(row.cruise_field_prgm);
   const fieldName = clean(row.field_name);
   const missionDescription = clean(row.purpose);
   if (
-    !collectorName &&
+    !collectorLastname &&
     !collectorOrcid &&
     !researchCampaign &&
     !fieldName &&
@@ -594,7 +592,8 @@ function mapScientificContext(row: LegacyRow): ScientificContext | null {
   }
   return {
     provenanceStatus: "field_sample",
-    ...(collectorName ? { collectorName } : {}),
+    ...(collectorFirstname ? { collectorFirstname } : {}),
+    ...(collectorLastname ? { collectorLastname } : {}),
     ...(collectorOrcid ? { collectorOrcid } : {}),
     ...(researchCampaign ? { researchCampaign } : {}),
     ...(fieldName ? { fieldName } : {}),

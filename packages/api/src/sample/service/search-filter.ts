@@ -44,15 +44,17 @@ function matchesIgsnExactly(token: string): Expression<SqlBool> {
   return sql<SqlBool>`igsn = upper(${token})`;
 }
 
-function matchesToken(token: string): Expression<SqlBool> {
+function matchesToken(
+  columns: readonly string[],
+  token: string,
+  extraArms: Expression<SqlBool>[],
+): Expression<SqlBool> {
   const pattern = tokenPattern(token);
   const arms = [
-    matchesIgsnExactly(token),
-    ...SEARCHED_COLUMNS.map(
-      (column) => sql`${searchable(column)} ~* ${pattern}`,
-    ),
+    ...extraArms,
+    ...columns.map((column) => sql`${searchable(column)} ~* ${pattern}`),
     ...(isFuzzyToken(token)
-      ? SEARCHED_COLUMNS.map(
+      ? columns.map(
           (column) =>
             sql`${searchable(column)} %> immutable_unaccent(${token})`,
         )
@@ -61,16 +63,30 @@ function matchesToken(token: string): Expression<SqlBool> {
   return sql<SqlBool>`(${sql.join(arms, sql` OR `)})`;
 }
 
+export function tokenFilters(
+  columns: readonly string[],
+  value: string,
+  extraArm?: (token: string) => Expression<SqlBool>,
+): Expression<SqlBool>[] {
+  const tokens = searchTokens(value);
+  if (tokens.length === 0) return [sql<SqlBool>`false`];
+  return tokens.map((token) =>
+    matchesToken(columns, token, extraArm ? [extraArm(token)] : []),
+  );
+}
+
 export function searchFilters(search: string): Expression<SqlBool>[] {
-  const tokens = searchTokens(search);
-  return tokens.length === 0 ? [sql<SqlBool>`false`] : tokens.map(matchesToken);
+  return tokenFilters(SEARCHED_COLUMNS, search, matchesIgsnExactly);
 }
 
 export async function applyFuzzyThreshold(
   trx: Transaction<DB>,
-  search: string | undefined,
+  values: readonly (string | undefined)[],
 ): Promise<void> {
-  if (search === undefined || !searchTokens(search).some(isFuzzyToken)) return;
+  const fuzzy = values.some(
+    (value) => value !== undefined && searchTokens(value).some(isFuzzyToken),
+  );
+  if (!fuzzy) return;
   const threshold = String(fuzzyThreshold);
   await sql`select set_config('pg_trgm.word_similarity_threshold', ${threshold}, true)`.execute(
     trx,

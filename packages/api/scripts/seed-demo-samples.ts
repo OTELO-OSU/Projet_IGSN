@@ -111,7 +111,8 @@ const SYNTHESIS: SampleRow["syntheticDetails"] = {
   finalProduct: "mineral",
   experimentType: "crystallization_dynamic",
   synthesisDate: { precision: "day", start: "2025-03-03", end: "2025-03-05" },
-  operatorName: "Claire Martin",
+  operatorFirstname: "Claire",
+  operatorLastname: "Martin",
   operatorOrcid: "0000-0002-1825-0097",
   researchStructure: ["02rx3b187"],
   temperature: { value: 1450, unit: "celsius" },
@@ -1345,8 +1346,6 @@ const THIN_SECTIONS = 6;
 const thinSection = (index: number) =>
   `Mont-Dore MD-01 S3A Thin Section ${index + 1}`;
 
-// One drill core split down to powders and recombined into a synthetic glass,
-// so the public lineage graph has a deep, wide, two-parent tree to draw.
 const LINEAGE: DemoRow[] = [
   corePiece(
     "Mont-Dore Drill Core MD-01",
@@ -1401,7 +1400,6 @@ const LINEAGE: DemoRow[] = [
   synthetic("Mont-Dore MD-01 Synthetic Glass SG-1", "2025-09-02"),
 ];
 
-/** Child sample name to its parent names, inserted into `sample_parent`. */
 export const DEMO_PARENTS: Record<string, string[]> = {
   "Mont-Dore Core MD-01 Section 3": ["Mont-Dore Drill Core MD-01"],
   "Mont-Dore Core MD-01 Section 7": ["Mont-Dore Drill Core MD-01"],
@@ -1615,9 +1613,11 @@ const FIELD_SAMPLE_CONTEXT: SampleRow["scientificContext"] = {
   provenanceStatus: "field_sample",
   funderOrganizations: ["02feahw73"],
   researchProgramName: "Solid Earth Demo Survey",
-  chiefScientist: "Jean Dupont",
+  chiefScientistFirstname: "Jean",
+  chiefScientistLastname: "Dupont",
   hostInstitution: ["02rx3b187"],
-  collectorName: "Claire Martin",
+  collectorFirstname: "Claire",
+  collectorLastname: "Martin",
 };
 
 const DEMO_REPOSITORY: SampleRow["repository"] = {
@@ -1629,7 +1629,8 @@ const DEMO_REPOSITORY: SampleRow["repository"] = {
 
 const COLLECTION_SPECIMEN_CONTEXT: SampleRow["scientificContext"] = {
   provenanceStatus: "collection_specimen",
-  collectionCurator: "Paul Bernard",
+  collectionCuratorFirstname: "Paul",
+  collectionCuratorLastname: "Bernard",
   collectionOrigin: "scientific_expedition",
 };
 

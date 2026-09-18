@@ -13,6 +13,12 @@ export const MAX_WILDCARDS = 2;
 
 export const MAX_SEARCH_LENGTH = 200;
 
+export const truncatedTextSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .transform((value) => value.slice(0, MAX_SEARCH_LENGTH));
+
 export const searchTermSchema = z
   .string()
   .trim()

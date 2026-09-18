@@ -114,10 +114,12 @@ function toScientificContext(row: Selectable<DB["sample"]>) {
       ...omitNull({
         funderOrganizations: row.sc_funder_organizations,
         researchProgramName: row.sc_research_program_name,
-        chiefScientist: row.sc_chief_scientist,
+        chiefScientistFirstname: row.sc_chief_scientist_firstname,
+        chiefScientistLastname: row.sc_chief_scientist_lastname,
         chiefScientistOrcid: row.sc_chief_scientist_orcid,
         hostInstitution: row.sc_host_institution,
-        collectorName: row.sc_collector_name,
+        collectorFirstname: row.sc_collector_firstname,
+        collectorLastname: row.sc_collector_lastname,
         collectorOrcid: row.sc_collector_orcid,
         researchCampaign: row.sc_research_campaign,
         funding: row.sc_funding,
@@ -131,9 +133,11 @@ function toScientificContext(row: Selectable<DB["sample"]>) {
     return scientificContextSchema.parse({
       provenanceStatus: "collection_specimen",
       ...omitNull({
-        collectionCurator: row.sc_collection_curator,
+        collectionCuratorFirstname: row.sc_collection_curator_firstname,
+        collectionCuratorLastname: row.sc_collection_curator_lastname,
         collectionOrigin: row.sc_collection_origin,
-        collectorName: row.sc_collector_name,
+        collectorFirstname: row.sc_collector_firstname,
+        collectorLastname: row.sc_collector_lastname,
         collectionContextDescription: row.sc_collection_context_description,
       }),
     });
@@ -170,7 +174,8 @@ function toSyntheticDetails(row: Selectable<DB["sample"]>) {
       precision: row.syn_synthesis_date_precision,
       timeZone: row.syn_synthesis_date_time_zone,
     }),
-    operatorName: row.syn_operator_name,
+    operatorFirstname: row.syn_operator_firstname,
+    operatorLastname: row.syn_operator_lastname,
     operatorOrcid: row.syn_operator_orcid,
     researchStructure: row.syn_research_structure,
     temperature: measurement(

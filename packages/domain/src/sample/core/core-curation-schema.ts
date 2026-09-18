@@ -81,10 +81,14 @@ const coreRepositorySchema = z.strictObject({
   collectionName: freeTextSchema
     .meta({ description: "Name of the collection the sample belongs to." })
     .optional(),
-  contact: freeTextSchema
+  contactFirstName: freeTextSchema
     .meta({
-      description:
-        "Contact person at that institution, first name and last name joined by a space.",
+      description: "First name of the contact person at that institution.",
+    })
+    .optional(),
+  contactLastName: freeTextSchema
+    .meta({
+      description: "Last name of the contact person at that institution.",
     })
     .optional(),
 });

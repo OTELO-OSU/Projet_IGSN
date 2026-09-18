@@ -35,7 +35,8 @@ export type SyntheticDetailsDraft = {
   synthesisDateEnd: string | undefined;
   synthesisDatePrecision: DatePrecision;
   synthesisDateTimeZone: string | undefined;
-  operatorName: string | null | undefined;
+  operatorFirstname: string | null | undefined;
+  operatorLastname: string | null | undefined;
   operatorOrcid: string | null | undefined;
   researchStructure: string[];
   temperatureValue: number | undefined;
@@ -55,7 +56,8 @@ type SyntheticDetailsCandidate = {
   experimentType: ExperimentType | undefined;
   experimentDuration: MeasurementCandidate<ExperimentDurationUnit> | undefined;
   synthesisDate: DateRangeCandidate;
-  operatorName: string | undefined;
+  operatorFirstname: string | undefined;
+  operatorLastname: string | undefined;
   operatorOrcid: string | undefined;
   researchStructure: string[] | undefined;
   temperature: MeasurementCandidate<TemperatureUnit> | undefined;
@@ -90,7 +92,8 @@ export function composeSyntheticDetails(
       precision: draft.synthesisDatePrecision,
       timeZone: draft.synthesisDateTimeZone,
     }),
-    operatorName: draft.operatorName?.trim() || undefined,
+    operatorFirstname: draft.operatorFirstname?.trim() || undefined,
+    operatorLastname: draft.operatorLastname?.trim() || undefined,
     operatorOrcid: draft.operatorOrcid?.trim() || undefined,
     researchStructure: nonEmpty(draft.researchStructure),
     temperature: composeMeasurement(
@@ -125,7 +128,8 @@ export function toSyntheticDetailsDraft(
     synthesisDateEnd: synthesisDate.end,
     synthesisDatePrecision: synthesisDate.precision,
     synthesisDateTimeZone: synthesisDate.timeZone,
-    operatorName: value?.operatorName ?? undefined,
+    operatorFirstname: value?.operatorFirstname ?? undefined,
+    operatorLastname: value?.operatorLastname ?? undefined,
     operatorOrcid: value?.operatorOrcid ?? undefined,
     researchStructure: value?.researchStructure ?? [],
     temperatureValue: value?.temperature?.value,

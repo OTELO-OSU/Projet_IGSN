@@ -46,5 +46,6 @@ export function zodIssues(error: z.ZodError): ServiceSampleIssue[] {
 export function frozenFieldIssues(
   paths: readonly string[],
 ): ServiceSampleIssue[] {
-  return paths.map((path) => coreSampleIssue("field_frozen", path));
+  const issues = paths.map((path) => coreSampleIssue("field_frozen", path));
+  return [...new Map(issues.map((issue) => [issue.path, issue])).values()];
 }

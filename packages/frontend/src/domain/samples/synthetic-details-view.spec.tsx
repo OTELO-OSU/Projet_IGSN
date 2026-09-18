@@ -19,7 +19,8 @@ describe("SyntheticDetailsView", () => {
             start: "2020-01-01",
             end: "2020-01-05",
           },
-          operatorName: "Marie Curie",
+          operatorFirstname: "Marie",
+          operatorLastname: "Curie",
           operatorOrcid: "0000-0002-1825-0097",
           researchStructure: ["043htjv09", "00z54nq84"],
           temperature: { value: -20, unit: "celsius" },
@@ -98,6 +99,16 @@ describe("SyntheticDetailsView", () => {
       .element(
         screen.getByText("2024-03-05 14:30 - 2024-03-06 09:05 (Europe/Paris)"),
       )
+      .toBeInTheDocument();
+  });
+
+  it("should render an operator without a firstname as the lastname alone", async () => {
+    const screen = await render(
+      <SyntheticDetailsView syntheticDetails={{ operatorLastname: "Curie" }} />,
+    );
+
+    await expect
+      .element(screen.getByText("Curie", { exact: true }))
       .toBeInTheDocument();
   });
 });

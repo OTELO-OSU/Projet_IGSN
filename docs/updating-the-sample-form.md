@@ -221,7 +221,8 @@ const LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   manualGroupIds: ["manualGroupIds"],
 } as const;
 const LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS = {
-  collectorName: ["scientificContext.collectorName"],
+  collectorFirstname: ["scientificContext.collectorFirstname"],
+  collectorLastname: ["scientificContext.collectorLastname"],
 } as const;
 ```
 

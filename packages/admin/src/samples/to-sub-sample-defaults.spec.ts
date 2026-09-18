@@ -34,7 +34,8 @@ const parent: Sample = {
   geomorphologicalEnvironment: null,
   scientificContext: {
     provenanceStatus: "collection_specimen",
-    collectionCurator: "Georges Cuvier",
+    collectionCuratorFirstname: "Georges",
+    collectionCuratorLastname: "Cuvier",
     collectionOrigin: "scientific_expedition",
   },
   syntheticDetails: null,
@@ -123,7 +124,8 @@ it("should inherit every block of the parent but its identity, its collections a
     geomorphologicalEnvironment: null,
     scientificContext: {
       provenanceStatus: "collection_specimen",
-      collectionCurator: "Georges Cuvier",
+      collectionCuratorFirstname: "Georges",
+      collectionCuratorLastname: "Cuvier",
       collectionOrigin: "scientific_expedition",
     },
     syntheticDetails: null,

@@ -73,37 +73,31 @@ describe("fromCoreSample", () => {
     },
   );
 
-  it.each([
-    ["Pierre Curie", "Pierre", "Curie"],
-    ["Curie", null, "Curie"],
-    ["Jean Pierre Curie", "Jean", "Pierre Curie"],
-  ])(
-    "should split the archive contact %s into %s and %s",
-    (contact, firstname, lastname) => {
-      const body: CoreSampleBody = {
-        ...FIELD_SAMPLE_RECORD,
-        curation: {
-          ...FIELD_SAMPLE_RECORD.curation,
-          currentRepository: {
-            organization: {
-              id: "https://ror.org/02feahw73",
-              name: ORGANIZATION_NAME,
-            },
-            collectionName: "Lorraine granites",
-            contact,
+  it("should read the archive contact first and last names as sent", () => {
+    const body: CoreSampleBody = {
+      ...FIELD_SAMPLE_RECORD,
+      curation: {
+        ...FIELD_SAMPLE_RECORD.curation,
+        currentRepository: {
+          organization: {
+            id: "https://ror.org/02feahw73",
+            name: ORGANIZATION_NAME,
           },
+          collectionName: "Lorraine granites",
+          contactFirstName: "Jean Pierre",
+          contactLastName: "Curie",
         },
-      };
+      },
+    };
 
-      expect(fromCoreSample(body).sample.repository).toEqual({
-        currentArchive: "02feahw73",
-        currentArchiveContactFirstname: firstname,
-        currentArchiveContactLastname: lastname,
-        collectionName: "Lorraine granites",
-        originalArchive: "Ecole des Mines collection",
-        originalArchiveContactFirstname: "Henri",
-        originalArchiveContactLastname: "Becquerel",
-      });
-    },
-  );
+    expect(fromCoreSample(body).sample.repository).toEqual({
+      currentArchive: "02feahw73",
+      currentArchiveContactFirstname: "Jean Pierre",
+      currentArchiveContactLastname: "Curie",
+      collectionName: "Lorraine granites",
+      originalArchive: "Ecole des Mines collection",
+      originalArchiveContactFirstname: "Henri",
+      originalArchiveContactLastname: "Becquerel",
+    });
+  });
 });

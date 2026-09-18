@@ -85,6 +85,22 @@ test.describe("search facets", () => {
     await list.expectSampleAbsent("Granite 7");
   });
 
+  test("a reader narrows by a person text facet with the name reversed", async ({
+    page,
+    samples,
+  }) => {
+    const { basalt } = published(samples);
+    const list = sampleListPage(page);
+
+    await list.gotoWithSearch("material=rock_and_sediment.rock.igneous");
+    await list.expectResultCount(2);
+
+    await list.fillTextFacet("Collector", "Martin Claire", "collectorName");
+    await list.expectResultCount(1);
+    await list.expectSampleLink("Basalt 42", basalt);
+    await list.expectSampleAbsent("Granite 7");
+  });
+
   test("a reader narrows by the age range facet", async ({ page, samples }) => {
     const { basalt } = published(samples);
     const list = sampleListPage(page);

@@ -22,7 +22,10 @@ import {
 import { NATURES, natureSchema } from "../nature.ts";
 import { expandPaths } from "../path/expand-paths.ts";
 import { type ListSamplesQuery, bboxSchema } from "../sample-validator.ts";
-import { searchTermSchema } from "../search/search-tokens.ts";
+import {
+  searchTermSchema,
+  truncatedTextSchema,
+} from "../search/search-tokens.ts";
 import { TEXTURES, textureSchema } from "../texture/vocabulary.ts";
 import { sampleTypeSchema, SAMPLE_TYPE_HIERARCHY } from "../type/vocabulary.ts";
 
@@ -50,7 +53,7 @@ export const CORE_FILTER_PARAM = {
 } as const satisfies Record<string, string>;
 
 const textFilter = (description: string) =>
-  z.string().trim().min(1).optional().meta({ description });
+  truncatedTextSchema.optional().meta({ description });
 
 export function coreFilterFields() {
   return {
@@ -94,20 +97,20 @@ export function coreFilterFields() {
       description: "Texture of the sample.",
     }),
     projectName: textFilter(
-      "Name of the research program, matched on a fragment, case and accents ignored.",
+      "Name of the research program, matched on a fragment, case and accents ignored, truncated past 200 characters.",
     ),
     chiefScientist: textFilter(
-      "Name of the chief scientist, matched on a fragment, case and accents ignored.",
+      "Name of the chief scientist, matched token by token against the first name and the last name, in any order, case and accents ignored, with a fuzzy fallback, truncated past 200 characters.",
     ),
     hostingInstitution: organizationRorSchema.optional().meta({
       enum: ORGANIZATIONS.map((o) => o.ror),
       description: "ROR id of an institution hosting the sample.",
     }),
     collector: textFilter(
-      "Name of the collector, matched on a fragment, case and accents ignored.",
+      "Name of the collector, matched token by token against the first name and the last name, in any order, case and accents ignored, with a fuzzy fallback, truncated past 200 characters.",
     ),
     curator: textFilter(
-      "Name of the collection curator, matched on a fragment, case and accents ignored.",
+      "Name of the collection curator, matched token by token against the first name and the last name, in any order, case and accents ignored, with a fuzzy fallback, truncated past 200 characters.",
     ),
     numericAgeMin: z.coerce.number().optional().meta({
       type: "number",

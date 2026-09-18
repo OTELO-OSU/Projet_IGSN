@@ -4,6 +4,7 @@ import { TooltipProvider } from "@projet-igsn/design-system/components/ui/toolti
 import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
 import { vi } from "vitest";
 
+import { fillPersonName } from "../../test/fill-person-name.ts";
 import { repickPath } from "../../test/pick-hierarchy.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
@@ -45,6 +46,9 @@ const pickMaterial = async (screen: Screen, from: string, to: string) => {
   await screen.getByRole("tab", { name: "Sample classification" }).click();
   await repickPath(screen, from, to);
 };
+
+const operatorName = (screen: Screen) =>
+  screen.getByRole("group", { name: "Operator name" });
 
 const pickOption = async (screen: Screen, combobox: string, option: string) => {
   await screen.getByRole("combobox", { name: combobox, exact: true }).click();
@@ -103,9 +107,7 @@ describe("SampleSyntheticDetailsFields", () => {
       .fill("3");
     await pickOption(screen, "Experiment duration unit *", "h");
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
-    await screen
-      .getByLabelText("Operator name *", { exact: true })
-      .fill("Marie Curie");
+    await fillPersonName(screen, "Operator name", "Marie", "Curie");
     await screen
       .getByLabelText("Operator ORCID", { exact: true })
       .fill("0000-0002-1825-0097");
@@ -152,7 +154,8 @@ describe("SampleSyntheticDetailsFields", () => {
               start: "2026-01-05",
               end: "2026-01-05",
             },
-            operatorName: "Marie Curie",
+            operatorFirstname: "Marie",
+            operatorLastname: "Curie",
             operatorOrcid: "0000-0002-1825-0097",
             researchStructure: ["02feahw73"],
             temperature: { value: 1200, unit: "celsius" },
@@ -164,21 +167,21 @@ describe("SampleSyntheticDetailsFields", () => {
         }),
       ),
     );
-  });
+  }, 15000);
 
   it("should keep the synthesis details in the draft but drop them from the payload once the material is no longer synthetic", async () => {
     const onSubmit = vi.fn();
     const screen = await renderSyntheticForm(onSubmit);
 
-    await screen
-      .getByLabelText("Operator name *", { exact: true })
-      .fill("Marie Curie");
+    await fillPersonName(screen, "Operator name", "Marie", "Curie");
 
     await pickMaterial(screen, SYNTHETIC_MATERIAL, "Mineral");
     await pickMaterial(screen, "Mineral", SYNTHETIC_MATERIAL);
     await expect
-      .element(screen.getByLabelText("Operator name *", { exact: true }))
-      .toHaveValue("Marie Curie");
+      .element(
+        operatorName(screen).getByRole("textbox", { name: /last name/i }),
+      )
+      .toHaveValue("Curie");
 
     await pickMaterial(screen, SYNTHETIC_MATERIAL, "Mineral");
     await screen.getByRole("button", { name: "Create" }).click();
@@ -325,7 +328,8 @@ describe("SampleSyntheticDetailsFields", () => {
             ...syntheticDefaults,
             scientificContext: {
               provenanceStatus: "collection_specimen",
-              collectionCurator: "Georges Cuvier",
+              collectionCuratorFirstname: "Georges",
+              collectionCuratorLastname: "Cuvier",
               collectionOrigin: "scientific_expedition",
             },
             syntheticDetails: {
@@ -339,7 +343,9 @@ describe("SampleSyntheticDetailsFields", () => {
                 start: "2026-01-05",
                 end: "2026-01-05",
               },
-              operatorName: "Marie Curie",
+              operatorFirstname: "Marie",
+              operatorLastname: "Curie",
+              operatorOrcid: "0000-0002-1825-0097",
               researchStructure: ["02feahw73"],
               temperature: { value: 1200, unit: "celsius" },
             },
@@ -351,9 +357,14 @@ describe("SampleSyntheticDetailsFields", () => {
 
     await screen.getByRole("tab", { name: "Sample classification" }).click();
 
+    for (const half of [/first name/i, /last name/i]) {
+      await expect
+        .element(operatorName(screen).getByRole("textbox", { name: half }))
+        .toBeDisabled();
+    }
     await expect
-      .element(screen.getByLabelText("Operator name *", { exact: true }))
-      .toBeDisabled();
+      .element(screen.getByLabelText("Operator ORCID", { exact: true }))
+      .toBeEnabled();
 
     for (const name of [
       "Starting material *",

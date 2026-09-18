@@ -2,6 +2,7 @@ import type { SyntheticDetails } from "@projet-igsn/domain/sample/synthetic-deta
 
 import { pressureUnitLabel } from "@projet-igsn/domain/sample/condition/pressure-unit";
 import { temperatureUnitLabel } from "@projet-igsn/domain/sample/condition/temperature-unit";
+import { joinContactName } from "@projet-igsn/domain/sample/contact-name";
 import { experimentDurationUnitLabel } from "@projet-igsn/domain/sample/synthetic-details/experiment-duration-unit";
 
 import { dateRangeText } from "#/domain/samples/date-range-text.ts";
@@ -34,7 +35,8 @@ export function SyntheticDetailsView({
     experimentType,
     experimentDuration,
     synthesisDate,
-    operatorName,
+    operatorFirstname,
+    operatorLastname,
     operatorOrcid,
     researchStructure,
     temperature,
@@ -79,7 +81,10 @@ export function SyntheticDetailsView({
         label={m.sample_field_synthesis_date()}
         value={synthesisDate && dateRangeText(synthesisDate)}
       />
-      <FieldRow label={m.sample_field_operator_name()} value={operatorName} />
+      <FieldRow
+        label={m.sample_field_operator_name()}
+        value={joinContactName(operatorFirstname, operatorLastname)}
+      />
       <FieldRow
         label={m.sample_field_operator_orcid()}
         value={operatorOrcid && <OrcidLink orcid={operatorOrcid} />}

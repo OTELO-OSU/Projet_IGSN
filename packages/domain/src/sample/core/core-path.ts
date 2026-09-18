@@ -43,15 +43,15 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   repository: "curation",
   "repository.currentArchive": "curation.currentRepository.organization",
   "repository.currentArchiveContactFirstname":
-    "curation.currentRepository.contact",
+    "curation.currentRepository.contactFirstName",
   "repository.currentArchiveContactLastname":
-    "curation.currentRepository.contact",
+    "curation.currentRepository.contactLastName",
   "repository.collectionName": "curation.currentRepository.collectionName",
   "repository.originalArchive": "curation.originalRepository.organization.name",
   "repository.originalArchiveContactFirstname":
-    "curation.originalRepository.contact",
+    "curation.originalRepository.contactFirstName",
   "repository.originalArchiveContactLastname":
-    "curation.originalRepository.contact",
+    "curation.originalRepository.contactLastName",
 
   condition: "curation.sampleCondition",
   "condition.storageConditions": "curation.sampleCondition.storageCondition",
@@ -65,12 +65,15 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   "condition.specificConditions": "curation.sampleCondition.description",
 
   scientificContext: "classification.contextCategories",
-  "scientificContext.collectorName": "responsibility",
+  "scientificContext.collectorFirstname": "responsibility",
+  "scientificContext.collectorLastname": "responsibility",
   "scientificContext.collectorOrcid": "responsibility",
-  "scientificContext.chiefScientist": "responsibility",
+  "scientificContext.chiefScientistFirstname": "responsibility",
+  "scientificContext.chiefScientistLastname": "responsibility",
   "scientificContext.chiefScientistOrcid": "responsibility",
   "scientificContext.hostInstitution": "responsibility",
-  "scientificContext.collectionCurator": "responsibility",
+  "scientificContext.collectionCuratorFirstname": "responsibility",
+  "scientificContext.collectionCuratorLastname": "responsibility",
   "scientificContext.missionDescription": "production.samplingPurpose",
   "scientificContext.fieldName": "production.samplingSite_name",
   "scientificContext.researchProgramName": "production.projects.0.name",
@@ -97,7 +100,8 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   "syntheticDetails.experimentalProtocol":
     "production.processSteps.0.description",
   "syntheticDetails.synthesisDate": "production.processSteps.0.timestampStart",
-  "syntheticDetails.operatorName": "responsibility",
+  "syntheticDetails.operatorFirstname": "responsibility",
+  "syntheticDetails.operatorLastname": "responsibility",
   "syntheticDetails.operatorOrcid": "responsibility",
   "syntheticDetails.researchStructure": "responsibility",
 

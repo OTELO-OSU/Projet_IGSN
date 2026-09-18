@@ -39,6 +39,44 @@ const geologicalAge = (min: GeologicalAge, max: GeologicalAge) => ({
   geologicalAgeMax: max,
 });
 
+const bare = {
+  nature: "rock_powder" as const,
+  type: null,
+  collectionMethod: null,
+};
+
+const insertCollectors = async (db: Transactional<DB>) => {
+  await insertSample(db, {
+    ...bare,
+    name: "By Curie",
+    scientificContext: {
+      provenanceStatus: "field_sample",
+      collectorFirstname: "Marie",
+      collectorLastname: "Curié",
+    },
+  });
+  await insertSample(db, {
+    ...bare,
+    name: "By Darwin",
+    scientificContext: {
+      provenanceStatus: "field_sample",
+      collectorFirstname: "Charles",
+      collectorLastname: "Darwin",
+    },
+  });
+};
+
+const insertCharpentier = (db: Transactional<DB>) =>
+  insertSample(db, {
+    ...bare,
+    name: "By Charpentier",
+    scientificContext: {
+      provenanceStatus: "field_sample",
+      collectorFirstname: "Jean",
+      collectorLastname: "Charpentier",
+    },
+  });
+
 const backdate = (db: Transactional<DB>, id: string) =>
   db
     .updateTable("sample")
@@ -386,38 +424,123 @@ describe("listSamples", () => {
   });
 
   pgTest(
-    "should filter a text facet case- and accent-insensitively",
+    "should filter a text facet on a fragment, case- and accent-insensitively",
     async ({ db }) => {
       // Arrange
       await insertSample(db, {
-        name: "By Curie",
-        nature: "rock_powder",
-        type: null,
-        collectionMethod: null,
+        ...bare,
+        name: "Surveyed",
         scientificContext: {
           provenanceStatus: "field_sample",
-          collectorName: "Marie Curié",
+          researchProgramName: "Forêt Profonde",
         },
       });
       await insertSample(db, {
-        name: "By Darwin",
-        nature: "rock_powder",
-        type: null,
-        collectionMethod: null,
+        ...bare,
+        name: "Unsurveyed",
         scientificContext: {
           provenanceStatus: "field_sample",
-          collectorName: "Charles Darwin",
+          researchProgramName: "Deep Biosphere",
         },
       });
       // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,
         perPage: 10,
-        collectorName: "curie",
+        researchProgramName: "et prof",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Surveyed"]);
+    },
+  );
+
+  pgTest.for([
+    ["the full name in form order", "marie curie"],
+    ["the full name in reverse order", "curie marie"],
+    ["the last name alone", "curie"],
+    ["the first name alone", "marie"],
+  ] as const)(
+    "should match a person facet on %s",
+    async ([, collectorName], { db }) => {
+      // Arrange
+      await insertCollectors(db);
+      // Act
+      const { data, total } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        collectorName,
       });
       // Assert
       expect(total).toBe(1);
       expect(data.map((s) => s.name)).toEqual(["By Curie"]);
+    },
+  );
+
+  pgTest(
+    "should match a person facet on a near-miss of a name",
+    async ({ db }) => {
+      // Arrange
+      await insertCharpentier(db);
+      // Act
+      const { data } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        collectorName: "charpentiers",
+      });
+      // Assert
+      expect(data.map((s) => s.name)).toEqual(["By Charpentier"]);
+    },
+  );
+
+  pgTest(
+    "should match no sample when a person facet token matches neither name",
+    async ({ db }) => {
+      // Arrange
+      await insertCollectors(db);
+      // Act
+      const { data, total } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        collectorName: "marie dupont",
+      });
+      // Assert
+      expect(total).toBe(0);
+      expect(data).toEqual([]);
+    },
+  );
+
+  pgTest(
+    "should match the collection curator on its own name pair",
+    async ({ db }) => {
+      // Arrange
+      await insertSample(db, {
+        ...bare,
+        name: "Curated by Anning",
+        scientificContext: {
+          provenanceStatus: "collection_specimen",
+          collectionCuratorFirstname: "Mary",
+          collectionCuratorLastname: "Anning",
+        },
+      });
+      await insertSample(db, {
+        ...bare,
+        name: "Curated by Cuvier",
+        scientificContext: {
+          provenanceStatus: "collection_specimen",
+          collectionCuratorFirstname: "Georges",
+          collectionCuratorLastname: "Cuvier",
+        },
+      });
+      // Act
+      const { data, total } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        collectionCurator: "anning mary",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Curated by Anning"]);
     },
   );
 

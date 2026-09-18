@@ -28,8 +28,8 @@ status: stable
 - `isSyntheticMaterial(material)` (`domain/sample/synthetic-details/is-synthetic-material.ts`) is the single predicate for "this sample is synthetic", true at or under `synthetic_rock_mineral`.
 - Its five consumers: the `createSampleSchema` refinement rejecting the block on a non-synthetic material, `samplePublishBlockers`, `allowsLocation` ([[location-material-gate]]), the admin Synthetic details tab visibility, and `composeSyntheticDetails` dropping the block on save.
 - A synthetic material refuses a location, so the Synthetic details tab replaces the Location tab rather than sitting next to it.
-- Every field is nullish, so a half-filled draft saves; seven are required to publish.
-- Publish blockers, all gated on a complete synthetic material: `synthetic_starting_material_missing`, `synthetic_starting_material_composition_missing`, `synthetic_final_product_missing`, `synthetic_synthesis_date_missing`, `synthetic_operator_name_missing`.
+- Every field is nullish, so a half-filled draft saves; seven are required to publish, `operatorFirstname` and `operatorLastname` counting as two of them (`operatorName` split into that pair, indexed like the other person names, [[scientific-context]]).
+- Publish blockers, all gated on a complete synthetic material: `synthetic_starting_material_missing`, `synthetic_starting_material_composition_missing`, `synthetic_final_product_missing`, `synthetic_synthesis_date_missing`, `synthetic_operator_firstname_missing` and `synthetic_operator_lastname_missing` (one per empty name half).
 - The composition is required only for a `synthetic` or `mixture` starting material, one shared predicate `needsStartingMaterialComposition` driving the blocker, the admin render gate and the compose exclusion.
 - Starting-material nature and experiment duration are no longer required to publish. `experimentDurationNotRelevant` is gone entirely, its column dropped by migration.
 - Its vocabularies are flat Zod enums in `domain/sample/synthetic-details/`, not `TreeNode` hierarchies ([[vocabulary-tree]]): `startingMaterial`, `startingMaterialNature`, `finalProduct`, `experimentType`, `experimentDurationUnit`.

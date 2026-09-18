@@ -21,6 +21,7 @@ import { m } from "#/paraglide/messages.js";
 import { DateRangeField } from "#/samples/date-range-field.tsx";
 import { MeasurementFieldPair } from "#/samples/measurement-fields.tsx";
 import { organizationItems } from "#/samples/organization-items.ts";
+import { PersonNameFields } from "#/samples/person-name-fields.tsx";
 import {
   experimentTypeLabel,
   finalProductLabel,
@@ -166,15 +167,15 @@ export function SampleSyntheticDetailsFields() {
         requiredToPublish={false}
       />
 
-      <form.AppField name="syntheticDetails.operatorName">
-        {(field) => (
-          <field.TextField label={m.field_operator_name()} requiredToPublish />
-        )}
-      </form.AppField>
-
-      <form.AppField name="syntheticDetails.operatorOrcid">
-        {(field) => <field.TextField label={m.field_operator_orcid()} />}
-      </form.AppField>
+      <PersonNameFields
+        legend={m.field_operator_name()}
+        person="syntheticDetails.operator"
+        requiredToPublish
+      >
+        <form.AppField name="syntheticDetails.operatorOrcid">
+          {(field) => <field.TextField label={m.field_operator_orcid()} />}
+        </form.AppField>
+      </PersonNameFields>
 
       <form.AppField name="syntheticDetails.researchStructure">
         {(field) => (

@@ -11,11 +11,18 @@ export function scientificContextColumns(
     sc_provenance_status: context?.provenanceStatus ?? null,
     sc_funder_organizations: fieldSample?.funderOrganizations ?? null,
     sc_research_program_name: fieldSample?.researchProgramName ?? null,
-    sc_chief_scientist: fieldSample?.chiefScientist ?? null,
+    sc_chief_scientist_firstname: fieldSample?.chiefScientistFirstname ?? null,
+    sc_chief_scientist_lastname: fieldSample?.chiefScientistLastname ?? null,
     sc_chief_scientist_orcid: fieldSample?.chiefScientistOrcid ?? null,
     sc_host_institution: fieldSample?.hostInstitution ?? null,
-    sc_collector_name:
-      fieldSample?.collectorName ?? collectionSpecimen?.collectorName ?? null,
+    sc_collector_firstname:
+      fieldSample?.collectorFirstname ??
+      collectionSpecimen?.collectorFirstname ??
+      null,
+    sc_collector_lastname:
+      fieldSample?.collectorLastname ??
+      collectionSpecimen?.collectorLastname ??
+      null,
     sc_collector_orcid: fieldSample?.collectorOrcid ?? null,
     sc_research_campaign: fieldSample?.researchCampaign ?? null,
     sc_funding: fieldSample?.funding ?? null,
@@ -23,7 +30,10 @@ export function scientificContextColumns(
       fieldSample?.researchProgramDescription ?? null,
     sc_field_name: fieldSample?.fieldName ?? null,
     sc_mission_description: fieldSample?.missionDescription ?? null,
-    sc_collection_curator: collectionSpecimen?.collectionCurator ?? null,
+    sc_collection_curator_firstname:
+      collectionSpecimen?.collectionCuratorFirstname ?? null,
+    sc_collection_curator_lastname:
+      collectionSpecimen?.collectionCuratorLastname ?? null,
     sc_collection_origin: collectionSpecimen?.collectionOrigin ?? null,
     sc_collection_context_description:
       collectionSpecimen?.collectionContextDescription ?? null,

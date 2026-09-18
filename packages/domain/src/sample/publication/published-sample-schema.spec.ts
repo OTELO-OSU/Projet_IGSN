@@ -20,7 +20,8 @@ const publishable = {
   availabilityStatus: "available" as const,
   scientificContext: {
     provenanceStatus: "collection_specimen" as const,
-    collectionCurator: "Georges Cuvier",
+    collectionCuratorFirstname: "Georges",
+    collectionCuratorLastname: "Cuvier",
     collectionOrigin: "scientific_expedition" as const,
   },
 };
@@ -42,14 +43,15 @@ describe("publishedSampleSchema", () => {
       "material",
     ],
     [
-      "collector_name_missing",
+      "collector_firstname_missing",
       {
         ...publishable,
         scientificContext: {
           provenanceStatus: "field_sample" as const,
+          collectorLastname: "Curie",
         },
       },
-      "scientificContext.collectorName",
+      "scientificContext.collectorFirstname",
     ],
   ])(
     "should reject an update that raises %s, pinned on its field",

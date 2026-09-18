@@ -6,6 +6,7 @@ import {
   facetQueryFields,
   SAMPLE_FACETS,
 } from "./facets.ts";
+import { MAX_SEARCH_LENGTH } from "./search-tokens.ts";
 
 describe("SAMPLE_FACETS", () => {
   it("should expose at least one searchable root for every hierarchy facet", () => {
@@ -48,6 +49,12 @@ describe("facetQueryFields", () => {
     ["contributor", "not-a-uuid"],
   ])("should degrade an invalid %s value to no filter", (key, value) => {
     expect(fields[key as keyof typeof fields].parse(value)).toBeUndefined();
+  });
+
+  it("should cap a text facet value at the search length limit", () => {
+    expect(fields.collectorName.parse("a".repeat(MAX_SEARCH_LENGTH + 50))).toBe(
+      "a".repeat(MAX_SEARCH_LENGTH),
+    );
   });
 
   it("should match the facet registry (no drift)", () => {

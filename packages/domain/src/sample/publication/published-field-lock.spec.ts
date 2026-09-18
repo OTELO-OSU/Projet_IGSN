@@ -59,10 +59,12 @@ const stored: Sample = {
     provenanceStatus: "field_sample",
     funderOrganizations: ["https://ror.org/00stored"],
     researchProgramName: "Stored program",
-    chiefScientist: "Stored chief",
+    chiefScientistFirstname: "Stored",
+    chiefScientistLastname: "chief",
     chiefScientistOrcid: "0000-0002-1825-0097",
     hostInstitution: ["https://ror.org/00struct"],
-    collectorName: "Stored collector",
+    collectorFirstname: "Stored",
+    collectorLastname: "collector",
     collectorOrcid: "0000-0002-1825-0097",
     researchCampaign: "stored campaign",
     funding: "stored funding",
@@ -149,10 +151,12 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
       provenanceStatus: "field_sample",
       funderOrganizations: ["https://ror.org/00edited"],
       researchProgramName: "Edited program",
-      chiefScientist: "Edited chief",
+      chiefScientistFirstname: "Edited",
+      chiefScientistLastname: "chief",
       chiefScientistOrcid: "0000-0001-5109-3700",
       hostInstitution: ["https://ror.org/00editedstruct"],
-      collectorName: "Edited collector",
+      collectorFirstname: "Edited",
+      collectorLastname: "editor",
       collectorOrcid: "0000-0001-5109-3700",
       researchCampaign: "edited campaign",
       funding: "edited funding",
@@ -244,12 +248,13 @@ describe("mergePublishedEdit", () => {
     expect(merged.location).toEqual(payload.location);
   });
 
-  it("keeps the frozen collector name but takes the other field-sample leaves", () => {
+  it("keeps both halves of the frozen collector name but takes the other field-sample leaves", () => {
     const payload = incoming();
     const merged = mergePublishedEdit(stored, payload);
     expect(merged.scientificContext).toEqual({
       ...payload.scientificContext,
-      collectorName: "Stored collector",
+      collectorFirstname: "Stored",
+      collectorLastname: "collector",
     });
   });
 
@@ -259,9 +264,11 @@ describe("mergePublishedEdit", () => {
       incoming({
         scientificContext: {
           provenanceStatus: "collection_specimen",
-          collectionCurator: "Smuggled curator",
+          collectionCuratorFirstname: "Smuggled",
+          collectionCuratorLastname: "curator",
           collectionOrigin: "purchase",
-          collectorName: "Smuggled collector",
+          collectorFirstname: "Smuggled",
+          collectorLastname: "collector",
           collectionContextDescription: "smuggled context",
         },
       }),
@@ -294,7 +301,8 @@ describe("mergePublishedEdit", () => {
         start: "2000-01-01",
         end: "2000-01-02",
       },
-      operatorName: "Stored operator",
+      operatorFirstname: "Stored",
+      operatorLastname: "operator",
       operatorOrcid: "0000-0002-1825-0097",
       researchStructure: ["04kdfz702"],
       temperature: { value: 900, unit: "celsius" },
@@ -315,7 +323,8 @@ describe("mergePublishedEdit", () => {
         start: "1990-05-05",
         end: "1990-05-06",
       },
-      operatorName: "Edited operator",
+      operatorFirstname: "Edited",
+      operatorLastname: "worker",
       operatorOrcid: "0000-0001-5109-3700",
       researchStructure: ["02feahw73"],
       temperature: { value: 1200, unit: "kelvin" },
@@ -331,7 +340,7 @@ describe("mergePublishedEdit", () => {
       syntheticDetails: storedDetails,
     };
 
-    it("keeps the frozen operator name but takes every other synthesis leaf", () => {
+    it("keeps both halves of the frozen operator name but takes every other synthesis leaf", () => {
       const merged = mergePublishedEdit(
         synthetic,
         incoming({
@@ -343,7 +352,8 @@ describe("mergePublishedEdit", () => {
 
       expect(merged.syntheticDetails).toEqual({
         ...incomingDetails,
-        operatorName: "Stored operator",
+        operatorFirstname: "Stored",
+        operatorLastname: "operator",
       });
     });
 

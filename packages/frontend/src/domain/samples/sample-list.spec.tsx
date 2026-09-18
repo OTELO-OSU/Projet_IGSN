@@ -64,7 +64,8 @@ describe("SampleList", () => {
         },
         scientificContext: {
           provenanceStatus: "field_sample",
-          collectorName: "Marie Curie",
+          collectorFirstname: "Marie",
+          collectorLastname: "Curie",
         },
       }),
     ]);
@@ -184,7 +185,8 @@ describe("SampleList", () => {
       sampleItem({
         scientificContext: {
           provenanceStatus: status,
-          collectorName: "Marie Curie",
+          collectorFirstname: "Marie",
+          collectorLastname: "Curie",
         },
       }),
     ]);
@@ -193,4 +195,54 @@ describe("SampleList", () => {
       .element(screen.getByText("Collector name: Marie Curie"))
       .toBeInTheDocument();
   });
+
+  it("should show a collector without a firstname as the lastname alone", async () => {
+    const screen = await renderSampleList([
+      sampleItem({
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorLastname: "Curie",
+        },
+      }),
+    ]);
+
+    await expect
+      .element(screen.getByText("Collector name: Curie", { exact: true }))
+      .toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      "chief scientist",
+      {
+        provenanceStatus: "field_sample",
+        chiefScientistFirstname: "Marie",
+        chiefScientistLastname: "Curie",
+      },
+      "chiefScientist",
+      "Chief scientist: Marie Curie",
+    ],
+    [
+      "collection curator",
+      {
+        provenanceStatus: "collection_specimen",
+        collectionCuratorFirstname: "Paul",
+        collectionCuratorLastname: "Durand",
+      },
+      "collectionCurator",
+      "Collection curator: Paul Durand",
+    ],
+  ] as const)(
+    "should show the picked %s as one name",
+    async (_case, scientificContext, field, expected) => {
+      const screen = await renderSampleList(
+        [sampleItem({ scientificContext })],
+        [field],
+      );
+
+      await expect
+        .element(screen.getByText(expected, { exact: true }))
+        .toBeInTheDocument();
+    },
+  );
 });

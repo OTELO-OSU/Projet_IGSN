@@ -104,7 +104,8 @@ const ENVELOPE: Pick<
 
 const CREATOR: CoreAgentRole = {
   agent: {
-    name: "Marie Curie",
+    firstname: "Marie",
+    lastname: "Curie",
     agentType: "Person",
     affiliations: [
       { id: ORGANIZATION_URI, name: ORGANIZATION_NAME },
@@ -157,7 +158,8 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
     {
       agent: {
         id: "https://orcid.org/0000-0001-5109-3700",
-        name: "Inge Lehmann",
+        firstname: "Inge",
+        lastname: "Lehmann",
         agentType: "Person",
       },
       roles: ["Collector"],
@@ -165,7 +167,8 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
     {
       agent: {
         id: "https://orcid.org/0000-0002-1825-0097",
-        name: "Alfred Wegener",
+        firstname: "Alfred",
+        lastname: "Wegener",
         agentType: "Person",
       },
       roles: ["ChiefScientist"],
@@ -257,11 +260,13 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
     currentRepository: {
       organization: { id: ORGANIZATION_URI, name: ORGANIZATION_NAME },
       collectionName: "Lorraine granites",
-      contact: "Pierre Curie",
+      contactFirstName: "Pierre",
+      contactLastName: "Curie",
     },
     originalRepository: {
       organization: { name: "Ecole des Mines collection" },
-      contact: "Henri Becquerel",
+      contactFirstName: "Henri",
+      contactLastName: "Becquerel",
     },
     sampleCondition: {
       storageCondition: [
@@ -331,11 +336,15 @@ const COLLECTION_SPECIMEN_RECORD: CoreSample = {
     CREATOR,
     REGISTRANT,
     {
-      agent: { name: "Jacques Cousteau", agentType: "Person" },
+      agent: {
+        firstname: "Jacques",
+        lastname: "Cousteau",
+        agentType: "Person",
+      },
       roles: ["Collector"],
     },
     {
-      agent: { name: "Mary Anning", agentType: "Person" },
+      agent: { firstname: "Mary", lastname: "Anning", agentType: "Person" },
       roles: ["Curator"],
     },
   ],
@@ -411,13 +420,18 @@ const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
     CREATOR,
     REGISTRANT,
     {
-      agent: { name: "Rosalind Franklin", agentType: "Person" },
+      agent: {
+        firstname: "Rosalind",
+        lastname: "Franklin",
+        agentType: "Person",
+      },
       roles: ["Collector"],
     },
     {
       agent: {
         id: "https://orcid.org/0000-0003-1415-9269",
-        name: "Rosalind Franklin",
+        firstname: "Rosalind",
+        lastname: "Franklin",
         agentType: "Person",
         affiliations: [{ id: ORGANIZATION_URI, name: ORGANIZATION_NAME }],
       },

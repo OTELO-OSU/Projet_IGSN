@@ -30,6 +30,16 @@ export function sampleFormPage(page: Page) {
   const pickHierarchy = (field: string, label: string) =>
     pickHierarchyLevel(page, fieldCombobox(field), label);
 
+  const fillPersonName = async (
+    person: RegExp,
+    firstname: string,
+    lastname: string,
+  ) => {
+    const group = page.getByRole("group", { name: person });
+    await group.getByRole("textbox", { name: /first name/i }).fill(firstname);
+    await group.getByRole("textbox", { name: /last name/i }).fill(lastname);
+  };
+
   const confirm = (dialog: string) =>
     page
       .getByRole("dialog", { name: dialog })
@@ -90,7 +100,7 @@ export function sampleFormPage(page: Page) {
       await openTab("Sample classification");
       if (material !== null) await pickHierarchy("Material", material);
       await openTab("Scientific context");
-      await page.getByLabel(/collection curator/i).fill("Paul Bernard");
+      await fillPersonName(/collection curator/i, "Paul", "Bernard");
       await pick("Collection origin", "Scientific expedition");
       await openTab("Curation and repository");
       await pick("Existence status", "Exists");
@@ -103,7 +113,7 @@ export function sampleFormPage(page: Page) {
         .getByRole("group", { name: /synthesis date/i })
         .getByRole("textbox", { name: /^Date/ })
         .fill("2025-06-15");
-      await page.getByLabel(/operator name/i).fill("Paul Bernard");
+      await fillPersonName(/operator name/i, "Paul", "Bernard");
     },
     setOriented: async (explanation: string) => {
       await openTab("Physical description");

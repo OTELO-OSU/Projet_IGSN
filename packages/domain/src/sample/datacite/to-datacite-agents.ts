@@ -9,6 +9,7 @@ import type {
   DataCiteCreator,
 } from "./datacite-schema.ts";
 
+import { joinContactName } from "../contact-name.ts";
 import { ORCID_SCHEME_URI, ROR_SCHEME_URI } from "./datacite-schema.ts";
 
 const CONTRIBUTOR_TYPE_BY_ROLE: Record<
@@ -54,19 +55,23 @@ const toAffiliation = (organization: { id?: string; name: string }) => {
 
 const toAgent = ({ agent }: CoreAgentRole): DataCiteCreator => {
   const registry = registryOf(agent.id);
+  const nameIdentifiers =
+    registry == null
+      ? undefined
+      : [
+          {
+            nameIdentifier: registry.id,
+            nameIdentifierScheme: registry.scheme,
+            schemeUri: registry.schemeUri,
+          },
+        ];
+  if (agent.agentType === "Organization") {
+    return { name: agent.name, nameType: "Organizational", nameIdentifiers };
+  }
   return {
-    name: agent.name,
-    nameType: agent.agentType === "Person" ? "Personal" : "Organizational",
-    nameIdentifiers:
-      registry == null
-        ? undefined
-        : [
-            {
-              nameIdentifier: registry.id,
-              nameIdentifierScheme: registry.scheme,
-              schemeUri: registry.schemeUri,
-            },
-          ],
+    name: joinContactName(agent.firstname, agent.lastname),
+    nameType: "Personal",
+    nameIdentifiers,
     affiliation: agent.affiliations?.map(toAffiliation),
   };
 };

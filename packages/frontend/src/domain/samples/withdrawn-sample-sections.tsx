@@ -1,5 +1,7 @@
 import type { WithdrawnSample } from "@projet-igsn/domain/sample/publication/withdrawn-sample";
 
+import { joinContactName } from "@projet-igsn/domain/sample/contact-name";
+
 import type { SampleSection } from "#/domain/samples/sample-section.ts";
 
 import { BreadcrumbFieldRow } from "#/domain/samples/breadcrumb-field-row.tsx";
@@ -21,8 +23,10 @@ export function withdrawnSampleSections(
     material,
     materialOtherName,
     location,
-    collectorName,
-    collectionCurator,
+    collectorFirstname,
+    collectorLastname,
+    collectionCuratorFirstname,
+    collectionCuratorLastname,
   }: WithdrawnSample,
   lineage: SampleSection | null,
 ): SampleSection[] {
@@ -55,11 +59,14 @@ export function withdrawnSampleSections(
           />
           <FieldRow
             label={m.sample_field_collector_name()}
-            value={collectorName}
+            value={joinContactName(collectorFirstname, collectorLastname)}
           />
           <FieldRow
             label={m.sample_field_collection_curator()}
-            value={collectionCurator}
+            value={joinContactName(
+              collectionCuratorFirstname,
+              collectionCuratorLastname,
+            )}
           />
         </FieldRows>
       ),

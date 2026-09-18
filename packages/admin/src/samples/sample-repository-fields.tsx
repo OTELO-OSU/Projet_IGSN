@@ -2,6 +2,7 @@ import { FormSection } from "@projet-igsn/design-system/components/form/form-sec
 import { ALL_ORGANIZATION_ITEMS } from "@projet-igsn/domain/institutional-group/managed-group-items";
 
 import { m } from "#/paraglide/messages.js";
+import { PersonNameFields } from "#/samples/person-name-fields.tsx";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 export function SampleRepositoryFields() {
@@ -26,20 +27,10 @@ export function SampleRepositoryFields() {
             {(field) => <field.TextField label={m.field_collection_name()} />}
           </form.AppField>
 
-          <fieldset className="grid gap-4">
-            <legend className="text-sm font-medium">
-              {m.legend_contact()}
-            </legend>
-            <div className="grid gap-4">
-              <form.AppField name="repository.currentArchiveContactFirstname">
-                {(field) => <field.TextField label={m.field_firstname()} />}
-              </form.AppField>
-
-              <form.AppField name="repository.currentArchiveContactLastname">
-                {(field) => <field.TextField label={m.field_lastname()} />}
-              </form.AppField>
-            </div>
-          </fieldset>
+          <PersonNameFields
+            legend={m.legend_contact()}
+            person="repository.currentArchiveContact"
+          />
         </FormSection>
       </div>
 
@@ -51,20 +42,10 @@ export function SampleRepositoryFields() {
             )}
           </form.AppField>
 
-          <fieldset className="grid gap-4">
-            <legend className="text-sm font-medium">
-              {m.legend_contact()}
-            </legend>
-            <div className="grid gap-4">
-              <form.AppField name="repository.originalArchiveContactFirstname">
-                {(field) => <field.TextField label={m.field_firstname()} />}
-              </form.AppField>
-
-              <form.AppField name="repository.originalArchiveContactLastname">
-                {(field) => <field.TextField label={m.field_lastname()} />}
-              </form.AppField>
-            </div>
-          </fieldset>
+          <PersonNameFields
+            legend={m.legend_contact()}
+            person="repository.originalArchiveContact"
+          />
         </FormSection>
       </div>
     </div>

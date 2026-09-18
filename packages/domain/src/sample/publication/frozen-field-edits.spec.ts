@@ -39,7 +39,8 @@ const stored: Sample = sampleSchema.parse({
   material: "rock_and_sediment.rock.igneous.plutonic",
   scientificContext: {
     provenanceStatus: "field_sample",
-    collectorName: "Stored collector",
+    collectorFirstname: "Stored",
+    collectorLastname: "collector",
   },
   manualGroups: [
     { id: "22222222-2222-4222-8222-222222222222", name: "Stored group" },
@@ -65,7 +66,8 @@ describe("frozenFieldEdits", () => {
     const payload = body({
       scientificContext: {
         provenanceStatus: "field_sample",
-        collectorName: "Edited collector",
+        collectorFirstname: "Edited",
+        collectorLastname: "editor",
       },
     });
     // Act
@@ -74,7 +76,10 @@ describe("frozenFieldEdits", () => {
       mergePublishedEdit(stored, payload),
     );
     // Assert
-    expect(result).toEqual(["scientificContext.collectorName"]);
+    expect(result).toEqual([
+      "scientificContext.collectorFirstname",
+      "scientificContext.collectorLastname",
+    ]);
   });
 
   it("should report nothing for a body changing only an editable field", () => {

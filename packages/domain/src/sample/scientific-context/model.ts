@@ -16,10 +16,12 @@ const fieldSampleSchema = z.object({
   provenanceStatus: z.literal("field_sample"),
   funderOrganizations: uniqueRorArraySchema("funder_organizations_duplicate"),
   researchProgramName: freeTextSchema.nullish(),
-  chiefScientist: freeTextSchema.nullish(),
+  chiefScientistFirstname: freeTextSchema.nullish(),
+  chiefScientistLastname: freeTextSchema.nullish(),
   chiefScientistOrcid: orcidSchema.nullish(),
   hostInstitution: uniqueRorArraySchema("host_institution_duplicate"),
-  collectorName: freeTextSchema.nullish(),
+  collectorFirstname: freeTextSchema.nullish(),
+  collectorLastname: freeTextSchema.nullish(),
   collectorOrcid: orcidSchema.nullish(),
   researchCampaign: freeTextSchema.nullish(),
   funding: freeTextSchema.nullish(),
@@ -30,9 +32,11 @@ const fieldSampleSchema = z.object({
 
 const collectionSpecimenSchema = z.object({
   provenanceStatus: z.literal("collection_specimen"),
-  collectionCurator: freeTextSchema.nullish(),
+  collectionCuratorFirstname: freeTextSchema.nullish(),
+  collectionCuratorLastname: freeTextSchema.nullish(),
   collectionOrigin: collectionOriginSchema.nullish(),
-  collectorName: freeTextSchema.nullish(),
+  collectorFirstname: freeTextSchema.nullish(),
+  collectorLastname: freeTextSchema.nullish(),
   collectionContextDescription: freeTextSchema.nullish(),
 });
 

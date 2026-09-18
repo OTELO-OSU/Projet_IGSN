@@ -23,8 +23,8 @@ function fromCoreSynthesisDate(
 export function fromCoreSyntheticDetails(
   body: CoreSampleBody,
 ): SyntheticDetails | null {
-  const { agentOf, orcidOf } = responsibilityFinders(body.responsibility);
-  const researcher = agentOf("Researcher");
+  const { personOf, orcidOf } = responsibilityFinders(body.responsibility);
+  const researcher = personOf("Researcher");
   const step = body.production.processSteps?.[0];
   const experiment = body.extensions?.experiment;
   if (experiment == null && step == null && researcher == null) return null;
@@ -37,7 +37,8 @@ export function fromCoreSyntheticDetails(
     experimentType: experiment?.experimentType?.id ?? null,
     experimentDuration: orNull(experiment?.duration, fromQuantity),
     synthesisDate: fromCoreSynthesisDate(step),
-    operatorName: researcher?.name ?? null,
+    operatorFirstname: researcher?.firstname ?? null,
+    operatorLastname: researcher?.lastname ?? null,
     operatorOrcid: orcidOf("Researcher"),
     researchStructure:
       researcher?.affiliations?.map((affiliation) =>

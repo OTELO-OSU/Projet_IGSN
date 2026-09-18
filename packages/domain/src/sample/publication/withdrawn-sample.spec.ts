@@ -30,7 +30,8 @@ const withdrawn: Sample = {
   geomorphologicalEnvironment: "continental_zone.bedrock",
   scientificContext: {
     provenanceStatus: "field_sample",
-    collectorName: "Claire Martin",
+    collectorFirstname: "Claire",
+    collectorLastname: "Martin",
   },
   syntheticDetails: null,
   age: null,
@@ -71,22 +72,28 @@ describe("toWithdrawnSample", () => {
         region: { kind: "continent", country: "FR" },
         localityName: "Mont-Dore",
       },
-      collectorName: "Claire Martin",
-      collectionCurator: null,
+      collectorFirstname: "Claire",
+      collectorLastname: "Martin",
+      collectionCuratorFirstname: null,
+      collectionCuratorLastname: null,
     });
   });
 
   it("should expose the curator of a collection specimen", () => {
     const scientificContext = {
       provenanceStatus: "collection_specimen",
-      collectorName: "Pierre Curie",
-      collectionCurator: "Paris museum",
+      collectorFirstname: "Pierre",
+      collectorLastname: "Curie",
+      collectionCuratorFirstname: "Paris",
+      collectionCuratorLastname: "museum",
     } satisfies ScientificContext;
     expect(
       toWithdrawnSample({ ...withdrawn, scientificContext }),
     ).toMatchObject({
-      collectorName: "Pierre Curie",
-      collectionCurator: "Paris museum",
+      collectorFirstname: "Pierre",
+      collectorLastname: "Curie",
+      collectionCuratorFirstname: "Paris",
+      collectionCuratorLastname: "museum",
     });
   });
 
@@ -99,8 +106,10 @@ describe("toWithdrawnSample", () => {
       }),
     ).toMatchObject({
       location: null,
-      collectorName: null,
-      collectionCurator: null,
+      collectorFirstname: null,
+      collectorLastname: null,
+      collectionCuratorFirstname: null,
+      collectionCuratorLastname: null,
     });
   });
 });

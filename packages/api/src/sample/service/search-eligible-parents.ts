@@ -47,7 +47,7 @@ export function searchEligibleParents(
   scope: ModerationScope | null,
 ): Promise<SampleParent[]> {
   return withTransaction(db, async (trx) => {
-    await applyFuzzyThreshold(trx, search);
+    await applyFuzzyThreshold(trx, [search]);
     const rows = await trx
       .selectFrom("sample")
       .select(["id", "igsn", "name", "material"])

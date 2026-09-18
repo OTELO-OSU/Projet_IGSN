@@ -6,22 +6,23 @@ import {
   organizationLabel,
   osuLabel,
 } from "../../institutional-group/label.ts";
-import { joinContactName } from "./contact-name.ts";
 import { toRorUri } from "./core-production-schema.ts";
 import { OTELO_ROR_URI, toOrcidUri } from "./core-sample-schema.ts";
 
 const personRole = (
   role: CoreRole,
-  name: string | null | undefined,
+  firstname: string | null | undefined,
+  lastname: string | null | undefined,
   orcid?: string | null,
 ): CoreAgentRole[] =>
-  name == null
+  firstname == null && lastname == null
     ? []
     : [
         {
           agent: {
             id: orcid == null ? undefined : toOrcidUri(orcid),
-            name,
+            firstname: firstname ?? undefined,
+            lastname: lastname ?? undefined,
             agentType: "Person",
           },
           roles: [role],
@@ -53,14 +54,11 @@ function toAffiliations(sample: Sample) {
 
 export function toCoreResponsibility(sample: Sample): CoreAgentRole[] {
   const roles: CoreAgentRole[] = [];
-  const creatorName = joinContactName(
-    sample.owner?.firstname,
-    sample.owner?.name,
-  );
-  if (creatorName !== "") {
+  if (sample.owner?.firstname != null || sample.owner?.name != null) {
     roles.push({
       agent: {
-        name: creatorName,
+        firstname: sample.owner.firstname ?? undefined,
+        lastname: sample.owner.name ?? undefined,
         agentType: "Person",
         affiliations: toAffiliations(sample),
       },
@@ -81,7 +79,8 @@ export function toCoreResponsibility(sample: Sample): CoreAgentRole[] {
     roles.push(
       ...personRole(
         "Collector",
-        context.collectorName,
+        context.collectorFirstname,
+        context.collectorLastname,
         context.provenanceStatus === "field_sample"
           ? context.collectorOrcid
           : null,
@@ -91,7 +90,8 @@ export function toCoreResponsibility(sample: Sample): CoreAgentRole[] {
       roles.push(
         ...personRole(
           "ChiefScientist",
-          context.chiefScientist,
+          context.chiefScientistFirstname,
+          context.chiefScientistLastname,
           context.chiefScientistOrcid,
         ),
       );
@@ -106,19 +106,29 @@ export function toCoreResponsibility(sample: Sample): CoreAgentRole[] {
         });
       }
     } else {
-      roles.push(...personRole("Curator", context.collectionCurator));
+      roles.push(
+        ...personRole(
+          "Curator",
+          context.collectionCuratorFirstname,
+          context.collectionCuratorLastname,
+        ),
+      );
     }
   }
 
   const details = sample.syntheticDetails;
-  if (details?.operatorName != null) {
+  if (
+    details != null &&
+    (details.operatorFirstname != null || details.operatorLastname != null)
+  ) {
     roles.push({
       agent: {
         id:
           details.operatorOrcid == null
             ? undefined
             : toOrcidUri(details.operatorOrcid),
-        name: details.operatorName,
+        firstname: details.operatorFirstname ?? undefined,
+        lastname: details.operatorLastname ?? undefined,
         agentType: "Person",
         affiliations: details.researchStructure?.map((ror) => ({
           id: toRorUri(ror),

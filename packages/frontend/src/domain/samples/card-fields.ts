@@ -2,6 +2,7 @@ import type { Location } from "@projet-igsn/domain/sample/location/model";
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 
+import { joinContactName } from "@projet-igsn/domain/sample/contact-name";
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
 
 import { ancestorPaths } from "#/domain/samples/ancestor-paths.ts";
@@ -107,6 +108,22 @@ function contextField(
   };
 }
 
+function personField(
+  key: "chiefScientist" | "collectionCurator",
+  label: () => string,
+): CardField {
+  return {
+    key,
+    label,
+    section: m.sample_section_scientific_context,
+    get: (sample) =>
+      joinContactName(
+        contextText(sample, `${key}Firstname`),
+        contextText(sample, `${key}Lastname`),
+      ) || null,
+  };
+}
+
 const LOCKED_FIELDS: readonly PickableField[] = [
   { key: "name", label: m.card_field_name, section: m.sample_section_sample },
   { key: "igsn", label: m.card_field_igsn, section: m.sample_section_sample },
@@ -147,9 +164,9 @@ const OPTIONAL_CARD_FIELDS: readonly CardField[] = [
     get: (sample) => sample.texture && textureLabel(sample.texture),
   },
   contextField("researchProgramName", m.facet_research_program_name),
-  contextField("chiefScientist", m.facet_chief_scientist),
+  personField("chiefScientist", m.facet_chief_scientist),
   contextField("researchCampaign", m.sample_field_research_campaign),
-  contextField("collectionCurator", m.facet_collection_curator),
+  personField("collectionCurator", m.facet_collection_curator),
   {
     key: "numericAge",
     label: m.sample_field_numeric_age,

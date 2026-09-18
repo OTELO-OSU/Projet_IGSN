@@ -6,9 +6,11 @@ const fieldSample = {
   provenanceStatus: "field_sample",
   funderOrganizations: ["02feahw73", "04kdfz702"],
   researchProgramName: "Deep Biosphere Survey",
-  chiefScientist: "Marie Curie",
+  chiefScientistFirstname: "Marie",
+  chiefScientistLastname: "Curie",
   chiefScientistOrcid: "0000-0002-1825-0097",
-  collectorName: "Pierre Curie",
+  collectorFirstname: "Pierre",
+  collectorLastname: "Curie",
   collectorOrcid: "0000-0001-2345-6789",
   hostInstitution: ["04kdfz702", "02feahw73"],
   researchCampaign: "MD 209 / 2021",
@@ -20,9 +22,11 @@ const fieldSample = {
 
 const collectionSpecimen = {
   provenanceStatus: "collection_specimen",
-  collectionCurator: "Georges Cuvier",
+  collectionCuratorFirstname: "Georges",
+  collectionCuratorLastname: "Cuvier",
   collectionOrigin: "scientific_expedition",
-  collectorName: "Alexander von Humboldt",
+  collectorFirstname: "Alexander",
+  collectorLastname: "von Humboldt",
   collectionContextDescription: "Assembled during the\n1799 expedition",
 };
 
@@ -57,7 +61,7 @@ describe("scientificContextSchema", () => {
   });
 
   it.each([
-    { case: "missing provenance status", input: { collectorName: "X" } },
+    { case: "missing provenance status", input: { collectorLastname: "X" } },
     {
       case: "invalid ROR funder",
       input: {

@@ -22,8 +22,16 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   existence_status_missing: m.publish_blocked_existence_status_missing,
   availability_status_missing: m.publish_blocked_availability_status_missing,
   scientific_context_missing: m.publish_blocked_scientific_context_missing,
-  collector_name_missing: m.publish_blocked_collector_name_missing,
-  collection_curator_missing: m.publish_blocked_collection_curator_missing,
+  collector_firstname_missing: m.publish_blocked_collector_firstname_missing,
+  collector_lastname_missing: m.publish_blocked_collector_lastname_missing,
+  chief_scientist_firstname_missing:
+    m.publish_blocked_chief_scientist_firstname_missing,
+  chief_scientist_lastname_missing:
+    m.publish_blocked_chief_scientist_lastname_missing,
+  collection_curator_firstname_missing:
+    m.publish_blocked_collection_curator_firstname_missing,
+  collection_curator_lastname_missing:
+    m.publish_blocked_collection_curator_lastname_missing,
   collection_origin_missing: m.publish_blocked_collection_origin_missing,
   synthetic_starting_material_missing:
     m.publish_blocked_synthetic_starting_material_missing,
@@ -33,8 +41,10 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
     m.publish_blocked_synthetic_final_product_missing,
   synthetic_synthesis_date_missing:
     m.publish_blocked_synthetic_synthesis_date_missing,
-  synthetic_operator_name_missing:
-    m.publish_blocked_synthetic_operator_name_missing,
+  synthetic_operator_firstname_missing:
+    m.publish_blocked_synthetic_operator_firstname_missing,
+  synthetic_operator_lastname_missing:
+    m.publish_blocked_synthetic_operator_lastname_missing,
   relation_resource_type_missing:
     m.publish_blocked_relation_resource_type_missing,
   parent_not_found: m.publish_blocked_parent_not_found,

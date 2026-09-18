@@ -50,7 +50,8 @@ async function createSample(
         availabilityStatus: "available",
         scientificContext: {
           provenanceStatus: "collection_specimen",
-          collectionCurator: "Georges Cuvier",
+          collectionCuratorFirstname: "Georges",
+          collectionCuratorLastname: "Cuvier",
           collectionOrigin: "scientific_expedition",
         },
         repository: { currentArchive: "02feahw73" },
@@ -484,8 +485,10 @@ describe("public sample routes", () => {
           material: "rock_and_sediment.sediment.exogenous_detritic.clay",
           materialOtherName: null,
           location: { region: null, localityName: null },
-          collectorName: null,
-          collectionCurator: "Georges Cuvier",
+          collectorFirstname: null,
+          collectorLastname: null,
+          collectionCuratorFirstname: "Georges",
+          collectionCuratorLastname: "Cuvier",
         },
       });
     },

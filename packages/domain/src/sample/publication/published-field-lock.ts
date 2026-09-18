@@ -10,14 +10,16 @@ const LOCKED_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   manualGroupIds: ["manualGroupIds"],
 } as const;
 const LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS = {
-  collectorName: ["scientificContext.collectorName"],
+  collectorFirstname: ["scientificContext.collectorFirstname"],
+  collectorLastname: ["scientificContext.collectorLastname"],
 } as const;
 const LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS = {
   collectionOrigin: ["scientificContext.collectionOrigin"],
 } as const;
 
 const LOCKED_SYNTHETIC_DETAILS_FIELDS_TO_FORM_FIELDS = {
-  operatorName: ["syntheticDetails.operatorName"],
+  operatorFirstname: ["syntheticDetails.operatorFirstname"],
+  operatorLastname: ["syntheticDetails.operatorLastname"],
 } as const;
 
 const PROVENANCE_DISCRIMINANT_FORM_FIELD =
