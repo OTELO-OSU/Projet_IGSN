@@ -206,9 +206,9 @@ services:
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost
-      DATACITE_API_HOST: http://datacite:8080
-      DATACITE_API_KEY: dev
-      DATACITE_DOI_PREFIX: "10.5072"
+      DATACITE_API_HOST: ${DATACITE_API_HOST:-http://datacite:8080}
+      DATACITE_API_KEY: ${DATACITE_API_KEY:-dev}
+      DATACITE_DOI_PREFIX: ${DATACITE_DOI_PREFIX:-10.5072}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3002/"]
       interval: 10s
