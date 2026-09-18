@@ -22,9 +22,15 @@ import {
 } from "@projet-igsn/domain/sample/datacite/datacite-schema";
 import { toDataCiteSample } from "@projet-igsn/domain/sample/datacite/to-datacite-sample";
 import {
+  ISAMPLES_MEDIA_TYPE,
+  iSamplesSampleSchema,
+} from "@projet-igsn/domain/sample/isamples/isamples-schema";
+import { toISamplesSample } from "@projet-igsn/domain/sample/isamples/to-isamples-sample";
+import {
   coreListSamplesResponseSchema,
   dataCiteListSamplesResponseSchema,
   frozenServiceSampleSchema,
+  iSamplesListSamplesResponseSchema,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
 import { describe, expect } from "vitest";
 
@@ -517,41 +523,56 @@ describe("GET /service/samples/:igsn", () => {
 });
 
 describe("the Accept header of the /service GET routes", () => {
-  pgTest(
-    "should answer the list as DataCite records under the DataCite media type",
-    async ({ db }) => {
+  const VENDOR_FORMATS = [
+    {
+      format: "DataCite",
+      mediaType: DATACITE_MEDIA_TYPE,
+      map: toDataCiteSample,
+      listSchema: dataCiteListSamplesResponseSchema,
+      schema: dataCiteSampleSchema,
+    },
+    {
+      format: "iSamples",
+      mediaType: ISAMPLES_MEDIA_TYPE,
+      map: toISamplesSample,
+      listSchema: iSamplesListSamplesResponseSchema,
+      schema: iSamplesSampleSchema,
+    },
+  ];
+
+  pgTest.for(VENDOR_FORMATS)(
+    "should answer the list as $format records under the $format media type",
+    async ({ mediaType, map, listSchema }, { db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
       const sample = await inLaboratory(db, archivedSample, IN_REACH);
       const published = (await publishSample(db, sample.id))!;
       // Act
-      const res = await listSamples(app, {}, DATACITE_MEDIA_TYPE);
+      const res = await listSamples(app, {}, mediaType);
       // Assert
       expect(res.status).toBe(200);
-      expect(res.headers.get("content-type")).toBe(DATACITE_MEDIA_TYPE);
-      expect(dataCiteListSamplesResponseSchema.parse(await res.json())).toEqual(
-        {
-          data: [toDataCiteSample(core(published))],
-          meta: { total: 1 },
-        },
-      );
+      expect(res.headers.get("content-type")).toBe(mediaType);
+      expect(listSchema.parse(await res.json())).toEqual({
+        data: [map(core(published))],
+        meta: { total: 1 },
+      });
     },
   );
 
-  pgTest(
-    "should answer one sample as a DataCite record under the DataCite media type",
-    async ({ db }) => {
+  pgTest.for(VENDOR_FORMATS)(
+    "should answer one sample as a $format record under the $format media type",
+    async ({ mediaType, map, schema }, { db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
       const sample = await inLaboratory(db, archivedSample, IN_REACH);
       const published = (await publishSample(db, sample.id))!;
       // Act
-      const res = await getSample(app, published.igsn!, DATACITE_MEDIA_TYPE);
+      const res = await getSample(app, published.igsn!, mediaType);
       // Assert
       expect(res.status).toBe(200);
-      expect(res.headers.get("content-type")).toBe(DATACITE_MEDIA_TYPE);
-      expect(dataCiteSampleSchema.parse(await res.json())).toEqual(
-        toDataCiteSample(await storedCore(db, sample.id)),
+      expect(res.headers.get("content-type")).toBe(mediaType);
+      expect(schema.parse(await res.json())).toEqual(
+        map(await storedCore(db, sample.id)),
       );
     },
   );

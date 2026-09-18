@@ -1,6 +1,7 @@
 import type { Kysely } from "kysely";
 
 import { DATACITE_MEDIA_TYPE } from "@projet-igsn/domain/sample/datacite/datacite-schema";
+import { ISAMPLES_MEDIA_TYPE } from "@projet-igsn/domain/sample/isamples/isamples-schema";
 import { describe, expect, it } from "vitest";
 
 import type { DB } from "../db.ts";
@@ -80,7 +81,7 @@ describe("the /service OpenAPI document", () => {
   });
 
   it.each(["/samples", "/samples/{igsn}"])(
-    "should offer both served formats on the Accept header of %s",
+    "should offer every served format on the Accept header of %s",
     async (path) => {
       const document = await serviceDocument();
 
@@ -94,6 +95,7 @@ describe("the /service OpenAPI document", () => {
       expect(accept?.schema.enum).toEqual([
         "application/json",
         DATACITE_MEDIA_TYPE,
+        ISAMPLES_MEDIA_TYPE,
       ]);
       expect(Object.keys(responses["200"]!.content)).toEqual(
         accept?.schema.enum,
