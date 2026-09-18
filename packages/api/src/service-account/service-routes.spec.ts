@@ -562,6 +562,25 @@ describe("the Accept header of the /service GET routes", () => {
     },
   );
 
+  pgTest.for([
+    "*/*, application/vnd.otelo.datacite+json",
+    "application/*, application/vnd.otelo.datacite+json",
+    "text/plain, */*, application/vnd.otelo.datacite+json",
+  ])(
+    "should serve the DataCite record named beside a wildcard in Accept %s",
+    async (accept, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const sample = await inLaboratory(db, archivedSample, IN_REACH);
+      await publishSample(db, sample.id);
+      // Act
+      const res = await listSamples(app, {}, accept);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toBe(DATACITE_MEDIA_TYPE);
+    },
+  );
+
   pgTest.for([undefined, "application/json", "application/*", "*/*"])(
     "should answer Core records as application/json for Accept %s",
     async (accept, { db }) => {

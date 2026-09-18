@@ -68,6 +68,9 @@ const SWAGGER_UI_INTEGRITY: Record<string, string> = {
 const subresource = (url: string) =>
   `integrity="${SWAGGER_UI_INTEGRITY[url.slice(url.lastIndexOf("/") + 1)]}" crossorigin="anonymous"`;
 
+const specificity = (type: string) =>
+  type === "*/*" ? 0 : type === "application/*" ? 1 : 2;
+
 // ponytail: Accept: application/json;q=0 reads as unranked, not as explicitly unacceptable; write an RFC 9110 parser if a caller ever needs it
 const negotiate = (c: Context<ServiceEnv>) =>
   accepts(c, {
@@ -76,7 +79,7 @@ const negotiate = (c: Context<ServiceEnv>) =>
     default: "*/*",
     match: (candidates, { supports }) =>
       [...candidates]
-        .sort((a, b) => b.q - a.q)
+        .sort((a, b) => b.q - a.q || specificity(b.type) - specificity(a.type))
         .find(({ type }) => supports.includes(type))?.type ?? "",
   });
 
