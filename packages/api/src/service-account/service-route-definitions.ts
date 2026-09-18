@@ -54,8 +54,8 @@ export const SERVED_MEDIA_TYPES = [
   ISAMPLES_MEDIA_TYPE,
 ] as const;
 
-const negotiated = (
-  schemas: Record<string, z.ZodType>,
+const negotiated = <Schemas extends Record<string, z.ZodType>>(
+  schemas: Schemas,
   description: string,
 ) => ({
   description,
@@ -64,7 +64,7 @@ const negotiated = (
       mediaType,
       { schema },
     ]),
-  ),
+  ) as { [MediaType in keyof Schemas]: { schema: Schemas[MediaType] } },
 });
 
 const NOT_ACCEPTABLE = json(

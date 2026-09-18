@@ -1,10 +1,14 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
 import type { CoreSample } from "@projet-igsn/domain/sample/core/core-sample-schema";
+import type { DataCiteSample } from "@projet-igsn/domain/sample/datacite/datacite-schema";
+import type { ISamplesSample } from "@projet-igsn/domain/sample/isamples/isamples-schema";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
 import type {
   CoreListSamplesResponse,
+  DataCiteListSamplesResponse,
   FrozenServiceSample,
+  ISamplesListSamplesResponse,
   InvalidServiceSample,
   ServiceSampleIssue,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
@@ -89,11 +93,11 @@ const negotiate = (c: Context<ServiceEnv>) =>
 const notAcceptable = (c: Context<ServiceEnv>) =>
   c.json({ error: "Not acceptable" }, 406);
 
-const serve = <Core>(
+const serve = <Core, Adapted>(
   c: Context<ServiceEnv>,
   format: string,
   core: Core,
-  adapters: Record<string, (core: Core) => unknown>,
+  adapters: Record<string, (core: Core) => Adapted>,
 ) => {
   const adapt = adapters[format];
   return adapt
@@ -191,7 +195,10 @@ export function createServiceRoutes(
       );
       const records = data.map((sample) => toCoreSample(sample, frontendUrl));
       const body: CoreListSamplesResponse = { data: records, meta: { total } };
-      return serve(c, format, body, {
+      return serve<
+        CoreListSamplesResponse,
+        DataCiteListSamplesResponse | ISamplesListSamplesResponse
+      >(c, format, body, {
         [DATACITE_MEDIA_TYPE]: listOf(toDataCiteSample),
         [ISAMPLES_MEDIA_TYPE]: listOf(toISamplesSample),
       });
@@ -205,10 +212,15 @@ export function createServiceRoutes(
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
-      return serve(c, format, toCoreSample(sample, frontendUrl), {
-        [DATACITE_MEDIA_TYPE]: toDataCiteSample,
-        [ISAMPLES_MEDIA_TYPE]: toISamplesSample,
-      });
+      return serve<CoreSample, DataCiteSample | ISamplesSample>(
+        c,
+        format,
+        toCoreSample(sample, frontendUrl),
+        {
+          [DATACITE_MEDIA_TYPE]: toDataCiteSample,
+          [ISAMPLES_MEDIA_TYPE]: toISamplesSample,
+        },
+      );
     })
     .openapi(createSampleRoute, async (c) => {
       const account = c.get("serviceAccount");
