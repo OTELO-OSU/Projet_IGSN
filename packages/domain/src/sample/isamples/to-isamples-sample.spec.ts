@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import type { CoreSample } from "../core/core-sample-schema.ts";
 
+import { toConcept } from "../core/concept.ts";
 import { FRONTEND_URL } from "../core/core-record-fixture.ts";
 import {
   COLLECTION_SPECIMEN,
@@ -12,6 +13,7 @@ import {
 } from "../core/core-sample-fixture.ts";
 import { coreSampleSchema } from "../core/core-sample-schema.ts";
 import { toCoreSample } from "../core/to-core-sample.ts";
+import { MATERIAL_TREE } from "../material/classification.ts";
 import { toISamplesSample } from "./to-isamples-sample.ts";
 
 const PROJECTED_CORE_PATHS = [
@@ -368,6 +370,26 @@ describe("the iSamples categories of a Core record", () => {
 
       expect(record.has_material_category).toEqual([material]);
       expect(record.has_context_category).toEqual([context]);
+    },
+  );
+
+  it.each(MATERIAL_TREE.rock_and_sediment.choices ?? [])(
+    "should map the head material %s onto an iSamples concept",
+    (choice) => {
+      const sample = core(FIELD_SAMPLE);
+
+      const record = toISamplesSample({
+        ...sample,
+        classification: {
+          ...sample.classification,
+          materialCategories: [
+            toConcept("material", `rock_and_sediment.${choice}`),
+          ],
+        },
+      });
+
+      expect(record.has_material_category[0]).toBeDefined();
+      expect(record.has_context_category[0]).toBeDefined();
     },
   );
 });

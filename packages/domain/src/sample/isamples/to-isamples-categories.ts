@@ -40,8 +40,6 @@ const MATERIAL_CONCEPTS: Record<MaterialHead, ISamplesConcept> = {
   ),
 };
 
-const EXTRATERRESTRIAL_HEAD: MaterialHead = "extraterrestrial_rock";
-
 const EARTH_INTERIOR = concept(
   SAMPLED_FEATURE_VOCABULARY,
   "earthinterior",
@@ -65,7 +63,7 @@ export function toISamplesMaterialCategory(head: string): ISamplesConcept {
 }
 
 export function toISamplesContextCategory(head: string): ISamplesConcept {
-  return head === EXTRATERRESTRIAL_HEAD
+  return head === "extraterrestrial_rock"
     ? EXTRATERRESTRIAL_ENVIRONMENT
     : EARTH_INTERIOR;
 }
