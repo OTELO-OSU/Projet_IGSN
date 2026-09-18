@@ -1,7 +1,7 @@
 import type { CoreSample } from "../core/core-sample-schema.ts";
 import type { DataCiteSample } from "./datacite-schema.ts";
 
-import { OTELO_ROR_URI } from "../core/core-sample-schema.ts";
+import { CORE_LICENCE_URI, OTELO_ROR_URI } from "../core/core-sample-schema.ts";
 import {
   DATACITE_SCHEMA_VERSION,
   RESOURCE_TYPE_GENERAL,
@@ -15,11 +15,15 @@ import { toDataCiteDates } from "./to-datacite-dates.ts";
 import { toDataCiteFundingReferences } from "./to-datacite-funding.ts";
 import { toDataCiteGeoLocations } from "./to-datacite-geolocations.ts";
 
-const CC_BY_4_0 = {
-  rights: "Creative Commons Attribution 4.0 International",
-  rightsIdentifier: "CC-BY-4.0",
-  rightsIdentifierScheme: "SPDX",
-} as const;
+type Licence = Omit<DataCiteSample["rightsList"][number], "rightsUri">;
+
+const LICENCE_BY_URI: Record<string, Licence> = {
+  [CORE_LICENCE_URI]: {
+    rights: "Creative Commons Attribution 4.0 International",
+    rightsIdentifier: "CC-BY-4.0",
+    rightsIdentifierScheme: "SPDX",
+  },
+};
 
 type Quantity = { value: number; unitCode: string };
 
@@ -43,7 +47,7 @@ export function toDataCiteSample(core: CoreSample): DataCiteSample {
     contributors: toDataCiteContributors(core.responsibility),
     publisher: {
       name: core.publication.publisher.name,
-      publisherIdentifier: OTELO_ROR_URI,
+      publisherIdentifier: core.publication.publisher.id ?? OTELO_ROR_URI,
       publisherIdentifierScheme: "ROR",
       schemeUri: ROR_SCHEME_URI,
     },
@@ -78,9 +82,10 @@ export function toDataCiteSample(core: CoreSample): DataCiteSample {
       ...toSize(physicalDescription?.dimensions?.width),
       ...toSize(physicalDescription?.dimensions?.thickness),
     ],
-    rightsList: core.rightsAndAccess.rightsURIs
-      .slice(0, 1)
-      .map((rightsUri) => ({ ...CC_BY_4_0, rightsUri })),
+    rightsList: core.rightsAndAccess.rightsURIs.flatMap((rightsUri) => {
+      const licence = LICENCE_BY_URI[rightsUri];
+      return licence == null ? [] : [{ ...licence, rightsUri }];
+    }),
     geoLocations: toDataCiteGeoLocations(
       production.location,
       core.rightsAndAccess.sensitiveLocation,
