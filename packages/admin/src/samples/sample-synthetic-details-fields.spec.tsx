@@ -2,9 +2,11 @@ import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
 import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
+import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 
 import { fillPersonName } from "../../test/fill-person-name.ts";
+import { worker } from "../../test/msw.ts";
 import { repickPath } from "../../test/pick-hierarchy.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
@@ -31,6 +33,9 @@ async function renderSyntheticForm(
   onSubmit: (value: CreateSample) => void = noop,
   defaultValues: CreateSample = syntheticDefaults,
 ): Promise<Screen> {
+  worker.use(
+    http.get("*/admin/users/search", () => HttpResponse.json({ data: [] })),
+  );
   const screen = await render(
     <SampleForm
       onCancel={noop}
@@ -108,8 +113,8 @@ describe("SampleSyntheticDetailsFields", () => {
     await pickOption(screen, "Experiment duration unit *", "h");
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
     await fillPersonName(screen, "Operator name", "Marie", "Curie");
-    await screen
-      .getByLabelText("Operator ORCID", { exact: true })
+    await operatorName(screen)
+      .getByRole("textbox", { name: "ORCID iD" })
       .fill("0000-0002-1825-0097");
     await screen
       .getByRole("combobox", { name: "Research structure of the operator" })
@@ -318,7 +323,7 @@ describe("SampleSyntheticDetailsFields", () => {
     );
   });
 
-  it("should freeze the operator name alone on a published synthetic sample", async () => {
+  it("should freeze the whole operator on a published synthetic sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -363,8 +368,8 @@ describe("SampleSyntheticDetailsFields", () => {
         .toBeDisabled();
     }
     await expect
-      .element(screen.getByLabelText("Operator ORCID", { exact: true }))
-      .toBeEnabled();
+      .element(operatorName(screen).getByRole("textbox", { name: "ORCID iD" }))
+      .toBeDisabled();
 
     for (const name of [
       "Starting material *",

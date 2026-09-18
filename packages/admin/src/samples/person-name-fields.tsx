@@ -4,10 +4,6 @@ import { m } from "#/paraglide/messages.js";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 type PersonField =
-  | "scientificContext.chiefScientist"
-  | "scientificContext.collector"
-  | "scientificContext.collectionCurator"
-  | "syntheticDetails.operator"
   | "repository.currentArchiveContact"
   | "repository.originalArchiveContact";
 

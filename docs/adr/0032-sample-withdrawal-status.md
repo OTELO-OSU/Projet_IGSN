@@ -21,6 +21,8 @@ A published sample keeps a permanent IGSN, but an owner may want it out of publi
 
 **A withdrawn sample still resolves at `GET /samples/:igsn`, as a redacted payload.** `domain/sample/publication/withdrawn-sample.ts` builds it: `toWithdrawnSample(sample)` picks a fixed whitelist field by field, never a spread, so a field added to `Sample` later stays private by default: `igsn`, `name`, `nature`, `type`, `material`, `location` narrowed to `region` and `localityName`, `collectorFirstname`, `collectorLastname`, `collectionCuratorFirstname`, and `collectionCuratorLastname` (the last two only from the `collection_specimen` provenance arm). `GET /samples/:igsn` returns a discriminated union on `status` (`publicSampleResponseSchema`), the full `sampleSchema` for `published`, `withdrawnSampleSchema` for `withdrawn`. Attachments 404 on a withdrawn sample; the contact form still works, since it reaches the owner, not the redacted data.
 
+**2026-09-18 narrowing.** A collector or collection curator may now link a registry account (`*UserId`) instead of a typed name; the read model resolves that link's firstname/lastname/ORCID live, before redaction, so a withdrawn sample keeps showing the resolved names on its whitelisted fields. The account link itself is never in the whitelist and never reaches the redacted payload.
+
 **Toggling is one endpoint**, `PUT /admin/samples/:id/status`, editor-only, 409 on a draft. The admin edit page renders `SampleStatusButton`, next to the existing publish action, offering "Withdraw" on a published sample and "Republish" on a withdrawn one.
 
 ### Rejected

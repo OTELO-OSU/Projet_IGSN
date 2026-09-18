@@ -6,6 +6,7 @@ import { testClient } from "hono/testing";
 import { describe, expect, vi } from "vitest";
 
 import { createApp } from "../app.ts";
+import { insertUser } from "../tests/insert-user.ts";
 import { pgTest } from "../tests/pg-test.ts";
 import { provisionUser } from "../tests/provision-user.ts";
 import { setSampleStatus } from "./service/set-sample-status.ts";
@@ -532,6 +533,77 @@ describe("public sample routes", () => {
       });
       expect(await list.json()).toMatchObject({
         data: [{ repository: redacted }],
+      });
+    },
+  );
+
+  const linkCurator = async (
+    db: Parameters<typeof createApp>[0],
+    sampleId: string,
+  ) => {
+    const account = await insertUser(db, "mc@univ-lorraine.fr", {
+      firstname: "Marie",
+      name: "Curié",
+    });
+    await db
+      .updateTable("sample")
+      .set({
+        sc_collection_curator_firstname: null,
+        sc_collection_curator_lastname: null,
+        sc_collection_curator_user_id: account.id,
+      })
+      .where("id", "=", sampleId)
+      .execute();
+  };
+
+  pgTest(
+    "should resolve a linked person's name and hide its account on a public payload",
+    async ({ db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      const published = await createPublishedSample(client, "Rhyolite liée");
+      await linkCurator(db, published.id);
+      // Act
+      const detail = await client.samples[":igsn"].$get({
+        param: { igsn: published.igsn! },
+      });
+      const list = await client.samples.$get({
+        query: { page: "1", perPage: "10" },
+      });
+      // Assert
+      const resolved = {
+        collectionCuratorUserId: null,
+        collectionCuratorFirstname: "Marie",
+        collectionCuratorLastname: "Curié",
+      };
+      expect(await detail.json()).toMatchObject({
+        data: { scientificContext: resolved },
+      });
+      expect(await list.json()).toMatchObject({
+        data: [{ scientificContext: resolved }],
+      });
+    },
+  );
+
+  pgTest(
+    "should keep a withdrawn sample's linked person resolved",
+    async ({ db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      const published = await createPublishedSample(client, "Rhyolite retirée");
+      await linkCurator(db, published.id);
+      await setSampleStatus(db, published.id, "withdrawn");
+      // Act
+      const res = await client.samples[":igsn"].$get({
+        param: { igsn: published.igsn! },
+      });
+      // Assert
+      expect(await res.json()).toMatchObject({
+        data: {
+          status: "withdrawn",
+          collectionCuratorFirstname: "Marie",
+          collectionCuratorLastname: "Curié",
+        },
       });
     },
   );

@@ -14,7 +14,7 @@ describe("toPublicSample", () => {
     expect(toPublicSample(sample)).toEqual(sample);
   });
 
-  it("should redact the archive contacts of a published sample", () => {
+  it("should redact the archive contacts and the account links of a published sample", () => {
     const archived = {
       ...sample,
       repository: {
@@ -22,6 +22,14 @@ describe("toPublicSample", () => {
         currentArchiveContactLastname: "Lovelace",
         originalArchiveContactFirstname: "Marie",
         originalArchiveContactLastname: "Curie",
+      },
+      scientificContext: {
+        provenanceStatus: "field_sample",
+        chiefScientistUserId: "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10",
+        collectorUserId: "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10",
+      },
+      syntheticDetails: {
+        operatorUserId: "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10",
       },
     } as Sample;
 
@@ -32,6 +40,11 @@ describe("toPublicSample", () => {
         originalArchiveContactFirstname: null,
         originalArchiveContactLastname: null,
       },
+      scientificContext: {
+        chiefScientistUserId: null,
+        collectorUserId: null,
+      },
+      syntheticDetails: { operatorUserId: null },
     });
   });
 

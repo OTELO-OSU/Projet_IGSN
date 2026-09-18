@@ -44,10 +44,10 @@ function matchesIgsnExactly(token: string): Expression<SqlBool> {
   return sql<SqlBool>`igsn = upper(${token})`;
 }
 
-function matchesToken(
+export function matchesToken(
   columns: readonly string[],
   token: string,
-  extraArms: Expression<SqlBool>[],
+  extraArms: Expression<SqlBool>[] = [],
 ): Expression<SqlBool> {
   const pattern = tokenPattern(token);
   const arms = [

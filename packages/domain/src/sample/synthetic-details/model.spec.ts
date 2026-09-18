@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { syntheticDetailsSchema } from "./model.ts";
+import {
+  createSyntheticDetailsSchema,
+  syntheticDetailsSchema,
+} from "./model.ts";
 
 const syntheticDetails = {
   startingMaterial: "synthetic",
@@ -74,5 +77,29 @@ describe("syntheticDetailsSchema", () => {
     expect(result.error?.issues).toMatchObject([
       { params: { code: "synthetic_research_structure_duplicate" } },
     ]);
+  });
+});
+
+const USER_ID = "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10";
+
+describe("an operator is a link or a typed name, never both", () => {
+  it.each([
+    { case: "a name", input: { operatorFirstname: "Marie" } },
+    { case: "an ORCID", input: { operatorOrcid: "0000-0002-1825-0097" } },
+  ])("should reject a linked operator carrying $case", ({ input }) => {
+    expect(
+      createSyntheticDetailsSchema.safeParse({
+        operatorUserId: USER_ID,
+        ...input,
+      }).success,
+    ).toBe(false);
+  });
+
+  it("should accept a linked operator with no typed name", () => {
+    expect(
+      createSyntheticDetailsSchema.parse({ operatorUserId: USER_ID }),
+    ).toEqual({
+      operatorUserId: USER_ID,
+    });
   });
 });

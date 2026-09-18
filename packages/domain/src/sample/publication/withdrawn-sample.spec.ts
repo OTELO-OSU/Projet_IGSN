@@ -98,6 +98,21 @@ describe("toWithdrawnSample", () => {
     });
   });
 
+  it("should keep the names a linked collector's account resolved to", () => {
+    const scientificContext = {
+      provenanceStatus: "field_sample",
+      collectorUserId: "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10",
+      collectorFirstname: "Marie",
+      collectorLastname: "Curie",
+    } satisfies ScientificContext;
+    expect(
+      toWithdrawnSample({ ...withdrawn, scientificContext }),
+    ).toMatchObject({
+      collectorFirstname: "Marie",
+      collectorLastname: "Curie",
+    });
+  });
+
   it("should report no collector, curator nor location when the sample has none", () => {
     expect(
       toWithdrawnSample({

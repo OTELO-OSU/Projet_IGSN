@@ -60,6 +60,32 @@ export function sampleParentsQuery(eb: ExpressionBuilder<DB, "sample">) {
   ).as("parents");
 }
 
+const personAccount = (
+  eb: ExpressionBuilder<DB, "sample">,
+  column:
+    | "sc_chief_scientist_user_id"
+    | "sc_collector_user_id"
+    | "sc_collection_curator_user_id"
+    | "syn_operator_user_id",
+) =>
+  jsonObjectFrom(
+    eb
+      .selectFrom("user")
+      .select(["user.firstname", "user.name", "user.orcid"])
+      .whereRef("user.id", "=", `sample.${column}`),
+  );
+
+export function samplePersonAccountsQuery(eb: ExpressionBuilder<DB, "sample">) {
+  return [
+    personAccount(eb, "sc_chief_scientist_user_id").as("chiefScientistAccount"),
+    personAccount(eb, "sc_collector_user_id").as("collectorAccount"),
+    personAccount(eb, "sc_collection_curator_user_id").as(
+      "collectionCuratorAccount",
+    ),
+    personAccount(eb, "syn_operator_user_id").as("operatorAccount"),
+  ];
+}
+
 export function sampleOwnerQuery(eb: ExpressionBuilder<DB, "sample">) {
   return jsonObjectFrom(
     eb

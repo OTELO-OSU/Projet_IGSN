@@ -11,6 +11,7 @@ import type { StartingMaterialNature } from "@projet-igsn/domain/sample/syntheti
 import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
 import { needsStartingMaterialComposition } from "@projet-igsn/domain/sample/synthetic-details/needs-starting-material-composition";
 
+import { composeContact } from "#/samples/compose-contact.ts";
 import {
   composeDateRange,
   type DateRangeCandidate,
@@ -35,6 +36,7 @@ export type SyntheticDetailsDraft = {
   synthesisDateEnd: string | undefined;
   synthesisDatePrecision: DatePrecision;
   synthesisDateTimeZone: string | undefined;
+  operatorUserId: string | null | undefined;
   operatorFirstname: string | null | undefined;
   operatorLastname: string | null | undefined;
   operatorOrcid: string | null | undefined;
@@ -56,6 +58,7 @@ type SyntheticDetailsCandidate = {
   experimentType: ExperimentType | undefined;
   experimentDuration: MeasurementCandidate<ExperimentDurationUnit> | undefined;
   synthesisDate: DateRangeCandidate;
+  operatorUserId: string | undefined;
   operatorFirstname: string | undefined;
   operatorLastname: string | undefined;
   operatorOrcid: string | undefined;
@@ -72,6 +75,12 @@ export function composeSyntheticDetails(
   material: string | null,
 ): SyntheticDetailsCandidate | null {
   if (!isSyntheticMaterial(material)) return null;
+  const operator = composeContact(
+    draft.operatorUserId,
+    draft.operatorFirstname,
+    draft.operatorLastname,
+    draft.operatorOrcid,
+  );
   const details = {
     startingMaterial: draft.startingMaterial,
     startingMaterialNature: draft.startingMaterialNature,
@@ -92,9 +101,10 @@ export function composeSyntheticDetails(
       precision: draft.synthesisDatePrecision,
       timeZone: draft.synthesisDateTimeZone,
     }),
-    operatorFirstname: draft.operatorFirstname?.trim() || undefined,
-    operatorLastname: draft.operatorLastname?.trim() || undefined,
-    operatorOrcid: draft.operatorOrcid?.trim() || undefined,
+    operatorUserId: operator.userId,
+    operatorFirstname: operator.firstname,
+    operatorLastname: operator.lastname,
+    operatorOrcid: operator.orcid,
     researchStructure: nonEmpty(draft.researchStructure),
     temperature: composeMeasurement(
       draft.temperatureValue,
@@ -128,6 +138,7 @@ export function toSyntheticDetailsDraft(
     synthesisDateEnd: synthesisDate.end,
     synthesisDatePrecision: synthesisDate.precision,
     synthesisDateTimeZone: synthesisDate.timeZone,
+    operatorUserId: value?.operatorUserId ?? undefined,
     operatorFirstname: value?.operatorFirstname ?? undefined,
     operatorLastname: value?.operatorLastname ?? undefined,
     operatorOrcid: value?.operatorOrcid ?? undefined,

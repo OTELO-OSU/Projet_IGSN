@@ -99,10 +99,12 @@ type SampleTable = {
   sc_provenance_status: string | null;
   sc_funder_organizations: string[] | null;
   sc_research_program_name: string | null;
+  sc_chief_scientist_user_id: string | null;
   sc_chief_scientist_firstname: string | null;
   sc_chief_scientist_lastname: string | null;
   sc_chief_scientist_orcid: string | null;
   sc_host_institution: string[] | null;
+  sc_collector_user_id: string | null;
   sc_collector_firstname: string | null;
   sc_collector_lastname: string | null;
   sc_collector_orcid: string | null;
@@ -111,6 +113,7 @@ type SampleTable = {
   sc_research_program_description: string | null;
   sc_field_name: string | null;
   sc_mission_description: string | null;
+  sc_collection_curator_user_id: string | null;
   sc_collection_curator_firstname: string | null;
   sc_collection_curator_lastname: string | null;
   sc_collection_origin: string | null;
@@ -133,6 +136,7 @@ type SampleTable = {
   syn_synthesis_date_end: string | null;
   syn_synthesis_date_precision: string | null;
   syn_synthesis_date_time_zone: string | null;
+  syn_operator_user_id: string | null;
   syn_operator_firstname: string | null;
   syn_operator_lastname: string | null;
   syn_operator_orcid: string | null;
