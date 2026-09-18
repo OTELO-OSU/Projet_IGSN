@@ -19,6 +19,7 @@ const PROJECTED_CORE_PATHS = [
   "record.metadataLanguage",
   "record.lifecycleEvents",
   "identification.sampleIdentifier",
+  "identification.doi",
   "identification.landingPage",
   "identification.titles",
   "classification.materialCategories",
@@ -131,7 +132,7 @@ const SCHEMA_VERSION = "http://datacite.org/schema/kernel-4";
 describe("a Core record mapped to DataCite", () => {
   it("should project a field sample onto its DataCite record", () => {
     expect(toDataCiteSample(core(FIELD_SAMPLE))).toEqual({
-      doi: "ABCDEFGHJKMNPQRSTVWXYZ0123",
+      doi: "10.5072/ABCDEFGHJKMNPQRSTVWXYZ0123",
       url: "https://igsn.example.org/samples/ABCDEFGHJKMNPQRSTVWXYZ0123",
       titles: [{ title: "Granite outcrop block" }],
       creators: [

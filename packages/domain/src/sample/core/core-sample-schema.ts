@@ -157,6 +157,13 @@ const coreIdentificationFields = {
     description:
       "IGSN of the sample, minted by the registry; emit only, ignored on input.",
   }),
+  doi: z
+    .string()
+    .meta({
+      description:
+        "DOI of the sample, minted at publication; emit only, ignored on input.",
+    })
+    .optional(),
   landingPage: z.url().meta({
     description: "Public page of the sample on the registry; emit only.",
   }),

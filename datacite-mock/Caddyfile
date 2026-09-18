@@ -1,0 +1,10 @@
+:8080 {
+	@dois {
+		method PUT
+		path /dois/*
+	}
+	header @dois Content-Type application/vnd.api+json
+	respond @dois `{"data":{"id":"{http.request.uri.path.1}/{http.request.uri.path.2}","type":"dois","attributes":{"state":"findable"}}}` 201
+	respond / 200
+	respond 404
+}

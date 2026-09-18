@@ -92,6 +92,7 @@ export const sampleSchema = z.object({
   economicDepositName: nameSchema.nullable(),
   economicDepositDescription: nameSchema.nullable(),
   igsn: igsnSchema.nullable(),
+  doiPrefix: z.string().nullable().default(null),
   owner: userSchema
     .pick({ name: true, firstname: true })
     .nullable()

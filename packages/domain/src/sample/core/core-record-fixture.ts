@@ -20,6 +20,8 @@ const ORGANIZATION_URI = "https://ror.org/02feahw73";
 
 const IGSN = "ABCDEFGHJKMNPQRSTVWXYZ0123";
 
+const DOI_PREFIX = "10.5072";
+
 const RELATION_ID = "99999999-9999-4999-8999-999999999999";
 
 const PARENT_ID = "44444444-4444-4444-8444-444444444444";
@@ -27,6 +29,7 @@ const PARENT_ID = "44444444-4444-4444-8444-444444444444";
 const TECHNICAL = {
   id: "11111111-1111-4111-8111-111111111111",
   igsn: IGSN,
+  doiPrefix: DOI_PREFIX,
   status: "published",
   createdAt: new Date("2024-06-02T10:00:00.000Z"),
   publishedAt: new Date("2024-06-03T10:00:00.000Z"),
@@ -132,6 +135,7 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
   ...ENVELOPE,
   identification: {
     sampleIdentifier: IGSN,
+    doi: `${DOI_PREFIX}/${IGSN}`,
     landingPage: `${FRONTEND_URL}samples/${IGSN}`,
     titles: [{ value: "Granite outcrop block", titleType: "Main" }],
     localName: "Block A",
@@ -311,6 +315,7 @@ const COLLECTION_SPECIMEN_RECORD: CoreSample = {
   ...ENVELOPE,
   identification: {
     sampleIdentifier: IGSN,
+    doi: `${DOI_PREFIX}/${IGSN}`,
     landingPage: `${FRONTEND_URL}samples/${IGSN}`,
     titles: [{ value: "Deep sea gravel", titleType: "Main" }],
   },
@@ -402,6 +407,7 @@ const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
   ...ENVELOPE,
   identification: {
     sampleIdentifier: IGSN,
+    doi: `${DOI_PREFIX}/${IGSN}`,
     landingPage: `${FRONTEND_URL}samples/${IGSN}`,
     titles: [{ value: "Synthetic basaltic glass", titleType: "Main" }],
   },

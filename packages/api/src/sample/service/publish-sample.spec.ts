@@ -1,8 +1,9 @@
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 import { sql } from "kysely";
-import { describe, expect } from "vitest";
+import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
+import { publishableSample } from "../../tests/sample-fixtures.ts";
 import { insertSample } from "./insert-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
@@ -30,12 +31,13 @@ describe("publishSample", () => {
 
       const row = await db
         .selectFrom("sample")
-        .select(["status", "igsn"])
+        .select(["status", "igsn", "doi_prefix"])
         .where("id", "=", created.id)
         .executeTakeFirstOrThrow();
       expect(row).toEqual({
         status: "published",
         igsn: generateIgsnSuffix(created.id),
+        doi_prefix: null,
       });
     },
   );
@@ -182,4 +184,63 @@ describe("publishSample", () => {
     });
     expect(republished).toMatchObject({ id: created.id });
   });
+});
+
+describe("publishSample with DataCite configured", () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    fetchMock.mockResolvedValue(new Response("{}", { status: 201 }));
+    process.env.DATACITE_API_HOST = "http://datacite.test";
+    process.env.DATACITE_API_KEY = "topsecret";
+    process.env.DATACITE_DOI_PREFIX = "10.5072";
+    process.env.FRONTEND_URL = "http://localhost:3000";
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    fetchMock.mockReset();
+  });
+
+  pgTest.for([
+    { status: "published" as const, event: "publish" },
+    { status: "withdrawn" as const, event: "register" },
+  ])(
+    "should stamp the configured prefix and register the DOI with the $event event when publishing as $status",
+    async ({ status, event }, { db }) => {
+      // Arrange
+      const created = await insertSample(db, publishableSample);
+      // Act
+      const published = await publishSample(db, created.id, status);
+      // Assert
+      expect(published?.doiPrefix).toBe("10.5072");
+      const row = await db
+        .selectFrom("sample")
+        .select("doi_prefix")
+        .where("id", "=", created.id)
+        .executeTakeFirstOrThrow();
+      expect(row.doi_prefix).toBe("10.5072");
+      const [url, init] = fetchMock.mock.calls[0]!;
+      expect(url).toBe(`http://datacite.test/dois/10.5072/${published?.igsn}`);
+      expect(JSON.parse(init.body).data.attributes).toMatchObject({
+        doi: `10.5072/${published?.igsn}`,
+        event,
+      });
+    },
+  );
+
+  pgTest(
+    "should keep the first prefix when published twice under another one",
+    async ({ db }) => {
+      // Arrange
+      const created = await insertSample(db, publishableSample);
+      await publishSample(db, created.id);
+      process.env.DATACITE_DOI_PREFIX = "10.9999";
+      // Act
+      const republished = await publishSample(db, created.id);
+      // Assert
+      expect(republished?.doiPrefix).toBe("10.5072");
+    },
+  );
 });

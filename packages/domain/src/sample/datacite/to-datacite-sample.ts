@@ -40,7 +40,7 @@ export function toDataCiteSample(core: CoreSample): DataCiteSample {
   const { classification, identification, physicalDescription, production } =
     core;
   return {
-    doi: identification.sampleIdentifier,
+    doi: identification.doi ?? identification.sampleIdentifier,
     url: identification.landingPage,
     titles: identification.titles.map(({ value }) => ({ title: value })),
     creators: toDataCiteCreators(core.responsibility),

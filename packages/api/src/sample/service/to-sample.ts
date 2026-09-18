@@ -274,6 +274,7 @@ export function toSample(row: SampleRow): Sample {
     economicDepositName: row.economic_deposit_name,
     economicDepositDescription: row.economic_deposit_description,
     igsn: row.igsn,
+    doiPrefix: row.doi_prefix,
     manualGroups: row.manualGroups ?? [],
     parents: row.parents ?? [],
     institutionalOrganization: row.institutional_organization,

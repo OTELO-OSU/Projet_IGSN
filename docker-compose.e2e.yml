@@ -64,6 +64,9 @@ services:
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost
+      DATACITE_API_HOST: http://datacite:8080
+      DATACITE_API_KEY: dev
+      DATACITE_DOI_PREFIX: "10.5072"
     volumes:
       - attachments:/data/attachments
     healthcheck: *healthcheck
@@ -72,6 +75,8 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+      datacite:
+        condition: service_healthy
 
   admin:
     build:
@@ -104,6 +109,14 @@ services:
       PORT: "3000"
       API_URL: http://api:3002
     healthcheck: *healthcheck
+
+  datacite:
+    image: caddy:2-alpine
+    volumes:
+      - ./datacite-mock/Caddyfile:/etc/caddy/Caddyfile:ro
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/"]
 
   caddy:
     image: caddy:2-alpine

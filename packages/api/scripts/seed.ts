@@ -351,6 +351,8 @@ async function seedOwners(
 
 const SEED_PUBLICATION_YEAR = 2025;
 
+const SEED_DOI_PREFIX = "10.5072";
+
 const SEED_REPOSITORY = {
   currentArchive: "02feahw73",
   currentArchiveContactFirstname: "Camille",
@@ -395,6 +397,7 @@ export async function insertSamples(
           publication_year: hasPermanentIgsn({ status })
             ? SEED_PUBLICATION_YEAR
             : null,
+          doi_prefix: hasPermanentIgsn({ status }) ? SEED_DOI_PREFIX : null,
           published_at: hasPermanentIgsn({ status }) ? sql`now()` : null,
           ...sampleColumns({ ...create, type: create.type ?? null }),
           institutional_organization: owner.institutionalOrganization,

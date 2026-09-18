@@ -51,6 +51,12 @@ services:
     ports:
       - "1080:1080"
 
+  datacite:
+    image: caddy:2-alpine
+    container_name: datacite
+    volumes:
+      - ./datacite-mock/Caddyfile:/etc/caddy/Caddyfile:ro
+
   caddy:
     image: caddy:2-alpine
     container_name: caddy
@@ -200,6 +206,9 @@ services:
       SMTP_HOST: maildev
       SMTP_PORT: "1025"
       SMTP_FROM: postmaster@igsn.localhost
+      DATACITE_API_HOST: http://datacite:8080
+      DATACITE_API_KEY: dev
+      DATACITE_DOI_PREFIX: "10.5072"
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:3002/"]
       interval: 10s
@@ -209,6 +218,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      datacite:
+        condition: service_started
     volumes:
       - ./packages/api/src:/app/packages/api/src:ro
       - ./packages/api/scripts:/app/packages/api/scripts:ro

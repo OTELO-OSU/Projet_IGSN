@@ -40,11 +40,18 @@ describe("toCoreSample", () => {
   it("should point the landing page at the frontend", () => {
     expect(toCoreSample(FIELD_SAMPLE, FRONTEND_URL).identification).toEqual({
       sampleIdentifier: "ABCDEFGHJKMNPQRSTVWXYZ0123",
+      doi: "10.5072/ABCDEFGHJKMNPQRSTVWXYZ0123",
       landingPage:
         "https://igsn.example.org/samples/ABCDEFGHJKMNPQRSTVWXYZ0123",
       titles: [{ value: "Granite outcrop block", titleType: "Main" }],
       localName: "Block A",
     });
+  });
+
+  it("should carry no doi when the sample has no prefix", () => {
+    expect(
+      toCoreSample(SYNTHETIC_SAMPLE, FRONTEND_URL).identification.doi,
+    ).toBeUndefined();
   });
 
   it("should name OTELo as the registrant", () => {

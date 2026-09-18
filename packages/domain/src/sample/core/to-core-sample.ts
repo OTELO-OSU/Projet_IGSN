@@ -8,6 +8,7 @@ import {
   CORE_SCHEMA_VERSION,
   OTELO_ROR_URI,
 } from "./core-sample-schema.ts";
+import { sampleDoi } from "./sample-doi.ts";
 import { sampleLandingPage } from "./sample-landing-page.ts";
 import { toCoreClassification } from "./to-core-classification.ts";
 import { toCoreCuration } from "./to-core-curation.ts";
@@ -52,6 +53,7 @@ export function toCoreSample(sample: Sample, frontendUrl: string): CoreSample {
     },
     identification: {
       sampleIdentifier: igsn,
+      doi: sample.doiPrefix ? sampleDoi(igsn, sample.doiPrefix) : undefined,
       landingPage: sampleLandingPage(igsn, frontendUrl),
       titles: [{ value: sample.name, titleType: "Main" }],
       localName: sample.specificName ?? undefined,

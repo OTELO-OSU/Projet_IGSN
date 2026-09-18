@@ -153,6 +153,7 @@ type SampleTable = {
   economic_deposit_name: string | null;
   economic_deposit_description: string | null;
   igsn: string | null;
+  doi_prefix: string | null;
   // ponytail: snapshot of the owner's groups at creation, kept even though the mock data derives the upper two from the labo, since real co-tutelle data will not be a clean tree
   institutional_organization: string | null;
   institutional_osu: string | null;

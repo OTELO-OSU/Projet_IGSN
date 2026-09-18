@@ -16,6 +16,7 @@ export const publishedSample = (
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3300",
   name: "Basalt 42",
   igsn: "0123456789ABCDEFGHJKMNPQRS",
+  doiPrefix: "10.5072",
   institutionalOrganization: null,
   institutionalOsu: null,
   institutionalLaboratory: null,
