@@ -300,9 +300,9 @@ To hide, wrap the field in `form.Subscribe` and return `null` when it does not a
 </form.Subscribe>
 ```
 
-Two things that must go with any hide:
+Two things to settle with any hide:
 
-- **A matching exclusion in `composeCreateSample`, on the same condition.** A hidden field keeps its value in the form store (so switching back restores it), but on save the compose step must drop it. Read the display condition and the compose exclusion off one shared helper, not two expressions that happen to agree: a coincidental pairing drifts the moment either side changes on its own. Miss the exclusion entirely and a hidden value reaches validation and fails silently: the save errors with no message the user can see or fix.
+- **A matching exclusion in `composeCreateSample`, on the same condition, unless the hidden value must still be saved.** A hidden field keeps its value in the form store (so switching back restores it), but on save the compose step must drop it. Read the display condition and the compose exclusion off one shared helper, not two expressions that happen to agree: a coincidental pairing drifts the moment either side changes on its own. Miss the exclusion entirely and a hidden value reaches validation and fails silently: the save errors with no message the user can see or fix. The exception is a field hidden because it is not the user's to set, yet still required: a sub-sample's collection date is hidden and still submitted, since excluding it would block publication (ADR [0045](adr/0045-sub-sample-collection-date-and-public-list-default.md)).
 - **Toggle the required marker with `withRequired`** if the field is a conditional publish requirement, so the trailing `*` appears exactly when the requirement holds. A field only ever rendered while its requirement holds can pass a bare `requiredToPublish` instead: there is no moment it is shown and not required, so nothing needs toggling.
 
 A requirement driven by another field (for example `allowsLocation(material)`, or `requiresLocation(provenanceStatus)` which drops the requirement for a `collection_specimen`) lives in `domain`, so the form and the publish tooltip always agree.

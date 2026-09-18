@@ -21,6 +21,7 @@ import {
   sampleManualGroupsQuery,
   sampleOwnerQuery,
   sampleParentsQuery,
+  sampleProcessStepsQuery,
   sampleRelationsQuery,
 } from "./sample-children-query.ts";
 import {
@@ -106,6 +107,7 @@ async function listSamplesWhere(
       .selectAll()
       .select(sampleLocationQuery)
       .select(sampleRelationsQuery)
+      .select(sampleProcessStepsQuery)
       .select(sampleAttachmentsQuery)
       .select(sampleManualGroupsQuery)
       .select(sampleParentsQuery)
@@ -202,6 +204,15 @@ export async function listPublishedSamples(
   db: Transactional<DB>,
   params: ListSamplesQuery,
 ): Promise<ListSamplesResult> {
-  const { data, total } = await listSamplesWhere(db, params, [isPublished()]);
+  const { data, total } = await listSamplesWhere(db, params, [
+    isPublished(),
+    ...(params.includeSubSamples === true
+      ? []
+      : [
+          sql<SqlBool>`not exists (
+    select 1 from sample_parent where sample_parent.sample_id = sample.id
+  )`,
+        ]),
+  ]);
   return { data, total };
 }

@@ -76,6 +76,7 @@ import { SampleConditionFields } from "#/samples/sample-condition-fields.tsx";
 import { SampleDescriptionFields } from "#/samples/sample-description-fields.tsx";
 import { sampleDraftFieldErrors } from "#/samples/sample-draft-field-errors.ts";
 import {
+  composeProcessSteps,
   publishedSampleSchema,
   type SampleDraft,
   sampleDraftSchema,
@@ -85,6 +86,7 @@ import { SampleEconomicInterestFields } from "#/samples/sample-economic-interest
 import { SampleGeologicalContextFields } from "#/samples/sample-geological-context-fields.tsx";
 import { natureLabel } from "#/samples/sample-labels.ts";
 import { SampleManualGroupsField } from "#/samples/sample-manual-groups-field.tsx";
+import { SampleProcessStepsFields } from "#/samples/sample-process-steps-fields.tsx";
 import { SampleRelationsFields } from "#/samples/sample-relations-fields.tsx";
 import { SampleRepositoryFields } from "#/samples/sample-repository-fields.tsx";
 import { SampleScientificContextFields } from "#/samples/sample-scientific-context-fields.tsx";
@@ -299,6 +301,7 @@ export function SampleForm({
             relations: values.relations.map(({ targetResourceType }) => ({
               targetResourceType: targetResourceType || null,
             })),
+            processSteps: composeProcessSteps(values.processSteps),
             attachments: keptAttachmentMetadata(attachments, attachmentChanges),
           } as PublishableFields & { attachments: AttachmentMetadata[] },
           UPLOAD_LIMIT,
@@ -545,10 +548,18 @@ export function SampleForm({
                         <ProvenanceStatusField />
                       </form.AppForm>
 
-                      <form.AppForm>
-                        <CollectionDateField />
-                      </form.AppForm>
+                      {parents.length === 0 ? (
+                        <form.AppForm>
+                          <CollectionDateField />
+                        </form.AppForm>
+                      ) : null}
                     </FormSection>
+
+                    {parents.length > 0 ? (
+                      <form.AppForm>
+                        <SampleProcessStepsFields />
+                      </form.AppForm>
+                    ) : null}
 
                     <form.AppForm>
                       <SampleManualGroupsField options={manualGroupOptions} />

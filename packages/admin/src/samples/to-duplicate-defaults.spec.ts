@@ -23,6 +23,12 @@ const relation = {
   description: null,
 };
 
+const processStep = {
+  kind: "preparation" as const,
+  date: { precision: "day" as const, start: "2026-02-01", end: "2026-02-01" },
+  description: "Cut into thin sections",
+};
+
 const source: Sample = {
   id: SOURCE_ID,
   name: "Basalte du Massif Central",
@@ -57,6 +63,7 @@ const source: Sample = {
   syntheticDetails: null,
   age: null,
   relations: [relation],
+  processSteps: [processStep],
   attachments: [
     {
       id: "3f2504e0-4f89-41d3-9a0c-0305e82c33cc",
@@ -146,6 +153,7 @@ it("should copy every declared field under a copy name, keeping no attachment, n
     economicDepositName: null,
     economicDepositDescription: null,
     relations: [relation],
+    processSteps: [processStep],
     attachments: [],
     manualGroupIds: [ATTACHABLE_GROUP_ID],
     parentIds: [PARENT_ID],

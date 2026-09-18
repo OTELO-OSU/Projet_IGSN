@@ -61,6 +61,12 @@ describe("facetQueryFields", () => {
     expect(Object.keys(fields).sort()).toEqual(facetParamKeys().sort());
   });
 
+  it("should coerce the sub-sample flag and degrade a malformed one to its default", () => {
+    expect(fields.includeSubSamples.parse("true")).toBe(true);
+    expect(fields.includeSubSamples.parse("false")).toBe(false);
+    expect(fields.includeSubSamples.parse("nope")).toBeUndefined();
+  });
+
   it("should coerce numeric age bounds and validate the unit", () => {
     expect(fields.ageMin.parse("10")).toBe(10);
     expect(fields.ageMax.parse("100")).toBe(100);

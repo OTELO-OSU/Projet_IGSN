@@ -54,6 +54,7 @@ type SampleFacet =
     }
   | { key: string; kind: "text" }
   | { key: string; kind: "linked" }
+  | { key: string; kind: "boolean" }
   | {
       key: string;
       kind: "numericRange";
@@ -109,6 +110,7 @@ export const SAMPLE_FACETS: readonly SampleFacet[] = [
   },
   { key: "manualGroup", kind: "linked" },
   { key: "contributor", kind: "linked" },
+  { key: "includeSubSamples", kind: "boolean" },
 ];
 
 export function activeFacetKeys(values: Record<string, unknown>): string[] {
@@ -156,5 +158,6 @@ export function facetQueryFields() {
     institutionalLaboratory: optionalFilter(laboratoryCodeSchema),
     manualGroup: optionalFilter(z.uuid()),
     contributor: optionalFilter(z.uuid()),
+    includeSubSamples: optionalFilter(z.boolean().or(z.stringbool())),
   };
 }

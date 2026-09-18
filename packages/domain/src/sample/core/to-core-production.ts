@@ -1,9 +1,17 @@
+import type { DateRange } from "../date-range.ts";
 import type { Sample } from "../sample.ts";
-import type { CoreProduction } from "./core-production-schema.ts";
+import type {
+  CoreProcessStep,
+  CoreProduction,
+} from "./core-production-schema.ts";
 
 import { collectionDateSchema } from "../description/collection-date.ts";
 import { isEmpty, optionalConcept } from "./core-optional.ts";
-import { toRorUri } from "./core-production-schema.ts";
+import {
+  CORE_SYNTHESIS_STEP,
+  coreProcessStepKind,
+  toRorUri,
+} from "./core-production-schema.ts";
 import { toCoreLocation } from "./to-core-location.ts";
 
 function toCoreProjects(sample: Sample): CoreProduction["projects"] {
@@ -22,25 +30,42 @@ function toCoreProjects(sample: Sample): CoreProduction["projects"] {
   return isEmpty(project) ? undefined : [project];
 }
 
-function toCoreProcessSteps(sample: Sample): CoreProduction["processSteps"] {
+function toCoreTimestamps(date: DateRange | null | undefined) {
+  return {
+    timestampStart: date?.start,
+    timestampEnd: date?.end,
+    timestampPrecision: date?.precision,
+    timestampTimeZone: date?.precision === "hour" ? date.timeZone : undefined,
+  };
+}
+
+function toCoreSynthesisStep(sample: Sample): CoreProcessStep | undefined {
   const details = sample.syntheticDetails;
   if (details == null) return undefined;
-  const synthesisDate = details.synthesisDate;
   const step = {
-    stepType: "Synthesis" as const,
+    stepType: CORE_SYNTHESIS_STEP,
     description: details.experimentalProtocol ?? undefined,
-    timestampStart: synthesisDate?.start,
-    timestampEnd: synthesisDate?.end,
-    timestampPrecision: synthesisDate?.precision,
-    timestampTimeZone:
-      synthesisDate?.precision === "hour" ? synthesisDate.timeZone : undefined,
+    ...toCoreTimestamps(details.synthesisDate),
     method: optionalConcept("experiment-type", details.experimentType),
   };
   return step.description == null &&
     step.timestampStart == null &&
     step.method == null
     ? undefined
-    : [step];
+    : step;
+}
+
+function toCoreProcessSteps(sample: Sample): CoreProduction["processSteps"] {
+  const synthesis = toCoreSynthesisStep(sample);
+  const steps = [
+    ...(synthesis == null ? [] : [synthesis]),
+    ...sample.processSteps.map((step) => ({
+      stepType: coreProcessStepKind.toCore(step.kind),
+      description: step.description ?? undefined,
+      ...toCoreTimestamps(step.date),
+    })),
+  ];
+  return steps.length === 0 ? undefined : steps;
 }
 
 export function toCoreProduction(sample: Sample): CoreProduction {

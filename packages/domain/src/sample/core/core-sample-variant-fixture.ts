@@ -246,8 +246,40 @@ const TWO_PARENT_SAMPLE: Sample = {
   ],
 };
 
+export const SUB_SAMPLE: Sample = {
+  ...FIELD_SAMPLE,
+  name: "Thin section of the block",
+  processSteps: [
+    {
+      kind: "subsampling",
+      date: { precision: "day", start: "2024-06-05", end: "2024-06-06" },
+      description: "Sawn into three slabs",
+    },
+    { kind: "preparation", date: null, description: null },
+  ],
+};
+
+export const SYNTHETIC_SUB_SAMPLE: Sample = {
+  ...SYNTHETIC_SAMPLE,
+  name: "Polished mount of the synthetic glass",
+  processSteps: [
+    {
+      kind: "transformation",
+      date: {
+        precision: "hour",
+        start: "2025-01-15T09:00",
+        end: "2025-01-15T11:00",
+        timeZone: "Europe/Paris",
+      },
+      description: "Mounted in epoxy and polished",
+    },
+  ],
+};
+
 export const CORE_SAMPLE_FIXTURES: readonly Sample[] = [
   FIELD_SAMPLE,
+  SUB_SAMPLE,
+  SYNTHETIC_SUB_SAMPLE,
   COLLECTION_SPECIMEN,
   LINE_SAMPLE,
   SYNTHETIC_SAMPLE,

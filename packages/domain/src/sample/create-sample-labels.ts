@@ -21,6 +21,7 @@ import { type MetamorphicFacies } from "./metamorphic-facies/vocabulary.ts";
 import { type Nature } from "./nature.ts";
 import { pathSegment } from "./path/segment.ts";
 import { vocabularyLabel } from "./path/vocabulary-label.ts";
+import { type ProcessStepKind } from "./process-step/kind.ts";
 import { type RelationType } from "./relation/relation-type.ts";
 import { type RelationTargetResourceType } from "./relation/target-resource-type.ts";
 import { type CollectionOrigin } from "./scientific-context/collection-origin.ts";
@@ -65,6 +66,7 @@ type _experimentTypeKeys = AssertKeys<`experiment_type_${ExperimentType}`>;
 type _oceanSeaKeys = AssertKeys<`ocean_sea_${OceanSea}`>;
 type _verticalReferenceKeys =
   AssertKeys<`vertical_reference_${VerticalReference}`>;
+type _processStepKindKeys = AssertKeys<`process_step_kind_${ProcessStepKind}`>;
 type _relationTypeKeys = AssertKeys<`relation_type_${RelationType}`>;
 type _relationTargetResourceTypeKeys =
   AssertKeys<`relation_resource_type_${RelationTargetResourceType}`>;
@@ -107,6 +109,7 @@ type SampleLabels = {
   startingMaterialNatureLabel: (form: StartingMaterialNature) => string;
   finalProductLabel: (product: FinalProduct) => string;
   experimentTypeLabel: (type: ExperimentType) => string;
+  processStepKindLabel: (kind: ProcessStepKind) => string;
   relationTypeLabel: (relationType: RelationType) => string;
   relationTargetResourceTypeLabel: (
     resourceType: RelationTargetResourceType,
@@ -144,6 +147,7 @@ const LABEL_KEY = {
   startingMaterialNatureLabel: ["starting_material_nature", "code"],
   finalProductLabel: ["final_product", "code"],
   experimentTypeLabel: ["experiment_type", "code"],
+  processStepKindLabel: ["process_step_kind", "code"],
   relationTypeLabel: ["relation_type", "code"],
   relationTargetResourceTypeLabel: ["relation_resource_type", "code"],
 } satisfies Record<keyof SampleLabels, [string, "path" | "code"]>;

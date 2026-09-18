@@ -4,7 +4,7 @@ Date: 2026-09-15
 
 ## Status
 
-Accepted. Amends ADR [0034](0034-collection-date-precision-and-time-zone.md), which left `synthesisDate` day-only.
+Accepted. Amends ADR [0034](0034-collection-date-precision-and-time-zone.md), which left `synthesisDate` day-only. Its `production.processSteps[0]` indexing assumption is extended, not superseded, by ADR [0044](0044-process-steps-on-sub-samples.md).
 
 ## Context
 

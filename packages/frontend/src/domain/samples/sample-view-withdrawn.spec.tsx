@@ -114,6 +114,9 @@ describe("SampleView of a withdrawn sample", () => {
     await expect.element(screen.getByText("France > Mont-Dore")).toBeVisible();
     await expect.element(screen.getByText("Claire Martin")).toBeVisible();
     await expect.element(screen.getByText("Paul Durand")).toBeVisible();
+    expect(
+      screen.getByRole("heading", { name: "Process steps" }).query(),
+    ).toBeNull();
   });
 
   it("should show the other material free text as the last material step", async () => {

@@ -9,6 +9,7 @@ import {
 import { sampleNamed, test } from "../support/db";
 import { headerPage } from "../support/frontend/header.page";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
+import { sampleListPage as publicSampleListPage } from "../support/frontend/sample-list.page";
 
 test.describe("sub samples", () => {
   test("a researcher declares a sub sample of a sample they published", async ({
@@ -52,6 +53,7 @@ test.describe("sub samples", () => {
 
     const subSampleName = `Sub sample ${Date.now()}`;
     await create.openTab("Identity");
+    await create.expectNoCollectionDate();
     await create.fillName(subSampleName);
     await create.submit();
     await edit.expectVisible();
@@ -61,6 +63,10 @@ test.describe("sub samples", () => {
     await edit.expectVisible();
     await edit.expectParentTab([parent]);
     await edit.expectInheritedLocation(parentName);
+    await edit.addProcessStep("Preparation", {
+      date: "2025-06-20",
+      description: "Cut into thin sections",
+    });
 
     await edit.openTab("Identity");
     await edit.pick("Nature", "Thin section");
@@ -72,6 +78,8 @@ test.describe("sub samples", () => {
     const detail = sampleDetailPage(page);
     await detail.goto(subSampleIgsn);
     await detail.expectSample(subSampleName, subSampleIgsn);
+    await detail.expectProcessStep("Preparation", "Cut into thin sections");
+    await detail.expectNoCollectionDate();
     await detail.expectParent(parent.name, parent.igsn);
     await detail.expectLineageGraph(2);
 
@@ -82,6 +90,14 @@ test.describe("sub samples", () => {
     await detail.goto(subSampleIgsn);
     await detail.openParentFromGraph(parent.name);
     await detail.expectSample(parent.name, parent.igsn);
+
+    const publicList = publicSampleListPage(page);
+    await publicList.gotoWithSearch(`q=${encodeURIComponent("sub sample")}`);
+    await publicList.expectSampleLink(parent.name, parent.igsn);
+    await publicList.expectSampleAbsent(subSampleName);
+
+    await publicList.includeSubSamples();
+    await publicList.expectSampleLink(subSampleName, subSampleIgsn);
   });
 
   test("a stranger declares a sub sample from the public page, making the parent owner a contributor", async ({
@@ -198,7 +214,11 @@ test.describe("sub samples", () => {
     await create.selectNature("Thin section");
     await create.fillFromParent(first.name, "Dredge");
     await create.expectHierarchyLevel("Dredge");
-    await create.fillPublishableFields({ material: null });
+    await create.expectNoCollectionDate();
+    await create.fillPublishableFields({
+      collectionDate: false,
+      material: null,
+    });
     await create.expectMaterialLockedToSynthetic();
     await create.publish();
 

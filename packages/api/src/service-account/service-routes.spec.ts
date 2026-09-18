@@ -14,6 +14,7 @@ import {
   SYNTHETIC_SAMPLE,
 } from "@projet-igsn/domain/sample/core/core-sample-fixture";
 import { coreSampleSchema } from "@projet-igsn/domain/sample/core/core-sample-schema";
+import { SUB_SAMPLE } from "@projet-igsn/domain/sample/core/core-sample-variant-fixture";
 import { toCoreSample } from "@projet-igsn/domain/sample/core/to-core-sample";
 import {
   DATACITE_MEDIA_TYPE,
@@ -176,6 +177,21 @@ const parentRelation = (igsn: string) => ({
 const subSampleBody = (...igsns: string[]) => {
   const { location: _inherited, ...production } = NEW_BODY.production;
   return { ...NEW_BODY, production, relations: igsns.map(parentRelation) };
+};
+
+const PROCESS_STEPS = core(SUB_SAMPLE).production.processSteps?.filter(
+  (step) => step.timestampStart != null,
+);
+
+const PROCESS_STEPS_ON_ROOT = {
+  error: "Invalid sample",
+  issues: [
+    {
+      path: "production.processSteps",
+      code: "custom",
+      message: expect.any(String),
+    },
+  ],
 };
 
 const SYNTHETIC_BODY = core(SYNTHETIC_SAMPLE);
@@ -607,6 +623,22 @@ const createdId = (body: CoreSample) =>
   body.record.recordId.replace("urn:uuid:", "");
 
 describe("POST /service/samples", () => {
+  pgTest(
+    "should refuse process steps on a sample with no parent relation",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(app, {
+        ...NEW_BODY,
+        production: { ...NEW_BODY.production, processSteps: PROCESS_STEPS },
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual(PROCESS_STEPS_ON_ROOT);
+    },
+  );
+
   pgTest(
     "should publish the sample at once, owned by the account's owner and snapshotting the account's institutional trio",
     async ({ db }) => {
@@ -1104,6 +1136,24 @@ const FROZEN_CASES: FrozenCase[] = [
 ];
 
 describe("PUT /service/samples/:igsn", () => {
+  pgTest(
+    "should refuse process steps on a published sample with no parent relation",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const created = await publishedInReach(db);
+      const body = core(created);
+      // Act
+      const res = await putSample(app, created.igsn!, {
+        ...body,
+        production: { ...body.production, processSteps: PROCESS_STEPS },
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual(PROCESS_STEPS_ON_ROOT);
+    },
+  );
+
   pgTest(
     "should update an editable field of a published sample in the account's reach",
     async ({ db }) => {

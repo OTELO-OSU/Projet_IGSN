@@ -61,6 +61,7 @@ export const PUBLISH_BLOCKER_PATH: Record<PublishBlocker, (string | number)[]> =
       "operatorLastname",
     ],
     relation_resource_type_missing: ["relations"],
+    process_step_date_missing: ["processSteps"],
     parent_not_found: ["parentIds"],
     attachment_metadata_missing: ["attachments"],
     attachment_limit_exceeded: ["attachments"],

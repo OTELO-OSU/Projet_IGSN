@@ -12,7 +12,9 @@ const READING_PATH =
   /^(condition)\.(temperature|pressure)\.measurement\.(value|unit)$/;
 
 const DATE_RANGE_PATH =
-  /^(description\.collectionDate|syntheticDetails\.synthesisDate)(?:\.(start|end|timeZone))?$/;
+  /^(description\.collectionDate|syntheticDetails\.synthesisDate|processSteps\[\d+\]\.date)(?:\.(start|end|timeZone))?$/;
+
+const ARRAY_INDEX = /\.(\d+)\./g;
 
 const DATE_RANGE_SUFFIXES: Record<string, string> = {
   start: "Start",
@@ -45,7 +47,8 @@ const HIERARCHY_PATHS = {
   collectionMethod: "collectionMethodPath",
 } as const;
 
-const draftFieldName = (path: string): string => {
+const draftFieldName = (issuePath: string): string => {
+  const path = issuePath.replace(ARRAY_INDEX, "[$1].");
   if (path.startsWith(VERTICAL_PREFIX)) {
     const leaf = path.slice(VERTICAL_PREFIX.length);
     return `location.${VERTICAL_FIELDS[leaf] ?? leaf}`;
@@ -68,21 +71,18 @@ const draftFieldName = (path: string): string => {
     return "condition.humidityPercentage";
   const hierarchy = HIERARCHY_PATHS[path as keyof typeof HIERARCHY_PATHS];
   if (hierarchy) return hierarchy;
-  const relation = RELATION_PATH.exec(path);
-  if (relation) return `relations[${relation[1]}].${relation[2]}`;
   return path;
 };
 
-const ORDER_END_FIELDS: Record<string, string | undefined> = {
-  collection_date_order: "description.collectionDateEnd",
-  synthesis_date_order: "syntheticDetails.synthesisDateEnd",
-};
+const DATE_ORDER_CODE = /_date_order$/;
 
 const REASON_MESSAGES: Record<string, (() => string) | undefined> = {
   collection_date_future: m.field_collection_date_future,
   collection_date_order: m.field_collection_date_order,
   synthesis_date_future: m.field_synthesis_date_future,
   synthesis_date_order: m.field_synthesis_date_order,
+  process_date_future: m.field_process_date_future,
+  process_date_order: m.field_process_date_order,
   humidity_percentage_range: m.field_humidity_percentage_range,
 };
 
@@ -147,10 +147,12 @@ export function sampleDraftFieldErrors(
   for (const issue of issues) {
     const path = issue.path.join(".");
     const message = issueMessage(path, issue);
-    fields[draftFieldName(path)] ??= { message };
+    const name = draftFieldName(path);
+    fields[name] ??= { message };
     const reason = (issue.params as { code?: string } | undefined)?.code;
-    const endField = reason && ORDER_END_FIELDS[reason];
-    if (endField) fields[endField] ??= { message };
+    if (reason && DATE_ORDER_CODE.test(reason) && name.endsWith("Start")) {
+      fields[`${name.slice(0, -"Start".length)}End`] ??= { message };
+    }
   }
   return fields;
 }

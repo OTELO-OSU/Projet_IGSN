@@ -90,13 +90,16 @@ export function sampleFormPage(page: Page) {
 
     fillPublishableFields: async ({
       material = SYNTHETIC_MATERIAL,
-    }: { material?: string | null } = {}) => {
+      collectionDate = true,
+    }: { material?: string | null; collectionDate?: boolean } = {}) => {
       await pickHierarchy("Type", "Dredge");
       await pick("Provenance status", "Collection specimen");
-      await page
-        .getByRole("group", { name: /collection date/i })
-        .getByRole("textbox", { name: /^Date/ })
-        .fill("2025-06-15");
+      if (collectionDate) {
+        await page
+          .getByRole("group", { name: /collection date/i })
+          .getByRole("textbox", { name: /^Date/ })
+          .fill("2025-06-15");
+      }
       await openTab("Sample classification");
       if (material !== null) await pickHierarchy("Material", material);
       await openTab("Scientific context");
@@ -114,6 +117,24 @@ export function sampleFormPage(page: Page) {
         .getByRole("textbox", { name: /^Date/ })
         .fill("2025-06-15");
       await fillPersonName(/operator name/i, "Paul", "Bernard");
+    },
+    expectNoCollectionDate: () =>
+      expect(page.getByRole("group", { name: /collection date/i })).toHaveCount(
+        0,
+      ),
+    addProcessStep: async (
+      kind: string,
+      { date, description }: { date: string; description: string },
+    ) => {
+      await openTab("Identity");
+      await page.getByRole("button", { name: "Add a process step" }).click();
+      await page.getByRole("menuitem", { name: kind, exact: true }).click();
+      const block = page.getByRole("group", {
+        name: `1. ${kind} step`,
+        exact: true,
+      });
+      await block.getByRole("textbox", { name: /^Date/ }).fill(date);
+      await block.getByLabel("Description").fill(description);
     },
     setOriented: async (explanation: string) => {
       await openTab("Physical description");

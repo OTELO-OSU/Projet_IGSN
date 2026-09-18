@@ -6,6 +6,7 @@ import {
   FIELD_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "./core-sample-fixture.ts";
+import { SYNTHETIC_SUB_SAMPLE } from "./core-sample-variant-fixture.ts";
 import { toCoreSample } from "./to-core-sample.ts";
 
 describe("toCoreSample", () => {
@@ -151,6 +152,34 @@ describe("toCoreSample", () => {
           schemeName: "otelo:experiment-type",
           schemeURI: "urn:otelo:vocabulary:experiment-type",
         },
+      },
+    ]);
+  });
+
+  it("should emit the synthesis step first, then the stored process steps", () => {
+    expect(
+      toCoreSample(SYNTHETIC_SUB_SAMPLE, FRONTEND_URL).production.processSteps,
+    ).toEqual([
+      {
+        stepType: "Synthesis",
+        description: "Piston cylinder run held at 2 GPa",
+        timestampStart: "2025-01-10",
+        timestampEnd: "2025-01-12",
+        timestampPrecision: "day",
+        method: {
+          id: "fusion",
+          label: "fusion",
+          schemeName: "otelo:experiment-type",
+          schemeURI: "urn:otelo:vocabulary:experiment-type",
+        },
+      },
+      {
+        stepType: "Transformation",
+        description: "Mounted in epoxy and polished",
+        timestampStart: "2025-01-15T09:00",
+        timestampEnd: "2025-01-15T11:00",
+        timestampPrecision: "hour",
+        timestampTimeZone: "Europe/Paris",
       },
     ]);
   });

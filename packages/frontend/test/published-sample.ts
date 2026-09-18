@@ -39,6 +39,7 @@ export const publishedSample = (
   location: null,
   age: null,
   relations: [],
+  processSteps: [],
   attachments: [],
   security: null,
   existenceStatus: null,

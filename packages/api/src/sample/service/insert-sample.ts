@@ -8,9 +8,11 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
+import { inheritParentCollectionDate } from "./inherit-parent-collection-date.ts";
 import { inheritParentLocation } from "./inherit-parent-location.ts";
 import { insertSampleParents } from "./insert-sample-parents.ts";
 import { replaceSampleManualGroups } from "./replace-sample-manual-groups.ts";
+import { replaceSampleProcessSteps } from "./replace-sample-process-steps.ts";
 import { replaceSampleRelations } from "./replace-sample-relations.ts";
 import { sampleColumns } from "./sample-columns.ts";
 import { writeSampleLocation } from "./write-sample-location.ts";
@@ -41,6 +43,7 @@ export async function insertSampleRows(
     .executeTakeFirstOrThrow();
   const parentIds = input.parentIds ?? [];
   await insertSampleParents(db, row.id, parentIds);
+  await inheritParentCollectionDate(db, row.id);
   const locationParent = soleParent(parentIds);
   if (locationParent === undefined) {
     await writeSampleLocation(db, row.id, input.location);
@@ -48,6 +51,7 @@ export async function insertSampleRows(
     await inheritParentLocation(db, row.id, locationParent);
   }
   await replaceSampleRelations(db, row.id, input.relations ?? []);
+  await replaceSampleProcessSteps(db, row.id, input.processSteps ?? []);
   await replaceSampleManualGroups(db, row.id, input.manualGroupIds ?? []);
   return row.id;
 }

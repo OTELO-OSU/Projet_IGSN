@@ -1,3 +1,5 @@
+import type { DatePrecision } from "@projet-igsn/domain/sample/date-range";
+import type { ProcessStepKind } from "@projet-igsn/domain/sample/process-step/kind";
 import type { IdentifierType } from "@projet-igsn/domain/sample/relation/identifier-type";
 import type { RelationTargetResourceType } from "@projet-igsn/domain/sample/relation/target-resource-type";
 
@@ -29,6 +31,10 @@ import {
   type ConditionDraft,
   toConditionDraft,
 } from "#/samples/compose-condition.ts";
+import {
+  composeDateRange,
+  toDateRangeDraft,
+} from "#/samples/compose-date-range.ts";
 import {
   composeDescription,
   type DescriptionDraft,
@@ -95,6 +101,25 @@ export const EMPTY_RELATION_DRAFT: Omit<
   description: "",
 };
 
+export type ProcessStepDraft = {
+  key: string;
+  kind: ProcessStepKind;
+  dateStart: string | undefined;
+  dateEnd: string | undefined;
+  datePrecision: DatePrecision;
+  dateTimeZone: string | undefined;
+  description: string;
+};
+
+export const EMPTY_PROCESS_STEP_DRAFT: Omit<ProcessStepDraft, "key" | "kind"> =
+  {
+    dateStart: undefined,
+    dateEnd: undefined,
+    datePrecision: "day",
+    dateTimeZone: undefined,
+    description: "",
+  };
+
 export type SampleDraft = {
   name: string | undefined;
   nature: CreateSample["nature"] | undefined;
@@ -120,6 +145,7 @@ export type SampleDraft = {
   availabilityStatus: CreateSample["availabilityStatus"] | undefined;
   age: AgeFormValues;
   relations: RelationDraft[];
+  processSteps: ProcessStepDraft[];
   manualGroupIds: string[];
   parentIds: string[];
 } & EconomicInterestDraft;
@@ -172,6 +198,18 @@ export const toSampleDraft = (
     schemeType: relation.schemeType ?? "",
     description: relation.description ?? "",
   })),
+  processSteps: (value?.processSteps ?? []).map((step) => {
+    const date = toDateRangeDraft(step.date, options);
+    return {
+      key: crypto.randomUUID(),
+      kind: step.kind,
+      dateStart: date.start,
+      dateEnd: date.end,
+      datePrecision: date.precision,
+      dateTimeZone: date.timeZone,
+      description: step.description ?? "",
+    };
+  }),
   manualGroupIds: value?.manualGroupIds ?? [],
   parentIds: value?.parentIds ?? [],
   ...toEconomicInterestDraft(value),
@@ -195,6 +233,18 @@ const composeRelations = (relations: RelationDraft[]) =>
       : {}),
   }));
 
+export const composeProcessSteps = (steps: ProcessStepDraft[]) =>
+  steps.map((step) => ({
+    kind: step.kind,
+    date: composeDateRange({
+      start: step.dateStart,
+      end: step.dateEnd,
+      precision: step.datePrecision,
+      timeZone: step.dateTimeZone,
+    }),
+    description: step.description.trim() || undefined,
+  }));
+
 const composeCreateSample = (draft: SampleDraft) => {
   const material = composeHierarchyValue(draft.materialPath);
   const locationAllowed = allowsLocation(material);
@@ -203,6 +253,7 @@ const composeCreateSample = (draft: SampleDraft) => {
   const scientificContext = composeScientificContext(draft.scientificContext);
   const repository = composeRepository(draft.repository);
   const relations = composeRelations(draft.relations);
+  const processSteps = composeProcessSteps(draft.processSteps);
   const economic = composeEconomicInterest(draft, material);
   const syntheticDetails = composeSyntheticDetails(
     draft.syntheticDetails,
@@ -248,6 +299,7 @@ const composeCreateSample = (draft: SampleDraft) => {
       : {}),
     ...(age ? { age } : {}),
     ...(relations.length > 0 ? { relations } : {}),
+    ...(processSteps.length > 0 ? { processSteps } : {}),
     manualGroupIds: draft.manualGroupIds,
     ...(draft.parentIds.length > 0 ? { parentIds: draft.parentIds } : {}),
     ...economic,

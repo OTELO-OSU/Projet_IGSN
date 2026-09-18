@@ -9,9 +9,10 @@ import { countrySchema } from "../location/country.ts";
 import { navigationTypeSchema } from "../location/navigation-type.ts";
 import { oceanSeaSchema } from "../location/ocean-sea.ts";
 import { VERTICAL_REFERENCES } from "../location/vertical-reference.ts";
+import { PROCESS_STEP_KINDS } from "../process-step/kind.ts";
 import { experimentTypeSchema } from "../synthetic-details/experiment-type.ts";
 import { conceptSchema } from "./concept.ts";
-import { coreEnum, toCamelCase } from "./core-enum.ts";
+import { coreEnum, toCamelCase, toPascalCase } from "./core-enum.ts";
 
 export const CRS84 = "http://www.opengis.net/def/crs/OGC/1.3/CRS84";
 
@@ -236,32 +237,38 @@ const hourPrecisionHasTimeZone = (
   }
 };
 
+export const CORE_SYNTHESIS_STEP = "Synthesis";
+
+export const coreProcessStepKind = coreEnum(PROCESS_STEP_KINDS, toPascalCase);
+
 export const coreProcessStepSchema = z
   .strictObject({
-    stepType: z.literal("Synthesis").meta({
-      description: "Kind of step, always the synthesis of a synthetic sample.",
-    }),
-    description: freeTextSchema
-      .meta({ description: "Experimental protocol the synthesis followed." })
-      .optional(),
-    timestampStart: coreTimestampSchema
+    stepType: z
+      .union([z.literal(CORE_SYNTHESIS_STEP), coreProcessStepKind.schema])
       .meta({
-        description: "Start of the synthesis, at the precision below.",
+        description:
+          "Kind of step, the synthesis of a synthetic sample or one of the steps that produced a sub-sample.",
+      }),
+    description: freeTextSchema
+      .meta({
+        description:
+          "Free text about the step, the experimental protocol on a synthesis.",
       })
       .optional(),
+    timestampStart: coreTimestampSchema
+      .meta({ description: "Start of the step, at the precision below." })
+      .optional(),
     timestampEnd: coreTimestampSchema
-      .meta({ description: "End of the synthesis, at the precision below." })
+      .meta({ description: "End of the step, at the precision below." })
       .optional(),
     timestampPrecision: z
       .enum(["day", "hour"])
-      .meta({
-        description: "Precision both synthesis timestamps are written at.",
-      })
+      .meta({ description: "Precision both step timestamps are written at." })
       .optional(),
     timestampTimeZone: timeZoneSchema
       .meta({
         description:
-          "IANA time zone of the synthesis timestamps, present exactly when the precision is the hour.",
+          "IANA time zone of the step timestamps, present exactly when the precision is the hour.",
       })
       .optional(),
     method: conceptSchema("experiment-type", experimentTypeSchema)
@@ -347,10 +354,10 @@ export const coreProductionSchema = z
       .optional(),
     processSteps: z
       .array(coreProcessStepSchema)
-      .length(1)
+      .min(1)
       .meta({
         description:
-          "Synthesis the sample was produced by, exactly one step on a synthetic sample.",
+          "Steps the sample was produced by, the synthesis of a synthetic sample first when it has one.",
       })
       .optional(),
     location: coreLocationSchema

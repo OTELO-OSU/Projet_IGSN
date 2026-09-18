@@ -2670,4 +2670,64 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("button", { name: "Remove Mineral" }))
       .toBeEnabled();
   });
+
+  it.each([
+    { parents: [], shown: true },
+    { parents: [NATURAL_PARENT], shown: false },
+  ])(
+    "should offer the collection date on a root sample only: $shown",
+    async ({ parents, shown }) => {
+      const screen = await render(
+        <SampleForm
+          onCancel={noop}
+          parents={parents}
+          primaryAction={createAction(noop)}
+        />,
+      );
+
+      const group = screen.getByRole("group", { name: "Collection date *" });
+      if (shown) {
+        await expect.element(group).toBeVisible();
+      } else {
+        await expect.element(group).not.toBeInTheDocument();
+      }
+    },
+  );
+
+  it("should submit the collection date of a sub sample though its field is hidden", async () => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <SampleForm
+        onCancel={noop}
+        parents={[NATURAL_PARENT]}
+        defaultValues={{
+          name: "Lame mince MC-2026-007",
+          description: {
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-01",
+              end: "2026-01-01",
+            },
+          },
+        }}
+        primaryAction={createAction(onSubmit)}
+      />,
+    );
+
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: expect.objectContaining({
+            collectionDate: {
+              precision: "day",
+              start: "2026-01-01",
+              end: "2026-01-01",
+            },
+          }),
+        }),
+      ),
+    );
+  });
 });

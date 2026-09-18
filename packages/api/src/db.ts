@@ -184,6 +184,17 @@ type SampleRelationTable = {
   description: string | null;
 };
 
+type SampleProcessStepTable = {
+  id: string;
+  sample_id: string;
+  kind: string;
+  date_start: string | null;
+  date_end: string | null;
+  date_precision: string | null;
+  date_time_zone: string | null;
+  description: string | null;
+};
+
 type SampleAttachmentTable = {
   id: string;
   sample_id: string;
@@ -276,6 +287,7 @@ export type DB = {
   sample_manual_group: SampleManualGroupTable;
   sample_parent: SampleParentTable;
   sample_relation: SampleRelationTable;
+  sample_process_step: SampleProcessStepTable;
   sample_attachment: SampleAttachmentTable;
   sample_edit_lock: SampleEditLockTable;
   service_account: ServiceAccountTable;

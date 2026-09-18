@@ -15,6 +15,7 @@ import { fromCoreCondition, fromCoreRepository } from "./from-core-curation.ts";
 import { fromCoreDateRange } from "./from-core-date-range.ts";
 import { fromCoreAge, fromCoreSecurity } from "./from-core-extensions.ts";
 import { fromCoreLocation } from "./from-core-location.ts";
+import { fromCoreProcessSteps } from "./from-core-process-steps.ts";
 import { fromCoreRelation } from "./from-core-relation.ts";
 import { fromCoreScientificContext } from "./from-core-scientific-context.ts";
 import { fromCoreSyntheticDetails } from "./from-core-synthetic-details.ts";
@@ -90,6 +91,7 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
       syntheticDetails: fromCoreSyntheticDetails(body),
       age: fromCoreAge(body.extensions),
       relations,
+      processSteps: fromCoreProcessSteps(body),
       security: fromCoreSecurity(body.extensions),
       existenceStatus: coreExistenceStatus.fromCore(
         body.curation.existenceStatus,

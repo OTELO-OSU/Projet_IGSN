@@ -1,5 +1,6 @@
 import type { GeologicalAge } from "@projet-igsn/domain/sample/age/geological-age";
 import type { Location } from "@projet-igsn/domain/sample/location/model";
+import type { SampleProcessStep } from "@projet-igsn/domain/sample/process-step/model";
 
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 
@@ -1426,6 +1427,21 @@ export const DEMO_PARENTS: Record<string, string[]> = {
   "Mont-Dore MD-01 Synthetic Composite SC-1": [
     "Mont-Dore MD-01 Synthetic Glass SG-1",
     "Mont-Dore MD-01 Synthetic Glass SG-2",
+  ],
+};
+
+export const DEMO_PROCESS_STEPS: Record<string, SampleProcessStep[]> = {
+  "Mont-Dore MD-01 S3 Half-Core A": [
+    {
+      kind: "subsampling",
+      date: { precision: "day", start: "2025-06-02", end: "2025-06-02" },
+      description: "Core section split lengthwise into two half-rounds",
+    },
+    {
+      kind: "preparation",
+      date: { precision: "day", start: "2025-06-03", end: "2025-06-03" },
+      description: "Cut face polished for thin sectioning",
+    },
   ],
 };
 

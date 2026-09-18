@@ -8,10 +8,19 @@ import {
   toListSamplesQuery,
 } from "./core-list-samples-query.ts";
 
+// Reader-only facets kept off the Core surface, see ADR 0045.
+const NON_CORE_FACET_PARAMS = ["includeSubSamples"];
+
 describe("CORE_FILTER_PARAM", () => {
   it("should name every public facet param plus search and bbox (no drift)", () => {
     expect(new Set(Object.values(CORE_FILTER_PARAM))).toEqual(
-      new Set([...facetParamKeys(), "search", "bbox"]),
+      new Set([
+        ...facetParamKeys().filter(
+          (key) => !NON_CORE_FACET_PARAMS.includes(key),
+        ),
+        "search",
+        "bbox",
+      ]),
     );
   });
 });
