@@ -1,10 +1,14 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
+import type { CoreSample } from "@projet-igsn/domain/sample/core/core-sample-schema";
+import type { DataCiteSample } from "@projet-igsn/domain/sample/datacite/datacite-schema";
+import type { ISamplesSample } from "@projet-igsn/domain/sample/isamples/isamples-schema";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
 import type {
   CoreListSamplesResponse,
   DataCiteListSamplesResponse,
   FrozenServiceSample,
+  ISamplesListSamplesResponse,
   InvalidServiceSample,
   ServiceSampleIssue,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
@@ -19,6 +23,8 @@ import { fromCoreSample } from "@projet-igsn/domain/sample/core/from-core-sample
 import { toCoreSample } from "@projet-igsn/domain/sample/core/to-core-sample";
 import { DATACITE_MEDIA_TYPE } from "@projet-igsn/domain/sample/datacite/datacite-schema";
 import { toDataCiteSample } from "@projet-igsn/domain/sample/datacite/to-datacite-sample";
+import { ISAMPLES_MEDIA_TYPE } from "@projet-igsn/domain/sample/isamples/isamples-schema";
+import { toISamplesSample } from "@projet-igsn/domain/sample/isamples/to-isamples-sample";
 import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
 import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
@@ -87,15 +93,24 @@ const negotiate = (c: Context<ServiceEnv>) =>
 const notAcceptable = (c: Context<ServiceEnv>) =>
   c.json({ error: "Not acceptable" }, 406);
 
-const serve = <Core, DataCite>(
+const serve = <Core, Adapted>(
   c: Context<ServiceEnv>,
   format: string,
   core: Core,
-  toDataCite: (core: Core) => DataCite,
-) =>
-  format === DATACITE_MEDIA_TYPE
-    ? c.json(toDataCite(core), 200, { "content-type": DATACITE_MEDIA_TYPE })
+  adapters: Record<string, (core: Core) => Adapted>,
+) => {
+  const adapt = adapters[format];
+  return adapt
+    ? c.json(adapt(core), 200, { "content-type": format })
     : c.json(core, 200);
+};
+
+const listOf =
+  <Mapped>(toRecord: (core: CoreSample) => Mapped) =>
+  ({ data, meta }: CoreListSamplesResponse) => ({
+    data: data.map((core) => toRecord(core)),
+    meta,
+  });
 
 const invalid = (c: Context<ServiceEnv>, issues: ServiceSampleIssue[]) =>
   c.json(
@@ -180,15 +195,13 @@ export function createServiceRoutes(
       );
       const records = data.map((sample) => toCoreSample(sample, frontendUrl));
       const body: CoreListSamplesResponse = { data: records, meta: { total } };
-      return serve(
-        c,
-        format,
-        body,
-        ({ data: core, meta }): DataCiteListSamplesResponse => ({
-          data: core.map(toDataCiteSample),
-          meta,
-        }),
-      );
+      return serve<
+        CoreListSamplesResponse,
+        DataCiteListSamplesResponse | ISamplesListSamplesResponse
+      >(c, format, body, {
+        [DATACITE_MEDIA_TYPE]: listOf(toDataCiteSample),
+        [ISAMPLES_MEDIA_TYPE]: listOf(toISamplesSample),
+      });
     })
     .openapi(getSampleRoute, async (c) => {
       const format = negotiate(c);
@@ -199,11 +212,14 @@ export function createServiceRoutes(
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
-      return serve(
+      return serve<CoreSample, DataCiteSample | ISamplesSample>(
         c,
         format,
         toCoreSample(sample, frontendUrl),
-        toDataCiteSample,
+        {
+          [DATACITE_MEDIA_TYPE]: toDataCiteSample,
+          [ISAMPLES_MEDIA_TYPE]: toISamplesSample,
+        },
       );
     })
     .openapi(createSampleRoute, async (c) => {

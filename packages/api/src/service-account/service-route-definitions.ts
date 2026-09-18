@@ -10,6 +10,10 @@ import {
   dataCiteSampleSchema,
 } from "@projet-igsn/domain/sample/datacite/datacite-schema";
 import {
+  ISAMPLES_MEDIA_TYPE,
+  iSamplesSampleSchema,
+} from "@projet-igsn/domain/sample/isamples/isamples-schema";
+import {
   DEFAULT_PAGE_SIZE,
   PAGE_SIZES,
   pageSchema,
@@ -19,6 +23,7 @@ import {
   coreListSamplesResponseSchema,
   dataCiteListSamplesResponseSchema,
   frozenServiceSampleSchema,
+  iSamplesListSamplesResponseSchema,
   invalidServiceSampleSchema,
   serviceErrorSchema,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
@@ -46,18 +51,20 @@ const json = <Schema extends z.ZodType>(
 export const SERVED_MEDIA_TYPES = [
   "application/json",
   DATACITE_MEDIA_TYPE,
+  ISAMPLES_MEDIA_TYPE,
 ] as const;
 
-const negotiated = <Core extends z.ZodType, DataCite extends z.ZodType>(
-  core: Core,
-  dataCite: DataCite,
+const negotiated = <Schemas extends Record<string, z.ZodType>>(
+  schemas: Schemas,
   description: string,
 ) => ({
   description,
-  content: {
-    "application/json": { schema: core },
-    [DATACITE_MEDIA_TYPE]: { schema: dataCite },
-  },
+  content: Object.fromEntries(
+    Object.entries(schemas).map(([mediaType, schema]) => [
+      mediaType,
+      { schema },
+    ]),
+  ) as { [MediaType in keyof Schemas]: { schema: Schemas[MediaType] } },
 });
 
 const NOT_ACCEPTABLE = json(
@@ -100,7 +107,7 @@ const acceptHeaderSchema = z.object({
       enum: [...SERVED_MEDIA_TYPES],
       default: SERVED_MEDIA_TYPES[0],
       description:
-        "Format the response is served in. Left out, set to application/json, application/* or */*, the sample is an IGSN Core record; set to the DataCite media type, it is a DataCite 4.7 record. Any other value answers 406.",
+        "Format the response is served in. Left out, set to application/json, application/* or */*, the sample is an IGSN Core record; set to the DataCite media type, it is a DataCite 4.7 record; set to the iSamples media type, it is an iSamples Core 2.0 record. Any other value answers 406.",
     }),
 });
 
@@ -148,8 +155,11 @@ export const listSamplesRoute = createRoute({
   },
   responses: {
     200: negotiated(
-      coreListSamplesResponseSchema,
-      dataCiteListSamplesResponseSchema,
+      {
+        "application/json": coreListSamplesResponseSchema,
+        [DATACITE_MEDIA_TYPE]: dataCiteListSamplesResponseSchema,
+        [ISAMPLES_MEDIA_TYPE]: iSamplesListSamplesResponseSchema,
+      },
       "One page of published samples.",
     ),
     403: FORBIDDEN,
@@ -170,8 +180,11 @@ export const getSampleRoute = createRoute({
   request: { headers: acceptHeaderSchema, params: igsnParamSchema },
   responses: {
     200: negotiated(
-      coreSampleSchema,
-      dataCiteSampleSchema,
+      {
+        "application/json": coreSampleSchema,
+        [DATACITE_MEDIA_TYPE]: dataCiteSampleSchema,
+        [ISAMPLES_MEDIA_TYPE]: iSamplesSampleSchema,
+      },
       "The published sample.",
     ),
     400: INVALID_IGSN,
