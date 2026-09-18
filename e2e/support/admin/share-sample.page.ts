@@ -23,8 +23,7 @@ export function shareSamplePage(page: Page) {
     expectColleagueOffered: (name: string) =>
       expect(colleague(name)).toBeVisible(),
     pickColleague: (name: string) => colleague(name).click(),
-    invite: () =>
-      inviteDialog.getByRole("button", { name: "Send invitation" }).click(),
+    invite: () => inviteDialog.getByRole("button", { name: "Share" }).click(),
     chooseRole: (role: "Editor" | "Contributor") =>
       inviteDialog.getByRole("radio", { name: new RegExp(`^${role}`) }).click(),
     expectCollaborator: (email: string) => expect(row(email)).toBeVisible(),

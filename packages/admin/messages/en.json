@@ -262,7 +262,7 @@
   "share_search_no_results": "No colleague found",
   "share_suggestions_label": "Matching colleagues",
   "share_invite_action": "Invite",
-  "share_invite_submit": "Send invitation",
+  "share_invite_submit": "Share",
   "share_contributor_added": "Collaborator added",
   "share_contributor_error": "Could not add the collaborator. Please try again.",
   "share_contributor_remove": "Remove {name}",
