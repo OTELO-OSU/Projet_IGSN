@@ -29,6 +29,8 @@ export function SearchPicker<T extends { id: string }>({
   suggestionsLabel,
   emptyText,
   clearLabel,
+  freeTextLabel,
+  onFreeText,
   ...aria
 }: {
   id: string;
@@ -44,6 +46,8 @@ export function SearchPicker<T extends { id: string }>({
   suggestionsLabel: string;
   emptyText: string;
   clearLabel?: string;
+  freeTextLabel?: string;
+  onFreeText?: () => void;
   "aria-invalid"?: true;
   "aria-describedby"?: string;
 }) {
@@ -94,6 +98,17 @@ export function SearchPicker<T extends { id: string }>({
                 </span>
               </CommandItem>
             ))}
+            {freeTextLabel === undefined ? null : (
+              <CommandItem
+                value="free-text"
+                onSelect={() => {
+                  onFreeText?.();
+                  picker.setIsOpen(false);
+                }}
+              >
+                {freeTextLabel}
+              </CommandItem>
+            )}
           </CommandList>
         </Command>
       </PopoverContent>

@@ -2438,7 +2438,7 @@ describe("SampleForm post-publication field lock", () => {
     },
   );
 
-  it("freezes the collector name alone on a published field sample", async () => {
+  it("freezes the whole collector on a published field sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -2481,8 +2481,12 @@ describe("SampleForm post-publication field lock", () => {
       )
       .toBeEnabled();
     await expect
-      .element(screen.getByLabelText("Collector ORCID"))
-      .toBeEnabled();
+      .element(
+        screen
+          .getByRole("group", { name: "Collector name" })
+          .getByRole("textbox", { name: "ORCID iD" }),
+      )
+      .toBeDisabled();
   });
 
   it("should freeze the manual groups on a published sample", async () => {
@@ -2539,7 +2543,7 @@ describe("SampleForm post-publication field lock", () => {
         .element(
           screen
             .getByRole("group", { name: person })
-            .getByRole("textbox", { name: /last name/i }),
+            .getByRole("combobox", { name: person }),
         )
         .toBeEnabled();
     }

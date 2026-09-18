@@ -1,10 +1,18 @@
 import type { SearchUsersFilters } from "@projet-igsn/domain/user/repository";
 import type { UserIdentity } from "@projet-igsn/domain/user/user-validator";
 
+import { sql, type SqlBool } from "kysely";
+
 import type { DB } from "../db.ts";
 
 import { likePattern } from "../like-pattern.ts";
 import { type Transactional } from "../transaction.ts";
+
+const SEARCHED_COLUMNS = ["name", "firstname", "email"] as const;
+
+const unaccented = (column: string) =>
+  sql`immutable_unaccent(coalesce(${sql.ref(column)}, ''))`;
+
 const SEARCH_LIMIT = 10;
 const BROWSE_LIMIT = 20;
 
@@ -70,7 +78,12 @@ export function searchUsers(
   const pattern = likePattern(search);
   return others
     .where((eb) =>
-      eb.or([eb("name", "ilike", pattern), eb("email", "ilike", pattern)]),
+      eb.or(
+        SEARCHED_COLUMNS.map(
+          (column) =>
+            sql<SqlBool>`${unaccented(column)} ilike immutable_unaccent(${pattern})`,
+        ),
+      ),
     )
     .orderBy("name")
     .limit(SEARCH_LIMIT)

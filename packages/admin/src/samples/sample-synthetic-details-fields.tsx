@@ -18,10 +18,10 @@ import { STARTING_MATERIALS } from "@projet-igsn/domain/sample/synthetic-details
 import { STARTING_MATERIAL_NATURES } from "@projet-igsn/domain/sample/synthetic-details/starting-material-nature";
 
 import { m } from "#/paraglide/messages.js";
+import { ContactNameFields } from "#/samples/contact-name-fields.tsx";
 import { DateRangeField } from "#/samples/date-range-field.tsx";
 import { MeasurementFieldPair } from "#/samples/measurement-fields.tsx";
 import { organizationItems } from "#/samples/organization-items.ts";
-import { PersonNameFields } from "#/samples/person-name-fields.tsx";
 import {
   experimentTypeLabel,
   finalProductLabel,
@@ -167,15 +167,12 @@ export function SampleSyntheticDetailsFields() {
         requiredToPublish={false}
       />
 
-      <PersonNameFields
-        legend={m.field_operator_name()}
+      <ContactNameFields
+        label={m.field_operator_name()}
         person="syntheticDetails.operator"
+        orcidName="syntheticDetails.operatorOrcid"
         requiredToPublish
-      >
-        <form.AppField name="syntheticDetails.operatorOrcid">
-          {(field) => <field.TextField label={m.field_operator_orcid()} />}
-        </form.AppField>
-      </PersonNameFields>
+      />
 
       <form.AppField name="syntheticDetails.researchStructure">
         {(field) => (

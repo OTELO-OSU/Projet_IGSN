@@ -85,6 +85,8 @@ const synthetic: Sample = {
   syntheticDetails,
 };
 
+const LINKED_USER_ID = "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10";
+
 describe("samplePublishBlockers", () => {
   it("should report no blockers when the type and material path are leaves", () => {
     expect(samplePublishBlockers(base)).toEqual([]);
@@ -842,4 +844,58 @@ describe("samplePublishBlockers", () => {
       }),
     ).toEqual(["existence_status_missing", "user_not_verified"]);
   });
+
+  it.each([
+    [
+      "a field sample's collector and chief scientist",
+      {
+        ...base,
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorUserId: LINKED_USER_ID,
+          chiefScientistUserId: LINKED_USER_ID,
+        },
+      },
+    ],
+    [
+      "a collection specimen's curator and collector",
+      {
+        ...base,
+        scientificContext: {
+          provenanceStatus: "collection_specimen",
+          collectionCuratorUserId: LINKED_USER_ID,
+          collectorUserId: LINKED_USER_ID,
+          collectionOrigin: "purchase",
+        },
+      },
+    ],
+    [
+      "a field sample's collector whose account resolves to a partial person",
+      {
+        ...base,
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorUserId: LINKED_USER_ID,
+          collectorFirstname: "Marie",
+        },
+      },
+    ],
+    [
+      "a synthesis operator",
+      {
+        ...synthetic,
+        syntheticDetails: {
+          ...syntheticDetails,
+          operatorFirstname: null,
+          operatorLastname: null,
+          operatorUserId: LINKED_USER_ID,
+        },
+      },
+    ],
+  ] as [string, Sample][])(
+    "should report no name blocker when %s is linked to a registry account",
+    (_case, sample) => {
+      expect(samplePublishBlockers(sample)).toEqual([]);
+    },
+  );
 });

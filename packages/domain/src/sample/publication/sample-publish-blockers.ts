@@ -108,7 +108,9 @@ const nameBlockers = (
   firstname: string | null | undefined,
   lastname: string | null | undefined,
   presence: "required" | "optional",
+  userId: string | null | undefined,
 ): PublishBlocker[] => {
+  if (userId != null) return [];
   if (presence === "optional" && firstname == null && lastname == null)
     return [];
   return [
@@ -225,12 +227,14 @@ export function samplePublishBlockers(
         context.collectorFirstname,
         context.collectorLastname,
         "required",
+        context.collectorUserId,
       ),
       ...nameBlockers(
         "chief_scientist",
         context.chiefScientistFirstname,
         context.chiefScientistLastname,
         "optional",
+        context.chiefScientistUserId,
       ),
     );
   } else {
@@ -240,6 +244,7 @@ export function samplePublishBlockers(
         context.collectionCuratorFirstname,
         context.collectionCuratorLastname,
         "required",
+        context.collectionCuratorUserId,
       ),
     );
     if (context.collectionOrigin == null)
@@ -250,6 +255,7 @@ export function samplePublishBlockers(
         context.collectorFirstname,
         context.collectorLastname,
         "optional",
+        context.collectorUserId,
       ),
     );
   }
@@ -278,6 +284,7 @@ export function samplePublishBlockers(
         details.operatorFirstname,
         details.operatorLastname,
         "required",
+        details.operatorUserId,
       ),
     );
   }

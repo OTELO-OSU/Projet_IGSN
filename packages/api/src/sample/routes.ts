@@ -8,7 +8,7 @@ import type {
 import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 
 import { toPublicSample } from "@projet-igsn/domain/sample/publication/public-sample";
-import { redactArchiveContacts } from "@projet-igsn/domain/sample/publication/redact-archive-contacts";
+import { redactPrivateContacts } from "@projet-igsn/domain/sample/publication/redact-private-contacts";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 
@@ -34,7 +34,7 @@ export function createSampleRoutes(
       const { sort: _sort, order: _order, ...query } = c.req.valid("query");
       const { data, total } = await repository.listPublished(query);
       const body: ListSamplesResponse = {
-        data: data.map(redactArchiveContacts),
+        data: data.map(redactPrivateContacts),
         meta: { total },
       };
       return c.json(body);

@@ -11,6 +11,8 @@ import {
   mergePublishedEdit,
 } from "./published-field-lock.ts";
 
+const LINKED_USER_ID = "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10";
+
 const stored: Sample = {
   id: "11111111-1111-1111-1111-111111111111",
   name: "Stored name",
@@ -89,7 +91,7 @@ const stored: Sample = {
   igsn: "ABC123",
   owner: null,
   manualGroups: [
-    { id: "22222222-2222-2222-2222-222222222222", name: "Stored group" },
+    { id: "22222222-2222-4222-8222-222222222222", name: "Stored group" },
   ],
   parents: [],
   institutionalOrganization: null,
@@ -250,13 +252,77 @@ describe("mergePublishedEdit", () => {
     expect(merged.location).toEqual(payload.location);
   });
 
-  it("keeps both halves of the frozen collector name but takes the other field-sample leaves", () => {
+  it("keeps every part of the frozen collector but takes the other field-sample leaves", () => {
     const payload = incoming();
     const merged = mergePublishedEdit(stored, payload);
     expect(merged.scientificContext).toEqual({
       ...payload.scientificContext,
       collectorFirstname: "Stored",
       collectorLastname: "collector",
+      collectorOrcid: "0000-0002-1825-0097",
+    });
+  });
+
+  it("drops the names a link resolved to when a provenance mismatch keeps the stored context", () => {
+    const linked: Sample = {
+      ...stored,
+      scientificContext: {
+        provenanceStatus: "field_sample",
+        collectorUserId: LINKED_USER_ID,
+        collectorFirstname: "Marie",
+        collectorLastname: "Curie",
+        collectorOrcid: "0000-0002-1825-0097",
+      },
+    };
+    const merged = mergePublishedEdit(
+      linked,
+      incoming({ scientificContext: null }),
+    );
+    expect(merged.scientificContext).toEqual({
+      provenanceStatus: "field_sample",
+      collectorUserId: LINKED_USER_ID,
+      collectorFirstname: null,
+      collectorLastname: null,
+      collectorOrcid: null,
+    });
+    expect(createSampleSchema.safeParse(merged)).toMatchObject({
+      success: true,
+    });
+  });
+
+  it("keeps the frozen collector's account link alone, dropping the names the account resolved to", () => {
+    const linked: Sample = {
+      ...stored,
+      scientificContext: {
+        provenanceStatus: "field_sample",
+        collectorUserId: LINKED_USER_ID,
+        collectorFirstname: "Marie",
+        collectorLastname: "Curie",
+        collectorOrcid: "0000-0002-1825-0097",
+      },
+    };
+    const merged = mergePublishedEdit(
+      linked,
+      incoming({
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorFirstname: "Edited",
+          collectorLastname: "editor",
+          collectorOrcid: "0000-0001-5109-3700",
+          fieldName: "edited field",
+        },
+      }),
+    );
+    expect(merged.scientificContext).toEqual({
+      provenanceStatus: "field_sample",
+      collectorUserId: LINKED_USER_ID,
+      collectorFirstname: null,
+      collectorLastname: null,
+      collectorOrcid: null,
+      fieldName: "edited field",
+    });
+    expect(createSampleSchema.safeParse(merged)).toMatchObject({
+      success: true,
     });
   });
 
@@ -286,7 +352,7 @@ describe("mergePublishedEdit", () => {
       }),
     );
     expect(merged.manualGroupIds).toEqual([
-      "22222222-2222-2222-2222-222222222222",
+      "22222222-2222-4222-8222-222222222222",
     ]);
   });
 
@@ -342,7 +408,7 @@ describe("mergePublishedEdit", () => {
       syntheticDetails: storedDetails,
     };
 
-    it("keeps both halves of the frozen operator name but takes every other synthesis leaf", () => {
+    it("keeps every part of the frozen operator but takes every other synthesis leaf", () => {
       const merged = mergePublishedEdit(
         synthetic,
         incoming({
@@ -356,6 +422,35 @@ describe("mergePublishedEdit", () => {
         ...incomingDetails,
         operatorFirstname: "Stored",
         operatorLastname: "operator",
+        operatorOrcid: "0000-0002-1825-0097",
+      });
+    });
+
+    it("keeps the frozen operator's account link alone, dropping the names the account resolved to", () => {
+      const merged = mergePublishedEdit(
+        {
+          ...synthetic,
+          syntheticDetails: {
+            operatorUserId: LINKED_USER_ID,
+            operatorFirstname: "Marie",
+            operatorLastname: "Curie",
+            operatorOrcid: "0000-0002-1825-0097",
+            finalProduct: "glass",
+          },
+        },
+        incoming({
+          material: synthetic.material,
+          location: null,
+          syntheticDetails: incomingDetails,
+        }),
+      );
+
+      expect(merged.syntheticDetails).toEqual({
+        ...incomingDetails,
+        operatorUserId: LINKED_USER_ID,
+        operatorFirstname: null,
+        operatorLastname: null,
+        operatorOrcid: null,
       });
     });
 

@@ -66,6 +66,38 @@ const insertCollectors = async (db: Transactional<DB>) => {
   });
 };
 
+const insertLinkedCollectors = async (db: Transactional<DB>) => {
+  const curie = await insertUser(
+    db,
+    `${crypto.randomUUID()}@univ-lorraine.fr`,
+    {
+      firstname: "Marie",
+      name: "Curié",
+    },
+  );
+  const darwin = await insertUser(
+    db,
+    `${crypto.randomUUID()}@univ-lorraine.fr`,
+    { firstname: "Charles", name: "Darwin" },
+  );
+  await insertSample(db, {
+    ...bare,
+    name: "Linked to Curie",
+    scientificContext: {
+      provenanceStatus: "field_sample",
+      collectorUserId: curie.id,
+    },
+  });
+  await insertSample(db, {
+    ...bare,
+    name: "Linked to Darwin",
+    scientificContext: {
+      provenanceStatus: "field_sample",
+      collectorUserId: darwin.id,
+    },
+  });
+};
+
 const insertCharpentier = (db: Transactional<DB>) =>
   insertSample(db, {
     ...bare,
@@ -498,6 +530,45 @@ describe("listSamples", () => {
     async ({ db }) => {
       // Arrange
       await insertCollectors(db);
+      // Act
+      const { data, total } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        collectorName: "marie dupont",
+      });
+      // Assert
+      expect(total).toBe(0);
+      expect(data).toEqual([]);
+    },
+  );
+
+  pgTest.for([
+    ["the full name in form order", "marie curie"],
+    ["the full name in reverse order", "curie marie"],
+    ["the last name alone", "curie"],
+    ["the first name alone", "marie"],
+  ] as const)(
+    "should match a linked person facet on %s",
+    async ([, collectorName], { db }) => {
+      // Arrange
+      await insertLinkedCollectors(db);
+      // Act
+      const { data, total } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        collectorName,
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Linked to Curie"]);
+    },
+  );
+
+  pgTest(
+    "should match no sample when a token matches neither name of the linked account",
+    async ({ db }) => {
+      // Arrange
+      await insertLinkedCollectors(db);
       // Act
       const { data, total } = await listAsOwner(db, {
         page: 1,

@@ -5,7 +5,7 @@ import { SAMPLE_FACETS } from "@projet-igsn/domain/sample/search/facets";
 import { type Expression, sql, type SqlBool } from "kysely";
 
 import { likePattern } from "../../like-pattern.ts";
-import { tokenFilters } from "./search-filter.ts";
+import { matchesToken, tokenFilters } from "./search-filter.ts";
 
 export const FACET_COLUMN: Record<string, string> = {
   type: "type",
@@ -20,17 +20,32 @@ export const FACET_COLUMN: Record<string, string> = {
   institutionalLaboratory: "institutional_laboratory",
 };
 
-export const PERSON_FACET_COLUMNS: Record<string, [string, string]> = {
-  chiefScientist: [
-    "sc_chief_scientist_firstname",
-    "sc_chief_scientist_lastname",
-  ],
-  collectorName: ["sc_collector_firstname", "sc_collector_lastname"],
-  collectionCurator: [
-    "sc_collection_curator_firstname",
-    "sc_collection_curator_lastname",
-  ],
+export const PERSON_FACET_COLUMNS: Record<
+  string,
+  { names: [string, string]; userId: string }
+> = {
+  chiefScientist: {
+    names: ["sc_chief_scientist_firstname", "sc_chief_scientist_lastname"],
+    userId: "sc_chief_scientist_user_id",
+  },
+  collectorName: {
+    names: ["sc_collector_firstname", "sc_collector_lastname"],
+    userId: "sc_collector_user_id",
+  },
+  collectionCurator: {
+    names: [
+      "sc_collection_curator_firstname",
+      "sc_collection_curator_lastname",
+    ],
+    userId: "sc_collection_curator_user_id",
+  },
 };
+
+const matchesLinkedAccount = (userIdColumn: string) => (token: string) =>
+  sql<SqlBool>`${sql.ref(`sample.${userIdColumn}`)} = any(array(
+    select u.id from "user" u
+     where ${matchesToken(["u.firstname", "u.name"], token)}
+  ))`;
 
 export const FACET_JOIN: Record<string, { table: string; column: string }> = {
   manualGroup: { table: "sample_manual_group", column: "group_id" },
@@ -49,9 +64,14 @@ function facetFilter(
          and ${sql.ref(`${table}.${column}`)} = ${value}
     )`;
   }
-  const pair = PERSON_FACET_COLUMNS[facet.key];
-  if (pair) {
-    return sql<SqlBool>`(${sql.join(tokenFilters(pair, value), sql` AND `)})`;
+  const person = PERSON_FACET_COLUMNS[facet.key];
+  if (person) {
+    const filters = tokenFilters(
+      person.names,
+      value,
+      matchesLinkedAccount(person.userId),
+    );
+    return sql<SqlBool>`(${sql.join(filters, sql` AND `)})`;
   }
   const column = FACET_COLUMN[facet.key]!;
   switch (facet.kind) {

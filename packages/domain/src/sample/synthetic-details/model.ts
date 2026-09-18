@@ -3,6 +3,7 @@ import { z } from "zod";
 import { orcidSchema } from "../../user/orcid.ts";
 import { pressureUnitSchema } from "../condition/pressure-unit.ts";
 import { temperatureUnitSchema } from "../condition/temperature-unit.ts";
+import { checkContactLinks } from "../contact-link.ts";
 import { dateRangeSchema } from "../date-range.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { measurementSchema } from "../measurement.ts";
@@ -21,6 +22,7 @@ export const syntheticDetailsSchema = z.object({
   experimentType: experimentTypeSchema.nullish(),
   experimentDuration: measurementSchema(experimentDurationUnitSchema).nullish(),
   synthesisDate: dateRangeSchema("synthesis_date").nullish(),
+  operatorUserId: z.uuid().nullish(),
   operatorFirstname: freeTextSchema.nullish(),
   operatorLastname: freeTextSchema.nullish(),
   operatorOrcid: orcidSchema.nullish(),
@@ -35,3 +37,7 @@ export const syntheticDetailsSchema = z.object({
 });
 
 export type SyntheticDetails = z.infer<typeof syntheticDetailsSchema>;
+
+export const createSyntheticDetailsSchema = syntheticDetailsSchema.superRefine(
+  (value, ctx) => checkContactLinks(value, ctx, ["operator"]),
+);
