@@ -2,7 +2,7 @@
 
 Status: **implemented**. `GET /service/samples` and `GET /service/samples/:igsn` (ADR [0042](adr/0042-format-negotiation-on-the-service-api.md)) emit a DataCite 4.7 record when the caller's `Accept` header asks for one, alongside the default IGSN Sample Core record (`docs/igsn-core-mapping.md`).
 
-Source: `Mapping_implementation_IGSN-Core_v0.10.0_v-Finale.docx`, section 2 (`mapCoreToDataCite`). The two other adapters it also contracts (OMS, iSamples Core) are out of scope here.
+Source: `Mapping_implementation_IGSN-Core_v0.10.0_v-Finale.docx`, section 2 (`mapCoreToDataCite`). iSamples Core is also implemented; see [`docs/isamples-mapping.md`](isamples-mapping.md). The remaining adapter it contracts (OMS) stays out of scope here.
 
 The mapping lives in `packages/domain/src/sample/datacite/`, pure and I/O-free:
 

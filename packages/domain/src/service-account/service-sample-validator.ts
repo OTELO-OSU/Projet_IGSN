@@ -4,6 +4,7 @@ import type { PublishBlocker } from "../sample/publication/sample-publish-blocke
 
 import { coreSampleSchema } from "../sample/core/core-sample-schema.ts";
 import { dataCiteSampleSchema } from "../sample/datacite/datacite-schema.ts";
+import { iSamplesSampleSchema } from "../sample/isamples/isamples-schema.ts";
 
 const listSamplesResponseSchema = <Record extends z.ZodType>(
   record: Record,
@@ -53,6 +54,19 @@ export const dataCiteListSamplesResponseSchema = listSamplesResponseSchema(
 
 export type DataCiteListSamplesResponse = z.infer<
   typeof dataCiteListSamplesResponseSchema
+>;
+
+export const iSamplesListSamplesResponseSchema = listSamplesResponseSchema(
+  iSamplesSampleSchema,
+  {
+    id: "ISamplesSampleList",
+    description: "One page of iSamples Core 2.0 sample records.",
+    format: "iSamples Core 2.0",
+  },
+);
+
+export type ISamplesListSamplesResponse = z.infer<
+  typeof iSamplesListSamplesResponseSchema
 >;
 
 export type ServiceSampleIssueCode =

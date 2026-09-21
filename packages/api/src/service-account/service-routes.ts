@@ -2,8 +2,6 @@ import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/rep
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
 import type {
-  CoreListSamplesResponse,
-  DataCiteListSamplesResponse,
   FrozenServiceSample,
   InvalidServiceSample,
   ServiceSampleIssue,
@@ -19,6 +17,8 @@ import { fromCoreSample } from "@projet-igsn/domain/sample/core/from-core-sample
 import { toCoreSample } from "@projet-igsn/domain/sample/core/to-core-sample";
 import { DATACITE_MEDIA_TYPE } from "@projet-igsn/domain/sample/datacite/datacite-schema";
 import { toDataCiteSample } from "@projet-igsn/domain/sample/datacite/to-datacite-sample";
+import { ISAMPLES_MEDIA_TYPE } from "@projet-igsn/domain/sample/isamples/isamples-schema";
+import { toISamplesSample } from "@projet-igsn/domain/sample/isamples/to-isamples-sample";
 import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
 import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
@@ -86,16 +86,6 @@ const negotiate = (c: Context<ServiceEnv>) =>
 
 const notAcceptable = (c: Context<ServiceEnv>) =>
   c.json({ error: "Not acceptable" }, 406);
-
-const serve = <Core, DataCite>(
-  c: Context<ServiceEnv>,
-  format: string,
-  core: Core,
-  toDataCite: (core: Core) => DataCite,
-) =>
-  format === DATACITE_MEDIA_TYPE
-    ? c.json(toDataCite(core), 200, { "content-type": DATACITE_MEDIA_TYPE })
-    : c.json(core, 200);
 
 const invalid = (c: Context<ServiceEnv>, issues: ServiceSampleIssue[]) =>
   c.json(
@@ -179,16 +169,19 @@ export function createServiceRoutes(
         editable === true,
       );
       const records = data.map((sample) => toCoreSample(sample, frontendUrl));
-      const body: CoreListSamplesResponse = { data: records, meta: { total } };
-      return serve(
-        c,
-        format,
-        body,
-        ({ data: core, meta }): DataCiteListSamplesResponse => ({
-          data: core.map(toDataCiteSample),
-          meta,
-        }),
-      );
+      const meta = { total };
+      switch (format) {
+        case DATACITE_MEDIA_TYPE:
+          return c.json({ data: records.map(toDataCiteSample), meta }, 200, {
+            "content-type": format,
+          });
+        case ISAMPLES_MEDIA_TYPE:
+          return c.json({ data: records.map(toISamplesSample), meta }, 200, {
+            "content-type": format,
+          });
+        default:
+          return c.json({ data: records, meta }, 200);
+      }
     })
     .openapi(getSampleRoute, async (c) => {
       const format = negotiate(c);
@@ -199,12 +192,19 @@ export function createServiceRoutes(
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
-      return serve(
-        c,
-        format,
-        toCoreSample(sample, frontendUrl),
-        toDataCiteSample,
-      );
+      const core = toCoreSample(sample, frontendUrl);
+      switch (format) {
+        case DATACITE_MEDIA_TYPE:
+          return c.json(toDataCiteSample(core), 200, {
+            "content-type": format,
+          });
+        case ISAMPLES_MEDIA_TYPE:
+          return c.json(toISamplesSample(core), 200, {
+            "content-type": format,
+          });
+        default:
+          return c.json(core, 200);
+      }
     })
     .openapi(createSampleRoute, async (c) => {
       const account = c.get("serviceAccount");

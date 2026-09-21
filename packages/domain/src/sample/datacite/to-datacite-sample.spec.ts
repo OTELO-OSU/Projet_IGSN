@@ -1,17 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { z } from "zod";
 
-import type { CoreSample } from "../core/core-sample-schema.ts";
-
-import { FRONTEND_URL } from "../core/core-record-fixture.ts";
+import { core, corePaths } from "../core/core-paths-fixture.ts";
 import {
   COLLECTION_SPECIMEN,
   FIELD_SAMPLE,
   LINE_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "../core/core-sample-fixture.ts";
-import { coreSampleSchema } from "../core/core-sample-schema.ts";
-import { toCoreSample } from "../core/to-core-sample.ts";
 import { toDataCiteSample } from "./to-datacite-sample.ts";
 
 const PROJECTED_CORE_PATHS = [
@@ -77,29 +72,6 @@ const DROPPED_CORE_PATHS = [
   "extensions.safety",
   "extensions.experiment",
 ];
-
-const isOptional = (schema: z.ZodType): schema is z.ZodOptional<z.ZodType> =>
-  schema instanceof z.ZodOptional;
-
-const isArray = (schema: z.ZodType): schema is z.ZodArray<z.ZodType> =>
-  schema instanceof z.ZodArray;
-
-const unwrap = (schema: z.ZodType): z.ZodType => {
-  if (isOptional(schema)) return unwrap(schema.unwrap());
-  if (isArray(schema)) return unwrap(schema.element);
-  return schema;
-};
-
-const corePaths = (): string[] =>
-  Object.entries(coreSampleSchema.shape).flatMap(([name, field]) => {
-    const inner = unwrap(field);
-    return inner instanceof z.ZodObject
-      ? Object.keys(inner.shape).map((child) => `${name}.${child}`)
-      : [name];
-  });
-
-const core = (sample: Parameters<typeof toCoreSample>[0]): CoreSample =>
-  toCoreSample(sample, FRONTEND_URL);
 
 const ORGANIZATION_NAME = "Centre National de la Recherche Scientifique (CNRS)";
 
