@@ -54,17 +54,22 @@ export const SERVED_MEDIA_TYPES = [
   ISAMPLES_MEDIA_TYPE,
 ] as const;
 
-const negotiated = <Schemas extends Record<string, z.ZodType>>(
-  schemas: Schemas,
+const negotiated = <
+  Core extends z.ZodType,
+  DataCite extends z.ZodType,
+  ISamples extends z.ZodType,
+>(
+  core: Core,
+  dataCite: DataCite,
+  iSamples: ISamples,
   description: string,
 ) => ({
   description,
-  content: Object.fromEntries(
-    Object.entries(schemas).map(([mediaType, schema]) => [
-      mediaType,
-      { schema },
-    ]),
-  ) as { [MediaType in keyof Schemas]: { schema: Schemas[MediaType] } },
+  content: {
+    "application/json": { schema: core },
+    [DATACITE_MEDIA_TYPE]: { schema: dataCite },
+    [ISAMPLES_MEDIA_TYPE]: { schema: iSamples },
+  },
 });
 
 const NOT_ACCEPTABLE = json(
@@ -155,11 +160,9 @@ export const listSamplesRoute = createRoute({
   },
   responses: {
     200: negotiated(
-      {
-        "application/json": coreListSamplesResponseSchema,
-        [DATACITE_MEDIA_TYPE]: dataCiteListSamplesResponseSchema,
-        [ISAMPLES_MEDIA_TYPE]: iSamplesListSamplesResponseSchema,
-      },
+      coreListSamplesResponseSchema,
+      dataCiteListSamplesResponseSchema,
+      iSamplesListSamplesResponseSchema,
       "One page of published samples.",
     ),
     403: FORBIDDEN,
@@ -180,11 +183,9 @@ export const getSampleRoute = createRoute({
   request: { headers: acceptHeaderSchema, params: igsnParamSchema },
   responses: {
     200: negotiated(
-      {
-        "application/json": coreSampleSchema,
-        [DATACITE_MEDIA_TYPE]: dataCiteSampleSchema,
-        [ISAMPLES_MEDIA_TYPE]: iSamplesSampleSchema,
-      },
+      coreSampleSchema,
+      dataCiteSampleSchema,
+      iSamplesSampleSchema,
       "The published sample.",
     ),
     400: INVALID_IGSN,

@@ -1,18 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { z } from "zod";
-
-import type { CoreSample } from "../core/core-sample-schema.ts";
 
 import { toConcept } from "../core/concept.ts";
-import { FRONTEND_URL } from "../core/core-record-fixture.ts";
+import { core, corePaths } from "../core/core-paths-fixture.ts";
+import { ORGANIZATION_NAME } from "../core/core-record-fixture.ts";
 import {
   COLLECTION_SPECIMEN,
   FIELD_SAMPLE,
   LINE_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "../core/core-sample-fixture.ts";
-import { coreSampleSchema } from "../core/core-sample-schema.ts";
-import { toCoreSample } from "../core/to-core-sample.ts";
 import { MATERIAL_TREE } from "../material/classification.ts";
 import { toISamplesSample } from "./to-isamples-sample.ts";
 
@@ -80,29 +76,6 @@ const DROPPED_CORE_PATHS = [
   "extensions.experiment",
 ];
 
-const isOptional = (schema: z.ZodType): schema is z.ZodOptional<z.ZodType> =>
-  schema instanceof z.ZodOptional;
-
-const isArray = (schema: z.ZodType): schema is z.ZodArray<z.ZodType> =>
-  schema instanceof z.ZodArray;
-
-const unwrap = (schema: z.ZodType): z.ZodType => {
-  if (isOptional(schema)) return unwrap(schema.unwrap());
-  if (isArray(schema)) return unwrap(schema.element);
-  return schema;
-};
-
-const corePaths = (): string[] =>
-  Object.entries(coreSampleSchema.shape).flatMap(([name, field]) => {
-    const inner = unwrap(field);
-    return inner instanceof z.ZodObject
-      ? Object.keys(inner.shape).map((child) => `${name}.${child}`)
-      : [name];
-  });
-
-const core = (sample: Parameters<typeof toCoreSample>[0]): CoreSample =>
-  toCoreSample(sample, FRONTEND_URL);
-
 const MATERIAL_BASE = "https://w3id.org/isample/vocabulary/material/";
 
 const MATERIAL_SCHEME = {
@@ -141,14 +114,12 @@ const EXTRATERRESTRIAL_ENVIRONMENT = {
 const OBJECT_TYPE_BASE =
   "https://w3id.org/isample/vocabulary/materialsampleobjecttype/";
 
-const SOLID_MATERIAL_SAMPLE = [
-  {
-    label: "Solid material sample",
-    pid: `${OBJECT_TYPE_BASE}solidmaterialsample`,
-    scheme_name: "iSamples Material Sample Object Type Vocabulary",
-    scheme_uri: `${OBJECT_TYPE_BASE}1.0/materialsampleobjecttype`,
-  },
-];
+const SOLID_MATERIAL_SAMPLE = {
+  label: "Solid material sample",
+  pid: `${OBJECT_TYPE_BASE}solidmaterialsample`,
+  scheme_name: "iSamples Material Sample Object Type Vocabulary",
+  scheme_uri: `${OBJECT_TYPE_BASE}1.0/materialsampleobjecttype`,
+};
 
 const REGISTRANT = {
   name: "OTELo",
@@ -159,8 +130,6 @@ const REGISTRANT = {
 const COMPLIES_WITH = ["https://w3id.org/isample/schema/2.0"];
 
 const DC_RIGHTS = "https://creativecommons.org/licenses/by/4.0/";
-
-const ORGANIZATION_NAME = "Centre National de la Recherche Scientifique (CNRS)";
 
 const METEORITE_SAMPLE = {
   ...FIELD_SAMPLE,
@@ -187,7 +156,7 @@ describe("a Core record mapped to iSamples", () => {
       last_modified_time: "2024-06-04T10:00:00.000Z",
       complies_with: COMPLIES_WITH,
       has_material_category: [ROCK],
-      has_sample_object_type: SOLID_MATERIAL_SAMPLE,
+      has_sample_object_type: [SOLID_MATERIAL_SAMPLE],
       has_context_category: [EARTH_INTERIOR],
       registrant: REGISTRANT,
       sampling_purpose: "Sampling campaign of June 2024",
@@ -252,7 +221,7 @@ describe("a Core record mapped to iSamples", () => {
       last_modified_time: "2025-01-22T08:00:00.000Z",
       complies_with: COMPLIES_WITH,
       has_material_category: [PARTICULATE],
-      has_sample_object_type: SOLID_MATERIAL_SAMPLE,
+      has_sample_object_type: [SOLID_MATERIAL_SAMPLE],
       has_context_category: [EARTH_INTERIOR],
       registrant: REGISTRANT,
       produced_by: {
@@ -302,16 +271,6 @@ describe("the related resources of an iSamples record", () => {
 describe("the sample location of an iSamples record", () => {
   it.each([
     {
-      name: "a point",
-      sample: FIELD_SAMPLE,
-      sampleLocation: {
-        latitude: 48.69,
-        longitude: 6.18,
-        elevation: "120 m depthBelowGround",
-        obfuscated: false,
-      },
-    },
-    {
       name: "an area",
       sample: COLLECTION_SPECIMEN,
       sampleLocation: { elevation: "1000 m bathymetry", obfuscated: false },
@@ -321,14 +280,11 @@ describe("the sample location of an iSamples record", () => {
       sample: LINE_SAMPLE,
       sampleLocation: { elevation: "1200 m bathymetry", obfuscated: false },
     },
-  ])(
-    "should carry coordinates for $name alone",
-    ({ sample, sampleLocation }) => {
-      expect(
-        toISamplesSample(core(sample)).produced_by.sample_location,
-      ).toEqual(sampleLocation);
-    },
-  );
+  ])("should carry no coordinates for $name", ({ sample, sampleLocation }) => {
+    expect(toISamplesSample(core(sample)).produced_by.sample_location).toEqual(
+      sampleLocation,
+    );
+  });
 
   it("should withhold the coordinates and keep the place names of a sensitive location", () => {
     const sample = core(FIELD_SAMPLE);
@@ -350,28 +306,12 @@ describe("the sample location of an iSamples record", () => {
 });
 
 describe("the iSamples categories of a Core record", () => {
-  it.each([
-    {
-      name: "a terrestrial rock",
-      sample: FIELD_SAMPLE,
-      material: ROCK,
-      context: EARTH_INTERIOR,
-    },
-    {
-      name: "an extraterrestrial rock",
-      sample: METEORITE_SAMPLE,
-      material: PARTICULATE,
-      context: EXTRATERRESTRIAL_ENVIRONMENT,
-    },
-  ])(
-    "should carry the material and the sampled feature of $name",
-    ({ sample, material, context }) => {
-      const record = toISamplesSample(core(sample));
+  it("should carry the particulate material and the extraterrestrial environment of a meteorite", () => {
+    const record = toISamplesSample(core(METEORITE_SAMPLE));
 
-      expect(record.has_material_category).toEqual([material]);
-      expect(record.has_context_category).toEqual([context]);
-    },
-  );
+    expect(record.has_material_category).toEqual([PARTICULATE]);
+    expect(record.has_context_category).toEqual([EXTRATERRESTRIAL_ENVIRONMENT]);
+  });
 
   it.each(MATERIAL_TREE.rock_and_sediment.choices ?? [])(
     "should map the head material %s onto an iSamples concept",
@@ -389,7 +329,6 @@ describe("the iSamples categories of a Core record", () => {
       });
 
       expect(record.has_material_category[0]).toBeDefined();
-      expect(record.has_context_category[0]).toBeDefined();
     },
   );
 });

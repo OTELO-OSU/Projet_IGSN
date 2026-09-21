@@ -24,20 +24,14 @@ const concept = (
   scheme_uri: schemeUri,
 });
 
+const PARTICULATE = concept(MATERIAL_VOCABULARY, "particulate", "Particulate");
+
 const MATERIAL_CONCEPTS: Record<MaterialHead, ISamplesConcept> = {
   rock: concept(MATERIAL_VOCABULARY, "rock", "Rock"),
   sediment: concept(MATERIAL_VOCABULARY, "sediment", "Sediment"),
   mineral: concept(MATERIAL_VOCABULARY, "mineral", "Mineral"),
-  synthetic_rock_mineral: concept(
-    MATERIAL_VOCABULARY,
-    "particulate",
-    "Particulate",
-  ),
-  extraterrestrial_rock: concept(
-    MATERIAL_VOCABULARY,
-    "particulate",
-    "Particulate",
-  ),
+  synthetic_rock_mineral: PARTICULATE,
+  extraterrestrial_rock: PARTICULATE,
 };
 
 const EARTH_INTERIOR = concept(

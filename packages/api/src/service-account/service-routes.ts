@@ -1,14 +1,8 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
-import type { CoreSample } from "@projet-igsn/domain/sample/core/core-sample-schema";
-import type { DataCiteSample } from "@projet-igsn/domain/sample/datacite/datacite-schema";
-import type { ISamplesSample } from "@projet-igsn/domain/sample/isamples/isamples-schema";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
 import type {
-  CoreListSamplesResponse,
-  DataCiteListSamplesResponse,
   FrozenServiceSample,
-  ISamplesListSamplesResponse,
   InvalidServiceSample,
   ServiceSampleIssue,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
@@ -93,25 +87,6 @@ const negotiate = (c: Context<ServiceEnv>) =>
 const notAcceptable = (c: Context<ServiceEnv>) =>
   c.json({ error: "Not acceptable" }, 406);
 
-const serve = <Core, Adapted>(
-  c: Context<ServiceEnv>,
-  format: string,
-  core: Core,
-  adapters: Record<string, (core: Core) => Adapted>,
-) => {
-  const adapt = adapters[format];
-  return adapt
-    ? c.json(adapt(core), 200, { "content-type": format })
-    : c.json(core, 200);
-};
-
-const listOf =
-  <Mapped>(toRecord: (core: CoreSample) => Mapped) =>
-  ({ data, meta }: CoreListSamplesResponse) => ({
-    data: data.map((core) => toRecord(core)),
-    meta,
-  });
-
 const invalid = (c: Context<ServiceEnv>, issues: ServiceSampleIssue[]) =>
   c.json(
     { error: "Invalid sample", issues } satisfies InvalidServiceSample,
@@ -194,14 +169,19 @@ export function createServiceRoutes(
         editable === true,
       );
       const records = data.map((sample) => toCoreSample(sample, frontendUrl));
-      const body: CoreListSamplesResponse = { data: records, meta: { total } };
-      return serve<
-        CoreListSamplesResponse,
-        DataCiteListSamplesResponse | ISamplesListSamplesResponse
-      >(c, format, body, {
-        [DATACITE_MEDIA_TYPE]: listOf(toDataCiteSample),
-        [ISAMPLES_MEDIA_TYPE]: listOf(toISamplesSample),
-      });
+      const meta = { total };
+      switch (format) {
+        case DATACITE_MEDIA_TYPE:
+          return c.json({ data: records.map(toDataCiteSample), meta }, 200, {
+            "content-type": format,
+          });
+        case ISAMPLES_MEDIA_TYPE:
+          return c.json({ data: records.map(toISamplesSample), meta }, 200, {
+            "content-type": format,
+          });
+        default:
+          return c.json({ data: records, meta }, 200);
+      }
     })
     .openapi(getSampleRoute, async (c) => {
       const format = negotiate(c);
@@ -212,15 +192,19 @@ export function createServiceRoutes(
       if (!sample) {
         return c.json({ error: "Not found" }, 404);
       }
-      return serve<CoreSample, DataCiteSample | ISamplesSample>(
-        c,
-        format,
-        toCoreSample(sample, frontendUrl),
-        {
-          [DATACITE_MEDIA_TYPE]: toDataCiteSample,
-          [ISAMPLES_MEDIA_TYPE]: toISamplesSample,
-        },
-      );
+      const core = toCoreSample(sample, frontendUrl);
+      switch (format) {
+        case DATACITE_MEDIA_TYPE:
+          return c.json(toDataCiteSample(core), 200, {
+            "content-type": format,
+          });
+        case ISAMPLES_MEDIA_TYPE:
+          return c.json(toISamplesSample(core), 200, {
+            "content-type": format,
+          });
+        default:
+          return c.json(core, 200);
+      }
     })
     .openapi(createSampleRoute, async (c) => {
       const account = c.get("serviceAccount");
