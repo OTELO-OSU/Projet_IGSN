@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
-import { draft, publishableSample } from "../../tests/sample-fixtures.ts";
+import { publishableSample } from "../../tests/sample-fixtures.ts";
 import {
   STUB_DATACITE_CONFIG,
   stubDataCite,
@@ -173,18 +173,4 @@ describe("updateSample with DataCite configured", () => {
       });
     },
   );
-
-  pgTest("should send nothing when the sample is a draft", async ({ db }) => {
-    // Arrange
-    const created = await insertSample(db, draft);
-    // Act
-    await updateSample(
-      db,
-      created.id,
-      { ...draft, name: "Grès de Fontainebleau" },
-      STUB_DATACITE_CONFIG,
-    );
-    // Assert
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
 });

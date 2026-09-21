@@ -10,16 +10,12 @@ import { appUrl } from "../app-url.ts";
 
 const SYNC_TIMEOUT_MS = 10_000;
 
-export type DoiEvent = "publish" | "register" | "hide";
-
-// hide moves a findable DOI to registered and does nothing to a registered one; register only works on a DOI DataCite has never seen, so publishSample alone sends it.
-const doiEvent = (status: Sample["status"]): DoiEvent =>
-  status === "published" ? "publish" : "hide";
-
 export async function syncDoi(
   config: DataCiteConfig | null,
   sample: Sample,
-  event: DoiEvent = doiEvent(sample.status),
+  event: "publish" | "register" | "hide" = sample.status === "published"
+    ? "publish"
+    : "hide",
 ): Promise<void> {
   if (!config || !sample.doiPrefix) return;
   const frontendUrl = appUrl("FRONTEND_URL");
