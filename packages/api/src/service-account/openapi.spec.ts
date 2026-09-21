@@ -2,6 +2,7 @@ import type { Kysely } from "kysely";
 
 import { DATACITE_MEDIA_TYPE } from "@projet-igsn/domain/sample/datacite/datacite-schema";
 import { ISAMPLES_MEDIA_TYPE } from "@projet-igsn/domain/sample/isamples/isamples-schema";
+import { OMS_MEDIA_TYPE } from "@projet-igsn/domain/sample/oms/oms-schema";
 import { describe, expect, it } from "vitest";
 
 import type { DB } from "../db.ts";
@@ -53,14 +54,17 @@ const undescribedProperties = (node: unknown, path: string): string[] => {
   if (node == null || typeof node !== "object") {
     return [];
   }
-  const { properties } = node as {
+  const { properties, ...keywords } = node as Record<string, unknown> & {
     properties?: Record<string, { description?: string }>;
   };
   return [
     ...Object.entries(properties ?? {})
       .filter(([, property]) => !property?.description)
       .map(([name]) => `${path}.${name}`),
-    ...Object.entries(node).flatMap(([key, value]) =>
+    ...Object.entries(properties ?? {}).flatMap(([name, property]) =>
+      undescribedProperties(property, `${path}.${name}`),
+    ),
+    ...Object.entries(keywords).flatMap(([key, value]) =>
       undescribedProperties(value, `${path}.${key}`),
     ),
   ];
@@ -96,6 +100,7 @@ describe("the /service OpenAPI document", () => {
         "application/json",
         DATACITE_MEDIA_TYPE,
         ISAMPLES_MEDIA_TYPE,
+        OMS_MEDIA_TYPE,
       ]);
       expect(Object.keys(responses["200"]!.content)).toEqual(
         accept?.schema.enum,

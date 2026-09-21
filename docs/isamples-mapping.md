@@ -1,6 +1,6 @@
 # iSamples Core 2.0 as a third `/service` read format
 
-Status: **implemented**. `GET /service/samples` and `GET /service/samples/:igsn` (ADR [0042](adr/0042-format-negotiation-on-the-service-api.md)) emit an iSamples Core 2.0 record when the caller's `Accept` header asks for one, alongside the default IGSN Sample Core record (`docs/igsn-core-mapping.md`) and the DataCite 4.7 record (`docs/datacite-mapping.md`).
+Status: **implemented**. `GET /service/samples` and `GET /service/samples/:igsn` (ADR [0042](adr/0042-format-negotiation-on-the-service-api.md)) emit an iSamples Core 2.0 record when the caller's `Accept` header asks for one, alongside the default IGSN Sample Core record (`docs/igsn-core-mapping.md`), the DataCite 4.7 record (`docs/datacite-mapping.md`) and the OGC-OMS / SOSA record ([`docs/oms-mapping.md`](oms-mapping.md)).
 
 Source: `Mapping_implementation_IGSN-Core_v0.10.0_v-Finale.docx`, section 4 (`mapCoreToISamples`), crosswalks 1.1, 1.3, 1.4 and the masking rule in section 5.
 

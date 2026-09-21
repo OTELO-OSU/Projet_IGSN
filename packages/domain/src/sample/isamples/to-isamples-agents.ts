@@ -5,7 +5,7 @@ import type {
 } from "../core/core-sample-schema.ts";
 import type { ISamplesAgent } from "./isamples-schema.ts";
 
-import { joinContactName } from "../contact-name.ts";
+import { coreAgentName } from "../core/core-agent-name.ts";
 
 const ISAMPLES_ROLES: Record<CoreRole, string> = {
   Creator: "collector",
@@ -21,10 +21,7 @@ const toISamplesAgent = (
   { agent }: CoreAgentRole,
   role: CoreRole,
 ): ISamplesAgent => ({
-  name:
-    agent.agentType === "Person"
-      ? joinContactName(agent.firstname, agent.lastname)
-      : agent.name,
+  name: coreAgentName(agent),
   pid: agent.id,
   affiliation:
     agent.agentType === "Person"
