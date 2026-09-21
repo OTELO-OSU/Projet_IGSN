@@ -1059,7 +1059,7 @@ describe("admin sample routes", () => {
     );
     // Assert
     expect(res.status).toBe(502);
-    expect(await res.json()).toEqual({ error: "DOI registration failed" });
+    expect(await res.json()).toEqual({ error: "DOI sync failed" });
   });
 
   pgTest("should publish a sample straight as withdrawn", async ({ db }) => {
@@ -1326,6 +1326,25 @@ describe("admin sample routes", () => {
         expect(await republished.json()).toMatchObject({
           data: { status: "published", igsn: sample.igsn },
         });
+      },
+    );
+
+    pgTest(
+      "should answer 502 when DataCite refuses the status change",
+      async ({ db }) => {
+        // Arrange
+        const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+        vi.spyOn(console, "error").mockImplementation(() => undefined);
+        onTestFinished(() => {
+          vi.unstubAllGlobals();
+        });
+        const { client, sample } = await arrangePublished(db);
+        fetchMock.mockResolvedValue(new Response("nope", { status: 500 }));
+        // Act
+        const res = await setStatus(client, sample.id, "withdrawn");
+        // Assert
+        expect(res.status).toBe(502);
+        expect(await res.json()).toEqual({ error: "DOI sync failed" });
       },
     );
 

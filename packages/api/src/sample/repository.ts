@@ -75,10 +75,12 @@ export function createSampleRepository(
         if (!published) throw new Error("Sample vanished before publish");
         return published;
       }),
-    update: tx(updateSample),
+    update: (id, input) =>
+      withTransaction(db, (trx) => updateSample(trx, id, input, dataCite)),
     publish: (id, status) =>
       withTransaction(db, (trx) => publishSample(trx, id, status, dataCite)),
-    setStatus: tx(setSampleStatus),
+    setStatus: (id, status) =>
+      withTransaction(db, (trx) => setSampleStatus(trx, id, status, dataCite)),
     remove: tx(deleteSample),
     getEditLock: tx(getEditLock),
     acquireEditLock: tx(acquireEditLock),
