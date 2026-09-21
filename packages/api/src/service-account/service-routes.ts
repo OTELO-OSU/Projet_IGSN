@@ -20,6 +20,11 @@ import { DATACITE_MEDIA_TYPE } from "@projet-igsn/domain/sample/datacite/datacit
 import { toDataCiteSample } from "@projet-igsn/domain/sample/datacite/to-datacite-sample";
 import { ISAMPLES_MEDIA_TYPE } from "@projet-igsn/domain/sample/isamples/isamples-schema";
 import { toISamplesSample } from "@projet-igsn/domain/sample/isamples/to-isamples-sample";
+import { OMS_MEDIA_TYPE } from "@projet-igsn/domain/sample/oms/oms-schema";
+import {
+  toOmsSample,
+  toOmsSampleCollection,
+} from "@projet-igsn/domain/sample/oms/to-oms-sample";
 import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
 import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
@@ -180,6 +185,10 @@ export function createServiceRoutes(
           return c.json({ data: records.map(toISamplesSample), meta }, 200, {
             "content-type": format,
           });
+        case OMS_MEDIA_TYPE:
+          return c.json(toOmsSampleCollection(records, total), 200, {
+            "content-type": format,
+          });
         default:
           return c.json({ data: records, meta }, 200);
       }
@@ -201,6 +210,10 @@ export function createServiceRoutes(
           });
         case ISAMPLES_MEDIA_TYPE:
           return c.json(toISamplesSample(core), 200, {
+            "content-type": format,
+          });
+        case OMS_MEDIA_TYPE:
+          return c.json(toOmsSample(core), 200, {
             "content-type": format,
           });
         default:

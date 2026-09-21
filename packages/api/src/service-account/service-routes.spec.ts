@@ -27,6 +27,15 @@ import {
 } from "@projet-igsn/domain/sample/isamples/isamples-schema";
 import { toISamplesSample } from "@projet-igsn/domain/sample/isamples/to-isamples-sample";
 import {
+  OMS_MEDIA_TYPE,
+  omsSampleCollectionSchema,
+  omsSampleSchema,
+} from "@projet-igsn/domain/sample/oms/oms-schema";
+import {
+  toOmsSample,
+  toOmsSampleCollection,
+} from "@projet-igsn/domain/sample/oms/to-oms-sample";
+import {
   coreListSamplesResponseSchema,
   dataCiteListSamplesResponseSchema,
   frozenServiceSampleSchema,
@@ -520,26 +529,42 @@ describe("GET /service/samples/:igsn", () => {
 });
 
 describe("the Accept header of the /service GET routes", () => {
+  const envelope = (records: unknown[]) => ({
+    data: records,
+    meta: { total: records.length },
+  });
+
   const VENDOR_FORMATS = [
     {
       format: "DataCite",
       mediaType: DATACITE_MEDIA_TYPE,
       map: toDataCiteSample,
-      listSchema: dataCiteListSamplesResponseSchema,
       schema: dataCiteSampleSchema,
+      listSchema: dataCiteListSamplesResponseSchema,
+      listOf: (cores: CoreSample[]) => envelope(cores.map(toDataCiteSample)),
     },
     {
       format: "iSamples",
       mediaType: ISAMPLES_MEDIA_TYPE,
       map: toISamplesSample,
-      listSchema: iSamplesListSamplesResponseSchema,
       schema: iSamplesSampleSchema,
+      listSchema: iSamplesListSamplesResponseSchema,
+      listOf: (cores: CoreSample[]) => envelope(cores.map(toISamplesSample)),
+    },
+    {
+      format: "OMS",
+      mediaType: OMS_MEDIA_TYPE,
+      map: toOmsSample,
+      schema: omsSampleSchema,
+      listSchema: omsSampleCollectionSchema,
+      listOf: (cores: CoreSample[]) =>
+        toOmsSampleCollection(cores, cores.length),
     },
   ];
 
   pgTest.for(VENDOR_FORMATS)(
     "should answer the list as $format records under the $format media type",
-    async ({ mediaType, map, listSchema }, { db }) => {
+    async ({ mediaType, listSchema, listOf }, { db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);
       const sample = await inLaboratory(db, archivedSample, IN_REACH);
@@ -549,10 +574,9 @@ describe("the Accept header of the /service GET routes", () => {
       // Assert
       expect(res.status).toBe(200);
       expect(res.headers.get("content-type")).toBe(mediaType);
-      expect(listSchema.parse(await res.json())).toEqual({
-        data: [map(core(published))],
-        meta: { total: 1 },
-      });
+      expect(listSchema.parse(await res.json())).toEqual(
+        listOf([core(published)]),
+      );
     },
   );
 
@@ -632,11 +656,11 @@ describe("the Accept header of the /service GET routes", () => {
   );
 
   pgTest.for([
-    "*/*, application/vnd.otelo.datacite+json",
-    "application/*, application/vnd.otelo.datacite+json",
-    "text/plain, */*, application/vnd.otelo.datacite+json",
+    `*/*, ${DATACITE_MEDIA_TYPE}`,
+    `application/*, ${DATACITE_MEDIA_TYPE}`,
+    `text/plain, */*, ${DATACITE_MEDIA_TYPE}`,
   ])(
-    "should serve the DataCite record named beside a wildcard in Accept %s",
+    "should serve the record named beside a wildcard in Accept %s",
     async (accept, { db }) => {
       // Arrange
       const { app } = await arrangeAccount(db);

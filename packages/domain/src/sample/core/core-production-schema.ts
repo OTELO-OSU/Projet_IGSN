@@ -25,7 +25,6 @@ const corePositionSchema = z.tuple([
 
 type CorePosition = z.infer<typeof corePositionSchema>;
 
-// A ring drawn from an area is [[w,s],[e,s],[e,n],[w,n],[w,s]].
 const isClosedRectangle = (ring: CorePosition[]): boolean => {
   const longitudes = ring.map(([longitude]) => longitude);
   const latitudes = ring.map(([, latitude]) => latitude);
@@ -41,7 +40,7 @@ const isClosedRectangle = (ring: CorePosition[]): boolean => {
 
 const geometryTypeDescription = "Shape the sample was collected over.";
 
-const coreGeometrySchema = z.discriminatedUnion("type", [
+export const coreGeometrySchema = z.discriminatedUnion("type", [
   z.strictObject({
     type: z.literal("Point").meta({ description: geometryTypeDescription }),
     coordinates: corePositionSchema.meta({
@@ -73,7 +72,7 @@ const coreGeometrySchema = z.discriminatedUnion("type", [
   }),
 ]);
 
-const coreVerticalCoordinateSchema = z.strictObject({
+export const coreVerticalCoordinateSchema = z.strictObject({
   value: z
     .number()
     .meta({ description: "Vertical coordinate of the sample, in metres." }),
@@ -101,6 +100,23 @@ const coreVerticalCoordinateSchema = z.strictObject({
     .optional(),
 });
 
+export const coreVerticalExtentSchema = z
+  .strictObject({
+    minimum: coreVerticalCoordinateSchema
+      .meta({
+        description:
+          "Lower vertical coordinate of the collection, and the only one a point carries.",
+      })
+      .optional(),
+    maximum: coreVerticalCoordinateSchema
+      .meta({
+        description:
+          "Upper vertical coordinate of the collection, refused on a point.",
+      })
+      .optional(),
+  })
+  .meta({ description: "Vertical extent the sample was collected over." });
+
 const coreLocationSchema = z
   .strictObject({
     geometry: coreGeometrySchema
@@ -116,23 +132,7 @@ const coreLocationSchema = z
           "Coordinate reference system of the geometry, always CRS84.",
       })
       .optional(),
-    verticalExtent: z
-      .strictObject({
-        minimum: coreVerticalCoordinateSchema
-          .meta({
-            description:
-              "Lower vertical coordinate of the collection, and the only one a point carries.",
-          })
-          .optional(),
-        maximum: coreVerticalCoordinateSchema
-          .meta({
-            description:
-              "Upper vertical coordinate of the collection, refused on a point.",
-          })
-          .optional(),
-      })
-      .meta({ description: "Vertical extent the sample was collected over." })
-      .optional(),
+    verticalExtent: coreVerticalExtentSchema.optional(),
     placeNames: z
       .array(freeTextSchema)
       .length(1)
