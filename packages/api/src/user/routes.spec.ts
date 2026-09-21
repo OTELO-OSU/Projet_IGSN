@@ -227,6 +227,27 @@ describe("admin user search routes", () => {
   );
 
   pgTest(
+    "should resolve a rejected account looked up by id, so a stored link keeps its name",
+    async ({ db }) => {
+      const rejected = await insertUser(db, "eve.curie@univ-lorraine.fr", {
+        name: "Curie-Joliot",
+        status: "rejected",
+      });
+
+      const res = await testClient(createApp(db).app).admin.users.search.$get(
+        { query: { ids: [rejected.id] } },
+        { headers: authHeader },
+      );
+
+      expect(res.status).toBe(200);
+      const body = userIdentitiesResponseSchema.parse(await res.json());
+      expect(body.data.map((user) => user.email)).toEqual([
+        "eve.curie@univ-lorraine.fr",
+      ]);
+    },
+  );
+
+  pgTest(
     "should keep only the accepted accounts when status is accepted",
     async ({ db }) => {
       await insertUser(db, "marie.curie@univ-lorraine.fr", { name: "Curie" });

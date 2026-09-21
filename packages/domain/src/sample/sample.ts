@@ -37,10 +37,16 @@ import {
 } from "./relation/model.ts";
 import { repositorySchema } from "./repository/model.ts";
 import { resourceTypeSchema } from "./resource-type/vocabulary.ts";
-import { scientificContextSchema } from "./scientific-context/model.ts";
+import {
+  createScientificContextSchema,
+  scientificContextSchema,
+} from "./scientific-context/model.ts";
 import { securitySchema } from "./security/model.ts";
 import { isSyntheticMaterial } from "./synthetic-details/is-synthetic-material.ts";
-import { syntheticDetailsSchema } from "./synthetic-details/model.ts";
+import {
+  createSyntheticDetailsSchema,
+  syntheticDetailsSchema,
+} from "./synthetic-details/model.ts";
 import { textureSchema, texturesFor } from "./texture/vocabulary.ts";
 import { sampleTypeSchema } from "./type/vocabulary.ts";
 
@@ -131,8 +137,8 @@ const createSampleFieldsSchema = z.strictObject({
   repository: repositorySchema.nullish(),
   geologicalContextDescription: freeTextSchema.nullish(),
   geomorphologicalEnvironment: geomorphologicalEnvironmentSchema.nullish(),
-  scientificContext: scientificContextSchema.nullish(),
-  syntheticDetails: syntheticDetailsSchema.nullish(),
+  scientificContext: createScientificContextSchema.nullish(),
+  syntheticDetails: createSyntheticDetailsSchema.nullish(),
   age: ageSchema.nullish(),
   relations: z.array(createSampleRelationSchema).optional(),
   processSteps: z.array(sampleProcessStepSchema).optional(),

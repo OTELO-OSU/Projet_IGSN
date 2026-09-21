@@ -7,8 +7,10 @@ describe("publishedSampleFrozenField", () => {
 
   it.each([
     "manualGroupIds",
+    "syntheticDetails.operatorUserId",
     "syntheticDetails.operatorFirstname",
     "syntheticDetails.operatorLastname",
+    "syntheticDetails.operatorOrcid",
   ])("freezes %s, which the domain lock map lists", (field) => {
     expect(isFrozen(field)).toBe(true);
   });
@@ -18,15 +20,15 @@ describe("publishedSampleFrozenField", () => {
     "typePath[2]",
     "scientificContext.chiefScientistFirstname",
     "scientificContext.chiefScientistLastname",
-    "scientificContext.collectorOrcid",
-    "syntheticDetails.operatorOrcid",
   ])("leaves %s editable on a published sample", (field) => {
     expect(isFrozen(field)).toBe(false);
   });
 
   it.each([
+    "scientificContext.collectorUserId",
     "scientificContext.collectorFirstname",
     "scientificContext.collectorLastname",
+    "scientificContext.collectorOrcid",
   ])("freezes %s only on the field-sample branch", (field) => {
     expect(isFrozen(field)).toBe(true);
     expect(publishedSampleFrozenField("collection_specimen", null)(field)).toBe(

@@ -282,17 +282,27 @@ describe("createUserRepository", () => {
       expect(found.map((user) => user.name)).toEqual(["Curie"]);
     });
 
-    pgTest("should not match a firstname alone", async ({ db }) => {
-      const repository = createUserRepository(db);
-      await insertUser(db, "geologue@univ-lorraine.fr", {
-        name: "Blanchard",
-        firstname: "Solene",
-      });
+    pgTest.for([
+      ["a first name", "Marie"],
+      ["an unaccented spelling of an accented family name", "curie"],
+    ] as const)(
+      "should find a researcher by %s",
+      async ([, search], { db }) => {
+        const repository = createUserRepository(db);
+        await insertUser(db, "mc@univ-lorraine.fr", {
+          name: "Curié",
+          firstname: "Marie",
+        });
+        await insertUser(db, "pd@univ-lorraine.fr", {
+          name: "Dupont",
+          firstname: "Pierre",
+        });
 
-      expect(await repository.search(CALLER_ID, { search: "Solene" })).toEqual(
-        [],
-      );
-    });
+        const found = await repository.search(CALLER_ID, { search });
+
+        expect(found.map((user) => user.name)).toEqual(["Curié"]);
+      },
+    );
 
     pgTest("should order results by name", async ({ db }) => {
       const repository = createUserRepository(db);

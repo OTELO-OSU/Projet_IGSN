@@ -1,15 +1,16 @@
 import type { Sample } from "../sample.ts";
 
-export function redactArchiveContacts(sample: Sample): Sample {
-  if (!sample.repository) return sample;
-  return {
+import { clearContactLinks } from "../contact-link.ts";
+
+export function redactPrivateContacts(sample: Sample): Sample {
+  return clearContactLinks({
     ...sample,
-    repository: {
+    repository: sample.repository && {
       ...sample.repository,
       currentArchiveContactFirstname: null,
       currentArchiveContactLastname: null,
       originalArchiveContactFirstname: null,
       originalArchiveContactLastname: null,
     },
-  };
+  });
 }

@@ -45,6 +45,7 @@ const DROPPED_CORE_PATHS = [
   "record.metadataLanguage",
   "record.metadataVersion",
   "record.lifecycleEvents",
+  "identification.doi",
   "identification.localName",
   "classification.natureOfSample",
   "classification.sampleObjectTypes",

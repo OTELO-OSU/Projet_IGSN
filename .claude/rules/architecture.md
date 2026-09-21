@@ -47,7 +47,7 @@ A sample's `status` (`draft | published | withdrawn | tombstone`) drives three s
 
 `domain/sample/publication/withdrawn-sample.ts` (`toWithdrawnSample`) is the only place that redacts a withdrawn sample, a field-by-field whitelist so a new `Sample` field stays private by default, and `public-sample.ts` (`toPublicSample`) picks it by status for the public `GET /samples/:igsn`; see ADR 0032.
 
-A published sample is public whole but for the fields `domain/sample/publication/redact-archive-contacts.ts` drops (the two archive contacts), called by `toPublicSample` and by the public list route, the two public payloads; the key-authenticated `/service` list emits them, so they are kept from the public web rather than admin-only.
+A published sample is public whole but for the fields `domain/sample/publication/redact-private-contacts.ts` (renamed from `redact-archive-contacts.ts`) drops: the two archive contacts and every person's `*UserId` account link, called by `toPublicSample` and by the public list route, the two public payloads; the key-authenticated `/service` list emits the archive contacts, so those alone are kept from the public web rather than admin-only. A person's resolved name and ORCID stay public; the account link they came from does not.
 
 `GET /samples/:igsn/lineage` walks both directions under one rule: a relative appears if it left draft (`hasPermanentIgsn`, inline in SQL), carrying ADR 0033's parent exception onto the whole graph, a draft relative being absent and stopping traversal past it. The root resolves for `published` and `withdrawn` alike, the pair `GET /samples/:igsn` answers, and a tombstoned root 404s; a tombstoned node carries a `tombstone` flag so the graph names it without linking to its 404; see ADR 0043.
 

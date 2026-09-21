@@ -36,6 +36,10 @@ export function sampleFormPage(page: Page) {
     lastname: string,
   ) => {
     const group = page.getByRole("group", { name: person });
+    await group.getByRole("combobox", { name: person }).click();
+    await page
+      .getByRole("option", { name: "Not in the list? Enter a name" })
+      .click();
     await group.getByRole("textbox", { name: /first name/i }).fill(firstname);
     await group.getByRole("textbox", { name: /last name/i }).fill(lastname);
   };

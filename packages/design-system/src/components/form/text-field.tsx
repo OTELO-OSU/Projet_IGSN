@@ -64,13 +64,12 @@ export function TextField({
         }}
         {...ariaProps}
       />
-      {error ? (
-        <FieldError error={error} errorId={errorId} />
-      ) : (
-        <p id={hintId} className="text-muted-foreground min-h-5 text-sm">
+      <FieldError error={error} errorId={errorId} />
+      {!error && hint ? (
+        <p id={hintId} className="text-muted-foreground text-sm">
           {hint}
         </p>
-      )}
+      ) : null}
     </FieldRow>
   );
 }

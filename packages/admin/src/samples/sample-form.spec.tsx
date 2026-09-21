@@ -2438,7 +2438,7 @@ describe("SampleForm post-publication field lock", () => {
     },
   );
 
-  it("freezes the collector name alone on a published field sample", async () => {
+  it("freezes the whole collector on a published field sample", async () => {
     const screen = await render(
       <TooltipProvider>
         <SampleForm
@@ -2481,8 +2481,12 @@ describe("SampleForm post-publication field lock", () => {
       )
       .toBeEnabled();
     await expect
-      .element(screen.getByLabelText("Collector ORCID"))
-      .toBeEnabled();
+      .element(
+        screen
+          .getByRole("group", { name: "Collector name" })
+          .getByRole("textbox", { name: "ORCID iD" }),
+      )
+      .toBeDisabled();
   });
 
   it("should freeze the manual groups on a published sample", async () => {
@@ -2534,15 +2538,20 @@ describe("SampleForm post-publication field lock", () => {
     await expect
       .element(screen.getByRole("combobox", { name: "Collection origin *" }))
       .toBeDisabled();
-    for (const person of ["Collector name", "Name of the collection curator"]) {
-      await expect
-        .element(
-          screen
-            .getByRole("group", { name: person })
-            .getByRole("textbox", { name: /last name/i }),
-        )
-        .toBeEnabled();
-    }
+    await expect
+      .element(
+        screen
+          .getByRole("group", { name: "Collector name" })
+          .getByRole("combobox", { name: "Collector name" }),
+      )
+      .toBeEnabled();
+    await expect
+      .element(
+        screen
+          .getByRole("group", { name: "Name of the collection curator" })
+          .getByRole("textbox", { name: /first name/i }),
+      )
+      .toBeEnabled();
   });
 
   it("blocks saving a published sample whose relation has no resource type", async () => {

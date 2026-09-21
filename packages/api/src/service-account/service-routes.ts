@@ -11,6 +11,7 @@ import type { Context } from "hono";
 import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
+import { keepContactLinks } from "@projet-igsn/domain/sample/contact-link";
 import { toListSamplesQuery } from "@projet-igsn/domain/sample/core/core-list-samples-query";
 import { CORE_SCHEMA_VERSION } from "@projet-igsn/domain/sample/core/core-sample-schema";
 import { fromCoreSample } from "@projet-igsn/domain/sample/core/from-core-sample";
@@ -267,7 +268,9 @@ export function createServiceRoutes(
           ]),
         ]);
       }
-      const parsed = updateSampleSchema.safeParse(sample);
+      const parsed = updateSampleSchema.safeParse(
+        keepContactLinks(sample, current),
+      );
       if (!parsed.success) {
         return invalid(c, zodIssues(parsed.error));
       }

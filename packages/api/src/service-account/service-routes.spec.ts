@@ -1227,6 +1227,87 @@ describe("PUT /service/samples/:igsn", () => {
     },
   );
 
+  pgTest(
+    "should keep every person account link through an unchanged round trip",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const linked = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+        firstname: "Marie",
+        name: "Curie",
+      });
+      const created = await publishedInReach(db, {
+        ...publishableSample,
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorUserId: linked.id,
+          chiefScientistUserId: linked.id,
+        },
+      });
+      // Act
+      const res = await putSample(
+        app,
+        created.igsn!,
+        renamed(created, "Renamed"),
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(
+        (await readSample(db, created.id))?.scientificContext,
+      ).toMatchObject({
+        chiefScientistFirstname: "Marie",
+        chiefScientistLastname: "Curie",
+        chiefScientistUserId: linked.id,
+        collectorFirstname: "Marie",
+        collectorLastname: "Curie",
+        collectorUserId: linked.id,
+      });
+    },
+  );
+
+  pgTest(
+    "should replace the link with the typed name when an unfrozen person is renamed",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const linked = await insertUser(db, "marie.curie@univ-lorraine.fr", {
+        firstname: "Marie",
+        name: "Curie",
+      });
+      const created = await publishedInReach(db, {
+        ...publishableSample,
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          chiefScientistUserId: linked.id,
+        },
+      });
+      const body = renamed(created, "Renamed");
+      // Act
+      const res = await putSample(app, created.igsn!, {
+        ...body,
+        responsibility: body.responsibility.map((agentRole) =>
+          agentRole.roles[0] === "ChiefScientist"
+            ? {
+                ...agentRole,
+                agent: { ...agentRole.agent, lastname: "Noether" },
+              }
+            : agentRole,
+        ),
+      });
+      // Assert
+      expect(res.status).toBe(200);
+      expect(
+        (await readSample(db, created.id))?.scientificContext,
+      ).toMatchObject({
+        chiefScientistFirstname: "Marie",
+        chiefScientistLastname: "Noether",
+      });
+      expect(
+        (await readSample(db, created.id))?.scientificContext,
+      ).not.toHaveProperty("chiefScientistUserId");
+    },
+  );
+
   pgTest.for(FROZEN_CASES)(
     "should refuse a body changing $field and write nothing",
     async ({ seed, edit, path }, { db }) => {

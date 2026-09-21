@@ -2,16 +2,19 @@ import type { CollectionOrigin } from "@projet-igsn/domain/sample/scientific-con
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
 
+import { composeContact } from "#/samples/compose-contact.ts";
 import { draftDefault, type DraftOptions } from "#/samples/draft-defaults.ts";
 
 export type ScientificContextDraft = {
   provenanceStatus: ProvenanceStatus | undefined;
   funderOrganizations: string[];
   researchProgramName: string | null | undefined;
+  chiefScientistUserId: string | null | undefined;
   chiefScientistFirstname: string | null | undefined;
   chiefScientistLastname: string | null | undefined;
   chiefScientistOrcid: string | null | undefined;
   hostInstitution: string[];
+  collectorUserId: string | null | undefined;
   collectorFirstname: string | null | undefined;
   collectorLastname: string | null | undefined;
   collectorOrcid: string | null | undefined;
@@ -20,6 +23,7 @@ export type ScientificContextDraft = {
   researchProgramDescription: string | null | undefined;
   fieldName: string | null | undefined;
   missionDescription: string | null | undefined;
+  collectionCuratorUserId: string | null | undefined;
   collectionCuratorFirstname: string | null | undefined;
   collectionCuratorLastname: string | null | undefined;
   collectionOrigin: CollectionOrigin | undefined;
@@ -31,10 +35,12 @@ type ScientificContextCandidate =
       provenanceStatus: "field_sample";
       funderOrganizations: string[] | undefined;
       researchProgramName: string | undefined;
+      chiefScientistUserId: string | undefined;
       chiefScientistFirstname: string | undefined;
       chiefScientistLastname: string | undefined;
       chiefScientistOrcid: string | undefined;
       hostInstitution: string[] | undefined;
+      collectorUserId: string | undefined;
       collectorFirstname: string | undefined;
       collectorLastname: string | undefined;
       collectorOrcid: string | undefined;
@@ -46,9 +52,11 @@ type ScientificContextCandidate =
     }
   | {
       provenanceStatus: "collection_specimen";
+      collectionCuratorUserId: string | undefined;
       collectionCuratorFirstname: string | undefined;
       collectionCuratorLastname: string | undefined;
       collectionOrigin: CollectionOrigin | undefined;
+      collectorUserId: string | undefined;
       collectorFirstname: string | undefined;
       collectorLastname: string | undefined;
       collectionContextDescription: string | undefined;
@@ -60,18 +68,32 @@ export const nonEmpty = (rors: string[]) =>
 export function composeScientificContext(
   draft: ScientificContextDraft,
 ): ScientificContextCandidate | null {
+  const chiefScientist = composeContact(
+    draft.chiefScientistUserId,
+    draft.chiefScientistFirstname,
+    draft.chiefScientistLastname,
+    draft.chiefScientistOrcid,
+  );
+  const collector = composeContact(
+    draft.collectorUserId,
+    draft.collectorFirstname,
+    draft.collectorLastname,
+    draft.collectorOrcid,
+  );
   if (draft.provenanceStatus === "field_sample") {
     return {
       provenanceStatus: "field_sample",
       funderOrganizations: nonEmpty(draft.funderOrganizations),
       researchProgramName: draft.researchProgramName || undefined,
-      chiefScientistFirstname: draft.chiefScientistFirstname || undefined,
-      chiefScientistLastname: draft.chiefScientistLastname || undefined,
-      chiefScientistOrcid: draft.chiefScientistOrcid || undefined,
+      chiefScientistUserId: chiefScientist.userId,
+      chiefScientistFirstname: chiefScientist.firstname,
+      chiefScientistLastname: chiefScientist.lastname,
+      chiefScientistOrcid: chiefScientist.orcid,
       hostInstitution: nonEmpty(draft.hostInstitution),
-      collectorFirstname: draft.collectorFirstname || undefined,
-      collectorLastname: draft.collectorLastname || undefined,
-      collectorOrcid: draft.collectorOrcid || undefined,
+      collectorUserId: collector.userId,
+      collectorFirstname: collector.firstname,
+      collectorLastname: collector.lastname,
+      collectorOrcid: collector.orcid,
       researchCampaign: draft.researchCampaign || undefined,
       funding: draft.funding || undefined,
       researchProgramDescription: draft.researchProgramDescription || undefined,
@@ -80,13 +102,20 @@ export function composeScientificContext(
     };
   }
   if (draft.provenanceStatus === "collection_specimen") {
+    const collectionCurator = composeContact(
+      draft.collectionCuratorUserId,
+      draft.collectionCuratorFirstname,
+      draft.collectionCuratorLastname,
+    );
     return {
       provenanceStatus: "collection_specimen",
-      collectionCuratorFirstname: draft.collectionCuratorFirstname || undefined,
-      collectionCuratorLastname: draft.collectionCuratorLastname || undefined,
+      collectionCuratorUserId: collectionCurator.userId,
+      collectionCuratorFirstname: collectionCurator.firstname,
+      collectionCuratorLastname: collectionCurator.lastname,
       collectionOrigin: draft.collectionOrigin,
-      collectorFirstname: draft.collectorFirstname || undefined,
-      collectorLastname: draft.collectorLastname || undefined,
+      collectorUserId: collector.userId,
+      collectorFirstname: collector.firstname,
+      collectorLastname: collector.lastname,
       collectionContextDescription:
         draft.collectionContextDescription || undefined,
     };
@@ -107,10 +136,15 @@ export function toScientificContextDraft(
       value?.provenanceStatus ?? draftDefault(options, "field_sample"),
     funderOrganizations: fieldSample?.funderOrganizations ?? [],
     researchProgramName: fieldSample?.researchProgramName ?? undefined,
+    chiefScientistUserId: fieldSample?.chiefScientistUserId ?? undefined,
     chiefScientistFirstname: fieldSample?.chiefScientistFirstname ?? undefined,
     chiefScientistLastname: fieldSample?.chiefScientistLastname ?? undefined,
     chiefScientistOrcid: fieldSample?.chiefScientistOrcid ?? undefined,
     hostInstitution: fieldSample?.hostInstitution ?? [],
+    collectorUserId:
+      fieldSample?.collectorUserId ??
+      collectionSpecimen?.collectorUserId ??
+      undefined,
     collectorFirstname:
       fieldSample?.collectorFirstname ??
       collectionSpecimen?.collectorFirstname ??
@@ -126,6 +160,8 @@ export function toScientificContextDraft(
       fieldSample?.researchProgramDescription ?? undefined,
     fieldName: fieldSample?.fieldName ?? undefined,
     missionDescription: fieldSample?.missionDescription ?? undefined,
+    collectionCuratorUserId:
+      collectionSpecimen?.collectionCuratorUserId ?? undefined,
     collectionCuratorFirstname:
       collectionSpecimen?.collectionCuratorFirstname ?? undefined,
     collectionCuratorLastname:

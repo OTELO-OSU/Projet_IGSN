@@ -153,6 +153,7 @@ function fakeApi(
   const lockCalls: string[] = [];
   const calls: string[] = [];
   worker.use(
+    http.get("*/admin/users/search", () => HttpResponse.json({ data: [] })),
     http.get("*/admin/currentUser", () => currentUserGate),
     http.get("*/admin/currentUser/manual-groups", () =>
       HttpResponse.json({ data: [] }),

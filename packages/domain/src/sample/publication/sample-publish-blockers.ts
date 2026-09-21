@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { User } from "../../user/model.ts";
 import type { SampleAttachment } from "../attachment/model.ts";
+import type { ContactLink } from "../contact-link.ts";
 import type { SampleProcessStep } from "../process-step/model.ts";
 import type { SampleRelation } from "../relation/model.ts";
 import type { Sample } from "../sample.ts";
@@ -105,10 +106,10 @@ type NamedPerson =
 
 const nameBlockers = (
   person: NamedPerson,
-  firstname: string | null | undefined,
-  lastname: string | null | undefined,
+  { userId, firstname, lastname }: ContactLink,
   presence: "required" | "optional",
 ): PublishBlocker[] => {
+  if (userId != null) return [];
   if (presence === "optional" && firstname == null && lastname == null)
     return [];
   return [
@@ -177,8 +178,8 @@ export function samplePublishBlockers(
     blockers.push("numeric_age_unit_missing");
   }
 
-  // An age in annum is a point on a calendar, so it needs a reference (CE/BCE/
-  // BP/cal BP) before publishing; other units are magnitudes and carry none.
+  // An age in annum is a point on a calendar, so it needs a reference
+  // (CE/BCE/BP/cal BP) before publishing.
   if (
     hasNumericValue &&
     age.numericAgeUnit === "a" &&
@@ -222,14 +223,20 @@ export function samplePublishBlockers(
     blockers.push(
       ...nameBlockers(
         "collector",
-        context.collectorFirstname,
-        context.collectorLastname,
+        {
+          userId: context.collectorUserId,
+          firstname: context.collectorFirstname,
+          lastname: context.collectorLastname,
+        },
         "required",
       ),
       ...nameBlockers(
         "chief_scientist",
-        context.chiefScientistFirstname,
-        context.chiefScientistLastname,
+        {
+          userId: context.chiefScientistUserId,
+          firstname: context.chiefScientistFirstname,
+          lastname: context.chiefScientistLastname,
+        },
         "optional",
       ),
     );
@@ -237,8 +244,11 @@ export function samplePublishBlockers(
     blockers.push(
       ...nameBlockers(
         "collection_curator",
-        context.collectionCuratorFirstname,
-        context.collectionCuratorLastname,
+        {
+          userId: context.collectionCuratorUserId,
+          firstname: context.collectionCuratorFirstname,
+          lastname: context.collectionCuratorLastname,
+        },
         "required",
       ),
     );
@@ -247,8 +257,11 @@ export function samplePublishBlockers(
     blockers.push(
       ...nameBlockers(
         "collector",
-        context.collectorFirstname,
-        context.collectorLastname,
+        {
+          userId: context.collectorUserId,
+          firstname: context.collectorFirstname,
+          lastname: context.collectorLastname,
+        },
         "optional",
       ),
     );
@@ -275,8 +288,11 @@ export function samplePublishBlockers(
     blockers.push(
       ...nameBlockers(
         "synthetic_operator",
-        details.operatorFirstname,
-        details.operatorLastname,
+        {
+          userId: details.operatorUserId,
+          firstname: details.operatorFirstname,
+          lastname: details.operatorLastname,
+        },
         "required",
       ),
     );

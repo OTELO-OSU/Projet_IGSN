@@ -1,9 +1,12 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
 import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
+import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
+import { userEvent } from "vitest/browser";
 
 import { fillPersonName } from "../../test/fill-person-name.ts";
+import { worker } from "../../test/msw.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
 
@@ -15,6 +18,9 @@ const createAction = (onSubmit: (value: CreateSample) => void) =>
 async function renderScientificContextSection(
   onSubmit: (value: CreateSample) => void = noop,
 ) {
+  worker.use(
+    http.get("*/admin/users/search", () => HttpResponse.json({ data: [] })),
+  );
   const screen = await render(
     <SampleForm
       onCancel={noop}
@@ -64,6 +70,8 @@ const pickOrganization = async (
   await screen.getByRole("option", { name: label }).click();
 };
 
+const closePopover = () => userEvent.keyboard("{Escape}");
+
 describe("SampleScientificContextFields", () => {
   it("should disable the Scientific context tab until a provenance status is chosen", async () => {
     const screen = await renderScientificContextSection();
@@ -104,6 +112,7 @@ describe("SampleScientificContextFields", () => {
       .click();
     await pickOrganization(screen, "04kdfz702");
     await pickOrganization(screen, "05hnb7x64");
+    await closePopover();
     await fillPersonName(screen, "Collector name", "Pierre", "Curie");
     await fillPersonName(
       screen,

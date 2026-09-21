@@ -21,6 +21,7 @@ import {
   sampleManualGroupsQuery,
   sampleOwnerQuery,
   sampleParentsQuery,
+  samplePersonAccountsQuery,
   sampleProcessStepsQuery,
   sampleRelationsQuery,
 } from "./sample-children-query.ts";
@@ -111,6 +112,7 @@ async function listSamplesWhere(
       .select(sampleAttachmentsQuery)
       .select(sampleManualGroupsQuery)
       .select(sampleParentsQuery)
+      .select(samplePersonAccountsQuery)
       .$if(withOwner, (qb) => qb.select(sampleOwnerQuery))
       .$if(sort === "status", (qb) => qb.orderBy(lifecycleOrder, order))
       .$if(sort === "igsn", (qb) => qb.orderBy("igsn", order))
