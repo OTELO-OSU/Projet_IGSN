@@ -305,6 +305,14 @@ describe("the sample location of an iSamples record", () => {
   });
 });
 
+describe("the curation of an iSamples record", () => {
+  it("should carry the collection curator of a collection specimen", () => {
+    expect(
+      toISamplesSample(core(COLLECTION_SPECIMEN)).curation.responsibility,
+    ).toEqual([{ name: "Mary Anning", role: "curator" }]);
+  });
+});
+
 describe("the iSamples categories of a Core record", () => {
   it("should carry the particulate material and the extraterrestrial environment of a meteorite", () => {
     const record = toISamplesSample(core(METEORITE_SAMPLE));
