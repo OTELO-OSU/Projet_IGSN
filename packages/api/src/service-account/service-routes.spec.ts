@@ -41,7 +41,7 @@ import {
   frozenServiceSampleSchema,
   iSamplesListSamplesResponseSchema,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
-import { describe, expect } from "vitest";
+import { describe, expect, vi } from "vitest";
 
 import type { DB } from "../db.ts";
 
@@ -60,6 +60,8 @@ import { hashApiKey } from "./api-key.ts";
 const KEY = "9tPqk1n0RmWvJ8LxUeYb3sQaZc7Hd2Fg";
 
 const FRONTEND_URL = "http://localhost:3000/";
+
+const ADMIN_URL = "http://localhost:3001/admin/";
 
 const IN_REACH = "UMR7358";
 const OUT_OF_REACH = "UMR5275";
@@ -1066,6 +1068,29 @@ describe("POST /service/samples", () => {
       });
     },
   );
+
+  pgTest(
+    "should mail the parent owner when the account declares a sub-sample",
+    async ({ db }) => {
+      // Arrange
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      await arrangeAccount(db);
+      const colleague = await insertUser(db, "colleague@univ-lorraine.fr");
+      const parent = await ownedParent(db, colleague.id);
+      const app = createApp(db, {
+        mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+      }).app;
+      // Act
+      const res = await postSample(app, subSampleBody(parent.igsn!));
+      // Assert
+      expect(res.status).toBe(201);
+      await vi.waitFor(() =>
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({ to: ["colleague@univ-lorraine.fr"] }),
+        ),
+      );
+    },
+  );
 });
 
 describe("the /service mount", () => {
@@ -1420,6 +1445,58 @@ describe("PUT /service/samples/:igsn", () => {
         ],
       });
       expect(await storedNames(db)).toEqual([{ name: publishableSample.name }]);
+    },
+  );
+
+  pgTest(
+    "should mail the owner of the sample the account edits",
+    async ({ db }) => {
+      // Arrange
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      await arrangeAccount(db);
+      const colleague = await insertUser(db, "colleague@univ-lorraine.fr");
+      const created = await publishedInReach(db);
+      await insertSampleOwner(db, created.id, colleague.id);
+      const app = createApp(db, {
+        mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+      }).app;
+      // Act
+      const res = await putSample(
+        app,
+        created.igsn!,
+        renamed(created, "Basalt revisited"),
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      await vi.waitFor(() =>
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({ to: ["colleague@univ-lorraine.fr"] }),
+        ),
+      );
+    },
+  );
+
+  pgTest(
+    "should mail nobody when the account edits a sample its own owner owns",
+    async ({ db }) => {
+      // Arrange
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      const { owner } = await arrangeAccount(db);
+      const created = await publishedInReach(db);
+      await insertSampleOwner(db, created.id, owner.id);
+      const app = createApp(db, {
+        mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+      }).app;
+      // Act
+      const res = await putSample(
+        app,
+        created.igsn!,
+        renamed(created, "Basalt revisited"),
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      expect(sendMail).not.toHaveBeenCalled();
     },
   );
 });

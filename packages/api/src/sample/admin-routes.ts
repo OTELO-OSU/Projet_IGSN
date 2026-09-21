@@ -46,6 +46,7 @@ import { attachmentDownload } from "./attachment-download.ts";
 import { findEligibleParent } from "./find-eligible-parent.ts";
 import { notifySampleDeleted } from "./notify-sample-deleted.ts";
 import { notifySampleModerated } from "./notify-sample-moderated.ts";
+import { notifySubSampleDeclared } from "./notify-sub-sample-declared.ts";
 import { requireEditLock } from "./require-edit-lock.ts";
 import { requireSampleAccess } from "./require-sample-access.ts";
 import { sampleDeletionRequestMail } from "./sample-deletion-request-mail.ts";
@@ -166,6 +167,13 @@ export function createSampleAdminRoutes(
         return c.json(PARENT_NOT_ELIGIBLE, 422);
       }
       const sample = await repository.create(input, user);
+      notifySubSampleDeclared({
+        userSamples: userSampleRepository,
+        mail,
+        declarer: user,
+        subSample: sample,
+        parents: parents.filter((parent) => parent !== null),
+      });
       return c.json({ data: sample }, 201);
     })
     .get("/:id/collaborators", validateIdParam, async (c) => {

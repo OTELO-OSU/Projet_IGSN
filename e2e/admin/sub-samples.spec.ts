@@ -10,6 +10,7 @@ import { sampleNamed, test } from "../support/db";
 import { headerPage } from "../support/frontend/header.page";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { sampleListPage as publicSampleListPage } from "../support/frontend/sample-list.page";
+import { maildev } from "../support/maildev";
 
 test.describe("sub samples", () => {
   test("a researcher declares a sub sample of a sample they published", async ({
@@ -100,9 +101,10 @@ test.describe("sub samples", () => {
     await publicList.expectSampleLink(subSampleName, subSampleIgsn);
   });
 
-  test("a stranger declares a sub sample from the public page, making the parent owner a contributor", async ({
+  test("a stranger declares a sub sample from the public page, making the parent owner a contributor and mailing them", async ({
     page,
     browser,
+    request,
   }) => {
     test.slow();
     await signInAsResearcher(page, RESEARCHERS.marie);
@@ -156,6 +158,12 @@ test.describe("sub samples", () => {
     await strangerCreate.submit();
     await strangerEdit.expectVisible();
     await strangerContext.close();
+
+    await maildev(request).expectMail(
+      RESEARCHERS.marie.email,
+      `Jean Martin declared a sub-sample of your sample "${parent.name}"`,
+      [subSampleName, parent.name],
+    );
 
     await edit.goToList();
     await list.filterByOwnership("Shared with me");

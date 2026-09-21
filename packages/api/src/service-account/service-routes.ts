@@ -6,11 +6,13 @@ import type {
   InvalidServiceSample,
   ServiceSampleIssue,
 } from "@projet-igsn/domain/service-account/service-sample-validator";
+import type { UserSampleRepository } from "@projet-igsn/domain/user-sample/repository";
 import type { Context } from "hono";
 
 import { swaggerUI } from "@hono/swagger-ui";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
+import { changedSampleFields } from "@projet-igsn/domain/sample/changed-sample-fields";
 import { keepContactLinks } from "@projet-igsn/domain/sample/contact-link";
 import { toListSamplesQuery } from "@projet-igsn/domain/sample/core/core-list-samples-query";
 import { CORE_SCHEMA_VERSION } from "@projet-igsn/domain/sample/core/core-sample-schema";
@@ -35,10 +37,14 @@ import {
 import { managerScope } from "@projet-igsn/domain/user/moderation-scope";
 import { accepts } from "hono/accepts";
 
+import type { SendMail } from "../mail/send-mail.ts";
+
 import {
   type ServiceEnv,
   requireServiceAccount,
 } from "../auth/require-service-account.ts";
+import { notifySampleModerated } from "../sample/notify-sample-moderated.ts";
+import { notifySubSampleDeclared } from "../sample/notify-sub-sample-declared.ts";
 import { uploadLimit } from "../sample/upload-limit.ts";
 import {
   type ResolvedParent,
@@ -107,6 +113,8 @@ export function createServiceRoutes(
   samples: SampleRepository,
   manualGroups: Pick<ManualGroupRepository, "listAttachableForUser">,
   frontendUrl: string,
+  userSamples: Pick<UserSampleRepository, "listCollaborators">,
+  mail?: { sendMail: SendMail; adminUrl: string },
 ) {
   const findPublished = async (igsn: string) => {
     const sample = await samples.getPublicByIgsn(igsn);
@@ -252,6 +260,15 @@ export function createServiceRoutes(
         account.owner.id,
         account,
       );
+      notifySubSampleDeclared({
+        userSamples,
+        mail,
+        declarer: account.owner,
+        subSample: created,
+        parents: resolved
+          .map(({ sample: parent }) => parent)
+          .filter((parent) => parent !== null),
+      });
       return c.json(toCoreSample(created, frontendUrl), 201);
     })
     .openapi(updateSampleRoute, async (c) => {
@@ -305,6 +322,17 @@ export function createServiceRoutes(
       const updated = await samples.update(current.id, merged);
       if (!updated) {
         return c.json({ error: "Not found" }, 404);
+      }
+      const fields = changedSampleFields(current, merged);
+      if (mail && fields.length > 0) {
+        // ponytail: fire and forget; a retry queue if a lost notification ever matters.
+        void notifySampleModerated({
+          userSamples,
+          mail,
+          sample: updated,
+          fields,
+          actorId: account.owner.id,
+        });
       }
       return c.json(toCoreSample(updated, frontendUrl), 200);
     });
