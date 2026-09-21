@@ -196,6 +196,7 @@ function fakeApi(
     manualGroups: [FOSSIL_TEAM],
     parents: sampleParents,
     igsn: status === "draft" ? null : IGSN,
+    doiPrefix: null,
     status,
     createdAt: "2026-06-01T00:00:00.000Z",
     updatedAt: "2026-07-01T10:00:00.000Z",

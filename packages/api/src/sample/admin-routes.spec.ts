@@ -28,6 +28,7 @@ import {
   draft,
   publishableSample,
 } from "../tests/sample-fixtures.ts";
+import { stubDataCite } from "../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { insertSample } from "./service/insert-sample.ts";
@@ -1046,14 +1047,7 @@ describe("admin sample routes", () => {
     const { app } = createApp(db);
     const client = testClient(app);
     const data = await createSample(db, client);
-    process.env.DATACITE_API_HOST = "http://datacite.test";
-    process.env.DATACITE_API_KEY = "topsecret";
-    process.env.DATACITE_DOI_PREFIX = "10.5072";
-    process.env.FRONTEND_URL = "http://localhost:3000";
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(new Response("nope", { status: 500 })),
-    );
+    stubDataCite(new Response("nope", { status: 500 }));
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     onTestFinished(() => {
       vi.unstubAllGlobals();

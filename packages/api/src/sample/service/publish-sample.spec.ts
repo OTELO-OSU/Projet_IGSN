@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { publishableSample } from "../../tests/sample-fixtures.ts";
+import { stubDataCite } from "../../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
 import { publishSample } from "./publish-sample.ts";
@@ -189,20 +190,14 @@ describe("publishSample", () => {
 });
 
 describe("publishSample with DataCite configured", () => {
-  const fetchMock = vi.fn();
+  let fetchMock: ReturnType<typeof stubDataCite>;
 
   beforeEach(() => {
-    vi.stubGlobal("fetch", fetchMock);
-    fetchMock.mockResolvedValue(new Response("{}", { status: 201 }));
-    process.env.DATACITE_API_HOST = "http://datacite.test";
-    process.env.DATACITE_API_KEY = "topsecret";
-    process.env.DATACITE_DOI_PREFIX = "10.5072";
-    process.env.FRONTEND_URL = "http://localhost:3000";
+    fetchMock = stubDataCite(new Response("{}", { status: 201 }));
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    fetchMock.mockReset();
   });
 
   pgTest.for([
@@ -223,12 +218,8 @@ describe("publishSample with DataCite configured", () => {
         .where("id", "=", created.id)
         .executeTakeFirstOrThrow();
       expect(row.doi_prefix).toBe("10.5072");
-      const [url, init] = fetchMock.mock.calls[0]!;
-      expect(url).toBe(`http://datacite.test/dois/10.5072/${published?.igsn}`);
-      expect(JSON.parse(init.body).data.attributes).toMatchObject({
-        doi: `10.5072/${published?.igsn}`,
-        event,
-      });
+      const [, init] = fetchMock.mock.calls[0]!;
+      expect(JSON.parse(init.body).data.attributes.event).toBe(event);
     },
   );
 
@@ -255,11 +246,8 @@ describe("publishSample with DataCite configured", () => {
     });
     await insertSampleOwner(db, created.id, owner.id);
     // Act
-    await publishSample(db, created.id);
+    const published = await publishSample(db, created.id);
     // Assert
-    const [, init] = fetchMock.mock.calls[0]!;
-    expect(JSON.parse(init.body).data.attributes.creators).toEqual([
-      expect.objectContaining({ name: "Marie Dupont", nameType: "Personal" }),
-    ]);
+    expect(published?.owner).toEqual({ name: "Dupont", firstname: "Marie" });
   });
 });

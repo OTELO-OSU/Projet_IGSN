@@ -33,6 +33,7 @@ const validSample = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: null,
+  doiPrefix: null,
   status: "draft",
   createdAt: "2026-07-02T10:00:00.000Z",
   updatedAt: "2026-07-02T10:00:00.000Z",

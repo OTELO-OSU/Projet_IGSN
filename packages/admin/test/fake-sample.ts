@@ -28,6 +28,7 @@ export const fakeSample = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: null,
+  doiPrefix: null,
   status: "draft",
   createdAt: "2026-06-01T00:00:00.000Z",
   updatedAt: "2026-07-01T10:00:00.000Z",

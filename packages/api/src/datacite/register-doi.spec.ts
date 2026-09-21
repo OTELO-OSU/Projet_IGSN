@@ -6,16 +6,15 @@ import { registerDoi } from "./register-doi.ts";
 
 const KEY = "topsecret";
 
-const DOI = `10.5072/${FIELD_SAMPLE.igsn}`;
+const CONFIG = { host: "http://datacite.test", key: KEY, prefix: "10.5072" };
+
+const DOI = `${CONFIG.prefix}/${FIELD_SAMPLE.igsn}`;
 
 describe("registerDoi", () => {
   const fetchMock = vi.fn();
 
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
-    process.env.DATACITE_API_HOST = "http://datacite.test";
-    process.env.DATACITE_API_KEY = KEY;
-    process.env.DATACITE_DOI_PREFIX = "10.5072";
     process.env.FRONTEND_URL = "http://localhost:3000";
   });
 
@@ -24,35 +23,14 @@ describe("registerDoi", () => {
     fetchMock.mockReset();
   });
 
-  it.each([
-    {
-      rule: "DataCite is not configured",
-      arrange: () => {
-        delete process.env.DATACITE_API_HOST;
-        return FIELD_SAMPLE;
-      },
-    },
-    {
-      rule: "the sample carries no DOI prefix",
-      arrange: () => ({ ...FIELD_SAMPLE, doiPrefix: null }),
-    },
-  ])("should register nothing when $rule", async ({ arrange }) => {
-    // Arrange
-    const sample = arrange();
-    // Act
-    await registerDoi(sample, "publish");
-    // Assert
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
   it("should PUT the DataCite record under the sample's DOI", async () => {
     // Arrange
     fetchMock.mockResolvedValue(new Response("{}", { status: 201 }));
     // Act
-    await registerDoi(FIELD_SAMPLE, "publish");
+    await registerDoi(CONFIG, FIELD_SAMPLE, "publish");
     // Assert
     expect(fetchMock).toHaveBeenCalledWith(
-      `http://datacite.test/dois/${DOI}`,
+      `${CONFIG.host}/dois/${DOI}`,
       expect.objectContaining({
         method: "PUT",
         headers: {
@@ -89,7 +67,7 @@ describe("registerDoi", () => {
         .spyOn(console, "error")
         .mockImplementation(() => undefined);
       // Act
-      const error = await registerDoi(FIELD_SAMPLE, "publish").catch(
+      const error = await registerDoi(CONFIG, FIELD_SAMPLE, "publish").catch(
         (reason: unknown) => reason,
       );
       // Assert

@@ -54,11 +54,8 @@ const OWNER = { firstname: "Jean", name: "Martin" };
 
 const core = (sample: Sample) => toCoreSample(sample, FRONTEND_URL);
 
-const storedCore = async (
-  db: Kysely<DB>,
-  id: string,
-  owner: Sample["owner"] = null,
-) => core({ ...(await readSample(db, id))!, owner });
+const storedCore = async (db: Kysely<DB>, id: string) =>
+  core((await readSample(db, id))!);
 
 const archivedSample = {
   ...publishableSample,
@@ -473,7 +470,7 @@ describe("GET /service/samples/:igsn", () => {
       const res = await getSample(app, published.igsn!);
       // Assert
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual(await storedCore(db, sample.id, OWNER));
+      expect(await res.json()).toEqual(await storedCore(db, sample.id));
     },
   );
 
@@ -651,7 +648,7 @@ describe("POST /service/samples", () => {
       expect(res.status).toBe(201);
       const body = coreSampleSchema.parse(await res.json());
       const id = createdId(body);
-      expect(body).toEqual(await storedCore(db, id, OWNER));
+      expect(body).toEqual(await storedCore(db, id));
       expect(body.identification.sampleIdentifier).toBe(generateIgsnSuffix(id));
       expect(
         await db
@@ -884,7 +881,7 @@ describe("POST /service/samples", () => {
       // Assert
       expect(res.status).toBe(201);
       const body = coreSampleSchema.parse(await res.json());
-      expect(body).toEqual(await storedCore(db, createdId(body), OWNER));
+      expect(body).toEqual(await storedCore(db, createdId(body)));
       expect(
         body.relations?.find(
           (relation) => relation.relationType === "IsDerivedFrom",

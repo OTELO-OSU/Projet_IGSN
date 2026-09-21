@@ -30,6 +30,7 @@ const sampleJson = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: "0123456789ABCDEFGHJKMNPQRS",
+  doiPrefix: null,
   status: "published",
   createdAt: iso,
   updatedAt: iso,

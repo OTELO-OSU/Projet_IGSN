@@ -389,21 +389,22 @@ export async function insertSamples(
           igsn,
           status,
           ...create
-        }) => ({
-          id,
-          status,
-          igsn: igsn ?? null,
-          location_id: located.has(id) ? id : null,
-          publication_year: hasPermanentIgsn({ status })
-            ? SEED_PUBLICATION_YEAR
-            : null,
-          doi_prefix: hasPermanentIgsn({ status }) ? SEED_DOI_PREFIX : null,
-          published_at: hasPermanentIgsn({ status }) ? sql`now()` : null,
-          ...sampleColumns({ ...create, type: create.type ?? null }),
-          institutional_organization: owner.institutionalOrganization,
-          institutional_osu: owner.institutionalOsu,
-          institutional_laboratory: owner.institutionalLaboratory,
-        }),
+        }) => {
+          const permanent = hasPermanentIgsn({ status });
+          return {
+            id,
+            status,
+            igsn: igsn ?? null,
+            location_id: located.has(id) ? id : null,
+            publication_year: permanent ? SEED_PUBLICATION_YEAR : null,
+            doi_prefix: permanent ? SEED_DOI_PREFIX : null,
+            published_at: permanent ? sql`now()` : null,
+            ...sampleColumns({ ...create, type: create.type ?? null }),
+            institutional_organization: owner.institutionalOrganization,
+            institutional_osu: owner.institutionalOsu,
+            institutional_laboratory: owner.institutionalLaboratory,
+          };
+        },
       ),
     )
     .returning(["id", "name", "nature", "igsn", "status"])

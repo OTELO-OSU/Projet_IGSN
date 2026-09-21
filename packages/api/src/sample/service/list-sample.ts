@@ -152,17 +152,12 @@ async function listWithOwners(
     true,
   );
   return {
-    data: data.map((sample) => {
-      const owner = owners.get(sample.id) ?? null;
-      return {
-        ...sample,
-        owner:
-          owner &&
-          (withOwnerStatus
-            ? owner
-            : { name: owner.name, firstname: owner.firstname }),
-      };
-    }),
+    data: withOwnerStatus
+      ? data.map((sample) => ({
+          ...sample,
+          owner: owners.get(sample.id) ?? null,
+        }))
+      : data,
     total,
   };
 }
