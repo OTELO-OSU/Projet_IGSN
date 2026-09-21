@@ -21,7 +21,7 @@ The DOI is `<prefix>/<igsn>`, the bare name as the DataCite API carries it, neve
 - Registration happens in `publishSample`, the one function minting an IGSN, so it covers the admin publish for both statuses and `POST /service/samples`.
 - `PUT /dois/{doi}` (idempotent), `event: publish` for `published`, `event: register` for `withdrawn`.
 - The call runs inside the publish transaction with a 10s timeout; a refused or failed registration throws a 502 `HTTPException`, so nothing is published without a registered DOI.
-- `DATACITE_API_HOST` unset disables registration silently. dev and e2e run a Caddy mock (`datacite-mock/Caddyfile`); preprod points at the real API.
+- `createApp` resolves the config once at boot: `DATACITE_API_HOST` unset disables registration silently, a host with a missing key or prefix stops the api before it serves, so a half-configured deploy fails its healthcheck instead of every publish. dev and e2e run a Caddy mock (`datacite-mock/Caddyfile`); preprod points at the real API.
 - Core gains an emit-only `identification.doi`; the DataCite `doi` falls back to `sampleIdentifier` when absent.
 
 See ADR [0032](0032-sample-withdrawal-status.md) (withdrawal), ADR [0036](0036-service-account-api-key.md) (service mount), ADR [0040](0040-igsn-core-pivot-on-service-api.md) (Core pivot), ADR [0042](0042-format-negotiation-on-the-service-api.md) (format negotiation).

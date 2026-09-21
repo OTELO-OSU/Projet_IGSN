@@ -9,6 +9,7 @@ import type { SendMail } from "./mail/send-mail.ts";
 
 import { type AuthenticatedEnv, currentUser } from "./auth/current-user.ts";
 import { requireAuth } from "./auth/middleware.ts";
+import { dataCiteConfig } from "./datacite/config.ts";
 import { createInstitutionalGroupRepository } from "./institutional-group/repository.ts";
 import { createInstitutionalGroupRoutes } from "./institutional-group/routes.ts";
 import { createPublicManualGroupRoutes } from "./manual-group/public-routes.ts";
@@ -58,7 +59,7 @@ export function createApp(
 
   const rateLimitConfig = loadRateLimitConfig();
 
-  const sampleRepository = createSampleRepository(database);
+  const sampleRepository = createSampleRepository(database, dataCiteConfig());
   const sampleAttachmentRepository = createSampleAttachmentRepository(
     database,
     attachmentsDir,

@@ -5,7 +5,10 @@ import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
 import { publishableSample } from "../../tests/sample-fixtures.ts";
-import { stubDataCite } from "../../tests/stub-datacite.ts";
+import {
+  STUB_DATACITE_CONFIG,
+  stubDataCite,
+} from "../../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
 import { publishSample } from "./publish-sample.ts";
@@ -209,7 +212,12 @@ describe("publishSample with DataCite configured", () => {
       // Arrange
       const created = await insertSample(db, publishableSample);
       // Act
-      const published = await publishSample(db, created.id, status);
+      const published = await publishSample(
+        db,
+        created.id,
+        status,
+        STUB_DATACITE_CONFIG,
+      );
       // Assert
       expect(published?.doiPrefix).toBe("10.5072");
       const row = await db
@@ -228,10 +236,12 @@ describe("publishSample with DataCite configured", () => {
     async ({ db }) => {
       // Arrange
       const created = await insertSample(db, publishableSample);
-      await publishSample(db, created.id);
-      process.env.DATACITE_DOI_PREFIX = "10.9999";
+      await publishSample(db, created.id, "published", STUB_DATACITE_CONFIG);
       // Act
-      const republished = await publishSample(db, created.id);
+      const republished = await publishSample(db, created.id, "published", {
+        ...STUB_DATACITE_CONFIG,
+        prefix: "10.9999",
+      });
       // Assert
       expect(republished?.doiPrefix).toBe("10.5072");
     },
@@ -246,7 +256,12 @@ describe("publishSample with DataCite configured", () => {
     });
     await insertSampleOwner(db, created.id, owner.id);
     // Act
-    const published = await publishSample(db, created.id);
+    const published = await publishSample(
+      db,
+      created.id,
+      "published",
+      STUB_DATACITE_CONFIG,
+    );
     // Assert
     expect(published?.owner).toEqual({ name: "Dupont", firstname: "Marie" });
   });

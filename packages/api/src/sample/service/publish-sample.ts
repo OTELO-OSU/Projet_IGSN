@@ -4,9 +4,9 @@ import type { PublishStatus } from "@projet-igsn/domain/sample/sample-validator"
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 import { sql } from "kysely";
 
+import type { DataCiteConfig } from "../../datacite/config.ts";
 import type { DB } from "../../db.ts";
 
-import { dataCiteConfig } from "../../datacite/config.ts";
 import { registerDoi } from "../../datacite/register-doi.ts";
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
@@ -15,8 +15,8 @@ export async function publishSample(
   db: Transactional<DB>,
   id: string,
   status: PublishStatus = "published",
+  config: DataCiteConfig | null = null,
 ): Promise<Sample | null> {
-  const config = dataCiteConfig();
   const row = await db
     .updateTable("sample")
     .set({

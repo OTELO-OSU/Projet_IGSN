@@ -1044,10 +1044,10 @@ describe("admin sample routes", () => {
 
   pgTest("should answer 502 when DataCite refuses the DOI", async ({ db }) => {
     // Arrange
+    stubDataCite(new Response("nope", { status: 500 }));
     const { app } = createApp(db);
     const client = testClient(app);
     const data = await createSample(db, client);
-    stubDataCite(new Response("nope", { status: 500 }));
     vi.spyOn(console, "error").mockImplementation(() => undefined);
     onTestFinished(() => {
       vi.unstubAllGlobals();

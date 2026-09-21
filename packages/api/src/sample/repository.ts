@@ -3,6 +3,7 @@ import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
+import type { DataCiteConfig } from "../datacite/config.ts";
 import type { DB } from "../db.ts";
 
 import {
@@ -45,7 +46,10 @@ async function insertOwnedSample(
   return id;
 }
 
-export function createSampleRepository(db: Kysely<DB>): SampleRepository {
+export function createSampleRepository(
+  db: Kysely<DB>,
+  dataCite: DataCiteConfig | null = null,
+): SampleRepository {
   const tx = transactionally(db);
   return {
     listAssignedTo: tx(listSamplesAssignedTo),
@@ -67,12 +71,13 @@ export function createSampleRepository(db: Kysely<DB>): SampleRepository {
     createPublished: (input, ownerId, groups) =>
       withTransaction(db, async (trx) => {
         const id = await insertOwnedSample(trx, input, ownerId, groups);
-        const published = await publishSample(trx, id);
+        const published = await publishSample(trx, id, "published", dataCite);
         if (!published) throw new Error("Sample vanished before publish");
         return published;
       }),
     update: tx(updateSample),
-    publish: tx(publishSample),
+    publish: (id, status) =>
+      withTransaction(db, (trx) => publishSample(trx, id, status, dataCite)),
     setStatus: tx(setSampleStatus),
     remove: tx(deleteSample),
     getEditLock: tx(getEditLock),
