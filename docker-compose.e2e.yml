@@ -66,7 +66,7 @@ services:
       SMTP_FROM: postmaster@igsn.localhost
       DATACITE_API_HOST: http://datacite:8080
       DATACITE_API_KEY: dev
-      DATACITE_DOI_PREFIX: "10.5072"
+      DATACITE_DOI_PREFIX: "10.70113"
     volumes:
       - attachments:/data/attachments
     healthcheck: *healthcheck

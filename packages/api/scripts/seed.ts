@@ -351,7 +351,7 @@ async function seedOwners(
 
 const SEED_PUBLICATION_YEAR = 2025;
 
-const SEED_DOI_PREFIX = "10.5072";
+const SEED_DOI_PREFIX = "10.70113";
 
 const SEED_REPOSITORY = {
   currentArchive: "02feahw73",
