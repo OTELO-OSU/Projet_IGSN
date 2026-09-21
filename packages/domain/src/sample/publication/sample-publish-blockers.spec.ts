@@ -57,6 +57,7 @@ const base: Sample = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: null,
+  doiPrefix: null,
   owner: null,
   manualGroups: [],
   parents: [],

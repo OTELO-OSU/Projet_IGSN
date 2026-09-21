@@ -35,21 +35,22 @@ The "Comment" column is mapping notes, written for a reviewer of the mapping rat
 
 ### Root and identification
 
-| Our field      | Core field                                                                       | Comment                                                                |
-| -------------- | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| (constant)     | `schemaVersion`                                                                  | `"0.10.0"`                                                             |
-| `id`           | `record.recordId`                                                                | `urn:uuid:<id>`; emit only                                             |
-| `createdAt`    | `record.createdAt`, `record.lifecycleEvents[eventType=created].timestamp`        | emit only                                                              |
-| `publishedAt`  | `record.lifecycleEvents[eventType=published].timestamp`                          | new column, set on first mint; emit only                               |
-| `updatedAt`    | `record.updatedAt`, `record.lifecycleEvents[eventType=updated].timestamp`        | `updated` event only when `updatedAt > publishedAt`; emit only         |
-| `status`       | `record.lifecycleEvents[].eventType`                                             | always `published` on this API, no `registered`/`validated`; emit only |
-| (constant)     | `record.metadataLanguage`                                                        | `["en"]`                                                               |
-| (constant)     | `record.metadataVersion`                                                         | `"0.10.0"`                                                             |
-| `igsn`         | `identification.sampleIdentifier`                                                | raw IGSN (26-char suffix or legacy handle); required; emit only        |
-| `igsn`         | `identification.landingPage`                                                     | `<FRONTEND_URL>samples/<igsn>`; required; emit only                    |
-| `name`         | `identification.titles[0].value`                                                 | `titleType: "Main"`; exactly one title                                 |
-| `specificName` | `identification.localName`                                                       |                                                                        |
-| (none)         | `identification.alternateIdentifiers`, `identification.descriptions`, `keywords` | not emitted; refused in a body (`unrecognized_keys`)                   |
+| Our field      | Core field                                                                       | Comment                                                                                                                                |
+| -------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| (constant)     | `schemaVersion`                                                                  | `"0.10.0"`                                                                                                                             |
+| `id`           | `record.recordId`                                                                | `urn:uuid:<id>`; emit only                                                                                                             |
+| `createdAt`    | `record.createdAt`, `record.lifecycleEvents[eventType=created].timestamp`        | emit only                                                                                                                              |
+| `publishedAt`  | `record.lifecycleEvents[eventType=published].timestamp`                          | new column, set on first mint; emit only                                                                                               |
+| `updatedAt`    | `record.updatedAt`, `record.lifecycleEvents[eventType=updated].timestamp`        | `updated` event only when `updatedAt > publishedAt`; emit only                                                                         |
+| `status`       | `record.lifecycleEvents[].eventType`                                             | always `published` on this API, no `registered`/`validated`; emit only                                                                 |
+| (constant)     | `record.metadataLanguage`                                                        | `["en"]`                                                                                                                               |
+| (constant)     | `record.metadataVersion`                                                         | `"0.10.0"`                                                                                                                             |
+| `igsn`         | `identification.sampleIdentifier`                                                | raw IGSN (26-char suffix or legacy handle); required; emit only                                                                        |
+| `doiPrefix`    | `identification.doi`                                                             | `<doi_prefix>/<igsn>`; optional, emit only; absent without a snapshotted prefix; accepted and ignored on input like `sampleIdentifier` |
+| `igsn`         | `identification.landingPage`                                                     | `<FRONTEND_URL>samples/<igsn>`; required; emit only                                                                                    |
+| `name`         | `identification.titles[0].value`                                                 | `titleType: "Main"`; exactly one title                                                                                                 |
+| `specificName` | `identification.localName`                                                       |                                                                                                                                        |
+| (none)         | `identification.alternateIdentifiers`, `identification.descriptions`, `keywords` | not emitted; refused in a body (`unrecognized_keys`)                                                                                   |
 
 ### Classification
 

@@ -5,6 +5,7 @@ import {
   sampleAttachmentsQuery,
   sampleLocationQuery,
   sampleManualGroupsQuery,
+  sampleOwnerQuery,
   sampleParentsQuery,
   sampleProcessStepsQuery,
   sampleRelationsQuery,
@@ -19,4 +20,5 @@ export const selectSample = (db: Transactional<DB>) =>
     .select(sampleProcessStepsQuery)
     .select(sampleAttachmentsQuery)
     .select(sampleManualGroupsQuery)
-    .select(sampleParentsQuery);
+    .select(sampleParentsQuery)
+    .select(sampleOwnerQuery);

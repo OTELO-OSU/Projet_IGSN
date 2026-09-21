@@ -238,19 +238,7 @@ export function createServiceRoutes(
         account.owner.id,
         account,
       );
-      return c.json(
-        toCoreSample(
-          {
-            ...created,
-            owner: {
-              name: account.owner.name,
-              firstname: account.owner.firstname,
-            },
-          },
-          frontendUrl,
-        ),
-        201,
-      );
+      return c.json(toCoreSample(created, frontendUrl), 201);
     })
     .openapi(updateSampleRoute, async (c) => {
       const account = c.get("serviceAccount");
@@ -302,9 +290,6 @@ export function createServiceRoutes(
       if (!updated) {
         return c.json({ error: "Not found" }, 404);
       }
-      return c.json(
-        toCoreSample({ ...updated, owner: current.owner }, frontendUrl),
-        200,
-      );
+      return c.json(toCoreSample(updated, frontendUrl), 200);
     });
 }

@@ -51,6 +51,7 @@ const sample: AdminSampleListItem = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: null,
+  doiPrefix: null,
   manualGroups: [],
   parents: [],
   institutionalOrganization: null,

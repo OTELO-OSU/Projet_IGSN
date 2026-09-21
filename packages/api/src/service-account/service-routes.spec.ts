@@ -61,11 +61,8 @@ const OWNER = { firstname: "Jean", name: "Martin" };
 
 const core = (sample: Sample) => toCoreSample(sample, FRONTEND_URL);
 
-const storedCore = async (
-  db: Kysely<DB>,
-  id: string,
-  owner: Sample["owner"] = null,
-) => core({ ...(await readSample(db, id))!, owner });
+const storedCore = async (db: Kysely<DB>, id: string) =>
+  core((await readSample(db, id))!);
 
 const archivedSample = {
   ...publishableSample,
@@ -495,7 +492,7 @@ describe("GET /service/samples/:igsn", () => {
       const res = await getSample(app, published.igsn!);
       // Assert
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual(await storedCore(db, sample.id, OWNER));
+      expect(await res.json()).toEqual(await storedCore(db, sample.id));
     },
   );
 
@@ -574,6 +571,39 @@ describe("the Accept header of the /service GET routes", () => {
       expect(schema.parse(await res.json())).toEqual(
         map(await storedCore(db, sample.id)),
       );
+    },
+  );
+
+  pgTest.for([
+    {
+      rule: "its DOI when the sample carries a prefix",
+      prefix: "10.5072",
+      doi: (igsn: string) => `10.5072/${igsn}`,
+    },
+    {
+      rule: "its bare IGSN when it carries none",
+      prefix: null,
+      doi: (igsn: string) => igsn,
+    },
+  ])(
+    "should identify the DataCite record by $rule",
+    async ({ prefix, doi }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const sample = await inLaboratory(db, archivedSample, IN_REACH);
+      const published = (await publishSample(db, sample.id))!;
+      await db
+        .updateTable("sample")
+        .set({ doi_prefix: prefix })
+        .where("id", "=", sample.id)
+        .execute();
+      // Act
+      const res = await getSample(app, published.igsn!, DATACITE_MEDIA_TYPE);
+      // Assert
+      expect(res.status).toBe(200);
+      expect(dataCiteSampleSchema.parse(await res.json())).toMatchObject({
+        doi: doi(published.igsn!),
+      });
     },
   );
 
@@ -671,7 +701,7 @@ describe("POST /service/samples", () => {
       expect(res.status).toBe(201);
       const body = coreSampleSchema.parse(await res.json());
       const id = createdId(body);
-      expect(body).toEqual(await storedCore(db, id, OWNER));
+      expect(body).toEqual(await storedCore(db, id));
       expect(body.identification.sampleIdentifier).toBe(generateIgsnSuffix(id));
       expect(
         await db
@@ -904,7 +934,7 @@ describe("POST /service/samples", () => {
       // Assert
       expect(res.status).toBe(201);
       const body = coreSampleSchema.parse(await res.json());
-      expect(body).toEqual(await storedCore(db, createdId(body), OWNER));
+      expect(body).toEqual(await storedCore(db, createdId(body)));
       expect(
         body.relations?.find(
           (relation) => relation.relationType === "IsDerivedFrom",

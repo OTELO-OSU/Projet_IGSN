@@ -46,6 +46,7 @@ const stored: Sample = sampleSchema.parse({
     { id: "22222222-2222-4222-8222-222222222222", name: "Stored group" },
   ],
   igsn: "CNRS0000000001",
+  doiPrefix: null,
   status: "published",
   createdAt: new Date("2020-01-01"),
   updatedAt: new Date("2020-01-01"),

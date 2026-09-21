@@ -1,8 +1,15 @@
 import { generateIgsnSuffix } from "@projet-igsn/domain/igsn/generate-igsn-suffix";
 import { sql } from "kysely";
-import { describe, expect } from "vitest";
+import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 
+import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
+import { publishableSample } from "../../tests/sample-fixtures.ts";
+import {
+  STUB_DATACITE_CONFIG,
+  stubDataCite,
+} from "../../tests/stub-datacite.ts";
+import { insertSampleOwner } from "../../user-sample/insert-sample-owner.ts";
 import { insertSample } from "./insert-sample.ts";
 import { publishSample } from "./publish-sample.ts";
 
@@ -30,12 +37,13 @@ describe("publishSample", () => {
 
       const row = await db
         .selectFrom("sample")
-        .select(["status", "igsn"])
+        .select(["status", "igsn", "doi_prefix"])
         .where("id", "=", created.id)
         .executeTakeFirstOrThrow();
       expect(row).toEqual({
         status: "published",
         igsn: generateIgsnSuffix(created.id),
+        doi_prefix: null,
       });
     },
   );
@@ -181,5 +189,80 @@ describe("publishSample", () => {
       igsn: generateIgsnSuffix(created.id),
     });
     expect(republished).toMatchObject({ id: created.id });
+  });
+});
+
+describe("publishSample with DataCite configured", () => {
+  let fetchMock: ReturnType<typeof stubDataCite>;
+
+  beforeEach(() => {
+    fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  pgTest.for([
+    { status: "published" as const, event: "publish" },
+    { status: "withdrawn" as const, event: "register" },
+  ])(
+    "should stamp the configured prefix and register the DOI with the $event event when publishing as $status",
+    async ({ status, event }, { db }) => {
+      // Arrange
+      const created = await insertSample(db, publishableSample);
+      // Act
+      const published = await publishSample(
+        db,
+        created.id,
+        status,
+        STUB_DATACITE_CONFIG,
+      );
+      // Assert
+      expect(published?.doiPrefix).toBe("10.5072");
+      const row = await db
+        .selectFrom("sample")
+        .select("doi_prefix")
+        .where("id", "=", created.id)
+        .executeTakeFirstOrThrow();
+      expect(row.doi_prefix).toBe("10.5072");
+      const [, init] = fetchMock.mock.calls[0]!;
+      expect(JSON.parse(init.body).data.attributes.event).toBe(event);
+    },
+  );
+
+  pgTest(
+    "should keep the first prefix when published twice under another one",
+    async ({ db }) => {
+      // Arrange
+      const created = await insertSample(db, publishableSample);
+      await publishSample(db, created.id, "published", STUB_DATACITE_CONFIG);
+      // Act
+      const republished = await publishSample(db, created.id, "published", {
+        ...STUB_DATACITE_CONFIG,
+        prefix: "10.9999",
+      });
+      // Assert
+      expect(republished?.doiPrefix).toBe("10.5072");
+    },
+  );
+
+  pgTest("should name the owner as the DOI creator", async ({ db }) => {
+    // Arrange
+    const created = await insertSample(db, publishableSample);
+    const owner = await insertUser(db, "marie.dupont@univ-lorraine.fr", {
+      name: "Dupont",
+      firstname: "Marie",
+    });
+    await insertSampleOwner(db, created.id, owner.id);
+    // Act
+    const published = await publishSample(
+      db,
+      created.id,
+      "published",
+      STUB_DATACITE_CONFIG,
+    );
+    // Assert
+    expect(published?.owner).toEqual({ name: "Dupont", firstname: "Marie" });
   });
 });

@@ -1,0 +1,9 @@
+:8080 {
+	@dois {
+		method PUT
+		path /dois/*
+	}
+	respond @dois 201
+	respond / 200
+	respond 404
+}

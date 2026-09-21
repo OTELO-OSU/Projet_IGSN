@@ -153,7 +153,9 @@ export type DataCiteFundingReference = z.infer<typeof fundingReferenceSchema>;
 
 export const dataCiteSampleSchema = z
   .object({
-    doi: z.string().meta({ description: "IGSN of the sample." }),
+    doi: z.string().meta({
+      description: "DOI of the sample, its IGSN when it has none.",
+    }),
     url: z.url().meta({ description: "Public page of the sample." }),
     titles: z
       .array(

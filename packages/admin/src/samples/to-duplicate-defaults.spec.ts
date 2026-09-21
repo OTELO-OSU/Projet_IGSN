@@ -84,6 +84,7 @@ const source: Sample = {
   economicDepositName: null,
   economicDepositDescription: null,
   igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
+  doiPrefix: "10.5072",
   owner: { name: "Curie", firstname: "Marie" },
   manualGroups: [
     { id: ATTACHABLE_GROUP_ID, name: "Basalt team" },

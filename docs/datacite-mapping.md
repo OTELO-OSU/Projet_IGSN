@@ -39,7 +39,8 @@ Ordered by the Core schema, top to bottom, so it reads in the direction the code
 | `record.metadataLanguage[0]`                                                              | `language`                        | defaults to `"en"`                                                                                                                                                                                        |
 | `record.metadataVersion`                                                                  | none                              | Core's own version, meaningless to DataCite                                                                                                                                                               |
 | `record.lifecycleEvents[]`                                                                | `dates[]`                         | `created->Created`, `validated->Valid`, `registered->Issued`, `published->Available`, `updated->Updated`, `withdrawn->Withdrawn`, `tombstone` skipped (see Deviations)                                    |
-| `identification.sampleIdentifier`                                                         | `doi`                             | DataCite's mandatory identifier, which the contract's table leaves implicit                                                                                                                               |
+| `identification.sampleIdentifier`                                                         | `doi`                             | fallback alone, when the sample has no snapshotted prefix                                                                                                                                                 |
+| `identification.doi`                                                                      | `doi`                             | DataCite's mandatory identifier, which the contract's table leaves implicit; the bare DOI name, present only when the sample has a snapshotted prefix                                                     |
 | `identification.landingPage`                                                              | `url`                             | direct                                                                                                                                                                                                    |
 | `identification.titles[]`                                                                 | `titles[]`                        | `{ title: value }`; `titleType` dropped, ours is always `Main`                                                                                                                                            |
 | `identification.localName`                                                                | none                              | omitted on purpose, see below                                                                                                                                                                             |
@@ -80,6 +81,12 @@ Ordered by the Core schema, top to bottom, so it reads in the direction the code
 `nameType` is `Personal` / `Organizational` from `agent.agentType`. `nameIdentifiers` and `affiliation[].affiliationIdentifier` are emitted only for an `https://orcid.org/` or `https://ror.org/` id; our `urn:otelo:osu:` / `urn:otelo:laboratory:` affiliations carry a name alone.
 
 A round-trip-style guard (`to-datacite-sample.spec.ts`) lists every Core path as projected or deliberately dropped, so a new Core field fails the suite until it is placed in one list or the other.
+
+## Registration
+
+- Publication now registers the sample's DOI at DataCite; see ADR [0044](adr/0044-doi-registration-on-publication.md).
+- `packages/api/src/datacite/register-doi.ts` (`registerDoi`) does the `PUT /dois/{doi}`, called from `publishSample`.
+- No `doiPrefix` means no registration call and the `doi` field above falls back to the bare IGSN.
 
 ## Deviations from the contract document
 

@@ -12,7 +12,7 @@ import {
 import { testClient } from "hono/testing";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect } from "vitest";
+import { describe, expect, onTestFinished, vi } from "vitest";
 
 import type { SendMail } from "../mail/send-mail.ts";
 
@@ -28,6 +28,7 @@ import {
   draft,
   publishableSample,
 } from "../tests/sample-fixtures.ts";
+import { stubDataCite } from "../tests/stub-datacite.ts";
 import { insertSampleOwner } from "../user-sample/insert-sample-owner.ts";
 import { acquireEditLock } from "./service/acquire-edit-lock.ts";
 import { insertSample } from "./service/insert-sample.ts";
@@ -1039,6 +1040,26 @@ describe("admin sample routes", () => {
     // Assert
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ data: { id: data.id } });
+  });
+
+  pgTest("should answer 502 when DataCite refuses the DOI", async ({ db }) => {
+    // Arrange
+    stubDataCite(new Response("nope", { status: 500 }));
+    const { app } = createApp(db);
+    const client = testClient(app);
+    const data = await createSample(db, client);
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+    onTestFinished(() => {
+      vi.unstubAllGlobals();
+    });
+    // Act
+    const res = await client.admin.samples[":id"].publish.$post(
+      { param: { id: data.id } },
+      { headers: authHeader },
+    );
+    // Assert
+    expect(res.status).toBe(502);
+    expect(await res.json()).toEqual({ error: "DOI registration failed" });
   });
 
   pgTest("should publish a sample straight as withdrawn", async ({ db }) => {
