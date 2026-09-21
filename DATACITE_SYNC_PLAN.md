@@ -7,17 +7,17 @@
 - an edit of a sample carrying a DOI re-PUTs the full metadata;
 - `published` maps to DataCite state findable (`event: publish`);
 - `withdrawn` maps to registered (`event: hide`);
-- `tombstone` maps to registered (`event: hide`) and points the DOI `url` at a new public tombstone page, `/samples/:igsn/tombstone`.
+- `tombstone` maps to registered (`event: hide`) and points the DOI `url` at a single public tombstone page, `/tombstone`, shared by every tombstoned sample (DataCite has no uniqueness rule on `url`, only `doi` is unique).
 
 DataCite's DOI model runs `aasm whiny_transitions: false`: an impossible transition is a silent no-op. So `publish` works from draft and registered, `hide` is harmless on an already registered DOI, and a stateless status-to-event map is enough. The only exception is the first registration of a `withdrawn` sample, which must stay `register` (`hide` from draft would be a no-op leaving a draft DOI); `publishSample` already does that.
 
 ### What DataCite must end up with
 
-| Our status | DataCite state | DataCite `url`                           |
-| ---------- | -------------- | ---------------------------------------- |
-| published  | findable       | `<FRONTEND_URL>samples/<igsn>`           |
-| withdrawn  | registered     | `<FRONTEND_URL>samples/<igsn>`           |
-| tombstone  | registered     | `<FRONTEND_URL>samples/<igsn>/tombstone` |
+| Our status | DataCite state | DataCite `url`                               |
+| ---------- | -------------- | -------------------------------------------- |
+| published  | findable       | `<FRONTEND_URL>samples/<igsn>`               |
+| withdrawn  | registered     | `<FRONTEND_URL>samples/<igsn>`               |
+| tombstone  | registered     | `<FRONTEND_URL>tombstone` (one page for all) |
 
 Every scenario below reaches exactly that. None is impossible.
 
@@ -131,21 +131,21 @@ stays registered, url back to the landing page.
 
 ```json
 { "data": { "type": "dois", "attributes": { ...metadata,
-  "url": "https://igsn.example.org/samples/ABCDEFGHJKMNPQRSTVWXYZ0123/tombstone",
+  "url": "https://igsn.example.org/tombstone",
   "event": "hide" } } }
 ```
 
-findable to registered, url to the tombstone page.
+findable to registered, url to the shared tombstone page.
 
 9. withdrawn to tombstone
 
 ```json
 { "data": { "type": "dois", "attributes": { ...metadata,
-  "url": "https://igsn.example.org/samples/ABCDEFGHJKMNPQRSTVWXYZ0123/tombstone",
+  "url": "https://igsn.example.org/tombstone",
   "event": "hide" } } }
 ```
 
-stays registered, url to the tombstone page.
+stays registered, url to the shared tombstone page.
 
 10. metadata edit, status unchanged: the same request as the row above for the current status (request 2 for published, request 5 for withdrawn, request 8 for tombstone), with the new metadata. State unchanged, metadata refreshed.
 
@@ -164,11 +164,11 @@ if (config)
 
 and `publish-sample.spec.ts` asserts both events (`published` sends `publish`, `withdrawn` sends `register`). Step 0 merges it in; this plan changes none of it.
 
-Rule that produces the table: `publishSample` keeps sending `publish` for `published` and `register` for `withdrawn` (the DOI is new, so `register` is the event that works from draft). Every other write sends `publish` when our status is `published` and `hide` otherwise, with `url` = tombstone page when our status is `tombstone`, landing page otherwise.
+Rule that produces the table: `publishSample` keeps sending `publish` for `published` and `register` for `withdrawn` (the DOI is new, so `register` is the event that works from draft). Every other write sends `publish` when our status is `published` and `hide` otherwise, with `url` = `<FRONTEND_URL>tombstone` when our status is `tombstone`, landing page otherwise.
 
 Two caveats, both pre-existing (ADR 0044): a sample published before DataCite was configured has no `doiPrefix` and is never synced, and a withdrawn or tombstoned sample sends its full record to DataCite while the public site redacts it (a registered DOI is not indexed by DataCite search, but its metadata is retrievable by anyone knowing the DOI).
 
-Decisions confirmed by the user: the tombstone page is a static per-sample frontend route that calls no API (the API keeps 404ing tombstones, ADR 0033 stays intact on the API side); a DataCite failure on update or status change fails the save with a 502 and rollback, exactly like publish.
+Decisions confirmed by the user: the tombstone page is one static generic frontend route, `/tombstone`, shared by every tombstoned DOI, calling no API and naming no sample (the API keeps 404ing tombstones, ADR 0033 stays intact on the API side); a DataCite failure on update or status change fails the save with a 502 and rollback, exactly like publish.
 
 `feat/datacite-update` is at the old `main` (4cbe161e) and lacks the whole registration feature. Step 0 brings it in.
 
@@ -195,9 +195,10 @@ export async function syncDoi(
   event: DoiEvent = doiEvent(sample.status),
 ): Promise<void> {
   if (!config || !sample.doiPrefix) return;
-  const record = toDataCiteSample(toCoreSample(sample, appUrl("FRONTEND_URL")));
-  // Must match the frontend route packages/frontend/src/routes/samples/$igsn_.tombstone.tsx
-  const url = sample.status === "tombstone" ? `${record.url}/tombstone` : record.url;
+  const frontendUrl = appUrl("FRONTEND_URL");
+  const record = toDataCiteSample(toCoreSample(sample, frontendUrl));
+  // One shared page for every tombstoned DOI; must match packages/frontend/src/routes/tombstone.tsx
+  const url = sample.status === "tombstone" ? `${frontendUrl}tombstone` : record.url;
   ... existing PUT with attributes { ...record, url, event }, same timeout, same 502 ...
 }
 ```
@@ -208,7 +209,7 @@ Spec (`sync-doi.spec.ts`, from the existing one): keep the two existing tests; a
 
 - skips fetch when `config` is null or `sample.doiPrefix` is null;
 - defaults the event from status (`withdrawn` sends `hide`, `published` sends `publish`);
-- a `tombstone` sample sends `event: hide` and `url: <landing page>/tombstone`; a `withdrawn` one keeps the landing page url.
+- a `tombstone` sample sends `event: hide` and `url: <FRONTEND_URL>tombstone`; a `withdrawn` one keeps the landing page url.
 
 ### 2. Call it from the three mutation services
 
@@ -229,17 +230,17 @@ No new env var, so no compose change (infra parity rule satisfied). The dev/e2e 
 
 ### 3. Public tombstone page
 
-- New route file `packages/frontend/src/routes/samples/$igsn_.tombstone.tsx` (trailing underscore un-nests it from `samples/$igsn.tsx`, per TanStack Router file-based routing docs, so the parent loader and its 404 do not run). Path `/samples/$igsn/tombstone`. Run `make generate` to regenerate `routeTree.gen.ts` (never `pnpm build`, it dirties the file).
-- No loader, no API call. Component reads `igsn` from `Route.useParams()` and renders a new presentational `packages/frontend/src/domain/samples/tombstone-notice.tsx`: a heading and a sentence saying the sample was permanently removed, showing the IGSN. Add `robots: noindex` in `head` like the withdrawn branch of `$igsn.tsx`, and a title.
+- New route file `packages/frontend/src/routes/tombstone.tsx`, path `/tombstone`, a sibling of `search.tsx`. Run `make generate` to regenerate `routeTree.gen.ts` (never `pnpm build`, it dirties the file).
+- No params, no loader, no API call. Renders a new presentational `packages/frontend/src/domain/samples/tombstone-notice.tsx`: a heading and a sentence saying the sample this identifier pointed to was permanently removed from the registry. It names no sample, since one page serves every tombstoned DOI. Add `robots: noindex` in `head` like the withdrawn branch of `samples/$igsn.tsx`, and a title.
 - Messages: add `sample_tombstone_title` and `sample_tombstone_notice` to `packages/frontend/messages/en.json` and the French catalog next to it (check `ls packages/frontend/messages`), following `sample_withdrawn_notice`.
-- Spec `tombstone-notice.spec.tsx` (Vitest browser mode, role queries): renders the heading and the IGSN text.
-- e2e: in `e2e/frontend/sample-tombstone.spec.ts` add one test "has a tombstone page" navigating to `/samples/${sample.igsn}/tombstone` and asserting the heading and IGSN; extend `e2e/support/frontend/sample-detail.page.ts` with a `gotoTombstone` helper if the page object owns navigation. Keep "has no public page" as is: `/samples/:igsn` still 404s.
+- Spec `tombstone-notice.spec.tsx` (Vitest browser mode, role queries): renders the heading and the notice.
+- e2e: in `e2e/frontend/sample-tombstone.spec.ts` add one test "redirects its DOI to the shared tombstone page" that opens `/tombstone` and asserts the heading. Keep "has no public page" as is: `/samples/:igsn` still 404s.
 
 ## Docs
 
-- New `docs/adr/0045-doi-lifecycle-sync.md`: decision (every `Sample` mutation of a DOI-bearing row re-PUTs the record; status-to-state map; tombstone url; same-transaction 502 semantics; `syncDoi` as the one place), rejected (async sync; a generic `/tombstone` page; a redacted tombstone payload from the API), consequences (DataCite's `url` for a tombstone points at a page the API does not back; a DataCite outage blocks edits of published samples). Link ADR 0033 and 0044.
+- New `docs/adr/0045-doi-lifecycle-sync.md`: decision (every `Sample` mutation of a DOI-bearing row re-PUTs the record; status-to-state map; tombstone url; same-transaction 502 semantics; `syncDoi` as the one place), rejected (async sync; a per-sample `/samples/:igsn/tombstone` page, which would name a sample the API refuses to serve; a redacted tombstone payload from the API), consequences (every tombstoned DOI resolves to the same page, so a visitor cannot tell which sample it was; a DataCite outage blocks edits of published samples). Link ADR 0033 and 0044.
 - ADR 0044: replace the "not synced (out of scope, follow-up)" consequence with a link to 0045.
-- ADR 0033: annotate the rejected "public tombstone page" bullet: superseded by 0045 for the DataCite landing page only; `GET /samples/:igsn` still 404s.
+- ADR 0033: annotate the rejected "public tombstone page" bullet: superseded by 0045 with one generic page as the DataCite landing url only; `GET /samples/:igsn` still 404s.
 - `docs/datacite-mapping.md` Registration section: rename to "Registration and sync", name `sync-doi.ts`, list the three callers and the state map.
 - `.claude/rules/architecture.md`, Publish constraints: one bullet naming `api/src/datacite/sync-doi.ts` as the single DataCite write, called from `publishSample`, `updateSample` and `setSampleStatus`.
 
@@ -248,6 +249,6 @@ No new env var, so no compose change (infra parity rule satisfied). The dev/e2e 
 1. `pnpm lint:check` (type gate).
 2. `pnpm test --project @projet-igsn/api`, then `--project @projet-igsn/frontend`, then `@projet-igsn/domain` (rerun per project if the combined run flakes).
 3. `make test-e2e` once at the end; read the passed count against the suite total, not the exit code.
-4. Manual against the real state machine: the dev Caddy mock holds no state, so run `make dev` with `DATACITE_API_HOST=https://api.test.datacite.org` and the test key from `infra/preprod/docker-compose.env`, publish a sample, then walk published, withdrawn, tombstone, withdrawn, published. After each step `GET https://api.test.datacite.org/dois/10.70113/<igsn>` and check `attributes.state` (findable, registered, registered, registered, findable) and `attributes.url` (landing, landing, tombstone, landing, landing). Open `http://localhost:3000/samples/<igsn>/tombstone`.
+4. Manual against the real state machine: the dev Caddy mock holds no state, so run `make dev` with `DATACITE_API_HOST=https://api.test.datacite.org` and the test key from `infra/preprod/docker-compose.env`, publish a sample, then walk published, withdrawn, tombstone, withdrawn, published. After each step `GET https://api.test.datacite.org/dois/10.70113/<igsn>` and check `attributes.state` (findable, registered, registered, registered, findable) and `attributes.url` (landing, landing, tombstone, landing, landing). Open `http://localhost:3000/tombstone`.
 
 Commit with `git add` for the new files first, then `git commit -- <pathspec>`, docs in the same commit as the code.
