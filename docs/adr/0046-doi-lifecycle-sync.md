@@ -12,7 +12,7 @@ ADR 0044 registers a DOI at DataCite on publication alone. It left as an open co
 
 ## Decision
 
-`api/src/datacite/sync-doi.ts` (`syncDoi`) is the one DataCite write, called by `publishSample`, `updateSample` and `setSampleStatus`. It PUTs the full record every time, `url` and `event` the only fields that vary with status:
+`api/src/datacite/sync-doi.ts` (`syncDoi`) is the one DataCite write and owns the whole status-to-event map, called by `publishSample` and by the `synced` wrapper in `api/src/sample/repository.ts` that every other persisted-sample write goes through. It PUTs the full record every time, `url` and `event` the only fields that vary with status:
 
 | Our status | DataCite state | DataCite `url`                 |
 | ---------- | -------------- | ------------------------------ |
@@ -20,11 +20,11 @@ ADR 0044 registers a DOI at DataCite on publication alone. It left as an open co
 | withdrawn  | registered     | `<FRONTEND_URL>samples/<igsn>` |
 | tombstone  | registered     | `<FRONTEND_URL>tombstone`      |
 
-- `publishSample` keeps sending `publish` for `published` and `register` for `withdrawn`, since the DOI is new there and `register` is the only event that works from DataCite's own draft state.
-- Every later write (`updateSample`, `setSampleStatus`) sends `publish` when our status is `published`, `hide` otherwise; `hide` moves findable to registered and is a no-op on an already-registered DOI, so a stateless status-to-event map is enough (DataCite's `aasm whiny_transitions: false`).
+- `publishSample` alone passes `firstRegistration`, the one fact `syncDoi` cannot read off the sample, which turns a non-published status into `register` rather than `hide`, since `register` is the only event that works from DataCite's own draft state.
+- Every later write sends `publish` when our status is `published`, `hide` otherwise; `hide` moves findable to registered and is a no-op on an already-registered DOI, so a stateless status-to-event map is enough (DataCite's `aasm whiny_transitions: false`).
 - A tombstoned sample's `url` points at one shared public page, `/tombstone`, in `frontend`, naming no sample; every other status points at the sample's own landing page.
 - `syncDoi` runs inside the same transaction as the write, same 10s timeout and 502 on refusal or timeout as ADR 0044's publish call, so nothing commits without a synced DOI.
-- The `!config || !sample.doiPrefix` guard is unchanged from ADR 0044: an unconfigured stack or a sample published before DataCite was configured is never synced.
+- ADR 0044's `!config` guard moves into `syncDoi` and gains `!sample.doiPrefix`, which the publish-only path could not reach: an unconfigured stack or a sample published before DataCite was configured is never synced.
 
 See ADR [0032](0032-sample-withdrawal-status.md) (withdrawal), ADR [0033](0033-sample-tombstone-status.md) (tombstone), ADR [0044](0044-doi-registration-on-publication.md) (initial registration, superseded here for the update/status-change gap).
 

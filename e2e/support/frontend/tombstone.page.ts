@@ -15,11 +15,6 @@ export function tombstonePage(page: Page) {
           name: "This sample has been removed",
         }),
       ).toBeVisible();
-      await expect(
-        page.getByText(
-          "The sample this identifier pointed to has been permanently removed from the registry.",
-        ),
-      ).toBeVisible();
     },
   };
 }

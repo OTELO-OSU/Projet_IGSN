@@ -32,10 +32,6 @@ export async function publishSample(
   if (!row) return null;
   const sample = await getSampleById(db, id);
   // ponytail: the row stays locked for the DataCite round trip, and a commit failing after a successful PUT leaves a DOI the next publish re-registers, PUT being idempotent.
-  await syncDoi(
-    config,
-    sample,
-    status === "published" ? "publish" : "register",
-  );
+  await syncDoi(config, sample, { firstRegistration: true });
   return sample;
 }

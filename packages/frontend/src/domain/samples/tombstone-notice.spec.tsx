@@ -3,7 +3,7 @@ import { TombstoneNotice } from "#/domain/samples/tombstone-notice.tsx";
 import { renderWithRouter } from "../../../test/render-with-router.tsx";
 
 describe("TombstoneNotice", () => {
-  it("should tell the visitor the sample was permanently removed, without naming it", async () => {
+  it("should tell the visitor the sample was removed, without naming it", async () => {
     const screen = await renderWithRouter(<TombstoneNotice />);
 
     await expect
@@ -17,7 +17,7 @@ describe("TombstoneNotice", () => {
     await expect
       .element(
         screen.getByText(
-          "The sample this identifier pointed to has been permanently removed from the registry.",
+          "The sample this identifier pointed to has been removed from the registry.",
         ),
       )
       .toBeInTheDocument();

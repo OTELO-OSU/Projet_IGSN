@@ -14,7 +14,7 @@ export function TombstoneNotice() {
       </p>
       <div className="mt-8">
         <Button asChild variant="secondary">
-          <Link to="/">{m.search_landing_title()}</Link>
+          <Link to="/">{m.sample_tombstone_back()}</Link>
         </Button>
       </div>
     </div>

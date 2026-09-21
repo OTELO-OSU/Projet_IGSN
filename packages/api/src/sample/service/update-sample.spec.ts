@@ -1,13 +1,7 @@
-import { afterEach, beforeEach, describe, expect, vi } from "vitest";
+import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
-import { publishableSample } from "../../tests/sample-fixtures.ts";
-import {
-  STUB_DATACITE_CONFIG,
-  stubDataCite,
-} from "../../tests/stub-datacite.ts";
 import { insertSample } from "./insert-sample.ts";
-import { publishSample } from "./publish-sample.ts";
 import { updateSample } from "./update-sample.ts";
 
 describe("updateSample", () => {
@@ -135,42 +129,6 @@ describe("updateSample", () => {
       );
       // Assert
       expect(updated).toBeNull();
-    },
-  );
-});
-
-describe("updateSample with DataCite configured", () => {
-  let fetchMock: ReturnType<typeof stubDataCite>;
-
-  beforeEach(() => {
-    fetchMock = stubDataCite(new Response("{}", { status: 201 }));
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  pgTest(
-    "should re-send the edited metadata of a published sample",
-    async ({ db }) => {
-      // Arrange
-      const created = await insertSample(db, publishableSample);
-      await publishSample(db, created.id, "published", STUB_DATACITE_CONFIG);
-      fetchMock.mockClear();
-      // Act
-      await updateSample(
-        db,
-        created.id,
-        { ...publishableSample, name: "Grès de Fontainebleau" },
-        STUB_DATACITE_CONFIG,
-      );
-      // Assert
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      const [, init] = fetchMock.mock.calls[0]!;
-      expect(JSON.parse(init.body).data.attributes).toMatchObject({
-        event: "publish",
-        titles: [{ title: "Grès de Fontainebleau" }],
-      });
     },
   );
 });

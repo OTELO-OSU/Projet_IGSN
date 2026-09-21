@@ -16,16 +16,17 @@ test.describe("a tombstoned sample", () => {
     await list.expectSampleLink("Basalt 42", basalt);
   });
 
-  test("has no public page", async ({ page, samples }) => {
+  test("has no public page, its DOI resolving to the shared tombstone page", async ({
+    page,
+    samples,
+  }) => {
     const sample = tombstone(samples);
 
     const detail = sampleDetailPage(page);
     await detail.gotoNotFound(sample.igsn);
 
     await detail.expectNotFound(sample.name);
-  });
 
-  test("resolves its DOI to the shared tombstone page", async ({ page }) => {
     const removed = tombstonePage(page);
     await removed.goto();
 

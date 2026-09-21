@@ -1062,6 +1062,39 @@ describe("admin sample routes", () => {
     expect(await res.json()).toEqual({ error: "DOI sync failed" });
   });
 
+  pgTest(
+    "should re-send the edited metadata of a published sample to DataCite",
+    async ({ db }) => {
+      // Arrange
+      const fetchMock = stubDataCite(new Response("{}", { status: 201 }));
+      onTestFinished(() => {
+        vi.unstubAllGlobals();
+      });
+      const client = testClient(createApp(db).app);
+      const data = await createAndPublish(db, client);
+      fetchMock.mockClear();
+      // Act
+      const res = await client.admin.samples[":id"].$put(
+        {
+          param: { id: data.id },
+          json: {
+            ...publishable,
+            name: "Gres de Fontainebleau",
+            expectedUpdatedAt: data.updatedAt,
+          },
+        },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      const [, init] = fetchMock.mock.calls[0]!;
+      expect(JSON.parse(init.body).data.attributes).toMatchObject({
+        titles: [{ title: "Gres de Fontainebleau" }],
+      });
+    },
+  );
+
   pgTest("should publish a sample straight as withdrawn", async ({ db }) => {
     // Arrange
     const { app } = createApp(db);

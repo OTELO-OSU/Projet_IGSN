@@ -31,7 +31,7 @@ describe("syncDoi", () => {
     // Arrange
     fetchMock.mockResolvedValue(new Response("{}", { status: 201 }));
     // Act
-    await syncDoi(CONFIG, FIELD_SAMPLE, "publish");
+    await syncDoi(CONFIG, FIELD_SAMPLE);
     // Assert
     expect(fetchMock).toHaveBeenCalledWith(
       `${CONFIG.host}/dois/${DOI}`,
@@ -113,7 +113,7 @@ describe("syncDoi", () => {
         .spyOn(console, "error")
         .mockImplementation(() => undefined);
       // Act
-      const error = await syncDoi(CONFIG, FIELD_SAMPLE, "publish").catch(
+      const error = await syncDoi(CONFIG, FIELD_SAMPLE).catch(
         (reason: unknown) => reason,
       );
       // Assert
