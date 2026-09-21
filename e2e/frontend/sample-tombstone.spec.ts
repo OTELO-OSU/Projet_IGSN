@@ -1,6 +1,7 @@
 import { published, test, tombstone } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { sampleListPage } from "../support/frontend/sample-list.page";
+import { tombstonePage } from "../support/frontend/tombstone.page";
 
 test.describe("a tombstoned sample", () => {
   test("is absent from the search results", async ({ page, samples }) => {
@@ -22,5 +23,12 @@ test.describe("a tombstoned sample", () => {
     await detail.gotoNotFound(sample.igsn);
 
     await detail.expectNotFound(sample.name);
+  });
+
+  test("resolves its DOI to the shared tombstone page", async ({ page }) => {
+    const removed = tombstonePage(page);
+    await removed.goto();
+
+    await removed.expectRemovedNotice();
   });
 });

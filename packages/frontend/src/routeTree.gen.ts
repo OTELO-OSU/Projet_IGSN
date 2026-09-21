@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TombstoneRouteImport } from './routes/tombstone'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SamplesIgsnRouteImport } from './routes/samples/$igsn'
 
+const TombstoneRoute = TombstoneRouteImport.update({
+  id: '/tombstone',
+  path: '/tombstone',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
@@ -32,35 +38,46 @@ const SamplesIgsnRoute = SamplesIgsnRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
+  '/tombstone': typeof TombstoneRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
+  '/tombstone': typeof TombstoneRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
+  '/tombstone': typeof TombstoneRoute
   '/samples/$igsn': typeof SamplesIgsnRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/search' | '/samples/$igsn'
+  fullPaths: '/' | '/search' | '/tombstone' | '/samples/$igsn'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/search' | '/samples/$igsn'
-  id: '__root__' | '/' | '/search' | '/samples/$igsn'
+  to: '/' | '/search' | '/tombstone' | '/samples/$igsn'
+  id: '__root__' | '/' | '/search' | '/tombstone' | '/samples/$igsn'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SearchRoute: typeof SearchRoute
+  TombstoneRoute: typeof TombstoneRoute
   SamplesIgsnRoute: typeof SamplesIgsnRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/tombstone': {
+      id: '/tombstone'
+      path: '/tombstone'
+      fullPath: '/tombstone'
+      preLoaderRoute: typeof TombstoneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/search': {
       id: '/search'
       path: '/search'
@@ -88,6 +105,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SearchRoute: SearchRoute,
+  TombstoneRoute: TombstoneRoute,
   SamplesIgsnRoute: SamplesIgsnRoute,
 }
 export const routeTree = rootRouteImport
