@@ -238,9 +238,9 @@ No new env var, so no compose change (infra parity rule satisfied). The dev/e2e 
 
 ## Docs
 
-- New `docs/adr/0045-doi-lifecycle-sync.md`: decision (every `Sample` mutation of a DOI-bearing row re-PUTs the record; status-to-state map; tombstone url; same-transaction 502 semantics; `syncDoi` as the one place), rejected (async sync; a per-sample `/samples/:igsn/tombstone` page, which would name a sample the API refuses to serve; a redacted tombstone payload from the API), consequences (every tombstoned DOI resolves to the same page, so a visitor cannot tell which sample it was; a DataCite outage blocks edits of published samples). Link ADR 0033 and 0044.
-- ADR 0044: replace the "not synced (out of scope, follow-up)" consequence with a link to 0045.
-- ADR 0033: annotate the rejected "public tombstone page" bullet: superseded by 0045 with one generic page as the DataCite landing url only; `GET /samples/:igsn` still 404s.
+- New `docs/adr/0046-doi-lifecycle-sync.md`: decision (every `Sample` mutation of a DOI-bearing row re-PUTs the record; status-to-state map; tombstone url; same-transaction 502 semantics; `syncDoi` as the one place), rejected (async sync; a per-sample `/samples/:igsn/tombstone` page, which would name a sample the API refuses to serve; a redacted tombstone payload from the API), consequences (every tombstoned DOI resolves to the same page, so a visitor cannot tell which sample it was; a DataCite outage blocks edits of published samples). Link ADR 0033 and 0044.
+- ADR 0044: replace the "not synced (out of scope, follow-up)" consequence with a link to 0046.
+- ADR 0033: annotate the rejected "public tombstone page" bullet: superseded by 0046 with one generic page as the DataCite landing url only; `GET /samples/:igsn` still 404s.
 - `docs/datacite-mapping.md` Registration section: rename to "Registration and sync", name `sync-doi.ts`, list the three callers and the state map.
 - `.claude/rules/architecture.md`, Publish constraints: one bullet naming `api/src/datacite/sync-doi.ts` as the single DataCite write, called from `publishSample`, `updateSample` and `setSampleStatus`.
 

@@ -39,6 +39,6 @@ See ADR [0032](0032-sample-withdrawal-status.md) (withdrawal), ADR [0036](0036-s
 - The row lock and a pool connection are held for the round trip, capped by the timeout and the per-user rate limit; a `ponytail:` comment marks this tradeoff.
 - A commit failing after a successful PUT leaves a registered DOI that the next publish re-PUTs.
 - A withdrawn sample's full Core record reaches DataCite under `register`, while the registry's own public payload is the `toWithdrawnSample` whitelist (ADR 0032); a policy point to revisit.
-- `PUT /admin/samples/:id/status` and later metadata edits are not synced to DataCite (out of scope, follow-up).
+- `PUT /admin/samples/:id/status` and later metadata edits are now synced too; see ADR [0046](0046-doi-lifecycle-sync.md).
 - `doiPrefix` rides on public sample payloads, a public identifier component.
 - No UI shows the DOI yet.
