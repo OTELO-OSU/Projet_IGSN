@@ -56,7 +56,7 @@ const stored: Sample = {
   condition: null,
   repository: { currentArchive: "02feahw73" },
   geologicalContextDescription: "stored geological context",
-  geomorphologicalEnvironment: "marine_zone.fjord",
+  physiographicEnvironment: "marine.fjord",
   scientificContext: {
     provenanceStatus: "field_sample",
     funderOrganizations: ["https://ror.org/00stored"],
@@ -150,7 +150,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     condition: null,
     repository: { currentArchive: "04kdfz702" },
     geologicalContextDescription: "edited geological context",
-    geomorphologicalEnvironment: "wetland.peat_bog",
+    physiographicEnvironment: "wetland.peat_bog",
     scientificContext: {
       provenanceStatus: "field_sample",
       funderOrganizations: ["https://ror.org/00edited"],
@@ -243,7 +243,7 @@ describe("mergePublishedEdit", () => {
       metamorphicFabric: "gneissic",
       location: stored.location,
       geologicalContextDescription: "stored geological context",
-      geomorphologicalEnvironment: "marine_zone.fjord",
+      physiographicEnvironment: "marine.fjord",
     });
   });
 

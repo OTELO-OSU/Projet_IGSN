@@ -63,7 +63,7 @@ describe("sampleSchema", () => {
       condition: null,
       repository: null,
       geologicalContextDescription: null,
-      geomorphologicalEnvironment: null,
+      physiographicEnvironment: null,
       scientificContext: null,
       syntheticDetails: null,
       age: null,
@@ -291,7 +291,7 @@ describe("createSampleSchema", () => {
     ],
     [
       "rock_and_sediment.synthetic_rock_mineral",
-      { geomorphologicalEnvironment: "marine_zone" },
+      { physiographicEnvironment: "marine" },
     ],
     [
       "rock_and_sediment.extraterrestrial_rock.returned_samples.lunar_sample",

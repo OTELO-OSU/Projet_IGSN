@@ -27,7 +27,7 @@ const withdrawn: Sample = {
   condition: null,
   repository: { currentArchive: "02feahw73" },
   geologicalContextDescription: "kept out of the public view",
-  geomorphologicalEnvironment: "continental_zone.bedrock",
+  physiographicEnvironment: "continental.plain",
   scientificContext: {
     provenanceStatus: "field_sample",
     collectorFirstname: "Claire",

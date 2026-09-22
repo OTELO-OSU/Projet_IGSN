@@ -11,7 +11,7 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   texture: "classification.contextCategories",
   metamorphicFacies: "classification.contextCategories",
   metamorphicFabric: "classification.contextCategories",
-  geomorphologicalEnvironment: "classification.contextCategories",
+  physiographicEnvironment: "classification.contextCategories",
   resourceType: "classification.contextCategories",
   geologicalContextDescription: "classification.contextCategories",
 

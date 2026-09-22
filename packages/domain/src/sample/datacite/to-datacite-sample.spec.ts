@@ -172,8 +172,8 @@ describe("a Core record mapped to DataCite", () => {
         },
         {
           subject: "badlands",
-          subjectScheme: "otelo:geomorphologicalContext",
-          schemeUri: "urn:otelo:vocabulary:geomorphologicalContext",
+          subjectScheme: "otelo:physiographicEnvironment",
+          schemeUri: "urn:otelo:vocabulary:physiographicEnvironment",
         },
         {
           subject: "uranium",

@@ -83,7 +83,7 @@ type SampleLabels = {
   typeLabel: (path: string) => string;
   collectionMethodLabel: (path: string) => string;
   resourceTypeLabel: (path: string) => string;
-  geomorphologicalEnvironmentLabel: (path: string) => string;
+  physiographicEnvironmentLabel: (path: string) => string;
   elementLabel: (element: Element) => string;
   textureLabel: (texture: Texture) => string;
   metamorphicFaciesLabel: (facies: MetamorphicFacies) => string;
@@ -121,7 +121,7 @@ const LABEL_KEY = {
   typeLabel: ["type", "path"],
   collectionMethodLabel: ["collection_method", "path"],
   resourceTypeLabel: ["resource_type", "path"],
-  geomorphologicalEnvironmentLabel: ["geomorphological_environment", "path"],
+  physiographicEnvironmentLabel: ["physiographic_environment", "path"],
   elementLabel: ["element", "code"],
   textureLabel: ["texture", "code"],
   metamorphicFaciesLabel: ["metamorphic_facies", "code"],

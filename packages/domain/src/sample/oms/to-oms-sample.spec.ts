@@ -132,7 +132,7 @@ const FIELD_FEATURE = {
         "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       ),
       toConcept("texture", "phaneritic"),
-      toConcept("geomorphologicalContext", "continental_zone.badlands"),
+      toConcept("physiographicEnvironment", "continental.badlands"),
       toConcept("resource-type", "mineral_and_ore.uranium"),
       toConcept("geologicalContext", "Hercynian basement"),
       toConcept("scientificContext", "field_sample", "provenance-status"),

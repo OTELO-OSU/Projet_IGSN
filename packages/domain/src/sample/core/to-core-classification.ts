@@ -32,8 +32,8 @@ export function toCoreClassification(sample: Sample): CoreClassification {
     optionalConcept("metamorphic-facies", sample.metamorphicFacies),
     optionalConcept("metamorphic-fabric", sample.metamorphicFabric),
     optionalConcept(
-      "geomorphologicalContext",
-      sample.geomorphologicalEnvironment,
+      "physiographicEnvironment",
+      sample.physiographicEnvironment,
     ),
     optionalConcept("resource-type", sample.resourceType),
     optionalConcept("geologicalContext", sample.geologicalContextDescription),
