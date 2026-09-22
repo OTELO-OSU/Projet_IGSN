@@ -111,7 +111,7 @@ describe("NumericAgeFormSection", () => {
     await toggle().click();
     await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
     await page.getByRole("combobox", { name: "Units *" }).click();
-    await page.getByRole("option", { name: "a (years)" }).click();
+    await page.getByRole("option", { name: "Year" }).click();
     await page.getByRole("combobox", { name: "Reference *" }).click();
     await page.getByRole("option", { name: "BP", exact: true }).click();
     await page.getByRole("spinbutton", { name: "Numeric age" }).fill("");

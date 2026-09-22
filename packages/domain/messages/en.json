@@ -848,7 +848,7 @@
   "pressure_vacuum": "Vacuum (partial or total)",
   "pressure_controlled_air": "Controlled air pressure (e.g. glovebox)",
   "pressure_controlled_gas": "Controlled gas pressure (N2, Ar, CO2...)",
-  "age_unit_a": "a (years)",
+  "age_unit_a": "Year",
   "age_unit_ka": "ka",
   "age_unit_ma": "Ma",
   "age_unit_ga": "Ga",
