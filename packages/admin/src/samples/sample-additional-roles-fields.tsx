@@ -25,14 +25,27 @@ export function SampleAdditionalRolesFields() {
       <form.Subscribe
         selector={(state) => state.values.scientificContext.additionalRoles}
       >
-        {(roles) =>
-          roles.map((row, index) => (
-            <div key={row.key} className="grid gap-2 rounded-lg border p-4">
-              <div className="flex justify-end">
+        {(roles) => (
+          <>
+            {isDisabled && roles.length === 0 ? null : (
+              <p className="font-medium">{m.legend_additional_roles()}</p>
+            )}
+            {roles.map((row, index) => (
+              <div key={row.key} className="relative rounded-lg border p-4">
+                <ContactNameFields
+                  label={m.legend_additional_role({
+                    index: index + 1,
+                    role: additionalRoleLabel(row.role),
+                  })}
+                  person={`${ROLES_FIELD}[${index}].person`}
+                  orcidName={`${ROLES_FIELD}[${index}].personOrcid`}
+                  requiredToPublish
+                />
                 <Button
                   type="button"
                   variant="ghost"
                   size="icon"
+                  className="absolute top-2 right-2"
                   disabled={isDisabled}
                   aria-label={m.action_remove_additional_role({
                     index: index + 1,
@@ -42,18 +55,9 @@ export function SampleAdditionalRolesFields() {
                   <Trash2 aria-hidden />
                 </Button>
               </div>
-              <ContactNameFields
-                label={m.legend_additional_role({
-                  index: index + 1,
-                  role: additionalRoleLabel(row.role),
-                })}
-                person={`${ROLES_FIELD}[${index}].person`}
-                orcidName={`${ROLES_FIELD}[${index}].personOrcid`}
-                requiredToPublish
-              />
-            </div>
-          ))
-        }
+            ))}
+          </>
+        )}
       </form.Subscribe>
       {isDisabled ? null : (
         <div>
