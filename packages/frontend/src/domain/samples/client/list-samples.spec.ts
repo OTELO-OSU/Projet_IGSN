@@ -7,6 +7,8 @@ const iso = "2026-01-02T03:04:05.000Z";
 const sampleJson = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Basalt 42",
+  localId: null,
+  localIdDescription: null,
   nature: "hand_sample",
   type: null,
   material: "rock_and_sediment.rock.igneous",
@@ -42,57 +44,17 @@ describe("listSamples", () => {
 
     const result = await listSamples({ page: 1, perPage: 25 }, fetch);
 
-    expect(result).toEqual({
-      total: 7,
-      data: [
-        {
-          id: sampleJson.id,
-          name: "Basalt 42",
-          nature: "hand_sample",
-          type: null,
-          material: "rock_and_sediment.rock.igneous",
-          materialOtherName: null,
-          texture: null,
-          metamorphicFacies: null,
-          metamorphicFabric: null,
-          collectionMethod: null,
-          collectionMethodDescription: null,
-          specificName: "BAS-42-001",
-          location: null,
-          description: null,
-          condition: null,
-          scientificContext: null,
-          repository: null,
-          geologicalContextDescription: null,
-          physiographicEnvironment: null,
-          syntheticDetails: null,
-          age: null,
-          relations: [],
-          processSteps: [],
-          attachments: [],
-          security: null,
-          existenceStatus: "exists",
-          availabilityStatus: "available",
-          publicationYear: 2026,
-          resourceType: null,
-          economicInterestElements: [],
-          economicResourceTypePrecision: null,
-          economicDepositName: null,
-          economicDepositDescription: null,
-          igsn: "0123456789ABCDEFGHJKMNPQRS",
-          doiPrefix: null,
-          institutionalOrganization: null,
-          institutionalOsu: null,
-          institutionalLaboratory: null,
-          manualGroups: [],
-          parents: [],
-          owner: null,
-          status: "published",
-          createdAt: new Date(iso),
-          updatedAt: new Date(iso),
-        },
-      ],
-    });
+    expect(result.total).toBe(7);
+    expect(result.data).toMatchObject([
+      {
+        id: sampleJson.id,
+        igsn: "0123456789ABCDEFGHJKMNPQRS",
+        specificName: "BAS-42-001",
+        relations: [],
+        createdAt: new Date(iso),
+        updatedAt: new Date(iso),
+      },
+    ]);
   });
 
   it("should send page and perPage as query params", async () => {

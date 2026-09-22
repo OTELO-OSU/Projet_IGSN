@@ -35,7 +35,7 @@ async function createSample(
     {
       json: {
         name,
-        nature: "rock_powder",
+        nature: "powder",
         type: "individual_sample",
         material: "rock_and_sediment.sediment.exogenous_detritic.clay",
         specificName,
@@ -481,7 +481,7 @@ describe("public sample routes", () => {
           status: "withdrawn",
           igsn: published.igsn,
           name: "Rhyolite retirée",
-          nature: "rock_powder",
+          nature: "powder",
           type: "individual_sample",
           material: "rock_and_sediment.sediment.exogenous_detritic.clay",
           materialOtherName: null,
@@ -598,7 +598,7 @@ describe("public sample routes", () => {
         {
           json: {
             name: "Basalte des rôles",
-            nature: "rock_powder",
+            nature: "powder",
             type: "individual_sample",
             material: "rock_and_sediment.sediment.exogenous_detritic.clay",
             location: {

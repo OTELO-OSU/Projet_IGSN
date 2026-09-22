@@ -11,7 +11,7 @@ const sample = (overrides: Partial<WithdrawnSample> = {}): WithdrawnSample => ({
   status: "withdrawn",
   igsn: "0123456789ABCDEFGHJKMNPQRS",
   name: "Rhyolite 11",
-  nature: "rock_powder",
+  nature: "powder",
   type: "core.half_round",
   material: "rock_and_sediment.rock.igneous",
   materialOtherName: null,
@@ -100,7 +100,7 @@ describe("SampleView of a withdrawn sample", () => {
   it("should show only the whitelisted fields", async () => {
     const screen = await renderWithRouter(<SampleView sample={sample()} />);
 
-    await expect.element(screen.getByText("Rock powder")).toBeVisible();
+    await expect.element(screen.getByText("Powder")).toBeVisible();
     await expect
       .element(
         screen.getByRole("list", { name: "Type" }).getByText("Core Half round"),

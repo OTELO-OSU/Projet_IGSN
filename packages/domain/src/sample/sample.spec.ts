@@ -8,6 +8,8 @@ const THIRD_PARENT_ID = "33333333-3333-4333-8333-333333333333";
 const validSample = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Basalte du Massif Central",
+  localId: null,
+  localIdDescription: null,
   nature: "thin_section",
   type: "core.section",
   material: null,
@@ -48,6 +50,8 @@ describe("sampleSchema", () => {
     expect(result).toEqual({
       id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
       name: "Basalte du Massif Central",
+      localId: null,
+      localIdDescription: null,
       nature: "thin_section",
       type: "core.section",
       material: null,
@@ -136,6 +140,10 @@ describe("createSampleSchema", () => {
     { collectionMethodDescription: "Collected at low tide, 30 cm depth" },
     { specificName: "FTB-2026-042" },
     {
+      localId: "FTB-2026-042",
+      localIdDescription: "Number in the laboratory collection catalogue",
+    },
+    {
       relations: [
         {
           relationType: "references",
@@ -163,13 +171,13 @@ describe("createSampleSchema", () => {
     // Arrange / Act
     const result = createSampleSchema.parse({
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       ...extra,
     });
     // Assert
     expect(result).toEqual({
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       ...extra,
     });
@@ -190,12 +198,12 @@ describe("createSampleSchema", () => {
     // Arrange / Act
     const result = createSampleSchema.parse({
       name: "  Grès de Fontainebleau  ",
-      nature: "rock_powder",
+      nature: "powder",
     });
     // Assert
     expect(result).toEqual({
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
     });
   });
@@ -229,27 +237,22 @@ describe("createSampleSchema", () => {
     },
   );
 
-  it("should accept a metamorphic facies for a metamorphic material", () => {
-    const result = createSampleSchema.safeParse({
-      name: "Gneiss 1",
-      nature: "hand_sample",
-      material:
-        "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
-      metamorphicFacies: "amphibolite",
-    });
-    expect(result).toMatchObject({ success: true });
-  });
-
-  it("should accept a metamorphic fabric for a metamorphic material", () => {
-    const result = createSampleSchema.safeParse({
-      name: "Gneiss 2",
-      nature: "hand_sample",
-      material:
-        "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
-      metamorphicFabric: "gneissic",
-    });
-    expect(result).toMatchObject({ success: true });
-  });
+  it.each([
+    { metamorphicFacies: "amphibolite" },
+    { metamorphicFabric: "gneissic" },
+  ])(
+    "should accept a metamorphic facies or fabric for a metamorphic material %o",
+    (fields) => {
+      const result = createSampleSchema.safeParse({
+        name: "Gneiss 1",
+        nature: "hand_sample",
+        material:
+          "rock_and_sediment.rock.metamorphic.strongly_metamorphosed.gneiss",
+        ...fields,
+      });
+      expect(result).toMatchObject({ success: true });
+    },
+  );
 
   it.each([
     {
@@ -383,18 +386,23 @@ describe("createSampleSchema", () => {
   );
 
   it.each([
-    { name: "", nature: "rock_powder" },
+    { name: "", nature: "powder" },
     { name: "Grès", nature: "Roche inconnue" },
-    { nature: "rock_powder" },
-    { name: "Grès", nature: "rock_powder", type: "half_round" },
-    { name: "Grès", nature: "rock_powder", material: "lava" },
-    { name: "Grès", nature: "rock_powder", collectionMethod: "gravity_corer" },
+    { nature: "powder" },
+    { name: "Grès", nature: "powder", type: "half_round" },
+    { name: "Grès", nature: "powder", material: "lava" },
+    { name: "Grès", nature: "powder", collectionMethod: "gravity_corer" },
     {
       name: "Grès",
-      nature: "rock_powder",
+      nature: "powder",
       collectionMethodDescription: "",
     },
-    { name: "Grès", nature: "rock_powder", specificName: "" },
+    { name: "Grès", nature: "powder", specificName: "" },
+    {
+      name: "Grès",
+      nature: "powder",
+      localIdDescription: "Number in the laboratory collection catalogue",
+    },
   ])("should reject invalid create input #%#", (input) => {
     // Arrange / Act
     const result = createSampleSchema.safeParse(input);
@@ -406,7 +414,7 @@ describe("createSampleSchema", () => {
     // Arrange / Act
     const result = createSampleSchema.safeParse({
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       existenceStatus: "consumed",
       availabilityStatus: "available",
     });
@@ -420,7 +428,7 @@ describe("createSampleSchema", () => {
     // Arrange / Act
     const result = createSampleSchema.safeParse({
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       existenceStatus: "consumed",
     });
     // Assert
@@ -497,7 +505,7 @@ describe("createSampleSchema", () => {
     // Arrange / Act
     const result = createSampleSchema.safeParse({
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
     });
     // Assert

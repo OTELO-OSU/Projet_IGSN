@@ -227,7 +227,7 @@ describe("admin sample routes", () => {
       {
         json: {
           name: "Grès de Fontainebleau",
-          nature: "rock_powder",
+          nature: "powder",
           type: null,
           collectionMethod: null,
         },
@@ -257,7 +257,7 @@ describe("admin sample routes", () => {
           {
             json: {
               name: "Grès de Fontainebleau",
-              nature: "rock_powder",
+              nature: "powder",
               type: null,
               collectionMethod: null,
             },
@@ -414,7 +414,7 @@ describe("admin sample routes", () => {
         param: { id: data.id },
         json: {
           name: "Grès de Fontainebleau",
-          nature: "rock_powder",
+          nature: "powder",
           type: null,
           collectionMethod: null,
           expectedUpdatedAt: data.updatedAt,
@@ -428,7 +428,7 @@ describe("admin sample routes", () => {
       data: {
         id: data.id,
         name: "Grès de Fontainebleau",
-        nature: "rock_powder",
+        nature: "powder",
       },
     });
   });
@@ -985,7 +985,7 @@ describe("admin sample routes", () => {
         param: { id: "01890a5d-ac96-774b-bcce-b302099a8057" },
         json: {
           name: "Grès",
-          nature: "rock_powder",
+          nature: "powder",
           type: null,
           collectionMethod: null,
           expectedUpdatedAt: new Date(),
@@ -1443,7 +1443,7 @@ describe("admin sample routes", () => {
     pgTest("should reject an empty name with 400", async ({ db }) => {
       const res = await postSample(createApp(db).app, {
         name: "",
-        nature: "rock_powder",
+        nature: "powder",
       });
       expect(res.status).toBe(400);
     });
@@ -1506,7 +1506,7 @@ describe("admin sample routes", () => {
     pgTest("should reject unknown fields with 400", async ({ db }) => {
       const res = await postSample(createApp(db).app, {
         name: "Grès",
-        nature: "rock_powder",
+        nature: "powder",
         extra: "x",
       });
       expect(res.status).toBe(400);
@@ -1575,7 +1575,7 @@ describe("admin sample routes", () => {
         {
           method: "PUT",
           headers: { "content-type": "application/json", ...authHeader },
-          body: JSON.stringify({ name: "", nature: "rock_powder" }),
+          body: JSON.stringify({ name: "", nature: "powder" }),
         },
       );
       expect(res.status).toBe(400);
@@ -1585,7 +1585,7 @@ describe("admin sample routes", () => {
   describe("authentication", () => {
     const jsonBody = {
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ name: "Grès", nature: "rock_powder" }),
+      body: JSON.stringify({ name: "Grès", nature: "powder" }),
     };
 
     pgTest.for([
@@ -1618,7 +1618,7 @@ describe("admin sample routes", () => {
       const other = await insertUser(db, "other@univ-lorraine.fr");
       const sample = await insertSample(db, {
         name: "Granite de Pierre",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
       });
@@ -1681,7 +1681,7 @@ describe("admin sample routes", () => {
             param: { id: sample.id },
             json: {
               name: "Stolen granite",
-              nature: "rock_powder",
+              nature: "powder",
               type: null,
               collectionMethod: null,
               expectedUpdatedAt: sample.updatedAt,
@@ -1733,7 +1733,7 @@ describe("admin sample routes", () => {
             param: { id: sample.id },
             json: {
               name: "Granite relu",
-              nature: "rock_powder",
+              nature: "powder",
               type: null,
               collectionMethod: null,
               expectedUpdatedAt: sample.updatedAt,
@@ -1894,7 +1894,7 @@ describe("admin sample routes", () => {
       // Arrange
       const sample = await insertSample(db, {
         name: "Orphan granite",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
       });
@@ -2359,7 +2359,7 @@ describe("admin sample routes", () => {
         const other = await insertUser(db, "other@univ-lorraine.fr");
         const foreign = await insertSample(db, {
           name: "Foreign granite",
-          nature: "rock_powder",
+          nature: "powder",
           type: null,
           collectionMethod: null,
         });

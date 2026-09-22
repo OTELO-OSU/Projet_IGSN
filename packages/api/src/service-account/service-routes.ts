@@ -298,9 +298,12 @@ export function createServiceRoutes(
           ]),
         ]);
       }
-      const parsed = updateSampleSchema.safeParse(
-        keepContactLinks(sample, current),
-      );
+      const parsed = updateSampleSchema.safeParse({
+        ...keepContactLinks(sample, current),
+        // Core has no slot for the local id description, so a round trip keeps the stored one.
+        localIdDescription:
+          sample.localId == null ? null : current.localIdDescription,
+      });
       if (!parsed.success) {
         return invalid(c, zodIssues(parsed.error));
       }

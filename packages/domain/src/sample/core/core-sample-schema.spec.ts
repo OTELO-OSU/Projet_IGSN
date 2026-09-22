@@ -51,6 +51,33 @@ describe("coreSampleSchema", () => {
     expect(parses(derivedFrom(3))).toBe(false);
   });
 
+  const MAIN_TITLE = { value: "Granite outcrop block", titleType: "Main" };
+  const LOCAL_ID_TITLE = { value: "NCY-2024-017", titleType: "Other" };
+
+  it.each<[string, unknown[]]>([
+    [
+      "two main titles",
+      [MAIN_TITLE, { value: "Other main title", titleType: "Main" }],
+    ],
+    ["no main title", [LOCAL_ID_TITLE]],
+    [
+      "a title type the local id mapping does not use",
+      [MAIN_TITLE, { value: "Bloc de granite", titleType: "TranslatedTitle" }],
+    ],
+    [
+      "a second title holding a local id",
+      [
+        MAIN_TITLE,
+        LOCAL_ID_TITLE,
+        { value: "NCY-2024-018", titleType: "AlternativeTitle" },
+      ],
+    ],
+  ])("should reject titles with %s", (_case, titles) => {
+    expect(
+      parses({ ...core, identification: { ...core.identification, titles } }),
+    ).toBe(false);
+  });
+
   it("should reject a concept id the scheme does not carry", () => {
     expect(
       parses({

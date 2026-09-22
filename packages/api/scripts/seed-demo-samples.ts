@@ -506,7 +506,7 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Fontainebleau Sandstone",
-    nature: "rock_powder",
+    nature: "powder",
     type: "individual_sample",
     material:
       "rock_and_sediment.rock.sedimentary.clastic_sedimentary_rock.sandstone",
@@ -640,7 +640,7 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Pacific Abyssal Clay",
-    nature: "separated_materials",
+    nature: "separated_minerals",
     type: "core.section",
     material: "rock_and_sediment.sediment.exogenous_detritic.clay",
     collectionMethod: "coring.gravity_corer.giant",
@@ -655,7 +655,7 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Loire Sand",
-    nature: "rock_powder",
+    nature: "powder",
     type: "individual_sample",
     material: "rock_and_sediment.sediment.exogenous_detritic.sand.medium_sand",
     collectionMethod: "manual",
@@ -679,7 +679,7 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Champagne Loess Silt",
-    nature: "rock_powder",
+    nature: "powder",
     type: "individual_sample",
     material: "rock_and_sediment.sediment.exogenous_detritic.silt.medium_silt",
     collectionMethod: "manual",
@@ -692,7 +692,7 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Vesuvius Volcanic Ash",
-    nature: "rock_powder",
+    nature: "powder",
     type: "individual_sample",
     material: "rock_and_sediment.sediment.volcano_detritic.ash.glass",
     collectionMethod: "manual",
@@ -719,7 +719,7 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Southern Ocean Diatom Ooze",
-    nature: "separated_materials",
+    nature: "separated_minerals",
     type: "core.section",
     material: "rock_and_sediment.sediment.biogenic.siliceous.diatoms",
     collectionMethod: "coring.gravity_corer.giant",
@@ -745,7 +745,7 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Red Sea Evaporitic Precipitate",
-    nature: "rock_powder",
+    nature: "powder",
     type: "individual_sample",
     material:
       "rock_and_sediment.sediment.physico_chemical.precipitates.evaporitic",
@@ -915,7 +915,7 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Apollo 17 Lunar Soil",
-    nature: "separated_materials",
+    nature: "separated_minerals",
     type: "individual_sample",
     material:
       "rock_and_sediment.extraterrestrial_rock.returned_samples.lunar_sample.soil",
@@ -986,7 +986,7 @@ const PUBLISHED: DemoRow[] = [
   },
   {
     name: "Sediment Trap Particulate",
-    nature: "separated_materials",
+    nature: "separated_minerals",
     type: "individual_sample",
     material: "rock_and_sediment.sediment.biogenic.siliceous.diatoms",
     collectionMethod: "sediment_trap",
@@ -1377,26 +1377,10 @@ const LINEAGE: DemoRow[] = [
   ...Array.from({ length: THIN_SECTIONS }, (_, index) =>
     corePiece(thinSection(index), "thin_section", "core.piece"),
   ),
-  corePiece(
-    "Mont-Dore MD-01 S3A-1 Powder Aliquot A",
-    "rock_powder",
-    "core.piece",
-  ),
-  corePiece(
-    "Mont-Dore MD-01 S3A-1 Powder Aliquot B",
-    "rock_powder",
-    "core.piece",
-  ),
-  corePiece(
-    "Mont-Dore MD-01 S3A-2 Powder Aliquot C",
-    "rock_powder",
-    "core.piece",
-  ),
-  corePiece(
-    "Mont-Dore MD-01 S3A-2 Powder Aliquot D",
-    "rock_powder",
-    "core.piece",
-  ),
+  corePiece("Mont-Dore MD-01 S3A-1 Powder Aliquot A", "powder", "core.piece"),
+  corePiece("Mont-Dore MD-01 S3A-1 Powder Aliquot B", "powder", "core.piece"),
+  corePiece("Mont-Dore MD-01 S3A-2 Powder Aliquot C", "powder", "core.piece"),
+  corePiece("Mont-Dore MD-01 S3A-2 Powder Aliquot D", "powder", "core.piece"),
   synthetic("Mont-Dore MD-01 Synthetic Glass SG-2", "2025-09-04"),
   synthetic("Mont-Dore MD-01 Synthetic Composite SC-1", "2025-09-08"),
   synthetic("Mont-Dore MD-01 Synthetic Glass SG-1", "2025-09-02"),
@@ -1488,7 +1472,7 @@ const DRAFTS: DemoRow[] = [
   },
   {
     name: "Point-only draft",
-    nature: "rock_powder",
+    nature: "powder",
     location: { position: point(3.0, 45.0) },
   },
   {
@@ -1503,7 +1487,7 @@ const DRAFTS: DemoRow[] = [
   },
   {
     name: "Coring campaign (unclassified)",
-    nature: "separated_materials",
+    nature: "separated_minerals",
     collectionMethod: "coring",
   },
   { name: "Legacy residue", nature: "residue" },
@@ -1520,7 +1504,7 @@ const DRAFTS: DemoRow[] = [
   },
   {
     name: "Ash deposit draft",
-    nature: "rock_powder",
+    nature: "powder",
     material: "rock_and_sediment.sediment.volcano_detritic.ash",
   },
   {

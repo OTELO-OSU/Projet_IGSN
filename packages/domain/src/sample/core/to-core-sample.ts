@@ -55,7 +55,12 @@ export function toCoreSample(sample: Sample, frontendUrl: string): CoreSample {
       sampleIdentifier: igsn,
       doi: sample.doiPrefix ? sampleDoi(igsn, sample.doiPrefix) : undefined,
       landingPage: sampleLandingPage(igsn, frontendUrl),
-      titles: [{ value: sample.name, titleType: "Main" }],
+      titles: [
+        { value: sample.name, titleType: "Main" as const },
+        ...(sample.localId == null
+          ? []
+          : [{ value: sample.localId, titleType: "Other" as const }]),
+      ],
       localName: sample.specificName ?? undefined,
     },
     classification: toCoreClassification(sample),

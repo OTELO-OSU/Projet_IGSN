@@ -53,6 +53,8 @@ const OUT_OF_REACH_SOURCE_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c33f5";
 const PARENT = {
   id: PARENT_ID,
   name: "Massif Central 2026",
+  localId: null,
+  localIdDescription: null,
   nature: "thin_section",
   type: "dredge",
   material: "rock_and_sediment.mineral",
@@ -178,6 +180,8 @@ function fakeApi(
       };
       sample = {
         id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+        localId: null,
+        localIdDescription: null,
         texture: null,
         metamorphicFacies: null,
         metamorphicFabric: null,

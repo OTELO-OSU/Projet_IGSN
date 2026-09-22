@@ -1,6 +1,7 @@
 import type { CoreSample } from "../core/core-sample-schema.ts";
 import type { ISamplesSample } from "./isamples-schema.ts";
 
+import { mainTitleOf } from "../core/core-sample-schema.ts";
 import { ISAMPLES_SCHEMA_URI } from "./isamples-schema.ts";
 import { toISamplesAgents } from "./to-isamples-agents.ts";
 import {
@@ -22,7 +23,7 @@ export function toISamplesSample(core: CoreSample): ISamplesSample {
   return {
     pid: identification.sampleIdentifier,
     sample_identifier: identification.landingPage,
-    label: identification.titles[0]?.value ?? "",
+    label: mainTitleOf(identification.titles)?.value ?? "",
     description: core.physicalDescription?.openPhysicalDescription,
     alternate_identifiers: [record.recordId],
     keywords: (core.extensions?.geology?.economic?.interestElements ?? []).map(

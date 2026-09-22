@@ -141,6 +141,8 @@ export const EMPTY_PROCESS_STEP_DRAFT: Omit<ProcessStepDraft, "key" | "kind"> =
 
 export type SampleDraft = {
   name: string | undefined;
+  localId: string | null | undefined;
+  localIdDescription: string | null | undefined;
   nature: CreateSample["nature"] | undefined;
   typePath: string[];
   materialPath: string[];
@@ -174,6 +176,8 @@ export const toSampleDraft = (
   options: DraftOptions = {},
 ): SampleDraft => ({
   name: value?.name,
+  localId: value?.localId,
+  localIdDescription: value?.localIdDescription,
   nature: value?.nature,
   typePath: toHierarchyPath(value?.type ?? null),
   materialPath: toHierarchyPath(
@@ -276,8 +280,13 @@ const composeCreateSample = (draft: SampleDraft) => {
     draft.syntheticDetails,
     material,
   );
+  const localId = draft.localId?.trim() || null;
   return {
     name: draft.name,
+    localId,
+    ...(localId
+      ? { localIdDescription: draft.localIdDescription?.trim() || null }
+      : {}),
     nature: draft.nature ?? null,
     type: composeHierarchyValue(draft.typePath),
     material,

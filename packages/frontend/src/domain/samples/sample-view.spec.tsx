@@ -168,7 +168,7 @@ describe("SampleView", () => {
   });
 
   it.each<[string, Partial<PublishedSample>, (string | RegExp)[]]>([
-    ["the translated nature", {}, ["Rock powder"]],
+    ["the translated nature", {}, ["Powder"]],
     [
       "the translated texture",
       {
@@ -191,6 +191,14 @@ describe("SampleView", () => {
       "the specific name",
       { specificName: "BRT-GRN-2025-07" },
       ["BRT-GRN-2025-07"],
+    ],
+    [
+      "the local id and its description",
+      {
+        localId: "FTB-2026-042",
+        localIdDescription: "Number in the laboratory collection catalogue",
+      },
+      ["FTB-2026-042", "Number in the laboratory collection catalogue"],
     ],
     [
       "the collection method description",

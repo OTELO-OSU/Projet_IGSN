@@ -29,6 +29,8 @@ const relationDraft: RelationDraft = {
 
 const draft: SampleDraft = {
   name: "Basalt 42",
+  localId: null,
+  localIdDescription: null,
   nature: "thin_section",
   typePath: toHierarchyPath("dredge"),
   materialPath: toHierarchyPath("rock_and_sediment.mineral"),
@@ -64,6 +66,7 @@ describe("sampleDraftSchema", () => {
   it("should compose the draft and validate it like the API does", () => {
     expect(sampleDraftSchema.parse(draft)).toEqual({
       name: "Basalt 42",
+      localId: null,
       nature: "thin_section",
       type: "dredge",
       material: "rock_and_sediment.mineral",
@@ -132,6 +135,27 @@ describe("sampleDraftSchema", () => {
     ).toMatchObject({ specificName });
   });
 
+  it.each<[string, string, string | undefined]>([
+    [
+      "drop a lingering local id description when the local id is blank",
+      "  ",
+      undefined,
+    ],
+    [
+      "keep the local id description once the local id is filled",
+      "  MC-2026-007  ",
+      "Collection catalogue number",
+    ],
+  ])("should %s", (_case, localId, localIdDescription) => {
+    const result = sampleDraftSchema.parse({
+      ...draft,
+      localId,
+      localIdDescription: "  Collection catalogue number  ",
+    });
+
+    expect(result.localIdDescription).toBe(localIdDescription);
+  });
+
   it("should drop a lingering location and geological context when the material forbids a location", () => {
     const result = sampleDraftSchema.parse({
       ...draft,
@@ -188,6 +212,7 @@ describe("sampleDraftSchema", () => {
       }),
     ).toEqual({
       name: "Basalt 42",
+      localId: null,
       nature: "thin_section",
       type: "dredge",
       material: "rock_and_sediment.mineral",

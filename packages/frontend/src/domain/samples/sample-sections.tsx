@@ -49,6 +49,8 @@ export function sampleSections(
     metamorphicFacies,
     metamorphicFabric,
     specificName,
+    localId,
+    localIdDescription,
     collectionMethod,
     collectionMethodDescription,
     description,
@@ -127,6 +129,11 @@ export function sampleSections(
           <FieldRow
             label={m.sample_field_specific_name()}
             value={specificName}
+          />
+          <FieldRow label={m.sample_field_local_id()} value={localId} />
+          <FieldRow
+            label={m.sample_field_local_id_description()}
+            value={localIdDescription}
           />
           <BreadcrumbFieldRow
             id="sample-field-collection-method"

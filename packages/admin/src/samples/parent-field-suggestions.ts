@@ -10,6 +10,8 @@ import { toSubSampleDefaults } from "#/samples/to-sub-sample-defaults.ts";
 
 const NOT_INHERITED_FIELDS = new Set([
   "name",
+  "localId",
+  "localIdDescription",
   "nature",
   "materialPath",
   "parentIds",

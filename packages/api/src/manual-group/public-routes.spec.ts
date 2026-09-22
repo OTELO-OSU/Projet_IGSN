@@ -29,7 +29,7 @@ describe("public manual group routes", () => {
         .execute();
       const published = await insertSample(db, {
         name: "Published sample",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         manualGroupIds: [PUBLISHED],
@@ -37,14 +37,14 @@ describe("public manual group routes", () => {
       await publishSample(db, published.id);
       await insertSample(db, {
         name: "Draft sample",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         manualGroupIds: [DRAFT_ONLY],
       });
       const withdrawn = await insertSample(db, {
         name: "Withdrawn sample",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         manualGroupIds: [WITHDRAWN_ONLY],

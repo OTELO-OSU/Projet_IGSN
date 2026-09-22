@@ -6,6 +6,8 @@ import { toWithdrawnSample } from "./withdrawn-sample.ts";
 const withdrawn: Sample = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Rhyolite 11",
+  localId: null,
+  localIdDescription: null,
   nature: "hand_sample",
   type: "dredge",
   material: "rock_and_sediment.rock.other",

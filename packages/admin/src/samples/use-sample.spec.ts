@@ -14,6 +14,8 @@ const LEFT_BEHIND = {
 const sample = {
   id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
   name: "Basalte du Massif Central",
+  localId: null,
+  localIdDescription: null,
   nature: "thin_section",
   type: null,
   material: null,

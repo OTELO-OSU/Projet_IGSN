@@ -11,6 +11,8 @@ import { toAgeColumns } from "./to-age-columns.ts";
 
 export const sampleColumns = (input: CreateSample) => ({
   name: input.name,
+  local_id: input.localId ?? null,
+  local_id_description: input.localIdDescription ?? null,
   nature: input.nature ?? null,
   type: input.type,
   material: input.material ?? null,

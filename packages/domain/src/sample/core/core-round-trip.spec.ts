@@ -24,6 +24,7 @@ const UNMAPPED_SAMPLE_FIELDS = [
   "institutionalLaboratory",
   "attachments",
   "publicationYear",
+  "localIdDescription",
 ];
 
 const UNMAPPED_RELATION_FIELDS = ["id"];

@@ -161,6 +161,8 @@
   "restore_withdrawn_sample_warning": "The sample gets its reduced public page back, still out of search results.",
   "field_name": "Name",
   "field_name_required": "Name is required",
+  "field_local_id": "Local ID",
+  "field_local_id_description": "Local ID description",
   "field_nature": "Nature",
   "field_igsn": "IGSN",
   "nature_placeholder": "Select a nature",
