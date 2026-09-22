@@ -415,7 +415,7 @@ describe("the geolocation of a DataCite record", () => {
       toDataCiteSample(
         core({
           ...FIELD_SAMPLE,
-          location: { region: { kind: "continent", country: "FR" } },
+          location: { region: { kind: "country", country: "FR" } },
         }),
       ).geoLocations,
     ).toEqual([]);

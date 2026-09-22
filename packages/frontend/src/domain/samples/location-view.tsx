@@ -85,10 +85,10 @@ export function LocationView({ location }: { location: Location }) {
         label={m.sample_field_region()}
         value={
           region &&
-          (region.kind === "continent"
+          (region.kind === "country"
             ? region.country
               ? countryLabel(region.country, getLocale())
-              : m.region_kind_continent()
+              : m.region_kind_country()
             : region.oceanSea
               ? oceanSeaLabel(region.oceanSea)
               : m.region_kind_ocean())

@@ -2145,7 +2145,7 @@ const publishedFieldSampleFixture: CreateSample = {
       latitude: 45,
       vertical: { position: 800, reference: "bathymetry", system: "msl" },
     },
-    region: { kind: "continent", country: "FR" },
+    region: { kind: "country", country: "FR" },
     localityName: "Massif Central",
   },
   scientificContext: {

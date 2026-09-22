@@ -703,7 +703,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     material: "rock_and_sediment.rock.igneous.volcanic.felsic.rhyolite",
     collectionMethod: "blasting",
     location: {
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
       localityName: "Mont-Dore",
       position: { type: "point", longitude: 2.81, latitude: 45.57 },
     },
@@ -739,7 +739,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     material: "rock_and_sediment.rock.igneous.volcanic.felsic.rhyolite",
     collectionMethod: "blasting",
     location: {
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
       localityName: "Mont-Dore",
       position: { type: "point", longitude: 2.81, latitude: 45.57 },
     },

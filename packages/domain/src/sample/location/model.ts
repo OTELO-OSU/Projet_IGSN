@@ -57,7 +57,7 @@ const positionSchema = z.discriminatedUnion("type", [
 ]);
 
 const regionSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("continent"), country: countrySchema.nullish() }),
+  z.object({ kind: z.literal("country"), country: countrySchema.nullish() }),
   z.object({ kind: z.literal("ocean"), oceanSea: oceanSeaSchema.nullish() }),
 ]);
 

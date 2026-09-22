@@ -124,7 +124,7 @@
   "sample_field_vertical_reference": "Vertical reference",
   "sample_field_vertical_reference_system": "Vertical reference system",
   "sample_field_region": "Region",
-  "region_kind_continent": "Continent / country",
+  "region_kind_country": "Country",
   "region_kind_ocean": "Ocean / sea",
   "sample_field_navigation_type": "Navigation type",
   "sample_field_locality_name": "Locality name",

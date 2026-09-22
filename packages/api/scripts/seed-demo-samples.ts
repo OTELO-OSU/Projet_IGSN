@@ -134,7 +134,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "BRT-GRN-2025-07",
     location: {
       position: point(-3.5, 48.2),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
       localityName: "Ploumanac'h quarry",
     },
     description: during("2025-05-12T09:15", "2025-05-12T17:40"),
@@ -150,7 +150,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "COR-GD-2025-03",
     location: {
       position: point(9.1, 42.15, elev(800)),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
     },
     description: on("2025-06-20"),
   },
@@ -163,7 +163,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(8.3, 46.7, elev(2200)),
-      region: { kind: "continent", country: "CH" },
+      region: { kind: "country", country: "CH" },
     },
     description: on("2024-08-01"),
   },
@@ -177,7 +177,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "BV-MAG-88",
     location: {
       position: point(29.5, -25.0),
-      region: { kind: "continent", country: "ZA" },
+      region: { kind: "country", country: "ZA" },
     },
     description: on("2025-02-14"),
   },
@@ -190,7 +190,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(10.7, 51.9),
-      region: { kind: "continent", country: "DE" },
+      region: { kind: "country", country: "DE" },
     },
     description: on("2024-09-03"),
   },
@@ -204,7 +204,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "OM-OPH-2025-11",
     location: {
       position: point(58.1, 23.1, elev(450)),
-      region: { kind: "continent", country: "OM" },
+      region: { kind: "country", country: "OM" },
     },
     description: on("2025-03-30"),
   },
@@ -217,7 +217,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "blasting",
     location: {
       position: point(10.7, 59.9),
-      region: { kind: "continent", country: "NO" },
+      region: { kind: "country", country: "NO" },
     },
     description: on("2024-07-19"),
   },
@@ -231,7 +231,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "MC-BAS-2025-19",
     location: {
       position: point(2.96, 45.77, elev(1050)),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
     },
     description: on("2025-06-15"),
   },
@@ -263,7 +263,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(15.0, 37.75, elev(2900)),
-      region: { kind: "continent", country: "IT" },
+      region: { kind: "country", country: "IT" },
     },
     description: on("2025-05-01"),
   },
@@ -276,7 +276,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-110.6, 44.6, elev(2400)),
-      region: { kind: "continent", country: "US" },
+      region: { kind: "country", country: "US" },
     },
     description: on("2024-06-11"),
   },
@@ -289,7 +289,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-70.0, -23.0, elev(3800)),
-      region: { kind: "continent", country: "CL" },
+      region: { kind: "country", country: "CL" },
     },
     description: on("2025-01-22"),
   },
@@ -302,7 +302,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(31.0, -25.8),
-      region: { kind: "continent", country: "ZA" },
+      region: { kind: "country", country: "ZA" },
     },
     description: on("2024-10-05"),
   },
@@ -315,7 +315,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-16.6, 28.3, elev(1900)),
-      region: { kind: "continent", country: "ES" },
+      region: { kind: "country", country: "ES" },
     },
     description: on("2025-02-02"),
   },
@@ -328,7 +328,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(73.8, 18.5),
-      region: { kind: "continent", country: "IN" },
+      region: { kind: "country", country: "IN" },
     },
     description: on("2024-11-20"),
   },
@@ -341,7 +341,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(24.77, -28.74),
-      region: { kind: "continent", country: "ZA" },
+      region: { kind: "country", country: "ZA" },
     },
     description: on("2025-03-11"),
   },
@@ -355,7 +355,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "blasting",
     location: {
       position: point(10.1, 44.08),
-      region: { kind: "continent", country: "IT" },
+      region: { kind: "country", country: "IT" },
       localityName: "Carrara quarry",
     },
     description: on("2024-05-30"),
@@ -371,7 +371,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(7.0, 45.9),
-      region: { kind: "continent", country: "IT" },
+      region: { kind: "country", country: "IT" },
     },
     description: on("2025-01-15"),
   },
@@ -386,7 +386,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(13.6, 68.2),
-      region: { kind: "continent", country: "NO" },
+      region: { kind: "country", country: "NO" },
     },
     description: on("2024-08-22"),
   },
@@ -400,7 +400,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(6.5, 61.9),
-      region: { kind: "continent", country: "NO" },
+      region: { kind: "country", country: "NO" },
     },
     description: on("2025-02-27"),
   },
@@ -414,7 +414,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-122.5, 37.8),
-      region: { kind: "continent", country: "US" },
+      region: { kind: "country", country: "US" },
     },
     description: on("2024-09-14"),
   },
@@ -428,7 +428,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-5.0, 58.2),
-      region: { kind: "continent", country: "GB" },
+      region: { kind: "country", country: "GB" },
     },
     description: on("2025-04-19"),
   },
@@ -441,7 +441,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "blasting",
     location: {
       position: point(-4.0, 53.0),
-      region: { kind: "continent", country: "GB" },
+      region: { kind: "country", country: "GB" },
     },
     description: on("2024-07-07"),
   },
@@ -455,7 +455,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(26.0, 68.5),
-      region: { kind: "continent", country: "FI" },
+      region: { kind: "country", country: "FI" },
     },
     description: on("2025-03-05"),
   },
@@ -469,7 +469,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(8.0, 45.7),
-      region: { kind: "continent", country: "IT" },
+      region: { kind: "country", country: "IT" },
     },
     description: on("2024-10-30"),
   },
@@ -484,7 +484,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(7.1, 45.5, elev(2500)),
-      region: { kind: "continent", country: "IT" },
+      region: { kind: "country", country: "IT" },
     },
     description: on("2025-01-08"),
   },
@@ -499,7 +499,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(6.9, 45.2),
-      region: { kind: "continent", country: "IT" },
+      region: { kind: "country", country: "IT" },
     },
     description: on("2025-02-18"),
   },
@@ -512,7 +512,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(2.7, 48.4),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
     },
     description: on("2024-06-01"),
   },
@@ -525,7 +525,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(5.9, 46.7),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
     },
     description: on("2025-05-25"),
   },
@@ -538,7 +538,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(11.9, 46.4, elev(2100)),
-      region: { kind: "continent", country: "IT" },
+      region: { kind: "country", country: "IT" },
     },
     description: on("2024-08-18"),
   },
@@ -551,7 +551,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(11.0, 49.8),
-      region: { kind: "continent", country: "DE" },
+      region: { kind: "country", country: "DE" },
     },
     description: on("2025-01-30"),
   },
@@ -564,7 +564,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(2.35, 48.9),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
     },
     description: on("2024-09-27"),
   },
@@ -578,7 +578,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "RUHR-BH-14",
     location: {
       position: point(7.2, 51.5, bathy(800)),
-      region: { kind: "continent", country: "DE" },
+      region: { kind: "country", country: "DE" },
     },
     description: on("2024-11-11"),
   },
@@ -660,7 +660,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-1.5, 47.2),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
     },
     description: on("2025-05-06"),
   },
@@ -672,7 +672,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(7.6, 47.6),
-      region: { kind: "continent", country: "DE" },
+      region: { kind: "country", country: "DE" },
     },
     description: on("2024-06-25"),
   },
@@ -684,7 +684,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(4.9, 48.3),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
     },
     description: on("2025-01-19"),
     age: annumAge(12000, 25000, "bp"),
@@ -697,7 +697,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(14.43, 40.82),
-      region: { kind: "continent", country: "IT" },
+      region: { kind: "country", country: "IT" },
     },
     description: on("2024-09-09"),
     age: annumAge(79, 79, "ce"),
@@ -737,7 +737,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "probe",
     location: {
       position: point(-8.0, 53.4),
-      region: { kind: "continent", country: "IE" },
+      region: { kind: "country", country: "IE" },
     },
     description: on("2025-03-17"),
     age: annumAge(2000, 8000, "cal_bp"),
@@ -765,7 +765,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(8.5, 46.5, elev(2600)),
-      region: { kind: "continent", country: "CH" },
+      region: { kind: "country", country: "CH" },
     },
     description: on("2024-07-01"),
   },
@@ -777,7 +777,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-6.6, 37.7),
-      region: { kind: "continent", country: "ES" },
+      region: { kind: "country", country: "ES" },
     },
     description: on("2025-04-14"),
   },
@@ -789,7 +789,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-43.0, -18.0),
-      region: { kind: "continent", country: "BR" },
+      region: { kind: "country", country: "BR" },
     },
     description: on("2024-10-22"),
   },
@@ -802,7 +802,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(10.6, 48.9),
-      region: { kind: "continent", country: "DE" },
+      region: { kind: "country", country: "DE" },
     },
     description: on("2025-05-18"),
     age: geologicalAge(10, 12, "Ries impact breccia"),
@@ -843,7 +843,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(1.0, 27.5),
-      region: { kind: "continent", country: "DZ" },
+      region: { kind: "country", country: "DZ" },
     },
     description: on("2024-06-05"),
   },
@@ -856,7 +856,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(145.2, -36.6),
-      region: { kind: "continent", country: "AU" },
+      region: { kind: "country", country: "AU" },
     },
     description: on("2025-02-11"),
   },
@@ -869,7 +869,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-111.02, 35.03),
-      region: { kind: "continent", country: "US" },
+      region: { kind: "country", country: "US" },
     },
     description: on("2024-08-08"),
   },
@@ -883,7 +883,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "NWA-8686",
     location: {
       position: point(-5.0, 28.0),
-      region: { kind: "continent", country: "MA" },
+      region: { kind: "country", country: "MA" },
     },
     description: on("2025-03-01"),
   },
@@ -897,7 +897,7 @@ const PUBLISHED: DemoRow[] = [
     specificName: "MIL-2024-01",
     location: {
       position: point(160.0, -76.7),
-      region: { kind: "continent", country: "AQ" },
+      region: { kind: "country", country: "AQ" },
     },
     description: on("2024-12-20"),
   },
@@ -962,7 +962,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "unknown",
     location: {
       position: point(2.5, 45.0),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
     },
     description: on("2024-01-10"),
     existenceStatus: "lost",
@@ -1004,7 +1004,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "suspended_sediment",
     location: {
       position: point(4.85, 45.75),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
     },
     description: on("2025-04-02"),
   },
@@ -1047,7 +1047,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(133.5, 33.8),
-      region: { kind: "continent", country: "JP" },
+      region: { kind: "country", country: "JP" },
     },
     description: on("2025-04-25"),
   },
@@ -1061,7 +1061,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(169.7, -45.3),
-      region: { kind: "continent", country: "NZ" },
+      region: { kind: "country", country: "NZ" },
     },
     description: on("2024-11-08"),
   },
@@ -1074,7 +1074,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-155.29, 19.42, elev(1200)),
-      region: { kind: "continent", country: "US" },
+      region: { kind: "country", country: "US" },
     },
     description: on("2025-05-30"),
   },
@@ -1088,7 +1088,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-115.5, 65.2),
-      region: { kind: "continent", country: "CA" },
+      region: { kind: "country", country: "CA" },
     },
     description: on("2024-07-22"),
   },
@@ -1102,7 +1102,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(114.0, 30.8),
-      region: { kind: "continent", country: "CN" },
+      region: { kind: "country", country: "CN" },
     },
     description: on("2025-03-14"),
   },
@@ -1115,7 +1115,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(98.9, 2.6),
-      region: { kind: "continent", country: "ID" },
+      region: { kind: "country", country: "ID" },
     },
     description: on("2024-10-09"),
   },
@@ -1128,7 +1128,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-16.78, 65.72),
-      region: { kind: "continent", country: "IS" },
+      region: { kind: "country", country: "IS" },
     },
     description: on("2025-06-28"),
   },
@@ -1141,7 +1141,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(88.2, 69.3),
-      region: { kind: "continent", country: "RU" },
+      region: { kind: "country", country: "RU" },
     },
     description: on("2024-08-30"),
   },
@@ -1154,7 +1154,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(2.964, 45.772, elev(1465)),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
       localityName: "Puy de Dôme",
     },
     description: on("2025-06-18"),
@@ -1168,7 +1168,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(2.94, 45.81, elev(1250)),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
       localityName: "Puy de Côme",
     },
     description: on("2025-06-19"),
@@ -1182,7 +1182,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(2.966, 45.798, elev(1210)),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
       localityName: "Puy Pariou",
     },
     description: on("2025-06-20"),
@@ -1196,7 +1196,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(2.98, 45.7, elev(1160)),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
       localityName: "Puy de la Vache",
     },
     description: on("2025-06-21"),
@@ -1210,7 +1210,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(2.97, 45.83, elev(1180)),
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
       localityName: "Puy Chopine",
     },
     description: on("2025-06-22"),
@@ -1224,7 +1224,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(40.6, 11.8),
-      region: { kind: "continent", country: "ET" },
+      region: { kind: "country", country: "ET" },
     },
     description: on("2025-02-04"),
   },
@@ -1238,7 +1238,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-50.0, 65.1),
-      region: { kind: "continent", country: "GL" },
+      region: { kind: "country", country: "GL" },
     },
     description: on("2024-07-14"),
   },
@@ -1252,7 +1252,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(86.9, 28.0, elev(5200)),
-      region: { kind: "continent", country: "NP" },
+      region: { kind: "country", country: "NP" },
     },
     description: on("2024-09-25"),
   },
@@ -1265,7 +1265,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-70.0, -46.5),
-      region: { kind: "continent", country: "AR" },
+      region: { kind: "country", country: "AR" },
     },
     description: on("2025-01-12"),
   },
@@ -1278,7 +1278,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(-98.62, 19.02, elev(4000)),
-      region: { kind: "continent", country: "MX" },
+      region: { kind: "country", country: "MX" },
     },
     description: on("2025-05-08"),
   },
@@ -1291,7 +1291,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(126.5, 33.4),
-      region: { kind: "continent", country: "KR" },
+      region: { kind: "country", country: "KR" },
     },
     description: on("2024-10-27"),
   },
@@ -1304,7 +1304,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethod: "manual",
     location: {
       position: point(147.7, -9.4),
-      region: { kind: "continent", country: "PG" },
+      region: { kind: "country", country: "PG" },
     },
     description: on("2025-03-19"),
   },
@@ -1312,7 +1312,7 @@ const PUBLISHED: DemoRow[] = [
 
 const MONT_DORE: DemoRow["location"] = {
   position: point(2.81, 45.57, elev(1400)),
-  region: { kind: "continent", country: "FR" },
+  region: { kind: "country", country: "FR" },
   localityName: "Mont-Dore massif",
 };
 
@@ -1478,7 +1478,7 @@ const DRAFTS: DemoRow[] = [
   {
     name: "Regional survey point",
     nature: "multiple_sample",
-    location: { region: { kind: "continent", country: "FR" } },
+    location: { region: { kind: "country", country: "FR" } },
   },
   {
     name: "Cave locality note",

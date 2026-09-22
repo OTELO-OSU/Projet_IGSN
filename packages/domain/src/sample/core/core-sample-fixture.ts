@@ -48,7 +48,7 @@ export const FIELD_SAMPLE: Sample = {
         system: "ngf_ign69",
       },
     },
-    region: { kind: "continent", country: "FR" },
+    region: { kind: "country", country: "FR" },
     navigationType: "GPS",
     localityName: "Nancy quarry",
     localityDescription: "Northern face of the quarry",

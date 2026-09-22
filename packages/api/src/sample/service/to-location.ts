@@ -83,8 +83,8 @@ function toPosition(row: LocationRow) {
 }
 
 function toRegion(row: LocationRow) {
-  if (row.region_kind === "continent") {
-    return { kind: "continent", country: row.country };
+  if (row.region_kind === "country") {
+    return { kind: "country", country: row.country };
   }
   if (row.region_kind === "ocean") {
     return { kind: "ocean", oceanSea: row.ocean_sea };
@@ -120,7 +120,7 @@ export function locationColumns(location: Location | null | undefined) {
     vertical_reference_system: vertical?.system ?? null,
     navigation_type: location?.navigationType ?? null,
     region_kind: region?.kind ?? null,
-    country: (region?.kind === "continent" ? region.country : null) ?? null,
+    country: (region?.kind === "country" ? region.country : null) ?? null,
     ocean_sea: (region?.kind === "ocean" ? region.oceanSea : null) ?? null,
     locality_name: location?.localityName ?? null,
     locality_description: location?.localityDescription ?? null,

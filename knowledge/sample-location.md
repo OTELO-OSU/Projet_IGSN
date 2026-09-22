@@ -32,7 +32,7 @@ Domain model (`domain/sample/location/`), `sample.location` nullable and its par
 
 - `position?`: a `z.discriminatedUnion("type")` over `point` (longitude, latitude), `area` (west/east/south/north) and `line` (start/end pairs), each with an optional vertical block.
 - The vertical block is a non-negative value in metres with a required `reference` (elevation, depth below ground, depth below sea floor, bathymetry, core depth, other) and an optional EPSG reference `system` (17 values); the sign lives in `reference`. A point carries one value, an area a `min`/`max`, a line a `start`/`end`. Bounds are plain `z.number()`, decimals accepted.
-- `region?`: `{ kind: "continent", country }` or `{ kind: "ocean", oceanSea }`; plus `navigationType?`, `localityName?`, `localityDescription?`.
+- `region?`: `{ kind: "country", country }` or `{ kind: "ocean", oceanSea }`; plus `navigationType?`, `localityName?`, `localityDescription?`.
 - Cross-field coherence (`north >= south`, vertical `min <= max`) is a `superRefine` on `locationSchema`.
 - Vocabularies stay codes: ISO 3166-1 alpha-2 countries localized by native `Intl.DisplayNames` with an English fallback for retired entries, a bespoke `snake_case` ocean/sea list with a generated label map, SESAR navigation types stored verbatim since the acronym is language-neutral.
 - A sample is read with a correlated `jsonObjectFrom` subquery on `location` (`sampleLocationQuery`), never a join; the bbox filter is a correlated `exists` on `location`. The repository selects explicit columns and maps the nested row to `Location`.

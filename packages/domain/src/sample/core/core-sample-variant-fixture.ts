@@ -18,7 +18,7 @@ const pointSample = (name: string, vertical: PointVertical): Sample => ({
   name,
   location: {
     position: { type: "point", longitude: 6.18, latitude: 48.69, vertical },
-    region: { kind: "continent", country: "FR" },
+    region: { kind: "country", country: "FR" },
     navigationType: "DGPS",
     localityName: "Nancy quarry",
     localityDescription: "Northern face of the quarry",

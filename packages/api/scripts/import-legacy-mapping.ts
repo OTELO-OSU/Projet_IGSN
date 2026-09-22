@@ -487,7 +487,7 @@ function mapLocation(row: LegacyRow): CreateSample["location"] | null {
     clean(row.locality_description) ?? clean(row.location_description);
   const location = {
     ...(position ? { position } : {}),
-    ...(country ? { region: { kind: "continent" as const, country } } : {}),
+    ...(country ? { region: { kind: "country" as const, country } } : {}),
     ...(navigationType ? { navigationType } : {}),
     ...(localityName ? { localityName } : {}),
     ...(localityDescription ? { localityDescription } : {}),
