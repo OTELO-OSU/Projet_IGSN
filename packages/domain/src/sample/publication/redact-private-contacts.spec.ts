@@ -44,7 +44,7 @@ describe("redactPrivateContacts", () => {
         provenanceStatus: "field_sample",
         chiefScientistUserId: USER_ID,
         collectorUserId: USER_ID,
-        fieldName: "Site A",
+        launchPlatformName: "RV Marion Dufresne",
         additionalRoles: [
           { role: "researcher", personUserId: USER_ID },
           { role: "data_manager", personLastname: "Curie" },
@@ -54,7 +54,7 @@ describe("redactPrivateContacts", () => {
         provenanceStatus: "field_sample",
         chiefScientistUserId: null,
         collectorUserId: null,
-        fieldName: "Site A",
+        launchPlatformName: "RV Marion Dufresne",
         additionalRoles: [
           { role: "researcher", personUserId: null },
           { role: "data_manager", personLastname: "Curie" },

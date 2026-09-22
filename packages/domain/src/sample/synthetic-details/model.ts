@@ -38,5 +38,6 @@ export const syntheticDetailsSchema = z.object({
 
 export type SyntheticDetails = z.infer<typeof syntheticDetailsSchema>;
 
-export const createSyntheticDetailsSchema =
-  syntheticDetailsSchema.superRefine(checkContactLinks);
+export const createSyntheticDetailsSchema = syntheticDetailsSchema
+  .omit({ operatorOrcid: true })
+  .superRefine(checkContactLinks);

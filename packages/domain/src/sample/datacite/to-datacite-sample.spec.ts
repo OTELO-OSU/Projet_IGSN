@@ -72,6 +72,7 @@ const DROPPED_CORE_PATHS = [
   "manualGroups.name",
   "extensions.geology",
   "extensions.safety",
+  "extensions.fieldwork",
 ];
 
 const ORGANIZATION_NAME = "Centre National de la Recherche Scientifique (CNRS)";
@@ -139,25 +140,11 @@ describe("a Core record mapped to DataCite", () => {
         {
           name: "Inge Lehmann",
           nameType: "Personal",
-          nameIdentifiers: [
-            {
-              nameIdentifier: "https://orcid.org/0000-0001-5109-3700",
-              nameIdentifierScheme: "ORCID",
-              schemeUri: "https://orcid.org",
-            },
-          ],
           contributorType: "DataCollector",
         },
         {
           name: "Alfred Wegener",
           nameType: "Personal",
-          nameIdentifiers: [
-            {
-              nameIdentifier: "https://orcid.org/0000-0002-1825-0097",
-              nameIdentifierScheme: "ORCID",
-              schemeUri: "https://orcid.org",
-            },
-          ],
           contributorType: "ProjectLeader",
         },
         {
@@ -253,10 +240,6 @@ describe("a Core record mapped to DataCite", () => {
       ],
       descriptions: [
         {
-          description: "Sampling campaign of June 2024",
-          descriptionType: "Abstract",
-        },
-        {
           description: "Coarse grained and slightly weathered",
           descriptionType: "Other",
         },
@@ -289,13 +272,6 @@ describe("a Core record mapped to DataCite", () => {
         {
           name: "Rosalind Franklin",
           nameType: "Personal",
-          nameIdentifiers: [
-            {
-              nameIdentifier: "https://orcid.org/0000-0003-1415-9269",
-              nameIdentifierScheme: "ORCID",
-              schemeUri: "https://orcid.org",
-            },
-          ],
           affiliation: [ORGANIZATION_AFFILIATION],
           contributorType: "Researcher",
         },

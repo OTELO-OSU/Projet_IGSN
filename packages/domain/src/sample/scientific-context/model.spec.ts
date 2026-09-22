@@ -16,11 +16,10 @@ const fieldSample = {
   collectorLastname: "Curie",
   collectorOrcid: "0000-0001-2345-6789",
   hostInstitution: ["04kdfz702", "02feahw73"],
-  researchCampaign: "MD 209 / 2021",
   funding: "ANR grant 42",
   researchProgramDescription: "Multi-year survey of\nsub-seafloor life",
-  fieldName: "Site A",
-  missionDescription: "Coring campaign in\nthe North Atlantic",
+  platformType: "ship",
+  launchPlatformName: "RV Marion Dufresne",
   additionalRoles: [],
 };
 
@@ -149,14 +148,6 @@ describe("a person is a link or a typed name, never both", () => {
         chiefScientistFirstname: "Marie",
       },
     },
-    {
-      case: "a person linked and carrying an ORCID alone",
-      input: {
-        provenanceStatus: "field_sample",
-        chiefScientistUserId: USER_ID,
-        chiefScientistOrcid: "0000-0002-1825-0097",
-      },
-    },
   ])("should reject $case", ({ input }) => {
     expect(createScientificContextSchema.safeParse(input).success).toBe(false);
   });
@@ -207,5 +198,31 @@ describe("a person is a link or a typed name, never both", () => {
       0,
       "personUserId",
     ]);
+  });
+});
+
+describe("a write payload carries no ORCID", () => {
+  it("should drop every submitted ORCID rather than reject it, since an ORCID comes from the linked account alone", () => {
+    expect(
+      createScientificContextSchema.parse({
+        provenanceStatus: "field_sample",
+        chiefScientistLastname: "Curie",
+        chiefScientistOrcid: "0000-0002-1825-0097",
+        collectorLastname: "Lehmann",
+        collectorOrcid: "0000-0001-5109-3700",
+        additionalRoles: [
+          {
+            role: "researcher",
+            personLastname: "Lovelace",
+            personOrcid: "0000-0003-1415-9269",
+          },
+        ],
+      }),
+    ).toEqual({
+      provenanceStatus: "field_sample",
+      chiefScientistLastname: "Curie",
+      collectorLastname: "Lehmann",
+      additionalRoles: [{ role: "researcher", personLastname: "Lovelace" }],
+    });
   });
 });

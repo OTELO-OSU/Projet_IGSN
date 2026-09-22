@@ -1,7 +1,6 @@
 import type { CoreAgentRole, CoreRole } from "./core-sample-schema.ts";
 
 import { fromRorUri } from "./core-production-schema.ts";
-import { fromOrcidUri } from "./core-sample-schema.ts";
 
 export function responsibilityFinders(responsibility: CoreAgentRole[]) {
   const agentOf = (role: CoreRole) =>
@@ -13,7 +12,6 @@ export function responsibilityFinders(responsibility: CoreAgentRole[]) {
   return {
     agentOf,
     personOf,
-    orcidOf: (role: CoreRole) => fromOrcidUri(agentOf(role)?.id),
     rorsOf: (role: CoreRole) => {
       const rors = responsibility
         .filter((agentRole) => agentRole.roles[0] === role)

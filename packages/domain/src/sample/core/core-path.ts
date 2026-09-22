@@ -67,23 +67,21 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   scientificContext: "classification.contextCategories",
   "scientificContext.collectorFirstname": "responsibility",
   "scientificContext.collectorLastname": "responsibility",
-  "scientificContext.collectorOrcid": "responsibility",
   "scientificContext.chiefScientistFirstname": "responsibility",
   "scientificContext.chiefScientistLastname": "responsibility",
-  "scientificContext.chiefScientistOrcid": "responsibility",
   "scientificContext.hostInstitution": "responsibility",
   "scientificContext.additionalRoles": "responsibility",
   "scientificContext.collectionCuratorFirstname": "responsibility",
   "scientificContext.collectionCuratorLastname": "responsibility",
-  "scientificContext.missionDescription": "production.samplingPurpose",
-  "scientificContext.fieldName": "production.samplingSite_name",
   "scientificContext.researchProgramName": "production.projects.0.name",
   "scientificContext.funderOrganizations":
     "production.projects.0.fundingReferences",
   "scientificContext.funding": "production.projects.0.funding",
   "scientificContext.researchProgramDescription":
     "production.projects.0.description",
-  "scientificContext.researchCampaign": "production.projects.0.campaign",
+  "scientificContext.platformType": "extensions.fieldwork.platformType",
+  "scientificContext.launchPlatformName":
+    "extensions.fieldwork.launchPlatformName",
 
   syntheticDetails: "extensions.experiment",
   "syntheticDetails.startingMaterial": "extensions.experiment.startingMaterial",
@@ -105,7 +103,6 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
     "extensions.experiment.operator.firstname",
   "syntheticDetails.operatorLastname":
     "extensions.experiment.operator.lastname",
-  "syntheticDetails.operatorOrcid": "extensions.experiment.operator.id",
   "syntheticDetails.researchStructure":
     "extensions.experiment.operator.affiliations",
 

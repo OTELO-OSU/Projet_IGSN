@@ -25,7 +25,6 @@ function toCoreProjects(sample: Sample): CoreProduction["projects"] {
     })),
     funding: context.funding ?? undefined,
     description: context.researchProgramDescription ?? undefined,
-    campaign: context.researchCampaign ?? undefined,
   };
   return isEmpty(project) ? undefined : [project];
 }
@@ -72,9 +71,6 @@ export function toCoreProduction(sample: Sample): CoreProduction {
   const collectionDate = collectionDateSchema.parse(
     sample.description?.collectionDate,
   );
-  const context = sample.scientificContext;
-  const fieldSample =
-    context?.provenanceStatus === "field_sample" ? context : null;
   return {
     collection_date_start: collectionDate.start,
     collection_date_end: collectionDate.end,
@@ -87,8 +83,6 @@ export function toCoreProduction(sample: Sample): CoreProduction {
     ),
     collectionMethodDescription:
       sample.collectionMethodDescription ?? undefined,
-    samplingPurpose: fieldSample?.missionDescription ?? undefined,
-    samplingSite_name: fieldSample?.fieldName ?? undefined,
     projects: toCoreProjects(sample),
     processSteps: toCoreProcessSteps(sample),
     location:

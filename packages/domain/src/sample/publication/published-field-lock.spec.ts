@@ -64,16 +64,13 @@ const stored: Sample = {
     researchProgramName: "Stored program",
     chiefScientistFirstname: "Stored",
     chiefScientistLastname: "chief",
-    chiefScientistOrcid: "0000-0002-1825-0097",
     hostInstitution: ["https://ror.org/00struct"],
     collectorFirstname: "Stored",
     collectorLastname: "collector",
-    collectorOrcid: "0000-0002-1825-0097",
-    researchCampaign: "stored campaign",
     funding: "stored funding",
     researchProgramDescription: "stored program desc",
-    fieldName: "stored field",
-    missionDescription: "stored mission",
+    platformType: "ship",
+    launchPlatformName: "stored platform",
   },
   syntheticDetails: null,
   age: null,
@@ -159,16 +156,13 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
       researchProgramName: "Edited program",
       chiefScientistFirstname: "Edited",
       chiefScientistLastname: "chief",
-      chiefScientistOrcid: "0000-0001-5109-3700",
       hostInstitution: ["https://ror.org/00editedstruct"],
       collectorFirstname: "Edited",
       collectorLastname: "editor",
-      collectorOrcid: "0000-0001-5109-3700",
-      researchCampaign: "edited campaign",
       funding: "edited funding",
       researchProgramDescription: "edited program desc",
-      fieldName: "edited field",
-      missionDescription: "edited mission",
+      platformType: "barge",
+      launchPlatformName: "edited platform",
     },
     age: null,
     relations: [],
@@ -262,7 +256,15 @@ describe("mergePublishedEdit", () => {
       ...payload.scientificContext,
       collectorFirstname: "Stored",
       collectorLastname: "collector",
-      collectorOrcid: "0000-0002-1825-0097",
+    });
+  });
+
+  it("takes the platform a payload edits after publication, since publication freezes neither", () => {
+    const merged = mergePublishedEdit(stored, incoming());
+
+    expect(merged.scientificContext).toMatchObject({
+      platformType: "barge",
+      launchPlatformName: "edited platform",
     });
   });
 
@@ -289,7 +291,6 @@ describe("mergePublishedEdit", () => {
       additionalRoles,
       collectorFirstname: "Stored",
       collectorLastname: "collector",
-      collectorOrcid: "0000-0002-1825-0097",
     });
   });
 
@@ -302,7 +303,6 @@ describe("mergePublishedEdit", () => {
         collectorUserId: LINKED_USER_ID,
         collectorFirstname: "Marie",
         collectorLastname: "Curie",
-        collectorOrcid: "0000-0002-1825-0097",
       },
     };
     const merged = mergePublishedEdit(
@@ -315,7 +315,6 @@ describe("mergePublishedEdit", () => {
       collectorUserId: LINKED_USER_ID,
       collectorFirstname: null,
       collectorLastname: null,
-      collectorOrcid: null,
     });
     expect(createSampleSchema.safeParse(merged)).toMatchObject({
       success: true,
@@ -333,7 +332,6 @@ describe("mergePublishedEdit", () => {
             personUserId: LINKED_USER_ID,
             personFirstname: "Marie",
             personLastname: "Curie",
-            personOrcid: "0000-0002-1825-0097",
           },
         ],
       },
@@ -350,7 +348,6 @@ describe("mergePublishedEdit", () => {
           personUserId: LINKED_USER_ID,
           personFirstname: null,
           personLastname: null,
-          personOrcid: null,
         },
       ],
     });
@@ -368,7 +365,6 @@ describe("mergePublishedEdit", () => {
         collectorUserId: LINKED_USER_ID,
         collectorFirstname: "Marie",
         collectorLastname: "Curie",
-        collectorOrcid: "0000-0002-1825-0097",
       },
     };
     const merged = mergePublishedEdit(
@@ -379,8 +375,7 @@ describe("mergePublishedEdit", () => {
           additionalRoles: [],
           collectorFirstname: "Edited",
           collectorLastname: "editor",
-          collectorOrcid: "0000-0001-5109-3700",
-          fieldName: "edited field",
+          launchPlatformName: "edited platform",
         },
       }),
     );
@@ -390,8 +385,7 @@ describe("mergePublishedEdit", () => {
       collectorUserId: LINKED_USER_ID,
       collectorFirstname: null,
       collectorLastname: null,
-      collectorOrcid: null,
-      fieldName: "edited field",
+      launchPlatformName: "edited platform",
     });
     expect(createSampleSchema.safeParse(merged)).toMatchObject({
       success: true,
@@ -443,7 +437,6 @@ describe("mergePublishedEdit", () => {
       },
       operatorFirstname: "Stored",
       operatorLastname: "operator",
-      operatorOrcid: "0000-0002-1825-0097",
       researchStructure: ["04kdfz702"],
       temperature: { value: 900, unit: "celsius" },
       pressure: { value: 1, unit: "gpa" },
@@ -465,7 +458,6 @@ describe("mergePublishedEdit", () => {
       },
       operatorFirstname: "Edited",
       operatorLastname: "worker",
-      operatorOrcid: "0000-0001-5109-3700",
       researchStructure: ["02feahw73"],
       temperature: { value: 1200, unit: "kelvin" },
       pressure: { value: 3, unit: "kbar" },
@@ -494,7 +486,6 @@ describe("mergePublishedEdit", () => {
         ...incomingDetails,
         operatorFirstname: "Stored",
         operatorLastname: "operator",
-        operatorOrcid: "0000-0002-1825-0097",
       });
     });
 
@@ -506,7 +497,6 @@ describe("mergePublishedEdit", () => {
             operatorUserId: LINKED_USER_ID,
             operatorFirstname: "Marie",
             operatorLastname: "Curie",
-            operatorOrcid: "0000-0002-1825-0097",
             finalProduct: "glass",
           },
         },
@@ -522,7 +512,6 @@ describe("mergePublishedEdit", () => {
         operatorUserId: LINKED_USER_ID,
         operatorFirstname: null,
         operatorLastname: null,
-        operatorOrcid: null,
       });
     });
 

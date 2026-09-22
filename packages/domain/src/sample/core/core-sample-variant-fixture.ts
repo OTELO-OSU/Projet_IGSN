@@ -262,35 +262,22 @@ export const TEAM_SAMPLE = withAdditionalRoles(
   FIELD_SAMPLE,
   "Non-synthetic sample credited to several people per role",
   [
-    {
-      role: "researcher",
-      personFirstname: "Ada",
-      personLastname: "Lovelace",
-      personOrcid: "0000-0002-1825-0097",
-    },
+    { role: "researcher", personFirstname: "Ada", personLastname: "Lovelace" },
     {
       role: "project_member",
       personFirstname: "Grace",
       personLastname: "Hopper",
-      personOrcid: null,
     },
-    {
-      role: "researcher",
-      personFirstname: "Emmy",
-      personLastname: "Noether",
-      personOrcid: null,
-    },
+    { role: "researcher", personFirstname: "Emmy", personLastname: "Noether" },
     {
       role: "data_manager",
       personFirstname: "Katherine",
       personLastname: "Johnson",
-      personOrcid: null,
     },
     {
       role: "project_manager",
       personFirstname: "Lise",
       personLastname: "Meitner",
-      personOrcid: null,
     },
   ],
 );
@@ -298,14 +285,7 @@ export const TEAM_SAMPLE = withAdditionalRoles(
 const SYNTHETIC_TEAM_SAMPLE = withAdditionalRoles(
   SYNTHETIC_SAMPLE,
   "Synthetic sample crediting its operator and a researcher",
-  [
-    {
-      role: "researcher",
-      personFirstname: "Emmy",
-      personLastname: "Noether",
-      personOrcid: null,
-    },
-  ],
+  [{ role: "researcher", personFirstname: "Emmy", personLastname: "Noether" }],
 );
 
 export const SUB_SAMPLE: Sample = {

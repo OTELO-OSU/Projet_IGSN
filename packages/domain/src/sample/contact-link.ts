@@ -4,20 +4,18 @@ export type ContactLink = {
   userId?: string | null;
   firstname?: string | null;
   lastname?: string | null;
-  orcid?: string | null;
 };
 
 export function hasTypedContactName(contact: ContactLink): boolean {
-  return (
-    contact.firstname != null ||
-    contact.lastname != null ||
-    contact.orcid != null
-  );
+  return contact.firstname != null || contact.lastname != null;
 }
 
 const LINK_SUFFIX = "UserId";
 
-const NAME_SUFFIXES = ["Firstname", "Lastname", "Orcid"] as const;
+const NAME_SUFFIXES = ["Firstname", "Lastname"] as const;
+
+// The ORCID is resolved from the linked account on read and never submitted, so comparing a payload against a stored sample must ignore it.
+const RESOLVED_SUFFIX = "Orcid";
 
 const linkedPersons = (value: Record<string, unknown>): string[] =>
   Object.keys(value)
@@ -104,7 +102,9 @@ const sameRow = (
   stored: Record<string, unknown>,
 ) =>
   [...new Set([...Object.keys(incoming), ...Object.keys(stored)])]
-    .filter((key) => !key.endsWith(LINK_SUFFIX))
+    .filter(
+      (key) => !key.endsWith(LINK_SUFFIX) && !key.endsWith(RESOLVED_SUFFIX),
+    )
     .every((key) => sameText(incoming[key], stored[key]));
 
 const restoreRowLinks = (
