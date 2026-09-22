@@ -4,6 +4,8 @@ import { institutionFilterSchema } from "../institutional-group/institution-filt
 import { manualGroupSchema } from "../manual-group/model.ts";
 import { userSampleRoleSchema } from "../user-sample/model.ts";
 import { userSchema } from "../user/model.ts";
+import { availabilityStatusSchema } from "./curation/availability-status.ts";
+import { existenceStatusSchema } from "./curation/existence-status.ts";
 import { sampleLineageSchema } from "./lineage/model.ts";
 import { sampleParentSchema } from "./parent/model.ts";
 import { withdrawnSampleSchema } from "./publication/withdrawn-sample.ts";
@@ -94,6 +96,8 @@ export const listSamplesQuerySchema = z.object({
   search: searchTermSchema,
   ownership: z.enum(["mine", "shared"]).optional().catch(undefined),
   status: sampleStatusSchema.optional().catch(undefined),
+  existenceStatus: existenceStatusSchema.optional().catch(undefined),
+  availabilityStatus: availabilityStatusSchema.optional().catch(undefined),
   ownerId: z.uuid().optional().catch(undefined),
   institution: institutionFilterSchema.optional().catch(undefined),
   ...facetQueryFields(),

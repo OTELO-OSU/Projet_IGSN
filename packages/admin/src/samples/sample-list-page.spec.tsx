@@ -1,9 +1,12 @@
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
+import { page } from "vitest/browser";
 
+import { addFilter } from "../../test/add-filter.ts";
 import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { fakeSample } from "../../test/fake-sample.ts";
 import { worker } from "../../test/msw.ts";
+import { pickPath } from "../../test/pick-hierarchy.ts";
 import { renderRoute } from "../../test/render-route.tsx";
 
 vi.mock("react-oidc-context", () => ({
@@ -29,6 +32,11 @@ const SAMPLES = [
   listSample(12, "shared"),
 ];
 
+const GROUP = {
+  id: "3f2504e0-4f89-41d3-9a0c-030500000020",
+  name: "Basalt survey",
+};
+
 function fakeApi() {
   const requested: string[] = [];
   fakeCurrentUser();
@@ -47,16 +55,16 @@ function fakeApi() {
         meta: { total: matching.length },
       });
     }),
+    http.get("*/admin/currentUser/manual-groups", () =>
+      HttpResponse.json({ data: [{ ...GROUP, canLeave: true }] }),
+    ),
   );
   return { requested };
 }
 
-type Screen = Awaited<ReturnType<typeof renderRoute>>["screen"];
+beforeAll(() => page.viewport(1280, 1600));
 
-async function addFilter(screen: Screen, name: string) {
-  await screen.getByRole("button", { name: "Add a filter" }).click();
-  await screen.getByRole("dialog").getByRole("button", { name }).click();
-}
+type Screen = Awaited<ReturnType<typeof renderRoute>>["screen"];
 
 describe("SampleListPage", () => {
   it("should ask the server for the chosen ownership and reset to page 1", async () => {
@@ -190,6 +198,44 @@ describe("SampleListPage", () => {
       },
       "status=published",
       { status: "published" },
+    ],
+    [
+      "collector name",
+      async (screen) => {
+        await addFilter(screen, "Collector name");
+        await screen
+          .getByRole("searchbox", { name: "Collector name", exact: true })
+          .fill("Curie");
+      },
+      "collectorName=Curie",
+      { collectorName: "Curie" },
+    ],
+    [
+      "manual group",
+      async (screen) => {
+        await addFilter(screen, "Manual group");
+        await pickPath(screen, "Manual group", GROUP.name);
+      },
+      `manualGroup=${GROUP.id}`,
+      { manualGroup: GROUP.id },
+    ],
+    [
+      "existence status",
+      async (screen) => {
+        await addFilter(screen, "Existence status");
+        await pickPath(screen, "Existence status", "Partially consumed");
+      },
+      "existenceStatus=partially_consumed",
+      { existenceStatus: "partially_consumed" },
+    ],
+    [
+      "availability status",
+      async (screen) => {
+        await addFilter(screen, "Availability status");
+        await pickPath(screen, "Availability status", "Restricted");
+      },
+      "availabilityStatus=restricted",
+      { availabilityStatus: "restricted" },
     ],
   ])(
     "should ask the server for the chosen %s, keep it in the URL and reset to page 1",

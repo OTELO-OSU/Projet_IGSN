@@ -25,7 +25,6 @@ describe("SearchField", () => {
 
     await screen.getByRole("searchbox").fill("granite");
 
-    // Debounced: not fired synchronously on input.
     expect(onSearch).not.toHaveBeenCalled();
     await vi.waitFor(() => expect(onSearch).toHaveBeenCalledWith("granite"));
   });
@@ -49,6 +48,19 @@ describe("SearchField", () => {
     await userEvent.keyboard("{Enter}");
 
     expect(onSearch).toHaveBeenCalledWith("Basalt");
+  });
+
+  it("should not call onSearch once unmounted during the debounce", async () => {
+    const onSearch = vi.fn();
+    const screen = await render(
+      <SearchField {...labels} onSearch={onSearch} />,
+    );
+
+    await screen.getByRole("searchbox").fill("granite");
+    await screen.unmount();
+    await new Promise((resolve) => setTimeout(resolve, 400));
+
+    expect(onSearch).not.toHaveBeenCalled();
   });
 
   it("should not submit when the query is empty", async () => {

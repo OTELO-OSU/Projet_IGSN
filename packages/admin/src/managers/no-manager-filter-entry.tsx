@@ -20,7 +20,7 @@ export function noManagerFilterEntry({
     active: checked,
     onRemove: () => onChange(false),
     cell: (
-      <div className="flex items-center gap-2">
+      <div className="flex h-9 items-center gap-2">
         <Switch id={FILTER_ID} checked={checked} onCheckedChange={onChange} />
         <Label htmlFor={FILTER_ID}>{m.filter_no_manager_label()}</Label>
       </div>

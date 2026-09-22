@@ -26,7 +26,10 @@ const searchSchema = listSamplesQuerySchema.pick({
   manualGroup: true,
   nature: true,
   collectionMethod: true,
+  collectorName: true,
   status: true,
+  existenceStatus: true,
+  availabilityStatus: true,
 });
 
 export const Route = createFileRoute("/samples/moderation")({
@@ -56,7 +59,6 @@ function SampleModerationPage() {
             label: m.samples_search_label(),
             placeholder: m.samples_search_placeholder(),
             defaultValue: params.search,
-            className: "sm:col-span-2",
             onSearch: (value) =>
               update({ page: 1, search: value || undefined }),
           }),

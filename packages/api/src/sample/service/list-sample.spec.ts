@@ -422,6 +422,50 @@ describe("listSamples", () => {
     expect(data.map((s) => s.name)).toEqual(["In the group"]);
   });
 
+  pgTest("should filter by the existence status", async ({ db }) => {
+    // Arrange
+    await insertSample(db, {
+      ...bare,
+      name: "Still there",
+      existenceStatus: "exists",
+    });
+    await insertSample(db, { ...bare, name: "Gone", existenceStatus: "lost" });
+    // Act
+    const { data, total } = await listAsOwner(db, {
+      page: 1,
+      perPage: 10,
+      existenceStatus: "lost",
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.name)).toEqual(["Gone"]);
+  });
+
+  pgTest("should filter by the availability status", async ({ db }) => {
+    // Arrange
+    await insertSample(db, {
+      ...bare,
+      name: "Open to all",
+      existenceStatus: "exists",
+      availabilityStatus: "available",
+    });
+    await insertSample(db, {
+      ...bare,
+      name: "Under embargo",
+      existenceStatus: "exists",
+      availabilityStatus: "restricted",
+    });
+    // Act
+    const { data, total } = await listAsOwner(db, {
+      page: 1,
+      perPage: 10,
+      availabilityStatus: "restricted",
+    });
+    // Assert
+    expect(total).toBe(1);
+    expect(data.map((s) => s.name)).toEqual(["Under embargo"]);
+  });
+
   pgTest("should filter by a linked user whatever the role", async ({ db }) => {
     // Arrange
     const user = await insertUser(db, "marie.curie@univ-lorraine.fr");

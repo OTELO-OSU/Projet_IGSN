@@ -62,7 +62,6 @@ function UsersPage() {
             label: m.users_search_label(),
             placeholder: m.users_search_placeholder(),
             defaultValue: search,
-            className: "col-span-3",
             onSearch: (value) =>
               update({ page: 1, search: value || undefined }),
           }),

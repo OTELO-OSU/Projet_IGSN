@@ -83,7 +83,6 @@ function ManualGroupsPage() {
             label: m.manual_groups_search_label(),
             placeholder: m.manual_groups_search_placeholder(),
             defaultValue: search,
-            className: "col-span-full",
             onSearch: (value) =>
               update({ page: 1, search: value || undefined }),
           }),

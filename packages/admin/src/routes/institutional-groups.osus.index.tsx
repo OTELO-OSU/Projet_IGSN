@@ -52,7 +52,6 @@ function OsusPage() {
             label: m.filter_osus_search(),
             placeholder: m.osu_search_placeholder(),
             defaultValue: search,
-            className: "col-span-3",
             onSearch: (value) =>
               void navigate({
                 search: (prev) => ({ ...prev, search: value || undefined }),

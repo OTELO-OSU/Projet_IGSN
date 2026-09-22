@@ -7,6 +7,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { ListHeader } from "#/filters/list-header.tsx";
 import { searchFilterEntry } from "#/filters/search-filter-entry.tsx";
 import { SelectFilter } from "#/filters/select-filter.tsx";
+import { manualGroupFilterEntry } from "#/manual-groups/manual-group-filter.tsx";
 import { m } from "#/paraglide/messages.js";
 import { sampleFilterEntries } from "#/samples/sample-filters.tsx";
 import { SampleListPanel } from "#/samples/sample-list-panel.tsx";
@@ -18,9 +19,13 @@ const searchSchema = listSamplesQuerySchema.pick({
   order: true,
   search: true,
   ownership: true,
+  manualGroup: true,
   nature: true,
   collectionMethod: true,
+  collectorName: true,
   status: true,
+  existenceStatus: true,
+  availabilityStatus: true,
 });
 
 export const Route = createFileRoute("/")({
@@ -58,7 +63,6 @@ function SampleListPage() {
             label: m.samples_search_label(),
             placeholder: m.samples_search_placeholder(),
             defaultValue: search,
-            className: "col-span-3",
             onSearch: (value) =>
               update({ page: 1, search: value || undefined }),
           }),
@@ -86,6 +90,12 @@ function SampleListPage() {
               />
             ),
           },
+          manualGroupFilterEntry({
+            mine: true,
+            value: params.manualGroup,
+            onChange: (manualGroup) => update({ page: 1, manualGroup }),
+            onRemove: () => update({ page: 1, manualGroup: undefined }),
+          }),
           ...sampleFilterEntries({
             values: params,
             onChange: (next) => update({ page: 1, ...next }),

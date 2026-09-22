@@ -70,10 +70,6 @@ describe("OrganizationsPage", () => {
     const { screen, router } = await renderRoute(
       "/institutional-groups/organizations",
     );
-    await screen.getByRole("button", { name: "Add a filter" }).click();
-    await screen
-      .getByRole("button", { name: "Without active manager" })
-      .click();
     await screen
       .getByRole("switch", { name: "Without active manager" })
       .click();

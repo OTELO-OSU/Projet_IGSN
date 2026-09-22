@@ -37,7 +37,8 @@
 - Declare the sort/filter params in the list query schema in `domain`, pass them through the repository, and keep them in the URL app-side.
 - Public sample-list filters are driven by the `SAMPLE_FACETS` registry (`domain/sample/search/facets.ts`) as single source of truth; to add or extend one, see the `add-search-facet` skill.
 - The free-text global search box is a separate mechanism (`domain/sample/search/search-tokens.ts`), not a facet; see ADR 0018.
-- The admin sample lists accept `ownerId` / `institution` / `manualGroup` / `status` on `listSamplesQuerySchema`, ANDed inside the caller's moderation scope; the three `institutional*` facet params stay dropped there, one param one meaning.
+- The admin sample lists accept `ownerId` / `institution` / `manualGroup` / `status` / `collectorName` / `existenceStatus` / `availabilityStatus` on `listSamplesQuerySchema`, ANDed inside the caller's moderation scope; the three `institutional*` facet params stay dropped there, one param one meaning.
+- `existenceStatus` and `availabilityStatus` are top-level params, not `SAMPLE_FACETS` entries: the registry is the public facet contract, and these two stay admin-only, off the sidebar and the Core `/service` contract.
 - `status` filters on `igsn`, never the `published` column, so the filter, the `sort: "status"` order and the admin badge all read one field.
 - `searchable` (`domain/sample/path/tree-node.ts`) is the public search-facet policy alone; the admin collection-method filter (`admin/src/samples/collection-method-tree-nodes.ts`) offers every hierarchy level regardless of that flag.
 

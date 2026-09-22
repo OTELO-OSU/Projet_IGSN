@@ -50,7 +50,6 @@ function OrganizationsPage() {
             label: m.filter_organizations_search(),
             placeholder: m.organization_search_placeholder(),
             defaultValue: search,
-            className: "col-span-full",
             onSearch: (value) =>
               void navigate({
                 search: (prev) => ({ ...prev, search: value || undefined }),
