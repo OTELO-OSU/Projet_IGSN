@@ -17,7 +17,7 @@ describe("physiographicEnvironmentSchema", () => {
     },
   );
 
-  it.each(["fjord", "continental.fjord", "Marine"])(
+  it.each(["", "fjord", "atmosphere", "continental.fjord", "Marine"])(
     "should reject %s",
     (input) => {
       expect(physiographicEnvironmentSchema.safeParse(input).success).toBe(
