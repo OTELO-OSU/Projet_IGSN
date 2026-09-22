@@ -104,6 +104,8 @@ export function createApp(
         sampleRepository,
         manualGroupRepository,
         frontendUrl,
+        userSampleRepository,
+        mail,
       ),
     );
 

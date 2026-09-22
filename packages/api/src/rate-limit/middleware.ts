@@ -2,12 +2,13 @@ import type { Context, MiddlewareHandler } from "hono";
 
 import { getConnInfo } from "@hono/node-server/conninfo";
 import { createMiddleware } from "hono/factory";
-import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
+import { RateLimiterRes } from "rate-limiter-flexible";
 
 import type { KeycloakClaims } from "../auth/middleware.ts";
 import type { RateLimitConfig, RateLimitScope } from "./config.ts";
 
 import { AUTHENTICATED_USER_BUDGET, PUBLIC_IP_BUDGET } from "./config.ts";
+import { createRateLimiter } from "./limiter.ts";
 
 type RateLimitEnv = { Variables: { jwtPayload: KeycloakClaims } };
 
@@ -39,9 +40,7 @@ export function rateLimit(
     return createMiddleware<RateLimitEnv>((_c, next) => next());
   }
 
-  // ponytail: in-process counters, one replica only; RateLimiterRedis when the
-  // api scales out.
-  const limiter = new RateLimiterMemory(budget);
+  const limiter = createRateLimiter(budget);
 
   return createMiddleware<RateLimitEnv>(async (c, next) => {
     try {

@@ -18,17 +18,19 @@ export async function notifySampleModerated({
   mail,
   sample,
   fields,
+  actorId,
 }: {
-  userSamples: UserSampleRepository;
+  userSamples: Pick<UserSampleRepository, "listCollaborators">;
   mail: { sendMail: SendMail; adminUrl: string };
   sample: Pick<Sample, "id" | "name">;
   fields: PublishStatus | SampleMailField[];
+  actorId?: string;
 }): Promise<void> {
   try {
     const owner = (await userSamples.listCollaborators(sample.id)).find(
       (collaborator) => isSampleOwner(collaborator.role),
     );
-    if (!owner || !canReceiveMail(owner)) {
+    if (!owner || owner.id === actorId || !canReceiveMail(owner)) {
       return;
     }
     await trySendMail(

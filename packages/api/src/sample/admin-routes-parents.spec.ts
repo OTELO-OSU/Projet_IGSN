@@ -9,7 +9,7 @@ import {
 } from "@projet-igsn/domain/sample/sample-validator";
 import { sampleCollaboratorsResponseSchema } from "@projet-igsn/domain/user-sample/user-sample-validator";
 import { testClient } from "hono/testing";
-import { describe, expect } from "vitest";
+import { describe, expect, vi } from "vitest";
 
 import type { DB } from "../db.ts";
 
@@ -28,6 +28,10 @@ type Db = Kysely<DB>;
 const authHeader = { Authorization: "Bearer test-token" };
 
 const PARENT_NOT_ELIGIBLE = { error: "Parent sample not eligible" };
+
+const ADMIN_URL = "http://localhost:3001/admin/";
+
+const FRONTEND_URL = "http://localhost:3000/";
 
 const parentOf = (...parents: Sample[]) =>
   parents.map((parent) => ({
@@ -458,6 +462,32 @@ describe("the parent read for prefill", () => {
       // Assert
       expect(res.status).toBe(404);
       expect(await res.json()).toEqual({ error: "Sample not found" });
+    },
+  );
+
+  pgTest(
+    "should mail the parent owner when someone else declares a draft sub-sample",
+    async ({ db }) => {
+      // Arrange
+      const sendMail = vi.fn().mockResolvedValue(undefined);
+      await provisionUser(db, "test-token", { status: "accepted" });
+      const owner = await insertUser(db, "owner@univ-lorraine.fr");
+      const parent = await insertParent(db, owner.id);
+      const app = createApp(db, {
+        mail: { sendMail, adminUrl: ADMIN_URL, frontendUrl: FRONTEND_URL },
+      }).app;
+      // Act
+      const res = await testClient(app).admin.samples.$post(
+        { json: { ...draft, parentIds: [parent.id] } },
+        { headers: authHeader },
+      );
+      // Assert
+      expect(res.status).toBe(201);
+      await vi.waitFor(() =>
+        expect(sendMail).toHaveBeenCalledWith(
+          expect.objectContaining({ to: ["owner@univ-lorraine.fr"] }),
+        ),
+      );
     },
   );
 });
