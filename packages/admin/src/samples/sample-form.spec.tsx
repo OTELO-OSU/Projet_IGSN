@@ -692,6 +692,22 @@ describe("SampleForm", () => {
     );
   });
 
+  it("should stop asking for a specific name on an unknown rock", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await screen.getByRole("tab", { name: "Sample classification" }).click();
+
+    await expect.element(screen.getByLabelText(/specific name/i)).toBeVisible();
+
+    await pickPath(screen, "Material *", "Rock", "Unknown");
+
+    await expect
+      .element(screen.getByLabelText(/specific name/i))
+      .not.toBeInTheDocument();
+  });
+
   it("should walk the collection-method levels and submit the deepest path", async () => {
     const onSubmit = vi.fn();
     const screen = await render(

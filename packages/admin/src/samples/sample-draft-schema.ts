@@ -8,6 +8,7 @@ import {
   toHierarchyPath,
 } from "@projet-igsn/design-system/lib/hierarchy";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
+import { allowsSpecificName } from "@projet-igsn/domain/sample/material/allows-specific-name";
 import { MATERIAL_ROOTS } from "@projet-igsn/domain/sample/material/classification";
 import { isOtherMaterial } from "@projet-igsn/domain/sample/material/is-other-material";
 import { publishedSampleSchema as domainPublishedSampleSchema } from "@projet-igsn/domain/sample/publication/published-sample-schema";
@@ -277,7 +278,9 @@ const composeCreateSample = (draft: SampleDraft) => {
     collectionMethod: composeHierarchyValue(draft.collectionMethodPath),
     collectionMethodDescription:
       draft.collectionMethodDescription?.trim() || null,
-    specificName: draft.specificName?.trim() || null,
+    specificName: allowsSpecificName(material)
+      ? draft.specificName?.trim() || null
+      : null,
     geologicalContextDescription: locationAllowed
       ? draft.geologicalContextDescription?.trim() || null
       : null,
