@@ -49,7 +49,7 @@ type SampleTable = {
   collection_method: string | null;
   collection_method_description: string | null;
   geological_context_description: string | null;
-  geomorphological_environment: string | null;
+  physiographic_environment: string | null;
   specific_name: string | null;
   collection_date_start: string | null;
   collection_date_end: string | null;

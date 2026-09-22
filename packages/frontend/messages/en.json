@@ -131,7 +131,7 @@
   "sample_field_locality_description": "Locality description",
   "sample_section_geological_context": "Geological context",
   "sample_field_geological_context_description": "Description",
-  "sample_field_environment": "Environment",
+  "sample_field_physiographic_environment": "Physiographic environment",
   "sample_section_repository": "Repository",
   "sample_field_current_archive": "Current archive",
   "sample_field_collection_name": "Collection name",

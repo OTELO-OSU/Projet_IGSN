@@ -18,7 +18,7 @@ const NOT_INHERITED_FIELDS = new Set([
   "processSteps",
   "location",
   "geologicalContextDescription",
-  "geomorphologicalEnvironmentPath",
+  "physiographicEnvironmentPath",
 ]);
 
 const isInheritable = (name: string) => {

@@ -247,7 +247,7 @@ const PUBLISHED: DemoRow[] = [
     collectionMethodDescription: "Chain-bag dredge on the axial ridge flank",
     geologicalContextDescription:
       "Fresh pillow lavas on the axial ridge flank, above sheeted dykes",
-    geomorphologicalEnvironment: "marine_zone.volcanic_edifice_submarine",
+    physiographicEnvironment: "marine.volcanic_edifice",
     location: {
       position: area(-30.5, -29.8, 56.8, 57.2, bathyRange(1520, 1520)),
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },

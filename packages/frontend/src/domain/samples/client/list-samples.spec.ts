@@ -64,7 +64,7 @@ describe("listSamples", () => {
           scientificContext: null,
           repository: null,
           geologicalContextDescription: null,
-          geomorphologicalEnvironment: null,
+          physiographicEnvironment: null,
           syntheticDetails: null,
           age: null,
           relations: [],

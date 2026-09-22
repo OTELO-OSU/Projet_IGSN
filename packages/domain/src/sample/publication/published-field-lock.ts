@@ -132,7 +132,7 @@ function mergeMaterialDependent(
     metamorphicFabric: current.metamorphicFabric,
     location: current.location ?? null,
     geologicalContextDescription: current.geologicalContextDescription,
-    geomorphologicalEnvironment: current.geomorphologicalEnvironment,
+    physiographicEnvironment: current.physiographicEnvironment,
   };
 }
 

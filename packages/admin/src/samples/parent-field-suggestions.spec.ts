@@ -25,7 +25,7 @@ const sample = (overrides: Partial<Sample>): Sample => ({
   condition: null,
   repository: null,
   geologicalContextDescription: "Volcanic plateau",
-  geomorphologicalEnvironment: "continental.plateau",
+  physiographicEnvironment: "continental.plateau",
   scientificContext: null,
   syntheticDetails: null,
   age: null,
@@ -85,7 +85,7 @@ it("should suggest each parent's own stored value per form field, with no slot o
     "processSteps[0].description",
     "location.longitude",
     "geologicalContextDescription",
-    "geomorphologicalEnvironmentPath",
+    "physiographicEnvironmentPath",
   ];
 
   expect(
@@ -137,6 +137,6 @@ it("should suggest each parent's own stored value per form field, with no slot o
     "processSteps[0].description": [],
     "location.longitude": [],
     geologicalContextDescription: [],
-    geomorphologicalEnvironmentPath: [],
+    physiographicEnvironmentPath: [],
   });
 });

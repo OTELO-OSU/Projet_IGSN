@@ -614,9 +614,7 @@ export function SampleForm({
                           </form.AppForm>
                         </FormSection>
 
-                        <FormSection
-                          title={m.section_geomorphological_context()}
-                        >
+                        <FormSection title={m.section_geological_context()}>
                           <form.AppForm>
                             <SampleGeologicalContextFields />
                           </form.AppForm>

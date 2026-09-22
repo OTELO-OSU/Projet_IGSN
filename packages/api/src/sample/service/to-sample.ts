@@ -317,7 +317,7 @@ export function toSample(row: SampleRow): Sample {
     collectionMethod: row.collection_method,
     collectionMethodDescription: row.collection_method_description,
     geologicalContextDescription: row.geological_context_description,
-    geomorphologicalEnvironment: row.geomorphological_environment,
+    physiographicEnvironment: row.physiographic_environment,
     specificName: row.specific_name,
     location: toLocation(row.location ?? null),
     description: toDescription(row),

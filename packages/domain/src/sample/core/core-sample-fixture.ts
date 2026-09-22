@@ -94,7 +94,7 @@ export const FIELD_SAMPLE: Sample = {
     originalArchiveContactLastname: "Becquerel",
   },
   geologicalContextDescription: "Hercynian basement",
-  geomorphologicalEnvironment: "continental_zone.badlands",
+  physiographicEnvironment: "continental.badlands",
   scientificContext: {
     provenanceStatus: "field_sample",
     funderOrganizations: [ORGANIZATION_ROR],
@@ -228,7 +228,7 @@ export const COLLECTION_SPECIMEN: Sample = {
   condition: null,
   repository: null,
   geologicalContextDescription: null,
-  geomorphologicalEnvironment: null,
+  physiographicEnvironment: null,
   scientificContext: {
     provenanceStatus: "collection_specimen",
     collectionCuratorFirstname: "Mary",
@@ -324,7 +324,7 @@ export const SYNTHETIC_SAMPLE: Sample = {
   condition: null,
   repository: null,
   geologicalContextDescription: null,
-  geomorphologicalEnvironment: null,
+  physiographicEnvironment: null,
   scientificContext: {
     provenanceStatus: "field_sample",
     funderOrganizations: null,
@@ -389,7 +389,7 @@ export function toCreateSample(sample: Sample): CreateSample {
     condition: sample.condition,
     repository: sample.repository,
     geologicalContextDescription: sample.geologicalContextDescription,
-    geomorphologicalEnvironment: sample.geomorphologicalEnvironment,
+    physiographicEnvironment: sample.physiographicEnvironment,
     scientificContext: sample.scientificContext,
     syntheticDetails: sample.syntheticDetails,
     age: sample.age,

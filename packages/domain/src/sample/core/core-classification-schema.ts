@@ -1,12 +1,12 @@
 import { z } from "zod";
 
 import { freeTextSchema } from "../free-text.ts";
-import { geomorphologicalEnvironmentSchema } from "../geomorphological-environment/vocabulary.ts";
 import { materialPathSchema } from "../material/classification.ts";
 import { metamorphicFabricSchema } from "../metamorphic-fabric/vocabulary.ts";
 import { metamorphicFaciesSchema } from "../metamorphic-facies/vocabulary.ts";
 import { natureSchema } from "../nature.ts";
 import { isPathAtOrUnder } from "../path/is-at-or-under.ts";
+import { physiographicEnvironmentSchema } from "../physiographic-environment/vocabulary.ts";
 import { resourceTypeSchema } from "../resource-type/vocabulary.ts";
 import { collectionOriginSchema } from "../scientific-context/collection-origin.ts";
 import { PROVENANCE_STATUSES } from "../scientific-context/provenance-status.ts";
@@ -34,7 +34,7 @@ const coreContextCategorySchema = z.discriminatedUnion("schemeName", [
   conceptSchema("texture", textureSchema),
   conceptSchema("metamorphic-facies", metamorphicFaciesSchema),
   conceptSchema("metamorphic-fabric", metamorphicFabricSchema),
-  conceptSchema("geomorphologicalContext", geomorphologicalEnvironmentSchema),
+  conceptSchema("physiographic-environment", physiographicEnvironmentSchema),
   conceptSchema("resource-type", resourceTypeSchema),
   conceptSchema("geologicalContext", freeTextSchema),
   z.discriminatedUnion("notation", [
@@ -74,7 +74,7 @@ export const coreClassificationSchema = z
       }),
     contextCategories: z.array(coreContextCategorySchema).min(1).meta({
       description:
-        "Scientific context of the sample: its full material path and its provenance status, both required, plus its texture, metamorphic facies and fabric, geomorphological context, resource type, geological context, collection origin and collection context when set.",
+        "Scientific context of the sample: its full material path and its provenance status, both required, plus its texture, metamorphic facies and fabric, physiographic environment, resource type, geological context, collection origin and collection context when set.",
     }),
   })
   .superRefine((classification, ctx) => {

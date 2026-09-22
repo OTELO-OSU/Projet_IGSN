@@ -32,7 +32,7 @@ const parent: Sample = {
   condition: null,
   repository: { currentArchive: "02feahw73" },
   geologicalContextDescription: "Volcanic plateau",
-  geomorphologicalEnvironment: null,
+  physiographicEnvironment: null,
   scientificContext: {
     provenanceStatus: "collection_specimen",
     collectionCuratorFirstname: "Georges",
@@ -124,7 +124,7 @@ it("should inherit every block of the parent but its identity, its collections a
     condition: null,
     repository: { currentArchive: "02feahw73" },
     geologicalContextDescription: "Volcanic plateau",
-    geomorphologicalEnvironment: null,
+    physiographicEnvironment: null,
     scientificContext: {
       provenanceStatus: "collection_specimen",
       collectionCuratorFirstname: "Georges",

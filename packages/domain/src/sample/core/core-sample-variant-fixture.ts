@@ -55,7 +55,7 @@ const MINERAL_RESOURCE_SAMPLE: Sample = {
   name: "Gold bearing ore",
   material: "rock_and_sediment.mineral",
   texture: null,
-  geomorphologicalEnvironment: "natural_fresh_water.delta",
+  physiographicEnvironment: "fluvial_lacustrine.delta",
   geologicalContextDescription: "Shear zone in the Montagne Noire",
   resourceType: "mineral_and_ore.orogenic_gold",
   economicInterestElements: ["u", "fe", "cu"],

@@ -1,8 +1,8 @@
-import { GEOMORPHOLOGICAL_ENVIRONMENT_HIERARCHY } from "@projet-igsn/domain/sample/geomorphological-environment/vocabulary";
+import { PHYSIOGRAPHIC_ENVIRONMENT_HIERARCHY } from "@projet-igsn/domain/sample/physiographic-environment/vocabulary";
 
 import { m } from "#/paraglide/messages.js";
 import { HIERARCHY_FIELD_LABELS } from "#/samples/hierarchy-field-labels.ts";
-import { geomorphologicalEnvironmentLabel } from "#/samples/sample-labels.ts";
+import { physiographicEnvironmentLabel } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 export function SampleGeologicalContextFields() {
@@ -18,15 +18,15 @@ export function SampleGeologicalContextFields() {
         )}
       </form.AppField>
 
-      <form.AppField name="geomorphologicalEnvironmentPath">
+      <form.AppField name="physiographicEnvironmentPath">
         {(field) => (
           <field.HierarchyField
-            label={m.field_environment()}
-            hierarchy={GEOMORPHOLOGICAL_ENVIRONMENT_HIERARCHY}
-            translate={geomorphologicalEnvironmentLabel}
-            placeholder={m.environment_placeholder()}
-            searchPlaceholder={m.environment_search_placeholder()}
-            emptyText={m.environment_empty()}
+            label={m.field_physiographic_environment()}
+            hierarchy={PHYSIOGRAPHIC_ENVIRONMENT_HIERARCHY}
+            translate={physiographicEnvironmentLabel}
+            placeholder={m.physiographic_environment_placeholder()}
+            searchPlaceholder={m.physiographic_environment_search_placeholder()}
+            emptyText={m.physiographic_environment_empty()}
             {...HIERARCHY_FIELD_LABELS}
           />
         )}

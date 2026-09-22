@@ -21,7 +21,7 @@ export const sampleColumns = (input: CreateSample) => ({
   collection_method: input.collectionMethod ?? null,
   collection_method_description: input.collectionMethodDescription ?? null,
   geological_context_description: input.geologicalContextDescription ?? null,
-  geomorphological_environment: input.geomorphologicalEnvironment ?? null,
+  physiographic_environment: input.physiographicEnvironment ?? null,
   specific_name: input.specificName ?? null,
   existence_status: input.existenceStatus ?? null,
   availability_status: input.availabilityStatus ?? null,

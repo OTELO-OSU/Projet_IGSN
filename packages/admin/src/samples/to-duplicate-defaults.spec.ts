@@ -52,7 +52,7 @@ const source: Sample = {
   condition: null,
   repository: { currentArchive: "02feahw73" },
   geologicalContextDescription: "Volcanic plateau",
-  geomorphologicalEnvironment: null,
+  physiographicEnvironment: null,
   scientificContext: {
     provenanceStatus: "collection_specimen",
     collectionCuratorFirstname: "Georges",
@@ -131,7 +131,7 @@ it("should copy every declared field under a copy name, keeping no attachment, n
     condition: null,
     repository: { currentArchive: "02feahw73" },
     geologicalContextDescription: "Volcanic plateau",
-    geomorphologicalEnvironment: null,
+    physiographicEnvironment: null,
     scientificContext: {
       provenanceStatus: "collection_specimen",
       collectionCuratorFirstname: "Georges",

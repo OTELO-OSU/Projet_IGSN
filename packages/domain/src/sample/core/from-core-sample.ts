@@ -59,8 +59,8 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
       texture: bySchemeName("otelo:texture")?.id ?? null,
       metamorphicFacies: bySchemeName("otelo:metamorphic-facies")?.id ?? null,
       metamorphicFabric: bySchemeName("otelo:metamorphic-fabric")?.id ?? null,
-      geomorphologicalEnvironment:
-        bySchemeName("otelo:geomorphologicalContext")?.id ?? null,
+      physiographicEnvironment:
+        bySchemeName("otelo:physiographic-environment")?.id ?? null,
       resourceType: bySchemeName("otelo:resource-type")?.id ?? null,
       geologicalContextDescription:
         bySchemeName("otelo:geologicalContext")?.id ?? null,

@@ -15,7 +15,6 @@ import { existenceStatusSchema } from "./curation/existence-status.ts";
 import { descriptionSchema } from "./description/model.ts";
 import { elementSchema } from "./element/vocabulary.ts";
 import { freeTextSchema } from "./free-text.ts";
-import { geomorphologicalEnvironmentSchema } from "./geomorphological-environment/vocabulary.ts";
 import { allowsLocation } from "./location/allows-location.ts";
 import { locationSchema } from "./location/model.ts";
 import { allowsSpecificName } from "./material/allows-specific-name.ts";
@@ -31,6 +30,7 @@ import {
 } from "./metamorphic-facies/vocabulary.ts";
 import { natureSchema } from "./nature.ts";
 import { sampleParentSchema } from "./parent/model.ts";
+import { physiographicEnvironmentSchema } from "./physiographic-environment/vocabulary.ts";
 import { sampleProcessStepSchema } from "./process-step/model.ts";
 import {
   createSampleRelationSchema,
@@ -82,7 +82,7 @@ export const sampleSchema = z.object({
   condition: conditionSchema.nullable(),
   repository: repositorySchema.nullable().default(null),
   geologicalContextDescription: freeTextSchema.nullable().default(null),
-  geomorphologicalEnvironment: geomorphologicalEnvironmentSchema
+  physiographicEnvironment: physiographicEnvironmentSchema
     .nullable()
     .default(null),
   scientificContext: scientificContextSchema.nullable().default(null),
@@ -137,7 +137,7 @@ const createSampleFieldsSchema = z.strictObject({
   condition: conditionSchema.nullish(),
   repository: repositorySchema.nullish(),
   geologicalContextDescription: freeTextSchema.nullish(),
-  geomorphologicalEnvironment: geomorphologicalEnvironmentSchema.nullish(),
+  physiographicEnvironment: physiographicEnvironmentSchema.nullish(),
   scientificContext: createScientificContextSchema.nullish(),
   syntheticDetails: createSyntheticDetailsSchema.nullish(),
   age: ageSchema.nullish(),
@@ -222,7 +222,7 @@ const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
     for (const field of [
       "location",
       "geologicalContextDescription",
-      "geomorphologicalEnvironment",
+      "physiographicEnvironment",
     ] as const) {
       if (value[field] != null) {
         ctx.addIssue({

@@ -33,14 +33,14 @@ async function renderGeologicalContextSection(
 beforeAll(() => page.viewport(1280, 1600));
 
 describe("SampleGeologicalContextFields", () => {
-  it("should submit the description with an environment left at its zone", async () => {
+  it("should submit the description with the picked physiographic environment", async () => {
     const onSubmit = vi.fn();
     const screen = await renderGeologicalContextSection(onSubmit);
 
     await expect
       .element(
         screen.getByRole("heading", {
-          name: "Geomorphological context",
+          name: "Geological context",
           level: 2,
         }),
       )
@@ -48,14 +48,14 @@ describe("SampleGeologicalContextFields", () => {
     await screen
       .getByLabelText("Geological context description")
       .fill("Basaltic plateau carved by the river");
-    await pickPath(screen, "Environment", "Marine zone", "Stop here");
+    await pickPath(screen, "Physiographic environment", "Marine", "Seamount");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           geologicalContextDescription: "Basaltic plateau carved by the river",
-          geomorphologicalEnvironment: "marine_zone",
+          physiographicEnvironment: "marine.seamount",
         }),
       ),
     );

@@ -31,7 +31,7 @@ const base: Sample = {
   condition: null,
   repository: { currentArchive: "02feahw73" },
   geologicalContextDescription: null,
-  geomorphologicalEnvironment: null,
+  physiographicEnvironment: null,
   scientificContext: {
     provenanceStatus: "field_sample",
     additionalRoles: [],
