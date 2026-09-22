@@ -56,7 +56,6 @@ const DROPPED_CORE_PATHS = [
   "physicalDescription.orientation",
   "relations.targetURI",
   "relations.targetTitles",
-  "relations.relationTypeInformation",
   "relations.relatedMetadataScheme",
   "relations.schemeURI",
   "relations.schemeType",

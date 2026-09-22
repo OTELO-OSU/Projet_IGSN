@@ -26,7 +26,6 @@ export function toCoreRelations(
     targetResourceType: coreTargetResourceType.toCore(
       relation.targetResourceType ?? "other",
     ),
-    relationTypeInformation: relation.relationTypeInformation ?? undefined,
     relatedMetadataScheme: relation.relatedMetadataScheme ?? undefined,
     schemeURI: relation.schemeURI ?? undefined,
     schemeType: relation.schemeType ?? undefined,

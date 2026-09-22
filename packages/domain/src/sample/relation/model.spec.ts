@@ -7,7 +7,6 @@ const relation = {
   identifier: "https://doi.org/10.1594/IEDA.100252",
   targetTitle: "IEDA companion dataset",
   targetResourceType: "dataset",
-  relationTypeInformation: null,
   relatedMetadataScheme: null,
   schemeURI: null,
   schemeType: null,

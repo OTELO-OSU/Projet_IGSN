@@ -683,7 +683,6 @@ describe("samplePublishBlockers", () => {
     identifier: "https://doi.org/10.1234/x",
     targetTitle: "Referenced paper",
     targetResourceType,
-    relationTypeInformation: null,
     relatedMetadataScheme: null,
     schemeURI: null,
     schemeType: null,

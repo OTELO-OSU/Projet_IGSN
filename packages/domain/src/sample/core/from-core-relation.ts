@@ -17,7 +17,6 @@ export function fromCoreRelation(relation: CoreRelation) {
     targetResourceType: coreTargetResourceType.fromCore(
       relation.targetResourceType,
     ),
-    relationTypeInformation: relation.relationTypeInformation ?? null,
     relatedMetadataScheme: relation.relatedMetadataScheme ?? null,
     schemeURI: relation.schemeURI ?? null,
     schemeType: relation.schemeType ?? null,

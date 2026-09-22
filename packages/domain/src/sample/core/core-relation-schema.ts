@@ -58,9 +58,6 @@ export const coreRelationSchema = z.strictObject({
     description:
       "Kind of resource the relation points at, PhysicalObject for a parent sample.",
   }),
-  relationTypeInformation: freeTextSchema
-    .meta({ description: "Free-text precision about the relation itself." })
-    .optional(),
   relatedMetadataScheme: freeTextSchema
     .meta({
       description:
