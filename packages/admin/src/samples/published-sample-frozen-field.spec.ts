@@ -10,7 +10,6 @@ describe("publishedSampleFrozenField", () => {
     "syntheticDetails.operatorUserId",
     "syntheticDetails.operatorFirstname",
     "syntheticDetails.operatorLastname",
-    "syntheticDetails.operatorOrcid",
   ])("freezes %s, which the domain lock map lists", (field) => {
     expect(isFrozen(field)).toBe(true);
   });
@@ -28,7 +27,6 @@ describe("publishedSampleFrozenField", () => {
     "scientificContext.collectorUserId",
     "scientificContext.collectorFirstname",
     "scientificContext.collectorLastname",
-    "scientificContext.collectorOrcid",
   ])("freezes %s only on the field-sample branch", (field) => {
     expect(isFrozen(field)).toBe(true);
     expect(publishedSampleFrozenField("collection_specimen", null)(field)).toBe(

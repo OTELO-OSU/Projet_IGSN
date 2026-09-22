@@ -107,7 +107,6 @@ export type AdditionalRoleDraft = {
   personUserId: string | null | undefined;
   personFirstname: string | null | undefined;
   personLastname: string | null | undefined;
-  personOrcid: string | null | undefined;
 };
 
 export const EMPTY_ADDITIONAL_ROLE_DRAFT: Omit<
@@ -117,7 +116,6 @@ export const EMPTY_ADDITIONAL_ROLE_DRAFT: Omit<
   personUserId: undefined,
   personFirstname: undefined,
   personLastname: undefined,
-  personOrcid: undefined,
 };
 
 export type ProcessStepDraft = {

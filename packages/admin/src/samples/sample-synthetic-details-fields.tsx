@@ -170,7 +170,6 @@ export function SampleSyntheticDetailsFields() {
       <ContactNameFields
         label={m.field_operator_name()}
         person="syntheticDetails.operator"
-        orcidName="syntheticDetails.operatorOrcid"
         requiredToPublish
       />
 

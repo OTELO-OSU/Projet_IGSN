@@ -22,21 +22,13 @@ type ContactPerson =
   | "syntheticDetails.operator"
   | `scientificContext.additionalRoles[${number}].person`;
 
-type ContactOrcidName =
-  | "scientificContext.chiefScientistOrcid"
-  | "scientificContext.collectorOrcid"
-  | "syntheticDetails.operatorOrcid"
-  | `scientificContext.additionalRoles[${number}].personOrcid`;
-
 export function ContactNameFields({
   label,
   person,
-  orcidName,
   requiredToPublish = false,
 }: {
   label: string;
   person: ContactPerson;
-  orcidName?: ContactOrcidName;
   requiredToPublish?: boolean;
 }) {
   const form = useSampleForm();
@@ -49,20 +41,16 @@ export function ContactNameFields({
       userId: form.getFieldValue(userIdName),
       firstname: form.getFieldValue(firstnameName),
       lastname: form.getFieldValue(lastnameName),
-      orcid: orcidName ? form.getFieldValue(orcidName) : null,
     }),
   );
 
   const clearTypedNames = () => {
     form.setFieldValue(firstnameName, undefined);
     form.setFieldValue(lastnameName, undefined);
-    if (orcidName) form.setFieldValue(orcidName, undefined);
   };
 
   const typedNames = (
-    <div
-      className={`grid gap-4 ${orcidName ? "sm:grid-cols-[1fr_1fr_1fr_auto]" : "sm:grid-cols-[1fr_1fr_auto]"}`}
-    >
+    <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]">
       <form.AppField name={firstnameName}>
         {(field) => (
           <field.TextField
@@ -80,12 +68,6 @@ export function ContactNameFields({
           />
         )}
       </form.AppField>
-
-      {orcidName ? (
-        <form.AppField name={orcidName}>
-          {(field) => <field.TextField label={m.field_orcid()} />}
-        </form.AppField>
-      ) : null}
 
       {isFrozen ? null : (
         <Tooltip>

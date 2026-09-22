@@ -98,7 +98,7 @@ describe("ContactNameFields", () => {
     );
   });
 
-  it("should drop the link and reveal the three typed inputs under the free-text item", async () => {
+  it("should drop the link and reveal the two typed inputs under the free-text item", async () => {
     const onSubmit = vi.fn();
     const screen = await renderCollector({ onSubmit });
 
@@ -112,9 +112,6 @@ describe("ContactNameFields", () => {
     await collector(screen)
       .getByRole("textbox", { name: /last name/i })
       .fill("Curie");
-    await collector(screen)
-      .getByRole("textbox", { name: "ORCID iD" })
-      .fill("0000-0002-1825-0097");
     await screen.getByRole("button", { name: "Save" }).click();
 
     await vi.waitFor(() =>
@@ -125,7 +122,6 @@ describe("ContactNameFields", () => {
             additionalRoles: [],
             collectorFirstname: "Pierre",
             collectorLastname: "Curie",
-            collectorOrcid: "0000-0002-1825-0097",
           },
         }),
       ),
@@ -175,7 +171,6 @@ describe("ContactNameFields", () => {
           additionalRoles: [],
           collectorFirstname: "Pierre",
           collectorLastname: "Curie",
-          collectorOrcid: "0000-0002-1825-0097",
         },
       },
     });
@@ -206,6 +201,24 @@ describe("ContactNameFields", () => {
         }),
       ),
     );
+  });
+
+  it("should offer no ORCID input for a person", async () => {
+    const screen = await renderCollector({
+      defaultValues: {
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          additionalRoles: [],
+          collectorFirstname: "Pierre",
+          collectorLastname: "Curie",
+        },
+      },
+    });
+
+    await expect.element(firstname(screen)).toHaveValue("Pierre");
+    await expect
+      .element(screen.getByRole("textbox", { name: "ORCID iD" }))
+      .not.toBeInTheDocument();
   });
 
   it("should mark a person required to publish in link mode", async () => {

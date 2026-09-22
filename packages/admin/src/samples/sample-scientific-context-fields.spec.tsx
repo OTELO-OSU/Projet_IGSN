@@ -122,7 +122,9 @@ describe("SampleScientificContextFields", () => {
     await pickOrganization(screen, "02feahw73");
     await pickOrganization(screen, "04kdfz702");
     await screen
-      .getByLabelText("Name of the research programme")
+      .getByLabelText(
+        "Name of the Research Programm/Campaign/Mission/Field/Cruise",
+      )
       .fill("Deep Biosphere Survey");
     await screen
       .getByRole("combobox", {
@@ -139,6 +141,9 @@ describe("SampleScientificContextFields", () => {
       "Marie",
       "Tharp",
     );
+    await screen.getByRole("combobox", { name: "Platform type" }).click();
+    await screen.getByRole("option", { name: "Ship" }).click();
+    await screen.getByLabelText("Launch platform name").fill("Pourquoi pas ?");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -154,6 +159,8 @@ describe("SampleScientificContextFields", () => {
             chiefScientistLastname: "Tharp",
             collectorFirstname: "Pierre",
             collectorLastname: "Curie",
+            platformType: "ship",
+            launchPlatformName: "Pourquoi pas ?",
           },
         }),
       ),
@@ -210,12 +217,18 @@ describe("SampleScientificContextFields", () => {
 
     await goToScientificContext(screen);
     await screen
-      .getByLabelText("Name of the research programme")
+      .getByLabelText(
+        "Name of the Research Programm/Campaign/Mission/Field/Cruise",
+      )
       .fill("Deep Biosphere Survey");
     await fillPersonName(screen, "Collector name", "Pierre", "Curie");
     await pickProvenance(screen, "Collection specimen");
     await expect
-      .element(screen.getByLabelText("Name of the research programme"))
+      .element(
+        screen.getByLabelText(
+          "Name of the Research Programm/Campaign/Mission/Field/Cruise",
+        ),
+      )
       .not.toBeInTheDocument();
     await expect
       .element(
@@ -227,7 +240,11 @@ describe("SampleScientificContextFields", () => {
 
     await pickProvenance(screen, "Field sample");
     await expect
-      .element(screen.getByLabelText("Name of the research programme"))
+      .element(
+        screen.getByLabelText(
+          "Name of the Research Programm/Campaign/Mission/Field/Cruise",
+        ),
+      )
       .toHaveValue("Deep Biosphere Survey");
 
     await pickProvenance(screen, "Collection specimen");
