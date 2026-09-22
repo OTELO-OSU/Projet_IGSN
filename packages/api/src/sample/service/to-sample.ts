@@ -316,7 +316,6 @@ export function toSample(row: SampleRow): Sample {
       identifier: relation.identifier,
       targetTitle: relation.target_title,
       targetResourceType: relation.target_resource_type,
-      relationTypeInformation: relation.relation_type_information,
       relatedMetadataScheme: relation.related_metadata_scheme,
       schemeURI: relation.scheme_uri,
       schemeType: relation.scheme_type,
