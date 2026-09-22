@@ -852,7 +852,7 @@ describe("SampleForm", () => {
       .getByRole("spinbutton", { name: "Numeric age", exact: true })
       .fill("12000");
     await screen.getByRole("combobox", { name: "Units" }).click();
-    await screen.getByRole("option", { name: "a (years)" }).click();
+    await screen.getByRole("option", { name: "Year" }).click();
     await screen.getByRole("combobox", { name: "Reference" }).click();
     await screen.getByRole("option", { name: "BP", exact: true }).click();
     await screen.getByRole("button", { name: "Create" }).click();
@@ -939,7 +939,7 @@ describe("SampleForm", () => {
       .not.toBeInTheDocument();
 
     await screen.getByRole("combobox", { name: "Units *" }).click();
-    await screen.getByRole("option", { name: "a (years)" }).click();
+    await screen.getByRole("option", { name: "Year" }).click();
     await expect
       .element(screen.getByRole("combobox", { name: "Reference *" }))
       .toBeVisible();
@@ -1053,7 +1053,7 @@ describe("SampleForm", () => {
       .getByRole("spinbutton", { name: "Numeric age", exact: true })
       .fill("120");
     await screen.getByRole("combobox", { name: "Units" }).click();
-    await screen.getByRole("option", { name: "a (years)" }).click();
+    await screen.getByRole("option", { name: "Year" }).click();
     await screen.getByRole("combobox", { name: "Reference" }).click();
     await screen.getByRole("option", { name: "BP", exact: true }).click();
     await screen.getByRole("combobox", { name: "Units" }).click();
