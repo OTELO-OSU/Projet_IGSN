@@ -59,6 +59,7 @@ const stored: Sample = {
   geomorphologicalEnvironment: "marine_zone.fjord",
   scientificContext: {
     provenanceStatus: "field_sample",
+    additionalRoles: [],
     funderOrganizations: ["https://ror.org/00stored"],
     researchProgramName: "Stored program",
     chiefScientistFirstname: "Stored",
@@ -153,6 +154,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
     geomorphologicalEnvironment: "wetland.peat_bog",
     scientificContext: {
       provenanceStatus: "field_sample",
+      additionalRoles: [],
       funderOrganizations: ["https://ror.org/00edited"],
       researchProgramName: "Edited program",
       chiefScientistFirstname: "Edited",
@@ -264,11 +266,39 @@ describe("mergePublishedEdit", () => {
     });
   });
 
+  it("takes an additional role added after publication, since publication does not freeze the list", () => {
+    const additionalRoles = [
+      {
+        role: "researcher" as const,
+        personFirstname: "Ada",
+        personLastname: "Lovelace",
+      },
+    ];
+    const merged = mergePublishedEdit(
+      stored,
+      incoming({
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          additionalRoles,
+        },
+      }),
+    );
+
+    expect(merged.scientificContext).toEqual({
+      provenanceStatus: "field_sample",
+      additionalRoles,
+      collectorFirstname: "Stored",
+      collectorLastname: "collector",
+      collectorOrcid: "0000-0002-1825-0097",
+    });
+  });
+
   it("drops the names a link resolved to when a provenance mismatch keeps the stored context", () => {
     const linked: Sample = {
       ...stored,
       scientificContext: {
         provenanceStatus: "field_sample",
+        additionalRoles: [],
         collectorUserId: LINKED_USER_ID,
         collectorFirstname: "Marie",
         collectorLastname: "Curie",
@@ -281,10 +311,48 @@ describe("mergePublishedEdit", () => {
     );
     expect(merged.scientificContext).toEqual({
       provenanceStatus: "field_sample",
+      additionalRoles: [],
       collectorUserId: LINKED_USER_ID,
       collectorFirstname: null,
       collectorLastname: null,
       collectorOrcid: null,
+    });
+    expect(createSampleSchema.safeParse(merged)).toMatchObject({
+      success: true,
+    });
+  });
+
+  it("drops the names a link resolved to on an additional role when the payload omits the context", () => {
+    const linked: Sample = {
+      ...stored,
+      scientificContext: {
+        provenanceStatus: "field_sample",
+        additionalRoles: [
+          {
+            role: "researcher",
+            personUserId: LINKED_USER_ID,
+            personFirstname: "Marie",
+            personLastname: "Curie",
+            personOrcid: "0000-0002-1825-0097",
+          },
+        ],
+      },
+    };
+    const merged = mergePublishedEdit(
+      linked,
+      incoming({ scientificContext: null }),
+    );
+    expect(merged.scientificContext).toEqual({
+      provenanceStatus: "field_sample",
+      additionalRoles: [
+        {
+          role: "researcher",
+          personUserId: LINKED_USER_ID,
+          personFirstname: null,
+          personLastname: null,
+          personOrcid: null,
+        },
+      ],
     });
     expect(createSampleSchema.safeParse(merged)).toMatchObject({
       success: true,
@@ -296,6 +364,7 @@ describe("mergePublishedEdit", () => {
       ...stored,
       scientificContext: {
         provenanceStatus: "field_sample",
+        additionalRoles: [],
         collectorUserId: LINKED_USER_ID,
         collectorFirstname: "Marie",
         collectorLastname: "Curie",
@@ -307,6 +376,7 @@ describe("mergePublishedEdit", () => {
       incoming({
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorFirstname: "Edited",
           collectorLastname: "editor",
           collectorOrcid: "0000-0001-5109-3700",
@@ -316,6 +386,7 @@ describe("mergePublishedEdit", () => {
     );
     expect(merged.scientificContext).toEqual({
       provenanceStatus: "field_sample",
+      additionalRoles: [],
       collectorUserId: LINKED_USER_ID,
       collectorFirstname: null,
       collectorLastname: null,

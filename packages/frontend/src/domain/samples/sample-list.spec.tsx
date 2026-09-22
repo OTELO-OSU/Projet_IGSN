@@ -1,3 +1,5 @@
+import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
+
 import type { CardSample } from "./card-fields.ts";
 
 import { renderWithRouter } from "../../../test/render-with-router.tsx";
@@ -66,6 +68,7 @@ describe("SampleList", () => {
           provenanceStatus: "field_sample",
           collectorFirstname: "Marie",
           collectorLastname: "Curie",
+          additionalRoles: [],
         },
       }),
     ]);
@@ -177,19 +180,26 @@ describe("SampleList", () => {
     ]);
   });
 
-  it.each([
-    ["a field sample", "field_sample"],
-    ["a collection specimen", "collection_specimen"],
-  ] as const)("should show the collector of %s", async (_case, status) => {
-    const screen = await renderSampleList([
-      sampleItem({
-        scientificContext: {
-          provenanceStatus: status,
-          collectorFirstname: "Marie",
-          collectorLastname: "Curie",
-        },
-      }),
-    ]);
+  it.each<[string, ScientificContext]>([
+    [
+      "a field sample",
+      {
+        provenanceStatus: "field_sample",
+        collectorFirstname: "Marie",
+        collectorLastname: "Curie",
+        additionalRoles: [],
+      },
+    ],
+    [
+      "a collection specimen",
+      {
+        provenanceStatus: "collection_specimen",
+        collectorFirstname: "Marie",
+        collectorLastname: "Curie",
+      },
+    ],
+  ])("should show the collector of %s", async (_case, scientificContext) => {
+    const screen = await renderSampleList([sampleItem({ scientificContext })]);
 
     await expect
       .element(screen.getByText("Collector name: Marie Curie"))
@@ -202,6 +212,7 @@ describe("SampleList", () => {
         scientificContext: {
           provenanceStatus: "field_sample",
           collectorLastname: "Curie",
+          additionalRoles: [],
         },
       }),
     ]);
@@ -211,13 +222,14 @@ describe("SampleList", () => {
       .toBeInTheDocument();
   });
 
-  it.each([
+  it.each<[string, ScientificContext, string, string]>([
     [
       "chief scientist",
       {
         provenanceStatus: "field_sample",
         chiefScientistFirstname: "Marie",
         chiefScientistLastname: "Curie",
+        additionalRoles: [],
       },
       "chiefScientist",
       "Chief scientist: Marie Curie",
@@ -232,7 +244,7 @@ describe("SampleList", () => {
       "collectionCurator",
       "Collection curator: Paul Durand",
     ],
-  ] as const)(
+  ])(
     "should show the picked %s as one name",
     async (_case, scientificContext, field, expected) => {
       const screen = await renderSampleList(

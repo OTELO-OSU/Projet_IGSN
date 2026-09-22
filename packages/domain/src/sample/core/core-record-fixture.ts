@@ -404,7 +404,7 @@ const COLLECTION_SPECIMEN_RECORD: CoreSample = {
   },
 };
 
-const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
+export const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
   ...ENVELOPE,
   identification: {
     sampleIdentifier: IGSN,
@@ -433,16 +433,6 @@ const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
         agentType: "Person",
       },
       roles: ["Collector"],
-    },
-    {
-      agent: {
-        id: "https://orcid.org/0000-0003-1415-9269",
-        firstname: "Rosalind",
-        lastname: "Franklin",
-        agentType: "Person",
-        affiliations: [{ id: ORGANIZATION_URI, name: ORGANIZATION_NAME }],
-      },
-      roles: ["Researcher"],
     },
   ],
   production: {
@@ -476,6 +466,12 @@ const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
       pressure: { value: 2000000000, unitCode: "Pa", unitLabel: "gpa" },
       purpose: "Calibrate the melting curve",
       equipment: "Piston cylinder press",
+      operator: {
+        id: "https://orcid.org/0000-0003-1415-9269",
+        firstname: "Rosalind",
+        lastname: "Franklin",
+        affiliations: [{ id: ORGANIZATION_URI, name: ORGANIZATION_NAME }],
+      },
     },
   },
 };

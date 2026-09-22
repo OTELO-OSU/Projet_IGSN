@@ -19,12 +19,14 @@ type ContactPerson =
   | "scientificContext.chiefScientist"
   | "scientificContext.collector"
   | "scientificContext.collectionCurator"
-  | "syntheticDetails.operator";
+  | "syntheticDetails.operator"
+  | `scientificContext.additionalRoles[${number}].person`;
 
 type ContactOrcidName =
   | "scientificContext.chiefScientistOrcid"
   | "scientificContext.collectorOrcid"
-  | "syntheticDetails.operatorOrcid";
+  | "syntheticDetails.operatorOrcid"
+  | `scientificContext.additionalRoles[${number}].personOrcid`;
 
 export function ContactNameFields({
   label,

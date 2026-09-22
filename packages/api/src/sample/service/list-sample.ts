@@ -16,6 +16,7 @@ import { facetFilters, personFacetValues } from "./facet-filter.ts";
 import { institutionSampleWhere } from "./institution-sample-where.ts";
 import { moderatedSampleWhere } from "./moderated-sample-where.ts";
 import {
+  sampleAdditionalRolesQuery,
   sampleAttachmentsQuery,
   sampleLocationQuery,
   sampleManualGroupsQuery,
@@ -109,6 +110,7 @@ async function listSamplesWhere(
       .select(sampleLocationQuery)
       .select(sampleRelationsQuery)
       .select(sampleProcessStepsQuery)
+      .select(sampleAdditionalRolesQuery)
       .select(sampleAttachmentsQuery)
       .select(sampleManualGroupsQuery)
       .select(sampleParentsQuery)

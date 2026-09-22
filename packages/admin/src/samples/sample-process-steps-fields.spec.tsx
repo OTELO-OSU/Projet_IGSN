@@ -40,6 +40,7 @@ const publishableValues = {
   availabilityStatus: "available",
   scientificContext: {
     provenanceStatus: "field_sample",
+    additionalRoles: [],
     collectorFirstname: "Pierre",
     collectorLastname: "Curie",
   },

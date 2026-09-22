@@ -586,6 +586,82 @@ describe("public sample routes", () => {
   );
 
   pgTest(
+    "should expose the additional roles without their account links",
+    async ({ db }) => {
+      // Arrange
+      const client = await acceptedClient(db);
+      const account = await insertUser(db, "ada@univ-lorraine.fr", {
+        firstname: "Ada",
+        name: "Lovelace",
+      });
+      const created = await client.admin.samples.$post(
+        {
+          json: {
+            name: "Basalte des rôles",
+            nature: "rock_powder",
+            type: "individual_sample",
+            material: "rock_and_sediment.sediment.exogenous_detritic.clay",
+            location: {
+              position: { type: "point", longitude: 0, latitude: 0 },
+            },
+            description: {
+              collectionDate: {
+                precision: "day",
+                start: "2026-01-01",
+                end: "2026-01-01",
+              },
+            },
+            existenceStatus: "exists",
+            availabilityStatus: "available",
+            scientificContext: {
+              provenanceStatus: "field_sample",
+              collectorFirstname: "Georges",
+              collectorLastname: "Cuvier",
+              additionalRoles: [
+                { role: "researcher", personUserId: account.id },
+                {
+                  role: "data_manager",
+                  personFirstname: "Marie",
+                  personLastname: "Curié",
+                },
+              ],
+            },
+            repository: { currentArchive: "02feahw73" },
+          },
+        },
+        { headers: authHeader },
+      );
+      const draft = sampleResponseSchema.parse(await created.json()).data;
+      const published = await publishSample(client, draft.id);
+      // Act
+      const res = await client.samples[":igsn"].$get({
+        param: { igsn: published.igsn! },
+      });
+      // Assert
+      expect(await res.json()).toMatchObject({
+        data: {
+          scientificContext: {
+            additionalRoles: [
+              {
+                role: "researcher",
+                personUserId: null,
+                personFirstname: "Ada",
+                personLastname: "Lovelace",
+              },
+              {
+                role: "data_manager",
+                personUserId: null,
+                personFirstname: "Marie",
+                personLastname: "Curié",
+              },
+            ],
+          },
+        },
+      });
+    },
+  );
+
+  pgTest(
     "should keep a withdrawn sample's linked person resolved",
     async ({ db }) => {
       // Arrange

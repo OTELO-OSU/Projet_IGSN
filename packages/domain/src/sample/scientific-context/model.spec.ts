@@ -21,6 +21,7 @@ const fieldSample = {
   researchProgramDescription: "Multi-year survey of\nsub-seafloor life",
   fieldName: "Site A",
   missionDescription: "Coring campaign in\nthe North Atlantic",
+  additionalRoles: [],
 };
 
 const collectionSpecimen = {
@@ -51,6 +52,29 @@ describe("scientificContextSchema", () => {
     expect(scientificContextSchema.safeParse(input).success).toBe(true);
   });
 
+  it("should accept several additional roles sharing one role on a field sample", () => {
+    const additionalRoles = [
+      { role: "researcher", personLastname: "Curie" },
+      { role: "researcher", personLastname: "Lehmann" },
+    ];
+
+    expect(
+      scientificContextSchema.parse({
+        provenanceStatus: "field_sample",
+        additionalRoles,
+      }),
+    ).toEqual({ provenanceStatus: "field_sample", additionalRoles });
+  });
+
+  it("should keep a collection specimen free of additional roles", () => {
+    expect(
+      scientificContextSchema.parse({
+        provenanceStatus: "collection_specimen",
+        additionalRoles: [{ role: "researcher", personLastname: "Curie" }],
+      }),
+    ).toEqual({ provenanceStatus: "collection_specimen" });
+  });
+
   it("should trim free-text fields", () => {
     expect(
       scientificContextSchema.parse({
@@ -60,6 +84,7 @@ describe("scientificContextSchema", () => {
     ).toEqual({
       provenanceStatus: "field_sample",
       researchProgramName: "Deep Biosphere Survey",
+      additionalRoles: [],
     });
   });
 
@@ -144,6 +169,12 @@ describe("a person is a link or a typed name, never both", () => {
         chiefScientistUserId: USER_ID,
         collectorUserId: USER_ID,
       },
+      parsed: {
+        provenanceStatus: "field_sample",
+        chiefScientistUserId: USER_ID,
+        collectorUserId: USER_ID,
+        additionalRoles: [],
+      },
     },
     {
       case: "a collection specimen linking its curator and its collector",
@@ -152,8 +183,29 @@ describe("a person is a link or a typed name, never both", () => {
         collectionCuratorUserId: USER_ID,
         collectorUserId: USER_ID,
       },
+      parsed: {
+        provenanceStatus: "collection_specimen",
+        collectionCuratorUserId: USER_ID,
+        collectorUserId: USER_ID,
+      },
     },
-  ])("should accept $case", ({ input }) => {
-    expect(createScientificContextSchema.parse(input)).toEqual(input);
+  ])("should accept $case", ({ input, parsed }) => {
+    expect(createScientificContextSchema.parse(input)).toEqual(parsed);
+  });
+
+  it("should reject an additional role both linked and named, reporting the row", () => {
+    const result = createScientificContextSchema.safeParse({
+      provenanceStatus: "field_sample",
+      additionalRoles: [
+        { role: "researcher", personUserId: USER_ID, personLastname: "Curie" },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual([
+      "additionalRoles",
+      0,
+      "personUserId",
+    ]);
   });
 });

@@ -29,7 +29,7 @@ const NO_ANSWERS = {
   materialOtherName: null,
   description: { oriented: false },
   security: { radioactivity: false, asbestosRich: false, chemicalRisk: false },
-  scientificContext: { provenanceStatus: "field_sample" },
+  scientificContext: { provenanceStatus: "field_sample", additionalRoles: [] },
 } as const;
 
 type Screen = Awaited<ReturnType<typeof render>>;
@@ -1511,7 +1511,10 @@ describe("SampleForm", () => {
           material: null,
           collectionMethod: null,
           collectionMethodDescription: null,
-          scientificContext: { provenanceStatus: "field_sample" },
+          scientificContext: {
+            provenanceStatus: "field_sample",
+            additionalRoles: [],
+          },
         }}
         primaryAction={createAction(noop)}
       />,
@@ -1586,6 +1589,10 @@ describe("SampleForm", () => {
   ] as const)(
     "marks the location type required to publish under %s as %s",
     async (provenanceStatus, name) => {
+      const scientificContext =
+        provenanceStatus === "field_sample"
+          ? { provenanceStatus, additionalRoles: [] }
+          : { provenanceStatus };
       const screen = await render(
         <SampleForm
           onCancel={noop}
@@ -1596,7 +1603,7 @@ describe("SampleForm", () => {
             material: "rock_and_sediment.mineral",
             collectionMethod: null,
             collectionMethodDescription: null,
-            scientificContext: { provenanceStatus },
+            scientificContext,
           }}
           primaryAction={createAction(noop)}
         />,
@@ -2150,6 +2157,7 @@ const publishedFieldSampleFixture: CreateSample = {
   },
   scientificContext: {
     provenanceStatus: "field_sample",
+    additionalRoles: [],
     funderOrganizations: ["03fd77x13"],
     researchProgramName: "GEOSAMPLE",
     chiefScientistFirstname: "Marie",

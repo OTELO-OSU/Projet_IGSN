@@ -6,8 +6,10 @@ import type { DB } from "../src/db.ts";
 import type { SampleOwner } from "./seed.ts";
 
 import { createDb } from "../src/db.ts";
+import { replaceSampleAdditionalRoles } from "../src/sample/service/replace-sample-additional-roles.ts";
 import { replaceSampleProcessSteps } from "../src/sample/service/replace-sample-process-steps.ts";
 import {
+  DEMO_ADDITIONAL_ROLES,
   DEMO_PARENTS,
   DEMO_PROCESS_STEPS,
   DEMO_SAMPLES,
@@ -76,6 +78,9 @@ if (parentRows.length > 0) {
 }
 for (const [name, steps] of Object.entries(DEMO_PROCESS_STEPS)) {
   await replaceSampleProcessSteps(db, sampleId(name), steps);
+}
+for (const [name, roles] of Object.entries(DEMO_ADDITIONAL_ROLES)) {
+  await replaceSampleAdditionalRoles(db, sampleId(name), roles);
 }
 await db.destroy();
 

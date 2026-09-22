@@ -1,3 +1,4 @@
+import type { SampleAdditionalRole } from "../additional-role/model.ts";
 import type { Location } from "../location/model.ts";
 import type { Sample } from "../sample.ts";
 
@@ -246,6 +247,69 @@ const TWO_PARENT_SAMPLE: Sample = {
   ],
 };
 
+const withAdditionalRoles = (
+  sample: Sample,
+  name: string,
+  additionalRoles: SampleAdditionalRole[],
+): Sample => ({
+  ...sample,
+  name,
+  scientificContext:
+    sample.scientificContext?.provenanceStatus === "field_sample"
+      ? { ...sample.scientificContext, additionalRoles }
+      : sample.scientificContext,
+});
+
+export const TEAM_SAMPLE = withAdditionalRoles(
+  FIELD_SAMPLE,
+  "Non-synthetic sample credited to several people per role",
+  [
+    {
+      role: "researcher",
+      personFirstname: "Ada",
+      personLastname: "Lovelace",
+      personOrcid: "0000-0002-1825-0097",
+    },
+    {
+      role: "project_member",
+      personFirstname: "Grace",
+      personLastname: "Hopper",
+      personOrcid: null,
+    },
+    {
+      role: "researcher",
+      personFirstname: "Emmy",
+      personLastname: "Noether",
+      personOrcid: null,
+    },
+    {
+      role: "data_manager",
+      personFirstname: "Katherine",
+      personLastname: "Johnson",
+      personOrcid: null,
+    },
+    {
+      role: "project_manager",
+      personFirstname: "Lise",
+      personLastname: "Meitner",
+      personOrcid: null,
+    },
+  ],
+);
+
+const SYNTHETIC_TEAM_SAMPLE = withAdditionalRoles(
+  SYNTHETIC_SAMPLE,
+  "Synthetic sample crediting its operator and a researcher",
+  [
+    {
+      role: "researcher",
+      personFirstname: "Emmy",
+      personLastname: "Noether",
+      personOrcid: null,
+    },
+  ],
+);
+
 export const SUB_SAMPLE: Sample = {
   ...FIELD_SAMPLE,
   name: "Thin section of the block",
@@ -298,4 +362,6 @@ export const CORE_SAMPLE_FIXTURES: readonly Sample[] = [
   CALENDAR_AGE_SAMPLE,
   HAZARDOUS_SAMPLE,
   RELATED_SAMPLE,
+  TEAM_SAMPLE,
+  SYNTHETIC_TEAM_SAMPLE,
 ];

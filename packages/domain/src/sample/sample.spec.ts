@@ -105,7 +105,10 @@ describe("sampleSchema", () => {
     // Act
     const result = sampleSchema.parse({ ...validSample, scientificContext });
     // Assert
-    expect(result.scientificContext).toEqual(scientificContext);
+    expect(result.scientificContext).toEqual({
+      ...scientificContext,
+      additionalRoles: [],
+    });
   });
 
   it.each([

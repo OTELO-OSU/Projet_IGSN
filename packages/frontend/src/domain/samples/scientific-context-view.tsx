@@ -1,11 +1,14 @@
+import type { SampleAdditionalRole } from "@projet-igsn/domain/sample/additional-role/model";
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 
+import { ADDITIONAL_ROLES } from "@projet-igsn/domain/sample/additional-role/role";
 import { joinContactName } from "@projet-igsn/domain/sample/contact-name";
 
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
 import { OrcidLink } from "#/domain/samples/orcid-link.tsx";
 import { OrgLinksRow } from "#/domain/samples/org-links-row.tsx";
 import {
+  additionalRoleLabel,
   collectionOriginLabel,
   provenanceStatusLabel,
 } from "#/domain/samples/sample-labels.ts";
@@ -19,6 +22,38 @@ type CollectionSpecimen = Extract<
   ScientificContext,
   { provenanceStatus: "collection_specimen" }
 >;
+
+function AdditionalRoleRows({ roles }: { roles: SampleAdditionalRole[] }) {
+  return ADDITIONAL_ROLES.map((role) => {
+    const people = roles.filter((person) => person.role === role);
+    return (
+      <FieldRow
+        key={role}
+        label={additionalRoleLabel(role)}
+        value={
+          people.length > 0 && (
+            <ul>
+              {people.map((person, index) => (
+                <li key={index}>
+                  {joinContactName(
+                    person.personFirstname,
+                    person.personLastname,
+                  )}
+                  {person.personOrcid && (
+                    <>
+                      {" "}
+                      <OrcidLink orcid={person.personOrcid} />
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )
+        }
+      />
+    );
+  });
+}
 
 function FieldSampleRows({ context }: { context: FieldSample }) {
   return (
@@ -63,6 +98,7 @@ function FieldSampleRows({ context }: { context: FieldSample }) {
           context.collectorOrcid && <OrcidLink orcid={context.collectorOrcid} />
         }
       />
+      <AdditionalRoleRows roles={context.additionalRoles} />
       <FieldRow
         label={m.sample_field_research_campaign()}
         value={context.researchCampaign}

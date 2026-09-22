@@ -125,6 +125,49 @@ test.describe("samples", () => {
     await edit.expectSaveMenuItem("Withdraw");
   });
 
+  test("a researcher credits additional roles on a field sample", async ({
+    page,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    const list = sampleListPage(page);
+    await list.goToCreate();
+
+    const create = sampleCreatePage(page);
+    const name = `Additional roles ${Date.now()}`;
+    await create.fillName(name);
+    await create.selectNature("Thin section");
+    await create.fillPublishableFields();
+    await create.openTab("Identity");
+    await create.pick("Provenance status", "Field sample");
+    await create.openTab("Scientific context");
+    await create.fillPersonName(/^Collector name/, "Pierre", "Curie");
+    await create.addAdditionalRole("Researcher", {
+      firstname: "Marie",
+      lastname: "Tharp",
+    });
+    await create.addAdditionalRole("Data manager", {
+      firstname: "Georges",
+      lastname: "Cuvier",
+    });
+    await create.submit();
+
+    const edit = sampleEditPage(page);
+    await edit.expectVisible();
+    await page.reload();
+    await edit.expectAdditionalRole(1, "Researcher", {
+      firstname: "Marie",
+      lastname: "Tharp",
+    });
+    await edit.expectAdditionalRole(2, "Data manager", {
+      firstname: "Georges",
+      lastname: "Cuvier",
+    });
+
+    await edit.publish();
+    await list.expectVisible();
+    await list.expectSampleRow(name);
+  });
+
   test("a researcher publishes a new sample straight as withdrawn", async ({
     page,
   }) => {

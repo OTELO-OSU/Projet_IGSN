@@ -1,4 +1,8 @@
-import type { CoreSample } from "@projet-igsn/domain/sample/core/core-sample-schema";
+import type { SampleAdditionalRole } from "@projet-igsn/domain/sample/additional-role/model";
+import type {
+  CoreAgentRole,
+  CoreSample,
+} from "@projet-igsn/domain/sample/core/core-sample-schema";
 import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
@@ -67,6 +71,7 @@ const IN_REACH = "UMR7358";
 const OUT_OF_REACH = "UMR5275";
 const FOREIGN_GROUP_ID = "01890a5d-ac96-774b-bcce-b302099a9003";
 const FOREIGN_GROUP_NAME = "Alpine Campaign 2026";
+const ACCOUNT_ID = "01890a5d-ac96-774b-bcce-b302099a9004";
 
 const OWNER = { firstname: "Jean", name: "Martin" };
 
@@ -171,10 +176,50 @@ const fieldSample = {
   ...publishableSample,
   scientificContext: {
     provenanceStatus: "field_sample" as const,
+    additionalRoles: [],
     collectorFirstname: "Georges",
     collectorLastname: "Cuvier",
   },
 } satisfies CreateSample;
+
+const RESEARCHERS = [
+  {
+    email: "ada.lovelace@univ-lorraine.fr",
+    firstname: "Ada",
+    name: "Lovelace",
+  },
+  {
+    email: "grace.hopper@univ-lorraine.fr",
+    firstname: "Grace",
+    name: "Hopper",
+  },
+];
+
+const insertResearchers = (db: Kysely<DB>) =>
+  Promise.all(
+    RESEARCHERS.map(({ email, ...names }) => insertUser(db, email, names)),
+  );
+
+const withAdditionalRoles = (additionalRoles: SampleAdditionalRole[]) =>
+  ({
+    ...fieldSample,
+    scientificContext: { ...fieldSample.scientificContext, additionalRoles },
+  }) satisfies CreateSample;
+
+const researcherAgentRole = (firstname: string, lastname: string) => ({
+  agent: { agentType: "Person" as const, firstname, lastname },
+  roles: ["Researcher" as const],
+});
+
+const isResearcher = ({ roles }: CoreAgentRole) => roles[0] === "Researcher";
+
+const withResearchers = (body: CoreSample, researchers: CoreAgentRole[]) => ({
+  ...body,
+  responsibility: [
+    ...body.responsibility.filter((agentRole) => !isResearcher(agentRole)),
+    ...researchers,
+  ],
+});
 
 const NEW_BODY = core(COLLECTION_SPECIMEN);
 
@@ -213,6 +258,16 @@ const SYNTHETIC_BODY = core(SYNTHETIC_SAMPLE);
 const syntheticSubSampleBody = (...igsns: string[]) => ({
   ...SYNTHETIC_BODY,
   relations: igsns.map(parentRelation),
+});
+
+const SYNTHETIC_EXPERIMENT = SYNTHETIC_BODY.extensions!.experiment!;
+
+const { operator: OPERATOR, ...EXPERIMENT_WITHOUT_OPERATOR } =
+  SYNTHETIC_EXPERIMENT;
+
+const syntheticBodyWith = (experiment: unknown) => ({
+  ...SYNTHETIC_BODY,
+  extensions: { ...SYNTHETIC_BODY.extensions, experiment },
 });
 
 describe("GET /service/samples", () => {
@@ -528,6 +583,40 @@ describe("GET /service/samples/:igsn", () => {
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "Not found" });
   });
+
+  pgTest(
+    "should answer the name a person's account resolved to and never the account link",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const [collector, researcher] = await insertResearchers(db);
+      const sample = await inLaboratory(
+        db,
+        {
+          ...fieldSample,
+          scientificContext: {
+            provenanceStatus: "field_sample",
+            collectorUserId: collector!.id,
+            additionalRoles: [
+              { role: "researcher", personUserId: researcher!.id },
+            ],
+          },
+        },
+        IN_REACH,
+      );
+      const published = (await publishSample(db, sample.id))!;
+      // Act
+      const res = await getSample(app, published.igsn!);
+      // Assert
+      expect(res.status).toBe(200);
+      const payload = JSON.stringify(await res.json());
+      expect(payload).toContain("Lovelace");
+      expect(payload).toContain("Hopper");
+      expect(payload).not.toContain(collector!.id);
+      expect(payload).not.toContain(researcher!.id);
+      expect(payload).not.toMatch(/userId/i);
+    },
+  );
 });
 
 describe("the Accept header of the /service GET routes", () => {
@@ -1091,6 +1180,117 @@ describe("POST /service/samples", () => {
       );
     },
   );
+
+  pgTest(
+    "should report the missing synthesis operator of a synthetic body whose only Researcher is an additional role",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(app, {
+        ...syntheticBodyWith(EXPERIMENT_WITHOUT_OPERATOR),
+        responsibility: [
+          ...SYNTHETIC_BODY.responsibility,
+          researcherAgentRole("Ada", "Lovelace"),
+        ],
+      });
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toEqual({
+        error: "Invalid sample",
+        issues: [
+          {
+            path: "extensions.experiment.operator.firstname",
+            code: "synthetic_operator_firstname_missing",
+          },
+          {
+            path: "extensions.experiment.operator.lastname",
+            code: "synthetic_operator_lastname_missing",
+          },
+        ],
+      });
+      expect(await db.selectFrom("sample").selectAll().execute()).toEqual([]);
+    },
+  );
+
+  pgTest(
+    "should credit the synthesis operator and the Researcher of a synthetic field sample apart",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(app, {
+        ...SYNTHETIC_BODY,
+        responsibility: [
+          ...SYNTHETIC_BODY.responsibility,
+          researcherAgentRole("Ada", "Lovelace"),
+        ],
+      });
+      // Assert
+      expect(res.status).toBe(201);
+      const stored = await readSample(
+        db,
+        createdId(coreSampleSchema.parse(await res.json())),
+      );
+      expect(stored?.syntheticDetails).toMatchObject({
+        operatorFirstname: OPERATOR?.firstname,
+        operatorLastname: OPERATOR?.lastname,
+      });
+      expect(stored?.scientificContext).toMatchObject({
+        additionalRoles: [
+          {
+            role: "researcher",
+            personUserId: null,
+            personFirstname: "Ada",
+            personLastname: "Lovelace",
+          },
+        ],
+      });
+    },
+  );
+
+  pgTest.for([
+    {
+      rule: "a responsibility agent",
+      body: () => ({
+        ...NEW_BODY,
+        responsibility: [
+          {
+            agent: {
+              agentType: "Person",
+              firstname: "Ada",
+              lastname: "Lovelace",
+              userId: ACCOUNT_ID,
+            },
+            roles: ["Researcher"],
+          },
+          ...NEW_BODY.responsibility,
+        ],
+      }),
+    },
+    {
+      rule: "the synthesis operator",
+      body: () =>
+        syntheticBodyWith({
+          ...SYNTHETIC_EXPERIMENT,
+          operator: { ...OPERATOR, userId: ACCOUNT_ID },
+        }),
+    },
+  ])(
+    "should refuse a body carrying an account link on $rule",
+    async ({ body }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(app, body());
+      // Assert
+      expect(res.status).toBe(422);
+      expect(await res.json()).toMatchObject({
+        error: "Invalid sample",
+        issues: [{ code: "unrecognized_keys" }],
+      });
+    },
+  );
 });
 
 describe("the /service mount", () => {
@@ -1289,6 +1489,7 @@ describe("PUT /service/samples/:igsn", () => {
         ...publishableSample,
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorUserId: linked.id,
           chiefScientistUserId: linked.id,
         },
@@ -1327,6 +1528,7 @@ describe("PUT /service/samples/:igsn", () => {
         ...publishableSample,
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           chiefScientistUserId: linked.id,
         },
       });
@@ -1497,6 +1699,104 @@ describe("PUT /service/samples/:igsn", () => {
       expect(res.status).toBe(200);
       await new Promise((resolve) => setTimeout(resolve, 100));
       expect(sendMail).not.toHaveBeenCalled();
+    },
+  );
+
+  pgTest.for([
+    {
+      rule: "with the first row removed",
+      submit: (researchers: CoreAgentRole[]) => researchers.slice(1),
+      kept: [1],
+    },
+    {
+      rule: "reordered",
+      submit: (researchers: CoreAgentRole[]) => [...researchers].reverse(),
+      kept: [1, 0],
+    },
+  ])(
+    "should keep each additional role's account link when the list comes back $rule",
+    async ({ submit, kept }, { db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const linked = await insertResearchers(db);
+      const created = await publishedInReach(
+        db,
+        withAdditionalRoles(
+          linked.map(({ id }) => ({
+            role: "researcher" as const,
+            personUserId: id,
+          })),
+        ),
+      );
+      const body = core(created);
+      // Act
+      const res = await putSample(
+        app,
+        created.igsn!,
+        withResearchers(body, submit(body.responsibility.filter(isResearcher))),
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(
+        (await readSample(db, created.id))?.scientificContext,
+      ).toMatchObject({
+        additionalRoles: kept.map((index) => ({
+          role: "researcher",
+          personUserId: linked[index]!.id,
+          personFirstname: RESEARCHERS[index]!.firstname,
+          personLastname: RESEARCHERS[index]!.name,
+        })),
+      });
+    },
+  );
+
+  pgTest(
+    "should add an additional role naming a person the sample never held as a typed name, leaving the other links alone",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const [collector, researcher] = await insertResearchers(db);
+      const created = await publishedInReach(db, {
+        ...fieldSample,
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorUserId: collector!.id,
+          additionalRoles: [
+            { role: "researcher", personUserId: researcher!.id },
+          ],
+        },
+      });
+      const body = core(created);
+      // Act
+      const res = await putSample(
+        app,
+        created.igsn!,
+        withResearchers(body, [
+          ...body.responsibility.filter(isResearcher),
+          researcherAgentRole("Marie", "Curie"),
+        ]),
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect(
+        (await readSample(db, created.id))?.scientificContext,
+      ).toMatchObject({
+        collectorUserId: collector!.id,
+        additionalRoles: [
+          {
+            role: "researcher",
+            personUserId: researcher!.id,
+            personFirstname: "Grace",
+            personLastname: "Hopper",
+          },
+          {
+            role: "researcher",
+            personUserId: null,
+            personFirstname: "Marie",
+            personLastname: "Curie",
+          },
+        ],
+      });
     },
   );
 });

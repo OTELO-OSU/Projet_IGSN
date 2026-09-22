@@ -151,6 +151,20 @@ function toScientificContext(row: SampleRow) {
     });
     return scientificContextSchema.parse({
       provenanceStatus: "field_sample",
+      additionalRoles: (row.additionalRoles ?? []).map((additional) => {
+        const person = resolveContact(additional.account, {
+          firstname: additional.person_firstname,
+          lastname: additional.person_lastname,
+          orcid: additional.person_orcid,
+        });
+        return {
+          role: additional.role,
+          personUserId: additional.person_user_id,
+          personFirstname: person.firstname,
+          personLastname: person.lastname,
+          personOrcid: person.orcid,
+        };
+      }),
       ...omitNull({
         funderOrganizations: row.sc_funder_organizations,
         researchProgramName: row.sc_research_program_name,
@@ -257,6 +271,9 @@ type SampleRow = Selectable<DB["sample"]> & {
   location?: LocationRow | null;
   relations?: Selectable<DB["sample_relation"]>[];
   processSteps?: Selectable<DB["sample_process_step"]>[];
+  additionalRoles?: (Selectable<DB["sample_additional_role"]> & {
+    account?: ContactAccount | null;
+  })[];
   attachments?: Selectable<DB["sample_attachment"]>[];
   manualGroups?: ManualGroup[];
   owner?: Pick<Selectable<DB["user"]>, "name" | "firstname"> | null;

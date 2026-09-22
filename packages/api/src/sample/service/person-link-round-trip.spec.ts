@@ -36,6 +36,7 @@ const personCases: PersonCase[] = [
       ...base,
       scientificContext: {
         provenanceStatus: "field_sample",
+        additionalRoles: [],
         chiefScientistUserId: userId,
       },
     }),
@@ -43,6 +44,7 @@ const personCases: PersonCase[] = [
       ...base,
       scientificContext: {
         provenanceStatus: "field_sample",
+        additionalRoles: [],
         chiefScientistUserId: userId,
         chiefScientistFirstname: "Marie",
       },
@@ -54,6 +56,7 @@ const personCases: PersonCase[] = [
       ...base,
       scientificContext: {
         provenanceStatus: "field_sample",
+        additionalRoles: [],
         collectorUserId: userId,
       },
     }),
@@ -61,6 +64,7 @@ const personCases: PersonCase[] = [
       ...base,
       scientificContext: {
         provenanceStatus: "field_sample",
+        additionalRoles: [],
         collectorUserId: userId,
         collectorOrcid: "0000-0002-1825-0097",
       },
@@ -141,12 +145,14 @@ describe("sample person account link persistence", () => {
         ...base,
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorUserId: account.id,
         },
       });
       // Assert
       expect(created.scientificContext).toEqual({
         provenanceStatus: "field_sample",
+        additionalRoles: [],
         collectorUserId: account.id,
         collectorFirstname: "Marie",
         collectorLastname: "Curié",
@@ -164,6 +170,7 @@ describe("sample person account link persistence", () => {
         ...base,
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorUserId: account.id,
         },
       });

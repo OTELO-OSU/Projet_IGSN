@@ -32,6 +32,13 @@ const withdrawn: Sample = {
     provenanceStatus: "field_sample",
     collectorFirstname: "Claire",
     collectorLastname: "Martin",
+    additionalRoles: [
+      {
+        role: "researcher",
+        personFirstname: "Kept",
+        personLastname: "private",
+      },
+    ],
   },
   syntheticDetails: null,
   age: null,

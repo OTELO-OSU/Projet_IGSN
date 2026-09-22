@@ -5,6 +5,9 @@ import { frontendUrl } from "../urls.ts";
 
 const SYNTHETIC_MATERIAL = "Synthetic rock / mineral";
 
+const additionalRoleName = (rank: number, role: string) =>
+  new RegExp(`^${rank}\\. ${role}( \\*)?$`);
+
 export function sampleFormPage(page: Page) {
   const openTab = (name: string) => page.getByRole("tab", { name }).click();
   const fieldCombobox = (field: string, scope: Locator | Page = page) =>
@@ -59,6 +62,7 @@ export function sampleFormPage(page: Page) {
     pick,
     confirm,
     confirmStatusChange,
+    fillPersonName,
 
     expectHierarchyLevel: (label: string) =>
       expect(
@@ -126,6 +130,35 @@ export function sampleFormPage(page: Page) {
       expect(page.getByRole("group", { name: /collection date/i })).toHaveCount(
         0,
       ),
+    addAdditionalRole: async (
+      role: string,
+      { firstname, lastname }: { firstname: string; lastname: string },
+    ) => {
+      await openTab("Scientific context");
+      const rank =
+        (await page.getByRole("button", { name: /^Remove role / }).count()) + 1;
+      await page.getByRole("button", { name: "Add a role" }).click();
+      await page.getByRole("menuitem", { name: role, exact: true }).click();
+      const person = additionalRoleName(rank, role);
+      await expect(page.getByRole("group", { name: person })).toBeVisible();
+      await fillPersonName(person, firstname, lastname);
+    },
+    expectAdditionalRole: async (
+      index: number,
+      role: string,
+      { firstname, lastname }: { firstname: string; lastname: string },
+    ) => {
+      await openTab("Scientific context");
+      const group = page.getByRole("group", {
+        name: additionalRoleName(index, role),
+      });
+      await expect(
+        group.getByRole("textbox", { name: /first name/i }),
+      ).toHaveValue(firstname);
+      await expect(
+        group.getByRole("textbox", { name: /last name/i }),
+      ).toHaveValue(lastname);
+    },
     addProcessStep: async (
       kind: string,
       { date, description }: { date: string; description: string },

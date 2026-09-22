@@ -22,6 +22,9 @@ const CONTRIBUTOR_TYPES = [
   "HostingInstitution",
   "DataCurator",
   "Researcher",
+  "ProjectManager",
+  "ProjectMember",
+  "DataManager",
 ] as const;
 
 export type DataCiteContributorType = (typeof CONTRIBUTOR_TYPES)[number];

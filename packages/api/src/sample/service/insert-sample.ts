@@ -11,6 +11,10 @@ import { getSampleById } from "./get-sample-by-id.ts";
 import { inheritParentCollectionDate } from "./inherit-parent-collection-date.ts";
 import { inheritParentLocation } from "./inherit-parent-location.ts";
 import { insertSampleParents } from "./insert-sample-parents.ts";
+import {
+  additionalRolesOf,
+  replaceSampleAdditionalRoles,
+} from "./replace-sample-additional-roles.ts";
 import { replaceSampleManualGroups } from "./replace-sample-manual-groups.ts";
 import { replaceSampleProcessSteps } from "./replace-sample-process-steps.ts";
 import { replaceSampleRelations } from "./replace-sample-relations.ts";
@@ -52,6 +56,7 @@ export async function insertSampleRows(
   }
   await replaceSampleRelations(db, row.id, input.relations ?? []);
   await replaceSampleProcessSteps(db, row.id, input.processSteps ?? []);
+  await replaceSampleAdditionalRoles(db, row.id, additionalRolesOf(input));
   await replaceSampleManualGroups(db, row.id, input.manualGroupIds ?? []);
   return row.id;
 }

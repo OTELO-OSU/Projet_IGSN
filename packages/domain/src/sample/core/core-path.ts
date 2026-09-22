@@ -72,6 +72,7 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   "scientificContext.chiefScientistLastname": "responsibility",
   "scientificContext.chiefScientistOrcid": "responsibility",
   "scientificContext.hostInstitution": "responsibility",
+  "scientificContext.additionalRoles": "responsibility",
   "scientificContext.collectionCuratorFirstname": "responsibility",
   "scientificContext.collectionCuratorLastname": "responsibility",
   "scientificContext.missionDescription": "production.samplingPurpose",
@@ -100,10 +101,13 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   "syntheticDetails.experimentalProtocol":
     "production.processSteps.0.description",
   "syntheticDetails.synthesisDate": "production.processSteps.0.timestampStart",
-  "syntheticDetails.operatorFirstname": "responsibility",
-  "syntheticDetails.operatorLastname": "responsibility",
-  "syntheticDetails.operatorOrcid": "responsibility",
-  "syntheticDetails.researchStructure": "responsibility",
+  "syntheticDetails.operatorFirstname":
+    "extensions.experiment.operator.firstname",
+  "syntheticDetails.operatorLastname":
+    "extensions.experiment.operator.lastname",
+  "syntheticDetails.operatorOrcid": "extensions.experiment.operator.id",
+  "syntheticDetails.researchStructure":
+    "extensions.experiment.operator.affiliations",
 
   age: "extensions.geology",
   "age.numericAgeMin": "extensions.geology.numericAge.min",

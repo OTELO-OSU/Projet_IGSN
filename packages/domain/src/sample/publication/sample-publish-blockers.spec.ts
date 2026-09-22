@@ -34,6 +34,7 @@ const base: Sample = {
   geomorphologicalEnvironment: null,
   scientificContext: {
     provenanceStatus: "field_sample",
+    additionalRoles: [],
     funderOrganizations: ["02feahw73"],
     researchProgramName: "Deep Biosphere Survey",
     chiefScientistFirstname: "Marie",
@@ -458,7 +459,10 @@ describe("samplePublishBlockers", () => {
     expect(
       samplePublishBlockers({
         ...base,
-        scientificContext: { provenanceStatus: "field_sample" },
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          additionalRoles: [],
+        },
       }),
     ).toEqual(["collector_firstname_missing", "collector_lastname_missing"]);
   });
@@ -480,7 +484,11 @@ describe("samplePublishBlockers", () => {
       expect(
         samplePublishBlockers({
           ...base,
-          scientificContext: { provenanceStatus: "field_sample", ...collector },
+          scientificContext: {
+            provenanceStatus: "field_sample",
+            additionalRoles: [],
+            ...collector,
+          },
         }),
       ).toEqual([blocker]);
     },
@@ -505,6 +513,7 @@ describe("samplePublishBlockers", () => {
           ...base,
           scientificContext: {
             provenanceStatus: "field_sample",
+            additionalRoles: [],
             collectorFirstname: "Pierre",
             collectorLastname: "Curie",
             ...chiefScientist,
@@ -520,11 +529,64 @@ describe("samplePublishBlockers", () => {
         ...base,
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorFirstname: "Pierre",
           collectorLastname: "Curie",
         },
       }),
     ).toEqual([]);
+  });
+
+  it.each([
+    { case: "no additional role", additionalRoles: [] },
+    {
+      case: "an additional role linked to an account",
+      additionalRoles: [
+        {
+          role: "researcher",
+          personUserId: "00000000-0000-7000-8000-00000000000a",
+        },
+      ],
+    },
+    {
+      case: "an additional role carrying a first and a last name",
+      additionalRoles: [
+        {
+          role: "data_manager",
+          personFirstname: "Marie",
+          personLastname: "Curie",
+        },
+      ],
+    },
+  ] as const)("should report no blocker for $case", ({ additionalRoles }) => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorFirstname: "Pierre",
+          collectorLastname: "Curie",
+          additionalRoles: [...additionalRoles],
+        },
+      }),
+    ).toEqual([]);
+  });
+
+  it("should report both name blockers for an additional role neither linked nor named", () => {
+    expect(
+      samplePublishBlockers({
+        ...base,
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          collectorFirstname: "Pierre",
+          collectorLastname: "Curie",
+          additionalRoles: [{ role: "project_manager" }],
+        },
+      }),
+    ).toEqual([
+      "additional_role_firstname_missing",
+      "additional_role_lastname_missing",
+    ]);
   });
 
   it("should report the missing mandatory fields of the collection-specimen branch", () => {
@@ -853,6 +915,7 @@ describe("samplePublishBlockers", () => {
         ...base,
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorUserId: LINKED_USER_ID,
           chiefScientistUserId: LINKED_USER_ID,
         },
@@ -876,6 +939,7 @@ describe("samplePublishBlockers", () => {
         ...base,
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorUserId: LINKED_USER_ID,
           collectorFirstname: "Marie",
         },

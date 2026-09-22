@@ -12,14 +12,23 @@ import { SampleForm } from "./sample-form.tsx";
 
 const noop = () => {};
 
+const WEGENER = {
+  id: "3f2504e0-4f89-41d3-9a0c-0305e82c33f7",
+  email: "alfred.wegener@awi.de",
+  firstname: "Alfred",
+  name: "Wegener",
+  orcid: null,
+};
+
 const createAction = (onSubmit: (value: CreateSample) => void) =>
   ({ kind: "submit", label: "Create", onSubmit }) as const;
 
 async function renderScientificContextSection(
   onSubmit: (value: CreateSample) => void = noop,
+  users: (typeof WEGENER)[] = [],
 ) {
   worker.use(
-    http.get("*/admin/users/search", () => HttpResponse.json({ data: [] })),
+    http.get("*/admin/users/search", () => HttpResponse.json({ data: users })),
   );
   const screen = await render(
     <SampleForm
@@ -71,6 +80,16 @@ const pickOrganization = async (
 };
 
 const closePopover = () => userEvent.keyboard("{Escape}");
+
+const addRole = async (screen: Screen, role: string) => {
+  await screen.getByRole("button", { name: "Add a role" }).click();
+  await screen.getByRole("menuitem", { name: role, exact: true }).click();
+};
+
+const roleGroup = (screen: Screen, index: number, role: string) =>
+  screen.getByRole("group", {
+    name: new RegExp(`^${index}\\. ${role}( \\*)?$`),
+  });
 
 describe("SampleScientificContextFields", () => {
   it("should disable the Scientific context tab until a provenance status is chosen", async () => {
@@ -127,6 +146,7 @@ describe("SampleScientificContextFields", () => {
         expect.objectContaining({
           scientificContext: {
             provenanceStatus: "field_sample",
+            additionalRoles: [],
             funderOrganizations: ["02feahw73", "04kdfz702"],
             researchProgramName: "Deep Biosphere Survey",
             hostInstitution: ["04kdfz702", "05hnb7x64"],
@@ -228,6 +248,113 @@ describe("SampleScientificContextFields", () => {
             collectionCuratorLastname: "Cuvier",
             collectorFirstname: "Pierre",
             collectorLastname: "Curie",
+          },
+        }),
+      ),
+    );
+  });
+  it("should number a second row of the same role", async () => {
+    const screen = await renderScientificContextSection();
+
+    await goToScientificContext(screen);
+    await addRole(screen, "Researcher");
+    await addRole(screen, "Researcher");
+
+    await expect.element(roleGroup(screen, 2, "Researcher")).toBeVisible();
+  });
+
+  it("should drop the removed row and renumber the rest", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderScientificContextSection(onSubmit);
+
+    await goToScientificContext(screen);
+    await addRole(screen, "Researcher");
+    await fillPersonName(screen, "1. Researcher", "Marie", "Tharp");
+    await addRole(screen, "Data manager");
+    await fillPersonName(screen, "2. Data manager", "Georges", "Cuvier");
+    await screen.getByRole("button", { name: "Remove role 1" }).click();
+
+    await expect.element(roleGroup(screen, 1, "Data manager")).toBeVisible();
+
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scientificContext: expect.objectContaining({
+            additionalRoles: [
+              {
+                role: "data_manager",
+                personFirstname: "Georges",
+                personLastname: "Cuvier",
+              },
+            ],
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("should submit a row linked to an account beside a row with a typed name", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderScientificContextSection(onSubmit, [WEGENER]);
+
+    await goToScientificContext(screen);
+    await addRole(screen, "Researcher");
+    await roleGroup(screen, 1, "Researcher")
+      .getByRole("combobox", { name: "1. Researcher" })
+      .click();
+    await screen.getByRole("option", { name: "Alfred Wegener" }).click();
+    await addRole(screen, "Data manager");
+    await fillPersonName(screen, "2. Data manager", "Georges", "Cuvier");
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scientificContext: expect.objectContaining({
+            additionalRoles: [
+              { role: "researcher", personUserId: WEGENER.id },
+              {
+                role: "data_manager",
+                personFirstname: "Georges",
+                personLastname: "Cuvier",
+              },
+            ],
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("should offer no role control on a collection specimen and omit the entered roles", async () => {
+    const onSubmit = vi.fn();
+    const screen = await renderScientificContextSection(onSubmit);
+
+    await goToScientificContext(screen);
+    await addRole(screen, "Researcher");
+    await fillPersonName(screen, "1. Researcher", "Marie", "Tharp");
+    await pickProvenance(screen, "Collection specimen");
+
+    await expect
+      .element(screen.getByRole("button", { name: "Add a role" }))
+      .not.toBeInTheDocument();
+
+    await fillPersonName(
+      screen,
+      "Name of the collection curator",
+      "Georges",
+      "Cuvier",
+    );
+    await screen.getByRole("button", { name: "Create" }).click();
+
+    await vi.waitFor(() =>
+      expect(onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          scientificContext: {
+            provenanceStatus: "collection_specimen",
+            collectionCuratorFirstname: "Georges",
+            collectionCuratorLastname: "Cuvier",
           },
         }),
       ),

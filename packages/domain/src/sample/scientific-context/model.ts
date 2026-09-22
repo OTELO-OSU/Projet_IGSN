@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { organizationRorSchema } from "../../institutional-group/organization.ts";
 import { orcidSchema } from "../../user/orcid.ts";
+import { sampleAdditionalRoleSchema } from "../additional-role/model.ts";
 import { checkContactLinks } from "../contact-link.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { collectionOriginSchema } from "./collection-origin.ts";
@@ -31,6 +32,7 @@ const fieldSampleSchema = z.object({
   researchProgramDescription: freeTextSchema.nullish(),
   fieldName: freeTextSchema.nullish(),
   missionDescription: freeTextSchema.nullish(),
+  additionalRoles: z.array(sampleAdditionalRoleSchema).default([]),
 });
 
 const collectionSpecimenSchema = z.object({

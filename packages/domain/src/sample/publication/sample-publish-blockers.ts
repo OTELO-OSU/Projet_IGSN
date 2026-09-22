@@ -41,6 +41,8 @@ export const publishBlockerSchema = z.enum([
   "collector_lastname_missing",
   "chief_scientist_firstname_missing",
   "chief_scientist_lastname_missing",
+  "additional_role_firstname_missing",
+  "additional_role_lastname_missing",
   "collection_curator_firstname_missing",
   "collection_curator_lastname_missing",
   "collection_origin_missing",
@@ -102,6 +104,7 @@ type NamedPerson =
   | "collector"
   | "chief_scientist"
   | "collection_curator"
+  | "additional_role"
   | "synthetic_operator";
 
 const nameBlockers = (
@@ -238,6 +241,21 @@ export function samplePublishBlockers(
           lastname: context.chiefScientistLastname,
         },
         "optional",
+      ),
+    );
+    blockers.push(
+      ...new Set(
+        context.additionalRoles.flatMap((role) =>
+          nameBlockers(
+            "additional_role",
+            {
+              userId: role.personUserId,
+              firstname: role.personFirstname,
+              lastname: role.personLastname,
+            },
+            "required",
+          ),
+        ),
       ),
     );
   } else {

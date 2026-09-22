@@ -2,6 +2,7 @@ import type { CoreLocation } from "../core/core-production-schema.ts";
 import type { CoreSample } from "../core/core-sample-schema.ts";
 import type { ISamplesSample } from "./isamples-schema.ts";
 
+import { operatorAgentRoles } from "../core/operator-agent-roles.ts";
 import { toISamplesAgents } from "./to-isamples-agents.ts";
 
 type SamplingEvent = ISamplesSample["produced_by"];
@@ -45,14 +46,16 @@ const toSampleLocation = (
 };
 
 export function toISamplesSamplingEvent({
+  extensions,
   production,
   responsibility,
   rightsAndAccess,
 }: CoreSample): SamplingEvent {
+  const agents = [...responsibility, ...operatorAgentRoles(extensions)];
   return {
     label: production.samplingSite_name,
     description: production.samplingPurpose,
-    responsibility: toISamplesAgents(responsibility, [
+    responsibility: toISamplesAgents(agents, [
       "Collector",
       "ChiefScientist",
       "Researcher",

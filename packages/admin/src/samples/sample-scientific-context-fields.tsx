@@ -4,6 +4,7 @@ import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-contex
 
 import { m } from "#/paraglide/messages.js";
 import { ContactNameFields } from "#/samples/contact-name-fields.tsx";
+import { SampleAdditionalRolesFields } from "#/samples/sample-additional-roles-fields.tsx";
 import { collectionOriginLabel } from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
@@ -71,6 +72,7 @@ export function SampleScientificContextFields() {
                   orcidName="scientificContext.collectorOrcid"
                   requiredToPublish
                 />
+                <SampleAdditionalRolesFields />
 
                 <form.AppField name="scientificContext.researchCampaign">
                   {(field) => (

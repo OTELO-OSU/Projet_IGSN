@@ -1,6 +1,9 @@
+import type { SampleAdditionalRole } from "@projet-igsn/domain/sample/additional-role/model";
 import type { CollectionOrigin } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
 import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
 import type { ProvenanceStatus } from "@projet-igsn/domain/sample/scientific-context/provenance-status";
+
+import type { AdditionalRoleDraft } from "#/samples/sample-draft-schema.ts";
 
 import { composeContact } from "#/samples/compose-contact.ts";
 import { draftDefault, type DraftOptions } from "#/samples/draft-defaults.ts";
@@ -23,6 +26,7 @@ export type ScientificContextDraft = {
   researchProgramDescription: string | null | undefined;
   fieldName: string | null | undefined;
   missionDescription: string | null | undefined;
+  additionalRoles: AdditionalRoleDraft[];
   collectionCuratorUserId: string | null | undefined;
   collectionCuratorFirstname: string | null | undefined;
   collectionCuratorLastname: string | null | undefined;
@@ -49,6 +53,7 @@ type ScientificContextCandidate =
       researchProgramDescription: string | undefined;
       fieldName: string | undefined;
       missionDescription: string | undefined;
+      additionalRoles: SampleAdditionalRole[];
     }
   | {
       provenanceStatus: "collection_specimen";
@@ -99,6 +104,21 @@ export function composeScientificContext(
       researchProgramDescription: draft.researchProgramDescription || undefined,
       fieldName: draft.fieldName || undefined,
       missionDescription: draft.missionDescription || undefined,
+      additionalRoles: draft.additionalRoles.map((row) => {
+        const person = composeContact(
+          row.personUserId,
+          row.personFirstname,
+          row.personLastname,
+          row.personOrcid,
+        );
+        return {
+          role: row.role,
+          personUserId: person.userId,
+          personFirstname: person.firstname,
+          personLastname: person.lastname,
+          personOrcid: person.orcid,
+        };
+      }),
     };
   }
   if (draft.provenanceStatus === "collection_specimen") {
@@ -160,6 +180,14 @@ export function toScientificContextDraft(
       fieldSample?.researchProgramDescription ?? undefined,
     fieldName: fieldSample?.fieldName ?? undefined,
     missionDescription: fieldSample?.missionDescription ?? undefined,
+    additionalRoles: (fieldSample?.additionalRoles ?? []).map((row) => ({
+      key: crypto.randomUUID(),
+      role: row.role,
+      personUserId: row.personUserId ?? undefined,
+      personFirstname: row.personFirstname ?? undefined,
+      personLastname: row.personLastname ?? undefined,
+      personOrcid: row.personOrcid ?? undefined,
+    })),
     collectionCuratorUserId:
       collectionSpecimen?.collectionCuratorUserId ?? undefined,
     collectionCuratorFirstname:

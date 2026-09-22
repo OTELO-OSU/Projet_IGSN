@@ -568,7 +568,10 @@ describe("SampleDescriptionFields", () => {
           asbestosRich: false,
           chemicalRisk: false,
         },
-        scientificContext: { provenanceStatus: "field_sample" },
+        scientificContext: {
+          provenanceStatus: "field_sample",
+          additionalRoles: [],
+        },
       }),
     );
   });

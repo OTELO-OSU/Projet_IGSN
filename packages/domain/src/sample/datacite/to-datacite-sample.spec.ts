@@ -7,6 +7,7 @@ import {
   LINE_SAMPLE,
   SYNTHETIC_SAMPLE,
 } from "../core/core-sample-fixture.ts";
+import { TEAM_SAMPLE } from "../core/core-sample-variant-fixture.ts";
 import { toDataCiteSample } from "./to-datacite-sample.ts";
 
 const PROJECTED_CORE_PATHS = [
@@ -21,6 +22,7 @@ const PROJECTED_CORE_PATHS = [
   "classification.contextCategories",
   "responsibility.agent",
   "responsibility.roles",
+  "extensions.experiment",
   "publication.publisher",
   "publication.publicationYear",
   "production.collection_date_start",
@@ -71,7 +73,6 @@ const DROPPED_CORE_PATHS = [
   "manualGroups.name",
   "extensions.geology",
   "extensions.safety",
-  "extensions.experiment",
 ];
 
 const ORGANIZATION_NAME = "Centre National de la Recherche Scientifique (CNRS)";
@@ -102,6 +103,23 @@ const RIGHTS_LIST = [
 const SCHEMA_VERSION = "http://datacite.org/schema/kernel-4";
 
 describe("a Core record mapped to DataCite", () => {
+  it("should contribute one agent per additional scientific role, under its DataCite contributor type", () => {
+    expect(
+      toDataCiteSample(core(TEAM_SAMPLE)).contributors?.map(
+        ({ name, contributorType }) => ({ name, contributorType }),
+      ),
+    ).toEqual([
+      { name: "Inge Lehmann", contributorType: "DataCollector" },
+      { name: "Alfred Wegener", contributorType: "ProjectLeader" },
+      { name: ORGANIZATION_NAME, contributorType: "HostingInstitution" },
+      { name: "Ada Lovelace", contributorType: "Researcher" },
+      { name: "Grace Hopper", contributorType: "ProjectMember" },
+      { name: "Emmy Noether", contributorType: "Researcher" },
+      { name: "Katherine Johnson", contributorType: "DataManager" },
+      { name: "Lise Meitner", contributorType: "ProjectManager" },
+    ]);
+  });
+
   it("should project a field sample onto its DataCite record", () => {
     expect(toDataCiteSample(core(FIELD_SAMPLE))).toEqual({
       doi: "10.5072/ABCDEFGHJKMNPQRSTVWXYZ0123",

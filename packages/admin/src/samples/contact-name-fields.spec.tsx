@@ -90,6 +90,7 @@ describe("ContactNameFields", () => {
         expect.objectContaining({
           scientificContext: {
             provenanceStatus: "field_sample",
+            additionalRoles: [],
             collectorUserId: WEGENER.id,
           },
         }),
@@ -121,6 +122,7 @@ describe("ContactNameFields", () => {
         expect.objectContaining({
           scientificContext: {
             provenanceStatus: "field_sample",
+            additionalRoles: [],
             collectorFirstname: "Pierre",
             collectorLastname: "Curie",
             collectorOrcid: "0000-0002-1825-0097",
@@ -135,6 +137,7 @@ describe("ContactNameFields", () => {
       defaultValues: {
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorFirstname: "Alfred",
           collectorLastname: "Wegener",
         },
@@ -149,6 +152,7 @@ describe("ContactNameFields", () => {
       defaultValues: {
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorUserId: WEGENER.id,
         },
       },
@@ -168,6 +172,7 @@ describe("ContactNameFields", () => {
       defaultValues: {
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorFirstname: "Pierre",
           collectorLastname: "Curie",
           collectorOrcid: "0000-0002-1825-0097",
@@ -195,6 +200,7 @@ describe("ContactNameFields", () => {
         expect.objectContaining({
           scientificContext: {
             provenanceStatus: "field_sample",
+            additionalRoles: [],
             collectorUserId: WEGENER.id,
           },
         }),
@@ -216,6 +222,7 @@ describe("ContactNameFields", () => {
       defaultValues: {
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           collectorFirstname: "Alfred",
           collectorLastname: "Wegener",
         },

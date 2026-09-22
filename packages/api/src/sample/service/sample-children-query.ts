@@ -6,6 +6,8 @@ import type { DB } from "../../db.ts";
 
 import { LOCATION_COLUMNS } from "./to-location.ts";
 
+const ACCOUNT_COLUMNS = ["user.firstname", "user.name", "user.orcid"] as const;
+
 export function sampleLocationQuery(eb: ExpressionBuilder<DB, "sample">) {
   return jsonObjectFrom(
     eb
@@ -32,6 +34,26 @@ export function sampleProcessStepsQuery(eb: ExpressionBuilder<DB, "sample">) {
       .selectAll("sample_process_step")
       .whereRef("sample_process_step.sample_id", "=", "sample.id"),
   ).as("processSteps");
+}
+
+export function sampleAdditionalRolesQuery(
+  eb: ExpressionBuilder<DB, "sample">,
+) {
+  return jsonArrayFrom(
+    eb
+      .selectFrom("sample_additional_role")
+      .selectAll("sample_additional_role")
+      .select((role) =>
+        jsonObjectFrom(
+          role
+            .selectFrom("user")
+            .select(ACCOUNT_COLUMNS)
+            .whereRef("user.id", "=", "sample_additional_role.person_user_id"),
+        ).as("account"),
+      )
+      .whereRef("sample_additional_role.sample_id", "=", "sample.id")
+      .orderBy("sample_additional_role.id"),
+  ).as("additionalRoles");
 }
 
 export function sampleManualGroupsQuery(eb: ExpressionBuilder<DB, "sample">) {
@@ -71,7 +93,7 @@ const personAccount = (
   jsonObjectFrom(
     eb
       .selectFrom("user")
-      .select(["user.firstname", "user.name", "user.orcid"])
+      .select(ACCOUNT_COLUMNS)
       .whereRef("user.id", "=", `sample.${column}`),
   );
 

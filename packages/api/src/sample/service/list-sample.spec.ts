@@ -51,6 +51,7 @@ const insertCollectors = async (db: Transactional<DB>) => {
     name: "By Curie",
     scientificContext: {
       provenanceStatus: "field_sample",
+      additionalRoles: [],
       collectorFirstname: "Marie",
       collectorLastname: "Curié",
     },
@@ -60,6 +61,7 @@ const insertCollectors = async (db: Transactional<DB>) => {
     name: "By Darwin",
     scientificContext: {
       provenanceStatus: "field_sample",
+      additionalRoles: [],
       collectorFirstname: "Charles",
       collectorLastname: "Darwin",
     },
@@ -85,6 +87,7 @@ const insertLinkedCollectors = async (db: Transactional<DB>) => {
     name: "Linked to Curie",
     scientificContext: {
       provenanceStatus: "field_sample",
+      additionalRoles: [],
       collectorUserId: curie.id,
     },
   });
@@ -93,6 +96,7 @@ const insertLinkedCollectors = async (db: Transactional<DB>) => {
     name: "Linked to Darwin",
     scientificContext: {
       provenanceStatus: "field_sample",
+      additionalRoles: [],
       collectorUserId: darwin.id,
     },
   });
@@ -104,6 +108,7 @@ const insertCharpentier = (db: Transactional<DB>) =>
     name: "By Charpentier",
     scientificContext: {
       provenanceStatus: "field_sample",
+      additionalRoles: [],
       collectorFirstname: "Jean",
       collectorLastname: "Charpentier",
     },
@@ -315,6 +320,7 @@ describe("listSamples", () => {
           collectionMethod: null,
           scientificContext: {
             provenanceStatus: "field_sample",
+            additionalRoles: [],
             hostInstitution,
           },
         });
@@ -464,6 +470,7 @@ describe("listSamples", () => {
         name: "Surveyed",
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           researchProgramName: "Forêt Profonde",
         },
       });
@@ -472,6 +479,7 @@ describe("listSamples", () => {
         name: "Unsurveyed",
         scientificContext: {
           provenanceStatus: "field_sample",
+          additionalRoles: [],
           researchProgramName: "Deep Biosphere",
         },
       });

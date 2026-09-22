@@ -7,6 +7,11 @@ import {
   nameSchema,
   publicationYearSchema,
 } from "../sample.ts";
+import {
+  agentIdSchema,
+  coreOrganizationSchema,
+  corePersonFields,
+} from "./core-agent-schema.ts";
 import { coreClassificationSchema } from "./core-classification-schema.ts";
 import { coreCurationSchema } from "./core-curation-schema.ts";
 import { corePhysicalDescriptionSchema } from "./core-curation-schema.ts";
@@ -28,6 +33,9 @@ export const ORCID_PREFIX = "https://orcid.org/";
 
 export const toOrcidUri = (orcid: string): string => `${ORCID_PREFIX}${orcid}`;
 
+export const fromOrcidUri = (id: string | null | undefined): string | null =>
+  id == null ? null : id.replace(ORCID_PREFIX, "");
+
 export const CORE_LICENCE_URI = "https://creativecommons.org/licenses/by/4.0/";
 
 const CORE_ROLES = [
@@ -38,33 +46,21 @@ const CORE_ROLES = [
   "HostingInstitution",
   "Curator",
   "Researcher",
+  "ProjectManager",
+  "ProjectMember",
+  "DataManager",
 ] as const;
 
 export type CoreRole = (typeof CORE_ROLES)[number];
 
-// One agent holds a role, except HostingInstitution which lists every host.
-const REPEATABLE_ROLES: readonly CoreRole[] = ["HostingInstitution"];
-
-const coreOrganizationSchema = z.strictObject({
-  id: z
-    .string()
-    .min(1)
-    .meta({
-      description:
-        "Identifier of the organization, a ROR URI or one of our urn:otelo: URNs for an OSU or a laboratory.",
-    })
-    .optional(),
-  name: freeTextSchema.meta({ description: "Name of the organization." }),
-});
-
-const agentIdSchema = z
-  .string()
-  .min(1)
-  .meta({
-    description:
-      "Identifier of the agent, an ORCID URI for a person and a ROR URI for an organization.",
-  })
-  .optional();
+// One agent holds a role, except the hosts and the additional scientific roles a sample repeats.
+const REPEATABLE_ROLES: readonly CoreRole[] = [
+  "HostingInstitution",
+  "Researcher",
+  "ProjectManager",
+  "ProjectMember",
+  "DataManager",
+];
 
 const coreAgentSchema = z
   .discriminatedUnion("agentType", [
@@ -72,21 +68,7 @@ const coreAgentSchema = z
       agentType: z.literal("Person").meta({
         description: "Whether the agent is a person or an organization.",
       }),
-      id: agentIdSchema,
-      firstname: freeTextSchema
-        .meta({ description: "First name of the person." })
-        .optional(),
-      lastname: freeTextSchema
-        .meta({ description: "Last name of the person." })
-        .optional(),
-      affiliations: z
-        .array(coreOrganizationSchema)
-        .min(1)
-        .meta({
-          description:
-            "Organizations the person belongs to, the institutional trio of the creator or the research structures of a researcher.",
-        })
-        .optional(),
+      ...corePersonFields,
     }),
     z.strictObject({
       agentType: z.literal("Organization").meta({
@@ -102,7 +84,7 @@ const coreAgentRoleSchema = z.strictObject({
   agent: coreAgentSchema,
   roles: z.array(z.enum(CORE_ROLES)).length(1).meta({
     description:
-      "The single role the agent holds; only HostingInstitution is held by several agents.",
+      "The single role the agent holds; HostingInstitution and the scientific roles are held by several agents.",
   }),
 });
 

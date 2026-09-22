@@ -82,7 +82,10 @@ describe("sampleDraftSchema", () => {
         asbestosRich: false,
         chemicalRisk: false,
       },
-      scientificContext: { provenanceStatus: "field_sample" },
+      scientificContext: {
+        provenanceStatus: "field_sample",
+        additionalRoles: [],
+      },
       manualGroupIds: [],
     });
   });
@@ -202,7 +205,10 @@ describe("sampleDraftSchema", () => {
         asbestosRich: false,
         chemicalRisk: false,
       },
-      scientificContext: { provenanceStatus: "field_sample" },
+      scientificContext: {
+        provenanceStatus: "field_sample",
+        additionalRoles: [],
+      },
       manualGroupIds: [],
       description: {
         oriented: false,
