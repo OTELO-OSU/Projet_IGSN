@@ -18,6 +18,7 @@ import { freeTextSchema } from "./free-text.ts";
 import { geomorphologicalEnvironmentSchema } from "./geomorphological-environment/vocabulary.ts";
 import { allowsLocation } from "./location/allows-location.ts";
 import { locationSchema } from "./location/model.ts";
+import { allowsSpecificName } from "./material/allows-specific-name.ts";
 import { materialPathSchema } from "./material/classification.ts";
 import { isOtherMaterial } from "./material/is-other-material.ts";
 import {
@@ -176,6 +177,13 @@ const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
       code: "custom",
       path: ["materialOtherName"],
       message: "only the other material carries a free-text name",
+    });
+  }
+  if (value.specificName != null && !allowsSpecificName(value.material)) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["specificName"],
+      message: "an unknown rock carries no specific name",
     });
   }
   if (
