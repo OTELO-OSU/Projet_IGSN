@@ -358,6 +358,28 @@ describe("createSampleSchema", () => {
   });
 
   it.each([
+    ["rock_and_sediment.rock.unknown", null],
+    ["rock_and_sediment.rock.other", "Basalte du Massif Central"],
+    [
+      "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
+      "Granite rose de Bretagne",
+    ],
+  ])(
+    "should accept the material %s carrying the specific name %s",
+    (material, specificName) => {
+      // Arrange / Act
+      const result = createSampleSchema.safeParse({
+        name: "Basalte du Massif Central",
+        nature: "hand_sample",
+        material,
+        specificName,
+      });
+      // Assert
+      expect(result).toMatchObject({ success: true });
+    },
+  );
+
+  it.each([
     { name: "", nature: "rock_powder" },
     { name: "Grès", nature: "Roche inconnue" },
     { nature: "rock_powder" },
@@ -500,6 +522,24 @@ describe("the write schemas", () => {
       expect(result.error?.issues).toMatchObject([
         { path: ["scientificContext", "collectorUserId"] },
       ]);
+    },
+  );
+
+  it.each([
+    ["createSampleSchema", createSampleSchema],
+    ["updateSampleSchema", updateSampleSchema],
+  ])(
+    "should reject on %s a specific name on an unknown rock",
+    (_name, schema) => {
+      // Arrange / Act
+      const result = schema.safeParse({
+        name: "Basalte du Massif Central",
+        nature: "hand_sample",
+        material: "rock_and_sediment.rock.unknown",
+        specificName: "Granite rose de Bretagne",
+      });
+      // Assert
+      expect(result.error?.issues).toMatchObject([{ path: ["specificName"] }]);
     },
   );
 

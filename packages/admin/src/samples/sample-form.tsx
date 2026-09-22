@@ -27,6 +27,7 @@ import {
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { composeHierarchyValue } from "@projet-igsn/design-system/lib/hierarchy";
 import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
+import { allowsSpecificName } from "@projet-igsn/domain/sample/material/allows-specific-name";
 import { natureSchema } from "@projet-igsn/domain/sample/nature";
 import { type SampleParent } from "@projet-igsn/domain/sample/parent/model";
 import { soleParent } from "@projet-igsn/domain/sample/parent/sole-parent";
@@ -577,11 +578,13 @@ export function SampleForm({
                       <form.AppForm>
                         <MetamorphicDetails />
                       </form.AppForm>
-                      <form.AppField name="specificName">
-                        {(field) => (
-                          <field.TextField label={m.field_specific_name()} />
-                        )}
-                      </form.AppField>
+                      {allowsSpecificName(material) ? (
+                        <form.AppField name="specificName">
+                          {(field) => (
+                            <field.TextField label={m.field_specific_name()} />
+                          )}
+                        </form.AppField>
+                      ) : null}
                     </FormSection>
 
                     <form.AppForm>

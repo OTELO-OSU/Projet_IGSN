@@ -108,6 +108,27 @@ describe("sampleDraftSchema", () => {
     ).toMatchObject({ materialOtherName });
   });
 
+  it.each<[string, string[], string | null]>([
+    [
+      "drop the specific name for the unknown rock",
+      toHierarchyPath("rock_and_sediment.rock.unknown"),
+      null,
+    ],
+    [
+      "keep the trimmed specific name for any other material",
+      toHierarchyPath("rock_and_sediment.mineral"),
+      "MC-2026-007",
+    ],
+  ])("should %s", (_case, materialPath, specificName) => {
+    expect(
+      sampleDraftSchema.parse({
+        ...draft,
+        materialPath,
+        specificName: "  MC-2026-007  ",
+      }),
+    ).toMatchObject({ specificName });
+  });
+
   it("should drop a lingering location and geological context when the material forbids a location", () => {
     const result = sampleDraftSchema.parse({
       ...draft,
