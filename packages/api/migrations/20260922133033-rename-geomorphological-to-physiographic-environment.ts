@@ -5,7 +5,9 @@ export async function up(db: Kysely<unknown>): Promise<void> {
     .alterTable("sample")
     .renameColumn("geomorphological_environment", "physiographic_environment")
     .execute();
-  await sql`update sample set physiographic_environment = null`.execute(db);
+  await sql`update sample set physiographic_environment = null where physiographic_environment is not null`.execute(
+    db,
+  );
 }
 
 export async function down(db: Kysely<unknown>): Promise<void> {
