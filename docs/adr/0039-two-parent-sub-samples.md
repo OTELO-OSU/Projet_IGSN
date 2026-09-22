@@ -21,13 +21,13 @@ The one-parent create form prefills the child from its parent by copying its fie
 ## Decision
 
 - A sample carries 0, 1 or 2 parents, `parentIds` capped at 2 in `createSampleSchema` and the parent relations capped at 2 in `coreSampleSchema`.
-- Two parents force a synthetic material (`rock_and_sediment.synthetic_rock_mineral` or below), a `createSampleSchema` refinement reported at `material`, which drops location, geological context and geomorphological environment through the existing `allowsLocation` rule.
+- Two parents force a synthetic material (`rock_and_sediment.synthetic_rock_mineral` or below), a `createSampleSchema` refinement reported at `material`, which drops location, geological context and physiographic environment through the existing `allowsLocation` rule.
 - Parents stay write-once: `updateSampleSchema` still omits `parentIds`, so parentage is set at creation and never edited.
 - The second parent is picked from `searchEligibleParents`, a repository search by name or exact IGSN over the samples the caller may declare a sub-sample of, the first parent excluded.
 - One parent keeps prefilling by copy, including the inherited location; two parents prefill only `material` and `parentIds` and suggest the rest.
 - A suggestion is the parent's stored value: a defaulted leaf with no stored value (`toSampleDraft(value, { defaults: false })`) yields "No value", never a draft default, while a stored value equal to the form default still gets a chip.
 - In a two-parent form every inheritable field's row ends with two fixed-width slots, `[parent 1 | parent 2]`, aligned across rows and with the input, each labelled with its parent's name above the chip, ellipsis-truncated with a tooltip for the full value; a chip when that parent holds a stored value and a disabled "No value" button otherwise.
-- Non-inheritable fields (name, nature, material, parents, manual groups, relations, attachments, location and geological/geomorphological context) render no slots, and a form with no parent rule (edit, one parent) renders no slot column at all.
+- Non-inheritable fields (name, nature, material, parents, manual groups, relations, attachments, location and geological/physiographic context) render no slots, and a form with no parent rule (edit, one parent) renders no slot column at all.
 - A field hidden behind a gate (orientation explanation, hazard explanation, humidity %, temperature/pressure value and unit, non-selected scientific-context branch fields, numeric age unit) shows no row while its gate is closed; the user opens the gate through the gate's own chips (Oriented "Yes", a type, a Provenance value) or by hand, and the field then appears with its chips. A chip fills only its own field, with no side effect beyond what the same edit would have on a no-parent sample.
 - Switches (Oriented, hazard flags) are inheritable rows with yes/no chips; the copy comes from admin i18n, the kit stays label-agnostic.
 - Every sample form (create with 0/1/2 parents, edit) lays out one field per row; the former multi-column groupings (temperature, humidity, pressure, measurements, age bounds, coordinates...) are gone.
