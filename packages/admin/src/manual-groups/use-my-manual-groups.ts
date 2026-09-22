@@ -5,7 +5,7 @@ import { API_URL } from "#/api-url.ts";
 import { apiJson } from "#/http-error.ts";
 import { useApiClient } from "#/use-api-client.ts";
 
-export function useMyManualGroups() {
+export function useMyManualGroups(enabled = true) {
   const apiFetch = useApiClient();
   return useQuery({
     queryKey: ["currentUser", "manual-groups"],
@@ -17,5 +17,6 @@ export function useMyManualGroups() {
         "Failed to load your manual groups",
       );
     },
+    enabled,
   });
 }

@@ -6,7 +6,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@projet-igsn/design-system/components/ui/popover";
-import { cn } from "@projet-igsn/design-system/lib/utils";
 import { PlusIcon, XIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -17,9 +16,10 @@ export type FilterEntry = {
   label: string;
   active?: boolean;
   onRemove?: () => void;
-  className?: string;
   cell: ReactNode;
 };
+
+const COLLAPSIBLE_FROM = 3;
 
 function AddFilter({
   filters,
@@ -66,12 +66,18 @@ export function ListHeader({
   action?: ReactNode;
   filters?: FilterEntry[];
 }) {
-  const [added, setAdded] = useState<ReadonlySet<string>>(new Set());
+  const [added, setAdded] = useState<ReadonlySet<string>>(
+    () =>
+      new Set(
+        filters.filter((filter) => filter.active).map((filter) => filter.name),
+      ),
+  );
 
+  const collapses = filters.length >= COLLAPSIBLE_FROM;
+  const isCollapsible = (filter: FilterEntry) =>
+    collapses && filter.onRemove !== undefined;
   const isShown = (filter: FilterEntry) =>
-    filter.onRemove === undefined ||
-    Boolean(filter.active) ||
-    added.has(filter.name);
+    !isCollapsible(filter) || Boolean(filter.active) || added.has(filter.name);
   const hidden = filters.filter((filter) => !isShown(filter));
 
   const remove = (filter: FilterEntry) => {
@@ -102,21 +108,18 @@ export function ListHeader({
 
       <div className="grid grid-cols-1 items-end gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {filters.filter(isShown).map((filter) => (
-          <div
-            key={filter.name}
-            className={cn("relative grid min-w-0 gap-1.5", filter.className)}
-          >
-            {filter.onRemove === undefined ? null : (
+          <div key={filter.name} className="flex min-w-0 items-center gap-1">
+            <div className="grid min-w-0 flex-1 gap-1.5">{filter.cell}</div>
+            {isCollapsible(filter) ? (
               <button
                 type="button"
                 aria-label={m.filter_remove({ name: filter.label })}
                 onClick={() => remove(filter)}
-                className="hover:bg-accent absolute top-0 right-0 rounded p-0.5"
+                className="hover:bg-accent shrink-0 rounded p-0.5"
               >
                 <XIcon className="size-3.5" />
               </button>
-            )}
-            {filter.cell}
+            ) : null}
           </div>
         ))}
       </div>

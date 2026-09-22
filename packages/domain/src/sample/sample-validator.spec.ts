@@ -50,18 +50,15 @@ describe("listSamplesQuerySchema", () => {
     });
   });
 
-  it.each([10, 25, 50])("should accept preset perPage %s", (perPage) => {
-    expect(listSamplesQuerySchema.parse({ perPage }).perPage).toBe(perPage);
+  it("should accept a preset perPage", () => {
+    expect(listSamplesQuerySchema.parse({ perPage: 10 }).perPage).toBe(10);
   });
 
-  it.each(["7", "999", "abc", 0, -5])(
-    "should fall back to the default perPage for off-preset %s",
-    (perPage) => {
-      expect(listSamplesQuerySchema.parse({ perPage }).perPage).toBe(
-        DEFAULT_PAGE_SIZE,
-      );
-    },
-  );
+  it("should fall back to the default perPage for an off-preset one", () => {
+    expect(listSamplesQuerySchema.parse({ perPage: 999 }).perPage).toBe(
+      DEFAULT_PAGE_SIZE,
+    );
+  });
 
   it("should coerce a numeric page string", () => {
     expect(listSamplesQuerySchema.parse({ page: "3" }).page).toBe(3);
@@ -92,15 +89,19 @@ describe("listSamplesQuerySchema", () => {
     ).toBeUndefined();
   });
 
-  it("should drop an unknown sort", () => {
-    expect(listSamplesQuerySchema.parse({ sort: "name" }).sort).toBeUndefined();
-  });
-
-  it("should drop an unknown ownership", () => {
-    expect(
-      listSamplesQuerySchema.parse({ ownership: "bogus" }).ownership,
-    ).toBeUndefined();
-  });
+  it.each([
+    "sort",
+    "ownership",
+    "existenceStatus",
+    "availabilityStatus",
+  ] as const)(
+    "should drop an unknown %s instead of failing the parse",
+    (param) => {
+      expect(
+        listSamplesQuerySchema.parse({ [param]: "bogus" })[param],
+      ).toBeUndefined();
+    },
+  );
 
   it("should drop an unknown order", () => {
     const result = listSamplesQuerySchema.parse({

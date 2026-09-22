@@ -1,9 +1,12 @@
 import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
+import { page } from "vitest/browser";
 
+import { addFilter } from "../../test/add-filter.ts";
 import { fakeCurrentUser } from "../../test/fake-current-user.ts";
 import { fakeSample } from "../../test/fake-sample.ts";
 import { worker } from "../../test/msw.ts";
+import { pickPath } from "../../test/pick-hierarchy.ts";
 import { renderRoute } from "../../test/render-route.tsx";
 
 vi.mock("react-oidc-context", () => ({
@@ -68,6 +71,10 @@ function fakeApi() {
   return { requested };
 }
 
+beforeAll(() => page.viewport(1280, 1600));
+
+type Screen = Awaited<ReturnType<typeof renderRoute>>["screen"];
+
 describe("SampleModerationPage", () => {
   it("should list the moderated samples with each owner's account status", async () => {
     fakeCurrentUser({ managedLaboratories: ["UMR7359"] });
@@ -89,24 +96,6 @@ describe("SampleModerationPage", () => {
     await expect
       .element(screen.getByRole("cell", { name: /Hugo Fournier\s*Pending/ }))
       .toBeVisible();
-  });
-
-  it("should send the picked institution to the api on the first page", async () => {
-    fakeCurrentUser({ managedLaboratories: ["UMR7359"] });
-    const { requested } = fakeApi();
-
-    const { screen } = await renderRoute("/samples/moderation");
-    await screen.getByRole("combobox", { name: "Institution" }).click();
-    await screen.getByLabelText("Search institutions").fill("GéoRessources");
-    await screen
-      .getByRole("button", { name: "GéoRessources (GEORESSOURCES)" })
-      .first()
-      .click();
-
-    await expect
-      .poll(() => requested.at(-1))
-      .toContain("institution=laboratory%3AUMR7359");
-    expect(requested.at(-1)).toContain("page=1");
   });
 
   it("should drop the researcher name once the url no longer carries the owner", async () => {
@@ -155,6 +144,75 @@ describe("SampleModerationPage", () => {
       .element(screen.getByRole("combobox", { name: "Manual group" }))
       .toHaveTextContent("Basalt survey");
   });
+
+  it.each<[string, (screen: Screen) => Promise<void>, string, object]>([
+    [
+      "institution",
+      async (screen) => {
+        await screen.getByRole("combobox", { name: "Institution" }).click();
+        await screen
+          .getByLabelText("Search institutions")
+          .fill("GéoRessources");
+        await screen
+          .getByRole("button", { name: "GéoRessources (GEORESSOURCES)" })
+          .first()
+          .click();
+      },
+      "institution=laboratory%3AUMR7359",
+      { institution: "laboratory:UMR7359" },
+    ],
+    [
+      "collector name",
+      async (screen) => {
+        await addFilter(screen, "Collector name");
+        await screen
+          .getByRole("searchbox", { name: "Collector name", exact: true })
+          .fill("Curie");
+      },
+      "collectorName=Curie",
+      { collectorName: "Curie" },
+    ],
+    [
+      "existence status",
+      async (screen) => {
+        await addFilter(screen, "Existence status");
+        await pickPath(screen, "Existence status", "Destroyed");
+      },
+      "existenceStatus=destroyed",
+      { existenceStatus: "destroyed" },
+    ],
+    [
+      "availability status",
+      async (screen) => {
+        await addFilter(screen, "Availability status");
+        await pickPath(screen, "Availability status", "Restricted");
+      },
+      "availabilityStatus=restricted",
+      { availabilityStatus: "restricted" },
+    ],
+  ])(
+    "should ask the server for the chosen %s, keep it in the URL and reset to page 1",
+    async (_, act, query, expected) => {
+      fakeCurrentUser({ managedLaboratories: ["UMR7359"] });
+      const { requested } = fakeApi();
+
+      const { screen, router } = await renderRoute(
+        "/samples/moderation?page=2",
+      );
+      await expect
+        .element(
+          screen.getByRole("cell", { name: "Sample of Jean", exact: true }),
+        )
+        .toBeVisible();
+
+      await act(screen);
+
+      await expect.poll(() => requested.at(-1)).toContain(query);
+      await expect
+        .poll(() => router.state.location.search)
+        .toMatchObject({ page: 1, ...expected });
+    },
+  );
 
   it("should send a plain researcher back to their own samples", async () => {
     fakeCurrentUser();

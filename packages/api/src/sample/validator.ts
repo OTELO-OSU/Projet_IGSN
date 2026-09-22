@@ -56,6 +56,21 @@ export const validateListQuery = validator("query", (value, c) => {
   return parsed.data;
 });
 
+const publicListSamplesQuerySchema = listSamplesQuerySchema.omit({
+  sort: true,
+  order: true,
+  existenceStatus: true,
+  availabilityStatus: true,
+});
+
+export const validatePublicListQuery = validator("query", (value, c) => {
+  const parsed = publicListSamplesQuerySchema.safeParse(value);
+  if (!parsed.success) {
+    return c.json({ error: "Invalid query parameters" }, 400);
+  }
+  return parsed.data;
+});
+
 function sampleBodyValidator<
   S extends typeof createSampleSchema | typeof updateSampleBodySchema,
 >(schema: S) {

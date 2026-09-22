@@ -57,7 +57,6 @@ function LaboratoriesPage() {
             label: m.filter_laboratories_search(),
             placeholder: m.laboratory_search_placeholder(),
             defaultValue: search,
-            className: "col-span-3",
             onSearch: (value) =>
               void navigate({
                 search: (prev) => ({ ...prev, search: value || undefined }),

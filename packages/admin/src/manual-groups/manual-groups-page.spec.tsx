@@ -169,10 +169,6 @@ describe("ManualGroupsPage", () => {
     const { requested } = fakeApi();
 
     const { screen, router } = await renderRoute("/manual-groups");
-    await screen.getByRole("button", { name: "Add a filter" }).click();
-    await screen
-      .getByRole("button", { name: "Without active manager" })
-      .click();
     await screen
       .getByRole("switch", { name: "Without active manager" })
       .click();

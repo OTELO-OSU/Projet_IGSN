@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 import { SearchInput } from "./search-input.tsx";
 
@@ -19,6 +19,8 @@ export function SearchField({
 }: SearchFieldProps) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => () => clearTimeout(timer.current), []);
 
   return (
     <form

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { vi } from "vitest";
 
 import { render } from "../../test/render.tsx";
@@ -13,6 +14,12 @@ const search = {
   cell: <input aria-label="Search" />,
 };
 
+const nature = {
+  name: "nature",
+  label: "Nature",
+  cell: <input aria-label="Nature" />,
+};
+
 const status = (onRemove = vi.fn(), active = false) => ({
   name: "status",
   label: "Status",
@@ -22,9 +29,27 @@ const status = (onRemove = vi.fn(), active = false) => ({
 });
 
 describe("ListHeader", () => {
-  it("should hide an optional filter until the user adds it", async () => {
+  it("should render every filter inline without an add or a remove button under three filters", async () => {
     const screen = await render(
       <ListHeader title={TITLE} filters={[search, status()]} />,
+    );
+
+    await expect
+      .element(screen.getByLabelText("Status", { exact: true }))
+      .toBeVisible();
+    expect(screen.getByRole("button", { name: ADD }).elements()).toHaveLength(
+      0,
+    );
+    expect(
+      screen
+        .getByRole("button", { name: "Remove the Status filter" })
+        .elements(),
+    ).toHaveLength(0);
+  });
+
+  it("should hide an optional filter until the user adds it", async () => {
+    const screen = await render(
+      <ListHeader title={TITLE} filters={[search, nature, status()]} />,
     );
 
     await expect.element(screen.getByLabelText("Search")).toBeVisible();
@@ -42,7 +67,10 @@ describe("ListHeader", () => {
 
   it("should show an optional filter that already carries a value", async () => {
     const screen = await render(
-      <ListHeader title={TITLE} filters={[search, status(vi.fn(), true)]} />,
+      <ListHeader
+        title={TITLE}
+        filters={[search, nature, status(vi.fn(), true)]}
+      />,
     );
 
     await expect
@@ -56,7 +84,7 @@ describe("ListHeader", () => {
   it("should clear the value and hide the filter when removed", async () => {
     const onRemove = vi.fn();
     const screen = await render(
-      <ListHeader title={TITLE} filters={[search, status(onRemove)]} />,
+      <ListHeader title={TITLE} filters={[search, nature, status(onRemove)]} />,
     );
 
     await screen.getByRole("button", { name: ADD }).click();
@@ -71,12 +99,47 @@ describe("ListHeader", () => {
     ).toHaveLength(0);
   });
 
+  it("should keep an already valued filter shown once the user clears it", async () => {
+    function StatusFilter() {
+      const [value, setValue] = useState("draft");
+      return (
+        <ListHeader
+          title={TITLE}
+          filters={[
+            search,
+            nature,
+            {
+              name: "status",
+              label: "Status",
+              active: value !== "",
+              onRemove: () => setValue(""),
+              cell: (
+                <input
+                  aria-label="Status"
+                  value={value}
+                  onChange={(event) => setValue(event.target.value)}
+                />
+              ),
+            },
+          ]}
+        />
+      );
+    }
+
+    const screen = await render(<StatusFilter />);
+    await screen.getByLabelText("Status", { exact: true }).fill("");
+
+    await expect
+      .element(screen.getByLabelText("Status", { exact: true }))
+      .toBeVisible();
+  });
+
   it("should sit the add-filter and the action buttons on the heading row", async () => {
     const screen = await render(
       <ListHeader
         title={TITLE}
         action={<button type="button">Create</button>}
-        filters={[search, status()]}
+        filters={[search, nature, status()]}
       />,
     );
 

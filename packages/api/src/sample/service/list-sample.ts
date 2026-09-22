@@ -152,6 +152,12 @@ async function listWithOwners(
       ...(params.ownerId === undefined
         ? []
         : [assignedTo(params.ownerId, "mine")]),
+      ...(params.existenceStatus === undefined
+        ? []
+        : [sql<SqlBool>`existence_status = ${params.existenceStatus}`]),
+      ...(params.availabilityStatus === undefined
+        ? []
+        : [sql<SqlBool>`availability_status = ${params.availabilityStatus}`]),
     ],
     true,
   );

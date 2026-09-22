@@ -3,22 +3,25 @@ import { SearchField } from "@projet-igsn/design-system/components/ui/search-fie
 import type { FilterEntry } from "#/filters/list-header.tsx";
 
 export function searchFilterEntry({
+  name = "search",
   label,
   placeholder,
   defaultValue,
+  onRemove,
   onSearch,
-  className,
 }: {
+  name?: string;
   label: string;
   placeholder: string;
   defaultValue: string | undefined;
+  onRemove?: () => void;
   onSearch: (value: string) => void;
-  className?: string;
 }): FilterEntry {
   return {
-    name: "search",
+    name,
     label,
-    className,
+    active: defaultValue !== undefined,
+    onRemove,
     cell: (
       <SearchField
         defaultValue={defaultValue}

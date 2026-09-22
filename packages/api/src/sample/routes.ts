@@ -20,7 +20,7 @@ import {
   validateContactBody,
   validateIgsnAttachmentParams,
   validateIgsnParam,
-  validateListQuery,
+  validatePublicListQuery,
 } from "./validator.ts";
 
 export function createSampleRoutes(
@@ -30,9 +30,10 @@ export function createSampleRoutes(
   mail?: { sendMail: SendMail; frontendUrl: string },
 ) {
   return new Hono()
-    .get("/", validateListQuery, async (c) => {
-      const { sort: _sort, order: _order, ...query } = c.req.valid("query");
-      const { data, total } = await repository.listPublished(query);
+    .get("/", validatePublicListQuery, async (c) => {
+      const { data, total } = await repository.listPublished(
+        c.req.valid("query"),
+      );
       const body: ListSamplesResponse = {
         data: data.map(redactPrivateContacts),
         meta: { total },

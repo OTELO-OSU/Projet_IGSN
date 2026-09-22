@@ -20,7 +20,10 @@ export type SampleListParams = Pick<
   | "manualGroup"
   | "nature"
   | "collectionMethod"
+  | "collectorName"
   | "status"
+  | "existenceStatus"
+  | "availabilityStatus"
 >;
 
 export function useSamples(params: SampleListParams, moderated = false) {
