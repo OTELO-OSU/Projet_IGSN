@@ -134,7 +134,7 @@ export type SampleDraft = {
   collectionMethodDescription: string | null | undefined;
   specificName: string | null | undefined;
   geologicalContextDescription: string | null | undefined;
-  geomorphologicalEnvironmentPath: string[];
+  physiographicEnvironmentPath: string[];
   location: LocationDraft;
   description: DescriptionDraft;
   condition: ConditionDraft;
@@ -169,8 +169,8 @@ export const toSampleDraft = (
   collectionMethodDescription: value?.collectionMethodDescription,
   specificName: value?.specificName,
   geologicalContextDescription: value?.geologicalContextDescription,
-  geomorphologicalEnvironmentPath: toHierarchyPath(
-    value?.geomorphologicalEnvironment ?? null,
+  physiographicEnvironmentPath: toHierarchyPath(
+    value?.physiographicEnvironment ?? null,
   ),
   location: toLocationDraft(value?.location),
   description: toDescriptionDraft(value?.description, options),
@@ -284,8 +284,8 @@ const composeCreateSample = (draft: SampleDraft) => {
     geologicalContextDescription: locationAllowed
       ? draft.geologicalContextDescription?.trim() || null
       : null,
-    geomorphologicalEnvironment: locationAllowed
-      ? composeHierarchyValue(draft.geomorphologicalEnvironmentPath)
+    physiographicEnvironment: locationAllowed
+      ? composeHierarchyValue(draft.physiographicEnvironmentPath)
       : null,
     location: locationAllowed ? composeLocation(draft.location) : null,
     description: composeDescription(draft.description),

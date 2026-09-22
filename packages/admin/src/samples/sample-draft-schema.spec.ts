@@ -40,7 +40,7 @@ const draft: SampleDraft = {
   collectionMethodDescription: null,
   specificName: null,
   geologicalContextDescription: null,
-  geomorphologicalEnvironmentPath: [],
+  physiographicEnvironmentPath: [],
   location: toLocationDraft(null),
   description: toDescriptionDraft(null),
   condition: toConditionDraft(null),
@@ -72,7 +72,7 @@ describe("sampleDraftSchema", () => {
       collectionMethodDescription: null,
       specificName: null,
       geologicalContextDescription: null,
-      geomorphologicalEnvironment: null,
+      physiographicEnvironment: null,
       location: null,
       existenceStatus: "exists",
       availabilityStatus: "available",
@@ -140,14 +140,14 @@ describe("sampleDraftSchema", () => {
         latitude: 48.85,
       },
       geologicalContextDescription: "Eroded plateau",
-      geomorphologicalEnvironmentPath: toHierarchyPath("marine_zone.bay"),
+      physiographicEnvironmentPath: toHierarchyPath("marine.bay"),
     });
 
     expect(result).toMatchObject({
       material: "rock_and_sediment.synthetic_rock_mineral",
       location: null,
       geologicalContextDescription: null,
-      geomorphologicalEnvironment: null,
+      physiographicEnvironment: null,
     });
   });
 
@@ -193,7 +193,7 @@ describe("sampleDraftSchema", () => {
       collectionMethodDescription: null,
       specificName: null,
       geologicalContextDescription: null,
-      geomorphologicalEnvironment: null,
+      physiographicEnvironment: null,
       location: null,
       existenceStatus: "exists",
       availabilityStatus: "available",
