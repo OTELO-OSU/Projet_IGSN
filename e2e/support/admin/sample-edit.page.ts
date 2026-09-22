@@ -26,6 +26,8 @@ export function sampleEditPage(page: Page) {
   const form = sampleFormPage(page);
   const { openTab, pick, confirm, confirmStatusChange } = form;
 
+  const identifierField = (type: string) => new RegExp(`^${type}`);
+
   const relationBlock = (index: number, type: string) =>
     page.getByRole("group", {
       name: `${index}. ${type} Relation`,
@@ -195,14 +197,16 @@ export function sampleEditPage(page: Page) {
 
     openRelatedResourcesTab: () => openTab("Related URL or document"),
     addRelation: async (index: number, relation: RelationFields) => {
-      await page.getByRole("button", { name: "Add a relation" }).click();
+      await page.getByRole("button", { name: "Resource format" }).click();
       await page
         .getByRole("menuitem", { name: relation.identifierType, exact: true })
         .click();
       const block = relationBlock(index, relation.identifierType);
       await pick("Relation type", relation.relationType, block);
       await block
-        .getByRole("textbox", { name: "Identifier" })
+        .getByRole("textbox", {
+          name: identifierField(relation.identifierType),
+        })
         .fill(relation.identifier);
       await block.getByLabel(/^Title/).fill(relation.title);
       await chooseOption(page, block)("Resource type", relation.resourceType);
@@ -214,7 +218,9 @@ export function sampleEditPage(page: Page) {
         block.getByRole("combobox", { name: "Relation type" }),
       ).toHaveText(relation.relationType);
       await expect(
-        block.getByRole("textbox", { name: "Identifier" }),
+        block.getByRole("textbox", {
+          name: identifierField(relation.identifierType),
+        }),
       ).toHaveValue(relation.identifier);
       await expect(block.getByLabel(/^Title/)).toHaveValue(relation.title);
       await expect(

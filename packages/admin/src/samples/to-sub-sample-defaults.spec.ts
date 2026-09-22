@@ -49,7 +49,6 @@ const parent: Sample = {
       identifier: "https://doi.org/10.1594/IEDA.100252",
       targetTitle: "Companion dataset",
       targetResourceType: null,
-      relationTypeInformation: null,
       relatedMetadataScheme: null,
       schemeURI: null,
       schemeType: null,

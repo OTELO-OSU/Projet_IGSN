@@ -13,7 +13,6 @@ const relation = (overrides: Partial<SampleRelation> = {}): SampleRelation => ({
   identifier: "https://doi.org/10.1594/IEDA.100252",
   targetTitle: "Companion dataset",
   targetResourceType: "dataset",
-  relationTypeInformation: null,
   relatedMetadataScheme: null,
   schemeURI: null,
   schemeType: null,

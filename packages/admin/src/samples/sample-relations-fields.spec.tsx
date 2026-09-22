@@ -53,7 +53,7 @@ const relationBlock = (screen: Screen, index: number, type = "DOI") =>
   });
 
 const addRelation = async (screen: Screen, type = "DOI") => {
-  await screen.getByRole("button", { name: "Add a relation" }).click();
+  await screen.getByRole("button", { name: "Resource format" }).click();
   await screen.getByRole("menuitem", { name: type }).click();
 };
 
@@ -111,11 +111,10 @@ describe("SampleForm related resources tab", () => {
     const block = relationBlock(screen, 1);
     await select(screen, block, "Relation type", "Is cited by");
     await block
-      .getByRole("textbox", { name: "Identifier" })
+      .getByRole("textbox", { name: "DOI" })
       .fill("https://doi.org/10.1594/IEDA.100252");
     await block.getByLabelText("Title").fill("Companion dataset");
     await select(screen, block, "Resource type", "Journal article");
-    await block.getByLabelText("Relation information").fill("Table 2");
     await block.getByLabelText("Description").fill("Cites this sample");
     await screen.getByRole("button", { name: "Save" }).click();
 
@@ -129,7 +128,6 @@ describe("SampleForm related resources tab", () => {
               identifier: "https://doi.org/10.1594/IEDA.100252",
               targetTitle: "Companion dataset",
               targetResourceType: "journal_article",
-              relationTypeInformation: "Table 2",
               description: "Cites this sample",
             },
           ],
@@ -146,7 +144,7 @@ describe("SampleForm related resources tab", () => {
     await addRelation(screen);
     const block = relationBlock(screen, 1);
     await block
-      .getByRole("textbox", { name: "Identifier" })
+      .getByRole("textbox", { name: "DOI" })
       .fill("https://doi.org/10.1594/IEDA.100252");
     await block.getByRole("button", { name: "Remove relation 1" }).click();
     await screen.getByRole("button", { name: "Save" }).click();
@@ -186,7 +184,7 @@ describe("SampleForm related resources tab", () => {
     await expect
       .element(
         relationBlock(screen, 1, "IGSN").getByRole("textbox", {
-          name: "Identifier",
+          name: "IGSN",
         }),
       )
       .toHaveAttribute("placeholder", "0123456789ABCDEFGHJKMNPQRS");
@@ -202,7 +200,7 @@ describe("SampleForm related resources tab", () => {
 
     const block = relationBlock(screen, 1);
     await expect
-      .element(block.getByRole("textbox", { name: "Identifier" }))
+      .element(block.getByRole("textbox", { name: "DOI" }))
       .toHaveAccessibleDescription("Required.");
     expect(onSubmit).not.toHaveBeenCalled();
   });
@@ -215,7 +213,7 @@ describe("SampleForm related resources tab", () => {
     const block = relationBlock(screen, 1);
 
     await expect
-      .element(block.getByRole("textbox", { name: "Identifier" }))
+      .element(block.getByRole("textbox", { name: "DOI" }))
       .not.toHaveAccessibleDescription("Required.");
     await expect
       .element(block.getByLabelText("Title"))
@@ -232,7 +230,7 @@ describe("SampleForm related resources tab", () => {
     await select(screen, block, "Relation type", "Is cited by");
     await block.getByLabelText("Title").fill("Companion dataset");
     await block
-      .getByRole("textbox", { name: "Identifier" })
+      .getByRole("textbox", { name: "DOI" })
       .fill("10.1594/IEDA.100252");
 
     await expect
@@ -257,7 +255,6 @@ describe("SampleForm related resources tab", () => {
               identifier: "https://doi.org/10.1594/IEDA.100252",
               targetTitle: "IEDA companion dataset",
               targetResourceType: null,
-              relationTypeInformation: null,
               relatedMetadataScheme: "DataCite",
               schemeURI: null,
               schemeType: null,
@@ -274,7 +271,7 @@ describe("SampleForm related resources tab", () => {
 
     const block = relationBlock(screen, 1);
     await expect
-      .element(block.getByRole("textbox", { name: "Identifier" }))
+      .element(block.getByRole("textbox", { name: "DOI" }))
       .toHaveValue("https://doi.org/10.1594/IEDA.100252");
     await expect
       .element(block.getByLabelText("Metadata scheme"))

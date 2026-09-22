@@ -62,11 +62,14 @@ export function SampleRelationsFields() {
               </legend>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
-                  <form.AppField name={`relations[${index}].targetTitle`}>
+                  <form.AppField name={`relations[${index}].identifier`}>
                     {(field) => (
                       <field.TextField
-                        label={m.field_relation_target_title()}
+                        label={identifierTypeLabel[relation.identifierType]}
                         requiredToPublish
+                        placeholder={IDENTIFIER_PLACEHOLDER[
+                          relation.identifierType
+                        ]?.()}
                       />
                     )}
                   </form.AppField>
@@ -82,6 +85,14 @@ export function SampleRelationsFields() {
                   <Trash2 aria-hidden />
                 </Button>
               </div>
+              <form.AppField name={`relations[${index}].targetTitle`}>
+                {(field) => (
+                  <field.TextField
+                    label={m.field_relation_target_title()}
+                    requiredToPublish
+                  />
+                )}
+              </form.AppField>
               <form.AppField name={`relations[${index}].relationType`}>
                 {(field) => (
                   <field.ComboboxField
@@ -94,17 +105,6 @@ export function SampleRelationsFields() {
                   />
                 )}
               </form.AppField>
-              <form.AppField name={`relations[${index}].identifier`}>
-                {(field) => (
-                  <field.TextField
-                    label={m.field_relation_identifier()}
-                    requiredToPublish
-                    placeholder={IDENTIFIER_PLACEHOLDER[
-                      relation.identifierType
-                    ]?.()}
-                  />
-                )}
-              </form.AppField>
               <form.AppField name={`relations[${index}].targetResourceType`}>
                 {(field) => (
                   <field.ComboboxField
@@ -114,15 +114,6 @@ export function SampleRelationsFields() {
                     placeholder={m.relation_resource_type_placeholder()}
                     searchPlaceholder={m.relation_resource_type_search_placeholder()}
                     emptyText={m.relation_resource_type_empty()}
-                  />
-                )}
-              </form.AppField>
-              <form.AppField
-                name={`relations[${index}].relationTypeInformation`}
-              >
-                {(field) => (
-                  <field.TextField
-                    label={m.field_relation_type_information()}
                   />
                 )}
               </form.AppField>

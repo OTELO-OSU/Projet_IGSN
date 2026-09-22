@@ -131,7 +131,6 @@ export const FIELD_SAMPLE: Sample = {
       identifier: "https://doi.org/10.1234/granites-of-lorraine",
       targetTitle: "Granites of Lorraine",
       targetResourceType: "journal_article",
-      relationTypeInformation: null,
       relatedMetadataScheme: null,
       schemeURI: null,
       schemeType: null,

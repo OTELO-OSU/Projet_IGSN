@@ -182,7 +182,6 @@ type SampleRelationTable = {
   identifier: string;
   target_title: string;
   target_resource_type: string | null;
-  relation_type_information: string | null;
   related_metadata_scheme: string | null;
   scheme_uri: string | null;
   scheme_type: string | null;

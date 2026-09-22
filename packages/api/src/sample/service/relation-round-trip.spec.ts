@@ -18,7 +18,6 @@ const fullRelation = {
   identifier: "https://doi.org/10.1594/IEDA.100252",
   targetTitle: "IEDA companion dataset",
   targetResourceType: "dataset" as const,
-  relationTypeInformation: "Described by the IEDA schema",
   relatedMetadataScheme: "DataCite",
   schemeURI: "https://schema.datacite.org/meta/kernel-4.6/",
   schemeType: "XSD",
@@ -35,7 +34,6 @@ const minimalRelation = {
 const persistedMinimal = {
   ...minimalRelation,
   targetResourceType: null,
-  relationTypeInformation: null,
   relatedMetadataScheme: null,
   schemeURI: null,
   schemeType: null,
