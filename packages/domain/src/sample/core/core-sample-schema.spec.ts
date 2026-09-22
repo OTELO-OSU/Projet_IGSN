@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { Sample } from "../sample.ts";
+
 import { toConcept } from "./concept.ts";
 import { FRONTEND_URL } from "./core-record-fixture.ts";
 import { COLLECTION_SPECIMEN, FIELD_SAMPLE } from "./core-sample-fixture.ts";
@@ -156,5 +158,87 @@ describe("coreSampleBodySchema", () => {
         responsibility: [],
       }),
     ).toMatchObject({ success: true });
+  });
+});
+
+const USER_ID = "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10";
+
+const linked = (sample: Sample): Sample => ({
+  ...sample,
+  scientificContext:
+    sample.scientificContext?.provenanceStatus === "field_sample"
+      ? {
+          ...sample.scientificContext,
+          collectorUserId: USER_ID,
+          chiefScientistUserId: USER_ID,
+          additionalRoles: sample.scientificContext.additionalRoles.map(
+            (additional) => ({ ...additional, personUserId: USER_ID }),
+          ),
+        }
+      : sample.scientificContext,
+  syntheticDetails:
+    sample.syntheticDetails == null
+      ? null
+      : { ...sample.syntheticDetails, operatorUserId: USER_ID },
+});
+
+const keysOf = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.flatMap(keysOf);
+  if (typeof value !== "object" || value === null) return [];
+  return Object.entries(value).flatMap(([key, nested]) => [
+    key,
+    ...keysOf(nested),
+  ]);
+};
+
+describe("the account links a Core record never carries", () => {
+  it.each(CORE_SAMPLE_FIXTURES)(
+    "should emit no account link of $name",
+    (sample) => {
+      expect(
+        keysOf(toCoreSample(linked(sample), FRONTEND_URL)).filter((key) =>
+          key.toLowerCase().includes("userid"),
+        ),
+      ).toEqual([]);
+    },
+  );
+
+  it.each([
+    [
+      "an agent",
+      {
+        responsibility: [
+          {
+            agent: {
+              agentType: "Person",
+              firstname: "Ada",
+              lastname: "Lovelace",
+              userId: USER_ID,
+            },
+            roles: ["Researcher"],
+          },
+        ],
+      },
+    ],
+    [
+      "the synthesis operator",
+      {
+        extensions: {
+          experiment: {
+            operator: {
+              firstname: "Ada",
+              lastname: "Lovelace",
+              userId: USER_ID,
+            },
+          },
+        },
+      },
+    ],
+  ])("should refuse a body linking %s to an account", (_case, block) => {
+    expect(coreSampleBodySchema.safeParse({ ...core, ...block })).toMatchObject(
+      {
+        success: false,
+      },
+    );
   });
 });

@@ -200,6 +200,16 @@ type SampleProcessStepTable = {
   description: string | null;
 };
 
+type SampleAdditionalRoleTable = {
+  id: string;
+  sample_id: string;
+  role: string;
+  person_user_id: string | null;
+  person_firstname: string | null;
+  person_lastname: string | null;
+  person_orcid: string | null;
+};
+
 type SampleAttachmentTable = {
   id: string;
   sample_id: string;
@@ -293,6 +303,7 @@ export type DB = {
   sample_parent: SampleParentTable;
   sample_relation: SampleRelationTable;
   sample_process_step: SampleProcessStepTable;
+  sample_additional_role: SampleAdditionalRoleTable;
   sample_attachment: SampleAttachmentTable;
   sample_edit_lock: SampleEditLockTable;
   service_account: ServiceAccountTable;

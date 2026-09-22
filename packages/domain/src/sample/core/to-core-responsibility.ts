@@ -6,6 +6,7 @@ import {
   organizationLabel,
   osuLabel,
 } from "../../institutional-group/label.ts";
+import { CORE_ROLE_BY_ADDITIONAL_ROLE } from "./core-additional-role.ts";
 import { toRorUri } from "./core-production-schema.ts";
 import { OTELO_ROR_URI, toOrcidUri } from "./core-sample-schema.ts";
 
@@ -116,27 +117,17 @@ export function toCoreResponsibility(sample: Sample): CoreAgentRole[] {
     }
   }
 
-  const details = sample.syntheticDetails;
-  if (
-    details != null &&
-    (details.operatorFirstname != null || details.operatorLastname != null)
-  ) {
-    roles.push({
-      agent: {
-        id:
-          details.operatorOrcid == null
-            ? undefined
-            : toOrcidUri(details.operatorOrcid),
-        firstname: details.operatorFirstname ?? undefined,
-        lastname: details.operatorLastname ?? undefined,
-        agentType: "Person",
-        affiliations: details.researchStructure?.map((ror) => ({
-          id: toRorUri(ror),
-          name: organizationLabel(ror),
-        })),
-      },
-      roles: ["Researcher"],
-    });
+  if (context?.provenanceStatus === "field_sample") {
+    for (const additional of context.additionalRoles) {
+      roles.push(
+        ...personRole(
+          CORE_ROLE_BY_ADDITIONAL_ROLE[additional.role],
+          additional.personFirstname,
+          additional.personLastname,
+          additional.personOrcid,
+        ),
+      );
+    }
   }
 
   return roles;

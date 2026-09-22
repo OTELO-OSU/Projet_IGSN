@@ -3,20 +3,19 @@ import type { CoreSampleBody } from "./core-sample-schema.ts";
 
 import { orNull } from "./core-optional.ts";
 import { CORE_SYNTHESIS_STEP, fromRorUri } from "./core-production-schema.ts";
+import { fromOrcidUri } from "./core-sample-schema.ts";
 import { fromCoreStepDate } from "./from-core-date-range.ts";
-import { responsibilityFinders } from "./from-core-responsibility.ts";
 import { fromQuantity } from "./quantity.ts";
 
 export function fromCoreSyntheticDetails(
   body: CoreSampleBody,
 ): SyntheticDetails | null {
-  const { personOf, orcidOf } = responsibilityFinders(body.responsibility);
-  const researcher = personOf("Researcher");
   const step = body.production.processSteps?.find(
     (candidate) => candidate.stepType === CORE_SYNTHESIS_STEP,
   );
   const experiment = body.extensions?.experiment;
-  if (experiment == null && step == null && researcher == null) return null;
+  if (experiment == null && step == null) return null;
+  const operator = experiment?.operator;
   return {
     startingMaterial: experiment?.startingMaterial ?? null,
     startingMaterialNature: experiment?.startingMaterialNature ?? null,
@@ -26,11 +25,11 @@ export function fromCoreSyntheticDetails(
     experimentType: experiment?.experimentType?.id ?? null,
     experimentDuration: orNull(experiment?.duration, fromQuantity),
     synthesisDate: fromCoreStepDate(step),
-    operatorFirstname: researcher?.firstname ?? null,
-    operatorLastname: researcher?.lastname ?? null,
-    operatorOrcid: orcidOf("Researcher"),
+    operatorFirstname: operator?.firstname ?? null,
+    operatorLastname: operator?.lastname ?? null,
+    operatorOrcid: fromOrcidUri(operator?.id),
     researchStructure:
-      researcher?.affiliations?.map((affiliation) =>
+      operator?.affiliations?.map((affiliation) =>
         fromRorUri(affiliation.id ?? ""),
       ) ?? null,
     temperature: orNull(experiment?.temperature, fromQuantity),

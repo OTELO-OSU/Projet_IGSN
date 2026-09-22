@@ -15,6 +15,9 @@ const ISAMPLES_ROLES: Record<CoreRole, string> = {
   Curator: "curator",
   Registrant: "registrant",
   HostingInstitution: "hostingInstitution",
+  ProjectManager: "projectManager",
+  ProjectMember: "projectMember",
+  DataManager: "dataManager",
 };
 
 const toISamplesAgent = (

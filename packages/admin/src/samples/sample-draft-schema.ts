@@ -1,3 +1,4 @@
+import type { AdditionalRole } from "@projet-igsn/domain/sample/additional-role/role";
 import type { DatePrecision } from "@projet-igsn/domain/sample/date-range";
 import type { ProcessStepKind } from "@projet-igsn/domain/sample/process-step/kind";
 import type { IdentifierType } from "@projet-igsn/domain/sample/relation/identifier-type";
@@ -100,6 +101,25 @@ export const EMPTY_RELATION_DRAFT: Omit<
   schemeURI: "",
   schemeType: "",
   description: "",
+};
+
+export type AdditionalRoleDraft = {
+  key: string;
+  role: AdditionalRole;
+  personUserId: string | null | undefined;
+  personFirstname: string | null | undefined;
+  personLastname: string | null | undefined;
+  personOrcid: string | null | undefined;
+};
+
+export const EMPTY_ADDITIONAL_ROLE_DRAFT: Omit<
+  AdditionalRoleDraft,
+  "key" | "role"
+> = {
+  personUserId: undefined,
+  personFirstname: undefined,
+  personLastname: undefined,
+  personOrcid: undefined,
 };
 
 export type ProcessStepDraft = {

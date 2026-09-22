@@ -48,6 +48,10 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
   relation_resource_type_missing:
     m.publish_blocked_relation_resource_type_missing,
   process_step_date_missing: m.publish_blocked_process_step_date_missing,
+  additional_role_firstname_missing:
+    m.publish_blocked_additional_role_firstname_missing,
+  additional_role_lastname_missing:
+    m.publish_blocked_additional_role_lastname_missing,
   parent_not_found: m.publish_blocked_parent_not_found,
   attachment_metadata_missing: m.publish_blocked_attachment_metadata_missing,
   attachment_limit_exceeded: () =>

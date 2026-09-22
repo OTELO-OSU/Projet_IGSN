@@ -7,6 +7,10 @@ import type { DB } from "../../db.ts";
 import { type Transactional } from "../../transaction.ts";
 import { getSampleById } from "./get-sample-by-id.ts";
 import { inheritParentCollectionDate } from "./inherit-parent-collection-date.ts";
+import {
+  additionalRolesOf,
+  replaceSampleAdditionalRoles,
+} from "./replace-sample-additional-roles.ts";
 import { replaceSampleManualGroups } from "./replace-sample-manual-groups.ts";
 import { replaceSampleProcessSteps } from "./replace-sample-process-steps.ts";
 import { replaceSampleRelations } from "./replace-sample-relations.ts";
@@ -29,6 +33,7 @@ export async function updateSample(
   await inheritParentCollectionDate(db, id);
   await replaceSampleRelations(db, id, input.relations ?? []);
   await replaceSampleProcessSteps(db, id, input.processSteps ?? []);
+  await replaceSampleAdditionalRoles(db, id, additionalRolesOf(input));
   if (input.manualGroupIds) {
     await replaceSampleManualGroups(db, id, input.manualGroupIds);
   }

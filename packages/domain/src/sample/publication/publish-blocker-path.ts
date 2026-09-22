@@ -33,6 +33,8 @@ export const PUBLISH_BLOCKER_PATH: Record<PublishBlocker, (string | number)[]> =
       "scientificContext",
       "chiefScientistLastname",
     ],
+    additional_role_firstname_missing: ["scientificContext", "additionalRoles"],
+    additional_role_lastname_missing: ["scientificContext", "additionalRoles"],
     collection_curator_firstname_missing: [
       "scientificContext",
       "collectionCuratorFirstname",

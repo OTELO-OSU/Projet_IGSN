@@ -2,6 +2,7 @@ import type { DB } from "../../db.ts";
 
 import { type Transactional } from "../../transaction.ts";
 import {
+  sampleAdditionalRolesQuery,
   sampleAttachmentsQuery,
   sampleLocationQuery,
   sampleManualGroupsQuery,
@@ -19,6 +20,7 @@ export const selectSample = (db: Transactional<DB>) =>
     .select(sampleLocationQuery)
     .select(sampleRelationsQuery)
     .select(sampleProcessStepsQuery)
+    .select(sampleAdditionalRolesQuery)
     .select(sampleAttachmentsQuery)
     .select(sampleManualGroupsQuery)
     .select(sampleParentsQuery)

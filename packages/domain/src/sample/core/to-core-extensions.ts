@@ -1,6 +1,7 @@
 import type { Sample } from "../sample.ts";
 import type { CoreExtensions } from "./core-extensions-schema.ts";
 
+import { organizationLabel } from "../../institutional-group/label.ts";
 import { toConcept } from "./concept.ts";
 import {
   coreNumericAgeEra,
@@ -8,6 +9,8 @@ import {
   toChronostratigraphy,
 } from "./core-extensions-schema.ts";
 import { isEmpty, optionalConcept, optionalQuantity } from "./core-optional.ts";
+import { toRorUri } from "./core-production-schema.ts";
+import { toOrcidUri } from "./core-sample-schema.ts";
 
 export function toCoreExtensions(sample: Sample): CoreExtensions | undefined {
   const age = sample.age;
@@ -60,6 +63,18 @@ export function toCoreExtensions(sample: Sample): CoreExtensions | undefined {
     asbestos: hazard(security?.asbestosRich, security?.asbestosExplanation),
     chemical: hazard(security?.chemicalRisk, security?.chemicalRiskExplanation),
   };
+  const operator = {
+    id:
+      details?.operatorOrcid == null
+        ? undefined
+        : toOrcidUri(details.operatorOrcid),
+    firstname: details?.operatorFirstname ?? undefined,
+    lastname: details?.operatorLastname ?? undefined,
+    affiliations: details?.researchStructure?.map((ror) => ({
+      id: toRorUri(ror),
+      name: organizationLabel(ror),
+    })),
+  };
   const experiment = {
     startingMaterial: details?.startingMaterial ?? undefined,
     startingMaterialNature: details?.startingMaterialNature ?? undefined,
@@ -72,6 +87,7 @@ export function toCoreExtensions(sample: Sample): CoreExtensions | undefined {
     pressure: optionalQuantity(details?.pressure),
     purpose: details?.experimentPurpose ?? undefined,
     equipment: details?.equipmentUsed ?? undefined,
+    operator: isEmpty(operator) ? undefined : operator,
   };
   const geology = {
     numericAge: isEmpty(numericAge) ? undefined : numericAge,

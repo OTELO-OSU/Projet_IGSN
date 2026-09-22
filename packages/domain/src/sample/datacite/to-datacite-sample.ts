@@ -2,6 +2,7 @@ import type { CoreSample } from "../core/core-sample-schema.ts";
 import type { DataCiteSample } from "./datacite-schema.ts";
 
 import { CORE_LICENCE_URI, OTELO_ROR_URI } from "../core/core-sample-schema.ts";
+import { operatorAgentRoles } from "../core/operator-agent-roles.ts";
 import {
   DATACITE_SCHEMA_VERSION,
   RESOURCE_TYPE_GENERAL,
@@ -44,7 +45,10 @@ export function toDataCiteSample(core: CoreSample): DataCiteSample {
     url: identification.landingPage,
     titles: identification.titles.map(({ value }) => ({ title: value })),
     creators: toDataCiteCreators(core.responsibility),
-    contributors: toDataCiteContributors(core.responsibility),
+    contributors: toDataCiteContributors([
+      ...core.responsibility,
+      ...operatorAgentRoles(core.extensions),
+    ]),
     publisher: {
       name: core.publication.publisher.name,
       publisherIdentifier: core.publication.publisher.id ?? OTELO_ROR_URI,

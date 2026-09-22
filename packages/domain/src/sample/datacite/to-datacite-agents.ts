@@ -23,6 +23,9 @@ const CONTRIBUTOR_TYPE_BY_ROLE: Record<
   HostingInstitution: "HostingInstitution",
   Curator: "DataCurator",
   Researcher: "Researcher",
+  ProjectManager: "ProjectManager",
+  ProjectMember: "ProjectMember",
+  DataManager: "DataManager",
 };
 
 type Registry = {

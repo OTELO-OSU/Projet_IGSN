@@ -1,5 +1,6 @@
 import type Catalog from "../../messages/en.json";
 
+import { type AdditionalRole } from "./additional-role/role.ts";
 import { type GeologicalAge } from "./age/geological-age.ts";
 import { type NumericUnit } from "./age/numeric-unit.ts";
 import { type YearsUnit } from "./age/years-unit.ts";
@@ -67,6 +68,7 @@ type _oceanSeaKeys = AssertKeys<`ocean_sea_${OceanSea}`>;
 type _verticalReferenceKeys =
   AssertKeys<`vertical_reference_${VerticalReference}`>;
 type _processStepKindKeys = AssertKeys<`process_step_kind_${ProcessStepKind}`>;
+type _additionalRoleKeys = AssertKeys<`additional_role_${AdditionalRole}`>;
 type _relationTypeKeys = AssertKeys<`relation_type_${RelationType}`>;
 type _relationTargetResourceTypeKeys =
   AssertKeys<`relation_resource_type_${RelationTargetResourceType}`>;
@@ -110,6 +112,7 @@ type SampleLabels = {
   finalProductLabel: (product: FinalProduct) => string;
   experimentTypeLabel: (type: ExperimentType) => string;
   processStepKindLabel: (kind: ProcessStepKind) => string;
+  additionalRoleLabel: (role: AdditionalRole) => string;
   relationTypeLabel: (relationType: RelationType) => string;
   relationTargetResourceTypeLabel: (
     resourceType: RelationTargetResourceType,
@@ -148,6 +151,7 @@ const LABEL_KEY = {
   finalProductLabel: ["final_product", "code"],
   experimentTypeLabel: ["experiment_type", "code"],
   processStepKindLabel: ["process_step_kind", "code"],
+  additionalRoleLabel: ["additional_role", "code"],
   relationTypeLabel: ["relation_type", "code"],
   relationTargetResourceTypeLabel: ["relation_resource_type", "code"],
 } satisfies Record<keyof SampleLabels, [string, "path" | "code"]>;

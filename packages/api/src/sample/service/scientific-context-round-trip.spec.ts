@@ -19,6 +19,7 @@ const roundTripped: [string, ScientificContext][] = [
     "a full field-sample context",
     {
       provenanceStatus: "field_sample",
+      additionalRoles: [],
       funderOrganizations: ["02feahw73", "04kdfz702"],
       researchProgramName: "Deep Biosphere Survey",
       chiefScientistFirstname: "Marie",
@@ -49,7 +50,7 @@ const roundTripped: [string, ScientificContext][] = [
   ],
   [
     "a context holding only its provenance status",
-    { provenanceStatus: "field_sample" },
+    { provenanceStatus: "field_sample", additionalRoles: [] },
   ],
 ];
 
@@ -77,6 +78,7 @@ describe("sample scientific context persistence", () => {
       ...base,
       scientificContext: {
         provenanceStatus: "field_sample" as const,
+        additionalRoles: [],
         researchProgramName: "Old programme",
         collectorFirstname: "Some",
         collectorLastname: "One",

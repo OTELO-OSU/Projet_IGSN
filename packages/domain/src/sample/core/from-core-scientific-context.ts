@@ -2,6 +2,7 @@ import type { ScientificContext } from "../scientific-context/model.ts";
 import type { CoreSampleBody } from "./core-sample-schema.ts";
 
 import { fromRorUri } from "./core-production-schema.ts";
+import { fromCoreAdditionalRoles } from "./from-core-additional-roles.ts";
 import { contextCategoryFinders } from "./from-core-context-category.ts";
 import { responsibilityFinders } from "./from-core-responsibility.ts";
 
@@ -40,6 +41,7 @@ export function fromCoreScientificContext(
       researchProgramDescription: project?.description ?? null,
       fieldName: production.samplingSite_name ?? null,
       missionDescription: production.samplingPurpose ?? null,
+      additionalRoles: fromCoreAdditionalRoles(body),
     };
   }
   if (provenanceStatus === "collection_specimen") {

@@ -1,3 +1,4 @@
+import type { SampleAdditionalRole } from "@projet-igsn/domain/sample/additional-role/model";
 import type { GeologicalAge } from "@projet-igsn/domain/sample/age/geological-age";
 import type { Location } from "@projet-igsn/domain/sample/location/model";
 import type { SampleProcessStep } from "@projet-igsn/domain/sample/process-step/model";
@@ -1676,3 +1677,18 @@ export const DEMO_SAMPLES: SampleRow[] = [...PUBLISHED_ROWS, ...DRAFTS].map(
     };
   },
 );
+
+const DEMO_ROLES: SampleAdditionalRole[] = [
+  {
+    role: "researcher",
+    personFirstname: "Amina",
+    personLastname: "Bensalem",
+    personOrcid: "0000-0002-1825-0097",
+  },
+  { role: "data_manager", personFirstname: "Luc", personLastname: "Moreau" },
+];
+
+export const DEMO_ADDITIONAL_ROLES: Record<string, SampleAdditionalRole[]> = {
+  "Brittany Granite": DEMO_ROLES,
+  "Aar Massif Tonalite": DEMO_ROLES,
+};

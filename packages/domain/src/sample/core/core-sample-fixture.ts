@@ -111,6 +111,7 @@ export const FIELD_SAMPLE: Sample = {
     researchProgramDescription: "Mapping the Hercynian basement",
     fieldName: "Quarry 12",
     missionDescription: "Sampling campaign of June 2024",
+    additionalRoles: [],
   },
   syntheticDetails: null,
   age: {
@@ -341,6 +342,7 @@ export const SYNTHETIC_SAMPLE: Sample = {
     researchProgramDescription: null,
     fieldName: null,
     missionDescription: null,
+    additionalRoles: [],
   },
   syntheticDetails: SYNTHETIC_DETAILS,
   age: null,

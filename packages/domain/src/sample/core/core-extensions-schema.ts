@@ -16,6 +16,7 @@ import { finalProductSchema } from "../synthetic-details/final-product.ts";
 import { startingMaterialNatureSchema } from "../synthetic-details/starting-material-nature.ts";
 import { startingMaterialSchema } from "../synthetic-details/starting-material.ts";
 import { conceptSchema } from "./concept.ts";
+import { corePersonSchema } from "./core-agent-schema.ts";
 import { coreEnum } from "./core-enum.ts";
 import { quantitySchema } from "./quantity.ts";
 
@@ -172,6 +173,12 @@ export const coreExtensionsSchema = z.strictObject({
         .optional(),
       equipment: freeTextSchema
         .meta({ description: "Equipment the synthesis used." })
+        .optional(),
+      operator: corePersonSchema
+        .meta({
+          description:
+            "Person who ran the synthesis, with their research structures as affiliations.",
+        })
         .optional(),
     })
     .meta({ description: "Synthesis parameters of a synthetic sample." })

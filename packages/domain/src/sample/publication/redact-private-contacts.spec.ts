@@ -45,12 +45,20 @@ describe("redactPrivateContacts", () => {
         chiefScientistUserId: USER_ID,
         collectorUserId: USER_ID,
         fieldName: "Site A",
+        additionalRoles: [
+          { role: "researcher", personUserId: USER_ID },
+          { role: "data_manager", personLastname: "Curie" },
+        ],
       },
       redacted: {
         provenanceStatus: "field_sample",
         chiefScientistUserId: null,
         collectorUserId: null,
         fieldName: "Site A",
+        additionalRoles: [
+          { role: "researcher", personUserId: null },
+          { role: "data_manager", personLastname: "Curie" },
+        ],
       },
     },
     {

@@ -37,6 +37,7 @@ const PROJECTED_CORE_PATHS = [
   "rightsAndAccess.rightsURIs",
   "rightsAndAccess.sensitiveLocation",
   "extensions.geology",
+  "extensions.experiment",
 ];
 
 const DROPPED_CORE_PATHS = [
@@ -74,7 +75,6 @@ const DROPPED_CORE_PATHS = [
   "manualGroups.id",
   "manualGroups.name",
   "extensions.safety",
-  "extensions.experiment",
 ];
 
 const MATERIAL_BASE = "https://w3id.org/isample/vocabulary/material/";

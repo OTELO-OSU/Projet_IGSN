@@ -7,6 +7,7 @@ import {
   CORE_RECORD_FIXTURES,
   FIELD_SAMPLE_RECORD,
   ORGANIZATION_NAME,
+  SYNTHETIC_SAMPLE_RECORD,
 } from "./core-record-fixture.ts";
 import { FIELD_SAMPLE, toCreateSample } from "./core-sample-fixture.ts";
 import { coreSampleBodySchema } from "./core-sample-schema.ts";
@@ -112,4 +113,84 @@ describe("fromCoreSample", () => {
       originalArchiveContactLastname: "Becquerel",
     });
   });
+});
+
+describe("the synthesis operator of a Core body", () => {
+  it("should credit a Researcher agent as an additional role, not as the operator", () => {
+    const body: CoreSampleBody = {
+      ...SYNTHETIC_SAMPLE_RECORD,
+      responsibility: [
+        {
+          agent: {
+            firstname: "Emmy",
+            lastname: "Noether",
+            agentType: "Person",
+          },
+          roles: ["Researcher"],
+        },
+      ],
+      extensions: { experiment: { startingMaterial: "synthetic" } },
+    };
+
+    const { sample } = fromCoreSample(body);
+
+    expect(sample.scientificContext).toMatchObject({
+      additionalRoles: [
+        {
+          role: "researcher",
+          personFirstname: "Emmy",
+          personLastname: "Noether",
+          personOrcid: null,
+        },
+      ],
+    });
+    expect(sample.syntheticDetails).toMatchObject({
+      operatorFirstname: null,
+      operatorLastname: null,
+      operatorOrcid: null,
+      researchStructure: null,
+    });
+  });
+
+  it.each([
+    [
+      "its ORCID and its research structures",
+      {
+        id: "https://orcid.org/0000-0003-1415-9269",
+        firstname: "Rosalind",
+        lastname: "Franklin",
+        affiliations: [
+          { id: "https://ror.org/02feahw73", name: ORGANIZATION_NAME },
+        ],
+      },
+      {
+        operatorOrcid: "0000-0003-1415-9269",
+        researchStructure: ["02feahw73"],
+      },
+    ],
+    [
+      "its name alone",
+      { firstname: "Rosalind", lastname: "Franklin" },
+      { operatorOrcid: null, researchStructure: null },
+    ],
+  ])(
+    "should read the operator the experiment extension carries with %s",
+    (_case, operator, expected) => {
+      const body: CoreSampleBody = {
+        ...SYNTHETIC_SAMPLE_RECORD,
+        responsibility: [],
+        production: {
+          ...SYNTHETIC_SAMPLE_RECORD.production,
+          processSteps: undefined,
+        },
+        extensions: { experiment: { operator } },
+      };
+
+      expect(fromCoreSample(body).sample.syntheticDetails).toMatchObject({
+        operatorFirstname: "Rosalind",
+        operatorLastname: "Franklin",
+        ...expected,
+      });
+    },
+  );
 });
