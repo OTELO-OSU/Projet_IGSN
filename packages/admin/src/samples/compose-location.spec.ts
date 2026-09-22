@@ -74,20 +74,20 @@ describe("composeLocation", () => {
   });
 
   it("should keep an incomplete region for the schema to reject", () => {
-    expect(composeLocation(draft({ regionPath: ["continent"] }))).toEqual({
-      region: { kind: "continent" },
+    expect(composeLocation(draft({ regionPath: ["country"] }))).toEqual({
+      region: { kind: "country" },
     });
   });
 
-  it("should compose a continent region and drop a blank locality", () => {
+  it("should compose a country region and drop a blank locality", () => {
     expect(
       composeLocation(
         draft({
-          regionPath: ["continent", "continent.FR"],
+          regionPath: ["country", "country.FR"],
           localityName: "  ",
         }),
       ),
-    ).toEqual({ region: { kind: "continent", country: "FR" } });
+    ).toEqual({ region: { kind: "country", country: "FR" } });
   });
 
   it("should compose an ocean region", () => {
@@ -174,7 +174,7 @@ describe("toLocationDraft", () => {
         latitude: -45,
         vertical: { position: 1200, reference: "bathymetry", system: "msl" },
       },
-      region: { kind: "continent", country: "FR" },
+      region: { kind: "country", country: "FR" },
       navigationType: "GPS",
       localityName: "Vent field",
     },
@@ -194,7 +194,7 @@ describe("toLocationDraft", () => {
       },
       region: { kind: "ocean", oceanSea: "atlantic_ocean" },
     },
-    { region: { kind: "continent" } },
+    { region: { kind: "country" } },
     {
       position: {
         type: "line",

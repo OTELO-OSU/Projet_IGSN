@@ -702,17 +702,13 @@ describe("SampleView", () => {
   });
 
   it.each<[string, NonNullable<Sample["location"]>["region"], string]>([
-    ["a country region", { kind: "continent", country: "FR" }, "France"],
+    ["a country region", { kind: "country", country: "FR" }, "France"],
     [
       "an ocean region",
       { kind: "ocean", oceanSea: "pacific_ocean" },
       "Pacific Ocean",
     ],
-    [
-      "a leafless continent region",
-      { kind: "continent" },
-      "Continent / country",
-    ],
+    ["a leafless country region", { kind: "country" }, "Country"],
     ["a leafless ocean region", { kind: "ocean" }, "Ocean / sea"],
   ])("should show %s as its label", async (_label, region, expected) => {
     const screen = await render(

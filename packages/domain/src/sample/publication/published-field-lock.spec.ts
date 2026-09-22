@@ -33,7 +33,7 @@ const stored: Sample = {
       latitude: 2,
       vertical: { position: 10, reference: "elevation", system: "ngf_ign69" },
     },
-    region: { kind: "continent", country: "FR" },
+    region: { kind: "country", country: "FR" },
     navigationType: "GPS",
     localityName: "stored locality",
     localityDescription: "stored locality detail",

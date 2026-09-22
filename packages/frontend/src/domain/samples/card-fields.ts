@@ -79,7 +79,7 @@ export function locationText(
 ): string | null {
   const region = location?.region;
   const regionName =
-    region?.kind === "continent"
+    region?.kind === "country"
       ? region.country && countryLabel(region.country, getLocale())
       : region?.oceanSea && oceanSeaLabel(region.oceanSea);
   return joinPath([regionName, location?.localityName]);

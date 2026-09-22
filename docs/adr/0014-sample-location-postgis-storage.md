@@ -6,7 +6,7 @@ Accepted, amended four times: the 1:1 `location` table became columns on `sample
 
 ## Context
 
-A sample needs a geographic location: a point, an area, or a line between two endpoints, with an optional vertical position, a continent/country or ocean/sea region, a marine navigation type, and free-text locality name and description. There is at most one location per sample.
+A sample needs a geographic location: a point, an area, or a line between two endpoints, with an optional vertical position, a country or ocean/sea region, a marine navigation type, and free-text locality name and description. There is at most one location per sample.
 
 Searching samples by an area drawn on a map was a near-term requirement, so the store had to be spatially indexable from the first migration, with no later migration or refactor to enable search.
 
@@ -36,7 +36,7 @@ location = {
                               vertical?:{ min, max, reference, system } }
             | { type:"line",  startLongitude, startLatitude, endLongitude, endLatitude,
                               vertical?:{ start, end, reference, system } }
-  region?:    { kind:"continent", country } | { kind:"ocean", oceanSea }
+  region?:    { kind:"country", country } | { kind:"ocean", oceanSea }
   navigationType?
   localityName?
   localityDescription?

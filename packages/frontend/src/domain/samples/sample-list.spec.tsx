@@ -60,7 +60,7 @@ describe("SampleList", () => {
         specificName: "Fresh basalt",
         location: {
           localityName: "Piton de la Fournaise",
-          region: { kind: "continent", country: "FR" },
+          region: { kind: "country", country: "FR" },
         },
         scientificContext: {
           provenanceStatus: "field_sample",

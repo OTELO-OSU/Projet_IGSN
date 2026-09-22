@@ -14,10 +14,10 @@ const LOCATION_TYPE_LABELS: Record<LocationType, () => string> = {
 };
 
 const REGION_PATH_LABELS: Record<string, string> = {
-  continent: m.region_kind_continent(),
+  country: m.region_kind_country(),
   ocean: m.region_kind_ocean(),
   ...Object.fromEntries(
-    COUNTRIES.map((code) => [`continent.${code}`, countryLabel(code, "en")]),
+    COUNTRIES.map((code) => [`country.${code}`, countryLabel(code, "en")]),
   ),
   ...Object.fromEntries(
     OCEAN_SEAS.map((code) => [`ocean.${code}`, oceanSeaLabel(code)]),

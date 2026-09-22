@@ -376,7 +376,7 @@
   "region_placeholder": "Select a region",
   "region_search_placeholder": "Search region...",
   "region_empty": "No region found",
-  "region_kind_continent": "Continent / country",
+  "region_kind_country": "Country",
   "region_kind_ocean": "Ocean / sea",
   "field_navigation_type": "Navigation type",
   "navigation_type_placeholder": "Select a navigation type",

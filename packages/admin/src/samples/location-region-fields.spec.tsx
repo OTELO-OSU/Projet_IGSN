@@ -57,7 +57,7 @@ describe("LocationRegionFields", () => {
     await screen.getByPlaceholder("Search region...").fill("France");
     await screen
       .getByRole("option", {
-        name: "Continent / country > France",
+        name: "Country > France",
         exact: true,
       })
       .click();
@@ -67,7 +67,7 @@ describe("LocationRegionFields", () => {
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           location: expect.objectContaining({
-            region: { kind: "continent", country: "FR" },
+            region: { kind: "country", country: "FR" },
           }),
         }),
       ),

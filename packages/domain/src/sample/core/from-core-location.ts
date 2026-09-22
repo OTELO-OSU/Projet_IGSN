@@ -86,7 +86,7 @@ export function fromCoreLocation(
     position: fromCoreGeometry(location),
     region:
       country != null
-        ? { kind: "continent", country }
+        ? { kind: "country", country }
         : location.oceanOrSea != null
           ? { kind: "ocean", oceanSea: location.oceanOrSea.id }
           : null,

@@ -18,7 +18,7 @@ const withdrawn: Sample = {
   specificName: null,
   location: {
     position: { type: "point", longitude: 2.8, latitude: 45.5 },
-    region: { kind: "continent", country: "FR" },
+    region: { kind: "country", country: "FR" },
     navigationType: null,
     localityName: "Mont-Dore",
     localityDescription: "kept out of the public view",
@@ -71,7 +71,7 @@ describe("toWithdrawnSample", () => {
       material: "rock_and_sediment.rock.other",
       materialOtherName: "Volcanic breccia",
       location: {
-        region: { kind: "continent", country: "FR" },
+        region: { kind: "country", country: "FR" },
         localityName: "Mont-Dore",
       },
       collectorFirstname: "Claire",

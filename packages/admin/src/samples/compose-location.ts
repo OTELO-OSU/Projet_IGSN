@@ -79,7 +79,7 @@ type LocationCandidate = {
       }
     | undefined;
   region:
-    | { kind: "continent"; country: Country | undefined }
+    | { kind: "country"; country: Country | undefined }
     | { kind: "ocean"; oceanSea: OceanSea | undefined }
     | undefined;
   navigationType: NavigationType | undefined;
@@ -158,8 +158,8 @@ function composePosition(draft: LocationDraft): LocationCandidate["position"] {
 function composeRegion(draft: LocationDraft): LocationCandidate["region"] {
   const [kind, leaf] =
     composeHierarchyValue(draft.regionPath)?.split(".") ?? [];
-  if (kind === "continent")
-    return { kind: "continent", country: countrySchema.safeParse(leaf).data };
+  if (kind === "country")
+    return { kind: "country", country: countrySchema.safeParse(leaf).data };
   if (kind === "ocean")
     return { kind: "ocean", oceanSea: oceanSeaSchema.safeParse(leaf).data };
   return undefined;
@@ -189,7 +189,7 @@ export function composeLocation(
 
 function regionValue(region: Location["region"]): string | null {
   if (!region) return null;
-  const leaf = region.kind === "continent" ? region.country : region.oceanSea;
+  const leaf = region.kind === "country" ? region.country : region.oceanSea;
   return leaf ? `${region.kind}.${leaf}` : region.kind;
 }
 

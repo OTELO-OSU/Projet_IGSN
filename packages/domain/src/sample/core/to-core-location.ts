@@ -81,7 +81,7 @@ export function toCoreLocation(location: Location): CoreLocation {
     placeNames:
       location.localityName == null ? undefined : [location.localityName],
     countryCodes:
-      region?.kind === "continent" && region.country != null
+      region?.kind === "country" && region.country != null
         ? [region.country]
         : undefined,
     oceanOrSea:

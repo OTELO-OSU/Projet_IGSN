@@ -16,7 +16,7 @@ const sample = (overrides: Partial<WithdrawnSample> = {}): WithdrawnSample => ({
   material: "rock_and_sediment.rock.igneous",
   materialOtherName: null,
   location: {
-    region: { kind: "continent", country: "FR" },
+    region: { kind: "country", country: "FR" },
     localityName: "Mont-Dore",
   },
   collectorFirstname: "Claire",

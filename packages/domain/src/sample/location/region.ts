@@ -3,7 +3,7 @@ import { COUNTRIES } from "./country.ts";
 import { OCEAN_SEAS } from "./ocean-sea.ts";
 
 const regionTree = {
-  continent: { optional: true, choices: COUNTRIES },
+  country: { optional: true, choices: COUNTRIES },
   ocean: { optional: true, choices: OCEAN_SEAS },
 } satisfies Record<string, TreeNode>;
 
