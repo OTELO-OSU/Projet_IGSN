@@ -151,7 +151,7 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
         "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       ),
       concept("texture", "phaneritic"),
-      concept("physiographicEnvironment", "continental.badlands"),
+      concept("physiographic-environment", "continental.badlands"),
       concept("resource-type", "mineral_and_ore.uranium"),
       concept("geologicalContext", "Hercynian basement"),
       concept("scientificContext", "field_sample", "provenance-status"),

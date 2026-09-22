@@ -32,7 +32,7 @@ export function toCoreClassification(sample: Sample): CoreClassification {
     optionalConcept("metamorphic-facies", sample.metamorphicFacies),
     optionalConcept("metamorphic-fabric", sample.metamorphicFabric),
     optionalConcept(
-      "physiographicEnvironment",
+      "physiographic-environment",
       sample.physiographicEnvironment,
     ),
     optionalConcept("resource-type", sample.resourceType),

@@ -34,7 +34,7 @@ const coreContextCategorySchema = z.discriminatedUnion("schemeName", [
   conceptSchema("texture", textureSchema),
   conceptSchema("metamorphic-facies", metamorphicFaciesSchema),
   conceptSchema("metamorphic-fabric", metamorphicFabricSchema),
-  conceptSchema("physiographicEnvironment", physiographicEnvironmentSchema),
+  conceptSchema("physiographic-environment", physiographicEnvironmentSchema),
   conceptSchema("resource-type", resourceTypeSchema),
   conceptSchema("geologicalContext", freeTextSchema),
   z.discriminatedUnion("notation", [
