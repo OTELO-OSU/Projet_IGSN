@@ -579,10 +579,6 @@ function mapScientificContext(row: LegacyRow): ScientificContext | null {
   const collector = parseCollector(row.collector);
   const { firstname: collectorFirstname, lastname: collectorLastname } =
     splitContactName("invalid" in collector ? null : collector.name);
-  // const collectorOrcid = "invalid" in collector ? null : collector.orcid;
-  // const researchCampaign = clean(row.cruise_field_prgm);
-  // const fieldName = clean(row.field_name);
-  // const missionDescription = clean(row.purpose);
   if (!collectorLastname) {
     return null;
   }
@@ -591,10 +587,6 @@ function mapScientificContext(row: LegacyRow): ScientificContext | null {
     additionalRoles: [],
     ...(collectorFirstname ? { collectorFirstname } : {}),
     ...(collectorLastname ? { collectorLastname } : {}),
-    // ...(collectorOrcid ? { collectorOrcid } : {}),
-    // ...(researchCampaign ? { researchCampaign } : {}),
-    // ...(fieldName ? { fieldName } : {}),
-    // ...(missionDescription ? { missionDescription } : {}),
   };
 }
 

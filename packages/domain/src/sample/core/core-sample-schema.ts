@@ -33,9 +33,6 @@ export const ORCID_PREFIX = "https://orcid.org/";
 
 export const toOrcidUri = (orcid: string): string => `${ORCID_PREFIX}${orcid}`;
 
-export const fromOrcidUri = (id: string | null | undefined): string | null =>
-  id == null ? null : id.replace(ORCID_PREFIX, "");
-
 export const CORE_LICENCE_URI = "https://creativecommons.org/licenses/by/4.0/";
 
 const CORE_ROLES = [

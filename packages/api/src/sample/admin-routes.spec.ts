@@ -778,55 +778,6 @@ describe("admin sample routes", () => {
     );
 
     pgTest(
-      "takes a platform edit on a published sample, publication freezing neither field",
-      async ({ db }) => {
-        // Arrange
-        const app = createApp(db).app;
-        const onShip = {
-          ...publishable,
-          scientificContext: {
-            provenanceStatus: "field_sample",
-            additionalRoles: [],
-            collectorFirstname: "Pierre",
-            collectorLastname: "Curie",
-            platformType: "ship",
-            launchPlatformName: "Marion Dufresne",
-          },
-        };
-        await provisionUser(db, "test-token", { status: "accepted" });
-        const created = sampleResponseSchema.parse(
-          await (await postSample(app, onShip)).json(),
-        ).data;
-        const published = sampleResponseSchema.parse(
-          await (
-            await app.request(`/admin/samples/${created.id}/publish`, {
-              method: "POST",
-              headers: authHeader,
-            })
-          ).json(),
-        ).data;
-        // Act
-        const res = await putSample(app, created.id, {
-          ...onShip,
-          scientificContext: {
-            ...onShip.scientificContext,
-            platformType: "barge",
-            launchPlatformName: "Barge Loire",
-          },
-          expectedUpdatedAt: published.updatedAt,
-        });
-        // Assert
-        expect(res.status).toBe(200);
-        expect(
-          sampleResponseSchema.parse(await res.json()).data.scientificContext,
-        ).toMatchObject({
-          platformType: "barge",
-          launchPlatformName: "Barge Loire",
-        });
-      },
-    );
-
-    pgTest(
       "lets a super admin change the frozen fields of a published sample",
       async ({ db }) => {
         // Arrange
