@@ -1303,7 +1303,7 @@ describe("EditSamplePage", () => {
         screen.getByRole("button", { name: "Browse files" }).elements(),
       ).toHaveLength(0);
       expect(
-        screen.getByRole("button", { name: "Add a relation" }).elements(),
+        screen.getByRole("button", { name: "Resource format" }).elements(),
       ).toHaveLength(0);
     });
 

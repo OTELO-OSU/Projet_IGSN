@@ -195,7 +195,6 @@ function fakeApi(
         ...body,
         relations: (body.relations ?? []).map((relation) => ({
           targetResourceType: null,
-          relationTypeInformation: null,
           relatedMetadataScheme: null,
           schemeURI: null,
           schemeType: null,
@@ -691,7 +690,7 @@ describe("CreateSamplePage", () => {
     await screen.getByRole("combobox", { name: /nature/i }).click();
     await screen.getByText("Thin section").click();
     await screen.getByRole("tab", { name: "Related URL or document" }).click();
-    await screen.getByRole("button", { name: "Add a relation" }).click();
+    await screen.getByRole("button", { name: "Resource format" }).click();
     await screen.getByRole("menuitem", { name: "DOI" }).click();
     const block = screen.getByRole("group", {
       name: "1. DOI Relation",
@@ -700,7 +699,7 @@ describe("CreateSamplePage", () => {
     await block.getByRole("combobox", { name: "Relation type" }).click();
     await screen.getByRole("option", { name: "Is cited by" }).click();
     await block
-      .getByRole("textbox", { name: "Identifier" })
+      .getByRole("textbox", { name: "DOI" })
       .fill("https://doi.org/10.1594/IEDA.100252");
     await block.getByLabelText("Title").fill("Companion dataset");
     await screen.getByRole("button", { name: "Save", exact: true }).click();

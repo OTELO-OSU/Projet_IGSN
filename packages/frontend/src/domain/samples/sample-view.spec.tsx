@@ -54,7 +54,6 @@ describe("SampleView", () => {
               identifier: "https://doi.org/10.1594/IEDA.100252",
               targetTitle: "IEDA companion dataset",
               targetResourceType: null,
-              relationTypeInformation: null,
               relatedMetadataScheme: null,
               schemeURI: null,
               schemeType: null,

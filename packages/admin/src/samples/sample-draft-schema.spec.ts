@@ -282,7 +282,6 @@ describe("sampleDraftSchema", () => {
           identifier: "https://doi.org/10.5880/GFZ.2026.001",
           targetTitle: "Companion dataset",
           targetResourceType: "dataset",
-          relationTypeInformation: "Table 2",
           description: "Cites this sample",
         },
       ],
@@ -295,7 +294,6 @@ describe("sampleDraftSchema", () => {
         identifier: "https://doi.org/10.1594/IEDA.100252",
         targetTitle: "IEDA companion dataset",
         targetResourceType: null,
-        relationTypeInformation: null,
         description: null,
       },
       {
@@ -304,7 +302,6 @@ describe("sampleDraftSchema", () => {
         identifier: "https://doi.org/10.5880/GFZ.2026.001",
         targetTitle: "Companion dataset",
         targetResourceType: "dataset",
-        relationTypeInformation: "Table 2",
         description: "Cites this sample",
       },
     ]);
@@ -402,7 +399,6 @@ describe("sampleDraftSchema", () => {
             identifier: "https://doi.org/10.1594/IEDA.100252",
             targetTitle: "IEDA companion dataset",
             targetResourceType: null,
-            relationTypeInformation: null,
             relatedMetadataScheme: null,
             schemeURI: null,
             schemeType: null,
