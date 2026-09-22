@@ -4,7 +4,7 @@ Date: 2026-09-22
 
 ## Status
 
-Accepted. Amends ADR [0036](0036-service-account-api-key.md).
+Accepted. Amends ADR [0036](0036-service-account-api-key.md). Superseded in part by ADR [0049](0049-person-orcid-from-linked-account-only.md), which changes the Consequences below.
 
 ## Context
 
@@ -21,5 +21,5 @@ A sample person is either a link to a registry account (`*UserId`) or a typed na
 
 ## Consequences
 
-- `keepContactLinks` now matches incoming and stored rows on content (role, name, ORCID) rather than array index, so a reordered or shortened `additionalRoles[]` still keeps the right rows' links.
+- `keepContactLinks` now matches incoming and stored rows on content (role, name, ~~ORCID~~) rather than array index, so a reordered or shortened `additionalRoles[]` still keeps the right rows' links. ORCID dropped from that match by ADR 0049: a stored row's ORCID is account-resolved and a submitted payload never carries one.
 - A `/service` caller cannot discover or forge an account link; every read and write treats the sample's own recorded name as the fact and a stored link as an internal detail it may only preserve, never set.
