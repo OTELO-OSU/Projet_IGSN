@@ -82,11 +82,12 @@ Ordered by the Core schema, top to bottom, so it reads in the direction the code
 
 A round-trip-style guard (`to-datacite-sample.spec.ts`) lists every Core path as projected or deliberately dropped, so a new Core field fails the suite until it is placed in one list or the other.
 
-## Registration
+## Registration and sync
 
-- Publication now registers the sample's DOI at DataCite; see ADR [0044](adr/0044-doi-registration-on-publication.md).
-- `packages/api/src/datacite/register-doi.ts` (`registerDoi`) does the `PUT /dois/{doi}`, called from `publishSample`.
-- No `doiPrefix` means no registration call and the `doi` field above falls back to the bare IGSN.
+- Publication registers the sample's DOI at DataCite; see ADR [0044](adr/0044-doi-registration-on-publication.md). A later edit or status change re-syncs it; see ADR [0046](adr/0046-doi-lifecycle-sync.md).
+- `packages/api/src/datacite/sync-doi.ts` (`syncDoi`) does the `PUT /dois/{doi}`, called from `publishSample` and from the `synced` wrapper in `packages/api/src/sample/repository.ts` that wraps every other persisted-sample write.
+- Status drives the DataCite state and the `url`: `published` -> findable, landing page; `withdrawn` -> registered, landing page; `tombstone` -> registered, the shared `/tombstone` page.
+- No `doiPrefix` means no call and the `doi` field above falls back to the bare IGSN.
 
 ## Deviations from the contract document
 

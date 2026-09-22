@@ -1,11 +1,12 @@
 import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
-import type { CreateSample } from "@projet-igsn/domain/sample/sample";
+import type { CreateSample, Sample } from "@projet-igsn/domain/sample/sample";
 import type { Kysely } from "kysely";
 
 import type { DataCiteConfig } from "../datacite/config.ts";
 import type { DB } from "../db.ts";
 
+import { syncDoi } from "../datacite/sync-doi.ts";
 import {
   type Transactional,
   transactionally,
@@ -51,6 +52,16 @@ export function createSampleRepository(
   dataCite: DataCiteConfig | null = null,
 ): SampleRepository {
   const tx = transactionally(db);
+  const synced =
+    <A extends unknown[]>(
+      write: (trx: Transactional<DB>, ...args: A) => Promise<Sample | null>,
+    ) =>
+    (...args: A): Promise<Sample | null> =>
+      withTransaction(db, async (trx) => {
+        const sample = await write(trx, ...args);
+        if (sample) await syncDoi(dataCite, sample);
+        return sample;
+      });
   return {
     listAssignedTo: tx(listSamplesAssignedTo),
     listModerated: tx(listModeratedSamples),
@@ -75,10 +86,10 @@ export function createSampleRepository(
         if (!published) throw new Error("Sample vanished before publish");
         return published;
       }),
-    update: tx(updateSample),
+    update: synced(updateSample),
     publish: (id, status) =>
       withTransaction(db, (trx) => publishSample(trx, id, status, dataCite)),
-    setStatus: tx(setSampleStatus),
+    setStatus: synced(setSampleStatus),
     remove: tx(deleteSample),
     getEditLock: tx(getEditLock),
     acquireEditLock: tx(acquireEditLock),

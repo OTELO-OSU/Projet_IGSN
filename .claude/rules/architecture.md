@@ -53,6 +53,8 @@ A published sample is public whole but for the fields `domain/sample/publication
 
 A sample carries 0, 1 or 2 parents, capped in `createSampleSchema` and `coreSampleSchema`, set at creation and never edited; two parents force a synthetic material (frozen and location-less), see ADR 0039.
 
+- `api/src/datacite/sync-doi.ts` (`syncDoi`) is the single DataCite write and the single status-to-event map, called by `publishSample` (with `firstRegistration`) and by the `synced` wrapper in `api/src/sample/repository.ts` that every other persisted-sample write goes through, pointing a tombstone at the shared `/tombstone` page; see ADR 0046.
+
 Why a sample cannot be published lives in ONE place, `domain/sample/publication/sample-publish-blockers.ts` (`samplePublishBlockers`).
 
 - The api publish guard and the admin publish tooltip both derive from it.

@@ -32,7 +32,7 @@ A published or withdrawn sample keeps a permanent IGSN (ADR 0032), so it cannot 
 
 - **Hard delete**: the same reason as ADR 0032, a permanent IGSN cannot be deleted.
 - **A separate `removed` boolean** alongside `status`: ADR 0032 already rejected the equivalent `withdrawn` boolean for the nonsense states it allows and the call sites it duplicates; the same holds here.
-- **A public tombstone page**: a plain 404 needs no redaction whitelist and leaks nothing directly; ADR 0032's redacted withdrawn page stays the only public status page.
+- **A public tombstone page**: a plain 404 needs no redaction whitelist and leaks nothing directly; ADR 0032's redacted withdrawn page stays the only public status page. Superseded by ADR [0046](0046-doi-lifecycle-sync.md) for the DataCite landing url alone: one generic `/tombstone` page naming no sample, `GET /samples/:igsn` still answering 404.
 
 ## Amendment, 2026-09-08: sub-sample lineage exception
 
