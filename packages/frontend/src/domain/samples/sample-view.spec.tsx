@@ -757,12 +757,12 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
-  it("should show the geological context as its own section with the environment breadcrumb", async () => {
+  it("should show the geological context as its own section with the physiographic environment breadcrumb", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
           geologicalContextDescription: "Sampled in a peat bog margin",
-          geomorphologicalEnvironment: "wetland.peat_bog",
+          physiographicEnvironment: "wetland.peat_bog",
         })}
       />,
     );
@@ -775,11 +775,13 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByText("Sampled in a peat bog margin"))
       .toBeInTheDocument();
-    const environment = screen.getByRole("list", { name: "Environment" });
+    const environment = screen.getByRole("list", {
+      name: "Physiographic environment",
+    });
     await expect
       .element(environment.getByText("Wetland", { exact: true }))
       .toBeInTheDocument();
-    await expect.element(environment.getByText("Peat-bog")).toBeInTheDocument();
+    await expect.element(environment.getByText("Peat bog")).toBeInTheDocument();
   });
 
   it("should show the repository as its own section with the current archive linked to ror.org", async () => {

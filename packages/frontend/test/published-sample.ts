@@ -35,7 +35,7 @@ export const publishedSample = (
   scientificContext: null,
   repository: null,
   geologicalContextDescription: null,
-  geomorphologicalEnvironment: null,
+  physiographicEnvironment: null,
   syntheticDetails: null,
   location: null,
   age: null,

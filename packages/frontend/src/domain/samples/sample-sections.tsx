@@ -23,11 +23,11 @@ import {
   availabilityStatusLabel,
   collectionMethodLabel,
   existenceStatusLabel,
-  geomorphologicalEnvironmentLabel,
   materialPathLabel,
   metamorphicFabricLabel,
   metamorphicFaciesLabel,
   natureLabel,
+  physiographicEnvironmentLabel,
   textureLabel,
   typeLabel,
 } from "#/domain/samples/sample-labels.ts";
@@ -56,7 +56,7 @@ export function sampleSections(
     scientificContext,
     repository,
     geologicalContextDescription,
-    geomorphologicalEnvironment,
+    physiographicEnvironment,
     syntheticDetails,
     processSteps,
     institutionalOrganization,
@@ -167,7 +167,7 @@ export function sampleSections(
       content: <LocationView location={location} />,
     },
     (geologicalContextDescription != null ||
-      geomorphologicalEnvironment != null) && {
+      physiographicEnvironment != null) && {
       id: "geological-context",
       title: m.sample_section_geological_context(),
       content: (
@@ -177,10 +177,10 @@ export function sampleSections(
             value={geologicalContextDescription}
           />
           <BreadcrumbFieldRow
-            id="sample-field-environment"
-            label={m.sample_field_environment()}
-            path={geomorphologicalEnvironment}
-            pathLabel={geomorphologicalEnvironmentLabel}
+            id="sample-field-physiographic-environment"
+            label={m.sample_field_physiographic_environment()}
+            path={physiographicEnvironment}
+            pathLabel={physiographicEnvironmentLabel}
           />
         </FieldRows>
       ),
