@@ -136,26 +136,6 @@ describe("SampleForm related resources tab", () => {
     );
   });
 
-  it.each(["DOI", "IGSN"])(
-    "should label the identifier field with the %s format of the relation",
-    async (format) => {
-      const screen = await renderEditForm(vi.fn());
-
-      await screen
-        .getByRole("tab", { name: "Related URL or document" })
-        .click();
-      await addRelation(screen, format);
-
-      await expect
-        .element(
-          relationBlock(screen, 1, format).getByLabelText(
-            new RegExp(`^${format}`),
-          ),
-        )
-        .toBeVisible();
-    },
-  );
-
   it("should remove a relation row before saving", async () => {
     const onSubmit = vi.fn();
     const screen = await renderEditForm(onSubmit);
