@@ -32,7 +32,6 @@ const roundTripped: [string, SyntheticDetails][] = [
       },
       operatorFirstname: "Marie",
       operatorLastname: "Curie",
-      operatorOrcid: "0000-0002-1825-0097",
       researchStructure: ["04kdfz702", "02feahw73"],
       temperature: { value: 1200, unit: "celsius" },
       pressure: { value: 1.5, unit: "gpa" },

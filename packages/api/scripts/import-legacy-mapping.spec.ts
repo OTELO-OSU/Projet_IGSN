@@ -509,7 +509,6 @@ describe("toCreateSample", () => {
       additionalRoles: [],
       collectorFirstname: "Jostein",
       collectorLastname: "Bakke",
-      collectorOrcid: "0000-0001-6114-0400",
     });
   });
 

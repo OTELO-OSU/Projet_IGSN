@@ -124,16 +124,12 @@ function toSecurity(row: Selectable<DB["sample"]>) {
 
 function resolveContact(
   account: ContactAccount | null | undefined,
-  columns: {
-    firstname: string | null;
-    lastname: string | null;
-    orcid?: string | null;
-  },
+  columns: { firstname: string | null; lastname: string | null },
 ) {
   return {
     firstname: columns.firstname ?? account?.firstname ?? null,
     lastname: columns.lastname ?? account?.name ?? null,
-    orcid: columns.orcid ?? account?.orcid ?? null,
+    orcid: account?.orcid ?? null,
   };
 }
 
@@ -141,13 +137,11 @@ function toScientificContext(row: SampleRow) {
   const collector = resolveContact(row.collectorAccount, {
     firstname: row.sc_collector_firstname,
     lastname: row.sc_collector_lastname,
-    orcid: row.sc_collector_orcid,
   });
   if (row.sc_provenance_status === "field_sample") {
     const chiefScientist = resolveContact(row.chiefScientistAccount, {
       firstname: row.sc_chief_scientist_firstname,
       lastname: row.sc_chief_scientist_lastname,
-      orcid: row.sc_chief_scientist_orcid,
     });
     return scientificContextSchema.parse({
       provenanceStatus: "field_sample",
@@ -155,7 +149,6 @@ function toScientificContext(row: SampleRow) {
         const person = resolveContact(additional.account, {
           firstname: additional.person_firstname,
           lastname: additional.person_lastname,
-          orcid: additional.person_orcid,
         });
         return {
           role: additional.role,
@@ -177,11 +170,10 @@ function toScientificContext(row: SampleRow) {
         collectorFirstname: collector.firstname,
         collectorLastname: collector.lastname,
         collectorOrcid: collector.orcid,
-        researchCampaign: row.sc_research_campaign,
         funding: row.sc_funding,
         researchProgramDescription: row.sc_research_program_description,
-        fieldName: row.sc_field_name,
-        missionDescription: row.sc_mission_description,
+        platformType: row.sc_platform_type,
+        launchPlatformName: row.sc_launch_platform_name,
       }),
     });
   }
@@ -223,7 +215,6 @@ function toSyntheticDetails(row: SampleRow) {
   const operator = resolveContact(row.operatorAccount, {
     firstname: row.syn_operator_firstname,
     lastname: row.syn_operator_lastname,
-    orcid: row.syn_operator_orcid,
   });
   return prune({
     startingMaterial: row.syn_starting_material,

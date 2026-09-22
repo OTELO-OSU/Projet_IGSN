@@ -1,5 +1,7 @@
-import type { ScientificContext } from "@projet-igsn/domain/sample/scientific-context/model";
-
+import {
+  createScientificContextSchema,
+  type ScientificContext,
+} from "@projet-igsn/domain/sample/scientific-context/model";
 import { describe, expect } from "vitest";
 
 import { pgTest } from "../../tests/pg-test.ts";
@@ -24,16 +26,13 @@ const roundTripped: [string, ScientificContext][] = [
       researchProgramName: "Deep Biosphere Survey",
       chiefScientistFirstname: "Marie",
       chiefScientistLastname: "Curie",
-      chiefScientistOrcid: "0000-0002-1825-0097",
       hostInstitution: ["04kdfz702", "02feahw73"],
       collectorFirstname: "Pierre",
       collectorLastname: "Curie",
-      collectorOrcid: "0000-0001-2345-6789",
-      researchCampaign: "MD 209 / 2021",
       funding: "ANR grant 42",
       researchProgramDescription: "Multi-year survey of\nsub-seafloor life",
-      fieldName: "Site A",
-      missionDescription: "Coring campaign in\nthe North Atlantic",
+      platformType: "ship",
+      launchPlatformName: "Marion Dufresne",
     },
   ],
   [
@@ -70,6 +69,28 @@ describe("sample scientific context persistence", () => {
       const created = await insertSample(db, base);
       expect(created.scientificContext).toBeNull();
       expect(await readSample(db, created.id)).toEqual(created);
+    },
+  );
+
+  pgTest(
+    "should drop a submitted ORCID, a linked account being the only source",
+    async ({ db }) => {
+      // Arrange
+      const scientificContext = createScientificContextSchema.parse({
+        provenanceStatus: "field_sample",
+        collectorFirstname: "Pierre",
+        collectorLastname: "Curie",
+        collectorOrcid: "0000-0001-2345-6789",
+      });
+      // Act
+      const created = await insertSample(db, { ...base, scientificContext });
+      // Assert
+      expect(created.scientificContext).toEqual({
+        provenanceStatus: "field_sample",
+        additionalRoles: [],
+        collectorFirstname: "Pierre",
+        collectorLastname: "Curie",
+      });
     },
   );
 

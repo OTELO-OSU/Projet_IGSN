@@ -102,17 +102,14 @@ type SampleTable = {
   sc_chief_scientist_user_id: string | null;
   sc_chief_scientist_firstname: string | null;
   sc_chief_scientist_lastname: string | null;
-  sc_chief_scientist_orcid: string | null;
   sc_host_institution: string[] | null;
   sc_collector_user_id: string | null;
   sc_collector_firstname: string | null;
   sc_collector_lastname: string | null;
-  sc_collector_orcid: string | null;
-  sc_research_campaign: string | null;
   sc_funding: string | null;
   sc_research_program_description: string | null;
-  sc_field_name: string | null;
-  sc_mission_description: string | null;
+  sc_platform_type: string | null;
+  sc_launch_platform_name: string | null;
   sc_collection_curator_user_id: string | null;
   sc_collection_curator_firstname: string | null;
   sc_collection_curator_lastname: string | null;
@@ -139,7 +136,6 @@ type SampleTable = {
   syn_operator_user_id: string | null;
   syn_operator_firstname: string | null;
   syn_operator_lastname: string | null;
-  syn_operator_orcid: string | null;
   syn_research_structure: string[] | null;
   syn_temperature_value: number | null;
   syn_temperature_unit: string | null;
@@ -206,7 +202,6 @@ type SampleAdditionalRoleTable = {
   person_user_id: string | null;
   person_firstname: string | null;
   person_lastname: string | null;
-  person_orcid: string | null;
 };
 
 type SampleAttachmentTable = {
