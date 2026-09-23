@@ -21,6 +21,7 @@ import {
 import {
   DEFAULT_PAGE_SIZE,
   PAGE_SIZES,
+  duplicateConflictSchema,
   pageSchema,
   pageSizeSchema,
 } from "@projet-igsn/domain/sample/sample-validator";
@@ -125,6 +126,19 @@ const igsnParamSchema = z.object({
   }),
 });
 
+const DUPLICATE_CONFLICT = json(
+  duplicateConflictSchema,
+  "The registry already holds published samples carrying this name, material and collector. Send the request again with confirmDuplicates=true to keep it anyway.",
+);
+
+const confirmDuplicatesQuery = z.object({
+  confirmDuplicates: z.stringbool().optional().catch(undefined).meta({
+    type: "boolean",
+    description:
+      "Set to true to write the record although the registry already holds a published sample carrying the same name, material and collector; left out, such a record answers 409.",
+  }),
+});
+
 const coreSampleBody = {
   required: true,
   content: { "application/json": { schema: coreSampleBodySchema } },
@@ -214,10 +228,11 @@ export const createSampleRoute = createRoute({
   description:
     "Creates a sample from an IGSN Core record and publishes it at once, owned by the account's owner and snapshotting the account's own institutional codes. The record must satisfy every publication constraint, since a draft is never created.",
   security: SECURITY,
-  request: { body: coreSampleBody },
+  request: { query: confirmDuplicatesQuery, body: coreSampleBody },
   responses: {
     201: json(coreSampleSchema, "The sample as created and published."),
     403: FORBIDDEN,
+    409: DUPLICATE_CONFLICT,
     415: UNSUPPORTED_MEDIA_TYPE,
     422: json(
       invalidServiceSampleSchema,
@@ -236,7 +251,11 @@ export const updateSampleRoute = createRoute({
   description:
     "Replaces the record of a published sample the account's managed groups reach. Publication freezes part of the record, and the parents of a sample are set at creation, so neither can be edited here.",
   security: SECURITY,
-  request: { params: igsnParamSchema, body: coreSampleBody },
+  request: {
+    query: confirmDuplicatesQuery,
+    params: igsnParamSchema,
+    body: coreSampleBody,
+  },
   responses: {
     200: json(coreSampleSchema, "The sample as updated."),
     400: INVALID_IGSN,
@@ -245,6 +264,7 @@ export const updateSampleRoute = createRoute({
       "The record edits a field publication froze, one issue per field. The api key being missing or unknown, or the sample being out of the account's reach, answers the same status with the issue-less ServiceError body.",
     ),
     404: NOT_FOUND,
+    409: DUPLICATE_CONFLICT,
     415: UNSUPPORTED_MEDIA_TYPE,
     422: json(
       invalidServiceSampleSchema,

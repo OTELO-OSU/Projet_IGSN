@@ -4,7 +4,47 @@ Date: 2026-09-08
 
 ## Status
 
-Accepted. Amended 2026-09-10: `GET /service/ping` is deleted, `GET /service/samples` having become the mount's route and the proof that a key works. Amended again 2026-09-10: that list defaults to every published sample rather than the account's own reach, `?editable=true` narrowing it to `managerScope`, and it emits the two archive contacts unredacted, a product-owner decision taken because the IGSN Core mapping will not expose them. Scoping by default with an `?all=true` to widen was rejected: an external service reads the registry, so the narrow view is the exception. Amended 2026-09-11: `POST /service/samples` creates and publishes a sample in one transaction, owned by the service account's owner and snapshotting the account's own institutional trio, not the owner's, so it shows under `?editable=true`. The service sees no status and no draft, so the admin's publish vocabulary never reaches it: every refused body answers one shape, 422 `{ error: "Invalid sample", issues: [{ path?, code, message? }] }`, listing every problem at once so a script fixes them in one round and a future IGSN Core mapping translates `code` and `path` mechanically. `code` is a zod issue code for a schema failure (with zod's `message`), or a `samplePublishBlockers` code with its field path from `publish-blocker-path.ts`: the route resolves the parent id and passes it in `parents`, a `null` entry firing `parent_not_found` at `parentIds.0` for a non-uuid, unknown, draft or out-of-reach parent alike (one code for all, so the route is no existence oracle). The two remaining service-only codes are this route's own request-shape rules: `location_inherited_from_parent` at `location` since a sub-sample inherits its parent's location as is, and `manual_group_not_attachable` at `manualGroupIds.<i>`. `createServiceSampleSchema` (`domain/service-account/service-sample-validator.ts`) is `createSampleSchema` with `parentIds` widened to any string for that reason; the blockers read the eligible parent's location; no `publisher` argument is needed since `findByApiKeyHash` already requires an accepted owner; manual groups and the parent are checked against the owner as a plain user, never super admin. Amended 2026-09-11: `PUT /service/samples/:igsn` updates a published sample the account's `managerScope` reaches, the same reach as `?editable=true`. 404 for an unknown IGSN or a non-published one (withdrawn included), 403 `{ error: "Forbidden" }` outside that reach. `updateServiceSampleSchema` (`updateSampleSchema` with `attachments` refused) feeds `mergePublishedEdit` through `frozenFieldEdits`; unlike the admin route's merge-not-reject (ADR 0021), a frozen field sent with a different value answers 403 `{ error: "Forbidden", issues: [{ path, code: "field_frozen" }] }`, nothing written, both reading the same lock maps; a frozen field omitted from the body keeps its stored value, since asking a script for a value it cannot change is pointless, and the route persists the merge. A newly introduced publish blocker answers the one 422 `{ error: "Invalid sample", issues }` shape, via `newPublishBlockers`, the diff core now shared with the admin route's own 409 check. No `expectedUpdatedAt` stale check, no human edit lock, no moderation mail, no attachments reconcile. Amended 2026-09-14: `POST /service/samples` accepts up to two parents (ADR [0039](0039-two-parent-sub-samples.md)); the service body carries `createSampleSchema`'s two-parent refinements, `parent_not_found` names the failing index, and location is inherited only when there is exactly one parent. Amended again 2026-09-14: `GET/POST/PUT /service/samples` and `GET /service/samples/:igsn` now emit and accept IGSN Sample Core v0.10.0 records instead of the internal `Sample` shape described above, every path travelling out as its Core path, so a parent is named by its IGSN and `parent_not_found` sits at `relations.<i>.targetIdentifier.value`; see ADR [0040](0040-igsn-core-pivot-on-service-api.md). Amended 2026-09-15: the four routes are declared through `@hono/zod-openapi`, publishing `GET /service/docs` and `GET /service/openapi.json` as two further public routes ahead of the API-key guard; see ADR [0041](0041-openapi-for-the-service-api.md). That declaration answers **415** `{ error: "Unsupported Media Type" }` for a `POST`/`PUT` with a missing or non-JSON `Content-Type`, where the hand-rolled validator used to substitute an empty body and answer 422 `Invalid sample`. The body is the mount's standard `{ error }` shape, the one 403, 404, 429 and 500 already answer; the 422 `{ error, issues }` shape stays what it always was, the answer to a refused sample.
+Accepted, then amended.
+
+### 2026-09-10, `GET /service/samples`
+
+- It replaces `GET /service/ping`, deleted, as the mount's route and the proof that a key works.
+- It lists every published sample, `?editable=true` narrowing it to `managerScope`; scoping by default with an `?all=true` to widen was rejected, an external service reads the registry.
+- It emits the two archive contacts unredacted, a PO decision, the IGSN Core mapping not exposing them.
+
+### 2026-09-11, `POST /service/samples`
+
+- It creates and publishes in one transaction, owned by the account's owner and snapshotting the account's own institutional trio, not the owner's, so it shows under `?editable=true`.
+- The service sees no status and no draft, so the admin's publish vocabulary never reaches it.
+- Every refusal answers one shape, 422 `{ error: "Invalid sample", issues: [{ path?, code, message? }] }`, listing every problem at once.
+- `code` is a zod issue code with zod's `message`, or a `samplePublishBlockers` code with its path from `publish-blocker-path.ts`.
+- `parent_not_found` covers a non-uuid, unknown, draft or out-of-reach parent alike, so the route is no existence oracle.
+- Two codes are this route's own request-shape rules: `location_inherited_from_parent` at `location`, a sub-sample inheriting its parent's location, and `manual_group_not_attachable` at `manualGroupIds.<i>`.
+- `createServiceSampleSchema` (`domain/service-account/service-sample-validator.ts`) is `createSampleSchema` with `parentIds` widened to any string for that reason.
+- Manual groups and the parent are checked against the owner as a plain user, never super admin.
+
+### 2026-09-11, `PUT /service/samples/:igsn`
+
+- It updates a published sample inside `managerScope`, 404 for an unknown or non-published IGSN (withdrawn included), 403 `{ error: "Forbidden" }` outside that reach.
+- `updateServiceSampleSchema` is `updateSampleSchema` with `attachments` refused.
+- Unlike the admin route's merge-not-reject (ADR [0021](0021-post-publish-field-mutability.md)), a frozen field sent with a different value answers 403 `{ error: "Forbidden", issues: [{ path, code: "field_frozen" }] }`, nothing written, both reading the same lock maps.
+- A frozen field omitted keeps its stored value, asking a script for a value it cannot change being pointless.
+- A newly introduced publish blocker answers the same 422, via `newPublishBlockers`, shared with the admin route's 409 check.
+- No `expectedUpdatedAt` stale check, no edit lock, no moderation mail, no attachments reconcile.
+
+### 2026-09-14
+
+- `POST /service/samples` accepts up to two parents (ADR [0039](0039-two-parent-sub-samples.md)), `parent_not_found` naming the failing index and location inherited only when there is exactly one parent.
+- The four routes emit and accept IGSN Sample Core v0.10.0 records instead of the internal `Sample` shape, every path travelling out as its Core path, so `parent_not_found` sits at `relations.<i>.targetIdentifier.value`; see ADR [0040](0040-igsn-core-pivot-on-service-api.md).
+
+### 2026-09-15
+
+- The four routes are declared through `@hono/zod-openapi`, publishing `GET /service/docs` and `GET /service/openapi.json` ahead of the API-key guard; see ADR [0041](0041-openapi-for-the-service-api.md).
+- A `POST`/`PUT` with a missing or non-JSON `Content-Type` now answers 415 `{ error: "Unsupported Media Type" }` instead of 422 `Invalid sample`.
+
+### 2026-09-23
+
+- `POST` and `PUT` refuse a record suspected to duplicate a published sample (same name, material and collector), answering 409 `{ error, reason: "duplicates", duplicates: [{ id, igsn, name }] }` unless the request carries `?confirmDuplicates=true`; see [`docs/igsn-core-mapping.md`](../igsn-core-mapping.md#suspected-duplicates).
 
 ## Context
 

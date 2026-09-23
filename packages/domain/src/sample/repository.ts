@@ -6,6 +6,10 @@ import type { SampleEditLock } from "./edit-lock.ts";
 import type { SampleLineage } from "./lineage/model.ts";
 import type { SampleParent } from "./parent/model.ts";
 import type {
+  DuplicateCriteria,
+  SuspectedDuplicate,
+} from "./publication/suspected-duplicate.ts";
+import type {
   AdminSampleListItem,
   ListSamplesQuery,
   PublishStatus,
@@ -50,6 +54,10 @@ export type SampleRepository = {
     userId: string,
   ): Promise<{ sample: Sample; role: UserSampleRole | null } | null>;
   getPublicByIgsn(igsn: string): Promise<Sample | null>;
+  findDuplicates(
+    criteria: DuplicateCriteria,
+    exclude?: string,
+  ): Promise<SuspectedDuplicate[]>;
   getPublicLineage(igsn: string): Promise<SampleLineage | null>;
   create(input: CreateSample, owner: User): Promise<Sample>;
   createPublished(

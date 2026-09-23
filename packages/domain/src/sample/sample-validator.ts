@@ -8,6 +8,10 @@ import { availabilityStatusSchema } from "./curation/availability-status.ts";
 import { existenceStatusSchema } from "./curation/existence-status.ts";
 import { sampleLineageSchema } from "./lineage/model.ts";
 import { sampleParentSchema } from "./parent/model.ts";
+import {
+  duplicateCriteriaSchema,
+  suspectedDuplicateSchema,
+} from "./publication/suspected-duplicate.ts";
 import { withdrawnSampleSchema } from "./publication/withdrawn-sample.ts";
 import {
   sampleSchema,
@@ -48,6 +52,26 @@ export const sampleConflictSchema = z.object({
 });
 
 export type SampleConflict = z.infer<typeof sampleConflictSchema>;
+
+export const checkDuplicatesBodySchema = duplicateCriteriaSchema.extend({
+  exclude: z.uuid().optional(),
+});
+
+export type CheckDuplicatesBody = z.infer<typeof checkDuplicatesBodySchema>;
+
+export const duplicateConflictSchema = z.object({
+  error: z.string().meta({
+    description: "Human readable summary of the conflict.",
+  }),
+  reason: z.literal("duplicates").meta({
+    description: "Always duplicates, naming the conflict the api found.",
+  }),
+  duplicates: z.array(suspectedDuplicateSchema).meta({
+    description: "The published samples the record is suspected to duplicate.",
+  }),
+});
+
+export type DuplicateConflict = z.infer<typeof duplicateConflictSchema>;
 
 export const PAGE_SIZES = [10, 25, 50] as const;
 export const DEFAULT_PAGE_SIZE = 25;

@@ -1839,3 +1839,126 @@ describe("PUT /service/samples/:igsn", () => {
     },
   );
 });
+
+const DUPLICATE_CONFLICT = {
+  error: expect.any(String),
+  reason: "duplicates",
+};
+
+const createdDuplicate = async (
+  app: ReturnType<typeof createApp>["app"],
+  input: unknown,
+) => {
+  const res = await postSample(app, input);
+  expect(res.status).toBe(201);
+  const body = coreSampleSchema.parse(await res.json());
+  return {
+    id: createdId(body),
+    igsn: body.identification.sampleIdentifier,
+    name: body.identification.titles[0]!.value,
+  };
+};
+
+describe("a suspected duplicate over /service", () => {
+  pgTest(
+    "should refuse to create a sample sharing the name, material and collector of a published one",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const existing = await createdDuplicate(app, NEW_BODY);
+      // Act
+      const res = await postSample(app, NEW_BODY);
+      // Assert
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({
+        ...DUPLICATE_CONFLICT,
+        duplicates: [existing],
+      });
+      expect(await storedNames(db)).toHaveLength(1);
+    },
+  );
+
+  pgTest(
+    "should create the suspected duplicate when the caller confirms it",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      await createdDuplicate(app, NEW_BODY);
+      // Act
+      const res = await serviceRequest(
+        app,
+        "POST",
+        "?confirmDuplicates=true",
+        NEW_BODY,
+      );
+      // Assert
+      expect(res.status).toBe(201);
+      expect(await storedNames(db)).toHaveLength(2);
+    },
+  );
+
+  pgTest(
+    "should refuse an update renaming a sample onto a published one it then duplicates",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const existing = await publishedInReach(db, fieldSample);
+      const subject = await publishedInReach(db, {
+        ...fieldSample,
+        name: "Autre basalte",
+      });
+      // Act
+      const res = await putSample(
+        app,
+        subject.igsn!,
+        renamed(subject, existing.name),
+      );
+      // Assert
+      expect(res.status).toBe(409);
+      expect(await res.json()).toEqual({
+        ...DUPLICATE_CONFLICT,
+        duplicates: [
+          { id: existing.id, igsn: existing.igsn, name: existing.name },
+        ],
+      });
+      expect((await readSample(db, subject.id))?.name).toBe("Autre basalte");
+    },
+  );
+
+  pgTest(
+    "should never suspect an update leaving the name, material and collector unchanged",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      await publishedInReach(db, fieldSample);
+      const subject = await publishedInReach(db, fieldSample);
+      // Act
+      const res = await putSample(app, subject.igsn!, core(subject));
+      // Assert
+      expect(res.status).toBe(200);
+    },
+  );
+
+  pgTest(
+    "should update onto the suspected duplicate when the caller confirms it",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      const existing = await publishedInReach(db, fieldSample);
+      const subject = await publishedInReach(db, {
+        ...fieldSample,
+        name: "Autre basalte",
+      });
+      // Act
+      const res = await serviceRequest(
+        app,
+        "PUT",
+        `/${subject.igsn}?confirmDuplicates=true`,
+        renamed(subject, existing.name),
+      );
+      // Assert
+      expect(res.status).toBe(200);
+      expect((await readSample(db, subject.id))?.name).toBe(existing.name);
+    },
+  );
+});

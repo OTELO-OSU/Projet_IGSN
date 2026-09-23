@@ -159,6 +159,10 @@ export function sampleEditPage(page: Page) {
       if (!id) throw new Error("the edit page url carries no sample id");
       return id;
     },
+    expectNoPublicPage: () =>
+      expect(page.getByRole("link", { name: "View public page" })).toHaveCount(
+        0,
+      ),
     publicPageIgsn: async () => {
       const href = await page
         .getByRole("link", { name: "View public page" })

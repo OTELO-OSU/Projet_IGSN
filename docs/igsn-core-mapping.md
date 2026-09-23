@@ -239,6 +239,15 @@ Every controlled vocabulary (nature, texture, the three hierarchies, ROR/OSU/lab
 
 `collector`, `curator` and `chiefScientist` are no longer matched on a fragment of a single column: each name is a firstname/lastname pair, and the value is matched token by token against both columns, in any order, accent-insensitive, with a fuzzy fallback (same rule as the public person facets).
 
+## Suspected duplicates
+
+`POST /service/samples` and `PUT /service/samples/{igsn}` refuse a record matching an existing published sample on all three of: the same `name` (unaccented, lowercased, trimmed), the same full `material` path, and the same collector. The collector compares the linked account when both sides carry one, otherwise the resolved firstname/lastname; an absent collector is a value of its own, matching only a record carrying none either. Parents and children are not excluded from the search, since a sub-sample may legitimately share its parent's name.
+
+- A match answers **409** `{ error, reason: "duplicates", duplicates: [{ id, igsn, name }] }`.
+- Send the request again with `?confirmDuplicates=true` to write the record anyway.
+- The check runs before the write, so a refused body creates or changes nothing.
+- This narrows ADR [0036](adr/0036-service-account-api-key.md)'s existing create/update contract rather than opening a new one; see that ADR's entry for the exact route history.
+
 ## Deviations recorded for the Core authors
 
 - `extensions.geology.chronostratigraphy` is `{ min: "ICS<n>", max: "ICS<n>", unit }`, a PO decision for a lossless mapping rather than a flatter shape.
