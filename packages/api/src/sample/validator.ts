@@ -2,6 +2,7 @@ import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { uploadSampleAttachmentSchema } from "@projet-igsn/domain/sample/attachment/attachment-validator";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 import {
+  checkDuplicatesBodySchema,
   contactSampleOwnerBodySchema,
   listSamplesQuerySchema,
   publishStatusSchema,
@@ -46,6 +47,12 @@ export const validateSearchEligibleParentsQuery = zodValidator(
   "query",
   searchEligibleParentsQuerySchema,
   "Invalid query parameters",
+);
+
+export const validateCheckDuplicatesBody = zodValidator(
+  "json",
+  checkDuplicatesBodySchema,
+  "Invalid duplicate criteria",
 );
 
 export const validateListQuery = validator("query", (value, c) => {

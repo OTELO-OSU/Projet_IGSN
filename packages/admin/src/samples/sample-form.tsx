@@ -1,5 +1,6 @@
 import type { ManualGroup } from "@projet-igsn/domain/manual-group/model";
 import type { SampleAttachment } from "@projet-igsn/domain/sample/attachment/model";
+import type { SuspectedDuplicate } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import type { PublishStatus } from "@projet-igsn/domain/sample/sample-validator";
 import type { User } from "@projet-igsn/domain/user/model";
 import type { ReactNode } from "react";
@@ -36,6 +37,7 @@ import {
   type PublishableFields,
   samplePublishBlockers,
 } from "@projet-igsn/domain/sample/publication/sample-publish-blockers";
+import { duplicateCheckCriteria } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import {
   type CreateSample,
   type SampleStatus,
@@ -46,7 +48,6 @@ import { isSampleOwner } from "@projet-igsn/domain/user-sample/is-sample-owner";
 import { canEditFrozenSampleFields } from "@projet-igsn/domain/user/can-edit-frozen-sample-fields";
 import { Fragment, useState } from "react";
 
-import { ConfirmButton } from "#/confirm-button.tsx";
 import { frontendSampleUrl } from "#/frontend-url.ts";
 import { m } from "#/paraglide/messages.js";
 import { AgeFields } from "#/samples/age-fields.tsx";
@@ -59,12 +60,13 @@ import { composeScientificContext } from "#/samples/compose-scientific-context.t
 import { composeSyntheticDetails } from "#/samples/compose-synthetic-details.ts";
 import {
   ConfirmMenuButton,
-  type ConfirmMenuItem,
+  type ConfirmMenuAction,
 } from "#/samples/confirm-menu-button.tsx";
 import {
   AvailabilityStatusField,
   ExistenceStatusField,
 } from "#/samples/curation-fields.tsx";
+import { DuplicateSamplesDialog } from "#/samples/duplicate-samples-dialog.tsx";
 import { LocalIdFields } from "#/samples/local-id-fields.tsx";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
@@ -102,6 +104,7 @@ import {
   keptAttachmentMetadata,
   type SampleAttachmentChanges,
 } from "#/samples/use-attachment-changes.ts";
+import { useCheckSampleDuplicates } from "#/samples/use-check-sample-duplicates.ts";
 import { useUserRoleOnSample } from "#/samples/use-user-role-on-sample.ts";
 import { UPLOAD_LIMIT } from "#/upload-limit.ts";
 
@@ -138,7 +141,7 @@ export type SampleSubmitMenu = {
   items: SampleSubmitMenuItem[];
 };
 
-export type SampleSubmitMenuItem = Omit<ConfirmMenuItem, "onConfirm"> & {
+export type SampleSubmitMenuItem = Omit<ConfirmMenuAction, "onConfirm"> & {
   onConfirm: (value: CreateSample) => void;
 };
 
@@ -156,6 +159,11 @@ export type SampleFormAction =
       onPublish: (value: CreateSample, status: PublishStatus) => void;
     }
   | { kind: "link"; label: string; href: string };
+
+type SubmitMeta = {
+  onValid: ((value: CreateSample) => void) | undefined;
+  checkDuplicates: boolean;
+};
 
 export type SampleFormProps = {
   onCancel: () => void;
@@ -228,12 +236,56 @@ export function SampleForm({
       : secondaryAction?.kind === "submit"
         ? secondaryAction.onSubmit
         : undefined;
+  const checkDuplicates = useCheckSampleDuplicates();
+  const [confirming, setConfirming] = useState<{
+    duplicates: SuspectedDuplicate[];
+    title?: string;
+    description?: string;
+    note?: string;
+    onConfirm: () => void;
+  } | null>(null);
+  const findDuplicates = async (value: CreateSample) => {
+    const criteria = duplicateCheckCriteria(value, {
+      previous: wasPublished ? defaultValues : null,
+    });
+    if (criteria === null) return [];
+    return checkDuplicates
+      .mutateAsync({ ...criteria, exclude: sampleId })
+      .catch(() => null);
+  };
+  const askPublish = async (
+    status: PublishStatus,
+    onPublish: (value: CreateSample, status: PublishStatus) => void,
+  ) => {
+    const parsed = sampleDraftSchema.safeParse(form.state.values);
+    const duplicates = parsed.success ? await findDuplicates(parsed.data) : [];
+    if (duplicates === null) return;
+    setConfirming({
+      duplicates,
+      title:
+        status === "withdrawn"
+          ? m.publish_withdrawn_sample_title()
+          : m.publish_sample_title(),
+      description:
+        status === "withdrawn"
+          ? m.publish_withdrawn_sample_warning()
+          : m.publish_sample_warning(),
+      note:
+        duplicates.length > 0 ? m.duplicate_samples_description() : undefined,
+      onConfirm: () =>
+        void form.handleSubmit({
+          onValid: (value) => onPublish(value, status),
+          checkDuplicates: false,
+        }),
+    });
+  };
 
   const form = useAppForm({
     defaultValues: toSampleDraft(defaultValues),
-    onSubmitMeta: { onValid: defaultSubmit } as {
-      onValid: ((value: CreateSample) => void) | undefined;
-    },
+    onSubmitMeta: {
+      onValid: defaultSubmit,
+      checkDuplicates: wasPublished,
+    } as SubmitMeta,
     validators: {
       onChange: (context) => {
         const result = validate(context);
@@ -261,6 +313,21 @@ export function SampleForm({
         UPLOAD_LIMIT
       ) {
         return;
+      }
+      if (meta.checkDuplicates) {
+        const duplicates = await findDuplicates(parsed.data);
+        if (duplicates === null) return;
+        if (duplicates.length > 0) {
+          setConfirming({
+            duplicates,
+            onConfirm: () =>
+              void form.handleSubmit({
+                onValid: meta.onValid,
+                checkDuplicates: false,
+              }),
+          });
+          return;
+        }
       }
       const committed = attachmentChanges
         ? await attachmentChanges.commit(attachments)
@@ -347,23 +414,19 @@ export function SampleForm({
       if (roleOnSample !== null && !isSampleEditor(roleOnSample)) {
         return null;
       }
-      const publish = (status: PublishStatus) =>
-        void form.handleSubmit({
-          onValid: (value) => action.onPublish(value, status),
-        });
       return renderPublishGated((gated) => {
-        const disabled = gated || action.disabled === true;
+        const disabled =
+          gated || action.disabled === true || checkDuplicates.isPending;
         return (
           <div className="flex">
-            <ConfirmButton
+            <Button
+              type="button"
               className="rounded-r-none"
               disabled={disabled}
-              title={m.publish_sample_title()}
-              description={m.publish_sample_warning()}
-              onConfirm={() => publish("published")}
+              onClick={() => void askPublish("published", action.onPublish)}
             >
               {action.label}
-            </ConfirmButton>
+            </Button>
             <ConfirmMenuButton
               label={m.action_publish_options()}
               className="border-l-primary-foreground/30 rounded-l-none border-l"
@@ -371,9 +434,8 @@ export function SampleForm({
               items={[
                 {
                   label: m.action_withdraw(),
-                  title: m.publish_withdrawn_sample_title(),
-                  description: m.publish_withdrawn_sample_warning(),
-                  onConfirm: () => publish("withdrawn"),
+                  onSelect: () =>
+                    void askPublish("withdrawn", action.onPublish),
                 },
               ]}
             />
@@ -405,7 +467,10 @@ export function SampleForm({
               items={menu.items.map((item) => ({
                 ...item,
                 onConfirm: () =>
-                  void form.handleSubmit({ onValid: item.onConfirm }),
+                  void form.handleSubmit({
+                    onValid: item.onConfirm,
+                    checkDuplicates: false,
+                  }),
               }))}
             />
           ) : null}
@@ -720,6 +785,18 @@ export function SampleForm({
             {statusAction}
             {primaryAction ? renderAction(primaryAction) : null}
           </div>
+
+          {confirming ? (
+            <DuplicateSamplesDialog
+              {...confirming}
+              onConfirm={() => {
+                const { onConfirm } = confirming;
+                setConfirming(null);
+                onConfirm();
+              }}
+              onCancel={() => setConfirming(null)}
+            />
+          ) : null}
         </form>
       </FieldSuggestionProvider>
     </FieldDisabledProvider>

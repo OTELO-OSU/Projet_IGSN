@@ -1,5 +1,10 @@
 import type { ManualGroupRepository } from "@projet-igsn/domain/manual-group/repository";
+import type {
+  DuplicateCriteria,
+  SuspectedDuplicate,
+} from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import type { SampleRepository } from "@projet-igsn/domain/sample/repository";
+import type { DuplicateConflict } from "@projet-igsn/domain/sample/sample-validator";
 import type { ServiceAccountRepository } from "@projet-igsn/domain/service-account/repository";
 import type {
   FrozenServiceSample,
@@ -30,6 +35,7 @@ import {
 import { frozenFieldEdits } from "@projet-igsn/domain/sample/publication/frozen-field-edits";
 import { newPublishBlockers } from "@projet-igsn/domain/sample/publication/new-publish-blockers";
 import { mergePublishedEdit } from "@projet-igsn/domain/sample/publication/published-field-lock";
+import { duplicateCheckCriteria } from "@projet-igsn/domain/sample/publication/suspected-duplicate";
 import {
   createSampleSchema,
   updateSampleSchema,
@@ -105,6 +111,19 @@ const invalid = (c: Context<ServiceEnv>, issues: ServiceSampleIssue[]) =>
     422,
   );
 
+const conflicting = (
+  c: Context<ServiceEnv>,
+  duplicates: SuspectedDuplicate[],
+) =>
+  c.json(
+    {
+      error: "Suspected duplicate",
+      reason: "duplicates",
+      duplicates,
+    } satisfies DuplicateConflict,
+    409,
+  );
+
 const forbidden = (c: Context<ServiceEnv>, issues: ServiceSampleIssue[]) =>
   c.json({ error: "Forbidden", issues } satisfies FrozenServiceSample, 403);
 
@@ -120,6 +139,13 @@ export function createServiceRoutes(
     const sample = await samples.getPublicByIgsn(igsn);
     return sample?.status === "published" ? sample : null;
   };
+  const suspectedDuplicates = (
+    criteria: DuplicateCriteria | null,
+    exclude?: string,
+  ) =>
+    criteria === null
+      ? Promise.resolve([])
+      : samples.findDuplicates(criteria, exclude);
   const findPublishedByIgsn = async (igsn: string) => {
     const parsed = igsnSchema.safeParse(igsn);
     return parsed.success ? findPublished(parsed.data) : null;
@@ -255,6 +281,14 @@ export function createServiceRoutes(
       if (issues.length > 0) {
         return invalid(c, issues);
       }
+      const duplicates = await suspectedDuplicates(
+        duplicateCheckCriteria(parsed.data, {
+          confirmed: c.req.valid("query").confirmDuplicates,
+        }),
+      );
+      if (duplicates.length > 0) {
+        return conflicting(c, duplicates);
+      }
       const created = await samples.createPublished(
         parsed.data,
         account.owner.id,
@@ -321,6 +355,16 @@ export function createServiceRoutes(
         current.parents.length === 0
       ) {
         return invalid(c, [processStepsOnRootIssue()]);
+      }
+      const duplicates = await suspectedDuplicates(
+        duplicateCheckCriteria(merged, {
+          previous: current,
+          confirmed: c.req.valid("query").confirmDuplicates,
+        }),
+        current.id,
+      );
+      if (duplicates.length > 0) {
+        return conflicting(c, duplicates);
       }
       const updated = await samples.update(current.id, merged);
       if (!updated) {

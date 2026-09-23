@@ -56,6 +56,7 @@ import {
   validateAddCollaboratorBody,
   validateAttachmentParams,
   validateAttachmentUpload,
+  validateCheckDuplicatesBody,
   validateCollaboratorParams,
   validateCreateSampleBody,
   validateIdParam,
@@ -125,6 +126,12 @@ export function createSampleAdminRoutes(
         return c.json(body);
       },
     )
+    .post("/duplicates", validateCheckDuplicatesBody, async (c) => {
+      const { exclude, ...criteria } = c.req.valid("json");
+      return c.json({
+        data: await repository.findDuplicates(criteria, exclude),
+      });
+    })
     .use("/:id", accessibleSample)
     .use("/:id/*", accessibleSample)
     .get("/:id", validateIdParam, async (c) => {

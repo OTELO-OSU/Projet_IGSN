@@ -48,6 +48,10 @@ export function sampleListPage(page: Page) {
       expect(page.getByRole("cell", { name, exact: true })).toBeHidden(),
     expectEmpty: () =>
       expect(page.getByRole("cell", { name: "No results" })).toBeVisible(),
+    expectSampleRowWithStatus: (name: string, status: string) =>
+      expect(
+        sampleRow(page, name).getByRole("cell", { name: status, exact: true }),
+      ).toBeVisible(),
     expectSampleRowWithNature: (name: string, nature: string) =>
       expect(
         sampleRow(page, name).getByRole("cell", { name: natureLabel(nature) }),

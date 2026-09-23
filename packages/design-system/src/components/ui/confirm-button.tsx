@@ -25,6 +25,7 @@ type ConfirmDialogProps = {
   cancelLabel: string;
   closeLabel: string;
   confirmPhrase?: ConfirmPhrase;
+  body?: ReactNode;
   onConfirm: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -32,7 +33,7 @@ type ConfirmDialogProps = {
 };
 
 type ConfirmButtonProps = ComponentProps<typeof Button> &
-  Omit<ConfirmDialogProps, "children">;
+  Omit<ConfirmDialogProps, "children" | "body">;
 
 export function ConfirmButton({
   title,
@@ -71,6 +72,7 @@ export function ConfirmDialog({
   cancelLabel,
   closeLabel,
   confirmPhrase,
+  body,
   onConfirm,
   open,
   onOpenChange,
@@ -84,6 +86,7 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {body}
         <ConfirmBody
           confirmLabel={confirmLabel}
           cancelLabel={cancelLabel}

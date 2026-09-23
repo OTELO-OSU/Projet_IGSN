@@ -5,8 +5,12 @@ import type {
 import type { ComponentProps } from "react";
 
 import { TooltipProvider } from "@projet-igsn/design-system/components/ui/tooltip";
+import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 
+import type { SampleAttachmentChanges } from "./use-attachment-changes.ts";
+
+import { worker } from "../../test/msw.ts";
 import { pickPath, repickPath } from "../../test/pick-hierarchy.ts";
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
@@ -2798,5 +2802,185 @@ describe("SampleForm post-publication field lock", () => {
         }),
       ),
     );
+  });
+});
+
+describe("SampleForm duplicate check", () => {
+  const SAMPLE_ID = "3f2504e0-4f89-41d3-9a0c-0305000000c0";
+
+  const DUPLICATE = {
+    id: "3f2504e0-4f89-41d3-9a0c-0305000000c1",
+    igsn: "01K072TVWVFK5A1RRZ5MY4PPKB",
+    name: "Basalte du Massif Central",
+  };
+
+  const RENAMED = "Basalte du Massif Central bis";
+
+  const collectedFixture: CreateSample = {
+    ...publishedFixture,
+    scientificContext: {
+      ...publishableScientificContext,
+      collectorFirstname: "Alfred",
+      collectorLastname: "Wegener",
+    },
+  };
+
+  const CRITERIA = {
+    name: collectedFixture.name,
+    material: collectedFixture.material,
+    collectorUserId: null,
+    collectorFirstname: "Alfred",
+    collectorLastname: "Wegener",
+  };
+
+  function fakeApi() {
+    const bodies: unknown[] = [];
+    worker.use(
+      http.get(`*/admin/samples/${SAMPLE_ID}`, () =>
+        HttpResponse.json(null, { status: 404 }),
+      ),
+      http.post("*/admin/samples/duplicates", async ({ request }) => {
+        bodies.push(await request.json());
+        return HttpResponse.json({ data: [DUPLICATE] });
+      }),
+    );
+    return bodies;
+  }
+
+  it("should list the suspected duplicates in the publish dialog", async () => {
+    const bodies = fakeApi();
+    const onPublish = vi.fn();
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          defaultValues={collectedFixture}
+          primaryAction={{
+            kind: "publish",
+            label: "Save & Publish",
+            onPublish,
+          }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("button", { name: "Save & Publish" }).click();
+
+    const dialog = screen.getByRole("dialog", { name: "Publish sample" });
+    await expect
+      .element(
+        dialog.getByRole("link", {
+          name: `${DUPLICATE.name} (${DUPLICATE.igsn})`,
+        }),
+      )
+      .toBeVisible();
+    expect(onPublish).not.toHaveBeenCalled();
+
+    await dialog.getByRole("button", { name: "Continue anyway" }).click();
+
+    await vi.waitFor(() => expect(onPublish).toHaveBeenCalled());
+    expect(bodies).toEqual([CRITERIA]);
+  });
+
+  const renderPublishedSave = async (
+    props: Partial<ComponentProps<typeof SampleForm>> = {},
+  ) => {
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          status="published"
+          sampleId={SAMPLE_ID}
+          defaultValues={collectedFixture}
+          primaryAction={{ kind: "submit", label: "Save", onSubmit }}
+          {...props}
+        />
+      </TooltipProvider>,
+    );
+    return { screen, onSubmit };
+  };
+
+  it("should hold an already published sample's save until the suspected duplicates are confirmed", async () => {
+    const bodies = fakeApi();
+    const { screen, onSubmit } = await renderPublishedSave();
+
+    await screen.getByLabelText("Name").fill(RENAMED);
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await expect
+      .element(
+        screen.getByRole("link", {
+          name: `${DUPLICATE.name} (${DUPLICATE.igsn})`,
+        }),
+      )
+      .toBeVisible();
+    expect(onSubmit).not.toHaveBeenCalled();
+
+    await screen.getByRole("button", { name: "Continue anyway" }).click();
+
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(bodies).toEqual([
+      { ...CRITERIA, name: RENAMED, exclude: SAMPLE_ID },
+    ]);
+  });
+
+  it("should never check a published save leaving the name, material and collector unchanged", async () => {
+    const bodies = fakeApi();
+    const { screen, onSubmit } = await renderPublishedSave();
+
+    await screen
+      .getByLabelText("Collection Method Description")
+      .fill("Dredged twice");
+    await screen.getByRole("button", { name: "Save" }).click();
+
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(bodies).toEqual([]);
+  });
+
+  it("should write nothing when the suspected duplicates are refused", async () => {
+    fakeApi();
+    const commit = vi.fn(() => Promise.resolve([]));
+    const { screen, onSubmit } = await renderPublishedSave({
+      attachmentChanges: {
+        batch: [],
+        deletions: [],
+        edits: {},
+        pending: [],
+        commit,
+      } as unknown as SampleAttachmentChanges,
+    });
+
+    await screen.getByLabelText("Name").fill(RENAMED);
+    await screen.getByRole("button", { name: "Save" }).click();
+    await screen
+      .getByRole("dialog")
+      .getByRole("button", { name: "Cancel" })
+      .click();
+
+    await vi.waitFor(() =>
+      expect(screen.getByRole("dialog").elements()).toHaveLength(0),
+    );
+    expect(commit).not.toHaveBeenCalled();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("should never check a draft save", async () => {
+    const bodies = fakeApi();
+    const onSubmit = vi.fn();
+    const screen = await render(
+      <TooltipProvider>
+        <SampleForm
+          onCancel={noop}
+          defaultValues={collectedFixture}
+          primaryAction={{ kind: "submit", label: "Save as draft", onSubmit }}
+        />
+      </TooltipProvider>,
+    );
+
+    await screen.getByRole("button", { name: "Save as draft" }).click();
+
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(bodies).toEqual([]);
   });
 });

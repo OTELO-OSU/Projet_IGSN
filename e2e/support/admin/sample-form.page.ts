@@ -30,8 +30,15 @@ export function sampleFormPage(page: Page) {
     }).toPass({ timeout: 20_000 });
   };
 
-  const pickHierarchy = (field: string, label: string) =>
-    pickHierarchyLevel(page, fieldCombobox(field), label);
+  const pickHierarchy = async (field: string, labels: string | string[]) => {
+    for (const label of [labels].flat())
+      await pickHierarchyLevel(
+        page,
+        fieldCombobox(field),
+        label,
+        fieldCombobox(field).locator("xpath=.."),
+      );
+  };
 
   const fillPersonName = async (
     person: RegExp,
@@ -46,6 +53,8 @@ export function sampleFormPage(page: Page) {
     await group.getByRole("textbox", { name: /first name/i }).fill(firstname);
     await group.getByRole("textbox", { name: /last name/i }).fill(lastname);
   };
+
+  const publishDialog = page.getByRole("dialog", { name: "Publish sample" });
 
   const confirm = (dialog: string) =>
     page
@@ -99,7 +108,10 @@ export function sampleFormPage(page: Page) {
     fillPublishableFields: async ({
       material = SYNTHETIC_MATERIAL,
       collectionDate = true,
-    }: { material?: string | null; collectionDate?: boolean } = {}) => {
+    }: {
+      material?: string | string[] | null;
+      collectionDate?: boolean;
+    } = {}) => {
       await pickHierarchy("Type", "Dredge");
       await pick("Provenance status", "Collection specimen");
       if (collectionDate) {
@@ -186,6 +198,32 @@ export function sampleFormPage(page: Page) {
       await page.getByRole("switch", { name: "Oriented sample" }).click();
       await page.getByLabel("Orientation explanation").fill(explanation);
     },
+    expectDuplicateWarning: async (
+      duplicates: { name: string; igsn: string }[],
+    ) => {
+      await expect(publishDialog).toBeVisible();
+      await expect(publishDialog).toContainText("Suspected duplicates");
+      for (const duplicate of duplicates) {
+        await expect(
+          publishDialog.getByRole("link", {
+            name: `${duplicate.name} (${duplicate.igsn})`,
+            exact: true,
+          }),
+        ).toHaveAttribute("href", `${frontendUrl}/samples/${duplicate.igsn}`);
+      }
+    },
+    cancelDuplicateWarning: async () => {
+      await publishDialog.getByRole("button", { name: "Cancel" }).click();
+      await expect(publishDialog).toBeHidden();
+    },
+    confirmDuplicateWarning: async () => {
+      await publishDialog
+        .getByRole("button", { name: "Continue anyway" })
+        .click();
+      await expect(publishDialog).toBeHidden();
+    },
+    openPublish: () =>
+      page.getByRole("button", { name: "Publish", exact: true }).click(),
     publish: () => confirmStatusChange("Publish", "Publish sample"),
     publishAsWithdrawn: async () => {
       await page

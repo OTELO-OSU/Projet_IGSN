@@ -12,12 +12,16 @@ import { useState } from "react";
 
 import { ConfirmDialog } from "#/confirm-button.tsx";
 
-export type ConfirmMenuItem = {
+export type ConfirmMenuAction = {
   label: string;
   title: string;
   description: string;
   onConfirm: () => void;
 };
+
+export type ConfirmMenuItem =
+  | ConfirmMenuAction
+  | { label: string; onSelect: () => void };
 
 export function ConfirmMenuButton({
   label,
@@ -32,7 +36,7 @@ export function ConfirmMenuButton({
   className?: string;
   items: ConfirmMenuItem[];
 }) {
-  const [pending, setPending] = useState<ConfirmMenuItem>();
+  const [pending, setPending] = useState<ConfirmMenuAction>();
 
   return (
     <>
@@ -53,7 +57,9 @@ export function ConfirmMenuButton({
           {items.map((item) => (
             <DropdownMenuItem
               key={item.label}
-              onSelect={() => setPending(item)}
+              onSelect={() =>
+                "onSelect" in item ? item.onSelect() : setPending(item)
+              }
             >
               {item.label}
             </DropdownMenuItem>
