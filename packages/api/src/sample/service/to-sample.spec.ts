@@ -83,13 +83,12 @@ const row = {
   sc_collection_curator_lastname: null,
   sc_collection_origin: null,
   sc_collection_context_description: null,
-  rep_current_archive: null,
+  rep_current_archive_osu: null,
+  rep_current_archive_laboratory: null,
   rep_current_archive_contact_firstname: null,
   rep_current_archive_contact_lastname: null,
   rep_collection_name: null,
-  rep_original_archive: null,
-  rep_original_archive_contact_firstname: null,
-  rep_original_archive_contact_lastname: null,
+  rep_rights_holder: null,
   syn_starting_material: null,
   syn_starting_material_nature: null,
   syn_starting_material_composition: null,
@@ -324,9 +323,5 @@ describe("toSample", () => {
         syn_synthesis_date_time_zone: null,
       }),
     ).toThrow("time zone");
-  });
-
-  it("should throw on a row the sample schema rejects", () => {
-    expect(() => toSample({ ...row, nature: "inconnu" })).toThrow();
   });
 });

@@ -31,7 +31,7 @@ const base: Sample = {
     },
   },
   condition: null,
-  repository: { currentArchive: "02feahw73" },
+  repository: { currentArchiveLaboratory: "UMR3589" },
   geologicalContextDescription: null,
   physiographicEnvironment: null,
   scientificContext: {

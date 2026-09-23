@@ -86,8 +86,6 @@ const archivedSample = {
     ...publishableSample.repository,
     currentArchiveContactFirstname: "Camille",
     currentArchiveContactLastname: "Durand",
-    originalArchiveContactFirstname: "Louise",
-    originalArchiveContactLastname: "Mercier",
   },
 } satisfies CreateSample;
 
@@ -910,6 +908,23 @@ describe("POST /service/samples", () => {
       rule: "attachments",
       body: { ...NEW_BODY, attachments: [] },
       issues: [{ code: "unrecognized_keys", message: expect.any(String) }],
+    },
+    {
+      rule: "an original repository",
+      body: {
+        ...NEW_BODY,
+        curation: {
+          ...NEW_BODY.curation,
+          originalRepository: { collectionName: "Former collection" },
+        },
+      },
+      issues: [
+        {
+          path: "curation",
+          code: "unrecognized_keys",
+          message: expect.any(String),
+        },
+      ],
     },
   ])(
     "should name the offending field when the body carries $rule",

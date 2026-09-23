@@ -4,13 +4,15 @@ import { toCorePath } from "./core-path.ts";
 
 describe("toCorePath", () => {
   it.each([
-    ["type", "classification.sampleObjectTypes.0"],
-    ["existenceStatus", "curation.existenceStatus"],
-    ["description.collectionDate", "production.collection_date_start"],
-    ["scientificContext.collectorLastname", "responsibility"],
-    ["manualGroupIds.0", "manualGroups.0"],
-    ["relations.0.identifier", "relations.0"],
-  ])("should map the internal path %s to %s", (path, expected) => {
+    ["a mapped field", "existenceStatus", "curation.existenceStatus"],
+    ["a mapped nested field", "repository.rightsHolder", "responsibility"],
+    ["the index under a mapped list", "manualGroupIds.0", "manualGroups.0"],
+    [
+      "the longest mapped prefix, up to the first non index",
+      "relations.0.identifier",
+      "relations.0",
+    ],
+  ])("should map %s to its Core path", (_rule, path, expected) => {
     expect(toCorePath(path)).toBe(expected);
   });
 

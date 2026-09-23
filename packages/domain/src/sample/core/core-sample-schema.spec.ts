@@ -78,6 +78,43 @@ describe("coreSampleSchema", () => {
     ).toBe(false);
   });
 
+  it("should reject a curation carrying an original repository", () => {
+    expect(
+      parses({
+        ...core,
+        curation: {
+          ...core.curation,
+          originalRepository: { collectionName: "Ecole des Mines collection" },
+        },
+      }),
+    ).toBe(false);
+  });
+
+  it.each([
+    {
+      rule: "an organization that is neither an OSU nor a laboratory",
+      organizations: [{ id: "https://ror.org/02feahw73", name: "CNRS" }],
+    },
+    {
+      rule: "an organization carrying a name alone",
+      organizations: [{ name: "CNRS" }],
+    },
+    {
+      rule: "two OSUs",
+      organizations: [
+        { id: "urn:otelo:osu:OASU", name: "OASU" },
+        { id: "urn:otelo:osu:OMP", name: "OMP" },
+      ],
+    },
+  ])("should reject an archive held by $rule", ({ organizations }) => {
+    expect(
+      parses({
+        ...core,
+        curation: { ...core.curation, currentRepository: { organizations } },
+      }),
+    ).toBe(false);
+  });
+
   it("should reject a concept id the scheme does not carry", () => {
     expect(
       parses({

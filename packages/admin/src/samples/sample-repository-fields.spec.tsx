@@ -1,7 +1,12 @@
 import type { CreateSample } from "@projet-igsn/domain/sample/sample";
 
-import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
+import {
+  laboratoryLabel,
+  organizationLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
 import { vi } from "vitest";
+import { userEvent } from "vitest/browser";
 
 import { render } from "../../test/render.tsx";
 import { SampleForm } from "./sample-form.tsx";
@@ -29,23 +34,34 @@ async function renderRepositorySection(
   return screen;
 }
 
+type Screen = Awaited<ReturnType<typeof renderRepositorySection>>;
+
+const pick = async (screen: Screen, field: string, option: string) => {
+  await screen.getByRole("combobox", { name: field }).click();
+  await screen.getByPlaceholder(/^Search/).fill(option);
+  await screen.getByRole("option", { name: option }).click();
+};
+
 describe("SampleRepositoryFields", () => {
-  it("should submit the current archive picked from the organization list with the other repository fields", async () => {
+  it("should submit the archive OSU, laboratory, collection, contact and rights holders", async () => {
     const onSubmit = vi.fn();
     const screen = await renderRepositorySection(onSubmit);
 
     const currentArchive = screen.getByRole("region", {
       name: "Current archive",
     });
-    await currentArchive
-      .getByRole("combobox", { name: "Organization" })
-      .click();
-    await screen
-      .getByPlaceholder("Search organizations...")
-      .fill(organizationLabel("02feahw73"));
-    await screen
-      .getByRole("option", { name: organizationLabel("02feahw73") })
-      .click();
+    await pick(screen, "OSU", osuLabel("OSUNA"));
+    await pick(screen, "UMR", laboratoryLabel("UMR6112"));
+    await screen.getByRole("combobox", { name: "Rights holder" }).click();
+    for (const ror of ["02feahw73", "04kdfz702"]) {
+      await screen
+        .getByPlaceholder("Search organizations...")
+        .fill(organizationLabel(ror));
+      await screen
+        .getByRole("option", { name: organizationLabel(ror) })
+        .click();
+    }
+    await userEvent.keyboard("{Escape}");
     await currentArchive
       .getByRole("textbox", { name: "First name" })
       .fill("Ada");
@@ -55,34 +71,55 @@ describe("SampleRepositoryFields", () => {
     await screen
       .getByRole("textbox", { name: "Collection name" })
       .fill("Massif Central basalts");
-    const originalArchive = screen.getByRole("region", {
-      name: "Original archive",
-    });
-    await originalArchive
-      .getByRole("textbox", { name: "Organization" })
-      .fill("Museum of Clermont-Ferrand");
-    await originalArchive
-      .getByRole("textbox", { name: "First name" })
-      .fill("Marie");
-    await originalArchive
-      .getByRole("textbox", { name: "Last name" })
-      .fill("Curie");
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
       expect(onSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           repository: {
-            currentArchive: "02feahw73",
+            currentArchiveOsu: "OSUNA",
+            currentArchiveLaboratory: "UMR6112",
             currentArchiveContactFirstname: "Ada",
             currentArchiveContactLastname: "Lovelace",
             collectionName: "Massif Central basalts",
-            originalArchive: "Museum of Clermont-Ferrand",
-            originalArchiveContactFirstname: "Marie",
-            originalArchiveContactLastname: "Curie",
+            rightsHolder: ["02feahw73", "04kdfz702"],
           },
         }),
       ),
     );
+  });
+
+  it("should narrow the laboratories to the picked OSU and clear the laboratory when it changes", async () => {
+    const screen = await renderRepositorySection();
+
+    await pick(screen, "OSU", osuLabel("OSUNA"));
+    await screen.getByRole("combobox", { name: "UMR" }).click();
+    await expect
+      .element(screen.getByRole("option", { name: laboratoryLabel("UMR6112") }))
+      .toBeVisible();
+    expect(
+      screen
+        .getByRole("option", { name: laboratoryLabel("UMR6524") })
+        .elements(),
+    ).toHaveLength(0);
+    await screen
+      .getByRole("option", { name: laboratoryLabel("UMR6112") })
+      .click();
+
+    await pick(screen, "OSU", osuLabel("OPGC"));
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "UMR" }))
+      .toHaveTextContent("Select a laboratory");
+  });
+
+  it("should offer every laboratory while no OSU is picked", async () => {
+    const screen = await renderRepositorySection();
+
+    await pick(screen, "UMR", laboratoryLabel("UMR7327"));
+
+    await expect
+      .element(screen.getByRole("combobox", { name: "UMR" }))
+      .toHaveTextContent(laboratoryLabel("UMR7327"));
   });
 });

@@ -23,7 +23,7 @@ const publishableScientificContext = {
   collectionOrigin: "scientific_expedition",
 } as const;
 
-const publishableRepository = { currentArchive: "02feahw73" } as const;
+const publishableRepository = { currentArchiveLaboratory: "UMR6112" } as const;
 
 const NO_ANSWERS = {
   materialOtherName: null,

@@ -89,7 +89,7 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
         volume: orNull(physical?.volume, fromQuantity),
       },
       condition: fromCoreCondition(body.curation),
-      repository: fromCoreRepository(body.curation),
+      repository: fromCoreRepository(body.curation, body.responsibility),
       scientificContext: fromCoreScientificContext(body),
       syntheticDetails: fromCoreSyntheticDetails(body),
       age: fromCoreAge(body.extensions),

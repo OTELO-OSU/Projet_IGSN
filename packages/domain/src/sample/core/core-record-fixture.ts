@@ -132,6 +132,25 @@ const REGISTRANT: CoreAgentRole = {
   roles: ["Registrant"],
 };
 
+const RIGHTS_HOLDERS: CoreAgentRole[] = [
+  {
+    agent: {
+      id: "https://ror.org/03fd77x13",
+      name: "Institut national de physique nucléaire et de physique des particules (CNRS - IN2P3)",
+      agentType: "Organization",
+    },
+    roles: ["SampleOwner"],
+  },
+  {
+    agent: {
+      id: "https://ror.org/02cte4b68",
+      name: "Institut national de chimie (CNRS - INC)",
+      agentType: "Organization",
+    },
+    roles: ["SampleOwner"],
+  },
+];
+
 export const FIELD_SAMPLE_RECORD: CoreSample = {
   ...ENVELOPE,
   identification: {
@@ -163,6 +182,7 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
   responsibility: [
     CREATOR,
     REGISTRANT,
+    ...RIGHTS_HOLDERS,
     {
       agent: {
         firstname: "Inge",
@@ -261,15 +281,16 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
     existenceStatus: "partiallyConsumed",
     availabilityStatus: "available",
     currentRepository: {
-      organization: { id: ORGANIZATION_URI, name: ORGANIZATION_NAME },
+      organizations: [
+        { id: "urn:otelo:osu:OASU", name: "OASU (OASU)" },
+        {
+          id: "urn:otelo:laboratory:UMR5805",
+          name: "Environnements et paléoenvironnements océaniques et continentaux (EPOC)",
+        },
+      ],
       collectionName: "Lorraine granites",
       contactFirstName: "Pierre",
       contactLastName: "Curie",
-    },
-    originalRepository: {
-      organization: { name: "Ecole des Mines collection" },
-      contactFirstName: "Henri",
-      contactLastName: "Becquerel",
     },
     sampleCondition: {
       storageCondition: [

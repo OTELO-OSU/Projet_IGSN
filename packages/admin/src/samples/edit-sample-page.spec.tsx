@@ -185,7 +185,7 @@ function fakeApi(
       collectionCuratorLastname: "Cuvier",
       collectionOrigin: "scientific_expedition",
     },
-    repository: { currentArchive: "02feahw73" },
+    repository: { currentArchiveLaboratory: "UMR6112" },
     existenceStatus,
     availabilityStatus: allowedAvailabilityStatuses(existenceStatus)[0],
     publicationYear: status === "draft" ? null : 2026,

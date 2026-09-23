@@ -15,7 +15,9 @@ import { sizeUnitSchema } from "../description/size-unit.ts";
 import { volumeUnitSchema } from "../description/volume-unit.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { conceptSchema } from "./concept.ts";
+import { coreOrganizationSchema } from "./core-agent-schema.ts";
 import { coreEnum, toCamelCase } from "./core-enum.ts";
+import { archiveUriKind } from "./institution-uri.ts";
 import { quantitySchema } from "./quantity.ts";
 
 export const coreExistenceStatus = coreEnum(EXISTENCE_STATUSES, toCamelCase);
@@ -66,17 +68,33 @@ export type CorePhysicalDescription = z.infer<
   typeof corePhysicalDescriptionSchema
 >;
 
-const coreRepositorySchema = z.strictObject({
-  organization: z
-    .strictObject({
-      id: z
-        .string()
-        .min(1)
-        .meta({ description: "Identifier of the institution, a ROR URI." })
-        .optional(),
-      name: freeTextSchema.meta({ description: "Name of the institution." }),
+const coreArchiveOrganizationSchema = coreOrganizationSchema.extend({
+  id: z
+    .string()
+    .refine((id) => archiveUriKind(id) != null, {
+      error: "an archiving institution is an OSU or a laboratory URN",
     })
-    .meta({ description: "Institution archiving the sample." })
+    .meta({
+      description:
+        "URN of the archiving institution, urn:otelo:osu:<code> or urn:otelo:laboratory:<code>.",
+    }),
+});
+
+const coreRepositorySchema = z.strictObject({
+  organizations: z
+    .array(coreArchiveOrganizationSchema)
+    .min(1)
+    .max(2)
+    .refine(
+      (organizations) =>
+        new Set(organizations.map(({ id }) => archiveUriKind(id))).size ===
+        organizations.length,
+      { error: "one OSU and one laboratory at most" },
+    )
+    .meta({
+      description:
+        "Institutions archiving the sample, its OSU then its laboratory.",
+    })
     .optional(),
   collectionName: freeTextSchema
     .meta({ description: "Name of the collection the sample belongs to." })
@@ -149,9 +167,6 @@ export const coreCurationSchema = z.strictObject({
   }),
   currentRepository: coreRepositorySchema
     .meta({ description: "Institution currently holding the sample." })
-    .optional(),
-  originalRepository: coreRepositorySchema
-    .meta({ description: "Institution that first held the sample." })
     .optional(),
   sampleCondition: coreSampleConditionSchema
     .meta({ description: "Conditions the sample must be kept in." })

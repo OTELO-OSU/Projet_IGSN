@@ -68,7 +68,6 @@ const DROPPED_CORE_PATHS = [
   "relations.relatedMetadataScheme",
   "relations.schemeURI",
   "relations.schemeType",
-  "curation.originalRepository",
   "curation.sampleCondition",
   "rightsAndAccess.metadataVisibility",
   "manualGroups.id",
@@ -182,7 +181,8 @@ describe("a Core record mapped to iSamples", () => {
       curation: {
         label: "partiallyConsumed",
         access_constraints: ["available"],
-        curation_location: `${ORGANIZATION_NAME}, Lorraine granites`,
+        curation_location:
+          "OASU (OASU), Environnements et paléoenvironnements océaniques et continentaux (EPOC), Lorraine granites",
         responsibility: [],
       },
       related_resource: [
@@ -310,24 +310,24 @@ describe("the iSamples categories of a Core record", () => {
     expect(record.has_context_category).toEqual([EXTRATERRESTRIAL_ENVIRONMENT]);
   });
 
-  it.each(MATERIAL_TREE.rock_and_sediment.choices ?? [])(
-    "should map the head material %s onto an iSamples concept",
-    (choice) => {
-      const sample = core(FIELD_SAMPLE);
+  it("should map every head material onto an iSamples concept", () => {
+    const sample = core(FIELD_SAMPLE);
 
-      const record = toISamplesSample({
-        ...sample,
-        classification: {
-          ...sample.classification,
-          materialCategories: [
-            toConcept("material", `rock_and_sediment.${choice}`),
-          ],
-        },
-      });
+    const unmapped = (MATERIAL_TREE.rock_and_sediment.choices ?? []).filter(
+      (choice) =>
+        toISamplesSample({
+          ...sample,
+          classification: {
+            ...sample.classification,
+            materialCategories: [
+              toConcept("material", `rock_and_sediment.${choice}`),
+            ],
+          },
+        }).has_material_category[0] == null,
+    );
 
-      expect(record.has_material_category[0]).toBeDefined();
-    },
-  );
+    expect(unmapped).toEqual([]);
+  });
 });
 
 describe("the Core coverage of the iSamples mapping", () => {

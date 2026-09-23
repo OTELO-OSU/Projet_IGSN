@@ -1,6 +1,10 @@
 import type { Sample } from "@projet-igsn/domain/sample/sample";
 
-import { organizationLabel } from "@projet-igsn/domain/institutional-group/label";
+import {
+  laboratoryLabel,
+  organizationLabel,
+  osuLabel,
+} from "@projet-igsn/domain/institutional-group/label";
 
 import type { PublishedSample } from "./sample-sections.tsx";
 
@@ -787,14 +791,15 @@ describe("SampleView", () => {
     await expect.element(environment.getByText("Peat bog")).toBeInTheDocument();
   });
 
-  it("should show the repository as its own section with the current archive linked to ror.org", async () => {
+  it("should show the repository as its own section with the osu, the umr, the collection and the rights holders", async () => {
     const screen = await render(
       <SampleView
         sample={sample({
           repository: {
-            currentArchive: "03fd77x13",
+            currentArchiveOsu: "OMP",
+            currentArchiveLaboratory: "EA4038",
             collectionName: "Historic basalts",
-            originalArchive: "Museum of Nancy",
+            rightsHolder: ["03fd77x13", "02cte4b68"],
           },
         })}
       />,
@@ -803,17 +808,23 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByRole("heading", { level: 2, name: "Repository" }))
       .toBeInTheDocument();
+    await expect.element(screen.getByText(osuLabel("OMP"))).toBeInTheDocument();
+    await expect
+      .element(screen.getByText(laboratoryLabel("EA4038")))
+      .toBeInTheDocument();
+    await expect
+      .element(screen.getByText("Historic basalts"))
+      .toBeInTheDocument();
     await expect
       .element(
         screen.getByRole("link", { name: organizationLabel("03fd77x13") }),
       )
       .toHaveAttribute("href", "https://ror.org/03fd77x13");
     await expect
-      .element(screen.getByText("Historic basalts"))
-      .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Museum of Nancy"))
-      .toBeInTheDocument();
+      .element(
+        screen.getByRole("link", { name: organizationLabel("02cte4b68") }),
+      )
+      .toHaveAttribute("href", "https://ror.org/02cte4b68");
   });
 
   it("should never show the archive contacts, which stay private to the admin", async () => {
@@ -821,17 +832,16 @@ describe("SampleView", () => {
       <SampleView
         sample={sample({
           repository: {
-            currentArchive: "03fd77x13",
+            currentArchiveOsu: "OMP",
             currentArchiveContactFirstname: "Archibald",
             currentArchiveContactLastname: "Archivist",
-            originalArchiveContactFirstname: "Museo",
-            originalArchiveContactLastname: "Nancy",
+            rightsHolder: [],
           },
         })}
       />,
     );
 
-    for (const value of ["Archibald", "Archivist", "Museo", "Nancy"]) {
+    for (const value of ["Archibald", "Archivist"]) {
       await expect.element(screen.getByText(value)).not.toBeInTheDocument();
     }
   });

@@ -65,7 +65,6 @@ const DROPPED_CORE_PATHS = [
   "curation.existenceStatus",
   "curation.availabilityStatus",
   "curation.currentRepository",
-  "curation.originalRepository",
   "curation.sampleCondition",
   "rightsAndAccess.metadataVisibility",
   "manualGroups.id",
@@ -91,6 +90,11 @@ const PUBLISHER = {
   schemeUri: "https://ror.org",
 };
 
+const IN2P3_NAME =
+  "Institut national de physique nucléaire et de physique des particules (CNRS - IN2P3)";
+
+const INC_NAME = "Institut national de chimie (CNRS - INC)";
+
 const RIGHTS_LIST = [
   {
     rights: "Creative Commons Attribution 4.0 International",
@@ -109,6 +113,8 @@ describe("a Core record mapped to DataCite", () => {
         ({ name, contributorType }) => ({ name, contributorType }),
       ),
     ).toEqual([
+      { name: IN2P3_NAME, contributorType: "RightsHolder" },
+      { name: INC_NAME, contributorType: "RightsHolder" },
       { name: "Inge Lehmann", contributorType: "DataCollector" },
       { name: "Alfred Wegener", contributorType: "ProjectLeader" },
       { name: ORGANIZATION_NAME, contributorType: "HostingInstitution" },
@@ -137,6 +143,30 @@ describe("a Core record mapped to DataCite", () => {
         },
       ],
       contributors: [
+        {
+          name: IN2P3_NAME,
+          nameType: "Organizational",
+          nameIdentifiers: [
+            {
+              nameIdentifier: "https://ror.org/03fd77x13",
+              nameIdentifierScheme: "ROR",
+              schemeUri: "https://ror.org",
+            },
+          ],
+          contributorType: "RightsHolder",
+        },
+        {
+          name: INC_NAME,
+          nameType: "Organizational",
+          nameIdentifiers: [
+            {
+              nameIdentifier: "https://ror.org/02cte4b68",
+              nameIdentifierScheme: "ROR",
+              schemeUri: "https://ror.org",
+            },
+          ],
+          contributorType: "RightsHolder",
+        },
         {
           name: "Inge Lehmann",
           nameType: "Personal",

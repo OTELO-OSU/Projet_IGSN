@@ -75,7 +75,7 @@ const sampleBody = {
     collectionCuratorLastname: "Cuvier",
     collectionOrigin: "scientific_expedition",
   },
-  repository: { currentArchive: "02feahw73" },
+  repository: { currentArchiveOsu: "OASU" },
 } as const;
 
 async function createSample(client: Client) {

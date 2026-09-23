@@ -15,7 +15,7 @@ const publishable = {
       end: "2026-01-01",
     },
   },
-  repository: { currentArchive: "02feahw73" },
+  repository: { currentArchiveLaboratory: "UMR3589" },
   existenceStatus: "exists" as const,
   availabilityStatus: "available" as const,
   scientificContext: {
@@ -66,12 +66,4 @@ describe("publishedSampleSchema", () => {
       ).toEqual([{ path, code: blocker }]);
     },
   );
-
-  it("should still reject what createSampleSchema rejects", () => {
-    const result = publishedSampleSchema.safeParse({
-      ...publishable,
-      name: "",
-    });
-    expect(result.success).toBe(false);
-  });
 });

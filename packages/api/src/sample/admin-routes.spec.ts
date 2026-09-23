@@ -1026,7 +1026,7 @@ describe("admin sample routes", () => {
             collectionCuratorLastname: "Cuvier",
             collectionOrigin: "scientific_expedition",
           },
-          repository: { currentArchive: "02feahw73" },
+          repository: { currentArchiveOsu: "OASU" },
         },
       },
       { headers: authHeader },

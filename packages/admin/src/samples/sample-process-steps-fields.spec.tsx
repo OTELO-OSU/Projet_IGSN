@@ -44,7 +44,7 @@ const publishableValues = {
     collectorFirstname: "Pierre",
     collectorLastname: "Curie",
   },
-  repository: { currentArchive: "02feahw73" },
+  repository: { currentArchiveLaboratory: "UMR6112" },
 } satisfies Partial<CreateSample> as CreateSample;
 
 type Screen = Awaited<ReturnType<typeof render>>;

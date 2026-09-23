@@ -14,7 +14,7 @@
 
 - This is one of two group mechanisms: manual groups are super-admin-curated rows with explicit membership, unrelated to any catalog here; see ADR 0025.
 - Organisme / OSU / Labo is a graph, not a chain: many labos per organisme, a labo shared by several organismes (co-tutelle), an OSU in one or more organismes, derived from its labos, a labo in zero or one OSU.
-- `domain/institutional-group/filter-laboratories-by-org-and-osu.ts` is the single source of truth for a group's labos: the form offers that list and `institutional-groups-validator.ts` checks against it.
+- `domain/institutional-group/filter-laboratories-by-org-and-osu.ts` is the single source of truth for a group's labos: the form offers that list, `institutional-groups-validator.ts` checks a user's trio against it and `createRepositorySchema` a sample's archive OSU and laboratory.
 - `institution-laboratory-codes.ts` resolves one `institution` filter param (`organization:<ror>` / `osu:<ror>/<code>` / `laboratory:<code>`) through that source, shared by the admin moderation institution filter and the admin `/institutional-groups/laboratories` list, both driven by the same `InstitutionTreeFilter`.
 - `user/managed-laboratory-codes.ts` is deliberately not that path: its organisme -> OSU widening reaches other organismes' laboratories, which is right for a manager's own reach but wrong for the moderation institution filter.
 - An OSU spans several organismes, so the moderation institution filter names the organisme too (`osu:<ror>/<code>`) and resolves to that organisme's labos alone.
@@ -48,7 +48,7 @@ A sample's `status` (`draft | published | withdrawn | tombstone`) drives three s
 
 `domain/sample/publication/withdrawn-sample.ts` (`toWithdrawnSample`) is the only place that redacts a withdrawn sample, a field-by-field whitelist so a new `Sample` field stays private by default, and `public-sample.ts` (`toPublicSample`) picks it by status for the public `GET /samples/:igsn`; see ADR 0032.
 
-A published sample is public whole but for the fields `domain/sample/publication/redact-private-contacts.ts` (renamed from `redact-archive-contacts.ts`) drops: the two archive contacts and every person's `*UserId` account link, called by `toPublicSample` and by the public list route, the two public payloads; the key-authenticated `/service` list emits the archive contacts, so those alone are kept from the public web rather than admin-only. A person's resolved name and ORCID stay public; the account link they came from does not.
+A published sample is public whole but for the fields `domain/sample/publication/redact-private-contacts.ts` drops: the current archive contact and every person's `*UserId` account link, called by `toPublicSample` and by the public list route, the two public payloads; the key-authenticated `/service` list emits the archive contact, so it alone is kept from the public web rather than admin-only. A person's resolved name and ORCID stay public; the account link they came from does not.
 
 `GET /samples/:igsn/lineage` walks both directions under one rule: a relative appears if it left draft (`hasPermanentIgsn`, inline in SQL), carrying ADR 0033's parent exception onto the whole graph, a draft relative being absent and stopping traversal past it. The root resolves for `published` and `withdrawn` alike, the pair `GET /samples/:igsn` answers, and a tombstoned root 404s; a tombstoned node carries a `tombstone` flag so the graph names it without linking to its 404; see ADR 0043.
 

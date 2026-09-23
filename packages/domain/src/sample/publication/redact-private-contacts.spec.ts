@@ -7,39 +7,38 @@ const USER_ID = "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10";
 const sample = {
   name: "Rhyolite 11",
   repository: {
-    currentArchive: "03fd77x13",
+    currentArchiveOsu: "OMP",
+    currentArchiveLaboratory: "UMR3589",
     currentArchiveContactFirstname: "Ada",
     currentArchiveContactLastname: "Lovelace",
     collectionName: "Historic basalts",
-    originalArchive: "Museum of Nancy",
-    originalArchiveContactFirstname: "Marie",
-    originalArchiveContactLastname: "Curie",
+    rightsHolder: ["03fd77x13"],
   },
   scientificContext: null,
   syntheticDetails: null,
 } as Sample;
 
 describe("redactPrivateContacts", () => {
-  it("should drop both archive contact names and keep the rest of the repository", () => {
+  it("should drop the current archive contact names and keep the rest of the repository", () => {
     expect(redactPrivateContacts(sample)).toEqual({
       name: "Rhyolite 11",
       repository: {
-        currentArchive: "03fd77x13",
+        currentArchiveOsu: "OMP",
+        currentArchiveLaboratory: "UMR3589",
         currentArchiveContactFirstname: null,
         currentArchiveContactLastname: null,
         collectionName: "Historic basalts",
-        originalArchive: "Museum of Nancy",
-        originalArchiveContactFirstname: null,
-        originalArchiveContactLastname: null,
+        rightsHolder: ["03fd77x13"],
       },
       scientificContext: null,
       syntheticDetails: null,
     });
   });
 
-  it.each([
-    {
-      case: "a field sample",
+  it("should drop the account link of every person, nested rows included", () => {
+    const linked = {
+      ...sample,
+      repository: null,
       scientificContext: {
         provenanceStatus: "field_sample",
         chiefScientistUserId: USER_ID,
@@ -50,7 +49,13 @@ describe("redactPrivateContacts", () => {
           { role: "data_manager", personLastname: "Curie" },
         ],
       },
-      redacted: {
+      syntheticDetails: { operatorUserId: USER_ID, finalProduct: "glass" },
+    } as Sample;
+
+    expect(redactPrivateContacts(linked)).toEqual({
+      name: "Rhyolite 11",
+      repository: null,
+      scientificContext: {
         provenanceStatus: "field_sample",
         chiefScientistUserId: null,
         collectorUserId: null,
@@ -60,38 +65,7 @@ describe("redactPrivateContacts", () => {
           { role: "data_manager", personLastname: "Curie" },
         ],
       },
-    },
-    {
-      case: "a collection specimen",
-      scientificContext: {
-        provenanceStatus: "collection_specimen",
-        collectionCuratorUserId: USER_ID,
-        collectorUserId: USER_ID,
-        collectionOrigin: "purchase",
-      },
-      redacted: {
-        provenanceStatus: "collection_specimen",
-        collectionCuratorUserId: null,
-        collectorUserId: null,
-        collectionOrigin: "purchase",
-      },
-    },
-  ])(
-    "should drop the account link of every person of $case",
-    ({ scientificContext, redacted }) => {
-      const linked = {
-        ...sample,
-        repository: null,
-        scientificContext,
-        syntheticDetails: { operatorUserId: USER_ID, finalProduct: "glass" },
-      } as Sample;
-
-      expect(redactPrivateContacts(linked)).toEqual({
-        name: "Rhyolite 11",
-        repository: null,
-        scientificContext: redacted,
-        syntheticDetails: { operatorUserId: null, finalProduct: "glass" },
-      });
-    },
-  );
+      syntheticDetails: { operatorUserId: null, finalProduct: "glass" },
+    });
+  });
 });

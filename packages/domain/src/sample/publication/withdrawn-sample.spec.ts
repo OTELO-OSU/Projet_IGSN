@@ -27,7 +27,7 @@ const withdrawn: Sample = {
   },
   description: { openDescription: "kept out of the public view" },
   condition: null,
-  repository: { currentArchive: "02feahw73" },
+  repository: { currentArchiveLaboratory: "UMR3589" },
   geologicalContextDescription: "kept out of the public view",
   physiographicEnvironment: "continental.plain",
   scientificContext: {

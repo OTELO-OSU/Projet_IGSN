@@ -56,7 +56,7 @@ const stored: Sample = {
     volume: null,
   },
   condition: null,
-  repository: { currentArchive: "02feahw73" },
+  repository: { currentArchiveLaboratory: "UMR3589" },
   geologicalContextDescription: "stored geological context",
   physiographicEnvironment: "marine.fjord",
   scientificContext: {
@@ -150,7 +150,7 @@ function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
       volume: null,
     },
     condition: null,
-    repository: { currentArchive: "04kdfz702" },
+    repository: { currentArchiveLaboratory: "UMR7358" },
     geologicalContextDescription: "edited geological context",
     physiographicEnvironment: "wetland.peat_bog",
     scientificContext: {

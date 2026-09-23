@@ -41,6 +41,7 @@ const CORE_ROLES = [
   "Collector",
   "ChiefScientist",
   "HostingInstitution",
+  "SampleOwner",
   "Curator",
   "Researcher",
   "ProjectManager",
@@ -50,9 +51,9 @@ const CORE_ROLES = [
 
 export type CoreRole = (typeof CORE_ROLES)[number];
 
-// One agent holds a role, except the hosts and the additional scientific roles a sample repeats.
 const REPEATABLE_ROLES: readonly CoreRole[] = [
   "HostingInstitution",
+  "SampleOwner",
   "Researcher",
   "ProjectManager",
   "ProjectMember",

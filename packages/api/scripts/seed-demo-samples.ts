@@ -1623,7 +1623,9 @@ const FIELD_SAMPLE_CONTEXT: SampleRow["scientificContext"] = {
 };
 
 const DEMO_REPOSITORY: SampleRow["repository"] = {
-  currentArchive: "02feahw73",
+  currentArchiveOsu: "OASU",
+  currentArchiveLaboratory: "UMR5805",
+  rightsHolder: ["03fd77x13"],
   currentArchiveContactFirstname: "Camille",
   currentArchiveContactLastname: "Durand",
   collectionName: "Solid Earth demo collection",

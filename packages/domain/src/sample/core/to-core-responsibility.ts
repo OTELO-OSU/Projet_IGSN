@@ -1,14 +1,11 @@
 import type { Sample } from "../sample.ts";
 import type { CoreAgentRole, CoreRole } from "./core-sample-schema.ts";
 
-import {
-  laboratoryLabel,
-  organizationLabel,
-  osuLabel,
-} from "../../institutional-group/label.ts";
+import { organizationLabel } from "../../institutional-group/label.ts";
 import { CORE_ROLE_BY_ADDITIONAL_ROLE } from "./core-additional-role.ts";
 import { toRorUri } from "./core-production-schema.ts";
 import { OTELO_ROR_URI, toOrcidUri } from "./core-sample-schema.ts";
+import { institutionOrganizations } from "./institution-uri.ts";
 
 const personRole = (
   role: CoreRole,
@@ -30,26 +27,30 @@ const personRole = (
         },
       ];
 
+const organizationRole = (role: CoreRole, ror: string): CoreAgentRole => ({
+  agent: {
+    id: toRorUri(ror),
+    name: organizationLabel(ror),
+    agentType: "Organization",
+  },
+  roles: [role],
+});
+
 function toAffiliations(sample: Sample) {
-  const affiliations = [];
-  if (sample.institutionalOrganization != null) {
-    affiliations.push({
-      id: toRorUri(sample.institutionalOrganization),
-      name: organizationLabel(sample.institutionalOrganization),
-    });
-  }
-  if (sample.institutionalOsu != null) {
-    affiliations.push({
-      id: `urn:otelo:osu:${sample.institutionalOsu}`,
-      name: osuLabel(sample.institutionalOsu),
-    });
-  }
-  if (sample.institutionalLaboratory != null) {
-    affiliations.push({
-      id: `urn:otelo:laboratory:${sample.institutionalLaboratory}`,
-      name: laboratoryLabel(sample.institutionalLaboratory),
-    });
-  }
+  const affiliations = [
+    ...(sample.institutionalOrganization == null
+      ? []
+      : [
+          {
+            id: toRorUri(sample.institutionalOrganization),
+            name: organizationLabel(sample.institutionalOrganization),
+          },
+        ]),
+    ...institutionOrganizations(
+      sample.institutionalOsu,
+      sample.institutionalLaboratory,
+    ),
+  ];
   return affiliations.length === 0 ? undefined : affiliations;
 }
 
@@ -74,6 +75,9 @@ export function toCoreResponsibility(sample: Sample): CoreAgentRole[] {
     },
     roles: ["Registrant"],
   });
+  for (const ror of sample.repository?.rightsHolder ?? []) {
+    roles.push(organizationRole("SampleOwner", ror));
+  }
 
   const context = sample.scientificContext;
   if (context != null) {
@@ -97,14 +101,7 @@ export function toCoreResponsibility(sample: Sample): CoreAgentRole[] {
         ),
       );
       for (const ror of context.hostInstitution ?? []) {
-        roles.push({
-          agent: {
-            id: toRorUri(ror),
-            name: organizationLabel(ror),
-            agentType: "Organization",
-          },
-          roles: ["HostingInstitution"],
-        });
+        roles.push(organizationRole("HostingInstitution", ror));
       }
     } else {
       roles.push(

@@ -70,7 +70,6 @@ const DROPPED_CORE_PATHS = [
   "curation.existenceStatus",
   "curation.availabilityStatus",
   "curation.currentRepository",
-  "curation.originalRepository",
   "curation.sampleCondition",
   "extensions.fieldwork",
   "rightsAndAccess.metadataVisibility",
