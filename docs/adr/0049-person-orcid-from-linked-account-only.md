@@ -24,6 +24,7 @@ A person's ORCID on a sample comes from their linked registry account alone. It 
 - `GET /samples/:igsn` and `GET /service/samples/:igsn` still emit `*Orcid`, unchanged: it always came from the account for a link, and a typed ORCID on a sample with no link is simply gone.
 - `POST /service/samples` and `PUT /service/samples/:igsn` can no longer record a person's ORCID at all: a caller wanting one recorded must link the person's account instead.
 - IGSN Core still emits `agent.id` (the ORCID) as it always did, from the linked account; it is never read back on input, which was already true for a link but is now also true for a typed person.
+- A person's `agent.id` stays in the create and update body, described as emit only and ignored on input, the treatment `doi` and `sampleIdentifier` already get. The body is a `strictObject`, so removing it would make a caller resubmitting the payload it just read fail on a 400.
 - Amends ADR 0048's Consequences: `keepContactLinks` no longer matches incoming and stored rows on ORCID, since a stored row's ORCID is account-resolved and a submitted payload never carries one; `sameRow` compares role and name alone, excluding every `*Orcid` key.
 
 ## Rejected option

@@ -62,6 +62,25 @@ describe("fromCoreSample", () => {
     expect(fromCoreSample(body)).toEqual(reversed(FIELD_SAMPLE));
   });
 
+  it("should ignore the ORCID a body carries for a person", () => {
+    const body = coreSampleBodySchema.parse({
+      ...FIELD_SAMPLE_RECORD,
+      responsibility: FIELD_SAMPLE_RECORD.responsibility.map((agentRole) =>
+        agentRole.agent.agentType === "Person"
+          ? {
+              ...agentRole,
+              agent: {
+                ...agentRole.agent,
+                id: "https://orcid.org/0000-0002-1825-0097",
+              },
+            }
+          : agentRole,
+      ),
+    });
+
+    expect(fromCoreSample(body)).toEqual(reversed(FIELD_SAMPLE));
+  });
+
   it.each([
     ["0123456789ABCDEFGHJKMNPQRS", "DOI"],
     ["CNRS1234567890", "IGSN"],

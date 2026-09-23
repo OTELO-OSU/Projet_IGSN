@@ -8,7 +8,7 @@ import {
   publicationYearSchema,
 } from "../sample.ts";
 import {
-  agentIdSchema,
+  organizationIdSchema,
   coreOrganizationSchema,
   corePersonFields,
 } from "./core-agent-schema.ts";
@@ -71,7 +71,7 @@ const coreAgentSchema = z
       agentType: z.literal("Organization").meta({
         description: "Whether the agent is a person or an organization.",
       }),
-      id: agentIdSchema,
+      id: organizationIdSchema,
       name: freeTextSchema.meta({ description: "Name of the organization." }),
     }),
   ])
