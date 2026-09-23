@@ -51,6 +51,15 @@ export function SampleScientificContextFields() {
                   )}
                 </form.AppField>
 
+                <form.AppField name="scientificContext.researchProgramDescription">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_research_program_description()}
+                      multiline
+                    />
+                  )}
+                </form.AppField>
+
                 <ContactNameFields
                   label={m.field_chief_scientist()}
                   person="scientificContext.chiefScientist"
@@ -80,15 +89,6 @@ export function SampleScientificContextFields() {
 
                 <form.AppField name="scientificContext.funding">
                   {(field) => <field.TextField label={m.field_funding()} />}
-                </form.AppField>
-
-                <form.AppField name="scientificContext.researchProgramDescription">
-                  {(field) => (
-                    <field.TextField
-                      label={m.field_research_program_description()}
-                      multiline
-                    />
-                  )}
                 </form.AppField>
 
                 <form.AppField name="scientificContext.platformType">

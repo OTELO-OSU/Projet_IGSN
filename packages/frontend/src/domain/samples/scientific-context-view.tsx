@@ -68,6 +68,10 @@ function FieldSampleRows({ context }: { context: FieldSample }) {
         value={context.researchProgramName}
       />
       <FieldRow
+        label={m.sample_field_research_program_description()}
+        value={context.researchProgramDescription}
+      />
+      <FieldRow
         label={m.sample_field_chief_scientist()}
         value={joinContactName(
           context.chiefScientistFirstname,
@@ -101,10 +105,6 @@ function FieldSampleRows({ context }: { context: FieldSample }) {
       />
       <AdditionalRoleRows roles={context.additionalRoles} />
       <FieldRow label={m.sample_field_funding()} value={context.funding} />
-      <FieldRow
-        label={m.sample_field_research_program_description()}
-        value={context.researchProgramDescription}
-      />
       <FieldRow
         label={m.sample_field_platform_type()}
         value={context.platformType && platformTypeLabel(context.platformType)}
