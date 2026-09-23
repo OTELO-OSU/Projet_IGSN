@@ -74,6 +74,7 @@ const DROPPED_CORE_PATHS = [
   "manualGroups.id",
   "manualGroups.name",
   "extensions.safety",
+  "extensions.fieldwork",
 ];
 
 const MATERIAL_BASE = "https://w3id.org/isample/vocabulary/material/";
@@ -159,21 +160,10 @@ describe("a Core record mapped to iSamples", () => {
       has_sample_object_type: [SOLID_MATERIAL_SAMPLE],
       has_context_category: [EARTH_INTERIOR],
       registrant: REGISTRANT,
-      sampling_purpose: "Sampling campaign of June 2024",
       produced_by: {
-        label: "Quarry 12",
-        description: "Sampling campaign of June 2024",
         responsibility: [
-          {
-            name: "Inge Lehmann",
-            pid: "https://orcid.org/0000-0001-5109-3700",
-            role: "collector",
-          },
-          {
-            name: "Alfred Wegener",
-            pid: "https://orcid.org/0000-0002-1825-0097",
-            role: "chiefScientist",
-          },
+          { name: "Inge Lehmann", role: "collector" },
+          { name: "Alfred Wegener", role: "chiefScientist" },
         ],
         authorized_by: ["Marie Curie"],
         result_time: "2024-06-01T08:30",
@@ -229,7 +219,6 @@ describe("a Core record mapped to iSamples", () => {
           { name: "Rosalind Franklin", role: "collector" },
           {
             name: "Rosalind Franklin",
-            pid: "https://orcid.org/0000-0003-1415-9269",
             affiliation: ORGANIZATION_NAME,
             role: "researcher",
           },

@@ -6,7 +6,6 @@ type ContactCandidate = {
   userId: string | undefined;
   firstname: string | undefined;
   lastname: string | undefined;
-  orcid: string | undefined;
 };
 
 export const isTypedContact = (contact: ContactLink): boolean =>
@@ -16,13 +15,11 @@ export function composeContact(
   userId: string | null | undefined,
   firstname: string | null | undefined,
   lastname: string | null | undefined,
-  orcid?: string | null,
 ): ContactCandidate {
   const contact = {
     userId: userId || undefined,
     firstname: firstname?.trim() || undefined,
     lastname: lastname?.trim() || undefined,
-    orcid: orcid?.trim() || undefined,
   };
   return isTypedContact(contact)
     ? { ...contact, userId: undefined }
@@ -30,6 +27,5 @@ export function composeContact(
         userId: contact.userId,
         firstname: undefined,
         lastname: undefined,
-        orcid: undefined,
       };
 }

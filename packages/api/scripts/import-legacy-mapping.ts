@@ -579,21 +579,13 @@ export function mapAge(row: LegacyRow): CreateSample["age"] | null {
   };
 }
 
+// TODO: remap cruise_field_prgm / field_name / purpose onto researchProgramName /
+// researchProgramDescription, and drop the collector ORCID for good, in the legacy import ticket.
 function mapScientificContext(row: LegacyRow): ScientificContext | null {
   const collector = parseCollector(row.collector);
   const { firstname: collectorFirstname, lastname: collectorLastname } =
     splitContactName("invalid" in collector ? null : collector.name);
-  const collectorOrcid = "invalid" in collector ? null : collector.orcid;
-  const researchCampaign = clean(row.cruise_field_prgm);
-  const fieldName = clean(row.field_name);
-  const missionDescription = clean(row.purpose);
-  if (
-    !collectorLastname &&
-    !collectorOrcid &&
-    !researchCampaign &&
-    !fieldName &&
-    !missionDescription
-  ) {
+  if (!collectorLastname) {
     return null;
   }
   return {
@@ -601,10 +593,6 @@ function mapScientificContext(row: LegacyRow): ScientificContext | null {
     additionalRoles: [],
     ...(collectorFirstname ? { collectorFirstname } : {}),
     ...(collectorLastname ? { collectorLastname } : {}),
-    ...(collectorOrcid ? { collectorOrcid } : {}),
-    ...(researchCampaign ? { researchCampaign } : {}),
-    ...(fieldName ? { fieldName } : {}),
-    ...(missionDescription ? { missionDescription } : {}),
   };
 }
 

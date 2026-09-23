@@ -66,7 +66,7 @@ const personCases: PersonCase[] = [
         provenanceStatus: "field_sample",
         additionalRoles: [],
         collectorUserId: userId,
-        collectorOrcid: "0000-0002-1825-0097",
+        collectorLastname: "Curie",
       },
     }),
   ],

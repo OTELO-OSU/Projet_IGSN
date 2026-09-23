@@ -1,15 +1,16 @@
-import type { SyntheticDetails } from "../synthetic-details/model.ts";
+import type { z } from "zod";
+
+import type { createSyntheticDetailsSchema } from "../synthetic-details/model.ts";
 import type { CoreSampleBody } from "./core-sample-schema.ts";
 
 import { orNull } from "./core-optional.ts";
 import { CORE_SYNTHESIS_STEP, fromRorUri } from "./core-production-schema.ts";
-import { fromOrcidUri } from "./core-sample-schema.ts";
 import { fromCoreStepDate } from "./from-core-date-range.ts";
 import { fromQuantity } from "./quantity.ts";
 
 export function fromCoreSyntheticDetails(
   body: CoreSampleBody,
-): SyntheticDetails | null {
+): z.input<typeof createSyntheticDetailsSchema> | null {
   const step = body.production.processSteps?.find(
     (candidate) => candidate.stepType === CORE_SYNTHESIS_STEP,
   );
@@ -27,7 +28,6 @@ export function fromCoreSyntheticDetails(
     synthesisDate: fromCoreStepDate(step),
     operatorFirstname: operator?.firstname ?? null,
     operatorLastname: operator?.lastname ?? null,
-    operatorOrcid: fromOrcidUri(operator?.id),
     researchStructure:
       operator?.affiliations?.map((affiliation) =>
         fromRorUri(affiliation.id ?? ""),

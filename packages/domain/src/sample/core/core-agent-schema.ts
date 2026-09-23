@@ -14,17 +14,23 @@ export const coreOrganizationSchema = z.strictObject({
   name: freeTextSchema.meta({ description: "Name of the organization." }),
 });
 
-export const agentIdSchema = z
+export const organizationIdSchema = z
   .string()
   .min(1)
   .meta({
-    description:
-      "Identifier of the agent, an ORCID URI for a person and a ROR URI for an organization.",
+    description: "ROR URI of the organization.",
   })
   .optional();
 
 export const corePersonFields = {
-  id: agentIdSchema,
+  id: z
+    .string()
+    .min(1)
+    .meta({
+      description:
+        "ORCID URI of the person, resolved from their linked registry account; emit only, ignored on input.",
+    })
+    .optional(),
   firstname: freeTextSchema
     .meta({ description: "First name of the person." })
     .optional(),

@@ -115,7 +115,6 @@ const SYNTHESIS: SampleRow["syntheticDetails"] = {
   synthesisDate: { precision: "day", start: "2025-03-03", end: "2025-03-05" },
   operatorFirstname: "Claire",
   operatorLastname: "Martin",
-  operatorOrcid: "0000-0002-1825-0097",
   researchStructure: ["02rx3b187"],
   temperature: { value: 1450, unit: "celsius" },
   pressure: { value: 1, unit: "gpa" },
@@ -1619,6 +1618,8 @@ const FIELD_SAMPLE_CONTEXT: SampleRow["scientificContext"] = {
   hostInstitution: ["02rx3b187"],
   collectorFirstname: "Claire",
   collectorLastname: "Martin",
+  platformType: "ship",
+  launchPlatformName: "Marion Dufresne",
 };
 
 const DEMO_REPOSITORY: SampleRow["repository"] = {
@@ -1667,7 +1668,6 @@ const DEMO_ROLES: SampleAdditionalRole[] = [
     role: "researcher",
     personFirstname: "Amina",
     personLastname: "Bensalem",
-    personOrcid: "0000-0002-1825-0097",
   },
   { role: "data_manager", personFirstname: "Luc", personLastname: "Moreau" },
 ];

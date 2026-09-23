@@ -22,7 +22,6 @@ const typed = (
   personUserId: null,
   personFirstname: "Marie",
   personLastname: lastname,
-  personOrcid: ORCID,
 });
 
 const fieldSample = (

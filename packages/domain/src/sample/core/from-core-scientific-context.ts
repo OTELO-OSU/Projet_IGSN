@@ -1,4 +1,6 @@
-import type { ScientificContext } from "../scientific-context/model.ts";
+import type { z } from "zod";
+
+import type { createScientificContextSchema } from "../scientific-context/model.ts";
 import type { CoreSampleBody } from "./core-sample-schema.ts";
 
 import { fromRorUri } from "./core-production-schema.ts";
@@ -8,18 +10,16 @@ import { responsibilityFinders } from "./from-core-responsibility.ts";
 
 export function fromCoreScientificContext(
   body: CoreSampleBody,
-): ScientificContext | null {
+): z.input<typeof createScientificContextSchema> | null {
   const { byNotation } = contextCategoryFinders(
     body.classification.contextCategories,
   );
-  const { personOf, orcidOf, rorsOf } = responsibilityFinders(
-    body.responsibility,
-  );
+  const { personOf, rorsOf } = responsibilityFinders(body.responsibility);
   const provenanceStatus = byNotation("provenance-status")?.id;
   const chiefScientist = personOf("ChiefScientist");
   const collector = personOf("Collector");
-  const production = body.production;
-  const project = production.projects?.[0];
+  const project = body.production.projects?.[0];
+  const fieldwork = body.extensions?.fieldwork;
 
   if (provenanceStatus === "field_sample") {
     return {
@@ -31,16 +31,13 @@ export function fromCoreScientificContext(
       researchProgramName: project?.name ?? null,
       chiefScientistFirstname: chiefScientist?.firstname ?? null,
       chiefScientistLastname: chiefScientist?.lastname ?? null,
-      chiefScientistOrcid: orcidOf("ChiefScientist"),
       hostInstitution: rorsOf("HostingInstitution"),
       collectorFirstname: collector?.firstname ?? null,
       collectorLastname: collector?.lastname ?? null,
-      collectorOrcid: orcidOf("Collector"),
-      researchCampaign: project?.campaign ?? null,
       funding: project?.funding ?? null,
       researchProgramDescription: project?.description ?? null,
-      fieldName: production.samplingSite_name ?? null,
-      missionDescription: production.samplingPurpose ?? null,
+      platformType: fieldwork?.platformType?.id ?? null,
+      launchPlatformName: fieldwork?.launchPlatformName ?? null,
       additionalRoles: fromCoreAdditionalRoles(body),
     };
   }

@@ -21,7 +21,6 @@ export function syntheticDetailsColumns(
     syn_operator_user_id: details?.operatorUserId ?? null,
     syn_operator_firstname: details?.operatorFirstname ?? null,
     syn_operator_lastname: details?.operatorLastname ?? null,
-    syn_operator_orcid: details?.operatorOrcid ?? null,
     syn_research_structure: details?.researchStructure ?? null,
     syn_temperature_value: details?.temperature?.value ?? null,
     syn_temperature_unit: details?.temperature?.unit ?? null,

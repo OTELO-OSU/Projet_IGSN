@@ -2,10 +2,14 @@ import { z } from "zod";
 
 import { organizationRorSchema } from "../../institutional-group/organization.ts";
 import { orcidSchema } from "../../user/orcid.ts";
-import { sampleAdditionalRoleSchema } from "../additional-role/model.ts";
+import {
+  createSampleAdditionalRoleSchema,
+  sampleAdditionalRoleSchema,
+} from "../additional-role/model.ts";
 import { checkContactLinks } from "../contact-link.ts";
 import { freeTextSchema } from "../free-text.ts";
 import { collectionOriginSchema } from "./collection-origin.ts";
+import { platformTypeSchema } from "./platform-type.ts";
 
 export const uniqueRorArraySchema = (code: string) =>
   z
@@ -27,11 +31,10 @@ const fieldSampleSchema = z.object({
   collectorFirstname: freeTextSchema.nullish(),
   collectorLastname: freeTextSchema.nullish(),
   collectorOrcid: orcidSchema.nullish(),
-  researchCampaign: freeTextSchema.nullish(),
   funding: freeTextSchema.nullish(),
   researchProgramDescription: freeTextSchema.nullish(),
-  fieldName: freeTextSchema.nullish(),
-  missionDescription: freeTextSchema.nullish(),
+  platformType: platformTypeSchema.nullish(),
+  launchPlatformName: freeTextSchema.nullish(),
   additionalRoles: z.array(sampleAdditionalRoleSchema).default([]),
 });
 
@@ -54,5 +57,15 @@ export const scientificContextSchema = z.discriminatedUnion(
 
 export type ScientificContext = z.infer<typeof scientificContextSchema>;
 
-export const createScientificContextSchema =
-  scientificContextSchema.superRefine(checkContactLinks);
+export const createFieldSampleSchema = fieldSampleSchema
+  .omit({ chiefScientistOrcid: true, collectorOrcid: true })
+  .extend({
+    additionalRoles: z.array(createSampleAdditionalRoleSchema).default([]),
+  });
+
+export const createScientificContextSchema = z
+  .discriminatedUnion("provenanceStatus", [
+    createFieldSampleSchema,
+    collectionSpecimenSchema,
+  ])
+  .superRefine(checkContactLinks);

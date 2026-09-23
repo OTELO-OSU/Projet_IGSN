@@ -10,6 +10,7 @@ import { OrgLinksRow } from "#/domain/samples/org-links-row.tsx";
 import {
   additionalRoleLabel,
   collectionOriginLabel,
+  platformTypeLabel,
   provenanceStatusLabel,
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
@@ -67,6 +68,10 @@ function FieldSampleRows({ context }: { context: FieldSample }) {
         value={context.researchProgramName}
       />
       <FieldRow
+        label={m.sample_field_research_program_description()}
+        value={context.researchProgramDescription}
+      />
+      <FieldRow
         label={m.sample_field_chief_scientist()}
         value={joinContactName(
           context.chiefScientistFirstname,
@@ -99,19 +104,14 @@ function FieldSampleRows({ context }: { context: FieldSample }) {
         }
       />
       <AdditionalRoleRows roles={context.additionalRoles} />
-      <FieldRow
-        label={m.sample_field_research_campaign()}
-        value={context.researchCampaign}
-      />
       <FieldRow label={m.sample_field_funding()} value={context.funding} />
       <FieldRow
-        label={m.sample_field_research_program_description()}
-        value={context.researchProgramDescription}
+        label={m.sample_field_platform_type()}
+        value={context.platformType && platformTypeLabel(context.platformType)}
       />
-      <FieldRow label={m.sample_field_field_name()} value={context.fieldName} />
       <FieldRow
-        label={m.sample_field_mission_description()}
-        value={context.missionDescription}
+        label={m.sample_field_launch_platform_name()}
+        value={context.launchPlatformName}
       />
     </>
   );

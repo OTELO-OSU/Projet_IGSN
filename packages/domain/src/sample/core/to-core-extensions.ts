@@ -89,6 +89,13 @@ export function toCoreExtensions(sample: Sample): CoreExtensions | undefined {
     equipment: details?.equipmentUsed ?? undefined,
     operator: isEmpty(operator) ? undefined : operator,
   };
+  const context = sample.scientificContext;
+  const fieldSample =
+    context?.provenanceStatus === "field_sample" ? context : null;
+  const fieldwork = {
+    platformType: optionalConcept("platform-type", fieldSample?.platformType),
+    launchPlatformName: fieldSample?.launchPlatformName ?? undefined,
+  };
   const geology = {
     numericAge: isEmpty(numericAge) ? undefined : numericAge,
     chronostratigraphy: isEmpty(chronostratigraphy)
@@ -100,6 +107,7 @@ export function toCoreExtensions(sample: Sample): CoreExtensions | undefined {
     geology: isEmpty(geology) ? undefined : geology,
     safety: isEmpty(safety) ? undefined : safety,
     experiment: isEmpty(experiment) ? undefined : experiment,
+    fieldwork: isEmpty(fieldwork) ? undefined : fieldwork,
   };
   return isEmpty(extensions) ? undefined : extensions;
 }

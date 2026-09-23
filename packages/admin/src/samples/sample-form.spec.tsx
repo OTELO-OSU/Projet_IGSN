@@ -2195,7 +2195,6 @@ const publishedFieldSampleFixture: CreateSample = {
     researchProgramName: "GEOSAMPLE",
     chiefScientistFirstname: "Marie",
     chiefScientistLastname: "Tharp",
-    chiefScientistOrcid: "0000-0002-1825-0097",
     hostInstitution: ["02cte4b68"],
     collectorFirstname: "Alfred",
     collectorLastname: "Wegener",
@@ -2530,7 +2529,11 @@ describe("SampleForm post-publication field lock", () => {
       .element(screen.getByRole("combobox", { name: "Funder organizations" }))
       .toBeEnabled();
     await expect
-      .element(screen.getByLabelText("Name of the research programme"))
+      .element(
+        screen.getByLabelText(
+          "Name of the Research Programm/Campaign/Mission/Field/Cruise",
+        ),
+      )
       .toBeEnabled();
     await expect
       .element(
@@ -2540,12 +2543,11 @@ describe("SampleForm post-publication field lock", () => {
       )
       .toBeEnabled();
     await expect
-      .element(
-        screen
-          .getByRole("group", { name: "Collector name" })
-          .getByRole("textbox", { name: "ORCID iD" }),
-      )
-      .toBeDisabled();
+      .element(screen.getByRole("combobox", { name: "Platform type" }))
+      .toBeEnabled();
+    await expect
+      .element(screen.getByLabelText("Launch platform name"))
+      .toBeEnabled();
   });
 
   it("should freeze the manual groups on a published sample", async () => {

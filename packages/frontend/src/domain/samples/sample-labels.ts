@@ -32,6 +32,7 @@ export const {
   geologicalAgeLabel,
   provenanceStatusLabel,
   collectionOriginLabel,
+  platformTypeLabel,
   startingMaterialLabel,
   startingMaterialNatureLabel,
   finalProductLabel,

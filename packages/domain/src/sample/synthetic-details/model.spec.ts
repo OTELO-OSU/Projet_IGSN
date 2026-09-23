@@ -99,4 +99,13 @@ describe("an operator is a link or a typed name, never both", () => {
       operatorUserId: USER_ID,
     });
   });
+
+  it("should drop a submitted operator ORCID, since an ORCID comes from the linked account alone", () => {
+    expect(
+      createSyntheticDetailsSchema.parse({
+        operatorLastname: "Curie",
+        operatorOrcid: "0000-0002-1825-0097",
+      }),
+    ).toEqual({ operatorLastname: "Curie" });
+  });
 });

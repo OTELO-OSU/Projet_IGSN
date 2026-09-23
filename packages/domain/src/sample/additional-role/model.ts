@@ -13,3 +13,7 @@ export const sampleAdditionalRoleSchema = z.object({
 });
 
 export type SampleAdditionalRole = z.infer<typeof sampleAdditionalRoleSchema>;
+
+export const createSampleAdditionalRoleSchema = sampleAdditionalRoleSchema.omit(
+  { personOrcid: true },
+);

@@ -165,7 +165,6 @@ const OPTIONAL_CARD_FIELDS: readonly CardField[] = [
   },
   contextField("researchProgramName", m.facet_research_program_name),
   personField("chiefScientist", m.facet_chief_scientist),
-  contextField("researchCampaign", m.sample_field_research_campaign),
   personField("collectionCurator", m.facet_collection_curator),
   {
     key: "numericAge",

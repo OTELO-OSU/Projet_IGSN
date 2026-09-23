@@ -10,6 +10,7 @@ import { pressureUnitSchema } from "../condition/pressure-unit.ts";
 import { temperatureUnitSchema } from "../condition/temperature-unit.ts";
 import { elementSchema } from "../element/vocabulary.ts";
 import { freeTextSchema } from "../free-text.ts";
+import { platformTypeSchema } from "../scientific-context/platform-type.ts";
 import { experimentDurationUnitSchema } from "../synthetic-details/experiment-duration-unit.ts";
 import { experimentTypeSchema } from "../synthetic-details/experiment-type.ts";
 import { finalProductSchema } from "../synthetic-details/final-product.ts";
@@ -182,6 +183,19 @@ export const coreExtensionsSchema = z.strictObject({
         .optional(),
     })
     .meta({ description: "Synthesis parameters of a synthetic sample." })
+    .optional(),
+  fieldwork: z
+    .strictObject({
+      platformType: conceptSchema("platform-type", platformTypeSchema)
+        .meta({
+          description: "Kind of platform the sample was collected from.",
+        })
+        .optional(),
+      launchPlatformName: freeTextSchema
+        .meta({ description: "Name of that platform." })
+        .optional(),
+    })
+    .meta({ description: "Fieldwork conditions of a field sample." })
     .optional(),
 });
 

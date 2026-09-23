@@ -26,6 +26,7 @@ import { type ProcessStepKind } from "./process-step/kind.ts";
 import { type RelationType } from "./relation/relation-type.ts";
 import { type RelationTargetResourceType } from "./relation/target-resource-type.ts";
 import { type CollectionOrigin } from "./scientific-context/collection-origin.ts";
+import { type PlatformType } from "./scientific-context/platform-type.ts";
 import { type ProvenanceStatus } from "./scientific-context/provenance-status.ts";
 import { type ExperimentType } from "./synthetic-details/experiment-type.ts";
 import { type FinalProduct } from "./synthetic-details/final-product.ts";
@@ -58,6 +59,7 @@ type _provenanceStatusKeys =
   AssertKeys<`provenance_status_${ProvenanceStatus}`>;
 type _collectionOriginKeys =
   AssertKeys<`collection_origin_${CollectionOrigin}`>;
+type _platformTypeKeys = AssertKeys<`platform_type_${PlatformType}`>;
 type _startingMaterialKeys =
   AssertKeys<`starting_material_${StartingMaterial}`>;
 type _startingMaterialNatureKeys =
@@ -107,6 +109,7 @@ type SampleLabels = {
   availabilityStatusLabel: (status: AvailabilityStatus) => string;
   provenanceStatusLabel: (status: ProvenanceStatus) => string;
   collectionOriginLabel: (origin: CollectionOrigin) => string;
+  platformTypeLabel: (platformType: PlatformType) => string;
   startingMaterialLabel: (nature: StartingMaterial) => string;
   startingMaterialNatureLabel: (form: StartingMaterialNature) => string;
   finalProductLabel: (product: FinalProduct) => string;
@@ -146,6 +149,7 @@ const LABEL_KEY = {
   availabilityStatusLabel: ["availability_status", "code"],
   provenanceStatusLabel: ["provenance_status", "code"],
   collectionOriginLabel: ["collection_origin", "code"],
+  platformTypeLabel: ["platform_type", "code"],
   startingMaterialLabel: ["starting_material", "code"],
   startingMaterialNatureLabel: ["starting_material_nature", "code"],
   finalProductLabel: ["final_product", "code"],

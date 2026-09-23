@@ -126,6 +126,14 @@ export function sampleFormPage(page: Page) {
         .fill("2025-06-15");
       await fillPersonName(/operator name/i, "Paul", "Bernard");
     },
+    setPlatformType: async (label: string) => {
+      await openTab("Scientific context");
+      await pick("Platform type", label);
+    },
+    expectPlatformType: async (label: string) => {
+      await openTab("Scientific context");
+      await expect(fieldCombobox("Platform type")).toHaveText(label);
+    },
     expectNoCollectionDate: () =>
       expect(page.getByRole("group", { name: /collection date/i })).toHaveCount(
         0,

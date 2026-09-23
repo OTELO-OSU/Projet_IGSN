@@ -80,6 +80,25 @@ describe("fromCoreSample", () => {
     expect(fromCoreSample(body)).toEqual(reversed(FIELD_SAMPLE));
   });
 
+  it("should ignore the ORCID a body carries for a person", () => {
+    const body = coreSampleBodySchema.parse({
+      ...FIELD_SAMPLE_RECORD,
+      responsibility: FIELD_SAMPLE_RECORD.responsibility.map((agentRole) =>
+        agentRole.agent.agentType === "Person"
+          ? {
+              ...agentRole,
+              agent: {
+                ...agentRole.agent,
+                id: "https://orcid.org/0000-0002-1825-0097",
+              },
+            }
+          : agentRole,
+      ),
+    });
+
+    expect(fromCoreSample(body)).toEqual(reversed(FIELD_SAMPLE));
+  });
+
   it.each([
     ["0123456789ABCDEFGHJKMNPQRS", "DOI"],
     ["CNRS1234567890", "IGSN"],
@@ -158,38 +177,32 @@ describe("the synthesis operator of a Core body", () => {
           role: "researcher",
           personFirstname: "Emmy",
           personLastname: "Noether",
-          personOrcid: null,
         },
       ],
     });
     expect(sample.syntheticDetails).toMatchObject({
       operatorFirstname: null,
       operatorLastname: null,
-      operatorOrcid: null,
       researchStructure: null,
     });
   });
 
   it.each([
     [
-      "its ORCID and its research structures",
+      "its research structures",
       {
-        id: "https://orcid.org/0000-0003-1415-9269",
         firstname: "Rosalind",
         lastname: "Franklin",
         affiliations: [
           { id: "https://ror.org/02feahw73", name: ORGANIZATION_NAME },
         ],
       },
-      {
-        operatorOrcid: "0000-0003-1415-9269",
-        researchStructure: ["02feahw73"],
-      },
+      { researchStructure: ["02feahw73"] },
     ],
     [
       "its name alone",
       { firstname: "Rosalind", lastname: "Franklin" },
-      { operatorOrcid: null, researchStructure: null },
+      { researchStructure: null },
     ],
   ])(
     "should read the operator the experiment extension carries with %s",

@@ -95,6 +95,29 @@ describe("toCoreSample", () => {
     });
   });
 
+  it("should carry the ORCID a person's linked account resolved to as their agent id", () => {
+    const sample = {
+      ...FIELD_SAMPLE,
+      scientificContext: {
+        provenanceStatus: "field_sample" as const,
+        collectorFirstname: "Inge",
+        collectorLastname: "Lehmann",
+        collectorOrcid: "0000-0001-5109-3700",
+        additionalRoles: [],
+      },
+    };
+
+    expect(toCoreSample(sample, FRONTEND_URL).responsibility).toContainEqual({
+      agent: {
+        id: "https://orcid.org/0000-0001-5109-3700",
+        firstname: "Inge",
+        lastname: "Lehmann",
+        agentType: "Person",
+      },
+      roles: ["Collector"],
+    });
+  });
+
   it("should draw an area as one closed rectangular ring", () => {
     expect(
       toCoreSample(COLLECTION_SPECIMEN, FRONTEND_URL).production.location

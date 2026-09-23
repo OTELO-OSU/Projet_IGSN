@@ -149,6 +149,7 @@ test.describe("samples", () => {
       firstname: "Georges",
       lastname: "Cuvier",
     });
+    await create.setPlatformType("Ship");
     await create.submit();
 
     const edit = sampleEditPage(page);
@@ -162,6 +163,7 @@ test.describe("samples", () => {
       firstname: "Georges",
       lastname: "Cuvier",
     });
+    await edit.expectPlatformType("Ship");
 
     await edit.publish();
     await list.expectVisible();

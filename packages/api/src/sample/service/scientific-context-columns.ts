@@ -14,7 +14,6 @@ export function scientificContextColumns(
     sc_chief_scientist_user_id: fieldSample?.chiefScientistUserId ?? null,
     sc_chief_scientist_firstname: fieldSample?.chiefScientistFirstname ?? null,
     sc_chief_scientist_lastname: fieldSample?.chiefScientistLastname ?? null,
-    sc_chief_scientist_orcid: fieldSample?.chiefScientistOrcid ?? null,
     sc_host_institution: fieldSample?.hostInstitution ?? null,
     sc_collector_user_id:
       fieldSample?.collectorUserId ??
@@ -28,13 +27,11 @@ export function scientificContextColumns(
       fieldSample?.collectorLastname ??
       collectionSpecimen?.collectorLastname ??
       null,
-    sc_collector_orcid: fieldSample?.collectorOrcid ?? null,
-    sc_research_campaign: fieldSample?.researchCampaign ?? null,
     sc_funding: fieldSample?.funding ?? null,
     sc_research_program_description:
       fieldSample?.researchProgramDescription ?? null,
-    sc_field_name: fieldSample?.fieldName ?? null,
-    sc_mission_description: fieldSample?.missionDescription ?? null,
+    sc_platform_type: fieldSample?.platformType ?? null,
+    sc_launch_platform_name: fieldSample?.launchPlatformName ?? null,
     sc_collection_curator_user_id:
       collectionSpecimen?.collectionCuratorUserId ?? null,
     sc_collection_curator_firstname:

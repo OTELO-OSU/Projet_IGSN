@@ -1,7 +1,5 @@
 import type { CreateSample, Sample } from "../sample.ts";
-import type { ScientificContext } from "../scientific-context/model.ts";
 import type { ProvenanceStatus } from "../scientific-context/provenance-status.ts";
-import type { SyntheticDetails } from "../synthetic-details/model.ts";
 
 import { dropTypedNameWhenLinked } from "../contact-link.ts";
 import { isPathAtOrUnder } from "../path/is-at-or-under.ts";
@@ -14,7 +12,6 @@ const LOCKED_FIELD_SAMPLE_FIELDS_TO_FORM_FIELDS = {
   collectorUserId: ["scientificContext.collectorUserId"],
   collectorFirstname: ["scientificContext.collectorFirstname"],
   collectorLastname: ["scientificContext.collectorLastname"],
-  collectorOrcid: ["scientificContext.collectorOrcid"],
 } as const;
 const LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS = {
   collectionOrigin: ["scientificContext.collectionOrigin"],
@@ -24,7 +21,6 @@ const LOCKED_SYNTHETIC_DETAILS_FIELDS_TO_FORM_FIELDS = {
   operatorUserId: ["syntheticDetails.operatorUserId"],
   operatorFirstname: ["syntheticDetails.operatorFirstname"],
   operatorLastname: ["syntheticDetails.operatorLastname"],
-  operatorOrcid: ["syntheticDetails.operatorOrcid"],
 } as const;
 
 const PROVENANCE_DISCRIMINANT_FORM_FIELD =
@@ -50,12 +46,13 @@ export function frozenMaterialDepth(material: Sample["material"]): number {
   return frozenMaterialPrefix(material)?.split(".").length ?? Infinity;
 }
 
+type CreateScientificContext = NonNullable<CreateSample["scientificContext"]>;
 type FieldSample = Extract<
-  ScientificContext,
+  CreateScientificContext,
   { provenanceStatus: "field_sample" }
 >;
 type CollectionSpecimen = Extract<
-  ScientificContext,
+  CreateScientificContext,
   { provenanceStatus: "collection_specimen" }
 >;
 
@@ -81,9 +78,11 @@ function mergeMaterial(
 function mergeSyntheticDetails(
   current: Sample["syntheticDetails"],
   incoming: CreateSample["syntheticDetails"],
-): SyntheticDetails | null {
+): CreateSample["syntheticDetails"] {
   if (current == null) return incoming ?? null;
-  const payload: SyntheticDetails = { ...incoming };
+  const payload: NonNullable<CreateSample["syntheticDetails"]> = {
+    ...incoming,
+  };
   return freezeLocked(
     payload,
     current,
@@ -94,7 +93,7 @@ function mergeSyntheticDetails(
 function mergeScientificContext(
   current: Sample["scientificContext"],
   incoming: CreateSample["scientificContext"],
-): ScientificContext | null {
+): CreateSample["scientificContext"] {
   if (current == null) {
     return null;
   }

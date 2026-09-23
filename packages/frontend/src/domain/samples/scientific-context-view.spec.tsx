@@ -20,11 +20,10 @@ describe("ScientificContextView", () => {
           collectorFirstname: "John",
           collectorLastname: "Field",
           collectorOrcid: "0000-0001-2345-6789",
-          researchCampaign: "Atlantic 2025",
           funding: "ANR grant 42",
           researchProgramDescription: "A deep sampling programme.",
-          fieldName: "Mid-Atlantic Ridge",
-          missionDescription: "Six weeks at sea.",
+          platformType: "ship",
+          launchPlatformName: "RV Marion Dufresne",
           additionalRoles: [],
         }}
       />,
@@ -41,15 +40,17 @@ describe("ScientificContextView", () => {
         .toHaveAttribute("href", `https://ror.org/${ror}`);
     }
 
-    await expect
-      .element(screen.getByRole("link", { name: "0000-0002-1825-0097" }))
-      .toHaveAttribute("href", "https://orcid.org/0000-0002-1825-0097");
+    for (const orcid of ["0000-0002-1825-0097", "0000-0001-2345-6789"]) {
+      await expect
+        .element(screen.getByRole("link", { name: orcid }))
+        .toHaveAttribute("href", `https://orcid.org/${orcid}`);
+    }
 
     await expect.element(screen.getByText("Marie Curie")).toBeInTheDocument();
     await expect.element(screen.getByText("John Field")).toBeInTheDocument();
-    await expect.element(screen.getByText("Atlantic 2025")).toBeInTheDocument();
+    await expect.element(screen.getByText("Ship")).toBeInTheDocument();
     await expect
-      .element(screen.getByText("Six weeks at sea."))
+      .element(screen.getByText("RV Marion Dufresne"))
       .toBeInTheDocument();
   });
 

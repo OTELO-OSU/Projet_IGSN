@@ -165,7 +165,6 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
     REGISTRANT,
     {
       agent: {
-        id: "https://orcid.org/0000-0001-5109-3700",
         firstname: "Inge",
         lastname: "Lehmann",
         agentType: "Person",
@@ -174,7 +173,6 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
     },
     {
       agent: {
-        id: "https://orcid.org/0000-0002-1825-0097",
         firstname: "Alfred",
         lastname: "Wegener",
         agentType: "Person",
@@ -197,15 +195,12 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
     collectionDateTimeZone: "Europe/Paris",
     collectionMethod: concept("sample_description", "coring.box_corer"),
     collectionMethodDescription: "Box corer on the port side",
-    samplingPurpose: "Sampling campaign of June 2024",
-    samplingSite_name: "Quarry 12",
     projects: [
       {
         name: "GEOLOR",
         fundingReferences: [{ value: ORGANIZATION_URI, identifierType: "ROR" }],
         funding: "ANR grant 2023",
         description: "Mapping the Hercynian basement",
-        campaign: "MEDUSA-3",
       },
     ],
     location: {
@@ -311,6 +306,10 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
       radioactivity: { flag: true, explanation: "Natural uranium traces" },
       asbestos: { flag: false },
       chemical: { flag: false },
+    },
+    fieldwork: {
+      platformType: concept("platform-type", "ship"),
+      launchPlatformName: "RV Marion Dufresne",
     },
   },
 };
@@ -470,7 +469,6 @@ export const SYNTHETIC_SAMPLE_RECORD: CoreSample = {
       purpose: "Calibrate the melting curve",
       equipment: "Piston cylinder press",
       operator: {
-        id: "https://orcid.org/0000-0003-1415-9269",
         firstname: "Rosalind",
         lastname: "Franklin",
         affiliations: [{ id: ORGANIZATION_URI, name: ORGANIZATION_NAME }],

@@ -20,23 +20,14 @@ export async function replaceSampleAdditionalRoles(
   await db
     .insertInto("sample_additional_role")
     .values(
-      roles.map(
-        ({
-          role,
-          personUserId,
-          personFirstname,
-          personLastname,
-          personOrcid,
-        }) => ({
-          id: uuidv7(),
-          sample_id: sampleId,
-          role,
-          person_user_id: personUserId ?? null,
-          person_firstname: personFirstname ?? null,
-          person_lastname: personLastname ?? null,
-          person_orcid: personOrcid ?? null,
-        }),
-      ),
+      roles.map(({ role, personUserId, personFirstname, personLastname }) => ({
+        id: uuidv7(),
+        sample_id: sampleId,
+        role,
+        person_user_id: personUserId ?? null,
+        person_firstname: personFirstname ?? null,
+        person_lastname: personLastname ?? null,
+      })),
     )
     .execute();
 }

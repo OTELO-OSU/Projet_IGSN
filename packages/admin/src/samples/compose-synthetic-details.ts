@@ -39,7 +39,6 @@ export type SyntheticDetailsDraft = {
   operatorUserId: string | null | undefined;
   operatorFirstname: string | null | undefined;
   operatorLastname: string | null | undefined;
-  operatorOrcid: string | null | undefined;
   researchStructure: string[];
   temperatureValue: number | undefined;
   temperatureUnit: TemperatureUnit | null | undefined;
@@ -61,7 +60,6 @@ type SyntheticDetailsCandidate = {
   operatorUserId: string | undefined;
   operatorFirstname: string | undefined;
   operatorLastname: string | undefined;
-  operatorOrcid: string | undefined;
   researchStructure: string[] | undefined;
   temperature: MeasurementCandidate<TemperatureUnit> | undefined;
   pressure: MeasurementCandidate<PressureUnit> | undefined;
@@ -79,7 +77,6 @@ export function composeSyntheticDetails(
     draft.operatorUserId,
     draft.operatorFirstname,
     draft.operatorLastname,
-    draft.operatorOrcid,
   );
   const details = {
     startingMaterial: draft.startingMaterial,
@@ -104,7 +101,6 @@ export function composeSyntheticDetails(
     operatorUserId: operator.userId,
     operatorFirstname: operator.firstname,
     operatorLastname: operator.lastname,
-    operatorOrcid: operator.orcid,
     researchStructure: nonEmpty(draft.researchStructure),
     temperature: composeMeasurement(
       draft.temperatureValue,
@@ -141,7 +137,6 @@ export function toSyntheticDetailsDraft(
     operatorUserId: value?.operatorUserId ?? undefined,
     operatorFirstname: value?.operatorFirstname ?? undefined,
     operatorLastname: value?.operatorLastname ?? undefined,
-    operatorOrcid: value?.operatorOrcid ?? undefined,
     researchStructure: value?.researchStructure ?? [],
     temperatureValue: value?.temperature?.value,
     temperatureUnit: value?.temperature?.unit,

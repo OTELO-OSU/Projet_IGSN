@@ -113,9 +113,6 @@ describe("SampleSyntheticDetailsFields", () => {
     await pickOption(screen, "Experiment duration unit *", "h");
     await screen.getByLabelText("Date *", { exact: true }).fill("2026-01-05");
     await fillPersonName(screen, "Operator name", "Marie", "Curie");
-    await operatorName(screen)
-      .getByRole("textbox", { name: "ORCID iD" })
-      .fill("0000-0002-1825-0097");
     await screen
       .getByRole("combobox", { name: "Research structure of the operator" })
       .click();
@@ -161,7 +158,6 @@ describe("SampleSyntheticDetailsFields", () => {
             },
             operatorFirstname: "Marie",
             operatorLastname: "Curie",
-            operatorOrcid: "0000-0002-1825-0097",
             researchStructure: ["02feahw73"],
             temperature: { value: 1200, unit: "celsius" },
             pressure: { value: 2, unit: "kbar" },
@@ -350,7 +346,6 @@ describe("SampleSyntheticDetailsFields", () => {
               },
               operatorFirstname: "Marie",
               operatorLastname: "Curie",
-              operatorOrcid: "0000-0002-1825-0097",
               researchStructure: ["02feahw73"],
               temperature: { value: 1200, unit: "celsius" },
             },
@@ -367,9 +362,6 @@ describe("SampleSyntheticDetailsFields", () => {
         .element(operatorName(screen).getByRole("textbox", { name: half }))
         .toBeDisabled();
     }
-    await expect
-      .element(operatorName(screen).getByRole("textbox", { name: "ORCID iD" }))
-      .toBeDisabled();
 
     for (const name of [
       "Starting material *",

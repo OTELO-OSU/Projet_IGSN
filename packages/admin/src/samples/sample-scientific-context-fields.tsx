@@ -1,17 +1,23 @@
 import { toComboboxItems } from "@projet-igsn/design-system/components/ui/combobox";
 import { ALL_ORGANIZATION_ITEMS } from "@projet-igsn/domain/institutional-group/managed-group-items";
 import { COLLECTION_ORIGINS } from "@projet-igsn/domain/sample/scientific-context/collection-origin";
+import { PLATFORM_TYPES } from "@projet-igsn/domain/sample/scientific-context/platform-type";
 
 import { m } from "#/paraglide/messages.js";
 import { ContactNameFields } from "#/samples/contact-name-fields.tsx";
 import { SampleAdditionalRolesFields } from "#/samples/sample-additional-roles-fields.tsx";
-import { collectionOriginLabel } from "#/samples/sample-labels.ts";
+import {
+  collectionOriginLabel,
+  platformTypeLabel,
+} from "#/samples/sample-labels.ts";
 import { useSampleForm } from "#/samples/use-sample-form.ts";
 
 const collectionOriginItems = toComboboxItems(
   COLLECTION_ORIGINS,
   collectionOriginLabel,
 );
+
+const platformTypeItems = toComboboxItems(PLATFORM_TYPES, platformTypeLabel);
 
 export function SampleScientificContextFields() {
   const form = useSampleForm();
@@ -45,10 +51,18 @@ export function SampleScientificContextFields() {
                   )}
                 </form.AppField>
 
+                <form.AppField name="scientificContext.researchProgramDescription">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_research_program_description()}
+                      multiline
+                    />
+                  )}
+                </form.AppField>
+
                 <ContactNameFields
                   label={m.field_chief_scientist()}
                   person="scientificContext.chiefScientist"
-                  orcidName="scientificContext.chiefScientistOrcid"
                 />
 
                 <form.AppField name="scientificContext.hostInstitution">
@@ -69,40 +83,29 @@ export function SampleScientificContextFields() {
                 <ContactNameFields
                   label={m.field_collector_name()}
                   person="scientificContext.collector"
-                  orcidName="scientificContext.collectorOrcid"
                   requiredToPublish
                 />
                 <SampleAdditionalRolesFields />
-
-                <form.AppField name="scientificContext.researchCampaign">
-                  {(field) => (
-                    <field.TextField label={m.field_research_campaign()} />
-                  )}
-                </form.AppField>
 
                 <form.AppField name="scientificContext.funding">
                   {(field) => <field.TextField label={m.field_funding()} />}
                 </form.AppField>
 
-                <form.AppField name="scientificContext.researchProgramDescription">
+                <form.AppField name="scientificContext.platformType">
                   {(field) => (
-                    <field.TextField
-                      label={m.field_research_program_description()}
-                      multiline
+                    <field.ComboboxField
+                      label={m.field_platform_type()}
+                      items={platformTypeItems}
+                      placeholder={m.platform_type_placeholder()}
+                      searchPlaceholder={m.platform_type_search_placeholder()}
+                      emptyText={m.platform_type_empty()}
                     />
                   )}
                 </form.AppField>
 
-                <form.AppField name="scientificContext.fieldName">
-                  {(field) => <field.TextField label={m.field_field_name()} />}
-                </form.AppField>
-
-                <form.AppField name="scientificContext.missionDescription">
+                <form.AppField name="scientificContext.launchPlatformName">
                   {(field) => (
-                    <field.TextField
-                      label={m.field_mission_description()}
-                      multiline
-                    />
+                    <field.TextField label={m.field_launch_platform_name()} />
                   )}
                 </form.AppField>
               </>

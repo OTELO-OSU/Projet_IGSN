@@ -8,7 +8,7 @@ import {
   publicationYearSchema,
 } from "../sample.ts";
 import {
-  agentIdSchema,
+  organizationIdSchema,
   coreOrganizationSchema,
   corePersonFields,
 } from "./core-agent-schema.ts";
@@ -32,9 +32,6 @@ export const OTELO_ROR_URI = "https://ror.org/02cyw3861";
 export const ORCID_PREFIX = "https://orcid.org/";
 
 export const toOrcidUri = (orcid: string): string => `${ORCID_PREFIX}${orcid}`;
-
-export const fromOrcidUri = (id: string | null | undefined): string | null =>
-  id == null ? null : id.replace(ORCID_PREFIX, "");
 
 export const CORE_LICENCE_URI = "https://creativecommons.org/licenses/by/4.0/";
 
@@ -74,7 +71,7 @@ const coreAgentSchema = z
       agentType: z.literal("Organization").meta({
         description: "Whether the agent is a person or an organization.",
       }),
-      id: agentIdSchema,
+      id: organizationIdSchema,
       name: freeTextSchema.meta({ description: "Name of the organization." }),
     }),
   ])

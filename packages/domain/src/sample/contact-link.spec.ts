@@ -10,27 +10,23 @@ const ADA = {
   role: "researcher",
   personFirstname: "Ada",
   personLastname: "Lovelace",
-  personOrcid: null,
 };
 
 const GRACE = {
   role: "project_member",
   personFirstname: "Grace",
   personLastname: "Hopper",
-  personOrcid: null,
 };
 
 const EMMY = {
   role: "researcher",
   personFirstname: "Emmy",
   personLastname: "Noether",
-  personOrcid: null,
 };
 
 const NO_NAME = {
   personFirstname: null,
   personLastname: null,
-  personOrcid: null,
 };
 
 const CURRENT = {
@@ -38,11 +34,11 @@ const CURRENT = {
     collectorUserId: MARIE_ID,
     collectorFirstname: "Marie",
     collectorLastname: "Curie",
-    collectorOrcid: null,
+    collectorOrcid: "0000-0002-1825-0097",
     additionalRoles: [
-      { ...ADA, personUserId: ADA_ID },
-      { ...GRACE, personUserId: null },
-      { ...EMMY, personUserId: EMMY_ID },
+      { ...ADA, personUserId: ADA_ID, personOrcid: "0000-0001-5109-3700" },
+      { ...GRACE, personUserId: null, personOrcid: null },
+      { ...EMMY, personUserId: EMMY_ID, personOrcid: null },
     ],
   },
 };
@@ -51,7 +47,6 @@ const submitted = (additionalRoles: object[]) => ({
   scientificContext: {
     collectorFirstname: "Marie",
     collectorLastname: "Curie",
-    collectorOrcid: null,
     additionalRoles,
   },
 });
@@ -60,6 +55,20 @@ const rolesOf = (incoming: ReturnType<typeof submitted>) =>
   keepContactLinks(incoming, CURRENT).scientificContext.additionalRoles;
 
 describe("the account links of a submitted sample", () => {
+  it("should keep the link of a person the payload names without an ORCID key, since a write payload carries no ORCID", () => {
+    expect(
+      keepContactLinks(
+        submitted([]).scientificContext,
+        CURRENT.scientificContext,
+      ),
+    ).toEqual({
+      collectorUserId: MARIE_ID,
+      collectorFirstname: null,
+      collectorLastname: null,
+      additionalRoles: [],
+    });
+  });
+
   it("should follow each person of a reordered additional role list", () => {
     expect(rolesOf(submitted([EMMY, GRACE, ADA]))).toEqual([
       { role: "researcher", personUserId: EMMY_ID, ...NO_NAME },
@@ -88,35 +97,20 @@ describe("the account links of a submitted sample", () => {
     ]);
   });
 
-  it.each([
-    [
-      "the name the stored account resolved to",
-      { collectorFirstname: "Marie", collectorLastname: "Curie" },
-      {
-        collectorUserId: MARIE_ID,
-        collectorFirstname: null,
-        collectorLastname: null,
-        collectorOrcid: null,
-      },
-    ],
-    [
-      "another name",
-      { collectorFirstname: "Irene", collectorLastname: "Curie" },
-      {
-        collectorFirstname: "Irene",
-        collectorLastname: "Curie",
-        collectorOrcid: null,
-      },
-    ],
-  ])(
-    "should keep the collector link only when the submitted name is %s",
-    (_case, collector, expected) => {
-      expect(
-        keepContactLinks(
-          { ...submitted([]).scientificContext, ...collector },
-          CURRENT.scientificContext,
-        ),
-      ).toEqual({ ...expected, additionalRoles: [] });
-    },
-  );
+  it("should replace the link with the typed name when the submitted name is another one", () => {
+    expect(
+      keepContactLinks(
+        {
+          ...submitted([]).scientificContext,
+          collectorFirstname: "Irene",
+          collectorLastname: "Curie",
+        },
+        CURRENT.scientificContext,
+      ),
+    ).toEqual({
+      collectorFirstname: "Irene",
+      collectorLastname: "Curie",
+      additionalRoles: [],
+    });
+  });
 });

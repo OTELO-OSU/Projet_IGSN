@@ -38,7 +38,6 @@ export function SampleAdditionalRolesFields() {
                     role: additionalRoleLabel(row.role),
                   })}
                   person={`${ROLES_FIELD}[${index}].person`}
-                  orcidName={`${ROLES_FIELD}[${index}].personOrcid`}
                   requiredToPublish
                 />
                 <Button
