@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { SampleQrCode } from "#/domain/samples/sample-qr-code.tsx";
+
 export function SampleHero({
   name,
   igsn,
@@ -16,7 +18,10 @@ export function SampleHero({
           <h1 className="text-4xl font-bold sm:text-5xl">{name}</h1>
           <p className="mt-2 text-lg text-sky-100">{igsn}</p>
         </div>
-        {actions}
+        <div className="flex flex-wrap items-start gap-4">
+          {actions}
+          {igsn == null ? null : <SampleQrCode igsn={igsn} />}
+        </div>
       </div>
     </div>
   );
