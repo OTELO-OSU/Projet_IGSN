@@ -39,6 +39,8 @@ type LocationTable = {
 type SampleTable = {
   id: string;
   name: string;
+  local_id: string | null;
+  local_id_description: string | null;
   nature: string | null;
   type: string | null;
   material: string | null;

@@ -70,6 +70,8 @@
   "mail_sample_withdrawn_body": "A moderator published the sample \"{{sample}}\" you own as withdrawn. It now carries an IGSN and its main information can no longer be changed, but it stays out of public view until it is republished.",
   "mail_sample_moderated_cta": "Open the sample",
   "mail_sample_field_name": "Name",
+  "mail_sample_field_localId": "Local ID",
+  "mail_sample_field_localIdDescription": "Local ID description",
   "mail_sample_field_nature": "Nature",
   "mail_sample_field_type": "Sample type",
   "mail_sample_field_material": "Material",

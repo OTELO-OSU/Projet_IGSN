@@ -10,6 +10,7 @@ import {
 } from "./core-curation-schema.ts";
 import { orNull } from "./core-optional.ts";
 import { parentIgsnOf } from "./core-relation-schema.ts";
+import { localIdTitleOf, mainTitleOf } from "./core-sample-schema.ts";
 import { contextCategoryFinders } from "./from-core-context-category.ts";
 import { fromCoreCondition, fromCoreRepository } from "./from-core-curation.ts";
 import { fromCoreDateRange } from "./from-core-date-range.ts";
@@ -51,7 +52,7 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
   return {
     parents,
     sample: {
-      name: body.identification.titles[0]?.value ?? "",
+      name: mainTitleOf(body.identification.titles)?.value ?? "",
       nature: body.classification.natureOfSample.id,
       type: body.classification.sampleObjectTypes[0]?.id ?? null,
       material: material?.id ?? null,
@@ -68,6 +69,8 @@ export function fromCoreSample(body: CoreSampleBody): ReversedCoreSample {
       collectionMethodDescription:
         production.collectionMethodDescription ?? null,
       specificName: body.identification.localName ?? null,
+      localId: localIdTitleOf(body.identification.titles)?.value ?? null,
+      localIdDescription: null,
       location: fromCoreLocation(production.location),
       description: {
         collectionDate: fromCoreDateRange({

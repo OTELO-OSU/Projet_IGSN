@@ -134,6 +134,31 @@ const coreRecordSchema = z.strictObject({
     }),
 });
 
+const CORE_TITLE_TYPES = ["Main", "AlternativeTitle", "Other"] as const;
+
+const coreSampleTitleSchema = coreTitleSchema.extend({
+  titleType: z.enum(CORE_TITLE_TYPES).meta({
+    description:
+      "Kind of title, Main for the name of the sample and Other or AlternativeTitle for the identifier it carries in its own collection; we emit Other.",
+  }),
+});
+
+export type CoreSampleTitle = z.infer<typeof coreSampleTitleSchema>;
+
+const isMainTitle = ({ titleType }: CoreSampleTitle): boolean =>
+  titleType === "Main";
+
+const isLocalIdTitle = ({ titleType }: CoreSampleTitle): boolean =>
+  titleType === "Other" || titleType === "AlternativeTitle";
+
+export const mainTitleOf = (
+  titles: readonly CoreSampleTitle[],
+): CoreSampleTitle | undefined => titles.find(isMainTitle);
+
+export const localIdTitleOf = (
+  titles: readonly CoreSampleTitle[],
+): CoreSampleTitle | undefined => titles.find(isLocalIdTitle);
+
 const coreIdentificationFields = {
   sampleIdentifier: igsnSchema.meta({
     description:
@@ -149,9 +174,18 @@ const coreIdentificationFields = {
   landingPage: z.url().meta({
     description: "Public page of the sample on the registry; emit only.",
   }),
-  titles: z.array(coreTitleSchema).length(1).meta({
-    description: "Name of the sample, exactly one title.",
-  }),
+  titles: z
+    .array(coreSampleTitleSchema)
+    .refine((titles) => titles.filter(isMainTitle).length === 1, {
+      error: "exactly one title is the Main name of the sample",
+    })
+    .refine((titles) => titles.filter(isLocalIdTitle).length <= 1, {
+      error: "at most one title holds the local identifier of the sample",
+    })
+    .meta({
+      description:
+        "Names of the sample: exactly one Main title holding its name, plus at most one Other or AlternativeTitle title holding the identifier it carries in its own collection; we emit Other.",
+    }),
   localName: nameSchema
     .meta({ description: "Name the sample carries in its own collection." })
     .optional(),

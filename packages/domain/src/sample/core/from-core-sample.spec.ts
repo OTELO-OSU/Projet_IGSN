@@ -16,7 +16,7 @@ import { fromCoreSample } from "./from-core-sample.ts";
 const reversed = (sample: Sample) => {
   const { parentIds: _parentIds, ...create } = toCreateSample(sample);
   return {
-    sample: create,
+    sample: { ...create, localIdDescription: null },
     parents: sample.parents.map((parent, index) => ({
       igsn: parent.igsn,
       relationIndex: sample.relations.length + index,
@@ -48,6 +48,24 @@ describe("fromCoreSample", () => {
     expect(
       fromCoreSample(coreSampleBodySchema.parse({ ...body, identification })),
     ).toEqual(reversed(FIELD_SAMPLE));
+  });
+
+  it("should tell the sample name from the local id by title type whatever their order", () => {
+    const body = coreSampleBodySchema.parse({
+      ...FIELD_SAMPLE_RECORD,
+      identification: {
+        ...FIELD_SAMPLE_RECORD.identification,
+        titles: [
+          { value: "NCY-2024-017", titleType: "Other" },
+          { value: "Granite outcrop block", titleType: "Main" },
+        ],
+      },
+    });
+
+    expect(fromCoreSample(body).sample).toMatchObject({
+      name: "Granite outcrop block",
+      localId: "NCY-2024-017",
+    });
   });
 
   it("should ignore the doi a body carries", () => {

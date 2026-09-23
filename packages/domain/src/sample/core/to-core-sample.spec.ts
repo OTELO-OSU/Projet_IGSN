@@ -44,7 +44,10 @@ describe("toCoreSample", () => {
       doi: "10.5072/ABCDEFGHJKMNPQRSTVWXYZ0123",
       landingPage:
         "https://igsn.example.org/samples/ABCDEFGHJKMNPQRSTVWXYZ0123",
-      titles: [{ value: "Granite outcrop block", titleType: "Main" }],
+      titles: [
+        { value: "Granite outcrop block", titleType: "Main" },
+        { value: "NCY-2024-017", titleType: "Other" },
+      ],
       localName: "Block A",
     });
   });

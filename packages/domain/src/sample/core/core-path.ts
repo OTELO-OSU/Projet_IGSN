@@ -1,7 +1,8 @@
 const CORE_PATH_BY_FIELD: Record<string, string> = {
   igsn: "identification.sampleIdentifier",
-  name: "identification.titles.0.value",
+  name: "identification.titles",
   specificName: "identification.localName",
+  localId: "identification.titles",
   publicationYear: "publication.publicationYear",
 
   nature: "classification.natureOfSample",

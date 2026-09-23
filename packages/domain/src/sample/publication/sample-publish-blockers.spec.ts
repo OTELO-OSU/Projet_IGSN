@@ -10,6 +10,8 @@ import { samplePublishBlockers } from "./sample-publish-blockers.ts";
 const base: Sample = {
   id: "00000000-0000-7000-8000-000000000001",
   name: "Basalt 42",
+  localId: null,
+  localIdDescription: null,
   nature: "hand_sample",
   type: "individual_sample",
   material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",

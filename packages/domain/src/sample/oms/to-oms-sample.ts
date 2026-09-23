@@ -6,6 +6,7 @@ import type {
 } from "./oms-schema.ts";
 
 import { parentIgsnOf } from "../core/core-relation-schema.ts";
+import { mainTitleOf } from "../core/core-sample-schema.ts";
 import {
   OMS_SAMPLE_COLLECTION_CONTEXT,
   OMS_SAMPLE_CONTEXT,
@@ -22,7 +23,7 @@ function toOmsFeature(core: CoreSample): OmsFeature {
     geometry: location?.geometry ?? null,
     properties: {
       sampleIdentifier: identification.sampleIdentifier,
-      name: identification.titles[0]?.value ?? "",
+      name: mainTitleOf(identification.titles)?.value ?? "",
       localName: identification.localName,
       specimenType: [
         classification.natureOfSample,

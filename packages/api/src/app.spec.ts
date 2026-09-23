@@ -99,7 +99,7 @@ describe("app", () => {
       const owner = await insertUser(db, rejectedEmail);
       const sample = await insertSample(db, {
         name: "Granite",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
       });

@@ -4,6 +4,8 @@ import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
 
 const NOT_COPIED = [
   "name",
+  "localId",
+  "localIdDescription",
   "nature",
   "relations",
   "attachments",

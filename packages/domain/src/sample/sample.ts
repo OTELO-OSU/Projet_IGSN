@@ -67,6 +67,8 @@ export const publicationYearSchema = z.number().int().positive();
 export const sampleSchema = z.object({
   id: z.uuid(),
   name: nameSchema,
+  localId: nameSchema.nullable(),
+  localIdDescription: nameSchema.nullable(),
   nature: natureSchema.nullable(),
   type: sampleTypeSchema.nullable(),
   material: materialPathSchema.nullable(),
@@ -122,6 +124,8 @@ export const MAX_SAMPLE_PARENTS = 2;
 
 const createSampleFieldsSchema = z.strictObject({
   name: nameSchema,
+  localId: nameSchema.nullish(),
+  localIdDescription: nameSchema.nullish(),
   nature: natureSchema.nullable().default(null),
   type: sampleTypeSchema.nullable().default(null),
   material: materialPathSchema.nullish(),
@@ -177,6 +181,13 @@ const checkSample = (value: SampleCheck, ctx: z.RefinementCtx) => {
       code: "custom",
       path: ["materialOtherName"],
       message: "only the other material carries a free-text name",
+    });
+  }
+  if (value.localIdDescription != null && value.localId == null) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["localIdDescription"],
+      message: "a local id description needs a local id",
     });
   }
   if (value.specificName != null && !allowsSpecificName(value.material)) {

@@ -27,6 +27,8 @@ export const SYNTHETIC_DETAILS: SyntheticDetails = {
 export const FIELD_SAMPLE: Sample = {
   id: "11111111-1111-4111-8111-111111111111",
   name: "Granite outcrop block",
+  localId: "NCY-2024-017",
+  localIdDescription: "Number in the quarry collection catalogue",
   nature: "hand_sample",
   type: "core.section",
   material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
@@ -181,6 +183,8 @@ export const FIELD_SAMPLE: Sample = {
 export const COLLECTION_SPECIMEN: Sample = {
   id: "55555555-5555-4555-8555-555555555555",
   name: "Deep sea gravel",
+  localId: null,
+  localIdDescription: null,
   nature: "residue",
   type: "dredge",
   material: "rock_and_sediment.sediment.exogenous_detritic.gravel.cobble",
@@ -295,6 +299,8 @@ export const LINE_SAMPLE: Sample = {
 export const SYNTHETIC_SAMPLE: Sample = {
   id: "77777777-7777-4777-8777-777777777777",
   name: "Synthetic basaltic glass",
+  localId: null,
+  localIdDescription: null,
   nature: "multiple_sample",
   type: "individual_sample",
   material: "rock_and_sediment.synthetic_rock_mineral",
@@ -384,6 +390,8 @@ export function toCreateSample(sample: Sample): CreateSample {
     collectionMethod: sample.collectionMethod,
     collectionMethodDescription: sample.collectionMethodDescription,
     specificName: sample.specificName,
+    localId: sample.localId,
+    localIdDescription: sample.localIdDescription,
     location: sample.location,
     description: sample.description,
     condition: sample.condition,

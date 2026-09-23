@@ -6,7 +6,9 @@ import { toSample } from "./to-sample.ts";
 const row = {
   id: "018f4d3a-1f2b-7c00-8000-000000000000",
   name: "Grès de Fontainebleau",
-  nature: "rock_powder",
+  local_id: "NCY-2024-017",
+  local_id_description: "Number in the quarry collection catalogue",
+  nature: "powder",
   type: "dredge",
   material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
   material_other_name: null,
@@ -153,7 +155,9 @@ describe("toSample", () => {
     expect(sample).toEqual({
       id: "018f4d3a-1f2b-7c00-8000-000000000000",
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      localId: "NCY-2024-017",
+      localIdDescription: "Number in the quarry collection catalogue",
+      nature: "powder",
       type: "dredge",
       material: "rock_and_sediment.rock.igneous.plutonic.felsic.granite",
       materialOtherName: null,

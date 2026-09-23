@@ -84,6 +84,8 @@ describe("insertSample", () => {
     // Act
     const created = await insertSample(db, {
       name: "Basalte du Massif Central",
+      localId: "NCY-2024-017",
+      localIdDescription: "Number in the quarry collection catalogue",
       nature: "thin_section",
       type: "core.section",
       collectionMethod: "coring.gravity_corer.giant",
@@ -95,6 +97,8 @@ describe("insertSample", () => {
     // Assert
     expect(created).toMatchObject({
       name: "Basalte du Massif Central",
+      localId: "NCY-2024-017",
+      localIdDescription: "Number in the quarry collection catalogue",
       nature: "thin_section",
       type: "core.section",
       collectionMethod: "coring.gravity_corer.giant",
@@ -156,7 +160,7 @@ describe("insertSample", () => {
     // Act
     const created = await insertSample(db, {
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
     });
@@ -168,7 +172,7 @@ describe("insertSample", () => {
     // Act
     const created = await insertSample(db, {
       name: "Calcaire de Bourgogne",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
     });
@@ -185,7 +189,7 @@ describe("insertSample", () => {
     // Arrange
     const created = await insertSample(db, {
       name: "Granite de Flamanville",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
     });

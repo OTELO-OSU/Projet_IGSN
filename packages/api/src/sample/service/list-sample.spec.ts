@@ -40,7 +40,7 @@ const geologicalAge = (min: GeologicalAge, max: GeologicalAge) => ({
 });
 
 const bare = {
-  nature: "rock_powder" as const,
+  nature: "powder" as const,
   type: null,
   collectionMethod: null,
 };
@@ -146,7 +146,7 @@ describe("listSamples", () => {
     // Arrange
     const older = await insertSample(db, {
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
     });
@@ -171,7 +171,7 @@ describe("listSamples", () => {
     // Assert
     expect(data).toMatchObject([
       { name: "Basalte du Massif Central", nature: "thin_section" },
-      { name: "Grès de Fontainebleau", nature: "rock_powder" },
+      { name: "Grès de Fontainebleau", nature: "powder" },
     ]);
   });
 
@@ -261,13 +261,13 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Cored section",
-        nature: "rock_powder",
+        nature: "powder",
         type: "core.section",
         collectionMethod: null,
       });
       await insertSample(db, {
         name: "Dredged",
-        nature: "rock_powder",
+        nature: "powder",
         type: "dredge",
         collectionMethod: null,
       });
@@ -287,7 +287,7 @@ describe("listSamples", () => {
     // Arrange
     await insertSample(db, {
       name: "Powdered",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
     });
@@ -315,7 +315,7 @@ describe("listSamples", () => {
       const hosted = (name: string, hostInstitution: string[]) =>
         insertSample(db, {
           name,
-          nature: "rock_powder",
+          nature: "powder",
           type: null,
           collectionMethod: null,
           scientificContext: {
@@ -346,7 +346,7 @@ describe("listSamples", () => {
         db,
         {
           name: "Lorraine core",
-          nature: "rock_powder",
+          nature: "powder",
           type: null,
           collectionMethod: null,
         },
@@ -360,7 +360,7 @@ describe("listSamples", () => {
         db,
         {
           name: "Grenoble core",
-          nature: "rock_powder",
+          nature: "powder",
           type: null,
           collectionMethod: null,
         },
@@ -406,14 +406,14 @@ describe("listSamples", () => {
       .execute();
     await insertSample(db, {
       name: "In the group",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       manualGroupIds: [groupId],
     });
     await insertSample(db, {
       name: "Outside the group",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
     });
@@ -666,14 +666,14 @@ describe("listSamples", () => {
     // Arrange
     await insertSample(db, {
       name: "Young",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       age: numericAge(10, 20),
     });
     await insertSample(db, {
       name: "Old",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       age: numericAge(100, 200),
@@ -697,14 +697,14 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Ancient",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: numericAge(4, 5, "ga"),
       });
       await insertSample(db, {
         name: "Recent",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: numericAge(5, 15, "ka"),
@@ -727,14 +727,14 @@ describe("listSamples", () => {
     // Arrange
     await insertSample(db, {
       name: "Mega",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       age: numericAge(5, 15, "ma"),
     });
     await insertSample(db, {
       name: "Kilo",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       age: numericAge(5, 15, "ka"),
@@ -764,7 +764,7 @@ describe("listSamples", () => {
       for (const [name, yearsUnit] of eras) {
         await insertSample(db, {
           name,
-          nature: "rock_powder",
+          nature: "powder",
           type: null,
           collectionMethod: null,
           age: {
@@ -809,7 +809,7 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Open-ended draft",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: { ...emptyAge, numericAgeMin: 100, numericAgeUnit: "ka" },
@@ -833,7 +833,7 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Ageless",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
       });
@@ -857,7 +857,7 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Miocene",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: geologicalAge(4, 4),
@@ -882,7 +882,7 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Miocene",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: geologicalAge(4, 4),
@@ -907,7 +907,7 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Numeric wins",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: {
@@ -939,7 +939,7 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Numeric in range",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: {
@@ -971,7 +971,7 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Reversed",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: geologicalAge(8, 4),
@@ -999,14 +999,14 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Miocene",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: geologicalAge(4, 4),
       });
       await insertSample(db, {
         name: "Cretaceous",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: geologicalAge(8, 8),
@@ -1030,14 +1030,14 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Below edge",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: geologicalAge(4, 4),
       });
       await insertSample(db, {
         name: "Above edge",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: geologicalAge(5, 5),
@@ -1065,7 +1065,7 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Half-entered",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         age: { ...emptyAge, geologicalAgeMin: 8 },
@@ -1099,7 +1099,7 @@ describe("listSamples", () => {
     // Arrange
     await insertSample(db, {
       name: "Edge",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       age,
@@ -1121,7 +1121,7 @@ describe("listSamples", () => {
     // Arrange
     await insertSample(db, {
       name: "Mid-range",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       age: geologicalAge(25, 25),
@@ -1157,7 +1157,7 @@ describe("listSamples", () => {
     // Arrange
     await insertSample(db, {
       name: "Match",
-      nature: "rock_powder",
+      nature: "powder",
       type: "core.section",
       collectionMethod: null,
       specificName: "Basalt 42",
@@ -1174,7 +1174,7 @@ describe("listSamples", () => {
       page: 1,
       perPage: 10,
       type: "core",
-      nature: "rock_powder",
+      nature: "powder",
     });
     // Assert
     expect(total).toBe(1);
@@ -1185,14 +1185,14 @@ describe("listSamples", () => {
     // Arrange
     const inside = await insertSample(db, {
       name: "Inside",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       location: { position: { type: "point", longitude: 5, latitude: 45 } },
     });
     await insertSample(db, {
       name: "Outside",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       location: { position: { type: "point", longitude: 100, latitude: 45 } },
@@ -1212,7 +1212,7 @@ describe("listSamples", () => {
     // Arrange
     const overlap = await insertSample(db, {
       name: "Overlap",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       location: {
@@ -1241,7 +1241,7 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "No location",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
       });
@@ -1269,7 +1269,7 @@ describe("listSamples", () => {
       for (const [name, longitude, latitude] of points) {
         await insertSample(db, {
           name,
-          nature: "rock_powder",
+          nature: "powder",
           type: null,
           collectionMethod: null,
           location: { position: { type: "point", longitude, latitude } },
@@ -1291,7 +1291,7 @@ describe("listSamples", () => {
     for (const longitude of [0, 100, -100, 179]) {
       await insertSample(db, {
         name: `Lon ${longitude}`,
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         location: { position: { type: "point", longitude, latitude: 10 } },
@@ -1313,7 +1313,7 @@ describe("listSamples", () => {
     for (const longitude of [175, -175, 0, 160]) {
       await insertSample(db, {
         name: `Lon ${longitude}`,
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
         location: { position: { type: "point", longitude, latitude: 10 } },
@@ -1333,7 +1333,7 @@ describe("listSamples", () => {
   pgTest("should match a stored area crossing the dateline", async ({ db }) => {
     const pacific = await insertSample(db, {
       name: "Pacific area",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       location: {
@@ -1364,14 +1364,14 @@ describe("listSamples", () => {
     // Arrange
     const match = await insertSample(db, {
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       location: { position: { type: "point", longitude: 5, latitude: 45 } },
     });
     await insertSample(db, {
       name: "Basalte",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
       location: { position: { type: "point", longitude: 6, latitude: 46 } },
@@ -1392,13 +1392,13 @@ describe("listSamples", () => {
     // Arrange
     const exact = await insertSample(db, {
       name: "Basalt",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
     });
     await insertSample(db, {
       name: "Basaltic Breccia",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
     });
@@ -1422,13 +1422,13 @@ describe("listSamples", () => {
       // Arrange
       await insertSample(db, {
         name: "Basalt Core",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
       });
       const older = await insertSample(db, {
         name: "Basalt Powder",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
       });
@@ -1475,7 +1475,7 @@ describe("listSamples", () => {
     const seedAchondrite = (db: Transactional<DB>) =>
       insertSample(db, {
         name: "Stony Achondrite",
-        nature: "rock_powder",
+        nature: "powder",
         type: null,
         collectionMethod: null,
       });

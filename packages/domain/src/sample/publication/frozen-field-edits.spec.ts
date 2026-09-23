@@ -10,6 +10,8 @@ import { frozenFieldEdits } from "./frozen-field-edits.ts";
 import { mergePublishedEdit } from "./published-field-lock.ts";
 
 const EMPTY_SAMPLE_FIELDS = {
+  localId: null,
+  localIdDescription: null,
   nature: null,
   type: null,
   materialOtherName: null,

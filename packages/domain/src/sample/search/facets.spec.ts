@@ -26,7 +26,7 @@ describe("facetQueryFields", () => {
     ["type", "core.section"],
     ["material", "rock_and_sediment.rock.igneous.plutonic"],
     ["collectionMethod", "coring"],
-    ["nature", "rock_powder"],
+    ["nature", "powder"],
     ["texture", "aphanitic"],
     ["collectorName", "Marie Curie"],
     ["chiefScientist", "Marie Curie"],
@@ -77,7 +77,7 @@ describe("facetQueryFields", () => {
 
 describe("activeFacetKeys", () => {
   it("should list a set non-range facet", () => {
-    expect(activeFacetKeys({ nature: "rock_powder" })).toEqual(["nature"]);
+    expect(activeFacetKeys({ nature: "powder" })).toEqual(["nature"]);
   });
 
   it("should drop a range unit when both bounds are absent", () => {

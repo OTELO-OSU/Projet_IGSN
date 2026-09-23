@@ -43,6 +43,8 @@
   "sample_field_metamorphic_facies": "Metamorphic facies",
   "sample_field_metamorphic_fabric": "Metamorphic fabrics",
   "sample_field_specific_name": "Specific name",
+  "sample_field_local_id": "Local ID",
+  "sample_field_local_id_description": "Local ID description",
   "sample_field_collection_method": "Collection method",
   "sample_field_collection_method_description": "Collection method details",
   "sample_field_existence_status": "Existence status",

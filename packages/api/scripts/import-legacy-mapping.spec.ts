@@ -233,7 +233,8 @@ describe("mapCollectionMethod", () => {
 describe("mapResourceType", () => {
   it.each([
     ["Thin section", { type: null, nature: "thin_section" }],
-    ["Rock powder", { type: null, nature: "rock_powder" }],
+    ["Rock powder", { type: null, nature: "powder" }],
+    ["Separated materials", { type: null, nature: "separated_minerals" }],
     ["Hand sample", { type: null, nature: "hand_sample" }],
     ["Residue", { type: null, nature: "residue" }],
     ["Core section", { type: "core.section", nature: "inapplicable" }],

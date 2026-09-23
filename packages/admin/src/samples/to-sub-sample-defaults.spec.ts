@@ -11,6 +11,8 @@ const SECOND_PARENT_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3302";
 const parent: Sample = {
   id: PARENT_ID,
   name: "Basalte du Massif Central",
+  localId: "MC-2026-007",
+  localIdDescription: "Collection catalogue number",
   nature: "thin_section",
   type: "dredge",
   material: "rock_and_sediment.mineral",

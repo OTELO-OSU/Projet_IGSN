@@ -65,6 +65,7 @@ import {
   AvailabilityStatusField,
   ExistenceStatusField,
 } from "#/samples/curation-fields.tsx";
+import { LocalIdFields } from "#/samples/local-id-fields.tsx";
 import { LocationFields } from "#/samples/location-fields.tsx";
 import { MaterialField } from "#/samples/material-field.tsx";
 import { MetamorphicDetails } from "#/samples/metamorphic-details.tsx";
@@ -514,6 +515,10 @@ export function SampleForm({
                           />
                         )}
                       </form.AppField>
+
+                      <form.AppForm>
+                        <LocalIdFields />
+                      </form.AppForm>
 
                       <form.AppForm>
                         <SampleTypeFields />

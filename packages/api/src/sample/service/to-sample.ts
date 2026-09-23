@@ -307,6 +307,8 @@ export function toSample(row: SampleRow): Sample {
   const sample = sampleSchema.parse({
     id: row.id,
     name: row.name,
+    localId: row.local_id,
+    localIdDescription: row.local_id_description,
     nature: row.nature,
     type: row.type,
     material: row.material,

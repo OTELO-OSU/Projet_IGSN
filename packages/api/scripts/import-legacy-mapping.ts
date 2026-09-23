@@ -192,14 +192,20 @@ const TYPE_SPECIALS: Record<string, string> = {
   individual_sample_in_core: "core.individual_sample_in_core",
 };
 
+const NATURE_ALIASES: Record<string, Nature> = {
+  rock_powder: "powder",
+  separated_materials: "separated_minerals",
+};
+
 export function mapResourceType(resourceType: string | null): {
   type: string | null;
   nature: Nature;
 } {
   if (!resourceType) return { type: null, nature: "inapplicable" };
   const slug = slugSegment(resourceType);
-  const nature = NATURES.includes(slug as Nature)
-    ? (slug as Nature)
+  const aliased = NATURE_ALIASES[slug] ?? slug;
+  const nature = NATURES.includes(aliased as Nature)
+    ? (aliased as Nature)
     : "inapplicable";
   const candidate = slug.startsWith("core_") ? `core.${slug.slice(5)}` : slug;
   const type =

@@ -18,7 +18,7 @@ describe("updateSample", () => {
       // Act
       const updated = await updateSample(db, created.id, {
         name: "Grès de Fontainebleau",
-        nature: "rock_powder",
+        nature: "powder",
         type: "dredge",
         collectionMethod: "dredging.chain_bag",
         collectionMethodDescription: "Chain bag dredge on the second pass",
@@ -28,7 +28,7 @@ describe("updateSample", () => {
       expect(updated).toMatchObject({
         id: created.id,
         name: "Grès de Fontainebleau",
-        nature: "rock_powder",
+        nature: "powder",
         type: "dredge",
         collectionMethod: "dredging.chain_bag",
         collectionMethodDescription: "Chain bag dredge on the second pass",
@@ -105,7 +105,7 @@ describe("updateSample", () => {
     // Act
     const updated = await updateSample(db, created.id, {
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       collectionMethod: null,
     });
@@ -122,7 +122,7 @@ describe("updateSample", () => {
         "01890a5d-ac96-774b-bcce-b302099a8057",
         {
           name: "Grès de Fontainebleau",
-          nature: "rock_powder",
+          nature: "powder",
           type: null,
           collectionMethod: null,
         },

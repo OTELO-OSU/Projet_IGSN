@@ -157,6 +157,8 @@ function fakeApi(
     id: "3f2504e0-4f89-41d3-9a0c-0305e82c3301",
     attachments,
     name: "Basalte du Massif Central",
+    localId: null,
+    localIdDescription: null,
     nature: "thin_section",
     type: "dredge",
     material,

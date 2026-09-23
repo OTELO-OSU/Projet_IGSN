@@ -170,7 +170,7 @@ describe("publishSample", () => {
     // Arrange
     const created = await insertSample(db, {
       name: "Grès de Fontainebleau",
-      nature: "rock_powder",
+      nature: "powder",
       type: null,
       material: "rock_and_sediment.sediment",
       collectionMethod: null,

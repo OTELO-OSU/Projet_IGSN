@@ -31,6 +31,8 @@ const processStep = {
 const source: Sample = {
   id: SOURCE_ID,
   name: "Basalte du Massif Central",
+  localId: "MC-2026-007",
+  localIdDescription: "Collection catalogue number",
   nature: "thin_section",
   type: "dredge",
   material: "rock_and_sediment.mineral",

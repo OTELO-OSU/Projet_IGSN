@@ -13,7 +13,7 @@ import { listSamplesAssignedTo } from "./list-sample.ts";
 function insertSampleNamed(db: Transactional<DB>, name: string) {
   return insertSample(db, {
     name,
-    nature: "rock_powder",
+    nature: "powder",
     type: null,
     collectionMethod: null,
   });

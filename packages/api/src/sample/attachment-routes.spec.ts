@@ -55,7 +55,7 @@ async function createTestApp(db: Parameters<typeof createApp>[0]) {
 
 const sampleBody = {
   name: "Grès de Fontainebleau",
-  nature: "rock_powder",
+  nature: "powder",
   type: "individual_sample",
   material: "rock_and_sediment.sediment.exogenous_detritic.clay",
   specificName: "FTB-2026-042",

@@ -138,7 +138,10 @@ export const FIELD_SAMPLE_RECORD: CoreSample = {
     sampleIdentifier: IGSN,
     doi: `${DOI_PREFIX}/${IGSN}`,
     landingPage: `${FRONTEND_URL}samples/${IGSN}`,
-    titles: [{ value: "Granite outcrop block", titleType: "Main" }],
+    titles: [
+      { value: "Granite outcrop block", titleType: "Main" },
+      { value: "NCY-2024-017", titleType: "Other" },
+    ],
     localName: "Block A",
   },
   classification: {
@@ -480,7 +483,10 @@ const SUB_SAMPLE_RECORD: CoreSample = {
   ...FIELD_SAMPLE_RECORD,
   identification: {
     ...FIELD_SAMPLE_RECORD.identification,
-    titles: [{ value: "Thin section of the block", titleType: "Main" }],
+    titles: [
+      { value: "Thin section of the block", titleType: "Main" },
+      { value: "NCY-2024-017", titleType: "Other" },
+    ],
   },
   production: {
     ...FIELD_SAMPLE_RECORD.production,

@@ -121,6 +121,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -130,6 +131,22 @@ describe("SampleForm", () => {
         ...NO_ANSWERS,
       }),
     );
+  });
+
+  it("should offer the local id description only once a local id is entered", async () => {
+    const screen = await render(
+      <SampleForm onCancel={noop} primaryAction={createAction(noop)} />,
+    );
+
+    await expect
+      .element(screen.getByLabelText("Local ID description"))
+      .not.toBeInTheDocument();
+
+    await screen.getByLabelText("Local ID").fill("MC-2026-007");
+
+    await expect
+      .element(screen.getByLabelText("Local ID description"))
+      .toBeVisible();
   });
 
   it("should submit a name alone with a null nature", async () => {
@@ -150,6 +167,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -193,6 +211,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -225,6 +244,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -255,6 +275,7 @@ describe("SampleForm", () => {
         nature: "thin_section",
         type: "core",
         material: "rock_and_sediment",
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -331,6 +352,7 @@ describe("SampleForm", () => {
         texture: "phaneritic",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -383,6 +405,7 @@ describe("SampleForm", () => {
         texture: "phaneritic",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -437,6 +460,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment.rock.igneous.volcanic",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -534,6 +558,7 @@ describe("SampleForm", () => {
         metamorphicFacies: "amphibolite",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -596,6 +621,7 @@ describe("SampleForm", () => {
         metamorphicFabric: "schistose",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -648,6 +674,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment.rock.igneous",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -681,6 +708,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: "MC-2026-007",
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -735,6 +763,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment",
         collectionMethod: "coring.gravity_corer.giant",
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -793,6 +822,7 @@ describe("SampleForm", () => {
         collectionMethod: null,
         collectionMethodDescription:
           "Cored at low tide from the northern outcrop",
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -825,6 +855,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -866,6 +897,7 @@ describe("SampleForm", () => {
         material: "rock_and_sediment",
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,
@@ -1220,6 +1252,7 @@ describe("SampleForm", () => {
           materialOtherName: null,
           collectionMethod: null,
           collectionMethodDescription: null,
+          localId: null,
           specificName: "MC-2026-007",
           geologicalContextDescription: null,
           physiographicEnvironment: null,

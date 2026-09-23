@@ -9,7 +9,7 @@ function sampleItem(overrides: Partial<CardSample> = {}): CardSample {
   return {
     igsn: "0123456789ABCDEFGHJKMNPQRS",
     name: "Basalt 42",
-    nature: "rock_powder",
+    nature: "powder",
     type: null,
     material: "rock_and_sediment.rock.igneous",
     materialOtherName: null,
@@ -77,7 +77,7 @@ describe("SampleList", () => {
     expect(cardLines(card)).toEqual([
       "Basalt 42",
       "0123456789ABCDEFGHJKMNPQRS",
-      "Core > Core Half round / Rock powder",
+      "Core > Core Half round / Powder",
       "Rock and sediment > Rock > Igneous > Fresh basalt",
       "France > Piton de la Fournaise",
       "Collector name: Marie Curie",
@@ -91,7 +91,7 @@ describe("SampleList", () => {
     expect(cardLines(card)).toEqual([
       "Basalt 42",
       "0123456789ABCDEFGHJKMNPQRS",
-      "Rock powder",
+      "Powder",
     ]);
   });
 
@@ -175,7 +175,7 @@ describe("SampleList", () => {
     expect(cardLines(card)).toEqual([
       "Basalt 42",
       "0123456789ABCDEFGHJKMNPQRS",
-      "Rock powder",
+      "Powder",
       "Rock and sediment > Rock > Igneous",
     ]);
   });

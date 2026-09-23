@@ -556,6 +556,7 @@ describe("SampleDescriptionFields", () => {
         materialOtherName: null,
         collectionMethod: null,
         collectionMethodDescription: null,
+        localId: null,
         specificName: null,
         geologicalContextDescription: null,
         physiographicEnvironment: null,

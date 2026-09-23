@@ -9,7 +9,7 @@ import type { DB } from "../../db.ts";
 import { unaccented } from "../../unaccented.ts";
 import { fuzzyThreshold } from "./fuzzy-threshold.ts";
 
-const SEARCHED_COLUMNS = ["name", "specific_name"] as const;
+const SEARCHED_COLUMNS = ["name", "specific_name", "local_id"] as const;
 
 const FUZZY_MIN_LENGTH = 5;
 

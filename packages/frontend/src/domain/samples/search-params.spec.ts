@@ -98,7 +98,7 @@ describe("searchQueryParams", () => {
       searchQueryParams({
         q: "granite",
         bbox: "-10,40,10,50",
-        nature: "rock_powder",
+        nature: "powder",
         page: 1,
       }),
     ).toEqual({
@@ -106,17 +106,17 @@ describe("searchQueryParams", () => {
       perPage: PER_PAGE,
       search: "granite",
       bbox: "-10,40,10,50",
-      filters: { nature: "rock_powder" },
+      filters: { nature: "powder" },
     });
   });
 
   it("should search on a facet alone", () => {
-    expect(searchQueryParams({ nature: "rock_powder", page: 1 })).toEqual({
+    expect(searchQueryParams({ nature: "powder", page: 1 })).toEqual({
       page: 1,
       perPage: PER_PAGE,
       search: undefined,
       bbox: undefined,
-      filters: { nature: "rock_powder" },
+      filters: { nature: "powder" },
     });
   });
 

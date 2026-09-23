@@ -400,8 +400,8 @@ describe("GET /service/samples", () => {
     {
       rule: "the nature vocabulary",
       param: "natureOfSample",
-      value: "rock_powder",
-      matching: { nature: "rock_powder" as const },
+      value: "powder",
+      matching: { nature: "powder" as const },
       other: { nature: "thin_section" as const },
     },
     {
@@ -509,11 +509,7 @@ describe("GET /service/samples", () => {
   pgTest("should count only the filtered samples", async ({ db }) => {
     // Arrange
     const { app } = await arrangeAccount(db);
-    for (const nature of [
-      "rock_powder",
-      "rock_powder",
-      "thin_section",
-    ] as const) {
+    for (const nature of ["powder", "powder", "thin_section"] as const) {
       const sample = await inLaboratory(
         db,
         { ...publishableSample, nature },
@@ -522,7 +518,7 @@ describe("GET /service/samples", () => {
       await publishSample(db, sample.id);
     }
     // Act
-    const res = await listSamples(app, { natureOfSample: "rock_powder" });
+    const res = await listSamples(app, { natureOfSample: "powder" });
     // Assert
     const body = coreListSamplesResponseSchema.parse(await res.json());
     expect(body.meta.total).toBe(2);
@@ -1475,6 +1471,34 @@ describe("PUT /service/samples/:igsn", () => {
       ]);
     },
   );
+
+  pgTest.for([
+    {
+      rule: "keep the stored local id description when the local id stays",
+      body: core,
+      expected: "Number in the quarry collection catalogue",
+    },
+    {
+      rule: "drop it when the local id goes",
+      body: (sample: Sample) => renamed(sample, sample.name),
+      expected: null,
+    },
+  ])("should $rule", async ({ body, expected }, { db }) => {
+    // Arrange
+    const { app } = await arrangeAccount(db);
+    const created = await publishedInReach(db, {
+      ...publishableSample,
+      localId: "NCY-2024-017",
+      localIdDescription: "Number in the quarry collection catalogue",
+    });
+    // Act
+    const res = await putSample(app, created.igsn!, body(created));
+    // Assert
+    expect(res.status).toBe(200);
+    expect((await readSample(db, created.id))?.localIdDescription).toBe(
+      expected,
+    );
+  });
 
   pgTest(
     "should keep every person account link through an unchanged round trip",

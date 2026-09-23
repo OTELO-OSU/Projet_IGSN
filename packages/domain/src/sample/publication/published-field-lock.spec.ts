@@ -16,6 +16,8 @@ const LINKED_USER_ID = "b7b3e4c2-1f9a-4a4f-9c3e-2d1f7a5c8e10";
 const stored: Sample = {
   id: "11111111-1111-1111-1111-111111111111",
   name: "Stored name",
+  localId: null,
+  localIdDescription: null,
   nature: "hand_sample",
   type: "core",
   material: "rock_and_sediment.rock.igneous.plutonic",
@@ -107,7 +109,9 @@ const stored: Sample = {
 function incoming(overrides: Partial<CreateSample> = {}): CreateSample {
   return {
     name: "Edited name",
-    nature: "rock_powder",
+    localId: null,
+    localIdDescription: null,
+    nature: "powder",
     type: "dredge",
     material: "rock_and_sediment.sediment",
     materialOtherName: null,
@@ -212,7 +216,7 @@ describe("mergePublishedEdit", () => {
     expect(merged.specificName).toBe("edited specific");
     expect(merged.resourceType).toBe("hydrocarbon");
     expect(merged.name).toBe("Edited name");
-    expect(merged.nature).toBe("rock_powder");
+    expect(merged.nature).toBe("powder");
     expect(merged.type).toBe("dredge");
     expect(merged.description).toEqual(payload.description);
     expect(merged.relations).toEqual(relations);

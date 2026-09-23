@@ -578,7 +578,7 @@ export const SEED_SAMPLES: SeedSample[] = [
     id: "00000000-0000-7000-8000-000000000001",
     name: "Fontainebleau Sandstone",
     owner: "marie",
-    nature: "rock_powder",
+    nature: "powder",
     type: "dredge",
     material: "rock_and_sediment.rock.sedimentary",
     collectionMethod: "dredging.chain_bag",
