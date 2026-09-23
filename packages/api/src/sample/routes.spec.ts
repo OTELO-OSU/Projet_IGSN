@@ -13,6 +13,12 @@ import { setSampleStatus } from "./service/set-sample-status.ts";
 
 const authHeader = { Authorization: "Bearer test-token" };
 
+const PUBLIC_REPOSITORY = {
+  currentArchiveOsu: "OASU",
+  currentArchiveLaboratory: "UMR5805",
+  rightsHolder: ["03fd77x13"],
+};
+
 async function acceptedClient(db: Parameters<typeof createApp>[0]) {
   await provisionUser(db, "test-token", { status: "accepted" });
   return testClient(createApp(db).app);
@@ -55,7 +61,7 @@ async function createSample(
           collectionCuratorLastname: "Cuvier",
           collectionOrigin: "scientific_expedition",
         },
-        repository: { currentArchive: "02feahw73" },
+        repository: PUBLIC_REPOSITORY,
       },
     },
     { headers: authHeader },
@@ -496,7 +502,7 @@ describe("public sample routes", () => {
   );
 
   pgTest(
-    "should never expose the archive contacts on a public payload",
+    "should expose the archive institutions and the rights holders but never the archive contacts on a public payload",
     async ({ db }) => {
       // Arrange
       const client = await acceptedClient(db);
@@ -509,8 +515,6 @@ describe("public sample routes", () => {
         .set({
           rep_current_archive_contact_firstname: "Ada",
           rep_current_archive_contact_lastname: "Archiviste",
-          rep_original_archive_contact_firstname: "Marie",
-          rep_original_archive_contact_lastname: "Museum",
         })
         .where("id", "=", published.id)
         .execute();
@@ -522,17 +526,16 @@ describe("public sample routes", () => {
         query: { page: "1", perPage: "10" },
       });
       // Assert
-      const redacted = {
+      const publicRepository = {
+        ...PUBLIC_REPOSITORY,
         currentArchiveContactFirstname: null,
         currentArchiveContactLastname: null,
-        originalArchiveContactFirstname: null,
-        originalArchiveContactLastname: null,
       };
       expect(await detail.json()).toMatchObject({
-        data: { repository: redacted },
+        data: { repository: publicRepository },
       });
       expect(await list.json()).toMatchObject({
-        data: [{ repository: redacted }],
+        data: [{ repository: publicRepository }],
       });
     },
   );
@@ -626,7 +629,7 @@ describe("public sample routes", () => {
                 },
               ],
             },
-            repository: { currentArchive: "02feahw73" },
+            repository: { currentArchiveOsu: "OASU" },
           },
         },
         { headers: authHeader },

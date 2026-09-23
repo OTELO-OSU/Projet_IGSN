@@ -25,6 +25,7 @@ const CONTRIBUTOR_TYPES = [
   "ProjectManager",
   "ProjectMember",
   "DataManager",
+  "RightsHolder",
 ] as const;
 
 export type DataCiteContributorType = (typeof CONTRIBUTOR_TYPES)[number];

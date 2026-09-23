@@ -36,7 +36,10 @@ import {
   createSampleRelationSchema,
   sampleRelationSchema,
 } from "./relation/model.ts";
-import { repositorySchema } from "./repository/model.ts";
+import {
+  createRepositorySchema,
+  repositorySchema,
+} from "./repository/model.ts";
 import { resourceTypeSchema } from "./resource-type/vocabulary.ts";
 import {
   createScientificContextSchema,
@@ -139,7 +142,7 @@ const createSampleFieldsSchema = z.strictObject({
   location: locationSchema.nullish(),
   description: descriptionSchema.nullish(),
   condition: conditionSchema.nullish(),
-  repository: repositorySchema.nullish(),
+  repository: createRepositorySchema.nullish(),
   geologicalContextDescription: freeTextSchema.nullish(),
   physiographicEnvironment: physiographicEnvironmentSchema.nullish(),
   scientificContext: createScientificContextSchema.nullish(),

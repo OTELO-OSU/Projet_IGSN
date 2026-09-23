@@ -42,17 +42,15 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   existenceStatus: "curation.existenceStatus",
   availabilityStatus: "curation.availabilityStatus",
   repository: "curation",
-  "repository.currentArchive": "curation.currentRepository.organization",
+  "repository.currentArchiveOsu": "curation.currentRepository.organizations",
+  "repository.currentArchiveLaboratory":
+    "curation.currentRepository.organizations",
+  "repository.rightsHolder": "responsibility",
   "repository.currentArchiveContactFirstname":
     "curation.currentRepository.contactFirstName",
   "repository.currentArchiveContactLastname":
     "curation.currentRepository.contactLastName",
   "repository.collectionName": "curation.currentRepository.collectionName",
-  "repository.originalArchive": "curation.originalRepository.organization.name",
-  "repository.originalArchiveContactFirstname":
-    "curation.originalRepository.contactFirstName",
-  "repository.originalArchiveContactLastname":
-    "curation.originalRepository.contactLastName",
 
   condition: "curation.sampleCondition",
   "condition.storageConditions": "curation.sampleCondition.storageCondition",

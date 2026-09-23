@@ -4,6 +4,9 @@ import type { SyntheticDetails } from "../synthetic-details/model.ts";
 const ORGANIZATION_ROR = "02feahw73";
 const OSU_CODE = "OMP";
 const LABORATORY_CODE = "UMR3589";
+const ARCHIVE_OSU_CODE = "OASU";
+const ARCHIVE_LABORATORY_CODE = "UMR5805";
+const RIGHTS_HOLDER_RORS = ["03fd77x13", "02cte4b68"];
 
 export const SYNTHETIC_DETAILS: SyntheticDetails = {
   startingMaterial: "synthetic",
@@ -86,13 +89,12 @@ export const FIELD_SAMPLE: Sample = {
     specificConditions: "Kept away from vibration",
   },
   repository: {
-    currentArchive: ORGANIZATION_ROR,
+    currentArchiveOsu: ARCHIVE_OSU_CODE,
+    currentArchiveLaboratory: ARCHIVE_LABORATORY_CODE,
     currentArchiveContactFirstname: "Pierre",
     currentArchiveContactLastname: "Curie",
     collectionName: "Lorraine granites",
-    originalArchive: "Ecole des Mines collection",
-    originalArchiveContactFirstname: "Henri",
-    originalArchiveContactLastname: "Becquerel",
+    rightsHolder: RIGHTS_HOLDER_RORS,
   },
   geologicalContextDescription: "Hercynian basement",
   physiographicEnvironment: "continental.badlands",

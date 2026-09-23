@@ -33,7 +33,9 @@ export const publishableSample = {
     collectionOrigin: "scientific_expedition" as const,
   },
   repository: {
-    currentArchive: "02feahw73",
+    currentArchiveOsu: "OASU",
+    currentArchiveLaboratory: "UMR5805",
+    rightsHolder: ["03fd77x13"],
   },
 } satisfies CreateSample;
 

@@ -21,6 +21,7 @@ const CONTRIBUTOR_TYPE_BY_ROLE: Record<
   Collector: "DataCollector",
   ChiefScientist: "ProjectLeader",
   HostingInstitution: "HostingInstitution",
+  SampleOwner: "RightsHolder",
   Curator: "DataCurator",
   Researcher: "Researcher",
   ProjectManager: "ProjectManager",

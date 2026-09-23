@@ -1,9 +1,11 @@
 import type { Condition } from "../condition/model.ts";
 import type { Repository } from "../repository/model.ts";
 import type { CoreCuration } from "./core-curation-schema.ts";
+import type { CoreAgentRole } from "./core-sample-schema.ts";
 
 import { orNull } from "./core-optional.ts";
-import { fromRorUri } from "./core-production-schema.ts";
+import { responsibilityFinders } from "./from-core-responsibility.ts";
+import { fromLaboratoryUri, fromOsuUri } from "./institution-uri.ts";
 import { fromQuantity } from "./quantity.ts";
 
 export function fromCoreCondition(curation: CoreCuration): Condition | null {
@@ -39,17 +41,24 @@ export function fromCoreCondition(curation: CoreCuration): Condition | null {
   };
 }
 
-export function fromCoreRepository(curation: CoreCuration): Repository | null {
+export function fromCoreRepository(
+  curation: CoreCuration,
+  responsibility: CoreAgentRole[],
+): Repository | null {
   const current = curation.currentRepository;
-  const original = curation.originalRepository;
-  if (current == null && original == null) return null;
+  const rightsHolder =
+    responsibilityFinders(responsibility).rorsOf("SampleOwner");
+  if (current == null && rightsHolder == null) return null;
+  const codeOf = (fromUri: (uri: string) => string | null) =>
+    (current?.organizations ?? [])
+      .map(({ id }) => fromUri(id))
+      .find((code) => code != null) ?? null;
   return {
-    currentArchive: orNull(current?.organization?.id, fromRorUri),
+    currentArchiveOsu: codeOf(fromOsuUri),
+    currentArchiveLaboratory: codeOf(fromLaboratoryUri),
     currentArchiveContactFirstname: current?.contactFirstName ?? null,
     currentArchiveContactLastname: current?.contactLastName ?? null,
     collectionName: current?.collectionName ?? null,
-    originalArchive: original?.organization?.name ?? null,
-    originalArchiveContactFirstname: original?.contactFirstName ?? null,
-    originalArchiveContactLastname: original?.contactLastName ?? null,
+    rightsHolder,
   };
 }

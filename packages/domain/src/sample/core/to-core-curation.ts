@@ -1,7 +1,6 @@
 import type { Sample } from "../sample.ts";
 import type { CoreCuration } from "./core-curation-schema.ts";
 
-import { organizationLabel } from "../../institutional-group/label.ts";
 import { availabilityStatusSchema } from "../curation/availability-status.ts";
 import { existenceStatusSchema } from "../curation/existence-status.ts";
 import { toConcept } from "./concept.ts";
@@ -10,30 +9,20 @@ import {
   coreExistenceStatus,
 } from "./core-curation-schema.ts";
 import { isEmpty, optionalConcept, optionalQuantity } from "./core-optional.ts";
-import { toRorUri } from "./core-production-schema.ts";
+import { institutionOrganizations } from "./institution-uri.ts";
 
 export function toCoreCuration(sample: Sample): CoreCuration {
   const repository = sample.repository;
   const condition = sample.condition;
+  const organizations = institutionOrganizations(
+    repository?.currentArchiveOsu,
+    repository?.currentArchiveLaboratory,
+  );
   const currentRepository = {
-    organization:
-      repository?.currentArchive == null
-        ? undefined
-        : {
-            id: toRorUri(repository.currentArchive),
-            name: organizationLabel(repository.currentArchive),
-          },
+    organizations: organizations.length === 0 ? undefined : organizations,
     collectionName: repository?.collectionName ?? undefined,
     contactFirstName: repository?.currentArchiveContactFirstname ?? undefined,
     contactLastName: repository?.currentArchiveContactLastname ?? undefined,
-  };
-  const originalRepository = {
-    organization:
-      repository?.originalArchive == null
-        ? undefined
-        : { name: repository.originalArchive },
-    contactFirstName: repository?.originalArchiveContactFirstname ?? undefined,
-    contactLastName: repository?.originalArchiveContactLastname ?? undefined,
   };
   const sampleCondition = {
     storageCondition: condition?.storageConditions?.map((storage) =>
@@ -62,9 +51,6 @@ export function toCoreCuration(sample: Sample): CoreCuration {
     currentRepository: isEmpty(currentRepository)
       ? undefined
       : currentRepository,
-    originalRepository: isEmpty(originalRepository)
-      ? undefined
-      : originalRepository,
     sampleCondition: isEmpty(sampleCondition) ? undefined : sampleCondition,
   };
 }

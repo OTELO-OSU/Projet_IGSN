@@ -9,8 +9,6 @@ export function redactPrivateContacts(sample: Sample): Sample {
       ...sample.repository,
       currentArchiveContactFirstname: null,
       currentArchiveContactLastname: null,
-      originalArchiveContactFirstname: null,
-      originalArchiveContactLastname: null,
     },
   });
 }

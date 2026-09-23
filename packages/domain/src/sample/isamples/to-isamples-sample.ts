@@ -14,7 +14,10 @@ import { toISamplesSamplingEvent } from "./to-isamples-sampling-event.ts";
 const toCurationLocation = (
   repository: CoreSample["curation"]["currentRepository"],
 ): string | undefined => {
-  const parts = [repository?.organization?.name, repository?.collectionName];
+  const parts = [
+    ...(repository?.organizations ?? []).map(({ name }) => name),
+    repository?.collectionName,
+  ];
   return parts.filter((part) => part != null).join(", ") || undefined;
 };
 

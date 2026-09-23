@@ -354,7 +354,9 @@ const SEED_PUBLICATION_YEAR = 2025;
 const SEED_DOI_PREFIX = "10.70113";
 
 const SEED_REPOSITORY = {
-  currentArchive: "02feahw73",
+  currentArchiveOsu: "OASU",
+  currentArchiveLaboratory: "UMR5805",
+  rightsHolder: ["03fd77x13"],
   currentArchiveContactFirstname: "Camille",
   currentArchiveContactLastname: "Durand",
   collectionName: "National rock reference collection",

@@ -420,11 +420,10 @@ describe("the parent read for prefill", () => {
       const created = await insertSample(db, {
         ...publishableSample,
         repository: {
-          currentArchive: "02feahw73",
+          currentArchiveOsu: "OASU",
+          currentArchiveLaboratory: "UMR5805",
           currentArchiveContactFirstname: "Camille",
           currentArchiveContactLastname: "Durand",
-          originalArchiveContactFirstname: "Louise",
-          originalArchiveContactLastname: "Mercier",
         },
       });
       await insertSampleOwner(db, created.id, stranger.id);

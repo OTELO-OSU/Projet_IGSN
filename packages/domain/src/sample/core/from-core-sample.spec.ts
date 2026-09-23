@@ -129,10 +129,10 @@ describe("fromCoreSample", () => {
       curation: {
         ...FIELD_SAMPLE_RECORD.curation,
         currentRepository: {
-          organization: {
-            id: "https://ror.org/02feahw73",
-            name: ORGANIZATION_NAME,
-          },
+          organizations: [
+            { id: "urn:otelo:osu:OASU", name: "OASU (OASU)" },
+            { id: "urn:otelo:laboratory:UMR5805", name: "EPOC" },
+          ],
           collectionName: "Lorraine granites",
           contactFirstName: "Jean Pierre",
           contactLastName: "Curie",
@@ -141,13 +141,12 @@ describe("fromCoreSample", () => {
     };
 
     expect(fromCoreSample(body).sample.repository).toEqual({
-      currentArchive: "02feahw73",
+      currentArchiveOsu: "OASU",
+      currentArchiveLaboratory: "UMR5805",
       currentArchiveContactFirstname: "Jean Pierre",
       currentArchiveContactLastname: "Curie",
       collectionName: "Lorraine granites",
-      originalArchive: "Ecole des Mines collection",
-      originalArchiveContactFirstname: "Henri",
-      originalArchiveContactLastname: "Becquerel",
+      rightsHolder: ["03fd77x13", "02cte4b68"],
     });
   });
 });

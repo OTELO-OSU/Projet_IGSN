@@ -15,6 +15,7 @@ const ISAMPLES_ROLES: Record<CoreRole, string> = {
   Curator: "curator",
   Registrant: "registrant",
   HostingInstitution: "hostingInstitution",
+  SampleOwner: "sampleOwner",
   ProjectManager: "projectManager",
   ProjectMember: "projectMember",
   DataManager: "dataManager",
