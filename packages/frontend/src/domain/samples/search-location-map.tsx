@@ -1,5 +1,8 @@
 import "leaflet/dist/leaflet.css";
-import { bboxSchema } from "@projet-igsn/domain/sample/sample-validator";
+import {
+  type Bbox,
+  bboxSchema,
+} from "@projet-igsn/domain/sample/sample-validator";
 import { splitBbox } from "@projet-igsn/domain/sample/split-bbox";
 import { type LatLng, type LatLngBoundsExpression, Util } from "leaflet";
 import { useEffect, useRef, useState } from "react";
@@ -11,7 +14,7 @@ import {
   useMapEvents,
 } from "react-leaflet";
 
-const WORLD_BOUNDS: LatLngBoundsExpression = [
+export const WORLD_BOUNDS: LatLngBoundsExpression = [
   [-90, -180],
   [90, 180],
 ];
@@ -35,14 +38,26 @@ export function formatBbox(a: LatLng, b: LatLng): string {
   return `${west},${Math.min(...lats)},${east},${Math.max(...lats)}`;
 }
 
-function toBoundsList(bbox: string | undefined): LatLngBoundsExpression[] {
+export function toBoundsList(bbox: Bbox): LatLngBoundsExpression[] {
+  return splitBbox(bbox).map(({ west, south, east, north }) => [
+    [south, west],
+    [north, east],
+  ]);
+}
+
+function parseBoundsList(bbox: string | undefined): LatLngBoundsExpression[] {
   const parsed = bboxSchema.safeParse(bbox);
-  if (!parsed.success) return [];
-  return splitBbox(parsed.data).map(
-    ({ west, south, east, north }): LatLngBoundsExpression => [
-      [south, west],
-      [north, east],
-    ],
+  return parsed.success ? toBoundsList(parsed.data) : [];
+}
+
+// ponytail: OSM public tiles are a known ceiling, self-host if traffic grows.
+export function OsmTileLayer() {
+  return (
+    <TileLayer
+      noWrap
+      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+    />
   );
 }
 
@@ -113,7 +128,7 @@ export function RectangleDrawer({
     setDraft(null);
   }, [drawing]);
 
-  const [westHalf, eastHalf] = draft ? [draft] : toBoundsList(bbox);
+  const [westHalf, eastHalf] = draft ? [draft] : parseBoundsList(bbox);
   return (
     <>
       {westHalf ? <Rectangle bounds={westHalf} /> : null}
@@ -143,7 +158,7 @@ export function InvalidateOnResize({ compact }: { compact: boolean }) {
 export function FitSelection({ bbox }: { bbox: string | undefined }) {
   const map = useMap();
   useEffect(() => {
-    const [bounds, ...rest] = toBoundsList(bbox);
+    const [bounds, ...rest] = parseBoundsList(bbox);
     if (bounds) map.fitBounds(rest.length > 0 ? WORLD_BOUNDS : bounds);
   }, [bbox, map]);
   return null;
@@ -172,13 +187,7 @@ export function SearchLocationMap({
       maxBoundsViscosity={1}
       className="z-0 h-full w-full rounded-md select-none"
     >
-      {/* ponytail: OSM public tiles are a known ceiling, self-host if traffic
-          grows. */}
-      <TileLayer
-        noWrap
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <OsmTileLayer />
       <RectangleDrawer bbox={value} drawing={drawing} onSelect={onChange} />
       <DrawCursor drawing={drawing} />
       <InvalidateOnResize compact={compact} />

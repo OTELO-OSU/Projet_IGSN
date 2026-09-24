@@ -17,6 +17,18 @@ test.describe("sample detail", () => {
     await detail.expectNoLineage();
   });
 
+  test("a reader sees where a sample was taken on its map", async ({
+    page,
+    samples,
+  }) => {
+    const sample = sampleNamed(samples, "Basalt 42");
+
+    const detail = sampleDetailPage(page);
+    await detail.goto(sample.igsn);
+
+    await detail.expectLocationOnMap("Latitude: 45.77, Longitude: 2.96");
+  });
+
   test("a reader who is not signed in is not offered a sub sample", async ({
     page,
     samples,

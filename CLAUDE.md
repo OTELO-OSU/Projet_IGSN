@@ -35,6 +35,7 @@
 - Read a package's docs with Context7 before using or configuring it, never from memory.
 - Add a sample vocabulary value with the `add-sample-vocabulary` skill.
 - Add a sample form field with the `add-domain-entity` then `add-admin-component` skills.
+- Take demo screenshots with Playwright in Chromium, never Chrome.
 
 ## Commands
 

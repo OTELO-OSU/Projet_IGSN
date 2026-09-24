@@ -9,6 +9,9 @@ export function sampleDetailPage(page: Page) {
     exact: true,
   });
   const lineage = page.getByRole("region", { name: "Lineage" });
+  const locationMap = page
+    .getByRole("region", { name: "Sample", exact: true })
+    .getByRole("group", { name: "Sample location map" });
   const lineageLink = (name: string, relation: string) =>
     lineage.getByRole("link", { name: `${name} ${relation}` });
 
@@ -109,6 +112,10 @@ export function sampleDetailPage(page: Page) {
       await expect(lineage.locator(".react-flow__edge")).not.toHaveCount(0);
     },
     expectNoLineage: () => expect(lineage).toHaveCount(0),
+    expectLocationOnMap: async (coordinates: string) => {
+      await locationMap.locator(".leaflet-interactive").hover();
+      await expect(locationMap.getByRole("tooltip")).toHaveText(coordinates);
+    },
     expectAttachment: (label: string) =>
       expect(page.getByText(label, { exact: true })).toBeVisible(),
     attachmentDownloadHref: (name: string) =>
