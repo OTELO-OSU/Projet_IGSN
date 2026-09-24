@@ -3,6 +3,16 @@ import type {
   SampleLineageNode,
 } from "@projet-igsn/domain/sample/lineage/model";
 
+import {
+  RouterProvider,
+  createMemoryHistory,
+  createRootRoute,
+  createRoute,
+  createRouter,
+} from "@tanstack/react-router";
+import { render as renderRoot } from "vitest-browser-react";
+import { userEvent } from "vitest/browser";
+
 import { renderWithRouter } from "../../../test/render-with-router.tsx";
 import { LineageView } from "./lineage-view.tsx";
 
@@ -126,5 +136,61 @@ describe("LineageView", () => {
     await expect
       .element(screen.getByRole("link", { name: /Thin section 4/ }))
       .not.toBeInTheDocument();
+  });
+
+  it("should fit the fullscreen graph to the new tree after navigating to a relative", async () => {
+    const lineages: Record<string, SampleLineage> = {
+      IGSNcurrent: lineage(
+        [node("current", 0, "Basalt 42"), node("parent", -1, "Basalt 41")],
+        [edge("parent", "current")],
+      ),
+      IGSNparent: lineage(
+        [
+          node("parent", 0, "Basalt 41"),
+          node("current", 1, "Basalt 42"),
+          node("child", 2, "Basalt 43"),
+        ],
+        [edge("parent", "current"), edge("current", "child")],
+      ),
+    };
+    const rootRoute = createRootRoute();
+    const sampleRoute = createRoute({
+      getParentRoute: () => rootRoute,
+      path: "/samples/$igsn",
+      component: function SamplePage() {
+        const { igsn } = sampleRoute.useParams();
+        return <LineageView lineage={lineages[igsn]!} />;
+      },
+    });
+    const screen = await renderRoot(
+      <RouterProvider
+        router={createRouter({
+          routeTree: rootRoute.addChildren([sampleRoute]),
+          history: createMemoryHistory({
+            initialEntries: ["/samples/IGSNcurrent"],
+          }),
+        })}
+      />,
+    );
+
+    await screen.getByRole("button", { name: "Expand the lineage" }).click();
+    const dialog = screen.getByRole("dialog", { name: "Sample lineage" });
+    const parent = dialog.getByRole("link", {
+      name: "Basalt 41 Parent sample",
+    });
+    await expect.element(parent).toBeInTheDocument();
+    parent.element().focus();
+    await userEvent.keyboard("{Enter}");
+
+    const graph = dialog.getByTestId("rf__wrapper");
+    const farthest = dialog.getByText("Basalt 43");
+    await expect.element(farthest).toBeInTheDocument();
+    await expect
+      .poll(() => {
+        const box = graph.element().getBoundingClientRect();
+        const node = farthest.element().getBoundingClientRect();
+        return node.left >= box.left && node.right <= box.right;
+      })
+      .toBe(true);
   });
 });

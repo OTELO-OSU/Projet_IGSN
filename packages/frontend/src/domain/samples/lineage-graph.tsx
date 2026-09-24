@@ -101,8 +101,13 @@ export function LineageGraph({
   edges: LineageEdge[];
   zoomable?: boolean;
 }) {
+  const rootId = nodes.find(
+    (node) => node.kind === "sample" && node.generation === 0,
+  )?.id;
+
   return (
     <ReactFlow<LineageNodeType>
+      key={rootId}
       nodes={layoutLineage(nodes, edges).map(toFlowNode)}
       edges={edges.map(({ parentId, childId }) => ({
         id: `${parentId}-${childId}`,
