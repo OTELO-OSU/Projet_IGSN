@@ -41,6 +41,9 @@ ENV VITE_OIDC_CLIENT_ID=$VITE_OIDC_CLIENT_ID
 ARG VITE_ADMIN_URL=http://localhost:3000/admin
 ENV VITE_ADMIN_URL=$VITE_ADMIN_URL
 
+ARG VITE_FRONTEND_URL=http://localhost:3000
+ENV VITE_FRONTEND_URL=$VITE_FRONTEND_URL
+
 RUN pnpm -F @projet-igsn/frontend build
 
 FROM node:24-alpine AS prod

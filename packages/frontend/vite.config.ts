@@ -17,7 +17,9 @@ const config = defineConfig({
     },
   },
   resolve: { tsconfigPaths: true },
-  optimizeDeps: { include: ["radix-ui", "lucide-react", "cmdk", "sonner"] },
+  optimizeDeps: {
+    include: ["radix-ui", "lucide-react", "cmdk", "sonner", "qrcode.react"],
+  },
   plugins: [
     devtools(),
     nitro({ exportConditions: ["module"], noExternals: ["tslib"] }),

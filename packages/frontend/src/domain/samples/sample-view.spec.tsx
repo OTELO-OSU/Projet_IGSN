@@ -5,6 +5,9 @@ import {
   organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
+import { sampleLandingPage } from "@projet-igsn/domain/sample/core/sample-landing-page";
+
+import { FRONTEND_URL } from "#/frontend-url.ts";
 
 import type { PublishedSample } from "./sample-sections.tsx";
 
@@ -29,6 +32,20 @@ describe("SampleView", () => {
     await expect
       .element(screen.getByText("0123456789ABCDEFGHJKMNPQRS"))
       .toBeInTheDocument();
+  });
+
+  it("should show a QR code labelled for the sample igsn in the hero", async () => {
+    const screen = await render(<SampleView sample={sample()} />);
+
+    await expect
+      .element(screen.getByRole("img", { name: /QR code/ }))
+      .toBeInTheDocument();
+  });
+
+  it("should encode the canonical landing page of the sample", () => {
+    expect(sampleLandingPage("0123456789ABCDEFGHJKMNPQRS", FRONTEND_URL)).toBe(
+      "http://localhost:3000/samples/0123456789ABCDEFGHJKMNPQRS",
+    );
   });
 
   it("should mark only the section being read as the current nav link", async () => {
