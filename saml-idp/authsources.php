@@ -26,14 +26,20 @@ $users = array(
 );
 
 $exampleUserpass = array('exampleauth:UserPass');
-foreach ($users as $login => $info) {
-    list($firstName, $lastName, $uid) = $info;
-    $exampleUserpass["$login:$password"] = array(
-        'eduPersonPrincipalName' => array("$uid@univ-lorraine.fr"),
-        'email' => array("$login@univ-lorraine.fr"),
-        'firstName' => array($firstName),
-        'lastName' => array($lastName),
-    );
+$worlds = array('' => '');
+for ($i = 0; $i < 6; $i++) {
+    $worlds[".w$i"] = "w$i";
+}
+foreach ($worlds as $world => $eppnSuffix) {
+    foreach ($users as $login => $info) {
+        list($firstName, $lastName, $uid) = $info;
+        $exampleUserpass["$login$world:$password"] = array(
+            'eduPersonPrincipalName' => array("$uid$eppnSuffix@univ-lorraine.fr"),
+            'email' => array("$login$world@univ-lorraine.fr"),
+            'firstName' => array($firstName),
+            'lastName' => array($lastName),
+        );
+    }
 }
 
 $config = array(

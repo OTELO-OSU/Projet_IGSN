@@ -3,36 +3,32 @@ import {
   serviceAccountPage,
   serviceAccountsPage,
 } from "../support/admin/service-accounts.page";
-import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
+import { signInAsResearcher } from "../support/admin/sign-in";
 import { test } from "../support/db";
 
 const uniqueName = (name: string) => `${name} ${Date.now()}`;
 
-const LORRAINE = "Université de Lorraine";
-const CRPG = "Centre de recherches pétrographiques et géochimiques";
-const MANAGED_CRPG = `${CRPG} (CRPG) (UMR7358)`;
-const MANUAL_GROUP = "ANR CritMet";
-
 test.describe("service accounts", () => {
   test("a super admin runs a service account through its lifecycle", async ({
     page,
+    world,
   }) => {
+    const { jean, nadia } = world.researchers;
+    const institution = world.institutions.nadia;
+    const manualGroup = world.manualGroups["ANR CritMet"].name;
     const accounts = serviceAccountsPage(page);
     const account = serviceAccountPage(page);
     const name = uniqueName("Gaia harvester");
 
-    await signInAsResearcher(page, RESEARCHERS.nadia);
+    await signInAsResearcher(page, nadia);
     await accounts.open();
     await accounts.expectVisible();
 
     await accounts.goToCreate();
     await account.fillName(name);
-    await account.chooseOwner("Martin", "Jean Martin");
-    await account.chooseInstitution({
-      organization: LORRAINE,
-      laboratory: CRPG,
-    });
-    await account.grant("Managed manual groups", MANUAL_GROUP, MANUAL_GROUP);
+    await account.chooseOwner(jean.email);
+    await account.chooseInstitution(institution);
+    await account.grant("Managed manual groups", manualGroup, manualGroup);
     await account.create();
     await account.expectVisible(name);
 
@@ -41,7 +37,11 @@ test.describe("service accounts", () => {
     await accounts.openAccount(name);
     await account.expectVisible(name);
 
-    await account.grant("Managed laboratories", "UMR7358", MANAGED_CRPG);
+    await account.grant(
+      "Managed laboratories",
+      institution.laboratoryCode,
+      institution.managedLaboratory,
+    );
     await account.save();
 
     await account.remove();
@@ -49,11 +49,14 @@ test.describe("service accounts", () => {
     await accounts.expectNoAccountRow(name);
   });
 
-  test("a space manager has no service accounts section", async ({ page }) => {
+  test("a space manager has no service accounts section", async ({
+    page,
+    world,
+  }) => {
     const accounts = serviceAccountsPage(page);
     const samples = sampleListPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    await signInAsResearcher(page, world.researchers.marie);
     await accounts.expectNoMenuEntry();
 
     await accounts.goto();

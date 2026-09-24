@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
-import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
+import { signInAsResearcher } from "../support/admin/sign-in";
 import { test } from "../support/db";
 
 const fixture = (name: string) => path.join(__dirname, "..", "fixtures", name);
@@ -37,14 +37,16 @@ const TXT_RESOURCE = {
 test.describe("sample relations", () => {
   test("a researcher adds a relation and attaches files", async ({
     page,
-    samples,
+    world,
   }) => {
+    const { pierre } = world.researchers;
+    const { samples } = world;
     const draft = samples.find(
       (sample) => sample.status === "draft" && sample.owner === "pierre",
     );
     if (!draft) throw new Error("seed must include a draft sample for pierre");
 
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, pierre);
     const list = sampleListPage(page);
     await list.openSample(draft.name);
 

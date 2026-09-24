@@ -10,6 +10,13 @@ export function manualGroupsPage(page: Page) {
     page
       .getByRole("row")
       .filter({ has: page.getByRole("link", { name, exact: true }) });
+  const search = async (term: string) => {
+    const searchbox = page.getByRole("searchbox", {
+      name: "Search manual groups",
+    });
+    await searchbox.fill(term);
+    await searchbox.press("Enter");
+  };
 
   return {
     goto: () => page.goto(`${adminUrl}/manual-groups`),
@@ -25,9 +32,9 @@ export function manualGroupsPage(page: Page) {
       await dialog.getByRole("textbox", { name: "Group name" }).fill(name);
       await dialog.getByRole("button", { name: "Create", exact: true }).click();
       await expect(dialog).toBeHidden();
+      await search(name);
     },
-    search: (term: string) =>
-      page.getByRole("searchbox", { name: "Search manual groups" }).fill(term),
+    search,
     openGroup: (name: string) =>
       page.getByRole("link", { name, exact: true }).click(),
     expectGroupRow: (name: string, memberCount: number) =>

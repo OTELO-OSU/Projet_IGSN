@@ -9,7 +9,7 @@ export async function pickComboboxOption(
     chipLabel,
   }: { field: string; option: string; query?: string; chipLabel: string },
 ) {
-  const chip = page.getByRole("button", { name: chipLabel });
+  const chip = page.getByRole("button", { name: chipLabel, exact: true });
   await expect(async () => {
     if (!(await chip.isVisible())) {
       const search = page.getByPlaceholder("Search by name");

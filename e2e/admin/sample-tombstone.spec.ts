@@ -2,7 +2,6 @@ import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { sampleModerationPage } from "../support/admin/sample-moderation.page";
 import {
-  RESEARCHERS,
   signInAsResearcher,
   signInAsResearcherInOwnSession,
 } from "../support/admin/sign-in";
@@ -13,14 +12,16 @@ test.describe("tombstone", () => {
   test("a space manager tombstones a published sample of the labs it manages", async ({
     page,
     browser,
-    samples,
+    world,
   }) => {
     test.slow();
+    const { jean, marie } = world.researchers;
+    const { samples } = world;
     const sample = sampleNamed(samples, "Basalt 42");
     const moderation = sampleModerationPage(page);
     const edit = sampleEditPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    await signInAsResearcher(page, marie);
     await moderation.open();
     await moderation.expectVisible();
     await moderation.openSample(sample.name);
@@ -29,10 +30,7 @@ test.describe("tombstone", () => {
     await edit.saveAnd("Tombstone");
     await moderation.expectVisible();
 
-    const ownerPage = await signInAsResearcherInOwnSession(
-      browser,
-      RESEARCHERS.jean,
-    );
+    const ownerPage = await signInAsResearcherInOwnSession(browser, jean);
     const ownerList = sampleListPage(ownerPage);
     const ownerEdit = sampleEditPage(ownerPage);
     await ownerList.expectVisible();
@@ -48,13 +46,14 @@ test.describe("tombstone", () => {
 
   test("a space manager restores a tombstoned sample as withdrawn, then republishes it", async ({
     page,
-    samples,
+    world,
   }) => {
+    const { samples } = world;
     const sample = tombstone(samples);
     const moderation = sampleModerationPage(page);
     const edit = sampleEditPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    await signInAsResearcher(page, world.researchers.marie);
     await moderation.open();
     await moderation.openSample(sample.name);
 

@@ -6,7 +6,6 @@ import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { settingsPage } from "../support/admin/settings.page";
 import {
-  RESEARCHERS,
   signInAsResearcher,
   signInAsResearcherInOwnSession,
 } from "../support/admin/sign-in";
@@ -23,13 +22,15 @@ const uniqueName = (name: string) => `${name} ${Date.now()}`;
 test.describe("manual groups", () => {
   test("a super admin runs a manual group through its lifecycle", async ({
     page,
+    world,
     request,
   }) => {
+    const { jean, nadia, theo } = world.researchers;
     const groups = manualGroupsPage(page);
     const group = manualGroupPage(page);
     const name = uniqueName("Team Basalt");
 
-    await signInAsResearcher(page, RESEARCHERS.nadia);
+    await signInAsResearcher(page, nadia);
     await groups.open();
     await groups.expectVisible();
 
@@ -38,18 +39,18 @@ test.describe("manual groups", () => {
 
     await groups.openGroup(name);
     await group.expectVisible(name);
-    await group.expectNoSuggestion("Roux");
-    await group.associate("Martin", RESEARCHERS.jean.email);
-    await group.expectMember(RESEARCHERS.jean.email, "Active");
+    await group.expectNoSuggestion(theo.email);
+    await group.associate(jean.email);
+    await group.expectMember(jean.email, "Active");
 
     await maildev(request).expectMail(
-      RESEARCHERS.jean.email,
+      jean.email,
       `Nadia Leroy added you to the group "${name}"`,
       ["/settings"],
     );
 
     await group.detach("Jean Martin");
-    await group.expectNoMember(RESEARCHERS.jean.email);
+    await group.expectNoMember(jean.email);
 
     const renamed = uniqueName("Team Andesite");
     await group.rename(renamed);
@@ -62,39 +63,44 @@ test.describe("manual groups", () => {
 
   test("a super admin attaches a group from the account page", async ({
     page,
+    world,
   }) => {
+    const { camille, nadia } = world.researchers;
     const groups = manualGroupsPage(page);
     const group = manualGroupPage(page);
     const users = usersPage(page);
     const user = userPage(page);
-    const name = uniqueName("Team Dunite");
+    const name = uniqueName("Dunite team");
 
-    await signInAsResearcher(page, RESEARCHERS.nadia);
+    await signInAsResearcher(page, nadia);
     await groups.open();
     await groups.create(name);
 
     await users.open();
     await users.expectVisible();
-    await users.openUser(RESEARCHERS.camille.email);
-    await user.expectVisible(RESEARCHERS.camille.email);
+    await users.openUser(camille.email);
+    await user.expectVisible(camille.email);
 
     await user.associateGroup(name);
     await user.expectGroup(name);
 
     await users.open();
-    await users.expectGroup(RESEARCHERS.camille.email, name);
+    await users.expectGroup(camille.email, name);
 
     await groups.open();
     await groups.openGroup(name);
-    await group.expectMember(RESEARCHERS.camille.email, "Active");
+    await group.expectMember(camille.email, "Active");
   });
 
-  test("a super admin searches the manual groups by name", async ({ page }) => {
+  test("a super admin searches the manual groups by name", async ({
+    page,
+    world,
+  }) => {
     const groups = manualGroupsPage(page);
     const matching = uniqueName("Volcano watchers");
     const other = uniqueName("Sediment readers");
 
-    await signInAsResearcher(page, RESEARCHERS.nadia);
+    await signInAsResearcher(page, world.researchers.nadia);
     await groups.open();
     await groups.create(matching);
     await groups.create(other);
@@ -107,28 +113,27 @@ test.describe("manual groups", () => {
 
   test("a member reads their manual groups in their settings and cannot edit them", async ({
     page,
+    world,
     browser,
   }) => {
     test.slow();
+    const { nadia, pierre } = world.researchers;
     const groups = manualGroupsPage(page);
     const group = manualGroupPage(page);
     const first = uniqueName("Andesite crew");
     const second = uniqueName("Tuff crew");
 
-    await signInAsResearcher(page, RESEARCHERS.nadia);
+    await signInAsResearcher(page, nadia);
     await groups.open();
     for (const name of [first, second]) {
       await groups.create(name);
       await groups.openGroup(name);
-      await group.associate("Durand", RESEARCHERS.pierre.email);
-      await group.expectMember(RESEARCHERS.pierre.email, "Active");
+      await group.associate(pierre.email);
+      await group.expectMember(pierre.email, "Active");
       await groups.open();
     }
 
-    const memberPage = await signInAsResearcherInOwnSession(
-      browser,
-      RESEARCHERS.pierre,
-    );
+    const memberPage = await signInAsResearcherInOwnSession(browser, pierre);
     const settings = settingsPage(memberPage);
     await settings.open();
 
@@ -141,11 +146,12 @@ test.describe("manual groups", () => {
 
   test("a researcher who is not a super admin cannot reach the manual groups", async ({
     page,
+    world,
   }) => {
     const groups = manualGroupsPage(page);
     const samples = sampleListPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.jean);
+    await signInAsResearcher(page, world.researchers.jean);
     await groups.goto();
 
     await samples.expectVisible();
@@ -154,25 +160,24 @@ test.describe("manual groups", () => {
 
   test("a manual group member publishes a sample under their group", async ({
     page,
+    world,
     browser,
   }) => {
     test.slow();
+    const { jean, nadia } = world.researchers;
     const groups = manualGroupsPage(page);
     const group = manualGroupPage(page);
     const name = uniqueName("Team Gabbro");
     const sampleName = uniqueName("Gabbro core");
 
-    await signInAsResearcher(page, RESEARCHERS.nadia);
+    await signInAsResearcher(page, nadia);
     await groups.open();
     await groups.create(name);
     await groups.openGroup(name);
-    await group.associate("Martin", RESEARCHERS.jean.email);
-    await group.expectMember(RESEARCHERS.jean.email, "Active");
+    await group.associate(jean.email);
+    await group.expectMember(jean.email, "Active");
 
-    const memberPage = await signInAsResearcherInOwnSession(
-      browser,
-      RESEARCHERS.jean,
-    );
+    const memberPage = await signInAsResearcherInOwnSession(browser, jean);
     const settings = settingsPage(memberPage);
     await settings.open();
     await settings.expectManualGroup(name);
@@ -215,10 +220,11 @@ test.describe("manual groups", () => {
 
   test("a researcher in no manual group is offered none on their sample", async ({
     page,
+    world,
   }) => {
     const sampleName = uniqueName("Limestone block");
 
-    await signInAsResearcher(page, RESEARCHERS.luc);
+    await signInAsResearcher(page, world.researchers.luc);
     const list = sampleListPage(page);
     const create = sampleCreatePage(page);
     const edit = sampleEditPage(page);
@@ -240,29 +246,28 @@ test.describe("manual groups", () => {
 
   test("a researcher owning a published sample leaves the group it is not attached to", async ({
     page,
+    world,
     browser,
   }) => {
     test.slow();
+    const { jean, nadia } = world.researchers;
     const groups = manualGroupsPage(page);
     const group = manualGroupPage(page);
     const attached = uniqueName("Team Basalt");
     const other = uniqueName("Team Tuff");
     const sampleName = uniqueName("Basalt core");
 
-    await signInAsResearcher(page, RESEARCHERS.nadia);
+    await signInAsResearcher(page, nadia);
     await groups.open();
     for (const name of [attached, other]) {
       await groups.create(name);
       await groups.openGroup(name);
-      await group.associate("Martin", RESEARCHERS.jean.email);
-      await group.expectMember(RESEARCHERS.jean.email, "Active");
+      await group.associate(jean.email);
+      await group.expectMember(jean.email, "Active");
       await groups.open();
     }
 
-    const memberPage = await signInAsResearcherInOwnSession(
-      browser,
-      RESEARCHERS.jean,
-    );
+    const memberPage = await signInAsResearcherInOwnSession(browser, jean);
     const list = sampleListPage(memberPage);
     const create = sampleCreatePage(memberPage);
     const edit = sampleEditPage(memberPage);

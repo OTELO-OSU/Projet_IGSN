@@ -2,7 +2,7 @@ import { sampleNamed, test } from "../support/db";
 import { headerPage } from "../support/frontend/header.page";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 
-test.describe("sample detail", () => {
+test.describe("sample detail", { tag: "@readonly" }, () => {
   test("a reader opens a sample by its igsn", async ({ page, samples }) => {
     const sample = samples.find((s) => s.status === "published");
     if (!sample || sample.igsn === null) {

@@ -1,7 +1,7 @@
 import { test } from "../support/db";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 
-test.describe("sample list", () => {
+test.describe("sample list", { tag: "@readonly" }, () => {
   test("a reader opening the results page without a query is sent home", async ({
     page,
   }) => {

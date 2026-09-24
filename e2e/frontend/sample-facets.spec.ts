@@ -4,7 +4,7 @@ import { natureLabel } from "../support/nature-label";
 
 const GROUP_FACET = "Other group (team, project…)";
 
-test.describe("search facets", () => {
+test.describe("search facets", { tag: "@readonly" }, () => {
   test("a reader narrows results with a facet and can clear it", async ({
     page,
     samples,

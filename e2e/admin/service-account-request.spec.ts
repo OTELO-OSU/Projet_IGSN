@@ -2,7 +2,6 @@ import { adminPage } from "../support/admin/admin.page";
 import { serviceAccountPage } from "../support/admin/service-accounts.page";
 import { settingsPage } from "../support/admin/settings.page";
 import {
-  RESEARCHERS,
   completeIdpLogin,
   signInAsResearcherInOwnSession,
 } from "../support/admin/sign-in";
@@ -12,9 +11,7 @@ import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { maildev } from "../support/maildev";
 import { adminUrl, frontendUrl } from "../support/urls";
 
-const MANUAL_GROUP = "ANR CritMet";
 const REASON = "We harvest our laboratory samples every night.";
-const JEAN_LABORATORY = "GéoRessources";
 const SAMPLES_URL = `${frontendUrl}/api/service/samples`;
 
 test.describe("service account request", () => {
@@ -22,9 +19,13 @@ test.describe("service account request", () => {
     page,
     browser,
     request,
-    samples,
+    world,
   }) => {
     test.slow();
+    const { jean, nadia } = world.researchers;
+    const { samples } = world;
+    const manualGroup = world.manualGroups["ANR CritMet"].name;
+    const { laboratory } = world.institutions.jean;
     const name = `Basalt harvester ${Date.now()}`;
     const own = sampleNamed(samples, "Basalt 42");
     const header = headerPage(page);
@@ -32,28 +33,25 @@ test.describe("service account request", () => {
 
     await detail.goto(own.igsn);
     await header.signIn();
-    await completeIdpLogin(page, RESEARCHERS.jean);
+    await completeIdpLogin(page, jean);
     await header.expectSignedIn();
 
-    await header.requestServiceAccount(name, REASON, MANUAL_GROUP);
+    await header.requestServiceAccount(name, REASON, manualGroup);
 
     const mail = await maildev(request).expectMail(
-      RESEARCHERS.nadia.email,
+      nadia.email,
       `Jean Martin asks for the service account "${name}"`,
-      [JEAN_LABORATORY, MANUAL_GROUP, REASON],
+      [laboratory, manualGroup, REASON],
     );
     const link = /http\S+service-accounts\/create\?request=\S+/.exec(mail)?.[0];
     expect(link).toBeDefined();
 
-    const superAdminPage = await signInAsResearcherInOwnSession(
-      browser,
-      RESEARCHERS.nadia,
-    );
+    const superAdminPage = await signInAsResearcherInOwnSession(browser, nadia);
     const account = serviceAccountPage(superAdminPage);
     await superAdminPage.goto(link!);
     await account.expectPrefilled({
       name,
-      laboratory: JEAN_LABORATORY,
+      laboratory,
       owner: "Jean Martin",
     });
     await account.create();

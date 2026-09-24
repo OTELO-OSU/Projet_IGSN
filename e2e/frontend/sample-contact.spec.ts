@@ -1,4 +1,3 @@
-import { RESEARCHERS } from "../support/admin/sign-in";
 import { sampleNamed, test } from "../support/db";
 import {
   sampleContactPage,
@@ -19,8 +18,9 @@ test.describe("contact the record owner", () => {
   test("a visitor emails the owner of a published sample", async ({
     page,
     request,
-    samples,
+    world,
   }) => {
+    const { samples } = world;
     const sample = sampleNamed(samples, "Basalt 42");
 
     const detail = sampleDetailPage(page);
@@ -36,7 +36,7 @@ test.describe("contact the record owner", () => {
     await detail.expectContactSent();
 
     await maildev(request).expectMail(
-      RESEARCHERS.jean.email,
+      world.researchers.jean.email,
       `A visitor wants to contact you about the sample "${sample.name}"`,
       [VISITOR.message, `${frontendUrl}/samples/${sample.igsn}`],
       VISITOR.email,

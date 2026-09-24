@@ -1,11 +1,7 @@
 import { sampleCreatePage } from "../support/admin/sample-create.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
-import {
-  RESEARCHERS,
-  completeIdpLogin,
-  signInAsResearcher,
-} from "../support/admin/sign-in";
+import { completeIdpLogin, signInAsResearcher } from "../support/admin/sign-in";
 import { sampleNamed, test } from "../support/db";
 import { headerPage } from "../support/frontend/header.page";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
@@ -15,14 +11,17 @@ import { maildev } from "../support/maildev";
 test.describe("sub samples", () => {
   test("a researcher declares a sub sample of a sample they published", async ({
     page,
-    samples,
+    world,
   }) => {
+    test.slow();
+    const { pierre } = world.researchers;
+    const { samples } = world;
     const draft = samples.find(
       (sample) => sample.status === "draft" && sample.owner === "pierre",
     );
     if (!draft) throw new Error("seed must include a draft sample for pierre");
 
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, pierre);
     const list = sampleListPage(page);
     const create = sampleCreatePage(page);
     const edit = sampleEditPage(page);
@@ -103,11 +102,13 @@ test.describe("sub samples", () => {
 
   test("a stranger declares a sub sample from the public page, making the parent owner a contributor and mailing them", async ({
     page,
+    world,
     browser,
     request,
   }) => {
     test.slow();
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    const { jean, marie } = world.researchers;
+    await signInAsResearcher(page, marie);
     const list = sampleListPage(page);
     const create = sampleCreatePage(page);
     const edit = sampleEditPage(page);
@@ -138,7 +139,7 @@ test.describe("sub samples", () => {
 
     await detail.goto(parent.igsn);
     await header.signIn();
-    await completeIdpLogin(strangerPage, RESEARCHERS.jean);
+    await completeIdpLogin(strangerPage, jean);
     await header.expectSignedIn();
 
     const accessAnswered = header.accessAnswered(parent.id);
@@ -160,7 +161,7 @@ test.describe("sub samples", () => {
     await strangerContext.close();
 
     await maildev(request).expectMail(
-      RESEARCHERS.marie.email,
+      marie.email,
       `Jean Martin declared a sub-sample of your sample "${parent.name}"`,
       [subSampleName, parent.name],
     );
@@ -172,9 +173,10 @@ test.describe("sub samples", () => {
 
   test("a researcher declares a synthetic sub sample of two published samples", async ({
     page,
+    world,
   }) => {
     test.slow();
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, world.researchers.pierre);
     const list = sampleListPage(page);
     const create = sampleCreatePage(page);
     const edit = sampleEditPage(page);
@@ -244,11 +246,12 @@ test.describe("sub samples", () => {
 
   test("the edit page of a published sample offers to add a sub sample", async ({
     page,
-    samples,
+    world,
   }) => {
+    const { samples } = world;
     const parent = sampleNamed(samples, "Granite 7");
 
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, world.researchers.pierre);
     const list = sampleListPage(page);
     await list.openSample(parent.name);
 

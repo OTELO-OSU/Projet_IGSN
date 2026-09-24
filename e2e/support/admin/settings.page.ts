@@ -36,9 +36,9 @@ export function settingsPage(page: Page) {
     }) => {
       const form = page.getByRole("form", { name: "Institution" });
       const choose = chooseOption(page, form);
-      await choose("Organization", groups.organization);
-      await choose("OSU", groups.osu);
-      await choose("Laboratory", groups.laboratory);
+      await choose("Organization", groups.organization, true);
+      await choose("OSU", groups.osu, true);
+      await choose("Laboratory", groups.laboratory, true);
       await form.getByRole("button", { name: "Save" }).click();
       await page.getByRole("button", { name: "Confirm" }).click();
       await expect(page.getByText("Institution saved")).toBeVisible();

@@ -15,9 +15,9 @@ export function institutionalGroupsPage(page: Page) {
       osu: string;
       laboratory: string;
     }) => {
-      await choose("Organization", groups.organization);
-      await choose("OSU", groups.osu);
-      await choose("Laboratory", groups.laboratory);
+      await choose("Organization", groups.organization, true);
+      await choose("OSU", groups.osu, true);
+      await choose("Laboratory", groups.laboratory, true);
       await page.getByRole("button", { name: "Save" }).click();
     },
   };

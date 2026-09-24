@@ -17,8 +17,9 @@ export function manualGroupPage(page: Page) {
   return {
     expectVisible: (name: string) =>
       expect(page.getByRole("heading", { name, level: 1 })).toBeVisible(),
-    associate: async (search: string, email: string) => {
-      await searchUser(search);
+    associate: async (email: string) => {
+      await searchUser(email);
+      await expect(page.getByRole("option")).toHaveCount(1);
       await page.getByRole("option").filter({ hasText: email }).click();
       await associateDialog
         .getByRole("button", { name: "Associate", exact: true })

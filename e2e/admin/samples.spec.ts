@@ -1,16 +1,18 @@
 import { sampleCreatePage } from "../support/admin/sample-create.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
-import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
+import { signInAsResearcher } from "../support/admin/sign-in";
 import { sampleNamed, test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 
 test.describe("samples", () => {
   test("a researcher browses the samples they declared", async ({
     page,
-    samples,
+    world,
   }) => {
-    await signInAsResearcher(page, RESEARCHERS.jean);
+    const { jean } = world.researchers;
+    const { samples } = world;
+    await signInAsResearcher(page, jean);
 
     const list = sampleListPage(page);
     await list.expectVisible();
@@ -25,8 +27,8 @@ test.describe("samples", () => {
     }
   });
 
-  test("a researcher declares a new sample", async ({ page }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+  test("a researcher declares a new sample", async ({ page, world }) => {
+    await signInAsResearcher(page, world.researchers.pierre);
 
     const list = sampleListPage(page);
     await list.goToCreate();
@@ -48,9 +50,10 @@ test.describe("samples", () => {
 
   test("a researcher sees no sample declared by someone else", async ({
     page,
-    samples,
+    world,
   }) => {
-    await signInAsResearcher(page, RESEARCHERS.luc);
+    const { samples } = world;
+    await signInAsResearcher(page, world.researchers.luc);
 
     const list = sampleListPage(page);
     await list.expectVisible();
@@ -63,9 +66,11 @@ test.describe("samples", () => {
 
   test("a researcher tells their own samples from the shared ones", async ({
     page,
-    samples,
+    world,
   }) => {
-    await signInAsResearcher(page, RESEARCHERS.camille);
+    const { camille } = world.researchers;
+    const { samples } = world;
+    await signInAsResearcher(page, camille);
 
     const owned = samples.filter((sample) => sample.owner === "camille");
     const shared = samples.filter((sample) =>
@@ -102,11 +107,12 @@ test.describe("samples", () => {
 
   test("an owner withdraws a published sample and republishes it", async ({
     page,
-    samples,
+    world,
   }) => {
+    const { samples } = world;
     const sample = sampleNamed(samples, "Basalt 42");
 
-    await signInAsResearcher(page, RESEARCHERS.jean);
+    await signInAsResearcher(page, world.researchers.jean);
     const list = sampleListPage(page);
     await list.openSample(sample.name);
 
@@ -127,8 +133,10 @@ test.describe("samples", () => {
 
   test("a researcher credits additional roles on a field sample", async ({
     page,
+    world,
   }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    test.slow();
+    await signInAsResearcher(page, world.researchers.pierre);
     const list = sampleListPage(page);
     await list.goToCreate();
 
@@ -172,8 +180,9 @@ test.describe("samples", () => {
 
   test("a researcher publishes a new sample straight as withdrawn", async ({
     page,
+    world,
   }) => {
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, world.researchers.pierre);
     const list = sampleListPage(page);
     await list.goToCreate();
 
@@ -196,8 +205,11 @@ test.describe("samples", () => {
     await detail.expectWithdrawnNotice();
   });
 
-  test("the create form rejects a sample without a name", async ({ page }) => {
-    await signInAsResearcher(page, RESEARCHERS.camille);
+  test("the create form rejects a sample without a name", async ({
+    page,
+    world,
+  }) => {
+    await signInAsResearcher(page, world.researchers.camille);
 
     const list = sampleListPage(page);
     await list.goToCreate();
@@ -211,8 +223,10 @@ test.describe("samples", () => {
 
   test("a researcher deletes their own draft, but never a published sample", async ({
     page,
-    samples,
+    world,
   }) => {
+    const { jean } = world.researchers;
+    const { samples } = world;
     const draft = samples.find(
       (sample) => sample.status === "draft" && sample.owner === "jean",
     );
@@ -223,7 +237,7 @@ test.describe("samples", () => {
       throw new Error("seed must give jean a draft and a published sample");
     }
 
-    await signInAsResearcher(page, RESEARCHERS.jean);
+    await signInAsResearcher(page, jean);
     const list = sampleListPage(page);
     const edit = sampleEditPage(page);
 

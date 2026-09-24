@@ -26,17 +26,22 @@ export function maildev(request: APIRequestContext) {
       replyTo?: string,
     ) => {
       const prefixed = `[IGSN-Dashboard] ${subject}`;
+      let mail: Mail | undefined;
       await expect
-        .poll(async () =>
-          (await mailsTo(recipient)).map((mail) => mail.subject),
+        .poll(
+          async () => {
+            mail = (await mailsTo(recipient)).find(
+              (candidate) =>
+                candidate.subject === prefixed &&
+                contents.every((content) => candidate.text.includes(content)),
+            );
+            return mail;
+          },
+          {
+            message: `"${prefixed}" to ${recipient} holding ${contents.join(", ")}`,
+          },
         )
-        .toContain(prefixed);
-      const [mail] = (await mailsTo(recipient)).filter(
-        (candidate) => candidate.subject === prefixed,
-      );
-      for (const content of contents) {
-        expect(mail?.text).toContain(content);
-      }
+        .toBeDefined();
       if (replyTo !== undefined) {
         expect(mail?.replyTo?.map(({ address }) => address)).toContain(replyTo);
       }

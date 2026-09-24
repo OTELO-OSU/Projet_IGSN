@@ -4,68 +4,74 @@ import { manualGroupsPage } from "../support/admin/manual-groups.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
 import { sampleModerationPage } from "../support/admin/sample-moderation.page";
-import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
+import { signInAsResearcher } from "../support/admin/sign-in";
 import { userPage } from "../support/admin/user.page";
 import { usersPage } from "../support/admin/users.page";
 import { test } from "../support/db";
 import { maildev } from "../support/maildev";
 import { adminUrl } from "../support/urls";
 
-const OTELO = "Observatoire Terre et Environnement de Lorraine (OTELo)";
-const GEORESSOURCES = "GéoRessources (GEORESSOURCES) (UMR7359)";
-const OUT_OF_SCOPE_USER = `${adminUrl}/users/01980e2d-6f9b-7000-8000-000000000003`;
-const JEAN_USER = `${adminUrl}/users/01980e2d-6f9b-7000-8000-000000000002`;
-
 test.describe("space manager", () => {
   test("a super admin grants a researcher its managed groups", async ({
     page,
+    world,
   }) => {
+    const { jean, nadia } = world.researchers;
+    const institution = world.institutions.jean;
     const users = usersPage(page);
     const user = userPage(page);
     const managed = managedGroupsSection(page);
 
-    await signInAsResearcher(page, RESEARCHERS.nadia);
+    await signInAsResearcher(page, nadia);
     await users.open();
     await users.expectVisible();
-    await users.openUser(RESEARCHERS.jean.email);
+    await users.openUser(jean.email);
     await managed.expectVisible();
 
-    await managed.grant("Managed OSUs", "OTELo", OTELO);
-    await managed.grant("Managed laboratories", "UMR7359", GEORESSOURCES);
+    await managed.grant("Managed OSUs", institution.osuCode, institution.osu);
+    await managed.grant(
+      "Managed laboratories",
+      institution.laboratoryCode,
+      institution.managedLaboratory,
+    );
     await user.save();
 
     await page.reload();
 
-    await managed.expectGranted(OTELO);
-    await managed.expectGranted(GEORESSOURCES);
-    await user.expectVisible(RESEARCHERS.jean.email);
+    await managed.expectGranted(institution.osu);
+    await managed.expectGranted(institution.managedLaboratory);
+    await user.expectVisible(jean.email);
   });
 
   test("a space manager sees only the users of the groups it moderates", async ({
     page,
+    world,
   }) => {
+    const { hugo, jean, marie, nadia, sophie } = world.researchers;
     const users = usersPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    await signInAsResearcher(page, marie);
     await users.open();
     await users.expectVisible();
 
-    await users.expectListed(RESEARCHERS.jean.email);
-    await users.expectListed(RESEARCHERS.hugo.email);
-    await users.expectNotListed(RESEARCHERS.sophie.email);
-    await users.expectNotListed(RESEARCHERS.nadia.email);
-    await users.expectNotListed(RESEARCHERS.marie.email);
+    await users.expectListed(jean.email);
+    await users.expectListed(hugo.email);
+    await users.expectNotListed(sophie.email);
+    await users.expectNotListed(nadia.email);
+    await users.expectNotListed(marie.email);
   });
 
   test("a space manager accepts a pending account it moderates", async ({
     page,
+    world,
   }) => {
+    const { hugo, marie } = world.researchers;
     const users = usersPage(page);
     const user = userPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    await signInAsResearcher(page, marie);
     await users.open();
-    await users.openUser(RESEARCHERS.hugo.email);
+    await users.openUser(hugo.email);
 
     await user.setStatus("Active");
     await page.reload();
@@ -75,13 +81,15 @@ test.describe("space manager", () => {
 
   test("a space manager bans then reactivates an account it moderates", async ({
     page,
+    world,
   }) => {
+    const { jean, marie } = world.researchers;
     const users = usersPage(page);
     const user = userPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    await signInAsResearcher(page, marie);
     await users.open();
-    await users.openUser(RESEARCHERS.jean.email);
+    await users.openUser(jean.email);
 
     await user.setStatus("Disabled");
     await page.reload();
@@ -94,86 +102,102 @@ test.describe("space manager", () => {
 
   test("a dual manager edits the manual groups it manages, not the role", async ({
     page,
+    world,
   }) => {
+    const { jean, marie } = world.researchers;
     const users = usersPage(page);
     const user = userPage(page);
     const managed = managedGroupsSection(page);
 
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    await signInAsResearcher(page, marie);
     await users.open();
-    await users.openUser(RESEARCHERS.jean.email);
+    await users.openUser(jean.email);
 
     await managed.expectAbsent();
-    await user.expectGroupLocked("GeoRift");
+    await user.expectGroupLocked(world.manualGroups.GeoRift.name);
 
-    await user.associateGroup("OZCAR-RI");
+    await user.associateGroup(world.manualGroups["OZCAR-RI"].name);
     await page.reload();
 
-    await user.expectGroup("OZCAR-RI");
+    await user.expectGroup(world.manualGroups["OZCAR-RI"].name);
   });
 
   test("a space manager cannot reach a user outside its groups", async ({
     page,
+    world,
   }) => {
     const user = userPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.marie);
-    await page.goto(OUT_OF_SCOPE_USER, { waitUntil: "commit" });
+    await signInAsResearcher(page, world.researchers.marie);
+    await page.goto(`${adminUrl}/users/${world.researchers.sophie.id}`, {
+      waitUntil: "commit",
+    });
 
     await user.expectNotFound();
   });
 
-  test("a manual group manager reaches no user page", async ({ page }) => {
+  test("a manual group manager reaches no user page", async ({
+    page,
+    world,
+  }) => {
     const users = usersPage(page);
     const samples = sampleListPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, world.researchers.pierre);
 
     await users.expectNoMenuEntry();
 
-    await page.goto(JEAN_USER, { waitUntil: "commit" });
+    await page.goto(`${adminUrl}/users/${world.researchers.jean.id}`, {
+      waitUntil: "commit",
+    });
 
     await samples.expectVisible();
   });
 
   test("a manual group manager curates the members of its own groups", async ({
     page,
+    world,
   }) => {
+    const { luc, pierre } = world.researchers;
     const groups = manualGroupsPage(page);
     const group = manualGroupPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, pierre);
     await groups.open();
     await groups.expectVisible();
 
-    await groups.expectNoGroupRow("OZCAR-RI");
-    await groups.openGroup("ANR CritMet");
+    await groups.expectNoGroupRow(world.manualGroups["OZCAR-RI"].name);
+    await groups.openGroup(world.manualGroups["ANR CritMet"].name);
     await group.expectNoEditControl();
 
-    await group.associate("Moreau", RESEARCHERS.luc.email);
-    await group.expectMember(RESEARCHERS.luc.email, "Active");
+    await group.associate(luc.email);
+    await group.expectMember(luc.email, "Active");
 
     await group.detach("Luc Moreau");
-    await group.expectNoMember(RESEARCHERS.luc.email);
+    await group.expectNoMember(luc.email);
   });
 
   test("a manual group manager cannot detach a member owning a published sample", async ({
     page,
+    world,
   }) => {
     const groups = manualGroupsPage(page);
     const group = manualGroupPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, world.researchers.pierre);
     await groups.open();
-    await groups.openGroup("ProfilLoire 2024");
+    await groups.openGroup(world.manualGroups["ProfilLoire 2024"].name);
 
     await group.expectDetachDisabled("Pierre Durand");
   });
 
-  test("a space manager remains an ordinary researcher", async ({ page }) => {
+  test("a space manager remains an ordinary researcher", async ({
+    page,
+    world,
+  }) => {
     const samples = sampleListPage(page);
 
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    await signInAsResearcher(page, world.researchers.marie);
 
     await samples.expectVisible();
   });
@@ -181,8 +205,10 @@ test.describe("space manager", () => {
   test("a space manager edits a sample of the groups it manages", async ({
     page,
     request,
-    samples,
+    world,
   }) => {
+    const { jean, marie } = world.researchers;
+    const { samples } = world;
     const moderation = sampleModerationPage(page);
     const edit = sampleEditPage(page);
     const target = samples.find(
@@ -190,7 +216,7 @@ test.describe("space manager", () => {
     );
     if (!target) throw new Error("no draft sample owned by Jean was seeded");
 
-    await signInAsResearcher(page, RESEARCHERS.marie);
+    await signInAsResearcher(page, marie);
     await moderation.open();
     await moderation.expectVisible();
     await moderation.expectSampleRowWithOwnerStatus(target.name, "Active");
@@ -201,7 +227,7 @@ test.describe("space manager", () => {
     await edit.save();
 
     await maildev(request).expectMail(
-      RESEARCHERS.jean.email,
+      jean.email,
       `The sample "${target.name}" was edited by a moderator`,
       [`/samples/${target.id}`],
     );

@@ -2,7 +2,7 @@ import { published, test, withdrawn } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 
-test.describe("a withdrawn sample", () => {
+test.describe("a withdrawn sample", { tag: "@readonly" }, () => {
   test("is absent from the search results", async ({ page, samples }) => {
     const sample = withdrawn(samples);
     const { basalt } = published(samples);

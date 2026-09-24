@@ -10,15 +10,19 @@ import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
 import { test } from "../support/db";
 
 test.describe("authentication", () => {
-  test("a researcher signs in through their institution", async ({ page }) => {
+  test.describe.configure({ mode: "serial" });
+
+  test("a researcher signs in through their institution", async ({
+    page,
+    world,
+  }) => {
+    const { marie } = world.researchers;
     const admin = adminPage(page);
     await admin.goto();
     await keycloakLoginPage(page).chooseInstitution();
 
-    await shibbolethLoginPage(page).login("marie.dupont", "password");
-    await keycloakProfilePage(page).completeIfShown(
-      "marie.dupont@univ-lorraine.fr",
-    );
+    await shibbolethLoginPage(page).login(marie.username, "password");
+    await keycloakProfilePage(page).completeIfShown(marie.email);
 
     await admin.expectSignedIn();
     await admin.expectUserName("Marie Dupont");
@@ -26,14 +30,14 @@ test.describe("authentication", () => {
 
   test("a researcher who signed out must re-enter credentials", async ({
     page,
+    world,
   }) => {
+    const { luc } = world.researchers;
     const admin = adminPage(page);
     await admin.goto();
     await keycloakLoginPage(page).chooseInstitution();
-    await shibbolethLoginPage(page).login("luc.moreau", "password");
-    await keycloakProfilePage(page).completeIfShown(
-      "luc.moreau@univ-lorraine.fr",
-    );
+    await shibbolethLoginPage(page).login(luc.username, "password");
+    await keycloakProfilePage(page).completeIfShown(luc.email);
     await admin.expectSignedIn();
 
     await admin.signOut();
@@ -92,10 +96,11 @@ test.describe("authentication", () => {
     const admin = adminPage(page);
     await admin.goto();
     await keycloakLoginPage(page).chooseInstitution();
-    await shibbolethLoginPage(page).login("marie.dupont", "password");
-    await keycloakProfilePage(page).completeIfShown(
-      "marie.dupont@univ-lorraine.fr",
+    await shibbolethLoginPage(page).login(
+      RESEARCHERS.marie.username,
+      "password",
     );
+    await keycloakProfilePage(page).completeIfShown(RESEARCHERS.marie.email);
     await admin.expectSignedIn();
 
     const settings = settingsPage(page);
@@ -113,12 +118,12 @@ test.describe("authentication", () => {
 
   test("a researcher opening a sample link in a new tab lands on that sample", async ({
     page,
-    samples,
+    world,
   }) => {
-    const sample = samples.find((s) => s.owner === "camille");
+    const sample = world.samples.find((s) => s.owner === "camille");
     if (!sample) throw new Error("seed must include a sample for camille");
 
-    await signInAsResearcher(page, RESEARCHERS.camille);
+    await signInAsResearcher(page, world.researchers.camille);
 
     const tab = await page.context().newPage();
     const edit = sampleEditPage(tab);

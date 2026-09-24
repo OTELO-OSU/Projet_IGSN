@@ -20,7 +20,7 @@ export function managedGroupsSection(page: Page) {
       }),
     expectGranted: (option: string) =>
       expect(
-        page.getByRole("button", { name: `Remove ${option}` }),
+        page.getByRole("button", { name: `Remove ${option}`, exact: true }),
       ).toBeVisible(),
   };
 }

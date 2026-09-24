@@ -1,4 +1,7 @@
-import type { InstitutionalGroups } from "@projet-igsn/domain/institutional-group/model";
+import type {
+  InstitutionalGroupKind,
+  InstitutionalGroups,
+} from "@projet-igsn/domain/institutional-group/model";
 import type { UserStatus } from "@projet-igsn/domain/user/model";
 import type { Kysely, Selectable } from "kysely";
 
@@ -46,7 +49,7 @@ const researcherKeySchema = z.enum([
   "chloe",
   "hugo",
 ]);
-type ResearcherKey = z.infer<typeof researcherKeySchema>;
+export type ResearcherKey = z.infer<typeof researcherKeySchema>;
 
 const MOCK_RESEARCHERS: Record<ResearcherKey, SeedUser> = {
   marie: {
@@ -196,31 +199,37 @@ const MOCK_MANUAL_GROUPS = [
 
 async function seedManagedGroups(
   db: Kysely<DB>,
+  world: SeedWorld,
   ownerIds: Record<ResearcherKey, string>,
 ): Promise<void> {
-  await db.deleteFrom("user_managed_institutional_group").execute();
-  await db.deleteFrom("user_managed_manual_group").execute();
+  const userIds = Object.values(ownerIds);
+  await db
+    .deleteFrom("user_managed_institutional_group")
+    .where("user_id", "in", userIds)
+    .execute();
+  await db
+    .deleteFrom("user_managed_manual_group")
+    .where("user_id", "in", userIds)
+    .execute();
   await db
     .insertInto("user_managed_institutional_group")
-    .values([
-      { user_id: ownerIds.marie, kind: "osu", code: "OTELo" },
-      { user_id: ownerIds.sophie, kind: "organization", code: "04vfs2w97" },
-      { user_id: ownerIds.sophie, kind: "laboratory", code: "UMR7327" },
-      { user_id: ownerIds.camille, kind: "osu", code: "OSUC" },
-    ])
+    .values(
+      world.managedInstitutionalGroups.map(({ researcher, kind, code }) => ({
+        user_id: ownerIds[researcher],
+        kind,
+        code,
+      })),
+    )
     .onConflict((oc) => oc.doNothing())
     .execute();
   await db
     .insertInto("user_managed_manual_group")
-    .values([
-      ...MOCK_MANUAL_GROUPS.slice(0, 2).map(({ id }) => ({
-        user_id: ownerIds.pierre,
-        group_id: id,
+    .values(
+      world.managedManualGroups.map(({ researcher, groupId }) => ({
+        user_id: ownerIds[researcher],
+        group_id: groupId,
       })),
-      ...MOCK_MANUAL_GROUPS.filter(({ name }) =>
-        ["OZCAR-RI", "GeoRift"].includes(name),
-      ).map(({ id }) => ({ user_id: ownerIds.marie, group_id: id })),
-    ])
+    )
     .onConflict((oc) => oc.doNothing())
     .execute();
 }
@@ -231,31 +240,64 @@ const MOCK_SERVICE_ACCOUNT = {
   institutional_organization: "04vfs2w97",
   institutional_osu: "OTELo",
   institutional_laboratory: "UMR7358",
+  managedLaboratory: "UMR7358",
+};
+
+export type SeedWorld = {
+  researchers: Record<ResearcherKey, SeedUser>;
+  manualGroups: { id: string; name: string }[];
+  managedInstitutionalGroups: {
+    researcher: ResearcherKey;
+    kind: InstitutionalGroupKind;
+    code: string;
+  }[];
+  managedManualGroups: { researcher: ResearcherKey; groupId: string }[];
+  serviceAccount: typeof MOCK_SERVICE_ACCOUNT;
+};
+
+export const BASELINE_WORLD: SeedWorld = {
+  researchers: MOCK_RESEARCHERS,
+  manualGroups: MOCK_MANUAL_GROUPS,
+  managedInstitutionalGroups: [
+    { researcher: "marie", kind: "osu", code: "OTELo" },
+    { researcher: "sophie", kind: "organization", code: "04vfs2w97" },
+    { researcher: "sophie", kind: "laboratory", code: "UMR7327" },
+    { researcher: "camille", kind: "osu", code: "OSUC" },
+  ],
+  managedManualGroups: [
+    { researcher: "pierre", groupId: "01980e2d-6f9b-7000-9000-000000000001" },
+    { researcher: "pierre", groupId: "01980e2d-6f9b-7000-9000-000000000002" },
+    { researcher: "marie", groupId: "01980e2d-6f9b-7000-9000-000000000003" },
+    { researcher: "marie", groupId: "01980e2d-6f9b-7000-9000-000000000008" },
+  ],
+  serviceAccount: MOCK_SERVICE_ACCOUNT,
 };
 
 async function seedServiceAccounts(
   db: Kysely<DB>,
+  world: SeedWorld,
   ownerIds: Record<ResearcherKey, string>,
 ): Promise<void> {
+  const { managedLaboratory, ...serviceAccount } = world.serviceAccount;
   await db
     .insertInto("service_account")
-    .values({ ...MOCK_SERVICE_ACCOUNT, owner_id: ownerIds.jean })
+    .values({ ...serviceAccount, owner_id: ownerIds.jean })
     .onConflict((oc) => oc.column("id").doNothing())
     .execute();
   await db
     .insertInto("service_account_managed_institutional_group")
     .values({
-      service_account_id: MOCK_SERVICE_ACCOUNT.id,
+      service_account_id: serviceAccount.id,
       kind: "laboratory",
-      code: "UMR7358",
+      code: managedLaboratory,
     })
     .onConflict((oc) => oc.doNothing())
     .execute();
   await db
     .insertInto("service_account_managed_manual_group")
     .values({
-      service_account_id: MOCK_SERVICE_ACCOUNT.id,
-      group_id: MOCK_MANUAL_GROUPS[0]!.id,
+      service_account_id: serviceAccount.id,
+      group_id: world.manualGroups[0]!.id,
     })
     .onConflict((oc) => oc.doNothing())
     .execute();
@@ -263,18 +305,19 @@ async function seedServiceAccounts(
 
 async function seedManualGroups(
   db: Kysely<DB>,
+  world: SeedWorld,
   ownerIds: Record<ResearcherKey, string>,
 ): Promise<void> {
   await db
     .insertInto("manual_group")
-    .values(MOCK_MANUAL_GROUPS)
+    .values(world.manualGroups)
     .onConflict((oc) => oc.doNothing())
     .execute();
   await db
     .insertInto("manual_group_member")
     .values(
       researcherKeySchema.options.flatMap((researcher) =>
-        MOCK_RESEARCHERS[researcher].manualGroups.map((group_id) => ({
+        world.researchers[researcher].manualGroups.map((group_id) => ({
           group_id,
           user_id: ownerIds[researcher],
         })),
@@ -286,18 +329,20 @@ async function seedManualGroups(
 
 export async function seedMockUsers(
   db: Kysely<DB>,
+  world: SeedWorld = BASELINE_WORLD,
 ): Promise<Record<ResearcherKey, string>> {
-  const ownerIds = await seedOwners(db);
-  await seedManualGroups(db, ownerIds);
-  await seedManagedGroups(db, ownerIds);
-  await seedServiceAccounts(db, ownerIds);
+  const ownerIds = await seedOwners(db, world);
+  await seedManualGroups(db, world, ownerIds);
+  await seedManagedGroups(db, world, ownerIds);
+  await seedServiceAccounts(db, world, ownerIds);
   return ownerIds;
 }
 
 async function seedOwners(
   db: Kysely<DB>,
+  world: SeedWorld,
 ): Promise<Record<ResearcherKey, string>> {
-  const owners = Object.values(MOCK_RESEARCHERS);
+  const owners = Object.values(world.researchers);
   await db
     .insertInto("user")
     .values(
@@ -342,7 +387,7 @@ async function seedOwners(
   const idByEmail = new Map(rows.map((row) => [row.email, row.id]));
   return Object.fromEntries(
     researcherKeySchema.options.map((key) => {
-      const id = idByEmail.get(MOCK_RESEARCHERS[key].email);
+      const id = idByEmail.get(world.researchers[key].email);
       if (!id) throw new Error(`owner ${key} missing after upsert`);
       return [key, id];
     }),
@@ -442,18 +487,19 @@ export async function insertSamples(
 export async function seed(
   db: Kysely<DB>,
   samples: SeedSample[],
+  world: SeedWorld = BASELINE_WORLD,
 ): Promise<
   (CreatedSample & {
     owner: ResearcherKey;
     collaborators: SeedCollaborator[];
   })[]
 > {
-  const ownerIds = await seedMockUsers(db);
+  const ownerIds = await seedMockUsers(db, world);
   const created = await insertSamples(
     db,
     samples.map(({ owner, collaborators, ...row }) => ({
       ...row,
-      owner: { ...MOCK_RESEARCHERS[owner], id: ownerIds[owner] },
+      owner: { ...world.researchers[owner], id: ownerIds[owner] },
       collaborators: collaborators?.map(({ researcher, role }) => ({
         userId: ownerIds[researcher],
         role,

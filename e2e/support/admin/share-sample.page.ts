@@ -17,6 +17,10 @@ export function shareSamplePage(page: Page) {
       await dialog.getByRole("button", { name: "Invite" }).click();
       await inviteDialog.getByRole("combobox", { name: "Email" }).click();
     },
+    searchColleague: async (email: string) => {
+      await page.getByPlaceholder("Search by name or email").fill(email);
+      await expect(page.getByRole("option")).toHaveCount(1);
+    },
     expectOwner: (name: string, email: string) =>
       expect(row(email)).toContainText(name),
     expectNoCollaborator: (email: string) => expect(row(email)).toHaveCount(0),

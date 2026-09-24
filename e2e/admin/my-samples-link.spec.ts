@@ -4,7 +4,7 @@ import { expect, published, test } from "../support/db";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 import { frontendUrl } from "../support/urls";
 
-test.describe("my samples link", () => {
+test.describe("my samples link", { tag: "@readonly" }, () => {
   test("a researcher shares the public list of their samples", async ({
     page,
     samples,

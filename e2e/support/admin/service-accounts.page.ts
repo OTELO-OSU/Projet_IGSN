@@ -42,14 +42,15 @@ export function serviceAccountPage(page: Page) {
       organization: string;
       laboratory: string;
     }) => {
-      await choose(/^Organization/, institution.organization);
-      await choose(/^Laboratory/, institution.laboratory);
+      await choose(/^Organization/, institution.organization, true);
+      await choose(/^Laboratory/, institution.laboratory, true);
     },
     grant: managedGroupsSection(page).grant,
-    chooseOwner: async (search: string, name: string) => {
+    chooseOwner: async (email: string) => {
       await page.getByRole("combobox", { name: /^Requested by/ }).click();
-      await page.getByPlaceholder("Search by name or email").fill(search);
-      await page.getByRole("option").filter({ hasText: name }).click();
+      await page.getByPlaceholder("Search by name or email").fill(email);
+      await expect(page.getByRole("option")).toHaveCount(1);
+      await page.getByRole("option").filter({ hasText: email }).click();
     },
     expectPrefilled: async (prefill: {
       name: string;

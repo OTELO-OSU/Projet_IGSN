@@ -9,7 +9,7 @@ import { headerPage } from "../support/frontend/header.page";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { adminUrl } from "../support/urls";
 
-test.describe("sign in from the public frontend", () => {
+test.describe("sign in from the public frontend", { tag: "@readonly" }, () => {
   test("a researcher signs in from a sample page and edits their own sample in admin", async ({
     page,
     samples,

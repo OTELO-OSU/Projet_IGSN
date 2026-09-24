@@ -18,14 +18,10 @@ export function institutionalGroupsListPage(page: Page) {
         .first()
         .click();
     },
-    expectLaboratoryRow: (acronym: string) =>
-      expect(
-        page.getByRole("cell", { name: acronym, exact: true }),
-      ).toBeVisible(),
-    expectNoLaboratoryRow: (acronym: string) =>
-      expect(
-        page.getByRole("cell", { name: acronym, exact: true }),
-      ).toBeHidden(),
+    expectLaboratoryRow: (code: string) =>
+      expect(page.getByRole("link", { name: code, exact: true })).toBeVisible(),
+    expectNoLaboratoryRow: (code: string) =>
+      expect(page.getByRole("link", { name: code, exact: true })).toBeHidden(),
     openLaboratory: (code: string) =>
       page.getByRole("link", { name: code, exact: true }).click(),
     expectLaboratoryCode: (code: string) =>

@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
-import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
+import { signInAsResearcher } from "../support/admin/sign-in";
 import { expect, test } from "../support/db";
 import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 
@@ -26,14 +26,15 @@ const ATTACHMENT_RESOURCE = {
 test.describe("sample relations on the public page", () => {
   test("a reader sees an editor's relation and downloads the file", async ({
     page,
-    samples,
+    world,
   }) => {
+    const { samples } = world;
     const published = samples.find((sample) => sample.status === "published");
     if (!published || published.igsn === null) {
       throw new Error("seed must include a published sample with an igsn");
     }
 
-    await signInAsResearcher(page, RESEARCHERS.jean);
+    await signInAsResearcher(page, world.researchers.jean);
     const list = sampleListPage(page);
     await list.openSample(published.name);
     const edit = sampleEditPage(page);

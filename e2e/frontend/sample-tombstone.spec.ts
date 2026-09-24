@@ -3,7 +3,7 @@ import { sampleDetailPage } from "../support/frontend/sample-detail.page";
 import { sampleListPage } from "../support/frontend/sample-list.page";
 import { tombstonePage } from "../support/frontend/tombstone.page";
 
-test.describe("a tombstoned sample", () => {
+test.describe("a tombstoned sample", { tag: "@readonly" }, () => {
   test("is absent from the search results", async ({ page, samples }) => {
     const sample = tombstone(samples);
     const { basalt } = published(samples);

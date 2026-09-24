@@ -3,7 +3,7 @@ import type { Page } from "@playwright/test";
 import { sampleCreatePage } from "../support/admin/sample-create.page";
 import { sampleEditPage } from "../support/admin/sample-edit.page";
 import { sampleListPage } from "../support/admin/sample-list.page";
-import { RESEARCHERS, signInAsResearcher } from "../support/admin/sign-in";
+import { signInAsResearcher } from "../support/admin/sign-in";
 import { expect, sampleNamed, test } from "../support/db";
 
 const BASALT_MATERIAL = ["Rock", "Igneous", "Volcanic", "Mafic", "Basalt"];
@@ -35,11 +35,12 @@ async function declareBasaltDraft(
 test.describe("duplicate samples", () => {
   test("a contributor cancels the publication of a suspected duplicate", async ({
     page,
-    samples,
+    world,
   }) => {
+    const { samples } = world;
     const published = sampleNamed(samples, "Basalt 42");
 
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, world.researchers.pierre);
     await declareBasaltDraft(page, published.name, SAME_COLLECTOR);
 
     const edit = sampleEditPage(page);
@@ -56,11 +57,12 @@ test.describe("duplicate samples", () => {
 
   test("a contributor confirms the publication of a suspected duplicate", async ({
     page,
-    samples,
+    world,
   }) => {
+    const { samples } = world;
     const published = sampleNamed(samples, "Basalt 42");
 
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, world.researchers.pierre);
     await declareBasaltDraft(page, published.name, SAME_COLLECTOR);
 
     const edit = sampleEditPage(page);
@@ -78,11 +80,12 @@ test.describe("duplicate samples", () => {
 
   test("a contributor publishes a sample collected by someone else without a warning", async ({
     page,
-    samples,
+    world,
   }) => {
+    const { samples } = world;
     const published = sampleNamed(samples, "Basalt 42");
 
-    await signInAsResearcher(page, RESEARCHERS.pierre);
+    await signInAsResearcher(page, world.researchers.pierre);
     await declareBasaltDraft(page, published.name, OTHER_COLLECTOR);
 
     const edit = sampleEditPage(page);
