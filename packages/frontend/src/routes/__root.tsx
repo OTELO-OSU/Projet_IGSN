@@ -12,7 +12,6 @@ import type { MyRouterContext } from "../router-context";
 
 import { AuthControls } from "../auth/auth-controls.tsx";
 import { onSigninCallback, userManager } from "../auth/oidc-config.ts";
-import { RequestServiceAccountDialog } from "../domain/service-accounts/request-service-account-dialog.tsx";
 import { m } from "../paraglide/messages.js";
 import { getLocale, localizeHref } from "../paraglide/runtime.js";
 import "../styles.css";
@@ -81,20 +80,17 @@ function RootLayout() {
         <Toaster />
 
         <footer className="bg-muted/30 mt-16 border-t">
-          <div className="flex flex-col gap-8 px-6 py-10 md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center gap-8">
-              <img
-                src={`${import.meta.env.BASE_URL}logo_cnrs-insu.png`}
-                alt={m.footer_logo_cnrs_insu()}
-                className="h-20 w-auto"
-              />
-              <img
-                src={`${import.meta.env.BASE_URL}gaia-data.svg`}
-                alt={m.footer_logo_gaia_data()}
-                className="h-20 w-auto"
-              />
-            </div>
-            <RequestServiceAccountDialog />
+          <div className="flex items-center gap-8 px-6 py-10">
+            <img
+              src={`${import.meta.env.BASE_URL}logo_cnrs-insu.png`}
+              alt={m.footer_logo_cnrs_insu()}
+              className="h-20 w-auto"
+            />
+            <img
+              src={`${import.meta.env.BASE_URL}gaia-data.svg`}
+              alt={m.footer_logo_gaia_data()}
+              className="h-20 w-auto"
+            />
           </div>
         </footer>
       </div>

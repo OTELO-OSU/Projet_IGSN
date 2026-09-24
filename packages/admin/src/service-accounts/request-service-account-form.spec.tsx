@@ -1,10 +1,19 @@
 import { laboratoryLabel } from "@projet-igsn/domain/institutional-group/label";
+import { HttpResponse, http } from "msw";
 import { vi } from "vitest";
 import { page } from "vitest/browser";
 
-import { renderWithRouter } from "../../../test/render-with-router.tsx";
-import { stubAuth } from "../../../test/stub-auth.tsx";
+import { worker } from "../../test/msw.ts";
+import { render } from "../../test/render.tsx";
 import { RequestServiceAccountForm } from "./request-service-account-form.tsx";
+
+vi.mock("react-oidc-context", () => ({
+  useAuth: () => ({
+    isLoading: false,
+    isAuthenticated: true,
+    user: { access_token: "a-token", profile: { sub: "jean" } },
+  }),
+}));
 
 const laboratory = "UMR7358";
 const laboratoryOption = `${laboratoryLabel(laboratory)} (${laboratory})`;
@@ -14,55 +23,40 @@ const group = {
   name: "ANR CritMet",
 };
 
-const signedIn = {
-  isAuthenticated: true,
-  user: { access_token: "a-token", profile: { sub: "jean" } },
-} as Parameters<typeof stubAuth>[1];
+type SeenPost = { pathname: string; token: string | null; body: unknown };
 
-type SeenPost = { url: string; token: string | null; body: string };
-
-const urlOf = (input: RequestInfo | URL) =>
-  input instanceof URL
-    ? input.href
-    : typeof input === "string"
-      ? input
-      : input.url;
-
-function stubApi() {
+function fakeApi() {
   const posts: SeenPost[] = [];
-  vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
-    if (init?.method === "POST") {
-      posts.push({
-        url: urlOf(input),
-        token: new Headers(init.headers).get("Authorization"),
-        body: typeof init.body === "string" ? init.body : "",
-      });
-      return new Response(null, { status: 204 });
-    }
-    const { pathname } = new URL(urlOf(input));
-    if (pathname === "/api/admin/currentUser/attachable-manual-groups") {
-      return Response.json({ data: [group] });
-    }
-    if (
-      pathname === "/api/admin/currentUser/service-accounts/requestable-groups"
-    ) {
-      return Response.json({
+  worker.use(
+    http.get("*/admin/currentUser/attachable-manual-groups", () =>
+      HttpResponse.json({ data: [group] }),
+    ),
+    http.get("*/admin/currentUser/service-accounts/requestable-groups", () =>
+      HttpResponse.json({
         data: { organizations: [], osus: [], laboratories: [laboratory] },
-      });
-    }
-    return new Response(null, { status: 404 });
-  });
+      }),
+    ),
+    http.post(
+      "*/admin/currentUser/service-accounts/requests",
+      async ({ request }) => {
+        posts.push({
+          pathname: new URL(request.url).pathname,
+          token: request.headers.get("Authorization"),
+          body: await request.json(),
+        });
+        return new HttpResponse(null, { status: 204 });
+      },
+    ),
+  );
   return posts;
 }
 
 const renderForm = (onSent = vi.fn()) =>
-  renderWithRouter(
-    stubAuth(<RequestServiceAccountForm onSent={onSent} />, signedIn),
-  );
+  render(<RequestServiceAccountForm onSent={onSent} />);
 
 describe("RequestServiceAccountForm", () => {
-  it("should post the service name and the picked group with the visitor's token", async () => {
-    const posts = stubApi();
+  it("should post the service name and the picked group with the requester's token", async () => {
+    const posts = fakeApi();
     const onSent = vi.fn();
     const screen = await renderForm(onSent);
 
@@ -79,26 +73,25 @@ describe("RequestServiceAccountForm", () => {
     await page.getByRole("button", { name: "Send request" }).click();
 
     await vi.waitFor(() => expect(posts).toHaveLength(1));
-    const { url, token, body } = posts[0]!;
-    expect(new URL(url).pathname).toBe(
-      "/api/admin/currentUser/service-accounts/requests",
-    );
-    expect(token).toBe("Bearer a-token");
-    expect(JSON.parse(body)).toEqual({
-      name: "Basalt pipeline",
-      reason: "Automate our basalt uploads",
-      managedGroups: {
-        organizations: [],
-        osus: [],
-        laboratories: [laboratory],
-        manualGroupIds: [group.id],
+    expect(posts[0]).toEqual({
+      pathname: "/api/admin/currentUser/service-accounts/requests",
+      token: "Bearer a-token",
+      body: {
+        name: "Basalt pipeline",
+        reason: "Automate our basalt uploads",
+        managedGroups: {
+          organizations: [],
+          osus: [],
+          laboratories: [laboratory],
+          manualGroupIds: [group.id],
+        },
       },
     });
-    expect(onSent).toHaveBeenCalled();
+    await vi.waitFor(() => expect(onSent).toHaveBeenCalled());
   });
 
   it("should offer only the laboratories the requester may request", async () => {
-    stubApi();
+    fakeApi();
     const screen = await renderForm();
 
     await screen
@@ -111,7 +104,7 @@ describe("RequestServiceAccountForm", () => {
   });
 
   it("should replace a picker the requester may request nothing from with a message", async () => {
-    stubApi();
+    fakeApi();
     const screen = await renderForm();
 
     await expect
@@ -126,7 +119,7 @@ describe("RequestServiceAccountForm", () => {
   });
 
   it("should flag the name and the reason and post nothing when both are blank", async () => {
-    const posts = stubApi();
+    const posts = fakeApi();
     const screen = await renderForm();
 
     await screen.getByRole("button", { name: "Send request" }).click();

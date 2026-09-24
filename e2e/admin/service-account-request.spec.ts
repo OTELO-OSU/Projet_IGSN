@@ -3,12 +3,10 @@ import { serviceAccountPage } from "../support/admin/service-accounts.page";
 import { settingsPage } from "../support/admin/settings.page";
 import {
   RESEARCHERS,
-  completeIdpLogin,
+  signInAsResearcher,
   signInAsResearcherInOwnSession,
 } from "../support/admin/sign-in";
-import { expect, sampleNamed, test } from "../support/db";
-import { headerPage } from "../support/frontend/header.page";
-import { sampleDetailPage } from "../support/frontend/sample-detail.page";
+import { expect, test } from "../support/db";
 import { maildev } from "../support/maildev";
 import { adminUrl, frontendUrl } from "../support/urls";
 
@@ -22,20 +20,14 @@ test.describe("service account request", () => {
     page,
     browser,
     request,
-    samples,
   }) => {
     test.slow();
     const name = `Basalt harvester ${Date.now()}`;
-    const own = sampleNamed(samples, "Basalt 42");
-    const header = headerPage(page);
-    const detail = sampleDetailPage(page);
+    const settings = settingsPage(page);
 
-    await detail.goto(own.igsn);
-    await header.signIn();
-    await completeIdpLogin(page, RESEARCHERS.jean);
-    await header.expectSignedIn();
-
-    await header.requestServiceAccount(name, REASON, MANUAL_GROUP);
+    await signInAsResearcher(page, RESEARCHERS.jean);
+    await settings.open();
+    await settings.requestServiceAccount(name, REASON, MANUAL_GROUP);
 
     const mail = await maildev(request).expectMail(
       RESEARCHERS.nadia.email,
@@ -60,7 +52,6 @@ test.describe("service account request", () => {
     await account.expectVisible(name);
     await superAdminPage.context().close();
 
-    const settings = settingsPage(page);
     await page.goto(`${adminUrl}/settings`);
     await adminPage(page).expectSignedIn();
     await settings.expectService(name);

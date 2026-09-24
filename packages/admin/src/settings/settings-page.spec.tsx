@@ -288,12 +288,26 @@ describe("settings page", () => {
     await expect.element(mySamplesInput()).not.toBeInTheDocument();
   });
 
-  it("should hide the services section from a user owning none", async () => {
+  it("should offer an accepted user owning no service account to ask for one", async () => {
     await renderSettingsPage();
+
+    await expect
+      .element(page.getByRole("heading", { name: "Services" }))
+      .toBeVisible();
+    await expect
+      .element(page.getByRole("button", { name: "Ask for a service account" }))
+      .toBeVisible();
+  });
+
+  it("should hide the services section from a pending user", async () => {
+    await renderSettingsPage({ status: "pending" });
 
     await expect.element(orcidForm()).toBeVisible();
     await expect
       .element(page.getByRole("heading", { name: "Services" }))
+      .not.toBeInTheDocument();
+    await expect
+      .element(page.getByRole("button", { name: "Ask for a service account" }))
       .not.toBeInTheDocument();
   });
 

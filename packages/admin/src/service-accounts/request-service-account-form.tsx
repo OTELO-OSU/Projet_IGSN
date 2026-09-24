@@ -10,10 +10,10 @@ import {
 import { serviceAccountRequestSchema } from "@projet-igsn/domain/service-account/service-account-validator";
 import { NO_MANAGED_GROUPS } from "@projet-igsn/domain/user/managed-groups";
 
-import { useListAttachableManualGroups } from "#/domain/manual-groups/hook/list-attachable-manual-groups.ts";
-import { useListRequestableGroups } from "#/domain/service-accounts/hook/list-requestable-groups.ts";
-import { useRequestServiceAccount } from "#/domain/service-accounts/hook/request-service-account.ts";
+import { useAttachableManualGroups } from "#/manual-groups/use-attachable-manual-groups.ts";
 import { m } from "#/paraglide/messages.js";
+import { useListRequestableGroups } from "#/service-accounts/use-list-requestable-groups.ts";
+import { useRequestServiceAccount } from "#/service-accounts/use-request-service-account.ts";
 
 const validate = zodFieldErrors(serviceAccountRequestSchema, () =>
   m.field_required(),
@@ -23,8 +23,8 @@ const requestableItems = (items: ComboboxItem[], codes?: string[]) =>
   codes && items.filter(({ value }) => codes.includes(value));
 
 export function RequestServiceAccountForm({ onSent }: { onSent: () => void }) {
-  const { data: attachableGroups } = useListAttachableManualGroups();
-  const { data: requestableGroups } = useListRequestableGroups();
+  const attachableGroups = useAttachableManualGroups().data?.data;
+  const requestableGroups = useListRequestableGroups().data?.data;
   const { mutate } = useRequestServiceAccount(onSent);
   const form = useAppForm({
     defaultValues: { name: "", reason: "", managedGroups: NO_MANAGED_GROUPS },
