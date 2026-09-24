@@ -17,7 +17,6 @@ function sampleItem(overrides: Partial<CardSample> = {}): CardSample {
     location: null,
     scientificContext: null,
     collectionMethod: null,
-    texture: null,
     age: null,
     ...overrides,
   };
