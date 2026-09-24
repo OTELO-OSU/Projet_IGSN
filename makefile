@@ -115,6 +115,13 @@ $(ROUTE_TREES) &: $(shell find packages/*/src/routes -type d)
 	@pnpm -r --parallel run generate-routes
 	@touch $(ROUTE_TREES)
 
+env-example:							## Regenerate the prod and preprod compose env examples
+	@node infra/scripts/compose-env.ts example --env prod > infra/prod/docker-compose.env.example
+	@node infra/scripts/compose-env.ts example --env preprod > infra/preprod/docker-compose.env.example
+
+env-list:								## List the deployment variables and secrets (ENV=prod|preprod)
+	@node infra/scripts/compose-env.ts table --env $(or $(ENV),prod)
+
 preprod-deploy:							## Deploy to preprod over SSH (requires DOMAIN=...)
 	@DOMAIN=$(DOMAIN) ./infra/preprod/scripts/deploy.sh
 

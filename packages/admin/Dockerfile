@@ -44,7 +44,7 @@ ENV VITE_SAMPLE_LOCK_POLL_SECONDS=$VITE_SAMPLE_LOCK_POLL_SECONDS
 
 RUN pnpm -F @projet-igsn/admin build
 
-FROM caddy:alpine AS prod
+FROM caddy:2-alpine AS prod
 
 RUN apk upgrade --no-cache && apk add --no-cache curl
 

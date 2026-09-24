@@ -1,26 +1,8 @@
-import { Kysely } from "kysely";
-import { PostgresJSDialect } from "kysely-postgres-js";
 import { FileMigrationProvider, Migrator } from "kysely/migration";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import postgres from "postgres";
 
-function createDb(): Kysely<unknown> {
-  return new Kysely<unknown>({
-    dialect: new PostgresJSDialect({
-      postgres: postgres({
-        host: process.env.DATABASE_HOST,
-        port: process.env.DATABASE_PORT
-          ? Number(process.env.DATABASE_PORT)
-          : 5432,
-        database: process.env.DATABASE_NAME,
-        username: process.env.DATABASE_USER,
-        password: process.env.DATABASE_PASSWORD,
-        ssl: process.env.DATABASE_SSL === "require" ? "require" : undefined,
-      }),
-    }),
-  });
-}
+import { createDb } from "../src/db.ts";
 
 async function migrateToLatest(): Promise<void> {
   const db = createDb();

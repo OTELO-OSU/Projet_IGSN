@@ -3,8 +3,9 @@
 Three apps plus Postgres as Docker containers on one EC2 host, behind a Caddy
 reverse proxy. No CD: deploy manually with `make preprod-deploy`
 ([deploy.sh](../infra/preprod/scripts/deploy.sh)). Everything preprod (OpenTofu,
-scripts, compose stack) lives under [infra/preprod/](../infra/preprod); prod will
-be a sibling `infra/prod/`.
+scripts, compose stack) lives under [infra/preprod/](../infra/preprod). Prod is
+the sibling [infra/prod/](../infra/prod), deployed on release by CI and backed by
+an external database: see [prod-deploy.md](prod-deploy.md).
 
 - **EC2** host (Amazon Linux 2023, IMDSv2-only, encrypted root volume). cloud-init
   installs Docker + compose. Only 80/443 are public; SSH is opened per-deploy and

@@ -1,0 +1,41 @@
+(edgetls) {
+	tls /certs/origin.pem /certs/origin.key
+}
+
+(realip) {
+	header_up X-Real-IP {client_ip}
+}
+
+(sechdrs) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+	# ponytail: no CSP, its nonces have to come from the apps.
+}
+
+igsn.{$DOMAIN} {
+	import edgetls
+	import sechdrs
+	redir /admin /admin/
+	redir /api /api/
+	handle_path /api/* {
+		reverse_proxy api:8080 {
+			import realip
+		}
+	}
+	handle /admin/* {
+		reverse_proxy admin:8080 {
+			import realip
+		}
+	}
+	handle {
+		reverse_proxy frontend:8080 {
+			import realip
+		}
+	}
+}
