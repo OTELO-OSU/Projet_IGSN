@@ -351,6 +351,7 @@ export function toSample(row: SampleRow): Sample {
     economicDepositDescription: row.economic_deposit_description,
     igsn: row.igsn,
     doiPrefix: row.doi_prefix,
+    internalNumber: row.internal_number,
     manualGroups: row.manualGroups ?? [],
     owner: row.owner
       ? { name: row.owner.name, firstname: row.owner.firstname }

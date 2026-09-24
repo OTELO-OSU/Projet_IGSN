@@ -8,6 +8,7 @@ import { SampleList } from "./sample-list.tsx";
 function sampleItem(overrides: Partial<CardSample> = {}): CardSample {
   return {
     igsn: "0123456789ABCDEFGHJKMNPQRS",
+    internalNumber: null,
     name: "Basalt 42",
     nature: "powder",
     type: null,
@@ -51,6 +52,16 @@ describe("SampleList", () => {
       .toHaveAttribute("href", "/samples/0123456789ABCDEFGHJKMNPQRS");
     await expect
       .element(screen.getByRole("link", { name: /Granite 7/ }))
+      .toBeInTheDocument();
+  });
+
+  it("should show the internal id beside the igsn when the sample has one", async () => {
+    const screen = await renderSampleList([sampleItem({ internalNumber: 42 })]);
+
+    await expect
+      .element(
+        screen.getByRole("link", { name: /Basalt 42/ }).getByText("sample-42"),
+      )
       .toBeInTheDocument();
   });
 

@@ -197,6 +197,7 @@ function fakeApi(
     parents: sampleParents,
     igsn: status === "draft" ? null : IGSN,
     doiPrefix: null,
+    internalNumber: status === "draft" ? null : 42,
     status,
     createdAt: "2026-06-01T00:00:00.000Z",
     updatedAt: "2026-07-01T10:00:00.000Z",
@@ -272,7 +273,7 @@ function fakeApi(
       const status = new URL(request.url).searchParams.get(
         "status",
       ) as SampleStatus;
-      sample = { ...sample, status, igsn: IGSN };
+      sample = { ...sample, status, igsn: IGSN, internalNumber: 42 };
       calls.push(`PUBLISH ${status}`);
       return HttpResponse.json({
         data: sample,
@@ -949,6 +950,23 @@ describe("EditSamplePage", () => {
   it("should show the IGSN of a published sample under the title", async () => {
     const { screen } = await renderEditPage("published");
     await expect.element(screen.getByLabelText("IGSN")).toHaveTextContent(IGSN);
+  });
+
+  it("should show the internal identifier of a published sample under the title", async () => {
+    const { screen } = await renderEditPage("published");
+    await expect
+      .element(screen.getByLabelText("Internal ID"))
+      .toHaveTextContent("sample-42");
+  });
+
+  it("should not show an internal identifier on a draft", async () => {
+    const { screen } = await renderEditPage();
+    await expect
+      .element(screen.getByRole("heading", { name: "Edit sample" }))
+      .toBeVisible();
+    await expect
+      .element(screen.getByLabelText("Internal ID"))
+      .not.toBeInTheDocument();
   });
 
   it("should refuse a save that would make the sample unpublishable", async () => {

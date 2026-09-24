@@ -77,6 +77,7 @@ const parent: Sample = {
   economicDepositDescription: null,
   igsn: "01K072TVWVFK5A1RRZ5MY4PPK9",
   doiPrefix: "10.5072",
+  internalNumber: null,
   owner: { name: "Curie", firstname: "Marie" },
   manualGroups: [
     { id: "3f2504e0-4f89-41d3-9a0c-0305000000a1", name: "Basalt team" },

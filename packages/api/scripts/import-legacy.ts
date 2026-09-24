@@ -1,5 +1,6 @@
 import { igsnSchema } from "@projet-igsn/domain/igsn/model";
 import { createSampleSchema } from "@projet-igsn/domain/sample/sample";
+import { sql } from "kysely";
 import { fileURLToPath } from "node:url";
 import postgres from "postgres";
 import { v7 as uuidv7 } from "uuid";
@@ -111,6 +112,7 @@ function toSampleRow(
     igsn,
     ...sampleColumns(create),
     status: "published" as const,
+    internal_number: sql<number>`nextval('sample_internal_number_seq')`,
     publication_year: publishedAt.getUTCFullYear(),
     created_at: publishedAt,
     updated_at: row.last_modified,
@@ -120,7 +122,7 @@ function toSampleRow(
 async function main() {
   const legacy = createLegacyDb();
   const db = createDb();
-  const preserved = new Set(["id", "igsn", "created_at"]);
+  const preserved = new Set(["id", "igsn", "created_at", "internal_number"]);
 
   const summary = { read: 0, imported: 0, users: 0, linked: 0, relations: 0 };
   const skipped: { igsn: string; reason: string; value: string }[] = [];

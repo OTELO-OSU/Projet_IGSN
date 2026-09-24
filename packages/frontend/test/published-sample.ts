@@ -18,6 +18,7 @@ export const publishedSample = (
   localId: null,
   localIdDescription: null,
   igsn: "0123456789ABCDEFGHJKMNPQRS",
+  internalNumber: null,
   doiPrefix: "10.5072",
   institutionalOrganization: null,
   institutionalOsu: null,

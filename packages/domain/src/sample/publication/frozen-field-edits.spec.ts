@@ -50,6 +50,7 @@ const stored: Sample = sampleSchema.parse({
   ],
   igsn: "CNRS0000000001",
   doiPrefix: null,
+  internalNumber: 1,
   status: "published",
   createdAt: new Date("2020-01-01"),
   updatedAt: new Date("2020-01-01"),

@@ -107,6 +107,7 @@ export const sampleSchema = z.object({
   economicDepositDescription: nameSchema.nullable(),
   igsn: igsnSchema.nullable(),
   doiPrefix: z.string().nullable(),
+  internalNumber: z.number().int().positive().nullable(),
   owner: userSchema
     .pick({ name: true, firstname: true })
     .nullable()

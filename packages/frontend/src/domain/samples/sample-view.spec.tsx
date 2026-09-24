@@ -34,6 +34,14 @@ describe("SampleView", () => {
       .toBeInTheDocument();
   });
 
+  it("should show the internal id beside the igsn in the hero", async () => {
+    const screen = await render(
+      <SampleView sample={sample({ internalNumber: 42 })} />,
+    );
+
+    await expect.element(screen.getByText("sample-42")).toBeInTheDocument();
+  });
+
   it("should show a QR code labelled for the sample igsn in the hero", async () => {
     const screen = await render(<SampleView sample={sample()} />);
 

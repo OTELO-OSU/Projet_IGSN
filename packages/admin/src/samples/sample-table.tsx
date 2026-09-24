@@ -9,6 +9,7 @@ import {
   TooltipTrigger,
 } from "@projet-igsn/design-system/components/ui/tooltip";
 import { formatDate } from "@projet-igsn/domain/date/format-date";
+import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { hasPermanentIgsn } from "@projet-igsn/domain/sample/publication/has-permanent-igsn";
 import { canDuplicateSample } from "@projet-igsn/domain/user-sample/can-duplicate-sample";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -77,6 +78,15 @@ function sampleColumns(moderated: boolean): ColumnDef<AdminSampleListItem>[] {
       header: () => m.column_igsn(),
       cell: ({ row }) => row.original.igsn,
       meta: { className: "w-64" },
+    },
+    {
+      accessorKey: "internalNumber",
+      header: () => m.column_internal_id(),
+      cell: ({ row }) =>
+        row.original.internalNumber === null
+          ? null
+          : formatInternalId(row.original.internalNumber),
+      meta: { className: "w-32" },
     },
     {
       accessorKey: "status",

@@ -27,6 +27,8 @@ export function sampleDetailPage(page: Page) {
       await expect(page.getByRole("heading", { level: 1, name })).toBeVisible();
       await expect(page.getByText(igsn)).toBeVisible();
     },
+    expectInternalId: (internalId: string) =>
+      expect(page.getByText(internalId, { exact: true })).toBeVisible(),
     expectNotFound: async (name: string) => {
       await expect(page.getByText("Not Found", { exact: true })).toBeVisible();
       await expect(page.getByRole("heading", { level: 1, name })).toHaveCount(

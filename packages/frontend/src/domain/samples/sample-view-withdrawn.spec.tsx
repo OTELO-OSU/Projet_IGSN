@@ -116,6 +116,19 @@ describe("SampleView of a withdrawn sample", () => {
     ).toBeNull();
   });
 
+  it("should show no internal id even when the payload carries one", async () => {
+    const screen = await renderWithRouter(
+      <SampleView
+        sample={{ ...sample(), internalNumber: 42 } as WithdrawnSample}
+      />,
+    );
+
+    await expect
+      .element(screen.getByRole("heading", { level: 1, name: "Rhyolite 11" }))
+      .toBeVisible();
+    expect(screen.getByText("sample-42").query()).toBeNull();
+  });
+
   it("should show the QR code of a withdrawn sample, which still resolves publicly", async () => {
     const screen = await renderWithRouter(<SampleView sample={sample()} />);
 

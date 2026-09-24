@@ -25,6 +25,7 @@ import {
   dataCiteSampleSchema,
 } from "@projet-igsn/domain/sample/datacite/datacite-schema";
 import { toDataCiteSample } from "@projet-igsn/domain/sample/datacite/to-datacite-sample";
+import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import {
   ISAMPLES_MEDIA_TYPE,
   iSamplesSampleSchema,
@@ -835,6 +836,28 @@ describe("POST /service/samples", () => {
           .where("sample_id", "=", id)
           .execute(),
       ).toEqual([{ user_id: owner.id, role: "owner" }]);
+    },
+  );
+
+  pgTest(
+    "should assign the created sample an internal number the Core body never carries",
+    async ({ db }) => {
+      // Arrange
+      const { app } = await arrangeAccount(db);
+      // Act
+      const res = await postSample(app, NEW_BODY);
+      // Assert
+      const body = await res.json();
+      const stored = await readSample(
+        db,
+        createdId(coreSampleSchema.parse(body)),
+      );
+      expect(stored?.internalNumber).toEqual(expect.any(Number));
+      const serialized = JSON.stringify(body);
+      expect(serialized).not.toContain("internalNumber");
+      expect(serialized).not.toContain(
+        formatInternalId(stored!.internalNumber!),
+      );
     },
   );
 
