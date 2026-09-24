@@ -747,6 +747,41 @@ describe("SampleView", () => {
     await expect.element(screen.getByText(expected)).toBeInTheDocument();
   });
 
+  it("should show the location map in the Sample section when a position is set", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          location: {
+            position: { type: "point", longitude: 2.96, latitude: 45.77 },
+          },
+        })}
+      />,
+    );
+
+    await expect
+      .element(
+        screen
+          .getByRole("region", { name: "Sample", exact: true })
+          .getByRole("group", { name: "Sample location map" }),
+      )
+      .toBeInTheDocument();
+  });
+
+  it("should show no location map for a region-only location", async () => {
+    const screen = await render(
+      <SampleView
+        sample={sample({
+          location: { region: { kind: "country", country: "FR" } },
+        })}
+      />,
+    );
+
+    await expect.element(screen.getByText("France")).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "Sample location map" }).query(),
+    ).toBeNull();
+  });
+
   it("should show who declared the sample and when, next to a button opening the contact form", async () => {
     const screen = await render(
       <SampleView

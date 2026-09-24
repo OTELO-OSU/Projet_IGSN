@@ -15,6 +15,7 @@ import { ConditionView } from "#/domain/samples/condition-view.tsx";
 import { DescriptionView } from "#/domain/samples/description-view.tsx";
 import { EconomicInterestView } from "#/domain/samples/economic-interest-view.tsx";
 import { FieldRow, FieldRows } from "#/domain/samples/field-rows.tsx";
+import { LazySampleLocationMap } from "#/domain/samples/lazy-sample-location-map.tsx";
 import { LocationView } from "#/domain/samples/location-view.tsx";
 import { ProcessStepsView } from "#/domain/samples/process-steps-view.tsx";
 import { RelationsView } from "#/domain/samples/relations-view.tsx";
@@ -87,79 +88,80 @@ export function sampleSections(
     description && parents.length > 0
       ? { ...description, collectionDate: null }
       : description;
+  const sampleRows = (
+    <FieldRows>
+      <FieldRow
+        label={m.sample_field_nature()}
+        value={nature ? natureLabel(nature) : null}
+      />
+      <BreadcrumbFieldRow
+        id="sample-field-type"
+        label={m.sample_field_type()}
+        path={type}
+        pathLabel={typeLabel}
+      />
+      <BreadcrumbFieldRow
+        id="sample-field-material"
+        label={m.sample_field_material()}
+        path={material}
+        pathLabel={materialPathLabel}
+        suffix={materialOtherName}
+      />
+      <FieldRow
+        label={m.sample_field_texture()}
+        value={texture && textureLabel(texture)}
+      />
+      <FieldRow
+        label={m.sample_field_metamorphic_facies()}
+        value={metamorphicFacies && metamorphicFaciesLabel(metamorphicFacies)}
+      />
+      <FieldRow
+        label={m.sample_field_metamorphic_fabric()}
+        value={metamorphicFabric && metamorphicFabricLabel(metamorphicFabric)}
+      />
+      <FieldRow label={m.sample_field_specific_name()} value={specificName} />
+      <FieldRow label={m.sample_field_local_id()} value={localId} />
+      <FieldRow
+        label={m.sample_field_local_id_description()}
+        value={localIdDescription}
+      />
+      <BreadcrumbFieldRow
+        id="sample-field-collection-method"
+        label={m.sample_field_collection_method()}
+        path={collectionMethod}
+        pathLabel={collectionMethodLabel}
+      />
+      <FieldRow
+        label={m.sample_field_collection_method_description()}
+        value={collectionMethodDescription}
+      />
+      <FieldRow
+        label={m.sample_field_existence_status()}
+        value={existenceStatus && existenceStatusLabel(existenceStatus)}
+      />
+      <FieldRow
+        label={m.sample_field_availability_status()}
+        value={
+          availabilityStatus && availabilityStatusLabel(availabilityStatus)
+        }
+      />
+      <FieldRow
+        label={m.sample_field_publication_year()}
+        value={publicationYear}
+      />
+    </FieldRows>
+  );
   return [
     {
       id: "sample",
       title: m.sample_section_sample(),
-      content: (
-        <FieldRows>
-          <FieldRow
-            label={m.sample_field_nature()}
-            value={nature ? natureLabel(nature) : null}
-          />
-          <BreadcrumbFieldRow
-            id="sample-field-type"
-            label={m.sample_field_type()}
-            path={type}
-            pathLabel={typeLabel}
-          />
-          <BreadcrumbFieldRow
-            id="sample-field-material"
-            label={m.sample_field_material()}
-            path={material}
-            pathLabel={materialPathLabel}
-            suffix={materialOtherName}
-          />
-          <FieldRow
-            label={m.sample_field_texture()}
-            value={texture && textureLabel(texture)}
-          />
-          <FieldRow
-            label={m.sample_field_metamorphic_facies()}
-            value={
-              metamorphicFacies && metamorphicFaciesLabel(metamorphicFacies)
-            }
-          />
-          <FieldRow
-            label={m.sample_field_metamorphic_fabric()}
-            value={
-              metamorphicFabric && metamorphicFabricLabel(metamorphicFabric)
-            }
-          />
-          <FieldRow
-            label={m.sample_field_specific_name()}
-            value={specificName}
-          />
-          <FieldRow label={m.sample_field_local_id()} value={localId} />
-          <FieldRow
-            label={m.sample_field_local_id_description()}
-            value={localIdDescription}
-          />
-          <BreadcrumbFieldRow
-            id="sample-field-collection-method"
-            label={m.sample_field_collection_method()}
-            path={collectionMethod}
-            pathLabel={collectionMethodLabel}
-          />
-          <FieldRow
-            label={m.sample_field_collection_method_description()}
-            value={collectionMethodDescription}
-          />
-          <FieldRow
-            label={m.sample_field_existence_status()}
-            value={existenceStatus && existenceStatusLabel(existenceStatus)}
-          />
-          <FieldRow
-            label={m.sample_field_availability_status()}
-            value={
-              availabilityStatus && availabilityStatusLabel(availabilityStatus)
-            }
-          />
-          <FieldRow
-            label={m.sample_field_publication_year()}
-            value={publicationYear}
-          />
-        </FieldRows>
+      content: location?.position ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          {sampleRows}
+          <LazySampleLocationMap position={location.position} />
+        </div>
+      ) : (
+        sampleRows
       ),
     },
     shownDescription &&
