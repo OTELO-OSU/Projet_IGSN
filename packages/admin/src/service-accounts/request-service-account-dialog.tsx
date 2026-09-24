@@ -6,24 +6,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@projet-igsn/design-system/components/ui/dialog";
-import { Suspense, lazy, useState } from "react";
-import { useAuth } from "react-oidc-context";
+import { useState } from "react";
 
 import { m } from "#/paraglide/messages.js";
-
-const RequestServiceAccountForm = lazy(() =>
-  import("#/domain/service-accounts/request-service-account-form.tsx").then(
-    (module) => ({ default: module.RequestServiceAccountForm }),
-  ),
-);
+import { RequestServiceAccountForm } from "#/service-accounts/request-service-account-form.tsx";
 
 export function RequestServiceAccountDialog() {
   const [open, setOpen] = useState(false);
-  const auth = useAuth();
-
-  if (!auth.isAuthenticated) {
-    return null;
-  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -36,9 +25,7 @@ export function RequestServiceAccountDialog() {
         <DialogHeader>
           <DialogTitle>{m.service_account_request_action()}</DialogTitle>
         </DialogHeader>
-        <Suspense fallback={null}>
-          <RequestServiceAccountForm onSent={() => setOpen(false)} />
-        </Suspense>
+        <RequestServiceAccountForm onSent={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

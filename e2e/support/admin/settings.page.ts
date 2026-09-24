@@ -1,10 +1,14 @@
 import { expect, type Page } from "@playwright/test";
 
 import { chooseOption } from "./choose-option.ts";
+import { pickComboboxOption } from "./pick-combobox-option.ts";
 
 export function settingsPage(page: Page) {
   const item = (name: string) =>
     page.getByRole("listitem").filter({ hasText: name });
+  const requestDialog = page.getByRole("dialog", {
+    name: "Ask for a service account",
+  });
 
   return {
     open: async () => {
@@ -55,6 +59,32 @@ export function settingsPage(page: Page) {
         .getByRole("button", { name: "Generate API key" })
         .click();
       return item(name).getByRole("textbox", { name: "API key" }).inputValue();
+    },
+    requestServiceAccount: async (
+      name: string,
+      reason: string,
+      manualGroup: string,
+    ) => {
+      await page
+        .getByRole("button", { name: "Ask for a service account" })
+        .click();
+      await requestDialog
+        .getByRole("textbox", { name: "Service name" })
+        .fill(name);
+      await requestDialog
+        .getByRole("textbox", { name: "Why do you need a service account?" })
+        .fill(reason);
+      await pickComboboxOption(page, {
+        field: "Groups to access",
+        option: manualGroup,
+        chipLabel: `Remove ${manualGroup}`,
+      });
+      await requestDialog.getByRole("button", { name: "Send request" }).click();
+      await expect(
+        page.getByText(
+          "Your request was sent to the super admin and is being processed.",
+        ),
+      ).toBeVisible();
     },
     expectManualGroup: (name: string) => expect(item(name)).toBeVisible(),
     expectNoManualGroup: (name: string) => expect(item(name)).toHaveCount(0),
