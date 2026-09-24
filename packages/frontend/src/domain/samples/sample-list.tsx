@@ -1,4 +1,5 @@
 import { joinContactName } from "@projet-igsn/domain/sample/contact-name";
+import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
@@ -75,7 +76,8 @@ export function SampleList({
   return (
     <ul ref={listRef} className="grid gap-4 sm:grid-cols-2">
       {samples.map((sample) => {
-        const { igsn, name, location, scientificContext } = sample;
+        const { igsn, internalNumber, name, location, scientificContext } =
+          sample;
         if (igsn === null) {
           return null;
         }
@@ -101,6 +103,11 @@ export function SampleList({
                 data-highlight="exact"
               >
                 {igsn}
+                {internalNumber === null ? null : (
+                  <span className="ml-3">
+                    {formatInternalId(internalNumber)}
+                  </span>
+                )}
               </p>
               {kind ? <CardLine>{kind}</CardLine> : null}
               {material ? <CardLine>{material}</CardLine> : null}

@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, vi } from "vitest";
 
 import { insertUser } from "../../tests/insert-user.ts";
 import { pgTest } from "../../tests/pg-test.ts";
-import { publishableSample } from "../../tests/sample-fixtures.ts";
+import { readSample } from "../../tests/read-sample.ts";
+import { draft, publishableSample } from "../../tests/sample-fixtures.ts";
 import {
   STUB_DATACITE_CONFIG,
   stubDataCite,
@@ -163,6 +164,43 @@ describe("publishSample", () => {
       const republished = await publishSample(db, created.id);
       // Assert
       expect(republished?.publishedAt).toEqual(first);
+    },
+  );
+
+  pgTest("should leave a draft without an internal number", async ({ db }) => {
+    // Act
+    const created = await insertSample(db, draft);
+    // Assert
+    expect((await readSample(db, created.id))?.internalNumber).toBeNull();
+  });
+
+  pgTest(
+    "should assign increasing internal numbers to successive publications",
+    async ({ db }) => {
+      // Arrange
+      const first = await insertSample(db, draft);
+      const second = await insertSample(db, draft);
+      // Act
+      const firstPublished = await publishSample(db, first.id);
+      const secondPublished = await publishSample(db, second.id);
+      // Assert
+      expect(firstPublished?.internalNumber).toBeGreaterThan(0);
+      expect(secondPublished?.internalNumber).toBeGreaterThan(
+        firstPublished!.internalNumber!,
+      );
+    },
+  );
+
+  pgTest(
+    "should keep the first internal number when published twice",
+    async ({ db }) => {
+      // Arrange
+      const created = await insertSample(db, draft);
+      const first = await publishSample(db, created.id);
+      // Act
+      const republished = await publishSample(db, created.id);
+      // Assert
+      expect(republished?.internalNumber).toBe(first?.internalNumber);
     },
   );
 

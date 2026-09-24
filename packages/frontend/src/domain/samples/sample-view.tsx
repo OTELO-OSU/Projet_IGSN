@@ -41,6 +41,7 @@ export function SampleView({
       <SampleHero
         name={sample.name}
         igsn={sample.igsn}
+        internalNumber={withdrawn ? null : sample.internalNumber}
         actions={
           withdrawn ? undefined : (
             <div className="flex flex-wrap gap-2">

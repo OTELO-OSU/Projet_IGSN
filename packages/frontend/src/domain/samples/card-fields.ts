@@ -23,6 +23,7 @@ import { getLocale } from "#/paraglide/runtime.js";
 export type CardSample = Pick<
   Sample,
   | "igsn"
+  | "internalNumber"
   | "name"
   | "nature"
   | "type"

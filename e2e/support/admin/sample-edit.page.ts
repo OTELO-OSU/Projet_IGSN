@@ -172,6 +172,12 @@ export function sampleEditPage(page: Page) {
       return igsn;
     },
 
+    internalId: async () => {
+      const internalId = page.getByLabel("Internal ID", { exact: true });
+      await expect(internalId).toHaveText(/^sample-\d+$/);
+      return internalId.innerText();
+    },
+
     saveAnd: async (action: SaveMenuAction) => {
       await openActionsMenu();
       await page.getByRole("menuitem", { name: action, exact: true }).click();

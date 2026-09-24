@@ -196,6 +196,31 @@ test.describe("samples", () => {
     await detail.expectWithdrawnNotice();
   });
 
+  test("a published sample shows the same internal id in admin and on its public page", async ({
+    page,
+  }) => {
+    await signInAsResearcher(page, RESEARCHERS.pierre);
+    const list = sampleListPage(page);
+    await list.goToCreate();
+
+    const create = sampleCreatePage(page);
+    const name = `Internal id ${Date.now()}`;
+    await create.fillName(name);
+    await create.selectNature("Thin section");
+    await create.fillPublishableFields();
+    await create.publish();
+    await list.expectVisible();
+
+    const edit = sampleEditPage(page);
+    await list.openSample(name);
+    const internalId = await edit.internalId();
+    const igsn = await edit.publicPageIgsn();
+
+    const detail = sampleDetailPage(page);
+    await detail.goto(igsn);
+    await detail.expectInternalId(internalId);
+  });
+
   test("the create form rejects a sample without a name", async ({ page }) => {
     await signInAsResearcher(page, RESEARCHERS.camille);
 

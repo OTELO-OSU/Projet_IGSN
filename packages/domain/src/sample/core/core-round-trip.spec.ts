@@ -14,6 +14,7 @@ const UNMAPPED_SAMPLE_FIELDS = [
   "id",
   "igsn",
   "doiPrefix",
+  "internalNumber",
   "status",
   "createdAt",
   "publishedAt",

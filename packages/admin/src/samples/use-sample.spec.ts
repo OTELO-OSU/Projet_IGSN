@@ -39,6 +39,7 @@ const sample = {
   economicDepositDescription: null,
   igsn: null,
   doiPrefix: null,
+  internalNumber: null,
   manualGroups: [LEFT_BEHIND],
   institutionalOrganization: null,
   institutionalOsu: null,

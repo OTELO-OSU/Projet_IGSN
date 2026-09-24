@@ -53,6 +53,7 @@ The "Comment" column is mapping notes, written for a reviewer of the mapping rat
 | (none)               | `identification.alternateIdentifiers`, `identification.descriptions`, `keywords` | not emitted; refused in a body (`unrecognized_keys`)                                                                                                                                       |
 | `specificName`       | `identification.localName`                                                       |                                                                                                                                                                                            |
 | `localIdDescription` | (none)                                                                           | no Core slot; not emitted, dropped in `UNMAPPED_SAMPLE_FIELDS` (`core-round-trip.spec.ts`); a `PUT` keeps the stored one, or clears it with the local id                                   |
+| `internalNumber`     | (none)                                                                           | the `sample-<n>` internal id; internal-only, not emitted, dropped in `UNMAPPED_SAMPLE_FIELDS` (`core-round-trip.spec.ts`)                                                                  |
 
 ### Classification
 

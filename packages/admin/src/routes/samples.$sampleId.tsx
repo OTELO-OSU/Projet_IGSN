@@ -8,6 +8,7 @@ import {
   Alert,
   AlertDescription,
 } from "@projet-igsn/design-system/components/ui/alert";
+import { formatInternalId } from "@projet-igsn/domain/sample/format-internal-id";
 import { canDeclareSubSample } from "@projet-igsn/domain/user-sample/can-declare-sub-sample";
 import { canDeleteSample } from "@projet-igsn/domain/user-sample/can-delete-sample";
 import { canDuplicateSample } from "@projet-igsn/domain/user-sample/can-duplicate-sample";
@@ -197,6 +198,14 @@ function EditSamplePage() {
               {query.data.igsn}
             </p>
           ) : null}
+          {query.data.internalNumber === null ? null : (
+            <p
+              aria-label={m.field_internal_id()}
+              className="text-muted-foreground text-sm"
+            >
+              {formatInternalId(query.data.internalNumber)}
+            </p>
+          )}
           {publicHint ? (
             <p role="status" className="text-muted-foreground text-sm">
               {publicHint}

@@ -57,6 +57,7 @@ const withdrawn: Sample = {
   economicDepositDescription: null,
   igsn: "CNRS1234567890",
   doiPrefix: "10.5072",
+  internalNumber: 42,
   owner: { name: "Martin", firstname: "Jean" },
   manualGroups: [],
   parents: [],

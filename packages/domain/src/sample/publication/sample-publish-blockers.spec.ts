@@ -61,6 +61,7 @@ const base: Sample = {
   economicDepositDescription: null,
   igsn: null,
   doiPrefix: null,
+  internalNumber: null,
   owner: null,
   manualGroups: [],
   parents: [],

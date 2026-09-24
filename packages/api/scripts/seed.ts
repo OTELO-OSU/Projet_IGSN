@@ -401,6 +401,9 @@ export async function insertSamples(
             publication_year: permanent ? SEED_PUBLICATION_YEAR : null,
             doi_prefix: permanent ? SEED_DOI_PREFIX : null,
             published_at: permanent ? sql`now()` : null,
+            internal_number: permanent
+              ? sql<number>`nextval('sample_internal_number_seq')`
+              : null,
             ...sampleColumns({ ...create, type: create.type ?? null }),
             institutional_organization: owner.institutionalOrganization,
             institutional_osu: owner.institutionalOsu,

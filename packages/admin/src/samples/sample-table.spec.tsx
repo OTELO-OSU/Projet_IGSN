@@ -54,6 +54,7 @@ const sample: AdminSampleListItem = {
   economicDepositDescription: null,
   igsn: null,
   doiPrefix: null,
+  internalNumber: null,
   manualGroups: [],
   parents: [],
   institutionalOrganization: null,
@@ -132,6 +133,23 @@ describe("SampleTable", () => {
     await expect
       .element(screen.getByText("01K072TVWVFK5A1RRZ5MY4PPK9"))
       .toBeInTheDocument();
+  });
+
+  it("should render the internal identifier of a published sample", async () => {
+    const screen = await renderTable([
+      { ...sample, status: "published", internalNumber: 42 },
+    ]);
+    await expect
+      .element(screen.getByRole("cell", { name: "sample-42", exact: true }))
+      .toBeInTheDocument();
+  });
+
+  it("should render no internal identifier on a draft", async () => {
+    const screen = await renderTable(samples);
+    await expect
+      .element(screen.getByRole("columnheader", { name: "Internal ID" }))
+      .toBeInTheDocument();
+    expect(screen.getByText(/^sample-/).elements()).toHaveLength(0);
   });
 
   it("should badge a sample with its status label", async () => {

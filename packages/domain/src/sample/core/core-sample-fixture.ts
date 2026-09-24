@@ -157,6 +157,7 @@ export const FIELD_SAMPLE: Sample = {
   economicDepositDescription: "A small vein system",
   igsn: "ABCDEFGHJKMNPQRSTVWXYZ0123",
   doiPrefix: "10.5072",
+  internalNumber: 7,
   owner: { firstname: "Marie", name: "Curie" },
   manualGroups: [
     { id: "33333333-3333-4333-8333-333333333333", name: "Lorraine survey" },
@@ -254,6 +255,7 @@ export const COLLECTION_SPECIMEN: Sample = {
   economicDepositDescription: null,
   igsn: "ZYXWVTSRQPNMKJHGFEDCBA9876",
   doiPrefix: "10.5072",
+  internalNumber: 3,
   owner: { firstname: null, name: "Cousteau" },
   manualGroups: [],
   parents: [],
@@ -358,6 +360,7 @@ export const SYNTHETIC_SAMPLE: Sample = {
   economicDepositDescription: null,
   igsn: "CNRS1234567890",
   doiPrefix: null,
+  internalNumber: 5,
   owner: { firstname: "Rosalind", name: "Franklin" },
   manualGroups: [],
   parents: [],

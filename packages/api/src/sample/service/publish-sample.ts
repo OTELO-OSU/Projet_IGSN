@@ -25,6 +25,8 @@ export async function publishSample(
       doi_prefix: sql`coalesce(doi_prefix, ${config?.prefix ?? null})`,
       publication_year: sql`coalesce(publication_year, extract(year from now())::int)`,
       published_at: sql`coalesce(published_at, now())`,
+      // ponytail: a rolled-back publish burns its sequence value, so numbers may skip; a gapless counter needs a locked counter row.
+      internal_number: sql`coalesce(internal_number, nextval('sample_internal_number_seq'))`,
     })
     .where("id", "=", id)
     .returning("id")
