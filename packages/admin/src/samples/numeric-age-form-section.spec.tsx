@@ -112,15 +112,36 @@ describe("NumericAgeFormSection", () => {
     await page.getByRole("spinbutton", { name: "Numeric age" }).fill("42");
     await page.getByRole("combobox", { name: "Units *" }).click();
     await page.getByRole("option", { name: "Year" }).click();
-    await page.getByRole("combobox", { name: "Reference *" }).click();
-    await page.getByRole("option", { name: "BP", exact: true }).click();
+    await page.getByRole("combobox", { name: "Age reference *" }).click();
+    await page
+      .getByRole("option", { name: "BP - Before Present", exact: true })
+      .click();
     await page.getByRole("spinbutton", { name: "Numeric age" }).fill("");
 
     await expect
       .element(page.getByRole("combobox", { name: "Units" }))
       .not.toBeInTheDocument();
     await expect
-      .element(page.getByRole("combobox", { name: "Reference" }))
+      .element(page.getByRole("combobox", { name: "Age reference" }))
+      .not.toBeInTheDocument();
+  });
+
+  it("should offer day and month units, with no age reference for a day", async () => {
+    await render(<Harness />);
+
+    await toggle().click();
+    await page.getByRole("spinbutton", { name: "Numeric age" }).fill("3");
+    await page.getByRole("combobox", { name: "Units *" }).click();
+    await expect
+      .element(page.getByRole("option", { name: "Month", exact: true }))
+      .toBeInTheDocument();
+    await page.getByRole("option", { name: "Day", exact: true }).click();
+
+    await expect
+      .element(page.getByRole("combobox", { name: "Units *" }))
+      .toHaveTextContent("Day");
+    await expect
+      .element(page.getByRole("combobox", { name: "Age reference" }))
       .not.toBeInTheDocument();
   });
 

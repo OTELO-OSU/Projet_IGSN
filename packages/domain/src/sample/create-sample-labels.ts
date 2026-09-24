@@ -50,6 +50,7 @@ type _lightKeys = AssertKeys<`light_${Light}`>;
 type _pressureTypeKeys = AssertKeys<`pressure_${PressureType}`>;
 type _numericUnitKeys = AssertKeys<`age_unit_${NumericUnit}`>;
 type _yearsUnitKeys = AssertKeys<`age_years_${YearsUnit}`>;
+type _yearsUnitShortKeys = AssertKeys<`age_years_short_${YearsUnit}`>;
 type _geologicalAgeKeys = AssertKeys<`age_ics_${GeologicalAge}`>;
 type _existenceStatusKeys = AssertKeys<`existence_status_${ExistenceStatus}`>;
 type _availabilityStatusKeys =
@@ -104,6 +105,7 @@ type SampleLabels = {
   pressureTypeLabel: (type: PressureType) => string;
   numericUnitLabel: (unit: NumericUnit) => string;
   yearsUnitLabel: (unit: YearsUnit) => string;
+  yearsUnitShortLabel: (unit: YearsUnit) => string;
   geologicalAgeLabel: (age: GeologicalAge) => string;
   existenceStatusLabel: (status: ExistenceStatus) => string;
   availabilityStatusLabel: (status: AvailabilityStatus) => string;
@@ -144,6 +146,7 @@ const LABEL_KEY = {
   pressureTypeLabel: ["pressure", "code"],
   numericUnitLabel: ["age_unit", "code"],
   yearsUnitLabel: ["age_years", "code"],
+  yearsUnitShortLabel: ["age_years_short", "code"],
   geologicalAgeLabel: ["age_ics", "code"],
   existenceStatusLabel: ["existence_status", "code"],
   availabilityStatusLabel: ["availability_status", "code"],

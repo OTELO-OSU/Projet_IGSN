@@ -267,7 +267,20 @@ describe("SampleView", () => {
           numericAgeUnit: "ka",
         },
       },
-      ["500-2000 ka"],
+      ["500-2000 Ka"],
+    ],
+    [
+      "a numeric age with its short years reference",
+      {
+        age: {
+          ...emptyAge,
+          numericAgeMin: 1200,
+          numericAgeMax: 1200,
+          numericAgeUnit: "a",
+          numericAgeYearsUnit: "ce",
+        },
+      },
+      [/^1200 Year CE$/],
     ],
     [
       "the translated geological age",

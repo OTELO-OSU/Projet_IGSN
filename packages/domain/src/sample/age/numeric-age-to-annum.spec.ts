@@ -8,6 +8,8 @@ describe("numericAgeToAnnum", () => {
     ["ga", 1, 1_000_000_000],
     ["ka", 500, 500_000],
     ["ma", 0.5, 500_000],
+    ["day", 365.25, 1],
+    ["month", 12, 1],
   ] as const)("should convert %s %s to %s annum", (unit, value, expected) => {
     expect(numericAgeToAnnum(value, unit)).toBe(expected);
   });
