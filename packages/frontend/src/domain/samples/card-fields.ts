@@ -106,19 +106,6 @@ function contextField(
   };
 }
 
-function personField(key: "chiefScientist", label: () => string): CardField {
-  return {
-    key,
-    label,
-    section: m.sample_section_scientific_context,
-    get: (sample) =>
-      joinContactName(
-        contextText(sample, `${key}Firstname`),
-        contextText(sample, `${key}Lastname`),
-      ) || null,
-  };
-}
-
 const LOCKED_FIELDS: readonly PickableField[] = [
   { key: "name", label: m.card_field_name, section: m.sample_section_sample },
   { key: "igsn", label: m.card_field_igsn, section: m.sample_section_sample },
@@ -153,7 +140,16 @@ const OPTIONAL_CARD_FIELDS: readonly CardField[] = [
       joinPath(pathText(sample.collectionMethod, collectionMethodLabel)),
   },
   contextField("researchProgramName", m.facet_research_program_name),
-  personField("chiefScientist", m.facet_chief_scientist),
+  {
+    key: "chiefScientist",
+    label: m.facet_chief_scientist,
+    section: m.sample_section_scientific_context,
+    get: (sample) =>
+      joinContactName(
+        contextText(sample, "chiefScientistFirstname"),
+        contextText(sample, "chiefScientistLastname"),
+      ) || null,
+  },
   {
     key: "numericAge",
     label: m.sample_field_numeric_age,

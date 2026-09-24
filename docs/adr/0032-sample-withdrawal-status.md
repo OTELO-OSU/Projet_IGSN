@@ -23,6 +23,8 @@ A published sample keeps a permanent IGSN, but an owner may want it out of publi
 
 **2026-09-18 narrowing.** A collector or collection curator may now link a registry account (`*UserId`) instead of a typed name; the read model resolves that link's firstname/lastname/ORCID live, before redaction, so a withdrawn sample keeps showing the resolved names on its whitelisted fields. The account link itself is never in the whitelist and never reaches the redacted payload.
 
+**2026-09-24 narrowing.** The collection curator is dropped from the scientific context, so its fields leave this record.
+
 **Toggling is one endpoint**, `PUT /admin/samples/:id/status`, editor-only, 409 on a draft. The admin edit page renders `SampleStatusButton`, next to the existing publish action, offering "Withdraw" on a published sample and "Republish" on a withdrawn one.
 
 ### Rejected

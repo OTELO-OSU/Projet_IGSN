@@ -103,19 +103,16 @@ export function toCoreResponsibility(sample: Sample): CoreAgentRole[] {
       for (const ror of context.hostInstitution ?? []) {
         roles.push(organizationRole("HostingInstitution", ror));
       }
-    }
-  }
-
-  if (context?.provenanceStatus === "field_sample") {
-    for (const additional of context.additionalRoles) {
-      roles.push(
-        ...personRole(
-          CORE_ROLE_BY_ADDITIONAL_ROLE[additional.role],
-          additional.personFirstname,
-          additional.personLastname,
-          additional.personOrcid,
-        ),
-      );
+      for (const additional of context.additionalRoles) {
+        roles.push(
+          ...personRole(
+            CORE_ROLE_BY_ADDITIONAL_ROLE[additional.role],
+            additional.personFirstname,
+            additional.personLastname,
+            additional.personOrcid,
+          ),
+        );
+      }
     }
   }
 
