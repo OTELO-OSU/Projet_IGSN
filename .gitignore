@@ -11,17 +11,15 @@
 **/__screenshots__
 **/.vitest-attachments
 
-# Uploaded sample attachment blobs (dev/test/e2e debug output, ADR 0017).
-# The api writes them under its cwd, which is the repo root for `pnpm test`.
 packages/api/attachments
 /attachments
 
 **/*.local
 **/.env
-infra/preprod/docker-compose.env
+infra/*/docker-compose.env
 
-# Cloudflare Origin CA cert + key (host secrets, copied by the operator)
-infra/preprod/certs/
+infra/*/certs/
+infra/*/ca/
 
 **/.DS_Store
 
@@ -38,14 +36,11 @@ infra/preprod/certs/
 .devcontainer.json
 .devcontainer-lock.json
 
-# Legacy IGSN dump, imported via `make db-import-legacy` (never committed)
 bdd-igsn.sql
 import-legacy.log
 .playwright-mcp
 
-# Institution CSV to sync
 sync-data/*
 !sync-data/.gitkeep
 
-# Working-draft specifications (never committed)
 *.docx

@@ -1,5 +1,8 @@
 make generate
 
+make env-example
+git add infra/prod/docker-compose.env.example infra/preprod/docker-compose.env.example
+
 make lint-staged
 
 git update-index --again
