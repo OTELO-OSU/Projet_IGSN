@@ -1,4 +1,4 @@
-import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
+import { isSyntheticMaterial } from "@projet-igsn/domain/sample/synthetic-details/is-synthetic-material";
 import ExcelJS from "exceljs";
 import { beforeAll, describe, expect, it } from "vitest";
 
@@ -11,10 +11,7 @@ import {
   SHEETS,
   TEMPLATE_VERSION,
 } from "./columns.ts";
-import {
-  BLOCK_PLACEMENTS,
-  PRUNED_MATERIAL_BRANCH,
-} from "./vocabulary-sheet.ts";
+import { BLOCK_PLACEMENTS } from "./vocabulary-sheet.ts";
 import { importTemplateWorkbook, sheetValidations } from "./workbook.ts";
 
 const GROUP_ROW = 1;
@@ -96,10 +93,7 @@ describe("import template workbook", () => {
       .getColumn(3)
       .eachCell((cell) => {
         const value = cell.value;
-        if (
-          typeof value === "string" &&
-          isPathAtOrUnder(value, PRUNED_MATERIAL_BRANCH)
-        ) {
+        if (typeof value === "string" && isSyntheticMaterial(value)) {
           prunedPaths.push(value);
         }
       });

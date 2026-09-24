@@ -1,8 +1,6 @@
 import { COLLECTION_METHODS } from "@projet-igsn/domain/sample/collection-method/vocabulary";
 import { REGION_HIERARCHY } from "@projet-igsn/domain/sample/location/region";
-import { MATERIAL_PATHS } from "@projet-igsn/domain/sample/material/classification";
 import { expandPaths } from "@projet-igsn/domain/sample/path/expand-paths";
-import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 import { pathSegment } from "@projet-igsn/domain/sample/path/segment";
 import { PHYSIOGRAPHIC_ENVIRONMENTS } from "@projet-igsn/domain/sample/physiographic-environment/vocabulary";
 import { RESOURCE_TYPE_PATHS } from "@projet-igsn/domain/sample/resource-type/vocabulary";
@@ -11,17 +9,26 @@ import { describe, expect, it } from "vitest";
 
 import type { VocabularyBlock } from "./vocabulary-sheet.ts";
 
-import {
-  PRUNED_MATERIAL_BRANCH,
-  VOCABULARY_BLOCKS,
-} from "./vocabulary-sheet.ts";
+import { TEMPLATE_MATERIAL_PATHS } from "./columns.ts";
+import { VOCABULARY_BLOCKS } from "./vocabulary-sheet.ts";
+
+const READABLE_CODE_BLOCKS = new Set([
+  "navigation_type",
+  "size_unit",
+  "mass_unit",
+  "pressure_unit",
+  "age_numeric_unit",
+  "identifier_type",
+]);
+
+const isHierarchy = (block: VocabularyBlock) => block.rows[0]?.[2] !== "";
 
 const codeOf = ([key, , path]: VocabularyBlock["rows"][number]) =>
   path === "" ? key : pathSegment(path);
 
 const hierarchyPaths = (id: string) =>
   VOCABULARY_BLOCKS.filter(
-    (block) => block.hierarchy && block.id.startsWith(`${id}_`),
+    (block) => isHierarchy(block) && block.id.startsWith(`${id}_`),
   )
     .flatMap((block) => block.rows.map(([, , path]) => path))
     .sort();
@@ -29,7 +36,7 @@ const hierarchyPaths = (id: string) =>
 describe("import template vocabulary sheet", () => {
   it("should offer a human label, never the code, in every list a researcher picks from", () => {
     const leaks = VOCABULARY_BLOCKS.filter(
-      (block) => !block.codeIsReadable,
+      (block) => !READABLE_CODE_BLOCKS.has(block.id),
     ).flatMap((block) =>
       block.rows
         .filter((row) => row[1] === codeOf(row))
@@ -43,7 +50,7 @@ describe("import template vocabulary sheet", () => {
     const collisions = VOCABULARY_BLOCKS.flatMap((block) => {
       const seen = new Set<string>();
       return block.rows.flatMap(([key, label]) => {
-        const group = `${block.id}|${block.hierarchy ? key : ""}|${label}`;
+        const group = `${block.id}|${isHierarchy(block) ? key : ""}|${label}`;
         if (seen.has(group)) return [group];
         seen.add(group);
         return [];
@@ -54,12 +61,7 @@ describe("import template vocabulary sheet", () => {
   });
 
   it.each([
-    [
-      "material",
-      MATERIAL_PATHS.filter(
-        (path) => !isPathAtOrUnder(path, PRUNED_MATERIAL_BRANCH),
-      ),
-    ],
+    ["material", TEMPLATE_MATERIAL_PATHS],
     ["sample_type", SAMPLE_TYPES],
     ["collection_method", COLLECTION_METHODS],
     ["physiographic_environment", PHYSIOGRAPHIC_ENVIRONMENTS],

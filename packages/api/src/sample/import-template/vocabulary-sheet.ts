@@ -1,5 +1,6 @@
 import {
   laboratoryLabel,
+  organizationLabel,
   osuLabel,
 } from "@projet-igsn/domain/institutional-group/label";
 import { LABORATORIES } from "@projet-igsn/domain/institutional-group/laboratory";
@@ -35,17 +36,16 @@ import {
 import { ELEMENTS } from "@projet-igsn/domain/sample/element/vocabulary";
 import { COUNTRIES } from "@projet-igsn/domain/sample/location/country";
 import { countryLabel } from "@projet-igsn/domain/sample/location/country-label";
+import { LOCATION_TYPES } from "@projet-igsn/domain/sample/location/location-type";
 import { NAVIGATION_TYPES } from "@projet-igsn/domain/sample/location/navigation-type";
 import { OCEAN_SEAS } from "@projet-igsn/domain/sample/location/ocean-sea";
 import { REGION_HIERARCHY } from "@projet-igsn/domain/sample/location/region";
 import { VERTICAL_REFERENCES } from "@projet-igsn/domain/sample/location/vertical-reference";
 import { VERTICAL_REFERENCE_SYSTEMS } from "@projet-igsn/domain/sample/location/vertical-reference-system";
-import { MATERIAL_PATHS } from "@projet-igsn/domain/sample/material/classification";
 import { METAMORPHIC_FABRICS } from "@projet-igsn/domain/sample/metamorphic-fabric/vocabulary";
 import { METAMORPHIC_FACIES } from "@projet-igsn/domain/sample/metamorphic-facies/vocabulary";
 import { NATURES } from "@projet-igsn/domain/sample/nature";
 import { expandPaths } from "@projet-igsn/domain/sample/path/expand-paths";
-import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
 import { PHYSIOGRAPHIC_ENVIRONMENTS } from "@projet-igsn/domain/sample/physiographic-environment/vocabulary";
 import {
   IDENTIFIER_TYPES,
@@ -60,39 +60,35 @@ import { PROVENANCE_STATUSES } from "@projet-igsn/domain/sample/scientific-conte
 import { TEXTURES } from "@projet-igsn/domain/sample/texture/vocabulary";
 import { SAMPLE_TYPES } from "@projet-igsn/domain/sample/type/vocabulary";
 
-import { SHEETS } from "./columns.ts";
+import { depthOf, SHEETS, TEMPLATE_MATERIAL_PATHS } from "./columns.ts";
 import { labels } from "./labels.ts";
 
-export type VocabularyRow = readonly [key: string, label: string, path: string];
+type VocabularyRow = readonly [key: string, label: string, path: string];
 
 export type VocabularyBlock = {
   id: string;
   title: string;
-  hierarchy: boolean;
-  codeIsReadable: boolean;
   rows: readonly VocabularyRow[];
 };
 
-export type BlockPlacement = {
+type BlockPlacement = {
+  title: string;
   keyRange: string;
   labelRange: string;
   labelAnchor: string;
 };
 
-export const PRUNED_MATERIAL_BRANCH =
-  "rock_and_sediment.synthetic_rock_mineral";
-
 export const YES_NO_LABEL = { true: "Yes", false: "No" } as const;
 
 export const POSITION_TYPE_LABEL = {
   point: "Point",
-  area: "Area",
+  area: "Polygon",
   line: "Line",
 } as const;
 
 export const REGION_KIND_LABEL = {
   country: "Country",
-  ocean: "Ocean or sea",
+  ocean: "Ocean / sea",
 } as const;
 
 export const DATE_PRECISION_LABEL = {
@@ -105,12 +101,9 @@ const flat = <T extends string | number>(
   title: string,
   codes: readonly T[],
   label: (code: T) => string,
-  codeIsReadable = false,
 ): VocabularyBlock => ({
   id,
   title,
-  hierarchy: false,
-  codeIsReadable,
   rows: codes.map((code) => [String(code), label(code), ""] as const),
 });
 
@@ -127,14 +120,11 @@ const hierarchy = (
       .map((_, index) => label(segments.slice(0, index + 1).join(".")))
       .join(" > ");
   };
-  const depth = Math.max(...paths.map((path) => path.split(".").length));
-  return Array.from({ length: depth }, (_, index) => {
+  return Array.from({ length: depthOf(paths) }, (_, index) => {
     const level = index + 1;
     return {
       id: `${id}_${level}`,
       title: `${title} (level ${level})`,
-      hierarchy: true,
-      codeIsReadable: false,
       rows: paths
         .filter((path) => path.split(".").length === level)
         .map((path): VocabularyRow => [breadcrumb(path), label(path), path])
@@ -142,10 +132,6 @@ const hierarchy = (
     };
   });
 };
-
-const ORGANIZATION_NAME = new Map(
-  ORGANIZATIONS.map((organization) => [organization.ror, organization.name]),
-);
 
 const identity = (code: string) => code;
 
@@ -186,7 +172,7 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
   flat(
     "position_type",
     "Position type",
-    ["point", "area", "line"] as const,
+    LOCATION_TYPES,
     (code) => POSITION_TYPE_LABEL[code],
   ),
   flat(
@@ -201,15 +187,15 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
     VERTICAL_REFERENCE_SYSTEMS,
     labels.verticalReferenceSystemLabel,
   ),
-  flat("navigation_type", "Navigation type", NAVIGATION_TYPES, identity, true),
+  flat("navigation_type", "Navigation type", NAVIGATION_TYPES, identity),
   flat(
     "date_precision",
     "Date precision",
     ["day", "hour"] as const,
     (code) => DATE_PRECISION_LABEL[code],
   ),
-  flat("size_unit", "Size unit", SIZE_UNITS, identity, true),
-  flat("mass_unit", "Mass unit", MASS_UNITS, identity, true),
+  flat("size_unit", "Size unit", SIZE_UNITS, identity),
+  flat("mass_unit", "Mass unit", MASS_UNITS, identity),
   flat(
     "volume_unit",
     "Volume unit",
@@ -253,13 +239,12 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
     "Pressure unit",
     PRESSURE_UNITS,
     (code) => pressureUnitLabel[code],
-    true,
   ),
   flat(
     "organization",
     "Organisation",
-    [...ORGANIZATION_NAME.keys()],
-    (ror) => ORGANIZATION_NAME.get(ror) ?? ror,
+    ORGANIZATIONS.map((organization) => organization.ror),
+    organizationLabel,
   ),
   flat(
     "osu",
@@ -302,7 +287,6 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
     "Numeric age unit",
     NUMERIC_UNITS,
     labels.numericUnitLabel,
-    true,
   ),
   flat(
     "age_years_unit",
@@ -340,7 +324,6 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
     "Identifier type",
     IDENTIFIER_TYPES,
     (code) => identifierTypeLabel[code],
-    true,
   ),
   flat(
     "relation_resource_type",
@@ -351,9 +334,7 @@ export const VOCABULARY_BLOCKS: readonly VocabularyBlock[] = [
   ...hierarchy(
     "material",
     "Material",
-    MATERIAL_PATHS.filter(
-      (path) => !isPathAtOrUnder(path, PRUNED_MATERIAL_BRANCH),
-    ),
+    TEMPLATE_MATERIAL_PATHS,
     labels.materialPathLabel,
   ),
   ...hierarchy("sample_type", "Sample type", SAMPLE_TYPES, labels.typeLabel),
@@ -391,6 +372,7 @@ const laidOut = () => {
     const start = rows.length + 1;
     rows.push(...block.rows);
     placements[block.id] = {
+      title: block.title,
       keyRange: `${SHEETS.vocabularies}!$A$${start}:$A$${rows.length}`,
       labelRange: `${SHEETS.vocabularies}!$B$${start}:$B$${rows.length}`,
       labelAnchor: `${SHEETS.vocabularies}!$B$${start}`,

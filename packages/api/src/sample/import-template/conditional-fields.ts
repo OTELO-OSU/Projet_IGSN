@@ -1,14 +1,24 @@
-import type { ControlledReading } from "@projet-igsn/domain/sample/condition/controlled-reading";
-import type { StorageCondition } from "@projet-igsn/domain/sample/condition/storage-condition";
-
+import {
+  CONTROLLED_READINGS,
+  READING_STORAGE_CONDITION,
+} from "@projet-igsn/domain/sample/condition/controlled-reading";
 import { allowedAvailabilityStatuses } from "@projet-igsn/domain/sample/curation/allowed-availability-statuses";
 import { EXISTENCE_STATUSES } from "@projet-igsn/domain/sample/curation/existence-status";
-import { MATERIAL_PATHS } from "@projet-igsn/domain/sample/material/classification";
+import { allowsLocation } from "@projet-igsn/domain/sample/location/allows-location";
+import { allowsSpecificName } from "@projet-igsn/domain/sample/material/allows-specific-name";
+import { isMetamorphicRock } from "@projet-igsn/domain/sample/material/is-metamorphic-rock";
+import { isOtherMaterial } from "@projet-igsn/domain/sample/material/is-other-material";
 import { isPathAtOrUnder } from "@projet-igsn/domain/sample/path/is-at-or-under";
+import { HAZARDS } from "@projet-igsn/domain/sample/security/model";
+import { texturesFor } from "@projet-igsn/domain/sample/texture/vocabulary";
 
 import type { Column } from "./columns.ts";
 
-import { DATA_SHEETS, REQUIRED_MARKER } from "./columns.ts";
+import {
+  DATA_SHEETS,
+  REQUIRED_MARKER,
+  TEMPLATE_MATERIAL_PATHS,
+} from "./columns.ts";
 import { labels } from "./labels.ts";
 import {
   DATE_PRECISION_LABEL,
@@ -17,7 +27,7 @@ import {
   YES_NO_LABEL,
 } from "./vocabulary-sheet.ts";
 
-export type ConditionalMatch = "is" | "isNot";
+type ConditionalMatch = "is" | "isNot";
 
 export type ConditionalCondition = {
   path: string;
@@ -54,16 +64,13 @@ const sentenceOf = (condition: ConditionalCondition) => {
 const material = (
   level: number,
   match: ConditionalMatch,
-  paths: readonly string[],
+  matches: (path: string) => boolean,
 ): ConditionalCondition => {
-  const stale = paths.filter(
-    (path) =>
-      !MATERIAL_PATHS.includes(path) || path.split(".").length !== level,
+  const paths = TEMPLATE_MATERIAL_PATHS.filter(
+    (path) => path.split(".").length === level && matches(path),
   );
-  if (stale.length > 0)
-    throw new Error(
-      `Material paths absent from level ${level}: ${stale.join(", ")}`,
-    );
+  if (paths.length === 0)
+    throw new Error(`No level ${level} material matches this condition`);
   return {
     path: "material",
     level,
@@ -72,29 +79,29 @@ const material = (
   };
 };
 
-const controlled = (
-  reading: ControlledReading,
-  storageCondition: StorageCondition,
-): ConditionalField => ({
-  paths: [`condition.${reading}`],
-  condition: {
-    path: "condition.storageConditions",
-    match: "is",
-    values: [labels.storageConditionLabel(storageCondition)],
-  },
-});
+const controlledReadings = CONTROLLED_READINGS.map(
+  (reading): ConditionalField => ({
+    paths: [`condition.${reading}`],
+    condition: {
+      path: "condition.storageConditions",
+      match: "is",
+      values: [
+        labels.storageConditionLabel(READING_STORAGE_CONDITION[reading]),
+      ],
+    },
+  }),
+);
 
-const hazardExplanation = (
-  flag: string,
-  explanation: string,
-): ConditionalField => ({
-  paths: [`security.${explanation}`],
-  condition: {
-    path: `security.${flag}`,
-    match: "is",
-    values: [YES_NO_LABEL.true],
-  },
-});
+const hazardExplanations = HAZARDS.map(
+  ({ flag, explanation }): ConditionalField => ({
+    paths: [`security.${explanation}`],
+    condition: {
+      path: `security.${flag}`,
+      match: "is",
+      values: [YES_NO_LABEL.true],
+    },
+  }),
+);
 
 const availabilityByExistence = EXISTENCE_STATUSES.flatMap((status) => {
   const [only, ...rest] = allowedAvailabilityStatuses(status);
@@ -151,31 +158,26 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
       values: [YES_NO_LABEL.true],
     },
   },
-  hazardExplanation("radioactivity", "radioactivityExplanation"),
-  hazardExplanation("asbestosRich", "asbestosExplanation"),
-  hazardExplanation("chemicalRisk", "chemicalRiskExplanation"),
+  ...hazardExplanations,
   {
     paths: ["availabilityStatus"],
     prompt: `Restricted by "${headerOf("existenceStatus")}": ${availabilityByExistence}.`,
   },
   {
     paths: ["texture"],
-    condition: material(4, "is", [
-      "rock_and_sediment.rock.igneous.plutonic",
-      "rock_and_sediment.rock.igneous.volcanic",
-    ]),
+    condition: material(4, "is", (path) => texturesFor(path).length > 0),
   },
   {
     paths: ["metamorphicFacies", "metamorphicFabric"],
-    condition: material(3, "is", ["rock_and_sediment.rock.metamorphic"]),
+    condition: material(3, "is", isMetamorphicRock),
   },
   {
     paths: ["materialOtherName"],
-    condition: material(3, "is", ["rock_and_sediment.rock.other"]),
+    condition: material(3, "is", isOtherMaterial),
   },
   {
     paths: ["specificName"],
-    condition: material(3, "isNot", ["rock_and_sediment.rock.unknown"]),
+    condition: material(3, "isNot", (path) => !allowsSpecificName(path)),
   },
   {
     paths: [
@@ -183,9 +185,7 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
       "geologicalContextDescription",
       "physiographicEnvironment",
     ],
-    condition: material(3, "isNot", [
-      "rock_and_sediment.extraterrestrial_rock.returned_samples",
-    ]),
+    condition: material(3, "isNot", (path) => !allowsLocation(path)),
   },
   {
     paths: [
@@ -254,10 +254,7 @@ export const CONDITIONAL_FIELDS: readonly ConditionalField[] = [
       values: [labels.numericUnitLabel("a")],
     },
   },
-  controlled("temperature", "temperature_controlled"),
-  controlled("humidity", "moisture_controlled"),
-  controlled("pressure", "pressure_controlled"),
-  controlled("light", "light_controlled"),
+  ...controlledReadings,
 ];
 
 export const conditionOf = (

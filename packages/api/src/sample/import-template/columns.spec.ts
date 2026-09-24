@@ -8,8 +8,6 @@ import type { Column } from "./columns.ts";
 import {
   CHILD_SHEETS,
   DATA_SHEETS,
-  DEFERRED_FIELDS,
-  IDENTIFIER_ONLY_FIELDS,
   REQUIRED_MARKER,
   SAMPLE_COLUMNS,
   SHEETS,
@@ -62,6 +60,23 @@ function leafPaths(schema: z.ZodType, prefix: string): string[] {
   }
   return [prefix];
 }
+
+const DEFERRED_FIELDS = [
+  "parentIds",
+  "processSteps",
+  "syntheticDetails",
+  "attachments",
+];
+
+// TODO(phase 3): these carry a uuid a researcher cannot type; drop them from this list once the importer resolves people and groups by name.
+const IDENTIFIER_ONLY_FIELDS = [
+  "manualGroupIds",
+  "scientificContext.chiefScientistUserId",
+  "scientificContext.collectorUserId",
+  "scientificContext.additionalRoles.personUserId",
+];
+
+const COVERED_BY_REGION_LEVEL_2 = ["location.region.oceanSea"];
 
 const EXCLUDED = [...DEFERRED_FIELDS, ...IDENTIFIER_ONLY_FIELDS];
 
@@ -162,28 +177,10 @@ describe("import template columns", () => {
       ...CHILD_SHEETS.flatMap((child) => child.columns),
     ];
 
-    const covered = columns.flatMap((column) => [
-      ...(column.path === undefined ? [] : [column.path]),
-      ...(column.covers ?? []),
-    ]);
+    const covered = [...pathsOf(columns), ...COVERED_BY_REGION_LEVEL_2];
 
     expect(unique(covered)).toEqual(
       unique(leafPaths(createSampleSchema, "").filter(isTemplated)),
     );
-  });
-
-  it("should only let a column cover a sibling of its own path", () => {
-    const parentOf = (path: string) => path.split(".").slice(0, -1).join(".");
-    const strays = DATA_SHEETS.flatMap((sheet) =>
-      sheet.columns.flatMap((column) =>
-        (column.covers ?? []).filter(
-          (covered) =>
-            column.path === undefined ||
-            parentOf(covered) !== parentOf(column.path),
-        ),
-      ),
-    );
-
-    expect(strays).toEqual([]);
   });
 });

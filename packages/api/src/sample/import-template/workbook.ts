@@ -10,8 +10,6 @@ import {
   DEFAULT_TEMPLATE_ROWS,
   SAMPLE_COLUMNS,
   SAMPLE_KEY_HEADER,
-  SAMPLE_LOOKUP_HEADER,
-  SAMPLE_NAME_HEADER,
   SHEETS,
   TEMPLATE_VERSION,
 } from "./columns.ts";
@@ -22,11 +20,7 @@ import {
   conditionOf,
   driverIndexOf,
 } from "./conditional-fields.ts";
-import {
-  BLOCK_PLACEMENTS,
-  VOCABULARY_BLOCKS,
-  VOCABULARY_ROWS,
-} from "./vocabulary-sheet.ts";
+import { BLOCK_PLACEMENTS, VOCABULARY_ROWS } from "./vocabulary-sheet.ts";
 
 type TemplateValidation = Omit<ExcelJS.DataValidation, "type" | "formulae"> & {
   type: ExcelJS.DataValidation["type"] | "any";
@@ -38,7 +32,7 @@ type RangeValidations = {
   find: (address: string) => TemplateValidation | undefined;
 };
 
-export type ExcelBuffer = Awaited<ReturnType<ExcelJS.Xlsx["writeBuffer"]>>;
+type ExcelBuffer = Awaited<ReturnType<ExcelJS.Xlsx["writeBuffer"]>>;
 
 export const sheetValidations = (sheet: ExcelJS.Worksheet): RangeValidations =>
   (sheet as unknown as { dataValidations: RangeValidations }).dataValidations;
@@ -50,6 +44,9 @@ const HEADER_ROW = 2;
 const FIRST_DATA_ROW = HEADER_ROW + 1;
 
 const lastDataRow = (rows: number) => FIRST_DATA_ROW + rows - 1;
+
+const dataRange = (letter: string, rows: number) =>
+  `${letter}${FIRST_DATA_ROW}:${letter}${lastDataRow(rows)}`;
 
 const READ_ME_LINES = [
   `Row ${GROUP_ROW} groups the columns as the declaration form's tabs do and row ${HEADER_ROW} names them.`,
@@ -64,10 +61,6 @@ const READ_ME_LINES = [
   `A greyed cell does not apply to the row as you filled it, so leave it empty.`,
 ];
 
-const BLOCK_TITLE = new Map(
-  VOCABULARY_BLOCKS.map((block) => [block.id, block.title]),
-);
-
 const blockIdOf = (column: Column) =>
   column.block === undefined
     ? undefined
@@ -78,24 +71,11 @@ const blockIdOf = (column: Column) =>
 const columnLetter = (sheet: ExcelJS.Worksheet, index: number) =>
   sheet.getColumn(index + 1).letter;
 
-const sampleColumnIndex = (header: string) =>
-  SAMPLE_COLUMNS.findIndex((column) => column.header === header);
+const sampleKeyRange = (rows: number) =>
+  `${SHEETS.samples}!$A$${FIRST_DATA_ROW}:$A$${lastDataRow(rows)}`;
 
-const sampleKeyRange = (samples: ExcelJS.Worksheet, rows: number) => {
-  const letter = columnLetter(samples, sampleColumnIndex(SAMPLE_KEY_HEADER));
-  return `${SHEETS.samples}!$${letter}$${FIRST_DATA_ROW}:$${letter}$${lastDataRow(rows)}`;
-};
-
-const sampleLookupFormula = (
-  samples: ExcelJS.Worksheet,
-  keyLetter: string,
-  row: number,
-) => {
-  const keyIndex = sampleColumnIndex(SAMPLE_KEY_HEADER);
-  const nameIndex = sampleColumnIndex(SAMPLE_NAME_HEADER);
-  const range = `${SHEETS.samples}!$${columnLetter(samples, keyIndex)}:$${columnLetter(samples, nameIndex)}`;
-  return `IFERROR(VLOOKUP($${keyLetter}${row}, ${range}, ${nameIndex - keyIndex + 1}, FALSE), "")`;
-};
+const sampleLookupFormula = (row: number) =>
+  `IFERROR(VLOOKUP($A${row}, ${SHEETS.samples}!$A:$B, 2, FALSE), "")`;
 
 const breadcrumbOf = (
   sheet: ExcelJS.Worksheet,
@@ -118,26 +98,24 @@ function vocabularyValidationOf(
   column: Column,
 ): TemplateValidation | undefined {
   const blockId = blockIdOf(column);
-  if (blockId === undefined) return undefined;
-  const title = BLOCK_TITLE.get(blockId) ?? blockId;
-  const placement = BLOCK_PLACEMENTS[blockId];
+  const placement =
+    blockId === undefined ? undefined : BLOCK_PLACEMENTS[blockId];
   if (placement === undefined) return undefined;
-  const level = column.level ?? 1;
-  const breadcrumb = breadcrumbOf(sheet, columns, column);
+  const { title, keyRange, labelAnchor, labelRange } = placement;
+  let formula = `=${labelRange}`;
+  let follows = "";
+  if ((column.level ?? 1) > 1) {
+    const breadcrumb = breadcrumbOf(sheet, columns, column);
+    formula = `=OFFSET(${labelAnchor}, MATCH(${breadcrumb}, ${keyRange}, 0)-1, 0, COUNTIF(${keyRange}, ${breadcrumb}), 1)`;
+    follows = ", which follows the level above";
+  }
   return {
     type: "list",
     allowBlank: true,
-    formulae: [
-      level > 1
-        ? `=OFFSET(${placement.labelAnchor}, MATCH(${breadcrumb}, ${placement.keyRange}, 0)-1, 0, COUNTIF(${placement.keyRange}, ${breadcrumb}), 1)`
-        : `=${placement.labelRange}`,
-    ],
+    formulae: [formula],
     showInputMessage: true,
     promptTitle: title,
-    prompt:
-      level > 1
-        ? `Pick a value from the list, which follows the level above. Full list in the "${title}" block of the ${SHEETS.vocabularies} sheet.`
-        : `Pick a value from the list. Full list in the "${title}" block of the ${SHEETS.vocabularies} sheet.`,
+    prompt: `Pick a value from the list${follows}. Full list in the "${title}" block of the ${SHEETS.vocabularies} sheet.`,
     showErrorMessage: true,
     errorStyle: "warning",
     errorTitle: title,
@@ -196,9 +174,8 @@ function addGreyRules(
     for (const index of field.paths.flatMap((path) =>
       columnIndexesOf(columns, path),
     )) {
-      const letter = columnLetter(sheet, index);
       sheet.addConditionalFormatting({
-        ref: `${letter}${FIRST_DATA_ROW}:${letter}${lastDataRow(rows)}`,
+        ref: dataRange(columnLetter(sheet, index), rows),
         rules: [
           {
             type: "expression",
@@ -241,9 +218,8 @@ function addDataSheet(
   for (const [index, column] of columns.entries()) {
     const validation = validationOf(sheet, columns, column);
     if (validation === undefined) continue;
-    const letter = columnLetter(sheet, index);
     sheetValidations(sheet).add(
-      `${letter}${FIRST_DATA_ROW}:${letter}${lastDataRow(rows)}`,
+      dataRange(columnLetter(sheet, index), rows),
       validation,
     );
   }
@@ -253,35 +229,25 @@ function addDataSheet(
 
 function addChildSheet(
   book: ExcelJS.Workbook,
-  samples: ExcelJS.Worksheet,
   name: string,
   columns: readonly Column[],
   rows: number,
 ) {
   const sheet = addDataSheet(book, name, columns, rows);
-  const indexOf = (header: string) =>
-    columns.findIndex((column) => column.header === header);
-  const keyLetter = columnLetter(sheet, indexOf(SAMPLE_KEY_HEADER));
-  sheetValidations(sheet).add(
-    `${keyLetter}${FIRST_DATA_ROW}:${keyLetter}${lastDataRow(rows)}`,
-    {
-      type: "list",
-      allowBlank: true,
-      formulae: [`=${sampleKeyRange(samples, rows)}`],
-      showInputMessage: true,
-      promptTitle: SAMPLE_KEY_HEADER,
-      prompt: `The number of the sample this row belongs to, taken from the ${SHEETS.samples} sheet.`,
-      showErrorMessage: true,
-      errorStyle: "warning",
-      errorTitle: SAMPLE_KEY_HEADER,
-      error: `This sample number is not in the ${SHEETS.samples} sheet.`,
-    },
-  );
-  const lookupColumn = indexOf(SAMPLE_LOOKUP_HEADER) + 1;
+  sheetValidations(sheet).add(dataRange("A", rows), {
+    type: "list",
+    allowBlank: true,
+    formulae: [`=${sampleKeyRange(rows)}`],
+    showInputMessage: true,
+    promptTitle: SAMPLE_KEY_HEADER,
+    prompt: `The number of the sample this row belongs to, taken from the ${SHEETS.samples} sheet.`,
+    showErrorMessage: true,
+    errorStyle: "warning",
+    errorTitle: SAMPLE_KEY_HEADER,
+    error: `This sample number is not in the ${SHEETS.samples} sheet.`,
+  });
   for (let row = FIRST_DATA_ROW; row <= lastDataRow(rows); row++) {
-    sheet.getCell(row, lookupColumn).value = {
-      formula: sampleLookupFormula(samples, keyLetter, row),
-    };
+    sheet.getCell(row, 2).value = { formula: sampleLookupFormula(row) };
   }
 }
 
@@ -313,7 +279,7 @@ async function build(rows: number): Promise<ExcelBuffer> {
     samples.getCell(row, 1).value = row - FIRST_DATA_ROW + 1;
   }
   for (const child of CHILD_SHEETS) {
-    addChildSheet(book, samples, child.name, child.columns, rows);
+    addChildSheet(book, child.name, child.columns, rows);
   }
   await addVocabularySheet(book);
   return book.xlsx.writeBuffer();
@@ -328,12 +294,12 @@ export function importTemplateWorkbook(
   return cachedDefault();
 }
 
-export const IMPORT_TEMPLATE_MEDIA_TYPE =
+const IMPORT_TEMPLATE_MEDIA_TYPE =
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
-export const IMPORT_TEMPLATE_FILENAME = "igsn-sample-import-template.xlsx";
+const IMPORT_TEMPLATE_FILENAME = "igsn-sample-import-template.xlsx";
 
-export async function importTemplateResponse(rows?: number): Promise<Response> {
+export async function importTemplateResponse(rows: number): Promise<Response> {
   return new Response(await importTemplateWorkbook(rows), {
     headers: {
       "Content-Type": IMPORT_TEMPLATE_MEDIA_TYPE,
