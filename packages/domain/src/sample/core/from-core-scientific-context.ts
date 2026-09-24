@@ -42,11 +42,8 @@ export function fromCoreScientificContext(
     };
   }
   if (provenanceStatus === "collection_specimen") {
-    const curator = personOf("Curator");
     return {
       provenanceStatus,
-      collectionCuratorFirstname: curator?.firstname ?? null,
-      collectionCuratorLastname: curator?.lastname ?? null,
       collectionOrigin: byNotation("collection-origin")?.id ?? null,
       collectorFirstname: collector?.firstname ?? null,
       collectorLastname: collector?.lastname ?? null,

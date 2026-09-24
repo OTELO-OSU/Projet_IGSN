@@ -32,12 +32,6 @@ export function scientificContextColumns(
       fieldSample?.researchProgramDescription ?? null,
     sc_platform_type: fieldSample?.platformType ?? null,
     sc_launch_platform_name: fieldSample?.launchPlatformName ?? null,
-    sc_collection_curator_user_id:
-      collectionSpecimen?.collectionCuratorUserId ?? null,
-    sc_collection_curator_firstname:
-      collectionSpecimen?.collectionCuratorFirstname ?? null,
-    sc_collection_curator_lastname:
-      collectionSpecimen?.collectionCuratorLastname ?? null,
     sc_collection_origin: collectionSpecimen?.collectionOrigin ?? null,
     sc_collection_context_description:
       collectionSpecimen?.collectionContextDescription ?? null,

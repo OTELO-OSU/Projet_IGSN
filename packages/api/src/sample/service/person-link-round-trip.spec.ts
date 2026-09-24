@@ -71,24 +71,6 @@ const personCases: PersonCase[] = [
     }),
   ],
   [
-    "a collection specimen's curator",
-    (userId) => ({
-      ...base,
-      scientificContext: {
-        provenanceStatus: "collection_specimen",
-        collectionCuratorUserId: userId,
-      },
-    }),
-    (userId) => ({
-      ...base,
-      scientificContext: {
-        provenanceStatus: "collection_specimen",
-        collectionCuratorUserId: userId,
-        collectionCuratorLastname: "Curie",
-      },
-    }),
-  ],
-  [
     "a synthesis operator",
     (userId) => ({
       ...synthetic,

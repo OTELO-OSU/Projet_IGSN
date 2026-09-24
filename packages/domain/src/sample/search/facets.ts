@@ -91,7 +91,6 @@ export const SAMPLE_FACETS: readonly SampleFacet[] = [
     values: ORGANIZATIONS.map((o) => o.ror),
   },
   { key: "collectorName", kind: "text" },
-  { key: "collectionCurator", kind: "text" },
   { key: "age", kind: "numericRange", units: NUMERIC_UNITS },
   {
     key: "institutionalOrganization",
@@ -149,7 +148,6 @@ export function facetQueryFields() {
     chiefScientist: textFilter(),
     hostInstitution: optionalFilter(organizationRorSchema),
     collectorName: textFilter(),
-    collectionCurator: textFilter(),
     ageMin: optionalFilter(z.coerce.number()),
     ageMax: optionalFilter(z.coerce.number()),
     ageUnit: optionalFilter(numericUnitSchema),

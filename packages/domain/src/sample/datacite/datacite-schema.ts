@@ -20,7 +20,6 @@ const CONTRIBUTOR_TYPES = [
   "DataCollector",
   "ProjectLeader",
   "HostingInstitution",
-  "DataCurator",
   "Researcher",
   "ProjectManager",
   "ProjectMember",

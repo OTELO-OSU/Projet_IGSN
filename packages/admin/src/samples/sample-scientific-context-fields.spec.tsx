@@ -86,6 +86,14 @@ const addRole = async (screen: Screen, role: string) => {
   await screen.getByRole("menuitem", { name: role, exact: true }).click();
 };
 
+const fieldLabels = (screen: Screen) =>
+  [
+    ...screen
+      .getByRole("tabpanel", { name: "Scientific context" })
+      .element()
+      .querySelectorAll("legend, label:not(fieldset label)"),
+  ].map((label) => label.textContent);
+
 const roleGroup = (screen: Screen, index: number, role: string) =>
   screen.getByRole("group", {
     name: new RegExp(`^${index}\\. ${role}( \\*)?$`),
@@ -109,6 +117,38 @@ describe("SampleScientificContextFields", () => {
     await expect
       .element(screen.getByRole("tab", { name: "Scientific context" }))
       .toBeEnabled();
+  });
+
+  it("should render the fields in the diagram order for each provenance status", async () => {
+    const screen = await renderScientificContextSection();
+
+    await goToScientificContext(screen);
+    await addRole(screen, "Researcher");
+
+    await expect
+      .poll(() => fieldLabels(screen))
+      .toEqual([
+        "Collector name *",
+        "Chief scientist / Project leader",
+        "Host institution (project leader)",
+        "1. Researcher *",
+        "Funder organizations",
+        "Funding",
+        "Name of the Research Programm/Campaign/Mission/Field/Cruise",
+        "Open description Research Programm/Campaign/Mission/Field/Cruise",
+        "Platform type",
+        "Launch platform name",
+      ]);
+
+    await pickProvenance(screen, "Collection specimen");
+
+    await expect
+      .poll(() => fieldLabels(screen))
+      .toEqual([
+        "Collection origin *",
+        "Collector name",
+        "Open description of the collection context",
+      ]);
   });
 
   it("should submit a field sample with organizations picked from the reference list", async () => {
@@ -167,17 +207,11 @@ describe("SampleScientificContextFields", () => {
     );
   });
 
-  it("should submit a collection specimen with its curator and origin", async () => {
+  it("should submit a collection specimen with its origin", async () => {
     const onSubmit = vi.fn();
     const screen = await renderScientificContextSection(onSubmit);
 
     await pickProvenance(screen, "Collection specimen");
-    await fillPersonName(
-      screen,
-      "Name of the collection curator",
-      "Georges",
-      "Cuvier",
-    );
     await screen.getByRole("combobox", { name: "Collection origin *" }).click();
     await screen.getByRole("option", { name: "Purchase" }).click();
     await screen
@@ -190,8 +224,6 @@ describe("SampleScientificContextFields", () => {
         expect.objectContaining({
           scientificContext: {
             provenanceStatus: "collection_specimen",
-            collectionCuratorFirstname: "Georges",
-            collectionCuratorLastname: "Cuvier",
             collectionOrigin: "purchase",
             collectionContextDescription: "Bought at auction in 1902",
           },
@@ -248,12 +280,6 @@ describe("SampleScientificContextFields", () => {
       .toHaveValue("Deep Biosphere Survey");
 
     await pickProvenance(screen, "Collection specimen");
-    await fillPersonName(
-      screen,
-      "Name of the collection curator",
-      "Georges",
-      "Cuvier",
-    );
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -261,8 +287,6 @@ describe("SampleScientificContextFields", () => {
         expect.objectContaining({
           scientificContext: {
             provenanceStatus: "collection_specimen",
-            collectionCuratorFirstname: "Georges",
-            collectionCuratorLastname: "Cuvier",
             collectorFirstname: "Pierre",
             collectorLastname: "Curie",
           },
@@ -357,12 +381,6 @@ describe("SampleScientificContextFields", () => {
       .element(screen.getByRole("button", { name: "Add a role" }))
       .not.toBeInTheDocument();
 
-    await fillPersonName(
-      screen,
-      "Name of the collection curator",
-      "Georges",
-      "Cuvier",
-    );
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -370,8 +388,6 @@ describe("SampleScientificContextFields", () => {
         expect.objectContaining({
           scientificContext: {
             provenanceStatus: "collection_specimen",
-            collectionCuratorFirstname: "Georges",
-            collectionCuratorLastname: "Cuvier",
           },
         }),
       ),

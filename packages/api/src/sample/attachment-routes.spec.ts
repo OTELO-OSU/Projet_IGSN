@@ -71,8 +71,6 @@ const sampleBody = {
   },
   scientificContext: {
     provenanceStatus: "collection_specimen",
-    collectionCuratorFirstname: "Georges",
-    collectionCuratorLastname: "Cuvier",
     collectionOrigin: "scientific_expedition",
   },
   repository: { currentArchiveOsu: "OASU" },

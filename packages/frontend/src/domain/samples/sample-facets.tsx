@@ -47,7 +47,6 @@ export const FACET_SECTIONS: readonly {
       "chiefScientist",
       "hostInstitution",
       "collectorName",
-      "collectionCurator",
     ],
   },
   { title: m.sample_section_age, keys: ["age"] },

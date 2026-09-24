@@ -59,8 +59,6 @@ describe("ScientificContextView", () => {
       <ScientificContextView
         scientificContext={{
           provenanceStatus: "collection_specimen",
-          collectionCuratorFirstname: "Alfred",
-          collectionCuratorLastname: "Curator",
           collectionOrigin: "scientific_expedition",
           collectorFirstname: "Old",
           collectorLastname: "Collector",
@@ -75,14 +73,76 @@ describe("ScientificContextView", () => {
     await expect
       .element(screen.getByText("Scientific expedition"))
       .toBeInTheDocument();
-    await expect
-      .element(screen.getByText("Alfred Curator"))
-      .toBeInTheDocument();
     await expect.element(screen.getByText("Old Collector")).toBeInTheDocument();
     await expect
       .element(screen.getByText("Funder organizations"))
       .not.toBeInTheDocument();
   });
+
+  it.each<[string, ScientificContext, string[]]>([
+    [
+      "field sample",
+      {
+        provenanceStatus: "field_sample",
+        funderOrganizations: ["03fd77x13"],
+        researchProgramName: "Deep Earth Sampling",
+        chiefScientistLastname: "Curie",
+        chiefScientistOrcid: "0000-0002-1825-0097",
+        hostInstitution: ["043htjv09"],
+        collectorLastname: "Field",
+        collectorOrcid: "0000-0001-2345-6789",
+        funding: "ANR grant 42",
+        researchProgramDescription: "A deep sampling programme.",
+        platformType: "ship",
+        launchPlatformName: "RV Marion Dufresne",
+        additionalRoles: [{ role: "researcher", personLastname: "Lovelace" }],
+      },
+      [
+        "Provenance status",
+        "Collector name",
+        "Collector ORCID",
+        "Chief scientist / Project leader",
+        "Chief scientist ORCID",
+        "Host institution (project leader)",
+        "Researcher",
+        "Funder organizations",
+        "Funding",
+        "Name of the Research Programm/Campaign/Mission/Field/Cruise",
+        "Open description Research Programm/Campaign/Mission/Field/Cruise",
+        "Platform type",
+        "Launch platform name",
+      ],
+    ],
+    [
+      "collection specimen",
+      {
+        provenanceStatus: "collection_specimen",
+        collectionOrigin: "scientific_expedition",
+        collectorLastname: "Collector",
+        collectionContextDescription: "Collected during the 1890 expedition.",
+      },
+      [
+        "Provenance status",
+        "Collection origin",
+        "Collector name",
+        "Open description of the collection context",
+      ],
+    ],
+  ])(
+    "should order the rows of a %s",
+    async (_case, scientificContext, labels) => {
+      const screen = await render(
+        <ScientificContextView scientificContext={scientificContext} />,
+      );
+
+      expect(
+        screen
+          .getByRole("term")
+          .elements()
+          .map((term) => term.textContent),
+      ).toEqual(labels);
+    },
+  );
 
   it("should render only the fields that are present", async () => {
     const screen = await render(
@@ -130,14 +190,6 @@ describe("ScientificContextView", () => {
         collectorLastname: "Collector",
       },
       "Collector",
-    ],
-    [
-      "collection curator",
-      {
-        provenanceStatus: "collection_specimen",
-        collectionCuratorLastname: "Curator",
-      },
-      "Curator",
     ],
   ])(
     "should render a %s without a firstname as the lastname alone",

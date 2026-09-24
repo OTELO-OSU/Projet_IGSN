@@ -1022,8 +1022,6 @@ describe("admin sample routes", () => {
           availabilityStatus: "available",
           scientificContext: {
             provenanceStatus: "collection_specimen",
-            collectionCuratorFirstname: "Georges",
-            collectionCuratorLastname: "Cuvier",
             collectionOrigin: "scientific_expedition",
           },
           repository: { currentArchiveOsu: "OASU" },

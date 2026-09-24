@@ -103,14 +103,6 @@ export function toCoreResponsibility(sample: Sample): CoreAgentRole[] {
       for (const ror of context.hostInstitution ?? []) {
         roles.push(organizationRole("HostingInstitution", ror));
       }
-    } else {
-      roles.push(
-        ...personRole(
-          "Curator",
-          context.collectionCuratorFirstname,
-          context.collectionCuratorLastname,
-        ),
-      );
     }
   }
 

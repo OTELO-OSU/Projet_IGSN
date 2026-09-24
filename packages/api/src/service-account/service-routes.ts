@@ -167,8 +167,7 @@ export function createServiceRoutes(
           info: {
             title: "IGSN service API",
             version: CORE_SCHEMA_VERSION,
-            description:
-              "Machine API of the IGSN registry, reading and writing published samples as IGSN Core v0.10.0 records. A service account authenticates every call with its api key.",
+            description: `Machine API of the IGSN registry, reading and writing published samples as IGSN Core v${CORE_SCHEMA_VERSION} records. A service account authenticates every call with its api key.`,
           },
           servers: [{ url: new URL("api/service", frontendUrl).toString() }],
         }),

@@ -106,10 +106,7 @@ function contextField(
   };
 }
 
-function personField(
-  key: "chiefScientist" | "collectionCurator",
-  label: () => string,
-): CardField {
+function personField(key: "chiefScientist", label: () => string): CardField {
   return {
     key,
     label,
@@ -157,7 +154,6 @@ const OPTIONAL_CARD_FIELDS: readonly CardField[] = [
   },
   contextField("researchProgramName", m.facet_research_program_name),
   personField("chiefScientist", m.facet_chief_scientist),
-  personField("collectionCurator", m.facet_collection_curator),
   {
     key: "numericAge",
     label: m.sample_field_numeric_age,

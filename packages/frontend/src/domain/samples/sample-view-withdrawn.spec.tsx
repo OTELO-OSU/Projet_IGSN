@@ -21,8 +21,6 @@ const sample = (overrides: Partial<WithdrawnSample> = {}): WithdrawnSample => ({
   },
   collectorFirstname: "Claire",
   collectorLastname: "Martin",
-  collectionCuratorFirstname: "Paul",
-  collectionCuratorLastname: "Durand",
   ...overrides,
 });
 
@@ -113,7 +111,6 @@ describe("SampleView of a withdrawn sample", () => {
       .toBeVisible();
     await expect.element(screen.getByText("France > Mont-Dore")).toBeVisible();
     await expect.element(screen.getByText("Claire Martin")).toBeVisible();
-    await expect.element(screen.getByText("Paul Durand")).toBeVisible();
     expect(
       screen.getByRole("heading", { name: "Process steps" }).query(),
     ).toBeNull();
@@ -168,19 +165,11 @@ describe("SampleView of a withdrawn sample", () => {
 
   it("should show a person without a firstname as the lastname alone", async () => {
     const screen = await renderWithRouter(
-      <SampleView
-        sample={sample({
-          collectorFirstname: null,
-          collectionCuratorFirstname: null,
-        })}
-      />,
+      <SampleView sample={sample({ collectorFirstname: null })} />,
     );
 
     await expect
       .element(screen.getByText("Martin", { exact: true }))
-      .toBeVisible();
-    await expect
-      .element(screen.getByText("Durand", { exact: true }))
       .toBeVisible();
   });
 });

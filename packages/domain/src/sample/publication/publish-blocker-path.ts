@@ -35,14 +35,6 @@ export const PUBLISH_BLOCKER_PATH: Record<PublishBlocker, (string | number)[]> =
     ],
     additional_role_firstname_missing: ["scientificContext", "additionalRoles"],
     additional_role_lastname_missing: ["scientificContext", "additionalRoles"],
-    collection_curator_firstname_missing: [
-      "scientificContext",
-      "collectionCuratorFirstname",
-    ],
-    collection_curator_lastname_missing: [
-      "scientificContext",
-      "collectionCuratorLastname",
-    ],
     collection_origin_missing: ["scientificContext", "collectionOrigin"],
     synthetic_starting_material_missing: [
       "syntheticDetails",

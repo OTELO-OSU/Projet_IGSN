@@ -23,7 +23,6 @@ const FACET_LABEL: Record<string, () => string> = {
   chiefScientist: m.facet_chief_scientist,
   hostInstitution: m.facet_host_institution,
   collectorName: m.facet_collector_name,
-  collectionCurator: m.facet_collection_curator,
   age: m.sample_section_age,
   institutionalOrganization: m.sample_field_institutional_organization,
   institutionalOsu: m.sample_field_institutional_osu,

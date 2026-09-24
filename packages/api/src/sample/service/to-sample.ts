@@ -178,16 +178,9 @@ function toScientificContext(row: SampleRow) {
     });
   }
   if (row.sc_provenance_status === "collection_specimen") {
-    const curator = resolveContact(row.collectionCuratorAccount, {
-      firstname: row.sc_collection_curator_firstname,
-      lastname: row.sc_collection_curator_lastname,
-    });
     return scientificContextSchema.parse({
       provenanceStatus: "collection_specimen",
       ...omitNull({
-        collectionCuratorUserId: row.sc_collection_curator_user_id,
-        collectionCuratorFirstname: curator.firstname,
-        collectionCuratorLastname: curator.lastname,
         collectionOrigin: row.sc_collection_origin,
         collectorUserId: row.sc_collector_user_id,
         collectorFirstname: collector.firstname,
@@ -256,7 +249,6 @@ type ContactAccount = {
 type SampleRow = Selectable<DB["sample"]> & {
   chiefScientistAccount?: ContactAccount | null;
   collectorAccount?: ContactAccount | null;
-  collectionCuratorAccount?: ContactAccount | null;
   operatorAccount?: ContactAccount | null;
   location?: LocationRow | null;
   relations?: Selectable<DB["sample_relation"]>[];

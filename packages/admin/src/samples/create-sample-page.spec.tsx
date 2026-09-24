@@ -75,8 +75,6 @@ const PARENT = {
   security: null,
   scientificContext: {
     provenanceStatus: "collection_specimen",
-    collectionCuratorFirstname: "Paul",
-    collectionCuratorLastname: "Bernard",
   },
   age: {
     numericAgeMin: 12,
@@ -363,12 +361,6 @@ async function fillPublishableSample(screen: CreateScreen) {
   await fillPersonName(screen, "Operator name", "Paul", "Bernard");
 
   await openTab(screen, "Scientific context");
-  await fillPersonName(
-    screen,
-    "Name of the collection curator",
-    "Paul",
-    "Bernard",
-  );
   await pick(screen, "Collection origin *", "Scientific expedition");
 }
 

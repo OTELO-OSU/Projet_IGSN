@@ -1,5 +1,4 @@
 import type { Sample } from "../sample.ts";
-import type { ScientificContext } from "../scientific-context/model.ts";
 
 import { toWithdrawnSample } from "./withdrawn-sample.ts";
 
@@ -85,30 +84,10 @@ describe("toWithdrawnSample", () => {
       },
       collectorFirstname: "Claire",
       collectorLastname: "Martin",
-      collectionCuratorFirstname: null,
-      collectionCuratorLastname: null,
     });
   });
 
-  it("should expose the curator of a collection specimen", () => {
-    const scientificContext = {
-      provenanceStatus: "collection_specimen",
-      collectorFirstname: "Pierre",
-      collectorLastname: "Curie",
-      collectionCuratorFirstname: "Paris",
-      collectionCuratorLastname: "museum",
-    } satisfies ScientificContext;
-    expect(
-      toWithdrawnSample({ ...withdrawn, scientificContext }),
-    ).toMatchObject({
-      collectorFirstname: "Pierre",
-      collectorLastname: "Curie",
-      collectionCuratorFirstname: "Paris",
-      collectionCuratorLastname: "museum",
-    });
-  });
-
-  it("should report no collector, curator nor location when the sample has none", () => {
+  it("should report no collector nor location when the sample has none", () => {
     expect(
       toWithdrawnSample({
         ...withdrawn,
@@ -119,8 +98,6 @@ describe("toWithdrawnSample", () => {
       location: null,
       collectorFirstname: null,
       collectorLastname: null,
-      collectionCuratorFirstname: null,
-      collectionCuratorLastname: null,
     });
   });
 });

@@ -33,7 +33,8 @@ Codes and labels (renamed 2026-09-04, data migration `20260904074005-rename-prov
 
 Field sample branch:
 
-- The four person fields (`chiefScientist`, `collector`, `collectionCurator`, `operator` on synthetic details) are each split into a `*Firstname`/`*Lastname` pair, indexed with a trigram index per column; see [[search-facets]].
+- The three person fields (`chiefScientist`, `collector`, `operator` on synthetic details) are each split into a `*Firstname`/`*Lastname` pair, indexed with a trigram index per column; see [[search-facets]].
+- Field order in the form: collector, chief scientist, host institution, additional roles, funder organizations, funding, research programme name, research programme description, platform type, launch platform name.
 - Each person is EITHER a link to a registry account (`*UserId`) OR a typed name, never both: `domain/sample/contact-link.ts` holds that exclusivity, enforced on the write schemas and by a Postgres CHECK per person. No person ORCID is ever typed: the write schema strips a submitted `*Orcid` silently, and the read model resolves it live from the linked account alone, not snapshotted, so renaming or re-linking an account changes a published sample's display and its public payload; accepted, see ADR 0032 and ADR [0049](../docs/adr/0049-person-orcid-from-linked-account-only.md). A link is not a collaborator role and grants no `user_sample` row or contributor facet; deleting a linked account is refused at the database (`on delete restrict`).
 - Mandatory to publish ([[publish-blockers]]): `funderOrganizations` (multi ROR), `hostInstitution` (multi ROR), a collector (a link, or the `collectorFirstname` + `collectorLastname` pair). `researchProgramName` carries no publish blocker and no required marker despite the label. `chiefScientistFirstname`/`chiefScientistLastname` are not mandatory, but publishing blocks on the empty half once the other is filled (`chief_scientist_firstname_missing` / `chief_scientist_lastname_missing`); a link always satisfies these blockers, whatever the account holds.
 - Optional: `chiefScientistFirstname`, `chiefScientistLastname` (or `chiefScientistUserId`), `funding`, `researchProgramDescription`, `platformType` (15-code vocabulary), `launchPlatformName`.
@@ -43,10 +44,10 @@ Field sample branch:
 
 Collection specimen branch:
 
-- Mandatory: a collection curator (a link, or the `collectionCuratorFirstname` + `collectionCuratorLastname` pair), `collectionOrigin` (enum `scientific_expedition | purchase | constitution | inheritance | unknown_origin`).
+- Field order in the form: collection origin, collector, context description.
+- Mandatory: `collectionOrigin` (enum `scientific_expedition | purchase | constitution | inheritance | unknown_origin`).
 - Optional: a collector (link or typed name), `collectionContextDescription`; publishing blocks on the empty typed half once the other is filled (`collector_firstname_missing` / `collector_lastname_missing`).
-- Frozen after publication: `collectionOrigin` alone (`LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS`). The collection curator's name (`collectionCuratorFirstname`/`collectionCuratorLastname`) carries no lock entry and stays editable, and has no `*Orcid` field to lock either.
-- Facet: `collectionCurator`.
+- Frozen after publication: `collectionOrigin` alone (`LOCKED_COLLECTION_SPECIMEN_FIELDS_TO_FORM_FIELDS`).
 - A collection specimen publishes without a location: `requiresLocation(provenanceStatus)` is false for it alone ([[location-material-gate]]).
 
 Shared rules:

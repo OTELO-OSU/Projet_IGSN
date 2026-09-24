@@ -687,8 +687,6 @@ export const SEED_SAMPLES: SeedSample[] = [
     availabilityStatus: "available",
     scientificContext: {
       provenanceStatus: "collection_specimen",
-      collectionCuratorFirstname: "Paul",
-      collectionCuratorLastname: "Bernard",
       collectionOrigin: "scientific_expedition",
       collectionContextDescription: "Armorican Massif reference collection",
     },

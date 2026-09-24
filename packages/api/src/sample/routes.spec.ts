@@ -57,8 +57,6 @@ async function createSample(
         availabilityStatus: "available",
         scientificContext: {
           provenanceStatus: "collection_specimen",
-          collectionCuratorFirstname: "Georges",
-          collectionCuratorLastname: "Cuvier",
           collectionOrigin: "scientific_expedition",
         },
         repository: PUBLIC_REPOSITORY,
@@ -494,8 +492,6 @@ describe("public sample routes", () => {
           location: { region: null, localityName: null },
           collectorFirstname: null,
           collectorLastname: null,
-          collectionCuratorFirstname: "Georges",
-          collectionCuratorLastname: "Cuvier",
         },
       });
     },
@@ -540,7 +536,7 @@ describe("public sample routes", () => {
     },
   );
 
-  const linkCurator = async (
+  const linkCollector = async (
     db: Parameters<typeof createApp>[0],
     sampleId: string,
   ) => {
@@ -551,9 +547,9 @@ describe("public sample routes", () => {
     await db
       .updateTable("sample")
       .set({
-        sc_collection_curator_firstname: null,
-        sc_collection_curator_lastname: null,
-        sc_collection_curator_user_id: account.id,
+        sc_collector_firstname: null,
+        sc_collector_lastname: null,
+        sc_collector_user_id: account.id,
       })
       .where("id", "=", sampleId)
       .execute();
@@ -565,7 +561,7 @@ describe("public sample routes", () => {
       // Arrange
       const client = await acceptedClient(db);
       const published = await createPublishedSample(client, "Rhyolite liée");
-      await linkCurator(db, published.id);
+      await linkCollector(db, published.id);
       // Act
       const detail = await client.samples[":igsn"].$get({
         param: { igsn: published.igsn! },
@@ -575,9 +571,9 @@ describe("public sample routes", () => {
       });
       // Assert
       const resolved = {
-        collectionCuratorUserId: null,
-        collectionCuratorFirstname: "Marie",
-        collectionCuratorLastname: "Curié",
+        collectorUserId: null,
+        collectorFirstname: "Marie",
+        collectorLastname: "Curié",
       };
       expect(await detail.json()).toMatchObject({
         data: { scientificContext: resolved },
@@ -670,7 +666,7 @@ describe("public sample routes", () => {
       // Arrange
       const client = await acceptedClient(db);
       const published = await createPublishedSample(client, "Rhyolite retirée");
-      await linkCurator(db, published.id);
+      await linkCollector(db, published.id);
       await setSampleStatus(db, published.id, "withdrawn");
       // Act
       const res = await client.samples[":igsn"].$get({
@@ -680,8 +676,8 @@ describe("public sample routes", () => {
       expect(await res.json()).toMatchObject({
         data: {
           status: "withdrawn",
-          collectionCuratorFirstname: "Marie",
-          collectionCuratorLastname: "Curié",
+          collectorFirstname: "Marie",
+          collectorLastname: "Curié",
         },
       });
     },

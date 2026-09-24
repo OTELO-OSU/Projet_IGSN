@@ -43,8 +43,6 @@ export const publishBlockerSchema = z.enum([
   "chief_scientist_lastname_missing",
   "additional_role_firstname_missing",
   "additional_role_lastname_missing",
-  "collection_curator_firstname_missing",
-  "collection_curator_lastname_missing",
   "collection_origin_missing",
   "synthetic_starting_material_missing",
   "synthetic_starting_material_composition_missing",
@@ -103,7 +101,6 @@ export function toPublishableFields(
 type NamedPerson =
   | "collector"
   | "chief_scientist"
-  | "collection_curator"
   | "additional_role"
   | "synthetic_operator";
 
@@ -259,17 +256,6 @@ export function samplePublishBlockers(
       ),
     );
   } else {
-    blockers.push(
-      ...nameBlockers(
-        "collection_curator",
-        {
-          userId: context.collectionCuratorUserId,
-          firstname: context.collectionCuratorFirstname,
-          lastname: context.collectionCuratorLastname,
-        },
-        "required",
-      ),
-    );
     if (context.collectionOrigin == null)
       blockers.push("collection_origin_missing");
     blockers.push(

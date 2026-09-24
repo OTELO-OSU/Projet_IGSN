@@ -20,8 +20,6 @@ const publishable = {
   availabilityStatus: "available" as const,
   scientificContext: {
     provenanceStatus: "collection_specimen" as const,
-    collectionCuratorFirstname: "Georges",
-    collectionCuratorLastname: "Cuvier",
     collectionOrigin: "scientific_expedition" as const,
   },
 };

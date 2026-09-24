@@ -40,9 +40,6 @@ const fieldSampleSchema = z.object({
 
 const collectionSpecimenSchema = z.object({
   provenanceStatus: z.literal("collection_specimen"),
-  collectionCuratorUserId: z.uuid().nullish(),
-  collectionCuratorFirstname: freeTextSchema.nullish(),
-  collectionCuratorLastname: freeTextSchema.nullish(),
   collectionOrigin: collectionOriginSchema.nullish(),
   collectorUserId: z.uuid().nullish(),
   collectorFirstname: freeTextSchema.nullish(),

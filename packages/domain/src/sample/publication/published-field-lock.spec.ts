@@ -402,8 +402,6 @@ describe("mergePublishedEdit", () => {
       incoming({
         scientificContext: {
           provenanceStatus: "collection_specimen",
-          collectionCuratorFirstname: "Smuggled",
-          collectionCuratorLastname: "curator",
           collectionOrigin: "purchase",
           collectorFirstname: "Smuggled",
           collectorLastname: "collector",

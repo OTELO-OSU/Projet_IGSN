@@ -25,8 +25,6 @@ const fieldSample = {
 
 const collectionSpecimen = {
   provenanceStatus: "collection_specimen",
-  collectionCuratorFirstname: "Georges",
-  collectionCuratorLastname: "Cuvier",
   collectionOrigin: "scientific_expedition",
   collectorFirstname: "Alexander",
   collectorLastname: "von Humboldt",
@@ -168,15 +166,13 @@ describe("a person is a link or a typed name, never both", () => {
       },
     },
     {
-      case: "a collection specimen linking its curator and its collector",
+      case: "a collection specimen linking its collector",
       input: {
         provenanceStatus: "collection_specimen",
-        collectionCuratorUserId: USER_ID,
         collectorUserId: USER_ID,
       },
       parsed: {
         provenanceStatus: "collection_specimen",
-        collectionCuratorUserId: USER_ID,
         collectorUserId: USER_ID,
       },
     },

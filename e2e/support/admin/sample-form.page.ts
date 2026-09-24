@@ -123,7 +123,6 @@ export function sampleFormPage(page: Page) {
       await openTab("Sample classification");
       if (material !== null) await pickHierarchy("Material", material);
       await openTab("Scientific context");
-      await fillPersonName(/collection curator/i, "Paul", "Bernard");
       await pick("Collection origin", "Scientific expedition");
       await openTab("Curation and repository");
       await pick("Existence status", "Exists");
