@@ -22,8 +22,6 @@ const createAction = (onSubmit: (value: CreateSample) => void) =>
 
 const publishableScientificContext = {
   provenanceStatus: "collection_specimen",
-  collectionCuratorFirstname: "Georges",
-  collectionCuratorLastname: "Cuvier",
   collectionOrigin: "scientific_expedition",
 } as const;
 
@@ -2612,13 +2610,6 @@ describe("SampleForm post-publication field lock", () => {
         screen
           .getByRole("group", { name: "Collector name" })
           .getByRole("combobox", { name: "Collector name" }),
-      )
-      .toBeEnabled();
-    await expect
-      .element(
-        screen
-          .getByRole("group", { name: "Name of the collection curator" })
-          .getByRole("textbox", { name: /first name/i }),
       )
       .toBeEnabled();
   });

@@ -25,9 +25,6 @@ export type ScientificContextDraft = {
   platformType: PlatformType | undefined;
   launchPlatformName: string | null | undefined;
   additionalRoles: AdditionalRoleDraft[];
-  collectionCuratorUserId: string | null | undefined;
-  collectionCuratorFirstname: string | null | undefined;
-  collectionCuratorLastname: string | null | undefined;
   collectionOrigin: CollectionOrigin | undefined;
   collectionContextDescription: string | null | undefined;
 };
@@ -52,9 +49,6 @@ type ScientificContextCandidate =
     }
   | {
       provenanceStatus: "collection_specimen";
-      collectionCuratorUserId: string | undefined;
-      collectionCuratorFirstname: string | undefined;
-      collectionCuratorLastname: string | undefined;
       collectionOrigin: CollectionOrigin | undefined;
       collectorUserId: string | undefined;
       collectorFirstname: string | undefined;
@@ -110,16 +104,8 @@ export function composeScientificContext(
     };
   }
   if (draft.provenanceStatus === "collection_specimen") {
-    const collectionCurator = composeContact(
-      draft.collectionCuratorUserId,
-      draft.collectionCuratorFirstname,
-      draft.collectionCuratorLastname,
-    );
     return {
       provenanceStatus: "collection_specimen",
-      collectionCuratorUserId: collectionCurator.userId,
-      collectionCuratorFirstname: collectionCurator.firstname,
-      collectionCuratorLastname: collectionCurator.lastname,
       collectionOrigin: draft.collectionOrigin,
       collectorUserId: collector.userId,
       collectorFirstname: collector.firstname,
@@ -172,12 +158,6 @@ export function toScientificContextDraft(
       personFirstname: row.personFirstname ?? undefined,
       personLastname: row.personLastname ?? undefined,
     })),
-    collectionCuratorUserId:
-      collectionSpecimen?.collectionCuratorUserId ?? undefined,
-    collectionCuratorFirstname:
-      collectionSpecimen?.collectionCuratorFirstname ?? undefined,
-    collectionCuratorLastname:
-      collectionSpecimen?.collectionCuratorLastname ?? undefined,
     collectionOrigin: collectionSpecimen?.collectionOrigin ?? undefined,
     collectionContextDescription:
       collectionSpecimen?.collectionContextDescription ?? undefined,

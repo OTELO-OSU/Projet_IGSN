@@ -233,8 +233,6 @@ export const COLLECTION_SPECIMEN: Sample = {
   physiographicEnvironment: null,
   scientificContext: {
     provenanceStatus: "collection_specimen",
-    collectionCuratorFirstname: "Mary",
-    collectionCuratorLastname: "Anning",
     collectionOrigin: "purchase",
     collectorFirstname: "Jacques",
     collectorLastname: "Cousteau",

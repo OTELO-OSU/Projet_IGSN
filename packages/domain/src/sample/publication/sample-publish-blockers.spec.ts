@@ -207,8 +207,6 @@ describe("samplePublishBlockers", () => {
         location: null,
         scientificContext: {
           provenanceStatus: "collection_specimen",
-          collectionCuratorFirstname: "Alexander",
-          collectionCuratorLastname: "von Humboldt",
           collectionOrigin: "scientific_expedition",
         },
       }),
@@ -597,11 +595,7 @@ describe("samplePublishBlockers", () => {
         ...base,
         scientificContext: { provenanceStatus: "collection_specimen" },
       }),
-    ).toEqual([
-      "collection_curator_firstname_missing",
-      "collection_curator_lastname_missing",
-      "collection_origin_missing",
-    ]);
+    ).toEqual(["collection_origin_missing"]);
   });
 
   it("should report no blocker for a complete collection-specimen context", () => {
@@ -610,40 +604,11 @@ describe("samplePublishBlockers", () => {
         ...base,
         scientificContext: {
           provenanceStatus: "collection_specimen",
-          collectionCuratorFirstname: "Georges",
-          collectionCuratorLastname: "Cuvier",
           collectionOrigin: "scientific_expedition",
         },
       }),
     ).toEqual([]);
   });
-
-  it.each([
-    [
-      "the firstname alone",
-      { collectionCuratorFirstname: "Georges" },
-      "collection_curator_lastname_missing",
-    ],
-    [
-      "the lastname alone",
-      { collectionCuratorLastname: "Cuvier" },
-      "collection_curator_firstname_missing",
-    ],
-  ] as const)(
-    "should report the missing half when a collection specimen names %s of the curator",
-    (_case, curator, blocker) => {
-      expect(
-        samplePublishBlockers({
-          ...base,
-          scientificContext: {
-            provenanceStatus: "collection_specimen",
-            collectionOrigin: "scientific_expedition",
-            ...curator,
-          },
-        }),
-      ).toEqual([blocker]);
-    },
-  );
 
   it.each([
     [
@@ -664,8 +629,6 @@ describe("samplePublishBlockers", () => {
           ...base,
           scientificContext: {
             provenanceStatus: "collection_specimen",
-            collectionCuratorFirstname: "Georges",
-            collectionCuratorLastname: "Cuvier",
             collectionOrigin: "scientific_expedition",
             ...collector,
           },
@@ -923,12 +886,11 @@ describe("samplePublishBlockers", () => {
       },
     ],
     [
-      "a collection specimen's curator and collector",
+      "a collection specimen's collector",
       {
         ...base,
         scientificContext: {
           provenanceStatus: "collection_specimen",
-          collectionCuratorUserId: LINKED_USER_ID,
           collectorUserId: LINKED_USER_ID,
           collectionOrigin: "purchase",
         },

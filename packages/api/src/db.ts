@@ -113,9 +113,6 @@ type SampleTable = {
   sc_research_program_description: string | null;
   sc_platform_type: string | null;
   sc_launch_platform_name: string | null;
-  sc_collection_curator_user_id: string | null;
-  sc_collection_curator_firstname: string | null;
-  sc_collection_curator_lastname: string | null;
   sc_collection_origin: string | null;
   sc_collection_context_description: string | null;
   rep_current_archive_osu: string | null;

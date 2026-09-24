@@ -59,17 +59,18 @@ function AdditionalRoleRows({ roles }: { roles: SampleAdditionalRole[] }) {
 function FieldSampleRows({ context }: { context: FieldSample }) {
   return (
     <>
-      <OrgLinksRow
-        label={m.sample_field_funder_organizations()}
-        rors={context.funderOrganizations}
+      <FieldRow
+        label={m.sample_field_collector_name()}
+        value={joinContactName(
+          context.collectorFirstname,
+          context.collectorLastname,
+        )}
       />
       <FieldRow
-        label={m.sample_field_research_program_name()}
-        value={context.researchProgramName}
-      />
-      <FieldRow
-        label={m.sample_field_research_program_description()}
-        value={context.researchProgramDescription}
+        label={m.sample_field_collector_orcid()}
+        value={
+          context.collectorOrcid && <OrcidLink orcid={context.collectorOrcid} />
+        }
       />
       <FieldRow
         label={m.sample_field_chief_scientist()}
@@ -90,21 +91,20 @@ function FieldSampleRows({ context }: { context: FieldSample }) {
         label={m.sample_field_host_institution()}
         rors={context.hostInstitution}
       />
-      <FieldRow
-        label={m.sample_field_collector_name()}
-        value={joinContactName(
-          context.collectorFirstname,
-          context.collectorLastname,
-        )}
-      />
-      <FieldRow
-        label={m.sample_field_collector_orcid()}
-        value={
-          context.collectorOrcid && <OrcidLink orcid={context.collectorOrcid} />
-        }
-      />
       <AdditionalRoleRows roles={context.additionalRoles} />
+      <OrgLinksRow
+        label={m.sample_field_funder_organizations()}
+        rors={context.funderOrganizations}
+      />
       <FieldRow label={m.sample_field_funding()} value={context.funding} />
+      <FieldRow
+        label={m.sample_field_research_program_name()}
+        value={context.researchProgramName}
+      />
+      <FieldRow
+        label={m.sample_field_research_program_description()}
+        value={context.researchProgramDescription}
+      />
       <FieldRow
         label={m.sample_field_platform_type()}
         value={context.platformType && platformTypeLabel(context.platformType)}
@@ -120,13 +120,6 @@ function FieldSampleRows({ context }: { context: FieldSample }) {
 function CollectionSpecimenRows({ context }: { context: CollectionSpecimen }) {
   return (
     <>
-      <FieldRow
-        label={m.sample_field_collection_curator()}
-        value={joinContactName(
-          context.collectionCuratorFirstname,
-          context.collectionCuratorLastname,
-        )}
-      />
       <FieldRow
         label={m.sample_field_collection_origin()}
         value={

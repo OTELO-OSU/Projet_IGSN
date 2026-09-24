@@ -854,9 +854,6 @@ describe("POST /service/samples", () => {
           ...NEW_BODY.classification,
           sampleObjectTypes: [toConcept("sample-type", "core")],
         },
-        responsibility: NEW_BODY.responsibility.filter(
-          (agentRole) => agentRole.roles[0] !== "Curator",
-        ),
         manualGroups: [{ id: FOREIGN_GROUP_ID, name: FOREIGN_GROUP_NAME }],
       });
       // Assert
@@ -867,14 +864,6 @@ describe("POST /service/samples", () => {
           {
             path: "classification.sampleObjectTypes.0",
             code: "type_incomplete",
-          },
-          {
-            path: "responsibility",
-            code: "collection_curator_firstname_missing",
-          },
-          {
-            path: "responsibility",
-            code: "collection_curator_lastname_missing",
           },
           { path: "manualGroups.0.id", code: "manual_group_not_attachable" },
         ],

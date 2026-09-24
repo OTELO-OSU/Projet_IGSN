@@ -1633,8 +1633,6 @@ const DEMO_REPOSITORY: SampleRow["repository"] = {
 
 const COLLECTION_SPECIMEN_CONTEXT: SampleRow["scientificContext"] = {
   provenanceStatus: "collection_specimen",
-  collectionCuratorFirstname: "Paul",
-  collectionCuratorLastname: "Bernard",
   collectionOrigin: "scientific_expedition",
 };
 

@@ -70,8 +70,6 @@ const CORE_PATH_BY_FIELD: Record<string, string> = {
   "scientificContext.chiefScientistLastname": "responsibility",
   "scientificContext.hostInstitution": "responsibility",
   "scientificContext.additionalRoles": "responsibility",
-  "scientificContext.collectionCuratorFirstname": "responsibility",
-  "scientificContext.collectionCuratorLastname": "responsibility",
   "scientificContext.researchProgramName": "production.projects.0.name",
   "scientificContext.funderOrganizations":
     "production.projects.0.fundingReferences",

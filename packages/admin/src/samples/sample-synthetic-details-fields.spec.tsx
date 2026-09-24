@@ -329,8 +329,6 @@ describe("SampleSyntheticDetailsFields", () => {
             ...syntheticDefaults,
             scientificContext: {
               provenanceStatus: "collection_specimen",
-              collectionCuratorFirstname: "Georges",
-              collectionCuratorLastname: "Cuvier",
               collectionOrigin: "scientific_expedition",
             },
             syntheticDetails: {

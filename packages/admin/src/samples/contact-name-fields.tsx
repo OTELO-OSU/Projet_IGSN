@@ -18,7 +18,6 @@ import { ContactNamePicker } from "#/users/contact-name-picker.tsx";
 type ContactPerson =
   | "scientificContext.chiefScientist"
   | "scientificContext.collector"
-  | "scientificContext.collectionCurator"
   | "syntheticDetails.operator"
   | `scientificContext.additionalRoles[${number}].person`;
 

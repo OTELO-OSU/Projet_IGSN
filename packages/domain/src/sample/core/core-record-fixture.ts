@@ -82,13 +82,13 @@ const ENVELOPE: Pick<
   CoreSample,
   "schemaVersion" | "record" | "publication" | "rightsAndAccess"
 > = {
-  schemaVersion: "0.10.0",
+  schemaVersion: "0.11.0",
   record: {
     recordId: "urn:uuid:11111111-1111-4111-8111-111111111111",
     createdAt: "2024-06-02T10:00:00.000Z",
     updatedAt: "2024-06-04T10:00:00.000Z",
     metadataLanguage: ["en"],
-    metadataVersion: "0.10.0",
+    metadataVersion: "0.11.0",
     lifecycleEvents: [
       { eventType: "created", timestamp: "2024-06-02T10:00:00.000Z" },
       { eventType: "published", timestamp: "2024-06-03T10:00:00.000Z" },
@@ -371,10 +371,6 @@ const COLLECTION_SPECIMEN_RECORD: CoreSample = {
         agentType: "Person",
       },
       roles: ["Collector"],
-    },
-    {
-      agent: { firstname: "Mary", lastname: "Anning", agentType: "Person" },
-      roles: ["Curator"],
     },
   ],
   production: {

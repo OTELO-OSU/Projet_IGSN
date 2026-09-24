@@ -32,7 +32,7 @@ describe("coreFilterFields", () => {
     );
   });
 
-  it.each(["projectName", "chiefScientist", "collector", "curator"])(
+  it.each(["projectName", "chiefScientist", "collector"])(
     "should truncate an over-long %s value",
     (key) => {
       const fields = coreFilterFields();

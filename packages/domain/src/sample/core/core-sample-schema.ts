@@ -25,7 +25,7 @@ import {
   parentIgsnOf,
 } from "./core-relation-schema.ts";
 
-export const CORE_SCHEMA_VERSION = "0.10.0";
+export const CORE_SCHEMA_VERSION = "0.11.0";
 
 export const OTELO_ROR_URI = "https://ror.org/02cyw3861";
 
@@ -42,7 +42,6 @@ const CORE_ROLES = [
   "ChiefScientist",
   "HostingInstitution",
   "SampleOwner",
-  "Curator",
   "Researcher",
   "ProjectManager",
   "ProjectMember",
@@ -306,7 +305,7 @@ export const coreSampleSchema = z
   .superRefine(checkCoreSample)
   .meta({
     id: "CoreSample",
-    description: "A published sample as an IGSN Core v0.10.0 record.",
+    description: "A published sample as an IGSN Core v0.11.0 record.",
   });
 
 export type CoreSample = z.infer<typeof coreSampleSchema>;
@@ -332,7 +331,7 @@ export const coreSampleBodySchema = z
   .meta({
     id: "CoreSampleBody",
     description:
-      "An IGSN Core v0.10.0 record submitted to create or update a sample.",
+      "An IGSN Core v0.11.0 record submitted to create or update a sample.",
   });
 
 export type CoreSampleBody = z.infer<typeof coreSampleBodySchema>;

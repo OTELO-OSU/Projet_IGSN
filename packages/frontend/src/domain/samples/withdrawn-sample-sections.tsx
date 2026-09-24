@@ -25,8 +25,6 @@ export function withdrawnSampleSections(
     location,
     collectorFirstname,
     collectorLastname,
-    collectionCuratorFirstname,
-    collectionCuratorLastname,
   }: WithdrawnSample,
   lineage: SampleSection | null,
 ): SampleSection[] {
@@ -60,13 +58,6 @@ export function withdrawnSampleSections(
           <FieldRow
             label={m.sample_field_collector_name()}
             value={joinContactName(collectorFirstname, collectorLastname)}
-          />
-          <FieldRow
-            label={m.sample_field_collection_curator()}
-            value={joinContactName(
-              collectionCuratorFirstname,
-              collectionCuratorLastname,
-            )}
           />
         </FieldRows>
       ),

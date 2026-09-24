@@ -53,7 +53,7 @@ export function toISamplesSample(core: CoreSample): ISamplesSample {
       label: curation.existenceStatus,
       access_constraints: [curation.availabilityStatus],
       curation_location: toCurationLocation(curation.currentRepository),
-      responsibility: toISamplesAgents(core.responsibility, ["Curator"]),
+      responsibility: [],
     },
     related_resource: (core.relations ?? []).map((relation) => ({
       relationship: relation.relationType,

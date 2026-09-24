@@ -233,16 +233,6 @@ describe("SampleList", () => {
       "chiefScientist",
       "Chief scientist: Marie Curie",
     ],
-    [
-      "collection curator",
-      {
-        provenanceStatus: "collection_specimen",
-        collectionCuratorFirstname: "Paul",
-        collectionCuratorLastname: "Durand",
-      },
-      "collectionCurator",
-      "Collection curator: Paul Durand",
-    ],
   ])(
     "should show the picked %s as one name",
     async (_case, scientificContext, field, expected) => {

@@ -37,8 +37,6 @@ const parent: Sample = {
   physiographicEnvironment: null,
   scientificContext: {
     provenanceStatus: "collection_specimen",
-    collectionCuratorFirstname: "Georges",
-    collectionCuratorLastname: "Cuvier",
     collectionOrigin: "scientific_expedition",
   },
   syntheticDetails: null,
@@ -129,8 +127,6 @@ it("should inherit every block of the parent but its identity, its collections a
     physiographicEnvironment: null,
     scientificContext: {
       provenanceStatus: "collection_specimen",
-      collectionCuratorFirstname: "Georges",
-      collectionCuratorLastname: "Cuvier",
       collectionOrigin: "scientific_expedition",
     },
     syntheticDetails: null,

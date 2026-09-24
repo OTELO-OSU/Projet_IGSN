@@ -30,35 +30,11 @@ export function SampleScientificContextFields() {
           if (provenanceStatus === "field_sample") {
             return (
               <>
-                <form.AppField name="scientificContext.funderOrganizations">
-                  {(field) => (
-                    <field.MultiComboboxField
-                      label={m.field_funder_organizations()}
-                      items={ALL_ORGANIZATION_ITEMS}
-                      placeholder={m.organization_placeholder()}
-                      searchPlaceholder={m.organization_search_placeholder()}
-                      emptyText={m.organization_empty()}
-                      removeLabel={(label) =>
-                        m.funder_organizations_remove({ label })
-                      }
-                    />
-                  )}
-                </form.AppField>
-
-                <form.AppField name="scientificContext.researchProgramName">
-                  {(field) => (
-                    <field.TextField label={m.field_research_program_name()} />
-                  )}
-                </form.AppField>
-
-                <form.AppField name="scientificContext.researchProgramDescription">
-                  {(field) => (
-                    <field.TextField
-                      label={m.field_research_program_description()}
-                      multiline
-                    />
-                  )}
-                </form.AppField>
+                <ContactNameFields
+                  label={m.field_collector_name()}
+                  person="scientificContext.collector"
+                  requiredToPublish
+                />
 
                 <ContactNameFields
                   label={m.field_chief_scientist()}
@@ -80,15 +56,40 @@ export function SampleScientificContextFields() {
                   )}
                 </form.AppField>
 
-                <ContactNameFields
-                  label={m.field_collector_name()}
-                  person="scientificContext.collector"
-                  requiredToPublish
-                />
                 <SampleAdditionalRolesFields />
+
+                <form.AppField name="scientificContext.funderOrganizations">
+                  {(field) => (
+                    <field.MultiComboboxField
+                      label={m.field_funder_organizations()}
+                      items={ALL_ORGANIZATION_ITEMS}
+                      placeholder={m.organization_placeholder()}
+                      searchPlaceholder={m.organization_search_placeholder()}
+                      emptyText={m.organization_empty()}
+                      removeLabel={(label) =>
+                        m.funder_organizations_remove({ label })
+                      }
+                    />
+                  )}
+                </form.AppField>
 
                 <form.AppField name="scientificContext.funding">
                   {(field) => <field.TextField label={m.field_funding()} />}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.researchProgramName">
+                  {(field) => (
+                    <field.TextField label={m.field_research_program_name()} />
+                  )}
+                </form.AppField>
+
+                <form.AppField name="scientificContext.researchProgramDescription">
+                  {(field) => (
+                    <field.TextField
+                      label={m.field_research_program_description()}
+                      multiline
+                    />
+                  )}
                 </form.AppField>
 
                 <form.AppField name="scientificContext.platformType">
@@ -114,12 +115,6 @@ export function SampleScientificContextFields() {
           if (provenanceStatus === "collection_specimen") {
             return (
               <>
-                <ContactNameFields
-                  label={m.field_collection_curator()}
-                  person="scientificContext.collectionCurator"
-                  requiredToPublish
-                />
-
                 <form.AppField name="scientificContext.collectionOrigin">
                   {(field) => (
                     <field.ComboboxField

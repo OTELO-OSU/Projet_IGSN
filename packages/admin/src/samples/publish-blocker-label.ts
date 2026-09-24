@@ -28,10 +28,6 @@ const PUBLISH_BLOCKER_LABELS: Record<PublishBlocker, () => string> = {
     m.publish_blocked_chief_scientist_firstname_missing,
   chief_scientist_lastname_missing:
     m.publish_blocked_chief_scientist_lastname_missing,
-  collection_curator_firstname_missing:
-    m.publish_blocked_collection_curator_firstname_missing,
-  collection_curator_lastname_missing:
-    m.publish_blocked_collection_curator_lastname_missing,
   collection_origin_missing: m.publish_blocked_collection_origin_missing,
   synthetic_starting_material_missing:
     m.publish_blocked_synthetic_starting_material_missing,

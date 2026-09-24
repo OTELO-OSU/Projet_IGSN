@@ -12,7 +12,6 @@ const ISAMPLES_ROLES: Record<CoreRole, string> = {
   Collector: "collector",
   ChiefScientist: "chiefScientist",
   Researcher: "researcher",
-  Curator: "curator",
   Registrant: "registrant",
   HostingInstitution: "hostingInstitution",
   SampleOwner: "sampleOwner",

@@ -181,8 +181,6 @@ function fakeApi(
     security,
     scientificContext: {
       provenanceStatus: "collection_specimen",
-      collectionCuratorFirstname: "Georges",
-      collectionCuratorLastname: "Cuvier",
       collectionOrigin: "scientific_expedition",
     },
     repository: { currentArchiveLaboratory: "UMR6112" },

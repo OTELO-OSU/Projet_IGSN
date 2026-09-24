@@ -32,13 +32,6 @@ export const PERSON_FACET_COLUMNS: Record<
     names: ["sc_collector_firstname", "sc_collector_lastname"],
     userId: "sc_collector_user_id",
   },
-  collectionCurator: {
-    names: [
-      "sc_collection_curator_firstname",
-      "sc_collection_curator_lastname",
-    ],
-    userId: "sc_collection_curator_user_id",
-  },
 };
 
 const matchesLinkedAccount = (userIdColumn: string) => (token: string) =>

@@ -41,7 +41,6 @@ export const CORE_FILTER_PARAM = {
   chiefScientist: "chiefScientist",
   hostingInstitution: "hostInstitution",
   collector: "collectorName",
-  curator: "collectionCurator",
   numericAgeMin: "ageMin",
   numericAgeMax: "ageMax",
   numericAgeUnit: "ageUnit",
@@ -108,9 +107,6 @@ export function coreFilterFields() {
     }),
     collector: textFilter(
       "Name of the collector, matched token by token against the first name and the last name, in any order, case and accents ignored, with a fuzzy fallback, truncated past 200 characters.",
-    ),
-    curator: textFilter(
-      "Name of the collection curator, matched token by token against the first name and the last name, in any order, case and accents ignored, with a fuzzy fallback, truncated past 200 characters.",
     ),
     numericAgeMin: z.coerce.number().optional().meta({
       type: "number",

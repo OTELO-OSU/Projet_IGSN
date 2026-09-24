@@ -87,7 +87,6 @@ const personAccount = (
   column:
     | "sc_chief_scientist_user_id"
     | "sc_collector_user_id"
-    | "sc_collection_curator_user_id"
     | "syn_operator_user_id",
 ) =>
   jsonObjectFrom(
@@ -101,9 +100,6 @@ export function samplePersonAccountsQuery(eb: ExpressionBuilder<DB, "sample">) {
   return [
     personAccount(eb, "sc_chief_scientist_user_id").as("chiefScientistAccount"),
     personAccount(eb, "sc_collector_user_id").as("collectorAccount"),
-    personAccount(eb, "sc_collection_curator_user_id").as(
-      "collectionCuratorAccount",
-    ),
     personAccount(eb, "syn_operator_user_id").as("operatorAccount"),
   ];
 }

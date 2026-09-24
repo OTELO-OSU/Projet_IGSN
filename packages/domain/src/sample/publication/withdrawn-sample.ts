@@ -24,8 +24,6 @@ export const withdrawnSampleSchema = sampleSchema
       .nullable(),
     collectorFirstname: freeTextSchema.nullable(),
     collectorLastname: freeTextSchema.nullable(),
-    collectionCuratorFirstname: freeTextSchema.nullable(),
-    collectionCuratorLastname: freeTextSchema.nullable(),
   });
 
 export type WithdrawnSample = z.infer<typeof withdrawnSampleSchema>;
@@ -48,13 +46,5 @@ export function toWithdrawnSample(sample: Sample): WithdrawnSample {
       : null,
     collectorFirstname: context?.collectorFirstname ?? null,
     collectorLastname: context?.collectorLastname ?? null,
-    collectionCuratorFirstname:
-      context?.provenanceStatus === "collection_specimen"
-        ? (context.collectionCuratorFirstname ?? null)
-        : null,
-    collectionCuratorLastname:
-      context?.provenanceStatus === "collection_specimen"
-        ? (context.collectionCuratorLastname ?? null)
-        : null,
   };
 }

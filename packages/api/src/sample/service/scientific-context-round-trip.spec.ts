@@ -37,8 +37,6 @@ const roundTripped: [string, ScientificContext][] = [
     "a full collection-specimen context",
     {
       provenanceStatus: "collection_specimen",
-      collectionCuratorFirstname: "Georges",
-      collectionCuratorLastname: "Cuvier",
       collectionOrigin: "scientific_expedition",
       collectorFirstname: "Alexander",
       collectorLastname: "von Humboldt",
@@ -85,14 +83,12 @@ describe("sample scientific context persistence", () => {
       ...base,
       scientificContext: {
         provenanceStatus: "collection_specimen" as const,
-        collectionCuratorFirstname: "Georges",
-        collectionCuratorLastname: "Cuvier",
+        collectionOrigin: "scientific_expedition" as const,
       },
     });
     expect(updated?.scientificContext).toEqual({
       provenanceStatus: "collection_specimen",
-      collectionCuratorFirstname: "Georges",
-      collectionCuratorLastname: "Cuvier",
+      collectionOrigin: "scientific_expedition",
     });
     expect(await readSample(db, created.id)).toEqual(updated);
   });
@@ -102,8 +98,7 @@ describe("sample scientific context persistence", () => {
       ...base,
       scientificContext: {
         provenanceStatus: "collection_specimen" as const,
-        collectionCuratorFirstname: "Georges",
-        collectionCuratorLastname: "Cuvier",
+        collectionOrigin: "scientific_expedition" as const,
       },
     });
     const updated = await updateSample(db, created.id, {

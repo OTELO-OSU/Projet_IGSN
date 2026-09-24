@@ -628,40 +628,6 @@ describe("listSamples", () => {
     },
   );
 
-  pgTest(
-    "should match the collection curator on its own name pair",
-    async ({ db }) => {
-      // Arrange
-      await insertSample(db, {
-        ...bare,
-        name: "Curated by Anning",
-        scientificContext: {
-          provenanceStatus: "collection_specimen",
-          collectionCuratorFirstname: "Mary",
-          collectionCuratorLastname: "Anning",
-        },
-      });
-      await insertSample(db, {
-        ...bare,
-        name: "Curated by Cuvier",
-        scientificContext: {
-          provenanceStatus: "collection_specimen",
-          collectionCuratorFirstname: "Georges",
-          collectionCuratorLastname: "Cuvier",
-        },
-      });
-      // Act
-      const { data, total } = await listAsOwner(db, {
-        page: 1,
-        perPage: 10,
-        collectionCurator: "anning mary",
-      });
-      // Assert
-      expect(total).toBe(1);
-      expect(data.map((s) => s.name)).toEqual(["Curated by Anning"]);
-    },
-  );
-
   pgTest("should filter an age range by numeric overlap", async ({ db }) => {
     // Arrange
     await insertSample(db, {
