@@ -15,7 +15,6 @@ import {
   materialPathLabel,
   natureLabel,
   oceanSeaLabel,
-  textureLabel,
   typeLabel,
 } from "#/domain/samples/sample-labels.ts";
 import { m } from "#/paraglide/messages.js";
@@ -33,7 +32,6 @@ export type CardSample = Pick<
   | "location"
   | "scientificContext"
   | "collectionMethod"
-  | "texture"
   | "age"
 >;
 
@@ -156,12 +154,6 @@ const OPTIONAL_CARD_FIELDS: readonly CardField[] = [
     section: m.sample_section_sample,
     get: (sample) =>
       joinPath(pathText(sample.collectionMethod, collectionMethodLabel)),
-  },
-  {
-    key: "texture",
-    label: m.sample_field_texture,
-    section: m.sample_section_sample,
-    get: (sample) => sample.texture && textureLabel(sample.texture),
   },
   contextField("researchProgramName", m.facet_research_program_name),
   personField("chiefScientist", m.facet_chief_scientist),

@@ -99,8 +99,8 @@ describe("SearchResultsView", () => {
   });
 
   it.each([
-    ["picks a field", [], ["texture"]],
-    ["unpicks a field", ["texture"], []],
+    ["picks a field", [], ["collectionMethod"]],
+    ["unpicks a field", ["collectionMethod"], []],
   ])(
     "should report the card fields when the reader %s",
     async (_case, fields, expected) => {
@@ -119,7 +119,7 @@ describe("SearchResultsView", () => {
       });
 
       await screen.getByRole("button", { name: "Add field results" }).click();
-      await page.getByRole("checkbox", { name: "Texture" }).click();
+      await page.getByRole("checkbox", { name: "Collection method" }).click();
 
       expect(onFieldsChange).toHaveBeenCalledWith(expected);
     },
