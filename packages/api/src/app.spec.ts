@@ -5,6 +5,7 @@ import { createApp } from "./app.ts";
 import {
   AUTHENTICATED_USER_BUDGET,
   CONTACT_MAIL_IP_BUDGET,
+  IMPORT_TEMPLATE_USER_BUDGET,
   MAIL_REQUEST_USER_BUDGET,
   PUBLIC_IP_BUDGET,
 } from "./rate-limit/config.ts";
@@ -308,6 +309,24 @@ describe("app", () => {
         );
         expect((await requestFrom("user-3")).status).toBe(429);
         expect((await requestFrom("user-4")).status).not.toBe(429);
+      },
+    );
+
+    pgTest(
+      "should throttle the import template far below the authenticated budget, per user",
+      async ({ db }) => {
+        const app = createApp(db).app;
+        const downloadFrom = (token: string) =>
+          app.request("/admin/samples/import-template?rows=0", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+
+        await spend(
+          () => downloadFrom("user-5"),
+          IMPORT_TEMPLATE_USER_BUDGET.points,
+        );
+        expect((await downloadFrom("user-5")).status).toBe(429);
+        expect((await downloadFrom("user-6")).status).not.toBe(429);
       },
     );
 

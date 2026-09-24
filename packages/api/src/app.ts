@@ -17,6 +17,7 @@ import { createManualGroupRepository } from "./manual-group/repository.ts";
 import { createManualGroupRoutes } from "./manual-group/routes.ts";
 import {
   CONTACT_MAIL_IP_BUDGET,
+  IMPORT_TEMPLATE_USER_BUDGET,
   MAIL_REQUEST_USER_BUDGET,
   loadRateLimitConfig,
 } from "./rate-limit/config.ts";
@@ -141,6 +142,10 @@ export function createApp(
     .use(
       "/samples/:id/deletion-request",
       rateLimit(rateLimitConfig, "user", MAIL_REQUEST_USER_BUDGET),
+    )
+    .use(
+      "/samples/import-template",
+      rateLimit(rateLimitConfig, "user", IMPORT_TEMPLATE_USER_BUDGET),
     )
     .route(
       "/samples/parents",

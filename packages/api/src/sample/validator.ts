@@ -17,6 +17,10 @@ import { z } from "zod";
 
 import { idParamSchema, validateUuidIdParam } from "../uuid-param.ts";
 import { zodValidator } from "../zod-validator.ts";
+import {
+  DEFAULT_TEMPLATE_ROWS,
+  MAX_TEMPLATE_ROWS,
+} from "./import-template/columns.ts";
 import { uploadLimit } from "./upload-limit.ts";
 
 const igsnParamSchema = z.object({ igsn: igsnSchema });
@@ -53,6 +57,21 @@ export const validateCheckDuplicatesBody = zodValidator(
   "json",
   checkDuplicatesBodySchema,
   "Invalid duplicate criteria",
+);
+
+const importTemplateQuerySchema = z.object({
+  rows: z.coerce
+    .number()
+    .int()
+    .min(1)
+    .max(MAX_TEMPLATE_ROWS)
+    .default(DEFAULT_TEMPLATE_ROWS),
+});
+
+export const validateImportTemplateQuery = zodValidator(
+  "query",
+  importTemplateQuerySchema,
+  `"rows" must be a whole number between 1 and ${MAX_TEMPLATE_ROWS}`,
 );
 
 export const validateListQuery = validator("query", (value, c) => {
