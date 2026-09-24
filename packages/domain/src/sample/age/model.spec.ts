@@ -41,6 +41,15 @@ describe("ageSchema", () => {
     expect(result).toMatchObject({ success: true });
   });
 
+  it("should accept a numeric age in days before present", () => {
+    const result = ageSchema.safeParse({
+      numericAgeMin: 3,
+      numericAgeMax: 3,
+      numericAgeUnit: "day",
+    });
+    expect(result).toMatchObject({ success: true });
+  });
+
   it.each([
     { numericAgeMin: 100 },
     { numericAgeMax: 140 },
@@ -104,6 +113,16 @@ describe("ageSchema", () => {
         numericAgeMin: 1,
         numericAgeMax: 1,
         numericAgeUnit: "ma",
+        numericAgeYearsUnit: "bp",
+      },
+      "numericAgeYearsUnit",
+      "numeric_years_unit_requires_annum",
+    ],
+    [
+      {
+        numericAgeMin: 1,
+        numericAgeMax: 1,
+        numericAgeUnit: "day",
         numericAgeYearsUnit: "bp",
       },
       "numericAgeYearsUnit",

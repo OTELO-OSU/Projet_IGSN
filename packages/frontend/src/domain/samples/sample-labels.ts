@@ -28,7 +28,7 @@ export const {
   resourceTypeLabel,
   elementLabel,
   numericUnitLabel,
-  yearsUnitLabel,
+  yearsUnitShortLabel,
   geologicalAgeLabel,
   provenanceStatusLabel,
   collectionOriginLabel,

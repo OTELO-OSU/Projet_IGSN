@@ -751,6 +751,34 @@ describe("listSamples", () => {
     expect(data.map((s) => s.name)).toEqual(["Mega"]);
   });
 
+  pgTest.for([
+    { unit: "month", min: 6, max: 6 },
+    { unit: "day", min: 180, max: 185 },
+  ] as const)(
+    "should convert a $unit age to annum",
+    async ({ unit, min, max }, { db }) => {
+      // Arrange
+      await insertSample(db, {
+        name: "Half a year",
+        nature: "powder",
+        type: null,
+        collectionMethod: null,
+        age: numericAge(min, max, unit),
+      });
+      // Act
+      const { data, total } = await listAsOwner(db, {
+        page: 1,
+        perPage: 10,
+        ageMin: 0.4,
+        ageMax: 0.6,
+        ageUnit: "a",
+      });
+      // Assert
+      expect(total).toBe(1);
+      expect(data.map((s) => s.name)).toEqual(["Half a year"]);
+    },
+  );
+
   pgTest(
     "should place same-value annum ages on the before-present axis by their years unit",
     async ({ db }) => {

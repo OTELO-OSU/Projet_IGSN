@@ -1,6 +1,8 @@
 import { type NumericUnit } from "./numeric-unit.ts";
 
 const NUMERIC_UNIT_TO_ANNUM: Record<NumericUnit, number> = {
+  day: 1 / 365.25,
+  month: 1 / 12,
   a: 1,
   ka: 1e3,
   ma: 1e6,

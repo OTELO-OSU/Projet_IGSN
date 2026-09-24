@@ -3,7 +3,7 @@ import type { Age } from "@projet-igsn/domain/sample/age/model";
 import {
   geologicalAgeLabel,
   numericUnitLabel,
-  yearsUnitLabel,
+  yearsUnitShortLabel,
 } from "#/domain/samples/sample-labels.ts";
 
 function unitSuffix(
@@ -11,7 +11,7 @@ function unitSuffix(
   years: Age["numericAgeYearsUnit"],
 ): string {
   const unitLabel = unit ? ` ${numericUnitLabel(unit)}` : "";
-  const yearsLabel = years ? ` ${yearsUnitLabel(years)}` : "";
+  const yearsLabel = years ? ` ${yearsUnitShortLabel(years)}` : "";
   return `${unitLabel}${yearsLabel}`;
 }
 

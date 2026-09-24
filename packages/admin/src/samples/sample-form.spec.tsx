@@ -888,8 +888,10 @@ describe("SampleForm", () => {
       .fill("12000");
     await screen.getByRole("combobox", { name: "Units" }).click();
     await screen.getByRole("option", { name: "Year" }).click();
-    await screen.getByRole("combobox", { name: "Reference" }).click();
-    await screen.getByRole("option", { name: "BP", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Age reference" }).click();
+    await screen
+      .getByRole("option", { name: "BP - Before Present", exact: true })
+      .click();
     await screen.getByRole("button", { name: "Create" }).click();
 
     await vi.waitFor(() =>
@@ -961,7 +963,7 @@ describe("SampleForm", () => {
       .element(screen.getByRole("combobox", { name: "Units" }))
       .not.toBeInTheDocument();
     await expect
-      .element(screen.getByRole("combobox", { name: "Reference" }))
+      .element(screen.getByRole("combobox", { name: "Age reference" }))
       .not.toBeInTheDocument();
 
     await screen
@@ -971,13 +973,13 @@ describe("SampleForm", () => {
       .element(screen.getByRole("combobox", { name: "Units *" }))
       .toBeVisible();
     await expect
-      .element(screen.getByRole("combobox", { name: "Reference" }))
+      .element(screen.getByRole("combobox", { name: "Age reference" }))
       .not.toBeInTheDocument();
 
     await screen.getByRole("combobox", { name: "Units *" }).click();
     await screen.getByRole("option", { name: "Year" }).click();
     await expect
-      .element(screen.getByRole("combobox", { name: "Reference *" }))
+      .element(screen.getByRole("combobox", { name: "Age reference *" }))
       .toBeVisible();
   });
 
@@ -1090,8 +1092,10 @@ describe("SampleForm", () => {
       .fill("120");
     await screen.getByRole("combobox", { name: "Units" }).click();
     await screen.getByRole("option", { name: "Year" }).click();
-    await screen.getByRole("combobox", { name: "Reference" }).click();
-    await screen.getByRole("option", { name: "BP", exact: true }).click();
+    await screen.getByRole("combobox", { name: "Age reference" }).click();
+    await screen
+      .getByRole("option", { name: "BP - Before Present", exact: true })
+      .click();
     await screen.getByRole("combobox", { name: "Units" }).click();
     await screen.getByRole("option", { name: "Ma", exact: true }).click();
 
