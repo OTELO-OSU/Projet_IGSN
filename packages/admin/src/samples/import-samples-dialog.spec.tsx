@@ -38,6 +38,20 @@ function drop(target: Element, file: File) {
   );
 }
 
+function answerNoSample() {
+  worker.use(
+    http.post("*/admin/samples/import", () =>
+      HttpResponse.json(
+        {
+          error: "Invalid import",
+          issues: [{ sheet: "Samples", code: "no_sample" }],
+        },
+        { status: 422 },
+      ),
+    ),
+  );
+}
+
 describe("ImportSamplesDialog", () => {
   it("should open the import dialog from the Import button", async () => {
     const { dialog } = await openDialog();
@@ -132,6 +146,42 @@ describe("ImportSamplesDialog", () => {
       .toHaveTextContent("Samples successfully imported.");
     expect(screen.getByRole("dialog").elements()).toHaveLength(0);
     expect(posted).toEqual([{ name: "samples.xlsx", type: XLSX_MEDIA_TYPE }]);
+  });
+
+  it("should report an invalid file in the open dialog without a toast, until another file is picked", async () => {
+    answerNoSample();
+    const { screen, dialog, importButton } = await openDialog();
+    await dialog.getByLabelText("choose one").upload([xlsx()]);
+
+    await importButton.click();
+
+    const report = dialog.getByRole("table", { name: "Samples" });
+    await expect.element(report).toHaveTextContent("The file holds no sample.");
+    expect(
+      screen.getByRole("region", { name: /notifications/i }).element()
+        .textContent,
+    ).toBe("");
+
+    await dialog.getByLabelText("choose one").upload([xlsx("fixed.xlsx")]);
+
+    await expect.element(dialog.getByText("fixed.xlsx")).toBeVisible();
+    await expect.element(report).not.toBeInTheDocument();
+  });
+
+  it("should clear the report when the dialog is closed", async () => {
+    answerNoSample();
+    const { screen, dialog, importButton } = await openDialog();
+    await dialog.getByLabelText("choose one").upload([xlsx()]);
+    await importButton.click();
+    await expect.element(dialog.getByRole("table")).toBeVisible();
+
+    await dialog.getByRole("button", { name: "Cancel" }).click();
+    await screen.getByRole("button", { name: "Import" }).click();
+
+    await expect
+      .element(screen.getByRole("dialog", { name: "Import samples" }))
+      .toBeVisible();
+    expect(screen.getByRole("table").elements()).toHaveLength(0);
   });
 
   it.each([415, 500])(
